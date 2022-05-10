@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 5.4
-Tested up to: 5.9.2
+Tested up to: 6.0
 Requires PHP: 7.0
-Stable tag: 4.2.2
+Stable tag: 4.2.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -179,6 +179,23 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.2.3 - 5-10-2022 =
+* Fixed: An issue with publishing sticky posts
+* Fixed: An issue with clearing date-picker values on mobile devices
+* Fixed: An issue with toggling the sites list section in the Connection Status widget
+* Fixed: An issue with running scheduled events on specific setups
+* Fixed: An issue with rendering UI elements on mobile devices
+* Fixed: Last Purge Cache format to reflect WP settings
+* Added: Responsive DataTables extension
+* Added: The responsive attribute to the majority of tables in MainWP Dashboard
+* Updated: Replaced Semantic UI framework with Fomantic UI
+* Updated: The Server Information page layout and style
+* Updated: Width of the button elements on mobile devices
+* Updated: Width of the label elements on mobile devices
+* Updated: Tables `white-space` property on mobile devices
+* Updated: Tested up to tag to WP 6.0
+* Removed: Calendar library
 
 = 4.2.2 - 4-21-2022 =
 * Fixed: An issue with scrolling content in modals on mobile devices

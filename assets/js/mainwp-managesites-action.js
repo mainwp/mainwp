@@ -142,7 +142,7 @@ mainwp_managesites_doaction_process = function( action ) {
    
 
 jQuery( document ).on( 'click', '.managesites_syncdata', function () {
-    var row = jQuery( this ).closest( 'tr' );
+  var row = jQuery( this ).closest( '.menu' );
     var syncIds = [ ];
     syncIds.push( row.attr( 'siteid' ) );
     mainwp_sync_sites_data( syncIds );
@@ -150,7 +150,7 @@ jQuery( document ).on( 'click', '.managesites_syncdata', function () {
 } );
 
 jQuery( document ).on( 'click', '.managesites_checknow', function () {
-  var row = jQuery( this ).closest( 'tr' );
+  var row = jQuery( this ).closest( '.menu' );
   var syncIds = [ ];
   syncIds.push( row.attr( 'siteid' ) );
   mainwp_sync_sites_data( syncIds, 'checknow' );

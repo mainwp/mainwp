@@ -132,14 +132,14 @@ class MainWP_Notification_Settings {
 			<div class="ui info message">
 				<?php _e( 'Email notifications sent from MainWP Dashboard are listed below.  Click on an email to configure it.  For additional help, please see <a href="https://kb.mainwp.com/docs/email-settings/">this help document</a>.', 'mainwp' ); ?>
 			</div>
-			<table class="ui table" id="mainwp-emails-settings-table">
+			<table class="ui unstackable table" id="mainwp-emails-settings-table">
 				<thead>
 					<tr>						
 						<th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-						<th><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
+						<th data-priority="1"><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
 						<th><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
-						<th><?php esc_html_e( 'Recipient(s)', 'mainwp' ); ?></th>						
-						<th class="no-sort collapsing" style="text-align:right">&nbsp;</th>
+						<th ><?php esc_html_e( 'Recipient(s)', 'mainwp' ); ?></th>
+						<th class="no-sort collapsing" data-priority="2" style="text-align:right">&nbsp;</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -187,7 +187,8 @@ class MainWP_Notification_Settings {
 					"paging":   false,
 					"ordering": true,
 					"columnDefs": [ { "orderable": false, "targets": [ 4 ] } ],
-					"order": [ [ 2, "asc" ] ]
+					"order": [ [ 2, "asc" ] ],
+					"responsive": true,
 				} );
 			} );
 			</script>

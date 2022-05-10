@@ -142,7 +142,18 @@
 .mainwp-ui .ui.multiple.dropdown > .label {
   vertical-align: baseline;
 }
+
 .mainwp-ui .mainwp-main-content .ui.checkbox:not( .slider ) .box::after,
 .mainwp-ui .mainwp-main-content .ui.checkbox:not( .slider ) label::after,
 .mainwp-ui  #mainwp-manage-sites-content .ui.checkbox:not( .slider ) .box::after,
 .mainwp-ui  #mainwp-manage-sites-content .ui.checkbox:not( .slider ) label::after { top: 1px; left: 1px; }
+
+mainwp-sub-header
+
+
+.mainwp-ui .mainwp-actions-bar .ui.mini.form .ui.dropdown,
+.mainwp-ui .mainwp-actions-bar.ui.mini.form .ui.dropdown,
+.mainwp-ui .mainwp-sub-header .ui.mini.form .ui.dropdown,
+.mainwp-ui .mainwp-sub-header.ui.mini.form .ui.dropdown {
+  font-size: 0.78571429rem !important;
+}

@@ -265,7 +265,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				</div>
 				<div class="right aligned middle aligned column">
 						<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
-						<div id="mainwp-filter-sites-group" class="ui multiple selection dropdown">
+						<div id="mainwp-filter-sites-group" multiple="" class="ui selection multiple dropdown">
 							<input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
 							<i class="dropdown icon"></i>
 							<div class="default text"><?php esc_html_e( 'All groups', 'mainwp' ); ?></div>
@@ -527,7 +527,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				<?php echo sprintf( __( 'Monitor your sites uptime and site health.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a>' ); ?>
 			</div>
 		<?php endif; ?>
-		<table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable stackable table mainwp-with-preview-table">
+		<table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table">
 			<thead>
 			<tr>
 				<?php $this->print_column_headers( $optimize, true ); ?>
@@ -563,6 +563,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			'stateSave'     => 'true',
 			'stateDuration' => '0',
 			'order'         => '[]',
+			'responsive'    => 'true',
 		);
 
 		/**
@@ -599,9 +600,16 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 					return false;
 				};
 
+				var responsive = <?php echo $table_features['responsive']; ?>;
+				if( jQuery( window ).width() > 1140 ) {
+					responsive = false;
+				}
+
+
 			<?php if ( ! $optimize ) { ?>
 				try {
 					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
+						"responsive" : responsive,
 						"searching" : <?php echo $table_features['searching']; ?>,
 						"paging" : <?php echo $table_features['paging']; ?>,
 						"pagingType" : <?php echo $table_features['pagingType']; ?>,
@@ -610,13 +618,24 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 						"stateSave" : <?php echo $table_features['stateSave']; ?>,
 						"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
 						"order" : <?php echo $table_features['order']; ?>,
-						"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
+						"columnDefs": [
+							{
+								"targets": 'no-sort',
+								"orderable": false
+							},
+							{
+								"targets": 'manage-site-column',
+								"type": 'natural-nohtml'
+							},
+							<?php do_action( 'mainwp_manage_sites_table_columns_defs' ); ?>
+						],
 						"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All" ] ],
 						"pageLength": <?php echo intval( $sites_per_page ); ?>
 					} );
 				} catch(err) {
 					// to fix js error.
 				}
+				mainwp_datatable_fix_menu_overflow();
 			<?php } else { ?>
 				try {
 					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).on( 'processing.dt', function ( e, settings, processing ) {
@@ -659,6 +678,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 								return json.data;
 							}
 						},
+						"responsive" : responsive,
 						"searching" : <?php echo $table_features['searching']; ?>,
 						"paging" : <?php echo $table_features['paging']; ?>,
 						"pagingType" : <?php echo $table_features['pagingType']; ?>,
@@ -674,6 +694,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 						"columns": <?php echo wp_json_encode( $this->get_columns_init() ); ?>,
 						"drawCallback": function( settings ) {
 							this.api().tables().body().to$().attr( 'id', 'mainwp-manage-sites-body-table' );
+							mainwp_datatable_fix_menu_overflow();
 							if ( typeof mainwp_preview_init_event !== "undefined" ) {
 								mainwp_preview_init_event();
 							}
@@ -691,6 +712,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				} catch(err) {
 					// to fix js error.
 				}
+
 				<?php } ?>
 				_init_manage_sites_screen = function() {
 						<?php
@@ -1007,9 +1029,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				<td class="collapsing"><span><a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo base64_encode( 'site-health.php' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>" data-tooltip="<?php echo esc_html__( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"><span class="ui <?php echo $h_color; ?> empty circular label"></span></a> <?php echo esc_html( $h_text ); ?></span></td>
 			<?php } elseif ( 'site_actions' === $column_name ) { ?>
 					<td class="collapsing">
-						<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999;">
+						<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999;">
 							<i class="ellipsis horizontal icon"></i>
-							<div class="menu">
+							<div class="menu" siteid=<?php echo $website['id']; ?>>
 							<a class="managesites_checknow item" href="#"><?php esc_html_e( 'Check Now', 'mainwp' ); ?></a>
 					<?php if ( '' == $website['sync_errors'] ) : ?>							
 							<a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
@@ -1159,9 +1181,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 									<?php
 							} elseif ( 'site_actions' === $column_name ) {
 								?>
-									<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999;">
+									<div class="ui right pointing dropdown icon mini basic green button"  style="z-index:999;">
 										<i class="ellipsis horizontal icon"></i>
-										<div class="menu">
+										<div class="menu" siteid="<?php echo $website['id']; ?>">
 											<a class="managesites_checknow item" href="#"><?php esc_html_e( 'Check Now', 'mainwp' ); ?></a>
 											<?php if ( '' == $website['sync_errors'] ) : ?>											
 											<a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>

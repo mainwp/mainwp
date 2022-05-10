@@ -443,7 +443,7 @@ class MainWP_Manage_Sites_List_Table {
 								<div class="item" data-value="yes"><?php esc_html_e( 'Is not', 'mainwp' ); ?></div>
 							</div>
 						</div>										
-						<div id="mainwp-filter-sites-group" class="ui multiple selection dropdown">
+						<div id="mainwp-filter-sites-group" class="ui selection multiple dropdown">
 							<input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
 							<i class="dropdown icon"></i>
 							<div class="default text"><?php esc_html_e( 'All groups', 'mainwp' ); ?></div>
@@ -884,7 +884,7 @@ class MainWP_Manage_Sites_List_Table {
 				<?php echo __( 'To hide or show a column, click the "Cog" icon and select options from "Show columns"', 'mainwp' ); ?>
 			</div>
 		<?php endif; ?>
-		<table id="mainwp-manage-sites-table" style="width:100%;" class="ui single line selectable table mainwp-with-preview-table">
+		<table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table">
 			<thead>
 				<tr><?php $this->print_column_headers( $optimize, true ); ?></tr>
 			</thead>
@@ -932,6 +932,7 @@ class MainWP_Manage_Sites_List_Table {
 			'stateDuration' => '0',
 			'order'         => '[]',
 			'scrollX'       => 'true',
+			'responsive'    => 'true',
 		);
 
 		/**
@@ -967,12 +968,18 @@ class MainWP_Manage_Sites_List_Table {
 				return false;
 			};
 
+			var responsive = <?php echo $table_features['responsive']; ?>;
+			if( jQuery( window ).width() > 1140 ) {
+				responsive = false;
+			}
+
 			jQuery( document ).ready( function( $ ) {
 
 			<?php if ( ! $optimize ) { ?>
 						try {	
 							jQuery( '#mainwp-sites-table-loader' ).hide();							
 							$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
+								"responsive": responsive,
 								"searching" : <?php echo $table_features['searching']; ?>,
 								"paging" : <?php echo $table_features['paging']; ?>,
 								"pagingType" : <?php echo $table_features['pagingType']; ?>,
@@ -987,6 +994,10 @@ class MainWP_Manage_Sites_List_Table {
 									{ 
 										"targets": 'no-sort', 
 										"orderable": false 
+									},
+									{ 
+										"targets": 'manage-site-column',
+										"type": 'natural-nohtml'										
 									},
 									<?php do_action( 'mainwp_manage_sites_table_columns_defs' ); ?>									
 								],
@@ -1049,6 +1060,7 @@ class MainWP_Manage_Sites_List_Table {
 									return json.data;
 								}
 							},
+							"responsive": responsive,
 							"searching" : <?php echo $table_features['searching']; ?>,
 							"paging" : <?php echo $table_features['paging']; ?>,
 							"pagingType" : <?php echo $table_features['pagingType']; ?>,
@@ -1218,8 +1230,9 @@ class MainWP_Manage_Sites_List_Table {
 				$class[] = 'no-sort';
 			}
 
-			$tag = 'th';
-			$id  = "id='$column_key'";
+			$tag      = 'th';
+			$priority = '';
+			$id       = "id='$column_key'";
 
 			if ( ! empty( $class ) ) {
 				$class = "class='" . join( ' ', $class ) . "'";
@@ -1537,7 +1550,7 @@ class MainWP_Manage_Sites_List_Table {
 							<?php } elseif ( 'site_actions' === $column_name ) { ?>
 									<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999;">
 										<i class="ellipsis horizontal icon"></i>
-										<div class="menu">
+										<div class="menu" siteid="<?php echo $website['id']; ?>">
 											<?php if ( '' !== $website['sync_errors'] ) : ?>
 											<a class="mainwp_site_reconnect item" href="#"><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 											<?php else : ?>
@@ -1847,7 +1860,7 @@ class MainWP_Manage_Sites_List_Table {
 					$cls_site = 'site-sync-error';
 				}
 				?>
-				<td class="column-site-bulk <?php echo $cls_site; ?>"><a href="<?php echo 'admin.php?page=managesites&dashboard=' . $website['id']; ?>" data-tooltip="<?php esc_attr_e( 'Open the site overview', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><?php echo stripslashes( $website['name'] ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span></td>
+				<td class="column-site-bulk all <?php echo $cls_site; ?>"><a href="<?php echo 'admin.php?page=managesites&dashboard=' . $website['id']; ?>" data-tooltip="<?php esc_attr_e( 'Open the site overview', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><?php echo stripslashes( $website['name'] ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span></td>
 			<?php } elseif ( 'login' === $column_name ) { ?>
 				<td class="collapsing">
 				<?php if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
@@ -1915,7 +1928,7 @@ class MainWP_Manage_Sites_List_Table {
 					<td class="collapsing">
 						<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999;">
 							<i class="ellipsis horizontal icon"></i>
-							<div class="menu">
+							<div class="menu" siteid="<?php echo $website['id']; ?>">
 					<?php if ( '' !== $website['sync_errors'] ) : ?>
 							<a class="mainwp_site_reconnect item" href="#"><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 							<?php else : ?>

@@ -1618,9 +1618,31 @@ class MainWP_Updates {
 				jQuery( '#mainwp-manage-updates .ui.accordion' ).accordion( {
 					"exclusive": <?php echo $table_features['exclusive']; ?>,
 					"duration": <?php echo $table_features['duration']; ?>,
+					onOpen: function(){
+						//mainwp_datatable_init_and_fix_recalc('table.mainwp-manage-updates-item-table');
+					}
 				} );
 			} );
 
+			mainwp_datatable_init_and_fix_recalc = function(selector){ 
+				jQuery(selector).each( function(e) {					
+					if(jQuery(this).is(":visible")){
+						console.log('visible ' + jQuery(this).attr('id'));
+						jQuery(this).css( 'display', 'table' );
+						jQuery(this).DataTable().destroy();						
+						var tb = jQuery(this).DataTable({
+							"paging":false,
+							"info": false,
+							"searching": false,
+							"ordering" : false,
+							"responsive": true,
+						});					
+						tb.columns.adjust();
+						tb.responsive.recalc();
+					}
+				});
+			}
+			
 			jQuery( document ).on( 'click', '.trigger-all-accordion', function() {
 				if ( jQuery( this ).hasClass( 'active' ) ) {
 					jQuery( this ).removeClass( 'active' );
@@ -1638,6 +1660,7 @@ class MainWP_Updates {
 					} );
 				}
 			} );
+
 		</script>
 		<?php
 
@@ -1871,7 +1894,7 @@ class MainWP_Updates {
 			 */
 			do_action( 'mainwp_updates_before_http_response_table' );
 			?>
-			<table class="ui single line inverted table" id="mainwp-http-response-issues-table">
+			<table class="ui single line inverted unstackable table" id="mainwp-http-response-issues-table">
 				<thead>
 					<tr>
 						<th class="no-sort" colspan="3"><?php esc_html_e( 'HTTP Response Check Results', 'mainwp' ); ?></th>
@@ -1942,10 +1965,11 @@ class MainWP_Updates {
 			do_action( 'mainwp_updates_after_http_response_table' );
 
 			$table_features = array(
-				'searching' => 'false',
-				'paging'    => 'false',
-				'stateSave' => 'true',
-				'info'      => 'false',
+				'searching'  => 'false',
+				'paging'     => 'false',
+				'stateSave'  => 'true',
+				'info'       => 'false',
+				'responsive' => 'true',
 			);
 
 			/**
@@ -1958,14 +1982,17 @@ class MainWP_Updates {
 			$table_features = apply_filters( 'mainwp_updates_http_responses_datatable_features', $table_features );
 			?>
 			<script>
-			jQuery( '#mainwp-http-response-issues-table' ).DataTable( {
-				"searching": <?php echo $table_features['searching']; ?>,
-				"paging" : <?php echo $table_features['paging']; ?>,
-				"stateSave": <?php echo $table_features['stateSave']; ?>,
-				"info" : <?php echo $table_features['info']; ?>,
-				"columnDefs" : [ { "orderable": false, "targets": "no-sort" } ],
-				"language" : { "emptyTable": "No HTTP issues detected." }
-		} );
+			jQuery( document ).ready( function() {
+				jQuery( '#mainwp-http-response-issues-table' ).DataTable( {
+						"responsive": <?php echo $table_features['responsive']; ?>,
+						"searching": <?php echo $table_features['searching']; ?>,
+						"paging" : <?php echo $table_features['paging']; ?>,
+						"stateSave": <?php echo $table_features['stateSave']; ?>,
+						"info" : <?php echo $table_features['info']; ?>,
+						"columnDefs" : [ { "orderable": false, "targets": "no-sort" } ],
+						"language" : { "emptyTable": "No HTTP issues detected." }
+				} );
+			} );
 			</script>
 		</div>
 		<div class="ui hidden clearing divider"></div>
@@ -1987,9 +2014,9 @@ class MainWP_Updates {
 		}
 
 		$checks = array(
-			'backupbuddy'     => 'backupbuddy/backupbuddy.php',
-			'backupwp'        => array( 'backwpup/backwpup.php', 'backwpup-pro/backwpup.php' ),
-			'updraftplus'     => 'updraftplus/updraftplus.php',
+			'backupbuddy' => 'backupbuddy/backupbuddy.php',
+			'backupwp'    => array( 'backwpup/backwpup.php', 'backwpup-pro/backwpup.php' ),
+			'updraftplus' => 'updraftplus/updraftplus.php',
 
 		);
 

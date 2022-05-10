@@ -819,7 +819,7 @@ class MainWP_Manage_Sites_View {
 								<option <?php echo ( MainWP_Utility::starts_with( $website->url, 'http:' ) ? 'selected' : '' ); ?> value="http">http://</option>
 								<option <?php echo ( MainWP_Utility::starts_with( $website->url, 'https:' ) ? 'selected' : '' ); ?> value="https">https://</option>
 							</select>
-							<div class="ui compact selection dropdown"">
+							<div class="ui compact selection dropdown">
 								<input type="hidden" name="mainwp_managesites_edit_wpurl_with_www" value="<?php echo ( false !== stripos( $website->url, '/www.' ) ? 'www' : 'none-www' ); ?>">
 								<i class="dropdown icon"></i>
 								<div class="default text"><?php esc_html_e( 'www', 'mainwp' ); ?></div>
@@ -1290,14 +1290,14 @@ class MainWP_Manage_Sites_View {
 		<div class="ui info message">
 			<?php esc_html_e( 'Email notifications sent from MainWP Dashboard about this child site are listed below.  Click on an email to configure it.', 'mainwp' ); ?>
 		</div>
-			<table class="ui table" id="mainwp-emails-settings-table">
+			<table class="ui unstackable table" id="mainwp-emails-settings-table">
 				<thead>
 					<tr>						
 						<th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-						<th><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
+						<th data-priority="1"><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
 						<th><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
 						<th><?php esc_html_e( 'Recipient(s)', 'mainwp' ); ?></th>						
-						<th class="no-sort collapsing" style="text-align:right">&nbsp;</th>
+						<th class="no-sort collapsing" data-priority="2" style="text-align:right">&nbsp;</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -1346,7 +1346,8 @@ class MainWP_Manage_Sites_View {
 					"paging":   false,
 					"ordering": true,
 					"columnDefs": [ { "orderable": false, "targets": [ 4 ] } ],
-					"order": [ [ 1, "asc" ] ]
+					"order": [ [ 1, "asc" ] ],
+					"responsive": true,
 				} );
 			} );
 			</script>			

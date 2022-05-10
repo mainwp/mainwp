@@ -41,6 +41,13 @@ class MainWP_Api_Manager {
 	protected static $instance = null;
 
 	/**
+	 * MainWP installation domain name.
+	 *
+	 * @var string $domain Empty by default.
+	 */
+	public $domain = '';
+
+	/**
 	 * Return the single instance of the class.
 	 *
 	 * @return mixed $instance The single instance of the class.
@@ -78,6 +85,7 @@ class MainWP_Api_Manager {
 	 * Replace HTTP protocol to HTTPS.
 	 */
 	public function __construct() {
+		$this->domain = str_ireplace( array( 'http://', 'https://' ), '', home_url() );
 	}
 
 	/**
@@ -168,6 +176,7 @@ class MainWP_Api_Manager {
 				'product_id'       => $options['product_id'],
 				'instance'         => $options['instance_id'],
 				'software_version' => $options['software_version'],
+				'object'           => $this->domain,
 			);
 
 			$activate_results = json_decode( MainWP_Api_Manager_Key::instance()->activate( $args ), true );
@@ -255,6 +264,7 @@ class MainWP_Api_Manager {
 					'product_id' => $options['product_id'],
 					'instance'   => $options['instance_id'],
 					'api_key'    => $api_key,
+					'object'     => $this->domain,
 				)
 			); // reset license key activation.
 
@@ -370,7 +380,7 @@ class MainWP_Api_Manager {
 			$options['product_item_id'] = 0; // to compatible.
 		}
 
-		if ( 'Deactivated' == $activation_status || '' == $activation_status || '' == $api_key || ! isset( $options['product_item_id'] ) ) {
+		if ( 'Deactivated' == $activation_status || '' == $activation_status || '' == $api_key || empty( $options['product_item_id'] ) ) {
 			$return = array();
 			if ( ! empty( $master_api_key ) ) {
 				$args = array(
@@ -378,6 +388,7 @@ class MainWP_Api_Manager {
 					'product_id'       => isset( $options['product_id'] ) ? $options['product_id'] : '',
 					'instance'         => isset( $options['instance_id'] ) ? $options['instance_id'] : '',
 					'software_version' => isset( $options['software_version'] ) ? $options['software_version'] : '',
+					'object'           => $this->domain,
 				);
 
 				$activate_results         = json_decode( MainWP_Api_Manager_Key::instance()->grab_api_key( $args ), true );

@@ -189,8 +189,10 @@ class MainWP_Manage_Groups {
 					<?php endif; ?>
 				</div>
 				<script type="text/javascript">
+				jQuery( document ).ready( function() {
 					jQuery( '#mainwp-manage-groups-sites-table' ).dataTable( {
 						"searching" : true,
+						"responsive" : true,
 						"colReorder" : true,
 						"stateSave":  true,
 						"paging": false,
@@ -205,6 +207,7 @@ class MainWP_Manage_Groups {
 							jQuery( '#mainwp-manage-groups-sites-table .ui.checkbox' ).checkbox();
 						}
 					} );
+				} );
 				</script>
 			</div>
 			<?php MainWP_UI::render_modal_edit_notes(); ?>
@@ -307,7 +310,7 @@ class MainWP_Manage_Groups {
 	 */
 	public static function render_groups_sites_table_element() {
 		?>
-		<table class="ui table selection mainwp-with-preview-table" id="mainwp-manage-groups-sites-table">
+		<table class="ui table unstackable selection mainwp-with-preview-table" id="mainwp-manage-groups-sites-table">
 			<thead>
 				<tr>
 					<th class="no-sort collapsing"><div class="ui checkbox" data-tooltip="<?php esc_attr_e( 'Click to select all sites.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><input type="checkbox" name="example"></div></th>
@@ -322,7 +325,7 @@ class MainWP_Manage_Groups {
 				<?php echo self::get_website_list_content(); ?>
 			</tbody>
 			<tfoot>
-				<tr class="full-width">
+				<tr>
 					<th colspan="6">
 						<a href="#" class="ui tiny green button" id="mainwp-save-sites-groups-selection-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Save the selected group sites selection.', 'mainwp' ); ?>"><?php esc_html_e( 'Save Selection', 'mainwp' ); ?></a>
 					</th>

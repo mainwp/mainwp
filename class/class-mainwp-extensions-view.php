@@ -304,6 +304,10 @@ class MainWP_Extensions_View {
 			}
 
 			if ( ! isset( $extension['product_item_id'] ) ) {
+				$extension['product_item_id'] = 0;
+			}
+
+			if ( empty( $extension['product_item_id'] ) ) {
 				$active               = false;
 				$extension['api_key'] = '';
 			}

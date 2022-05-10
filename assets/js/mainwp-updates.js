@@ -3362,7 +3362,7 @@ jQuery( document ).ready( function ($) {
 
 } );
 
- mainwp_table_check_columns_init = function() {
+mainwp_table_check_columns_init = function() {
     jQuery( document ).find( 'table th.check-column .checkbox' ).checkbox( {
             // check all children
             onChecked: function() {

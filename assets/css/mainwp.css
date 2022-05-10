@@ -64,8 +64,12 @@
 
 /* Content Wrap */
 
+.mainwp-content-wrap {
+  margin-bottom: 60px;
+}
+
 .mainwp-ui-leftmenu .mainwp-content-wrap {
-    background: #fafafa;
+    background: #fff;
     margin-left: 180px;
 }
 
@@ -213,6 +217,27 @@
     display: none;
 }
 
+.mainwp-sub-header #mainwp-filter-sites-group .default.text {
+  overflow: visible !important;
+}
+
+/* Tables */
+
+.mainwp-ui table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control::before,
+.mainwp-ui table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control::before {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+
+.mainwp-ui table.dataTable.dtr-inline.collapsed > tbody > tr.parent.dt-hasChild > td.dtr-control::before,
+.mainwp-ui table.dataTable.dtr-inline.collapsed > tbody > tr.parent.dt-hasChild > th.dtr-control::before {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.mainwp-ui table ul.dtr-details {
+  width: 100% !important;
+}
+
 /* Manage Sites Table */
 
 table#mainwp-manage-sites-table {
@@ -287,6 +312,14 @@ table#mainwp-manage-sites-table .error a {
 
 .mainwp-ui .mainwp-nav-wrap.hoverli {
     background-color: #1c1d1b !important;
+}
+
+.mainwp-ui .mainwp-nav-wrap.hoverli .label {
+    color: #ffffff !important;
+}
+
+.mainwp-hidden {
+  display:none!important;
 }
 
 /* END V4

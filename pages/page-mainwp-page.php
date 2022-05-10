@@ -329,23 +329,6 @@ class MainWP_Page {
 	}
 
 	/**
-	 * Method add_status_handle()
-	 *
-	 * Add edit post status handle.
-	 *
-	 * @param int $post_id Post ID.
-	 *
-	 * @return int $post_id Post id with status handle added to it.
-	 */
-	public static function add_status_handle( $post_id ) {
-		$_post = get_post( $post_id );
-		if ( 'bulkpage' == $_post->post_type && isset( $_POST['mainwp_edit_post_status'] ) ) {
-			update_post_meta( $post_id, '_edit_post_status', sanitize_text_field( wp_unslash( $_POST['mainwp_edit_post_status'] ) ) );
-		}
-		return $post_id;
-	}
-
-	/**
 	 * Method render_header()
 	 *
 	 * Render page header.
@@ -763,8 +746,8 @@ class MainWP_Page {
 		 */
 		do_action( 'mainwp_before_pages_table' );
 		?>
-		<table id="mainwp-pages-table" class="ui selectable single line table" style="width:100%">
-			<thead class="full-width">
+		<table id="mainwp-pages-table" class="ui unstackable single line table" style="width:100%">
+			<thead>
 				<tr>
 					<th  class="no-sort check-column collapsing"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
 					<?php
@@ -778,9 +761,9 @@ class MainWP_Page {
 					do_action( 'mainwp_pages_table_header' );
 					?>
 					<th id="mainwp-title"><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
-					<th id="mainwp-author"><?php esc_html_e( 'Author', 'mainwp' ); ?></th>
+					<th id="mainwp-author" class="min-tablet"><?php esc_html_e( 'Author', 'mainwp' ); ?></th>
 					<th id="mainwp-comments"><i class="comment icon"></i></th>
-					<th id="mainwp-date"><?php esc_html_e( 'Date', 'mainwp' ); ?></th>
+					<th id="mainwp-date" class="min-tablet"><?php esc_html_e( 'Date', 'mainwp' ); ?></th>
 					<th id="mainwp-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					<?php if ( MainWP_Utility::enabled_wp_seo() ) : ?>
 					<th id="mainwp-seo-links"><span title="<?php echo esc_attr__( 'Number of internal links in this page', 'mainwp' ); ?>"><?php esc_html_e( 'Links', 'mainwp' ); ?></span></th>
@@ -788,8 +771,8 @@ class MainWP_Page {
 					<th id="mainwp-seo-score"><span title="<?php echo esc_attr__( 'SEO score', 'mainwp' ); ?>"><?php esc_html_e( 'SEO score', 'mainwp' ); ?></span></th>
 					<th id="mainwp-seo-readability"><span title="<?php echo esc_attr__( 'Readability score', 'mainwp' ); ?>"><?php esc_html_e( 'Readability score', 'mainwp' ); ?></span></th>
 					<?php endif; ?>
-					<th id="mainwp-website"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-					<th id="mainwp-pages-actions" class="no-sort"></th>
+					<th id="mainwp-website" class="min-tablet"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
+					<th id="mainwp-pages-actions" class="no-sort min-tablet"></th>
 				</tr>
 			</thead>
 			<tbody id="mainwp-posts-list">
@@ -820,6 +803,7 @@ class MainWP_Page {
 			'scrollX'    => 'true',
 			'colReorder' => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
 			'order'      => '[]',
+			'responsive' => 'true',
 		);
 
 		/**
@@ -836,6 +820,7 @@ class MainWP_Page {
 			try {
 				jQuery("#mainwp-pages-table").DataTable().destroy(); // fixed re-initialize datatable issue.
 				jQuery( '#mainwp-pages-table' ).DataTable( {
+					"responsive" : <?php echo $table_features['responsive']; ?>,
 					"searching" : <?php echo $table_features['searching']; ?>,
 					"colReorder" : <?php echo $table_features['colReorder']; ?>,
 					"stateSave":  <?php echo $table_features['stateSave']; ?>,
@@ -848,6 +833,7 @@ class MainWP_Page {
 						"targets": 'no-sort',
 						"orderable": false
 					} ],
+					"language" : { "emptyTable": "<?php esc_html_e( 'Please use the search options to find wanted pages.', 'mainwp' ); ?>" },
 					"preDrawCallback": function( settings ) {
 						jQuery( '#mainwp_pages_wrap_table table .ui.dropdown' ).dropdown();
 						jQuery( '#mainwp_pages_wrap_table table .ui.checkbox' ).checkbox();
@@ -962,15 +948,7 @@ class MainWP_Page {
 		);
 
 		if ( 0 == $output->pages ) {
-			ob_start();
-			?>
-			<tr>
-				<td colspan="999"><?php esc_html_e( 'Please use the search options to find wanted pages.', 'mainwp' ); ?></td>
-			</tr>
-			<?php
-			$newOutput = ob_get_clean();
-			echo $newOutput;
-			MainWP_Cache::add_body( 'Page', $newOutput );
+			MainWP_Cache::add_body( 'Page', '' );
 			return;
 		}
 	}
@@ -1054,10 +1032,7 @@ class MainWP_Page {
 					do_action( 'mainwp_pages_table_column', $page, $website );
 					?>
 					<td class="page-title  column-title">
-						<input class="pageId" type="hidden" name="id" value="<?php echo intval( $page['id'] ); ?>"/>
-						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'trash' == $page['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' == $page['status'] || 'draft' == $page['status'] ) ? 'publish|' : ''; ?>" />
-						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
-
+						
 						<strong>
 							<abbr title="<?php echo esc_html( $page['title'] ); ?>">
 								<?php if ( 'trash' != $page['status'] ) { ?>
@@ -1109,6 +1084,10 @@ class MainWP_Page {
 						<a href="<?php echo esc_html( $website->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( $website->url ); ?></a>
 					</td>
 					<td class="right aligned">
+						<input class="pageId" type="hidden" name="id" value="<?php echo intval( $page['id'] ); ?>"/>
+						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'trash' == $page['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' == $page['status'] || 'draft' == $page['status'] ) ? 'publish|' : ''; ?>" />
+						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
+
 						<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
 							<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 							<div class="menu">

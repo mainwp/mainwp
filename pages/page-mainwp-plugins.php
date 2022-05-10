@@ -1032,7 +1032,7 @@ class MainWP_Plugins {
 		 */
 		do_action( 'mainwp_before_plugins_table' );
 		?>
-		<table id="mainwp-manage-plugins-table" style="min-width:100%" class="ui celled single line selectable compact table">
+		<table id="mainwp-manage-plugins-table" style="min-width:100%" class="ui celled single line selectable compact unstackable table">
 			<thead>
 				<tr>
 					<th class="mainwp-first-th no-sort"></th>
@@ -1062,7 +1062,7 @@ class MainWP_Plugins {
 				<tr>
 					<td style="padding-left:40px;padding-right:40px;">
 						<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $site_id ); ?>"/>
-						<div class="ui slider checkbox">
+						<div class="ui slider checkbox mainwp-768-hide">
 							<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_plugins_site_check_all"/><label></label>
 						</div>
 						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site_id; ?>" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign-in alternate icon"></i></a>
@@ -1100,6 +1100,7 @@ class MainWP_Plugins {
 							<?php if ( ! isset( $pluginsMainWP[ $plugin_name ] ) || 'F' === $pluginsMainWP[ $plugin_name ] ) : ?>
 						<div class="ui checkbox">
 							<input type="checkbox" value="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] ); ?>" name="<?php echo wp_strip_all_tags( $pluginsName[ $plugin_name ] ); ?>" class="mainwp-selected-plugin" version="<?php echo wp_strip_all_tags( $pluginsRealVersion[ $plugin_name ] ); ?>" />
+								<label></label>
 						</div>
 					<?php elseif ( isset( $pluginsMainWP[ $plugin_name ] ) && 'T' === $pluginsMainWP[ $plugin_name ] ) : ?>
 						<div class="ui disabled checkbox"><input type="checkbox" disabled="disabled"><label></label></div>
@@ -1130,7 +1131,7 @@ class MainWP_Plugins {
 						$th_id        = preg_replace( '/[[:space:]]+/', '_', $th_id );
 						?>
 						<th id="<?php echo esc_html( $th_id ); ?>" class="center aligned">
-							<div class="ui slider checkbox">
+							<div class="ui slider checkbox mainwp-768-hide">
 								<input type="checkbox" value="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] ); ?>" id="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] . '-' . $pluginsRealVersion[ $plugin_name ] ); ?>" version="<?php echo wp_strip_all_tags( $pluginsRealVersion[ $plugin_name ] ); ?>" class="mainwp_plugin_check_all" />
 								<label></label>
 							</div>
@@ -1166,6 +1167,7 @@ class MainWP_Plugins {
 				'scrollY'        => '750',
 				'scrollX'        => 'true',
 				'scroller'       => 'true',
+				'responsive'     => 'true',
 			);
 
 			/**
@@ -1195,7 +1197,12 @@ class MainWP_Plugins {
 			}
 			</style>
 			<script type="text/javascript">
+			var responsive = <?php echo $table_features['responsive']; ?>;
+			if( jQuery( window ).width() > 1140 ) {
+				responsive = false;
+			}
 			jQuery( document ).ready( function( $ ) {
+
 				try {
 					jQuery( '#mainwp-manage-plugins-table' ).DataTable( {
 						"paging" : <?php echo $table_features['paging']; ?>,
@@ -1209,6 +1216,7 @@ class MainWP_Plugins {
 						"scrollX" : <?php echo $table_features['scrollX']; ?>,
 						"scroller" : <?php echo $table_features['scroller']; ?>,
 						"columnDefs": [ { "orderable": false, "targets": [ 0 ] } ],
+						"responsive": responsive,
 					} );
 				} catch( err ) {
 					// to fix js issues.
@@ -1427,7 +1435,7 @@ class MainWP_Plugins {
 						<div class="ui mini form stackable grid">
 							<div class="ui two column row">
 								<div class="left aligned column">
-									<select id="mainwp-bulk-actions" name="bulk_action" class="ui selection dropdown">
+									<select id="mainwp-bulk-actions" name="bulk_action" class="ui mini selection dropdown">
 										<option class="item" value=""><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
 										<option class="item" value="trust"><?php esc_html_e( 'Trust', 'mainwp' ); ?></option>
 										<option class="item" value="untrust"><?php esc_html_e( 'Untrust', 'mainwp' ); ?></option>
@@ -1718,15 +1726,15 @@ class MainWP_Plugins {
 		 */
 		do_action( 'mainwp_plugins_before_auto_updates_table' );
 		?>
-		<table class="ui single line table" id="mainwp-all-active-plugins-table">
+		<table class="ui unstackable table" id="mainwp-all-active-plugins-table">
 			<thead>
 				<tr>
 					<th class="no-sort check-column collapsing"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
-					<th class="collapsing"></th>
-					<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+					<th data-priority="1"><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-					<th class="collapsing"><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
+					<th class="collapsing" data-priority="2"><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
+					<th class="collapsing"></th>
 					<th class="collapsing"><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
 				</tr>
 			</thead>
@@ -1752,11 +1760,11 @@ class MainWP_Plugins {
 					?>
 					<tr plugin-slug="<?php echo rawurlencode( $slug ); ?>" plugin-name="<?php echo wp_strip_all_tags( $name ); ?>">
 						<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo rawurlencode( $slug ); ?>"></span></td>
-						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span data-tooltip="Ignored plugins will not be automatically updated." data-inverted=""><i class="info red circle icon" ></i></span>' : ''; ?></td>
 						<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $slug ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $name ); ?></a></td>
 						<td><?php echo ( 1 == $plugin['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); ?></td>
 						<td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
 						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
+						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span data-tooltip="Ignored plugins will not be automatically updated." data-inverted=""><i class="info red circle icon" ></i></span>' : ''; ?></td>
 						<td class="collapsing center aligned">
 						<?php if ( '' === $esc_note ) : ?>
 							<a href="javascript:void(0)" class="mainwp-edit-plugin-note" ><i class="sticky note outline icon"></i></a>
@@ -1820,6 +1828,7 @@ class MainWP_Plugins {
 				"ordering" : <?php echo $table_features['ordering']; ?>,
 				"order" : <?php echo $table_features['order']; ?>,
 				"columnDefs": [ { "orderable": false, "targets": [ 0, 1, 6 ] } ],
+				"responsive": true,
 			} );
 		} );
 		</script>
@@ -1917,7 +1926,7 @@ class MainWP_Plugins {
 	 */
 	public static function render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins ) {
 		?>
-		<table id="mainwp-globally-ignored-plugins" class="ui compact selectable table stackable">
+		<table id="mainwp-globally-ignored-plugins" class="ui compact selectable table unstackable">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
@@ -1940,7 +1949,7 @@ class MainWP_Plugins {
 						<?php endforeach; ?>
 					<?php else : ?>
 						<tr>
-							<td colspan="999"><?php esc_html_e( 'No ignored plugins', 'mainwp' ); ?></td>
+							<td colspan="3"><?php esc_html_e( 'No ignored plugins', 'mainwp' ); ?></td>
 						</tr>
 					<?php endif; ?>
 				</tbody>
@@ -1948,7 +1957,7 @@ class MainWP_Plugins {
 					<?php if ( $ignoredPlugins ) : ?>
 						<tfoot class="full-width">
 							<tr>
-								<th colspan="999">
+								<th colspan="3">
 									<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_plugins_unignore_globally_all();" id="mainwp-unignore-globally-all">
 										<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
 									</a>
@@ -1958,6 +1967,16 @@ class MainWP_Plugins {
 					<?php endif; ?>
 				<?php endif; ?>
 			</table>
+			<script type="text/javascript">
+			jQuery( document ).ready( function() {
+				jQuery( '#mainwp-globally-ignored-plugins' ).DataTable( {
+					searching: false,
+					paging: false,
+					info: false,
+					responsive: true,
+				} );
+			} );
+			</script>
 		<?php
 	}
 
@@ -1975,7 +1994,7 @@ class MainWP_Plugins {
 	 */
 	public static function render_sites_ignored( $cnt, $websites ) {
 		?>
-	<table id="mainwp-per-site-ignored-plugins" class="ui compact selectable table stackable">
+		<table id="mainwp-per-site-ignored-plugins" class="ui unstackable compact selectable table ">
 			<thead>
 				<tr>
 					<th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
@@ -2029,7 +2048,7 @@ class MainWP_Plugins {
 				<?php if ( 0 < $cnt ) : ?>
 					<tfoot class="full-width">
 						<tr>
-							<th colspan="999">
+							<th colspan="4">
 								<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_plugins_unignore_detail_all();" id="mainwp-unignore-detail-all">
 									<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
 								</a>
@@ -2039,6 +2058,16 @@ class MainWP_Plugins {
 				<?php endif; ?>
 			<?php endif; ?>
 		</table>
+		<script type="text/javascript">
+		jQuery( document ).ready( function() {
+			jQuery( '#mainwp-per-site-ignored-plugins' ).DataTable( {
+				"responsive": true,
+				"searching": false,
+				"paging": false,
+				"info": false,
+			} );
+		} );
+		</script>
 		<?php
 	}
 
@@ -2120,7 +2149,7 @@ class MainWP_Plugins {
 	 */
 	public static function render_global_ignored_abandoned( $ignoredPlugins, $decodedIgnoredPlugins ) {
 		?>
-		<table id="mainwp-globally-ignored-abandoned-plugins" class="ui compact selectable table stackable">
+		<table id="mainwp-globally-ignored-abandoned-plugins" class="ui compact selectable table unstackable">
 			<thead>
 				<tr>
 					<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
@@ -2151,7 +2180,7 @@ class MainWP_Plugins {
 				<?php if ( $ignoredPlugins ) : ?>
 					<tfoot class="full-width">
 						<tr>
-							<th colspan="999">
+							<th colspan="3">
 								<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_plugins_abandoned_unignore_globally_all();" id="mainwp-unignore-globally-all">
 									<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
 								</a>
@@ -2161,6 +2190,16 @@ class MainWP_Plugins {
 				<?php endif; ?>
 			<?php endif; ?>
 		</table>
+		<script type="text/javascript">
+		jQuery( document ).ready( function() {
+			jQuery( '#mainwp-globally-ignored-abandoned-plugins' ).DataTable( {
+				"responsive": true,
+				"searching": false,
+				"paging": false,
+				"info": false,
+			} );
+		} );
+		</script>
 		<?php
 	}
 
@@ -2178,7 +2217,7 @@ class MainWP_Plugins {
 	 */
 	public static function render_sites_ignored_abandoned( $cnt, $websites ) {
 		?>
-		<table id="mainwp-per-site-ignored-abandoned-plugins" class="ui compact selectable table stackable">
+		<table id="mainwp-per-site-ignored-abandoned-plugins" class="ui compact selectable table unstackable">
 			<thead>
 				<tr>
 					<th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
@@ -2222,7 +2261,7 @@ class MainWP_Plugins {
 		else :
 			?>
 			<tr>
-				<td colspan="999"><?php esc_html_e( 'No ignored abandoned plugins', 'mainwp' ); ?></td>
+				<td colspan="4"><?php esc_html_e( 'No ignored abandoned plugins', 'mainwp' ); ?></td>
 			</tr>
 		<?php endif; ?>
 		</tbody>
@@ -2230,7 +2269,7 @@ class MainWP_Plugins {
 			<?php if ( 0 < $cnt ) : ?>
 				<tfoot class="full-width">
 					<tr>
-						<th colspan="999">
+						<th colspan="4">
 							<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_plugins_unignore_abandoned_detail_all();" id="mainwp-unignore-detail-all">
 								<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
 							</a>
@@ -2240,6 +2279,16 @@ class MainWP_Plugins {
 			<?php endif; ?>
 		<?php endif; ?>
 		</table>
+		<script type="text/javascript">
+		jQuery( document ).ready( function() {
+			jQuery( '#mainwp-per-site-ignored-abandoned-plugins' ).DataTable( {
+				"responsive": true,
+				"searching": false,
+				"paging": false,
+				"info": false,
+			} );
+		} );
+		</script>
 		<?php
 	}
 

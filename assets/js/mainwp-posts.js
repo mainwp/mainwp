@@ -307,10 +307,10 @@ mainwppost_postAction = function (elem, what, postType) {
         return;
     }
 
-    if (what == 'get_edit' && postType === 'page') {
-        postId = parent.attr('page-id');
+    if ( what == 'get_edit' && postType === 'page' ) {
+        postId = rowElement.find( '.pageId' ).val();
     }
-
+    
     var data = {
         action: 'mainwp_post_' + what,
         postId: postId,

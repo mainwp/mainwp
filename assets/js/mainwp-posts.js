@@ -290,8 +290,8 @@ jQuery(document).ready(function () {
 
 mainwppost_postAction = function (elem, what, postType) {
     var rowElement = jQuery(elem).closest('tr');
-    var postId = rowElement.attr('post-id');
-    var websiteId = rowElement.attr('website-id');
+    var postId = rowElement.find('.postId').val();
+    var websiteId = rowElement.find('.websiteId').val();
     if (rowElement.find('.allowedBulkActions').val().indexOf('|' + what + '|') == -1) {
         jQuery(elem).removeAttr('checked');
         countReceived++;

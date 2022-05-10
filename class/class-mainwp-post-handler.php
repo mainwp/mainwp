@@ -839,7 +839,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	}
 
 	/**
-	 * Method ajax_sites_display_rows()
+	 * Method ajax_monitoring_display_rows()
 	 *
 	 * Display rows via ajax,
 	 * Page: Monitoring Sites.

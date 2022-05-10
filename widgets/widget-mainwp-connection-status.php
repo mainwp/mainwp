@@ -185,7 +185,7 @@ class MainWP_Connection_Status {
 						<div class="text"><?php esc_html_e( 'All Sites', 'mainwp' ); ?></div>
 						<i class="dropdown icon"></i>
 						<div class="menu">
-							<a class="active item" data-tab="no-sites" data-value="" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Hide the child sites list', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Hide Details', 'mainwp' ); ?></a>
+							<a class="item" data-tab="no-sites" data-value="no-sites" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Hide the child sites list', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Hide Details', 'mainwp' ); ?></a>
 							<a class="item" data-tab="all-sites" data-value="all-sites" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'See all child sites', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'See All Sites', 'mainwp' ); ?></a>
 							<a class="item" data-tab="connected" data-value="connected" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'See all connected child sites', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'See All Connected', 'mainwp' ); ?></a>
 							<a class="item" data-tab="disconnected" data-value="disconnected" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'See all disconnected child sites', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'See All Disconnected', 'mainwp' ); ?></a>
@@ -332,7 +332,7 @@ class MainWP_Connection_Status {
 		?>
 		<div class="ui hidden divider"></div>
 
-		<div class="ui active tab" data-tab="no-sites"></div>
+		<div class="ui tab" data-tab="no-sites"></div>
 
 		<div class="ui tab" data-tab="all-sites">
 			<?php

@@ -144,6 +144,7 @@ class MainWP_Bulk_Post {
 		MainWP_System::instance()->metaboxes->add_tags_handle( $post_id, 'bulkpost' );
 		MainWP_System::instance()->metaboxes->add_slug_handle( $post_id, 'bulkpost' );
 		MainWP_Post_Page_Handler::add_sticky_handle( $post_id );
+		MainWP_Post_Page_Handler::add_status_handle( $post_id );
 
 		/**
 		 * Action: mainwp_save_bulkpost
@@ -212,7 +213,7 @@ class MainWP_Bulk_Post {
 
 		$pid = MainWP_System::instance()->metaboxes->select_sites_handle( $post_id, 'bulkpage' );
 		MainWP_System::instance()->metaboxes->add_slug_handle( $post_id, 'bulkpage' );
-		MainWP_Page::add_status_handle( $post_id );
+		MainWP_Post_Page_Handler::add_status_handle( $post_id );
 
 		/**
 		 * Action: mainwp_save_bulkpage

@@ -8,7 +8,7 @@
  * http://opensource.org/licenses/MIT
  *
  */
-@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400%3B0,700%3B1,400%3B1,700&subset=latin&display=swap');
+
 /*!
  * # Fomantic-UI 2.8.8 - Reset
  * http://github.com/fomantic/Fomantic-UI/
@@ -19,6 +19,18 @@
  *
  */
 
+ /*******************************
+           Variables
+ *******************************/
+:root {
+  --mainwp-green: #7fb100;
+  --mainwp-green-hover: #6d9800;
+  --mainwp-green-dark: #446200;
+  --mainwp-green-light: #f9ffea;
+  --mainwp-black: #1c1d1b;
+  --mainwp-red: #a00000;
+  --mainwp-red-hover: #870000;
+}
 /*******************************
              Reset
 *******************************/
@@ -544,12 +556,12 @@ p:last-child {
 --------------------*/
 
 a {
-  color: #4183C4;
+  color: var(--mainwp-green);
   text-decoration: none;
 }
 
 a:hover {
-  color: #1e70bf;
+  color: var(--mainwp-green-hover);
   text-decoration: none;
 }
 
@@ -1824,7 +1836,7 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 .ui.toggle.buttons .active.button,
 .ui.buttons .button.toggle.active,
 .ui.button.toggle.active {
-  background-color: #21BA45;
+  background-color: var(--mainwp-green);
   -webkit-box-shadow: none;
   box-shadow: none;
   text-shadow: none;
@@ -1832,7 +1844,7 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 }
 
 .ui.button.toggle.active:hover {
-  background-color: #16ab39;
+  background-color: var(--mainwp-green-hover);
   text-shadow: none;
   color: #FFFFFF;
 }
@@ -2408,7 +2420,7 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 
 .ui.secondary.buttons .button,
 .ui.secondary.button {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #FFFFFF;
   text-shadow: none;
   background-image: none;
@@ -2454,9 +2466,9 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 .ui.basic.secondary.buttons .button,
 .ui.basic.secondary.button {
   background: transparent;
-  -webkit-box-shadow: 0 0 0 1px #1B1C1D inset;
-  box-shadow: 0 0 0 1px #1B1C1D inset;
-  color: #1B1C1D;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-black) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-black) inset;
+  color: var(--mainwp-black);
 }
 
 .ui.basic.secondary.buttons .button:hover,
@@ -2588,7 +2600,7 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
   background: transparent;
   -webkit-box-shadow: none;
   box-shadow: none;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 .ui.tertiary.secondary.buttons .button:hover,
@@ -2620,7 +2632,7 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 
 .ui.red.buttons .button,
 .ui.red.button {
-  background-color: #DB2828;
+  background-color: var(--mainwp-red);
   color: #FFFFFF;
   text-shadow: none;
   background-image: none;
@@ -2633,14 +2645,14 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 
 .ui.red.buttons .button:hover,
 .ui.red.button:hover {
-  background-color: #d01919;
+  background-color: var(--mainwp-red-hover);
   color: #FFFFFF;
   text-shadow: none;
 }
 
 .ui.red.buttons .button:focus,
 .ui.red.button:focus {
-  background-color: #ca1010;
+  background-color: var(--mainwp-red-hover);
   color: #FFFFFF;
   text-shadow: none;
 }
@@ -2666,25 +2678,25 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 .ui.basic.red.buttons .button,
 .ui.basic.red.button {
   background: transparent;
-  -webkit-box-shadow: 0 0 0 1px #DB2828 inset;
-  box-shadow: 0 0 0 1px #DB2828 inset;
-  color: #DB2828;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-red) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-red) inset;
+  color: var(--mainwp-red);
 }
 
 .ui.basic.red.buttons .button:hover,
 .ui.basic.red.button:hover {
   background: transparent;
-  -webkit-box-shadow: 0 0 0 1px #d01919 inset;
-  box-shadow: 0 0 0 1px #d01919 inset;
-  color: #d01919;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-red-hover) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-red-hover) inset;
+  color: var(--mainwp-red-hover);
 }
 
 .ui.basic.red.buttons .button:focus,
 .ui.basic.red.button:focus {
   background: transparent;
-  -webkit-box-shadow: 0 0 0 1px #ca1010 inset;
-  box-shadow: 0 0 0 1px #ca1010 inset;
-  color: #d01919;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-red-hover) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-red-hover) inset;
+  color: var(--mainwp-red-hover);
 }
 
 .ui.basic.red.buttons .active.button,
@@ -2800,7 +2812,7 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
   background: transparent;
   -webkit-box-shadow: none;
   box-shadow: none;
-  color: #DB2828;
+  color: var(--mainwp-red);
 }
 
 .ui.tertiary.red.buttons .button:hover,
@@ -3468,7 +3480,7 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 
 .ui.green.buttons .button,
 .ui.green.button {
-  background-color: #21BA45;
+  background-color: var(--mainwp-green);
   color: #FFFFFF;
   text-shadow: none;
   background-image: none;
@@ -3481,21 +3493,21 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 
 .ui.green.buttons .button:hover,
 .ui.green.button:hover {
-  background-color: #16ab39;
+  background-color: var(--mainwp-green-hover);
   color: #FFFFFF;
   text-shadow: none;
 }
 
 .ui.green.buttons .button:focus,
 .ui.green.button:focus {
-  background-color: #0ea432;
+  background-color: var(--mainwp-green-hover);
   color: #FFFFFF;
   text-shadow: none;
 }
 
 .ui.green.buttons .button:active,
 .ui.green.button:active {
-  background-color: #198f35;
+  background-color: var(--mainwp-green-hover);
   color: #FFFFFF;
   text-shadow: none;
 }
@@ -3504,7 +3516,7 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 .ui.green.buttons .active.button:active,
 .ui.green.active.button,
 .ui.green.button .active.button:active {
-  background-color: #13ae38;
+  background-color: var(--mainwp-green-hover);
   color: #FFFFFF;
   text-shadow: none;
 }
@@ -3514,40 +3526,40 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 .ui.basic.green.buttons .button,
 .ui.basic.green.button {
   background: transparent;
-  -webkit-box-shadow: 0 0 0 1px #21BA45 inset;
-  box-shadow: 0 0 0 1px #21BA45 inset;
-  color: #21BA45;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-green) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-green) inset;
+  color: var(--mainwp-green);
 }
 
 .ui.basic.green.buttons .button:hover,
 .ui.basic.green.button:hover {
   background: transparent;
-  -webkit-box-shadow: 0 0 0 1px #16ab39 inset;
-  box-shadow: 0 0 0 1px #16ab39 inset;
-  color: #16ab39;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-green-hover) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-green-hover) inset;
+  color: var(--mainwp-green-hover);
 }
 
 .ui.basic.green.buttons .button:focus,
 .ui.basic.green.button:focus {
   background: transparent;
-  -webkit-box-shadow: 0 0 0 1px #0ea432 inset;
-  box-shadow: 0 0 0 1px #0ea432 inset;
-  color: #16ab39;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-green-hover) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-green-hover) inset;
+  color: var(--mainwp-green-hover);
 }
 
 .ui.basic.green.buttons .active.button,
 .ui.basic.green.active.button {
   background: transparent;
-  -webkit-box-shadow: 0 0 0 1px #13ae38 inset;
-  box-shadow: 0 0 0 1px #13ae38 inset;
-  color: #198f35;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-green-hover) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-green-hover) inset;
+  color: var(--mainwp-green-dark);
 }
 
 .ui.basic.green.buttons .button:active,
 .ui.basic.green.button:active {
-  -webkit-box-shadow: 0 0 0 1px #198f35 inset;
-  box-shadow: 0 0 0 1px #198f35 inset;
-  color: #198f35;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-green-hover) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-green-hover) inset;
+  color: var(--mainwp-green-hover);
 }
 
 .ui.buttons:not(.vertical) > .basic.green.button:not(:first-child) {
@@ -3648,7 +3660,7 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
   background: transparent;
   -webkit-box-shadow: none;
   box-shadow: none;
-  color: #21BA45;
+  color: var(--mainwp-green);
 }
 
 .ui.tertiary.green.buttons .button:hover,
@@ -3675,7 +3687,7 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 .ui.tertiary.green.button:active {
   -webkit-box-shadow: inset 0 -0.2em 0 #00c22e;
   box-shadow: inset 0 -0.2em 0 #00c22e;
-  color: #13ae38;
+  color: var(--mainwp-green-hover);
 }
 
 .ui.teal.buttons .button,
@@ -5164,7 +5176,7 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 
 .ui.black.buttons .button,
 .ui.black.button {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #FFFFFF;
   text-shadow: none;
   background-image: none;
@@ -5210,9 +5222,9 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 .ui.basic.black.buttons .button,
 .ui.basic.black.button {
   background: transparent;
-  -webkit-box-shadow: 0 0 0 1px #1B1C1D inset;
-  box-shadow: 0 0 0 1px #1B1C1D inset;
-  color: #1B1C1D;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-black) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-black) inset;
+  color: var(--mainwp-black);
 }
 
 .ui.basic.black.buttons .button:hover,
@@ -5344,7 +5356,7 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
   background: transparent;
   -webkit-box-shadow: none;
   box-shadow: none;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 .ui.tertiary.black.buttons .button:hover,
@@ -5382,7 +5394,7 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 
 .ui.positive.buttons .button,
 .ui.positive.button {
-  background-color: #21BA45;
+  background-color: var(--mainwp-green);
   color: #FFFFFF;
   text-shadow: none;
   background-image: none;
@@ -5395,21 +5407,21 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 
 .ui.positive.buttons .button:hover,
 .ui.positive.button:hover {
-  background-color: #16ab39;
+  background-color: var(--mainwp-green-hover);
   color: #FFFFFF;
   text-shadow: none;
 }
 
 .ui.positive.buttons .button:focus,
 .ui.positive.button:focus {
-  background-color: #0ea432;
+  background-color: var(--mainwp-green-hover);
   color: #FFFFFF;
   text-shadow: none;
 }
 
 .ui.positive.buttons .button:active,
 .ui.positive.button:active {
-  background-color: #198f35;
+  background-color: var(--mainwp-green-hover);
   color: #FFFFFF;
   text-shadow: none;
 }
@@ -5418,7 +5430,7 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 .ui.positive.buttons .active.button:active,
 .ui.positive.active.button,
 .ui.positive.button .active.button:active {
-  background-color: #13ae38;
+  background-color: var(--mainwp-green-hover);
   color: #FFFFFF;
   text-shadow: none;
 }
@@ -5428,40 +5440,40 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 .ui.basic.positive.buttons .button,
 .ui.basic.positive.button {
   background: transparent;
-  -webkit-box-shadow: 0 0 0 1px #21BA45 inset;
-  box-shadow: 0 0 0 1px #21BA45 inset;
-  color: #21BA45;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-green) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-green) inset;
+  color: var(--mainwp-green);
 }
 
 .ui.basic.positive.buttons .button:hover,
 .ui.basic.positive.button:hover {
   background: transparent;
-  -webkit-box-shadow: 0 0 0 1px #16ab39 inset;
-  box-shadow: 0 0 0 1px #16ab39 inset;
-  color: #16ab39;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-green-hover) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-green-hover) inset;
+  color: var(--mainwp-green-hover);
 }
 
 .ui.basic.positive.buttons .button:focus,
 .ui.basic.positive.button:focus {
   background: transparent;
-  -webkit-box-shadow: 0 0 0 1px #0ea432 inset;
-  box-shadow: 0 0 0 1px #0ea432 inset;
-  color: #16ab39;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-green-hover) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-green-hover) inset;
+  color: var(--mainwp-green-hover);
 }
 
 .ui.basic.positive.buttons .active.button,
 .ui.basic.positive.active.button {
   background: transparent;
-  -webkit-box-shadow: 0 0 0 1px #13ae38 inset;
-  box-shadow: 0 0 0 1px #13ae38 inset;
-  color: #198f35;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-green) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-green) inset;
+  color: var(--mainwp-green);
 }
 
 .ui.basic.positive.buttons .button:active,
 .ui.basic.positive.button:active {
-  -webkit-box-shadow: 0 0 0 1px #198f35 inset;
-  box-shadow: 0 0 0 1px #198f35 inset;
-  color: #198f35;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-green) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-green) inset;
+  color: var(--mainwp-green);
 }
 
 .ui.buttons:not(.vertical) > .basic.positive.button:not(:first-child) {
@@ -5476,7 +5488,7 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 
 .ui.negative.buttons .button,
 .ui.negative.button {
-  background-color: #DB2828;
+  background-color: var(--mainwp-red);
   color: #FFFFFF;
   text-shadow: none;
   background-image: none;
@@ -5489,14 +5501,14 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 
 .ui.negative.buttons .button:hover,
 .ui.negative.button:hover {
-  background-color: #d01919;
+  background-color: var(--mainwp-red-hover);
   color: #FFFFFF;
   text-shadow: none;
 }
 
 .ui.negative.buttons .button:focus,
 .ui.negative.button:focus {
-  background-color: #ca1010;
+  background-color: var(--mainwp-red-hover);
   color: #FFFFFF;
   text-shadow: none;
 }
@@ -5522,25 +5534,25 @@ body .ui.inverted:not(.dimmer)::-webkit-scrollbar-thumb:hover {
 .ui.basic.negative.buttons .button,
 .ui.basic.negative.button {
   background: transparent;
-  -webkit-box-shadow: 0 0 0 1px #DB2828 inset;
-  box-shadow: 0 0 0 1px #DB2828 inset;
-  color: #DB2828;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-red) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-red) inset;
+  color: var(--mainwp-red);
 }
 
 .ui.basic.negative.buttons .button:hover,
 .ui.basic.negative.button:hover {
   background: transparent;
-  -webkit-box-shadow: 0 0 0 1px #d01919 inset;
-  box-shadow: 0 0 0 1px #d01919 inset;
-  color: #d01919;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-red-hover) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-red-hover) inset;
+  color: var(--mainwp-red-hover);
 }
 
 .ui.basic.negative.buttons .button:focus,
 .ui.basic.negative.button:focus {
   background: transparent;
-  -webkit-box-shadow: 0 0 0 1px #ca1010 inset;
-  box-shadow: 0 0 0 1px #ca1010 inset;
-  color: #d01919;
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-red-hover) inset;
+  box-shadow: 0 0 0 1px var(--mainwp-red-hover) inset;
+  color: var(--mainwp-red-hover);
 }
 
 .ui.basic.negative.buttons .active.button,
@@ -23162,7 +23174,7 @@ h6.ui.header .sub.header {
 }
 
 .ui.inverted.attached.header {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
   -webkit-box-shadow: none;
   box-shadow: none;
   border-color: transparent;
@@ -23206,7 +23218,7 @@ a.ui.inverted.primary.header.header.header:hover {
 }
 
 .ui.secondary.header {
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 a.ui.secondary.header:hover {
@@ -23214,7 +23226,7 @@ a.ui.secondary.header:hover {
 }
 
 .ui.secondary.dividing.header {
-  border-bottom: 2px solid #1B1C1D;
+  border-bottom: 2px solid var(--mainwp-black);
 }
 
 .ui.inverted.secondary.header.header.header {
@@ -23230,15 +23242,15 @@ a.ui.inverted.secondary.header.header.header:hover {
 }
 
 .ui.red.header {
-  color: #DB2828;
+  color: var(--mainwp-red);
 }
 
 a.ui.red.header:hover {
-  color: #d01919;
+  color: var(--mainwp-red-hover);
 }
 
 .ui.red.dividing.header {
-  border-bottom: 2px solid #DB2828;
+  border-bottom: 2px solid var(--mainwp-red);
 }
 
 .ui.inverted.red.header.header.header {
@@ -23326,15 +23338,15 @@ a.ui.inverted.olive.header.header.header:hover {
 }
 
 .ui.green.header {
-  color: #21BA45;
+  color: var(--mainwp-green);
 }
 
 a.ui.green.header:hover {
-  color: #16ab39;
+  color: var(--mainwp-green-hover);
 }
 
 .ui.green.dividing.header {
-  border-bottom: 2px solid #21BA45;
+  border-bottom: 2px solid var(--mainwp-green);
 }
 
 .ui.inverted.green.header.header.header {
@@ -23518,7 +23530,7 @@ a.ui.inverted.grey.header.header.header:hover {
 }
 
 .ui.black.header {
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 a.ui.black.header:hover {
@@ -23526,7 +23538,7 @@ a.ui.black.header:hover {
 }
 
 .ui.black.dividing.header {
-  border-bottom: 2px solid #1B1C1D;
+  border-bottom: 2px solid var(--mainwp-black);
 }
 
 .ui.inverted.black.header.header.header {
@@ -24054,7 +24066,7 @@ i.bordered.inverted.icon {
 
 i.inverted.bordered.icon,
 i.inverted.circular.icon {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #FFFFFF;
 }
 
@@ -24083,7 +24095,7 @@ i.inverted.circular.primary.icons {
 }
 
 i.secondary.icon.icon.icon.icon.icon {
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 i.inverted.secondary.icon.icon.icon.icon.icon {
@@ -24094,12 +24106,12 @@ i.inverted.bordered.secondary.icon.icon.icon.icon.icon,
 i.inverted.circular.secondary.icon.icon.icon.icon.icon,
 i.inverted.bordered.secondary.icons,
 i.inverted.circular.secondary.icons {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #FFFFFF;
 }
 
 i.red.icon.icon.icon.icon.icon {
-  color: #DB2828;
+  color: var(--mainwp-red);
 }
 
 i.inverted.red.icon.icon.icon.icon.icon {
@@ -24110,7 +24122,7 @@ i.inverted.bordered.red.icon.icon.icon.icon.icon,
 i.inverted.circular.red.icon.icon.icon.icon.icon,
 i.inverted.bordered.red.icons,
 i.inverted.circular.red.icons {
-  background-color: #DB2828;
+  background-color: var(--mainwp-red);
   color: #FFFFFF;
 }
 
@@ -24163,7 +24175,7 @@ i.inverted.circular.olive.icons {
 }
 
 i.green.icon.icon.icon.icon.icon {
-  color: #21BA45;
+  color: var(--mainwp-green);
 }
 
 i.inverted.green.icon.icon.icon.icon.icon {
@@ -24174,7 +24186,7 @@ i.inverted.bordered.green.icon.icon.icon.icon.icon,
 i.inverted.circular.green.icon.icon.icon.icon.icon,
 i.inverted.bordered.green.icons,
 i.inverted.circular.green.icons {
-  background-color: #21BA45;
+  background-color: var(--mainwp-green);
   color: #FFFFFF;
 }
 
@@ -24291,7 +24303,7 @@ i.inverted.circular.grey.icons {
 }
 
 i.black.icon.icon.icon.icon.icon {
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 i.inverted.black.icon.icon.icon.icon.icon {
@@ -24302,7 +24314,7 @@ i.inverted.bordered.black.icon.icon.icon.icon.icon,
 i.inverted.circular.black.icon.icon.icon.icon.icon,
 i.inverted.bordered.black.icons,
 i.inverted.circular.black.icons {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #FFFFFF;
 }
 
@@ -24438,7 +24450,7 @@ i.icons .icon.corner[class*="bottom right"] {
 }
 
 i.icons .inverted.corner.icon {
-  text-shadow: -1px -1px 0 #1B1C1D, 1px -1px 0 #1B1C1D, -1px 1px 0 #1B1C1D, 1px 1px 0 #1B1C1D;
+  text-shadow: -1px -1px 0 var(--mainwp-black), 1px -1px 0 var(--mainwp-black), -1px 1px 0 var(--mainwp-black), 1px 1px 0 var(--mainwp-black);
 }
 
 /*************************************************
@@ -24478,7 +24490,7 @@ i.circular.inverted.icons {
   border: none;
   -webkit-box-shadow: none;
   box-shadow: none;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #FFFFFF;
 }
 
@@ -34739,11 +34751,11 @@ a.ui.basic.label:hover {
 .ui.inverted.basic.label,
 .ui.inverted.basic.label:hover {
   border-color: rgba(255, 255, 255, 0.5);
-  background: #1B1C1D;
+  background: var(--mainwp-black);
 }
 
 .ui.inverted.basic.label:hover {
-  color: #4183C4;
+  color: var(--mainwp-green);
 }
 
 /*-------------------
@@ -34794,7 +34806,7 @@ a.ui.ui.ui.basic.primary.label:hover {
 .ui.ui.ui.inverted.primary.label {
   background-color: #54C8FF;
   border-color: #54C8FF;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Link */
@@ -34803,7 +34815,7 @@ a.ui.ui.ui.basic.primary.label:hover {
 a.ui.ui.ui.inverted.primary.label:hover {
   background-color: #21b8ff;
   border-color: #21b8ff;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Ribbon */
@@ -34816,7 +34828,7 @@ a.ui.ui.ui.inverted.primary.label:hover {
 
 .ui.inverted.basic.labels .primary.label,
 .ui.ui.ui.inverted.basic.primary.label {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   border-color: #54C8FF;
   color: #54C8FF;
 }
@@ -34824,7 +34836,7 @@ a.ui.ui.ui.inverted.primary.label:hover {
 .ui.inverted.basic.labels a.primary.label:hover,
 a.ui.ui.ui.inverted.basic.primary.label:hover {
   border-color: #21b8ff;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #21b8ff;
 }
 
@@ -34840,14 +34852,14 @@ a.ui.ui.ui.inverted.basic.primary.label:hover {
   border-color: inherit;
   border-width: 1px 0 0 1px;
   border-style: inherit;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   right: calc(100% + 1px);
 }
 
 .ui.secondary.labels .label,
 .ui.ui.ui.secondary.label {
-  background-color: #1B1C1D;
-  border-color: #1B1C1D;
+  background-color: var(--mainwp-black);
+  border-color: var(--mainwp-black);
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -34871,8 +34883,8 @@ a.ui.ui.ui.secondary.label:hover {
 .ui.basic.labels .secondary.label,
 .ui.ui.ui.basic.secondary.label {
   background: none #FFFFFF;
-  border-color: #1B1C1D;
-  color: #1B1C1D;
+  border-color: var(--mainwp-black);
+  color: var(--mainwp-black);
 }
 
 .ui.basic.labels a.secondary.label:hover,
@@ -34888,7 +34900,7 @@ a.ui.ui.ui.basic.secondary.label:hover {
 .ui.ui.ui.inverted.secondary.label {
   background-color: #545454;
   border-color: #545454;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Link */
@@ -34897,7 +34909,7 @@ a.ui.ui.ui.basic.secondary.label:hover {
 a.ui.ui.ui.inverted.secondary.label:hover {
   background-color: #6e6e6e;
   border-color: #6e6e6e;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Ribbon */
@@ -34910,7 +34922,7 @@ a.ui.ui.ui.inverted.secondary.label:hover {
 
 .ui.inverted.basic.labels .secondary.label,
 .ui.ui.ui.inverted.basic.secondary.label {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   border-color: #545454;
   color: #545454;
 }
@@ -34918,7 +34930,7 @@ a.ui.ui.ui.inverted.secondary.label:hover {
 .ui.inverted.basic.labels a.secondary.label:hover,
 a.ui.ui.ui.inverted.basic.secondary.label:hover {
   border-color: #6e6e6e;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #6e6e6e;
 }
 
@@ -34934,14 +34946,14 @@ a.ui.ui.ui.inverted.basic.secondary.label:hover {
   border-color: inherit;
   border-width: 1px 0 0 1px;
   border-style: inherit;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   right: calc(100% + 1px);
 }
 
 .ui.red.labels .label,
 .ui.ui.ui.red.label {
-  background-color: #DB2828;
-  border-color: #DB2828;
+  background-color: var(--mainwp-red);
+  border-color: var(--mainwp-red);
   color: #FFFFFF;
 }
 
@@ -34949,8 +34961,8 @@ a.ui.ui.ui.inverted.basic.secondary.label:hover {
 
 .ui.red.labels a.label:hover,
 a.ui.ui.ui.red.label:hover {
-  background-color: #d01919;
-  border-color: #d01919;
+  background-color: var(--mainwp-red-hover);
+  border-color: var(--mainwp-red-hover);
   color: #FFFFFF;
 }
 
@@ -34965,15 +34977,15 @@ a.ui.ui.ui.red.label:hover {
 .ui.basic.labels .red.label,
 .ui.ui.ui.basic.red.label {
   background: none #FFFFFF;
-  border-color: #DB2828;
-  color: #DB2828;
+  border-color: var(--mainwp-red);
+  color: var(--mainwp-red);
 }
 
 .ui.basic.labels a.red.label:hover,
 a.ui.ui.ui.basic.red.label:hover {
   background: none #FFFFFF;
-  border-color: #d01919;
-  color: #d01919;
+  border-color: var(--mainwp-red-hover);
+  color: var(--mainwp-red-hover);
 }
 
 /* Inverted */
@@ -34982,7 +34994,7 @@ a.ui.ui.ui.basic.red.label:hover {
 .ui.ui.ui.inverted.red.label {
   background-color: #FF695E;
   border-color: #FF695E;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Link */
@@ -34991,7 +35003,7 @@ a.ui.ui.ui.basic.red.label:hover {
 a.ui.ui.ui.inverted.red.label:hover {
   background-color: #ff392b;
   border-color: #ff392b;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Ribbon */
@@ -35004,7 +35016,7 @@ a.ui.ui.ui.inverted.red.label:hover {
 
 .ui.inverted.basic.labels .red.label,
 .ui.ui.ui.inverted.basic.red.label {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   border-color: #FF695E;
   color: #FF695E;
 }
@@ -35012,7 +35024,7 @@ a.ui.ui.ui.inverted.red.label:hover {
 .ui.inverted.basic.labels a.red.label:hover,
 a.ui.ui.ui.inverted.basic.red.label:hover {
   border-color: #ff392b;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #ff392b;
 }
 
@@ -35028,7 +35040,7 @@ a.ui.ui.ui.inverted.basic.red.label:hover {
   border-color: inherit;
   border-width: 1px 0 0 1px;
   border-style: inherit;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   right: calc(100% + 1px);
 }
 
@@ -35076,7 +35088,7 @@ a.ui.ui.ui.basic.orange.label:hover {
 .ui.ui.ui.inverted.orange.label {
   background-color: #FF851B;
   border-color: #FF851B;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Link */
@@ -35085,7 +35097,7 @@ a.ui.ui.ui.basic.orange.label:hover {
 a.ui.ui.ui.inverted.orange.label:hover {
   background-color: #e76b00;
   border-color: #e76b00;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Ribbon */
@@ -35098,7 +35110,7 @@ a.ui.ui.ui.inverted.orange.label:hover {
 
 .ui.inverted.basic.labels .orange.label,
 .ui.ui.ui.inverted.basic.orange.label {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   border-color: #FF851B;
   color: #FF851B;
 }
@@ -35106,7 +35118,7 @@ a.ui.ui.ui.inverted.orange.label:hover {
 .ui.inverted.basic.labels a.orange.label:hover,
 a.ui.ui.ui.inverted.basic.orange.label:hover {
   border-color: #e76b00;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #e76b00;
 }
 
@@ -35122,7 +35134,7 @@ a.ui.ui.ui.inverted.basic.orange.label:hover {
   border-color: inherit;
   border-width: 1px 0 0 1px;
   border-style: inherit;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   right: calc(100% + 1px);
 }
 
@@ -35170,7 +35182,7 @@ a.ui.ui.ui.basic.yellow.label:hover {
 .ui.ui.ui.inverted.yellow.label {
   background-color: #FFE21F;
   border-color: #FFE21F;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Link */
@@ -35179,7 +35191,7 @@ a.ui.ui.ui.basic.yellow.label:hover {
 a.ui.ui.ui.inverted.yellow.label:hover {
   background-color: #ebcd00;
   border-color: #ebcd00;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Ribbon */
@@ -35192,7 +35204,7 @@ a.ui.ui.ui.inverted.yellow.label:hover {
 
 .ui.inverted.basic.labels .yellow.label,
 .ui.ui.ui.inverted.basic.yellow.label {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   border-color: #FFE21F;
   color: #FFE21F;
 }
@@ -35200,7 +35212,7 @@ a.ui.ui.ui.inverted.yellow.label:hover {
 .ui.inverted.basic.labels a.yellow.label:hover,
 a.ui.ui.ui.inverted.basic.yellow.label:hover {
   border-color: #ebcd00;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #ebcd00;
 }
 
@@ -35216,7 +35228,7 @@ a.ui.ui.ui.inverted.basic.yellow.label:hover {
   border-color: inherit;
   border-width: 1px 0 0 1px;
   border-style: inherit;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   right: calc(100% + 1px);
 }
 
@@ -35264,7 +35276,7 @@ a.ui.ui.ui.basic.olive.label:hover {
 .ui.ui.ui.inverted.olive.label {
   background-color: #D9E778;
   border-color: #D9E778;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Link */
@@ -35273,7 +35285,7 @@ a.ui.ui.ui.basic.olive.label:hover {
 a.ui.ui.ui.inverted.olive.label:hover {
   background-color: #d2e745;
   border-color: #d2e745;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Ribbon */
@@ -35286,7 +35298,7 @@ a.ui.ui.ui.inverted.olive.label:hover {
 
 .ui.inverted.basic.labels .olive.label,
 .ui.ui.ui.inverted.basic.olive.label {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   border-color: #D9E778;
   color: #D9E778;
 }
@@ -35294,7 +35306,7 @@ a.ui.ui.ui.inverted.olive.label:hover {
 .ui.inverted.basic.labels a.olive.label:hover,
 a.ui.ui.ui.inverted.basic.olive.label:hover {
   border-color: #d2e745;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #d2e745;
 }
 
@@ -35310,14 +35322,14 @@ a.ui.ui.ui.inverted.basic.olive.label:hover {
   border-color: inherit;
   border-width: 1px 0 0 1px;
   border-style: inherit;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   right: calc(100% + 1px);
 }
 
 .ui.green.labels .label,
 .ui.ui.ui.green.label {
-  background-color: #21BA45;
-  border-color: #21BA45;
+  background-color: var(--mainwp-green);
+  border-color: var(--mainwp-green);
   color: #FFFFFF;
 }
 
@@ -35325,15 +35337,15 @@ a.ui.ui.ui.inverted.basic.olive.label:hover {
 
 .ui.green.labels a.label:hover,
 a.ui.ui.ui.green.label:hover {
-  background-color: #16ab39;
-  border-color: #16ab39;
+  background-color: var(--mainwp-green-hover);
+  border-color: var(--mainwp-green-hover);
   color: #FFFFFF;
 }
 
 /* Ribbon */
 
 .ui.ui.ui.green.ribbon.label {
-  border-color: #198f35;
+  border-color: var(--mainwp-green-dark);
 }
 
 /* Basic */
@@ -35341,15 +35353,15 @@ a.ui.ui.ui.green.label:hover {
 .ui.basic.labels .green.label,
 .ui.ui.ui.basic.green.label {
   background: none #FFFFFF;
-  border-color: #21BA45;
-  color: #21BA45;
+  border-color: var(--mainwp-green);
+  color: var(--mainwp-green);
 }
 
 .ui.basic.labels a.green.label:hover,
 a.ui.ui.ui.basic.green.label:hover {
   background: none #FFFFFF;
-  border-color: #16ab39;
-  color: #16ab39;
+  border-color: var(--mainwp-green-hover);
+  color: var(--mainwp-green-hover);
 }
 
 /* Inverted */
@@ -35358,7 +35370,7 @@ a.ui.ui.ui.basic.green.label:hover {
 .ui.ui.ui.inverted.green.label {
   background-color: #2ECC40;
   border-color: #2ECC40;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Link */
@@ -35367,7 +35379,7 @@ a.ui.ui.ui.basic.green.label:hover {
 a.ui.ui.ui.inverted.green.label:hover {
   background-color: #1ea92e;
   border-color: #1ea92e;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Ribbon */
@@ -35380,7 +35392,7 @@ a.ui.ui.ui.inverted.green.label:hover {
 
 .ui.inverted.basic.labels .green.label,
 .ui.ui.ui.inverted.basic.green.label {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   border-color: #2ECC40;
   color: #2ECC40;
 }
@@ -35388,7 +35400,7 @@ a.ui.ui.ui.inverted.green.label:hover {
 .ui.inverted.basic.labels a.green.label:hover,
 a.ui.ui.ui.inverted.basic.green.label:hover {
   border-color: #1ea92e;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #1ea92e;
 }
 
@@ -35404,7 +35416,7 @@ a.ui.ui.ui.inverted.basic.green.label:hover {
   border-color: inherit;
   border-width: 1px 0 0 1px;
   border-style: inherit;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   right: calc(100% + 1px);
 }
 
@@ -35452,7 +35464,7 @@ a.ui.ui.ui.basic.teal.label:hover {
 .ui.ui.ui.inverted.teal.label {
   background-color: #6DFFFF;
   border-color: #6DFFFF;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Link */
@@ -35461,7 +35473,7 @@ a.ui.ui.ui.basic.teal.label:hover {
 a.ui.ui.ui.inverted.teal.label:hover {
   background-color: #3affff;
   border-color: #3affff;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Ribbon */
@@ -35474,7 +35486,7 @@ a.ui.ui.ui.inverted.teal.label:hover {
 
 .ui.inverted.basic.labels .teal.label,
 .ui.ui.ui.inverted.basic.teal.label {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   border-color: #6DFFFF;
   color: #6DFFFF;
 }
@@ -35482,7 +35494,7 @@ a.ui.ui.ui.inverted.teal.label:hover {
 .ui.inverted.basic.labels a.teal.label:hover,
 a.ui.ui.ui.inverted.basic.teal.label:hover {
   border-color: #3affff;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #3affff;
 }
 
@@ -35498,7 +35510,7 @@ a.ui.ui.ui.inverted.basic.teal.label:hover {
   border-color: inherit;
   border-width: 1px 0 0 1px;
   border-style: inherit;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   right: calc(100% + 1px);
 }
 
@@ -35546,7 +35558,7 @@ a.ui.ui.ui.basic.blue.label:hover {
 .ui.ui.ui.inverted.blue.label {
   background-color: #54C8FF;
   border-color: #54C8FF;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Link */
@@ -35555,7 +35567,7 @@ a.ui.ui.ui.basic.blue.label:hover {
 a.ui.ui.ui.inverted.blue.label:hover {
   background-color: #21b8ff;
   border-color: #21b8ff;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Ribbon */
@@ -35568,7 +35580,7 @@ a.ui.ui.ui.inverted.blue.label:hover {
 
 .ui.inverted.basic.labels .blue.label,
 .ui.ui.ui.inverted.basic.blue.label {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   border-color: #54C8FF;
   color: #54C8FF;
 }
@@ -35576,7 +35588,7 @@ a.ui.ui.ui.inverted.blue.label:hover {
 .ui.inverted.basic.labels a.blue.label:hover,
 a.ui.ui.ui.inverted.basic.blue.label:hover {
   border-color: #21b8ff;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #21b8ff;
 }
 
@@ -35592,7 +35604,7 @@ a.ui.ui.ui.inverted.basic.blue.label:hover {
   border-color: inherit;
   border-width: 1px 0 0 1px;
   border-style: inherit;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   right: calc(100% + 1px);
 }
 
@@ -35640,7 +35652,7 @@ a.ui.ui.ui.basic.violet.label:hover {
 .ui.ui.ui.inverted.violet.label {
   background-color: #A291FB;
   border-color: #A291FB;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Link */
@@ -35649,7 +35661,7 @@ a.ui.ui.ui.basic.violet.label:hover {
 a.ui.ui.ui.inverted.violet.label:hover {
   background-color: #745aff;
   border-color: #745aff;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Ribbon */
@@ -35662,7 +35674,7 @@ a.ui.ui.ui.inverted.violet.label:hover {
 
 .ui.inverted.basic.labels .violet.label,
 .ui.ui.ui.inverted.basic.violet.label {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   border-color: #A291FB;
   color: #A291FB;
 }
@@ -35670,7 +35682,7 @@ a.ui.ui.ui.inverted.violet.label:hover {
 .ui.inverted.basic.labels a.violet.label:hover,
 a.ui.ui.ui.inverted.basic.violet.label:hover {
   border-color: #745aff;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #745aff;
 }
 
@@ -35686,7 +35698,7 @@ a.ui.ui.ui.inverted.basic.violet.label:hover {
   border-color: inherit;
   border-width: 1px 0 0 1px;
   border-style: inherit;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   right: calc(100% + 1px);
 }
 
@@ -35734,7 +35746,7 @@ a.ui.ui.ui.basic.purple.label:hover {
 .ui.ui.ui.inverted.purple.label {
   background-color: #DC73FF;
   border-color: #DC73FF;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Link */
@@ -35743,7 +35755,7 @@ a.ui.ui.ui.basic.purple.label:hover {
 a.ui.ui.ui.inverted.purple.label:hover {
   background-color: #cf40ff;
   border-color: #cf40ff;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Ribbon */
@@ -35756,7 +35768,7 @@ a.ui.ui.ui.inverted.purple.label:hover {
 
 .ui.inverted.basic.labels .purple.label,
 .ui.ui.ui.inverted.basic.purple.label {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   border-color: #DC73FF;
   color: #DC73FF;
 }
@@ -35764,7 +35776,7 @@ a.ui.ui.ui.inverted.purple.label:hover {
 .ui.inverted.basic.labels a.purple.label:hover,
 a.ui.ui.ui.inverted.basic.purple.label:hover {
   border-color: #cf40ff;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #cf40ff;
 }
 
@@ -35780,7 +35792,7 @@ a.ui.ui.ui.inverted.basic.purple.label:hover {
   border-color: inherit;
   border-width: 1px 0 0 1px;
   border-style: inherit;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   right: calc(100% + 1px);
 }
 
@@ -35828,7 +35840,7 @@ a.ui.ui.ui.basic.pink.label:hover {
 .ui.ui.ui.inverted.pink.label {
   background-color: #FF8EDF;
   border-color: #FF8EDF;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Link */
@@ -35837,7 +35849,7 @@ a.ui.ui.ui.basic.pink.label:hover {
 a.ui.ui.ui.inverted.pink.label:hover {
   background-color: #ff5bd1;
   border-color: #ff5bd1;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Ribbon */
@@ -35850,7 +35862,7 @@ a.ui.ui.ui.inverted.pink.label:hover {
 
 .ui.inverted.basic.labels .pink.label,
 .ui.ui.ui.inverted.basic.pink.label {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   border-color: #FF8EDF;
   color: #FF8EDF;
 }
@@ -35858,7 +35870,7 @@ a.ui.ui.ui.inverted.pink.label:hover {
 .ui.inverted.basic.labels a.pink.label:hover,
 a.ui.ui.ui.inverted.basic.pink.label:hover {
   border-color: #ff5bd1;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #ff5bd1;
 }
 
@@ -35874,7 +35886,7 @@ a.ui.ui.ui.inverted.basic.pink.label:hover {
   border-color: inherit;
   border-width: 1px 0 0 1px;
   border-style: inherit;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   right: calc(100% + 1px);
 }
 
@@ -35922,7 +35934,7 @@ a.ui.ui.ui.basic.brown.label:hover {
 .ui.ui.ui.inverted.brown.label {
   background-color: #D67C1C;
   border-color: #D67C1C;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Link */
@@ -35931,7 +35943,7 @@ a.ui.ui.ui.basic.brown.label:hover {
 a.ui.ui.ui.inverted.brown.label:hover {
   background-color: #b0620f;
   border-color: #b0620f;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Ribbon */
@@ -35944,7 +35956,7 @@ a.ui.ui.ui.inverted.brown.label:hover {
 
 .ui.inverted.basic.labels .brown.label,
 .ui.ui.ui.inverted.basic.brown.label {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   border-color: #D67C1C;
   color: #D67C1C;
 }
@@ -35952,7 +35964,7 @@ a.ui.ui.ui.inverted.brown.label:hover {
 .ui.inverted.basic.labels a.brown.label:hover,
 a.ui.ui.ui.inverted.basic.brown.label:hover {
   border-color: #b0620f;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #b0620f;
 }
 
@@ -35968,7 +35980,7 @@ a.ui.ui.ui.inverted.basic.brown.label:hover {
   border-color: inherit;
   border-width: 1px 0 0 1px;
   border-style: inherit;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   right: calc(100% + 1px);
 }
 
@@ -36016,7 +36028,7 @@ a.ui.ui.ui.basic.grey.label:hover {
 .ui.ui.ui.inverted.grey.label {
   background-color: #DCDDDE;
   border-color: #DCDDDE;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Link */
@@ -36038,7 +36050,7 @@ a.ui.ui.ui.inverted.grey.label:hover {
 
 .ui.inverted.basic.labels .grey.label,
 .ui.ui.ui.inverted.basic.grey.label {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   border-color: #DCDDDE;
   color: rgba(255, 255, 255, 0.9);
 }
@@ -36046,7 +36058,7 @@ a.ui.ui.ui.inverted.grey.label:hover {
 .ui.inverted.basic.labels a.grey.label:hover,
 a.ui.ui.ui.inverted.basic.grey.label:hover {
   border-color: #c2c4c5;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 /* Inverted Basic Tags */
@@ -36061,14 +36073,14 @@ a.ui.ui.ui.inverted.basic.grey.label:hover {
   border-color: inherit;
   border-width: 1px 0 0 1px;
   border-style: inherit;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   right: calc(100% + 1px);
 }
 
 .ui.black.labels .label,
 .ui.ui.ui.black.label {
-  background-color: #1B1C1D;
-  border-color: #1B1C1D;
+  background-color: var(--mainwp-black);
+  border-color: var(--mainwp-black);
   color: #FFFFFF;
 }
 
@@ -36092,8 +36104,8 @@ a.ui.ui.ui.black.label:hover {
 .ui.basic.labels .black.label,
 .ui.ui.ui.basic.black.label {
   background: none #FFFFFF;
-  border-color: #1B1C1D;
-  color: #1B1C1D;
+  border-color: var(--mainwp-black);
+  color: var(--mainwp-black);
 }
 
 .ui.basic.labels a.black.label:hover,
@@ -36109,7 +36121,7 @@ a.ui.ui.ui.basic.black.label:hover {
 .ui.ui.ui.inverted.black.label {
   background-color: #545454;
   border-color: #545454;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Inverted Link */
@@ -36131,7 +36143,7 @@ a.ui.ui.ui.inverted.black.label:hover {
 
 .ui.inverted.basic.labels .black.label,
 .ui.ui.ui.inverted.basic.black.label {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   border-color: #545454;
   color: rgba(255, 255, 255, 0.9);
 }
@@ -36139,7 +36151,7 @@ a.ui.ui.ui.inverted.black.label:hover {
 .ui.inverted.basic.labels a.black.label:hover,
 a.ui.ui.ui.inverted.basic.black.label:hover {
   border-color: #000000;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 /* Inverted Basic Tags */
@@ -36154,7 +36166,7 @@ a.ui.ui.ui.inverted.basic.black.label:hover {
   border-color: inherit;
   border-width: 1px 0 0 1px;
   border-style: inherit;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   right: calc(100% + 1px);
 }
 
@@ -36633,7 +36645,7 @@ ol.ui.list ol li,
 .ui.list .list > a.item,
 .ui.list > a.item {
   cursor: pointer;
-  color: #4183C4;
+  color: var(--mainwp-green);
 }
 
 .ui.list .list > a.item:hover,
@@ -36655,7 +36667,7 @@ ol.ui.list ol li,
 .ui.list .list > .item a.header,
 .ui.list > .item a.header {
   cursor: pointer;
-  color: #4183C4 !important;
+  color: var(--mainwp-green) !important;
 }
 
 .ui.list .list > .item > a.header:hover,
@@ -37870,7 +37882,7 @@ ol.ui.suffixed.list li:before,
 .ui.secondary.loading.loading.loading.loading .input > i.icon:after,
 .ui.secondary.loading.loading.loading.loading > i.icon:after,
 .ui.secondary.loader.loader.loader:after {
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 .ui.inverted.secondary.elastic.loader:before,
@@ -37894,7 +37906,7 @@ ol.ui.suffixed.list li:before,
 .ui.red.loading.loading.loading.loading .input > i.icon:after,
 .ui.red.loading.loading.loading.loading > i.icon:after,
 .ui.red.loader.loader.loader:after {
-  color: #DB2828;
+  color: var(--mainwp-red);
 }
 
 .ui.inverted.red.elastic.loader:before,
@@ -37990,7 +38002,7 @@ ol.ui.suffixed.list li:before,
 .ui.green.loading.loading.loading.loading .input > i.icon:after,
 .ui.green.loading.loading.loading.loading > i.icon:after,
 .ui.green.loader.loader.loader:after {
-  color: #21BA45;
+  color: var(--mainwp-green);
 }
 
 .ui.inverted.green.elastic.loader:before,
@@ -38182,7 +38194,7 @@ ol.ui.suffixed.list li:before,
 .ui.black.loading.loading.loading.loading .input > i.icon:after,
 .ui.black.loading.loading.loading.loading > i.icon:after,
 .ui.black.loader.loader.loader:after {
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 .ui.inverted.black.elastic.loader:before,
@@ -38719,7 +38731,7 @@ ol.ui.suffixed.list li:before,
 .ui.inverted.placeholder .image.header:after,
 .ui.inverted.placeholder .line,
 .ui.inverted.placeholder .line:after {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 /*******************************
@@ -39919,11 +39931,11 @@ ol.ui.suffixed.list li:before,
 --------------------*/
 
 .ui.red.segment.segment.segment.segment.segment:not(.inverted) {
-  border-top: 2px solid #DB2828;
+  border-top: 2px solid var(--mainwp-red);
 }
 
 .ui.inverted.red.segment.segment.segment.segment.segment {
-  background-color: #DB2828;
+  background-color: var(--mainwp-red);
   color: #FFFFFF;
 }
 
@@ -39955,11 +39967,11 @@ ol.ui.suffixed.list li:before,
 }
 
 .ui.green.segment.segment.segment.segment.segment:not(.inverted) {
-  border-top: 2px solid #21BA45;
+  border-top: 2px solid var(--mainwp-green);
 }
 
 .ui.inverted.green.segment.segment.segment.segment.segment {
-  background-color: #21BA45;
+  background-color: var(--mainwp-green);
   color: #FFFFFF;
 }
 
@@ -40027,11 +40039,11 @@ ol.ui.suffixed.list li:before,
 }
 
 .ui.black.segment.segment.segment.segment.segment:not(.inverted) {
-  border-top: 2px solid #1B1C1D;
+  border-top: 2px solid var(--mainwp-black);
 }
 
 .ui.inverted.black.segment.segment.segment.segment.segment {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #FFFFFF;
 }
 
@@ -40081,7 +40093,7 @@ ol.ui.suffixed.list li:before,
 .ui.inverted.segments .segment,
 .ui.inverted.segment,
 .ui.primary.inverted.segment {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -40664,7 +40676,7 @@ ol.ui.suffixed.list li:before,
 }
 
 .ui.steps .step.active .title {
-  color: #4183C4;
+  color: var(--mainwp-green);
 }
 
 .ui.ordered.steps .step.active:before,
@@ -40705,7 +40717,7 @@ ol.ui.suffixed.list li:before,
 
 .ui.steps .step.completed > i.icon:before,
 .ui.ordered.steps .step.completed:before {
-  color: #21BA45;
+  color: var(--mainwp-green);
 }
 
 /* Disabled */
@@ -40957,12 +40969,12 @@ ol.ui.suffixed.list li:before,
 
 .ui.inverted.steps .step {
   color: rgba(255, 255, 255, 0.9);
-  background: #1B1C1D;
+  background: var(--mainwp-black);
   border-color: #555555;
 }
 
 .ui.inverted.steps .step:after {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   border-color: #555555;
 }
 
@@ -41061,7 +41073,7 @@ span.ui.inverted.primary.text {
 }
 
 span.ui.secondary.text {
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 span.ui.inverted.secondary.text {
@@ -41069,7 +41081,7 @@ span.ui.inverted.secondary.text {
 }
 
 span.ui.red.text {
-  color: #DB2828;
+  color: var(--mainwp-red);
 }
 
 span.ui.inverted.red.text {
@@ -41101,7 +41113,7 @@ span.ui.inverted.olive.text {
 }
 
 span.ui.green.text {
-  color: #21BA45;
+  color: var(--mainwp-green);
 }
 
 span.ui.inverted.green.text {
@@ -41165,7 +41177,7 @@ span.ui.inverted.grey.text {
 }
 
 span.ui.black.text {
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 span.ui.inverted.black.text {
@@ -41173,7 +41185,7 @@ span.ui.inverted.black.text {
 }
 
 span.ui.error.text {
-  color: #DB2828;
+  color: var(--mainwp-red);
 }
 
 span.ui.info.text {
@@ -41181,7 +41193,7 @@ span.ui.info.text {
 }
 
 span.ui.success.text {
-  color: #21BA45;
+  color: var(--mainwp-green);
 }
 
 span.ui.warning.text {
@@ -41276,7 +41288,7 @@ span.ui.massive.text {
 /* Link */
 
 .ui.breadcrumb a {
-  color: #4183C4;
+  color: var(--mainwp-green);
 }
 
 .ui.breadcrumb a:hover {
@@ -42945,7 +42957,7 @@ span.ui.massive.text {
 .ui.form label.required:after {
   margin: -0.2em 0 0 0.2em;
   content: '*';
-  color: #DB2828;
+  color: var(--mainwp-red);
 }
 
 .ui.form .required.fields:not(.grouped) > .field > label:after,
@@ -44895,14 +44907,14 @@ span.ui.massive.text {
 .ui.grid > .secondary.row,
 .ui.grid > .secondary.column,
 .ui.grid > .row > .secondary.column {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #FFFFFF;
 }
 
 .ui.grid > .red.row,
 .ui.grid > .red.column,
 .ui.grid > .row > .red.column {
-  background-color: #DB2828;
+  background-color: var(--mainwp-red);
   color: #FFFFFF;
 }
 
@@ -44930,7 +44942,7 @@ span.ui.massive.text {
 .ui.grid > .green.row,
 .ui.grid > .green.column,
 .ui.grid > .row > .green.column {
-  background-color: #21BA45;
+  background-color: var(--mainwp-green);
   color: #FFFFFF;
 }
 
@@ -44986,7 +44998,7 @@ span.ui.massive.text {
 .ui.grid > .black.row,
 .ui.grid > .black.column,
 .ui.grid > .row > .black.column {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #FFFFFF;
 }
 
@@ -47118,7 +47130,7 @@ Floated Menu / Item
 .ui.icon.menu .item {
   height: auto;
   text-align: center;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /* Icon */
@@ -47261,7 +47273,7 @@ Floated Menu / Item
 .ui.ui.ui.menu .red.active.item,
 .ui.ui.red.menu .active.item:hover,
 .ui.ui.red.menu .active.item {
-  color: #DB2828;
+  color: var(--mainwp-red);
 }
 
 .ui.ui.ui.menu .orange.active.item,
@@ -47285,7 +47297,7 @@ Floated Menu / Item
 .ui.ui.ui.menu .green.active.item,
 .ui.ui.green.menu .active.item:hover,
 .ui.ui.green.menu .active.item {
-  color: #21BA45;
+  color: var(--mainwp-green);
 }
 
 .ui.ui.ui.menu .teal.active.item,
@@ -47333,7 +47345,7 @@ Floated Menu / Item
 .ui.ui.ui.menu .black.active.item,
 .ui.ui.black.menu .active.item:hover,
 .ui.ui.black.menu .active.item {
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 /*--------------
@@ -47342,7 +47354,7 @@ Floated Menu / Item
 
 .ui.inverted.menu {
   border: 0 solid transparent;
-  background: #1B1C1D;
+  background: var(--mainwp-black);
   -webkit-box-shadow: none;
   box-shadow: none;
 }
@@ -47487,7 +47499,7 @@ Floated Menu / Item
 
 .ui.ui.ui.inverted.menu .red.active.item,
 .ui.ui.inverted.red.menu {
-  background-color: #DB2828;
+  background-color: var(--mainwp-red);
 }
 
 .ui.inverted.red.menu .item:before {
@@ -47499,7 +47511,7 @@ Floated Menu / Item
 }
 
 .ui.inverted.pointing.red.menu .active.item {
-  background-color: #d01919;
+  background-color: var(--mainwp-red-hover);
 }
 
 .ui.ui.ui.inverted.menu .orange.active.item,
@@ -47555,7 +47567,7 @@ Floated Menu / Item
 
 .ui.ui.ui.inverted.menu .green.active.item,
 .ui.ui.inverted.green.menu {
-  background-color: #21BA45;
+  background-color: var(--mainwp-green);
 }
 
 .ui.inverted.green.menu .item:before {
@@ -47567,7 +47579,7 @@ Floated Menu / Item
 }
 
 .ui.inverted.pointing.green.menu .active.item {
-  background-color: #16ab39;
+  background-color: var(--mainwp-green-hover);
 }
 
 .ui.ui.ui.inverted.menu .teal.active.item,
@@ -47691,7 +47703,7 @@ Floated Menu / Item
 
 .ui.ui.ui.inverted.menu .black.active.item,
 .ui.ui.inverted.black.menu {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 .ui.inverted.black.menu .item:before {
@@ -48018,11 +48030,11 @@ Floated Menu / Item
 }
 
 .ui.inverted.pointing.menu .secondary.active.item:after {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 .ui.inverted.pointing.menu .red.active.item:after {
-  background-color: #DB2828;
+  background-color: var(--mainwp-red);
 }
 
 .ui.inverted.pointing.menu .orange.active.item:after {
@@ -48038,7 +48050,7 @@ Floated Menu / Item
 }
 
 .ui.inverted.pointing.menu .green.active.item:after {
-  background-color: #21BA45;
+  background-color: var(--mainwp-green);
 }
 
 .ui.inverted.pointing.menu .teal.active.item:after {
@@ -48070,7 +48082,7 @@ Floated Menu / Item
 }
 
 .ui.inverted.pointing.menu .black.active.item:after {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 /*--------------
@@ -48237,7 +48249,7 @@ Floated Menu / Item
 --------------------*/
 
 .ui.menu .ui.inverted.inverted.dropdown.item .menu {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
   -webkit-box-shadow: none;
   box-shadow: none;
 }
@@ -48611,7 +48623,7 @@ Floated Menu / Item
 }
 
 .ui.positive.message .header {
-  color: #1A531B;
+  color: var(--mainwp-green-dark);
 }
 
 .ui.inverted.positive.message,
@@ -48736,7 +48748,7 @@ Floated Menu / Item
 }
 
 .ui.success.message .header {
-  color: #1A531B;
+  color: var(--mainwp-green-dark);
 }
 
 .ui.inverted.success.message,
@@ -48771,13 +48783,13 @@ Floated Menu / Item
 
 .ui.secondary.message,
 .ui.attached.secondary.message {
-  -webkit-box-shadow: 0 0 0 1px #1B1C1D inset, 0 0 0 0 rgba(0, 0, 0, 0);
-  box-shadow: 0 0 0 1px #1B1C1D inset, 0 0 0 0 rgba(0, 0, 0, 0);
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-black) inset, 0 0 0 0 rgba(0, 0, 0, 0);
+  box-shadow: 0 0 0 1px var(--mainwp-black) inset, 0 0 0 0 rgba(0, 0, 0, 0);
 }
 
 .ui.floating.secondary.message {
-  -webkit-box-shadow: 0 0 0 1px #1B1C1D inset, 0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15);
-  box-shadow: 0 0 0 1px #1B1C1D inset, 0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15);
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-black) inset, 0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15);
+  box-shadow: 0 0 0 1px var(--mainwp-black) inset, 0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15);
 }
 
 .ui.secondary.message .header {
@@ -48786,18 +48798,18 @@ Floated Menu / Item
 
 .ui.red.message {
   background-color: #FFE8E6;
-  color: #DB2828;
+  color: var(--mainwp-red);
 }
 
 .ui.red.message,
 .ui.attached.red.message {
-  -webkit-box-shadow: 0 0 0 1px #DB2828 inset, 0 0 0 0 rgba(0, 0, 0, 0);
-  box-shadow: 0 0 0 1px #DB2828 inset, 0 0 0 0 rgba(0, 0, 0, 0);
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-red) inset, 0 0 0 0 rgba(0, 0, 0, 0);
+  box-shadow: 0 0 0 1px var(--mainwp-red) inset, 0 0 0 0 rgba(0, 0, 0, 0);
 }
 
 .ui.floating.red.message {
-  -webkit-box-shadow: 0 0 0 1px #DB2828 inset, 0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15);
-  box-shadow: 0 0 0 1px #DB2828 inset, 0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15);
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-red) inset, 0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15);
+  box-shadow: 0 0 0 1px var(--mainwp-red) inset, 0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15);
 }
 
 .ui.red.message .header {
@@ -48865,19 +48877,19 @@ Floated Menu / Item
 }
 
 .ui.green.message {
-  background-color: #E5F9E7;
-  color: #1EBC30;
+  background-color: var(--mainwp-green-light);
+  color: var(--mainwp-green);
 }
 
 .ui.green.message,
 .ui.attached.green.message {
-  -webkit-box-shadow: 0 0 0 1px #1EBC30 inset, 0 0 0 0 rgba(0, 0, 0, 0);
-  box-shadow: 0 0 0 1px #1EBC30 inset, 0 0 0 0 rgba(0, 0, 0, 0);
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-green) inset, 0 0 0 0 rgba(0, 0, 0, 0);
+  box-shadow: 0 0 0 1px var(--mainwp-green) inset, 0 0 0 0 rgba(0, 0, 0, 0);
 }
 
 .ui.floating.green.message {
-  -webkit-box-shadow: 0 0 0 1px #1EBC30 inset, 0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15);
-  box-shadow: 0 0 0 1px #1EBC30 inset, 0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15);
+  -webkit-box-shadow: 0 0 0 1px var(--mainwp-green) inset, 0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15);
+  box-shadow: 0 0 0 1px var(--mainwp-green) inset, 0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15);
 }
 
 .ui.green.message .header {
@@ -49025,7 +49037,7 @@ Floated Menu / Item
 }
 
 .ui.black.message {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -49034,7 +49046,7 @@ Floated Menu / Item
 }
 
 .ui.inverted.message {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -49369,13 +49381,13 @@ Floated Menu / Item
   }
 
   .ui.ui.ui.ui.table:not(.unstackable) tr.marked.secondary.left {
-    -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 #1B1C1D inset;
-    box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 #1B1C1D inset;
+    -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 var(--mainwp-black) inset;
+    box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 var(--mainwp-black) inset;
   }
 
   .ui.ui.ui.ui.table:not(.unstackable) tr.marked.secondary.right {
-    -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 #1B1C1D inset;
-    box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 #1B1C1D inset;
+    -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 var(--mainwp-black) inset;
+    box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 var(--mainwp-black) inset;
   }
 
   .ui.ui.ui.ui.inverted.table:not(.unstackable) tr.marked.secondary.left {
@@ -49389,13 +49401,13 @@ Floated Menu / Item
   }
 
   .ui.ui.ui.ui.table:not(.unstackable) tr.marked.red.left {
-    -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 #DB2828 inset;
-    box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 #DB2828 inset;
+    -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 var(--mainwp-red) inset;
+    box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 var(--mainwp-red) inset;
   }
 
   .ui.ui.ui.ui.table:not(.unstackable) tr.marked.red.right {
-    -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 #DB2828 inset;
-    box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 #DB2828 inset;
+    -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 var(--mainwp-red) inset;
+    box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 var(--mainwp-red) inset;
   }
 
   .ui.ui.ui.ui.inverted.table:not(.unstackable) tr.marked.red.left {
@@ -49469,13 +49481,13 @@ Floated Menu / Item
   }
 
   .ui.ui.ui.ui.table:not(.unstackable) tr.marked.green.left {
-    -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 #21BA45 inset;
-    box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 #21BA45 inset;
+    -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 var(--mainwp-green) inset;
+    box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 var(--mainwp-green) inset;
   }
 
   .ui.ui.ui.ui.table:not(.unstackable) tr.marked.green.right {
-    -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 #21BA45 inset;
-    box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 #21BA45 inset;
+    -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 var(--mainwp-green) inset;
+    box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 var(--mainwp-green) inset;
   }
 
   .ui.ui.ui.ui.inverted.table:not(.unstackable) tr.marked.green.left {
@@ -49629,13 +49641,13 @@ Floated Menu / Item
   }
 
   .ui.ui.ui.ui.table:not(.unstackable) tr.marked.black.left {
-    -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 #1B1C1D inset;
-    box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 #1B1C1D inset;
+    -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 var(--mainwp-black) inset;
+    box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 var(--mainwp-black) inset;
   }
 
   .ui.ui.ui.ui.table:not(.unstackable) tr.marked.black.right {
-    -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 #1B1C1D inset;
-    box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 #1B1C1D inset;
+    -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 var(--mainwp-black) inset;
+    box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 var(--mainwp-black) inset;
   }
 
   .ui.ui.ui.ui.inverted.table:not(.unstackable) tr.marked.black.left {
@@ -49932,13 +49944,13 @@ Floated Menu / Item
 }
 
 .ui.ui.ui.ui[class*="tablet stackable"].table tr.marked.secondary.left {
-  -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 #1B1C1D inset;
-  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 #1B1C1D inset;
+  -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 var(--mainwp-black) inset;
+  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 var(--mainwp-black) inset;
 }
 
 .ui.ui.ui.ui[class*="tablet stackable"].table tr.marked.secondary.right {
-  -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 #1B1C1D inset;
-  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 #1B1C1D inset;
+  -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 var(--mainwp-black) inset;
+  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 var(--mainwp-black) inset;
 }
 
 .ui.ui.ui.ui[class*="tablet stackable"].inverted.table tr.marked.secondary.left {
@@ -49952,13 +49964,13 @@ Floated Menu / Item
 }
 
 .ui.ui.ui.ui[class*="tablet stackable"].table tr.marked.red.left {
-  -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 #DB2828 inset;
-  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 #DB2828 inset;
+  -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 var(--mainwp-red) inset;
+  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 var(--mainwp-red) inset;
 }
 
 .ui.ui.ui.ui[class*="tablet stackable"].table tr.marked.red.right {
-  -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 #DB2828 inset;
-  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 #DB2828 inset;
+  -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 var(--mainwp-red) inset;
+  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 var(--mainwp-red) inset;
 }
 
 .ui.ui.ui.ui[class*="tablet stackable"].inverted.table tr.marked.red.left {
@@ -50032,13 +50044,13 @@ Floated Menu / Item
 }
 
 .ui.ui.ui.ui[class*="tablet stackable"].table tr.marked.green.left {
-  -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 #21BA45 inset;
-  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 #21BA45 inset;
+  -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 var(--mainwp-green) inset;
+  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 var(--mainwp-green) inset;
 }
 
 .ui.ui.ui.ui[class*="tablet stackable"].table tr.marked.green.right {
-  -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 #21BA45 inset;
-  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 #21BA45 inset;
+  -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 var(--mainwp-green) inset;
+  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 var(--mainwp-green) inset;
 }
 
 .ui.ui.ui.ui[class*="tablet stackable"].inverted.table tr.marked.green.left {
@@ -50192,13 +50204,13 @@ Floated Menu / Item
 }
 
 .ui.ui.ui.ui[class*="tablet stackable"].table tr.marked.black.left {
-  -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 #1B1C1D inset;
-  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 #1B1C1D inset;
+  -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 var(--mainwp-black) inset;
+  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, 0.2em 0 0 0 var(--mainwp-black) inset;
 }
 
 .ui.ui.ui.ui[class*="tablet stackable"].table tr.marked.black.right {
-  -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 #1B1C1D inset;
-  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 #1B1C1D inset;
+  -webkit-box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 var(--mainwp-black) inset;
+  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.1) inset, -0.2em 0 0 0 var(--mainwp-black) inset;
 }
 
 .ui.ui.ui.ui[class*="tablet stackable"].inverted.table tr.marked.black.left {
@@ -50482,11 +50494,11 @@ Floated Menu / Item
 }
 
 .ui.secondary.table {
-  border-top: 0.2em solid #1B1C1D;
+  border-top: 0.2em solid var(--mainwp-black);
 }
 
 .ui.inverted.secondary.table {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #FFFFFF;
 }
 
@@ -50505,14 +50517,14 @@ Floated Menu / Item
 
 .ui.table td.marked.secondary.left,
 .ui.table tr.marked.secondary.left {
-  -webkit-box-shadow: 0.2em 0 0 0 #1B1C1D inset;
-  box-shadow: 0.2em 0 0 0 #1B1C1D inset;
+  -webkit-box-shadow: 0.2em 0 0 0 var(--mainwp-black) inset;
+  box-shadow: 0.2em 0 0 0 var(--mainwp-black) inset;
 }
 
 .ui.table td.marked.secondary.right,
 .ui.table tr.marked.secondary.right {
-  -webkit-box-shadow: -0.2em 0 0 0 #1B1C1D inset;
-  box-shadow: -0.2em 0 0 0 #1B1C1D inset;
+  -webkit-box-shadow: -0.2em 0 0 0 var(--mainwp-black) inset;
+  box-shadow: -0.2em 0 0 0 var(--mainwp-black) inset;
 }
 
 .ui.inverted.table td.marked.secondary.left,
@@ -50528,37 +50540,37 @@ Floated Menu / Item
 }
 
 .ui.red.table {
-  border-top: 0.2em solid #DB2828;
+  border-top: 0.2em solid var(--mainwp-red);
 }
 
 .ui.inverted.red.table {
-  background-color: #DB2828;
+  background-color: var(--mainwp-red);
   color: #FFFFFF;
 }
 
 .ui.ui.ui.ui.table tr.red:not(.marked),
 .ui.ui.table td.red:not(.marked) {
   background: #ffe1df;
-  color: #DB2828;
+  color: var(--mainwp-red);
 }
 
 .ui.ui.selectable.table tr.red:not(.marked):hover,
 .ui.table tr td.selectable.red:not(.marked):hover,
 .ui.selectable.table tr:hover td.red:not(.marked) {
   background: #ffd7d5;
-  color: #DB2828;
+  color: var(--mainwp-red);
 }
 
 .ui.table td.marked.red.left,
 .ui.table tr.marked.red.left {
-  -webkit-box-shadow: 0.2em 0 0 0 #DB2828 inset;
-  box-shadow: 0.2em 0 0 0 #DB2828 inset;
+  -webkit-box-shadow: 0.2em 0 0 0 var(--mainwp-red) inset;
+  box-shadow: 0.2em 0 0 0 var(--mainwp-red) inset;
 }
 
 .ui.table td.marked.red.right,
 .ui.table tr.marked.red.right {
-  -webkit-box-shadow: -0.2em 0 0 0 #DB2828 inset;
-  box-shadow: -0.2em 0 0 0 #DB2828 inset;
+  -webkit-box-shadow: -0.2em 0 0 0 var(--mainwp-red) inset;
+  box-shadow: -0.2em 0 0 0 var(--mainwp-red) inset;
 }
 
 .ui.inverted.table td.marked.red.left,
@@ -50712,37 +50724,37 @@ Floated Menu / Item
 }
 
 .ui.green.table {
-  border-top: 0.2em solid #21BA45;
+  border-top: 0.2em solid var(--mainwp-green);
 }
 
 .ui.inverted.green.table {
-  background-color: #21BA45;
+  background-color: var(--mainwp-green);
   color: #FFFFFF;
 }
 
 .ui.ui.ui.ui.table tr.green:not(.marked),
 .ui.ui.table td.green:not(.marked) {
   background: #d5f5d9;
-  color: #1EBC30;
+  color: var(--mainwp-green);
 }
 
 .ui.ui.selectable.table tr.green:not(.marked):hover,
 .ui.table tr td.selectable.green:not(.marked):hover,
 .ui.selectable.table tr:hover td.green:not(.marked) {
   background: #d2eed5;
-  color: #1EBC30;
+  color: var(--mainwp-green);
 }
 
 .ui.table td.marked.green.left,
 .ui.table tr.marked.green.left {
-  -webkit-box-shadow: 0.2em 0 0 0 #21BA45 inset;
-  box-shadow: 0.2em 0 0 0 #21BA45 inset;
+  -webkit-box-shadow: 0.2em 0 0 0 var(--mainwp-green) inset;
+  box-shadow: 0.2em 0 0 0 var(--mainwp-green) inset;
 }
 
 .ui.table td.marked.green.right,
 .ui.table tr.marked.green.right {
-  -webkit-box-shadow: -0.2em 0 0 0 #21BA45 inset;
-  box-shadow: -0.2em 0 0 0 #21BA45 inset;
+  -webkit-box-shadow: -0.2em 0 0 0 var(--mainwp-green) inset;
+  box-shadow: -0.2em 0 0 0 var(--mainwp-green) inset;
 }
 
 .ui.inverted.table td.marked.green.left,
@@ -51080,11 +51092,11 @@ Floated Menu / Item
 }
 
 .ui.black.table {
-  border-top: 0.2em solid #1B1C1D;
+  border-top: 0.2em solid var(--mainwp-black);
 }
 
 .ui.inverted.black.table {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: #FFFFFF;
 }
 
@@ -51103,14 +51115,14 @@ Floated Menu / Item
 
 .ui.table td.marked.black.left,
 .ui.table tr.marked.black.left {
-  -webkit-box-shadow: 0.2em 0 0 0 #1B1C1D inset;
-  box-shadow: 0.2em 0 0 0 #1B1C1D inset;
+  -webkit-box-shadow: 0.2em 0 0 0 var(--mainwp-black) inset;
+  box-shadow: 0.2em 0 0 0 var(--mainwp-black) inset;
 }
 
 .ui.table td.marked.black.right,
 .ui.table tr.marked.black.right {
-  -webkit-box-shadow: -0.2em 0 0 0 #1B1C1D inset;
-  box-shadow: -0.2em 0 0 0 #1B1C1D inset;
+  -webkit-box-shadow: -0.2em 0 0 0 var(--mainwp-black) inset;
+  box-shadow: -0.2em 0 0 0 var(--mainwp-black) inset;
 }
 
 .ui.inverted.table td.marked.black.left,
@@ -52647,8 +52659,8 @@ a.ui.card:hover,
 .ui.secondary.cards > .card,
 .ui.cards > .secondary.card,
 .ui.secondary.card {
-  -webkit-box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 #1B1C1D, 0 1px 3px 0 #D4D4D5;
-  box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 #1B1C1D, 0 1px 3px 0 #D4D4D5;
+  -webkit-box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 var(--mainwp-black), 0 1px 3px 0 #D4D4D5;
+  box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 var(--mainwp-black), 0 1px 3px 0 #D4D4D5;
 }
 
 .ui.secondary.cards > .card:hover,
@@ -52675,15 +52687,15 @@ a.ui.card:hover,
 .ui.red.cards > .card,
 .ui.cards > .red.card,
 .ui.red.card {
-  -webkit-box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 #DB2828, 0 1px 3px 0 #D4D4D5;
-  box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 #DB2828, 0 1px 3px 0 #D4D4D5;
+  -webkit-box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 var(--mainwp-red), 0 1px 3px 0 #D4D4D5;
+  box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 var(--mainwp-red), 0 1px 3px 0 #D4D4D5;
 }
 
 .ui.red.cards > .card:hover,
 .ui.cards > .red.card:hover,
 .ui.red.card:hover {
-  -webkit-box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 #d01919, 0 1px 3px 0 #BCBDBD;
-  box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 #d01919, 0 1px 3px 0 #BCBDBD;
+  -webkit-box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 var(--mainwp-red-hover), 0 1px 3px 0 #BCBDBD;
+  box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 var(--mainwp-red-hover), 0 1px 3px 0 #BCBDBD;
 }
 
 .ui.inverted.red.cards > .card,
@@ -52787,15 +52799,15 @@ a.ui.card:hover,
 .ui.green.cards > .card,
 .ui.cards > .green.card,
 .ui.green.card {
-  -webkit-box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 #21BA45, 0 1px 3px 0 #D4D4D5;
-  box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 #21BA45, 0 1px 3px 0 #D4D4D5;
+  -webkit-box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 var(--mainwp-green), 0 1px 3px 0 #D4D4D5;
+  box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 var(--mainwp-green), 0 1px 3px 0 #D4D4D5;
 }
 
 .ui.green.cards > .card:hover,
 .ui.cards > .green.card:hover,
 .ui.green.card:hover {
-  -webkit-box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 #16ab39, 0 1px 3px 0 #BCBDBD;
-  box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 #16ab39, 0 1px 3px 0 #BCBDBD;
+  -webkit-box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 var(--mainwp-green-hover), 0 1px 3px 0 #BCBDBD;
+  box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 var(--mainwp-green-hover), 0 1px 3px 0 #BCBDBD;
 }
 
 .ui.inverted.green.cards > .card,
@@ -53011,8 +53023,8 @@ a.ui.card:hover,
 .ui.black.cards > .card,
 .ui.cards > .black.card,
 .ui.black.card {
-  -webkit-box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 #1B1C1D, 0 1px 3px 0 #D4D4D5;
-  box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 #1B1C1D, 0 1px 3px 0 #D4D4D5;
+  -webkit-box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 var(--mainwp-black), 0 1px 3px 0 #D4D4D5;
+  box-shadow: 0 0 0 1px #D4D4D5, 0 2px 0 0 var(--mainwp-black), 0 1px 3px 0 #D4D4D5;
 }
 
 .ui.black.cards > .card:hover,
@@ -53424,7 +53436,7 @@ a.ui.card:hover,
 
 .ui.inverted.cards > .card,
 .ui.inverted.card {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
   -webkit-box-shadow: 0 1px 3px 0 #555555, 0 0 0 1px #555555;
   box-shadow: 0 1px 3px 0 #555555, 0 0 0 1px #555555;
 }
@@ -53501,7 +53513,7 @@ a.ui.card:hover,
 .ui.inverted.link.cards .card:not(.icon):hover,
 a.inverted.ui.card:hover,
 .ui.inverted.link.card:hover {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
 }
 
 /* Loading */
@@ -53805,7 +53817,7 @@ a.inverted.ui.card:hover,
   --------------------*/
 
 .ui.inverted.comments .comment {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 .ui.inverted.comments .comment .author,
@@ -54167,7 +54179,7 @@ a.inverted.ui.card:hover,
   -------------------*/
 
 .ui.inverted.feed > .event {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
 }
 
 .ui.inverted.feed > .event > .content .date,
@@ -54768,7 +54780,7 @@ a.inverted.ui.card:hover,
 }
 
 .ui.inverted.items > .item > .content a:not(.ui):hover {
-  color: #4183C4;
+  color: var(--mainwp-green);
 }
 
 .ui.inverted.items > .item > .content > a.header {
@@ -54935,7 +54947,7 @@ a.inverted.ui.card:hover,
   font-size: 4rem;
   font-weight: normal;
   line-height: 1em;
-  color: #1B1C1D;
+  color: var(--mainwp-black);
   text-transform: uppercase;
   text-align: center;
 }
@@ -55199,7 +55211,7 @@ a.inverted.ui.card:hover,
 .ui.secondary.statistics .statistic > .value,
 .ui.statistics .secondary.statistic > .value,
 .ui.secondary.statistic > .value {
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 .ui.inverted.secondary.statistics .statistic > .value,
@@ -55211,7 +55223,7 @@ a.inverted.ui.card:hover,
 .ui.red.statistics .statistic > .value,
 .ui.statistics .red.statistic > .value,
 .ui.red.statistic > .value {
-  color: #DB2828;
+  color: var(--mainwp-red);
 }
 
 .ui.inverted.red.statistics .statistic > .value,
@@ -55259,7 +55271,7 @@ a.inverted.ui.card:hover,
 .ui.green.statistics .statistic > .value,
 .ui.statistics .green.statistic > .value,
 .ui.green.statistic > .value {
-  color: #21BA45;
+  color: var(--mainwp-green);
 }
 
 .ui.inverted.green.statistics .statistic > .value,
@@ -55355,7 +55367,7 @@ a.inverted.ui.card:hover,
 .ui.black.statistics .statistic > .value,
 .ui.statistics .black.statistic > .value,
 .ui.black.statistic > .value {
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 .ui.inverted.black.statistics .statistic > .value,
@@ -59432,7 +59444,7 @@ select.ui.dropdown {
 
 .ui.dropdown .inverted.menu,
 .ui.inverted.dropdown .menu {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
   -webkit-box-shadow: none;
   box-shadow: none;
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -59490,7 +59502,7 @@ select.ui.dropdown {
 
 .ui.inverted.selection.dropdown {
   border: 1px solid rgba(255, 255, 255, 0.15);
-  background: #1B1C1D;
+  background: var(--mainwp-black);
   color: rgba(255, 255, 255, 0.8);
 }
 
@@ -59621,7 +59633,7 @@ select.ui.dropdown {
 
 .ui.pointing.dropdown > .inverted.menu:after,
 .ui.inverted.pointing.dropdown > .menu:after {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
   -webkit-box-shadow: -1px -1px 0 0 rgba(255, 255, 255, 0.15);
   box-shadow: -1px -1px 0 0 rgba(255, 255, 255, 0.15);
 }
@@ -60920,7 +60932,7 @@ a.ui.nag {
 }
 
 .ui.secondary.nag {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 .ui.inverted.secondary.nag {
@@ -60928,7 +60940,7 @@ a.ui.nag {
 }
 
 .ui.red.nag {
-  background-color: #DB2828;
+  background-color: var(--mainwp-red);
 }
 
 .ui.inverted.red.nag {
@@ -60960,7 +60972,7 @@ a.ui.nag {
 }
 
 .ui.green.nag {
-  background-color: #21BA45;
+  background-color: var(--mainwp-green);
 }
 
 .ui.inverted.green.nag {
@@ -61024,7 +61036,7 @@ a.ui.nag {
 }
 
 .ui.black.nag {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -61325,13 +61337,13 @@ a.ui.nag {
 /* Arrow Position */
 
 [data-tooltip][data-inverted]:before {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
 }
 
 /* Popup  */
 
 [data-tooltip][data-inverted]:after {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
   color: #FFFFFF;
   border: none;
   -webkit-box-shadow: none;
@@ -61517,25 +61529,25 @@ a.ui.nag {
 /* Inverted Arrow Color */
 
 [data-inverted][data-position~="bottom"][data-tooltip]:before {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
   -webkit-box-shadow: -1px -1px 0 0 #bababc;
   box-shadow: -1px -1px 0 0 #bababc;
 }
 
 [data-inverted][data-position="left center"][data-tooltip]:before {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
   -webkit-box-shadow: 1px -1px 0 0 #bababc;
   box-shadow: 1px -1px 0 0 #bababc;
 }
 
 [data-inverted][data-position="right center"][data-tooltip]:before {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
   -webkit-box-shadow: -1px 1px 0 0 #bababc;
   box-shadow: -1px 1px 0 0 #bababc;
 }
 
 [data-inverted][data-position~="top"][data-tooltip]:before {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
 }
 
 [data-position~="bottom"][data-tooltip]:before {
@@ -61772,16 +61784,16 @@ a.ui.nag {
 /* Inverted Arrow Color */
 
 .ui.inverted.bottom.popup:before {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
 }
 
 .ui.inverted.right.center.popup:before,
 .ui.inverted.left.center.popup:before {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
 }
 
 .ui.inverted.top.popup:before {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
 }
 
 /*******************************
@@ -61881,7 +61893,7 @@ a.ui.nag {
 /* Inverted colors  */
 
 .ui.inverted.popup {
-  background: #1B1C1D;
+  background: var(--mainwp-black);
   color: #FFFFFF;
   border: none;
   -webkit-box-shadow: none;
@@ -61894,7 +61906,7 @@ a.ui.nag {
 }
 
 .ui.inverted.popup:before {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   -webkit-box-shadow: none !important;
   box-shadow: none !important;
 }
@@ -62268,7 +62280,7 @@ a.ui.nag {
 /* Indicating Success */
 
 .ui.ui.indicating.progress.success .label {
-  color: #1A531B;
+  color: var(--mainwp-green-dark);
 }
 
 /*******************************
@@ -62280,7 +62292,7 @@ a.ui.nag {
   ---------------*/
 
 .ui.ui.progress.success .bar {
-  background-color: #21BA45;
+  background-color: var(--mainwp-green);
 }
 
 .ui.ui.progress.success .bar,
@@ -62290,7 +62302,7 @@ a.ui.nag {
 }
 
 .ui.progress.success > .label {
-  color: #1A531B;
+  color: var(--mainwp-green-dark);
 }
 
 /*--------------
@@ -62316,7 +62328,7 @@ a.ui.nag {
   ---------------*/
 
 .ui.ui.progress.error .bar {
-  background-color: #DB2828;
+  background-color: var(--mainwp-red);
 }
 
 .ui.ui.progress.error .bar,
@@ -62419,7 +62431,7 @@ a.ui.nag {
 }
 
 .ui.inverted.progress .bar > .progress {
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 .ui.inverted.progress > .label {
@@ -62427,7 +62439,7 @@ a.ui.nag {
 }
 
 .ui.inverted.progress.success > .label {
-  color: #21BA45;
+  color: var(--mainwp-green);
 }
 
 .ui.inverted.progress.warning > .label {
@@ -62435,7 +62447,7 @@ a.ui.nag {
 }
 
 .ui.inverted.progress.error > .label {
-  color: #DB2828;
+  color: var(--mainwp-red);
 }
 
 /*--------------
@@ -62511,7 +62523,7 @@ a.ui.nag {
 .ui.indeterminate.secondary.progress .bar::before,
 .ui.secondary.progress .bar,
 .ui.progress .secondary.bar {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 .ui.inverted.indeterminate.secondary.progress .bar::before,
@@ -62523,7 +62535,7 @@ a.ui.nag {
 .ui.indeterminate.red.progress .bar::before,
 .ui.red.progress .bar,
 .ui.progress .red.bar {
-  background-color: #DB2828;
+  background-color: var(--mainwp-red);
 }
 
 .ui.inverted.indeterminate.red.progress .bar::before,
@@ -62571,7 +62583,7 @@ a.ui.nag {
 .ui.indeterminate.green.progress .bar::before,
 .ui.green.progress .bar,
 .ui.progress .green.bar {
-  background-color: #21BA45;
+  background-color: var(--mainwp-green);
 }
 
 .ui.inverted.indeterminate.green.progress .bar::before,
@@ -62667,7 +62679,7 @@ a.ui.nag {
 .ui.indeterminate.black.progress .bar::before,
 .ui.black.progress .bar,
 .ui.progress .black.bar {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 .ui.inverted.indeterminate.black.progress .bar::before,
@@ -62813,7 +62825,7 @@ a.ui.nag {
 
 .ui.sliding.indeterminate.progress .bar .progress,
 .ui.swinging.indeterminate.progress .bar .progress {
-  color: #1B1C1D;
+  color: var(--mainwp-black);
 }
 
 .ui.inverted.sliding.indeterminate.progress .bar,
@@ -63006,7 +63018,7 @@ a.ui.nag {
 .ui.slider .inner .track-fill {
   position: absolute;
   border-radius: 4px;
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 .ui.slider:not(.vertical) .inner .track-fill {
@@ -63288,7 +63300,7 @@ a.ui.nag {
 /* Standard */
 
 .ui.secondary.slider .inner .track-fill {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 .ui.secondary.inverted.slider .inner .track-fill {
@@ -63298,7 +63310,7 @@ a.ui.nag {
 /* Basic */
 
 .ui.secondary.slider.basic .inner .thumb {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 .ui.secondary.slider.basic .inner .thumb:hover,
@@ -63320,7 +63332,7 @@ a.ui.nag {
 /* Standard */
 
 .ui.red.slider .inner .track-fill {
-  background-color: #DB2828;
+  background-color: var(--mainwp-red);
 }
 
 .ui.red.inverted.slider .inner .track-fill {
@@ -63330,12 +63342,12 @@ a.ui.nag {
 /* Basic */
 
 .ui.red.slider.basic .inner .thumb {
-  background-color: #DB2828;
+  background-color: var(--mainwp-red);
 }
 
 .ui.red.slider.basic .inner .thumb:hover,
 .ui.red.slider.basic:focus .inner .thumb {
-  background-color: #d01919;
+  background-color: var(--mainwp-red-hover);
 }
 
 /* Basic Inverted */
@@ -63448,7 +63460,7 @@ a.ui.nag {
 /* Standard */
 
 .ui.green.slider .inner .track-fill {
-  background-color: #21BA45;
+  background-color: var(--mainwp-green);
 }
 
 .ui.green.inverted.slider .inner .track-fill {
@@ -63458,12 +63470,12 @@ a.ui.nag {
 /* Basic */
 
 .ui.green.slider.basic .inner .thumb {
-  background-color: #21BA45;
+  background-color: var(--mainwp-green);
 }
 
 .ui.green.slider.basic .inner .thumb:hover,
 .ui.green.slider.basic:focus .inner .thumb {
-  background-color: #16ab39;
+  background-color: var(--mainwp-green-hover);
 }
 
 /* Basic Inverted */
@@ -63704,7 +63716,7 @@ a.ui.nag {
 /* Standard */
 
 .ui.black.slider .inner .track-fill {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 .ui.black.inverted.slider .inner .track-fill {
@@ -63714,7 +63726,7 @@ a.ui.nag {
 /* Basic */
 
 .ui.black.slider.basic .inner .thumb {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 .ui.black.slider.basic .inner .thumb:hover,
@@ -63740,7 +63752,7 @@ a.ui.nag {
 /* Standard */
 
 .ui.slider.basic .inner .thumb {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 .ui.slider.basic .inner .thumb:hover,
@@ -64025,7 +64037,7 @@ a.ui.nag {
 
 .ui.secondary.rating .active.icon {
   color: #545454;
-  text-shadow: 0px -1px 0px #1B1C1D, -1px 0px 0px #1B1C1D, 0px 1px 0px #1B1C1D, 1px 0px 0px #1B1C1D;
+  text-shadow: 0px -1px 0px var(--mainwp-black), -1px 0px 0px var(--mainwp-black), 0px 1px 0px var(--mainwp-black), 1px 0px 0px var(--mainwp-black);
 }
 
 .ui.secondary.rating .icon.selected,
@@ -64043,14 +64055,14 @@ a.ui.nag {
   background: -webkit-linear-gradient(left, #545454 0% var(--full), rgba(0, 0, 0, 0.15) var(--full) 100%);
   background: linear-gradient(to right, #545454 0% var(--full), rgba(0, 0, 0, 0.15) var(--full) 100%);
   text-shadow: none;
-  -webkit-text-stroke: #1B1C1D 0.78px;
+  -webkit-text-stroke: var(--mainwp-black) 0.78px;
   background-clip: text;
   color: transparent;
 }
 
 .ui.red.rating .active.icon {
   color: #FF695E;
-  text-shadow: 0px -1px 0px #DB2828, -1px 0px 0px #DB2828, 0px 1px 0px #DB2828, 1px 0px 0px #DB2828;
+  text-shadow: 0px -1px 0px var(--mainwp-red), -1px 0px 0px var(--mainwp-red), 0px 1px 0px var(--mainwp-red), 1px 0px 0px var(--mainwp-red);
 }
 
 .ui.red.rating .icon.selected,
@@ -64058,7 +64070,7 @@ a.ui.nag {
 .ui.red.rating .icon.selected.partial.active {
   background: inherit;
   color: #ff392b;
-  text-shadow: 0px -1px 0px #d01919, -1px 0px 0px #d01919, 0px 1px 0px #d01919, 1px 0px 0px #d01919;
+  text-shadow: 0px -1px 0px var(--mainwp-red-hover), -1px 0px 0px var(--mainwp-red-hover), 0px 1px 0px var(--mainwp-red-hover), 1px 0px 0px var(--mainwp-red-hover);
   -webkit-text-stroke: unset;
   background-clip: unset;
 }
@@ -64068,7 +64080,7 @@ a.ui.nag {
   background: -webkit-linear-gradient(left, #FF695E 0% var(--full), rgba(0, 0, 0, 0.15) var(--full) 100%);
   background: linear-gradient(to right, #FF695E 0% var(--full), rgba(0, 0, 0, 0.15) var(--full) 100%);
   text-shadow: none;
-  -webkit-text-stroke: #DB2828 0.78px;
+  -webkit-text-stroke: var(--mainwp-red) 0.78px;
   background-clip: text;
   color: transparent;
 }
@@ -64150,7 +64162,7 @@ a.ui.nag {
 
 .ui.green.rating .active.icon {
   color: #2ECC40;
-  text-shadow: 0px -1px 0px #21BA45, -1px 0px 0px #21BA45, 0px 1px 0px #21BA45, 1px 0px 0px #21BA45;
+  text-shadow: 0px -1px 0px var(--mainwp-green), -1px 0px 0px var(--mainwp-green), 0px 1px 0px var(--mainwp-green), 1px 0px 0px var(--mainwp-green);
 }
 
 .ui.green.rating .icon.selected,
@@ -64158,7 +64170,7 @@ a.ui.nag {
 .ui.green.rating .icon.selected.partial.active {
   background: inherit;
   color: #1ea92e;
-  text-shadow: 0px -1px 0px #16ab39, -1px 0px 0px #16ab39, 0px 1px 0px #16ab39, 1px 0px 0px #16ab39;
+  text-shadow: 0px -1px 0px var(--mainwp-green-hover), -1px 0px 0px var(--mainwp-green-hover), 0px 1px 0px var(--mainwp-green-hover), 1px 0px 0px var(--mainwp-green-hover);
   -webkit-text-stroke: unset;
   background-clip: unset;
 }
@@ -64168,7 +64180,7 @@ a.ui.nag {
   background: -webkit-linear-gradient(left, #2ECC40 0% var(--full), rgba(0, 0, 0, 0.15) var(--full) 100%);
   background: linear-gradient(to right, #2ECC40 0% var(--full), rgba(0, 0, 0, 0.15) var(--full) 100%);
   text-shadow: none;
-  -webkit-text-stroke: #21BA45 0.78px;
+  -webkit-text-stroke: var(--mainwp-green) 0.78px;
   background-clip: text;
   color: transparent;
 }
@@ -64350,7 +64362,7 @@ a.ui.nag {
 
 .ui.black.rating .active.icon {
   color: #545454;
-  text-shadow: 0px -1px 0px #1B1C1D, -1px 0px 0px #1B1C1D, 0px 1px 0px #1B1C1D, 1px 0px 0px #1B1C1D;
+  text-shadow: 0px -1px 0px var(--mainwp-black), -1px 0px 0px var(--mainwp-black), 0px 1px 0px var(--mainwp-black), 1px 0px 0px var(--mainwp-black);
 }
 
 .ui.black.rating .icon.selected,
@@ -64368,7 +64380,7 @@ a.ui.nag {
   background: -webkit-linear-gradient(left, #545454 0% var(--full), rgba(0, 0, 0, 0.15) var(--full) 100%);
   background: linear-gradient(to right, #545454 0% var(--full), rgba(0, 0, 0, 0.15) var(--full) 100%);
   text-shadow: none;
-  -webkit-text-stroke: #1B1C1D 0.78px;
+  -webkit-text-stroke: var(--mainwp-black) 0.78px;
   background-clip: text;
   color: transparent;
 }
@@ -64590,7 +64602,7 @@ a.ui.nag {
 
 .ui.search > .results .result .price {
   float: right;
-  color: #21BA45;
+  color: var(--mainwp-green);
 }
 
 /*--------------
@@ -64764,7 +64776,7 @@ a.ui.nag {
 
 .ui.search.selection > .icon.input > .remove.icon:hover {
   opacity: 1;
-  color: #DB2828;
+  color: var(--mainwp-red);
 }
 
 /*--------------
@@ -66566,12 +66578,12 @@ body.pushable > .pusher {
 }
 
 .ui.toast.success {
-  background-color: #21BA45;
+  background-color: var(--mainwp-green);
   color: rgba(255, 255, 255, 0.9);
 }
 
 .ui.toast.error {
-  background-color: #DB2828;
+  background-color: var(--mainwp-red);
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -66735,7 +66747,7 @@ body.pushable > .pusher {
 }
 
 .ui.secondary.toast {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -66746,7 +66758,7 @@ body.pushable > .pusher {
 }
 
 .ui.red.toast {
-  background-color: #DB2828;
+  background-color: var(--mainwp-red);
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -66790,7 +66802,7 @@ body.pushable > .pusher {
 }
 
 .ui.green.toast {
-  background-color: #21BA45;
+  background-color: var(--mainwp-green);
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -66878,7 +66890,7 @@ body.pushable > .pusher {
 }
 
 .ui.black.toast {
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -66890,7 +66902,7 @@ body.pushable > .pusher {
 
 .ui.inverted.toast {
   color: rgba(255, 255, 255, 0.9);
-  background-color: #1B1C1D;
+  background-color: var(--mainwp-black);
 }
 
 @media only screen and (max-width: 420px) {

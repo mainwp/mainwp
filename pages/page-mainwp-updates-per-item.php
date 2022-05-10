@@ -50,15 +50,15 @@ class MainWP_Updates_Per_Item {
 	 */
 	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
 		?>
-		<table class="ui stackable single line table main-master-checkbox" id="mainwp-plugins-updates-table">
+		<table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-plugins-updates-table">
 			<thead>
 				<tr>
 					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
 					<th class="indicator-accordion-sorting handle-accordion-sorting">
 					<div class="ui main-master checkbox ">
-						<input type="checkbox" name="">
+						<input type="checkbox" name=""><label><?php esc_html_e( 'Plugin', 'mainwp' ); ?></label>
 					</div>
-					<?php esc_html_e( 'Plugin', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?>
+					<?php MainWP_UI::render_sorting_icons(); ?>
 					</th>
 					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php echo $total_plugin_upgrades . ' ' . _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Trusted', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
@@ -117,9 +117,9 @@ class MainWP_Updates_Per_Item {
 							<?php endif; ?>
 						</td>
 					</tr>
-					<tr style="display:none" class="plugins-bulk-updates child-checkbox" plugin_slug="<?php echo $plugin_name; ?>" plugin_name="<?php echo rawurlencode( $pluginsInfo[ $slug ]['name'] ); ?>" premium="<?php echo $pluginsInfo[ $slug ]['premium'] ? 1 : 0; ?>">
-						<td colspan="5" class="ui content">
-							<table id="mainwp-plugins-updates-sites-inner-table" class="ui stackable single line table">
+					<tr class="plugins-bulk-updates child-checkbox content" plugin_slug="<?php echo $plugin_name; ?>" plugin_name="<?php echo rawurlencode( $pluginsInfo[ $slug ]['name'] ); ?>" premium="<?php echo $pluginsInfo[ $slug ]['premium'] ? 1 : 0; ?>">
+						<td colspan="5">
+							<table id="mainwp-plugins-updates-sites-inner-table" class="ui mainwp-manage-updates-table table">
 								<thead>
 									<tr>
 									<?php $updates_table_helper->print_column_headers(); ?>										
@@ -236,15 +236,15 @@ class MainWP_Updates_Per_Item {
 	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
 		$updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view, 'theme' );
 		?>
-		<table class="ui stackable single line table main-master-checkbox" id="mainwp-themes-updates-table">
+		<table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-themes-updates-table">
 			<thead>
 				<tr>
 					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
 					<th class="handle-accordion-sorting indicator-accordion-sorting">
 						<div class="ui main-master checkbox ">
-							<input type="checkbox" name="">
+							<input type="checkbox" name=""><label><?php esc_html_e( 'Theme', 'mainwp' ); ?></label>
 						</div>
-						<?php esc_html_e( 'Theme', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?>
+						<?php MainWP_UI::render_sorting_icons(); ?>
 					</th>
 					<th class="handle-accordion-sorting indicator-accordion-sorting"><?php echo $total_theme_upgrades . ' ' . _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 					<th class="handle-accordion-sorting indicator-accordion-sorting"><?php esc_html_e( 'Trusted', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
@@ -275,9 +275,8 @@ class MainWP_Updates_Per_Item {
 						<td class="accordion-trigger"><i class="icon dropdown"></i></td>
 						<td>
 						<div class="ui master checkbox">
-							<input type="checkbox" name="">
+							<input type="checkbox" name=""><label><?php echo esc_html( $themesInfo[ $slug ]['name'] ); ?></label>
 						</div>
-						<?php echo esc_html( $themesInfo[ $slug ]['name'] ); ?>
 						</td>
 						<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Update', 'Updates', $cnt, 'mainwp' ); ?></td>
 						<td sort-value="<?php echo $trusted; ?>"><?php echo ( $trusted ? '<span class="ui tiny green label">Trusted</span>' : '<span class="ui tiny grey label">Not Trusted</span>' ); ?></td>
@@ -298,9 +297,9 @@ class MainWP_Updates_Per_Item {
 							<?php endif; ?>
 						</td>
 					</tr>
-					<tr style="display:none" class="themes-bulk-updates child-checkbox"  theme_slug="<?php echo $theme_name; ?>" theme_name="<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>" premium="<?php echo $themesInfo[ $slug ]['premium'] ? 1 : 0; ?>">
-						<td colspan="5" class="ui content">
-							<table id="mainwp-themes-updates-sites-inner-table" class="ui stackable single line table mainwp-updates-list">
+					<tr class="themes-bulk-updates child-checkbox content"  theme_slug="<?php echo $theme_name; ?>" theme_name="<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>" premium="<?php echo $themesInfo[ $slug ]['premium'] ? 1 : 0; ?>">
+						<td colspan="5">
+							<table id="mainwp-themes-updates-sites-inner-table" class="ui table mainwp-manage-updates-table mainwp-updates-list">
 								<thead>
 									<tr>
 									<?php $updates_table_helper->print_column_headers(); ?>
@@ -407,15 +406,15 @@ class MainWP_Updates_Per_Item {
 	 */
 	public static function render_trans_update( $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ) {
 		?>
-		<table class="ui stackable single line table main-master-checkbox" id="mainwp-translations-sites-table">
+		<table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-translations-sites-table">
 			<thead>
 				<tr>
 					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
 					<th class="indicator-accordion-sorting handle-accordion-sorting">
 					<div class="ui main-master checkbox ">
-						<input type="checkbox" name="">
+						<input type="checkbox" name=""><label><?php esc_html_e( 'Translation', 'mainwp' ); ?></label>
 					</div>
-					<?php esc_html_e( 'Translation', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?>
+					<?php MainWP_UI::render_sorting_icons(); ?>
 					</th>
 					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 					<th class="right aligned">
@@ -436,9 +435,8 @@ class MainWP_Updates_Per_Item {
 						<td class="accordion-trigger"><i class="dropdown icon"></i></td>
 						<td>
 						<div class="ui master checkbox">
-							<input type="checkbox" name="">
+							<input type="checkbox" name=""><label><?php echo esc_html( $translationsInfo[ $slug ]['name'] ); ?></label>
 						</div>
-						<?php echo esc_html( $translationsInfo[ $slug ]['name'] ); ?>
 						</td>
 						<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Update', 'Updates', $cnt, 'mainwp' ); ?></td>
 						<td class="right aligned">
@@ -454,9 +452,9 @@ class MainWP_Updates_Per_Item {
 						<?php endif; ?>
 						</td>
 					</tr>
-					<tr style="display:none"  class="child-checkbox">
-						<td colspan="4" class="content">
-							<table class="ui stackable single line table" id="mainwp-translations-sites-table">
+					<tr class="child-checkbox content">
+						<td colspan="4">
+							<table class="ui table mainwp-manage-updates-table" id="mainwp-translations-sites-table">
 								<thead>
 									<tr>
 										<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
@@ -515,9 +513,9 @@ class MainWP_Updates_Per_Item {
 					<th class="collapsing no-sort"></th>
 					<th>
 					<div class="ui main-master checkbox ">
-						<input type="checkbox" name="">
+						<input type="checkbox" name=""><label><?php esc_html_e( 'Translation', 'mainwp' ); ?></label>
 					</div>
-					<?php esc_html_e( 'Translation', 'mainwp' ); ?>
+
 					</th>
 					<th><?php esc_html_e( 'Updates', 'mainwp' ); ?></th>
 					<th class="right aligned"></th>
@@ -549,7 +547,7 @@ class MainWP_Updates_Per_Item {
 	public static function render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins ) {
 		$str_format = __( 'Updated %s days ago', 'mainwp' );
 		?>
-		<table class="ui stackable single line table" id="mainwp-abandoned-plugins-items-table">
+		<table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-abandoned-plugins-items-table">
 			<thead>
 				<tr>
 					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
@@ -576,9 +574,9 @@ class MainWP_Updates_Per_Item {
 						<?php } ?>
 					</td>
 				</tr>
-				<tr style="display:none">
-					<td colspan="4" class="content">
-						<table class="ui stackable single line table" id="mainwp-abandoned-plugins-sites-table">
+				<tr class="content">
+					<td colspan="4">
+						<table class="ui table mainwp-manage-updates-table" id="mainwp-abandoned-plugins-sites-table">
 							<thead>
 								<tr>
 									<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
@@ -671,7 +669,7 @@ class MainWP_Updates_Per_Item {
 	public static function render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes ) {
 		$str_format = __( 'Updated %s days ago', 'mainwp' );
 		?>
-		<table class="ui stackable single line table" id="mainwp-themes-updates-table">
+		<table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-themes-updates-table">
 			<thead>
 				<tr>
 					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
@@ -698,9 +696,9 @@ class MainWP_Updates_Per_Item {
 						<?php } ?>
 					</td>
 				</tr>
-				<tr style="display:none">
-					<td colspan="4" class="content">
-						<table class="ui stackable single line table" id="mainwp-abandoned-themes-sites-table">
+				<tr class="content">
+					<td colspan="4">
+						<table class="ui table mainwp-manage-updates-item-table" id="mainwp-abandoned-themes-sites-table">
 							<thead>
 								<tr>
 									<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>

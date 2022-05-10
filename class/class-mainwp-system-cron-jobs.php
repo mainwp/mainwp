@@ -263,41 +263,27 @@ class MainWP_System_Cron_Jobs {
 			$frequencyDailyUpdate = 1;
 		}
 
-		$next_time = 0;
+		$lasttimeScheduleStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_schedule_timestamp' );
 
-		if ( $frequencyDailyUpdate > 1 ) { // check this if frequency > 1 only.
-			$lasttimeStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_timestamp' );
+		$next_time = $run_timestamp;
 
-			$frequence_period_in_seconds = ( $today_end - $run_timestamp ) / $frequencyDailyUpdate; // new way to set run frequency.
-			if ( $frequence_period_in_seconds < HOUR_IN_SECONDS ) {
-				$frequence_period_in_seconds = HOUR_IN_SECONDS;
-			}
-
-			if ( $local_timestamp > $run_timestamp ) {
-				$frequence_now = floor( ( $local_timestamp - $run_timestamp ) / $frequence_period_in_seconds );
-			} else {
-				$frequence_now = 0;
-			}
-
-			$frequence_today_count = get_option( 'mainwp_updatescheck_frequency_today_count' );
-			if ( $lasttimeStartAutomaticUpdate < $today_0h ) {
-				if ( $local_timestamp > $run_timestamp ) {
-					$next_time = $local_timestamp; // Any minute.
+		if ( 1 >= $frequencyDailyUpdate ) {
+			$frequence_period_in_seconds = $today_end - $run_timestamp;
+			if ( $local_timestamp > $next_time ) {
+				if ( $next_time > $lasttimeScheduleStartAutomaticUpdate + $frequence_period_in_seconds - 5 * MINUTE_IN_SECONDS ) {
+					$next_time = $local_timestamp; // any minute.
 				} else {
-					$next_time = $run_timestamp;
-				}
-			} elseif ( ( $local_timestamp > $today_0h + $frequence_period_in_seconds * ( $frequence_today_count + 1 ) ) || ( $local_timestamp > $lasttimeStartAutomaticUpdate + $frequence_period_in_seconds ) ) {
-				$next_time = $local_timestamp; // Any minute.
-			} else { // frequence_now <= frequence_today_count.
-				$next_time = $run_timestamp + $frequence_period_in_seconds * ( $frequence_now + 1 ); // calculate nex time.
-				if ( $next_time > $today_end + 30 * MINUTE_IN_SECONDS ) {
-					$next_time = $run_timestamp + DAY_IN_SECONDS; // Ok, for next_time jump to next day.
+					$next_time = $run_timestamp + DAY_IN_SECONDS; // run next day.
 				}
 			}
-		}
-
-		if ( empty( $next_time ) ) {
-			$next_time = $today_end + 1;
+		} else { // check this if frequency > 1 only.
+			$frequence_period_in_seconds = ( $today_end - $run_timestamp ) / ( $frequencyDailyUpdate - 1 ); // new way to set run frequency.
+			while ( $next_time < $lasttimeScheduleStartAutomaticUpdate + $frequence_period_in_seconds - 5 * MINUTE_IN_SECONDS ) { // to fix.
+				$next_time += $frequence_period_in_seconds;
+			}
+			if ( $next_time > $today_end ) {
+				$next_time = $run_timestamp + DAY_IN_SECONDS; // next day run_timestamp.
+			}
 		}
 
 		return $next_time;
@@ -364,26 +350,16 @@ class MainWP_System_Cron_Jobs {
 			$frequencyDailyUpdate = 1;
 		}
 
-		$frequence_period_in_seconds = DAY_IN_SECONDS / $frequencyDailyUpdate;
-
-		$frequence_now = 0;
-		if ( 1 < $frequencyDailyUpdate ) {
-			$frequence_period_in_seconds = ( $today_end - $run_timestamp ) / $frequencyDailyUpdate; // new way to set run frequency.
-			if ( $frequence_period_in_seconds < HOUR_IN_SECONDS ) {
-				$frequence_period_in_seconds = HOUR_IN_SECONDS;
-			}
-			if ( $local_timestamp > $run_timestamp ) {
-				$frequence_now = floor( ( $local_timestamp - $run_timestamp ) / $frequence_period_in_seconds );
-			}
-		}
+		$today_count = get_option( 'mainwp_updatescheck_today_count' );
 
 		$today_m_y = date( 'd/m/Y', $local_timestamp ); //phpcs:ignore -- local time.
 
-		$lasttimeAutomaticUpdate      = get_option( 'mainwp_updatescheck_last_timestamp' );
-		$lasttimeStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_timestamp' );
-		$mainwpLastAutomaticUpdate    = get_option( 'mainwp_updatescheck_last' );
-		$lasttimeDailyDigest          = get_option( 'mainwp_updatescheck_dailydigest_last_timestamp' );
-		$mainwpLastDailydigest        = get_option( 'mainwp_dailydigest_last' );
+		$lasttimeAutomaticUpdate              = get_option( 'mainwp_updatescheck_last_timestamp' );
+		$lasttimeStartAutomaticUpdate         = get_option( 'mainwp_updatescheck_start_last_timestamp' );
+		$lasttimeScheduleStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_schedule_timestamp' );
+		$mainwpLastAutomaticUpdate            = get_option( 'mainwp_updatescheck_last' );
+		$lasttimeDailyDigest                  = get_option( 'mainwp_updatescheck_dailydigest_last_timestamp' );
+		$mainwpLastDailydigest                = get_option( 'mainwp_dailydigest_last' );
 
 		/**
 		 * Filter: mainwp_updatescheck_sendmail_at_time
@@ -465,36 +441,44 @@ class MainWP_System_Cron_Jobs {
 			$this->refresh_saved_fields();
 		}
 
-		$run_synctime = null;
-		if ( ! empty( $timeDailyUpdate ) ) {
-			$run_synctime = false;
-			if ( $local_timestamp > $run_timestamp && $lasttimeStartAutomaticUpdate < $run_timestamp ) {
-				$run_synctime = true; // it is time to run or worked.
-			} elseif ( $local_timestamp > $lasttimeStartAutomaticUpdate + $frequence_period_in_seconds ) {
-				$run_synctime = true;
-			}
+		$next_time = $run_timestamp;
 
-			if ( ! $updatecheck_running && ! $run_synctime ) {
-				MainWP_Logger::instance()->info( 'CRON :: updates check :: wait sync time' );
-				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: wait sync time :: ' . date( 'Y-m-d H:i:s', $run_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER ); //phpcs:ignore -- local time.
-				// sync time is false.
-				return;
-			}
-		}
-
-		$frequence_today_count = get_option( 'mainwp_updatescheck_frequency_today_count' );
-
-		$run_frequency = null;
+		$check_to_run = false;
 		if ( $frequencyDailyUpdate > 1 ) { // check this if frequency > 1 only.
-			$run_frequency = false;
-			if ( ( $local_timestamp > $today_0h + $frequence_period_in_seconds * ( $frequence_today_count + 1 ) ) || ( $local_timestamp > $lasttimeStartAutomaticUpdate + $frequence_period_in_seconds ) ) {
-				$run_frequency = true;
+
+			$frequence_period_in_seconds = ( $today_end - $run_timestamp ) / ( $frequencyDailyUpdate - 1 ); // new way to set run frequency.
+			if ( $frequence_period_in_seconds < HOUR_IN_SECONDS ) {
+				$frequence_period_in_seconds = HOUR_IN_SECONDS;
 			}
 
-			if ( ! $run_frequency ) {
-				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: wait frequency today :: ' . $frequence_now . ' / ' . $frequencyDailyUpdate . ' :: ' . date( 'Y-m-d H:i:s', $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER ); //phpcs:ignore -- local time.
+			while ( $next_time < $lasttimeScheduleStartAutomaticUpdate + $frequence_period_in_seconds - 5 * MINUTE_IN_SECONDS ) { // to fix.
+				$next_time += $frequence_period_in_seconds;
+			}
+
+			if ( $local_timestamp >= $next_time ) {
+				$check_to_run = true;
 			} else {
-				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: running frequency now :: ' . $frequence_now . ' :: ' . date( 'Y-m-d H:i:s', $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER ); //phpcs:ignore -- local time.
+				$last_run_timestamp_today = get_option( 'mainwp_updatescheck_last_run_timestamp_today', false ); // to fix.
+				if ( $local_timestamp > $last_run_timestamp_today && ( ( $today_count + 1 ) == $frequencyDailyUpdate ) ) {
+					$check_to_run = true;
+				}
+			}
+
+			if ( ! $check_to_run ) {
+				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: wait frequency today :: ' . date( 'Y-m-d H:i:s', $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER ); //phpcs:ignore -- local time.
+			} else {
+				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: running frequency now :: ' . date( 'Y-m-d H:i:s', $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER ); //phpcs:ignore -- local time.
+			}
+		} elseif ( $next_time < $local_timestamp ) {
+			$frequence_period_in_seconds = $today_end - $run_timestamp;
+			if ( $next_time > $lasttimeScheduleStartAutomaticUpdate + $frequence_period_in_seconds - 5 * MINUTE_IN_SECONDS ) {
+				$next_time = $local_timestamp; // any minute.
+			} else {
+				$next_time = $run_timestamp + DAY_IN_SECONDS; // next day run_timestamp.
+			}
+
+			if ( $local_timestamp >= $next_time ) {
+				$check_to_run = true;
 			}
 		}
 
@@ -510,13 +494,13 @@ class MainWP_System_Cron_Jobs {
 		 *
 		 * @since 3.4
 		 */
-		$mainwpHoursIntervalAutomaticUpdate = apply_filters( 'mainwp_updatescheck_hours_interval', false );
+		$hoursIntervalAutomaticUpdate = apply_filters( 'mainwp_updatescheck_hours_interval', false );
 
 		if ( ! $updatecheck_running ) {
 			$run_hours_interval = null;
-			if ( $mainwpHoursIntervalAutomaticUpdate > 0 ) {
+			if ( $hoursIntervalAutomaticUpdate > 0 ) {
 				$run_hours_interval = false;
-				if ( $lasttimeAutomaticUpdate && ( $lasttimeAutomaticUpdate + $mainwpHoursIntervalAutomaticUpdate * 3600 > $local_timestamp ) ) {
+				if ( $lasttimeAutomaticUpdate && ( $lasttimeAutomaticUpdate + $hoursIntervalAutomaticUpdate * 3600 > $local_timestamp ) ) {
 					MainWP_Logger::instance()->debug( 'CRON :: updates check :: already updated hours interval' );
 					MainWP_Logger::instance()->log_action( 'CRON :: updates check :: already updated hours interval', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 					return;
@@ -528,9 +512,7 @@ class MainWP_System_Cron_Jobs {
 			$run_valid = false;
 			if ( $run_hours_interval ) {
 				$run_valid = true;
-			} elseif ( ( null === $run_synctime || $run_synctime ) && $run_frequency ) { // if not set sync time, and run frequency.
-				$run_valid = true;
-			} elseif ( ( null === $run_synctime || $run_synctime ) && $today_m_y != $mainwpLastAutomaticUpdate ) { // if sync time or not set sync time, and other day, to fix.
+			} elseif ( null === $run_hours_interval && $check_to_run ) { // if not set sync time, and run frequency.
 				$run_valid = true;
 			}
 
@@ -542,8 +524,46 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		if ( ! $updatecheck_running ) {
-			$lasttimeStartAutomaticUpdate = $local_timestamp;
 			MainWP_Utility::update_option( 'mainwp_updatescheck_start_last_timestamp', $local_timestamp ); // start new update checking.
+
+			while ( $lasttimeScheduleStartAutomaticUpdate < $local_timestamp ) {
+				$lasttimeScheduleStartAutomaticUpdate += $frequence_period_in_seconds;
+			}
+
+			if ( $lasttimeScheduleStartAutomaticUpdate > $local_timestamp - HOUR_IN_SECONDS ) {
+				$lasttimeScheduleStartAutomaticUpdate -= $frequence_period_in_seconds; // to fix logging schedule start time.
+			}
+
+			MainWP_Utility::update_option( 'mainwp_updatescheck_start_last_schedule_timestamp', $lasttimeScheduleStartAutomaticUpdate ); // start new update checking.
+
+			// log last run.
+			$last_run = get_option( 'mainwp_updatescheck_last_run' );
+			if ( $last_run ) {
+				$last_run = json_decode( $last_run );
+			}
+			if ( ! is_array( $last_run ) ) {
+				$last_run = array();
+			}
+
+			if ( count( $last_run ) > 10 ) {
+				array_shift( $last_run );
+			}
+
+			$last_run[] = date( 'Y-m-d H:i:s', $local_timestamp );
+
+			MainWP_Utility::update_option( 'mainwp_updatescheck_last_run', wp_json_encode( $last_run ) );
+
+			if ( $local_timestamp > $run_timestamp && $local_timestamp < $run_timestamp + $frequence_period_in_seconds ) {
+				$today_count = 1; // first run of today.
+				if ( $frequencyDailyUpdate > 1 ) {
+					$last_run_timestamp_today = $run_timestamp + $frequence_period_in_seconds * ( $frequencyDailyUpdate - 1 );
+					MainWP_Utility::update_option( 'mainwp_updatescheck_last_run_timestamp_today', $last_run_timestamp_today );
+				}
+			} elseif ( $today_count < $frequencyDailyUpdate ) {
+				$today_count += 1;
+			}
+			MainWP_Utility::update_option( 'mainwp_updatescheck_today_count', $today_count );
+
 			$this->refresh_saved_fields();
 		}
 
@@ -610,7 +630,6 @@ class MainWP_System_Cron_Jobs {
 			}
 
 			update_option( 'mainwp_last_synced_all_sites', time() );
-			MainWP_Utility::update_option( 'mainwp_updatescheck_frequency_today_count', $frequence_now + 1 );
 			MainWP_Utility::update_option( 'mainwp_updatescheck_last_timestamp', $local_timestamp );
 
 			MainWP_Utility::update_option( 'mainwp_updatescheck_last', $today_m_y );

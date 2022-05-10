@@ -297,12 +297,12 @@ class MainWP_Manage_Sites_Update_View {
 		$user_can_update_wp = mainwp_current_user_have_right( 'dashboard', 'update_wordpress' );
 		?>
 		<div class="ui <?php echo 'WordPress' === $active_tab ? 'active' : ''; ?> tab" data-tab="wordpress">
-				<table class="ui stackable single line table" id="mainwp-wordpress-updates-table">
+			<table class="ui tablet stackable table" id="mainwp-wordpress-updates-table mainwp-manage-updates-table">
 					<thead>
 						<tr>
 							<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
 							<th><?php esc_html_e( 'New Version', 'mainwp' ); ?></th>
-							<th class="right aligned"></th>
+						<th></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -320,7 +320,7 @@ class MainWP_Manage_Sites_Update_View {
 									<?php echo esc_html( $wp_upgrades['new'] ); ?>
 								<?php endif; ?>
 							</td>
-							<td class="right aligned">
+						<td>
 								<?php if ( $user_can_update_wp ) : ?>
 									<?php if ( 0 < count( $wp_upgrades ) ) : ?>
 										<a href="#" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . $website->name; ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
@@ -336,7 +336,7 @@ class MainWP_Manage_Sites_Update_View {
 						<tr>
 							<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
 							<th><?php esc_html_e( 'New Version', 'mainwp' ); ?></th>
-							<th class="right aligned"></th>
+						<th></th>
 						</tr>
 					</thead>
 				</table>
@@ -402,7 +402,7 @@ class MainWP_Manage_Sites_Update_View {
 				$updates_table_helper = new MainWP_Updates_Table_Helper( MAINWP_VIEW_PER_SITE );
 
 				?>
-				<table id="mainwp-updates-plugins-table" class="ui stackable single line table mainwp-updates-list">
+				<table id="mainwp-updates-plugins-table" class="ui tablet stackable table mainwp-updates-list mainwp-manage-updates-table">
 					<thead>
 						<tr>
 						<?php $updates_table_helper->print_column_headers(); ?>						
@@ -427,7 +427,7 @@ class MainWP_Manage_Sites_Update_View {
 							$action_rendered = isset( $row_columns['action'] ) ? true : false;
 							if ( ! $action_rendered ) :
 								?>
-							<td class="right aligned">
+							<td>
 								<?php if ( $user_can_ignore_unignore ) : ?>
 									<a href="#" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 								<?php endif; ?>
@@ -510,7 +510,7 @@ class MainWP_Manage_Sites_Update_View {
 				$updates_table_helper = new MainWP_Updates_Table_Helper( MAINWP_VIEW_PER_SITE, 'theme' );
 
 				?>
-				<table id="mainwp-updates-themes-table" class="ui stackable single line table mainwp-updates-list">
+				<table id="mainwp-updates-themes-table" class="ui tablet stackable table mainwp-updates-list mainwp-manage-updates-table">
 					<thead>
 						<tr>
 						<?php $updates_table_helper->print_column_headers(); ?>
@@ -535,7 +535,7 @@ class MainWP_Manage_Sites_Update_View {
 								$action_rendered = isset( $row_columns['action'] ) ? true : false;
 								if ( ! $action_rendered ) :
 									?>
-								<td class="right aligned">
+								<td>
 									<?php if ( $user_can_ignore_unignore ) : ?>
 										<a href="#" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 									<?php endif; ?>
@@ -570,7 +570,7 @@ class MainWP_Manage_Sites_Update_View {
 		$user_can_update_translation = mainwp_current_user_have_right( 'dashboard', 'update_translations' );
 		?>
 		<div class="ui <?php echo 'trans' === $active_tab ? 'active' : ''; ?> tab" data-tab="translations">
-			<table class="ui stackable single line table" id="mainwp-translations-table">
+			<table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-translations-table">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'Translation', 'mainwp' ); ?></th>
@@ -593,7 +593,7 @@ class MainWP_Manage_Sites_Update_View {
 						<td>
 							<?php echo esc_html( $translation_upgrade['version'] ); ?>
 						</td>
-						<td class="right aligned">
+						<td>
 							<?php if ( $user_can_update_translation ) { ?>
 								<a href="#" class="ui green mini button" onClick="return updatesoverview_upgrade_translation( <?php echo esc_attr( $website->id ); ?>, '<?php echo $translation_slug; ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 							<?php } ?>
@@ -645,7 +645,7 @@ class MainWP_Manage_Sites_Update_View {
 		?>
 
 		<div class="ui <?php echo 'abandoned-plugins' === $active_tab ? 'active' : ''; ?> tab" data-tab="abandoned-plugins">
-			<table class="ui stackable single line table" id="mainwp-abandoned-plugins-table">
+			<table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-abandoned-plugins-table">
 				<thead>
 					<tr>
 						<tr>
@@ -673,7 +673,7 @@ class MainWP_Manage_Sites_Update_View {
 							</td>
 							<td><?php echo esc_html( $plugin_outdate['Version'] ); ?></td>
 							<td><?php echo $outdate_notice; ?></td>
-							<td class="right aligned" id="wp_dismissbuttons_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>">
+							<td id="wp_dismissbuttons_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>">
 								<?php if ( $user_can_ignore_unignore ) { ?>
 								<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
 							<?php } ?>
@@ -730,7 +730,7 @@ class MainWP_Manage_Sites_Update_View {
 
 		?>
 		<div class="ui <?php echo 'abandoned-themes' === $active_tab ? 'active' : ''; ?> tab" data-tab="abandoned-themes">
-			<table class="ui stackable single line table" id="mainwp-abandoned-themes-table">
+			<table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-abandoned-themes-table">
 				<thead>
 					<tr>
 						<tr>
@@ -758,7 +758,7 @@ class MainWP_Manage_Sites_Update_View {
 							</td>
 							<td><?php echo esc_html( $theme_outdate['Version'] ); ?></td>
 							<td><?php echo $outdate_notice; ?></td>
-							<td class="right aligned" id="wp_dismissbuttons_theme_<?php echo esc_attr( $website->id ); ?>_<?php echo $theme_name; ?>">
+							<td id="wp_dismissbuttons_theme_<?php echo esc_attr( $website->id ); ?>_<?php echo $theme_name; ?>">
 								<?php if ( $user_can_ignore_unignore ) { ?>
 								<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_dismiss_outdate_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
 								<?php } ?>

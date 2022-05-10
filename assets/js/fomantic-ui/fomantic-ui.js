@@ -12352,7 +12352,7 @@ $.fn.modal = function(parameters) {
               $module
                   .off('mousedown' + elementEventNamespace)
               ;
-            }           
+            }
             $dimmer
               .off('mousedown' + elementEventNamespace)
             ;
@@ -12625,7 +12625,7 @@ $.fn.modal = function(parameters) {
                       ? $(document).scrollTop() + settings.padding
                       : $(document).scrollTop() + (module.cache.contextHeight - module.cache.height - settings.padding),
                   marginLeft: -(module.cache.width / 2)
-                }) 
+                })
               ;
             } else {
               $module
@@ -12634,7 +12634,7 @@ $.fn.modal = function(parameters) {
                     ? -(module.cache.height / 2)
                     : settings.padding / 2,
                   marginLeft: -(module.cache.width / 2)
-                }) 
+                })
               ;
             }
             module.verbose('Setting modal offset for legacy mode');
@@ -16872,9 +16872,9 @@ $.fn.slider = function(parameters) {
           },
           gapRatio: function() {
             var gapRatio = 1;
-            
+
             if( settings.autoAdjustLabels ) {
-              var 
+              var
                 numLabels = module.get.numLabels(),
                 trackLength = module.get.trackLength(),
                 gapCounter = 1
@@ -18381,7 +18381,7 @@ $.fn.search = function(parameters) {
 
           resultsScrollTop = $results.scrollTop();
           resultsHeight = $results.height();
-            
+
           if (elTop < 0) {
             $results.scrollTop(resultsScrollTop + elTop);
           }
@@ -18781,10 +18781,10 @@ $.fn.search = function(parameters) {
                 ;
                 if(fieldExists) {
                   var text;
-                  if (typeof content[field] === 'string'){  
+                  if (typeof content[field] === 'string'){
                       text = module.remove.diacritics(content[field]);
                   } else {
-                      text = content[field].toString(); 
+                      text = content[field].toString();
                   }
                   if( text.search(matchRegExp) !== -1) {
                     // content starts with value (first in results)

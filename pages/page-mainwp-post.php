@@ -858,7 +858,7 @@ class MainWP_Post {
 		 */
 		do_action( 'mainwp_before_posts_table' );
 		?>
-		<table id="mainwp-posts-table" class="ui selectable single line table" style="width:100%">
+		<table id="mainwp-posts-table" class="ui unstackable single line table" style="width:100%">
 			<thead class="full-width">
 				<tr>
 					<th class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
@@ -873,16 +873,16 @@ class MainWP_Post {
 					do_action( 'mainwp_posts_table_header' );
 					?>
 					<th id="mainwp-title"><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
-					<th id="mainwp-author"><?php esc_html_e( 'Author', 'mainwp' ); ?></th>
-					<th id="mainwp-categories"><?php esc_html_e( 'Categories', 'mainwp' ); ?></th>
-					<th id="mainwp-tags"><?php esc_html_e( 'Tags', 'mainwp' ); ?></th>
+					<th id="mainwp-author" class="min-tablet"><?php esc_html_e( 'Author', 'mainwp' ); ?></th>
+					<th id="mainwp-categories" class="min-tablet"><?php esc_html_e( 'Categories', 'mainwp' ); ?></th>
+					<th id="mainwp-tags" class="min-tablet"><?php esc_html_e( 'Tags', 'mainwp' ); ?></th>
 					<?php if ( is_plugin_active( 'mainwp-custom-post-types/mainwp-custom-post-types.php' ) ) : ?>
 						<th id="mainwp-post-type"><?php esc_html_e( 'Post Type', 'mainwp' ); ?></th>
 					<?php endif; ?>
 					<?php if ( is_plugin_active( 'mainwp-comments-extension/mainwp-comments-extension.php' ) ) : ?>
 						<th id="mainwp-comments"><i class="comment icon"></i></th>
 					<?php endif; ?>
-					<th id="mainwp-date" class=""><?php esc_html_e( 'Date', 'mainwp' ); ?></th>
+					<th id="mainwp-date" class="min-tablet"><?php esc_html_e( 'Date', 'mainwp' ); ?></th>
 					<th id="mainwp-status" class=""><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					<?php if ( MainWP_Utility::enabled_wp_seo() ) : ?>
 						<th id="mainwp-seo-links"><?php esc_html_e( 'Links', 'mainwp' ); ?></th>
@@ -890,8 +890,8 @@ class MainWP_Post {
 						<th id="mainwp-seo-score"><?php esc_html_e( 'SEO Score', 'mainwp' ); ?></th>
 						<th id="mainwp-seo-readability"><?php esc_html_e( 'Readability score', 'mainwp' ); ?></th>
 					<?php endif; ?>
-					<th id="mainwp-website"><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-					<th id="mainwp-posts-actions" class="no-sort"></th>
+					<th id="mainwp-website" class="min-tablet"><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+					<th id="mainwp-posts-actions" class="no-sort min-tablet"></th>
 				</tr>
 			</thead>
 
@@ -924,6 +924,7 @@ class MainWP_Post {
 			'scrollX'    => 'true',
 			'colReorder' => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
 			'order'      => '[]',
+			'responsive' => 'true',
 		);
 
 		/**
@@ -941,6 +942,7 @@ class MainWP_Post {
 				try {
 					jQuery("#mainwp-posts-table").DataTable().destroy(); // to fix re-init database issue.
 					jQuery('#mainwp-posts-table').DataTable( {
+						"responsive" : <?php echo $table_features['responsive']; ?>,
 						"searching" : <?php echo $table_features['searching']; ?>,
 						"colReorder" : <?php echo $table_features['colReorder']; ?>,
 						"stateSave":  <?php echo $table_features['stateSave']; ?>,
@@ -1230,9 +1232,6 @@ class MainWP_Post {
 					do_action( 'mainwp_posts_table_column', $post, $website );
 					?>
 					<td class="title column-title">
-						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $post['id'] ); ?>"/>
-						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'publish' === $post['status'] ) ? 'unpublish|' : ''; ?><?php echo ( 'pending' === $post['status'] ) ? 'approve|' : ''; ?><?php echo ( 'trash' === $post['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' === $post['status'] || 'draft' === $post['status'] ) ? 'publish|' : ''; ?>" />
-						<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>"/>
 						<strong>
 							<abbr title="<?php echo esc_attr( $post['title'] ); ?>">
 							<?php if ( 'trash' !== $post['status'] ) { ?>
@@ -1292,6 +1291,10 @@ class MainWP_Post {
 
 					<td class="website column-website"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
 					<td class="right aligned">
+						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $post['id'] ); ?>"/>
+						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'publish' === $post['status'] ) ? 'unpublish|' : ''; ?><?php echo ( 'pending' === $post['status'] ) ? 'approve|' : ''; ?><?php echo ( 'trash' === $post['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' === $post['status'] || 'draft' === $post['status'] ) ? 'publish|' : ''; ?>" />
+						<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>"/>
+						
 						<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
 							<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 							<div class="menu">
@@ -2328,7 +2331,7 @@ class MainWP_Post {
 				} elseif ( ! empty( $post->post_password ) ) {
 					$visibility       = 'password';
 					$visibility_trans = __( 'Password protected', 'mainwp' );
-				} elseif ( 'post' === $post_type && is_sticky( $post->ID ) ) {
+				} elseif ( 'bulkpost' === $post_type && is_sticky( $post->ID ) ) {
 					$visibility       = 'public';
 					$visibility_trans = __( 'Public, Sticky', 'mainwp' );
 				} else {
@@ -2345,12 +2348,14 @@ class MainWP_Post {
 							<label><?php esc_html_e( 'Public', 'mainwp' ); ?></label>
 						</div>
 					</div>
+					<?php if ( 'bulkpost' === $post_type ) { ?>
 					<div class="field" id="sticky-field">
 						<div class="ui checkbox">
 							<input type="checkbox" id="sticky" name="sticky" value="sticky"  <?php checked( is_sticky( $post->ID ) ); ?>  />
 							<label><?php esc_html_e( 'Stick this post to the front page', 'mainwp' ); ?></label>
 						</div>
 					</div>
+					<?php } ?>
 					<div class="field">
 						<div class="ui radio checkbox">
 							<input type="radio" name="visibility" value="password" id="visibility-radio-password" <?php echo ( 'password' === $visibility ) ? 'checked="checked"' : ''; ?>>

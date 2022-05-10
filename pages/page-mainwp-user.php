@@ -349,7 +349,7 @@ class MainWP_User {
 					<div class="ui grid">
 						<div class="ui two column row">
 							<div class="column">
-								<select class="ui dropdown" id="mainwp-bulk-actions">
+								<select class="ui mini dropdown" id="mainwp-bulk-actions">
 									<option value=""><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
 									<option value="edit"><?php esc_html_e( 'Edit', 'mainwp' ); ?></option>
 									<option value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
@@ -481,7 +481,7 @@ class MainWP_User {
 					?>
 					<div class="ui mini form">
 						<div class="field" data-tooltip="<?php esc_attr_e( 'Select specific roles that you want to search for.', 'mainwp' ); ?>" data-inverted="" data-position="top right">
-							<select multiple="" class="ui fluid dropdown" id="mainwp_user_roles">
+							<select multiple="" class="ui fluid mini dropdown" id="mainwp_user_roles">
 								<option value=""><?php esc_html_e( 'Select wanted role(s)', 'mainwp' ); ?></option>
 								<?php
 								foreach ( $user_roles as $r => $n ) {
@@ -750,13 +750,13 @@ class MainWP_User {
 		 */
 		do_action( 'mainwp_before_users_table' );
 		?>
-		<table id="mainwp-users-table" class="ui tablet stackable single line table" style="width:100%">
+		<table id="mainwp-users-table" class="ui unstackable single line table" style="width:100%">
 			<thead>
 				<tr>
-					<th class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
+					<th  class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
 					<?php do_action( 'mainwp_users_table_header' ); ?>
 					<th><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Username', 'mainwp' ); ?></th>
+					<th ><?php esc_html_e( 'Username', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'E-mail', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Role', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Posts', 'mainwp' ); ?></th>
@@ -797,6 +797,7 @@ class MainWP_User {
 			'info'       => 'true',
 			'stateSave'  => 'true',
 			'scrollX'    => 'true',
+			'responsive' => 'true',
 			'colReorder' => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
 			'order'      => '[]',
 		);
@@ -805,8 +806,9 @@ class MainWP_User {
 		<script type="text/javascript">
 		jQuery( document ).ready( function () {
 			try {
-				jQuery("#mainwp-users-table").DataTable().destroy(); // to fix re-init database issue.
-				jQuery( '#mainwp-users-table' ).DataTable( {
+				jQuery( "#mainwp-users-table" ).DataTable().destroy(); // to fix re-init database issue.
+				jQuery( "#mainwp-users-table" ).DataTable( {
+					"responsive" : <?php echo $table_features['responsive']; ?>,
 					"searching" : <?php echo $table_features['searching']; ?>,
 					"colReorder" : <?php echo $table_features['colReorder']; ?>,
 					"stateSave":  <?php echo $table_features['stateSave']; ?>,

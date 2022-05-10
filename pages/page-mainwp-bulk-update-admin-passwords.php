@@ -271,10 +271,11 @@ class MainWP_Bulk_Update_Admin_Passwords {
 						 */
 						do_action( 'mainwp_admin_pass_before_users_table' );
 						?>
-						<table  id="mainwp-admin-users-table" class="ui padded selectable compact single line table">
+						<table  id="mainwp-admin-users-table" class="ui single line unstackable table">
 							<thead>
 								<tr>
 									<th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+									<th class="no-sort collapsing"><i class="sign in icon"></i></th>
 									<th><?php esc_html_e( 'Admin Username', 'mainwp' ); ?></th>
 									<th><?php esc_html_e( 'Admin Name', 'mainwp' ); ?></th>
 									<th><?php esc_html_e( 'Admin Email', 'mainwp' ); ?></th>
@@ -284,6 +285,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 								<?php while ( $websites && $website = MainWP_DB::fetch_object( $websites ) ) : ?>
 									<tr>
 									<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
+									<td><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>"><i class="sign in icon"></i></a></td>
 									<td><?php echo esc_html( $website->adminname ); ?></td>
 									<td><?php echo esc_html( $website->admin_nicename ); ?></td>
 									<td><?php echo esc_html( $website->admin_useremail ); ?></td>
@@ -291,6 +293,15 @@ class MainWP_Bulk_Update_Admin_Passwords {
 								<?php endwhile; ?>
 								<?php MainWP_DB::free_result( $websites ); ?>
 							</tbody>
+							<tfoot>
+								<tr>
+									<th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+									<th><i class="sign in icon"></i></th>
+									<th><?php esc_html_e( 'Admin Username', 'mainwp' ); ?></th>
+									<th><?php esc_html_e( 'Admin Name', 'mainwp' ); ?></th>
+									<th><?php esc_html_e( 'Admin Email', 'mainwp' ); ?></th>
+								</tr>
+							</tfoot>
 						</table>
 						<?php
 						/**
@@ -308,6 +319,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 							'info'       => 'true',
 							'colReorder' => 'true',
 							'stateSave'  => 'true',
+							'responsive' => 'true',
 						);
 						/**
 						 * Filter: mainwp_admin_users_table_fatures
@@ -328,6 +340,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 								"stateSave":  <?php echo $table_features['stateSave']; ?>,
 								"order": [],
 								"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
+								"responsive": <?php echo $table_features['responsive']; ?>,
 							} );
 						} );
 						</script>

@@ -945,7 +945,7 @@ class MainWP_Themes {
 		 */
 		do_action( 'mainwp_before_themes_table' );
 		?>
-		<table id="mainwp-manage-themes-table" style="min-width:100%" class="ui celled single line selectable compact table">
+		<table id="mainwp-manage-themes-table" style="min-width:100%" class="ui celled single line selectable compact unstackable table">
 			<thead>
 				<tr>
 					<th class="mainwp-first-th no-sort"></th>
@@ -975,7 +975,7 @@ class MainWP_Themes {
 				<tr>
 					<td style="padding-left:40px;padding-right:40px;">
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $site_id ); ?>"/>
-						<div class="ui slider checkbox">
+						<div class="ui slider checkbox mainwp-768-hide">
 							<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_themes_site_check_all"/><label></label>
 						</div>
 						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site_id; ?>" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign-in alternate icon"></i></a>
@@ -1048,7 +1048,7 @@ class MainWP_Themes {
 						$th_id       = preg_replace( '/[[:space:]]+/', '_', $th_id );
 						?>
 						<th id="<?php echo esc_attr( $th_id ); ?>" class="center aligned">
-							<div class="ui slider checkbox not-auto-init">
+							<div class="ui slider checkbox not-auto-init mainwp-768-hide">
 								<input type="checkbox" value="<?php echo esc_attr( $themes[ $theme_name ] ); ?>" id="<?php echo esc_attr( $themes[ $theme_name ] ); ?>-<?php echo esc_attr( $themesRealVersion[ $theme_name ] ); ?>" version="<?php echo esc_attr( $themesRealVersion[ $theme_name ] ); ?>" class="mainwp_theme_check_all" />
 								<label></label>
 							</div>
@@ -1087,6 +1087,7 @@ class MainWP_Themes {
 			'scrollX'        => 'true',
 			'scroller'       => 'true',
 			'fixedColumns'   => 'true',
+			'responsive'     => 'true',
 		);
 
 		/**
@@ -1115,6 +1116,10 @@ class MainWP_Themes {
 			}
 		</style>
 		<script type="text/javascript">
+			var responsive = <?php echo $table_features['responsive']; ?>;
+			if( jQuery( window ).width() > 1140 ) {
+				responsive = false;
+			}
 			jQuery( document ).ready( function( $ ) {
 				jQuery( '#mainwp-manage-themes-table' ).DataTable( {
 					"paging" : <?php echo $table_features['paging']; ?>,
@@ -1129,6 +1134,7 @@ class MainWP_Themes {
 					"scroller" : <?php echo $table_features['scroller']; ?>,
 					"fixedColumns" : <?php echo $table_features['fixedColumns']; ?>,
 					"columnDefs": [ { "orderable": false, "targets": [ 0 ] } ],
+					"responsive": responsive,
 				} );
 				jQuery( '.mainwp-ui-page .ui.checkbox:not(.not-auto-init)' ).checkbox(); // to fix onclick on plugins checkbox for sorting.
 			} );
@@ -1489,7 +1495,7 @@ class MainWP_Themes {
 						<div class="ui mini form stackable grid">
 							<div class="ui two column row">
 								<div class="left aligned column">
-									<select id="mainwp-bulk-actions" name="bulk_action" class="ui selection dropdown">
+									<select id="mainwp-bulk-actions" name="bulk_action" class="ui mini selection dropdown">
 										<option class="item" value=""><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
 										<option class="item" value="trust"><?php esc_html_e( 'Trust', 'mainwp' ); ?></option>
 										<option class="item" value="untrust"><?php esc_html_e( 'Untrust', 'mainwp' ); ?></option>
@@ -1759,15 +1765,15 @@ class MainWP_Themes {
 		 */
 		do_action( 'mainwp_themes_before_auto_updates_table' );
 		?>
-		<table class="ui single line table" id="mainwp-all-active-themes-table">
+		<table class="ui unstackable table" id="mainwp-all-active-themes-table">
 			<thead>
 				<tr>
 					<th class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
-					<th class="collapsing"></th>
-					<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+					<th data-priority="1"><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-					<th class="collapsing"><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
+					<th  data-priority="2" class="collapsing"><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
+					<th class="collapsing"></th>
 					<th class="collapsing"><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
 				</tr>
 			</thead>
@@ -1796,11 +1802,11 @@ class MainWP_Themes {
 				?>
 				<tr theme-slug="<?php echo rawurlencode( $slug ); ?>" theme-name="<?php echo esc_attr( $name ); ?>">
 					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="theme[]" value="<?php echo rawurlencode( $slug ); ?>"></span></td>
-					<td><?php echo ( isset( $decodedIgnoredThemes[ $slug ] ) ) ? '<span data-tooltip="Ignored themes will not be automatically updated." data-inverted=""><i class="info red circle icon"></i></span>' : ''; ?></td>
 					<td><?php echo esc_html( $name ); ?></td>
 					<td><?php echo ( 1 == $theme['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); ?></td>
 					<td><?php echo ( in_array( $slug, $trustedThemes ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
 					<td><?php echo ( isset( $decodedIgnoredThemes[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
+					<td><?php echo ( isset( $decodedIgnoredThemes[ $slug ] ) ) ? '<span data-tooltip="Ignored themes will not be automatically updated." data-inverted=""><i class="info red circle icon"></i></span>' : ''; ?></td>
 					<td class="collapsing center aligned">
 					<?php if ( '' === $esc_note ) : ?>
 						<a href="javascript:void(0)" class="mainwp-edit-theme-note"><i class="sticky note outline icon"></i></a>
@@ -1867,6 +1873,7 @@ class MainWP_Themes {
 					"ordering" : <?php echo $table_features['ordering']; ?>,
 					"order" : <?php echo $table_features['order']; ?>,
 					"columnDefs": [ { "orderable": false, "targets": [ 0, 1, 6 ] } ],
+					"responsive": true,
 				} );
 			} );
 		</script>
@@ -1956,7 +1963,7 @@ class MainWP_Themes {
 	 */
 	public static function render_global_ignored( $ignoredThemes, $decodedIgnoredThemes ) {
 		?>
-		<table id="mainwp-globally-ignored-themes" class="ui compact selectable table stackable">
+		<table id="mainwp-globally-ignored-themes" class="ui compact selectable table unstackable">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
@@ -1978,14 +1985,14 @@ class MainWP_Themes {
 						</tr>
 						<?php endforeach; ?>
 					<?php else : ?>
-						<tr><td colspan="999"><?php esc_html_e( 'No ignored themes.', 'mainwp' ); ?></td></tr>
+						<tr><td colspan="3"><?php esc_html_e( 'No ignored themes.', 'mainwp' ); ?></td></tr>
 					<?php endif; ?>
 				</tbody>
 				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 					<?php if ( $ignoredThemes ) : ?>
 					<tfoot class="full-width">
 						<tr>
-							<th colspan="999">
+							<th colspan="3">
 								<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_themes_unignore_globally_all();" id="mainwp-unignore-globally-all">
 									<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
 								</a>
@@ -1995,6 +2002,16 @@ class MainWP_Themes {
 				<?php endif; ?>
 			<?php endif; ?>
 		</table>
+		<script type="text/javascript">
+		jQuery( document ).ready( function() {
+			jQuery( '#mainwp-globally-ignored-themes' ).DataTable( {
+				searching: false,
+				paging: false,
+				info: false,
+				responsive: true,
+			} );
+		} );
+		</script>
 		<?php
 	}
 
@@ -2012,7 +2029,7 @@ class MainWP_Themes {
 	 */
 	public static function render_sites_ignored( $cnt, $websites ) {
 		?>
-		<table id="mainwp-per-site-ignored-themes" class="ui compact selectable table stackable">
+		<table id="mainwp-per-site-ignored-themes" class="ui compact selectable table unstackable">
 			<thead>
 				<tr>
 					<th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
@@ -2059,14 +2076,14 @@ class MainWP_Themes {
 				MainWP_DB::free_result( $websites );
 				?>
 				<?php else : ?>
-					<tr><td colspan="999"><?php esc_html_e( 'No ignored themes', 'mainwp' ); ?></td></tr>
+					<tr><td colspan="4"><?php esc_html_e( 'No ignored themes', 'mainwp' ); ?></td></tr>
 				<?php endif; ?>
 			</tbody>
 			<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 				<?php if ( 0 < $cnt ) : ?>
 				<tfoot class="full-width">
 				<tr>
-					<th colspan="999">
+					<th colspan="4">
 						<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_themes_unignore_detail_all();" id="mainwp-unignore-detail-all">
 							<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
 						</a>
@@ -2076,6 +2093,16 @@ class MainWP_Themes {
 				<?php endif; ?>
 			<?php endif; ?>
 		</table>
+		<script type="text/javascript">
+		jQuery( document ).ready( function() {
+			jQuery( '#mainwp-per-site-ignored-themes' ).DataTable( {
+				searching: false,
+				paging: false,
+				info: false,
+				responsive: true,
+			} );
+		} );
+		</script>
 		<?php
 	}
 
@@ -2155,7 +2182,7 @@ class MainWP_Themes {
 	 */
 	public static function render_global_ignored_abandoned( $ignoredThemes, $decodedIgnoredThemes ) {
 		?>
-		<table id="mainwp-globally-ignored-abandoned-themes" class="ui compact selectable table stackable">
+		<table id="mainwp-globally-ignored-abandoned-themes" class="ui compact selectable table unstackable">
 			<thead>
 				<tr>
 					<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
@@ -2177,14 +2204,14 @@ class MainWP_Themes {
 					</tr>
 					<?php endforeach; ?>
 				<?php else : ?>
-					<tr><td colspan="999"><?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?></td></tr>
+					<tr><td colspan="3"><?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?></td></tr>
 				<?php endif; ?>
 				</tbody>
 				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 					<?php if ( $ignoredThemes ) : ?>
 					<tfoot class="full-width">
 						<tr>
-							<th colspan="999">
+							<th colspan="3">
 								<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_themes_abandoned_unignore_globally_all();" id="mainwp-unignore-globally-all">
 									<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
 								</a>
@@ -2194,6 +2221,16 @@ class MainWP_Themes {
 					<?php endif; ?>
 				<?php endif; ?>
 		</table>
+		<script type="text/javascript">
+		jQuery( document ).ready( function() {
+			jQuery( '#mainwp-globally-ignored-abandoned-themes' ).DataTable( {
+				"responsive": true,
+				"searching": false,
+				"paging": false,
+				"info": false,
+			} );
+		} );
+		</script>
 		<?php
 	}
 
@@ -2213,7 +2250,7 @@ class MainWP_Themes {
 	 */
 	public static function render_sites_ignored_abandoned( $cnt, $websites ) {
 		?>
-	<table id="mainwp-per-site-ignored-abandoned-themes" class="ui compact selectable table stackable">
+	<table id="mainwp-per-site-ignored-abandoned-themes" class="ui compact selectable table unstackable">
 		<thead>
 			<tr>
 				<th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
@@ -2256,14 +2293,14 @@ class MainWP_Themes {
 				MainWP_DB::free_result( $websites );
 				?>
 			<?php else : ?>
-			<tr><td colspan="999"><?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?></td></tr>
+			<tr><td colspan="4"><?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?></td></tr>
 			<?php endif; ?>
 			</tbody>
 			<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 				<?php if ( 0 < $cnt ) : ?>
 				<tfoot class="full-width">
 					<tr>
-						<th colspan="999">
+						<th colspan="4">
 							<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_themes_unignore_abandoned_detail_all();" id="mainwp-unignore-detail-all">
 								<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
 							</a>
@@ -2273,6 +2310,16 @@ class MainWP_Themes {
 				<?php endif; ?>
 			<?php endif; ?>
 		</table>
+		<script type="text/javascript">
+		jQuery( document ).ready( function() {
+			jQuery( '#mainwp-per-site-ignored-abandoned-themes' ).DataTable( {
+				"responsive": true,
+				"searching": false,
+				"paging": false,
+				"info": false,
+			} );
+		} );
+		</script>
 		<?php
 	}
 

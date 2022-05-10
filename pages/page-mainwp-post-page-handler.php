@@ -1221,14 +1221,26 @@ class MainWP_Post_Page_Handler {
 		$_post = get_post( $post_id );
 		if ( 'bulkpost' === $_post->post_type && isset( $_POST['sticky'] ) ) {
 			update_post_meta( $post_id, '_sticky', base64_encode( sanitize_text_field( wp_unslash( $_POST['sticky'] ) ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-
 			return base64_encode( sanitize_text_field( wp_unslash( $_POST['sticky'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		}
+		return $post_id;
+	}
 
-		if ( 'bulkpost' === $_post->post_type && isset( $_POST['mainwp_edit_post_status'] ) ) {
+	
+	/**
+	 * Method add_status_handle()
+	 *
+	 * Add edit post status handle.
+	 *
+	 * @param int $post_id Post ID.
+	 *
+	 * @return int $post_id Post id with status handle added to it.
+	 */
+	public static function add_status_handle( $post_id ) {
+		$_post = get_post( $post_id );
+		if ( ( 'bulkpage' == $_post->post_type || 'bulkpost' == $_post->post_type ) && isset( $_POST['mainwp_edit_post_status'] ) ) {
 			update_post_meta( $post_id, '_edit_post_status', sanitize_text_field( wp_unslash( $_POST['mainwp_edit_post_status'] ) ) );
 		}
-
 		return $post_id;
 	}
 

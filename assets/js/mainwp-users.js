@@ -260,6 +260,7 @@ mainwp_fetch_users = function () {
   } );
 
   jQuery( '#mainwp-loading-users-row' ).show();
+
   jQuery.post( ajaxurl, data, function ( response ) {
     response = jQuery.trim( response );
     jQuery( '#mainwp-loading-users-row' ).hide();
@@ -270,7 +271,8 @@ mainwp_fetch_users = function () {
     jQuery( '#mainwp_users_wrap_table' ).html( response );
     // re-initialize datatable
     jQuery("#mainwp-users-table").DataTable().destroy();
-    jQuery('#mainwp-users-table').DataTable({
+    jQuery('#mainwp-users-table').DataTable( {
+        "responsive" : true,
         "colReorder": {
             fixedColumnsLeft: 1,
             fixedColumnsRight: 1
@@ -285,12 +287,12 @@ mainwp_fetch_users = function () {
             "orderable": false
         } ],
         "preDrawCallback": function() {
-            jQuery('#mainwp-users-table .ui.dropdown').dropdown();
-            jQuery('#mainwp-users-table .ui.checkbox').checkbox();
+            jQuery( '#mainwp_users_wrap_table table .ui.dropdown' ).dropdown();
+            jQuery( '#mainwp_users_wrap_table table .ui.checkbox' ).checkbox();
             mainwp_datatable_fix_menu_overflow();
             mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
         }
-    });
+    } );
   } );
 };
 

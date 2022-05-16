@@ -2,10 +2,11 @@
 /*---------------[RESPONSIVE LAYOUTS]-------------*/
 /*------------------------------------------------*/
 
-
-
-
 @media only screen and ( min-width: 769px ) {
+
+	.mainwp-768-show {
+		display: none !important;
+	}
 
 	.mainwp-manage-updates-table {
 		white-space: nowrap;
@@ -18,7 +19,7 @@
 	}
 }
 
-@media only screen and (min-width: 769px) and ( max-width: 1365px ) {
+@media only screen and ( min-width: 768px ) and ( max-width: 1365px ) {
 
 	#mainwp-main-menu {
 		max-height: 75vh;
@@ -31,10 +32,46 @@
 	}
 }
 
-@media screen and (max-width: 768px) {
+@media only screen and ( min-width: 768px ) and ( max-width: 1080px ) {
+
+	.mainwp-ui .ui.two.column.grid .column,
+	.mainwp-ui .ui.three.column.grid .column {
+		width: 100% !important;
+		padding: 1em !important;
+	}
+
+	#mainwp-top-header .ui.grid .left.floated.column {
+		width: 15% !important;
+	}
+	#mainwp-top-header .ui.grid .right.floated.column {
+		width: 85% !important;
+	}
+
+	#mainwp-top-header #mainwp-add-new-buttons {
+		display: none;
+	}
+
+}
+
+@media screen and ( max-width: 767px ) {
 
 	.mainwp-768-hide {
 		display: none !important;
+	}
+
+	.mainwp-768-show {
+		display: inline-block !important;
+	}
+
+	.mainwp-768-fluid {
+		width: 100% !important;
+		text-align: center !important;
+	}
+
+
+	.ui.table:not(.unstackable) > tbody > tr > td:not(.rowspanned).mainwp-768-half-width-cell {
+		width: 50% !important;
+		display: inline-table !important;
 	}
 
 	.mainwp-ui table .menu.transition.visible {
@@ -157,24 +194,15 @@
 
 	/*--- Tables ---*/
 
-	/*
-	.mainwp-ui .ui.table:not(.unstackable) thead tr th,
-	.mainwp-ui .ui.table:not(.unstackable) tbody tr td,
-	.mainwp-ui .ui.table:not(.unstackable) tfoot tr th,
-		{
-		display: block !important;
+	.ui.table:not(.unstackable) > thead.mainwp-768-hide {
+		display: none !important;
 	}
-
-
-	.mainwp-ui .ui.table tr td {
-		text-align: left !important;
-	}
-
-	*/
 
 	.mainwp-ui .ui.table tr td .ui.mini.button {
 		width: auto !important;
 		float: none !important;
+		padding: 15px !important;
+		margin-top: 5px !important;
 	}
 
 
@@ -205,6 +233,14 @@
 
 	#mainwp-manage-sites-table {
 		white-space: normal !important;
+	}
+
+	#mainwp-manage-sites-table tbody tr td.mainwp-site-cell,
+	#mainwp-manage-sites-table tbody tr td.mainwp-url-cell {
+		white-space: nowrap;
+	  overflow: hidden;
+	  text-overflow: ellipsis;
+	  max-width: 185px;
 	}
 
 	/*--- Groups ---*/
@@ -244,6 +280,15 @@
 
 	.mainwp-manage-updates-table table table tbody tr {
 		background: #f9ffea !important;
+	}
+
+	.mainwp-manage-updates-table td,
+	.mainwp-manage-updates-item-table td {
+		font-weight: normal !important;
+	}
+
+	.mainwp-manage-updates-table strong.mainwp-768-show {
+		width: 70px;
 	}
 
 	.mainwp-manage-updates-table .ui.button {
@@ -348,9 +393,12 @@
 		display: block !important;
 	}
 
-	#mainwp-users-table {
+	#mainwp-users-table,
+	#mainwp-admin-users-table {
 		white-space: normal !important;
 	}
+
+
 
 	/* --- Extensions --- */
 

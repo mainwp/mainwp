@@ -407,7 +407,7 @@ class MainWP_Overview {
 				$cls_grid = 'three';
 			}
 			?>
-			<div class="ui <?php echo $cls_grid; ?> column stackable grid mainwp-grid-wrapper">
+			<div class="ui <?php echo $cls_grid; ?> column tablet stackable grid mainwp-grid-wrapper">
 		<div class="column" id="mainwp-grid-left" widget-context="left">
 						<?php
 						/**

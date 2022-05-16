@@ -189,10 +189,14 @@ class MainWP_Manage_Groups {
 					<?php endif; ?>
 				</div>
 				<script type="text/javascript">
+				var responsive = true;
+				if( jQuery( window ).width() > 1140 ) {
+					responsive = false;
+				}
 				jQuery( document ).ready( function() {
 					jQuery( '#mainwp-manage-groups-sites-table' ).dataTable( {
 						"searching" : true,
-						"responsive" : true,
+						"responsive" : responsive,
 						"colReorder" : true,
 						"stateSave":  true,
 						"paging": false,
@@ -315,7 +319,7 @@ class MainWP_Manage_Groups {
 				<tr>
 					<th class="no-sort collapsing"><div class="ui checkbox" data-tooltip="<?php esc_attr_e( 'Click to select all sites.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><input type="checkbox" name="example"></div></th>
 					<th><?php esc_html_e( 'Sites', 'mainwp' ); ?></th>
-					<th class="no-sort collapsing"><i class="sign-in icon"></i></th>
+					<th class="no-sort collapsing"><i class="sign in icon"></i></th>
 					<th><?php esc_html_e( 'URL', 'mainwp' ); ?></th>
 					<th class="no-sort collapsing"><i class="camera icon"></i></th>
 					<th class="no-sort collapsing"><i class="sticky note outline icon"></i></th>

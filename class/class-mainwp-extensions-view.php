@@ -216,11 +216,19 @@ class MainWP_Extensions_View {
 		?>
 		<div class="ui secondary segment">
 			<h2 class="header"><?php esc_html_e( 'What are Extensions?', 'mainwp' ); ?></h2>
-			<p><?php esc_html_e( 'Extensions are specific features or tools created to expand the basic functionality of MainWP. The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat. Extensions offer custom functions and features so that each user can tailor their MainWP Dashboard to their specific needs.', 'mainwp' ); ?></p>
-			<p><?php esc_html_e( 'MainWP offers a variety of Free and Premium Extensions in multiple categories that you can purchase through one of the MainWP Pro plans.', 'mainwp' ); ?></p>
+			<p><?php esc_html_e( 'Extensions are specific features or tools created to expand the basic functionality of MainWP. The core of MainWP is designed to provide the functions most needed for you and minimize code bloat.', 'mainwp' ); ?></p>
+			<p><?php esc_html_e( 'Extensions offer custom functions and features so that each user can tailor the MainWP Dashboard to their specific needs.', 'mainwp' ); ?></p>
+			<p><?php esc_html_e( 'MainWP Pro offers 40+ Free & Premium Extensions in multiple categories, such as Security, Backup, Performance, Administrative, etc. You can get all of them at a single price.', 'mainwp' ); ?></p>
+			<h4><?php esc_html_e( 'MainWP Pro includes:', 'mainwp' ); ?></h4>
+			<div class="ui bulleted list">
+				<div class="item"><?php esc_html_e( 'All current MainWP Extensions (free & premium)', 'mainwp' ); ?></div>
+				<div class="item"><?php esc_html_e( 'All future MainWP Extensions (free & premium)', 'mainwp' ); ?></div>
+				<div class="item"><?php esc_html_e( 'Critical Security & Performance updates for MainWP Extensions', 'mainwp' ); ?></div>
+				<div class="item"><?php esc_html_e( 'Priority support via Helpdesk & Community for MainWP products', 'mainwp' ); ?></div>
+			</div>
+			<a class="ui basic green button" href="https://mainwp.com/mainwp-extensions/" target="_blank"><?php esc_html_e( 'Browse All MainWP Extensions', 'mainwp' ); ?></a> <a class="ui green button" href="https://mainwp.com/signup/" target="_blank"><?php esc_html_e( 'Get MainWP Pro', 'mainwp' ); ?></a>
 			<h2 class="header"><?php esc_html_e( 'How to install your MainWP Extensions?', 'mainwp' ); ?></h2>
-			<p><?php echo sprintf( __( 'Once you have ordered a MainWP Extension, you can either use the %1$sautomatic extension installation%2$s option or %3$smanual installation%4$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-extensions/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/my-downloads-and-api-keys/" target="_blank">', '</a>' ); ?></p>
-			<a class="ui green button" href="https://mainwp.com/mainwp-extensions/" target="_blank"><?php esc_html_e( 'Browse All MainWP Extensions', 'mainwp' ); ?></a>
+			<p><?php echo sprintf( __( 'Once you have ordered a MainWP Extensions, you can either use the %1$sautomatic extension installation%2$s option or %3$smanual installation%4$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-extensions/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/my-downloads-and-api-keys/" target="_blank">', '</a>' ); ?></p>
 		</div>
 		<?php
 	}

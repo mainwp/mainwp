@@ -173,8 +173,8 @@ jQuery(document).ready(function () {
             var websiteId = jQuery(this).val();
             var rowElement = jQuery(this).parents('tr');
             
-            if (jQuery(rowElement).hasClass('child')) {
-                rowElement = jQuery(rowElement).prev();
+            if (jQuery(rowElement).hasClass('parent')) {
+                rowElement = jQuery(rowElement).next();
             }
             
             var selectedPlugins = rowElement.find('.mainwp-selected-plugin:checked');
@@ -515,8 +515,8 @@ jQuery(document).ready(function () {
             var websiteId = jQuery(this).val();
             var rowElement = jQuery(this).parents('tr');
 
-            if (jQuery(rowElement).hasClass('child')) {
-                rowElement = jQuery(rowElement).prev();
+            if (jQuery(rowElement).hasClass('parent')) {
+                rowElement = jQuery(rowElement).next();
             } 
 
             var selectedThemes = rowElement.find('.mainwp-selected-theme:checked');

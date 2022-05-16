@@ -661,7 +661,7 @@ class MainWP_Page {
 						<div class="ui calendar mainwp_datepicker" >
 							<div class="ui input left icon">
 								<i class="calendar icon"></i>
-								<input type="text" placeholder="Date" id="mainwp_page_search_by_dtsstart" value="
+								<input type="text" placeholder="Date" autocomplete="off" id="mainwp_page_search_by_dtsstart" value="
 									<?php
 									if ( null != $cachedSearch ) {
 										echo esc_attr( $cachedSearch['dtsstart'] );
@@ -675,7 +675,7 @@ class MainWP_Page {
 						<div class="ui calendar mainwp_datepicker" >
 							<div class="ui input left icon">
 								<i class="calendar icon"></i>
-								<input type="text" placeholder="Date" id="mainwp_page_search_by_dtsstop" value="
+								<input type="text" placeholder="Date" autocomplete="off" id="mainwp_page_search_by_dtsstop" value="
 								<?php
 								if ( null != $cachedSearch ) {
 									echo esc_attr( $cachedSearch['dtsstop'] );
@@ -816,11 +816,15 @@ class MainWP_Page {
 		$table_features = apply_filters( 'mainwp_pages_table_fatures', $table_features );
 		?>
 		<script type="text/javascript">
+		var responsive = <?php echo $table_features['responsive']; ?>;
+		if( jQuery( window ).width() > 1140 ) {
+			responsive = false;
+		}
 		jQuery( document ).ready( function () {
 			try {
 				jQuery("#mainwp-pages-table").DataTable().destroy(); // fixed re-initialize datatable issue.
 				jQuery( '#mainwp-pages-table' ).DataTable( {
-					"responsive" : <?php echo $table_features['responsive']; ?>,
+					"responsive" : responsive,
 					"searching" : <?php echo $table_features['searching']; ?>,
 					"colReorder" : <?php echo $table_features['colReorder']; ?>,
 					"stateSave":  <?php echo $table_features['stateSave']; ?>,

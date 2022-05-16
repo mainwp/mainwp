@@ -178,7 +178,11 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 		);
 		$defines[] = array(
 			'targets'   => 'manage-site-column',
-			'className' => 'column-site-bulk',
+			'className' => 'column-site-bulk mainwp-site-cell',
+		);
+		$defines[] = array(
+			'targets'   => 'manage-url-column',
+			'className' => 'mainwp-url-cell',
 		);
 		$defines[] = array(
 			'targets'   => array( 'manage-login-column', 'manage-last_check-column', 'manage-status_code-column', 'manage-site_health-column', 'manage-site_actions-column', 'extra-column' ),
@@ -563,6 +567,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			'stateSave'     => 'true',
 			'stateDuration' => '0',
 			'order'         => '[]',
+			'scrollX'       => 'true',
 			'responsive'    => 'true',
 		);
 
@@ -618,6 +623,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 						"stateSave" : <?php echo $table_features['stateSave']; ?>,
 						"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
 						"order" : <?php echo $table_features['order']; ?>,
+						"scrollX" : <?php echo $table_features['scrollX']; ?>,
 						"columnDefs": [
 							{
 								"targets": 'no-sort',
@@ -687,6 +693,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 						"stateSave" : <?php echo $table_features['stateSave']; ?>,
 						"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
 						"order" : <?php echo $table_features['order']; ?>,
+						"scrollX" : <?php echo $table_features['scrollX']; ?>,
 						"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All"] ],
 						serverSide: true,
 						"pageLength": <?php echo intval( $sites_per_page ); ?>,
@@ -986,7 +993,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 					$cls_site = 'site-sync-error';
 				}
 				?>
-				<td class="column-site-bulk <?php echo $cls_site; ?>"><a href="<?php echo 'admin.php?page=managesites&dashboard=' . $website['id']; ?>" data-tooltip="<?php esc_attr_e( 'Open the site overview', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><?php echo stripslashes( $website['name'] ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span></td>
+				<td class="column-site-bulk mainwp-site-cell <?php echo $cls_site; ?>"><a href="<?php echo 'admin.php?page=managesites&dashboard=' . $website['id']; ?>" data-tooltip="<?php esc_attr_e( 'Open the site overview', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><?php echo stripslashes( $website['name'] ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span></td>
 			<?php } elseif ( 'login' === $column_name ) { ?>
 				<td class="collapsing">
 				<?php if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
@@ -1010,7 +1017,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				}
 
 				?>
-				<td><?php echo $imgfavi; ?><a href="<?php echo esc_url( $website['url'] ); ?>" class="mainwp-may-hide-referrer open_site_url" target="_blank"><?php echo esc_html( $website['url'] ); ?></a></td>
+				<td class="mainwp-url-cell"><?php echo $imgfavi; ?><a href="<?php echo esc_url( $website['url'] ); ?>" class="mainwp-may-hide-referrer open_site_url" target="_blank"><?php echo esc_html( $website['url'] ); ?></a></td>
 			<?php } elseif ( 'status_code' === $column_name ) { ?>
 				<td class="collapsing" data-order="<?php echo esc_html( $website['http_response_code'] ); ?>">
 					<?php

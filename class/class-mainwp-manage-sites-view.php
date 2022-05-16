@@ -1340,6 +1340,10 @@ class MainWP_Manage_Sites_View {
 			do_action( 'mainwp_manage_sites_email_settings', $website );
 			?>
 			<script type="text/javascript">
+			var responsive = true;
+			if( jQuery( window ).width() > 1140 ) {
+				responsive = false;
+			}
 			jQuery( document ).ready( function() {
 				jQuery( '#mainwp-emails-settings-table' ).DataTable( {						
 					"stateSave":  true,
@@ -1347,7 +1351,7 @@ class MainWP_Manage_Sites_View {
 					"ordering": true,
 					"columnDefs": [ { "orderable": false, "targets": [ 4 ] } ],
 					"order": [ [ 1, "asc" ] ],
-					"responsive": true,
+					"responsive": responsive,
 				} );
 			} );
 			</script>			

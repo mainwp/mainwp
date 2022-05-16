@@ -331,6 +331,10 @@ class MainWP_Bulk_Update_Admin_Passwords {
 						$table_features = apply_filters( 'mainwp_admin_users_table_fatures', $table_features );
 						?>
 						<script type="text/javascript">
+						var responsive = <?php echo $table_features['responsive']; ?>;
+						if( jQuery( window ).width() > 1140 ) {
+							responsive = false;
+						}
 						jQuery( document ).ready( function () {
 							jQuery( '#mainwp-admin-users-table' ).DataTable( {
 								"searching" : <?php echo $table_features['searching']; ?>,
@@ -340,7 +344,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 								"stateSave":  <?php echo $table_features['stateSave']; ?>,
 								"order": [],
 								"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
-								"responsive": <?php echo $table_features['responsive']; ?>,
+								"responsive": responsive,
 							} );
 						} );
 						</script>

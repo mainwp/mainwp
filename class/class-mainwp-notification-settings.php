@@ -181,6 +181,10 @@ class MainWP_Notification_Settings {
 			do_action( 'mainwp_settings_email_settings' );
 			?>
 			<script type="text/javascript">
+			var responsive = true;
+			if( jQuery( window ).width() > 1140 ) {
+				responsive = false;
+			}
 			jQuery( document ).ready( function() {
 				jQuery( '#mainwp-emails-settings-table' ).DataTable( {					
 					"stateSave":  true,
@@ -188,7 +192,7 @@ class MainWP_Notification_Settings {
 					"ordering": true,
 					"columnDefs": [ { "orderable": false, "targets": [ 4 ] } ],
 					"order": [ [ 2, "asc" ] ],
-					"responsive": true,
+					"responsive": responsive,
 				} );
 			} );
 			</script>

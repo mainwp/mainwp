@@ -479,10 +479,10 @@ class MainWP_Server_Information {
 		<table id="mainwp-system-report-wordpress-table" class="ui unstackable table single line mainwp-system-report-table mainwp-system-info-table">
 				<thead>
 					<tr>
-					<th data-priority="1"><?php esc_html_e( 'WordPress Check', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'WordPress Check', 'mainwp' ); ?></th>
 						<th><?php esc_html_e( 'Required', 'mainwp' ); ?></th>
 						<th><?php esc_html_e( 'Detected', 'mainwp' ); ?></th>
-					<th class="right aligned" data-priority="2"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+					<th class="right aligned"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -493,10 +493,10 @@ class MainWP_Server_Information {
 		<table id="mainwp-system-report-php-table" class="ui unstackable table fixed mainwp-system-report-table mainwp-system-info-table">
 			<thead>
 				<tr>
-					<th data-priority="1"><?php esc_html_e( 'PHP', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'PHP', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Required', 'mainwp' ); ?></th>
-					<th data-priority="3"><?php esc_html_e( 'Detected', 'mainwp' ); ?></th>
-					<th class="right aligned" data-priority="2"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Detected', 'mainwp' ); ?></th>
+					<th class="right aligned"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -507,10 +507,10 @@ class MainWP_Server_Information {
 		<table id="mainwp-system-report-mysql-table" class="ui unstackable table mainwp-system-report-table mainwp-system-info-table">
 			<thead>
 				<tr>
-					<th data-priority="1"><?php esc_html_e( 'MySQL', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'MySQL', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Required', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Detected', 'mainwp' ); ?></th>
-					<th class="right aligned" data-priority="2"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+					<th class="right aligned"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -518,7 +518,7 @@ class MainWP_Server_Information {
 			</tbody>
 		</table>
 
-		<table id="mainwp-system-report-server-table" class="ui unstackable table single line mainwp-system-report-table mainwp-system-info-table">
+		<table id="mainwp-system-report-server-table" class="ui unstackable table mainwp-system-report-table mainwp-system-info-table">
 			<thead>
 				<tr>
 					<th><?php esc_html_e( 'Server Configuration', 'mainwp' ); ?></th>
@@ -530,7 +530,7 @@ class MainWP_Server_Information {
 			</tbody>
 		</table>
 
-		<table id="mainwp-system-report-dashboard-table" class="ui unstackable table single line mainwp-system-report-table mainwp-system-info-table">
+		<table id="mainwp-system-report-dashboard-table" class="ui unstackable table mainwp-system-report-table mainwp-system-info-table">
 			<thead>
 					<tr>
 					<th><?php esc_html_e( 'MainWP Dashboard Settings', 'mainwp' ); ?></th>
@@ -545,10 +545,10 @@ class MainWP_Server_Information {
 		<table id="mainwp-system-report-extensions-table" class="ui unstackable table single line mainwp-system-report-table mainwp-system-info-table">
 			<thead>
 					<tr>
-					<th data-priority="1"><?php esc_html_e( 'Extensions', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Extensions', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'License', 'mainwp' ); ?></th>
-					<th class="right aligned" data-priority="2"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+					<th class="right aligned"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					</tr>
 			</thead>
 			<tbody>
@@ -559,9 +559,9 @@ class MainWP_Server_Information {
 		<table id="mainwp-system-report-plugins-table" class="ui single line table unstackable mainwp-system-report-table mainwp-system-info-table">
 			<thead>
 						<tr>
-					<th data-priority="1"><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-					<th class="right aligned" data-priority="2"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 						</tr>
 			</thead>
 			<tbody>
@@ -574,9 +574,14 @@ class MainWP_Server_Information {
 		</div>
 
 		<script type="text/javascript">
+		var responsive = true;
+		if( jQuery( window ).width() > 1140 ) {
+			responsive = false;
+		}
 		jQuery( document ).ready( function() {
 			jQuery( '.mainwp-system-info-table' ).DataTable( {
-				responsive: true,
+				responsive: responsive,
+				colreorder: true,
 				paging: false,
 				info: false,
 			} );
@@ -1086,12 +1091,16 @@ class MainWP_Server_Information {
 		$table_features = apply_filters( 'mainwp_cron_jobs_table_features', $table_features );
 		?>
 		<script type="text/javascript">
+		var responsive = <?php echo $table_features['responsive']; ?>;
+		if( jQuery( window ).width() > 1140 ) {
+			responsive = false;
+		}
 		jQuery( document ).ready( function() {
 		jQuery( '#mainwp-cron-jobs-table' ).DataTable( {
 			"searching": <?php echo $table_features['searching']; ?>,
 			"paging": <?php echo $table_features['paging']; ?>,
 			"info": <?php echo $table_features['info']; ?>,
-				"responsive": <?php echo $table_features['responsive']; ?>,
+				"responsive": responsive,
 			} );
 		} );
 		</script>
@@ -1312,9 +1321,13 @@ class MainWP_Server_Information {
 			</tbody>
 		</table>
 		<script type="text/javascript">
+		var responsive = true;
+		if( jQuery( window ).width() > 1140 ) {
+			responsive = false;
+		}
 		jQuery( document ).ready( function() {
 			jQuery( '#mainwp-error-log-table' ).DataTable( {
-				"responsive": true,
+				"responsive": responsive,
 			} );
 		} );
 		</script>

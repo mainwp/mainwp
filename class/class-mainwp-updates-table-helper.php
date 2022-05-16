@@ -133,11 +133,11 @@ class MainWP_Updates_Table_Helper {
 	 */
 	public function column_trusted( $value ) {
 		if ( $value ) {
-			$label = '<span class="ui tiny green label">Trusted</span>';
+			$label = '<span class="ui tiny basic green label mainwp-768-fluid">Trusted</span>';
 		} else {
-			$label = '<span class="ui tiny grey label">Not Trusted</span>';
+			$label = '<span class="ui tiny basic grey label mainwp-768-fluid">Not Trusted</span>';
 		}
-		return '<td>' . $label . '</td>';
+		return '<td class="mainwp-768-half-width-cell">' . $label . '</td>';
 	}
 
 	/**
@@ -147,11 +147,11 @@ class MainWP_Updates_Table_Helper {
 	 */
 	public function column_status( $value ) {
 		if ( $value ) {
-			$label = '<span class="ui tiny green label">Active</span>';
+			$label = '<span class="ui tiny basic green label mainwp-768-fluid">Active</span>';
 		} else {
-			$label = '<span class="ui tiny grey label">Inactive</span>';
+			$label = '<span class="ui tiny basic grey label mainwp-768-fluid">Inactive</span>';
 		}
-		return '<td>' . $label . '</td>';
+		return '<td class="mainwp-768-half-width-cell">' . $label . '</td>';
 	}
 
 	/**
@@ -162,7 +162,11 @@ class MainWP_Updates_Table_Helper {
 	 */
 	public function column_default( $value, $column_name ) {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
-		$col          = '<td>';
+		$class        = '';
+		if ( 'version' == $column_name || 'latest' == $column_name ) {
+			$class = 'mainwp-768-half-width-cell';
+		}
+		$col          = '<td class="' . $class . '">';
 		if ( 'title' == $column_name && empty( $current_wpid ) ) {
 			$col .= '<div class="ui child checkbox">
 			<input type="checkbox" name="">

@@ -1982,9 +1982,13 @@ class MainWP_Updates {
 			$table_features = apply_filters( 'mainwp_updates_http_responses_datatable_features', $table_features );
 			?>
 			<script>
+			var responsive = <?php echo $table_features['responsive']; ?>;
+			if( jQuery( window ).width() > 1140 ) {
+				responsive = false;
+			}
 			jQuery( document ).ready( function() {
 				jQuery( '#mainwp-http-response-issues-table' ).DataTable( {
-						"responsive": <?php echo $table_features['responsive']; ?>,
+						"responsive": responsive,
 						"searching": <?php echo $table_features['searching']; ?>,
 						"paging" : <?php echo $table_features['paging']; ?>,
 						"stateSave": <?php echo $table_features['stateSave']; ?>,
@@ -2083,6 +2087,17 @@ class MainWP_Updates {
 				<input id="updatesoverview-backup-ignore" type="button" name="Ignore" value="<?php esc_html_e( 'Ignore', 'mainwp' ); ?>" class="button"/>
 			</div>
 		</div>
+
+
+		<div class="ui modal" id="mainwp-plugin-details-modal">
+				<div class="header"><?php echo __( 'Plugin Details', 'mainwp' ); ?></div>
+				<div class="content">
+					<div class="ui embed"></div>
+				</div>
+				<div class="actions">
+					<div class="ui cancel button"><?php echo __( 'Close', 'mainwp' ); ?></div>
+				</div>
+			</div>
 		<?php
 	}
 

@@ -241,7 +241,7 @@ class MainWP_Updates_Per_Site {
 					<tr class="child-checkbox content">
 						<td colspan="4">
 							<table id="mainwp-wordpress-updates-groups-inner-table" class="ui table mainwp-manage-updates-item-table">
-								<thead>
+								<thead class="mainwp-768-hide">
 									<tr>
 									<?php $updates_table_helper->print_column_headers(); ?>
 									</tr>
@@ -252,9 +252,9 @@ class MainWP_Updates_Per_Site {
 										<?php
 										$indent_hidden = '<input type="hidden" id="wp_upgraded_plugin_' . esc_attr( $website->id ) . '_' . $plugin_name . '" value="0" />';
 										$row_columns   = array(
-											'title'   => '<a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&TB_iframe=true&width=772&height=887" target="_blank" class="thickbox open-plugin-details-modal">' . esc_html( $plugin_upgrade['Name'] ) . '</a>' . $indent_hidden,
-											'version' => esc_html( $plugin_upgrade['Version'] ),
-											'latest'  => '<a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog&TB_iframe=true&width=772&height=887" target="_blank" class="thickbox open-plugin-details-modal">' . esc_html( $plugin_upgrade['update']['new_version'] ) . '</a>',
+											'title'   => '<a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&TB_iframe=true&width=772&height=887" target="_blank" class="open-plugin-details-modal">' . esc_html( $plugin_upgrade['Name'] ) . '</a>' . $indent_hidden,
+											'version' => '<strong class="mainwp-768-show">' . __( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $plugin_upgrade['Version'] ),
+											'latest'  => '<strong class="mainwp-768-show">' . __( 'Latest: ', 'mainwp' ) . '</strong>' . '<a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog&TB_iframe=true&width=772&height=887" target="_blank" class="open-plugin-details-modal">' . esc_html( $plugin_upgrade['update']['new_version'] ) . '</a>',
 											'trusted' => ( in_array( $slug, $trustedPlugins ) ? true : false ),
 											'status'  => ( isset( $plugin_upgrade['active'] ) && $plugin_upgrade['active'] ) ? true : false,
 										);
@@ -412,7 +412,7 @@ class MainWP_Updates_Per_Site {
 					<tr class="child-checkbox content">
 						<td colspan="4">
 							<table id="mainwp-wordpress-updates-groups-inner-table" class="ui table mainwp-manage-updates-item-table mainwp-updates-list">
-								<thead>
+								<thead class="mainwp-768-hide">
 									<tr>
 									<?php $updates_table_helper->print_column_headers(); ?>
 									</tr>
@@ -424,8 +424,8 @@ class MainWP_Updates_Per_Site {
 										<?php
 										$row_columns = array(
 											'title'   => esc_html( $theme_upgrade['Name'] ) . $indent_hidden,
-											'version' => esc_html( $theme_upgrade['Version'] ),
-											'latest'  => esc_html( $theme_upgrade['update']['new_version'] ),
+											'version' => '<strong class="mainwp-768-show">' . __( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $theme_upgrade['Version'] ),
+											'latest'  => '<strong class="mainwp-768-show">' . __( 'Latest: ', 'mainwp' ) . '</strong>' . esc_html( $theme_upgrade['update']['new_version'] ),
 											'trusted' => ( in_array( $slug, $trustedThemes, true ) ? true : false ),
 											'status'  => ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? true : false,
 										);
@@ -526,7 +526,6 @@ class MainWP_Updates_Per_Site {
 						<div class="ui master checkbox">
 							<input type="checkbox" name=""> <label><?php MainWP_Updates::render_site_link_dashboard( $website ); ?></label>
 						</div>
-
 						</td>
 						<td sort-value="<?php echo count( $translation_upgrades ); ?>">
 							<?php echo count( $translation_upgrades ); ?><?php echo _n( 'Update', 'Updates', count( $translation_upgrades ), 'mainwp' ); ?>
@@ -543,7 +542,7 @@ class MainWP_Updates_Per_Site {
 					<tr class="content child-checkbox">
 						<td colspan="4">
 							<table class="ui table mainwp-manage-updates-item-table" id="mainwp-translations-table">
-								<thead>
+								<thead class="mainwp-768-hide">
 									<tr>
 										<th><?php esc_html_e( 'Translation', 'mainwp' ); ?></th>
 										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
@@ -564,7 +563,7 @@ class MainWP_Updates_Per_Site {
 											<input type="hidden" id="wp_upgraded_translation_<?php echo esc_attr( $website->id ); ?>_<?php echo $translation_slug; ?>" value="0"/>
 										</td>
 										<td>
-											<?php echo esc_html( $translation_upgrade['version'] ); ?>
+											<strong class="mainwp-768-show"><?php esc_html_e( 'Version:', 'mainwp' ); ?></strong> <?php echo esc_html( $translation_upgrade['version'] ); ?>
 										</td>
 										<td class="right aligned">
 											<?php if ( MainWP_Updates::user_can_update_trans() ) { ?>
@@ -574,7 +573,7 @@ class MainWP_Updates_Per_Site {
 									</tr>
 								<?php endforeach; ?>
 								</tbody>
-								<tfoot>
+								<tfoot class="mainwp-768-hide">
 									<tr>
 										<th><?php esc_html_e( 'Translation', 'mainwp' ); ?></th>
 										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
@@ -667,7 +666,7 @@ class MainWP_Updates_Per_Site {
 					<tr class="content">
 						<td colspan="3">
 							<table class="ui table mainwp-manage-updates-item-table" id="mainwp-abandoned-plugins-table">
-								<thead>
+								<thead class="mainwp-768-hide">
 									<tr>
 										<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
 										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
@@ -687,11 +686,11 @@ class MainWP_Updates_Per_Site {
 										?>
 										<tr dismissed="0">
 											<td>											
-												<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? rawurlencode( $plugin_outdate['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_outdate['Name'] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal"><?php echo esc_html( $plugin_outdate['Name'] ); ?></a>
+												<strong class="mainwp-768-show"><?php esc_html_e( 'Plugin:', 'mainwp' ); ?></strong> <a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? rawurlencode( $plugin_outdate['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_outdate['Name'] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $plugin_outdate['Name'] ); ?></a>
 												<input type="hidden" id="wp_dismissed_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>" value="0"/>
 											</td>
-											<td><?php echo esc_html( $plugin_outdate['Version'] ); ?></td>
-											<td><?php echo $outdate_notice; ?></td>
+											<td><strong class="mainwp-768-show"><?php esc_html_e( 'Version:', 'mainwp' ); ?></strong> <?php echo esc_html( $plugin_outdate['Version'] ); ?></td>
+											<td><strong class="mainwp-768-show"><?php esc_html_e( 'Last Update:', 'mainwp' ); ?></strong> <?php echo $outdate_notice; ?></td>
 											<td class="right aligned" id="wp_dismissbuttons_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>">
 											<?php if ( MainWP_Updates::user_can_ignore_updates() ) { ?>
 												<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
@@ -780,7 +779,7 @@ class MainWP_Updates_Per_Site {
 					<tr class="content">
 						<td colspan="3">
 							<table class="ui table mainwp-manage-updates-item-table" id="mainwp-abandoned-themes-table">
-								<thead>
+								<thead class="mainwp-768-hide">
 									<tr>
 										<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
 										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
@@ -800,11 +799,11 @@ class MainWP_Updates_Per_Site {
 										?>
 										<tr dismissed="0">
 											<td>
-												<?php echo esc_html( $theme_outdate['Name'] ); ?>
+												<strong class="mainwp-768-show"><?php esc_html_e( 'Theme:', 'mainwp' ); ?></strong> <?php echo esc_html( $theme_outdate['Name'] ); ?>
 												<input type="hidden" id="wp_dismissed_theme_<?php echo esc_attr( $website->id ); ?>_<?php echo $theme_name; ?>" value="0"/>
 											</td>
-											<td><?php echo esc_html( $theme_outdate['Version'] ); ?></td>
-											<td><?php echo $outdate_notice; ?></td>
+											<td><strong class="mainwp-768-show"><?php esc_html_e( 'Version:', 'mainwp' ); ?></strong> <?php echo esc_html( $theme_outdate['Version'] ); ?></td>
+											<td><strong class="mainwp-768-show"><?php esc_html_e( 'Last Update:', 'mainwp' ); ?></strong> <?php echo $outdate_notice; ?></td>
 											<td class="right aligned" id="wp_dismissbuttons_theme_<?php echo esc_attr( $website->id ); ?>_<?php echo $theme_name; ?>">
 												<?php if ( MainWP_Updates::user_can_ignore_updates() ) { ?>
 													<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_dismiss_outdate_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>

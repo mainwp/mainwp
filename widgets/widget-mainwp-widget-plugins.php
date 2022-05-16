@@ -191,7 +191,7 @@ class MainWP_Widget_Plugins {
 							<?php } ?>
 						</div>
 						<div class="middle aligned content">
-							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $actived_plugins[ $i ]['name'] ); ?>">
+							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $actived_plugins[ $i ]['name'] ); ?>">
 								<?php echo esc_html( $actived_plugins[ $i ]['name'] . ' ' . $actived_plugins[ $i ]['version'] ); ?>
 							</a>
 							</div>
@@ -247,7 +247,7 @@ class MainWP_Widget_Plugins {
 							<?php } ?>
 						</div>
 						<div class="middle aligned content">
-							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="thickbox open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ); ?>">
+							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ); ?>">
 								<?php echo esc_html( $inactive_plugins[ $i ]['name'] . ' ' . $inactive_plugins[ $i ]['version'] ); ?>
 							</a>
 						</div>

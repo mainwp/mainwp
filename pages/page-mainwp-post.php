@@ -773,7 +773,7 @@ class MainWP_Post {
 						<div class="ui calendar mainwp_datepicker" >
 							<div class="ui input left icon">
 								<i class="calendar icon"></i>
-								<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstart" value="<?php echo null != $cachedSearch ? esc_attr( $cachedSearch['dtsstart'] ) : ''; ?>"/>
+								<input type="text" autocomplete="off" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstart" value="<?php echo null != $cachedSearch ? esc_attr( $cachedSearch['dtsstart'] ) : ''; ?>"/>
 							</div>
 						</div>
 					</div>
@@ -781,7 +781,7 @@ class MainWP_Post {
 						<div class="ui calendar mainwp_datepicker" >
 							<div class="ui input left icon">
 								<i class="calendar icon"></i>
-								<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstop" value="<?php echo null != $cachedSearch ? esc_attr( $cachedSearch['dtsstop'] ) : ''; ?>"/>
+								<input type="text" autocomplete="off" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstop" value="<?php echo null != $cachedSearch ? esc_attr( $cachedSearch['dtsstop'] ) : ''; ?>"/>
 							</div>
 						</div>
 					</div>
@@ -938,11 +938,15 @@ class MainWP_Post {
 		if ( $cached ) {
 			?>
 			<script type="text/javascript">
+			var responsive = <?php echo $table_features['responsive']; ?>;
+			if( jQuery( window ).width() > 1140 ) {
+				responsive = false;
+			}
 			jQuery( document ).ready( function () {
 				try {
 					jQuery("#mainwp-posts-table").DataTable().destroy(); // to fix re-init database issue.
 					jQuery('#mainwp-posts-table').DataTable( {
-						"responsive" : <?php echo $table_features['responsive']; ?>,
+						"responsive" : responsive,
 						"searching" : <?php echo $table_features['searching']; ?>,
 						"colReorder" : <?php echo $table_features['colReorder']; ?>,
 						"stateSave":  <?php echo $table_features['stateSave']; ?>,
@@ -2375,16 +2379,16 @@ class MainWP_Post {
 				<div class="field">
 					<label><?php esc_html_e( 'Publish', 'mainwp' ); ?></label>
 					<select class="ui dropdown" name="post_timestamp" id="post_timestamp">
-						<option value="immediately" selected="selected"><?php esc_html_e( 'Immediately', 'mainwp' ); ?></option>
-						<option value="schedule"><?php esc_html_e( 'Schedule', 'mainwp' ); ?></option>
+						<option value="immediately" <?php echo ( 'future' == $post->post_status ) ? '' : 'selected="selected"'; ?>><?php esc_html_e( 'Immediately', 'mainwp' ); ?></option>
+						<option value="schedule" <?php echo ( 'future' == $post->post_status ) ? 'selected="selected"' : ''; ?>><?php esc_html_e( 'Schedule', 'mainwp' ); ?></option>
 					</select>
 				</div>
 
-				<div class="field" id="post_timestamp_value-field" style="display:none">
+				<div class="field" id="post_timestamp_value-field" <?php echo ( 'future' == $post->post_status ) ? "" : 'style="display:none"'; ?>>
 					<div class="ui calendar mainwp_datepicker" id="schedule_post_datetime" >
 						<div class="ui input left icon">
 							<i class="calendar icon"></i>
-							<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="post_timestamp_value" value="" />
+							<input type="text" autocomplete="off" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="post_timestamp_value" value="" />
 						</div>
 					</div>
 				</div>				

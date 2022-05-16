@@ -277,10 +277,29 @@ class MainWP_System_Cron_Jobs {
 				}
 			}
 		} else { // check this if frequency > 1 only.
+
+			$last_run_timestamp_today = get_option( 'mainwp_updatescheck_last_run_timestamp_today', false ); // to fix.
+			$today_count              = get_option( 'mainwp_updatescheck_today_count', 0 );
+
 			$frequence_period_in_seconds = ( $today_end - $run_timestamp ) / ( $frequencyDailyUpdate - 1 ); // new way to set run frequency.
 			while ( $next_time < $lasttimeScheduleStartAutomaticUpdate + $frequence_period_in_seconds - 5 * MINUTE_IN_SECONDS ) { // to fix.
 				$next_time += $frequence_period_in_seconds;
 			}
+
+			// to fix.
+			if ( $local_timestamp > $run_timestamp && $local_timestamp < $run_timestamp + $frequence_period_in_seconds && $local_timestamp > $last_run_timestamp_today ) {
+				$next_time = $local_timestamp;
+			}
+
+			if ( $local_timestamp >= $next_time ) {
+				$next_time = $local_timestamp;
+			} else {
+				// to fix.
+				if ( $local_timestamp > $last_run_timestamp_today && ( ( $today_count + 1 ) == $frequencyDailyUpdate ) ) {
+					$next_time = $local_timestamp;
+				}
+			}
+
 			if ( $next_time > $today_end ) {
 				$next_time = $run_timestamp + DAY_IN_SECONDS; // next day run_timestamp.
 			}
@@ -445,7 +464,7 @@ class MainWP_System_Cron_Jobs {
 
 		$check_to_run = false;
 		if ( $frequencyDailyUpdate > 1 ) { // check this if frequency > 1 only.
-
+			$last_run_timestamp_today    = get_option( 'mainwp_updatescheck_last_run_timestamp_today', false ); // to fix.
 			$frequence_period_in_seconds = ( $today_end - $run_timestamp ) / ( $frequencyDailyUpdate - 1 ); // new way to set run frequency.
 			if ( $frequence_period_in_seconds < HOUR_IN_SECONDS ) {
 				$frequence_period_in_seconds = HOUR_IN_SECONDS;
@@ -455,10 +474,15 @@ class MainWP_System_Cron_Jobs {
 				$next_time += $frequence_period_in_seconds;
 			}
 
+			// to fix.
+			if ( $local_timestamp > $run_timestamp && $local_timestamp < $run_timestamp + $frequence_period_in_seconds && $local_timestamp > $last_run_timestamp_today ) {
+				$next_time = $local_timestamp;
+			}
+
 			if ( $local_timestamp >= $next_time ) {
 				$check_to_run = true;
 			} else {
-				$last_run_timestamp_today = get_option( 'mainwp_updatescheck_last_run_timestamp_today', false ); // to fix.
+				// to fix.
 				if ( $local_timestamp > $last_run_timestamp_today && ( ( $today_count + 1 ) == $frequencyDailyUpdate ) ) {
 					$check_to_run = true;
 				}
@@ -545,7 +569,7 @@ class MainWP_System_Cron_Jobs {
 				$last_run = array();
 			}
 
-			if ( count( $last_run ) > 10 ) {
+			if ( count( $last_run ) > 20 ) {
 				array_shift( $last_run );
 			}
 

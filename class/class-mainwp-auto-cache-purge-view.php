@@ -551,9 +551,13 @@ class MainWP_Auto_Cache_Purge_View {
 		</table>
 
 		<script type="text/javascript">
+		var responsive = true;
+			if( jQuery( window ).width() > 1140 ) {
+				responsive = false;
+			}
 		jQuery( document ).ready( function() {
 			jQuery( '#mainwp-cache-control-log-table' ).DataTable( {
-				responsive: true,
+				responsive: responsive,
 				columnDefs: [ {
 					"targets": 'no-sort',
 					"orderable": false,

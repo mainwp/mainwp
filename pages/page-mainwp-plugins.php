@@ -1065,7 +1065,7 @@ class MainWP_Plugins {
 						<div class="ui slider checkbox mainwp-768-hide">
 							<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_plugins_site_check_all"/><label></label>
 						</div>
-						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site_id; ?>" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign-in alternate icon"></i></a>
+						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site_id; ?>" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
 						<a href="<?php echo esc_attr( $site_url ); ?>"><?php echo esc_html( $website->name ); ?></a>
 					</td>
 					<?php
@@ -1806,6 +1806,7 @@ class MainWP_Plugins {
 			'paging'     => 'false',
 			'ordering'   => 'true',
 			'order'      => '[ [ 2, "asc" ] ]',
+			'responsive' => 'true',
 		);
 
 		/**
@@ -1818,6 +1819,10 @@ class MainWP_Plugins {
 		$table_features = apply_filters( 'mainwp_plugin_auto_updates_table_fatures', $table_features );
 		?>
 		<script type="text/javascript">
+		var responsive = <?php echo $table_features['responsive']; ?>;
+			if( jQuery( window ).width() > 1140 ) {
+				responsive = false;
+			}
 		jQuery( document ).ready( function() {
 			jQuery( '#mainwp-all-active-plugins-table' ).DataTable( {
 				"searching" : <?php echo $table_features['searching']; ?>,
@@ -1828,7 +1833,7 @@ class MainWP_Plugins {
 				"ordering" : <?php echo $table_features['ordering']; ?>,
 				"order" : <?php echo $table_features['order']; ?>,
 				"columnDefs": [ { "orderable": false, "targets": [ 0, 1, 6 ] } ],
-				"responsive": true,
+				"responsive": responsive,
 			} );
 		} );
 		</script>

@@ -804,11 +804,15 @@ class MainWP_User {
 		$table_features = apply_filters( 'mainwp_users_table_fatures', $table_features );
 		?>
 		<script type="text/javascript">
+		var responsive = <?php echo $table_features['responsive']; ?>;
+		if( jQuery( window ).width() > 1140 ) {
+			responsive = false;
+		}
 		jQuery( document ).ready( function () {
 			try {
 				jQuery( "#mainwp-users-table" ).DataTable().destroy(); // to fix re-init database issue.
 				jQuery( "#mainwp-users-table" ).DataTable( {
-					"responsive" : <?php echo $table_features['responsive']; ?>,
+					"responsive" : responsive,
 					"searching" : <?php echo $table_features['searching']; ?>,
 					"colReorder" : <?php echo $table_features['colReorder']; ?>,
 					"stateSave":  <?php echo $table_features['stateSave']; ?>,
@@ -1109,9 +1113,6 @@ class MainWP_User {
 					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="user[]" value="1"></span></td>
 					<?php do_action( 'mainwp_users_table_column', $user, $website ); ?>
 					<td class="name column-name">
-					<input class="userId" type="hidden" name="id" value="<?php echo esc_attr( $user['id'] ); ?>" />
-					<input class="userName" type="hidden" name="name" value="<?php echo esc_attr( $user['login'] ); ?>" />
-					<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>" />
 					<?php echo ! empty( $user['display_name'] ) ? esc_html( $user['display_name'] ) : '&nbsp;'; ?>
 					<div class="row-actions-working">
 						<i class="ui active inline loader tiny"></i> <?php esc_html_e( 'Please wait', 'mainwp' ); ?>
@@ -1123,6 +1124,9 @@ class MainWP_User {
 				<td class="posts column-posts"><a href="<?php echo admin_url( 'admin.php?page=PostBulkManage&siteid=' . intval( $website->id ) . '&userid=' . $user['id'] ); ?>"><?php echo esc_html( $user['post_count'] ); ?></a></td>
 				<td class="website column-website"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
 				<td class="right aligned">
+					<input class="userId" type="hidden" name="id" value="<?php echo esc_attr( $user['id'] ); ?>" />
+					<input class="userName" type="hidden" name="name" value="<?php echo esc_attr( $user['login'] ); ?>" />
+					<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>" />
 					<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
 						<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 						<div class="menu">

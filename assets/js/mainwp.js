@@ -2060,7 +2060,7 @@ mainwp_links_visit_site_and_admin = function (url, siteId) {
   if (url != '') {
     links += '<a href="' + url + '" target="_blank" class="mainwp-may-hide-referrer"><i class="external alternate icon"></i></a> ';
   }
-  links += '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + siteId + '" target="_blank"><i class="sign-in alternate icon"></i></a>';
+  links += '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + siteId + '" target="_blank"><i class="sign in alternate icon"></i></a>';
   return links;
 }
 

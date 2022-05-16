@@ -493,9 +493,9 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 			do_action( 'mainwp_install_plugin_card_top' );
 			?>
 			<div class="content">
-			<a class="right floated mini ui image thickbox open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><img src="<?php echo esc_attr( $plugin_icon_url ); ?>" /></a>
+			<a class="right floated mini ui image open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><img src="<?php echo esc_attr( $plugin_icon_url ); ?>" /></a>
 			<div class="header">
-				<a class="thickbox open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><?php echo $title; ?></a>
+				<a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><?php echo $title; ?></a>
 					</div>
 			<div class="meta">
 						<?php echo $author; ?>
@@ -519,7 +519,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 					?>
 					</div>
 					<div class="extra content">
-						<a href="<?php echo esc_attr( $details_link ); ?>" class="ui mini button thickbox open-plugin-details-modal"><?php echo esc_html( 'Plugin Details' ); ?></a>
+						<a href="<?php echo esc_attr( $details_link ); ?>" class="ui mini button open-plugin-details-modal"><?php echo esc_html( 'Plugin Details' ); ?></a>
 						<div class="ui radio checkbox right floated">
 						<input name="install-plugin" type="radio" id="install-plugin-<?php echo sanitize_html_class( $plugin['slug'] ); ?>">
 						<label><?php esc_html_e( 'Install this Plugin', 'mainwp' ); ?></label>

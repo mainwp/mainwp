@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.0
 Requires PHP: 7.0
-Stable tag: 4.2.3
+Stable tag: 4.2.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -179,6 +179,20 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.2.4 - 5-16-2022 =
+* Fixed: An issue with missing Go to WP Admin icon in the update feedback
+* Fixed: An issue with rendering plugin and theme details modal
+* Fixed: An issue with editing scheduled posts and pages
+* Fixed: An issue with triggering the sync process by clicking the status icon in the Manage Sites table
+* Fixed: An issue with loading user data when Editing a single user
+* Updated: Limited string length in the Site Title column
+* Updated: Limited string length in the Site URL column
+* Updated: Disabled auto-complete for date fields
+* Updated: Disabled the DataTables Responsive extension for desktop screens
+* Updated: Removed thead element for inner tables in the Updates section
+* Updated: Increased button size in Updates tables in responsive view
+* Updated: Extensions info message on the Extensions page
 
 = 4.2.3 - 5-10-2022 =
 * Fixed: An issue with publishing sticky posts

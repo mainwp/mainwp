@@ -978,7 +978,7 @@ class MainWP_Themes {
 						<div class="ui slider checkbox mainwp-768-hide">
 							<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_themes_site_check_all"/><label></label>
 						</div>
-						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site_id; ?>" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign-in alternate icon"></i></a>
+						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site_id; ?>" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
 						<a href="<?php echo esc_attr( $site_url ); ?>"><?php echo esc_html( $website->name ); ?></a>
 					</td>
 					<?php
@@ -1849,6 +1849,7 @@ class MainWP_Themes {
 			'paging'     => 'false',
 			'ordering'   => 'true',
 			'order'      => '[ [ 2, "asc" ] ]',
+			'responsive' => 'true',
 		);
 
 		/**
@@ -1861,6 +1862,10 @@ class MainWP_Themes {
 		$table_features = apply_filters( 'mainwp_theme_auto_updates_table_fatures', $table_features );
 		?>
 		<script type="text/javascript">
+		var responsive = <?php echo $table_features['responsive']; ?>;
+			if( jQuery( window ).width() > 1140 ) {
+				responsive = false;
+			}
 			jQuery( document ).ready( function() {
 				jQuery( '.mainwp-ui-page .ui.checkbox' ).checkbox();
 
@@ -1873,7 +1878,7 @@ class MainWP_Themes {
 					"ordering" : <?php echo $table_features['ordering']; ?>,
 					"order" : <?php echo $table_features['order']; ?>,
 					"columnDefs": [ { "orderable": false, "targets": [ 0, 1, 6 ] } ],
-					"responsive": true,
+					"responsive": responsive,
 				} );
 			} );
 		</script>

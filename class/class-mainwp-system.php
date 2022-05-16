@@ -33,7 +33,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.2.3';
+	public static $version = '4.2.4';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -301,7 +301,6 @@ class MainWP_System {
 				'mainwp_disableSitesHealthMonitoring',
 				'mainwp_frequencySitesChecking',
 				'mainwp_sitehealthThreshold',
-				'mainwp_updatescheck_frequency_today_count',
 				'mainwp_settings_notification_emails',
 				'mainwp_ignore_HTTP_response_status',
 				'mainwp_check_http_response',

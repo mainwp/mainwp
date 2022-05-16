@@ -1157,10 +1157,11 @@ class MainWP_Manage_Sites {
 			}
 		}
 
+		$hide_loading = apply_filters( 'mainwp_manage_sites_hide_loading', false );
 		?>
 		<div id="mainwp-manage-sites-content" class="ui segment">
-			<div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
-			<div class="ui active inverted dimmer" id="mainwp-sites-table-loader">
+			<div id="mainwp-message-zone" class="ui message"></div>
+			<div class="ui active inverted dimmer" <?php echo $hide_loading ? 'style="display:none;"' : ''; ?> id="mainwp-sites-table-loader">
 				<div class="ui large text loader"><?php esc_html_e( 'Loading sites...', 'mainwp' ); ?></div>
 			</div>
 			<form method="post" class="mainwp-table-container">

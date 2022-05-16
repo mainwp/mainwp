@@ -517,11 +517,7 @@ class MainWP_Settings {
 				}
 				MainWP_Utility::update_option( 'mainwp_timeDailyUpdate', isset( $_POST['mainwp_timeDailyUpdate'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_timeDailyUpdate'] ) ) : '' );
 
-				$old_freq = get_option( 'mainwp_frequencyDailyUpdate' );
 				$new_freq = ( isset( $_POST['mainwp_frequencyDailyUpdate'] ) ? intval( $_POST['mainwp_frequencyDailyUpdate'] ) : 1 );
-				if ( $old_freq != $new_freq ) {
-					MainWP_Utility::update_option( 'mainwp_updatescheck_frequency_today_count', 0 ); // reset the value.
-				}
 				MainWP_Utility::update_option( 'mainwp_frequencyDailyUpdate', $new_freq );
 
 				$val  = ( isset( $_POST['mainwp_sidebarPosition'] ) ? intval( $_POST['mainwp_sidebarPosition'] ) : 1 );
@@ -607,7 +603,7 @@ class MainWP_Settings {
 			return;
 		}
 
-		$frequence_today_count = get_option( 'mainwp_updatescheck_frequency_today_count' );
+		$updatescheck_today_count = get_option( 'mainwp_updatescheck_today_count' );
 
 		self::render_header( '' );
 		?>
@@ -757,7 +753,7 @@ class MainWP_Settings {
 								</select>
 								<div class="ui hidden divider"></div>
 								<div class="ui label"><?php esc_html_e( 'Last run: ', 'mainwp' ); ?><?php echo esc_html( $lastAutomaticUpdate ); ?></div>
-								<div class="ui label" frequence-today-count="<?php echo intval( $frequence_today_count ); ?>"><?php esc_html_e( 'Next run: ', 'mainwp' ); ?><?php echo esc_html( $nextAutomaticUpdate ); ?></div>
+								<div class="ui label" updatescheck-today-count="<?php echo intval( $updatescheck_today_count ); ?>"><?php esc_html_e( 'Next run: ', 'mainwp' ); ?><?php echo esc_html( $nextAutomaticUpdate ); ?></div>
 							</div>
 						</div>
 						<div class="ui grid field">

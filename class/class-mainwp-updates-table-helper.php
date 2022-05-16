@@ -166,7 +166,7 @@ class MainWP_Updates_Table_Helper {
 		if ( 'version' == $column_name || 'latest' == $column_name ) {
 			$class = 'mainwp-768-half-width-cell';
 		}
-		$col          = '<td class="' . $class . '">';
+		$col = '<td class="' . $class . '">';
 		if ( 'title' == $column_name && empty( $current_wpid ) ) {
 			$col .= '<div class="ui child checkbox">
 			<input type="checkbox" name="">

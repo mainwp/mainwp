@@ -2384,7 +2384,7 @@ class MainWP_Post {
 					</select>
 				</div>
 
-				<div class="field" id="post_timestamp_value-field" <?php echo ( 'future' == $post->post_status ) ? "" : 'style="display:none"'; ?>>
+				<div class="field" id="post_timestamp_value-field" <?php echo ( 'future' == $post->post_status ) ? '' : 'style="display:none"'; ?>>
 					<div class="ui calendar mainwp_datepicker" id="schedule_post_datetime" >
 						<div class="ui input left icon">
 							<i class="calendar icon"></i>

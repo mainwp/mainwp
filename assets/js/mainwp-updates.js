@@ -3205,15 +3205,15 @@ mainwp_table_check_columns_init = function () {
 }
 
 jQuery(document).ready(function ($) {
-    $('.open-plugin-details-modal').on('click', function (e) {
+    $('.open-plugin-details-modal').on('click', function () {
         var itemDetail = this;
         $('#mainwp-plugin-details-modal').modal({
             onHide: function () {
             },
             onShow: function () {
                 $('#mainwp-plugin-details-modal').find('.ui.embed').embed({
-                    source      : 'WP',
-                    url          : $(itemDetail).attr('href'),
+                    source: 'WP',
+                    url: $(itemDetail).attr('href'),
                 });
                 return false;
             }

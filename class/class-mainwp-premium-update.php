@@ -57,6 +57,7 @@ class MainWP_Premium_Update {
 				'wp-all-import-pro/wp-all-import-pro.php',
 				'bbq-pro/bbq-pro.php',
 				'seedprod-coming-soon-pro-5/seedprod-coming-soon-pro-5.php',
+				'oxygen/functions.php',
 				'elementor-pro/elementor-pro.php',
 				'bbpowerpack/bb-powerpack.php',
 				'bb-ultimate-addon/bb-ultimate-addon.php',
@@ -74,6 +75,8 @@ class MainWP_Premium_Update {
 				'wp-schema-pro/wp-schema-pro.php',
 				'ultimate-elementor/ultimate-elementor.php',
 				'gp-premium/gp-premium.php',
+				'flying-press/flying-press.php',
+				'wp-rocket/wp-rocket.php',
 			);
 
 			/**

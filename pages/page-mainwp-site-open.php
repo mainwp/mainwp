@@ -35,6 +35,9 @@ class MainWP_Site_Open {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function render() {
+
+		self::verify_open_nonce();
+
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) {
 			mainwp_do_not_have_permissions( __( 'WP-Admin on child sites', 'mainwp' ) );
 
@@ -92,6 +95,9 @@ class MainWP_Site_Open {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function render_restore() {
+
+		self::verify_open_nonce();
+
 		if ( ! isset( $_GET['websiteid'] ) ) {
 			exit();
 		}
@@ -146,6 +152,18 @@ class MainWP_Site_Open {
 			</form>
 		</div>
 		<?php
+	}
+
+	/**
+	 * This verify opens the site nonce.
+	 */
+	public static function verify_open_nonce() {
+		$nonce = '_opennonce';
+		if ( isset( $_GET[ $nonce ] ) && wp_verify_nonce( sanitize_key( $_GET[ $nonce ] ), 'mainwp-admin-nonce' ) ) {
+			return true;
+		} else {
+			wp_die( __( 'Unauthorized request. Invalid or missing nonce, be sure you are using the current version of the MainWP Dashboard and Extensions.', 'mainwp' ) );
+		}
 	}
 
 	/**

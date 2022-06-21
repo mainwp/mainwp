@@ -1931,7 +1931,7 @@ class MainWP_Updates {
 							<label class="ui red label http-code"><?php echo 'HTTP ' . $website->http_response_code; ?></label>
 						</td>
 						<td class="right aligned">
-							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>" class="ui mini button" target="_blank"><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></a>
+							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" class="ui mini button" target="_blank"><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></a>
 							<a href="javascript:void(0)" onclick="return updatesoverview_recheck_http( this, <?php echo esc_attr( $website->id ); ?> )" class="ui basic mini green button"><?php esc_html_e( 'Recheck', 'mainwp' ); ?></a>
 							<?php if ( ! empty( $website->sync_errors ) ) { ?>
 							<a href="#" class="mainwp_site_reconnect ui green mini button"><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
@@ -2087,7 +2087,6 @@ class MainWP_Updates {
 				<input id="updatesoverview-backup-ignore" type="button" name="Ignore" value="<?php esc_html_e( 'Ignore', 'mainwp' ); ?>" class="button"/>
 			</div>
 		</div>
-
 
 		<div class="ui modal" id="mainwp-plugin-details-modal">
 				<div class="header"><?php echo __( 'Plugin Details', 'mainwp' ); ?></div>

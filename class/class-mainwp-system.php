@@ -33,7 +33,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.2.4';
+	public static $version = '4.2.5';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -731,6 +731,7 @@ class MainWP_System {
 			'installedBulkSettingsManager'     => is_plugin_active( 'mainwp-bulk-settings-manager/mainwp-bulk-settings-manager.php' ) ? 1 : 0,
 			'maximumSyncRequests'              => ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ),
 			'maximumInstallUpdateRequests'     => ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ),
+			'_wpnonce'                         => wp_create_nonce( 'mainwp-admin-nonce' ),
 		);
 		wp_localize_script( 'mainwp', 'mainwpParams', $mainwpParams );
 

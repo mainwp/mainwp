@@ -56,10 +56,10 @@ class MainWP_DB extends MainWP_DB_Base {
 	 */
 	public function get_option_view( $fields = array(), $default = true ) {
 
-		$view = '(SELECT intwp.id AS wpid,';
+		$view = '(SELECT intwp.id AS wpid ';
 
 		if ( empty( $fields ) || $default ) {
-			$view .= ' (SELECT recent_comments.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_comments WHERE  recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments" LIMIT 1) AS recent_comments,
+			$view .= ',(SELECT recent_comments.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_comments WHERE  recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments" LIMIT 1) AS recent_comments,
 					(SELECT recent_posts.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_posts WHERE  recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts" LIMIT 1) AS recent_posts,
 					(SELECT recent_pages.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_pages WHERE  recent_pages.wpid = intwp.id AND recent_pages.name = "recent_pages" LIMIT 1) AS recent_pages,
 					(SELECT phpversion.value FROM ' . $this->table_name( 'wp_options' ) . ' phpversion WHERE  phpversion.wpid = intwp.id AND phpversion.name = "phpversion" LIMIT 1) AS phpversion,
@@ -870,7 +870,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	public function get_sql_website_by_id( $id, $selectGroups = false, $extra_view = array() ) {
 
 		if ( empty( $extra_view ) ) {
-			$extra_view = array( 'favi_icon' );
+			$extra_view = array( 'favi_icon', 'site_info' );
 		}
 
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
@@ -1014,15 +1014,16 @@ class MainWP_DB extends MainWP_DB_Base {
                  LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                  LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
                  JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-                 JOIN ' . $this->get_option_view() . ' wp_optionview ON wp.id = wp_optionview.wpid
+                 JOIN ' . $this->get_option_view( array( 'site_info' ), true ) . ' wp_optionview ON wp.id = wp_optionview.wpid
                  WHERE wpgroup.groupid = ' . $id . ' ' .
 				( null == $where ? '' : ' AND ' . $where ) . $where_allowed . $where_search . '
                  GROUP BY wp.id, wp_sync.sync_id
                  ORDER BY ' . $orderBy;
 			} else {
-				$qry = 'SELECT wp.*,wp_sync.* FROM ' . $this->table_name( 'wp' ) . ' wp
+				$qry = 'SELECT wp.*,wp_optionview.*, wp_sync.* FROM ' . $this->table_name( 'wp' ) . ' wp
                         JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid
                         JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
+						JOIN ' . $this->get_option_view( array( 'site_info' ), false ) . ' wp_optionview ON wp.id = wp_optionview.wpid
                         WHERE wpgroup.groupid = ' . $id . ' ' . $where_allowed . $where_search .
 				( null == $where ? '' : ' AND ' . $where ) . ' ORDER BY ' . $orderBy;
 			}

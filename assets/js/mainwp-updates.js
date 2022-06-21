@@ -36,7 +36,7 @@ updatesoverview_upgrade = function (id, obj) {
 
     updatesoverviewContinueAfterBackup = function (pId, pUpgradeElement) {
         return function () {
-            jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
+            jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ' + __('Updating. Please wait...'));
             pUpgradeElement.val(1);
             var data = mainwp_secure_data({
                 action: 'mainwp_upgradewp',
@@ -49,9 +49,9 @@ updatesoverview_upgrade = function (id, obj) {
                     if (response.error.extra) {
                         err_msg = response.error.extra + ' ';
                     }
-                    jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html(err_msg + '<i class="red times icon"></i>');
+                    jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + err_msg + '"><i class="red times icon"></i></span>');
                 } else {
-                    jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html('<i class="green check icon"></i>');
+                    jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
                 }
 
 
@@ -261,11 +261,11 @@ updatesoverview_wordpress_upgrade_int = function (websiteId, bulkMode) {
                     err_msg = response.error.extra + ' ';
                 }
                 if (pBulkMode)
-                    updatesoverview_wordpress_upgrade_all_update_site_status(pWebsiteId, err_msg + '<i class="red times icon"></i>');
+                    updatesoverview_wordpress_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + err_msg + '"><i class="red times icon"></i></span>');
             } else {
                 result = response.result;
                 if (pBulkMode)
-                    updatesoverview_wordpress_upgrade_all_update_site_status(pWebsiteId, '<i class="green check icon"></i>');
+                    updatesoverview_wordpress_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
                 countRealItemsUpdated++;
                 couttItemsToUpdate++;
             }
@@ -862,7 +862,7 @@ updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSelecte
     var _callback = function () {
 
         for (var i = 0; i < sitesToUpdate.length; i++) {
-            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(decodeURIComponent(siteNames[sitesToUpdate[i]]), '<span class="updatesoverview-upgrade-status-wp" siteid="' + sitesToUpdate[i] + '">' + '<i class="clock outline icon"></i> ' + '</span>');
+            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(decodeURIComponent(siteNames[sitesToUpdate[i]]), '<span class="updatesoverview-upgrade-status-wp" siteid="' + sitesToUpdate[i] + '">' + '<span data-inverted="" data-position="left center" data-tooltip="' + __('Pending', 'mainwp') + '"><i class="clock outline icon"></i></span> ' + '</span>');
         }
 
         var sitesCount = sitesToUpdate.length;
@@ -989,7 +989,7 @@ updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noChe
                 if (!websiteHolder.exists()) {
                     websiteHolder = jQuery('.plugins-bulk-updates[site_id="' + pWebsiteId + '"] tr[plugin_slug="' + slugParts[i] + '"]');
                 }
-                websiteHolder.find('td:last-child').html('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
+                websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ' + __('Updating. Please wait...'));
             }
 
             var data = mainwp_secure_data({
@@ -1003,7 +1003,7 @@ updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noChe
                 url: ajaxurl,
                 data: data,
                 success: function (pSlug, pWebsiteId, pBulkMode) {
-                    return function (response) {
+                    return function (response) {                       
                         var slugParts = pSlug.split(',');
                         var done = false;
                         for (var i = 0; i < slugParts.length; i++) {
@@ -1013,16 +1013,17 @@ updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noChe
                             }
 
                             if (response.error) {
+                                var extErr = getErrorMessage(response.error, true ); 
                                 if (!done && pBulkMode)
-                                    updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
-                                websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
+                                    updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="red times icon"></i></span>');
+                                websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="red times icon"></i></span>');
                             } else {
                                 var res = response.result;
                                 if (res[slugParts[i]]) {
                                     if (!done && pBulkMode)
-                                        updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
+                                        updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
                                     websiteHolder.attr('updated', 1);
-                                    websiteHolder.find('td:last-child').html('<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
+                                    websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
 
                                     countRealItemsUpdated++;
                                     if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
@@ -1426,17 +1427,18 @@ updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
                     }
 
                     if (response.error) {
+                        var extErr = getErrorMessage(response.error, true ); 
                         if (!done && pBulkMode)
-                            updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
-                        websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
+                            updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="red times icon"></i></span>');
+                        websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="red times icon"></i></span>');
                     } else {
                         var res = response.result;
 
                         if (res[slugParts[i]]) {
                             if (!done && pBulkMode)
-                                updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, '<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
+                                updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
                             websiteHolder.attr('updated', 1);
-                            websiteHolder.find('td:last-child').html('<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
+                            websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
 
                             countRealItemsUpdated++;
                             if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
@@ -2927,7 +2929,7 @@ updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, gr
                 var elem = document.getElementById('wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item);
                 if (elem && elem.value == 0) {
                     var parent = jQuery(elem).closest('tr');
-                    parent.find('td:last-child').html('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
+                    parent.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ' + __('Updating. Please wait...'));
                     elem.value = 1;
                     parent.attr('updated', 1);
                     newList.push(item);
@@ -2966,7 +2968,7 @@ updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, gr
                             var elem = document.getElementById('wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item);
                             var parent = jQuery(elem).closest('tr');
                             if (res[item]) {
-                                parent.find('td:last-child').html('<i class="green check icon"></i>');
+                                parent.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful.', 'mainwp') + '"><i class="green check icon"></i></span>');
                                 countRealItemsUpdated++;
                             } else {
                                 parent.find('td:last-child').html('<i class="red times icon"></i>');

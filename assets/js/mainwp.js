@@ -914,7 +914,7 @@ mainwp_sync_sites_data = function (syncSiteIds, pAction) {
   }
 
   for (var i = 0; i < allWebsiteIds.length; i++) {
-    dashboard_update_site_status(allWebsiteIds[i], '<i class="clock outline icon"></i>');
+    dashboard_update_site_status(allWebsiteIds[i], '<span data-inverted="" data-position="left center" data-tooltip="' + __('Pending', 'mainwp') + '"><i class="clock outline icon"></i></span>');
   }
 
   var nrOfWebsites = allWebsiteIds.length;
@@ -1020,7 +1020,7 @@ dashboard_update_next = function (pAction) {
   currentThreads++;
   websitesLeft--;
   var websiteId = websitesToUpdate[currentWebsite++];
-  dashboard_update_site_status(websiteId, '<i class="sync alternate loading icon"></i>');
+  dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Syncing...', 'mainwp') + '"><i class="sync alternate loading icon"></i></span>');
   var data = mainwp_secure_data({
     action: ('checknow' == pAction ? 'mainwp_checksites' : 'mainwp_syncsites'),
     wp_id: websiteId,
@@ -1037,9 +1037,10 @@ dashboard_update_next_int = function (websiteId, data, errors, action) {
     success: function (pWebsiteId, pAction) {
       return function (response) {
         if (response.error) {
-          dashboard_update_site_status(pWebsiteId, '<i class="exclamation red icon"></i>');
+          var extErr = response.error;
+          dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="exclamation red icon"></i></span>');
         } else {
-          dashboard_update_site_status(websiteId, '<i class="check green icon"></i>', true);
+          dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Synchronization process completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>', true);
         }
         dashboard_update_done(pAction);
       }
@@ -2060,7 +2061,7 @@ mainwp_links_visit_site_and_admin = function (url, siteId) {
   if (url != '') {
     links += '<a href="' + url + '" target="_blank" class="mainwp-may-hide-referrer"><i class="external alternate icon"></i></a> ';
   }
-  links += '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + siteId + '" target="_blank"><i class="sign in alternate icon"></i></a>';
+  links += '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' + siteId + '&_opennonce=' + mainwpParams._wpnonce + '" target="_blank"><i class="sign in alternate icon"></i></a>';
   return links;
 }
 
@@ -2629,7 +2630,7 @@ mainwp_notes_site_save = function () {
 
 };
 
-getErrorMessage = function (pError) {
+getErrorMessage = function (pError, msgOnly ) {
   if (pError.message == 'HTTPERROR') {
     return __('HTTP error') + '! ' + pError.extra;
   } else if (pError.message == 'NOMAINWP' || pError == 'NOMAINWP') {
@@ -2644,7 +2645,13 @@ getErrorMessage = function (pError) {
   } else if (pError.message == 'ERROR') {
     return 'ERROR' + ((pError.extra != '') && (pError.extra != undefined) ? ': ' + pError.extra : '');
   } else if (pError.message == 'WPERROR') {
-    return __('ERROR on the child site') + ((pError.extra != '') && (pError.extra != undefined) ? ': ' + pError.extra : '');
+    var extrMsg = (pError.extra != '') && (pError.extra != undefined) ? pError.extra : '';
+    if( msgOnly != undefined && msgOnly && extrMsg != '' ) {
+      return extrMsg;
+    } else {
+      return __('ERROR on the child site') + ': ' + extrMsg;
+    }
+   
   } else if (pError.message != undefined && pError.message != '') {
     return pError.message;
   } else {

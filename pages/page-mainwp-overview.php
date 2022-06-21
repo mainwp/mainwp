@@ -103,6 +103,12 @@ class MainWP_Overview {
 			 */
 			global $current_user;
 
+			//The icon in Base64 format.
+			$icon_base64 = 'PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyNi4zLjEsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCA1MCA1MCIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgNTAgNTA7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+DQoJLnN0MHtmaWxsOiM5Q0EyQTc7fQ0KPC9zdHlsZT4NCjxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0yNSwwLjVDMTEuNDcsMC41LDAuNSwxMS40NywwLjUsMjVjMCwxMy41MywxMC45NywyNC41LDI0LjUsMjQuNVM0OS41LDM4LjUzLDQ5LjUsMjUNCglDNDkuNSwxMS40NywzOC41MywwLjUsMjUsMC41eiBNMjUsNDQuNmwtOC4zMy00LjlsNi4wOS0yNS4wN2MtMS41Ny0wLjgyLTIuNjYtMi40NC0yLjY2LTQuMzNjMC0yLjcxLDIuMTktNC45LDQuOS00LjkNCglzNC45LDIuMTksNC45LDQuOWMwLDEuODktMS4wOSwzLjUyLTIuNjYsNC4zM2w2LjA5LDI1LjA3TDI1LDQ0LjZ6Ii8+DQo8L3N2Zz4NCg==';
+
+			//The icon in the data URI scheme.
+			$icon_data_uri = 'data:image/svg+xml;base64,' . $icon_base64;
+
 			delete_user_option( $current_user->ID, 'screen_layout_toplevel_page_mainwp_tab' );
 			$this->dashBoard = add_menu_page(
 				'MainWP',
@@ -113,7 +119,7 @@ class MainWP_Overview {
 					$this,
 					'on_show_page',
 				),
-				MAINWP_PLUGIN_URL . 'assets/images/mainwpicon.png',
+				$icon_data_uri,
 				'2.00001'
 			);
 

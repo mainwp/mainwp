@@ -444,15 +444,15 @@ class MainWP_System_View {
 				  <i class="star icon"></i>
 				  <span class="text">Rate MainWP</span>
 				  <div class="menu">
-				    <a href="https://wordpress.org/support/plugin/mainwp/reviews/#new-post" class="item" target="_blank">
-				      <span class="text">WordPress.org</span>
-				    </a>
-				    <a href="https://www.trustpilot.com/review/mainwp.com" class="item" target="_blank">
-				      <span class="text">TrustPilot</span>
-				    </a>
-				    <a href="https://www.g2.com/products/mainwp/reviews" class="item" target="_blank">
-				      <span class="text">G2</span>
-				    </a>
+					<a href="https://wordpress.org/support/plugin/mainwp/reviews/#new-post" class="item" target="_blank">
+					  <span class="text">WordPress.org</span>
+					</a>
+					<a href="https://www.trustpilot.com/review/mainwp.com" class="item" target="_blank">
+					  <span class="text">TrustPilot</span>
+					</a>
+					<a href="https://www.g2.com/products/mainwp/reviews" class="item" target="_blank">
+					  <span class="text">G2</span>
+					</a>
 				  </div>
 				</div>
 				<a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews1"><?php esc_html_e( 'Nope, maybe later.', 'mainwp' ); ?></a>
@@ -475,15 +475,15 @@ class MainWP_System_View {
 				  <i class="star icon"></i>
 				  <span class="text">Rate MainWP</span>
 				  <div class="menu">
-				    <a href="https://wordpress.org/support/plugin/mainwp/reviews/#new-post" class="item" target="_blank">
-				      <span class="text">WordPress.org</span>
-				    </a>
-				    <a href="https://www.trustpilot.com/review/mainwp.com" class="item" target="_blank">
-				      <span class="text">TrustPilot</span>
-				    </a>
-				    <a href="https://www.g2.com/products/mainwp/reviews" class="item" target="_blank">
-				      <span class="text">G2</span>
-				    </a>
+					<a href="https://wordpress.org/support/plugin/mainwp/reviews/#new-post" class="item" target="_blank">
+					  <span class="text">WordPress.org</span>
+					</a>
+					<a href="https://www.trustpilot.com/review/mainwp.com" class="item" target="_blank">
+					  <span class="text">TrustPilot</span>
+					</a>
+					<a href="https://www.g2.com/products/mainwp/reviews" class="item" target="_blank">
+					  <span class="text">G2</span>
+					</a>
 				  </div>
 				</div>
 				<a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews2"><?php esc_html_e( 'Nope, maybe later.', 'mainwp' ); ?></a>

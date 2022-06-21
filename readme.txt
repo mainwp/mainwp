@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.0
 Requires PHP: 7.0
-Stable tag: 4.2.4
+Stable tag: 4.2.5
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -179,6 +179,15 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.2.5 - 6-21-2022 =
+* Added: WP Nonce verification to the Go to WP Admin request for additional security
+* Added: TrustPilot and G2 options to the MainWP Rating notice
+* Updated: Error reporting and status info for the synchronization and update process
+
+= 4.2.4.1 - 5-31-2022 =
+* Updated: MainWP logo
+* Updated: MainWP WP Admin menu icon
 
 = 4.2.4 - 5-16-2022 =
 * Fixed: An issue with missing Go to WP Admin icon in the update feedback

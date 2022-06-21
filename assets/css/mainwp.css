@@ -126,11 +126,16 @@
     left: 0;
     top: 0;
     bottom: -120px;
+    z-index: 9999 !important;
 }
 
 .mainwp-nav-wrap #mainwp-logo {
     height: 35px;
     margin: .92857143em 1.14285714em;
+}
+
+.mainwp-nav-wrap #mainwp-version-label {
+  z-index: 9999 !important;
 }
 
 .mainwp-nav-menu .ui.accordion.menu .item:hover,
@@ -760,7 +765,7 @@ body.show-upload-plugin .mainwp-upload-plugin {
     background-color: #fcf3ef;
 }
 
-#plugin-information-footer a {
+#plugin-information-footer {
     display: none;
 }
 

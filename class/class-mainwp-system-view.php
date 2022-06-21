@@ -438,12 +438,23 @@ class MainWP_System_View {
 		<div class="ui green icon message" style="margin-bottom: 0; border-radius: 0;">
 			<i class="star icon"></i>
 			<div class="content">
-				<div class="header">
-					<?php esc_html_e( 'Hi, I noticed you have been using MainWP for over 30 days and that\'s awesome!', 'mainwp' ); ?>
+				<p><?php esc_html_e( 'Hi, I noticed you have been using MainWP for over 30 days and that\'s awesome!', 'mainwp' ); ?></p>
+				<p><?php esc_html_e( 'Could you please do me a BIG favor and give it a 5-star rating? Reviews from users like YOU really help the MainWP community to grow.', 'mainwp' ); ?></p>
+				<div class="ui green floating mini labeled icon dropdown button">
+				  <i class="star icon"></i>
+				  <span class="text">Rate MainWP</span>
+				  <div class="menu">
+					<a href="https://wordpress.org/support/plugin/mainwp/reviews/#new-post" class="item" target="_blank">
+					  <span class="text">WordPress.org</span>
+					</a>
+					<a href="https://www.trustpilot.com/review/mainwp.com" class="item" target="_blank">
+					  <span class="text">TrustPilot</span>
+					</a>
+					<a href="https://www.g2.com/products/mainwp/reviews" class="item" target="_blank">
+					  <span class="text">G2</span>
+					</a>
+				  </div>
 				</div>
-				<?php esc_html_e( 'Could you please do me a BIG favor and give it a 5-star rating on WordPress? Reviews from users like you really help the MainWP community grow.', 'mainwp' ); ?>
-				<br /><br />
-				<a href="https://wordpress.org/support/view/plugin-reviews/mainwp#postform" target="_blank" class="ui green mini button"><?php esc_html_e( 'Ok, you deserve!', 'mainwp' ); ?></a>
 				<a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews1"><?php esc_html_e( 'Nope, maybe later.', 'mainwp' ); ?></a>
 				<a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews1_forever"><?php esc_html_e( 'I already did.', 'mainwp' ); ?></a>
 			</div>
@@ -458,12 +469,23 @@ class MainWP_System_View {
 		<div class="ui green icon message" style="margin-bottom: 0; border-radius: 0;">
 			<i class="star icon"></i>
 			<div class="content">
-				<div class="header">
-					<?php esc_html_e( 'Hi, I noticed you have a few MainWP Extensions installed and that\'s awesome!', 'mainwp' ); ?>
+				<p><?php esc_html_e( 'Hi, I noticed you have a few MainWP Extensions installed and that\'s awesome!', 'mainwp' ); ?></p>
+				<p><?php esc_html_e( 'Could you please do me a BIG favor and give it a 5-star rating? Reviews from users like YOU really help the MainWP community to grow.', 'mainwp' ); ?></p>
+				<div class="ui green floating mini labeled icon dropdown button">
+				  <i class="star icon"></i>
+				  <span class="text">Rate MainWP</span>
+				  <div class="menu">
+					<a href="https://wordpress.org/support/plugin/mainwp/reviews/#new-post" class="item" target="_blank">
+					  <span class="text">WordPress.org</span>
+					</a>
+					<a href="https://www.trustpilot.com/review/mainwp.com" class="item" target="_blank">
+					  <span class="text">TrustPilot</span>
+					</a>
+					<a href="https://www.g2.com/products/mainwp/reviews" class="item" target="_blank">
+					  <span class="text">G2</span>
+					</a>
+				  </div>
 				</div>
-				<?php esc_html_e( 'Could you please do me a BIG favor and give it a 5-star rating on WordPress? Reviews from users like you really help the MainWP community to grow.', 'mainwp' ); ?>
-				<br /><br />
-				<a href="https://wordpress.org/support/view/plugin-reviews/mainwp#postform" target="_blank" class="ui green mini button"><?php esc_html_e( 'Ok, you deserve!', 'mainwp' ); ?></a>
 				<a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews2"><?php esc_html_e( 'Nope, maybe later.', 'mainwp' ); ?></a>
 				<a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews2_forever"><?php esc_html_e( 'I already did.', 'mainwp' ); ?></a>
 			</div>

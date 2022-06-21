@@ -45,6 +45,8 @@ class MainWP_Extensions_Handler {
 		'version'          => 'version',
 		'sync_errors'      => 'sync_errors',
 		'ignored_plugins'  => 'ignored_plugins',
+		'wp_upgrades'      => 'wp_upgrades',
+		'site_info'        => 'site_info',
 	);
 
 

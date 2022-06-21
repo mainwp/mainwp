@@ -285,7 +285,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 								<?php while ( $websites && $website = MainWP_DB::fetch_object( $websites ) ) : ?>
 									<tr>
 									<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
-									<td><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>"><i class="sign in icon"></i></a></td>
+									<td><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>"><i class="sign in icon"></i></a></td>
 									<td><?php echo esc_html( $website->adminname ); ?></td>
 									<td><?php echo esc_html( $website->admin_nicename ); ?></td>
 									<td><?php echo esc_html( $website->admin_useremail ); ?></td>

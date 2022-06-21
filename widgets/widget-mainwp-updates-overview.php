@@ -122,7 +122,7 @@ class MainWP_Updates_Overview {
 
 		$website = MainWP_DB::instance()->get_website_by_id( $website->id );
 
-		die( wp_json_encode( array( 'error' => esc_html( strip_tags( $website->sync_errors ) ) ) ) );
+		die( wp_json_encode( array( 'error' => esc_html( wp_strip_all_tags( $website->sync_errors ) ) ) ) );
 	}
 
 	/**

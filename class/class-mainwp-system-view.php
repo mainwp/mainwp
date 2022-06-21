@@ -441,19 +441,19 @@ class MainWP_System_View {
 				<p><?php esc_html_e( 'Hi, I noticed you have been using MainWP for over 30 days and that\'s awesome!', 'mainwp' ); ?></p>
 				<p><?php esc_html_e( 'Could you please do me a BIG favor and give it a 5-star rating? Reviews from users like YOU really help the MainWP community to grow.', 'mainwp' ); ?></p>
 				<div class="ui green floating mini labeled icon dropdown button">
-				  <i class="star icon"></i>
-				  <span class="text">Rate MainWP</span>
-				  <div class="menu">
+					<i class="star icon"></i>
+					<span class="text">Rate MainWP</span>
+					<div class="menu">
 					<a href="https://wordpress.org/support/plugin/mainwp/reviews/#new-post" class="item" target="_blank">
-					  <span class="text">WordPress.org</span>
+						<span class="text">WordPress.org</span>
 					</a>
 					<a href="https://www.trustpilot.com/review/mainwp.com" class="item" target="_blank">
-					  <span class="text">TrustPilot</span>
+						<span class="text">TrustPilot</span>
 					</a>
 					<a href="https://www.g2.com/products/mainwp/reviews" class="item" target="_blank">
-					  <span class="text">G2</span>
+						<span class="text">G2</span>
 					</a>
-				  </div>
+					</div>
 				</div>
 				<a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews1"><?php esc_html_e( 'Nope, maybe later.', 'mainwp' ); ?></a>
 				<a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews1_forever"><?php esc_html_e( 'I already did.', 'mainwp' ); ?></a>
@@ -472,19 +472,19 @@ class MainWP_System_View {
 				<p><?php esc_html_e( 'Hi, I noticed you have a few MainWP Extensions installed and that\'s awesome!', 'mainwp' ); ?></p>
 				<p><?php esc_html_e( 'Could you please do me a BIG favor and give it a 5-star rating? Reviews from users like YOU really help the MainWP community to grow.', 'mainwp' ); ?></p>
 				<div class="ui green floating mini labeled icon dropdown button">
-				  <i class="star icon"></i>
-				  <span class="text">Rate MainWP</span>
-				  <div class="menu">
+					<i class="star icon"></i>
+					<span class="text">Rate MainWP</span>
+					<div class="menu">
 					<a href="https://wordpress.org/support/plugin/mainwp/reviews/#new-post" class="item" target="_blank">
-					  <span class="text">WordPress.org</span>
+						<span class="text">WordPress.org</span>
 					</a>
 					<a href="https://www.trustpilot.com/review/mainwp.com" class="item" target="_blank">
-					  <span class="text">TrustPilot</span>
+						<span class="text">TrustPilot</span>
 					</a>
 					<a href="https://www.g2.com/products/mainwp/reviews" class="item" target="_blank">
-					  <span class="text">G2</span>
+						<span class="text">G2</span>
 					</a>
-				  </div>
+					</div>
 				</div>
 				<a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews2"><?php esc_html_e( 'Nope, maybe later.', 'mainwp' ); ?></a>
 				<a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews2_forever"><?php esc_html_e( 'I already did.', 'mainwp' ); ?></a>

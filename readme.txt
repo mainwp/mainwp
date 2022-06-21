@@ -182,7 +182,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 = 4.2.5 - 6-21-2022 =
 * Added: WP Nonce verification to the Go to WP Admin request for additional security
-* Added: TrustPilot and G2 options to the MainWP Rating notice
+* Added: Trustpilot and G2 options to the MainWP Rating notice
 * Updated: Error reporting and status info for the synchronization and update process
 
 = 4.2.4.1 - 5-31-2022 =

@@ -448,7 +448,7 @@ class MainWP_System_View {
 						<span class="text">WordPress.org</span>
 					</a>
 					<a href="https://www.trustpilot.com/review/mainwp.com" class="item" target="_blank">
-						<span class="text">TrustPilot</span>
+						<span class="text">Trustpilot</span>
 					</a>
 					<a href="https://www.g2.com/products/mainwp/reviews" class="item" target="_blank">
 						<span class="text">G2</span>
@@ -479,7 +479,7 @@ class MainWP_System_View {
 						<span class="text">WordPress.org</span>
 					</a>
 					<a href="https://www.trustpilot.com/review/mainwp.com" class="item" target="_blank">
-						<span class="text">TrustPilot</span>
+						<span class="text">Trustpilot</span>
 					</a>
 					<a href="https://www.g2.com/products/mainwp/reviews" class="item" target="_blank">
 						<span class="text">G2</span>

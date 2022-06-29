@@ -191,6 +191,11 @@ class Rest_Api {
 				'callback' => 'sites-available-updates-count',
 			),
 			array(
+				'route'    => 'sites',
+				'method'   => 'GET',
+				'callback' => 'get-sites-by-url',
+			),
+			array(
 				'route'    => 'site',
 				'method'   => 'GET',
 				'callback' => 'site',
@@ -1004,6 +1009,46 @@ class Rest_Api {
 
 		return $response;
 	}
+
+	/**
+	 * Method mainwp_rest_api_get_sites_by_url_callback()
+	 *
+	 * Callback function for managing the response to API requests made for the endpoint: get-sites-by-url
+	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/sites/get-sites-by-url
+	 * API Method: GET
+	 *
+	 * @param array $request The request made in the API call which includes all parameters.
+	 *
+	 * @return object $response An object that contains the return data and status of the API request.
+	 */
+	public function mainwp_rest_api_get_sites_by_url_callback( $request ) {
+
+		// first validate the request.
+		if ( $this->mainwp_validate_request( $request ) ) {
+
+			$params = array(
+				'full_data'    => true,				
+				'selectgroups' => ( isset( $request['selectgroups'] ) && true == $request['selectgroups'] ) ? true : false,
+			);
+
+			if ( isset( $request['urls'] ) && ! empty( $request['urls'] ) ) {
+				$params['urls'] = rawurldecode( $request['urls'] );
+			}
+
+			// get data.
+			$data = MainWP_DB::instance()->get_websites_for_current_user( $params );
+
+			$response = new \WP_REST_Response( $data );
+			$response->set_status( 200 );
+
+		} else {
+			// throw common error.
+			$response = $this->mainwp_authentication_error();
+		}
+
+		return $response;
+	}
+
 
 	/**
 	 * Method mainwp_rest_api_site_callback()

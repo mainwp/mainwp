@@ -403,9 +403,9 @@ class MainWP_Plugins {
 				<div class="ui mini form mainwp-actions-bar">
 					<div class="ui grid">
 						<div class="ui two column row">
-							<div class="column">
-								<a href="#" onclick="jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', true ).change(); return false;" class="ui mini button"><?php esc_html_e( 'Select All', 'mainwp' ); ?></a>
-								<a href="#" onclick="jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', false ).change(); return false;"   class="ui mini button"><?php esc_html_e( 'Select None', 'mainwp' ); ?></a>
+							<div class="column" >
+								<a href="#"  onclick="jQuery( '.mainwp-selected-plugin' ).prop( 'checked', true ).change();jQuery( '.mainwp-selected-plugin' ).attr('checked-state', 'checked'); jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', true ).change(); return false;" class="ui mini button"><?php esc_html_e( 'Select All', 'mainwp' ); ?></a>
+								<a href="#" onclick="jQuery( '.mainwp-selected-plugin' ).prop( 'checked', false ).change();jQuery( '.mainwp-selected-plugin' ).attr('checked-state', 'un-checked'); jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', false ).change(); return false;"   class="ui mini button"><?php esc_html_e( 'Select None', 'mainwp' ); ?></a>
 								<button id="mainwp-install-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
 								<?php
 								/**
@@ -1032,7 +1032,7 @@ class MainWP_Plugins {
 		 */
 		do_action( 'mainwp_before_plugins_table' );
 		?>
-		<table id="mainwp-manage-plugins-table" style="min-width:100%" class="ui celled single line selectable compact unstackable table">
+		<table id="mainwp-manage-plugins-table" checked-select-all="0" style="min-width:100%" class="ui celled single line selectable compact unstackable table">
 			<thead>
 				<tr>
 					<th class="mainwp-first-th no-sort"></th>
@@ -1062,7 +1062,7 @@ class MainWP_Plugins {
 				<tr>
 					<td style="padding-left:40px;padding-right:40px;">
 						<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $site_id ); ?>"/>
-						<div class="ui slider checkbox mainwp-768-hide">
+						<div class="ui slider checkbox">
 							<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_plugins_site_check_all"/><label></label>
 						</div>
 						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site_id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
@@ -1333,6 +1333,7 @@ class MainWP_Plugins {
 			</div>
 			<?php
 			MainWP_UI::render_modal_install_plugin_theme();
+			MainWP_Updates::render_plugin_details_modal();
 			?>
 		</div>
 	</div>

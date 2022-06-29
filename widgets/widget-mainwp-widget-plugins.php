@@ -283,6 +283,8 @@ class MainWP_Widget_Plugins {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_plugins_widget_bottom', $website, $allPlugins );
+
+		MainWP_Updates::render_plugin_details_modal();
 	}
 
 	/**

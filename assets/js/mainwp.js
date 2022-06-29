@@ -2509,6 +2509,25 @@ mainwp_upload_bulk_start_specific = function (type, urls, activatePlugin, overwr
   }(type, urls, activatePlugin, overwrite, siteToInstall), 'json');
 };
 
+jQuery(document).ready(function ($) {
+  $('.open-plugin-details-modal').on('click', function () {
+      var itemDetail = this;
+      $('#mainwp-plugin-details-modal').modal({
+          onHide: function () {
+          },
+          onShow: function () {
+              $('#mainwp-plugin-details-modal').find('.ui.embed').embed({
+                  source: 'WP',
+                  url: $(itemDetail).attr('href'),
+              });
+              return false;
+          }
+      }).modal('show');
+      return false;
+  });
+});
+
+
 /**
  * Utility
  */
@@ -3132,6 +3151,13 @@ mainwp_datatable_fix_child_menu_overflow = function (chilRow, fix_overflow) {
     jQuery(this).find('.menu').css('min-width', '170px');
     console.log('top:' + top);
   });
+}
+
+
+mainwp_responsive_fix_remove_child_row = function (el) {
+  if (jQuery(el).hasClass('dt-hasChild')) { // to fix.
+      jQuery(el).next().remove();
+  }
 }
 
 /* eslint-disable complexity */

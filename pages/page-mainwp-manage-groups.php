@@ -298,8 +298,8 @@ class MainWP_Manage_Groups {
 						<a href="#" class="ui tiny green button" id="mainwp-new-sites-group-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Click here to create a new group.', 'mainwp' ); ?>"><?php esc_html_e( 'New Group', 'mainwp' ); ?></a>
 					</div>
 					<div class="right aligned column">
-						<a href="#" class="ui tiny icon green basic button disabled" id="mainwp-rename-group-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Edit selected group.', 'mainwp' ); ?>"><i class="edit icon"></i></a>
-						<a href="#" class="ui tiny icon button disabled" id="mainwp-delete-group-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Delete selected group.', 'mainwp' ); ?>"><i class="trash icon"></i></a>
+						<a href="#" class="ui tiny icon green basic button disabled" id="mainwp-rename-group-button" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Edit selected group.', 'mainwp' ); ?>"><i class="edit icon"></i></a>
+						<a href="#" class="ui tiny icon button disabled" id="mainwp-delete-group-button" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete selected group.', 'mainwp' ); ?>"><i class="trash icon"></i></a>
 					</div>
 				</div>
 			</div>

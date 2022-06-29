@@ -465,7 +465,22 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_site_info( $args = array(), $assoc_args = array(), $website = false ) {
-		$data = json_decode( MainWP_DB::instance()->get_website_option( $website, 'site_info' ), true );
+		$data = array(
+			'wpversion'      => '',
+			'phpversion'     => '',
+			'child_version'  => '',
+			'memory_limit'   => '',
+			'mysql_version'  => '',
+			'themeactivated' => '',
+			'ip'             => '',
+		);
+
+		$site_info = json_decode( MainWP_DB::instance()->get_website_option( $website, 'site_info' ), true );
+		if ( ! is_array( $site_info ) ) {
+			$site_info = array();
+		}
+
+		$data = array_merge( $data, $site_info );
 
 		\WP_CLI::line( \WP_CLI::colorize( '%gSite Name:%n ' ) . $website->name );
 		\WP_CLI::line( \WP_CLI::colorize( '%gSite URL:%n ' ) . $website->url );
@@ -799,9 +814,12 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 			\WP_CLI::line( '' );
 
 			foreach ( $translation_upgrades as $translation_upgrade ) {
-				\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $translation_upgrade['Name'] );
-				\WP_CLI::line( \WP_CLI::colorize( '%gDetected:%n ' ) . $translation_upgrade['Version'] );
-				\WP_CLI::line( \WP_CLI::colorize( '%gLatest:%n ' ) . $translation_upgrade['update']['new_version'] );
+				if ( ! is_array( $translation_upgrade ) ) {
+					$translation_upgrade = array();
+				}
+				\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . ( isset( $translation_upgrade['Name'] ) ? $translation_upgrade['Name'] : '' ) );
+				\WP_CLI::line( \WP_CLI::colorize( '%gDetected:%n ' ) . ( isset( $translation_upgrade['Version'] ) ? $translation_upgrade['Version'] : '' ) );
+				\WP_CLI::line( \WP_CLI::colorize( '%gLatest:%n ' ) . ( isset( $translation_upgrade['update']['new_version'] ) ? $translation_upgrade['update']['new_version'] : '' ) );
 				\WP_CLI::line( '' );
 			}
 		}

@@ -173,7 +173,7 @@ jQuery(document).ready(function () {
     jQuery(document).on('click', '#mainwp-manage-plugins-table td.dtr-control', function () {
         var rowChkAll = jQuery(this).find('.mainwp_plugins_site_check_all');
         if (jQuery(rowChkAll).length > 0) {
-            var ch_val = jQuery(rowChkAll).is(":checked");            
+            var ch_val = jQuery(rowChkAll).is(":checked");
             setTimeout(function () {
                 var parent = jQuery(rowChkAll).closest('tr');
                 if (jQuery(parent).hasClass('dt-hasChild')) {
@@ -187,6 +187,24 @@ jQuery(document).ready(function () {
             }, 1000);
         }
     });
+
+    // trick to fix show child row.
+    jQuery(document).on('click', '#mainwp-manage-plugins-table tr td.dtr-control', function (e) {
+        var sliderClicked = false;
+        if (jQuery(e.target).is('label') && jQuery(e.target).closest('div.ui.slider.checkbox').length > 0) {
+            sliderClicked = true;
+        } else if (jQuery(e.target).hasClass('slider') && jQuery(e.target).hasClass('checkbox')) {
+            sliderClicked = true;
+        }
+        if (sliderClicked ) {
+            console.log('slider clicked!');
+            jQuery(this).click(); // trick.
+            e.stopPropagation();
+            return;
+        }
+        console.log('Processing click event');
+    });
+
 
     jQuery('#mainwp_show_all_active_plugins').on('click', function () {
         mainwp_fetch_all_active_plugins();

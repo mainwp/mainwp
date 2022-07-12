@@ -1158,7 +1158,7 @@ class MainWP_Plugins {
 
 			$table_features = array(
 				'searching'      => 'true',
-				'paging'         => 'false',
+				'paging'         => 'true', // to fix.
 				'info'           => 'false',
 				'colReorder'     => 'false',
 				'stateSave'      => 'true',

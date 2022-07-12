@@ -2269,7 +2269,8 @@ mainwp_install_bulk_start_specific = function (type, url, activatePlugin, overwr
       bulkInstallCurrentThreads--;
       bulkInstallDone++;
       jQuery('#plugintheme-installation-progress-modal .mainwp-modal-progress').progress('set progress', bulkInstallDone);
-      jQuery('#plugintheme-installation-progress-modal .mainwp-modal-progress').find('.label').html(bulkInstallDone + '/' + bulkInstallTotal + ' ' + __('Installed')); mainwp_install_bulk_start_next(type, url, activatePlugin, overwrite);
+      jQuery('#plugintheme-installation-progress-modal .mainwp-modal-progress').find('.label').html(bulkInstallDone + '/' + bulkInstallTotal + ' ' + __('Installed')); 
+      mainwp_install_bulk_start_next(type, url, activatePlugin, overwrite);
     }
   }(type, url, activatePlugin, overwrite, siteToInstall), 'json');
 };

@@ -2960,8 +2960,12 @@ updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, gr
                 });
                 jQuery.post(ajaxurl, data, function (response) {
                     var success = false;
+                    var extErr = '';      
                     if (response.error) {
-                        console.log(response.error);
+                        console.log(response.error);                  
+                        if (response.error.message && response.error.message == 'WPERROR' && response.error.extra) {
+                            extErr = response.error.extra;
+                        }
                     }
                     else {
                         var res = response.result;
@@ -3012,7 +3016,7 @@ updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, gr
                             var elem = document.getElementById('wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item);
                             var parent = jQuery(elem).closest('tr');
                             //document.getElementById( 'wp_upgrade_' + pWhat + '_' + pId + strGroup + '_' + item ).innerHTML = result;
-                            parent.find('td:last-child').html('<i class="red times icon"></i>');
+                            parent.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="red times icon"></i><span');
                         }
                     }
                 }, 'json');

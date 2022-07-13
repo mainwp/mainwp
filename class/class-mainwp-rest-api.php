@@ -1027,7 +1027,7 @@ class Rest_Api {
 		if ( $this->mainwp_validate_request( $request ) ) {
 
 			$params = array(
-				'full_data'    => true,				
+				'full_data'    => true,
 				'selectgroups' => ( isset( $request['selectgroups'] ) && true == $request['selectgroups'] ) ? true : false,
 			);
 

@@ -1101,7 +1101,6 @@ class MainWP_Manage_Sites_View {
 		$email_description = MainWP_Notification_Settings::get_settings_desc( $type );
 		?>
 		<div class="ui segment">
-			<h1>wht</h1>
 		<?php MainWP_Notification_Settings::render_update_template_message( $updated_templ ); ?>		
 		<form method="POST" action="admin.php?page=managesites&emailsettingsid=<?php echo $siteid; ?>" class="ui form">
 			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdateWebsiteEmailSettings' . $siteid ); ?>" />

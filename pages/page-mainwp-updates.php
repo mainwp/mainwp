@@ -653,6 +653,7 @@ class MainWP_Updates {
 		self::render_js_updates( $site_view );
 
 		self::render_updates_modal();
+		self::render_plugin_details_modal();
 
 		self::render_footer();
 	}
@@ -2087,7 +2088,14 @@ class MainWP_Updates {
 				<input id="updatesoverview-backup-ignore" type="button" name="Ignore" value="<?php esc_html_e( 'Ignore', 'mainwp' ); ?>" class="button"/>
 			</div>
 		</div>
+		<?php
+	}
 
+	/**
+	 * Displays the plugin details modal window.
+	 */
+	public static function render_plugin_details_modal() {
+		?>
 		<div class="ui modal" id="mainwp-plugin-details-modal">
 				<div class="header"><?php echo __( 'Plugin Details', 'mainwp' ); ?></div>
 				<div class="content">

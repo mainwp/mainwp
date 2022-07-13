@@ -871,14 +871,17 @@ class MainWP_System {
 			wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'assets/js/mainwp-extensions.js', array(), $this->current_version, true );
 			wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assets/js/moment/moment.min.js', array(), $this->current_version, true );
 			wp_enqueue_script( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.js', array( 'jquery' ), $this->current_version, false );
-			wp_enqueue_script( 'datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/datatables.js', array( 'jquery' ), $this->current_version, false );
-			wp_enqueue_script( 'datatables-colreorder', MAINWP_PLUGIN_URL . 'assets/js/colreorder/dataTables.colReorder.min.js', array( 'jquery' ), $this->current_version, false );
-			wp_enqueue_script( 'datatables-scroller', MAINWP_PLUGIN_URL . 'assets/js/scroller/scroller.dataTables.js', array( 'jquery' ), $this->current_version, false );
-			wp_enqueue_script( 'datatables-fixedcolumns', MAINWP_PLUGIN_URL . 'assets/js/fixedcolumns/dataTables.fixedColumns.js', array( 'jquery' ), $this->current_version, false );
+				
+			wp_enqueue_script( 'datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/jquery.dataTables.js', array( 'jquery' ), $this->current_version, false );
+			wp_enqueue_script( 'datatables-semanticui', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.semanticui.js', array( 'jquery' ), $this->current_version, false );
+			wp_enqueue_script( 'datatables-fixedColumns', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.fixedColumns.min.js', array( 'jquery' ), $this->current_version, false );
+			wp_enqueue_script( 'datatables-scroller', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.scroller.js', array( 'jquery' ), $this->current_version, false );
+			wp_enqueue_script( 'datatables-colreorder', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.colReorder.min.js', array( 'jquery' ), $this->current_version, false );
+			wp_enqueue_script( 'datatables-responsive', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.responsive.min.js', array( 'jquery' ), $this->current_version, true );
+
 			wp_enqueue_script( 'hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version, true );
 			wp_enqueue_script( 'datatables-natural-sorting', MAINWP_PLUGIN_URL . 'assets/js/sorting/natural.js', array( 'jquery' ), $this->current_version, true );
-			wp_enqueue_script( 'datatables-responsive', MAINWP_PLUGIN_URL . 'assets/js/responsive/dataTables.responsive.min.js', array( 'jquery' ), $this->current_version, true );
-
+			
 			wp_enqueue_script( 'mainwp-clipboard', MAINWP_PLUGIN_URL . 'assets/js/clipboard/clipboard.min.js', array( 'jquery' ), $this->current_version, true );
 			wp_enqueue_script( 'mainwp-rest-api', MAINWP_PLUGIN_URL . 'assets/js/mainwp-rest-api.js', array(), $this->current_version, true );
 
@@ -896,7 +899,6 @@ class MainWP_System {
 		wp_enqueue_script( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'assets/js/fileuploader.js', array(), $this->current_version ); // phpcs:ignore -- fileuploader scripts need to load at header.
 		wp_enqueue_script( 'mainwp-date', MAINWP_PLUGIN_URL . 'assets/js/date.js', array(), $this->current_version, true );
 		wp_enqueue_script( 'mainwp-filesaver', MAINWP_PLUGIN_URL . 'assets/js/FileSaver.js', array(), $this->current_version, true );
-		wp_enqueue_script( 'mainwp-jqueryfiletree', MAINWP_PLUGIN_URL . 'assets/js/jqueryFileTree.js', array(), $this->current_version, true );
 	}
 
 	/**
@@ -928,17 +930,20 @@ class MainWP_System {
 		}
 
 		if ( self::is_mainwp_pages() ) {
-			wp_enqueue_style( 'mainwp-filetree', MAINWP_PLUGIN_URL . 'assets/css/jqueryFileTree.css', array(), $this->current_version );
 			wp_enqueue_style( 'mainwp-fonts', MAINWP_PLUGIN_URL . 'assets/css/mainwp-fonts.css', array(), $this->current_version );
 			wp_enqueue_style( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.css', array(), $this->current_version );
 			wp_enqueue_style( 'mainwp-fomantic', MAINWP_PLUGIN_URL . 'assets/css/mainwp-fomantic.css', array(), $this->current_version );
-			wp_enqueue_style( 'datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/datatables.css', array(), $this->current_version );
-			wp_enqueue_style( 'datatables-colreorder', MAINWP_PLUGIN_URL . 'assets/js/colreorder/colReorder.dataTables.min.css', array(), $this->current_version );
-			wp_enqueue_style( 'datatables-scroller', MAINWP_PLUGIN_URL . 'assets/js/scroller/scroller.dataTables.css', array(), $this->current_version );
+		
+			wp_enqueue_style( 'datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/dataTables.semanticui.css', array(), $this->current_version );
+			wp_enqueue_style( 'datatables-colreorder', MAINWP_PLUGIN_URL . 'assets/js/datatables/colReorder.dataTables.min.css', array(), $this->current_version );
+			wp_enqueue_style( 'datatables-fixedColumns', MAINWP_PLUGIN_URL . 'assets/js/datatables/fixedColumns.dataTables.min.css', array(), $this->current_version );
+			wp_enqueue_style( 'datatables-scroller', MAINWP_PLUGIN_URL . 'assets/js/datatables/scroller.semanticui.css', array(), $this->current_version );
+			wp_enqueue_style( 'datatables-responsive', MAINWP_PLUGIN_URL . 'assets/js/datatables/responsive.dataTables.min.css', array(), $this->current_version );
+
 			wp_enqueue_style( 'hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.css', array(), $this->current_version );
 			// to fix conflict layout.
 			wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assets/css/1.11.1/jquery-ui.min.css', array(), '1.11.1' );
-			wp_enqueue_style( 'datatables-responsive', MAINWP_PLUGIN_URL . 'assets/js/responsive/responsive.dataTables.min.css', array(), $this->current_version );
+					
 		}
 
 		if ( $load_cust_scripts ) {

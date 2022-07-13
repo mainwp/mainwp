@@ -449,6 +449,7 @@ class MainWP_Manage_Sites_Update_View {
 			</div>
 		<?php
 		MainWP_Updates::render_updates_modal();
+		MainWP_Updates::render_plugin_details_modal();
 	}
 
 	/**

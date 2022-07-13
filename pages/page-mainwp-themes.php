@@ -1077,7 +1077,7 @@ class MainWP_Themes {
 
 		$table_features = array(
 			'searching'      => 'true',
-			'paging'         => 'false',
+			'paging'         => 'true', // to fix.
 			'info'           => 'false',
 			'colReorder'     => 'true',
 			'stateSave'      => 'true',

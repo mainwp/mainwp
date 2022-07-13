@@ -496,10 +496,14 @@ mainwp_fetch_posts = function (postId, userId, start_sites) {
 mainwp_fetch_posts_done = function () {
     jQuery('#mainwp-loading-posts-row').hide();
     jQuery('#mainwp_posts_main').show();
+    var responsive = true;
+    if( jQuery( window ).width() > 1140 ) {
+        responsive = false;
+    }
     // re-initialize datatable.
     jQuery("#mainwp-posts-table").DataTable().destroy();
     jQuery('#mainwp-posts-table').DataTable({
-        "responsive": true,
+        "responsive": responsive,
         "colReorder": {
             fixedColumnsLeft: 1,
             fixedColumnsRight: 1

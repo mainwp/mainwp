@@ -164,6 +164,7 @@ class MainWP_Install_Bulk {
 				); // Save on a bit of bandwidth.
 			}
 			$url = $api->download_link;
+			$url = apply_filters( 'mainwp_prepare_install_download_url', $url, $_POST );
 		} else {
 			$url = isset( $_POST['url'] ) ? wp_unslash( $_POST['url'] ) : '';
 

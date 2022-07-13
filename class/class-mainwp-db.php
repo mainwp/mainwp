@@ -534,11 +534,76 @@ class MainWP_DB extends MainWP_DB_Base {
 		$offset       = isset( $params['offset'] ) ? $params['offset'] : false;
 		$rowcount     = isset( $params['rowcount'] ) ? $params['rowcount'] : false;
 		$extraWhere   = isset( $params['where'] ) ? $params['where'] : null;
-		$extra_view   = isset( $params['extra_view'] ) ? $params['extra_view'] : array( 'favi_icon' );
+		$extra_view   = isset( $params['extra_view'] ) && is_array( $params['extra_view'] ) ? $params['extra_view'] : array( 'favi_icon' );
 		$is_staging   = isset( $params['is_staging'] ) ? $params['is_staging'] : 'no';
-		$for_manager  = false;
+		$full_data    = isset( $params['full_data'] ) && $params['full_data'] ? true : false;
+
+		$for_manager = false;
+
+		$urlsWhere = '';
+
+		if ( isset( $params['urls'] ) && ! empty( $params['urls'] ) ) {
+			$urls = explode( ';', $params['urls'] );
+			foreach ( $urls as $url ) {
+				$url = str_replace( array( 'https://www.', 'http://www.', 'https://', 'http://', 'www.' ), array( '', '', '', '', '' ), $url );
+				if ( '/' != substr( $url, - 1 ) ) {
+					$url .= '/';
+				}
+				$urlsWhere .= '"' . $this->escape( $url ) . '", ';
+			}
+			$urlsWhere = rtrim( $urlsWhere, ', ' );
+		}
+
+		if ( ! empty( $urlsWhere ) ) {
+			$urlsWhere = " ( replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www.', '') IN ( " . $urlsWhere . ') ) ';
+
+			if ( empty( $extraWhere ) ) {
+				$extraWhere = $urlsWhere;
+			} else {
+				$extraWhere = $extraWhere . ' AND ' . $urlsWhere;
+			}
+		}
 
 		$data = array( 'id', 'url', 'name' );
+
+		if ( $full_data ) {
+			$data = array(
+				'id',
+				'url',
+				'name',
+				'offline_checks_last',
+				'offline_check_result',
+				'http_response_code',
+				'disable_status_check',
+				'disable_health_check',
+				'status_check_interval',
+				'health_threshold',
+				'note',
+				'note_lastupdate',
+				'plugin_upgrades',
+				'theme_upgrades',
+				'translation_upgrades',
+				'securityIssues',
+				'themes',
+				'plugins',
+				'automatic_update',
+				'sync_errors',
+				'dtsAutomaticSync',
+				'dtsAutomaticSyncStart',
+				'dtsSync',
+				'dtsSyncStart',
+				'last_post_gmt',
+				'health_value',
+				'phpversion',
+				'wp_upgrades',
+				'security_stats',
+			);
+
+			if ( ! in_array( 'security_stats', $extra_view ) ) {
+				$extra_view[] = 'security_stats';
+			}
+		}
+
 		if ( $selectgroups ) {
 			$data[] = 'wpgroups';
 		}

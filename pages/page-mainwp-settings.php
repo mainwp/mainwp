@@ -430,6 +430,14 @@ class MainWP_Settings {
 			);
 		}
 
+		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'cache-control' ) ) {
+			$renderItems[] = array(
+				'title'  => __( 'Cache Control', 'mainwp' ),
+				'href'   => 'admin.php?page=cache-control',
+				'active' => ( 'cache-control' == $shownPage ) ? true : false,
+			);
+		}
+
 		if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsClientReportsResponder' ) ) {
 				$renderItems[] = array(

@@ -77,42 +77,11 @@ class MainWP_Auto_Cache_Purge_View {
 	 */
 	public function admin_init() {
 		add_filter( 'mainwp_sync_others_data', array( $this, 'cache_control_sync_others_data' ), 10, 2 );
-		add_filter( 'mainwp_page_navigation', array( $this, 'cache_control_navigation' ) );
 		add_filter( 'mainwp_sitestable_getcolumns', array( $this, 'cache_control_sitestable_column' ), 10, 1 );
 		add_filter( 'mainwp_sitestable_item', array( $this, 'cache_control_sitestable_item' ), 10, 1 );
 		add_action( 'mainwp_site_synced', array( $this, 'synced_site' ), 10, 2 );
 		add_action( 'mainwp_after_upgrade_wp_success', array( $this, 'upgrade_wp_success' ), 10, 2 );
 		add_action( 'mainwp_after_plugin_theme_translation_update', array( $this, 'update_plugin_theme_success' ), 10, 4 );
-	}
-
-	/**
-	 * Cache Control page Header Navigation.
-	 *
-	 * @param $subPages $subPages is an Array of subpages.
-	 * @return array|mixed
-	 */
-	public function cache_control_navigation( $subPages ) {
-		$currentScreen = get_current_screen();
-
-		// Only show on these subpages.
-		$show = array(
-			'mainwp_page_Settings',
-			'mainwp_page_SettingsAdvanced',
-			'mainwp_page_SettingsEmail',
-			'mainwp_page_MainWPTools',
-			'mainwp_page_RESTAPI',
-			'mainwp_page_cache-control',
-		);
-		if ( in_array( $currentScreen->id, $show ) ) {
-			if ( isset( $subPages ) && is_array( $subPages ) ) {
-				$subPages[] = array(
-					'title'  => __( 'Cache Control', 'mainwp' ),
-					'href'   => 'admin.php?page=cache-control',
-					'active' => ( 'cache-control' == $currentScreen ) ? true : false,
-				);
-			}
-		}
-		return $subPages;
 	}
 
 	/**
@@ -443,7 +412,7 @@ class MainWP_Auto_Cache_Purge_View {
 	 * @param bool $updated Updated or not.
 	 */
 	public static function render_child_site_settings( $websiteid, $updated ) {
-		MainWP_Manage_Sites::render_header( 'cache-control' );
+		MainWP_Manage_Sites::render_header( 'ManageSitesCacheControl' );
 		if ( ! mainwp_current_user_have_right( 'admin', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 			return;
@@ -510,7 +479,7 @@ class MainWP_Auto_Cache_Purge_View {
 			</div>
 		</div>
 		<?php
-		MainWP_Manage_Sites::render_footer( 'cache-control' );
+		MainWP_Manage_Sites::render_footer( 'ManageSitesCacheControl' );
 	}
 
 	/**

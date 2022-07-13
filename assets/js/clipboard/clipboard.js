@@ -36,7 +36,7 @@ var listen_default = /*#__PURE__*/__webpack_require__.n(listen);
 // EXTERNAL MODULE: ./node_modules/select/src/select.js
 var src_select = __webpack_require__(817);
 var select_default = /*#__PURE__*/__webpack_require__.n(src_select);
-;// CONCATENATED MODULE: ./src/common/command.js
+// CONCATENATED MODULE: ./src/common/command.js
 /**
  * Executes a given operation type.
  * @param {String} type
@@ -49,7 +49,7 @@ function command(type) {
     return false;
   }
 }
-;// CONCATENATED MODULE: ./src/actions/cut.js
+// CONCATENATED MODULE: ./src/actions/cut.js
 
 
 /**
@@ -65,7 +65,7 @@ var ClipboardActionCut = function ClipboardActionCut(target) {
 };
 
 /* harmony default export */ var actions_cut = (ClipboardActionCut);
-;// CONCATENATED MODULE: ./src/common/create-fake-element.js
+// CONCATENATED MODULE: ./src/common/create-fake-element.js
 /**
  * Creates a fake textarea element with a value.
  * @param {String} value
@@ -90,7 +90,7 @@ function createFakeElement(value) {
   fakeElement.value = value;
   return fakeElement;
 }
-;// CONCATENATED MODULE: ./src/actions/copy.js
+// CONCATENATED MODULE: ./src/actions/copy.js
 
 
 
@@ -137,7 +137,7 @@ var ClipboardActionCopy = function ClipboardActionCopy(target) {
 };
 
 /* harmony default export */ var actions_copy = (ClipboardActionCopy);
-;// CONCATENATED MODULE: ./src/actions/default.js
+// CONCATENATED MODULE: ./src/actions/default.js
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 
@@ -192,7 +192,7 @@ var ClipboardActionDefault = function ClipboardActionDefault() {
 };
 
 /* harmony default export */ var actions_default = (ClipboardActionDefault);
-;// CONCATENATED MODULE: ./src/clipboard.js
+// CONCATENATED MODULE: ./src/clipboard.js
 function clipboard_typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { clipboard_typeof = function _typeof(obj) { return typeof obj; }; } else { clipboard_typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return clipboard_typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -776,7 +776,7 @@ E.prototype = {
     function listener () {
       self.off(name, listener);
       callback.apply(ctx, arguments);
-    };
+    }
 
     listener._ = callback
     return this.on(name, listener, ctx);

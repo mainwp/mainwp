@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.0.1
 Requires PHP: 7.0
-Stable tag: 4.2.5
+Stable tag: 4.2.6
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -179,6 +179,24 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.2.6 - 7-14-2022 =
+Fixed: An issue with displaying tooltip elements in the Manage Groups page
+Fixed: A problem with showing plugin info modal
+Fixed: Missing CSS class for the Cache-Control menu item
+Fixed: The Undefined index PHP notice in CLI when calling site info 
+Fixed: Manage Plugins and Themes responsiveness issues
+Added: Go to WP Admin link to WP Core update success message
+Added: New REST API endpoint `get-sites-by-url`
+Updated: The FileSaver JS library
+Updated: The Clipboard JS library
+Updated: The Colreorder JS library
+Updated: The FixedColumns JS library
+Updated: The Responsive JS library
+Updated: The Scroller JS library
+Updated: The Datatables JS library
+Updated: The Dragula JS library
+Updated: The Moment JS library
 
 = 4.2.5 - 6-21-2022 =
 * Added: WP Nonce verification to the Go to WP Admin request for additional security

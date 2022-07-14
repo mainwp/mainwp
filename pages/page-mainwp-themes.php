@@ -975,7 +975,7 @@ class MainWP_Themes {
 				<tr>
 					<td style="padding-left:40px;padding-right:40px;">
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $site_id ); ?>"/>
-						<div class="ui slider checkbox mainwp-768-hide">
+						<div class="ui slider checkbox mainwp-768-hide-fixlayout">
 							<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_themes_site_check_all"/><label></label>
 						</div>
 						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site_id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
@@ -1139,6 +1139,14 @@ class MainWP_Themes {
 				jQuery( '.mainwp-ui-page .ui.checkbox:not(.not-auto-init)' ).checkbox(); // to fix onclick on plugins checkbox for sorting.
 			} );
 		</script>
+		<style type="text/css">				
+			@media screen and ( max-width: 767px ) {
+				.mainwp-768-hide-fixlayout {
+					right: 9999px !important;
+					width: 0px !important;
+				}
+			}
+		</style>
 		<?php
 	}
 

@@ -33,7 +33,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.2.5';
+	public static $version = '4.2.6';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -194,6 +194,8 @@ class MainWP_System {
 		add_action( 'admin_menu', array( &$this, 'admin_menu' ) );
 		add_action( 'login_form', array( &$this, 'login_form_redirect' ) );
 		add_action( 'admin_print_styles', array( MainWP_System_View::get_class_name(), 'admin_print_styles' ) );
+
+		add_action( 'wp_logout', array( &$this, 'clear_sessions' ) );
 
 		MainWP_Install_Bulk::init();
 
@@ -653,6 +655,7 @@ class MainWP_System {
 	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
 	 */
 	public function admin_init() {
+
 		if ( ! MainWP_System_Utility::is_admin() ) {
 			return;
 		}
@@ -833,6 +836,22 @@ class MainWP_System {
 		)
 		) {
 			MainWP_Cache::init_session();
+		}
+	}
+
+	/**
+	 * Method clear_sessions()
+	 *
+	 *  When logout clear the sessions to reset.
+	 */
+	public function clear_sessions() {
+		MainWP_Cache::init_session();
+		$clear_cached = array(
+			'Post',
+			'Page',
+		);
+		foreach ( $clear_cached as $ca ) {
+			MainWP_Cache::init_cache( $ca ); // to re-set cache.
 		}
 	}
 

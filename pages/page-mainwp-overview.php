@@ -414,7 +414,7 @@ class MainWP_Overview {
 			}
 			?>
 			<div class="ui <?php echo $cls_grid; ?> column tablet stackable grid mainwp-grid-wrapper">
-		<div class="column" id="mainwp-grid-left" widget-context="left">
+		<div class="column grid-item" id="mainwp-grid-left" widget-context="left">
 						<?php
 						/**
 						 * Action: mainwp_overview_before_left_column
@@ -436,7 +436,7 @@ class MainWP_Overview {
 						?>
 		</div>
 		<?php if ( 3 == $overviewColumns ) : ?>
-		<div class="column" id="mainwp-grid-middle" widget-context="middle">
+		<div class="column grid-item" id="mainwp-grid-middle" widget-context="middle">
 						<?php
 						/**
 						 * Action: mainwp_overview_before_middle_column
@@ -458,7 +458,7 @@ class MainWP_Overview {
 						?>
 		</div>
 		<?php endif; ?>
-		<div class="column" id="mainwp-grid-right" widget-context="right">
+		<div class="column grid-item" id="mainwp-grid-right" widget-context="right">
 						<?php
 						/**
 						 * Action: mainwp_overview_before_right_column

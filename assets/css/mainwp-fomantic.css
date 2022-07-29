@@ -43,7 +43,7 @@
 .mainwp-ui .alternate { background-color: rgba( 255, 0, 0, 0 ) !important; }
 .mainwp-ui .ui.search, .mainwp-ui .icon.search { background: none !important; }
 
-.mainwp-ui .ui.segment {
+.mainwp-ui:not(.mainwp-ui-setup) .ui.segment {
   border-radius: 0;
   border: 0;
   margin-top: 0;

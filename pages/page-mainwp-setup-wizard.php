@@ -104,6 +104,7 @@ class MainWP_Setup_Wizard {
 		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'assets/css/mainwp.css', array(), MAINWP_VERSION );
 		wp_enqueue_style( 'mainwp-fonts', MAINWP_PLUGIN_URL . 'assets/css/mainwp-fonts.css', array(), MAINWP_VERSION );
 		wp_enqueue_style( 'fomantic', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.css', array(), MAINWP_VERSION );
+		wp_enqueue_style( 'mainwp-fomantic', MAINWP_PLUGIN_URL . 'assets/css/mainwp-fomantic.css', array(), MAINWP_VERSION );
 
 		if ( ! empty( $_POST['save_step'] ) && isset( $this->steps[ $this->step ]['handler'] ) ) {
 			call_user_func( $this->steps[ $this->step ]['handler'] );
@@ -166,11 +167,11 @@ class MainWP_Setup_Wizard {
 				<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 				<title><?php esc_html_e( 'MainWP &rsaquo; Setup Wizard', 'mainwp' ); ?></title>
 				<?php wp_print_scripts( 'mainwp-setup' ); ?>
-				<?php wp_print_scripts( 'semantic' ); ?>
+				<?php wp_print_scripts( 'fomantic' ); ?>
 				<?php do_action( 'admin_print_styles' ); ?>
 				<script type="text/javascript"> var ajaxurl = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';</script>
 			</head>
-			<body>
+			<body class="mainwp-ui mainwp-ui-setup">
 				<div class="ui hidden divider"></div>
 				<div class="ui hidden divider"></div>
 				<div id="mainwp-quick-setup-wizard" class="ui padded container segment">

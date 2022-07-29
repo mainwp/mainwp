@@ -13,15 +13,15 @@ jQuery( document ).ready( function () {
     return false;
   } );
 
-  //jQuery( '.ui.checkbox:not(.not-auto-init)' ).checkbox();
+  jQuery( '.ui.checkbox:not(.not-auto-init)' ).checkbox();
 
   jQuery( '.mainwp-checkbox-showhide-elements' ).on( 'click', function () {
     var hiel = jQuery( this ).attr( 'hide-parent' );
     // if semantic ui checkbox is checked.
     if ( jQuery( this ).find( 'input' ).is( ':checked' ) ) {
-     jQuery( '[hide-element=' + hiel + ']' ).fadeOut( 500 );
-    } else {
      jQuery( '[hide-element=' + hiel + ']' ).fadeIn( 500 );
+    } else {
+     jQuery( '[hide-element=' + hiel + ']' ).fadeOut( 500 );
     }
   } );
 

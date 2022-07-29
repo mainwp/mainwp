@@ -588,10 +588,24 @@ class Rest_Api {
 				'selectgroups' => ( isset( $request['selectgroups'] ) && true == $request['selectgroups'] ) ? true : false,
 			);
 
+			$format              = isset( $request['format'] ) ? $request['format'] : '';
+			$params['format']    = $format;
+			$params['full_data'] = isset( $request['full_data'] ) ? $request['full_data'] : false;
+
 			// get data.
 			$data = MainWP_DB::instance()->get_websites_for_current_user( $params );
 
-			$response = new \WP_REST_Response( $data );
+			$result = $data;
+
+			if ( 'array' == $format ) {
+				if ( is_array( $data ) ) {
+					$result = array(
+						'data' => $data,
+					);
+				}
+			}
+
+			$response = new \WP_REST_Response( $result );
 			$response->set_status( 200 );
 
 		} else {
@@ -1031,6 +1045,9 @@ class Rest_Api {
 				'selectgroups' => ( isset( $request['selectgroups'] ) && true == $request['selectgroups'] ) ? true : false,
 			);
 
+			$format           = isset( $request['format'] ) ? $request['format'] : '';
+			$params['format'] = $format;
+
 			if ( isset( $request['urls'] ) && ! empty( $request['urls'] ) ) {
 				$params['urls'] = rawurldecode( $request['urls'] );
 			}
@@ -1038,7 +1055,17 @@ class Rest_Api {
 			// get data.
 			$data = MainWP_DB::instance()->get_websites_for_current_user( $params );
 
-			$response = new \WP_REST_Response( $data );
+			$result = $data;
+
+			if ( 'array' == $format ) {
+				if ( is_array( $data ) ) {
+					$result = array(
+						'data' => $data,
+					);
+				}
+			}
+
+			$response = new \WP_REST_Response( $result );
 			$response->set_status( 200 );
 
 		} else {

@@ -536,7 +536,8 @@ class MainWP_DB extends MainWP_DB_Base {
 		$extraWhere   = isset( $params['where'] ) ? $params['where'] : null;
 		$extra_view   = isset( $params['extra_view'] ) && is_array( $params['extra_view'] ) ? $params['extra_view'] : array( 'favi_icon' );
 		$is_staging   = isset( $params['is_staging'] ) ? $params['is_staging'] : 'no';
-		$full_data    = isset( $params['full_data'] ) && $params['full_data'] ? true : false;
+		$full_data    = isset( $params['full_data'] ) && $params['full_data'] && ( 'no' !== $params['full_data'] ) ? true : false;
+		$format       = isset( $params['format'] ) ? $params['format'] : '';
 
 		$for_manager = false;
 
@@ -611,7 +612,38 @@ class MainWP_DB extends MainWP_DB_Base {
 		$dbwebsites = array();
 		$websites   = self::instance()->query( self::instance()->get_sql_websites_for_current_user( $selectgroups, $search_site, $orderBy, $offset, $rowcount, $extraWhere, $for_manager, $extra_view, $is_staging ) );
 		while ( $websites && ( $website = self::fetch_object( $websites ) ) ) {
-			$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
+			$obj_data = MainWP_Utility::map_site( $website, $data );
+
+			if ( $full_data ) {
+				$sum_upgrades = 0;
+				if ( '' != $obj_data->plugin_upgrades ) {
+					$plugin_upgrades = json_decode( $obj_data->plugin_upgrades, true );
+					if ( is_array( $plugin_upgrades ) ) {
+						$sum_upgrades += count( $plugin_upgrades );
+					}
+				}
+
+				if ( '' != $obj_data->theme_upgrades ) {
+					$theme_upgrades = json_decode( $obj_data->theme_upgrades, true );
+					if ( is_array( $theme_upgrades ) ) {
+						$sum_upgrades += count( $theme_upgrades );
+					}
+				}
+
+				if ( '' != $obj_data->wp_upgrades ) {
+					$wp_upgrades = json_decode( $obj_data->wp_upgrades, true );
+					if ( is_array( $wp_upgrades ) ) {
+						$sum_upgrades += count( $wp_upgrades );
+					}
+				}
+				$obj_data->sum_of_upgrades = $sum_upgrades;
+			}
+
+			if ( 'array' == $format ) {
+				$dbwebsites[] = $obj_data;
+			} else {
+				$dbwebsites[ $website->id ] = $obj_data;
+			}
 		}
 		self::free_result( $websites );
 		return $dbwebsites;
@@ -1208,6 +1240,9 @@ class MainWP_DB extends MainWP_DB_Base {
 		$isStaging = 0 ) {
 
 		if ( MainWP_Utility::ctype_digit( $userid ) && ( 0 == $nossl || 1 == $nossl ) ) {
+			if ( '/' != substr( $url, - 1 ) ) {
+				$url .= '/';
+			}
 			$values = array(
 				'userid'                => $userid,
 				'adminname'             => $this->escape( $admin ),

@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.0.1
 Requires PHP: 7.0
-Stable tag: 4.2.7-beta1
+Stable tag: 4.2.7
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -179,6 +179,14 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.2.7 - 8-8-2022 =
+* Added: Atarim extension info to the `get_available_extensions()` method
+* Added: Atarim extension icon
+* Fixed: `wp_mail` error detection message width
+* Updated: `wp_mail` error detection message content
+* Updated: Error message in case of a plugin installation failure due to blocked request on the MainWP Dashboard side
+* Updated: Error message in case of a theme installation failure due to blocked request on the MainWP Dashboard side
 
 = 4.2.6.1 - 7-29-2022 =
 * Fixed: Toggle checkbox appearance issue in the Quick Setup Wizard

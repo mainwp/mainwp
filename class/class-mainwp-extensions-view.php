@@ -1265,6 +1265,23 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
+			'mainwp-atarim-extension' =>
+			array(
+				'slug'                 => 'mainwp-atarim-extension',
+				'title'                => 'MainWP Atarim Extension',
+				'desc'                 => 'MainWP Atarim Extension allows you get your Atarim info about managed sites to your MainWP Dashboard.',
+				'link'                 => 'https://mainwp.com/extension/atarim/',
+				'img'                  => $folder_url . 'atarim.png',
+				'product_id'           => 'MainWP Atarim Extension',
+				'product_item_id'      => 0,
+				'catalog_id'           => '1251161',
+				'group'                => array( 'admin' ),
+				'privacy'              => 0,
+				'integration'          => 1,
+				'integration_url'      => 'https://atarim.io/',
+				'integration_owner'    => 'WP FeedBack LTD',
+				'integration_owner_pp' => 'https://atarim.io/privacy-policy/',
+			),
 		);
 	}
 

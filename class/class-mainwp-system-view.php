@@ -318,10 +318,27 @@ class MainWP_System_View {
 		}
 
 		self::check_rating_notice( $current_options );
+
+		self::render_wp_mail_warning();
 	}
 
 	/**
-	 * Render PHP Version Notice.
+	 * Renders wp_mail warning.
+	 */
+	public static function render_wp_mail_warning() {
+		$mail_failed = get_option( 'mainwp_notice_wp_mail_failed' );
+		if ( 'yes' == $mail_failed ) {
+			?>
+			<div class="ui yellow message" style="margin-bottom: 0; border-radius: 0;">
+				<?php echo esc_html__( 'wp_mail() error detected! It is more than likely that your MainWP Dashboard will fail to send any email. Please check for possible plugin conflicts with your Dashboard or contact your host support to determine why the wp_mail() function fails.', 'mainwp' ); ?>
+				<i class="close icon mainwp-notice-dismiss" notice-id="mail_failed"></i>
+			</div>
+			<?php
+		}
+	}
+
+	/**
+	 * Renders PHP Version Notice.
 	 *
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
 	 */
@@ -341,7 +358,7 @@ class MainWP_System_View {
 	}
 
 	/**
-	 * Render OpenSSL Error message.
+	 * Renders OpenSSL Error message.
 	 *
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
 	 */
@@ -361,7 +378,7 @@ class MainWP_System_View {
 		}
 	}
 
-	/** Render WP Multisite Error Message. */
+	/** Renders WP Multisite Error Message. */
 	public static function render_notice_multi_sites() {
 		?>
 		<div class="ui icon red message" style="margin-bottom: 0; border-radius: 0;">
@@ -373,7 +390,7 @@ class MainWP_System_View {
 	}
 
 	/**
-	 * Render MainWP Review Request.
+	 * Renders MainWP Review Request.
 	 *
 	 * @param bool $current_options false|true Weather or not to display request.
 	 *
@@ -419,7 +436,7 @@ class MainWP_System_View {
 		}
 	}
 
-	/** Render MainWP Dashboard & Child Plugin auto update Alert. */
+	/** Renders MainWP Dashboard & Child Plugin auto update Alert. */
 	public static function render_notice_trust_update() {
 		?>
 		<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
@@ -432,7 +449,7 @@ class MainWP_System_View {
 		<?php
 	}
 
-	/** Render MainWP 30 day review request. */
+	/** Renders MainWP 30 day review request. */
 	public static function render_rating_notice_1() {
 		?>
 		<div class="ui green icon message" style="margin-bottom: 0; border-radius: 0;">
@@ -463,7 +480,7 @@ class MainWP_System_View {
 		<?php
 	}
 
-	/** Render MainWP review notice after a few extensions have been installed. */
+	/** Renders MainWP review notice after a few extensions have been installed. */
 	public static function render_rating_notice_2() {
 		?>
 		<div class="ui green icon message" style="margin-bottom: 0; border-radius: 0;">
@@ -494,7 +511,7 @@ class MainWP_System_View {
 		<?php
 	}
 
-	/** Render Send Mail Function may have failed error. */
+	/** Renders Send Mail Function may have failed error. */
 	public static function wp_admin_notices() {
 
 		/**
@@ -503,17 +520,6 @@ class MainWP_System_View {
 		 * @global string
 		 */
 		global $pagenow;
-
-		$mail_failed = get_option( 'mainwp_notice_wp_mail_failed' );
-		if ( 'yes' == $mail_failed ) {
-			?>
-			<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
-				<i class="exclamation circle icon"></i>
-				<?php echo esc_html__( 'Send mail function may failed.', 'mainwp' ); ?>
-				<i class="close icon mainwp-notice-dismiss" notice-id="mail_failed"></i>
-			</div>
-			<?php
-		}
 
 		if ( 'plugins.php' !== $pagenow ) {
 			return;
@@ -533,7 +539,7 @@ class MainWP_System_View {
 	/**
 	 * Method admin_footer()
 	 *
-	 * Render Admin Footer.
+	 * Renders admin footer.
 	 */
 	public static function admin_footer() {
 		$disabled_confirm = get_option( 'mainwp_disable_update_confirmations', 0 );

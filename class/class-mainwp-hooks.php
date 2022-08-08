@@ -110,6 +110,10 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_notification_get_settings', array( &$this, 'get_notification_settings' ), 10, 2 );
 		add_filter( 'mainwp_send_wp_mail', array( &$this, 'hook_send_wp_mail' ), 10, 5 );
 		add_filter( 'mainwp_notification_get_template_content', array( &$this, 'hook_get_template_html' ), 10, 3 );
+		add_filter( 'mainwp_sitestable_getcolumns', array( $this, 'hook_atarim_default_sitestable_column' ), 10, 1 );
+		add_filter( 'mainwp_sitestable_item', array( $this, 'hook_atarim_manage_sites_default_item' ), 10, 1 );
+		add_filter( 'mainwp_monitoring_sitestable_getcolumns', array( $this, 'hook_atarim_default_sitestable_column' ), 10, 1 );
+		add_filter( 'mainwp_monitoring_sitestable_item', array( $this, 'hook_atarim_manage_sites_default_item' ), 10, 1 );
 	}
 
 	/**
@@ -1173,5 +1177,36 @@ class MainWP_Hooks {
 			MainWP_Post_Page_Handler::posting_posts( $post_id, 'ajax_posting' );
 		}
 		die();
+	}
+
+	/**
+	 * Method hook_atarim_default_sitestable_column()
+	 *
+	 * @param mixed $columns columns data.
+	 *
+	 * Hook Atarim default column.
+	 */
+	public function hook_atarim_default_sitestable_column( $columns ) {
+		if ( ! is_plugin_active( 'mainwp-atarim-extension/mainwp-atarim-extension.php' ) ) {
+			$columns['atarim_tasks'] = __( 'Atarim', 'mainwp-atarim-extension' );
+		}
+		return $columns;
+	}
+
+	/**
+	 * Method hook_atarim_manage_sites_default_item()
+	 *
+	 * @param mixed $item item row data.
+	 *
+	 * Hook Atarim manage sites default item.
+	 */
+	public function hook_atarim_manage_sites_default_item( $item ) {
+		if ( ! is_plugin_active( 'mainwp-atarim-extension/mainwp-atarim-extension.php' ) ) {
+			if ( is_array( $item ) && isset( $item['url'] ) ) {
+				$collaborate_link     = 'https://app.atarim.io/fetching/?_from=mainwp&url=' . $item['url'];
+				$item['atarim_tasks'] = '<a href="' . $collaborate_link . '" target="_balnk" data-tooltip="Collaborate on this website." data-inverted="" data-position="left center"><span class="ui blue icon label"><i class="comments icon"></i></span></a>';
+			}
+		}
+		return $item;
 	}
 }

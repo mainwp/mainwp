@@ -529,6 +529,7 @@ class MainWP_Install_Bulk {
 	 * @param mixed  $data Processing data.
 	 * @param object $website The website object.
 	 * @param mixed  $output Function output.
+	 * @param mixed  $post_data Post data.
 	 *
 	 * @return mixed $output->ok[ $website->id ] = array( $website->name )|Error,
 	 *  Already installed,
@@ -537,7 +538,7 @@ class MainWP_Install_Bulk {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
 	 */
-	public static function install_plugin_theme_handler( $data, $website, &$output ) {
+	public static function install_plugin_theme_handler( $data, $website, &$output, $post_data = array() ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 
 			$result = $results[1];
@@ -553,6 +554,17 @@ class MainWP_Install_Bulk {
 				if ( isset( $information['error_code'] ) && 'folder_exists' == $information['error_code'] ) {
 					$error = __( 'Already installed', 'mainwp' );
 				}
+
+				if ( 'not found' == strtolower( $error ) ) {
+					if ( is_array( $post_data ) && isset( $post_data['type'] ) ) {
+						if ( 'plugin' == $post_data['type'] ) {
+							$error = __( 'Plugin file not found. Make sure security plugins or server-side security rules are not blocking requests from your child sites.', 'mainwp' );
+						} elseif ( 'theme' == $post_data['type'] ) {
+							$error = __( 'Theme file not found. Make sure security plugins or server-side security rules are not blocking requests from your child sites.', 'mainwp' );
+						}
+					}
+				}
+
 				$output->errors[ $website->id ] = array( $website->name, $error );
 			} else {
 				$output->errors[ $website->id ] = array(

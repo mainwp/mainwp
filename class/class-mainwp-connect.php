@@ -730,7 +730,7 @@ class MainWP_Connect {
 
 					if ( null != $handler ) {
 						$site = &$handleToWebsite[ self::get_resource_id( $info['handle'] ) ];
-						call_user_func_array( $handler, array( $data, $site, &$output ) );
+						call_user_func_array( $handler, array( $data, $site, &$output, $params ) );
 					}
 
 					unset( $handleToWebsite[ self::get_resource_id( $info['handle'] ) ] );
@@ -751,7 +751,7 @@ class MainWP_Connect {
 
 				if ( null != $handler ) {
 					$site = &$handleToWebsite[ self::get_resource_id( $ch ) ];
-					call_user_func_array( $handler, array( $data, $site, &$output ) );
+					call_user_func_array( $handler, array( $data, $site, &$output, $params ) );
 				}
 			}
 		}

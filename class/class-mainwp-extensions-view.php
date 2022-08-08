@@ -1265,7 +1265,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-atarim-extension'        =>
+			'mainwp-atarim-extension' =>
 			array(
 				'slug'                 => 'mainwp-atarim-extension',
 				'title'                => 'MainWP Atarim Extension',

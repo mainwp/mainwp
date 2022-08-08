@@ -114,7 +114,6 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_sitestable_item', array( $this, 'hook_atarim_manage_sites_default_item' ), 10, 1 );
 		add_filter( 'mainwp_monitoring_sitestable_getcolumns', array( $this, 'hook_atarim_default_sitestable_column' ), 10, 1 );
 		add_filter( 'mainwp_monitoring_sitestable_item', array( $this, 'hook_atarim_manage_sites_default_item' ), 10, 1 );
-
 	}
 
 	/**

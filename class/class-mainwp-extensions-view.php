@@ -59,6 +59,7 @@ class MainWP_Extensions_View {
 		} else {
 			$extension_name_raw = sanitize_text_field( wp_unslash( $_GET['page'] ) );
 			$extension_name     = str_replace( array( 'Extensions', '-', 'Mainwp', 'Extension' ), ' ', $extension_name_raw );
+			$extension_name     = apply_filters( 'mainwp_extensions_page_top_header', $extension_name, $extension_name_raw );
 			$params             = array(
 				'title' => $extension_name,
 			);
@@ -149,7 +150,7 @@ class MainWP_Extensions_View {
 
 							$extensions_data = isset( $available_extensions_data[ dirname( $extension['slug'] ) ] ) ? $available_extensions_data[ dirname( $extension['slug'] ) ] : array();
 							$added_on_menu   = MainWP_Extensions_Handler::added_on_menu( $extension['slug'] );
-
+							
 							if ( isset( $extensions_data['img'] ) ) {
 								$img_url = $extensions_data['img'];
 							} elseif ( isset( $extension['iconURI'] ) && '' !== $extension['iconURI'] ) {

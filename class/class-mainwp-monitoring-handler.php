@@ -270,6 +270,7 @@ class MainWP_Monitoring_Handler {
 				MainWP_Notification::send_websites_uptime_monitoring( $admin_email, $subject, $mail_content, $plain_text );
 				usleep( 100000 );
 			}
+			do_action( 'mainwp_after_notice_sites_uptime_monitoring_admin', $websites );
 			return;
 		}
 
@@ -306,6 +307,7 @@ class MainWP_Monitoring_Handler {
 				);
 				usleep( 100000 );
 			}
+			do_action( 'mainwp_after_notice_sites_uptime_monitoring_individual', $site );
 		}
 	}
 

@@ -576,8 +576,9 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 	 * Columns for a single row.
 	 *
 	 * @param mixed $item     Object containing the client info.
+	 * @param bool  $compatible to compatible param - DO NOT remove.
 	 */
-	protected function single_row_columns( $item ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	protected function single_row_columns( $item, $compatible = true ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		list( $columns ) = $this->get_column_info();
 
@@ -671,6 +672,10 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 				echo $this->column_default( $item, $column_name );
 				echo '</td>';
 			}
+		}
+
+		if ( ! $compatible ) {
+			$compatible = true;
 		}
 	}
 

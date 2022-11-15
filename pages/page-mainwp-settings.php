@@ -1505,7 +1505,6 @@ class MainWP_Settings {
 			$themes_files = array();
 		}
 		?>
-				
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php _e( 'Select MainWP Theme', 'mainwp' ); ?></label>
 			<div class="ten wide column" tabindex="0" data-tooltip="<?php esc_attr_e( 'Select your MainWP Dashboard theme.', 'mainwp' ); ?>" data-inverted="" data-position="top left">

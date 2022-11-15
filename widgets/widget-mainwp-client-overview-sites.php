@@ -198,7 +198,6 @@ class MainWP_Client_Overview_Sites {
 			<script type="text/javascript">
 				jQuery( document ).ready( function( $ ) {
 					try {	
-										
 						$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
 							"searching" : <?php echo $table_features['searching']; ?>,
 							"paging" : <?php echo $table_features['paging']; ?>,

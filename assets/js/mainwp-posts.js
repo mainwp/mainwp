@@ -137,20 +137,28 @@ mainwp_fetch_pages = function () {
     var errors = [];
     var selected_sites = [];
     var selected_groups = [];
+    var selected_clients = [];
 
     if (jQuery('#select_by').val() == 'site') {
         jQuery("input[name='selected_sites[]']:checked").each(function () {
             selected_sites.push(jQuery(this).val());
         });
         if (selected_sites.length == 0) {
-            errors.push('<div class="mainwp-notice mainwp-notice-red">' + __('Please select websites or groups.') + '</div>');
+            errors.push('<div class="mainwp-notice mainwp-notice-red">' + __('Please select websites or groups or clients.') + '</div>');
+        }
+    } else if( jQuery('#select_by').val() == 'client' ) {
+        jQuery("input[name='selected_clients[]']:checked").each(function () {
+            selected_clients.push(jQuery(this).val());
+        });
+        if (selected_clients.length == 0) {
+            errors.push('<div class="mainwp-notice mainwp-notice-red">' + __('Please select websites or groups or clients.') + '</div>');
         }
     } else {
         jQuery("input[name='selected_groups[]']:checked").each(function () {
             selected_groups.push(jQuery(this).val());
         });
         if (selected_groups.length == 0) {
-            errors.push('<div class="mainwp-notice mainwp-notice-red">' + __('Please select websites or groups.') + '</div>');
+            errors.push('<div class="mainwp-notice mainwp-notice-red">' + __('Please select websites or groups or clients.') + '</div>');
         }
     }
 
@@ -179,6 +187,7 @@ mainwp_fetch_pages = function () {
         status: _status,
         'groups[]': selected_groups,
         'sites[]': selected_sites,
+        'clients[]': selected_clients,
         maximum: jQuery("#mainwp_maximumPages").val(),
         search_on: jQuery("#mainwp_page_search_on").val(),
     });
@@ -362,6 +371,7 @@ mainwp_fetch_posts = function (postId, userId, start_sites) {
     var errors = [];
     var selected_sites = [];
     var selected_groups = [];
+    var selected_clients = [];
 
     var i = 0;
     var num_sites = jQuery('#search-bulk-sites').attr('number-sites');
@@ -385,16 +395,24 @@ mainwp_fetch_posts = function (postId, userId, start_sites) {
         });
         if (selected_sites.length == 0) {
             if (!bulk_search || (bulk_search && start_sites == 0)) {
-                errors.push('<div class="ui yellow message">' + __('Please select at least one website or group.') + '</div>');
+                errors.push('<div class="ui yellow message">' + __('Please select at least one website or group or client.') + '</div>');
             }
         }
 
-    } else {
+    } else if (jQuery('#select_by').val() == 'client') {
+        jQuery("input[name='selected_clients[]']:checked").each(function () {
+            selected_clients.push(jQuery(this).val());
+        });
+        if (selected_clients.length == 0) {
+            errors.push('<div class="ui yellow message">' + __('Please select at least one client or website, group.') + '</div>');
+        }
+
+    } else if(jQuery('#select_by').val() == 'group' ) {
         jQuery("input[name='selected_groups[]']:checked").each(function () {
             selected_groups.push(jQuery(this).val());
         });
         if (selected_groups.length == 0) {
-            errors.push('<div class="ui yellow message">' + __('Please select at least one website or group.') + '</div>');
+            errors.push('<div class="ui yellow message">' + __('Please select at least one website or group or client.') + '</div>');
         } else if (bulk_search) {
 
             if (start_sites == undefined) {
@@ -456,6 +474,7 @@ mainwp_fetch_posts = function (postId, userId, start_sites) {
         status: _status,
         'groups[]': selected_groups,
         'sites[]': selected_sites,
+        'clients[]': selected_clients,
         postId: (postId == undefined ? '' : postId),
         userId: (userId == undefined ? '' : userId),
         post_type: jQuery("#mainwp_get_custom_post_types_select").val(),

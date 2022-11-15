@@ -25,7 +25,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '8.59';
+	protected $mainwp_db_version = '8.97';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -70,8 +70,14 @@ class MainWP_Install extends MainWP_DB_Base {
 		if ( empty( $currentVersion ) ) {
 			update_option( 'mainwp_run_quick_setup', 'yes' );
 			MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 0 );
-		} elseif ( false === get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-			MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+		} else {
+			if ( false === get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+				MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+			}
+		}
+
+		if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.8', '<' ) ) {
+			MainWP_Utility::update_option( 'mainwp_selected_theme', 'default' );
 		}
 
 		$rslt = self::instance()->query( "SHOW TABLES LIKE '" . $this->table_name( 'wp' ) . "'" );
@@ -84,6 +90,11 @@ class MainWP_Install extends MainWP_DB_Base {
 		}
 
 		$charset_collate = $this->wpdb->get_charset_collate();
+
+		/*
+		* As of WP 4.2, which uses 4 bytes per character. This means that an index, now only has room for floor(767/4) = 191 characters.
+		*/
+		$max_index_length = 191;
 
 		$sql = array();
 		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp' ) . " (
@@ -144,6 +155,8 @@ class MainWP_Install extends MainWP_DB_Base {
   http_pass text NOT NULL DEFAULT '',
   wpe tinyint(1) NOT NULL,
   is_staging tinyint(1) NOT NULL DEFAULT 0,
+  client_id int(11) NOT NULL DEFAULT 0,
+  `suspended` tinyint(1) NOT NULL DEFAULT 0,
   KEY idx_userid (userid)";
 		if ( '' == $currentVersion ) {
 			$tbl .= ',
@@ -167,6 +180,7 @@ class MainWP_Install extends MainWP_DB_Base {
   extauth text NOT NULL DEFAULT '',
   last_post_gmt int(11) NOT NULL DEFAULT 0,
   health_value int(11) NOT NULL DEFAULT 0,
+  health_status tinyint(1) NOT NULL DEFAULT 0,
   health_site_noticed tinyint(1) NOT NULL DEFAULT 1,
   KEY idx_wpid (wpid)";
 
@@ -324,7 +338,8 @@ class MainWP_Install extends MainWP_DB_Base {
 		$tbl = 'CREATE TABLE ' . $this->table_name( 'action_log' ) . " (
 	id int(11) NOT NULL auto_increment,
 	log_content mediumtext NOT NULL DEFAULT '',	
-	log_type tinyint(1) DEFAULT 0,	
+	log_type tinyint(1) DEFAULT 0,
+	log_color tinyint(1) DEFAULT 0,	
 	log_user varchar(128) NOT NULL DEFAULT '',
 	log_timestamp int(11) NOT NULL DEFAULT 0";
 		if ( '' == $currentVersion || version_compare( $currentVersion, '8.50', '<=' ) ) {
@@ -347,6 +362,8 @@ class MainWP_Install extends MainWP_DB_Base {
 		}
 		$tbl  .= ') ' . $charset_collate . ';';
 		$sql[] = $tbl;
+
+		$sql = apply_filters( 'mainwp_db_install_tables', $sql, $currentVersion, $charset_collate );
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		foreach ( $sql as $query ) {
@@ -443,6 +460,8 @@ class MainWP_Install extends MainWP_DB_Base {
 			$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_settings_backup' ) . ' ADD set_id int NOT NULL AUTO_INCREMENT PRIMARY KEY' );
 			$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_sync' ) . ' ADD sync_id int NOT NULL AUTO_INCREMENT PRIMARY KEY' );
 		}
+
+		MainWP_DB_Client::instance()->check_to_updates_reports_data_861( $currentVersion );
 	}
 
 	/**

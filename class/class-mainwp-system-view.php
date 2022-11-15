@@ -101,9 +101,9 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'Backup complete.', __( 'Backup complete.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Upload to %1 (%2) failed:', __( 'Upload to %1 (%2) failed:', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Upload to %1 (%2) succesful', __( 'Upload to %1 (%2) succesful', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or groups to add a backup task.', __( 'Please select websites or groups to add a backup task.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or tags to add a backup task.', __( 'Please select websites or tags to add a backup task.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Adding the task to MainWP', __( 'Adding the task to MainWP', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or groups.', __( 'Please select websites or groups.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or tags.', __( 'Please select websites or tags.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Are you sure you want to delete this backup task?', __( 'Are you sure you want to delete this backup task?', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Removing the task..', __( 'Removing the task..', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'The task has been removed', __( 'The task has been removed', 'mainwp' ) );
@@ -136,7 +136,7 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'Number of sites to Import: %1 Created sites: %2 Failed: %3', __( 'Number of sites to Import: %1 Created sites: %2 Failed: %3', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'HTTP error - website does not exist', __( 'HTTP error - website does not exist', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'No selected Categories', __( 'No selected Categories', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or groups to add a user.', __( 'Please select websites or groups to add a user.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or tags to add a user.', __( 'Please select websites or tags to add a user.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Number of Users to Import: %1 Created users: %2 Failed: %3', __( 'Number of Users to Import: %1 Created users: %2 Failed: %3', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Please enter the username.', __( 'Please enter the username.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Please enter the email.', __( 'Please enter the email.', 'mainwp' ) );
@@ -145,13 +145,13 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'Loading previous page..', __( 'Loading previous page..', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Loading next page..', __( 'Loading next page..', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Searching the WordPress repository..', __( 'Searching the WordPress repository..', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or groups on the right side to install files.', __( 'Please select websites or groups on the right side to install files.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or tags on the right side to install files.', __( 'Please select websites or tags on the right side to install files.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Queued', __( 'Queued', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'In progress', __( 'In progress', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Preparing %1 installation.', __( 'Preparing %1 installation.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Installation successful', __( 'Installation successful', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Installation failed', __( 'Installation failed', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or groups to install files.', __( 'Please select websites or groups to install files.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or tags to install files.', __( 'Please select websites or tags to install files.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Creating the backupfile on the child installation, this might take a while depending on the size. Please be patient.', __( 'Creating the backupfile on the child installation, this might take a while depending on the size. Please be patient.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Backupfile on child site created successfully.', __( 'Backupfile on child site created successfully.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Downloading the file.', __( 'Downloading the file.', 'mainwp' ) );
@@ -670,6 +670,11 @@ class MainWP_System_View {
 		if ( MainWP_System::is_mainwp_pages() ) {
 			$class_string .= ' mainwp-ui mainwp-ui-page ';
 			$class_string .= ' mainwp-ui-leftmenu ';
+
+			$selected_theme = MainWP_Settings::get_instance()->get_selected_theme();
+			if ( ! empty( $selected_theme ) ) {
+				$class_string .= ' mainwp-custom-theme ';
+			}
 		}
 		return $class_string;
 	}
@@ -713,6 +718,7 @@ class MainWP_System_View {
 		 * @since Unknown
 		 */
 		do_action( 'mainwp_admin_footer' );
+		MainWP_UI::render_select_mainwp_themes_modal();
 		?>
 		<div class="ui longer modal" id="mainwp-sync-sites-modal" current-wpid="<?php echo intval( $current_wpid ); ?>">
 			<div class="header"><?php esc_html_e( 'Data Synchronization', 'mainwp' ); ?></div>

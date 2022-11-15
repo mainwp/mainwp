@@ -204,7 +204,9 @@ class MainWP_Updates_Overview {
 			$pluginsIgnoredAbandoned_perSites = array();
 			$themesIgnoredAbandoned_perSites  = array();
 
-			$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
+			$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
+			$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+
 			if ( $website->is_ignoreCoreUpdates ) {
 				$wp_upgrades = array();
 			}
@@ -229,7 +231,9 @@ class MainWP_Updates_Overview {
 				$theme_upgrades = array();
 			}
 
-			$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
+			$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
+			$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+
 			if ( is_array( $decodedPremiumUpgrades ) ) {
 				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 					$premiumUpgrade['premium'] = true;
@@ -334,8 +338,11 @@ class MainWP_Updates_Overview {
 				$themesIgnoredAbandoned_perSites = array_filter( $themesIgnoredAbandoned_perSites );
 			}
 
-			$plugins_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
-			$themes_outdate  = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
+			$plugins_outdate = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
+			$plugins_outdate = ( '' != $plugins_outdate ) ? json_decode( $plugins_outdate, true ) : array();
+
+			$themes_outdate = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
+			$themes_outdate = ( '' != $themes_outdate ) ? json_decode( $themes_outdate, true ) : array();
 
 			if ( is_array( $plugins_outdate ) ) {
 				if ( is_array( $pluginsIgnoredAbandoned_perSites ) ) {
@@ -460,6 +467,11 @@ class MainWP_Updates_Overview {
 	 * @param int             $limit_updates_all limit number of update per request, 0 is no limit.
 	 */
 	public static function render_total_update( $total_upgrades, $lastSyncMsg, $can_total_update, $limit_updates_all ) {
+		$current_wpid = MainWP_System_Utility::get_current_wpid();
+		$globalView   = true;
+		if ( $current_wpid ) {
+			$globalView = false;
+		}
 		?>
 		<div class="ui grid">
 			<div class="sixteen wide column">
@@ -512,7 +524,7 @@ class MainWP_Updates_Overview {
 				if ( $can_total_update ) :
 					?>
 					<?php if ( ! get_option( 'mainwp_hide_update_everything', false ) ) : ?>
-						<a href="#" <?php echo 0 == $total_upgrades ? 'disabled' : 'onClick="return updatesoverview_global_upgrade_all( \'all\' );"'; ?> class="ui big button fluid green" id="mainwp-update-everything-button" data-tooltip="<?php esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', __( 'Update Everything', 'mainwp' ) ) ); ?></a>
+						<a href="#" <?php echo 0 == $total_upgrades ? 'disabled' : 'onClick="return updatesoverview_global_upgrade_all( \'all\' );"'; ?> class="ui big button fluid green" id="mainwp-update-everything-button" data-tooltip="<?php $globalView ? esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on ALL your websites.', 'mainwp' ) : esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', __( 'Update Everything', 'mainwp' ) ) ); ?></a>
 			<?php endif; ?>
 		<?php endif; ?>
 				</div>
@@ -660,9 +672,11 @@ class MainWP_Updates_Overview {
 				if ( $user_can_update_plugins ) {
 						MainWP_Updates::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
 					if ( $globalView ) {
-						$detail_plugins_up = 'admin.php?page=UpdatesManage&tab=plugins-updates';
+						$detail_plugins_up  = 'admin.php?page=UpdatesManage&tab=plugins-updates';
+						$update_all_tooltip = __( 'Clicking this button will update all Plugins on All your websites.', 'mainwp' );
 					} else {
-						$detail_plugins_up = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=plugins-updates';
+						$detail_plugins_up  = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=plugins-updates';
+						$update_all_tooltip = __( 'Clicking this button will update all Plugins on the website.', 'mainwp' );
 					}
 
 					if ( 0 == $total_plugin_upgrades ) {
@@ -673,7 +687,7 @@ class MainWP_Updates_Overview {
 					} else {
 						?>
 							<a href="<?php echo $detail_plugins_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-							<a href="#" onClick="return updatesoverview_global_upgrade_all('plugin');" class="ui basic green button <?php echo MainWP_Updates::get_continue_update_selector(); ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Plugins on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+							<a href="#" onClick="return updatesoverview_global_upgrade_all('plugin');" class="ui basic green button <?php echo MainWP_Updates::get_continue_update_selector(); ?>" data-tooltip="<?php echo $update_all_tooltip; ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 							<?php
 					}
 				};

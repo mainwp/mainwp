@@ -52,10 +52,12 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_extension_deactivate', array( &$this, 'deactivate_extension' ) );
 		$this->add_action( 'mainwp_extension_testextensionapilogin', array( &$this, 'test_extensions_api_login' ) );
 
+		$this->add_action( 'mainwp_extension_plugin_action', array( &$this, 'ajax_extension_plugin_action' ) );
+
 		if ( mainwp_current_user_have_right( 'dashboard', 'bulk_install_and_activate_extensions' ) ) {
 			$this->add_action( 'mainwp_extension_grabapikey', array( &$this, 'grab_extension_api_key' ) );
 			$this->add_action( 'mainwp_extension_saveextensionapilogin', array( &$this, 'save_extensions_api_login' ) );
-			$this->add_action( 'mainwp_extension_getpurchased', array( MainWP_Extensions::get_class_name(), 'get_purchased_exts' ) );
+			$this->add_action( 'mainwp_extension_getpurchased', array( MainWP_Extensions::get_class_name(), 'ajax_get_purchased_extensions' ) );
 			$this->add_action( 'mainwp_extension_downloadandinstall', array( &$this, 'download_and_install' ) );
 			$this->add_action( 'mainwp_extension_bulk_activate', array( &$this, 'bulk_activate' ) );
 			$this->add_action( 'mainwp_extension_apisslverifycertificate', array( &$this, 'save_api_ssl_verify' ) );
@@ -108,6 +110,80 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		wp_send_json( $result );
 	}
 
+
+	/**
+	 * Handle MainWP Extension plugin actions.
+	 *
+	 * @return void
+	 */
+	public function ajax_extension_plugin_action() {
+		$this->check_security( 'mainwp_extension_plugin_action' );
+		$plugin_slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
+		$action      = isset( $_POST['what'] ) ? sanitize_text_field( wp_unslash( $_POST['what'] ) ) : '';
+		if ( ! empty( $plugin_slug ) && in_array( $action, array( 'active', 'disable', 'remove' ) ) ) {
+			if ( 'disable' == $action ) {
+				if ( is_plugin_active( $plugin_slug ) ) {
+					deactivate_plugins( $plugin_slug, false );
+				}
+				wp_send_json( array( 'result' => 'SUCCESS' ) );
+			} elseif ( 'active' == $action ) {
+				if ( ! is_plugin_active( $plugin_slug ) ) {
+					activate_plugin( $plugin_slug, '', false, false );
+				}
+				wp_send_json( array( 'result' => 'SUCCESS' ) );
+
+			} elseif ( 'remove' == $action ) {
+				$status = $this->delete_extension_plugin( $plugin_slug );
+				wp_send_json( $status );
+			}
+		}
+		wp_send_json( array( 'error' => __( 'Invalid data provided.', 'mainwp' ) ) );
+	}
+
+	/**
+	 * Delete MainWP Extension plugin.
+	 *
+	 * @param string $plugin_slug plugin slug.
+	 *
+	 * @return array $status Status result.
+	 */
+	public function delete_extension_plugin( $plugin_slug ) {
+
+		$status = array();
+		if ( ! empty( $plugin_slug ) ) {
+			// Check filesystem credentials.
+			$url = wp_nonce_url( 'plugins.php?action=delete-selected&verify-delete=1&checked[]=' . $plugin_slug, 'bulk-plugins' );
+			ob_start();
+			$credentials = request_filesystem_credentials( $url );
+			ob_end_clean();
+
+			if ( false === $credentials || ! WP_Filesystem( $credentials ) ) {
+				global $wp_filesystem;
+				$status['error'] = __( 'Unable to connect to the filesystem. Please confirm your credentials.', 'mainwp' );
+				// Pass through the error from WP_Filesystem if one was raised.
+				if ( $wp_filesystem instanceof WP_Filesystem_Base && is_wp_error( $wp_filesystem->errors ) && $wp_filesystem->errors->has_errors() ) {
+					$status['error'] = esc_html( $wp_filesystem->errors->get_error_message() );
+				}
+				return $status;
+			}
+
+			$result = delete_plugins( array( $plugin_slug ) );
+
+			if ( is_wp_error( $result ) ) {
+				$status['error'] = $result->get_error_message();
+				return $status;
+			} elseif ( false === $result ) {
+				$status['error'] = __( 'Plugin could not be deleted.', 'mainwp' );
+				return $status;
+			}
+			$status['result'] = 'SUCCESS';
+
+			return $status;
+		}
+		return $status;
+	}
+
+
 	/**
 	 * Deactivate MainWP Extension.
 	 *
@@ -118,7 +194,6 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function deactivate_extension() {
 		$this->check_security( 'mainwp_extension_deactivate' );
-		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 		$api_slug = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : '';
 		$api_key  = isset( $_POST['api_key'] ) ? wp_unslash( $_POST['api_key'] ) : '';
 		$result   = MainWP_Api_Manager::instance()->license_key_deactivation( $api_slug, $api_key );
@@ -246,13 +321,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function test_extensions_api_login() {
 		$this->check_security( 'mainwp_extension_testextensionapilogin' );
-		$enscrypt_api_key = get_option( 'mainwp_extensions_master_api_key', false );
-		$api_key          = false;
-		if ( false !== $enscrypt_api_key ) {
-			$api_key = ! empty( $enscrypt_api_key ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_api_key ) : '';
-		}
-
-		$result = array();
+		$api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
+		$result  = array();
 		try {
 			$test = MainWP_Api_Manager::instance()->verify_mainwp_api( $api_key );
 		} catch ( \Exception $e ) {
@@ -294,8 +364,30 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		// phpcs:ignore -- custom setting to install plugin.
 		ini_set( 'zlib.output_compression', 'Off' );
 		$download_link = isset( $_POST['download_link'] ) ? wp_unslash( $_POST['download_link'] ) : '';
+		$plugin_slug   = isset( $_POST['plugin_slug'] ) ? wp_unslash( $_POST['plugin_slug'] ) : '';
 
-		$return = MainWP_Extensions_Handler::install_plugin( $download_link );
+		$return = array( 'error' => __( 'Empty or Invalid request data, please try again.', 'mainwp' ) );
+
+		if ( ! empty( $download_link ) ) {
+			$return = MainWP_Extensions_Handler::install_plugin( $download_link );
+		} elseif ( ! empty( $plugin_slug ) ) {
+			include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
+			$api = MainWP_System_Utility::get_plugin_theme_info(
+				'plugin',
+				array(
+					'slug'    => dirname( $plugin_slug ),
+					'fields'  => array( 'sections' => false ),
+					'timeout' => 60,
+				)
+			);
+
+			if ( is_object( $api ) && property_exists( $api, 'download_link' ) ) {
+				$download_link = $api->download_link;
+				$return        = MainWP_Extensions_Handler::install_plugin( $download_link );
+			} else {
+				$return = array( 'error' => __( 'No response from the WordPress update server.', 'mainwp' ) );
+			}
+		}
 
 		die( '<mainwp>' . wp_json_encode( $return ) . '</mainwp>' );
 	}

@@ -7,7 +7,7 @@
 
 namespace MainWP\Dashboard;
 
-// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
+// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors, Generic.Metrics.CyclomaticComplexity -- Using cURL functions.
 
 /**
  * Class MainWP_System_Utility
@@ -213,7 +213,59 @@ class MainWP_System_Utility {
 		$mwpDir      = $mwpDir[0];
 		$fullFile    = $specificDir . $filename;
 
-		return admin_url( '?sig=' . md5( filesize( $fullFile ) ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $fullFile ) ) );
+		$download_url = admin_url( '?sig=' . self::get_download_sig( $fullFile ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $fullFile ) ) );
+
+		return $download_url;
+	}
+
+
+	/**
+	 * Method get_download_sig()
+	 *
+	 * @param string $fullFile File Name.
+	 *
+	 * @return string Sig Download URL.
+	 */
+	public static function get_download_sig( $fullFile ) {
+		$key_value  = uniqid( 'sig_', true ) . filesize( $fullFile ) . time();
+		$sig_values = array(
+			'sig'       => md5( filesize( $fullFile ) ),
+			'key_value' => $key_value,
+			'hash_key'  => wp_hash( $key_value ),
+		);
+		$sig_values = wp_json_encode( $sig_values );
+		$sig_values = rawurlencode( $sig_values );
+		return $sig_values;
+	}
+
+
+	/**
+	 * Method valid_download_sig()
+	 *
+	 * @param string $file File Name.
+	 * @param string $sig download.
+	 *
+	 * @return bool true|false.
+	 */
+	public static function valid_download_sig( $file, $sig ) {
+
+		$sig   = rawurldecode( $sig );
+		$value = json_decode( $sig, true );
+
+		if ( ! is_array( $value ) || empty( $value['key_value'] ) || empty( $value['sig'] ) ) {
+			return false;
+		}
+
+		if ( md5( filesize( $file ) ) !== $value['sig'] ) {
+			return false;
+		}
+
+		$hash_key = wp_hash( $value['key_value'] );
+		if ( ! hash_equals( $hash_key, $value['hash_key'] ) ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -315,6 +367,38 @@ class MainWP_System_Utility {
 	}
 
 	/**
+	 * Method get_mainwp_dir_allow_access()
+	 *
+	 * Get MainWP specific sub folder allow access.
+	 *
+	 * @param mixed $sub_dir MainWP Sub Directory.
+	 */
+	public static function get_mainwp_dir_allow_access( $sub_dir ) {
+		$dirs = self::get_mainwp_dir( $sub_dir, false );
+		if ( $dirs ) {
+			$hasWPFileSystem = self::get_wp_file_system();
+			global $wp_filesystem;
+			if ( $wp_filesystem ) {
+				// to fix issue of do not allow access.
+				$newdir  = $dirs[0];
+				$content = "Order allow,deny\r\nAllow from all";
+				// check if the htaccess is deny access all.
+				if ( $wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
+					if ( $wp_filesystem->size( trailingslashit( $newdir ) . '.htaccess' ) < 25 ) { // 25 bytes: deny from all.
+						// update the htaccess file to allow direct access.
+						$wp_filesystem->put_contents( trailingslashit( $newdir ) . '.htaccess', $content );
+					}
+				} else {
+					// update the htaccess file to allow direct access.
+					$wp_filesystem->put_contents( trailingslashit( $newdir ) . '.htaccess', $content );
+				}
+			}
+		}
+		return $dirs;
+	}
+
+
+	/**
 	 * Method get_wp_file_system()
 	 *
 	 * Get WP file system & define Global Variable FS_METHOD.
@@ -392,6 +476,103 @@ class MainWP_System_Utility {
 		global $current_user;
 
 		return ( $website->userid == $current_user->ID );
+	}
+
+	/**
+	 * Gets site tags
+	 *
+	 * @param array $item Array containing child site data.
+	 * @param bool  $client_tag It is client tags or not.
+	 *
+	 * @return mixed Single Row Classes Item.
+	 */
+	public static function get_site_tags( $item, $client_tag = false ) {
+
+		if ( ! is_array( $item ) || ! isset( $item['wpgroups'] ) ) {
+			return '';
+		}
+
+		$href = 'admin.php?page=managesites&g=';
+		if ( $client_tag ) {
+			$href = 'admin.php?page=ManageClients&tags=';
+		}
+
+		$tags        = '';
+		$tags_labels = '';
+		if ( isset( $item['wpgroups'] ) && ! empty( $item['wpgroups'] ) ) {
+
+			if ( $client_tag ) {
+				$tags_filter = self::client_tags_filter( $item );
+				$tags        = $tags_filter['wpgroups'];
+				$tags_ids    = $tags_filter['wpgroupids'];
+			} else {
+				$tags     = $item['wpgroups'];
+				$tags     = explode( ',', $tags );
+				$tags_ids = $item['wpgroupids'];
+				$tags_ids = explode( ',', $tags_ids );
+			}
+
+			if ( is_array( $tags ) ) {
+				foreach ( $tags as $idx => $tag ) {
+					$tag = trim( $tag );
+					if ( isset( $tags_ids[ $idx ] ) && ! empty( $tags_ids[ $idx ] ) ) {
+						$tag_id       = $tags_ids[ $idx ];
+						$tags_labels .= '<span class="ui tag mini label"><a href="' . $href . $tag_id . '">' . $tag . '</a></span>';
+					} else {
+						$tags_labels .= '<span class="ui tag mini label">' . $tag . '</span>';
+					}
+				}
+			}
+		}
+		return $tags_labels;
+	}
+
+	/**
+	 * Filter client tags
+	 *
+	 * @param array $item Array containing tags.
+	 *
+	 * @return mixed Single Row Classes Item.
+	 */
+	public static function client_tags_filter( $item ) {
+		$tags = $item['wpgroups'];
+		$tags = explode( ',', $tags );
+		$tags = array_values( array_unique( $tags ) );
+
+		$tags_ids = $item['wpgroupids'];
+		$tags_ids = explode( ',', $tags_ids );
+		$tags_ids = array_values( array_unique( $tags_ids ) );
+
+		$return = array();
+
+		$return['wpgroups']   = $tags;
+		$return['wpgroupids'] = $tags_ids;
+		return $return;
+	}
+
+	/**
+	 * Method is_suspended_site()
+	 *
+	 * Check if enable site.
+	 *
+	 * @param mixed $website The website.
+	 */
+	public static function is_suspended_site( $website = false ) {
+		if ( empty( $website ) ) {
+			return true; // empty so return as suspended.
+		}
+		if ( is_array( $website ) ) {
+			return ( '1' === $website['suspended'] );
+		} elseif ( is_object( $website ) ) {
+			return ( '1' === $website->suspended );
+		} elseif ( is_numeric( $website ) ) {
+			$siteId  = $website;
+			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
+			if ( $website ) {
+				return self::is_suspended_site( $website );
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -552,7 +733,9 @@ class MainWP_System_Utility {
 			'[site.url]'  => $site->url,
 		);
 
-		$site_info = json_decode( MainWP_DB::instance()->get_website_option( $site, 'site_info' ), true );
+		$site_info = MainWP_DB::instance()->get_website_option( $site, 'site_info' );
+		$site_info = ( '' != $site_info ) ? json_decode( $site_info, true ) : array();
+
 		if ( is_array( $site_info ) ) {
 			$map_site_tokens = array(
 				'client.site.version' => 'wpversion',   // Displays the WP version of the child site.
@@ -594,4 +777,475 @@ class MainWP_System_Utility {
 			set_time_limit( $timeout );
 		}
 	}
+
+	/**
+	 *
+	 * Method get_plugin_theme_info().
+	 *
+	 * Get WordPress plugin/theme info.
+	 *
+	 * @param string $what 'plugin' or 'theme'.
+	 * @param array  $params Plugin/Theme info params.
+	 */
+	public static function get_plugin_theme_info( $what, $params = array() ) {
+
+		if ( 'plugin' === $what ) {
+			include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
+			return plugins_api(
+				'plugin_information',
+				$params
+			);
+		} elseif ( 'theme' === $what ) {
+			include_once ABSPATH . '/wp-admin/includes/theme-install.php';
+			return themes_api(
+				'theme_information',
+				$params
+			);
+
+		}
+
+		return false;
+	}
+
+	/**
+	 * Method update_cached_icons().
+	 *
+	 * Update cached icons
+	 *
+	 * @param string $icon The icon.
+	 * @param string $slug slug.
+	 * @param string $type Type: plugin|theme.
+	 * @param bool   $custom_icon Custom icon or not. Default: false.
+	 */
+	public static function update_cached_icons( $icon, $slug, $type, $custom_icon = false ) {
+
+		if ( 'plugin' === $type ) {
+			$option_name = 'plugins_icons';
+		} elseif ( 'theme' === $type ) {
+			$option_name = 'themes_icons';
+		} else {
+			return false;
+		}
+
+		$cached_icons = MainWP_DB::instance()->get_general_option( $option_name, 'array' );
+
+		$icon = apply_filters( 'mainwp_update_cached_icons', $icon, $slug, $type );
+
+		if ( isset( $cached_icons[ $slug ] ) ) {
+			$value = $cached_icons[ $slug ];
+		} else {
+			$value = array(
+				'lasttime_cached' => time(),
+				'path_custom'     => '',
+				'path'            => '',
+			);
+		}
+
+		$value['lasttime_cached'] = time();
+
+		if ( $custom_icon ) {
+			$value['path_custom'] = $icon;
+		} else {
+			$value['path'] = $icon;
+		}
+
+		// update cache.
+		$cached_icons[ $slug ] = $value;
+
+		MainWP_DB::instance()->update_general_option( $option_name, $cached_icons, 'array' );
+		return true;
+	}
+
+	/**
+	 * Private function Fetch a plugin|theme icon via API from WordPress.org
+	 *
+	 * @param string $slug Plugin|Theme slug.
+	 * @param string $type Plugin|Theme.
+	 */
+	private static function fetch_wp_org_icons( $slug, $type ) {
+		if ( 'plugin' === $type ) {
+			$fields = array(
+				'tags'          => false,
+				'icons'         => true,
+				'sections'      => false,
+				'description'   => false,
+				'tested'        => false,
+				'requires'      => false,
+				'rating'        => false,
+				'downloaded'    => false,
+				'downloadlink'  => false,
+				'last_updated'  => false,
+				'homepage'      => false,
+				'tags'          => false,
+				'compatibility' => false,
+				'ratings'       => false,
+				'added'         => false,
+				'donate_link'   => false,
+			);
+		} elseif ( 'theme' === $type ) {
+			$fields = array(
+				'screenshots'      => true,
+				'screenshot_count' => 5,
+				'sections'         => false,
+				'rating'           => false,
+				'downloaded'       => false,
+				'download_link'    => false,
+				'last_updated'     => false,
+				'homepage'         => false,
+				'tags'             => false,
+				'template'         => false,
+				'parent'           => false,
+				'screenshot_url'   => false,
+				'homepage'         => false,
+			);
+
+		} else {
+			return false;
+		}
+
+		$info = self::get_plugin_theme_info(
+			$type,
+			array(
+				'slug'    => $slug,
+				'fields'  => $fields,
+				'timeout' => 60,
+			)
+		);
+
+		$option_name = 'plugins_icons';
+
+		$icon = '';
+		if ( 'plugin' === $type ) {
+			if ( is_object( $info ) && property_exists( $info, 'icons' ) && isset( $info->icons['1x'] ) ) {
+				$icon = $info->icons['1x'];
+			}
+		} else {
+			if ( is_object( $info ) && property_exists( $info, 'screenshots' ) && isset( $info->screenshots[0] ) ) {
+				$icon = $info->screenshots[0];
+			}
+			$option_name = 'themes_icons';
+		}
+		$fetched_icon = '';
+		if ( '' !== $icon ) {
+			$fetched_icon = rawurlencode( $icon );
+		}
+
+		$cached_icons = MainWP_DB::instance()->get_general_option( $option_name, 'array' );
+
+		if ( isset( $cached_icons[ $slug ] ) ) {
+			if ( '' === $fetched_icon && ! empty( $cached_icons[ $slug ]['path'] ) ) {
+				// if fetch icon empty then used caching icon.
+				$fetched_icon = $cached_icons[ $slug ]['path'];
+				$icon         = rawurldecode( $fetched_icon );
+			}
+		}
+
+		self::update_cached_icons( $fetched_icon, $slug, $type );
+
+		if ( '' !== $icon ) {
+			return $icon;
+		}
+		return false;
+	}
+
+	/**
+	 * Method handle_get_icon()
+	 *
+	 * @param string $slug Plugin slug.
+	 * @param string $type Type: theme|plugin.
+	 */
+	public static function handle_get_icon( $slug, $type ) {
+		if ( empty( $slug ) ) {
+			return false;
+		}
+		if ( 'plugin' == $type || 'theme' == $type ) {
+			return self::fetch_wp_org_icons( $slug, $type );
+		}
+		return '';
+	}
+
+
+	/**
+	 * Gets a plugin icon via API from WordPress.org
+	 *
+	 * @param string $slug Plugin slug.
+	 * @param bool   $forced_get Forced get icon, default: false.
+	 */
+	public static function get_plugin_icon( $slug, $forced_get = false ) {
+
+		$icon = apply_filters( 'mainwp_get_plugin_theme_icon', '', $slug, 'plugin' );
+
+		if ( ! empty( $icon ) ) {
+			return $icon;
+		}
+
+		$forced_get = apply_filters( 'mainwp_forced_get_plugin_theme_icon', $forced_get, $slug, 'plugin' );
+
+		if ( $forced_get ) {
+			$fet_icon = self::fetch_wp_org_icons( $slug, 'plugin' );
+			if ( false !== $fet_icon ) {
+				$scr  = MainWP_Utility::remove_http_prefix( $fet_icon );
+				$icon = '<img style="display:inline-block" class="ui mini circular image" updated-icon="true" src="' . esc_attr( $scr ) . '" />';
+				return $icon;
+			}
+			return $icon;
+		}
+
+		// checks expired.
+		$cached_icons = MainWP_DB::instance()->get_general_option( 'plugins_icons', 'array' );
+
+		if ( ! empty( $cached_icons ) ) {
+			$lasttime_clear_cached = MainWP_DB::instance()->get_general_option( 'lasttime_clear_cached_plugins_icon' );
+			if ( time() > ( intval( $lasttime_clear_cached ) + MONTH_IN_SECONDS ) ) {
+				$updated    = false;
+				$new_cached = array();
+				foreach ( $cached_icons as $sl => $val ) {
+					if ( empty( $val['path_custom'] ) && time() < ( intval( $val['lasttime_cached'] ) + 12 * MONTH_IN_SECONDS ) ) {
+						$new_cached[ $sl ] = $val; // unset.
+						$updated           = true;
+					}
+				}
+				if ( $updated ) {
+					MainWP_DB::instance()->update_general_option( 'plugins_icons', $new_cached, 'array' );
+				}
+				MainWP_DB::instance()->update_general_option( 'lasttime_clear_cached_plugins_icon', time() );
+			}
+		}
+
+		return self::get_plugin_theme_icon( $slug, 'plugin' );
+	}
+
+	/**
+	 * Gets a theme icon via API from WordPress.org
+	 *
+	 * @param string $slug Theme slug.
+	 * @param bool   $forced_get Forced get icon, default: false.
+	 */
+	public static function get_theme_icon( $slug, $forced_get = false ) {
+
+		$icon = apply_filters( 'mainwp_get_plugin_theme_icon', '', $slug, 'theme' );
+
+		if ( ! empty( $icon ) ) {
+			return $icon;
+		}
+
+		$forced_get = apply_filters( 'mainwp_forced_get_plugin_theme_icon', $forced_get, $slug, 'theme' );
+
+		if ( $forced_get ) {
+			$fet_icon = self::fetch_wp_org_icons( $slug, 'theme' );
+			if ( false !== $fet_icon ) {
+				$scr  = MainWP_Utility::remove_http_prefix( $fet_icon );
+				$icon = '<img style="display:inline-block" class="ui mini circular image" updated-icon="true" src="' . esc_attr( $scr ) . '" />';
+			}
+			return $icon;
+		}
+
+		// checks expired.
+		$cached_icons = MainWP_DB::instance()->get_general_option( 'themes_icons', 'array' );
+
+		if ( ! empty( $cached_icons ) ) {
+			$lasttime_clear_cached = MainWP_DB::instance()->get_general_option( 'lasttime_clear_cached_themes_icon' );
+			if ( time() > ( intval( $lasttime_clear_cached ) + MONTH_IN_SECONDS ) ) {
+				$updated    = false;
+				$new_cached = array();
+				foreach ( $cached_icons as $sl => $val ) {
+					if ( empty( $val['path_custom'] ) && time() < ( intval( $val['lasttime_cached'] ) + 12 * MONTH_IN_SECONDS ) ) {
+						$new_cached[ $sl ] = $val;
+						$updated           = true;
+					}
+				}
+				if ( $updated ) {
+					MainWP_DB::instance()->update_general_option( 'themes_icons', $new_cached, 'array' );
+				}
+				MainWP_DB::instance()->update_general_option( 'lasttime_clear_cached_themes_icon', time() );
+			}
+		}
+
+		return self::get_plugin_theme_icon( $slug, 'theme' );
+	}
+
+
+	/**
+	 * Gets a plugin|theme icon to output.
+	 *
+	 * @param string $slug Plugin|Theme slug.
+	 * @param string $type Type icon, plugin|theme.
+	 */
+	private static function get_plugin_theme_icon( $slug, $type ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+
+		if ( 'plugin' === $type ) {
+			$option_name = 'plugins_icons';
+		} elseif ( 'theme' === $type ) {
+			$option_name = 'themes_icons';
+		} else {
+			return '<i style="font-size: 17px"   class="plug circular inverted icon" not-cached-path="true"></i>';
+		}
+
+		$cached_icons = MainWP_DB::instance()->get_general_option( $option_name, 'array' );
+
+		$cached_days = apply_filters( 'mainwp_plugin_theme_icon_cache_days', 15, $slug, $type ); // default 15 days.
+
+		$attr_slug      = ' icon-type="' . esc_attr( $type ) . '" item-slug="' . esc_attr( $slug ) . '" ';
+		$cls_expired    = ' cached-icon-expired ';
+		$cls_uploadable = ' cached-icon-customable ';
+
+		$icon = '';
+
+		if ( isset( $cached_icons[ $slug ] ) ) {
+			$scr            = '';
+			$is_custom_icon = false;
+			if ( ! empty( $cached_icons[ $slug ]['path_custom'] ) ) {
+				if ( 'plugin' === $type ) {
+					$dirs = self::get_mainwp_dir( 'plugin-icons', true );
+				} elseif ( 'theme' === $type ) {
+					$dirs = self::get_mainwp_dir( 'theme-icons', true );
+				}
+				$scr            = $dirs[1] . rawurldecode( $cached_icons[ $slug ]['path_custom'] );
+				$is_custom_icon = true; // custom icons will not expired.
+			} elseif ( ! empty( $cached_icons[ $slug ]['path'] ) ) {
+				$scr = rawurldecode( $cached_icons[ $slug ]['path'] );
+				$scr = MainWP_Utility::remove_http_prefix( $scr );
+			}
+
+			$set_cached_expired = apply_filters( 'mainwp_cache_icon_expired', false, $slug, 'theme' );
+			$set_expired        = false;
+
+			if ( $set_cached_expired ) {
+				if ( time() > ( intval( $cached_icons[ $slug ]['lasttime_cached'] ) + 15 * MINUTE_IN_SECONDS ) ) {
+					$set_expired = true;
+				}
+			}
+
+			if ( time() > ( intval( $cached_icons[ $slug ]['lasttime_cached'] ) + $cached_days * DAY_IN_SECONDS ) ) { // expired.
+				if ( ! empty( $scr ) ) {
+					$icon = '<img style="display:inline-block" class="ui mini circular image ' . ( $is_custom_icon ? $cls_uploadable : $cls_expired ) . '" ' . $attr_slug . 'src="' . esc_attr( $scr ) . '"/>'; // to update expired icon.
+				} else {
+					$icon = '<i style="font-size: 17px" class="plug circular inverted icon ' . $cls_expired . $cls_uploadable . '" ' . $attr_slug . '></i>'; // to update expired icon.
+				}
+			} elseif ( ! empty( $scr ) ) {
+				$icon = '<img style="display:inline-block" class="ui mini circular image ' . ( $is_custom_icon ? $cls_uploadable : ( $set_expired ? $cls_expired : '' ) ) . '" ' . $attr_slug . ' cached-path-icon="true" src="' . esc_attr( $scr ) . '"/>';
+			} else {
+				$icon = '<i style="font-size: 17px" class="plug circular inverted icon ' . ( $set_expired ? $cls_expired : '' ) . $cls_uploadable . '" ' . $attr_slug . ' cached-path-icon="true"></i>';
+			}
+		} elseif ( empty( $icon ) ) {
+			$icon = '<i style="font-size: 17px" class="plug circular inverted icon ' . $cls_expired . '" ' . $attr_slug . ' not-cached-path="true"></i>'; // not upload when not existed in the cached.
+		}
+		return $icon;
+	}
+
+
+	/**
+	 * Method handle_upload_image().
+	 *
+	 * Handle upload icons.
+	 *
+	 * @param string $sub_folder The sub folder.
+	 * @param mixed  $file_uploader The file uploader.
+	 * @param mixed  $file_index The index of file uploader.
+	 * @param bool   $file_subindex Is file with sub index.
+	 * @param int    $max_width max image width.
+	 * @param int    $max_height max image height.
+	 */
+	public static function handle_upload_image( $sub_folder, $file_uploader, $file_index, $file_subindex = false, $max_width = 300, $max_height = 300 ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+
+		$dirs     = self::get_mainwp_dir( $sub_folder, true );
+		$base_dir = $dirs[0];
+		$base_url = $dirs[1];
+
+		$output   = array();
+		$filename = '';
+		$filepath = '';
+
+		$file_types = array(
+			'image/jpeg',
+			'image/jpg',
+			'image/gif',
+			'image/x-icon',
+			'image/png',
+		);
+
+		$file_exts = array(
+			'jpeg',
+			'jpg',
+			'gif',
+			'ico',
+			'png',
+		);
+
+		$upload_ok = ( false === $file_subindex ) ? ( UPLOAD_ERR_OK == $file_uploader['error'][ $file_index ] ) : ( UPLOAD_ERR_OK == $file_uploader['error'][ $file_index ][ $file_subindex ] );
+
+		if ( $upload_ok ) {
+			$tmp_file = ( false === $file_subindex ) ? ( $file_uploader['tmp_name'][ $file_index ] ) : ( $file_uploader['tmp_name'][ $file_index ][ $file_subindex ] );
+
+			if ( is_uploaded_file( $tmp_file ) ) {
+				if ( false === $file_subindex ) {
+					$file_size = $file_uploader['size'][ $file_index ];
+					$file_type = $file_uploader['type'][ $file_index ];
+					$file_name = $file_uploader['name'][ $file_index ];
+				} else {
+					$file_size = $file_uploader['size'][ $file_index ][ $file_subindex ];
+					$file_type = $file_uploader['type'][ $file_index ][ $file_subindex ];
+					$file_name = $file_uploader['name'][ $file_index ][ $file_subindex ];
+				}
+
+				$file_extension = strtolower( pathinfo( $file_name, PATHINFO_EXTENSION ) );
+
+				if ( ( $file_size > 500 * 1025 ) ) {
+					$output['error'][] = 3;
+				} elseif ( ! in_array( $file_type, $file_types ) ) {
+					$output['error'][] = 4;
+				} elseif ( ! in_array( $file_extension, $file_exts ) ) {
+					$output['error'][] = 5;
+				} else {
+
+					$dest_file = $base_dir . '/' . $file_name;
+					$dest_file = dirname( $dest_file ) . '/' . wp_unique_filename( dirname( $dest_file ), basename( $dest_file ) );
+
+					if ( move_uploaded_file( $tmp_file, $dest_file ) ) {
+						if ( file_exists( $dest_file ) ) {
+							list( $width, $height, $type, $attr ) = getimagesize( $dest_file );
+						}
+
+						$resize = false;
+						if ( $width > $max_width ) {
+							$dst_width = $max_width;
+							if ( $height > $max_height ) {
+								$dst_height = $max_height;
+							} else {
+								$dst_height = $height;
+							}
+							$resize = true;
+						} elseif ( $height > $max_height ) {
+							$dst_width  = $width;
+							$dst_height = $max_height;
+							$resize     = true;
+						}
+
+						if ( $resize ) {
+							$src          = $dest_file;
+							$cropped_file = wp_crop_image( $src, 0, 0, $width, $height, $dst_width, $dst_height, false );
+							if ( ! $cropped_file || is_wp_error( $cropped_file ) ) {
+								$output['error'][] = 9;
+							} else {
+								unlink( $dest_file );
+								$filename = basename( $cropped_file );
+								$filepath = $cropped_file;
+							}
+						} else {
+							$filename = basename( $dest_file );
+							$filepath = $dest_file;
+						}
+					} else {
+						$output['error'][] = 6;
+					}
+				}
+			}
+		}
+		$output['fileurl']  = ! empty( $filename ) ? $base_url . '/' . $filename : '';
+		$output['filepath'] = ! empty( $filepath ) ? $filepath : '';
+		$output['filename'] = ! empty( $filename ) ? $filename : '';
+
+		return $output;
+	}
+
 }

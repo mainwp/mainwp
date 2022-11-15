@@ -55,8 +55,10 @@ class MainWP_Themes_Handler {
 					if ( ! isset( $theme['name'] ) ) {
 						continue;
 					}
-					$theme['websiteid']            = $website->id;
-					$theme['websiteurl']           = $website->url;
+					$theme['websiteid']   = $website->id;
+					$theme['websiteurl']  = $website->url;
+					$theme['websitename'] = $website->name;
+
 					$output->not_criteria_themes[] = $theme;
 				}
 			} else {
@@ -64,8 +66,9 @@ class MainWP_Themes_Handler {
 					if ( ! isset( $theme['name'] ) ) {
 						continue;
 					}
-					$theme['websiteid']  = $website->id;
-					$theme['websiteurl'] = $website->url;
+					$theme['websiteid']   = $website->id;
+					$theme['websiteurl']  = $website->url;
+					$theme['websitename'] = $website->name;
 
 					$output->themes[] = $theme;
 				}
@@ -117,6 +120,10 @@ class MainWP_Themes_Handler {
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			die( 'FAIL' );
+		}
+
+		if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
+			die( wp_json_encode( array( 'error' => __( 'The child site has been suspended.', 'mainwp' ) ) ) );
 		}
 
 		/**

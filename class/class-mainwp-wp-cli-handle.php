@@ -475,7 +475,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 			'ip'             => '',
 		);
 
-		$site_info = json_decode( MainWP_DB::instance()->get_website_option( $website, 'site_info' ), true );
+		$site_info = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
+		$site_info = ( '' != $site_info ) ? json_decode( $site_info, true ) : array();
+
 		if ( ! is_array( $site_info ) ) {
 			$site_info = array();
 		}
@@ -758,7 +760,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_site_available_updates( $args = array(), $assoc_args = array(), $website = false ) {
-		$wp_upgrades          = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
+		$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
+		$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+
 		$plugin_upgrades      = json_decode( $website->plugin_upgrades, true );
 		$theme_upgrades       = json_decode( $website->theme_upgrades, true );
 		$translation_upgrades = json_decode( $website->translation_upgrades, true );
@@ -838,7 +842,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$plugins      = json_decode( $website->plugin_upgrades, true );
 		$themes       = json_decode( $website->theme_upgrades, true );
 		$translations = json_decode( $website->translation_upgrades, true );
-		$wp           = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
+		$wp           = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
+		$wp           = ( '' != $wp ) ? json_decode( $wp, true ) : array();
+
 		if ( count( $wp ) > 0 ) {
 			$wp = 1;
 		} else {
@@ -876,7 +882,8 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_site_abandoned_plugins( $args = array(), $assoc_args = array(), $website = false ) {
-		$plugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
+		$plugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
+		$plugins = ( '' != $plugins ) ? json_decode( $plugins, true ) : array();
 
 		\WP_CLI::line( '' );
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Abandoned Plugins', 'mainwp' ) . '%n' ) );
@@ -901,7 +908,8 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_site_abandoned_plugins_count( $args = array(), $assoc_args = array(), $website = false ) {
-		$plugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
+		$plugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
+		$plugins = ( '' != $plugins ) ? json_decode( $plugins, true ) : array();
 
 		\WP_CLI::line( '' );
 		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . ' ' . __( 'Abandoned plugins: ', 'mainwp' ) . '%n' . count( $plugins ) ) );
@@ -918,7 +926,8 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_site_abandoned_themes( $args = array(), $assoc_args = array(), $website = false ) {
-		$themes = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
+		$themes = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
+		$themes = ( '' != $themes ) ? json_decode( $themes, true ) : array();
 
 		\WP_CLI::line( '' );
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Abandoned Themes', 'mainwp' ) . '%n' ) );
@@ -942,7 +951,8 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_site_abandoned_themes_count( $args = array(), $assoc_args = array(), $website = false ) {
-		$themes = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
+		$themes = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
+		$themes = ( '' != $themes ) ? json_decode( $themes, true ) : array();
 
 		\WP_CLI::line( '' );
 		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . ' ' . __( 'Abandoned themes: ', 'mainwp' ) . '%n' . count( $themes ) ) );
@@ -1016,6 +1026,10 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Registered version information removed from URLs:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['registered_versions'] ? 'NO' : 'YES' ) );
 		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'readme.html removed from WordPress root:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['readme'] ? 'NO' : 'YES' ) );
 		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Administrator username is not "admin":', 'mainwp' ) . '%n ' ) . ( 'N' == $data['admin'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'WordPress is not up to date:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['wp_uptodate'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'PHP version does not match the WordPress requirement:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['phpversion_matched'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'SSL protocol is not in place:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['sslprotocol'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'WP Config debugging is enabled:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['debug_disabled'] ? 'NO' : 'YES' ) );
 	}
 
 	/**
@@ -1410,7 +1424,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$all_updates = array();
 		$websites    = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-			$wp_upgrades          = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
+			$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
+			$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+
 			$plugin_upgrades      = json_decode( $website->plugin_upgrades, true );
 			$theme_upgrades       = json_decode( $website->theme_upgrades, true );
 			$translation_upgrades = json_decode( $website->translation_upgrades, true );

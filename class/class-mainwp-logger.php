@@ -133,7 +133,7 @@ class MainWP_Logger {
 	 */
 	public function set_log_priority( $logPriority, $spec_log = 0 ) {
 		$this->logPriority = $logPriority;
-		$this->logSpecific = $spec_log;
+		$this->logSpecific = $spec_log; // 1 - specific log, 0 - not specific log.
 	}
 
 	/**
@@ -171,6 +171,38 @@ class MainWP_Logger {
 	 */
 	public function get_log_specific() {
 		return get_option( 'mainwp_specific_logs', 0 );
+	}
+
+	/**
+	 * Method get_log_type_info()
+	 *
+	 * Get log type info.
+	 *
+	 * @param int $type Log type value.
+	 * @param int $logcolor Log color value.
+	 *
+	 * @return int $currentColor log color code.
+	 */
+	public function get_log_type_info( $type, $logcolor ) {
+		$currentColor = '';
+		$prefix       = '';
+		if ( self::DEBUG == $type || self::DEBUG == $logcolor ) {
+			$currentColor = self::DEBUG_COLOR;
+			$prefix       = '[DEBUG]';
+		} elseif ( self::INFO == $type || self::INFO == $logcolor ) {
+			$currentColor = self::INFO_COLOR;
+			$prefix       = '[INFO]';
+		} elseif ( self::WARNING == $type || self::WARNING == $logcolor ) {
+			$currentColor = self::WARNING_COLOR;
+			$prefix       = '[WARNING]';
+		} elseif ( self::LOG == $type || self::LOG == $logcolor ) {
+			$currentColor = self::LOG_COLOR;
+			$prefix       = '[LOG]';
+		}
+		return array(
+			'log_color'  => $currentColor,
+			'log_prefix' => $prefix,
+		);
 	}
 
 	/**
@@ -212,7 +244,6 @@ class MainWP_Logger {
 		return $this->log( $text, self::WARNING );
 	}
 
-
 	/**
 	 * Method actions()
 	 *
@@ -220,11 +251,12 @@ class MainWP_Logger {
 	 *
 	 * @param string $text Warning message text.
 	 * @param int    $priority priority message.
+	 * @param int    $log_color Set color: 0 - LOG, 1 - WARNING, 2 - INFO, 3- DEBUG.
 	 *
 	 * @return string Log warning message.
 	 */
-	public function log_action( $text, $priority ) {
-		return $this->log( $text, $priority );
+	public function log_action( $text, $priority, $log_color = 0 ) {
+		return $this->log( $text, $priority, $log_color );
 	}
 
 	/**
@@ -297,23 +329,24 @@ class MainWP_Logger {
 	}
 
 	/**
-	 * Method log()
+	 * Method log_to_db()
 	 *
 	 * Log to database.
 	 *
 	 * @param string $text Log record text.
 	 * @param int    $priority Set priority.
+	 * @param int    $log_color Set color.
 	 *
 	 * @return bool true|false Default is False.
 	 */
-	public function log_to_db( $text, $priority ) {
+	public function log_to_db( $text, $priority, $log_color = 0 ) {
 
 		$text = $this->prepare_log_info( $text );
 
 		$do_log = false;
 
-		if ( 1 == $this->logSpecific ) {
-			if ( $this->logPriority == $priority ) {
+		if ( 1 == $this->logSpecific ) { // 1 - specific log, 0 - not specific log.
+			if ( $this->logPriority == $priority ) { // specific priority number saved setting.
 				$do_log = true;
 			}
 		} elseif ( $this->logPriority >= $priority ) {
@@ -345,6 +378,7 @@ class MainWP_Logger {
 			$data['log_content']   = $text;
 			$data['log_user']      = $user;
 			$data['log_type']      = $priority;
+			$data['log_color']     = intval( $log_color );
 			$data['log_timestamp'] = time();
 
 			MainWP_DB_Common::instance()->insert_action_log( $data );
@@ -361,21 +395,22 @@ class MainWP_Logger {
 	 *
 	 * @param string $text Log record text.
 	 * @param int    $priority Set priority.
+	 * @param int    $log_color Set color.
 	 *
 	 * @return bool true|false Default is False.
 	 */
-	public function log( $text, $priority ) { // phpcs:ignore -- complex function.
+	public function log( $text, $priority,  $log_color = 0 ) { // phpcs:ignore -- complex function.
 
 		$log_to_db = apply_filters( 'mainwp_logger_to_db', true );
 		if ( $log_to_db ) {
-			return $this->log_to_db( $text, $priority );
+			return $this->log_to_db( $text, $priority, $log_color );
 		}
 
 		$text = $this->prepare_log_info( $text );
 
 		$do_log = false;
-		if ( 1 == $this->logSpecific ) {
-			if ( $this->logPriority == $priority ) {
+		if ( 1 == $this->logSpecific ) { // 1 - specific log, 0 - not specific log.
+			if ( $this->logPriority == $priority ) { // specific priority number saved setting.
 				$do_log = true;
 			}
 		} elseif ( $this->logPriority >= $priority ) {
@@ -593,22 +628,10 @@ class MainWP_Logger {
 
 			$time = gmdate( $this->logDateFormat, $row->log_timestamp );
 
-			$prefix = $time . ' ';
+			$showInfo     = $this->get_log_type_info( $row->log_type, $row->log_color );
+			$currentColor = $showInfo['log_color'];
 
-			$currentColor = '';
-			if ( self::DEBUG == $type ) {
-				$currentColor = self::DEBUG_COLOR;
-				$prefix      .= '[DEBUG]';
-			} elseif ( self::INFO == $type ) {
-				$currentColor = self::INFO_COLOR;
-				$prefix      .= '[INFO]';
-			} elseif ( self::WARNING == $type ) {
-				$currentColor = self::WARNING_COLOR;
-				$prefix      .= '[WARNING]';
-			} elseif ( self::LOG == $type ) {
-				$currentColor = self::LOG_COLOR;
-				$prefix      .= '[LOG]';
-			}
+			$prefix = $time . ' ' . $showInfo['log_prefix'];
 
 			$line = htmlentities( $line );
 
@@ -645,11 +668,11 @@ class MainWP_Logger {
 	}
 
 	/**
-	 * Method show_log()
+	 * Method show_log_file()
 	 *
 	 * Grab log file and build output to screen.
 	 */
-	public function show_log() {
+	public function show_log_file() {
 		$logFile = $this->get_log_file();
 
 		if ( ! file_exists( $logFile ) ) {

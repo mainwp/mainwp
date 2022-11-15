@@ -52,7 +52,8 @@ class MainWP_Site_Info {
 
 		$website = MainWP_DB::instance()->get_website_by_id( $current_wpid, true );
 
-		$website_info = json_decode( MainWP_DB::instance()->get_website_option( $website, 'site_info' ), true );
+		$website_info = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
+		$website_info = ( '' != $website_info ) ? json_decode( $website_info, true ) : array();
 
 		if ( is_array( $website_info ) ) {
 			$code        = $website->http_response_code;
@@ -71,7 +72,7 @@ class MainWP_Site_Info {
 			'memory_limit'  => __( 'PHP Memory Limit', 'mainwp' ),
 			'mysql_version' => __( 'MySQL Version', 'mainwp' ),
 			'ip'            => __( 'Server IP', 'mainwp' ),
-			'group'         => __( 'Groups', 'mainwp' ),
+			'group'         => __( 'Tags', 'mainwp' ),
 			'last_status'   => __( 'Last Check Status', 'mainwp' ),
 		);
 

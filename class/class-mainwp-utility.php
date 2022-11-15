@@ -979,4 +979,27 @@ class MainWP_Utility {
 		}
 		return array( 'result' => 'NOSITE' );
 	}
+
+	/**
+	 * Get directory or slug of plugin.
+	 *
+	 * @param string $slug Plugin slug.
+	 *
+	 * @return string $value directory or slug of plugin.
+	 */
+	public static function get_dir_slug( $slug ) {
+		$value = '';
+		if ( false === strpos( $slug, '/' ) ) {
+			if ( false !== strpos( $slug, '.' ) ) {
+				$value = substr( $slug, 0, strpos( $slug, '.' ) );
+			}
+		} else {
+			$value = dirname( $slug );
+		}
+		if ( empty( $value ) ) {
+			return $slug;
+		}
+		return $value;
+	}
+
 }

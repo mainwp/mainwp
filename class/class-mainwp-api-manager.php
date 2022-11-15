@@ -99,6 +99,15 @@ class MainWP_Api_Manager {
 	}
 
 	/**
+	 * Get domain URL.
+	 *
+	 * @return string domain URL.
+	 */
+	public function get_domain() {
+		return $this->domain;
+	}
+
+	/**
 	 * Get activation info.
 	 *
 	 * @param mixed $ext_key extension key.
@@ -132,6 +141,17 @@ class MainWP_Api_Manager {
 		update_option( 'mainwp_extensions_all_activation_cached', '' );
 
 		return MainWP_Utility::update_option( $ext_key . '_APIManAdder', $info );
+	}
+
+	/**
+	 *  Remove activation info.
+	 *
+	 * @param mixed $ext_key Extension key.
+	 *
+	 * @return mixed Remove activation info.
+	 */
+	public function remove_activation_info( $ext_key ) {
+		self::instance()->set_activation_info( $ext_key, '' );
 	}
 
 	/**
@@ -179,7 +199,12 @@ class MainWP_Api_Manager {
 				'object'           => $this->domain,
 			);
 
-			$activate_results = json_decode( MainWP_Api_Manager_Key::instance()->activate( $args ), true );
+			$activate_results = MainWP_Api_Manager_Key::instance()->activate( $args );
+			if ( ! empty( $activate_results ) ) {
+				$activate_results = json_decode( $activate_results, true );
+			} else {
+				$activate_results = array();
+			}
 
 			if ( true == $activate_results['activated'] ) {
 				$return['result']               = 'SUCCESS';
@@ -391,7 +416,13 @@ class MainWP_Api_Manager {
 					'object'           => $this->domain,
 				);
 
-				$activate_results         = json_decode( MainWP_Api_Manager_Key::instance()->grab_api_key( $args ), true );
+				$activate_results = MainWP_Api_Manager_Key::instance()->grab_api_key( $args );
+				if ( ! empty( $activate_results ) ) {
+					$activate_results = json_decode( $activate_results, true );
+				} else {
+					$activate_results = array();
+				}
+
 				$options['api_key']       = '';
 				$options['activated_key'] = 'Deactivated';
 

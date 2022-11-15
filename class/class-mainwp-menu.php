@@ -92,45 +92,100 @@ class MainWP_Menu {
 	 */
 	public static function init_mainwp_menus() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		if ( MainWP_System_Utility::is_admin() ) {
-			if ( ! self::is_disable_menu_item( 2, 'UpdatesManage' ) ) {
-				MainWP_Updates::init_menu();
-			}
+
+			// Manage Sites.
 			if ( ! self::is_disable_menu_item( 2, 'managesites' ) ) {
-				MainWP_Manage_Sites::init_menu();
+				if ( mainwp_current_user_have_right( 'dashboard', 'add_sites' ) && mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) && mainwp_current_user_have_right( 'dashboard', 'delete_sites' ) && mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) && mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) && mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) && mainwp_current_user_have_right( 'dashboard', 'test_connection' ) && mainwp_current_user_have_right( 'dashboard', 'manage_groups' ) ) {
+					MainWP_Manage_Sites::init_menu();
+				}
 			}
-			if ( ! self::is_disable_menu_item( 2, 'PostBulkManage' ) ) {
-				MainWP_Post::init_menu();
+
+			// Manage Clients.
+			if ( ! self::is_disable_menu_item( 2, 'ManageClients' ) ) {
+				if ( mainwp_current_user_have_right( 'dashboard', 'manage_clients' ) ) {
+					MainWP_Client::init_menu();
+				}
 			}
-			if ( ! self::is_disable_menu_item( 2, 'PageBulkManage' ) ) {
-				MainWP_Page::init_menu();
+
+			// Manage Updates.
+			if ( ! self::is_disable_menu_item( 2, 'UpdatesManage' ) ) {
+				if ( mainwp_current_user_have_right( 'dashboard', 'update_wordpress' ) && mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) && mainwp_current_user_have_right( 'dashboard', 'update_themes' ) && mainwp_current_user_have_right( 'dashboard', 'update_translations' ) && mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) && mainwp_current_user_have_right( 'dashboard', 'trust_untrust_updates' ) ) {
+					MainWP_Updates::init_menu();
+				}
 			}
-			if ( ! self::is_disable_menu_item( 2, 'ThemesManage' ) ) {
-				MainWP_Themes::init_menu();
-			}
+
+			// Manage Plugins.
 			if ( ! self::is_disable_menu_item( 2, 'PluginsManage' ) ) {
-				MainWP_Plugins::init_menu();
+				if ( mainwp_current_user_have_right( 'dashboard', 'install_plugins' ) && mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) && mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) {
+					MainWP_Plugins::init_menu();
+				}
 			}
+
+			// Manage Themes.
+			if ( ! self::is_disable_menu_item( 2, 'ThemesManage' ) ) {
+				if ( mainwp_current_user_have_right( 'dashboard', 'install_themes' ) && mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) && mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) {
+					MainWP_Themes::init_menu();
+				}
+			}
+
+			// Manage Users.
 			if ( ! self::is_disable_menu_item( 2, 'UserBulkManage' ) ) {
 				if ( mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
 					MainWP_User::init_menu();
 				}
 			}
+
+			// Manage Posts.
+			if ( ! self::is_disable_menu_item( 2, 'PostBulkManage' ) ) {
+				if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
+					MainWP_Post::init_menu();
+				}
+			}
+
+			// Manage Pages.
+			if ( ! self::is_disable_menu_item( 2, 'PageBulkManage' ) ) {
+				if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
+					MainWP_Page::init_menu();
+				}
+			}
+
+			// Manage Backups.
 			if ( ! self::is_disable_menu_item( 2, 'ManageBackups' ) ) {
 				MainWP_Manage_Backups::init_menu();
 			}
+
+			// Monitoring Sites.
+			if ( ! self::is_disable_menu_item( 3, 'Extensions' ) ) {
+				if ( mainwp_current_user_have_right( 'dashboard', 'manage_extensions' ) ) {
+					MainWP_Extensions::init_menu();
+				}
+			}
+
+			// Manage Settings.
+			if ( ! self::is_disable_menu_item( 2, 'Settings' ) ) {
+				if ( mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
+					MainWP_Settings::init_menu();
+				}
+			}
+
+			// Manage Admin Passwords.
 			if ( ! self::is_disable_menu_item( 3, 'UpdateAdminPasswords' ) ) {
-				MainWP_Bulk_Update_Admin_Passwords::init_menu();
+				if ( mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
+					MainWP_Bulk_Update_Admin_Passwords::init_menu();
+				}
 			}
+
+			// Manage Groups/Tags.
 			if ( ! self::is_disable_menu_item( 3, 'ManageGroups' ) ) {
-				MainWP_Manage_Groups::init_menu();
+				if ( mainwp_current_user_have_right( 'dashboard', 'manage_groups' ) ) {
+					MainWP_Manage_Groups::init_menu();
+				}
 			}
+
+			// Monitoring Sites.
 			if ( ! self::is_disable_menu_item( 3, 'MonitoringSites' ) ) {
 				MainWP_Monitoring::init_menu();
 			}
-			if ( ! self::is_disable_menu_item( 2, 'Settings' ) ) {
-				MainWP_Settings::init_menu();
-			}
-			MainWP_Extensions::init_menu();
 
 			/**
 			 * Action: mainwp_admin_menu
@@ -142,13 +197,15 @@ class MainWP_Menu {
 			do_action( 'mainwp_admin_menu' );
 
 			if ( ! self::is_disable_menu_item( 2, 'ServerInformation' ) ) {
-				MainWP_Server_Information::init_menu();
+				if ( mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
+					MainWP_Server_Information::init_menu();
+				}
 			}
 		}
 	}
 
 	/**
-	 * Method init_subpages_menu()
+	 * Method init_sub_pages()
 	 *
 	 * Init subpages MainWP menus.
 	 *
@@ -164,7 +221,7 @@ class MainWP_Menu {
 	 * @uses \MainWP\Dashboard\MainWP_User::init_subpages_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Settings::init_subpages_menu()
 	 */
-	public static function init_subpages_menu() {
+	public static function init_sub_pages() {
 
 		if ( ! self::is_disable_menu_item( 2, 'PostBulkManage' ) ) {
 			MainWP_Post::init_subpages_menu();
@@ -191,6 +248,9 @@ class MainWP_Menu {
 		}
 		if ( ! self::is_disable_menu_item( 2, 'UserBulkManage' ) ) {
 			MainWP_User::init_subpages_menu();
+		}
+		if ( ! self::is_disable_menu_item( 2, 'ManageClients' ) ) {
+			MainWP_Client::init_subpages_menu();
 		}
 		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			if ( ! self::is_disable_menu_item( 2, 'ManageBackups' ) ) {
@@ -418,7 +478,7 @@ class MainWP_Menu {
 				?>
 				" />
 				</a>
-				<span id="mainwp-version-label" class="ui mini green right ribbon label"><?php echo __( 'Version ', 'mainwp' ); ?> <?php echo $version; ?></span>
+				<span id="mainwp-version-label" class="ui mini green right ribbon label"><?php echo __( 'V. ', 'mainwp' ); ?> <?php echo $version; ?></span>
 			</div>
 			<div class="ui hidden divider"></div>
 			<div class="mainwp-nav-menu">
@@ -481,7 +541,7 @@ class MainWP_Menu {
 
 					$link = array(
 						'url'  => $go_back_wpadmin_url,
-						'text' => __( 'Go to WP Admin', 'mainwp' ),
+						'text' => __( 'WP Admin', 'mainwp' ),
 						'tip'  => __( 'Click to go back to the site WP Admin area.', 'mainwp' ),
 					);
 
@@ -508,7 +568,7 @@ class MainWP_Menu {
 						}
 						?>
 					<div class="item item-wp-admin" style="background-color: rgba(255,255,255,.15);">
-						<a href="<?php echo esc_html( $link['url'] ); ?>" class="title" style="display:inline" data-position="top left" data-tooltip="<?php echo esc_html( $link['tip'] ); ?>"><b><i class="wordpress icon"></i> <?php echo esc_html( $link['text'] ); ?></b></a> <a class="ui small label" data-position="top right" data-tooltip="<?php esc_html_e( 'Logout', 'mainwp' ); ?>" href="<?php echo wp_logout_url(); ?>"><i class="sign out icon" style="margin:0"></i></a> <?php //phpcs:ignore -- to avoid auto fix wordpress icon ?>
+						<a href="<?php echo esc_html( $link['url'] ); ?>" class="title" style="display:inline" data-position="top left" data-tooltip="<?php echo esc_html( $link['tip'] ); ?>"><b><i class="icon wordpress"></i> <?php echo esc_html( $link['text'] ); ?></b></a> <a class="ui small label" data-position="top right" data-tooltip="<?php esc_html_e( 'Logout', 'mainwp' ); ?>" href="<?php echo wp_logout_url(); ?>"><i class="sign out icon" style="margin:0"></i></a> <?php //phpcs:ignore -- to avoid auto fix icon wordpress ?>
 					</div>
 					<?php } ?>
 					<div class="hamburger">

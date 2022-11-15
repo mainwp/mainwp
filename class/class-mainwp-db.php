@@ -30,6 +30,15 @@ class MainWP_DB extends MainWP_DB_Base {
 	private static $instance = null;
 
 	/**
+	 * Private static variable to hold the single instance.
+	 *
+	 * @static
+	 *
+	 * @var mixed Default null
+	 */
+	private static $general_options = null;
+
+	/**
 	 * Create public static instance.
 	 *
 	 * @static
@@ -195,10 +204,11 @@ class MainWP_DB extends MainWP_DB_Base {
 	 *
 	 * @param array $website Child Site array.
 	 * @param mixed $option  Child Site wp_options table name.
+	 * @param mixed $default  default value.
 	 *
 	 * @return string|null Database query result (as string), or null on failure.
 	 */
-	public function get_website_option( $website, $option ) {
+	public function get_website_option( $website, $option, $default = null ) {
 
 		if ( is_array( $website ) ) {
 			if ( isset( $website[ $option ] ) ) {
@@ -212,7 +222,12 @@ class MainWP_DB extends MainWP_DB_Base {
 			$site_id = $website->id;
 		}
 
-		return $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT value FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', $site_id ) );
+		$var = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT value FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', $site_id ) );
+
+		if ( null === $var && null !== $default ) {
+			$var = $default;
+		}
+		return $var;
 	}
 
 	/**
@@ -272,17 +287,6 @@ class MainWP_DB extends MainWP_DB_Base {
 	 */
 	public function update_website_option( $website, $option, $value ) {
 		$rslt = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', $website->id ) );
-		if ( 0 < count( $rslt ) ) {
-			$this->wpdb->delete(
-				$this->table_name( 'wp_options' ),
-				array(
-					'wpid' => $website->id,
-					'name' => $this->escape( $option ),
-				)
-			);
-			$rslt = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', $website->id ) );
-		}
-
 		if ( 0 === count( $rslt ) ) {
 			$this->wpdb->insert(
 				$this->table_name( 'wp_options' ),
@@ -302,6 +306,141 @@ class MainWP_DB extends MainWP_DB_Base {
 				)
 			);
 		}
+	}
+
+
+	/**
+	 * Get general Child site option.
+	 *
+	 * @param mixed $option  Child Site option name.
+	 *
+	 * @return string|null Database query result (as string), or null on failure.
+	 */
+	private function get_general_website_option( $option ) {
+
+		if ( null !== self::$general_options ) {
+			if ( isset( self::$general_options[ $option ] ) ) {
+				return self::$general_options[ $option ];
+			}
+		} else {
+			self::$general_options[] = array();
+		}
+
+		$val = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT value FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', 0 ) );
+
+		self::$general_options[ $option ] = $val;
+		return $val;
+	}
+
+	/**
+	 * Get child site options.
+	 *
+	 * @param mixed $options Child site options name.
+	 *
+	 * @return string|null Database query result (as string), or null on failure.
+	 */
+	public function get_general_options_array( $options ) {
+
+		if ( ! is_array( $options ) || empty( $options ) ) {
+			return array();
+		}
+
+		$return_options = array();
+		if ( null !== self::$general_options ) {
+			foreach ( self::$general_options as $opt => $val ) {
+				if ( in_array( $opt, $options ) ) {
+					$return_options[ $opt ] = $val;
+				}
+			}
+		} else {
+			self::$general_options[] = array();
+		}
+
+		$diff_options = array();
+		foreach ( $options as $opt ) {
+			if ( ! isset( $return_options[ $opt ] ) ) {
+				$diff_options[] = $opt;
+			}
+		}
+
+		$options_name = implode( "','", $diff_options );
+		$options_name = "'" . $options_name . "'";
+
+		$options_db = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name, value FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name IN (' . $options_name . ')', 0 ) );
+
+		foreach ( (array) $options_db as $o ) {
+			$return_options[ $o->name ]        = $o->value;
+			self::$general_options[ $o->name ] = $o->value;
+		}
+		return $return_options;
+	}
+
+	/**
+	 * Update general site options.
+	 *
+	 * @param mixed  $option  Option to update.
+	 * @param mixed  $value   Value to update with.
+	 * @param string $type_value  Type values: single|array.
+	 */
+	public function update_general_option( $option, $value, $type_value = 'single' ) {
+
+		if ( 'array' === $type_value ) {
+			if ( empty( $value ) ) {
+				$value = array();
+			} elseif ( ! is_array( $value ) ) {
+				return false;
+			}
+			$value = wp_json_encode( $value );
+		}
+
+		if ( null === self::$general_options ) {
+			self::$general_options[] = array();
+		}
+		self::$general_options[ $option ] = $value;
+
+		$rslt = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', 0 ) );
+
+		if ( 0 === count( $rslt ) ) {
+			$this->wpdb->insert(
+				$this->table_name( 'wp_options' ),
+				array(
+					'wpid'  => 0,
+					'name'  => $option,
+					'value' => $value,
+				)
+			);
+		} else {
+			$this->wpdb->update(
+				$this->table_name( 'wp_options' ),
+				array( 'value' => $value ),
+				array(
+					'wpid' => 0,
+					'name' => $option,
+				)
+			);
+		}
+		return true;
+	}
+
+	/**
+	 * Get general Child site option.
+	 *
+	 * @param mixed  $opt  Child Site option name.
+	 * @param string $type_value  Type values: single|array.
+	 *
+	 * @return string|null Database query result (as string), or null on failure.
+	 */
+	public function get_general_option( $opt, $type_value = 'single' ) {
+		if ( 'single' === $type_value ) {
+			return $this->get_general_website_option( $opt );
+		} elseif ( 'array' === $type_value ) {
+			$json_value = $this->get_general_website_option( $opt );
+			if ( empty( $json_value ) ) {
+				return array();
+			}
+			return json_decode( $json_value, true );
+		}
+		return false;
 	}
 
 	/**
@@ -394,7 +533,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			$where .= $this->get_sql_where_allow_access_sites( 'wp' );
 
 			if ( $selectgroups ) {
-				$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.id SEPARATOR ", ") as wpgroupids
+				$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids
                 FROM ' . $this->table_name( 'wp' ) . ' wp
                 LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                 LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
@@ -486,18 +625,21 @@ class MainWP_DB extends MainWP_DB_Base {
 
 		// wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
 		if ( $selectgroups ) {
-			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.id SEPARATOR ", ") as wpgroupids
+			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids,
+            wpclient.name as client_name
             FROM ' . $this->table_name( 'wp' ) . ' wp
             LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
             LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
+			LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where . '
             GROUP BY wp.id, wp_sync.sync_id
             ORDER BY ' . $orderBy;
 		} else {
-			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*
+			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, wpclient.name as client_name
             FROM ' . $this->table_name( 'wp' ) . ' wp
+			LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where . '
@@ -512,6 +654,165 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 
 		return $qry;
+	}
+
+	/**
+	 * Get SQL to get wp child sites for current user.
+	 *
+	 * @since 4.3
+	 *
+	 * @param array $params params .
+	 *
+	 * @return object|null Database query results or null on failure.
+	 */
+	public function get_sql_wp_for_current_user( $params = array() ) {
+		if ( ! is_array( $params ) ) {
+			$params = array();
+		}
+
+		$selectgroups = isset( $params['select_groups'] ) ? $params['select_groups'] : false;
+		$search_site  = isset( $params['search_site'] ) && ! empty( $params['search_site'] ) ? $params['search_site'] : null;
+		$orderBy      = isset( $params['order_by'] ) && ! empty( $params['order_by'] ) ? $params['order_by'] : 'wp.url';
+		$offset       = isset( $params['offset'] ) ? $params['offset'] : false;
+		$rowcount     = isset( $params['row_count'] ) ? $params['row_count'] : false;
+		$for_manager  = isset( $params['for_manager'] ) ? $params['for_manager'] : false;
+		$extraWhere   = isset( $params['extra_where'] ) && ! empty( $params['extra_where'] ) ? $params['extra_where'] : null;
+		$extra_view   = isset( $params['extra_view'] ) && is_array( $params['extra_view'] ) && ! empty( $params['extra_view'] ) ? $params['extra_view'] : array( 'favi_icon' );
+		$extra_join   = isset( $params['extra_join'] ) ? $params['extra_join'] : '';
+
+		$extra_select_wp_fields  = isset( $params['extra_select_wp_fields'] ) && is_array( $params['extra_select_wp_fields'] ) && ! empty( $params['extra_select_wp_fields'] ) ? $params['extra_select_wp_fields'] : array();
+		$extra_select_sql_fields = isset( $params['extra_select_sql_fields'] ) && ! empty( $params['extra_select_sql_fields'] ) ? $params['extra_select_sql_fields'] : '';
+
+		$is_staging = isset( $params['is_staging'] ) && 'yes' === $params['is_staging'] ? 'yes' : 'no';
+
+		$where = '';
+
+		if ( null !== $search_site ) {
+			$search_site = trim( $search_site );
+			$where      .= ' AND (wp.name LIKE "%' . $this->escape( $search_site ) . '%" OR wp.url LIKE  "%' . $this->escape( $search_site ) . '%") ';
+		}
+
+		if ( null !== $extraWhere ) {
+			$where .= ' AND ' . $extraWhere;
+		}
+
+		if ( ! $for_manager ) {
+			$where .= $this->get_sql_where_allow_access_sites( 'wp', $is_staging );
+		}
+
+		if ( 'wp.url' === $orderBy ) {
+			$orderBy = "replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www.', '')";
+		}
+
+		$select_wp_fields = $this->get_sql_select_wp_valid_fields( $extra_select_wp_fields );
+
+		if ( ! empty( $extra_select_sql_fields ) ) {
+			$extra_select_sql_fields = ',' . $extra_select_sql_fields;
+		}
+
+		// wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
+		if ( $selectgroups ) {
+			$qry = 'SELECT' . $select_wp_fields . $extra_select_sql_fields . ',wp_sync.sync_errors,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids,
+            wpclient.name as client_name
+            FROM ' . $this->table_name( 'wp' ) . ' wp
+            LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
+            LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
+			LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
+            JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
+            JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid ' .
+			$extra_join . '
+            WHERE 1 ' . $where . '
+            GROUP BY wp.id, wp_sync.sync_id
+            ORDER BY ' . $orderBy;
+		} else {
+			$qry = 'SELECT ' . $select_wp_fields . $extra_select_sql_fields . ',wp_sync.sync_errors,wp_optionview.*, wpclient.name as client_name
+            FROM ' . $this->table_name( 'wp' ) . ' wp
+			LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
+            JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
+            JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid ' .
+			$extra_join . '
+            WHERE 1 ' . $where . '
+            GROUP BY wp.id, wp_sync.sync_id
+            ORDER BY ' . $orderBy;
+		}
+
+		if ( ( false !== $offset ) && ( false !== $rowcount ) ) {
+			$qry .= ' LIMIT ' . intval( $offset ) . ', ' . intval( $rowcount );
+		} elseif ( false !== $rowcount ) {
+			$qry .= ' LIMIT ' . intval( $rowcount );
+		}
+		return $qry;
+	}
+	/**
+	 * Get SQL select websites fields.
+	 *
+	 * @since 4.3
+	 *
+	 * @param array $other_fields extra select wp fields .
+	 *
+	 * @return string sql string.
+	 */
+	public function get_sql_select_wp_valid_fields( $other_fields = array() ) {
+
+		$allow_other_fields = array(
+			'offline_checks_last',
+			'offline_check_result',
+			'http_response_code',
+			'http_code_noticed',
+			'disable_status_check',
+			'disable_health_check',
+			'status_check_interval',
+			'health_threshold',
+			'note',
+			'note_lastupdate',
+			'statsUpdate',
+			'directories',
+			'plugin_upgrades',
+			'theme_upgrades',
+			'translation_upgrades',
+			'premium_upgrades',
+			'securityIssues',
+			'themes',
+			'ignored_themes',
+			'plugins',
+			'ignored_plugins',
+			'pages',
+			'users',
+			'categories',
+			'pluginDir',
+			'automatic_update',
+			'backup_before_upgrade',
+			'backups',
+			'mainwpdir',
+			'loadFilesBeforeZip',
+			'is_ignoreCoreUpdates',
+			'is_ignorePluginUpdates',
+			'is_ignoreThemeUpdates',
+			'verify_certificate',
+			'force_use_ipv4',
+			'ssl_version',
+			'http_user',
+			'http_pass',
+			'wpe',
+			'is_staging',
+			'client_id',
+		);
+
+		$default_fields = array( 'id', 'url', 'name', 'adminname', 'verify_certificate', 'ssl_version', 'http_user', 'http_pass', 'suspended' );
+
+		$select = ' ';
+
+		foreach ( $default_fields as $field ) {
+			$select .= 'wp.' . $this->escape( $field ) . ',';
+		}
+		foreach ( $other_fields as $field ) {
+			if ( ! in_array( $field, $allow_other_fields ) ) {
+				continue;
+			}
+			$select .= 'wp.' . $this->escape( $field ) . ',';
+		}
+		$select = rtrim( $select, ',' );
+		return $select;
 	}
 
 	/**
@@ -537,7 +838,9 @@ class MainWP_DB extends MainWP_DB_Base {
 		$extra_view   = isset( $params['extra_view'] ) && is_array( $params['extra_view'] ) ? $params['extra_view'] : array( 'favi_icon' );
 		$is_staging   = isset( $params['is_staging'] ) ? $params['is_staging'] : 'no';
 		$full_data    = isset( $params['full_data'] ) && $params['full_data'] && ( 'no' !== $params['full_data'] ) ? true : false;
+		$select_data  = isset( $params['select_data'] ) && is_array( $params['select_data'] ) ? $params['select_data'] : false;
 		$format       = isset( $params['format'] ) ? $params['format'] : '';
+		$clients      = isset( $params['client'] ) ? $params['client'] : '';
 
 		$for_manager = false;
 
@@ -562,6 +865,24 @@ class MainWP_DB extends MainWP_DB_Base {
 				$extraWhere = $urlsWhere;
 			} else {
 				$extraWhere = $extraWhere . ' AND ' . $urlsWhere;
+			}
+		}
+
+		$clientWhere = '';
+		if ( ! empty( $clients ) ) {
+			$clients = explode( ';', $clients );
+			foreach ( $clients as $client ) {
+				$clientWhere .= $this->escape( $client ) . ', ';
+			}
+			$clientWhere = rtrim( $clientWhere, ', ' );
+		}
+
+		if ( ! empty( $clientWhere ) ) {
+			$clientWhere = ' ( wp.client_id IN ( ' . $clientWhere . ') ) ';
+			if ( empty( $extraWhere ) ) {
+				$extraWhere = $clientWhere;
+			} else {
+				$extraWhere = $extraWhere . ' AND ' . $clientWhere;
 			}
 		}
 
@@ -598,11 +919,16 @@ class MainWP_DB extends MainWP_DB_Base {
 				'phpversion',
 				'wp_upgrades',
 				'security_stats',
+				'client_id',
 			);
 
 			if ( ! in_array( 'security_stats', $extra_view ) ) {
 				$extra_view[] = 'security_stats';
 			}
+		}
+
+		if ( ! empty( $select_data ) && is_array( $select_data ) ) {
+			$data = $select_data;
 		}
 
 		if ( $selectgroups ) {
@@ -675,6 +1001,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		$is_staging   = isset( $params['is_staging'] ) && 'yes' == $params['is_staging'] ? 'yes' : 'no';
 		$is_count     = isset( $params['count_only'] ) && $params['count_only'] ? true : false;
 		$group_ids    = isset( $params['group_id'] ) && ! empty( $params['group_id'] ) ? $params['group_id'] : array();
+		$client_ids   = isset( $params['client_id'] ) && ! empty( $params['client_id'] ) ? $params['client_id'] : array();
 		$is_not       = isset( $params['isnot'] ) && ! empty( $params['isnot'] ) ? true : false;
 
 		if ( ! is_array( $group_ids ) ) {
@@ -686,6 +1013,22 @@ class MainWP_DB extends MainWP_DB_Base {
 			$group_ids,
 			function( $e ) {
 				if ( 'nogroups' == $e ) {
+					return true;
+				}
+				$e = intval( $e );
+				return ( 0 < $e ) ? true : false;
+			}
+		);
+
+		if ( ! is_array( $client_ids ) ) {
+			$client_ids = array();
+		}
+
+		// valid group ids.
+		$client_ids = array_filter(
+			$client_ids,
+			function( $e ) {
+				if ( 'noclients' == $e ) {
 					return true;
 				}
 				$e = intval( $e );
@@ -784,25 +1127,73 @@ class MainWP_DB extends MainWP_DB_Base {
 			}
 		}
 
+		$join_client  = '';
+		$where_client = '';
+
+		if ( in_array( 'noclients', $client_ids ) ) {
+			$join_client = ' LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id ';
+			$client_ids  = array_filter(
+				$client_ids,
+				function( $e ) {
+					return 'noclients' != $e;
+				}
+			);
+			if ( 0 < count( $client_ids ) ) {
+				$clients = implode( ',', $client_ids );
+				if ( $is_not ) {
+					$where_client = ' AND wpclient.client_id IS NOT NULL AND wp.client_id NOT IN (' . $clients . ') ';
+					// to fix.
+					// $sub_select_is_not = ' SELECT wp.id FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id WHERE wpclient.client_id IN (' . $clients . ') ';.
+					// $where_client      .= ' AND wp.id NOT IN ( ' . $sub_select_is_not . ' ) ';.
+				} else {
+					$where_client = ' AND wpclient.client_id IN (' . $clients . ') ';
+				}
+			} else {
+				if ( $is_not ) {
+					$where_client = ' AND wpclient.client_id IS NOT NULL ';
+				} else {
+					$where_client = ' AND wpclient.client_id IS NULL ';
+				}
+			}
+		} elseif ( $client_ids && 0 < count( $client_ids ) ) {
+			$clients = implode( ',', $client_ids );
+			if ( $is_not ) {
+				$join_client  = ' LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id ';
+				$where_client = ' AND ( wpclient.client_id NOT IN (' . $clients . ') OR wpclient.client_id IS NULL ) ';
+				// to fix.
+				// $sub_select_is_not = ' SELECT wp.id FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id WHERE wpclient.client_id IN (' . $clients . ') ';.
+				// $where_client     .= ' AND wp.id NOT IN ( ' . $sub_select_is_not . ' ) ';.
+			} else {
+				$join_client  = ' JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id ';
+				$where_client = ' AND wpclient.client_id IN (' . $clients . ') ';
+			}
+		}
+
+		if ( '' === $join_client ) {
+			$join_client = ' LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id ';
+		}
 		// wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
 		if ( $selectgroups ) {
-			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.id SEPARATOR ", ") as wpgroupids
+			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, wpclient.name as client_name 
             FROM ' . $this->table_name( 'wp' ) . ' wp ' .
-			$join_group . '
+			$join_group . ' ' .
+			$join_client . '
             LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
             LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
+			
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-            WHERE 1 ' . $where . $where_group . '
+            WHERE 1 ' . $where . $where_group . $where_client . '
 			GROUP BY wp.id, wp_sync.sync_id ' .
 			$orderBy;
 		} else {
-			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*
+			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, wpclient.name as client_name
             FROM ' . $this->table_name( 'wp' ) . ' wp ' .
-			$join_group . '
+			$join_group . ' ' .
+			$join_client . '
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-			WHERE 1 ' . $where . $where_group . '
+			WHERE 1 ' . $where . $where_group . $where_client . '
 			GROUP BY wp.id, wp_sync.sync_id ' .
 			$orderBy;
 		}
@@ -973,7 +1364,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
 			$where = $this->get_sql_where_allow_access_sites( 'wp', 'nocheckstaging' );
 			if ( $selectGroups ) {
-				return 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.id SEPARATOR ", ") as wpgroupids
+				return 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids
                 FROM ' . $this->table_name( 'wp' ) . ' wp
                 LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                 LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
@@ -1105,7 +1496,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
 			$where_allowed = $this->get_sql_where_allow_access_sites( 'wp', $is_staging );
 			if ( $selectgroups ) {
-				$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.id SEPARATOR ", ") as wpgroupids
+				$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids
                  FROM ' . $this->table_name( 'wp' ) . ' wp
                  JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid
                  LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
@@ -1683,4 +2074,5 @@ class MainWP_DB extends MainWP_DB_Base {
 			OBJECT
 		);
 	}
+
 }

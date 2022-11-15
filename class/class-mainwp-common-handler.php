@@ -62,8 +62,9 @@ class MainWP_Common_Handler {
 		MainWP_DB::data_seek( $websites, 0 );
 
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+			$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
+			$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
-			$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
 			if ( $website->is_ignoreCoreUpdates ) {
 				$wp_upgrades = array();
 			}
@@ -84,7 +85,9 @@ class MainWP_Common_Handler {
 				$theme_upgrades = array();
 			}
 
-			$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
+			$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
+			$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+
 			if ( is_array( $decodedPremiumUpgrades ) ) {
 				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 					$premiumUpgrade['premium'] = true;

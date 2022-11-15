@@ -44,6 +44,10 @@ class MainWP_Updates_Handler {
 
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
 
+			if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
+				throw new MainWP_Exception( 'ERROR', '<i class="red times icon"></i> ' . __( 'The child site has been suspended.', 'mainwp' ) );
+			}
+
 			$information = self::upgrade_website( $website );
 
 			if ( is_array( $information ) ) {
@@ -463,13 +467,17 @@ class MainWP_Updates_Handler {
 				if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 					$slug = urldecode( $slug );
 					if ( 'plugin' === $type ) {
-						$decodedIgnoredPlugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
+						$decodedIgnoredPlugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
+						$decodedIgnoredPlugins = ( '' != $decodedIgnoredPlugins ) ? json_decode( $decodedIgnoredPlugins, true ) : array();
+
 						if ( isset( $decodedIgnoredPlugins[ $slug ] ) ) {
 							unset( $decodedIgnoredPlugins[ $slug ] );
 							MainWP_DB::instance()->update_website_option( $website, 'plugins_outdate_dismissed', wp_json_encode( $decodedIgnoredPlugins ) );
 						}
 					} elseif ( 'theme' === $type ) {
-						$decodedIgnoredThemes = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
+						$decodedIgnoredThemes = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
+						$decodedIgnoredThemes = ( '' != $decodedIgnoredThemes ) ? json_decode( $decodedIgnoredThemes, true ) : array();
+
 						if ( isset( $decodedIgnoredThemes[ $slug ] ) ) {
 							unset( $decodedIgnoredThemes[ $slug ] );
 							MainWP_DB::instance()->update_website_option( $website, 'themes_outdate_dismissed', wp_json_encode( $decodedIgnoredThemes ) );
@@ -559,13 +567,17 @@ class MainWP_Updates_Handler {
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				$slug = urldecode( $slug );
 				if ( 'plugin' === $type ) {
-					$decodedDismissedPlugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
+					$decodedDismissedPlugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
+					$decodedDismissedPlugins = ( '' != $decodedDismissedPlugins ) ? json_decode( $decodedDismissedPlugins, true ) : array();
+
 					if ( ! isset( $decodedDismissedPlugins[ $slug ] ) ) {
 						$decodedDismissedPlugins[ $slug ] = urldecode( $name );
 						MainWP_DB::instance()->update_website_option( $website, 'plugins_outdate_dismissed', wp_json_encode( $decodedDismissedPlugins ) );
 					}
 				} elseif ( 'theme' === $type ) {
-					$decodedDismissedThemes = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
+					$decodedDismissedThemes = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
+					$decodedDismissedThemes = ( '' != $decodedDismissedThemes ) ? json_decode( $decodedDismissedThemes, true ) : array();
+
 					if ( ! isset( $decodedDismissedThemes[ $slug ] ) ) {
 						$decodedDismissedThemes[ $slug ] = urldecode( $name );
 						MainWP_DB::instance()->update_website_option( $website, 'themes_outdate_dismissed', wp_json_encode( $decodedDismissedThemes ) );
@@ -640,7 +652,10 @@ class MainWP_Updates_Handler {
 	 */
 	public static function upgrade_plugin_theme_translation( $id, $type, $list ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
-			$website     = MainWP_DB::instance()->get_website_by_id( $id );
+			$website = MainWP_DB::instance()->get_website_by_id( $id );
+			if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
+				throw new MainWP_Exception( 'ERROR', __( 'The child site has been suspended.', 'mainwp' ) );
+			}
 			$information = self::update_plugin_theme_translation( $website, $type, $list );
 			if ( is_array( $information ) ) {
 				if ( isset( $information['upgrades'] ) ) {
@@ -738,7 +753,9 @@ class MainWP_Updates_Handler {
 			}
 
 			$plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
-			$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
+			$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
+			$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+
 			if ( is_array( $decodedPremiumUpgrades ) ) {
 				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 					$premiumUpgrade['premium'] = true;
@@ -775,7 +792,9 @@ class MainWP_Updates_Handler {
 			}
 
 			$theme_upgrades         = json_decode( $website->theme_upgrades, true );
-			$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
+			$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
+			$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+
 			if ( is_array( $decodedPremiumUpgrades ) ) {
 				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 					$premiumUpgrade['premium'] = true;

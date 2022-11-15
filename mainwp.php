@@ -8,7 +8,7 @@
  * Author URI: https://mainwp.com
  * Plugin URI: https://mainwp.com/
  * Text Domain: mainwp
- * Version:  4.2.7.1
+ * Version:  4.3
  *
  * @package MainWP/Dashboard
  *
@@ -109,5 +109,5 @@ if ( ! $mainwp_is_secupress_scanning ) {
 	$mainWP = new MainWP\Dashboard\MainWP_System( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basename( __FILE__ ) );
 	register_activation_hook( __FILE__, array( $mainWP, 'activation' ) );
 	register_deactivation_hook( __FILE__, array( $mainWP, 'deactivation' ) );
-	add_action( 'plugins_loaded', array( $mainWP, 'update' ) );
+	add_action( 'plugins_loaded', array( $mainWP, 'update_install' ) );
 }

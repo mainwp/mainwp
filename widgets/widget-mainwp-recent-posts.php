@@ -779,6 +779,10 @@ class MainWP_Recent_Posts {
 			die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}
 
+		if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
+			die( wp_json_encode( array( 'error' => __( 'The child site has been suspended.', 'mainwp' ) ) ) );
+		}
+
 		/**
 		* Action: mainwp_before_post_action
 		*

@@ -1,100 +1,206 @@
-=== MainWP Dashboard – The Private WordPress Manager for Multiple Website Maintenance ===
+=== MainWP Dashboard  – WordPress Manager for Multiple Websites Maintenance ===
 Contributors: mainwp
-Tags: WordPress Manager, WordPress Management, Managed WordPress, Manage Multiple Sites, Control multiple sites, WordPress site management, WordPress management dashboard
+Tags: WordPress Manager, WordPress Management, Manage WordPress, Manage Multiple Sites, Control Multiple Sites, WordPress Site Management, WordPress Management Dashboard, ManageWP, Manage WP Sites, WordPress Maintenance, Uptime Monitor, Backup, Security, Lighthouse, Client Reports, Manage Plugins, Updates Manager, Manage WordPress Websites, Client Management, REST API, Hooks
 Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 5.4
-Tested up to: 6.0.1
+Tested up to: 6.1
 Requires PHP: 7.0
-Stable tag: 4.2.7.1
+Stable tag: 4.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-The MainWP WordPress Manager Dashboard allows control of unlimited WordPress sites from your own private self-hosted WordPress install. More than just updates!
+Perform WordPress maintenance tasks like Updates, Backups, Uptime Monitoring, Security, Staging, Analytics, etc., from a single self-hosted dashboard.
 
 == Description ==
 
-The [MainWP WordPress Manager](https://mainwp.com) Dashboard plugin allows you to control unlimited WordPress sites from your own private self-hosted WordPress install.
+The [MainWP WordPress Manager](https://mainwp.com) Dashboard plugin allows you to control multiple WordPress websites **(even those on different hosting)** from your own private self-hosted WordPress website.
 
-The MainWP WordPress management system is a free and open source.  The system is designed for WordPress professionals who realize that WordPress management for yourself or your clients is more than just plugin and theme updates.
+🎉 Over **600k websites are being managed by 10k active dashboards**, which makes 60 sites on average.
 
-And, just because it is free does not mean it's not effective. MainWP allows you to control virtually all of your daily WordPress maintenance tasks at absolutely no cost.
+And, MainWP is the only WordPress sites management plugin with **over 2000** ⭐⭐⭐⭐⭐ reviews.
 
-The Dashboard plugin allows you to connect and control all the WordPress sites you administer, even those on different hosts and servers.
 
-MainWP is the perfect solution for WordPress consultants, marketers, developers, WordPress shops, or anyone with multiple WordPress sites.
+== How is MainWP different from ManageWP and other SaaS WordPress Management plugins? ==
 
-= Your Guarantee of Privacy =
+MainWP is a free, open-source, and self-hosted plugin to manage multiple WordPress websites from a single WordPress website, ensuring **complete privacy for you and your clients.**
 
-The MainWP plugins come with their own [privacy policies](https://mainwp.com/mainwp-plugin-privacy-policy/) to ensure you that the plugins do not collect any personally identifiable information (PII). Please review them before activating the plugin.
+It is designed for WordPress professionals who realize that WP management for yourself and your clients is **more than just plugin and theme updates.**
 
-= How does MainWP work? =
+And, just because it is free does not mean it’s not effective. MainWP allows you to control all your daily WordPress maintenance tasks at no cost.
 
-First, Install and Activate this MainWP Dashboard plugin on a WordPress site you will use for controlling all other sites; this is your Dashboard Site.  We highly recommend this be a new, clean WordPress installation and not on one of your operating sites. Using a clean site helps to eliminate any unnecessary plugin conflicts or security issues.
+MainWP is the **perfect solution for**
+- Agencies
+- Freelancers
+- Developers
+- Designers
+- Consultants
+- Marketers
+- In fact, anyone who wants to manage multiple WordPress sites.
 
-Next, Install and Activate the MainWP Child plugin on a WordPress site you want to connect to your MainWP Dashboard.  WordPress sites connected to your Dashboard are referred to as Child sites.
 
-Lastly, you securely connect your child site to your MainWP Dashboard.  Once connected, your Dashboard can control most aspects of the Child site.
+== Why WordPress Managers Love MainWP! ==
 
-Still not sure how MainWP works? [Review these detailed steps on installing your Dashboard and connecting your first Child site.](https://mainwp.com/getting-started-with-mainwp/)
+💰 Free Forever
+🏷️ White Label
+♾️ Connect Unlimited Websites
+👥 Full Client Management
+🌐 Organize Sites via Tags
+🕒 Uptime & Site Health Monitoring
+🚩 1-Click Lighthouse Stats
+🔄 Effortless Bulk Updates
+🚧 Staging, Cloning
+📝 Professional Reports
+🔗 Security & Backup Integrations
+💬 Bulk Manage Comments
+🛡️ Bulk Manage Security
+📈 SEO, Traffic, Analytics, etc.
+🚀 WP Rocket, Cache-Control
+✏️ Fully Customizable
+🌐 Domain Monitoring
+🔒 Full Privacy, Self-hosted, Lock Your Dashboard
+😌 Bulk Content Management (Draft, Publish, Edit, Trash)
+🦾 40+ Integrations
 
-= How is MainWP free? What's the catch? How will you continue to pay development costs? =
+And [a lot more](https://mainwp.com/mainwp-extensions/)…
 
-We make money by selling [Extensions](https://mainwp.com/mainwp-extensions/).
 
-Extensions enhance your MainWP Dashboard with additional features. The catalog of [MainWP Extensions](https://mainwp.com/mainwp-extensions/) includes additional features for backups, marketing, SEO, maintenance, security, monitoring, and other tools to help you build a better network.
+== Your Guarantee of Privacy ==
 
-= Everything below and more is included in with MainWP at absolutely no charge, no tricks, no hidden fees, no nickel and diming you for every little feature and absolutely no gotchas! =
+The MainWP plugins come with their own [privacy policies](https://mainwp.com/mainwp-plugin-privacy-policy/) to ensure that the plugins do not collect any personally identifiable information (PII).
 
-= Some Included MainWP Features: =
 
-= Easy Management =
-The MainWP WordPress management system takes the hassle out of managing your themes and plugins. The MainWP Dashboard allows easy review of which of your WordPress sites have themes and plugins that need updating.
+== How Does MainWP Work? ==
 
-Just one click will update all of your plugins and themes across all your sites.
+First, Install and Activate this MainWP Dashboard plugin on a WordPress site you will use for controlling all other sites (even those on different hosting); this is your Dashboard Site.
 
-= Effortless Upgrades =
-Do you have a busy schedule and dread all of the work you'll be putting into upgrading to WordPress's latest version? Worry no more! With the click of a button from your MainWP WordPress Manager Dashboard, all of your WordPress sites will be upgraded to the latest stable version.
+We highly recommend this be a new, clean WordPress installation and not on one of your operating sites. Using a clean site helps to eliminate any unnecessary plugin conflicts or security issues.
 
-= One-Click Access =
-Do you have too many WordPress sites to remember? Accessing all of your WordPress sites is now a breeze with our intuitive one-click access. With the click of a button, you're instantly and securely logged in and ready to work in that WordPress site!
+Next, Install and Activate the [MainWP Child plugin](https://wordpress.org/plugins/mainwp-child/) on all WordPress sites you want to manage from your MainWP Dashboard. WordPress sites connected to your Dashboard are referred to as Child Sites.
 
-= Automated Updates =
-Using the Trusted Plugin and Theme option in your MainWP Dashboard will automatically update all Plugins and Themes you trust with no further interaction. Your MainWP Dashboard will alert you by email with available updates and then auto-update them the next day.
+Once all Child Sites are connected, your Dashboard can control almost everything about your Child Site(s).
 
-= Abandoned Plugin and Theme Alerts =
-When a plugin or theme hasn't had an update in a long time, we tend to forget about it, which could lead to security or compatibility issues. Your MainWP Dashboard will alert you of possibly abandoned plugins or themes so that you can look for a more updated plugin or theme.
+Still, trying to figure out how MainWP works? [Review these detailed steps on installing your Dashboard and connecting your first Child Site.](https://mainwp.com/getting-started-with-mainwp/)
 
-= Multiple Reliable Backup Options =
-The MainWP Dashboard offers multiple backup options. We have integrated some of the most popular backup plugins and released them as  [Free Backup Extensions](https://mainwp.com/mainwp-extensions/extension-category/backup/) this allows you to use the backup plugins you know and trust directly from your MainWP Dashboard.
+== How Is MainWP Free? What’s the Catch? How Will You Continue to Pay Development Costs? ==
 
-= Self-Hosted =
-Your MainWP Dashboard is hosted on your own WordPress install and not on our private servers. We do not keep records of your actions, sites, passwords, or anything else. [Why that's important!](https://mainwp.com/protect-your-data/)
+The MainWP WordPress manager plugin is [100% FREE!](https://mainwp.com/mainwp-free-features/) However, MainWP Pro offers a wide range of [30+ Premium Extensions](https://mainwp.com/mainwp-extensions/) at a single price.
 
-= Private =
-We have 100% respect for your privacy. The developers do not have access to any of your WordPress sites or information. [Why that's important!](https://mainwp.com/protect-your-data/)
+Extensions enhance your MainWP Dashboard with additional features for backups, marketing, SEO, maintenance, security, monitoring, and other tools to help you better organize and manage websites.
 
-= Ignore Updates =
-Is there a plugin or theme that you do not want to update for compatibility or other issues?  Just tell your MainWP Dashboard to ignore it, and it will no longer alert you of the update.
 
-= Content Management =
-With the power of the MainWP WordPress management system, publishing content to sites is now as easy as possible. Pick your site from a list, write content, and publish, without the hassles of logging into each and every site. It's just as easy to manage links, comments, and spam using our mass publish and delete functions.
+== Some Powerful MainWP Features: ==
 
-= Bulk Posting =
-Posting content to multiple websites can prove difficult with WordPress alone. With the MainWP Dashboard, posting content to multiple blogs couldn't be more natural. Create the content, select your blogs, and enjoy the time you saved.
+MainWP is a feature-rich WP management plugin to manage multiple WordPress sites from a single self-hosted dashboard. Here are some of the highlighted features.
 
-= Open Source Code =
-Both the MainWP WordPress Manager Dashboard and Child plugin are fully open source and GPL compliant with no obfuscated code, so you always know what is running on your server. Both plugins are also maintained on [GitHub](https://mainwp.com/github/) for easy code access.
+= – Easy WordPress Management =
 
-= Discovery Protection =
-MainWP protects you from your competitors, search engines, or anyone else with prying eyes. No one will ever know you are using the MainWP WordPress management system unless you tell them.
+MainWP, the WP Management plugin, eliminates the hassle of managing multiple sites by highlighting what needs to be done on which Child Site.
 
-= Customize MainWP =
-Extensions offer custom functions and features so that each user can tailor their WordPress management experience to their needs.
+With the Easy [Plugin Manager feature](https://mainwp.com/easy-plugin-manager/), you can update specific plugins on selected Child Sites with just a click. Additionally, all themes and WordPress updates can be done the same way.
 
-= Developer?  Code your own Extensions  =
-Building on WordPress's core principles, the MainWP plugin allows third-party developers to "hook" into it, so anything you want can be developed for your MainWP Dashboard. You can find more information in the [Develop MainWP Extensions](https://mainwp.com/develop-mainwp/) page.  Build around a proven WordPress Management System!
+
+= – Full Client Management =
+
+With the MainWP Client Management feature, you can create new profiles for your clients, add their contact person details, map websites to specific clients, add tags, suspend clients, and much more!
+
+Have a look at how you can [easily manage your clients](https://kb.mainwp.com/docs/manage-clients/).
+
+
+= – One-Click Login to wp-admin =
+
+With the click of a button, you’re instantly and securely logged in to the wp-admin of a Child Site and ready to work! No need to remember usernames and passwords anymore!
+
+
+= – Effortless Upgrades =
+
+With the click of a button from your MainWP WordPress Manager Dashboard, all your WordPress sites will be upgraded to the latest stable version.
+
+
+= – Automated Updates =
+
+The Trusted Plugin and Theme option in your MainWP Dashboard will automatically update the Trusted Plugins and Themes without further interaction.
+
+You will get an alert via email with available updates, and your Dashboard will auto-update them the next day.
+
+
+= – Ignore Updates =
+
+Is there a plugin or theme you want to avoid updating for compatibility or other issues? Just tell your MainWP Dashboard to ignore it, and it will no longer alert you of the update.
+
+
+= – Abandoned Plugin and Theme Alerts =
+
+When a plugin or theme hasn’t been updated in a long time, we tend to forget about it, which could lead to security or compatibility issues.
+
+Your MainWP Dashboard will alert you of possibly abandoned plugins or themes so that you can look for a more updated plugin or theme.
+
+
+= – Multiple Reliable Backup Options =
+
+The MainWP Dashboard offers multiple backup options. We have integrated some of the most popular backup plugins and released them as [Free Backup Extensions.](https://mainwp.com/mainwp-extensions/extension-category/backup/)
+
+This allows you to use the backup plugins you know and trust directly from your MainWP Dashboard.
+
+
+= – Content Management =
+
+With the power of the MainWP WordPress management plugin, publishing content to Child Sites is now as easy as possible. Pick your site from a list, write content, and publish without the hassles of logging into each website.
+
+It’s just as easy to manage links, comments, and spam using our mass publish and delete functions.
+
+
+= – Bulk Posting =
+
+Posting content to multiple WordPress websites can prove difficult. With the MainWP Dashboard, posting content to various websites couldn’t be more natural.
+
+Create the content, select your websites, and enjoy the time you saved.
+
+
+= – Self-Hosted =
+
+Your MainWP Dashboard is hosted on your own WordPress website and not on our private servers. We do not keep records of your actions, sites, passwords, or anything else. [Read Why that’s important!](https://mainwp.com/protect-your-data/)
+
+
+= – Private =
+
+We have 100% respect for your and your clients’ privacy. The developers do not have access to your WordPress sites or information. [Read Why that’s important!](https://mainwp.com/wordpress-manager-gdpr/)
+
+
+= – Open Source Code =
+
+The MainWP WordPress Manager Dashboard and Child plugins are fully open source and GPL compliant with no obfuscated code, so you always know what is running on your server.
+
+Both plugins are also maintained on [GitHub](https://mainwp.com/github/) for easy code access.
+
+
+= – Discovery Protection =
+
+MainWP protects you from your competitors, search engines, or anyone else with prying eyes. Unless you tell them, no one will ever know you are using the MainWP WordPress management plugin.
+
+
+= – Customize MainWP =
+
+The MainWP [Custom Dashboard](https://mainwp.com/extension/mainwp-custom-dashboard-extension/) Extension offers custom functions and features so that users can tailor their WP management experience to their needs.
+
+
+= – Developer? Code Your Own Extensions =
+
+Built on WordPress’s core principles, the MainWP plugin allows third-party developers to “hook” into it, so anything you want can be developed for your MainWP Dashboard.
+
+MainWP supports CLI and REST API and provides Hooks for different use cases. You can find more information on the [Develop MainWP Extensions](https://mainwp.com/develop-mainwp/) page.
+
+Build around a proven WordPress Management System!
+
+
+== – Partners ==
+
+We are [partnered with industry-leading](https://mainwp.com/mainwp-extensions/) plugins and solutions to provide more flexibility.
+
+If you want to build an extension or integration for MainWP, you may get a massive boost. We may list it on our [Extensions page](https://mainwp.com/mainwp-extensions/) and market it, and with the 1000 extension installs, you could get 60k new active installations for your plugin.
+
+Find more details on the [Develop MainWP Extensions](https://mainwp.com/develop-mainwp/) page.
 
 = More Information =
 [MainWP Documentation](https://kb.mainwp.com/)
@@ -179,6 +285,57 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.3 - 11-15-2022 =
+* Fixed: Dimmer element padding on laptop screen sizes
+* Fixed: Padding issue of the URL protocol dropdown
+* Fixed: Go to WP Admin menu item layout issue on screens less than 500px high
+* Fixed: Incorrect tooltip for the Update All button on individual site overview
+* Added: Client Management system [Feature Request](https://feedback.mainwp.com/admin/plugins/introduce-a-website-owner-feature-and-consolidate-the-redundant-token-systems-ckzycyuxk3248792urd05vs59y9)
+* Added: Updates menu item sub-pages
+* Added: Site Suspended status [Feature Request](https://feedback.mainwp.com/admin/plugins/disable-sites-from-being-maintained-cl0804kkh1654292unylcuqn0al)
+* Added: Tags column to the Manage Sites table
+* Added: Plugin icon to Updates, Ignored Updates, Ignored Abandoned Updates table
+* Added: FREE, PRO, and ORG labels to list items in the list of the available extensions
+* Added: Ability to disable extensions from the Extensions page
+* Added: Ability to enable extensions from the Extensions page
+* Added: Ability to delete extensions from teh Extensions page
+* Added: Info for extensions that require additional plugins on the Dashboard site
+* Added: Extensions privacy info in the install extensions modal
+* Added: Quick switch to Dark theme
+* Added: Quick Grid/List switch on the Manage Sites screen
+* Added: Custom CSS class for buttons in the Updates screen for easier customizations
+* Added: New default theme
+* Added: Theme switch option to the MainWP Tools page
+* Added: Monitoring extensions category
+* Added: Ability to install extensions from the WordPress.org repository
+* Added: Links to the extension page for each extension in the Install Extensions modal
+* Added: New feature to detect plugin and theme changes made outside of MainWP Dashboard [Inspired by WPBuilds Podcast 297](https://wpbuilds.com/2022/09/29/297-dealing-with-changing-staff-and-new-management/)
+* Updated: Previously default theme renamed to MainWP Classic Theme
+* Updated: Tooltip pointer element z-index value
+* Updated: https://meta.mainwp.com URLs changed to https://managers.mainwp.com
+* Updated: Main navigation items order
+* Updated: Better utilization of Team Control permissions in the navigation
+* Updated: Renamed “Groups” to “Tags”
+* Updated: Atarim extension privacy info
+* Updated: Header action buttons layout on laptop screen size
+* Updated: Extension installation indicator style
+* Updated: Split available extensions list to tabs
+* Updated: Extension card element
+* Updated: Show extensions cards in 5 columns
+* Updated: Privacy Policy page layout
+* Updated: Increased cards number per row to 5 on the Extensions page
+* Updated: Show extensions privacy info in a modal
+* Updated: Manage sites grid view to show more info for each site
+* Updated: Moved sites filters to a separate row
+* Updated: Extensions categories
+* Updated: Extensions order in the install modal
+* Updated: Manage Plugins and Themes page layout [Feature Request](https://feedback.mainwp.com/admin/plugins/plugins-listed-as-rows-instead-of-columns-cl755dqhx6970531xq3d89ypnye)
+* Removed: Select All and Select None buttons in the Install Extensions modal Child
+* Fixed: Multiple PHP warnings
+* Added: Support for new security checks
+* Added: Support for the Non-MainWP Changes feature
+* Removed: Unused code
 
 = 4.2.7.1 - 9-22-2022 =
 * Added: The `mainwp_extensions_page_top_header` filter for customizing the Extensions page title
@@ -297,15 +454,15 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: Cosmetic issue where the header element gets pushed to the bottom
 * Added: Plugin privacy policy file to the plugin directory
 * Added: Plugin Privacy page
-* Added: Child and Parent theme indicator to the Manage Themes page
+* Added: Child and Parent theme indicator to the Manage Themes page [Feature Request](https://feedback.mainwp.com/plugins/show-parent-theme-name-when-viewing-site-themes-ckzpp1ezq899352wnsqsw6g59g)
 * Added: The "Delete Extensions API Activation Data" button to the MainWP > Tools page
-* Added: Negative search ability Plugins and Theme search page
-* Added: Automatic cache clearing after updates feature
+* Added: Negative search ability Plugins and Theme search page [Feature Request](https://feedback.mainwp.com/plugins/search-for-missing-plugins-feature-needed-ckzpq3y6c1046282wnsx5kidmqi)
+* Added: Automatic cache clearing after updates feature [Feature Request](https://feedback.mainwp.com/plugins/automatic-cache-clearing-ckzq1lhwm1407202wns6666te9z)
 * Added: Version number label under the logo in the menu element
 * Added: Extensions privacy info
 * Updated: Extensions licensing system
-* Updated: Site URL edit field to allow www/non-www change in site URL
-* Updated: Disallow users to delete the parent theme of the active child site
+* Updated: Site URL edit field to allow www/non-www change in site URL [Feature Request](https://feedback.mainwp.com/plugins/child-site-url-edit-option-ckzprh0we1170382wnsn7074ldl)
+* Updated: Disallow users to delete the parent theme of the active child site [Feature Request](https://feedback.mainwp.com/plugins/parent-themes-should-be-locked-by-default-ckzpofev7812132wnsg7vdeyan)
 * Updated: Renamed the Status menu item to Info
 * Updated: Info notice on Manage Plugins and Manage Themes page
 * Updated: The Select All, Deselect All element in the Select Sites box

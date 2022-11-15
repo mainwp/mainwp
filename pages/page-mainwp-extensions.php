@@ -86,6 +86,8 @@ class MainWP_Extensions {
 		$init_extensions = apply_filters_deprecated( 'mainwp-getextensions', array( $init_extensions ), '4.0.7.2', 'mainwp_getextensions' );
 		$init_extensions = apply_filters( 'mainwp_getextensions', $init_extensions );
 
+		$all_available_extensions = MainWP_Extensions_View::get_available_extensions( 'all' );
+
 		$activations_cached = get_option( 'mainwp_extensions_all_activation_cached', array() );
 
 		if ( ! is_array( $activations_cached ) ) {
@@ -174,7 +176,8 @@ class MainWP_Extensions {
 			$extension['version']          = $plugin_data['Version'];
 			$extension['description']      = $plugin_data['Description'];
 			$extension['author']           = $plugin_data['Author'];
-			$extension['iconURI']          = isset( $extension['icon'] ) ? $extension['icon'] : $file_data['IconURI'];
+			$extension['icon']             = isset( $extension['icon'] ) ? trim( $extension['icon'] ) : '';
+			$extension['iconURI']          = $file_data['IconURI'];
 			$extension['SupportForumURI']  = $file_data['SupportForumURI'];
 			$extension['DocumentationURI'] = $file_data['DocumentationURI'];
 			$extension['page']             = 'Extensions-' . str_replace( ' ', '-', ucwords( str_replace( '-', ' ', dirname( $slug ) ) ) );
@@ -204,6 +207,12 @@ class MainWP_Extensions {
 					$extension['product_item_id'] = $options['product_item_id'];
 				}
 			}
+
+			$ext_slug = dirname( $slug );
+			if ( isset( $all_available_extensions[ $ext_slug ] ) ) {
+				$extension['type'] = $all_available_extensions[ $ext_slug ]['type']; // to fix.
+			}
+
 			$save_extensions[] = $extension;
 			if ( mainwp_current_user_have_right( 'extension', dirname( $slug ) ) ) {
 				if ( isset( $extension['callback'] ) ) {
@@ -238,7 +247,6 @@ class MainWP_Extensions {
 		if ( ! $is_cached ) {
 			update_option( 'mainwp_extensions_all_activation_cached', $activations_cached );
 		}
-
 		self::init_left_menu( $extsPages );
 	}
 
@@ -253,6 +261,7 @@ class MainWP_Extensions {
 	 * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
 	 */
 	public static function init_left_menu( $extPages ) {
+		$subPages = array();
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
 			MainWP_Menu::add_left_menu(
 				array(
@@ -265,6 +274,25 @@ class MainWP_Extensions {
 				),
 				1
 			);
+
+			$init_sub_subleftmenu = array(
+				array(
+					'title'      => __( 'Manage Extensions', 'mainwp' ),
+					'parent_key' => 'Extensions',
+					'href'       => 'admin.php?page=Extensions',
+					'slug'       => 'Extensions',
+					'right'      => '',
+				),
+			);
+
+			MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'Extensions', 'Extensions' );
+
+			foreach ( $init_sub_subleftmenu as $item ) {
+				if ( MainWP_Menu::is_disable_menu_item( 3, $item['slug'] ) ) {
+					continue;
+				}
+				MainWP_Menu::add_left_menu( $item, 2 );
+			}
 
 			if ( 0 < count( $extPages ) ) {
 
@@ -330,7 +358,7 @@ class MainWP_Extensions {
 
 
 	/**
-	 * Method get_purchased_exts()
+	 * Method ajax_get_purchased_extensions()
 	 *
 	 * Get purchased MainWP Extensions.
 	 *
@@ -342,59 +370,125 @@ class MainWP_Extensions {
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
-	public static function get_purchased_exts() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function ajax_get_purchased_extensions() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
+
 		$api_key = isset( $_POST['api_key'] ) ? trim( $_POST['api_key'] ) : false;
 
-		if ( '' == $api_key ) {
-			die( wp_json_encode( array( 'error' => __( 'Requires API KEY.', 'mainwp' ) ) ) );
+		$all_available_extensions_compatible_api_response = array();
+		$all_free_pro_exts                                = array();
+		$all_org_exts                                     = array();
+		$map_extensions_group                             = array();
+		$purchased_data                                   = array();
+
+		$all_groups = MainWP_Extensions_View::get_extension_groups();
+
+		$grouped_exts = array( 'others' => '' );
+
+		foreach ( MainWP_Extensions_View::get_available_extensions( 'all' ) as $ext ) {
+			$all_available_extensions_compatible_api_response[ $ext['product_id'] ] = $ext;
+			$map_extensions_group[ $ext['product_id'] ]                             = current( $ext['group'] );
+			if ( 'free' === $ext['type'] || 'pro' === $ext['type'] ) {
+				$all_free_pro_exts[ $ext['product_id'] ] = $ext['product_id'];
+			} elseif ( 'org' === $ext['type'] ) {
+				$all_org_exts[ $ext['product_id'] ] = $ext['product_id'];
+			}
 		}
 
-		$data = MainWP_Api_Manager::instance()->get_purchased_extension( $api_key );
+		$extensions          = MainWP_Extensions_Handler::get_extensions();
+		$installed_softwares = array();
 
-		$result = json_decode( $data, true );
-		$return = array();
-
-		if ( is_array( $result ) ) {
-			if ( isset( $result['success'] ) && $result['success'] ) {
-				$all_available_exts   = array();
-				$map_extensions_group = array();
-				$free_group           = array();
-
-				foreach ( MainWP_Extensions_View::get_available_extensions() as $ext ) {
-					$all_available_exts[ $ext['product_id'] ]   = $ext;
-					$map_extensions_group[ $ext['product_id'] ] = current( $ext['group'] );
-					if ( isset( $ext['free'] ) && ! empty( $ext['free'] ) ) {
-						$free_group[] = $ext['product_id'];
-					}
-				}
-
-				$exts                = MainWP_Extensions_Handler::get_extensions();
-				$installed_softwares = array();
-				foreach ( $exts as $extension ) {
+		foreach ( $extensions as $extension ) {
+			if ( isset( $extension['type'] ) ) {
+				if ( 'free' === $extension['type'] || 'pro' === $extension['type'] ) {
 					if ( isset( $extension['product_id'] ) && ! empty( $extension['product_id'] ) ) {
 						$installed_softwares[ $extension['product_id'] ] = $extension['product_id'];
 					}
+				} elseif ( 'org' === $extension['type'] ) {
+					$ext_slug                         = dirname( $extension['slug'] );
+					$installed_softwares[ $ext_slug ] = $ext_slug;
+				}
+			}
+		}
+
+		$all_disabled_extensions = MainWP_Extensions_Handler::get_extensions_disabled( true );
+
+		foreach ( $all_disabled_extensions as $ext ) {
+			$installed_softwares[ $ext['product_id'] ] = $ext['product_id'];
+		}
+
+		$not_purchased_exts     = $all_free_pro_exts;
+		$not_installed_org_exts = array_diff_key( $all_org_exts, $installed_softwares );
+		$installing_exts        = $not_installed_org_exts;
+
+		if ( ! empty( $api_key ) ) {
+
+			$data = MainWP_Api_Manager::instance()->get_purchased_extension( $api_key );
+
+			$result = json_decode( $data, true );
+			$return = array();
+
+			if ( is_array( $result ) ) {
+				if ( isset( $result['success'] ) && $result['success'] ) {
+					$purchased_data     = ( isset( $result['purchased_data'] ) && is_array( $result['purchased_data'] ) ) ? $result['purchased_data'] : array();
+					$not_purchased_exts = array_diff_key( $all_free_pro_exts, $purchased_data );
+					$installing_exts    = array_diff_key( $purchased_data, $installed_softwares );
+					$installing_exts    = array_merge( $installing_exts, $not_installed_org_exts );
+				} elseif ( isset( $result['error'] ) ) {
+					$return = array( 'error' => $result['error'] );
+				}
+			} else {
+				$apisslverify = get_option( 'mainwp_api_sslVerifyCertificate' );
+				if ( 1 == $apisslverify ) {
+					MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', 0 );
+					$return['retry_action'] = 1;
+				}
+			}
+
+			if ( ! empty( $return ) ) {
+				wp_send_json( $return );
+			}
+		}
+
+		foreach ( $all_available_extensions_compatible_api_response as $product_id => $ext ) {
+
+			$item_html        = '';
+			$error            = '';
+			$ext_source_label = '';
+			$type             = '';
+			$notice           = '';
+			$privacy          = '<a href="#" class="extension-privacy-info-link" style="text-decoration:none"> <i class="shield alternate small icon"></i></a>';
+
+			$software_title = MainWP_Extensions_Handler::polish_string_name( $ext['title'] );
+
+			if ( ! empty( $ext['type'] ) ) {
+				$type = $ext['type'];
+				if ( 'free' == $type ) {
+					$ext_source_label = '<span class="ui mini green label">FREE</span>';
+				} elseif ( 'pro' == $type ) {
+					$ext_source_label = '<span class="ui mini blue label">PRO</span>';
+				} elseif ( 'org' == $type ) {
+					$ext_source_label = '<span class="ui mini grey label">.ORG</span>';
+				}
+			}
+
+			if ( 'MainWP WordPress SEO Extension' == $product_id || 'wp-seopress-mainwp' == $product_id ) {
+				$notice = ' <i class="info circle small icon"></i>';
+			}
+
+			$ext_source_label .= '&nbsp;';
+
+			if ( isset( $installing_exts[ $product_id ] ) ) {
+
+				$product_info = isset( $installing_exts[ $product_id ] ) ? $installing_exts[ $product_id ] : array();
+				if ( ! is_array( $product_info ) ) {
+					$product_info = array();
 				}
 
-				$purchased_data     = ( isset( $result['purchased_data'] ) && is_array( $result['purchased_data'] ) ) ? $result['purchased_data'] : array();
-				$not_purchased_exts = array_diff_key( $all_available_exts, $purchased_data );
-				$installing_exts    = array_diff_key( $purchased_data, $installed_softwares );
+				if ( 'free' === $type || 'pro' === $type ) {
 
-				$all_groups = MainWP_Extensions_View::get_extension_groups();
-
-				$grouped_exts = array( 'others' => '' );
-
-				foreach ( $installing_exts as $product_id => $product_info ) {
-					$item_html      = '';
-					$error          = '';
-					$software_title = isset( $all_available_exts[ $product_id ] ) ? $all_available_exts[ $product_id ]['title'] : $product_id;
-
-					if ( is_numeric( $software_title ) ) {
-						continue;
-					}
-
-					if ( isset( $product_info['package'] ) && ! empty( $product_info['package'] ) ) {
+					if ( $product_info && isset( $product_info['package'] ) && ! empty( $product_info['package'] ) ) {
 
 						/**
 						 * API Manager Upgrade URL
@@ -407,14 +501,14 @@ class MainWP_Extensions {
 						$package_url = apply_filters( 'mainwp_api_manager_upgrade_package_url', $product_info['package'], $product_info );
 
 						$item_html = '
-						<div class="item extension-to-install" download-link="' . $package_url . '" product-id="' . $product_id . '">
-							<div class="ui grid">
-								<div class="two column row">
-									<div class="four wide column"><span class="ui checkbox"><input type="checkbox" status="queue"><label><strong>' . str_replace( array( 'Extension', 'MainWP' ), '', $software_title ) . '</strong></label></span></div>
-									<div class="twelve wide column"><span class="installing-extension" status="queue"></span></div>
-								</div>
-							</div>
-						</div>';
+									<div class="item extension extension-to-install" download-link="' . esc_url( $package_url ) . '" plugin-slug="" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+										<div class="ui stackable grid">
+											<div class="two column row">
+												<div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $ext_source_label . '<strong><a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . '</strong></label></span></div>
+												<div class="right aligned column"><span class="installing-extension" status="queue"></span></div>
+											</div>
+										</div>
+									</div>';
 
 					} elseif ( isset( $product_info['error'] ) && ! empty( $product_info['error'] ) ) {
 						$error = MainWP_Api_Manager::instance()->check_response_for_intall_errors( $product_info, $software_title );
@@ -424,105 +518,152 @@ class MainWP_Extensions {
 
 					if ( ! empty( $error ) ) {
 						$item_html = '
-						<div class="item">
-							<div class="ui grid">
+									<div class="item extension">
+										<div class="ui stackable grid">
+											<div class="two column row">
+												<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . '</label></span></div>
+												<div class="right aligned column"><span data-tooltip="' . $error . '" data-inverted="" data-position="left center"><i class="times red icon"></i></span></div>
+											</div>
+										</div>
+									</div>';
+					}
+				} elseif ( 'org' === $type ) {
+					$item_html = '
+								<div class="item extension extension-to-install" download-link="" plugin-slug="' . esc_attr( $ext['slug'] ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+									<div class="ui stackable grid">
+										<div class="two column row">
+											<div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $ext_source_label . '<strong><a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . '</strong></label></span></div>
+											<div class="right aligned column"><span class="installing-extension" status="queue"></span></div>
+										</div>
+									</div>
+								</div>';
+				}
+			} elseif ( isset( $not_purchased_exts[ $product_id ] ) ) {
+				if ( 'free' === $type || 'pro' === $type ) {
+					$item_html = '
+						<div class="item extension" product-id="' . $product_id . '" slug="' . esc_attr( $ext['slug'] ) . '">
+							<div class="ui stackable grid">
 								<div class="two column row">
-									<div class="four wide column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . str_replace( array( 'Extension', 'MainWP' ), '', $software_title ) . '</label></span></div>
-									<div class="twelve wide column"><i class="times circle red icon"></i> ' . $error . '</div>
+									<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . '</label></span></div>
+									<div class="right aligned column"><a href="' . $ext['link'] . '" target="_blank" data-tooltip="' . __( 'Extension not purchased. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
 								</div>
 							</div>
 						</div>';
-					}
-
-					$group_id = isset( $map_extensions_group[ $product_id ] ) ? $map_extensions_group[ $product_id ] : false;
-					if ( ! empty( $group_id ) && isset( $all_groups[ $group_id ] ) ) {
-						if ( isset( $grouped_exts[ $group_id ] ) ) {
-							$grouped_exts[ $group_id ] .= $item_html;
-						} else {
-							$grouped_exts[ $group_id ] = $item_html;
-						}
-					} else {
-						$grouped_exts['others'] .= $item_html;
-					}
-				}
-
-				foreach ( $not_purchased_exts as $product_id => $ext ) {
-
+				} elseif ( 'org' === $type ) {
 					$item_html = '
-					<div class="item" product-id="' . $product_id . '">
-						<div class="ui grid">
+							<div class="item extension" product-id="' . $product_id . '" slug="' . esc_attr( $ext['slug'] ) . '">
+								<div class="ui stackable grid">
+									<div class="two column row">
+										<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . '</label></span></div>
+										<div class="right aligned column"><a href="' . $ext['url'] . '" target="_blank" data-tooltip="' . __( 'Extension not installed. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
+									</div>
+								</div>
+							</div>';
+				}
+			} elseif ( isset( $installed_softwares[ $product_id ] ) ) {
+				$item_html = '
+					<div class="item extension" slug="' . esc_attr( $ext['slug'] ) . '">
+						<div class="ui stackable grid">
 							<div class="two column row">
-								<div class="four wide column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . str_replace( array( 'Extension', 'MainWP' ), '', $ext['title'] ) . '</label></span></div>
-								<div class="twelve wide column">' . __( 'Extension not purchased. ', 'mainwp' ) . '<a href="' . $ext['link'] . '" target="_blank">' . __( 'Find out more...', 'mainwp' ) . '</a></div>
+								<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a> ' . $notice . '</label></span>' . $privacy . '</div>
+								<div class="right aligned column">Installed</div>
 							</div>
 						</div>
 					</div>';
-
-					$group_id = isset( $map_extensions_group[ $product_id ] ) ? $map_extensions_group[ $product_id ] : false;
-					if ( ! empty( $group_id ) && isset( $all_groups[ $group_id ] ) ) {
-						if ( isset( $grouped_exts[ $group_id ] ) ) {
-							$grouped_exts[ $group_id ] .= $item_html;
-						} else {
-							$grouped_exts[ $group_id ] = $item_html;
-						}
-					} elseif ( ! empty( $ext['title'] ) ) {
-						$grouped_exts['others'] .= $item_html;
-					}
-				}
-
-				$html = '';
-
-				$html .= '<div class="mainwp-installing-extensions">';
-
-				if ( empty( $installing_exts ) && count( $purchased_data ) == count( $all_available_exts ) ) {
-					$html .= '<div class="ui message yellow">' . __( 'All purchased extensions already installed.', 'mainwp' ) . '</div>';
-				} else {
-					$html .= '<div class="ui message info">' . __( 'You have access to all your purchased Extensions but you DO NOT need to install all off them. In order to avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Skip any Extension you do not want to install at this time.', 'mainwp' ) . '</div>';
-					$html .= '<div class="ui message info">' . sprintf( __( 'After installing all needed extensions, close the modal by clicking the Close button and %1$sactivate extensions API license%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank">', '</a>' ) . '</div>';
-					$html .= '<div id="mainwp-bulk-activating-extensions-status" class="ui message" style="display:none;"></div>';
-
-					foreach ( $all_groups as $gr_id => $gr_name ) {
-						if ( isset( $grouped_exts[ $gr_id ] ) ) {
-							$html .= '<h3>' . $gr_name . '</h3>';
-							$html .= '<div class="ui relaxed divided list">';
-							$html .= $grouped_exts[ $gr_id ];
-							$html .= '</div>';
-						}
-					}
-
-					if ( isset( $grouped_exts['others'] ) && ! empty( $grouped_exts['others'] ) ) {
-						$html .= '<h3>' . __( 'Other', 'mainwp' ) . '</h3>';
-						$html .= '<div class="ui relaxed divided list">';
-						$html .= $grouped_exts['others'];
-						$html .= '</div>';
-					}
-				}
-
-				if ( ! empty( $installing_exts ) ) {
-					$html .= '<p>
-                                <span class="extension_api_loading">
-
-                                    <i class="ui active inline loader tiny" style="display: none;"></i><span class="status hidden"></span>
-                                </span>
-                            </p> ';
-				}
-
-				$html  .= '</div>';
-				$return = array(
-					'result' => 'SUCCESS',
-					'data'   => $html,
-				);
-
-			} elseif ( isset( $result['error'] ) ) {
-				$return = array( 'error' => $result['error'] );
 			}
-		} else {
-			$apisslverify = get_option( 'mainwp_api_sslVerifyCertificate' );
-			if ( 1 == $apisslverify ) {
-				MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', 0 );
-				$return['retry_action'] = 1;
+
+			$group_id = isset( $map_extensions_group[ $product_id ] ) ? $map_extensions_group[ $product_id ] : false;
+			if ( ! empty( $group_id ) && isset( $all_groups[ $group_id ] ) ) {
+				if ( isset( $grouped_exts[ $group_id ] ) ) {
+					$grouped_exts[ $group_id ] .= $item_html;
+				} else {
+					$grouped_exts[ $group_id ] = $item_html;
+				}
+			} else {
+				$grouped_exts['others'] .= $item_html;
 			}
 		}
+
+		$html = '<div class="mainwp-installing-extensions">';
+
+		if ( empty( $installing_exts ) && count( $purchased_data ) == count( $all_free_pro_exts ) ) {
+			$html .= '<div class="ui message yellow">' . __( 'All purchased extensions already installed.', 'mainwp' ) . '</div>';
+		} else {
+			if ( isset( $not_purchased_exts ) && ! empty( $not_purchased_exts ) ) {
+				$html .= '<div class="ui message info">' . __( 'You have access to all our Free and third-party Extensions on WP.org and any that you have registered for, but you DO NOT need to install them. ', 'mainwp' );
+				$html .= '<br /><br />';
+				$html .= __( 'To avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Skip any Extension you do not want to install at this time.', 'mainwp' );
+				$html .= '<br /><br />';
+				$html .= sprintf( __( 'After installing all your selected Extensions, close the modal by clicking the Close button and %1$sactivate Extensions API license%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank">', '</a>' ) . '</div>';
+			} else {
+				$html .= '<div class="ui message info">' . __( 'You have access to the MainWP Pro plan, which gives you access to all MainWP-created Extensions, but you DO NOT need to install all of them.', 'mainwp' );
+				$html .= '<br /><br />';
+				$html .= __( 'To avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Skip any Extension you do not want to install at this time.', 'mainwp' );
+				$html .= '<br /><br />';
+				$html .= sprintf( __( 'After installing all your selected Extensions, close the modal by clicking the Close button and %1$sactivate Extensions API license%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank">', '</a>' ) . '</div>';
+			}
+
+			$html .= '<div id="mainwp-bulk-activating-extensions-status" class="ui message" style="display:none;"></div>';
+
+			$html .= '<div class="ui secondary green pointing tabular stackable menu" id="mainwp-install-extensions-menu">';
+			foreach ( $all_groups as $gr_id => $gr_name ) {
+				if ( isset( $grouped_exts[ $gr_id ] ) ) {
+					$html .= '<a class="item" data-tab="' . $gr_id . '">' . $gr_name . '</a>';
+				}
+			}
+			if ( isset( $grouped_exts['others'] ) && ! empty( $grouped_exts['others'] ) ) {
+				$html .= '<a class="item" data-tab="other">' . __( 'Other', 'mainwp' ) . '</h3>';
+			}
+			$html .= '</div>';
+
+			foreach ( $all_groups as $gr_id => $gr_name ) {
+				if ( isset( $grouped_exts[ $gr_id ] ) ) {
+					$html .= '<div class="ui tab" data-tab="' . $gr_id . '">';
+					$html .= '<div class="ui hidden divider"></div>';
+					$html .= '<h3>' . $gr_name . '</h3>';
+					$html .= '<div class="ui hidden divider"></div>';
+					$html .= '<div class="ui relaxed divided list">';
+					$html .= $grouped_exts[ $gr_id ];
+					$html .= '</div>';
+					$html .= '</div>';
+				}
+			}
+			if ( isset( $grouped_exts['others'] ) && ! empty( $grouped_exts['others'] ) ) {
+				$html .= '<div class="ui tab" data-tab="other">';
+				$html .= '<h3>Other</h3>';
+				$html .= '<div class="ui relaxed divided list">';
+				$html .= $grouped_exts['others'];
+				$html .= '</div>';
+				$html .= '</div>';
+			}
+		}
+		$html .= '<div class="ui hidden divider"></div>';
+		$html .= '<div class="ui hidden divider"></div>';
+		$html .= '<div class="ui secondary segment">';
+		$html .= '<span class="ui mini green label">FREE</span> - ' . __( 'Free extension developed by MainWP', 'mainwp' ) . '<br/>';
+		$html .= '<span class="ui mini blue label">PRO</span> - ' . __( 'Premium extension developed by MainWP', 'mainwp' ) . '<br/>';
+		$html .= '<span class="ui mini grey label">.ORG</span> - ' . __( 'Free extension developed by 3rd party author, available on WordPress.org', 'mainwp' );
+		$html .= '<div class="ui hidden fitted divider"></div>';
+		$html .= '<i class="info circle icon"></i> ' . __( 'Extension requires the corresponding plugin on your MainWP Dashboard site too.', 'mainwp' ) . '<br/>';
+		$html .= '<i class="shield alternate icon"></i> ' . __( 'Shows the extension privacy info.', 'mainwp' ) . '<br/>';
+		$html .= '</div>';
+
+		$html .= '<script>jQuery( "#mainwp-install-extensions-menu .item" ).tab();</script>';
+
+		if ( ! empty( $installing_exts ) ) {
+			$html .= '<p>
+				<span class="extension_api_loading">
+					<i class="ui active inline loader tiny" style="display: none;"></i><span class="status hidden"></span>
+				</span>
+			</p> ';
+		}
+
+		$html  .= '</div>';
+		$return = array(
+			'result' => 'SUCCESS',
+			'data'   => $html,
+		);
+
 		wp_send_json( $return );
 	}
 

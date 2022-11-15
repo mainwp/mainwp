@@ -214,20 +214,28 @@ mainwp_fetch_users = function () {
   var errors = [ ];
   var selected_sites = [ ];
   var selected_groups = [ ];
+  var selected_clients = [];
 
   if ( jQuery( '#select_by' ).val() == 'site' ) {
     jQuery( "input[name='selected_sites[]']:checked" ).each( function () {
       selected_sites.push( jQuery( this ).val() );
     } );
     if ( selected_sites.length == 0 ) {
-      errors.push( __( 'Please select at least one website or group.' )  );
+      errors.push( __( 'Please select at least one website or group or clients.' )  );
     }
-  } else {
+  } else if ( jQuery( '#select_by' ).val() == 'client' ) {
+    jQuery( "input[name='selected_clients[]']:checked" ).each( function () {
+        selected_clients.push( jQuery( this ).val() );
+    } );
+    if ( selected_clients.length == 0 ) {
+      errors.push( __( 'Please select at least one website or group or clients.' )  );
+    }
+  } else{
     jQuery( "input[name='selected_groups[]']:checked" ).each( function () {
       selected_groups.push( jQuery( this ).val() );
     } );
     if ( selected_groups.length == 0 ) {
-      errors.push( __( 'Please select at least one website or group.' ) );
+      errors.push( __( 'Please select at least one website or group or clients.' ) );
     }
   }
 
@@ -256,7 +264,8 @@ mainwp_fetch_users = function () {
     role: role,
     search: name,
     'groups[]': selected_groups,
-    'sites[]': selected_sites
+    'sites[]': selected_sites,
+    'clients[]': selected_clients
   } );
 
   jQuery( '#mainwp-loading-users-row' ).show();

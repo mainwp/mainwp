@@ -12,6 +12,8 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Extensions_Handler {
 
+// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+
 	/**
 	 * Method get_class_name()
 	 *
@@ -29,6 +31,14 @@ class MainWP_Extensions_Handler {
 	 * @var array $extensions
 	 */
 	public static $extensions;
+
+	/**
+	 * All disabled extensions.
+	 *
+	 * @var array $extensions
+	 */
+	public static $extensions_disabled;
+
 
 	/**
 	 * Possible options.
@@ -53,23 +63,23 @@ class MainWP_Extensions_Handler {
 	/**
 	 * Get Extension Slug.
 	 *
-	 * @param mixed $pSlug Extension Slug.
+	 * @param mixed $slug Extension Slug.
 	 *
 	 * @return string Extensions Slug.
 	 */
-	public static function get_extension_slug( $pSlug ) {
+	public static function get_extension_slug( $slug ) {
 		$currentExtensions = self::get_extensions();
 		if ( ! is_array( $currentExtensions ) || empty( $currentExtensions ) ) {
-			return $pSlug;
+			return $slug;
 		}
 
 		foreach ( $currentExtensions as $extension ) {
-			if ( isset( $extension['api'] ) && ( $extension['api'] == $pSlug ) ) {
+			if ( isset( $extension['api'] ) && ( $extension['api'] == $slug ) ) {
 				return $extension['slug'];
 			}
 		}
 
-		return $pSlug;
+		return $slug;
 	}
 
 	/**
@@ -117,25 +127,44 @@ class MainWP_Extensions_Handler {
 	 * Clean up MainWP Extention names.
 	 *
 	 * @param array $extension Array of MainWP Extentsions.
+	 * @param array $forced forced polish.
 	 *
 	 * @return string $menu_name Final Menu Name.
 	 */
-	public static function polish_ext_name( $extension ) {
-		if ( isset( $extension['mainwp'] ) && $extension['mainwp'] ) {
-			$menu_name = str_replace(
-				array(
-					'Extension',
-					'MainWP',
-				),
-				'',
-				$extension['name']
-			);
-			$menu_name = trim( $menu_name );
+	public static function polish_ext_name( $extension, $forced = false ) {
+		if ( $forced || ( isset( $extension['mainwp'] ) && $extension['mainwp'] ) ) {
+			$menu_name = self::polish_string_name( $extension['name'] );
 		} else {
 			$menu_name = $extension['name'];
 		}
 		return $menu_name;
 	}
+
+	/**
+	 * Clean up MainWP Extention names.
+	 *
+	 * @param string $name Extention name string.
+	 *
+	 * @return string $menu_name Final Name.
+	 */
+	public static function polish_string_name( $name ) {
+		if ( false !== stripos( $name, 'for Mainwp' ) ) {
+			return $name; // skip.
+		}
+		$new_name = str_replace(
+			array(
+				'Extensions',
+				'Mainwp',
+				'Extension',
+				'MainWP',
+			),
+			'',
+			$name
+		);
+		$new_name = trim( $new_name );
+		return $new_name;
+	}
+
 
 	/**
 	 * Load MainWP Extensions.
@@ -160,6 +189,72 @@ class MainWP_Extensions_Handler {
 			}
 		}
 		return self::$extensions;
+	}
+
+
+	/**
+	 * Get disabled MainWP Extensions.
+	 *
+	 * @param bool $compatible_api_response To get compatible api response values.
+	 *
+	 * @return array Array of disabled Extensions.
+	 */
+	public static function get_extensions_disabled( $compatible_api_response = false ) {
+		if ( ! isset( self::$extensions_disabled ) || $compatible_api_response ) {
+			self::$extensions_disabled = array();
+			$all_available_extensions  = MainWP_Extensions_View::get_available_extensions( 'all' );
+			$all_plugins               = get_plugins();
+
+			$exts_disabled = array();
+
+			if ( $all_plugins ) {
+				foreach ( $all_plugins as $plugin => $plugin_data ) {
+					if ( is_plugin_active( $plugin ) ) {
+						continue;
+					}
+					$slug = dirname( $plugin );
+					if ( isset( $all_available_extensions[ $slug ] ) ) {
+
+						$ext = $all_available_extensions[ $slug ];
+
+						$extension = array();
+
+						$extension['name']             = $plugin_data['Name'];
+						$extension['slug']             = $plugin;
+						$extension['version']          = $plugin_data['Version'];
+						$extension['description']      = $plugin_data['Description'];
+						$extension['author']           = $plugin_data['Author'];
+						$extension['img']              = isset( $ext['img'] ) ? $ext['img'] : '';
+						$extension['iconURI']          = isset( $plugin_data['IconURI'] ) ? $plugin_data['IconURI'] : '';
+						$extension['SupportForumURI']  = '';
+						$extension['DocumentationURI'] = '';
+						$extension['page']             = 'Extensions-' . str_replace( ' ', '-', ucwords( str_replace( '-', ' ', dirname( $slug ) ) ) );
+
+						$extension['api_key']             = '';
+						$extension['activated_key']       = 'Deactivated';
+						$extension['deactivate_checkbox'] = 'off';
+						$extension['product_id']          = $ext['product_id'];
+						$extension['instance_id']         = '';
+						$extension['software_version']    = '';
+						$extension['product_item_id']     = '';
+						$extension['type']                = $ext['type'];
+
+						if ( $compatible_api_response ) {
+							$exts_disabled[ $ext['product_id'] ] = $extension;
+						} else {
+							$exts_disabled[] = $extension;
+						}
+					}
+				}
+			}
+
+			if ( $compatible_api_response ) {
+				return $exts_disabled;
+			} else {
+				self::$extensions_disabled = $exts_disabled;
+			}
+		}
+		return self::$extensions_disabled;
 	}
 
 	/**
@@ -366,7 +461,8 @@ class MainWP_Extensions_Handler {
 				$thePlugin = get_plugin_data( $path . $srcFile );
 
 				if ( null != $thePlugin && '' !== $thePlugin && '' !== $thePlugin['Name'] ) {
-					$output     .= str_replace( array( 'Extension', 'MainWP' ), '', esc_html( $thePlugin['Name'] ) ) . sprintf( __( ' installed successfully. Don\'t forget to %1$sactivate the extension API license%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank">', '</a>' );
+					$the_name    = self::polish_string_name( $thePlugin['Name'] );
+					$output     .= esc_html( $the_name ) . ' ' . __( 'installed successfully. Do not forget to activate the extension API license.', 'mainwp' );
 					$plugin_slug = $result['destination_name'] . '/' . $srcFile;
 
 					if ( $activatePlugin ) {
@@ -664,10 +760,11 @@ class MainWP_Extensions_Handler {
 
 			return array(
 				array(
-					'id'        => $websiteid,
-					'url'       => MainWP_Utility::get_nice_url( $website->url, true ),
-					'name'      => $website->name,
-					'totalsize' => $website->totalsize,
+					'id'          => $websiteid,
+					'url'         => MainWP_Utility::get_nice_url( $website->url, true ),
+					'name'        => $website->name,
+					'totalsize'   => $website->totalsize,
+					'sync_errors' => $website->sync_errors,
 				),
 			);
 		} else {
@@ -731,10 +828,11 @@ class MainWP_Extensions_Handler {
 		$output = array();
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			$re = array(
-				'id'        => $website->id,
-				'url'       => MainWP_Utility::get_nice_url( $website->url, true ),
-				'name'      => $website->name,
-				'totalsize' => $website->totalsize,
+				'id'          => $website->id,
+				'url'         => MainWP_Utility::get_nice_url( $website->url, true ),
+				'name'        => $website->name,
+				'totalsize'   => $website->totalsize,
+				'sync_errors' => $website->sync_errors,
 			);
 
 			if ( 0 < $totalRecords ) {
@@ -812,6 +910,26 @@ class MainWP_Extensions_Handler {
 		}
 
 		return $output;
+	}
+
+
+	/**
+	 * Method hook_get_sql_websites_for_current_user()
+	 *
+	 * Get sql websites for current user.
+	 *
+	 * @param mixed  $false First input filter value.
+	 * @param string $pluginFile Extension plugin file to verify.
+	 * @param string $key The child-key.
+	 * @param mixed  $params  Input params data.
+	 *
+	 * @return string sql.
+	 */
+	public static function hook_get_sql_websites_for_current_user( $false, $pluginFile, $key, $params ) {
+		if ( ! self::hook_verify( $pluginFile, $key ) ) {
+			return false;
+		}
+		return MainWP_DB::instance()->get_sql_wp_for_current_user( $params );
 	}
 
 	/**

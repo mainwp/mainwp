@@ -123,6 +123,20 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_monitoring_sites_display_rows', array( &$this, 'ajax_monitoring_display_rows' ) );
 
 		$this->add_action_nonce( 'mainwp-common-nonce' );
+
+		// Page: Clients.
+		$this->add_action( 'mainwp_clients_add_client', array( &$this, 'mainwp_clients_add_client' ) );
+		$this->add_action( 'mainwp_clients_delete_client', array( &$this, 'mainwp_clients_delete_client' ) );
+
+		$this->add_action( 'mainwp_clients_save_field', array( &$this, 'mainwp_clients_save_field' ) );
+		$this->add_action( 'mainwp_clients_delete_general_field', array( &$this, 'mainwp_clients_delete_general_field' ) );
+		$this->add_action( 'mainwp_clients_delete_field', array( &$this, 'mainwp_clients_delete_field' ) );
+		$this->add_action( 'mainwp_clients_notes_save', array( &$this, 'mainwp_clients_notes_save' ) );
+		$this->add_action( 'mainwp_clients_suspend_client', array( &$this, 'mainwp_clients_suspend_client' ) );
+		$this->add_action( 'mainwp_refresh_icon', array( &$this, 'ajax_refresh_icon' ) );
+		$this->add_action( 'mainwp_upload_custom_icon', array( &$this, 'ajax_upload_custom_icon' ) );
+		$this->add_action( 'mainwp_select_custom_theme', array( &$this, 'ajax_select_custom_theme' ) );
+		$this->add_action( 'mainwp_site_actions_dismiss', array( &$this, 'ajax_site_actions_dismiss' ) );
 	}
 
 	/**
@@ -162,12 +176,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_users_search' );
 		MainWP_Cache::init_session();
 
-		$role   = isset( $_POST['role'] ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : '';
-		$groups = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
-		$sites  = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
-		$search = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
+		$role    = isset( $_POST['role'] ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : '';
+		$groups  = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
+		$sites   = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
+		$clients = isset( $_POST['clients'] ) && is_array( $_POST['clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['clients'] ) ) : '';
+		$search  = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
 
-		MainWP_User::render_table( false, $role, $groups, $sites, $search );
+		MainWP_User::render_table( false, $role, $groups, $sites, $search, $clients );
 		die();
 	}
 
@@ -194,6 +209,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$status             = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
 		$groups             = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
 		$sites              = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
+		$clients            = isset( $_POST['clients'] ) && is_array( $_POST['clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['clients'] ) ) : '';
 		$postId             = isset( $_POST['postId'] ) ? sanitize_text_field( wp_unslash( $_POST['postId'] ) ) : '';
 		$userId             = isset( $_POST['userId'] ) ? sanitize_text_field( wp_unslash( $_POST['userId'] ) ) : '';
 		$search_on          = isset( $_POST['search_on'] ) ? sanitize_text_field( wp_unslash( $_POST['search_on'] ) ) : '';
@@ -201,9 +217,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 		MainWP_Cache::init_session();
 		if ( $table_content_only ) {
-			MainWP_Post::render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type, $search_on, true );
+			MainWP_Post::render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type, $search_on, true, $clients );
 		} else {
-			MainWP_Post::render_table( false, $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type, $search_on );
+			MainWP_Post::render_table( false, $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type, $search_on, $clients );
 		}
 		die();
 	}
@@ -230,10 +246,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$status    = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
 		$groups    = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
 		$sites     = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
+		$clients   = isset( $_POST['clients'] ) && is_array( $_POST['clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['clients'] ) ) : '';
 		$search_on = isset( $_POST['search_on'] ) ? sanitize_text_field( wp_unslash( $_POST['search_on'] ) ) : '';
 
 		MainWP_Cache::init_session();
-		MainWP_Page::render_table( false, $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on );
+		MainWP_Page::render_table( false, $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on, $clients );
 		die();
 	}
 
@@ -879,6 +896,90 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	}
 
 	/**
+	 * Method mainwp_clients_add_client()
+	 *
+	 * Add Client for,
+	 * Page: BulkAddClient.
+	 */
+	public function mainwp_clients_add_client() {
+		$this->check_security( 'mainwp_clients_add_client' );
+		MainWP_Client::add_client();
+		die();
+	}
+
+	/**
+	 * Method mainwp_clients_delete_client()
+	 *
+	 * Add Client for,
+	 * Page: BulkAddClient.
+	 */
+	public function mainwp_clients_delete_client() {
+		$this->check_security( 'mainwp_clients_delete_client' );
+		$ret       = array( 'success' => false );
+		$client_id = isset( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0;
+
+		if ( $client_id ) {
+			MainWP_DB_Client::instance()->delete_client( $client_id );
+			$ret['success'] = 'SUCCESS';
+			$ret['result']  = __( 'Client removed successfully.', 'mainwp' );
+		} else {
+			$ret['result'] = __( 'Client ID empty.', 'mainwp' );
+		}
+
+		echo wp_json_encode( $ret );
+		exit;
+	}
+
+	/**
+	 * Method mainwp_clients_save_field()
+	 *
+	 * Save client custom fields.
+	 */
+	public function mainwp_clients_save_field() {
+		$this->check_security( 'mainwp_clients_save_field' );
+		MainWP_Client::save_client_field();
+		die();
+	}
+
+
+	/**
+	 * Method mainwp_clients_delete_general_field()
+	 *
+	 * Delete client general fields.
+	 */
+	public function mainwp_clients_delete_general_field() {
+		$this->check_security( 'mainwp_clients_delete_field' );
+		$ret       = array( 'success' => false );
+		$field_id  = intval( $_POST['field_id'] );
+		$client_id = 0; // 0 general fields.
+		if ( MainWP_DB_Client::instance()->delete_client_field_by( 'field_id', $field_id, $client_id ) ) {
+			$ret['success'] = true;
+		}
+		echo wp_json_encode( $ret );
+		exit;
+	}
+
+
+		/**
+		 * Method mainwp_clients_delete_field()
+		 *
+		 * Delete client custom fields.
+		 */
+	public function mainwp_clients_delete_field() {
+		$this->check_security( 'mainwp_clients_delete_field' );
+		$ret       = array( 'success' => false );
+		$field_id  = intval( $_POST['field_id'] );
+		$client_id = isset( $_POST['client_id'] ) ? intval( $_POST['client_id'] ) : 0; // $client_id > 0, individual token.
+		if ( $client_id ) {
+			if ( MainWP_DB_Client::instance()->delete_client_field_by( 'field_id', $field_id, $client_id ) ) {
+				$ret['success'] = true;
+			}
+		}
+		echo wp_json_encode( $ret );
+		exit;
+	}
+
+	/**
 	 * Method mainwp_notes_save()
 	 *
 	 * Post handler for save notes on,
@@ -889,6 +990,48 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_notes_save() {
 		$this->secure_request( 'mainwp_notes_save' );
 		MainWP_Manage_Sites_Handler::save_note();
+	}
+
+	/**
+	 * Method mainwp_clients_notes_save()
+	 *
+	 * Post handler for save notes on,
+	 * Page: Manage Sites.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::save_note()
+	 */
+	public function mainwp_clients_notes_save() {
+		$this->secure_request( 'mainwp_clients_notes_save' );
+		MainWP_Client::save_note();
+	}
+
+	/**
+	 * Method mainwp_clients_suspend_client()
+	 *
+	 * Post handler for suspend client,
+	 * Page: Manage Sites.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::save_note()
+	 */
+	public function mainwp_clients_suspend_client() {
+		$this->secure_request( 'mainwp_clients_suspend_client' );
+		$clientid  = isset( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0;
+		$suspended = isset( $_POST['suspend_status'] ) && $_POST['suspend_status'] ? 1 : 0;
+
+		if ( empty( $clientid ) ) {
+			wp_die( 'Error - empty client id!' );
+		}
+
+		$params = array(
+			'client_id' => $clientid,
+			'suspended' => $suspended,
+		);
+
+		MainWP_DB_Client::instance()->update_client( $params );
+
+		MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $clientid, $suspended );
+
+		wp_die( 'success' );
 	}
 
 	/**
@@ -1111,5 +1254,106 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 		wp_send_json( $information );
 	}
+
+	/**
+	 * Method ajax_refresh_icon()
+	 */
+	public function ajax_refresh_icon() {
+		$this->secure_request( 'mainwp_refresh_icon' );
+		$slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
+		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
+
+		if ( empty( $slug ) ) {
+			wp_die( 'failed' );
+		}
+
+		$fet_icon = MainWP_System_Utility::handle_get_icon( $slug, $type );
+
+		if ( ! empty( $fet_icon ) ) {
+			wp_die( 'success' );
+		} else {
+			wp_die( 'failed' );
+		}
+	}
+
+	/**
+	 * Method ajax_upload_custom_icon()
+	 */
+	public function ajax_upload_custom_icon() {
+		$this->secure_request( 'mainwp_upload_custom_icon' );
+		$slug   = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
+		$type   = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
+		$delete = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0;
+
+		if ( empty( $slug ) || ( 'plugin' !== $type && 'theme' !== $type ) ) {
+			wp_die( 'failed' );
+		}
+
+		$sub_folder = '';
+
+		if ( 'plugin' === $type ) {
+			$sub_folder = 'plugin-icons';
+		} elseif ( 'theme' === $type ) {
+			$sub_folder = 'theme-icons';
+		} else {
+			wp_die( wp_json_encode( array( 'result' => 'invalid' ) ) );
+		}
+
+		if ( $delete ) {
+			MainWP_System_Utility::update_cached_icons( '', $slug, $type, true );
+			wp_die( wp_json_encode( array( 'result' => 'success' ) ) );
+		}
+
+		$output = MainWP_System_Utility::handle_upload_image( $sub_folder, $_FILES['mainwp_upload_icon_uploader'], 0 );
+
+		$uploaded_icon = 'NOTCHANGE';
+		if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
+			$uploaded_icon = $output['filename'];
+		}
+
+		if ( 'NOTCHANGE' !== $uploaded_icon ) {
+			MainWP_System_Utility::update_cached_icons( $uploaded_icon, $slug, $type, true );
+			wp_die( wp_json_encode( array( 'result' => 'success' ) ) );
+		} else {
+			wp_die( wp_json_encode( array( 'result' => 'failed' ) ) );
+		}
+	}
+
+	/**
+	 * Method ajax_select_custom_theme()
+	 */
+	public function ajax_select_custom_theme() {
+		$this->secure_request( 'mainwp_select_custom_theme' );
+		$theme = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : '';
+		if ( empty( $theme ) ) {
+			wp_die( 'failed' );
+		}
+
+		$user = wp_get_current_user();
+		if ( empty( $user ) || empty( $user->ID ) ) {
+			wp_die( 'failed' );
+		}
+
+		update_user_option( $user->ID, 'mainwp_selected_theme', $theme );
+		wp_die( 'success' );
+	}
+
+
+	/**
+	 * Method ajax_site_actions_dismiss()
+	 */
+	public function ajax_site_actions_dismiss() {
+		$this->secure_request( 'mainwp_site_actions_dismiss' );
+		$action_id = isset( $_POST['action_id'] ) ? intval( $_POST['action_id'] ) : 0;
+		if ( empty( $action_id ) ) {
+			wp_die( 'failed' );
+		}
+		$update = array(
+			'dismiss'   => 1,
+		);
+		MainWP_DB_Site_Actions::instance()->update_action_by_id( $action_id, $update );
+		wp_die( 'success' );
+	}
+
 
 }

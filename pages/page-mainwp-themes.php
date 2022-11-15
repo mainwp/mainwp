@@ -360,18 +360,20 @@ class MainWP_Themes {
 	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
 	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_result()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_empty_bulk_actions()
-	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render() {
-		$cachedSearch    = MainWP_Cache::get_cached_context( 'Themes' );
-		$selected_sites  = array();
-		$selected_groups = array();
+		$cachedSearch     = MainWP_Cache::get_cached_context( 'Themes' );
+		$selected_sites   = array();
+		$selected_groups  = array();
+		$selected_clients = array();
 
 		if ( null != $cachedSearch ) {
 			if ( is_array( $cachedSearch['sites'] ) ) {
 				$selected_sites = $cachedSearch['sites'];
 			} elseif ( is_array( $cachedSearch['groups'] ) ) {
 				$selected_groups = $cachedSearch['groups'];
+			} elseif ( is_array( $cachedSearch['clients'] ) ) {
+				$selected_clients = $cachedSearch['clients'];
 			}
 		}
 
@@ -385,7 +387,16 @@ class MainWP_Themes {
 				<div class="ui mini form mainwp-actions-bar">
 					<div class="ui stackable grid">
 						<div class="ui two column row">
-							<div class="column">
+							<div class="left aligned column">
+								<div id="mainwp-themes-bulk-actions-wapper">
+								<?php
+								if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
+									echo $cachedResult['bulk_actions'];
+								} else {
+									MainWP_UI::render_empty_bulk_actions();
+								}
+								?>
+								</div>
 								<button id="mainwp-install-themes-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
 								<?php
 								/**
@@ -399,16 +410,7 @@ class MainWP_Themes {
 								?>
 							</div>
 							<div class="right aligned column">
-								<div id="mainwp-themes-bulk-actions-wapper">
-								<?php
-								if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
-									echo $cachedResult['bulk_actions'];
-								} else {
-									MainWP_UI::render_empty_bulk_actions();
-								}
-								?>
-								</div>
-
+								<button id="mainwp-install-themes-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
 								<?php
 								/**
 								 * Action: mainwp_themes_actions_bar_right
@@ -427,7 +429,7 @@ class MainWP_Themes {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-themes-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-themes-info-message"></i>
-							<div><?php echo __( 'Manage installed themes on your child sites. Here you can activate, deactive, and delete installed themes.', 'mainwp' ); ?></div>
+							<div><?php echo __( 'Manage installed themes on your child sites. Here you can activate, deactivate, and delete installed themes.', 'mainwp' ); ?></div>
 							<p><?php echo __( 'To Activate or Delete a specific theme, you must search only for Inactive themes on your child sites. If you search for Active or both Active and Inactive, the Activate and Delete actions will be disabled.', 'mainwp' ); ?></p>
 							<p><?php echo sprintf( __( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">', '</a>' ); ?></p>
 						</div>
@@ -441,18 +443,18 @@ class MainWP_Themes {
 						<?php if ( is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) : ?>
 								<?php echo $cachedResult['result']; ?>
 						<?php else : ?>
-							<table id="mainwp-manage-themes-table-placeholder" class="ui table">
-								<thead>
-									<tr>
-										<th><?php esc_html_e( 'Sites / Themes', 'mainwp' ); ?></th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr>
-										<td><?php esc_html_e( 'Please use the search options to find wanted themes.', 'mainwp' ); ?></td>
-									</tr>
-								</tbody>
-							</table>
+							<div class="ui padded segment">
+								<div class="ui hidden divider"></div>
+								<div class="ui hidden divider"></div>
+								<div class="ui hidden divider"></div>
+								<h2 class="ui icon header">
+									<i class="settings icon"></i>
+									<div class="content">
+									<?php esc_html_e( 'Manage Themes', 'mainwp' ); ?>
+									<div class="sub header"><?php esc_html_e( 'Use the search options to find the theme you want to manage.', 'mainwp' ); ?></div>
+									</div>
+								</h2>
+							</div>
 						<?php endif; ?>
 						</div>
 					</div>
@@ -482,7 +484,18 @@ class MainWP_Themes {
 					do_action( 'mainwp_manage_themes_before_select_sites' );
 					?>
 					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-					<div class="content active"><?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?></div>
+					<div class="content active">
+						<?php
+						$sel_params = array(
+							'class'            => 'mainwp_select_sites_box_left',
+							'selected_sites'   => $selected_sites,
+							'selected_groups'  => $selected_groups,
+							'selected_clients' => $selected_clients,
+							'show_client'      => true,
+						);
+						MainWP_UI_Select_Sites::select_sites_box( $sel_params );
+						?>
+						</div>
 					<?php
 					/**
 					 * Action: mainwp_manage_themes_after_select_sites
@@ -510,7 +523,7 @@ class MainWP_Themes {
 					?>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="themes-manage-info"></i>
-						<?php esc_html_e( 'A theme needs to be Inactive in order for it to be Activated or Deleted.', 'mainwp' ); ?>
+						<?php esc_html_e( 'A theme needs to be Inactive for it to be Activated or Deleted.', 'mainwp' ); ?>
 					</div>
 					<div class="ui mini form">
 						<div class="field">
@@ -648,6 +661,7 @@ class MainWP_Themes {
 	 * @param array  $groups Selected groups of child sites.
 	 * @param array  $sites Selected child sites.
 	 * @param mixed  $not_criteria Show not criteria result.
+	 * @param mixed  $clients Selected Clients.
 	 *
 	 * @return mixed $result Errors|HTML.
 	 *
@@ -665,13 +679,28 @@ class MainWP_Themes {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
-	public static function render_table( $keyword, $status, $groups, $sites, $not_criteria ) { // phpcs:ignore -- complex function.
+	public static function render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients = '' ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Themes' );
 
 		$output                      = new \stdClass();
 		$output->errors              = array();
 		$output->themes              = array();
 		$output->not_criteria_themes = array();
+
+		$data_fields = array(
+			'id',
+			'url',
+			'name',
+			'adminname',
+			'nossl',
+			'privkey',
+			'nosslkey',
+			'http_user',
+			'http_pass',
+			'ssl_version',
+			'sync_errors',
+			'themes',
+		);
 
 		if ( 1 == get_option( 'mainwp_optimize' ) ) {
 			if ( '' != $sites ) {
@@ -695,16 +724,18 @@ class MainWP_Themes {
 								continue;
 							}
 
-							$theme['websiteid']  = $website->id;
-							$theme['websiteurl'] = $website->url;
-							$output->themes[]    = $theme;
-							$not_found           = false;
+							$theme['websiteid']   = $website->id;
+							$theme['websiteurl']  = $website->url;
+							$theme['websitename'] = $website->name;
+							$output->themes[]     = $theme;
+							$not_found            = false;
 						}
 						if ( $not_found && $not_criteria ) {
 							for ( $i = 0; $i < $_count; $i ++ ) {
 								$theme                         = $allThemes[ $i ];
 								$theme['websiteid']            = $website->id;
 								$theme['websiteurl']           = $website->url;
+								$theme['websitename']          = $website->name;
 								$output->not_criteria_themes[] = $theme;
 							}
 						}
@@ -717,7 +748,7 @@ class MainWP_Themes {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' !== $website->sync_errors ) {
+							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 								continue;
 							}
 							$allThemes = json_decode( $website->themes, true );
@@ -736,10 +767,11 @@ class MainWP_Themes {
 									continue;
 								}
 
-								$theme['websiteid']  = $website->id;
-								$theme['websiteurl'] = $website->url;
-								$output->themes[]    = $theme;
-								$not_found           = false;
+								$theme['websiteid']   = $website->id;
+								$theme['websiteurl']  = $website->url;
+								$theme['websitename'] = $website->name;
+								$output->themes[]     = $theme;
+								$not_found            = false;
 							}
 
 							if ( $not_found && $not_criteria ) {
@@ -747,11 +779,60 @@ class MainWP_Themes {
 									$theme                         = $allThemes[ $i ];
 									$theme['websiteid']            = $website->id;
 									$theme['websiteurl']           = $website->url;
+									$theme['websitename']          = $website->name;
 									$output->not_criteria_themes[] = $theme;
 								}
 							}
 						}
 						MainWP_DB::free_result( $websites );
+					}
+				}
+			}
+
+			if ( '' !== $clients && is_array( $clients ) ) {
+				$websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+					$clients,
+					array(
+						'select_data' => $data_fields,
+					)
+				);
+				if ( $websites ) {
+					foreach ( $websites as $website ) {
+						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							continue;
+						}
+						$allThemes = json_decode( $website->themes, true );
+						$_count    = count( $allThemes );
+						$not_found = true;
+						for ( $i = 0; $i < $_count; $i ++ ) {
+							$theme = $allThemes[ $i ];
+							if ( 'active' === $status || 'inactive' === $status ) {
+								if ( 1 == $theme['active'] && 'active' !== $status ) {
+									continue;
+								} elseif ( 1 != $theme['active'] && 'inactive' !== $status ) {
+									continue;
+								}
+							}
+							if ( '' != $keyword && ! stristr( $theme['title'], $keyword ) ) {
+								continue;
+							}
+
+							$theme['websiteid']   = $website->id;
+							$theme['websiteurl']  = $website->url;
+							$theme['websitename'] = $website->name;
+							$output->themes[]     = $theme;
+							$not_found            = false;
+						}
+
+						if ( $not_found && $not_criteria ) {
+							for ( $i = 0; $i < $_count; $i ++ ) {
+								$theme                         = $allThemes[ $i ];
+								$theme['websiteid']            = $website->id;
+								$theme['websiteurl']           = $website->url;
+								$theme['websitename']          = $website->name;
+								$output->not_criteria_themes[] = $theme;
+							}
+						}
 					}
 				}
 			}
@@ -761,21 +842,13 @@ class MainWP_Themes {
 			if ( '' !== $sites ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$website                    = MainWP_DB::instance()->get_website_by_id( $v );
+						$website = MainWP_DB::instance()->get_website_by_id( $v );
+						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							continue;
+						}
 						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 							$website,
-							array(
-								'id',
-								'url',
-								'name',
-								'adminname',
-								'nossl',
-								'privkey',
-								'nosslkey',
-								'http_user',
-								'http_pass',
-								'ssl_version',
-							)
+							$data_fields
 						);
 					}
 				}
@@ -786,26 +859,35 @@ class MainWP_Themes {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' !== $website->sync_errors ) {
+							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 								continue;
 							}
 							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 								$website,
-								array(
-									'id',
-									'url',
-									'name',
-									'adminname',
-									'nossl',
-									'privkey',
-									'nosslkey',
-									'http_user',
-									'http_pass',
-									'ssl_version',
-								)
+								$data_fields
 							);
 						}
 						MainWP_DB::free_result( $websites );
+					}
+				}
+			}
+
+			if ( '' !== $clients && is_array( $clients ) ) {
+				$websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+					$clients,
+					array(
+						'select_data' => $data_fields,
+					)
+				);
+				if ( $websites ) {
+					foreach ( $websites as $website ) {
+						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							continue;
+						}
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+							$website,
+							$data_fields
+						);
 					}
 				}
 			}
@@ -845,6 +927,7 @@ class MainWP_Themes {
 				'status'       => $status,
 				'sites'        => ( '' !== $sites ) ? $sites : '',
 				'groups'       => ( '' !== $groups ) ? $groups : '',
+				'clients'      => ( '' !== $clients ) ? $clients : '',
 				'not_criteria' => $not_criteria ? true : false,
 			)
 		);
@@ -862,7 +945,7 @@ class MainWP_Themes {
 			$sites             = array();
 			$siteThemes        = array();
 			$themes            = array();
-			$themesVersion     = array();
+			$themesNameSites   = array();
 			$themesRealVersion = array();
 			$themesSlug        = array();
 			$themes_list       = array();
@@ -876,6 +959,7 @@ class MainWP_Themes {
 			}
 
 			foreach ( $themes_list as $theme ) {
+				$slug_ver            = esc_html( $theme['name'] . '_' . $theme['version'] );
 				$theme['name']       = esc_html( $theme['name'] );
 				$theme['version']    = esc_html( $theme['version'] );
 				$theme['title']      = esc_html( $theme['title'] );
@@ -883,33 +967,29 @@ class MainWP_Themes {
 				$theme['active']     = ( 1 == $theme['active'] ) ? 1 : 0;
 				$theme['websiteurl'] = esc_url_raw( $theme['websiteurl'] );
 
-				$sites[ $theme['websiteid'] ]                                  = $theme['websiteurl'];
-				$themes[ $theme['name'] . '_' . $theme['version'] ]            = $theme['name'];
-				$themesSlug[ $theme['name'] . '_' . $theme['version'] ]        = $theme['slug'];
-				$themesVersion[ $theme['name'] . '_' . $theme['version'] ]     = array(
-					'title' => $theme['title'],
-					'ver'   => $theme['version'],
+				$sites[ $theme['websiteid'] ] = array(
+					'websiteurl'  => $theme['websiteurl'],
+					'websitename' => $theme['websitename'],
 				);
-				$themesRealVersion[ $theme['name'] . '_' . $theme['version'] ] = $theme['version'];
+				$themesName[ $slug_ver ]      = $theme['name'];
+				$themesSlug[ $slug_ver ]      = $theme['slug'];
+
+				$themesNameSites[ $theme['name'] ][ $theme['websiteid'] ][] = $slug_ver;
+
+				$themesRealVersion[ $slug_ver ] = $theme['version'];
 				if ( ! isset( $siteThemes[ $theme['websiteid'] ] ) || ! is_array( $siteThemes[ $theme['websiteid'] ] ) ) {
 					$siteThemes[ $theme['websiteid'] ] = array();
 				}
-				$siteThemes[ $theme['websiteid'] ][ $theme['name'] . '_' . $theme['version'] ] = $theme;
+				$siteThemes[ $theme['websiteid'] ][ $slug_ver ] = $theme;
 			}
 
-			uasort(
-				$themesVersion,
-				function( $a, $b ) {
-					$ret = strcasecmp( $a['title'], $b['title'] );
-					if ( 0 != $ret ) {
-						return $ret;
-					}
-					return version_compare( $a['ver'], $b['ver'] );
-				}
-			);
+			ksort( $themesNameSites, SORT_STRING );
 
 			ob_start();
-			self::render_manage_table( $sites, $themes, $siteThemes, $themesSlug, $themesVersion, $themesRealVersion );
+			self::render_manage_table( $sites, $themesName, $siteThemes, $themesSlug, $themesNameSites, $themesRealVersion );
+
+			MainWP_UI::render_modal_upload_icon();
+
 			$newOutput = ob_get_clean();
 		}
 
@@ -928,13 +1008,64 @@ class MainWP_Themes {
 	 * Render the Manage Themes table
 	 *
 	 * @param array  $sites List of sites.
-	 * @param array  $themes List of themes.
+	 * @param array  $themesName List of themes.
 	 * @param array  $siteThemes List of themes for the site.
-	 * @param string $themesSlug Theme slug.
-	 * @param string $themesVersion Installed theme version.
+	 * @param string $themesSlug List of theme slugs.
+	 * @param array  $themesNameSites Installed theme version.
 	 * @param string $themesRealVersion Current theme version.
 	 */
-	public static function render_manage_table( $sites, $themes, $siteThemes, $themesSlug, $themesVersion, $themesRealVersion ) {
+	public static function render_manage_table( $sites, $themesName, $siteThemes, $themesSlug, $themesNameSites, $themesRealVersion ) {
+
+		$userExtension        = MainWP_DB_Common::instance()->get_user_extension();
+		$decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
+		$trustedThemes        = json_decode( $userExtension->trusted_themes, true );
+
+		if ( ! is_array( $trustedThemes ) ) {
+			$trustedThemes = array();
+		}
+
+		$updateWebsites = array();
+
+		foreach ( $sites as $site_id => $info ) {
+
+			$theme_upgrades = array();
+			$website        = MainWP_DB::instance()->get_website_by_id( $site_id );
+			if ( $website ) {
+				if ( ! $website->is_ignoreThemeUpdates ) {
+					$theme_upgrades         = json_decode( $website->theme_upgrades, true );
+					$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
+					$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+
+					if ( is_array( $decodedPremiumUpgrades ) ) {
+						foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+							$premiumUpgrade['premium'] = true;
+
+							if ( 'theme' === $premiumUpgrade['type'] ) {
+								if ( ! is_array( $theme_upgrades ) ) {
+									$theme_upgrades = array();
+								}
+
+								$premiumUpgrade = array_filter( $premiumUpgrade );
+
+								if ( ! isset( $theme_upgrades[ $crrSlug ] ) ) {
+									$theme_upgrades[ $crrSlug ] = array();
+								}
+								$theme_upgrades[ $crrSlug ] = array_merge( $theme_upgrades[ $crrSlug ], $premiumUpgrade );
+							}
+						}
+					}
+					$ignored_themes = json_decode( $website->ignored_themes, true );
+					if ( is_array( $ignored_themes ) ) {
+						$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+					}
+
+					if ( is_array( $decodedIgnoredThemes ) ) {
+						$theme_upgrades = array_diff_key( $theme_upgrades, $decodedIgnoredThemes );
+					}
+				}
+			}
+			$updateWebsites[ $site_id ] = $theme_upgrades;
+		}
 
 		/**
 		 * Action: mainwp_before_themes_table
@@ -945,125 +1076,220 @@ class MainWP_Themes {
 		 */
 		do_action( 'mainwp_before_themes_table' );
 		?>
-		<table id="mainwp-manage-themes-table" style="min-width:100%" class="ui celled single line selectable compact unstackable table">
-			<thead>
-				<tr>
-					<th class="mainwp-first-th no-sort"></th>
+
+		<div class="ui secondary segment main-master-checkbox">
+			<div class="ui grid">
+				<div class="one wide center aligned middle aligned column">
+					<span class="trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></span>
+				</div>
+				<div class="one wide center aligned middle aligned column"><div class="ui checkbox main-master  not-auto-init"><input type="checkbox"/><label></label></div></div>
+				<div class="one wide center aligned middle aligned column"></div>
+				<div class="five wide middle aligned column"><?php esc_html_e( 'Theme', 'mainwp' ); ?></div>
+				<div class="two wide center aligned middle aligned column"></div>
+				<div class="two wide center aligned middle aligned column"><?php esc_html_e( 'Latest Version', 'mainwp' ); ?></div>
+				<div class="two wide center aligned middle aligned column"></div>
+				<div class="two wide center aligned middle aligned column"><?php esc_html_e( 'Websites', 'mainwp' ); ?></div>
+			</div>
+		</div>
+		<div class="mainwp-manage-themes-wrapper main-child-checkbox">
+		<?php foreach ( $themesNameSites as $theme_title => $themeSites ) : ?>
+			<?php
+			$slugVersions     = current( $themeSites );
+			$slug_ver_first   = $slugVersions[0]; // get the first one [slug]_[version] to get theme [slug].
+			$theme_slug_first = $themesSlug[ $slug_ver_first ];
+			$theme_directory  = MainWP_Utility::get_dir_slug( $theme_slug_first );
+
+			$item_id = strtolower( $theme_title );
+			$item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
+
+			$count_sites     = count( $themeSites );
+			$lastest_version = '';
+			?>
+			<div class="ui accordion mainwp-manage-theme-accordion mainwp-manage-theme-item main-child-checkbox"  id="<?php echo esc_html( $item_id ); ?>">
+				<div class="title master-checkbox">
+					<div class="ui grid">
+						<div class="one wide center aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
+						<div class="one wide center aligned middle aligned column"><div class="ui checkbox master"><input type="checkbox"><label></label></div></div>
+						<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_theme_icon( $theme_slug_first ); ?></div>
+						<div class="five wide middle aligned column"><strong><?php echo esc_html( $theme_title ); ?></strong></div>
+						<div class="two wide center aligned middle aligned column"></div>
+						<div class="two wide center aligned middle aligned column lastest-version-info"></div>
+						<div class="two wide center aligned middle aligned column"></div>
+						<div class="two wide center aligned middle aligned column"><div class="ui label"><i class="icon wordpress"></i> <?php echo intval( $count_sites ); // phpcs:ignore -- Prevent modify WP icon. ?></div></div>
+					</div>
+				</div>
+			<div class="content child-checkbox">
 					<?php
-					/**
-					 * Action: mainwp_manage_themes_table_header
-					 *
-					 * @since 4.1
-					 */
-					do_action( 'mainwp_manage_themes_table_header' );
-					?>
-					<?php foreach ( $themesVersion as $theme_name => $theme_info ) : ?>
-						<?php
-						$theme_title = $theme_info['title'] . ' ' . $theme_info['ver'];
-						$th_id       = strtolower( $theme_name );
-						$th_id       = preg_replace( '/[[:space:]]+/', '_', $th_id );
-						?>
-						<th id="<?php echo esc_html( $th_id ); ?>" class="center aligned mainwp-manage-themes-theme-name">
-							<?php echo esc_html( $theme_title ); ?>
-						</th>
-					<?php endforeach; ?>
-				</tr>
-			</thead>
-			<tbody>
-				<?php foreach ( $sites as $site_id => $site_url ) : ?>
-					<?php $website = MainWP_DB::instance()->get_website_by_id( $site_id ); ?>
-				<tr>
-					<td style="padding-left:40px;padding-right:40px;">
-						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $site_id ); ?>"/>
-						<div class="ui slider checkbox mainwp-768-hide-fixlayout">
-							<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_themes_site_check_all"/><label></label>
-						</div>
-						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site_id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
-						<a href="<?php echo esc_attr( $site_url ); ?>"><?php echo esc_html( $website->name ); ?></a>
-					</td>
-					<?php
-					/**
-					 * Action: mainwp_manage_themes_table_column
-					 *
-					 * @param int $site_id Site ID.
-					 *
-					 * @since 4.1
-					 */
-					do_action( 'mainwp_manage_themes_table_column', $site_id );
-					?>
-					<?php foreach ( $themesVersion as $theme_name => $theme_info ) : ?>
-						<?php
-						$active_status_class = '';
-						if ( isset( $siteThemes[ $site_id ][ $theme_name ]['active'] ) && 1 == $siteThemes[ $site_id ][ $theme_name ]['active'] ) {
-							$active_status_class = 'positive';
-						} elseif ( isset( $siteThemes[ $site_id ][ $theme_name ]['active'] ) && 0 == $siteThemes[ $site_id ][ $theme_name ]['active'] ) {
-							$active_status_class = 'negative';
-						} else {
+					foreach ( $themeSites as $site_id => $slugVersions ) :
+
+						$site_url  = $sites[ $site_id ]['websiteurl'];
+						$site_name = $sites[ $site_id ]['websitename'];
+
+						foreach ( $slugVersions as $slug_ver ) :
+
+							$theme_slug = $themesSlug[ $slug_ver ];
+							$trusted    = in_array( $theme_slug, $trustedThemes ) ? true : false;
+
+							$theme_version = $siteThemes[ $site_id ][ $slug_ver ]['version'];
+
+							$theme_upgrades = isset( $updateWebsites[ $site_id ] ) ? $updateWebsites[ $site_id ] : array();
+							if ( ! is_array( $theme_upgrades ) ) {
+								$theme_upgrades = array();
+							}
+
+							$upgradeInfo = isset( $theme_upgrades[ $theme_slug ] ) ? $theme_upgrades[ $theme_slug ] : false;
+
 							$active_status_class = '';
-						}
+							if ( isset( $siteThemes[ $site_id ][ $slug_ver ]['active'] ) && 1 == $siteThemes[ $site_id ][ $slug_ver ]['active'] ) {
+								$active_status_class = 'positive';
+							} elseif ( isset( $siteThemes[ $site_id ][ $slug_ver ]['active'] ) && 0 == $siteThemes[ $site_id ][ $slug_ver ]['active'] ) {
+								$active_status_class = 'negative';
+							} else {
+								$active_status_class = '';
+							}
 
-						if ( isset( $siteThemes[ $site_id ][ $theme_name ]['child_active'] ) && 1 == $siteThemes[ $site_id ][ $theme_name ]['child_active'] ) {
-							$active_status_class .= ' child-active';
-						}
+							if ( isset( $siteThemes[ $site_id ][ $slug_ver ]['child_active'] ) && 1 == $siteThemes[ $site_id ][ $slug_ver ]['child_active'] ) {
+								$active_status_class .= ' child-active';
+							}
 
-						$not_delete = false;
-						$parent_str = '';
-						if ( isset( $siteThemes[ $site_id ][ $theme_name ]['parent_active'] ) && 1 == $siteThemes[ $site_id ][ $theme_name ]['parent_active'] ) {
-							$parent_str = '<span data-tooltip="' . sprintf( __( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $siteThemes[ $site_id ][ $theme_name ]['child_theme'] ) ? $siteThemes[ $site_id ][ $theme_name ]['child_theme'] : '' ) . '" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>';
-							$not_delete = true;
-						}
-						?>
-						<td class="center aligned <?php echo $active_status_class; ?>">
-							<?php if ( isset( $siteThemes[ $site_id ] ) && isset( $siteThemes[ $site_id ][ $theme_name ] ) ) : ?>
+							$not_delete = false;
+							$parent_str = '';
+							if ( isset( $siteThemes[ $site_id ][ $slug_ver ]['parent_active'] ) && 1 == $siteThemes[ $site_id ][ $slug_ver ]['parent_active'] ) {
+								$parent_str = '<span data-tooltip="' . sprintf( __( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] ) ? $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] : '' ) . '" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>';
+								$not_delete = true;
+							}
+
+							$new_version = '';
+							if ( ! empty( $upgradeInfo ) && isset( $upgradeInfo['update']['new_version'] ) ) {
+								$new_version = $upgradeInfo['update']['new_version'];
+							}
+
+							if ( '' === $lastest_version ) {
+								$lastest_version = $theme_version;
+							} elseif ( version_compare( $theme_version, $lastest_version, '>' ) ) {
+								$lastest_version = $theme_version;
+							}
+
+							if ( '' !== $new_version ) {
+								if ( version_compare( $new_version, $lastest_version, '>' ) ) {
+									$lastest_version = $new_version;
+								}
+							}
+
+							if ( isset( $siteThemes[ $site_id ][ $slug_ver ] ) && ( 0 == $siteThemes[ $site_id ][ $slug_ver ]['active'] || 1 == $siteThemes[ $site_id ][ $slug_ver ]['active'] ) ) {
+								$actived = true;
+
+								if ( isset( $siteThemes[ $site_id ][ $slug_ver ]['active'] ) && 1 == $siteThemes[ $site_id ][ $slug_ver ]['active'] ) {
+									$theme_status = '<span class="ui small green basic label">Active</span>';
+								} elseif ( isset( $siteThemes[ $site_id ][ $slug_ver ]['active'] ) && 0 == $siteThemes[ $site_id ][ $slug_ver ]['active'] ) {
+									$theme_status = '<span class="ui small red basic label">Inactive</span>';
+									$actived      = false;
+								} else {
+									$theme_status = '';
+								}
+
+								$item_id = $slug_ver . '_' . $site_id;
+								$item_id = strtolower( $item_id );
+								$item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
+
+								?>
+							<div class="ui grid mainwp-manage-theme-item-website <?php echo $active_status_class; ?>"  updated="0" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" >
+								<div class="one wide center aligned middle aligned column"></div>
+								<div class="one wide center aligned middle aligned column">
+
 								<?php if ( '' != $parent_str ) : ?>
 									<?php echo $parent_str; ?>
+								<?php elseif ( $actived ) : ?>
+									<span data-tooltip="<?php echo esc_html__( 'Active theme on the site can not be deleted.', 'mainwp' ); ?>" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>
 								<?php else : ?>
 								<div class="ui checkbox">
-									<input type="checkbox" value="<?php echo esc_attr( $themes[ $theme_name ] ); ?>" name="<?php echo esc_attr( $themes[ $theme_name ] ); ?>" class="mainwp-selected-theme" version="<?php echo esc_attr( $themesRealVersion[ $theme_name ] ); ?>" slug="<?php echo esc_attr( $themesSlug[ $theme_name ] ); ?>"  not-delete="<?php echo $not_delete ? 1 : 0; ?>" />
-										<label></label>
+									<input type="checkbox"  class="mainwp-selected-theme-site" />
+									<label></label>
 								</div>
 								<?php endif; ?>
+								</div>
+								<div class="three wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $site_id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo $site_id; ?>"><?php echo esc_html( $site_name ); ?></a></div>
+								<div class="one wide middle aligned column"></div>
+								<div class="one wide center aligned middle aligned column"><?php echo $theme_status; ?></div>
+								<div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
+								<div class="one wide center aligned middle aligned column"></div>
+								<div class="two wide center aligned middle aligned column current-version">
+									<?php echo esc_html( $theme_version ); ?>
+									<?php if ( ! empty( $new_version ) ) : ?>
+									&rarr; <?php echo esc_html( $new_version ); ?>
+									<?php endif; ?>
+								</div>
+								<div class="two wide right aligned middle aligned column update-column">
+								<?php if ( ! empty( $upgradeInfo ) && MainWP_Updates::user_can_update_themes() ) : ?>
+									<a href="javascript:void(0)" class="ui mini green basic button" onClick="return manage_themes_upgrade_theme( '<?php echo rawurlencode( $theme_slug ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+								<?php endif; ?>
+								</div>
+								<div class="two wide center aligned middle aligned column">
+								<?php if ( $actived ) : ?>	
+											<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
+												<a href="javascript:void(0)" disabled class="ui mini fluid button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Active theme cannot be deactivated. If you need to activate another theme, go to the list of inactive themes and activate the wanted theme.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
+											<?php } ?>
+									<?php else : ?>
+										<div class="ui mini fluid buttons">
+										<?php	if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
+											<a href="javascript:void(0)" class="mainwp-manages-theme-activate ui green button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Activate the ', 'mainwp' ) . esc_html( wp_strip_all_tags( $theme_title ) ) . esc_attr_e( ' theme on the child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
+										<?php } ?>
+											<?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) && ! $not_delete ) { ?>
+											<a href="javascript:void(0)" class="mainwp-manages-theme-delete ui button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete the', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $theme_title ) ) . ' ' . esc_attr_e( 'theme from the child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+										<?php } ?>
+										</div>
+								<?php endif; ?>										
+								</div>
 							</div>
-							<?php endif; ?>
-						</td>
-					<?php endforeach; ?>
-				</tr>
-				<?php endforeach; ?>
-			</tbody>
-			<tfoot>			
-				<tr>
-					<th class="mainwp-first-th"></th>
-					<?php
-					/**
-					 * Action: mainwp_manage_themes_table_header
-					 *
-					 * @since 4.1
-					 */
-					do_action( 'mainwp_manage_themes_table_header' );
-					?>
-					<?php foreach ( $themesVersion as $theme_name => $theme_info ) : ?>
-						<?php
-						$theme_title = $theme_info['title'] . ' ' . $theme_info['ver'];
-						$th_id       = strtolower( $theme_name );
-						$th_id       = preg_replace( '/[[:space:]]+/', '_', $th_id );
+								<?php
+							}
+					endforeach;
 						?>
-						<th id="<?php echo esc_attr( $th_id ); ?>" class="center aligned">
-							<div class="ui slider checkbox not-auto-init mainwp-768-hide">
-								<input type="checkbox" value="<?php echo esc_attr( $themes[ $theme_name ] ); ?>" id="<?php echo esc_attr( $themes[ $theme_name ] ); ?>-<?php echo esc_attr( $themesRealVersion[ $theme_name ] ); ?>" version="<?php echo esc_attr( $themesRealVersion[ $theme_name ] ); ?>" class="mainwp_theme_check_all" />
-								<label></label>
-							</div>
-						</th>
-					<?php endforeach; ?>
-				</tr>
-			</tfoot>
-		</table>
-		<div class="ui horizontal list" id="mainwp-manage-themes-table-legend">
-			<div class="item"><a class="ui empty circular label" style="background:#f7ffe6;border:1px solid #7fb100;"></a> <?php echo esc_html__( 'Installed/Active', 'mainwp' ); ?></div>
-			<div class="item"><a class="ui empty circular label" style="background:#e3ffa7;border:1px solid #7fb100;"></a> <?php echo esc_html__( 'Installed/Active/Child theme', 'mainwp' ); ?></div>
-			<div class="item"><a class="ui empty circular label" style="background:#ffe7e7;border:1px solid #910000;"></a> <?php echo esc_html__( 'Installed/Inactive', 'mainwp' ); ?></div>
-			<div class="item"><i class="ui red lock icon"></i> <?php echo esc_html__( 'Parent of Active Child Theme/Installed/Inactive', 'mainwp' ); ?></div>
-			<div class="item"><a class="ui empty circular label" style="background:#fafafa;border:1px solid #f4f4f4;"></a> <?php echo esc_html__( 'Not installed', 'mainwp' ); ?></div>
+					<span style="display:none" class="lastest-version-hidden" lastest-version="<?php echo esc_html( $lastest_version ); ?>"></span>
+						<?php
+				endforeach;
+					?>
+				</div>
+			</div>
+		<?php endforeach; ?>
 		</div>
+
+
+		<script type="text/javascript">
+			jQuery( '.mainwp-manage-theme-accordion' ).accordion( {
+				"selector": {
+					"trigger"   : '.dropdown-trigger',
+				} 
+			} );
+
+			jQuery( '.trigger-all-accordion' ).on( 'click', function() { // not use document here.
+				if ( jQuery( this ).hasClass( 'active' ) ) {
+					jQuery( this ).removeClass( 'active' );
+					jQuery( '.mainwp-manage-themes-wrapper .ui.accordion div.title' ).each( function( i ) {
+						if ( jQuery( this ).hasClass( 'active' ) ) {
+							jQuery( this ).find('.dropdown-trigger').trigger( 'click' );
+						}
+					} );
+				} else {
+					jQuery( this ).addClass( 'active' );
+					jQuery( '.mainwp-manage-themes-wrapper .ui.accordion div.title' ).each( function( i ) {
+						if ( !jQuery( this ).hasClass( 'active' ) ) {
+							jQuery( this ).find('.dropdown-trigger').trigger( 'click' );
+						}
+					} );
+				}
+				return false;
+			} );
+
+			jQuery(document).ready(function ($) {
+				$('.lastest-version-hidden').each(function(){
+					$(this).closest('.mainwp-manage-theme-item').find('.lastest-version-info').html($(this).attr('lastest-version'));
+				});
+				mainwp_master_checkbox_init($);
+				mainwp_get_icon_start();
+			});
+
+		</script>
 
 		<?php
 		/**
@@ -1074,80 +1300,6 @@ class MainWP_Themes {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_after_themes_table' );
-
-		$table_features = array(
-			'searching'      => 'true',
-			'paging'         => 'true', // to fix.
-			'info'           => 'false',
-			'colReorder'     => 'true',
-			'stateSave'      => 'true',
-			'ordering'       => 'true',
-			'scrollCollapse' => 'true',
-			'scrollY'        => '500',
-			'scrollX'        => 'true',
-			'scroller'       => 'true',
-			'fixedColumns'   => 'true',
-			'responsive'     => 'true',
-		);
-
-		/**
-		 * Filter: mainwp_themes_table_features
-		 *
-		 * Filter the Themes table features.
-		 *
-		 * @since 4.1
-		 */
-		$table_features = apply_filters( 'mainwp_themes_table_features', $table_features );
-		?>
-
-		<style type="text/css">
-			thead th.mainwp-first-th {
-				position: sticky !important;
-				left: 0  !important;
-				top: 0  !important;
-				z-index: 9 !important;
-			}
-			#mainwp-manage-themes-table tbody tr td:first-child {
-				position: sticky !important;
-				left: 0;
-				top: 0;
-				background: #f9fafb;
-				z-index: 9 !important;
-			}
-		</style>
-		<script type="text/javascript">
-			var responsive = <?php echo $table_features['responsive']; ?>;
-			if( jQuery( window ).width() > 1140 ) {
-				responsive = false;
-			}
-			jQuery( document ).ready( function( $ ) {
-				jQuery( '#mainwp-manage-themes-table' ).DataTable( {
-					"paging" : <?php echo $table_features['paging']; ?>,
-					"colReorder" : <?php echo $table_features['colReorder']; ?>,
-					"stateSave" :  <?php echo $table_features['stateSave']; ?>,
-					"ordering" : <?php echo $table_features['ordering']; ?>,
-					"searching" : <?php echo $table_features['searching']; ?>,
-					"info" : <?php echo $table_features['info']; ?>,
-					"scrollCollapse" : <?php echo $table_features['scrollCollapse']; ?>,
-					"scrollY" : <?php echo $table_features['scrollY']; ?>,
-					"scrollX" : <?php echo $table_features['scrollX']; ?>,
-					"scroller" : <?php echo $table_features['scroller']; ?>,
-					"fixedColumns" : <?php echo $table_features['fixedColumns']; ?>,
-					"columnDefs": [ { "orderable": false, "targets": [ 0 ] } ],
-					"responsive": responsive,
-				} );
-				jQuery( '.mainwp-ui-page .ui.checkbox:not(.not-auto-init)' ).checkbox(); // to fix onclick on plugins checkbox for sorting.
-			} );
-		</script>
-		<style type="text/css">				
-			@media screen and ( max-width: 767px ) {
-				.mainwp-768-hide-fixlayout {
-					right: 9999px !important;
-					width: 0px !important;
-				}
-			}
-		</style>
-		<?php
 	}
 
 	/**
@@ -1158,7 +1310,7 @@ class MainWP_Themes {
 	 * @return mixed $bulkActions
 	 */
 	public static function render_bulk_actions( $status ) {
-			ob_start();
+		ob_start();
 		?>
 		<select class="ui dropdown" id="mainwp-bulk-actions">
 			<option value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
@@ -1249,7 +1401,7 @@ class MainWP_Themes {
 	 * Render the Themes table for the Install Themes Tab.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_modal_install_plugin_theme()
-	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_Install_Bulk::render_upload()
 	 */
 	public static function render_themes_table() {
@@ -1328,8 +1480,7 @@ class MainWP_Themes {
 					<div class="active title"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 					<div class="content active">
 					<?php
-					$selected_sites  = array();
-					$selected_groups = array();
+					$selected_sites = array();
 
 					if ( isset( $_GET['selected_sites'] ) ) {
 						$selected_sites = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) ); // sanitize ok.
@@ -1337,7 +1488,14 @@ class MainWP_Themes {
 						$selected_sites = array_filter( $selected_sites );
 					}
 					?>
-					<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
+					<?php
+					$sel_params = array(
+						'class'          => 'mainwp_select_sites_box_left',
+						'selected_sites' => $selected_sites,
+						'show_client'    => true,
+					);
+					MainWP_UI_Select_Sites::select_sites_box( $sel_params );
+					?>
 					</div>
 					<?php do_action( 'mainwp_manage_themes_after_select_sites' ); ?>
 				</div>
@@ -1381,7 +1539,14 @@ class MainWP_Themes {
 			</div>
 			<div class="ui clearing hidden divider"></div>
 		</div>
-
+		<?php
+		$favorites        = '';
+		$favorites_themes = apply_filters( 'mainwp_favorites_themes', array() );
+		if ( is_array( $favorites_themes ) && ! empty( $favorites_themes ) ) {
+			$favorites = wp_json_encode( $favorites_themes );
+		}
+		?>
+		<div id="mainwp-favorites-themes" favorites-themes="<?php echo esc_attr( $favorites ); ?>"></div>
 		<script id="tmpl-theme" type="text/template">
 				<# if ( data.screenshot_url ) { #>
 				<div class="image">
@@ -1417,7 +1582,7 @@ class MainWP_Themes {
 				<?php if ( $favorites_enabled ) { ?>
 				<div class="extra content">
 					<span><?php esc_html_e( 'Add to Favorites', 'mainwp-favorites-extension' ); ?></span>
-					<a class="ui huge star rating right floated" data-max-rating="1" id="add-favorite-theme-{{data.slug}}"></a>
+					<a class="ui huge star rating right floated <# if ( data.added_fav ) { #> favorite <# } #>" data-max-rating="1" id="add-favorite-theme-{{data.slug}}"></a>
 				</div>
 				<?php } ?>
 		</script>
@@ -1632,6 +1797,20 @@ class MainWP_Themes {
 		$keyword       = null;
 		$search_status = 'all';
 
+		$data_fields = array(
+			'id',
+			'url',
+			'name',
+			'adminname',
+			'nossl',
+			'privkey',
+			'nosslkey',
+			'http_user',
+			'http_pass',
+			'ssl_version',
+			'sync_errors',
+		);
+
 		if ( null == $output ) {
 			$keyword             = isset( $_POST['keyword'] ) && ! empty( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : null;
 			$search_status       = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : 'all';
@@ -1668,20 +1847,12 @@ class MainWP_Themes {
 				$dbwebsites = array();
 				$websites   = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+					if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+						continue;
+					}
 					$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 						$website,
-						array(
-							'id',
-							'url',
-							'name',
-							'adminname',
-							'nossl',
-							'privkey',
-							'nosslkey',
-							'http_user',
-							'http_pass',
-							'ssl_version',
-						)
+						$data_fields
 					);
 				}
 				MainWP_DB::free_result( $websites );
@@ -1810,7 +1981,7 @@ class MainWP_Themes {
 				?>
 				<tr theme-slug="<?php echo rawurlencode( $slug ); ?>" theme-name="<?php echo esc_attr( $name ); ?>">
 					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="theme[]" value="<?php echo rawurlencode( $slug ); ?>"></span></td>
-					<td><?php echo esc_html( $name ); ?></td>
+					<td><?php echo MainWP_System_Utility::get_theme_icon( $slug ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $name ); ?></td>
 					<td><?php echo ( 1 == $theme['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); ?></td>
 					<td><?php echo ( in_array( $slug, $trustedThemes ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
 					<td><?php echo ( isset( $decodedIgnoredThemes[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
@@ -1830,11 +2001,11 @@ class MainWP_Themes {
 			<tfoot>
 				<tr>
 					<th class="no-sort check-column"><span class="ui checkbox"><input id="cb-select-all-bottom" type="checkbox" /></span></th>
-					<th></th>
 					<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
+					<th class="collapsing"></th>
 					<th><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
 				</tr>
 			</tfoot>
@@ -1965,6 +2136,7 @@ class MainWP_Themes {
 		?>
 		</div>
 		<?php
+		MainWP_Updates::render_plugin_details_modal();
 		self::render_footer( 'Ignore' );
 	}
 
@@ -1988,11 +2160,11 @@ class MainWP_Themes {
 					<?php if ( $ignoredThemes ) : ?>
 						<?php foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) : ?>
 						<tr theme-slug="<?php echo rawurlencode( $ignoredTheme ); ?>">
-							<td><?php echo esc_html( $ignoredThemeName ); ?></td>
+							<td><?php echo MainWP_System_Utility::get_theme_icon( $ignoredTheme ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $ignoredThemeName ); ?></td>
 							<td><?php echo esc_html( $ignoredTheme ); ?></td>
 							<td class="right aligned">
 							<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_globally( '<?php echo rawurlencode( $ignoredTheme ); ?>' )"><?php esc_html_e( 'Unigore', 'mainwp' ); ?></a>
+								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_globally( '<?php echo rawurlencode( $ignoredTheme ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							</td>
 						</tr>
@@ -2075,11 +2247,11 @@ class MainWP_Themes {
 							<?php else : ?>
 								<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
 							<?php endif; ?>
-							<td><?php echo esc_html( $ignoredThemeName ); ?></td>
+							<td><?php echo MainWP_System_Utility::get_theme_icon( $ignoredTheme ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $ignoredThemeName ); ?></td>
 							<td><?php echo esc_html( $ignoredTheme ); ?></td>
 							<td class="right aligned">
 							<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_detail( '<?php echo rawurlencode( $ignoredTheme ); ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Unigore', 'mainwp' ); ?></a>
+								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_detail( '<?php echo rawurlencode( $ignoredTheme ); ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							</td>
 						</tr>
@@ -2135,7 +2307,9 @@ class MainWP_Themes {
 		$ignoredThemes        = ( is_array( $decodedIgnoredThemes ) && ( 0 < count( $decodedIgnoredThemes ) ) );
 		$cnt                  = 0;
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-			$tmpDecodedIgnoredThemes = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
+			$tmpDecodedIgnoredThemes = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
+			$tmpDecodedIgnoredThemes = ( '' != $tmpDecodedIgnoredThemes ) ? json_decode( $tmpDecodedIgnoredThemes, true ) : array();
+
 			if ( ! is_array( $tmpDecodedIgnoredThemes ) || 0 == count( $tmpDecodedIgnoredThemes ) ) {
 				continue;
 			}
@@ -2277,7 +2451,9 @@ class MainWP_Themes {
 				<?php
 				MainWP_DB::data_seek( $websites, 0 );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-					$decodedIgnoredThemes = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
+					$decodedIgnoredThemes = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
+					$decodedIgnoredThemes = ( '' != $decodedIgnoredThemes ) ? json_decode( $decodedIgnoredThemes, true ) : array();
+
 					if ( ! is_array( $decodedIgnoredThemes ) || 0 == count( $decodedIgnoredThemes ) ) {
 						continue;
 					}

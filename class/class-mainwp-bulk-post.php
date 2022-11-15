@@ -355,6 +355,8 @@ class MainWP_Bulk_Post {
 		);
 
 		register_post_type( 'bulkpage', $args );
+
+		do_action( 'mainwp_register_post_type' );
 	}
 
 	/**

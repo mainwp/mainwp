@@ -31,8 +31,8 @@ class MainWP_Manage_Groups {
 	public static function init_menu() {
 		add_submenu_page(
 			'mainwp_tab',
-			__( 'Groups', 'mainwp' ),
-			'<div class="mainwp-hidden">' . __( 'Groups', 'mainwp' ) . '</div>',
+			__( 'Tags', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Tags', 'mainwp' ) . '</div>',
 			'read',
 			'ManageGroups',
 			array(
@@ -158,8 +158,8 @@ class MainWP_Manage_Groups {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_groups_info' ) ) { ?>
 			<div class="ui message info">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp_groups_info"></i>
-					<div><?php esc_html_e( 'In case you are managing a large number of WordPress sites, it could be useful for you to split sites into different groups. Later, you will be able to make Site Selection by a group that will speed up your work and makes it much easier.', 'mainwp' ); ?></div>
-					<div><?php esc_html_e( 'One child site can be assigned to multiple Groups at the same time.', 'mainwp' ); ?></div>
+					<div><?php esc_html_e( 'In case you are managing a large number of WordPress sites, it could be useful for you to mark them with different tags. Later, you will be able to make Site Selection by a tag that will speed up your work and makes it much easier.', 'mainwp' ); ?></div>
+					<div><?php esc_html_e( 'One child site can be assigned to multiple Tags at the same time.', 'mainwp' ); ?></div>
 					<div><?php echo sprintf( __( 'For more information check the %1$sKnowledge Base%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">', '</a>' ); ?></div>
 			</div>
 			<?php } ?>
@@ -216,18 +216,18 @@ class MainWP_Manage_Groups {
 			</div>
 			<?php MainWP_UI::render_modal_edit_notes(); ?>
 			<div class="ui mini modal" id="mainwp-create-group-modal">
-				<div class="header"><?php echo __( 'Create Group', 'mainwp' ); ?></div>
+				<div class="header"><?php echo __( 'Create Tag', 'mainwp' ); ?></div>
 				<div class="content">
 					<div class="ui form">
 						<div class="field">
-							<input type="text" value="" name="mainwp-group-name" id="mainwp-group-name" placeholder="<?php esc_attr_e( 'Enter group name', 'mainwp' ); ?>" >
+							<input type="text" value="" name="mainwp-group-name" id="mainwp-group-name" placeholder="<?php esc_attr_e( 'Enter tag name', 'mainwp' ); ?>" >
 						</div>
 					</div>
 				</div>
 				<div class="actions">
 					<div class="ui two columns grid">
 						<div class="left aligned column">
-							<a class="ui green button" id="mainwp-save-new-group-button" href="#"><?php echo __( 'Create Group', 'mainwp' ); ?></a>
+							<a class="ui green button" id="mainwp-save-new-group-button" href="#"><?php echo __( 'Create Tag', 'mainwp' ); ?></a>
 						</div>
 						<div class="right aligned column">
 							<div class="ui cancel button"><?php echo __( 'Close', 'mainwp' ); ?></div>
@@ -237,18 +237,18 @@ class MainWP_Manage_Groups {
 			</div>
 
 			<div class="ui mini modal" id="mainwp-rename-group-modal">
-				<div class="header"><?php echo __( 'Rename Group', 'mainwp' ); ?></div>
+				<div class="header"><?php echo __( 'Rename Tag', 'mainwp' ); ?></div>
 				<div class="content">
 					<div class="ui form">
 						<div class="field">
-							<input type="text" value="" name="mainwp-group-name" id="mainwp-group-name" placeholder="<?php esc_attr_e( 'Enter group name', 'mainwp' ); ?>" >
+							<input type="text" value="" name="mainwp-group-name" id="mainwp-group-name" placeholder="<?php esc_attr_e( 'Enter tag name', 'mainwp' ); ?>" >
 						</div>
 					</div>
 				</div>
 				<div class="actions">
 					<div class="ui two columns stackable grid">
 						<div class="left aligned column">
-							<a class="ui green button" id="mainwp-update-new-group-button" href="#"><?php echo __( 'Update Group', 'mainwp' ); ?></a>
+							<a class="ui green button" id="mainwp-update-new-group-button" href="#"><?php echo __( 'Update Tag', 'mainwp' ); ?></a>
 						</div>
 						<div class="right aligned column">
 							<div class="ui cancel button"><?php echo __( 'Close', 'mainwp' ); ?></div>
@@ -290,16 +290,16 @@ class MainWP_Manage_Groups {
 		}
 		?>
 		<div class="ui fluid <?php echo 1 == $sidebarPosition ? 'right' : ''; ?> pointing vertical menu sticky" id="mainwp-groups-menu" style="margin-top:52px">
-			<h4 class="item ui header"><?php esc_html_e( 'Sites Groups', 'mainwp' ); ?></h4>
+			<h4 class="item ui header"><?php esc_html_e( 'Sites Tags', 'mainwp' ); ?></h4>
 			<?php echo self::get_group_list_content(); ?>
 			<div class="item">
 				<div class="ui two columns stackable grid">
 					<div class="left aligned column">
-						<a href="#" class="ui tiny green button" id="mainwp-new-sites-group-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Click here to create a new group.', 'mainwp' ); ?>"><?php esc_html_e( 'New Group', 'mainwp' ); ?></a>
+						<a href="#" class="ui tiny green button" id="mainwp-new-sites-group-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Click here to create a new tag.', 'mainwp' ); ?>"><?php esc_html_e( 'New Tag', 'mainwp' ); ?></a>
 					</div>
 					<div class="right aligned column">
-						<a href="#" class="ui tiny icon green basic button disabled" id="mainwp-rename-group-button" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Edit selected group.', 'mainwp' ); ?>"><i class="edit icon"></i></a>
-						<a href="#" class="ui tiny icon button disabled" id="mainwp-delete-group-button" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete selected group.', 'mainwp' ); ?>"><i class="trash icon"></i></a>
+						<a href="#" class="ui tiny icon green basic button disabled" id="mainwp-rename-group-button" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Edit selected tag.', 'mainwp' ); ?>"><i class="edit icon"></i></a>
+						<a href="#" class="ui tiny icon button disabled" id="mainwp-delete-group-button" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete selected tag.', 'mainwp' ); ?>"><i class="trash icon"></i></a>
 					</div>
 				</div>
 			</div>
@@ -331,7 +331,7 @@ class MainWP_Manage_Groups {
 			<tfoot>
 				<tr>
 					<th colspan="6">
-						<a href="#" class="ui tiny green button" id="mainwp-save-sites-groups-selection-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Save the selected group sites selection.', 'mainwp' ); ?>"><?php esc_html_e( 'Save Selection', 'mainwp' ); ?></a>
+						<a href="#" class="ui tiny green button" id="mainwp-save-sites-groups-selection-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Save the selected tag sites selection.', 'mainwp' ); ?>"><?php esc_html_e( 'Save Selection', 'mainwp' ); ?></a>
 					</th>
 				</tr>
 			</tfoot>
@@ -409,7 +409,7 @@ class MainWP_Manage_Groups {
 	 */
 	public static function check_group_name( $groupName, $groupId = null ) {
 		if ( '' == $groupName ) {
-			$groupName = __( 'New group', 'mainwp' );
+			$groupName = __( 'New tag', 'mainwp' );
 		}
 
 		$groupName = esc_html( $groupName );

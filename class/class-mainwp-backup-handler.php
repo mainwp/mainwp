@@ -835,6 +835,10 @@ class MainWP_Backup_Handler {
 		$subfolder = MainWP_Utility::remove_preslash_spaces( $subfolder );
 		$subfolder = MainWP_Utility::normalize_filename( $subfolder );
 
+		if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
+			throw new MainWP_Exception( 'The child site has been suspended' );
+		}
+
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			throw new MainWP_Exception( 'You are not allowed to backup this site' );
 		}

@@ -2,6 +2,12 @@
 /*---------------[RESPONSIVE LAYOUTS]-------------*/
 /*------------------------------------------------*/
 
+@media only screen and ( max-height: 500px ) {
+	.mainwp-nav-menu .item-wp-admin {
+		position: relative !important;
+	}
+}
+
 @media only screen and ( min-width: 769px ) {
 
 	.mainwp-768-show {
@@ -16,6 +22,26 @@
 	.mainwp-manage-updates-table tbody tr td:last-child,
 	.mainwp-manage-updates-table tfoot tr th:last-child {
 		text-align: right !important;
+	}
+}
+
+@media only screen and ( min-width: 768px ) and ( max-width: 1449px ) {
+	.mainwp-sync-button-icon {
+		display: inline-block !important;
+	}
+	.mainwp-sync-button-text  {
+		display: none !important;
+	}
+
+	#mainwp-add-new-buttons .ui.icon.button {
+		display: inline-block !important;
+	}
+	#mainwp-add-new-buttons .ui.button:not(.icon) {
+		display: none !important;
+	}
+
+	.mainwp-ui .ui.dimmer.modals.visible.active {
+		padding-left: 200px;
 	}
 }
 
@@ -45,10 +71,6 @@
 	}
 	#mainwp-top-header .ui.grid .right.floated.column {
 		width: 85% !important;
-	}
-
-	#mainwp-top-header #mainwp-add-new-buttons {
-		display: none;
 	}
 
 }

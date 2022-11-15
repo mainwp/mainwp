@@ -466,7 +466,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 				$author = ' <cite>' . sprintf( __( 'By %s', 'mainwp' ), $author ) . '</cite>';
 			}
 
-			$details_link = self_admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . $plugin['slug'] . '&url=' . ( isset( $plugin['PluginURI'] ) ? rawurlencode( $plugin['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin['name'] ) . '&TB_iframe=true&width=772&height=887' );
+			$details_link = self_admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . $plugin['slug'] . '&url=' . ( isset( $plugin['PluginURI'] ) ? rawurlencode( $plugin['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin['name'] ) );
 
 			if ( ! empty( $plugin['icons']['svg'] ) ) {
 				$plugin_icon_url = $plugin['icons']['svg'];
@@ -501,7 +501,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 						<?php echo $author; ?>
 					</div>
 			<div class="description">
-			<?php echo wp_strip_all_tags( $description ); ?>
+			<?php echo esc_html( wp_strip_all_tags( $description ) ); ?>
 				</div>
 					</div>
 				<div class="extra content">

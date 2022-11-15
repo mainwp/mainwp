@@ -57,7 +57,7 @@ class MainWP_Manage_Sites_View {
 						<?php } ?>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageGroups' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=ManageGroups' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Groups', 'mainwp' ); ?></a>
+						<a href="<?php echo admin_url( 'admin.php?page=ManageGroups' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Tags', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MonitoringSites' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=MonitoringSites' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Monitoring', 'mainwp' ); ?></a>
@@ -131,7 +131,7 @@ class MainWP_Manage_Sites_View {
 				'item_slug'  => 'managesites_import',
 			),
 			array(
-				'title'      => __( 'Groups', 'mainwp' ),
+				'title'      => __( 'Tags', 'mainwp' ),
 				'parent_key' => 'managesites',
 				'href'       => 'admin.php?page=ManageGroups',
 				'slug'       => 'ManageGroups',
@@ -216,7 +216,7 @@ class MainWP_Manage_Sites_View {
 			),
 			'ManageGroups'    => array(
 				'href'   => 'admin.php?page=ManageGroups',
-				'title'  => __( 'Groups', 'mainwp' ),
+				'title'  => __( 'Tags', 'mainwp' ),
 				'access' => true,
 			),
 			'MonitoringSites' => array(
@@ -259,10 +259,10 @@ class MainWP_Manage_Sites_View {
 			),
 			'SecurityScan'             => array(
 				'href'   => 'admin.php?page=managesites&scanid=' . $site_id,
-				'title'  => __( 'Security Scan', 'mainwp' ),
+				'title'  => __( 'Security', 'mainwp' ),
 				'access' => true,
 			),
-			'ManageSitesCacheControl' => array(
+			'ManageSitesCacheControl'  => array(
 				'href'   => 'admin.php?page=managesites&cacheControlId=' . $site_id,
 				'title'  => __( 'Cache Control', 'mainwp' ),
 				'access' => true,
@@ -291,7 +291,11 @@ class MainWP_Manage_Sites_View {
 			$imgfavi = '';
 			if ( 1 == get_option( 'mainwp_use_favicon', 1 ) ) {
 				$favi_url = MainWP_Connect::get_favico_url( $website );
-				$imgfavi  = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
+				if ( false != $favi_url ) {
+					$imgfavi = '<img src="' . esc_attr( $favi_url ) . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
+				} else {
+					$imgfavi  = '<i class="icon wordpress"></i>'; // phpcs:ignore -- Prevent modify WP icon.
+				}
 			}
 			$pagetitle = $imgfavi . ' ' . $website->url;
 		}
@@ -302,9 +306,14 @@ class MainWP_Manage_Sites_View {
 
 		MainWP_UI::render_top_header( $params );
 
+		$manage_sites = false;
+		if ( 'ManageSites' === $shownPage || 'MonitoringSites' === $shownPage ) {
+			$manage_sites = true;
+		}
+
 		self::render_managesites_header( $site_pages, $managesites_pages, $subPages, $site_id, $shownPage );
 
-		if ( 'ManageSites' === $shownPage || 'MonitoringSites' === $shownPage ) {
+		if ( $manage_sites ) {
 			$which = strtolower( $shownPage );
 			MainWP_UI::render_second_top_header( $which );
 		}
@@ -539,9 +548,7 @@ class MainWP_Manage_Sites_View {
 				}
 
 				$sync_info = isset( $sync_extensions_options[ $dir_slug ] ) ? $sync_extensions_options[ $dir_slug ] : array();
-				$ext_name  = str_replace( 'MainWP', '', $data['name'] );
-				$ext_name  = str_replace( 'Extension', '', $ext_name );
-				$ext_name  = trim( $ext_name );
+				$ext_name  = MainWP_Extensions_Handler::polish_string_name( $data['name'] );
 				$ext_name  = esc_html( $ext_name );
 
 				$ext_data = isset( $available_exts_data[ dirname( $slug ) ] ) ? $available_exts_data[ dirname( $slug ) ] : array();
@@ -869,18 +876,44 @@ class MainWP_Manage_Sites_View {
 				$init_groups = ltrim( $init_groups, ',' );
 				?>
 				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Groups', 'mainwp' ); ?></label>
-					<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add the website to existing group(s).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Tags', 'mainwp' ); ?></label>
+					<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add the website to existing tags(s).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<div class="ui multiple selection dropdown" init-value="<?php echo esc_attr( $init_groups ); ?>">
 							<input name="mainwp_managesites_edit_addgroups" value="" type="hidden">
 							<i class="dropdown icon"></i>
-							<div class="default text"><?php echo ( '' === $init_groups ) ? __( 'No groups added yet.', 'mainwp' ) : ''; ?></div>
+							<div class="default text"><?php echo ( '' === $init_groups ) ? __( 'No Tags added yet.', 'mainwp' ) : ''; ?></div>
 							<div class="menu">
 								<?php foreach ( $groups as $group ) { ?>
-									<div class="item" data-value="<?php echo $group->id; ?>"><?php echo $group->name; ?></div>
+									<div class="item" data-value="<?php echo $group->id; ?>"><?php echo esc_html( $group->name ); ?></div>
 								<?php } ?>
 							</div>
 						</div>
+					</div>
+				</div>
+				<?php
+				$clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+				?>
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Client', 'mainwp' ); ?></label>
+					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select Client.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<div class="ui search selection dropdown">
+							<input type="hidden" name="mainwp_managesites_edit_client_id" value="<?php echo intval( $website->client_id ); ?>">
+							<i class="dropdown icon"></i>
+							<div class="default text"><?php _e( 'Select Client', 'mainwp' ); ?></div>
+							<div class="menu">
+								<div class="item" data-value="0"><?php _e( 'No Client', 'mainwp' ); ?></div>
+								<?php
+								foreach ( $clients as $client ) {
+									?>
+									<div class="item" data-value="<?php echo intval( $client->client_id ); ?>">
+										<?php echo esc_html( $client->name ); ?>
+									</div>
+									<?php
+								}
+								?>
+							</div>
+						</div>
+						<a href="javascript:void(0)" class="ui basic green button edit-site-new-client-button"><?php esc_html_e( 'Create New Client', 'mainwp' ); ?></a>
 					</div>
 				</div>
 				<div class="ui grid field">
@@ -891,6 +924,12 @@ class MainWP_Manage_Sites_View {
 							<option <?php echo ( 0 == $website->backup_before_upgrade ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
 							<option <?php echo ( 2 == $website->backup_before_upgrade ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
 						</select>
+					</div>
+				</div>
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Suspend Site', 'mainwp' ); ?></label>
+					<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want Suspend this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<input type="checkbox" name="mainwp_suspended_site" id="mainwp_suspended_site" <?php echo ( 1 == $website->suspended ? 'checked="true"' : '' ); ?>><label for="mainwp_suspended_site"></label>
 					</div>
 				</div>
 				<div class="ui grid field">
@@ -1060,6 +1099,7 @@ class MainWP_Manage_Sites_View {
 			</div>
 		</div>
 		<?php
+		MainWP_Client::render_add_client_modal();
 	}
 
 	/**
@@ -1474,6 +1514,7 @@ class MainWP_Manage_Sites_View {
 		$params['http_pass']         = isset( $_POST['managesites_add_http_pass'] ) ? wp_unslash( $_POST['managesites_add_http_pass'] ) : '';
 		$params['groupids']          = isset( $_POST['groupids'] ) && ! empty( $_POST['groupids'] ) ? explode( ',', sanitize_text_field( wp_unslash( $_POST['groupids'] ) ) ) : array();
 		$params['groupnames_import'] = isset( $_POST['groupnames_import'] ) ? sanitize_text_field( wp_unslash( $_POST['groupnames_import'] ) ) : '';
+		$params['clientid']          = isset( $_POST['clientid'] ) && ! empty( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0;
 
 		if ( isset( $_POST['qsw_page'] ) ) {
 			$params['qsw_page'] = sanitize_text_field( wp_unslash( $_POST['qsw_page'] ) );
@@ -1615,6 +1656,10 @@ class MainWP_Manage_Sites_View {
 
 						$id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : null ), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
 
+						if ( $id && isset( $params['clientid'] ) ) {
+							MainWP_DB::instance()->update_website_values( $id, array( 'client_id' => intval( $params['clientid'] ) ) );
+						}
+
 						if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
 							$message = sprintf( __( '<div class="ui header">Congratulations you have connected %1$s.</div> You can add new sites at anytime from the Add New Site page.', 'mainwp' ), '<strong>' . $params['name'] . '</strong>' );
 						} else {
@@ -1643,7 +1688,7 @@ class MainWP_Manage_Sites_View {
 				if ( 'HTTPERROR' == $e->getMessage() ) {
 					$error = 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
 				} elseif ( 'NOMAINWP' == $e->getMessage() ) {
-					$error = sprintf( __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %sMainWP Community%s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a>' );
+					$error = sprintf( __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a>' );
 				} else {
 					$error = $e->getMessage();
 				}

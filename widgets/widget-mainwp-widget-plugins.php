@@ -180,7 +180,8 @@ class MainWP_Widget_Plugins {
 				<?php
 				$_count = count( $actived_plugins );
 				for ( $i = 0; $i < $_count; $i ++ ) {
-					$slug = wp_strip_all_tags( $actived_plugins[ $i ]['slug'] );
+					$slug             = wp_strip_all_tags( $actived_plugins[ $i ]['slug'] );
+					$plugin_directory = dirname( $slug );
 					?>
 					<div class="item <?php echo esc_html( dirname( $slug ) ); ?>">
 						<input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ); ?>"/>
@@ -191,7 +192,8 @@ class MainWP_Widget_Plugins {
 							<?php } ?>
 						</div>
 						<div class="middle aligned content">
-							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $actived_plugins[ $i ]['name'] ); ?>">
+							<?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?>&nbsp;&nbsp;&nbsp;&nbsp;
+							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ); ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $actived_plugins[ $i ]['name'] ); ?>">
 								<?php echo esc_html( $actived_plugins[ $i ]['name'] . ' ' . $actived_plugins[ $i ]['version'] ); ?>
 							</a>
 							</div>
@@ -233,7 +235,8 @@ class MainWP_Widget_Plugins {
 				<?php
 				$_count = count( $inactive_plugins );
 				for ( $i = 0; $i < $_count; $i ++ ) {
-					$slug = $inactive_plugins[ $i ]['slug'];
+					$slug             = $inactive_plugins[ $i ]['slug'];
+					$plugin_directory = dirname( $slug );
 					?>
 					<div class="item <?php echo esc_html( sanitize_text_field( dirname( $slug ) ) ); ?>">
 						<input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_plugins[ $i ]['slug'] ) ); ?>"/>
@@ -247,7 +250,8 @@ class MainWP_Widget_Plugins {
 							<?php } ?>
 						</div>
 						<div class="middle aligned content">
-							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ); ?>">
+							<?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?>&nbsp;&nbsp;&nbsp;&nbsp;
+							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ); ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ); ?>">
 								<?php echo esc_html( $inactive_plugins[ $i ]['name'] . ' ' . $inactive_plugins[ $i ]['version'] ); ?>
 							</a>
 						</div>
@@ -283,7 +287,6 @@ class MainWP_Widget_Plugins {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_plugins_widget_bottom', $website, $allPlugins );
-
 		MainWP_Updates::render_plugin_details_modal();
 	}
 
@@ -343,6 +346,10 @@ class MainWP_Widget_Plugins {
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			die( wp_json_encode( array( 'error' => __( 'You cannot edit this website.', 'mainwp' ) ) ) );
+		}
+
+		if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
+			die( wp_json_encode( array( 'error' => __( 'The child site has been suspended.', 'mainwp' ) ) ) );
 		}
 
 		try {

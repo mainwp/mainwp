@@ -463,7 +463,7 @@ jQuery(document).ready(function () {
  * Security Issues
  */
 
-var securityIssues_fixes = ['listing', 'wp_version', 'rsd', 'wlw', 'core_updates', 'plugin_updates', 'theme_updates', 'db_reporting', 'php_reporting', 'versions', 'registered_versions', 'admin', 'readme'];
+var securityIssues_fixes = ['listing', 'wp_version', 'rsd', 'wlw', 'core_updates', 'plugin_updates', 'theme_updates', 'db_reporting', 'php_reporting', 'versions', 'registered_versions', 'admin', 'readme', 'wp_uptodate', 'phpversion_matched', 'sslprotocol', 'debug_disabled'];
 jQuery(document).ready(function () {
   var securityIssueSite = jQuery('#securityIssueSite');
   if ((securityIssueSite.val() != null) && (securityIssueSite.val() != "")) {
@@ -486,19 +486,19 @@ jQuery(document).ready(function () {
     });
 
     for (var i = 0; i < securityIssues_fixes.length; i++) {
-      jQuery('#' + securityIssues_fixes[i] + '_fix').bind('click', function (what) {
-        return function () {
-          securityIssues_fix(what);
-          return false;
-        }
-      }(securityIssues_fixes[i]));
+        jQuery('#' + securityIssues_fixes[i] + '_fix').bind('click', function (what) {
+          return function () {
+            securityIssues_fix(what);
+            return false;
+          }
+        }(securityIssues_fixes[i]));
 
-      jQuery('#' + securityIssues_fixes[i] + '_unfix').bind('click', function (what) {
-        return function () {
-          securityIssues_unfix(what);
-          return false;
-        }
-      }(securityIssues_fixes[i]));
+        jQuery('#' + securityIssues_fixes[i] + '_unfix').bind('click', function (what) {
+          return function () {
+            securityIssues_unfix(what);
+            return false;
+          }
+        }(securityIssues_fixes[i]));
     }
     securityIssues_request(securityIssueSite.val());
   }
@@ -884,12 +884,11 @@ jQuery(document).ready(function () {
   jQuery('#dashboard_refresh').on('click', function () {
     mainwp_sync_sites_data();
   });
-});
-
-jQuery('.mainwp-sync-this-site').on('click', function () {
-  var syncSiteIds = [];
-  syncSiteIds.push(jQuery(this).attr('site-id'));
-  mainwp_sync_sites_data(syncSiteIds);
+  jQuery('.mainwp-sync-this-site').on('click', function () {
+    var syncSiteIds = [];
+    syncSiteIds.push(jQuery(this).attr('site-id'));
+    mainwp_sync_sites_data(syncSiteIds);
+  });
 });
 
 mainwp_sync_sites_data = function (syncSiteIds, pAction) {
@@ -1230,6 +1229,11 @@ jQuery(document).ready(function () {
     return false;
   });
 
+  jQuery('#mainwp-sites-previews').on('click', '.mainwp_site_card_reconnect', function () {
+    mainwp_managesites_cards_reconnect(jQuery(this));
+    return false;
+  });
+
   jQuery('.mainwp-updates-overview-reconnect-site').on('click', function () {
     mainwp_site_overview_reconnect(jQuery(this));
     return false;
@@ -1316,6 +1320,36 @@ mainwp_managesites_reconnect = function (pElement) {
     }
 
   }(wrapElement));
+};
+
+mainwp_managesites_cards_reconnect = function (element) {
+  element.html('<i class="notched loading circle icon"></i> Reconnecting...');
+  var data = mainwp_secure_data({
+    action: 'mainwp_reconnectwp',
+    siteid: element.attr('site-id')
+  });
+
+  jQuery.post(ajaxurl, data, function (element) {
+    return function (response) {
+      response = jQuery.trim(response);
+      element.hide();
+      if (response.substr(0, 5) == 'ERROR') {
+        var error;
+        if (response.length == 5) {
+          error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.';
+        } else {
+          error = response.substr(6);
+        }
+        feedback('mainwp-message-zone', error, 'red');
+      } else {
+        feedback('mainwp-message-zone', response, 'green');
+      }
+      setTimeout(function () {
+        window.location.reload()
+      }, 6000);
+    }
+
+  }(element));
 };
 
 // Connect a new website
@@ -1412,6 +1446,7 @@ mainwp_managesites_add = function () {
         var name = jQuery('#mainwp_managesites_add_wpname').val();
         name = name.replace(/"/g, '&quot;');
         var group_ids = jQuery('#mainwp_managesites_add_addgroups').dropdown('get value');
+        var client_id = jQuery('#mainwp_managesites_add_client_id').dropdown('get value');
         var data = mainwp_secure_data({
           action: 'mainwp_addwp',
           managesites_add_wpname: name,
@@ -1419,6 +1454,7 @@ mainwp_managesites_add = function () {
           managesites_add_wpadmin: jQuery('#mainwp_managesites_add_wpadmin').val(),
           managesites_add_uniqueId: jQuery('#mainwp_managesites_add_uniqueId').val(),
           groupids: group_ids,
+          clientid: client_id,
           managesites_add_http_user: jQuery('#mainwp_managesites_add_http_user').val(),
           managesites_add_http_pass: jQuery('#mainwp_managesites_add_http_pass').val(),
         });
@@ -1921,7 +1957,16 @@ mainwp_createuser = function () {
       selected_sites.push(jQuery(this).val());
     });
     if (selected_sites.length == 0) {
-      feedback('mainwp-message-zone', __('Please select at least one website or group.'), 'yellow');
+      feedback('mainwp-message-zone', __('Please select at least one website or group or client.'), 'yellow');
+      cont = false;
+    }
+  } else if (jQuery('#select_by').val() == 'client') {
+    var selected_clients = [];
+    jQuery("input[name='selected_clients[]']:checked").each(function () {
+      selected_clients.push(jQuery(this).val());
+    });
+    if (selected_clients.length == 0) {
+      feedback('mainwp-message-zone', __('Please select at least one website or group or client.'), 'yellow');
       cont = false;
     }
   } else {
@@ -1930,7 +1975,7 @@ mainwp_createuser = function () {
       selected_groups.push(jQuery(this).val());
     });
     if (selected_groups.length == 0) {
-      feedback('mainwp-message-zone', __('Please select at least one website or group.'), 'yellow');
+      feedback('mainwp-message-zone', __('Please select at least one website or group or client.'), 'yellow');
       cont = false;
     }
   }
@@ -1946,6 +1991,7 @@ mainwp_createuser = function () {
       'select_by': jQuery('#select_by').val(),
       'selected_groups[]': selected_groups,
       'selected_sites[]': selected_sites,
+      'selected_clients[]': selected_clients,
       'user_login': jQuery('#user_login').val(),
       'email': jQuery('#email').val(),
       'url': jQuery('#url').val(),
@@ -2097,11 +2143,26 @@ mainwp_install_bulk = function (type, slug) {
     });
 
     if (selected_sites.length == 0) {
-      feedback('mainwp-message-zone', __('Please select at least one website or a group.', 'mainwp'), 'yellow');
+      feedback('mainwp-message-zone', __('Please select at least one website or a group or client.', 'mainwp'), 'yellow');
       return;
     }
 
     data['selected_sites[]'] = selected_sites;
+
+  } else if (jQuery('#select_by').val() == 'client') {
+
+    var selected_clients = [];
+
+    jQuery("input[name='selected_clients[]']:checked").each(function () {
+      selected_clients.push(jQuery(this).val());
+    });
+
+    if (selected_clients.length == 0) {
+      feedback('mainwp-message-zone', __('Please select at least one website or a group or client.', 'mainwp'), 'yellow');
+      return;
+    }
+
+    data['selected_clients[]'] = selected_clients;
 
   } else {
     var selected_groups = [];
@@ -2111,7 +2172,7 @@ mainwp_install_bulk = function (type, slug) {
     });
 
     if (selected_groups.length == 0) {
-      feedback('mainwp-message-zone', __('Please select at least one website or a group.', 'mainwp'), 'yellow');
+      feedback('mainwp-message-zone', __('Please select at least one website or a group or client.', 'mainwp'), 'yellow');
       return;
     }
 
@@ -2269,7 +2330,7 @@ mainwp_install_bulk_start_specific = function (type, url, activatePlugin, overwr
       bulkInstallCurrentThreads--;
       bulkInstallDone++;
       jQuery('#plugintheme-installation-progress-modal .mainwp-modal-progress').progress('set progress', bulkInstallDone);
-      jQuery('#plugintheme-installation-progress-modal .mainwp-modal-progress').find('.label').html(bulkInstallDone + '/' + bulkInstallTotal + ' ' + __('Installed')); 
+      jQuery('#plugintheme-installation-progress-modal .mainwp-modal-progress').find('.label').html(bulkInstallDone + '/' + bulkInstallTotal + ' ' + __('Installed'));
       mainwp_install_bulk_start_next(type, url, activatePlugin, overwrite);
     }
   }(type, url, activatePlugin, overwrite, siteToInstall), 'json');
@@ -2355,17 +2416,28 @@ mainwp_upload_bulk = function (type) {
     });
 
     if (selected_sites.length == 0) {
-      feedback('mainwp-message-zone', __('Please select at least one website or a group.', 'mainwp'), 'yellow');
+      feedback('mainwp-message-zone', __('Please select at least one website or a group or client.', 'mainwp'), 'yellow');
       return;
     }
     data['selected_sites[]'] = selected_sites;
+  } else if (jQuery('#select_by').val() == 'client') {
+    var selected_clients = [];
+    jQuery("input[name='selected_clients[]']:checked").each(function () {
+      selected_clients.push(jQuery(this).val());
+    });
+
+    if (selected_clients.length == 0) {
+      feedback('mainwp-message-zone', __('Please select at least one website or a group or client.', 'mainwp'), 'yellow');
+      return;
+    }
+    data['selected_clients[]'] = selected_clients;
   } else {
     var selected_groups = [];
     jQuery("input[name='selected_groups[]']:checked").each(function () {
       selected_groups.push(jQuery(this).val());
     });
     if (selected_groups.length == 0) {
-      feedback('mainwp-message-zone', __('Please select at least one website or a group.', 'mainwp'), 'yellow');
+      feedback('mainwp-message-zone', __('Please select at least one website or a group or client.', 'mainwp'), 'yellow');
       return;
     }
     data['selected_groups[]'] = selected_groups;
@@ -2511,20 +2583,20 @@ mainwp_upload_bulk_start_specific = function (type, urls, activatePlugin, overwr
 };
 
 jQuery(document).ready(function ($) {
-  $('.open-plugin-details-modal').on('click', function () {
-      var itemDetail = this;
-      $('#mainwp-plugin-details-modal').modal({
-          onHide: function () {
-          },
-          onShow: function () {
-              $('#mainwp-plugin-details-modal').find('.ui.embed').embed({
-                  source: 'WP',
-                  url: $(itemDetail).attr('href'),
-              });
-              return false;
-          }
-      }).modal('show');
-      return false;
+  jQuery(document).on('click', '.open-plugin-details-modal', function () {
+    var itemDetail = this;
+    $('#mainwp-plugin-details-modal').modal({
+      onHide: function () {
+      },
+      onShow: function () {
+        $('#mainwp-plugin-details-modal').find('.ui.embed').embed({
+          source: 'WP',
+          url: $(itemDetail).attr('href'),
+        });
+        return false;
+      }
+    }).modal('show');
+    return false;
   });
 });
 
@@ -2576,6 +2648,8 @@ jQuery(document).ready(function () {
       mainwp_notes_theme_save();
     } else if (which == 'plugin') {
       mainwp_notes_plugin_save()
+    } else if (which == 'client') {
+      mainwp_notes_client_save()
     }
     var newnote = jQuery('#mainwp-notes-note').val();
     jQuery('#mainwp-notes-html').html(newnote);
@@ -2588,6 +2662,7 @@ jQuery(document).ready(function () {
     jQuery('#mainwp-notes-html').html(note == '' ? __('No saved notes. Click the Edit button to edit site notes.') : note);
     jQuery('#mainwp-notes-note').val(note);
     jQuery('#mainwp-notes-websiteid').val(id);
+    jQuery('#mainwp-which-note').val('site'); // to fix conflict.
     mainwp_notes_show();
     return false;
   });
@@ -2604,8 +2679,17 @@ jQuery(document).ready(function () {
   jQuery('#redirectForm').submit();
 });
 
-mainwp_notes_show = function () {
-  jQuery('#mainwp-notes-modal').modal('setting', 'closable', false).modal('show');
+mainwp_notes_show = function (reloadClose) {
+  if (reloadClose) {
+    jQuery('#mainwp-notes-modal').modal({
+      onHide: function () {
+        window.location.href = location.href
+      }
+    }).modal('show');
+  } else {
+    jQuery('#mainwp-notes-modal').modal({ closable: false }).modal('show');
+  }
+
   jQuery('#mainwp-notes-html').show();
   jQuery('#mainwp-notes-editor').hide();
   jQuery('#mainwp-notes-save').hide();
@@ -2650,7 +2734,7 @@ mainwp_notes_site_save = function () {
 
 };
 
-getErrorMessage = function (pError, msgOnly ) {
+getErrorMessage = function (pError, msgOnly) {
   if (pError.message == 'HTTPERROR') {
     return __('HTTP error') + '! ' + pError.extra;
   } else if (pError.message == 'NOMAINWP' || pError == 'NOMAINWP') {
@@ -2666,12 +2750,12 @@ getErrorMessage = function (pError, msgOnly ) {
     return 'ERROR' + ((pError.extra != '') && (pError.extra != undefined) ? ': ' + pError.extra : '');
   } else if (pError.message == 'WPERROR') {
     var extrMsg = (pError.extra != '') && (pError.extra != undefined) ? pError.extra : '';
-    if( msgOnly != undefined && msgOnly && extrMsg != '' ) {
+    if (msgOnly != undefined && msgOnly && extrMsg != '') {
       return extrMsg;
     } else {
       return __('ERROR on the child site') + ': ' + extrMsg;
     }
-   
+
   } else if (pError.message != undefined && pError.message != '') {
     return pError.message;
   } else {
@@ -2990,6 +3074,19 @@ mainwpTweetUrlBuilder = function (o) {
   ].join('');
 };
 
+jQuery(document).on('click', '.mainwp-action-dismiss', function () {
+  var action_id = jQuery(this).attr('action-id');
+  jQuery(this).closest('tr').fadeOut("slow");
+  var data = {
+    action: 'mainwp_site_actions_dismiss'
+  };
+  data['action_id'] = action_id;
+  jQuery.post(ajaxurl, mainwp_secure_data(data), function () {
+
+  });
+  return false;
+});
+
 mainwp_managesites_update_childsite_value = function (siteId, uniqueId) {
   var data = mainwp_secure_data({
     action: 'mainwp_updatechildsite_value',
@@ -3071,37 +3168,37 @@ updatesoverview_send_twitt_info = function () {
   return send;
 };
 
+// fix menu overflow with scroll tables.
 mainwp_datatable_fix_menu_overflow = function () {
-
-  var fix_overflow = jQuery( '.mainwp-content-wrap' ).attr( 'menu-overflow' );
-
+  var fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');
+  console.log('fix_overflow: ' + fix_overflow);
   jQuery(document).on('click', 'table td.check-column.dtr-control', function () {
     if (jQuery(this).parent().hasClass('parent')) {
       var chilRow = jQuery(this).parent().next();
       jQuery(chilRow).find('.ui.dropdown').dropdown();
-      mainwp_datatable_fix_child_menu_overflow( chilRow, fix_overflow );
+      mainwp_datatable_fix_child_menu_overflow(chilRow, fix_overflow);
     }
-  } );
+  });
 
   // Fix the overflow prbolem for the actions menu element (right pointing menu).
   jQuery('table tr td .ui.right.pointing.dropdown.button').on('click', function () {
     jQuery(this).closest('.dataTables_scrollBody').css('position', '');
     jQuery(this).closest('.dataTables_scroll').css('position', 'relative');
     jQuery(this).css('position', 'static');
-
+    var fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');
     var position = jQuery(this).position();
     var top = position.top;
-    var right = 55;
-    if ( fix_overflow > 1 ) {
+    var right = 48;
+    if (fix_overflow > 1) {
       position = jQuery(this).closest('td').position();
-      top = position.top + 10;
+      top = position.top + 85;
     }
-
-    jQuery(this).find( '.menu' ).css('top', top);
-    jQuery(this).find( '.menu' ).css('right', right);
-    jQuery(this).find( '.menu' ).css('min-width', '170px');
-    console.log( 'right' );
-    console.log( 'top: ' + position.top );
+    console.log('right');
+    console.log('top: ' + position.top);
+    //return false;
+    jQuery(this).find('.menu').css('min-width', '170px');
+    jQuery(this).find('.menu').css('top', top);
+    jQuery(this).find('.menu').css('right', right);
   });
 
   // Fix the overflow prbolem for the actions menu element (left pointing menu).
@@ -3109,25 +3206,26 @@ mainwp_datatable_fix_menu_overflow = function () {
     jQuery(this).closest('.dataTables_scrollBody').css('position', '');
     jQuery(this).closest('.dataTables_scroll').css('position', 'relative');
     jQuery(this).css('position', 'static');
-
     var position = jQuery(this).position();
     var top = position.top;
     var left = position.left - 159;
 
     if (fix_overflow > 1) {
       position = jQuery(this).closest('td').position();
-      var scroll_left = jQuery('.dataTables_scrollBody').scrollLeft();
-      top = position.top + 55;
+      var scroll_left = jQuery(this).closest('.dataTables_scrollBody').scrollLeft();
+      top = position.top + 85;
       left = position.left - scroll_left - 145;
     }
 
-    jQuery(this).find('.menu').css('top', top);
-    jQuery(this).find('.menu').css('left', left);
+    console.log('left');
+    console.log('top: ' + top + ' left: ' + left);
+
     jQuery(this).find('.menu').css('min-width', '150px');
     jQuery(this).removeClass('left');
     jQuery(this).addClass('right');
-    console.log('left');
-    console.log('top: ' + top + ' left: ' + left);
+    //return false;
+    jQuery(this).find('.menu').css('top', top);
+    jQuery(this).find('.menu').css('left', left);
   });
 }
 
@@ -3141,7 +3239,7 @@ mainwp_datatable_fix_child_menu_overflow = function (chilRow, fix_overflow) {
 
     if (fix_overflow > 1) {
       position = jQuery(this).closest('td.child').position();
-      top = position.top + jQuery(this).closest('td.child').height() + 20;
+      top = position.top + jQuery(this).closest('td.child').height() + 85;
     }
 
     jQuery(this).closest('.dataTables_scrollBody').css('position', '');
@@ -3157,7 +3255,7 @@ mainwp_datatable_fix_child_menu_overflow = function (chilRow, fix_overflow) {
 
 mainwp_responsive_fix_remove_child_row = function (el) {
   if (jQuery(el).hasClass('dt-hasChild')) { // to fix.
-      jQuery(el).next().remove();
+    jQuery(el).next().remove();
   }
 }
 
@@ -3351,7 +3449,6 @@ jQuery(document).ready(function () {
   });
 });
 
-
 jQuery(document).ready(function () {
   if (jQuery('body.mainwp-ui').length > 0) {
     jQuery('.mainwp-ui-page .ui.dropdown:not(.not-auto-init)').dropdown();
@@ -3360,8 +3457,8 @@ jQuery(document).ready(function () {
       var values = jQuery(this).attr('init-value').split(',');
       jQuery(this).dropdown('set selected', values);
     });
+    console.log('init ui element.');
   }
-
 });
 
 // MainWP Action Logs

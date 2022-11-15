@@ -248,11 +248,8 @@ class MainWP_Client_Overview {
 	 * Method on_show_page()
 	 *
 	 * When the page loads render the body content.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
-	 * @uses \MainWP\Dashboard\MainWP_UI::render_second_top_header()
 	 */
-	public function on_show_page( $client_id ) {
+	public function on_show_page() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_client_dashboard' ) ) {
 			mainwp_do_not_have_permissions( __( 'client dashboard', 'mainwp' ) );
 			return;
@@ -435,7 +432,6 @@ class MainWP_Client_Overview {
 				} ).modal( 'show' );
 				return false;
 			};
-			
 			jQuery('#reset-clients-overview-settings').on('click', function () {
 				mainwp_confirm(__('Are you sure.'), function(){
 					jQuery('input[name=number_overview_columns][value=2]').prop('checked', true);
@@ -445,10 +441,8 @@ class MainWP_Client_Overview {
 				}, false, false, true);
 				return false;
 			});
-			
 		} );
 	</script>
-
 	<div class="ui modal" id="mainwp-clients-overview-screen-options-modal">
 			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
 			<div class="content ui form">

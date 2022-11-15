@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.0.1
 Requires PHP: 7.0
-Stable tag: 4.2.7
+Stable tag: 4.2.7.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -179,6 +179,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.2.7.1 - 9-22-2022 =
+* Added: The `mainwp_extensions_page_top_header` filter for customizing the Extensions page title
 
 = 4.2.7 - 8-8-2022 =
 * Added: Atarim extension info to the `get_available_extensions()` method

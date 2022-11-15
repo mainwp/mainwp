@@ -43,7 +43,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 	}
 
 	/**
-	 * constructor.
+	 * Constructor.
 	 *
 	 * Run each time the class is called.
 	 */

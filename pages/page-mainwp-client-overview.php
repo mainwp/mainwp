@@ -98,7 +98,7 @@ class MainWP_Client_Overview {
 	 *
 	 * Run on page load.
 	 *
-	 * @param string $page page name.
+	 * @param mixed $page Page name.
 	 */
 	public static function on_load_page( $page ) {
 
@@ -437,11 +437,11 @@ class MainWP_Client_Overview {
 			};
 			
 			jQuery('#reset-clients-overview-settings').on('click', function () {
-				mainwp_confirm(__('Are you sure.'), function () {
-				jQuery('input[name=number_overview_columns][value=2]').prop('checked', true);
-				jQuery('.mainwp_hide_wpmenu_checkboxes input[name="mainwp_show_widgets[]"]').prop('checked', true);
-				jQuery('input[name=reset_client_overview_settings]').attr('value', 1);
-				jQuery('#submit-client-overview-settings').click();
+				mainwp_confirm(__('Are you sure.'), function(){
+					jQuery('input[name=number_overview_columns][value=2]').prop('checked', true);
+					jQuery('.mainwp_hide_wpmenu_checkboxes input[name="mainwp_show_widgets[]"]').prop('checked', true);
+					jQuery('input[name=reset_client_overview_settings]').attr('value', 1);
+					jQuery('#submit-client-overview-settings').click();
 				}, false, false, true);
 				return false;
 			});

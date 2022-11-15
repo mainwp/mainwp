@@ -43,7 +43,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 	}
 
 	/**
-	 * MainWP_DB_Tasks constructor.
+	 * constructor.
 	 *
 	 * Run each time the class is called.
 	 */
@@ -62,7 +62,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 	 * @param string $currentVersion Current db Version.
 	 * @param string $charset_collate charset collate.
 	 *
-	 * @return string $sql.
+	 * @return array $sql queries.
 	 */
 	public function hook_db_install_tables( $sql, $currentVersion, $charset_collate ) {
 		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_actions' ) . ' (
@@ -225,7 +225,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 	 *
 	 * Create or update action.
 	 *
-	 * @param array $data action data.
+	 * @param array $action_id action id.
 	 *
 	 * @return bool
 	 */

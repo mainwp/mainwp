@@ -64,9 +64,7 @@ class MainWP_Client_Overview_Custom_Info {
 			?>
 			<div class="sub header"></div>
 			</h3>
-	
 			<div class="ui section hidden divider"></div>
-	
 			<div class="mainwp-widget-client-card">
 				<?php
 				/**

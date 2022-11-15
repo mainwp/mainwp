@@ -142,7 +142,6 @@ class MainWP_Extensions_View {
 					</div>
 					<?php endif; ?>
 				<div class="ui five stackable cards" id="mainwp-extensions-list">
-			
 					<?php if ( isset( $extensions ) && is_array( $extensions ) ) : ?>
 							<?php foreach ( $extensions as $extension ) : ?>
 									<?php
@@ -169,7 +168,6 @@ class MainWP_Extensions_View {
 						<?php endif; ?>
 
 						<?php if ( is_array( $extensions_disabled ) ) : ?>
-						
 							<?php foreach ( $extensions_disabled as $extension ) : ?>
 									<?php
 									$slug = dirname( $extension['slug'] );

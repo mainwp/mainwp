@@ -1016,18 +1016,15 @@ class MainWP_UI {
 			echo $actions;
 		}
 		?>
-				
 		<a class="ui button basic icon" id="mainwp-sites-sidebar" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_attr_e( 'Quick sites shortcuts', 'mainwp' ); ?>">
 			<i class="globe icon"></i>
 		</a>
 		<a class="ui button basic icon" id="mainwp-help-sidebar" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_attr_e( 'Need help?', 'mainwp' ); ?>">
 			<i class="life ring icon"></i>
 		</a>
-
 		<a class="ui button basic icon" data-inverted="" data-position="bottom right" href="https://managers.mainwp.com/" target="_blank" data-tooltip="<?php esc_attr_e( 'MainWP Community', 'mainwp' ); ?>">
 			<i class="discourse icon"></i>
 		</a>
-
 		<a class="ui button basic icon" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Go to your MainWP Account at MainWP.com', 'mainwp' ); ?>" target="_blank" href="https://mainwp.com/my-account/">
 			<i class="user icon"></i>
 		</a>
@@ -1105,7 +1102,6 @@ class MainWP_UI {
 				}
 				do_action( 'mainwp_page_navigation_menu' );
 				?>
-								
 			</div>
 		</div>
 		<?php

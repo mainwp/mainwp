@@ -1001,7 +1001,7 @@ class MainWP_System_Utility {
 				$new_cached = array();
 				foreach ( $cached_icons as $sl => $val ) {
 					if ( empty( $val['path_custom'] ) && time() < ( intval( $val['lasttime_cached'] ) + 12 * MONTH_IN_SECONDS ) ) {
-						$new_cached[ $sl ] = $val; // unset
+						$new_cached[ $sl ] = $val; // unset.
 						$updated           = true;
 					}
 				}

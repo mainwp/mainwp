@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 5.4
-Tested up to: 6.0.1
+Tested up to: 6.1
 Requires PHP: 7.0
-Stable tag: 4.2.7.1
+Stable tag: 4.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -286,6 +286,57 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 4.3 - 11-15-2022 =
+* Fixed: Dimmer element padding on laptop screen sizes
+* Fixed: Padding issue of the URL protocol dropdown
+* Fixed: Go to WP Admin menu item layout issue on screens less than 500px high
+* Fixed: Incorrect tooltip for the Update All button on individual site overview
+* Added: Client Management system [Feature Request](https://feedback.mainwp.com/admin/plugins/introduce-a-website-owner-feature-and-consolidate-the-redundant-token-systems-ckzycyuxk3248792urd05vs59y9)
+* Added: Updates menu item sub-pages
+* Added: Site Suspended status [Feature Request](https://feedback.mainwp.com/admin/plugins/disable-sites-from-being-maintained-cl0804kkh1654292unylcuqn0al)
+* Added: Tags column to the Manage Sites table
+* Added: Plugin icon to Updates, Ignored Updates, Ignored Abandoned Updates table
+* Added: FREE, PRO, and ORG labels to list items in the list of the available extensions
+* Added: Ability to disable extensions from the Extensions page
+* Added: Ability to enable extensions from the Extensions page
+* Added: Ability to delete extensions from teh Extensions page
+* Added: Info for extensions that require additional plugins on the Dashboard site
+* Added: Extensions privacy info in the install extensions modal
+* Added: Quick switch to Dark theme
+* Added: Quick Grid/List switch on the Manage Sites screen
+* Added: Custom CSS class for buttons in the Updates screen for easier customizations
+* Added: New default theme
+* Added: Theme switch option to the MainWP Tools page
+* Added: Monitoring extensions category
+* Added: Ability to install extensions from the WordPress.org repository
+* Added: Links to the extension page for each extension in the Install Extensions modal
+* Added: New feature to detect plugin and theme changes made outside of MainWP Dashboard [Inspired by WPBuilds Podcast 297](https://wpbuilds.com/2022/09/29/297-dealing-with-changing-staff-and-new-management/)
+* Updated: Previously default theme renamed to MainWP Classic Theme
+* Updated: Tooltip pointer element z-index value
+* Updated: https://meta.mainwp.com URLs changed to https://managers.mainwp.com
+* Updated: Main navigation items order
+* Updated: Better utilization of Team Control permissions in the navigation
+* Updated: Renamed “Groups” to “Tags”
+* Updated: Atarim extension privacy info
+* Updated: Header action buttons layout on laptop screen size
+* Updated: Extension installation indicator style
+* Updated: Split available extensions list to tabs
+* Updated: Extension card element
+* Updated: Show extensions cards in 5 columns
+* Updated: Privacy Policy page layout
+* Updated: Increased cards number per row to 5 on the Extensions page
+* Updated: Show extensions privacy info in a modal
+* Updated: Manage sites grid view to show more info for each site
+* Updated: Moved sites filters to a separate row
+* Updated: Extensions categories
+* Updated: Extensions order in the install modal
+* Updated: Manage Plugins and Themes page layout [Feature Request](https://feedback.mainwp.com/admin/plugins/plugins-listed-as-rows-instead-of-columns-cl755dqhx6970531xq3d89ypnye)
+* Removed: Select All and Select None buttons in the Install Extensions modal Child
+* Fixed: Multiple PHP warnings
+* Added: Support for new security checks
+* Added: Support for the Non-MainWP Changes feature
+* Removed: Unused code
+
 = 4.2.7.1 - 9-22-2022 =
 * Added: The `mainwp_extensions_page_top_header` filter for customizing the Extensions page title
 
@@ -403,15 +454,15 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: Cosmetic issue where the header element gets pushed to the bottom
 * Added: Plugin privacy policy file to the plugin directory
 * Added: Plugin Privacy page
-* Added: Child and Parent theme indicator to the Manage Themes page
+* Added: Child and Parent theme indicator to the Manage Themes page [Feature Request](https://feedback.mainwp.com/plugins/show-parent-theme-name-when-viewing-site-themes-ckzpp1ezq899352wnsqsw6g59g)
 * Added: The "Delete Extensions API Activation Data" button to the MainWP > Tools page
-* Added: Negative search ability Plugins and Theme search page
-* Added: Automatic cache clearing after updates feature
+* Added: Negative search ability Plugins and Theme search page [Feature Request](https://feedback.mainwp.com/plugins/search-for-missing-plugins-feature-needed-ckzpq3y6c1046282wnsx5kidmqi)
+* Added: Automatic cache clearing after updates feature [Feature Request](https://feedback.mainwp.com/plugins/automatic-cache-clearing-ckzq1lhwm1407202wns6666te9z)
 * Added: Version number label under the logo in the menu element
 * Added: Extensions privacy info
 * Updated: Extensions licensing system
-* Updated: Site URL edit field to allow www/non-www change in site URL
-* Updated: Disallow users to delete the parent theme of the active child site
+* Updated: Site URL edit field to allow www/non-www change in site URL [Feature Request](https://feedback.mainwp.com/plugins/child-site-url-edit-option-ckzprh0we1170382wnsn7074ldl)
+* Updated: Disallow users to delete the parent theme of the active child site [Feature Request](https://feedback.mainwp.com/plugins/parent-themes-should-be-locked-by-default-ckzpofev7812132wnsg7vdeyan)
 * Updated: Renamed the Status menu item to Info
 * Updated: Info notice on Manage Plugins and Manage Themes page
 * Updated: The Select All, Deselect All element in the Select Sites box

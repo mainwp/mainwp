@@ -1479,7 +1479,6 @@ class MainWP_Client {
 									<input type="checkbox" value="<?php echo intval( $client_id ); ?>" id="mainwp_client_delete_image[client_field]" name="mainwp_client_delete_image[client_field]" />
 									<label for="mainwp_client_delete_image[client_field][]"><?php _e( 'Delete photo', 'mainwp' ); ?></label>
 								</div>
-			
 							</div>
 						</div>
 					<?php endif; ?>

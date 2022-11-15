@@ -869,14 +869,6 @@ class MainWP_Settings {
 								<input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo ( ( false === get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ) ? 365 : get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
 							</div>
 						</div>
-						<!--
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable plugins/themes/wp-core actions notification on child site', 'mainwp' ); ?></label>
-							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want your MainWP Child to send notification if the child site modified by not connected admin user.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-								<input type="checkbox" name="mainwp_site_actions_notification_enable" id="mainwp_site_actions_notification_enable" <?php echo ( ( 1 == get_option( 'mainwp_site_actions_notification_enable', 0 ) ) ? 'checked="true"' : '' ); ?>/>
-							</div>
-						</div>
-						-->
 						<?php MainWP_Monitoring_View::render_settings(); ?>					
 						<?php MainWP_Manage_Backups::render_settings(); ?>
 						<?php

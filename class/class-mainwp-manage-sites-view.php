@@ -926,19 +926,6 @@ class MainWP_Manage_Sites_View {
 						</select>
 					</div>
 				</div>
-				<?php 
-				$enable_site_notification = MainWP_DB::instance()->get_website_option( $website, 'enable_actions_notification', 2 );
-				?>
-				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Enable plugins/themes/wp-core actions notification on child site', 'mainwp' ); ?></label>
-					<div class="ui six wide column">
-						<select class="ui dropdown" id="mainwp_managesites_edit_enable_actions_notification" name="mainwp_managesites_edit_enable_actions_notification">
-							<option <?php echo ( 1 == $enable_site_notification ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'Yes', 'mainwp' ); ?></option>
-							<option <?php echo ( 0 == $enable_site_notification ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
-							<option <?php echo ( 2 == $enable_site_notification ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
-						</select>
-					</div>
-				</div>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Suspend Site', 'mainwp' ); ?></label>
 					<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want Suspend this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">

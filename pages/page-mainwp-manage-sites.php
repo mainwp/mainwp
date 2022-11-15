@@ -1482,8 +1482,6 @@ class MainWP_Manage_Sites {
 					$forceuseipv4 = 0;
 				}
 
-				$enable_site_notification = isset( $_POST['mainwp_managesites_edit_enable_actions_notification'] ) ? intval( $_POST['mainwp_managesites_edit_enable_actions_notification'] ) : 2;
-
 				$newValues = array(
 					'automatic_update'      => ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : 1 ),
 					'backup_before_upgrade' => $backup_before_upgrade,
@@ -1503,7 +1501,6 @@ class MainWP_Manage_Sites {
 				$monitoring_emails = isset( $_POST['mainwp_managesites_edit_monitoringNotificationEmails'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_monitoringNotificationEmails'] ) ) : '';
 				$monitoring_emails = MainWP_Utility::valid_input_emails( $monitoring_emails );
 				MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $monitoring_emails );
-				MainWP_DB::instance()->update_website_option( $website, 'enable_actions_notification', $enable_site_notification );
 				$updated = true;
 			}
 		}

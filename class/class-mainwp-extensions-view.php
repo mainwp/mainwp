@@ -61,7 +61,6 @@ class MainWP_Extensions_View {
 			$extension_name     = str_replace( array( '-' ), ' ', $extension_name_raw );
 			$extension_name     = MainWP_Extensions_Handler::polish_string_name( $extension_name );
 			$extension_name     = apply_filters( 'mainwp_extensions_page_top_header', $extension_name, $extension_name_raw );
-			$extension_name     = apply_filters( 'mainwp_extensions_page_top_header', $extension_name, $extension_name_raw );
 			$params             = array(
 				'title' => $extension_name,
 			);

@@ -133,7 +133,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 			'contact_name'     => __( 'Contact Name', 'mainwp' ),
 			'client_email'     => __( 'Client Email', 'mainwp' ),
 			'suspended'        => __( 'Status', 'mainwp' ),
-			'client_phone'     => __( 'Contact Phone', 'mainwp' ),
+			'client_phone'     => __( 'Phone', 'mainwp' ),
 			'client_facebook'  => __( 'Facebook', 'mainwp' ),
 			'client_twitter'   => __( 'Twitter', 'mainwp' ),
 			'client_instagram' => __( 'Instagram', 'mainwp' ),

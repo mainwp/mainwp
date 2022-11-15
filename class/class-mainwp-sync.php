@@ -118,10 +118,10 @@ class MainWP_Sync {
 			 */
 			$othersData = apply_filters( 'mainwp_sync_others_data', $othersData, $pWebsite );
 
-			$enable_actions_notification = MainWP_DB::instance()->get_website_option( $pWebsite, 'enable_actions_notification', 2 );
-			if ( 2 === intval( $enable_actions_notification ) ) {
-				$enable_actions_notification = get_option( 'mainwp_site_actions_notification_enable', 0 );
-			}
+			// $enable_actions_notification = MainWP_DB::instance()->get_website_option( $pWebsite, 'enable_actions_notification', 2 );
+			// if ( 2 === intval( $enable_actions_notification ) ) {
+			// 	$enable_actions_notification = get_option( 'mainwp_site_actions_notification_enable', 0 );
+			// }
 
 			$saved_days_number = apply_filters( 'minwp_site_actions_saved_days_number', 30 );
 
@@ -136,7 +136,7 @@ class MainWP_Sync {
 					'numberdaysOutdatePluginTheme'      => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
 					'primaryBackup'                     => $primaryBackup,
 					'siteId'                            => $pWebsite->id,
-					'child_actions_notification_enable' => intval( $enable_actions_notification ),
+					// 'child_actions_notification_enable' => intval( $enable_actions_notification ),
 					'child_actions_saved_days_number'   => intval( $saved_days_number ),
 				),
 				true,

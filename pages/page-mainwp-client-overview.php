@@ -248,7 +248,6 @@ class MainWP_Client_Overview {
 	 * Method on_show_page()
 	 *
 	 * When the page loads render the body content.
-	 * 
 	 */
 	public function on_show_page() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_client_dashboard' ) ) {

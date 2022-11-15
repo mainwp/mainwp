@@ -7,6 +7,8 @@
 
 namespace MainWP\Dashboard;
 
+// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+
 /**
  * Class MainWP_Hooks
  *
@@ -991,7 +993,7 @@ class MainWP_Hooks {
 	 */
 	public function hook_check_security_request( $false, $action = '', $query_arg = '' ) {
 		if ( empty( $query_arg ) ) {
-			$query_arg = $action; // to check wp_verify_nonce( sanitize_key( $_REQUEST[ $query_arg ] ), $action ).
+			$query_arg = $action; // to check wp_verify_nonce - sanitize_key( $_REQUEST[ $query_arg ] ) - $action.
 		}
 		return MainWP_Post_Handler::instance()->check_security( $action, $query_arg, false );
 	}
@@ -1333,6 +1335,7 @@ class MainWP_Hooks {
 	 *
 	 * Hook get download sig.
 	 *
+	 * @param string $false Input value.
 	 * @param string $fullfile Full file path.
 	 *
 	 * @return string
@@ -1346,8 +1349,8 @@ class MainWP_Hooks {
 	 *
 	 * Hook get download sig.
 	 *
-	 * @param string          $fullfile Full file path.
-	 * @param bool true|false
+	 * @param string $fullfile Full file path.
+	 * @param string $sig sig value.
 	 */
 	public function hook_secure_download( $fullfile, $sig ) {
 		$valid = MainWP_System_Utility::valid_download_sig( $fullfile, $sig );
@@ -1363,8 +1366,6 @@ class MainWP_Hooks {
 	 *
 	 * @param string $action action name.
 	 * @param string $callback callback function.
-	 *
-	 * @param void
 	 */
 	public function hook_ajax_add_action( $action, $callback ) {
 		MainWP_Post_Handler::instance()->add_action( $action, $callback );
@@ -1375,10 +1376,8 @@ class MainWP_Hooks {
 	 *
 	 * Hook get plugin icon.
 	 *
-	 * @param mixed       $icon input icon.
-	 * @param string      $slug Plugin slug.
-	 *
-	 * @param string icon.
+	 * @param mixed  $icon input icon.
+	 * @param string $slug Plugin slug.
 	 */
 	public function hook_get_plugin_icon( $icon, $slug ) {
 		return MainWP_System_Utility::get_plugin_icon( $slug );
@@ -1389,10 +1388,8 @@ class MainWP_Hooks {
 	 *
 	 * Hook get theme icon.
 	 *
-	 * @param mixed       $icon input icon.
-	 * @param string      $slug Theme slug.
-	 *
-	 * @param string icon.
+	 * @param mixed  $icon input icon.
+	 * @param string $slug Theme slug.
 	 */
 	public function hook_get_theme_icon( $icon, $slug ) {
 		return MainWP_System_Utility::get_theme_icon( $slug );
@@ -1402,10 +1399,8 @@ class MainWP_Hooks {
 	 *
 	 * Hook get dir slug of plugin/theme.
 	 *
-	 * @param mixed           $input input value.
-	 * @param string          $slug Plugin/Theme slug.
-	 *
-	 * @param string dir slug.
+	 * @param mixed  $input input value.
+	 * @param string $slug Plugin/Theme slug.
 	 */
 	public function hook_get_dir_slug( $input, $slug ) {
 		return MainWP_Utility::get_dir_slug( $slug );
@@ -1430,7 +1425,7 @@ class MainWP_Hooks {
 	/**
 	 * Method hook_add_widget_box()
 	 *
-	 * hook add MainWP meta box.
+	 * Hook add MainWP meta box.
 	 *
 	 * @param mixed       $id Widget ID parameter.
 	 * @param mixed       $callback Callback function.

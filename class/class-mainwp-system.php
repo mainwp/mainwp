@@ -7,6 +7,8 @@
 
 namespace MainWP\Dashboard;
 
+// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+
 /**
  * Defines MainWP Twitter Max Seconds.
  *
@@ -605,7 +607,7 @@ class MainWP_System {
 			$valid_sig = MainWP_System_Utility::valid_download_sig( $file, $sig_value );
 
 			if ( ! $valid_sig ) {
-				MainWP_Logger::instance()->debug( ' :: download :: invalid sig :: ' . base64_decode( $sig_value ) );
+				MainWP_Logger::instance()->debug( ' :: download :: invalid sig :: ' . base64_decode( $sig_value ) ); // phpcs:ignore -- for debug logging.  
 			}
 
 			if ( $hasWPFileSystem && $wp_filesystem->exists( $file ) && $valid_sig ) {
@@ -666,7 +668,7 @@ class MainWP_System {
 	 * @uses \MainWP\Dashboard\MainWP_System_View::get_mainwp_translations()
 	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
 	 */
-	public function admin_init() {
+	public function admin_init() { // phpcs:ignore -- complex function.
 
 		if ( ! MainWP_System_Utility::is_admin() ) {
 			return;

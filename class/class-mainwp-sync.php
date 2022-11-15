@@ -118,26 +118,20 @@ class MainWP_Sync {
 			 */
 			$othersData = apply_filters( 'mainwp_sync_others_data', $othersData, $pWebsite );
 
-			// $enable_actions_notification = MainWP_DB::instance()->get_website_option( $pWebsite, 'enable_actions_notification', 2 );
-			// if ( 2 === intval( $enable_actions_notification ) ) {
-			// $enable_actions_notification = get_option( 'mainwp_site_actions_notification_enable', 0 );
-			// }
-
 			$saved_days_number = apply_filters( 'minwp_site_actions_saved_days_number', 30 );
 
 			$information = MainWP_Connect::fetch_url_authed(
 				$pWebsite,
 				'stats',
 				array(
-					'optimize'                          => ( ( get_option( 'mainwp_optimize', 0 ) == 1 ) ? 1 : 0 ),
-					'cloneSites'                        => ( ! $cloneEnabled ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ) ),
-					'othersData'                        => wp_json_encode( $othersData ),
-					'server'                            => get_admin_url(),
-					'numberdaysOutdatePluginTheme'      => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
-					'primaryBackup'                     => $primaryBackup,
-					'siteId'                            => $pWebsite->id,
-					// 'child_actions_notification_enable' => intval( $enable_actions_notification ),
-					'child_actions_saved_days_number'   => intval( $saved_days_number ),
+					'optimize'                        => ( ( get_option( 'mainwp_optimize', 0 ) == 1 ) ? 1 : 0 ),
+					'cloneSites'                      => ( ! $cloneEnabled ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ) ),
+					'othersData'                      => wp_json_encode( $othersData ),
+					'server'                          => get_admin_url(),
+					'numberdaysOutdatePluginTheme'    => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
+					'primaryBackup'                   => $primaryBackup,
+					'siteId'                          => $pWebsite->id,
+					'child_actions_saved_days_number' => intval( $saved_days_number ),
 				),
 				true,
 				$pForceFetch
@@ -514,7 +508,7 @@ class MainWP_Sync {
 			if ( is_array( $information['child_site_actions_data'] ) && isset( $information['child_site_actions_data']['connected_admin'] ) ) {
 				unset( $information['child_site_actions_data']['connected_admin'] );
 			}
-			MainWP_DB_Site_Actions::instance()->sync_site_actions($pWebsite->id, $information['child_site_actions_data'] );
+			MainWP_DB_Site_Actions::instance()->sync_site_actions( $pWebsite->id, $information['child_site_actions_data'] );
 			$done = true;
 		}
 

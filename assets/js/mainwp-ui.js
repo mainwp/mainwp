@@ -588,7 +588,7 @@ jQuery(document).ready(function () {
             allowMultiple: false,
             closable: true,
             onHide: function () {
-                location.href = location.href;
+                window.location.href = location.href;
             }
         }).modal('show');
 

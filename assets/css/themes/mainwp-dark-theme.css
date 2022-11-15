@@ -734,7 +734,7 @@ body.mainwp-ui.mainwp-custom-theme,
   background-color: var(--background-color-4);
   color: var(--font-color);
 }
-.mainwp-ui.mainwp-custom-theme #mainwp-sites-sidebar-menu.ui.vertical.menu .item:after {}
+.mainwp-ui.mainwp-custom-theme #mainwp-sites-sidebar-menu.ui.vertical.menu .item:after,
 .mainwp-ui.mainwp-custom-theme .ui.pointing.vertical.menu .item:after {
   display: none !important;
 }

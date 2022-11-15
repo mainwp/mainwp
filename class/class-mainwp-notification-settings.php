@@ -286,13 +286,18 @@ class MainWP_Notification_Settings {
 						$templ     = MainWP_Notification_Template::get_template_name_by_notification_type( $type );
 						$overrided = MainWP_Notification_Template::instance()->is_overrided_template( $type );
 						/**
-						*  @deprecated Since v4.3 - use mainwp_notification_template_copy_message instead.
-						*/
+						 *
+						 * Use mainwp_notification_template_copy_message instead.
+						 *
+						 * @deprecated Since v4.3.
+						 */
 						$copy_message = apply_filters( 'minwp_notification_template_copy_message', '', $templ, $type, $overrided );
-
 						/**
-						*  @since v4.3
-						*/
+						 *
+						 * Filter mainwp_notification_template_copy_message.
+						 *
+						 * @since v4.3
+						 */
 						$copy_message = apply_filters( 'mainwp_notification_template_copy_message', $copy_message, $templ, $type, $overrided );
 						if ( empty( $copy_message ) ) {
 							$copy_message = $overrided ? esc_html__( 'This template has been overridden and can be found in:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>' : esc_html__( 'To override and edit this email template copy:', 'mainwp' ) . ' <code>mainwp/templates/' . $templ . '</code> ' . esc_html__( 'to the folder:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>';

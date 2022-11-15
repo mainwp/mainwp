@@ -116,10 +116,6 @@ mainwp_manageclients_doaction_process = function (action) {
   bulkManageClientsTotal = jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]').length;
   bulkManageClientsTaskRunning = true;
 
-  var selectedIds = jQuery.map(jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked'), function (el) {
-    return jQuery(el).val();
-  });
-
   if (action == 'delete') {
     mainwp_manageclients_bulk_remove_next();
     return false;
@@ -263,7 +259,7 @@ mainwp_createclient = function (fromModal) {
 };
 
 // Trigger new client fields modal
-jQuery(document).on('click', '#mainwp-clients-new-custom-field-button', function (e) {
+jQuery(document).on('click', '#mainwp-clients-new-custom-field-button', function () {
   var parent = jQuery(this).parents('#mainwp-clients-custom-field-modal');
   jQuery(parent).find('input[name="field-name"]').val('');
   jQuery(parent).find('input[name="field-description"]').val('');
@@ -293,7 +289,7 @@ jQuery(document).on('click', '#mainwp-clients-edit-custom-field', function () {
 });
 
 // Save/Update custom fields
-jQuery(document).on('click', '#mainwp-clients-save-new-custom-field', function ($) {
+jQuery(document).on('click', '#mainwp-clients-save-new-custom-field', function () {
   mainwp_clients_update_custom_field(this);
   return false;
 });
@@ -344,7 +340,7 @@ mainwp_clients_update_custom_field = function (me) {
 }
 
 // Delete Custom field
-jQuery(document).on('click', '#mainwp-clients-delete-general-field', function ($) {
+jQuery(document).on('click', '#mainwp-clients-delete-general-field', function () {
   if (confirm(__('Are you sure you want to delete this field?'))) {
 
     var parent = jQuery(this).closest('.mainwp-field');
@@ -365,7 +361,7 @@ jQuery(document).on('click', '#mainwp-clients-delete-general-field', function ($
 });
 
 // Delete Custom field
-jQuery(document).on('click', '#mainwp-clients-delete-individual-field', function ($) {
+jQuery(document).on('click', '#mainwp-clients-delete-individual-field', function () {
   if (confirm(__('Are you sure you want to delete this field?'))) {
 
     var parent = jQuery(this).closest('.mainwp-field');

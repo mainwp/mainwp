@@ -112,7 +112,7 @@ class MainWP_Extensions_View {
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::added_on_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
 	 */
-	public static function render() {
+	public static function render() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$mainwp_api_key = false;
 		if ( true == get_option( 'mainwp_extensions_api_save_login' ) ) {
 			$mainwp_api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
@@ -151,7 +151,7 @@ class MainWP_Extensions_View {
 									}
 
 									$extensions_data = isset( $all_available_extensions[ dirname( $extension['slug'] ) ] ) ? $all_available_extensions[ dirname( $extension['slug'] ) ] : array();
-							
+
 									if ( isset( $extensions_data['icon'] ) && ! empty( $extensions_data['icon'] ) ) {
 										$img_url = $extensions_data['icon'];
 									} elseif ( isset( $extensions_data['img'] ) && ! empty( $extensions_data['img'] ) ) {
@@ -465,7 +465,7 @@ class MainWP_Extensions_View {
 				<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
 						<a class="ui activate-api-status mainwp-manage-extension-license icon basic button" data-tooltip="<?php echo ( $active ? __( 'Extension API license is activated properly. Click here to Deactivate it if needed.', 'mainwp' ) : __( 'Extension API license is not activated. Click here to activate it.', 'mainwp' ) ); ?>" api-actived="<?php echo $active ? '1' : '0'; ?>" data-position="top left" data-inverted=""><?php echo $license_class; ?> <?php echo __( 'License', 'mainwp' ); ?></a>
 				<?php endif; ?>
-	  </div>
+		</div>
 		</div>
 
 		<div class="extra content action-feedback" style="display:none;">

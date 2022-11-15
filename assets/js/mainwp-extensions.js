@@ -577,7 +577,7 @@ mainwp_extension_grab_purchased = function (pObj, retring) {
     return false;
 }
 
-mainwp_extension_grab_org_extensions = function (pObj) {
+mainwp_extension_grab_org_extensions = function () {
 
     var statusEl = jQuery(".mainwp-extensions-api-loading");
     var data = mainwp_secure_data({

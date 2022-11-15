@@ -100,14 +100,14 @@ class MainWP_Menu {
 				}
 			}
 
-			// Manage Clients
+			// Manage Clients.
 			if ( ! self::is_disable_menu_item( 2, 'ManageClients' ) ) {
 				if ( mainwp_current_user_have_right( 'dashboard', 'manage_clients' ) ) {
 					MainWP_Client::init_menu();
 				}
 			}
 
-			// Manage Updates
+			// Manage Updates.
 			if ( ! self::is_disable_menu_item( 2, 'UpdatesManage' ) ) {
 				if ( mainwp_current_user_have_right( 'dashboard', 'update_wordpress' ) && mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) && mainwp_current_user_have_right( 'dashboard', 'update_themes' ) && mainwp_current_user_have_right( 'dashboard', 'update_translations' ) && mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) && mainwp_current_user_have_right( 'dashboard', 'trust_untrust_updates' ) ) {
 					MainWP_Updates::init_menu();
@@ -168,7 +168,7 @@ class MainWP_Menu {
 				}
 			}
 
-			// Manage Admin Passwords
+			// Manage Admin Passwords.
 			if ( ! self::is_disable_menu_item( 3, 'UpdateAdminPasswords' ) ) {
 				if ( mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
 					MainWP_Bulk_Update_Admin_Passwords::init_menu();

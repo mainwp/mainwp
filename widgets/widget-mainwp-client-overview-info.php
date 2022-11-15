@@ -44,7 +44,7 @@ class MainWP_Client_Overview_Info {
 	 *
 	 * @param object $client_id Client ID.
 	 */
-	public static function render_client_overview( $client_id ) {
+	public static function render_client_overview( $client_id ) {  // phpcs:ignore -- complex function.
 		$params      = array( 'with_selected_sites' => true );
 		$client_info = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id, ARRAY_A, $params );
 
@@ -83,7 +83,7 @@ class MainWP_Client_Overview_Info {
 						<div class="twelve wide middle aligned column">
 							<div class="ui relaxed list">
 								<?php if ( isset( $client_info['client_email'] ) && '' != $client_info['client_email'] ) : ?>
-							  <div class="item">
+								<div class="item">
 								<i class="envelope grey icon"></i>
 									<div class="content"><a href="mailto:<?php echo esc_url( $client_info['client_email'] ); ?>" target="_blank"><?php echo esc_html( $client_info['client_email'] ); ?></a> <i data-clipboard-text="<?php echo esc_html( $client_info['client_email'] ); ?>" style="cursor:pointer" class="copy green icon copy-to-clipboard"></i></div>
 								</div>
@@ -148,15 +148,15 @@ class MainWP_Client_Overview_Info {
 					</div>
 				</div>
 
-							<div class="ui hidden divider"></div>
-							<div class="ui hidden divider"></div>
+				<div class="ui hidden divider"></div>
+				<div class="ui hidden divider"></div>
 
-							<a href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_id ); ?>" title="" class="ui button green"><?php echo esc_html__( 'Edit Client', 'mainwp' ); ?></a>
-							<a class="ui green basic button" href="admin.php?page=managesites&client=<?php echo intval( $client_id ); ?>"><?php esc_html_e( 'Manage Sites', 'mainwp' ); ?></a>
-							<?php if ( is_plugin_active( 'mainwp-pro-reports-extension/mainwp-pro-reports-extension.php' ) ) { ?>
-								<a class="ui green basic button" href="admin.php?page=Extensions-Mainwp-Pro-Reports-Extension&tab=report&action=newreport&selected_sites=<?php echo esc_html( $selected_sites ); ?>"><?php esc_html_e( 'Create Report', 'mainwp' ); ?></a>
-							<?php } ?>
-							<a href="javascript:void(0);" suspend-status="<?php echo intval( $client_info['suspended'] ); ?>" title="" class="ui right floated button client-suspend-unsuspend-sites"><?php echo 0 == $client_info['suspended'] ? esc_html__( 'Suspend Sites', 'mainwp' ) : esc_html__( 'Unsuspend Sites', 'mainwp' ); ?></a>
+				<a href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_id ); ?>" title="" class="ui button green"><?php echo esc_html__( 'Edit Client', 'mainwp' ); ?></a>
+				<a class="ui green basic button" href="admin.php?page=managesites&client=<?php echo intval( $client_id ); ?>"><?php esc_html_e( 'Manage Sites', 'mainwp' ); ?></a>
+				<?php if ( is_plugin_active( 'mainwp-pro-reports-extension/mainwp-pro-reports-extension.php' ) ) { ?>
+					<a class="ui green basic button" href="admin.php?page=Extensions-Mainwp-Pro-Reports-Extension&tab=report&action=newreport&selected_sites=<?php echo esc_html( $selected_sites ); ?>"><?php esc_html_e( 'Create Report', 'mainwp' ); ?></a>
+				<?php } ?>
+				<a href="javascript:void(0);" suspend-status="<?php echo intval( $client_info['suspended'] ); ?>" title="" class="ui right floated button client-suspend-unsuspend-sites"><?php echo 0 == $client_info['suspended'] ? esc_html__( 'Suspend Sites', 'mainwp' ) : esc_html__( 'Unsuspend Sites', 'mainwp' ); ?></a>
 
 					<script type="text/javascript">
 							jQuery( document ).ready( function ($) {

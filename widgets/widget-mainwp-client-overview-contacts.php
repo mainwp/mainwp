@@ -75,9 +75,7 @@ class MainWP_Client_Overview_Contacts {
 					<?php echo esc_html( apply_filters( 'mainwp_clients_overview_contact_widget_sutbitle', $contact_info['contact_role'], $contact_info ) ); ?>
 				</div>
 			</h3>
-	
 			<div class="ui section hidden divider"></div>
-	
 			<div class="mainwp-widget-client-card">
 				<?php
 				/**
@@ -106,7 +104,7 @@ class MainWP_Client_Overview_Contacts {
 								<div class="twelve wide middle aligned column">
 							<div class="ui relaxed list">
 								<?php if ( isset( $contact_info['contact_email'] ) && '' != $contact_info['contact_email'] ) : ?>
-							  <div class="item">
+								<div class="item">
 									<i class="envelope grey icon"></i>
 									<div class="content"><a href="mailto:<?php echo esc_url( $contact_info['contact_email'] ); ?>" target="_blank"><?php echo esc_html( $contact_info['contact_email'] ); ?></a> <i data-clipboard-text="<?php echo esc_html( $contact_info['contact_email'] ); ?>" style="cursor:pointer" class="copy green icon copy-to-clipboard"></i></div>
 											</div>

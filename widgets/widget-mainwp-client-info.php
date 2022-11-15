@@ -80,9 +80,7 @@ class MainWP_Client_Info {
 			?>
 				<div class="sub header"><?php esc_html_e( 'Client Information', 'mainwp' ); ?></div>
 			</h3>
-	
 			<div class="ui section hidden divider"></div>
-	
 			<div class="mainwp-widget-site-info">
 				<?php
 				/**
@@ -195,7 +193,6 @@ class MainWP_Client_Info {
 					</tbody>
 				</table>
 				<?php } ?>
-
 				<div class="ui stackable grid">
 					<div class="eight wide column">
 						<?php if ( $client_info ) { ?>
@@ -206,7 +203,6 @@ class MainWP_Client_Info {
 						<a href="admin.php?page=ClientAddNew" title="" class="ui button green"><?php echo esc_html__( 'Add New Client', 'mainwp' ); ?></a>
 					</div>
 				</div>
-				
 				<?php
 				/**
 				 * Action: mainwp_clients_info_widget_bottom

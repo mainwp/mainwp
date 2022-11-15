@@ -24,7 +24,7 @@ class MainWP_Meta_Boxes {
 	 *
 	 * @return int $post_id Post ID.
 	 */
-	public function select_sites_handle( $post_id, $post_type ) {
+	public function select_sites_handle( $post_id, $post_type ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		/**
 		 * Verify this came from the our screen and with proper authorization.
 		 */

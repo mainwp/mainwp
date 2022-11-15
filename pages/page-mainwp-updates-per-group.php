@@ -44,7 +44,7 @@ class MainWP_Updates_Per_Group {
 	 * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
 	 * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
 	 */
-	public static function render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) {
+	public static function render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		?>
 			<table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-wordpress-updates-groups-table"> <!-- Per Group table -->
 				<thead>
@@ -347,7 +347,7 @@ class MainWP_Updates_Per_Group {
 														<?php
 														$indent_hidden = '<input type="hidden" id="wp_upgraded_plugin_' . esc_attr( $website->id ) . '_group_' . esc_attr( $group_id ) . '_' . $plugin_name . '" value="0"/>';
 														$row_columns   = array(
-															'title'   => MainWP_System_Utility::get_plugin_icon( dirname( $slug ) ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . '<a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '" target="_blank" class="open-plugin-details-modal">' . esc_html( $plugin_upgrade['Name'] ) . '</a>' . $indent_hidden,
+															'title'   => MainWP_System_Utility::get_plugin_icon( dirname( $slug ) ) . '&nbsp;&nbsp;&nbsp;&nbsp;<a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '" target="_blank" class="open-plugin-details-modal">' . esc_html( $plugin_upgrade['Name'] ) . '</a>' . $indent_hidden,
 															'version' => '<strong class="mainwp-768-show">' . __( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $plugin_upgrade['Version'] ),
 															'latest'  => '<strong class="mainwp-768-show">' . __( 'Updates: ', 'mainwp' ) . '</strong><a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog" target="_blank" class="open-plugin-details-modal">' . esc_html( $plugin_upgrade['update']['new_version'] ) . '</a>',
 															'trusted' => ( in_array( $slug, $trustedPlugins ) ? true : false ),

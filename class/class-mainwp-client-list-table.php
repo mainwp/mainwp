@@ -55,7 +55,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 	 *
 	 * @return string Column name.
 	 */
-	public function column_default( $item, $column_name ) { 	// phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public function column_default( $item, $column_name ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		/**
 		 * Filter: mainwp_clients_sitestable_item
@@ -341,11 +341,9 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 					<?php $this->print_column_headers( $optimize, true ); ?>
 				</tr>
 			</thead>
-			
 			<tbody id="mainwp-manage-sites-body-table">
 				<?php $this->display_rows_or_placeholder(); ?>
 			</tbody>
-			
 			<tfoot>
 				<tr>
 					<?php $this->print_column_headers( $optimize, false ); ?>
@@ -453,12 +451,9 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 							// to fix js error.
 						}
 					} );
-					
 				};
 				_init_manage_sites_screen();
-
 			} );
-
 			</script>
 		<?php
 	}
@@ -568,10 +563,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 	/**
 	 * Single row.
 	 *
-	 * @param mixed $website Object containing the site info.
-	 *
-	 * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
-	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_site_health()
+	 * @param mixed $item Object containing the client info.
 	 */
 	public function single_row( $item ) {
 		echo '<tr id="client-site-' . $item['client_id'] . '"  clientid=' . $item['client_id'] . ' >';
@@ -583,11 +575,9 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 	/**
 	 * Columns for a single row.
 	 *
-	 * @param mixed $website     Object containing the site info.
+	 * @param mixed $item     Object containing the client info.
 	 */
-	protected function single_row_columns( $item, $good_health = false ) {
-		// for compatible.
-		$good_health = $good_health ? true : false;
+	protected function single_row_columns( $item ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		list( $columns ) = $this->get_column_info();
 

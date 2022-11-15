@@ -54,6 +54,7 @@ class MainWP_Site_Actions {
 	 * Render Sites actions Info.
 	 *
 	 * @param object $actions_info Sites actions info.
+	 * @param object $website Sites info.
 	 */
 	private static function render_info( $actions_info, $website ) {
 
@@ -76,9 +77,7 @@ class MainWP_Site_Actions {
 			?>
 				<div class="sub header"><?php esc_html_e( 'The most recent Non-MainWP plugin and theme changes. Sync to get latest info.', 'mainwp' ); ?></div>
 			</h3>
-	
 			<div class="ui section hidden divider"></div>
-	
 			<div class="mainwp-widget-site-info">
 				<?php
 				/**
@@ -130,7 +129,7 @@ class MainWP_Site_Actions {
 							<td data-order="<?php echo esc_attr( $data->created ); ?>">
 								<strong><?php echo isset( $meta_data->name ) && '' != $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?></strong> <?php echo 'WordPress' != $data->context ? esc_html( ucfirst( rtrim( $data->context, 's' ) ) ) : 'WordPress'; ?><br/>
 								<?php echo esc_html( ucfirst( $data->action ) ); ?><br/>
-								<em><?php echo esc_html( 'On: ', 'mainwp' ); ?><?php echo esc_html( MainWP_Utility::format_timestamp( $data->created ) ); ?></em>
+								<em><?php esc_html_e( 'On: ', 'mainwp' ); ?><?php echo esc_html( MainWP_Utility::format_timestamp( $data->created ) ); ?></em>
 							</td>
 							<?php
 							if ( empty( $website ) ) {
@@ -174,7 +173,7 @@ class MainWP_Site_Actions {
 					} );
 				} );
 				</script>
-			   <?php } else { ?>
+				<?php } else { ?>
 				<h2 class="ui icon header">
 					<i class="info circle icon"></i>
 					<div class="content">

@@ -185,7 +185,7 @@ class MainWP_Manage_Screenshots {
 	 *
 	 * Render Screenshots.
 	 */
-	public static function render_all_sites() {
+	public static function render_all_sites() { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		/**
 		 * Sites Page header
 		 *
@@ -372,13 +372,13 @@ class MainWP_Manage_Screenshots {
 							</div>
 						<div class="content">
 								<h5 class="ui small header">
-									<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php echo esc_attr( 'Go to WP Admin', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php echo $website->name; ?></a>
+									<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php echo $website->name; ?></a>
 									<div class="sub header" style="font-size:11px"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo $website->url; ?></a></div>
 								</h5>
 						</div>
 							<?php if ( isset( $website->client_id ) && '0' != $website->client_id ) : ?>
 							<div class="extra content">
-								<small data-tooltip="<?php echo esc_attr( 'See client details', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="user icon"></i> <a href="<?php echo esc_attr( 'admin.php?page=ManageClients&client_id=' . $website->client_id ); ?>" class="ui small"><?php echo $website->client_name; ?></a></small>
+								<small data-tooltip="<?php esc_attr_e( 'See client details', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="user icon"></i> <a href="<?php echo esc_attr( 'admin.php?page=ManageClients&client_id=' . $website->client_id ); ?>" class="ui small"><?php echo $website->client_name; ?></a></small>
 							</div>
 							<?php endif; ?>
 							<div class="extra content">
@@ -393,8 +393,8 @@ class MainWP_Manage_Screenshots {
 							<?php if ( $hasSyncErrors ) : ?>
 								<a class="ui mini green basic icon button fluid mainwp_site_card_reconnect" site-id="<?php echo $website->id; ?>" href="#"><i class="sync alternate icon"></i> <?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 							<?php else : ?>
-							<div data-tooltip="<?php echo esc_html( 'Last Sync: ', 'mainwp' ); ?> <?php echo 0 != $website->dtsSync ? MainWP_Utility::format_timestamp( MainWP_Utility::format_timestamp( $website->dtsSync ) ) : ''; ?>" data-inverted="" data-position="bottom center">
-								<a href="javascript:void(0)" class="ui mini green icon button fluid mainwp-sync-this-site" site-id="<?php echo $website->id; ?>"><i class="sync alternate icon"></i> <?php echo esc_html( 'Sync Site ', 'mainwp' ); ?></a>
+							<div data-tooltip="<?php esc_html_e( 'Last Sync: ', 'mainwp' ); ?> <?php echo 0 != $website->dtsSync ? MainWP_Utility::format_timestamp( MainWP_Utility::format_timestamp( $website->dtsSync ) ) : ''; ?>" data-inverted="" data-position="bottom center">
+								<a href="javascript:void(0)" class="ui mini green icon button fluid mainwp-sync-this-site" site-id="<?php echo $website->id; ?>"><i class="sync alternate icon"></i> <?php esc_html_e( 'Sync Site ', 'mainwp' ); ?></a>
 							</div>
 							<?php endif; ?>
 						</div>
@@ -516,7 +516,7 @@ class MainWP_Manage_Screenshots {
 	/**
 	 * Prepare the items to be listed.
 	 */
-	public static function prepare_items() {
+	public static function prepare_items() { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$orderby = 'wp.url';
 

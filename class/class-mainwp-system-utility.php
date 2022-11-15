@@ -7,7 +7,7 @@
 
 namespace MainWP\Dashboard;
 
-// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
+// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors, Generic.Metrics.CyclomaticComplexity -- Using cURL functions.
 
 /**
  * Class MainWP_System_Utility
@@ -222,37 +222,35 @@ class MainWP_System_Utility {
 	/**
 	 * Method get_download_sig()
 	 *
-	 * @param string $filename File Name.
+	 * @param string $fullFile File Name.
 	 *
 	 * @return string Sig Download URL.
 	 */
 	public static function get_download_sig( $fullFile ) {
-		$key_value  = uniqid( 'sig_', true ) . filesize( $fullFile ) . current_time( 'timestamp' );
+		$key_value  = uniqid( 'sig_', true ) . filesize( $fullFile ) . time();
 		$sig_values = array(
 			'sig'       => md5( filesize( $fullFile ) ),
 			'key_value' => $key_value,
 			'hash_key'  => wp_hash( $key_value ),
 		);
 		$sig_values = wp_json_encode( $sig_values );
-		return base64_encode( $sig_values );
+		$sig_values = rawurlencode( $sig_values );
+		return $sig_values;
 	}
 
 
 	/**
 	 * Method valid_download_sig()
 	 *
-	 * @param string $filename File Name.
+	 * @param string $file File Name.
 	 * @param string $sig download.
 	 *
 	 * @return bool true|false.
 	 */
 	public static function valid_download_sig( $file, $sig ) {
 
-		$decoded = base64_decode( $sig, true );
-		if ( false === $decoded ) {
-			return false;
-		}
-		$value = json_decode( $decoded, true );
+		$sig   = rawurldecode( $sig );
+		$value = json_decode( $sig, true );
 
 		if ( ! is_array( $value ) || empty( $value['key_value'] ) || empty( $value['sig'] ) ) {
 			return false;
@@ -530,7 +528,7 @@ class MainWP_System_Utility {
 	}
 
 	/**
-	 * filter client tags
+	 * Filter client tags
 	 *
 	 * @param array $item Array containing tags.
 	 *
@@ -816,7 +814,7 @@ class MainWP_System_Utility {
 	 *
 	 * @param string $icon The icon.
 	 * @param string $slug slug.
-	 * @param string $slug Type: plugin|theme.
+	 * @param string $type Type: plugin|theme.
 	 * @param bool   $custom_icon Custom icon or not. Default: false.
 	 */
 	public static function update_cached_icons( $icon, $slug, $type, $custom_icon = false ) {
@@ -1073,7 +1071,7 @@ class MainWP_System_Utility {
 	 * @param string $slug Plugin|Theme slug.
 	 * @param string $type Type icon, plugin|theme.
 	 */
-	private static function get_plugin_theme_icon( $slug, $type ) {
+	private static function get_plugin_theme_icon( $slug, $type ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		if ( 'plugin' === $type ) {
 			$option_name = 'plugins_icons';
@@ -1144,10 +1142,11 @@ class MainWP_System_Utility {
 	 * @param string $sub_folder The sub folder.
 	 * @param mixed  $file_uploader The file uploader.
 	 * @param mixed  $file_index The index of file uploader.
+	 * @param bool   $file_subindex Is file with sub index.
 	 * @param int    $max_width max image width.
 	 * @param int    $max_height max image height.
 	 */
-	public static function handle_upload_image( $sub_folder, $file_uploader, $file_index, $file_subindex = false, $max_width = 300, $max_height = 300 ) {
+	public static function handle_upload_image( $sub_folder, $file_uploader, $file_index, $file_subindex = false, $max_width = 300, $max_height = 300 ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$dirs     = self::get_mainwp_dir( $sub_folder, true );
 		$base_dir = $dirs[0];

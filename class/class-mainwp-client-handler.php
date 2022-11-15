@@ -197,26 +197,26 @@ class MainWP_Client_Handler {
 	 * Rest API add client.
 	 *
 	 * @param array $data fields array.
-	 * @param array $output Output array.
+	 * @param bool  $edit Is edit.
 	 *
-	 * $data fields.
-	 * 'email'.
-	 * 'name'.
-	 * 'facebook'.
-	 * 'twitter'.
-	 * 'instagram'.
-	 * 'address_1'.
-	 * 'address_2'.
-	 * 'city'.
-	 * 'zip'.
-	 * 'state'.
-	 * 'note'.
-	 * 'selected_sites'.
-	 * 'client_id'. - to edit client.
+	 *  $data fields.
+	 *  'email'.
+	 *  'name'.
+	 *  'facebook'.
+	 *  'twitter'.
+	 *  'instagram'.
+	 *  'address_1'.
+	 *  'address_2'.
+	 *  'city'.
+	 *  'zip'.
+	 *  'state'.
+	 *  'note'.
+	 *  'selected_sites'.
+	 *  'client_id'. - to edit client.
 	 *
 	 * @return mixed Results.
 	 */
-	public static function rest_api_add_client( $data, $edit = false ) {
+	public static function rest_api_add_client( $data, $edit = false ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.  
 
 		$params = array();
 
@@ -358,7 +358,7 @@ class MainWP_Client_Handler {
 	 *
 	 * @return mixed $result Result of tokens.
 	 */
-	public function get_website_client_tokens_data( $websiteid = false ) {
+	public function get_website_client_tokens_data( $websiteid = false ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated. 
 		if ( empty( $websiteid ) ) {
 			return false;
 		}

@@ -467,11 +467,11 @@ class MainWP_Plugins {
 									<div class="ui hidden divider"></div>
 									<div class="ui hidden divider"></div>
 									<h2 class="ui icon header">
-									  <i class="settings icon"></i>
-									  <div class="content">
+										<i class="settings icon"></i>
+										<div class="content">
 										<?php esc_html_e( 'Manage Plugins', 'mainwp' ); ?>
 										<div class="sub header"><?php esc_html_e( 'Use the search options to find the plugin you want to manage.', 'mainwp' ); ?></div>
-									  </div>
+										</div>
 									</h2>
 								</div>
 							<?php endif; ?>
@@ -1094,6 +1094,7 @@ class MainWP_Plugins {
 	 * @param array $pluginsMainWP MainWP plugins array.
 	 * @param array $muPlugins Must use plugins array.
 	 * @param array $pluginsName Plugin names array.
+	 * @param array $pluginsNameSites Plugin names with Sites array.
 	 * @param array $pluginsRealVersion Latest plugin release version.
 	 */
 	public static function render_manage_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion ) {
@@ -1165,11 +1166,11 @@ class MainWP_Plugins {
 				</div>
 				<div class="one wide center aligned middle aligned column"><div class="ui checkbox main-master  not-auto-init"><input type="checkbox"/><label></label></div></div>
 				<div class="one wide center aligned middle aligned column"></div>
-				<div class="five wide middle aligned column"><?php echo esc_html( 'Plugin', 'mainwp' ); ?></div>
+				<div class="five wide middle aligned column"><?php esc_html_e( 'Plugin', 'mainwp' ); ?></div>
 				<div class="two wide center aligned middle aligned column"></div>
-				<div class="two wide center aligned middle aligned column"><?php echo esc_html( 'Latest Version', 'mainwp' ); ?></div>
+				<div class="two wide center aligned middle aligned column"><?php esc_html_e( 'Latest Version', 'mainwp' ); ?></div>
 				<div class="two wide center aligned middle aligned column"></div>
-				<div class="two wide center aligned middle aligned column"><?php echo esc_html( 'Websites', 'mainwp' ); ?></div>
+				<div class="two wide center aligned middle aligned column"><?php esc_html_e( 'Websites', 'mainwp' ); ?></div>
 			</div>
 		</div>
 
@@ -1192,7 +1193,7 @@ class MainWP_Plugins {
 			$lastest_version = '';
 			?>
 			<div class="ui accordion mainwp-manage-plugin-accordion mainwp-manage-plugin-item main-child-checkbox"  id="<?php echo esc_html( $item_id ); ?>">
-			  <div class="title master-checkbox">
+				<div class="title master-checkbox">
 					<div class="ui grid">
 						<div class="one wide center aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
 						<div class="one wide center aligned middle aligned column">
@@ -1205,8 +1206,8 @@ class MainWP_Plugins {
 						<div class="two wide center aligned middle aligned column"></div>
 						<div class="two wide center aligned middle aligned column"><div class="ui label"><i class="icon wordpress"></i> <?php echo intval( $count_sites ); // phpcs:ignore -- Prevent modify WP icon. ?></div></div> 
 					</div>
-			  </div>
-			  <div class="content child-checkbox">
+				</div>
+				<div class="content child-checkbox">
 					<?php
 					foreach ( $pluginSites as $site_id => $slugVersions ) :
 						$site_url  = $sites[ $site_id ]['websiteurl'];

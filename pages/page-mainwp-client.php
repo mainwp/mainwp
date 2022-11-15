@@ -286,7 +286,7 @@ class MainWP_Client {
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
-	public static function render_header( $shownPage = '' ) {
+	public static function render_header( $shownPage = '' ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$client_id = isset( $_GET['client_id'] ) ? sanitize_text_field( wp_unslash( $_GET['client_id'] ) ) : 0;
 
@@ -963,16 +963,16 @@ class MainWP_Client {
 								<?php esc_html_e( 'Client info is available as tokens for reports and boilerplate content. Toggle the switch to see available tokens.', 'mainwp' ); ?>
 							</div>
 							<div class="ui toggle checkbox">
-							  <input type="checkbox" name="mainwp_toggle_tokens_info" id="mainwp_toggle_tokens_info">
-							  <label><?php esc_html_e( 'Toggle available tokens', 'mainwp' ); ?></label>
+								<input type="checkbox" name="mainwp_toggle_tokens_info" id="mainwp_toggle_tokens_info">
+								<label><?php esc_html_e( 'Toggle available tokens', 'mainwp' ); ?></label>
 							</div>
 						</div>
 					</div>
 					<script type="text/javascript">
 					jQuery( document ).ready( function() {
 					jQuery( '#mainwp_toggle_tokens_info' ).on( 'change', function() {
-						 jQuery( '.hidden.token.column' ).toggle();
-					  } );
+							jQuery( '.hidden.token.column' ).toggle();
+						} );
 					} );
 					</script>
 					<div class="ui fitted divider"></div>
@@ -1400,7 +1400,7 @@ class MainWP_Client {
 	 *
 	 * @param mixed $edit_client The client data.
 	 */
-	public static function render_add_client_content( $edit_client = false ) {
+	public static function render_add_client_content( $edit_client = false ) { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 
 		$client_id = $edit_client ? $edit_client->client_id : 0;
 
@@ -1497,7 +1497,6 @@ class MainWP_Client {
 						<div class="ui left labeled">
 							<div class="ui search selection dropdown" init-value="" id="client_fields[default_field][primary_contact_id]">
 							<input type="hidden" name="client_fields[default_field][primary_contact_id]" value="<?php echo $edit_client ? intval( $edit_client->primary_contact_id ) : 0; ?>">
-									
 							<i class="dropdown icon"></i>
 								<div class="default text"><?php esc_attr_e( 'Select primary contact', 'mainwp' ); ?></div>
 								<div class="menu">
@@ -1514,9 +1513,7 @@ class MainWP_Client {
 					<div class="ui four wide column">
 					</div>	
 				</div>
-
 				<div class="ui section hidden divider"></div>
-
 			<?php
 		} else {
 			self::get_add_contact_temp( false, true, true );
@@ -1526,10 +1523,6 @@ class MainWP_Client {
 
 		if ( $edit_client && $edit_client->primary_contact_id ) {
 			$primary_contact_id = $edit_client->primary_contact_id;
-			// $primary_contact    = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', $primary_contact_id );
-			// if ( $primary_contact ) {
-			// self::get_add_contact_temp( $primary_contact, true );
-			// }
 		}
 
 		if ( is_array( $custom_fields ) && count( $custom_fields ) > 0 ) {
@@ -1572,9 +1565,6 @@ class MainWP_Client {
 		if ( $client_id ) {
 			if ( $client_contacts ) {
 				foreach ( $client_contacts as $client_contact ) {
-					// if ( $primary_contact_id === $client_contact->contact_id ) {
-					// continue;
-					// }
 					self::get_add_contact_temp( $client_contact, true );
 				}
 			}
@@ -1732,29 +1722,40 @@ class MainWP_Client {
 			if ( $current && $current->field_name == $field_name && $current->field_desc == $field_desc ) {
 				$return['success'] = true;
 				$return['message'] = __( 'Field has been saved without changes.', 'mainwp' );
-			} elseif ( ( $current = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $field_name, $client_id ) ) && $current->field_id != $field_id ) { // check if other field with the same name existed.
-				$return['error'] = __( 'Field already exists, try different field name.', 'mainwp' );
-			} elseif ( $field = MainWP_DB_Client::instance()->update_client_field( // update general or individual field name.
-				$field_id,
-				array(
-					'field_name' => $field_name,
-					'field_desc' => $field_desc,
-					'client_id'  => $client_id,
-				)
-			) ) {
-				$return['success'] = true;
+			} else {
+				$current = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $field_name, $client_id ); // check if other field with the same name existed.
+				if ( $current && $current->field_id != $field_id ) {
+					$return['error'] = __( 'Field already exists, try different field name.', 'mainwp' );
+				} else {
+					// update general or individual field name.
+					$field = MainWP_DB_Client::instance()->update_client_field(
+						$field_id,
+						array(
+							'field_name' => $field_name,
+							'field_desc' => $field_desc,
+							'client_id'  => $client_id,
+						)
+					);
+					if ( $field ) {
+						$return['success'] = true;
+					}
+				}
 			}
-		} else { // add new
-			if ( $current = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $field_name, $client_id ) ) { // checking general or individual field name.
+		} else { // add new.
+			$current = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $field_name, $client_id );
+			if ( $current ) { // checking general or individual field name.
 				$return['error'] = __( 'Field already exists, try different field name.', 'mainwp' );
 			} else {
-				if ( $field = MainWP_DB_Client::instance()->add_client_field( // insert general or individual field name.
+				// insert general or individual field name.
+				$field = MainWP_DB_Client::instance()->add_client_field(
 					array(
 						'field_name' => $field_name,
 						'field_desc' => $field_desc,
 						'client_id'  => $client_id,
 					)
-				) ) {
+				);
+
+				if ( $field ) {
 					$return['success'] = true;
 				} else {
 					$return['error'] = __( 'Undefined error occurred. Please try again.', 'mainwp' ); }

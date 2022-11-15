@@ -565,7 +565,7 @@ class MainWP_Extensions {
 					<div class="item extension" slug="' . esc_attr( $ext['slug'] ) . '">
 						<div class="ui stackable grid">
 							<div class="two column row">
-								<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . ' ' . $notice . '</label></span>' . $privacy . '</div>
+								<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a> ' . $notice . '</label></span>' . $privacy . '</div>
 								<div class="right aligned column">Installed</div>
 							</div>
 						</div>
@@ -589,7 +589,7 @@ class MainWP_Extensions {
 		if ( empty( $installing_exts ) && count( $purchased_data ) == count( $all_free_pro_exts ) ) {
 			$html .= '<div class="ui message yellow">' . __( 'All purchased extensions already installed.', 'mainwp' ) . '</div>';
 		} else {
-			if ( isset( $not_purchased_exts ) && ! empty($not_purchased_exts) ) {
+			if ( isset( $not_purchased_exts ) && ! empty( $not_purchased_exts ) ) {
 				$html .= '<div class="ui message info">' . __( 'You have access to all our Free and third-party Extensions on WP.org and any that you have registered for, but you DO NOT need to install them. ', 'mainwp' );
 				$html .= '<br /><br />';
 				$html .= __( 'To avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Skip any Extension you do not want to install at this time.', 'mainwp' );

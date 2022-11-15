@@ -3168,32 +3168,6 @@ updatesoverview_send_twitt_info = function () {
   return send;
 };
 
-function setContextMenuPostion(event, contextMenu) {
-
-  var mousePosition = {};
-  var menuPostion = {};
-  var menuDimension = {};
-  menuDimension.x = contextMenu.outerWidth();
-  menuDimension.y = contextMenu.outerHeight();
-  mousePosition.x = event.pageX;
-  mousePosition.y = event.pageY;
-
-  if (mousePosition.x + menuDimension.x > jQuery(window).width() + jQuery(window).scrollLeft()) {
-    menuPostion.x = mousePosition.x - menuDimension.x;
-  } else {
-    menuPostion.x = mousePosition.x;
-  }
-
-  if (mousePosition.y + menuDimension.y > jQuery(window).height() + jQuery(window).scrollTop()) {
-    menuPostion.y = mousePosition.y - menuDimension.y;
-  } else {
-    menuPostion.y = mousePosition.y;
-  }
-  return menuPostion;
-}
-
-
-
 // fix menu overflow with scroll tables.
 mainwp_datatable_fix_menu_overflow = function () {
   var fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');

@@ -1020,7 +1020,6 @@ class MainWP_UI {
 		<a class="ui button basic icon" id="mainwp-sites-sidebar" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_attr_e( 'Quick sites shortcuts', 'mainwp' ); ?>">
 			<i class="globe icon"></i>
 		</a>
-
 		<a class="ui button basic icon" id="mainwp-help-sidebar" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_attr_e( 'Need help?', 'mainwp' ); ?>">
 			<i class="life ring icon"></i>
 		</a>

@@ -529,11 +529,6 @@ class MainWP_Manage_Sites_List_Table {
 	 *
 	 * Render page navigation left items.
 	 *
-	 * @param array  $site_pages site pages.
-	 * @param array  $managesites_pages manage site pages.
-	 * @param array  $subPages sub pages.
-	 * @param int    $site_id Site id.
-	 * @param string $shownPage Current Page.
 	 */
 	public static function render_page_navigation_left_items() {
 		$siteViewMode = get_user_option( 'mainwp_sitesviewmode' );
@@ -925,7 +920,7 @@ class MainWP_Manage_Sites_List_Table {
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-columns-notice' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-columns-notice"></i>
-				<?php echo sprintf ( __( 'To hide or show a column, click the Cog (%s) icon and select options from "Show columns"', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
+				<?php echo sprintf( __( 'To hide or show a column, click the Cog (%s) icon and select options from "Show columns"', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
 			</div>
 		<?php endif; ?>
 		<table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table">

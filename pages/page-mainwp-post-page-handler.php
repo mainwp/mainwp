@@ -162,7 +162,7 @@ class MainWP_Post_Page_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_ids()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
-	public static function get_categories() {
+	public static function get_categories() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$websites = array();
 		if ( isset( $_REQUEST['sites'] ) && ( '' !== $_REQUEST['sites'] ) ) {
 			$siteIds          = explode( ',', wp_unslash( urldecode( $_REQUEST['sites'] ) ) ); // do not sanitize encoded values.

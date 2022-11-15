@@ -73,9 +73,7 @@ class MainWP_Client_Overview_Note {
 			?>
 				<div class="sub header"><?php echo __( 'Client notes.', 'mainwp' ); ?></div>
 			</h3>
-	
 			<div class="ui hidden divider"></div>
-	
 			<div class="mainwp-widget-client-card">
 				<?php
 				/**

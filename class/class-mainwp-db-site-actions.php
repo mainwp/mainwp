@@ -16,6 +16,8 @@ namespace MainWP\Dashboard;
  */
 class MainWP_DB_Site_Actions extends MainWP_DB {
 
+	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
+
 	/**
 	 * Private static variable to hold the single instance of the class.
 	 *
@@ -54,11 +56,13 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 	/**
 	 * Method hook_db_install_tables()
 	 *
-	 * Hooks to get actions db tables.
+	 * Get the query to install db tables.
 	 *
-	 * @return array $sql tables.
+	 * @param array  $sql input filter.
+	 * @param string $currentVersion Current db Version.
+	 * @param string $charset_collate charset collate.
 	 *
-	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
+	 * @return string $sql.
 	 */
 	public function hook_db_install_tables( $sql, $currentVersion, $charset_collate ) {
 		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_actions' ) . ' (
@@ -88,7 +92,9 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 	 *
 	 * Installs the new DB.
 	 *
-	 * @return void
+	 * @param mixed $site site object.
+	 *
+	 * @return bool result.
 	 */
 	public function hook_delete_site( $site ) {
 		if ( empty( $site ) ) {
@@ -158,7 +164,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 	/**
 	 * Method add_new_action.
 	 *
-	 * add new action.
+	 * Add new action.
 	 *
 	 * @param array $data action data.
 	 *
@@ -202,6 +208,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 	 *
 	 * Create or update action.
 	 *
+	 * @param array $action_id action id.
 	 * @param array $data action data.
 	 *
 	 * @return bool
@@ -265,7 +272,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 	 * @param bool  $params params.
 	 * @param mixed $obj Format data.
 	 *
-	 * @return void
+	 * @return mixed $result result.
 	 */
 	public function get_wp_actions( $params = array(), $obj = OBJECT ) {
 

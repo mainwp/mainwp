@@ -143,7 +143,9 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	/**
 	 * Delete MainWP Extension plugin.
 	 *
-	 * @return void
+	 * @param string $plugin_slug plugin slug.
+	 *
+	 * @return array $status Status result.
 	 */
 	public function delete_extension_plugin( $plugin_slug ) {
 

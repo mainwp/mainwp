@@ -31,13 +31,13 @@ It is designed for WordPress professionals who realize that WP management for yo
 And, just because it is free does not mean it’s not effective. MainWP allows you to control all your daily WordPress maintenance tasks at no cost.
 
 MainWP is the **perfect solution for**
-* Agencies
-* Freelancers
-* Developers
-* Designers
-* Consultants
-* Marketers
-* In fact, anyone who wants to manage multiple WordPress sites.
+- Agencies
+- Freelancers
+- Developers
+- Designers
+- Consultants
+- Marketers
+- In fact, anyone who wants to manage multiple WordPress sites.
 
 
 == Why WordPress Managers Love MainWP! ==
@@ -85,7 +85,7 @@ Still, trying to figure out how MainWP works? [Review these detailed steps on in
 
 == How Is MainWP Free? What’s the Catch? How Will You Continue to Pay Development Costs? ==
 
-The MainWP WordPress manager plugin is [100% FREE!](https://mainwp.com/mainwp-free-features/) However, MainWP Pro offers a wide range of 30+ Premium Extensions at a single price.
+The MainWP WordPress manager plugin is [100% FREE!](https://mainwp.com/mainwp-free-features/) However, MainWP Pro offers a wide range of [30+ Premium Extensions](https://mainwp.com/mainwp-extensions/) at a single price.
 
 Extensions enhance your MainWP Dashboard with additional features for backups, marketing, SEO, maintenance, security, monitoring, and other tools to help you better organize and manage websites.
 

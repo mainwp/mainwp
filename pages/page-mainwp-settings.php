@@ -1378,7 +1378,6 @@ class MainWP_Settings {
 					<?php echo sprintf( __( 'Use MainWP tools to adjust your MainWP Dashboard to your needs and perform specific actions when needed.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
-			
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-tools-info-custom-theme' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-tools-info-custom-theme"></i>
@@ -1386,14 +1385,12 @@ class MainWP_Settings {
 					<div><?php _e( 'To create a custom theme, copy the `mainwp-dark-theme.css` file from the MainWP Custom Dashboard Extension located in the `css` directory, make your edits and upload the file to the `../wp-content/uploads/mainwp/custom-dashboard/` directory.', 'mainwp' ); ?></div>
 				</div>
 			<?php endif; ?>
-
 				<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) : ?>
 					<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 				<?php endif; ?>
 			<?php if ( isset( $_POST['mainwp_restore_info_messages'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) : ?>
 				<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Info messages have been restored successfully!', 'mainwp' ); ?></div>
 			<?php endif; ?>
-		
 				<div class="ui form">
 					<form method="POST" action="">
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -1513,11 +1510,11 @@ class MainWP_Settings {
 			<label class="six wide column middle aligned"><?php _e( 'Select MainWP Theme', 'mainwp' ); ?></label>
 			<div class="ten wide column" tabindex="0" data-tooltip="<?php esc_attr_e( 'Select your MainWP Dashboard theme.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 				<select name="mainwp_settings_custom_theme" id="mainwp_settings_custom_theme" class="ui dropdown selection">
-					<option value="default" <?php echo ( $custom_theme == 'default' || '' == $custom_theme ) ? 'selected' : ''; ?>><?php _e( 'Default', 'mainwp' ); ?></option>
-					<option value="classic" <?php echo ( $custom_theme == 'classic' ) ? 'selected' : ''; ?>><?php _e( 'Classic', 'mainwp' ); ?></option>
-					<option value="dark" <?php echo ( $custom_theme == 'dark' ) ? 'selected' : ''; ?>><?php _e( 'Dark', 'mainwp' ); ?></option>
-					<option value="wpadmin" <?php echo ( $custom_theme == 'wpadmin' ) ? 'selected' : ''; ?>><?php _e( 'WP Admin', 'mainwp' ); ?></option>
-					<option value="minimalistic" <?php echo ( $custom_theme == 'minimalistic' ) ? 'selected' : ''; ?>><?php _e( 'Minimalistic', 'mainwp' ); ?></option>
+					<option value="default" <?php echo ( 'default' == $custom_theme || '' == $custom_theme ) ? 'selected' : ''; ?>><?php _e( 'Default', 'mainwp' ); ?></option>
+					<option value="classic" <?php echo ( 'classic' == $custom_theme ) ? 'selected' : ''; ?>><?php _e( 'Classic', 'mainwp' ); ?></option>
+					<option value="dark" <?php echo ( 'dark' == $custom_theme ) ? 'selected' : ''; ?>><?php _e( 'Dark', 'mainwp' ); ?></option>
+					<option value="wpadmin" <?php echo ( 'wpadmin' == $custom_theme ) ? 'selected' : ''; ?>><?php _e( 'WP Admin', 'mainwp' ); ?></option>
+					<option value="minimalistic" <?php echo ( 'minimalistic' == $custom_theme ) ? 'selected' : ''; ?>><?php _e( 'Minimalistic', 'mainwp' ); ?></option>
 					<?php
 					foreach ( $themes_files as $file_name => $theme ) {
 						$theme   = ucfirst( $theme );

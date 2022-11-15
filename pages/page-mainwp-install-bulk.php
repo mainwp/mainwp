@@ -115,7 +115,7 @@ class MainWP_Install_Bulk {
 								echo wp_strip_all_tags( $extraOptions ) . ',';
 							}
 							?>
-							params: {mainwp_do: 'MainWP_Install_Bulk-uploadfile', qq_nonce: '<?php echo wp_create_nonce('qq_nonce'); ?>' }
+							params: {mainwp_do: 'MainWP_Install_Bulk-uploadfile', qq_nonce: '<?php echo wp_create_nonce( 'qq_nonce' ); ?>' }
 						} );
 					}
 
@@ -152,7 +152,8 @@ class MainWP_Install_Bulk {
 			if ( isset( $_POST['type'] ) && 'plugin' == $_POST['type'] ) {
 				$what = 'plugin';
 			}
-			$api = MainWP_System_Utility::get_plugin_theme_info( $what,
+			$api = MainWP_System_Utility::get_plugin_theme_info(
+				$what,
 				array(
 					'slug'   => isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '',
 					'fields' => array( 'sections' => false ),
@@ -377,7 +378,7 @@ class MainWP_Install_Bulk {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
-	public static function prepare_upload() {
+	public static function prepare_upload() { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
 
 		$output          = array();

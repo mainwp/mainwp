@@ -97,6 +97,8 @@ class MainWP_Client_Overview {
 	 * Method on_load_page()
 	 *
 	 * Run on page load.
+	 *
+	 * @param string $page page name.
 	 */
 	public static function on_load_page( $page ) {
 
@@ -280,9 +282,7 @@ class MainWP_Client_Overview {
 		$screen = get_current_screen();
 		?>
 		<div class="mainwp-primary-content-wrap">
-			
 		<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
-
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'client-widgets' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="client-widgets"></i>

@@ -12,6 +12,8 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Extensions_Handler {
 
+// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+
 	/**
 	 * Method get_class_name()
 	 *
@@ -61,7 +63,7 @@ class MainWP_Extensions_Handler {
 	/**
 	 * Get Extension Slug.
 	 *
-	 * @param mixed $pSlug Extension Slug.
+	 * @param mixed $slug Extension Slug.
 	 *
 	 * @return string Extensions Slug.
 	 */

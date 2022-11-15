@@ -3077,7 +3077,7 @@ updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteName,
 }
 
 // for semantic ui checkboxes
-jQuery(document).ready(function ($) {
+jQuery(document).ready(function () {
     mainwp_table_check_columns_init(); // call as function to support tables with ajax, may check and call at extensions    
     mainwp_master_checkbox_init(jQuery);
 });

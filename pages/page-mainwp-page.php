@@ -896,7 +896,7 @@ class MainWP_Page {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
-	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all', $clients = '' ) {
+	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all', $clients = '' ) { // phpcs:ignore -- complex function.
 
 		MainWP_Cache::init_cache( 'Page' );
 

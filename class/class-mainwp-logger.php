@@ -179,7 +179,7 @@ class MainWP_Logger {
 	 * Get log type info.
 	 *
 	 * @param int $type Log type value.
-	 * @param int $log_color Log color value.
+	 * @param int $logcolor Log color value.
 	 *
 	 * @return int $currentColor log color code.
 	 */

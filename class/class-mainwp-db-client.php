@@ -16,7 +16,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_DB_Client extends MainWP_DB {
 
-	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
+	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared, Generic.Metrics.CyclomaticComplexity -- unprepared SQL ok, accessing the database directly to custom database functions.
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -53,13 +53,15 @@ class MainWP_DB_Client extends MainWP_DB {
 	}
 
 	/**
-	 * Method install()
+	 * Method hook_db_install_tables()
 	 *
-	 * Installs the new DB.
+	 * Get the query to install db tables.
 	 *
-	 * @return void
+	 * @param array  $sql input filter.
+	 * @param string $currentVersion Current db Version.
+	 * @param string $charset_collate charset collate.
 	 *
-	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
+	 * @return string $sql.
 	 */
 	public function hook_db_install_tables( $sql, $currentVersion, $charset_collate ) {
 
@@ -191,7 +193,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 *
 	 * @param string $currentVersion Current db Version.
 	 *
-	 * @return void.
+	 * @return null.
 	 */
 	public function insert_client_fields_861( $currentVersion ) {
 
@@ -212,9 +214,10 @@ class MainWP_DB_Client extends MainWP_DB {
 			'client.note'              => 'Displays the Client Note',
 		);
 
-		// create or update default token
+		// create or update default token.
 		foreach ( $default_tokens as $field_name => $field_desc ) {
-			if ( $current = $this->get_client_fields_by( 'field_name', $field_name ) ) {
+			$current = $this->get_client_fields_by( 'field_name', $field_name );
+			if ( $current ) {
 				self::instance()->update_client_field(
 					$current->field_id,
 					array(
@@ -242,7 +245,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 *
 	 * @param string $currentVersion Current db Version.
 	 *
-	 * @return void.
+	 * @return null.
 	 */
 	public function client_reports_check_updates_861( $currentVersion ) {
 
@@ -263,7 +266,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 *
 	 * @param string $currentVersion Current db Version.
 	 *
-	 * @return void.
+	 * @return null.
 	 */
 	public function pro_reports_check_updates_861( $currentVersion ) {
 
@@ -288,7 +291,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 *
 	 * @return void.
 	 */
-	public function reports_check_updates_861( $tokens, $sites_tokens_values ) {
+	public function reports_check_updates_861( $tokens, $sites_tokens_values ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$default_client_fields  = MainWP_Client_Handler::get_default_client_fields();
 		$default_contact_fields = MainWP_Client_Handler::get_default_contact_fields();
@@ -451,7 +454,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 *
 	 * @param array $data Client data.
 	 *
-	 * @return void
+	 * @return bool.
 	 */
 	public function update_client( $data ) {
 		if ( empty( $data ) ) {
@@ -478,7 +481,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 *
 	 * @param array $data Contact data.
 	 *
-	 * @return void
+	 * @return bool.
 	 */
 	public function update_client_contact( $data ) {
 
@@ -522,9 +525,9 @@ class MainWP_DB_Client extends MainWP_DB {
 	 * @param string $by by.
 	 * @param mixed  $value by value.
 	 * @param mixed  $obj Format data.
-	 * @param bool   $with_selected_sites To get selected sites.
+	 * @param array  $params other params.
 	 *
-	 * @return void
+	 * @return mixed $result results.
 	 */
 	public function get_wp_client_contact_by( $by = 'contact_id', $value = null, $obj = OBJECT, $params = array() ) {
 
@@ -592,9 +595,9 @@ class MainWP_DB_Client extends MainWP_DB {
 	 * @param mixed  $obj Format data.
 	 * @param bool   $params Others params.
 	 *
-	 * @return void
+	 * @return mixed $result results.
 	 */
-	public function get_wp_client_by( $by = 'client_id', $value = null, $obj = OBJECT, $params = array() ) {
+	public function get_wp_client_by( $by = 'client_id', $value = null, $obj = OBJECT, $params = array() ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$with_selected_sites = isset( $params['with_selected_sites'] ) && $params['with_selected_sites'] ? true : false;
 		$with_tags           = isset( $params['with_tags'] ) && $params['with_tags'] ? true : false;
@@ -738,7 +741,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 * @param int   $client_id client id.
 	 * @param array $site_ids site ids.
 	 *
-	 * @return void
+	 * @return bool true|false.
 	 */
 	public function update_selected_sites_for_client( $client_id, $site_ids ) {
 		if ( empty( $client_id ) ) {
@@ -834,7 +837,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 *
 	 * @param int $client_id Client id.
 	 *
-	 * @return void
+	 * @return bool true|false.
 	 */
 	public function get_number_sites_of_client( $client_id ) {
 		if ( empty( $client_id ) ) {
@@ -850,7 +853,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 *
 	 * @param mixed $field Client fields data.
 	 *
-	 * @return void
+	 * @return mixed bool|results.
 	 */
 	public function add_client_field( $field ) {
 		if ( ! empty( $field['field_name'] ) && isset( $field['client_id'] ) ) {
@@ -876,7 +879,8 @@ class MainWP_DB_Client extends MainWP_DB {
 	 */
 	public function update_client_field( $field_id, $field ) {
 		if ( $field_id && ! empty( $field['field_name'] ) ) {
-			if ( $current = $this->get_client_fields_by( 'field_id', $field_id ) ) {
+			$current = $this->get_client_fields_by( 'field_id', $field_id );
+			if ( $current ) {
 				if ( $this->wpdb->update( $this->table_name( 'wp_clients_fields' ), $field, array( 'field_id' => $field_id ) ) ) {
 					return $this->get_client_fields_by( 'field_id', $current->field_id );
 				}
@@ -964,7 +968,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	/**
 	 * Method get_client_fields()
 	 *
-	 * get client fields.
+	 * Get client fields.
 	 *
 	 * @param bool $general Get general fields OR not.
 	 * @param int  $client_id Client id.

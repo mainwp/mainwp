@@ -110,9 +110,7 @@ class MainWP_Client_Overview_Sites {
 			?>
 			<div class="sub header"><?php echo __( 'Websites that belong to the client.', 'mainwp' ); ?></div>
 			</h3>
-	
 			<div class="ui section hidden divider"></div>
-	
 			<div class="mainwp-widget-client-card">
 				<?php
 				/**
@@ -249,7 +247,7 @@ class MainWP_Client_Overview_Sites {
 	/**
 	 * Prepare the items to be listed.
 	 *
-	 * @param bool $optimize true|false Whether or not to optimize.
+	 * @param int $client_id  client id.
 	 */
 	public function prepare_items( $client_id ) {
 

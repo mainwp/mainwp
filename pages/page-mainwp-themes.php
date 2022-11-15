@@ -1084,11 +1084,11 @@ class MainWP_Themes {
 				</div>
 				<div class="one wide center aligned middle aligned column"><div class="ui checkbox main-master  not-auto-init"><input type="checkbox"/><label></label></div></div>
 				<div class="one wide center aligned middle aligned column"></div>
-				<div class="five wide middle aligned column"><?php echo esc_html( 'Theme', 'mainwp' ); ?></div>
+				<div class="five wide middle aligned column"><?php esc_html_e( 'Theme', 'mainwp' ); ?></div>
 				<div class="two wide center aligned middle aligned column"></div>
-				<div class="two wide center aligned middle aligned column"><?php echo esc_html( 'Latest Version', 'mainwp' ); ?></div>
+				<div class="two wide center aligned middle aligned column"><?php esc_html_e( 'Latest Version', 'mainwp' ); ?></div>
 				<div class="two wide center aligned middle aligned column"></div>
-				<div class="two wide center aligned middle aligned column"><?php echo esc_html( 'Websites', 'mainwp' ); ?></div>
+				<div class="two wide center aligned middle aligned column"><?php esc_html_e( 'Websites', 'mainwp' ); ?></div>
 			</div>
 		</div>
 		<div class="mainwp-manage-themes-wrapper main-child-checkbox">
@@ -1106,7 +1106,7 @@ class MainWP_Themes {
 			$lastest_version = '';
 			?>
 			<div class="ui accordion mainwp-manage-theme-accordion mainwp-manage-theme-item main-child-checkbox"  id="<?php echo esc_html( $item_id ); ?>">
-			  <div class="title master-checkbox">
+				<div class="title master-checkbox">
 					<div class="ui grid">
 						<div class="one wide center aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
 						<div class="one wide center aligned middle aligned column"><div class="ui checkbox master"><input type="checkbox"><label></label></div></div>
@@ -1117,8 +1117,8 @@ class MainWP_Themes {
 						<div class="two wide center aligned middle aligned column"></div>
 						<div class="two wide center aligned middle aligned column"><div class="ui label"><i class="icon wordpress"></i> <?php echo intval( $count_sites ); // phpcs:ignore -- Prevent modify WP icon. ?></div></div>
 					</div>
-			  </div>
-			  <div class="content child-checkbox">
+				</div>
+			<div class="content child-checkbox">
 					<?php
 					foreach ( $themeSites as $site_id => $slugVersions ) :
 
@@ -1541,9 +1541,9 @@ class MainWP_Themes {
 		</div>
 		<?php
 		$favorites        = '';
-		$favorites_themes = apply_filters('mainwp_favorites_themes', array());
+		$favorites_themes = apply_filters( 'mainwp_favorites_themes', array() );
 		if ( is_array( $favorites_themes ) && ! empty( $favorites_themes ) ) {
-			$favorites = json_encode( $favorites_themes );
+			$favorites = wp_json_encode( $favorites_themes );
 		}
 		?>
 		<div id="mainwp-favorites-themes" favorites-themes="<?php echo esc_attr( $favorites ); ?>"></div>
@@ -1583,7 +1583,6 @@ class MainWP_Themes {
 				<div class="extra content">
 					<span><?php esc_html_e( 'Add to Favorites', 'mainwp-favorites-extension' ); ?></span>
 					<a class="ui huge star rating right floated <# if ( data.added_fav ) { #> favorite <# } #>" data-max-rating="1" id="add-favorite-theme-{{data.slug}}"></a>
-				
 				</div>
 				<?php } ?>
 		</script>

@@ -43,7 +43,8 @@ class MainWP_Server_Information_Handler {
 			return $_SESSION['cachedVersion'];
 		}
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
-		$api = MainWP_System_Utility::get_plugin_theme_info( 'plugin',
+		$api = MainWP_System_Utility::get_plugin_theme_info(
+			'plugin',
 			array(
 				'slug'    => 'mainwp',
 				'fields'  => array( 'sections' => false ),

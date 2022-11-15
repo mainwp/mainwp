@@ -351,7 +351,7 @@ table#mainwp-manage-sites-table .error a {
   border-top: 1px solid rgba( 34, 36, 38, 0.1 );
   background: #fafafa;
   padding: 1em;
-  margin: 0 0 -1px 0 !important;
+  margin: 0 0 -1px !important;
 }
 
 

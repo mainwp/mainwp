@@ -180,7 +180,7 @@ class MainWP_Widget_Plugins {
 				<?php
 				$_count = count( $actived_plugins );
 				for ( $i = 0; $i < $_count; $i ++ ) {
-					$slug = wp_strip_all_tags( $actived_plugins[ $i ]['slug'] );
+					$slug             = wp_strip_all_tags( $actived_plugins[ $i ]['slug'] );
 					$plugin_directory = dirname( $slug );
 					?>
 					<div class="item <?php echo esc_html( dirname( $slug ) ); ?>">
@@ -235,7 +235,7 @@ class MainWP_Widget_Plugins {
 				<?php
 				$_count = count( $inactive_plugins );
 				for ( $i = 0; $i < $_count; $i ++ ) {
-					$slug = $inactive_plugins[ $i ]['slug'];
+					$slug             = $inactive_plugins[ $i ]['slug'];
 					$plugin_directory = dirname( $slug );
 					?>
 					<div class="item <?php echo esc_html( sanitize_text_field( dirname( $slug ) ) ); ?>">

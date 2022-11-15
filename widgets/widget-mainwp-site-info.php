@@ -54,7 +54,7 @@ class MainWP_Site_Info {
 
 		$website_info = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
 		$website_info = ( '' != $website_info ) ? json_decode( $website_info, true ) : array();
-		
+
 		if ( is_array( $website_info ) ) {
 			$code        = $website->http_response_code;
 			$code_string = MainWP_Utility::get_http_codes( $code );

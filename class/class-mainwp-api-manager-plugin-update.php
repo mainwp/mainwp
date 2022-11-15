@@ -101,7 +101,7 @@ class MainWP_Api_Manager_Plugin_Update {
 			'api_key'          => $plugin['api_key'],
 			'instance'         => $plugin['instance'],
 			'software_version' => $plugin['software_version'],
-			'extra'            => isset( $plugin['extra'] ) ? $plugin['extra'] : '',			
+			'extra'            => isset( $plugin['extra'] ) ? $plugin['extra'] : '',
 		);
 
 		// Check for a plugin update.
@@ -123,9 +123,9 @@ class MainWP_Api_Manager_Plugin_Update {
 			'extensions' => base64_encode( wp_json_encode( $plugins ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			'json'       => true,
 		);
-		
+
 		$mainwp_api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
-		
+
 		if ( ! empty( $mainwp_api_key ) ) {
 			$args['api_key'] = $mainwp_api_key;
 		}
@@ -168,7 +168,7 @@ class MainWP_Api_Manager_Plugin_Update {
 	public function plugin_information( $args, $bulk_check = false ) {
 
 		$args['object'] = MainWP_Api_Manager::instance()->get_domain();
-		
+
 		$target_url = $this->create_upgrade_api_url( $args, $bulk_check );
 		$default    = array(
 			'timeout'   => 50,

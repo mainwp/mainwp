@@ -283,13 +283,13 @@ class MainWP_Notification_Settings {
 						<label class="six wide column middle aligned"><?php esc_html_e( 'HTML template', 'mainwp' ); ?></label>
 						<div class="ui ten wide column" data-tooltip="<?php esc_attr_e( 'Manage the email HTML template.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<?php
-						$templ        = MainWP_Notification_Template::get_template_name_by_notification_type( $type );
-						$overrided    = MainWP_Notification_Template::instance()->is_overrided_template( $type );
+						$templ     = MainWP_Notification_Template::get_template_name_by_notification_type( $type );
+						$overrided = MainWP_Notification_Template::instance()->is_overrided_template( $type );
 						/**
 						*  @deprecated Since v4.3 - use mainwp_notification_template_copy_message instead.
 						*/
 						$copy_message = apply_filters( 'minwp_notification_template_copy_message', '', $templ, $type, $overrided );
-						
+
 						/**
 						*  @since v4.3
 						*/

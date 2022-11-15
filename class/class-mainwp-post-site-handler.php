@@ -373,6 +373,5 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		} else {
 			wp_send_json( array( 'error' => 'Error: site id empty' ) );
 		}
-
 	}
 }

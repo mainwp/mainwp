@@ -843,8 +843,8 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$themes       = json_decode( $website->theme_upgrades, true );
 		$translations = json_decode( $website->translation_upgrades, true );
 		$wp           = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-		$wp = ( '' != $wp ) ? json_decode( $wp, true ) : array();
-		
+		$wp           = ( '' != $wp ) ? json_decode( $wp, true ) : array();
+
 		if ( count( $wp ) > 0 ) {
 			$wp = 1;
 		} else {
@@ -1424,9 +1424,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$all_updates = array();
 		$websites    = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-			$wp_upgrades          = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
+			$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
 			$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
-			
+
 			$plugin_upgrades      = json_decode( $website->plugin_upgrades, true );
 			$theme_upgrades       = json_decode( $website->theme_upgrades, true );
 			$translation_upgrades = json_decode( $website->translation_upgrades, true );

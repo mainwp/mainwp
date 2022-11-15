@@ -386,7 +386,7 @@ class MainWP_Manage_Screenshots {
 									<a  data-tooltip="<?php esc_attr_e( 'Available updates.', 'mainwp' ); ?>" data-position="top left" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>" class="ui icon button"><i class="redo <?php esc_attr_e( $a_color ); ?> alternate icon"></i> <?php echo $total_updates; ?></a>
 									<a  data-tooltip="<?php esc_attr_e( 'Available plugins updates.', 'mainwp' ); ?>" data-position="top center" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=plugins-updates" class="ui icon button"><i class="plug <?php esc_attr_e( $p_color ); ?> icon"></i> <?php echo $total_plugin_upgrades; ?></a>
 									<a  data-tooltip="<?php esc_attr_e( 'Available themes updates.', 'mainwp' ); ?>" data-position="top center" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=themes-updates" class="ui icon button"><i class="brush <?php esc_attr_e( $t_color ); ?> icon"></i> <?php echo $total_theme_upgrades; ?></a>
-									<a  data-tooltip="<?php esc_attr_e( 'WordPress core updates.', 'mainwp' ); ?>" data-position="top right" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=wordpress-updates" class="ui icon button"><i class="wordpress <?php esc_attr_e( $w_color ); ?> icon"></i> <?php echo $total_wp_upgrades; ?></a>
+									<a  data-tooltip="<?php esc_attr_e( 'WordPress core updates.', 'mainwp' ); ?>" data-position="top right" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=wordpress-updates" class="ui icon button"><i class="WordPress <?php esc_attr_e( $w_color ); ?> icon"></i> <?php echo $total_wp_upgrades; ?></a>
 						</div>
 						</div>
 						<div class="extra content">
@@ -525,7 +525,6 @@ class MainWP_Manage_Screenshots {
 
 		$perPage = 9999;
 		$start   = 0;
-		
 
 		$get_saved_state = ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] ) && ! isset( $_REQUEST['client'] );
 		$get_all         = ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && empty( $_REQUEST['g'] ) && empty( $_REQUEST['client'] ) ? true : false;
@@ -549,9 +548,9 @@ class MainWP_Manage_Screenshots {
 			MainWP_Utility::update_user_option( 'mainwp_screenshots_filter_group', '' );
 			MainWP_Utility::update_user_option( 'mainwp_screenshots_filter_client', '' );
 		}
-		
-		$group_ids   = false;
-		$client_ids  = false;
+
+		$group_ids  = false;
+		$client_ids = false;
 
 		if ( ! $get_all ) {
 			if ( ! isset( $_REQUEST['g'] ) ) {
@@ -625,7 +624,6 @@ class MainWP_Manage_Screenshots {
 				}
 			}
 		}
-
 
 		$params = array(
 			'selectgroups' => true,

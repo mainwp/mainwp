@@ -948,7 +948,6 @@ class MainWP_System_Utility {
 			return $icon;
 		}
 		return false;
-
 	}
 
 	/**

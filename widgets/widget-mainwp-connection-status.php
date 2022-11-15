@@ -247,7 +247,7 @@ class MainWP_Connection_Status {
 			<div class="ui two column stackable grid">
 				<div class="column left aligned">
 					<h2 class="ui header">
-					<?php if(  '1' === $site->suspended ) { ?>
+					<?php if ( '1' === $site->suspended ) { ?>
 						<i class="pause yellow circle icon"></i>
 						<div class="content"><?php esc_html_e( 'Suspended', 'mainwp' ); ?></div>
 					<?php } else { ?>

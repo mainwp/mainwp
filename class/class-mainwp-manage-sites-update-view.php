@@ -653,7 +653,7 @@ class MainWP_Manage_Sites_Update_View {
 
 		$plugins_outdate = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
 		$plugins_outdate = ( '' != $plugins_outdate ) ? json_decode( $plugins_outdate, true ) : array();
-		
+
 		if ( ! is_array( $plugins_outdate ) ) {
 			$plugins_outdate = array();
 		}

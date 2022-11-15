@@ -1540,9 +1540,9 @@ class MainWP_Themes {
 			<div class="ui clearing hidden divider"></div>
 		</div>
 		<?php
-		$favorites = '';
-		$favorites_themes = apply_filters('mainwp_favorites_themes' , array());
-		if(is_array( $favorites_themes ) && ! empty( $favorites_themes )){
+		$favorites        = '';
+		$favorites_themes = apply_filters('mainwp_favorites_themes', array());
+		if ( is_array( $favorites_themes ) && ! empty( $favorites_themes ) ) {
 			$favorites = json_encode( $favorites_themes );
 		}
 		?>

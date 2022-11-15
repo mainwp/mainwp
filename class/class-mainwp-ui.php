@@ -1486,7 +1486,6 @@ class MainWP_UI {
 				</div>
 		</div>
 		<?php
-
 	}
 
 	/**
@@ -1831,7 +1830,7 @@ class MainWP_UI {
 		</div>
 		</form>
 	</div>
-	<?php
+		<?php
 	}
 
 }

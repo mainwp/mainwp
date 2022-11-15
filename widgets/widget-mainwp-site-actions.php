@@ -128,7 +128,7 @@ class MainWP_Site_Actions {
 						?>
 						<tr>
 							<td data-order="<?php echo esc_attr( $data->created ); ?>">
-								<strong><?php echo isset( $meta_data->name ) && '' != $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?></strong> <?php echo 'wordpress' != $data->context ? esc_html( ucfirst( rtrim( $data->context, 's' ) ) ) : 'WordPress'; ?><br/>
+								<strong><?php echo isset( $meta_data->name ) && '' != $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?></strong> <?php echo 'WordPress' != $data->context ? esc_html( ucfirst( rtrim( $data->context, 's' ) ) ) : 'WordPress'; ?><br/>
 								<?php echo esc_html( ucfirst( $data->action ) ); ?><br/>
 								<em><?php echo esc_html( 'On: ', 'mainwp' ); ?><?php echo esc_html( MainWP_Utility::format_timestamp( $data->created ) ); ?></em>
 							</td>

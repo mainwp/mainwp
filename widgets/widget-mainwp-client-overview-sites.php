@@ -159,7 +159,7 @@ class MainWP_Client_Overview_Sites {
 			</div>
 
 			<?php
-			
+
 				$sites_per_page = get_option( 'mainwp_default_sites_per_page', 25 );
 
 				$sites_per_page = intval( $sites_per_page );
@@ -181,7 +181,7 @@ class MainWP_Client_Overview_Sites {
 
 				$pagelength_val   = implode( ',', array_keys( $pages_length ) );
 				$pagelength_title = implode( ',', array_values( $pages_length ) );
-				
+
 				$table_features = array(
 					'searching'     => 'true',
 					'paging'        => 'false',
@@ -280,7 +280,7 @@ class MainWP_Client_Overview_Sites {
 		if ( $client_id ) {
 			$total_websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $total_params ) );
 			$totalRecords   = ( $total_websites ? MainWP_DB::num_rows( $total_websites ) : 0 );
-			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
+			$websites       = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
 		}
 
 		$this->items       = $websites;
@@ -297,11 +297,10 @@ class MainWP_Client_Overview_Sites {
 		list( $columns ) = $this->get_column_info();
 
 		$sortable = array(
-			'site'   => array( 'site', false ),
-			'update' => array( 'update', false ),			
+			'site'        => array( 'site', false ),
+			'update'      => array( 'update', false ),
 			'client_name' => array( 'client_name', false ),
 		);
-
 
 		$def_columns                 = $columns;
 		$def_columns['site_actions'] = '';
@@ -339,7 +338,7 @@ class MainWP_Client_Overview_Sites {
 		}
 	}
 
-	
+
 
 	/**
 	 * Fetch single row item.
@@ -358,14 +357,14 @@ class MainWP_Client_Overview_Sites {
 	}
 
 		/**
-	 * Single Row.
-	 *
-	 * @param mixed $website Child Site.
-	 *
-	 * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
-	 */
+		 * Single Row.
+		 *
+		 * @param mixed $website Child Site.
+		 *
+		 * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
+		 */
 	public function single_row( $website ) {
-		$classes = "";
+		$classes = '';
 
 		$hasSyncErrors = ( '' !== $website['sync_errors'] );
 		$md5Connection = ( ! $hasSyncErrors && ( 1 == $website['nossl'] ) );
@@ -458,7 +457,7 @@ class MainWP_Client_Overview_Sites {
 		);
 		return $defines;
 	}
-		
+
 	/**
 	 * Columns for a single row.
 	 *
@@ -564,7 +563,6 @@ class MainWP_Client_Overview_Sites {
 			$a_color = 'green';
 		}
 
-
 		$hasSyncErrors = ( '' !== $website['sync_errors'] );
 		$md5Connection = ( ! $hasSyncErrors && ( 1 == $website['nossl'] ) );
 
@@ -579,7 +577,6 @@ class MainWP_Client_Overview_Sites {
 			$h_color = '';
 			$h_color = '';
 		}
-
 
 		list( $columns ) = $this->get_column_info();
 
@@ -625,7 +622,7 @@ class MainWP_Client_Overview_Sites {
 				<td class="collapsing center aligned"><span data-tooltip="<?php esc_attr_e( 'Number of available updates. Click to see details.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><a class="ui mini compact button <?php echo $a_color; ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>"><?php echo $total_updates; ?></a></span></td>
 				<?php
 			} elseif ( 'site_actions' === $column_name ) {
-			?>
+				?>
 					<td class="collapsing">
 						<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999;">
 							<i class="ellipsis horizontal icon"></i>
@@ -645,19 +642,19 @@ class MainWP_Client_Overview_Sites {
 						</div>
 					</td>
 				<?php
-		} elseif ( method_exists( $this, 'column_' . $column_name ) ) {
-			echo "<td $attributes>";
-			echo call_user_func( array( $this, 'column_' . $column_name ), $website );
-			echo '</td>';
-		} else {
-			echo "<td $attributes>";
-			echo $this->column_default( $website, $column_name );
-			echo '</td>';
-		}
+			} elseif ( method_exists( $this, 'column_' . $column_name ) ) {
+				echo "<td $attributes>";
+				echo call_user_func( array( $this, 'column_' . $column_name ), $website );
+				echo '</td>';
+			} else {
+				echo "<td $attributes>";
+				echo $this->column_default( $website, $column_name );
+				echo '</td>';
+			}
 		}
 	}
 
-	
+
 	/**
 	 * Set the column names.
 	 *

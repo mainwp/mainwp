@@ -500,8 +500,8 @@ class MainWP_Post {
 
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Post' );
 
-		$selected_sites  = array();
-		$selected_groups = array();
+		$selected_sites   = array();
+		$selected_groups  = array();
 		$selected_clients = array();
 
 		if ( null != $cachedSearch ) {
@@ -608,11 +608,11 @@ class MainWP_Post {
 					<div class="content active">
 					<?php
 					$sel_params = array(
-						'class'           => 'mainwp_select_sites_box_left',
-						'selected_sites'  => $selected_sites,
-						'selected_groups' => $selected_groups,
+						'class'            => 'mainwp_select_sites_box_left',
+						'selected_sites'   => $selected_sites,
+						'selected_groups'  => $selected_groups,
 						'selected_clients' => $selected_clients,
-						'show_client'     => true,
+						'show_client'      => true,
 					);
 					MainWP_UI_Select_Sites::select_sites_box( $sel_params );
 					?>
@@ -1044,7 +1044,7 @@ class MainWP_Post {
 		if ( '' !== $sites ) {
 			foreach ( $sites as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
-					$website                    = MainWP_DB::instance()->get_website_by_id( $v );
+					$website = MainWP_DB::instance()->get_website_by_id( $v );
 					if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
 						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 							$website,
@@ -1079,7 +1079,7 @@ class MainWP_Post {
 				)
 			);
 
-			foreach( $websites as $website ) {
+			foreach ( $websites as $website ) {
 				if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 					continue;
 				}
@@ -1155,7 +1155,7 @@ class MainWP_Post {
 					'status'    => $status,
 					'sites'     => ( '' !== $sites ) ? $sites : '',
 					'groups'    => ( '' !== $groups ) ? $groups : '',
-					'clients'    => ( '' !== $clients ) ? $clients : '',
+					'clients'   => ( '' !== $clients ) ? $clients : '',
 					'search_on' => $search_on,
 				)
 			);

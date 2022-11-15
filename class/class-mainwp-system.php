@@ -767,11 +767,11 @@ class MainWP_System {
 
 		$load_dragula = false;
 
-		if ( isset( $_GET['page'] ) && ( 'mainwp_tab' === $_GET['page'] || ( 'managesites' === $_GET['page']  && isset( $_GET['dashboard'] ) ) ) ) {
+		if ( isset( $_GET['page'] ) && ( 'mainwp_tab' === $_GET['page'] || ( 'managesites' === $_GET['page'] && isset( $_GET['dashboard'] ) ) ) ) {
 			$load_dragula = true;
 		} elseif ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) ) {
 			$load_dragula = true;
-		} elseif( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'ManageSites' ) ){ // individual page.
+		} elseif ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'ManageSites' ) ) { // individual page.
 			$load_dragula = true;
 		}
 

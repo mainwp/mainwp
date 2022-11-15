@@ -140,7 +140,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 		MainWP_WP_CLI_Handle::handle_cli_callback( 'site', $args, $assoc_args );
 	}
 
-	
+
 	/**
 	 * Updates commands.
 	 *

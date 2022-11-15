@@ -36,12 +36,12 @@ class MainWP_Overview {
 	 * @var array $enable_widgets
 	 */
 	private static $enable_widgets = array(
-		'overview'          => true,
-		'connection_status' => true,
-		'recent_posts'      => true,
-		'recent_pages'      => true,
-		'security_issues'   => true,
-		'backup_tasks'      => true,
+		'overview'           => true,
+		'connection_status'  => true,
+		'recent_posts'       => true,
+		'recent_pages'       => true,
+		'security_issues'    => true,
+		'backup_tasks'       => true,
 		'non_mainwp_changes' => true,
 	);
 

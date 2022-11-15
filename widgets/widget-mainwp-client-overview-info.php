@@ -47,7 +47,7 @@ class MainWP_Client_Overview_Info {
 	public static function render_client_overview( $client_id ) {
 		$params      = array( 'with_selected_sites' => true );
 		$client_info = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id, ARRAY_A, $params );
-	
+
 		?>
 			<h3 class="ui header handle-drag">
 				<?php echo esc_html( $client_info['name'] ); ?>
@@ -88,13 +88,13 @@ class MainWP_Client_Overview_Info {
 									<div class="content"><a href="mailto:<?php echo esc_url( $client_info['client_email'] ); ?>" target="_blank"><?php echo esc_html( $client_info['client_email'] ); ?></a> <i data-clipboard-text="<?php echo esc_html( $client_info['client_email'] ); ?>" style="cursor:pointer" class="copy green icon copy-to-clipboard"></i></div>
 								</div>
 								<?php endif; ?>
-								<?php if ( isset( $client_info['client_phone'] ) && '' != $client_info['client_phone']) : ?>
+								<?php if ( isset( $client_info['client_phone'] ) && '' != $client_info['client_phone'] ) : ?>
 								<div class="item">
 									<i class="phone grey rotated icon"></i>
 									<div class="content"><a href="tel:<?php echo esc_url( $client_info['client_phone'] ); ?>" target="_blank"><?php echo esc_html( $client_info['client_phone'] ); ?></a></div>
 								</div>
 								<?php endif; ?>
-								<?php if ( isset( $client_info['client_facebook'] ) && '' !=  $client_info['client_facebook']  ) : ?>
+								<?php if ( isset( $client_info['client_facebook'] ) && '' != $client_info['client_facebook'] ) : ?>
 								<div class="item">
 									<i class="facebook grey icon"></i>
 									<div class="content"><a href="<?php echo esc_url( $client_info['client_facebook'] ); ?>" target="_blank"><?php echo esc_html( $client_info['client_facebook'] ); ?></a></div>
@@ -126,7 +126,7 @@ class MainWP_Client_Overview_Info {
 											<?php if ( isset( $client_info['address_1'] ) && '' != $client_info['address_1'] ) : ?>
 												<?php echo esc_html( $client_info['address_1'] ); ?>
 											<?php endif; ?>
-								<?php if ( isset( $client_info['address_2'] ) && '' != $client_info['address_2'] ) : ?>
+									<?php if ( isset( $client_info['address_2'] ) && '' != $client_info['address_2'] ) : ?>
 												<?php echo esc_html( $client_info['address_2'] ); ?>
 											<?php endif; ?>
 											<?php if ( isset( $client_info['city'] ) && '' != $client_info['city'] ) : ?>

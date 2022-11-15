@@ -161,7 +161,6 @@ class MainWP_Extensions_Handler {
 		);
 		$new_name = trim( $new_name );
 		return $new_name;
-
 	}
 
 

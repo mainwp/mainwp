@@ -751,8 +751,8 @@ class MainWP_System_Cron_Jobs {
 				/** Check core updates * */
 				$websiteLastCoreUpgrades = MainWP_DB::instance()->get_website_option( $website, 'last_wp_upgrades' );
 				$websiteLastCoreUpgrades = ( '' != $websiteLastCoreUpgrades ) ? json_decode( $websiteLastCoreUpgrades, true ) : array();
-				
-				$websiteCoreUpgrades     = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
+
+				$websiteCoreUpgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
 				$websiteCoreUpgrades = ( '' != $websiteCoreUpgrades ) ? json_decode( $websiteCoreUpgrades, true ) : array();
 
 				if ( isset( $websiteCoreUpgrades['current'] ) ) {
@@ -799,18 +799,18 @@ class MainWP_System_Cron_Jobs {
 				/** Check plugins * */
 				$websiteLastPlugins = MainWP_DB::instance()->get_website_option( $website, 'last_plugin_upgrades' );
 				$websiteLastPlugins = ( '' != $websiteLastPlugins ) ? json_decode( $websiteLastPlugins, true ) : array();
-				
-				$websitePlugins     = json_decode( $website->plugin_upgrades, true );
+
+				$websitePlugins = json_decode( $website->plugin_upgrades, true );
 
 				/** Check themes * */
 				$websiteLastThemes = MainWP_DB::instance()->get_website_option( $website, 'last_theme_upgrades' );
 				$websiteLastThemes = ( '' != $websiteLastThemes ) ? json_decode( $websiteLastThemes, true ) : array();
-				
-				$websiteThemes     = json_decode( $website->theme_upgrades, true );
+
+				$websiteThemes = json_decode( $website->theme_upgrades, true );
 
 				$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
 				$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
-				
+
 				if ( is_array( $decodedPremiumUpgrades ) ) {
 					foreach ( $decodedPremiumUpgrades as $slug => $premiumUpgrade ) {
 						if ( 'plugin' === $premiumUpgrade['type'] ) {

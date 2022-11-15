@@ -1317,7 +1317,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		} else {
 			wp_die( wp_json_encode( array( 'result' => 'failed' ) ) );
 		}
-
 	}
 
 	/**

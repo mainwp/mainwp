@@ -428,7 +428,6 @@ class MainWP_System_Handler {
 				update_user_option( $user->ID, 'mainwp_widgets_sorted_mainwp_page_manageclients', false, true );
 			}
 		}
-
 	}
 
 
@@ -512,7 +511,6 @@ class MainWP_System_Handler {
 				}
 			}
 		}
-
 	}
 
 	/**

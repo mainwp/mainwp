@@ -125,7 +125,6 @@ class MainWP_Client_Handler {
 				'db_field' => 'suspended',
 			),
 		);
-
 	}
 
 
@@ -177,7 +176,6 @@ class MainWP_Client_Handler {
 				'db_field' => 'linkedin',
 			),
 		);
-
 	}
 
 

@@ -160,29 +160,29 @@ class MainWP_Updates {
 
 		if ( $show_language_updates ) {
 
-		$init_sub_subleftmenu = array(
-			array(
-				'title'      => __( 'Plugins Updates', 'mainwp' ),
-				'parent_key' => 'UpdatesManage',
-				'href'       => 'admin.php?page=UpdatesManage&tab=plugins-updates',
-				'slug'       => 'UpdatesManage',
-				'right'      => '',
-			),
-			array(
-				'title'      => __( 'Themes Updates', 'mainwp' ),
-				'parent_key' => 'UpdatesManage',
-				'href'       => 'admin.php?page=UpdatesManage&tab=themes-updates',
-				'slug'       => 'UpdatesManage',
-				'right'      => '',
-			),
-			array(
-				'title'      => __( 'WordPress Updates', 'mainwp' ),
-				'parent_key' => 'UpdatesManage',
-				'href'       => 'admin.php?page=UpdatesManage&tab=wordpress-updates',
-				'slug'       => 'UpdatesManage&tab=wordpress-updates',
-				'right'      => '',
-			),
-			array(
+			$init_sub_subleftmenu = array(
+				array(
+					'title'      => __( 'Plugins Updates', 'mainwp' ),
+					'parent_key' => 'UpdatesManage',
+					'href'       => 'admin.php?page=UpdatesManage&tab=plugins-updates',
+					'slug'       => 'UpdatesManage',
+					'right'      => '',
+				),
+				array(
+					'title'      => __( 'Themes Updates', 'mainwp' ),
+					'parent_key' => 'UpdatesManage',
+					'href'       => 'admin.php?page=UpdatesManage&tab=themes-updates',
+					'slug'       => 'UpdatesManage',
+					'right'      => '',
+				),
+				array(
+					'title'      => __( 'WordPress Updates', 'mainwp' ),
+					'parent_key' => 'UpdatesManage',
+					'href'       => 'admin.php?page=UpdatesManage&tab=wordpress-updates',
+					'slug'       => 'UpdatesManage&tab=wordpress-updates',
+					'right'      => '',
+				),
+				array(
 					'title'      => __( 'Translation Updatess', 'mainwp' ),
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=translations-updates',
@@ -190,20 +190,20 @@ class MainWP_Updates {
 					'right'      => '',
 				),
 				array(
-				'title'      => __( 'Abandoned Plugins', 'mainwp' ),
-				'parent_key' => 'UpdatesManage',
-				'href'       => 'admin.php?page=UpdatesManage&tab=abandoned-plugins',
+					'title'      => __( 'Abandoned Plugins', 'mainwp' ),
+					'parent_key' => 'UpdatesManage',
+					'href'       => 'admin.php?page=UpdatesManage&tab=abandoned-plugins',
 					'slug'       => 'UpdatesManage&tab=abandoned-plugins',
-				'right'      => '',
-			),
-			array(
-				'title'      => __( 'Abandoned Themes', 'mainwp' ),
-				'parent_key' => 'UpdatesManage',
-				'href'       => 'admin.php?page=UpdatesManage&tab=abandoned-themes',
-				'slug'       => 'UpdatesManage',
-				'right'      => '',
-			),
-		);
+					'right'      => '',
+				),
+				array(
+					'title'      => __( 'Abandoned Themes', 'mainwp' ),
+					'parent_key' => 'UpdatesManage',
+					'href'       => 'admin.php?page=UpdatesManage&tab=abandoned-themes',
+					'slug'       => 'UpdatesManage',
+					'right'      => '',
+				),
+			);
 		} else {
 			$init_sub_subleftmenu = array(
 				array(
@@ -520,8 +520,7 @@ class MainWP_Updates {
 
 			$themesIgnoredAbandoned_perSites = array();
 			$ignoredAbandoned_themes         = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
-			$ignoredAbandoned_themes = ( '' != $ignoredAbandoned_themes ) ? json_decode( $ignoredAbandoned_themes, true ) : array();
-
+			$ignoredAbandoned_themes         = ( '' != $ignoredAbandoned_themes ) ? json_decode( $ignoredAbandoned_themes, true ) : array();
 
 			if ( is_array( $ignoredAbandoned_themes ) ) {
 				$ignoredAbandoned_themes         = array_filter( $ignoredAbandoned_themes );
@@ -531,10 +530,10 @@ class MainWP_Updates {
 			$ignoredAbandoned_plugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
 			$ignoredAbandoned_plugins = ( '' != $ignoredAbandoned_plugins ) ? json_decode( $ignoredAbandoned_plugins, true ) : array();
 
-			$plugins_outdate          = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
+			$plugins_outdate = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
 			$plugins_outdate = ( '' != $plugins_outdate ) ? json_decode( $plugins_outdate, true ) : array();
 
-			$themes_outdate           = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
+			$themes_outdate = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
 			$themes_outdate = ( '' != $themes_outdate ) ? json_decode( $themes_outdate, true ) : array();
 
 			if ( is_array( $plugins_outdate ) ) {

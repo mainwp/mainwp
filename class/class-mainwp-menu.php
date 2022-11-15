@@ -110,22 +110,22 @@ class MainWP_Menu {
 			// Manage Updates
 			if ( ! self::is_disable_menu_item( 2, 'UpdatesManage' ) ) {
 				if ( mainwp_current_user_have_right( 'dashboard', 'update_wordpress' ) && mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) && mainwp_current_user_have_right( 'dashboard', 'update_themes' ) && mainwp_current_user_have_right( 'dashboard', 'update_translations' ) && mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) && mainwp_current_user_have_right( 'dashboard', 'trust_untrust_updates' ) ) {
-				MainWP_Updates::init_menu();
-			}
+					MainWP_Updates::init_menu();
+				}
 			}
 
 			// Manage Plugins.
 			if ( ! self::is_disable_menu_item( 2, 'PluginsManage' ) ) {
 				if ( mainwp_current_user_have_right( 'dashboard', 'install_plugins' ) && mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) && mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) {
 					MainWP_Plugins::init_menu();
-			}
+				}
 			}
 
 			// Manage Themes.
 			if ( ! self::is_disable_menu_item( 2, 'ThemesManage' ) ) {
 				if ( mainwp_current_user_have_right( 'dashboard', 'install_themes' ) && mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) && mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) {
-				MainWP_Themes::init_menu();
-			}
+					MainWP_Themes::init_menu();
+				}
 			}
 
 			// Manage Users.
@@ -134,14 +134,14 @@ class MainWP_Menu {
 					MainWP_User::init_menu();
 				}
 			}
-		
+
 			// Manage Posts.
 			if ( ! self::is_disable_menu_item( 2, 'PostBulkManage' ) ) {
 				if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
 					MainWP_Post::init_menu();
 				}
 			}
-		
+
 			// Manage Pages.
 			if ( ! self::is_disable_menu_item( 2, 'PageBulkManage' ) ) {
 				if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
@@ -171,15 +171,15 @@ class MainWP_Menu {
 			// Manage Admin Passwords
 			if ( ! self::is_disable_menu_item( 3, 'UpdateAdminPasswords' ) ) {
 				if ( mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
-				MainWP_Bulk_Update_Admin_Passwords::init_menu();
-			}
+					MainWP_Bulk_Update_Admin_Passwords::init_menu();
+				}
 			}
 
 			// Manage Groups/Tags.
 			if ( ! self::is_disable_menu_item( 3, 'ManageGroups' ) ) {
 				if ( mainwp_current_user_have_right( 'dashboard', 'manage_groups' ) ) {
-				MainWP_Manage_Groups::init_menu();
-			}
+					MainWP_Manage_Groups::init_menu();
+				}
 			}
 
 			// Monitoring Sites.
@@ -198,10 +198,10 @@ class MainWP_Menu {
 
 			if ( ! self::is_disable_menu_item( 2, 'ServerInformation' ) ) {
 				if ( mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
-				MainWP_Server_Information::init_menu();
+					MainWP_Server_Information::init_menu();
+				}
 			}
 		}
-	}
 	}
 
 	/**

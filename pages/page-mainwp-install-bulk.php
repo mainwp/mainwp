@@ -49,7 +49,7 @@ class MainWP_Install_Bulk {
 	 */
 	public static function admin_init() {
 		if ( isset( $_REQUEST['mainwp_do'] ) ) {
-			if ( isset( $_REQUEST['qq_nonce'] ) &&  'MainWP_Install_Bulk-uploadfile' == $_REQUEST['mainwp_do'] ) {
+			if ( isset( $_REQUEST['qq_nonce'] ) && 'MainWP_Install_Bulk-uploadfile' == $_REQUEST['mainwp_do'] ) {
 				do_action( 'mainwp_secure_request', 'qq_nonce', 'qq_nonce' );
 				$allowedExtensions = array( 'zip' ); // Only zip allowed.
 				// max file size in bytes.
@@ -151,7 +151,7 @@ class MainWP_Install_Bulk {
 			$what = 'theme';
 			if ( isset( $_POST['type'] ) && 'plugin' == $_POST['type'] ) {
 				$what = 'plugin';
-			} 
+			}
 			$api = MainWP_System_Utility::get_plugin_theme_info( $what,
 				array(
 					'slug'   => isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '',

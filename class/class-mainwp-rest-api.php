@@ -1867,8 +1867,8 @@ class Rest_Api {
 					$themes       = json_decode( $website->theme_upgrades, true );
 					$translations = json_decode( $website->translation_upgrades, true );
 					$wp           = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-					$wp = ( '' != $wp ) ? json_decode( $wp, true ) : array();
-					
+					$wp           = ( '' != $wp ) ? json_decode( $wp, true ) : array();
+
 					if ( count( $wp ) > 0 ) {
 						$wp = 1;
 					} else {
@@ -1928,7 +1928,7 @@ class Rest_Api {
 					// get data.
 					$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 					$data    = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
-					$data = ( '' != $data ) ? json_decode( $data, true ) : array();
+					$data    = ( '' != $data ) ? json_decode( $data, true ) : array();
 
 					$response = new \WP_REST_Response( $data );
 					$response->set_status( 200 );
@@ -1977,7 +1977,7 @@ class Rest_Api {
 					$plugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
 					$plugins = ( '' != $plugins ) ? json_decode( $plugins, true ) : array();
 
-					$data    = array(
+					$data = array(
 						'count' => count( $plugins ),
 					);
 
@@ -2026,7 +2026,7 @@ class Rest_Api {
 					// get data.
 					$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 					$data    = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
-					$data = ( '' != $data ) ? json_decode( $data, true ) : array();
+					$data    = ( '' != $data ) ? json_decode( $data, true ) : array();
 
 					$response = new \WP_REST_Response( $data );
 					$response->set_status( 200 );
@@ -2073,9 +2073,9 @@ class Rest_Api {
 					// get data.
 					$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 					$themes  = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
-					$themes = ( '' != $themes ) ? json_decode( $themes, true ) : array();
+					$themes  = ( '' != $themes ) ? json_decode( $themes, true ) : array();
 
-					$data    = array(
+					$data = array(
 						'count' => count( $themes ),
 					);
 
@@ -2979,9 +2979,9 @@ class Rest_Api {
 			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( true ) );
 
 			while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-				$wp_upgrades                 = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
+				$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
 				$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
-				
+
 				$plugin_upgrades             = json_decode( $website->plugin_upgrades, true );
 				$theme_upgrades              = json_decode( $website->theme_upgrades, true );
 				$translation_upgrades        = json_decode( $website->translation_upgrades, true );

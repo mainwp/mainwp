@@ -120,7 +120,7 @@ class MainWP_Sync {
 
 			// $enable_actions_notification = MainWP_DB::instance()->get_website_option( $pWebsite, 'enable_actions_notification', 2 );
 			// if ( 2 === intval( $enable_actions_notification ) ) {
-			// 	$enable_actions_notification = get_option( 'mainwp_site_actions_notification_enable', 0 );
+			// $enable_actions_notification = get_option( 'mainwp_site_actions_notification_enable', 0 );
 			// }
 
 			$saved_days_number = apply_filters( 'minwp_site_actions_saved_days_number', 30 );

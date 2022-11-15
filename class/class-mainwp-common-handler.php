@@ -87,7 +87,7 @@ class MainWP_Common_Handler {
 
 			$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
 			$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
-			
+
 			if ( is_array( $decodedPremiumUpgrades ) ) {
 				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 					$premiumUpgrade['premium'] = true;

@@ -1265,7 +1265,6 @@ class MainWP_Plugins {
 								$item_id = strtolower( $item_id );
 								$item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
 
-
 								?>
 							<div class="ui grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( wp_strip_all_tags( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $pluginsName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
 								<div class="one wide center aligned middle aligned column"></div>
@@ -1381,7 +1380,6 @@ class MainWP_Plugins {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_after_plugins_table' );
-
 	}
 
 	/** Render Install Subpage. */
@@ -2286,7 +2284,6 @@ class MainWP_Plugins {
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			$tmpDecodedDismissedPlugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
 			$tmpDecodedDismissedPlugins = ( '' != $tmpDecodedDismissedPlugins ) ? json_decode( $tmpDecodedDismissedPlugins, true ) : array();
-
 
 			if ( ! is_array( $tmpDecodedDismissedPlugins ) || 0 == count( $tmpDecodedDismissedPlugins ) ) {
 				continue;

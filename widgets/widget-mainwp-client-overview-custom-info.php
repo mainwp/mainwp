@@ -140,7 +140,7 @@ class MainWP_Client_Overview_Custom_Info {
 					</tbody>
 				</table>
 				<a href="admin.php?page=ClientAddField" title="" class="ui button basic green"><?php echo esc_html__( 'Add Custom Client Info', 'mainwp' ); ?></a>
-				<?php
+					<?php
 				} else {
 					?>
 					<h2 class="ui grey icon header">

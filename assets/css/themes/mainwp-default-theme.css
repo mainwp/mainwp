@@ -218,8 +218,6 @@
 
 .mainwp-ui.mainwp-custom-theme .ui.message {
  background-color: #fafafa;
- box-shadow: none !important;
- -webkit-box-shadow: none !important;
  color: var( --font-color );
  box-shadow:  0 1px 2px 0 rgba( 0, 0, 0, .1 ) !important;
  -webkit-box-shadow:  0 1px 2px 0 rgba( 0, 0, 0, .1 ) !important;
@@ -521,7 +519,7 @@
 
 .mainwp-ui.mainwp-custom-theme #mainwp-page-navigation-wrapper {
   background-color: #ffffff;
-  padding: 8px 10px 14px 10px !important;
+  padding: 8px 10px 14px !important;
   border-bottom: 1px solid var( --grey-light-alt ) !important;
 }
 
@@ -552,7 +550,7 @@
 
 .mainwp-ui.mainwp-custom-theme .ui.inverted.menu.mainwp-sub-submenu .item:hover,
 .mainwp-ui.mainwp-custom-theme .ui.inverted.menu.mainwp-sub-submenu .item.active {
-  color: #ffffff !important;;
+  color: #ffffff !important;
   background-color: var( --accent );
 }
 

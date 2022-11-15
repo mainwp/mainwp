@@ -120,7 +120,7 @@ class MainWP_Updates_Per_Group {
 
 											$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
 											$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
-			
+
 											if ( ( 0 == count( $wp_upgrades ) ) && ( '' == $website->sync_errors ) ) {
 												continue;
 											}

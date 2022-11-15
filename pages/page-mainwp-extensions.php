@@ -382,7 +382,7 @@ class MainWP_Extensions {
 		$map_extensions_group                             = array();
 		$purchased_data                                   = array();
 
-		$all_groups   = MainWP_Extensions_View::get_extension_groups();
+		$all_groups = MainWP_Extensions_View::get_extension_groups();
 
 		$grouped_exts = array( 'others' => '' );
 
@@ -473,7 +473,7 @@ class MainWP_Extensions {
 				}
 			}
 
-			if ( 'MainWP Wordpress SEO Extension' == $product_id || 'wp-seopress-mainwp' == $product_id ) {
+			if ( 'MainWP WordPress SEO Extension' == $product_id || 'wp-seopress-mainwp' == $product_id ) {
 				$notice = ' <i class="info circle small icon"></i>';
 			}
 

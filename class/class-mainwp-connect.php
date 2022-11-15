@@ -99,11 +99,11 @@ class MainWP_Connect {
 		if ( false !== $http_version ) {
 			curl_setopt( $ch, CURLOPT_HTTP_VERSION, $http_version );
 		}
-		
+
 		$curlopt_resolve = apply_filters( 'mainwp_curl_curlopt_resolve', false, false, $url );
 		if ( is_array( $curlopt_resolve ) && ! empty( $curlopt_resolve ) ) {
 			curl_setopt( $ch, CURLOPT_RESOLVE, $curlopt_resolve );
-			curl_setopt( $ch, CURLOPT_DNS_USE_GLOBAL_CACHE, false ); 
+			curl_setopt( $ch, CURLOPT_DNS_USE_GLOBAL_CACHE, false );
 		}
 
 		$headers           = array( 'X-Requested-With' => 'XMLHttpRequest' );
@@ -133,7 +133,7 @@ class MainWP_Connect {
 				curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
 			}
 		}
-		
+
 		$disabled_functions = ini_get( 'disable_functions' );
 		if ( empty( $disabled_functions ) || ( stristr( $disabled_functions, 'curl_multi_exec' ) === false ) ) {
 			$mh = curl_multi_init();
@@ -698,9 +698,8 @@ class MainWP_Connect {
 				$curlopt_resolve = apply_filters( 'mainwp_curl_curlopt_resolve', false, $website->id, $website->url );
 				if ( is_array( $curlopt_resolve ) && ! empty( $curlopt_resolve ) ) {
 					curl_setopt( $ch, CURLOPT_RESOLVE, $curlopt_resolve );
-					curl_setopt( $ch, CURLOPT_DNS_USE_GLOBAL_CACHE, false ); 
+					curl_setopt( $ch, CURLOPT_DNS_USE_GLOBAL_CACHE, false );
 				}
-
 			}
 
 			curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
@@ -1274,7 +1273,7 @@ class MainWP_Connect {
 			$curlopt_resolve = apply_filters( 'mainwp_curl_curlopt_resolve', false, $website->id, $website->url );
 			if ( is_array( $curlopt_resolve ) && ! empty( $curlopt_resolve ) ) {
 				curl_setopt( $ch, CURLOPT_RESOLVE, $curlopt_resolve );
-				curl_setopt( $ch, CURLOPT_DNS_USE_GLOBAL_CACHE, false ); 
+				curl_setopt( $ch, CURLOPT_DNS_USE_GLOBAL_CACHE, false );
 			}
 		}
 

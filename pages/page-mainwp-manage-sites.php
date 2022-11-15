@@ -46,17 +46,17 @@ class MainWP_Manage_Sites {
 	 * @var array $enable_widgets Widgets to enable.
 	 */
 	private static $enable_widgets = array(
-		'overview'          => true,
-		'connection_status' => true,
-		'recent_posts'      => true,
-		'recent_pages'      => true,
-		'security_issues'   => true,
-		'manage_backups'    => true,
-		'plugins'           => true,
-		'themes'            => true,
-		'notes'             => true,
-		'site_note'         => true,
-		'client_info'       => true,
+		'overview'           => true,
+		'connection_status'  => true,
+		'recent_posts'       => true,
+		'recent_pages'       => true,
+		'security_issues'    => true,
+		'manage_backups'     => true,
+		'plugins'            => true,
+		'themes'             => true,
+		'notes'              => true,
+		'site_note'          => true,
+		'client_info'        => true,
 		'non_mainwp_changes' => true,
 
 	);

@@ -468,7 +468,7 @@ class MainWP_Updates_Overview {
 	 */
 	public static function render_total_update( $total_upgrades, $lastSyncMsg, $can_total_update, $limit_updates_all ) {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
-		$globalView = true;
+		$globalView   = true;
 		if ( $current_wpid ) {
 			$globalView = false;
 		}
@@ -672,10 +672,10 @@ class MainWP_Updates_Overview {
 				if ( $user_can_update_plugins ) {
 						MainWP_Updates::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
 					if ( $globalView ) {
-						$detail_plugins_up = 'admin.php?page=UpdatesManage&tab=plugins-updates';
+						$detail_plugins_up  = 'admin.php?page=UpdatesManage&tab=plugins-updates';
 						$update_all_tooltip = __( 'Clicking this button will update all Plugins on All your websites.', 'mainwp' );
 					} else {
-						$detail_plugins_up = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=plugins-updates';
+						$detail_plugins_up  = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=plugins-updates';
 						$update_all_tooltip = __( 'Clicking this button will update all Plugins on the website.', 'mainwp' );
 					}
 

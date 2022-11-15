@@ -351,6 +351,5 @@ class MainWP_UI_Select_Sites {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_after_select_clients_list', $clients );
-
 	}
 }

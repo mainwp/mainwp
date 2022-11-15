@@ -825,7 +825,6 @@ class MainWP_Client {
 		} else {
 			self::clients_search_handler_renderer( $clients, $website );
 		}
-
 	}
 
 	/**
@@ -971,8 +970,8 @@ class MainWP_Client {
 					</div>
 					<script type="text/javascript">
 					jQuery( document ).ready( function() {
-    				jQuery( '#mainwp_toggle_tokens_info' ).on( 'change', function() {
-					     jQuery( '.hidden.token.column' ).toggle();
+					jQuery( '#mainwp_toggle_tokens_info' ).on( 'change', function() {
+						 jQuery( '.hidden.token.column' ).toggle();
 					  } );
 					} );
 					</script>
@@ -1174,7 +1173,7 @@ class MainWP_Client {
 					$field_id = array_key_first( $field_val );
 					// update custom field value for client.
 					if ( $field_id ) {
-						$val      = $field_val[ $field_id ];
+						$val = $field_val[ $field_id ];
 						MainWP_DB_Client::instance()->update_client_field_value( $field_id, $val, $client_id );
 					}
 				}
@@ -1233,10 +1232,10 @@ class MainWP_Client {
 
 					$contact_to_add['contact_phone'] = $client_fields['contacts_field']['contact.phone'][ $indx ];
 					$contact_to_add['contact_role']  = $client_fields['contacts_field']['contact.role'][ $indx ];
-					$contact_to_add['facebook']  = $client_fields['contacts_field']['contact.facebook'][ $indx ];
-					$contact_to_add['twitter']   = $client_fields['contacts_field']['contact.twitter'][ $indx ];
-					$contact_to_add['instagram'] = $client_fields['contacts_field']['contact.instagram'][ $indx ];
-					$contact_to_add['linkedin']  = $client_fields['contacts_field']['contact.linkedin'][ $indx ];
+					$contact_to_add['facebook']      = $client_fields['contacts_field']['contact.facebook'][ $indx ];
+					$contact_to_add['twitter']       = $client_fields['contacts_field']['contact.twitter'][ $indx ];
+					$contact_to_add['instagram']     = $client_fields['contacts_field']['contact.instagram'][ $indx ];
+					$contact_to_add['linkedin']      = $client_fields['contacts_field']['contact.linkedin'][ $indx ];
 
 					$contact_to_add['contact_client_id'] = $client_id;
 					$contact_to_add['contact_id']        = $contact_id;
@@ -1305,7 +1304,7 @@ class MainWP_Client {
 
 					if ( $inserted ) {
 
-						$contact_id = $inserted->contact_id;
+						$contact_id    = $inserted->contact_id;
 						$contact_image = '';
 
 						if ( UPLOAD_ERR_OK == $_FILES['mainwp_client_image_uploader']['error']['new_contacts_field'][ $indx ] ) {
@@ -1323,7 +1322,6 @@ class MainWP_Client {
 							MainWP_DB_Client::instance()->update_client_contact( $update );
 						}
 
-						
 						if ( $add_new && 0 == $indx ) {
 							$update = array(
 								'client_id'          => $client_id,
@@ -1393,7 +1391,6 @@ class MainWP_Client {
 				});
 			</script>
 		<?php
-
 	}
 
 	/**
@@ -1457,7 +1454,7 @@ class MainWP_Client {
 					</div>
 					<?php if ( $client_id ) : ?>
 					<div class="ui four wide middle aligned hidden token column" style="display:none">
-					<?php if ( 'client.suspended' !== $field_name ) { ?>
+						<?php if ( 'client.suspended' !== $field_name ) { ?>
 						[<?php echo esc_html( $field_name ); ?>]
 					<?php } ?>
 					</div>	
@@ -1569,7 +1566,7 @@ class MainWP_Client {
 					<?php
 			}
 		}
-		
+
 		$temp = self::get_add_contact_temp();
 
 		if ( $client_id ) {
@@ -1595,7 +1592,6 @@ class MainWP_Client {
 		</div>
 		<input type="hidden" name="client_fields[client_id]" value="<?php echo intval( $client_id ); ?>">
 		<?php
-
 	}
 
 	/**
@@ -1618,7 +1614,7 @@ class MainWP_Client {
 			$contact_image = $edit_contact->contact_image;
 		}
 		ob_start();
-			?>
+		?>
 		<h3 class="ui dividing header">
 			<?php if ( $edit_contact ) : ?>
 				<?php echo __( 'Edit Contact', 'mainwp' ); ?>
@@ -1629,14 +1625,14 @@ class MainWP_Client {
 			<?php endif; ?>
 		</h3>
 						<?php
-		$contact_fields = MainWP_Client_Handler::get_default_contact_fields();
+						$contact_fields = MainWP_Client_Handler::get_default_contact_fields();
 
-		foreach ( $contact_fields as $field_name => $field ) {
-			$db_field   = isset( $field['db_field'] ) ? $field['db_field'] : '';
-			$val        = $edit_contact && '' != $db_field && property_exists( $edit_contact, $db_field ) ? $edit_contact->{$db_field} : '';
-			$contact_id = $edit_contact && property_exists( $edit_contact, 'contact_id' ) ? $edit_contact->contact_id : '';
+						foreach ( $contact_fields as $field_name => $field ) {
+							$db_field   = isset( $field['db_field'] ) ? $field['db_field'] : '';
+							$val        = $edit_contact && '' != $db_field && property_exists( $edit_contact, $db_field ) ? $edit_contact->{$db_field} : '';
+							$contact_id = $edit_contact && property_exists( $edit_contact, 'contact_id' ) ? $edit_contact->contact_id : '';
 
-			?>
+							?>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php echo esc_html( $field['title'] ); ?></label>
 					<div class="ui six wide column">
@@ -1644,16 +1640,16 @@ class MainWP_Client {
 							<input type="text" value="<?php echo esc_html( $val ); ?>" class="regular-text" name="client_fields[<?php echo esc_html( $input_name ); ?>][<?php echo esc_attr( $field_name ); ?>][]"/>
 						</div>											
 					</div>
-					<?php if ( $edit_contact ) : ?>
+							<?php if ( $edit_contact ) : ?>
 					<div class="ui four wide middle aligned hidden token column" style="display:none">
 						[<?php echo esc_html( $field_name ); ?>]
 					</div>	
 					<?php endif; ?>
 				</div>
-				<?php
+							<?php
 
-				if ( 'contact.role' === $field_name ) {
-					?>
+							if ( 'contact.role' === $field_name ) {
+								?>
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php _e( 'Contact photo', 'mainwp' ); ?></label>
 						<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Upload a client photo.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -1661,7 +1657,7 @@ class MainWP_Client {
 						</div>
 					</div>
 
-					<?php if ( ! empty( $contact_image ) ) : ?>
+								<?php if ( ! empty( $contact_image ) ) : ?>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"></label>
 							<div class="six wide column">
@@ -1673,32 +1669,32 @@ class MainWP_Client {
 
 							</div>
 						</div>
-						<?php
+									<?php
 		endif;
-				}
-		}
+							}
+						}
 
-		if ( ! $for_new_client ) {
-		?>
+						if ( ! $for_new_client ) {
+							?>
 			<div class="ui grid field">
 				<label class="six wide column middle aligned"><?php _e( 'Remove contact', 'mainwp' ); ?></label>
 				<div class="ui six wide column">
 					<div class="ui left labeled input">
 					<a href="javascript:void(0);" contact-id="<?php echo intval( $contact_id ); ?>" class="ui basic button mainwp-client-remove-contact"><?php _e( 'Remove contact', 'mainwp' ); ?></a>
 					</div>
-					<?php
-					if ( $edit_contact ) {
-						?>
+							<?php
+							if ( $edit_contact ) {
+								?>
 						<input type="hidden" value="<?php echo intval( $edit_contact->contact_id ); ?>" name="client_fields[contacts_field][contact_id][]"/>
-						<?php
-					}
-					?>
+								<?php
+							}
+							?>
 				</div>
 			</div>
-			<?php
-		}
+							<?php
+						}
 
-		?>
+						?>
 		<div class="ui section hidden divider bottom-contact-fields"></div>
 
 		<?php

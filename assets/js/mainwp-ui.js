@@ -313,25 +313,25 @@ mainwp_sites_selection_onvisible_callback = function (me) {
     var parent = jQuery(me).closest('.mainwp_select_sites_wrapper');
     if (selected_tab == 'staging') {
         // uncheck live sites
-        parent.find('#mainwp-select-sites-list INPUT:checkbox').prop('checked', false);;
-        parent.find('#mainwp-select-groups-list INPUT:checkbox').prop('checked', false);;
-        parent.find('#mainwp-select-clients-list INPUT:checkbox').prop('checked', false);;
+        parent.find('#mainwp-select-sites-list INPUT:checkbox').prop('checked', false);
+        parent.find('#mainwp-select-groups-list INPUT:checkbox').prop('checked', false);
+        parent.find('#mainwp-select-clients-list INPUT:checkbox').prop('checked', false);
     } else if (selected_tab == 'site') {
         // uncheck staging sites
-        parent.find('#mainwp-select-staging-sites-list INPUT:checkbox').prop('checked', false);;
-        parent.find('#mainwp-select-groups-list INPUT:checkbox').prop('checked', false);;
-        parent.find('#mainwp-select-clients-list INPUT:checkbox').prop('checked', false);;
+        parent.find('#mainwp-select-staging-sites-list INPUT:checkbox').prop('checked', false);
+        parent.find('#mainwp-select-groups-list INPUT:checkbox').prop('checked', false);
+        parent.find('#mainwp-select-clients-list INPUT:checkbox').prop('checked', false);
     } else if (selected_tab == 'group') {
         // uncheck sites
-        parent.find('#mainwp-select-sites-list INPUT:checkbox').prop('checked', false);;
-        parent.find('#mainwp-select-staging-sites-list INPUT:checkbox').prop('checked', false);;
-        parent.find('#mainwp-select-clients-list INPUT:checkbox').prop('checked', false);;
+        parent.find('#mainwp-select-sites-list INPUT:checkbox').prop('checked', false);
+        parent.find('#mainwp-select-staging-sites-list INPUT:checkbox').prop('checked', false);
+        parent.find('#mainwp-select-clients-list INPUT:checkbox').prop('checked', false);
         select_by = 'group';
     } else if (selected_tab == 'client') {
         // uncheck sites
-        parent.find('#mainwp-select-sites-list INPUT:checkbox').prop('checked', false);;
-        parent.find('#mainwp-select-groups-list INPUT:checkbox').prop('checked', false);;
-        parent.find('#mainwp-select-staging-sites-list INPUT:checkbox').prop('checked', false);;
+        parent.find('#mainwp-select-sites-list INPUT:checkbox').prop('checked', false);
+        parent.find('#mainwp-select-groups-list INPUT:checkbox').prop('checked', false);
+        parent.find('#mainwp-select-staging-sites-list INPUT:checkbox').prop('checked', false);
         select_by = 'client';
     }
 

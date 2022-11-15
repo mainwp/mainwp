@@ -77,7 +77,7 @@ class MainWP_Install extends MainWP_DB_Base {
 		}
 
 		if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.8', '<' ) ) {
-			MainWP_Utility::update_option( 'mainwp_selected_theme', 'default' );				
+			MainWP_Utility::update_option( 'mainwp_selected_theme', 'default' );
 		}
 
 		$rslt = self::instance()->query( "SHOW TABLES LIKE '" . $this->table_name( 'wp' ) . "'" );

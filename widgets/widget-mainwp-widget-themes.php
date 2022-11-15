@@ -309,7 +309,6 @@ class MainWP_Widget_Themes {
 			die( wp_json_encode( array( 'error' => __( 'The child site has been suspended.', 'mainwp' ) ) ) );
 		}
 
-
 		/**
 		* Action: mainwp_before_theme_action
 		*

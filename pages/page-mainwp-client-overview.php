@@ -116,7 +116,6 @@ class MainWP_Client_Overview {
 
 		self::add_meta_boxes( $page );
 		add_filter( 'mainwp_header_actions_right', array( self::get_class_name(), 'screen_options' ), 10, 2 );
-
 	}
 
 	/**
@@ -276,7 +275,6 @@ class MainWP_Client_Overview {
 	 * Method render_dashboard_body()
 	 *
 	 * Render the Dashboard Body content.
-	 *
 	 */
 	public static function render_dashboard_body() {
 		$screen = get_current_screen();
@@ -496,7 +494,6 @@ class MainWP_Client_Overview {
 		</div>
 
 		<?php
-
 	}
 
 	/**

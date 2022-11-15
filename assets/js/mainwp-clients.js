@@ -21,7 +21,7 @@ jQuery(document).ready(function () {
           rowElement.html('<td colspan="8"><i class="check circle icon"></i> ' + response.result + '</td>');
         }
       }, 'json');
-    };
+    }
 
     return false;
   });

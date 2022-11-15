@@ -570,7 +570,6 @@ class MainWP_Updates_Handler {
 					$decodedDismissedPlugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
 					$decodedDismissedPlugins = ( '' != $decodedDismissedPlugins ) ? json_decode( $decodedDismissedPlugins, true ) : array();
 
-					
 					if ( ! isset( $decodedDismissedPlugins[ $slug ] ) ) {
 						$decodedDismissedPlugins[ $slug ] = urldecode( $name );
 						MainWP_DB::instance()->update_website_option( $website, 'plugins_outdate_dismissed', wp_json_encode( $decodedDismissedPlugins ) );
@@ -757,7 +756,6 @@ class MainWP_Updates_Handler {
 			$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
 			$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 
-
 			if ( is_array( $decodedPremiumUpgrades ) ) {
 				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 					$premiumUpgrade['premium'] = true;
@@ -796,7 +794,7 @@ class MainWP_Updates_Handler {
 			$theme_upgrades         = json_decode( $website->theme_upgrades, true );
 			$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
 			$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
-			
+
 			if ( is_array( $decodedPremiumUpgrades ) ) {
 				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 					$premiumUpgrade['premium'] = true;

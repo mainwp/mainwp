@@ -90,7 +90,6 @@ class MainWP_DB_Client extends MainWP_DB {
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
-
 		$tbl = 'CREATE TABLE `' . $this->table_name( 'wp_clients_fields' ) . '` (
 	field_id int(11) NOT NULL auto_increment,
 	field_name varchar(191) NOT NULL DEFAULT "",
@@ -234,7 +233,6 @@ class MainWP_DB_Client extends MainWP_DB {
 
 			}
 		}
-
 	}
 
 	/**
@@ -256,7 +254,6 @@ class MainWP_DB_Client extends MainWP_DB {
 		$sites_tokens_values = $this->client_reports_get_site_token_values();
 
 		$this->reports_check_updates_861( $tokens, $sites_tokens_values );
-
 	}
 
 	/**
@@ -278,7 +275,6 @@ class MainWP_DB_Client extends MainWP_DB {
 		$sites_tokens_values = $this->pro_reports_get_site_token_values();
 
 		$this->reports_check_updates_861( $tokens, $sites_tokens_values );
-
 	}
 
 

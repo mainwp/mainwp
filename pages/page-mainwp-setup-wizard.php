@@ -190,7 +190,7 @@ class MainWP_Setup_Wizard {
 				<?php do_action( 'admin_print_styles' ); ?>
 				<script type="text/javascript"> var ajaxurl = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';</script>
 			</head>
-			<body class="mainwp-ui <?php echo ! empty( $selected_theme ) ? 'mainwp-custom-theme' : '' ; ?> mainwp-ui-setup">
+			<body class="mainwp-ui <?php echo ! empty( $selected_theme ) ? 'mainwp-custom-theme' : ''; ?> mainwp-ui-setup">
 				<div class="ui hidden divider"></div>
 				<div class="ui hidden divider"></div>
 				<div id="mainwp-quick-setup-wizard" class="ui padded container segment">

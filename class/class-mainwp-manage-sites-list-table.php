@@ -528,7 +528,6 @@ class MainWP_Manage_Sites_List_Table {
 	 * Method render_page_navigation_left_items()
 	 *
 	 * Render page navigation left items.
-	 *
 	 */
 	public static function render_page_navigation_left_items() {
 		$siteViewMode = get_user_option( 'mainwp_sitesviewmode' );

@@ -989,16 +989,13 @@ class MainWP_UI {
 				</div>
 			</div>
 		</div>		
-		<?php if ( isset( $_GET['dashboard'] ) ) : ?>
-			<?php $website_id = intval( $_GET['dashboard'] ); ?>
-			<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website_id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><i class="sign in icon"></i></a>
-		<?php endif; ?>
 		<?php if ( isset( $_GET['dashboard'] ) || ( isset( $_GET['id'] ) && isset( $_GET['page'] ) && 'managesites' == $_GET['page'] ) ) : ?>
 			<?php if ( isset( $_GET['dashboard'] ) ) : ?>
 				<?php $website_id = intval( $_GET['dashboard'] ); ?>
 			<?php else : ?>
 				<?php $website_id = intval( $_GET['id'] ); ?>
 			<?php endif; ?>
+			<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website_id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><i class="sign in icon"></i></a>
 			<a href="#" site-id="<?php echo $website_id; ?>" data-tooltip="<?php esc_attr_e( 'Remove the site from your MainWP Dashboard.', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="mainwp-remove-site-button ui red basic icon button" target="_blank"><i class="times icon"></i></a>
 		<?php endif; ?>
 		<?php if ( ( isset( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] ) || isset( $_GET['dashboard'] ) || in_array( $_GET['page'], $sidebar_pages ) ) : ?>

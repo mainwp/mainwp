@@ -106,6 +106,24 @@ class MainWP_Setup_Wizard {
 		wp_enqueue_style( 'fomantic', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.css', array(), MAINWP_VERSION );
 		wp_enqueue_style( 'mainwp-fomantic', MAINWP_PLUGIN_URL . 'assets/css/mainwp-fomantic.css', array(), MAINWP_VERSION );
 
+		// load custom MainWP theme.
+		$selected_theme = MainWP_Settings::get_instance()->get_selected_theme();
+		if ( ! empty( $selected_theme ) ) {
+			if ( 'dark' == $selected_theme ) {
+				wp_enqueue_style( 'mainwp-custom-dashboard-extension-dark-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-dark-theme.css', array(), MAINWP_VERSION );
+			} elseif ( 'wpadmin' == $selected_theme ) {
+				wp_enqueue_style( 'mainwp-custom-dashboard-extension-wp-admin-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-wpadmin-theme.css', array(), MAINWP_VERSION );
+			} elseif ( 'minimalistic' == $selected_theme ) {
+				wp_enqueue_style( 'mainwp-custom-dashboard-extension-minimalistic-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-minimalistic-theme.css', array(), MAINWP_VERSION );
+			} elseif ( 'default' == $selected_theme ) {
+				wp_enqueue_style( 'mainwp-custom-dashboard-extension-default-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-default-theme.css', array(), MAINWP_VERSION );
+			} else {
+				$dirs      = MainWP_Settings::get_instance()->get_custom_theme_folder();
+				$theme_dir = $dirs[0];
+				wp_enqueue_style( 'mainwp-custom-dashboard-theme', $theme_dir . $selected_theme, array(), MAINWP_VERSION );
+			}
+		}
+
 		if ( ! empty( $_POST['save_step'] ) && isset( $this->steps[ $this->step ]['handler'] ) ) {
 			call_user_func( $this->steps[ $this->step ]['handler'] );
 		}
@@ -159,6 +177,7 @@ class MainWP_Setup_Wizard {
 	 * Render Setup Wizard's header.
 	 */
 	public function setup_wizard_header() {
+		$selected_theme = MainWP_Settings::get_instance()->get_selected_theme();
 		?>
 		<!DOCTYPE html>
 		<html xmlns="http://www.w3.org/1999/xhtml" <?php language_attributes(); ?> class="mainwp-quick-setup">
@@ -171,7 +190,7 @@ class MainWP_Setup_Wizard {
 				<?php do_action( 'admin_print_styles' ); ?>
 				<script type="text/javascript"> var ajaxurl = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';</script>
 			</head>
-			<body class="mainwp-ui mainwp-ui-setup">
+			<body class="mainwp-ui <?php echo ! empty( $selected_theme ) ? 'mainwp-custom-theme' : '' ; ?> mainwp-ui-setup">
 				<div class="ui hidden divider"></div>
 				<div class="ui hidden divider"></div>
 				<div id="mainwp-quick-setup-wizard" class="ui padded container segment">
@@ -384,7 +403,7 @@ class MainWP_Setup_Wizard {
 			<div class="field">
 				<label><?php esc_html_e( 'What is the site URL? ', 'mainwp' ); ?></label>
 						<div class="ui left action input">
-							<select class="ui compact selection dropdown" id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol" style="width:120px;">
+							<select class="ui compact selection dropdown" id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol" style="width:120px;padding:0px;">
 							<option value="https">https://</option>
 							<option value="http">http://</option>
 						</select>

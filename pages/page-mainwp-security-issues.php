@@ -234,15 +234,75 @@ class MainWP_Security_Issues {
 						<strong id="admin-status-ok" style="display: none;"><?php esc_html_e( 'Administrator username is not "admin"', 'mainwp' ); ?></strong>
 						<br />
 						<em><?php esc_html_e( 'You have to change this yourself. If this user was used as your MainWP Secure Link Admin, you will need to change your Administrator Username in the MainWP Dashboard for the site.', 'mainwp' ); ?></em>
-					</td>
+					</td>					
 					<td></td>
 				</tr>
+
+				<tr>
+					<td>
+						<span id="wp_uptodate_loading"><i class="notched circle big loading icon"></i></span>
+						<span id="wp_uptodate_ok" style="display: none;"><i class="big check circle green icon"></i></span>
+						<span id="wp_uptodate_nok" style="display: none;"><i class="big times circle red icon"></i></span>
+					</td>
+					<td>
+						<strong id="wp_uptodate-status-nok"><?php esc_html_e( 'WordPress is not up to date.', 'mainwp' ); ?></strong>
+						<strong id="wp_uptodate-status-ok" style="display: none;"><?php esc_html_e( 'WordPress is up to date.', 'mainwp' ); ?></strong>
+						<br />
+						<em><?php esc_html_e( 'Checks if WP is up to date. You have to change this yourself.', 'mainwp' ); ?></em>
+					</td>					
+					<td></td>
+				</tr>
+				<tr>
+					<td>
+						<span id="phpversion_matched_loading"><i class="notched circle big loading icon"></i></span>
+						<span id="phpversion_matched_ok" style="display: none;"><i class="big check circle green icon"></i></span>
+						<span id="phpversion_matched_nok" style="display: none;"><i class="big times circle red icon"></i></span>
+					</td>
+					<td>
+						<strong id="phpversion_matched-status-nok"><?php esc_html_e( 'PHP version does not match the WordPress requirement', 'mainwp' ); ?></strong>
+						<strong id="phpversion_matched-status-ok" style="display: none;"><?php esc_html_e( 'PHP version matches the WordPress requirement', 'mainwp' ); ?></strong>
+						<br />
+						<em><?php esc_html_e( 'Checks if PHP version matches the WP requirement. You have to change this yourself.', 'mainwp' ); ?></em>
+					</td>					
+					<td></td>
+				</tr>
+
+				<tr>
+					<td>
+						<span id="sslprotocol_loading"><i class="notched circle big loading icon"></i></span>
+						<span id="sslprotocol_ok" style="display: none;"><i class="big check circle green icon"></i></span>
+						<span id="sslprotocol_nok" style="display: none;"><i class="big times circle red icon"></i></span>
+					</td>
+					<td>
+						<strong id="sslprotocol-status-nok"><?php esc_html_e( 'SSL protocol is not in place', 'mainwp' ); ?></strong>
+						<strong id="sslprotocol-status-ok" style="display: none;"><?php esc_html_e( 'SSL protocol is in place', 'mainwp' ); ?></strong>
+						<br />
+						<em><?php esc_html_e( 'Checks if SSL protocol is in place. You have to change this yourself.', 'mainwp' ); ?></em>
+					</td>					
+					<td></td>
+				</tr>
+
+				<tr>
+					<td>
+						<span id="debug_disabled_loading"><i class="notched circle big loading icon"></i></span>
+						<span id="debug_disabled_ok" style="display: none;"><i class="big check circle green icon"></i></span>
+						<span id="debug_disabled_nok" style="display: none;"><i class="big times circle red icon"></i></span>
+					</td>
+					<td>
+						<strong id="debug_disabled-status-nok"><?php esc_html_e( 'WP Config debugging is enabled', 'mainwp' ); ?></strong>
+						<strong id="debug_disabled-status-ok" style="display: none;"><?php esc_html_e( 'WP Config debugging is disabled', 'mainwp' ); ?></strong>
+						<br />
+						<em><?php esc_html_e( 'Checks if WP Config debugging is disabled. You have to change this yourself.', 'mainwp' ); ?></em>
+					</td>					
+					<td></td>
+				</tr>
+
 		</tbody>
 			<tfoot class="full-width">
 				<tr>
 					<th colspan="3">
 						<input type="button" id="securityIssues_fixAll" class="ui green button right floated" value="<?php esc_html_e( 'Fix All', 'mainwp' ); ?>"/>
-						<input type="button" id="securityIssues_refresh" class="ui button" value="<?php esc_html_e( 'Refresh', 'mainwp' ); ?>"/>
+						<input type="button" id="securityIssues_refresh" class="ui green basic button" value="<?php esc_html_e( 'Refresh', 'mainwp' ); ?>"/>
 						<input type="hidden" id="securityIssueSite" value="<?php echo intval( $website->id ); ?>"/>
 					</th>
 				</tr>
@@ -314,6 +374,10 @@ class MainWP_Security_Issues {
 			return '';
 		}
 
+		if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+			return '';
+		}
+
 		$skip_features = array(
 			'listing',
 			'wp_version',
@@ -324,6 +388,10 @@ class MainWP_Security_Issues {
 			'versions',
 			'registered_versions',
 			'readme',
+			'wp_uptodate',
+			'phpversion_matched',
+			'sslprotocol',
+			'debug_disabled',
 		);
 
 		/**
@@ -388,6 +456,10 @@ class MainWP_Security_Issues {
 		$website = MainWP_DB::instance()->get_website_by_id( $id );
 
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
+			return '';
+		}
+
+		if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 			return '';
 		}
 

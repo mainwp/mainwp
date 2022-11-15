@@ -140,24 +140,47 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 		MainWP_WP_CLI_Handle::handle_cli_callback( 'site', $args, $assoc_args );
 	}
 
+	
 	/**
 	 * Updates commands.
 	 *
 	 * ## OPTIONS
 	 *
-	 * [--available-updates]
+	 * [--available-updates <websiteid>]
 	 *  : Get available updates
 	 *
-	 * [--ignored-plugins-updates]
+	 * [--ignored-plugins-updates <websiteid>]
 	 *  : If set, get ignored plugins updates.
+	 *
+	 * [--site-ignored-plugins-updates  <websiteid>]
+	 *  : If set, get ignored plugins updates of site.
+	 *
+	 * [--ignored-themes-updates <websiteid>]
+	 *  : If set, get ignored themes updates.
+	 *
+	 * [--site-ignored-themes-updates <websiteid>]
+	 *  : If set, get ignored themes updates of site.
+	 *
+	 * [--ignore-updates --type=[type] --slug=[slug]]
+	 *  : If set, ignored updates.
+	 *
+	 * [--ignore-update <websiteid> --type=[type] --slug=[slug]]
+	 *  : If set, ignored update.
+	 *
+	 * [--unignore-updates --type=[type] --slug=[slug]]
+	 *  : If set, unignore updates.
+	 *
+	 * [--unignore-update <websiteid> --type=[type] --slug=[slug]]
+	 *  : If set, unignore update.
 	 *
 	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp mainwp updates --available-updates
 	 *     wp mainwp updates --ignored-plugins-updates
+	 *     wp mainwp updates --site-ignored-plugins-updates 3
 	 *
-	 * ## Synopsis [--available-updates] [--ignored-plugins-updates] [...]
+	 * ## Synopsis [--available-updates] [--ignored-plugins-updates] [--site-ignored-plugins-updates] [...]
 	 *
 	 * @param array $args Function arguments.
 	 * @param array $assoc_args Function associate arguments.

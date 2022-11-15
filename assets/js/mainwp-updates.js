@@ -2234,7 +2234,7 @@ updatesoverview_unignore_plugintheme_abandoned_by_site = function (what, slug, i
     return false;
 };
 
-// Unigore all per site ignored abandoned Plugins / Themese
+// Unignore all per site ignored abandoned Plugins / Themese
 updatesoverview_unignore_plugintheme_abandoned_by_site_all = function (what) {
     var data = mainwp_secure_data({
         action: 'mainwp_unignoreabandonedplugintheme',
@@ -3079,7 +3079,10 @@ updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteName,
 // for semantic ui checkboxes
 jQuery(document).ready(function ($) {
     mainwp_table_check_columns_init(); // call as function to support tables with ajax, may check and call at extensions    
+    mainwp_master_checkbox_init(jQuery);
+});
 
+mainwp_master_checkbox_init = function($){
     // Master Checkboxes.
     $('.master-checkbox .master.checkbox').checkbox();
     $('.master-checkbox .master.checkbox').on('click', function (e) {
@@ -3137,6 +3140,7 @@ jQuery(document).ready(function ($) {
     // Main Master Checkboxes.
     $('.main-master-checkbox .main-master.checkbox').checkbox();
     $('.main-master-checkbox .main-master.checkbox').on('click', function (e) {
+        console.log('main-master click');
         if ($(this).checkbox('is checked')) {
             $(this).closest('.main-master-checkbox').next('.main-child-checkbox').find('.checkbox').checkbox('check');
             $(this).closest('.main-master-checkbox').find('.checkbox').checkbox('check');
@@ -3147,7 +3151,7 @@ jQuery(document).ready(function ($) {
         e.stopPropagation();
     });
 
-});
+}
 
 mainwp_table_check_columns_init = function () {
     jQuery(document).find('table th.check-column .checkbox').checkbox({

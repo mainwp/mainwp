@@ -20,6 +20,20 @@ class MainWP_Settings {
 	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
 	/**
+	 * Protected static variable to hold the single instance of the class.
+	 *
+	 * @var mixed Default null
+	 */
+	protected static $instance = null;
+
+	/**
+	 * Public static varable to hold Subpages information.
+	 *
+	 * @var array $subPages
+	 */
+	public static $subPages;
+
+	/**
 	 * Get Class Name
 	 *
 	 * @return __CLASS__
@@ -29,11 +43,16 @@ class MainWP_Settings {
 	}
 
 	/**
-	 * Public static varable to hold Subpages information.
+	 * Return the single instance of the class.
 	 *
-	 * @var array $subPages
+	 * @return mixed $instance The single instance of the class.
 	 */
-	public static $subPages;
+	public static function get_instance() {
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
 
 	/** Instantiate Hooks for the Settings Page. */
 	public static function init() {
@@ -528,6 +547,9 @@ class MainWP_Settings {
 				$new_freq = ( isset( $_POST['mainwp_frequencyDailyUpdate'] ) ? intval( $_POST['mainwp_frequencyDailyUpdate'] ) : 1 );
 				MainWP_Utility::update_option( 'mainwp_frequencyDailyUpdate', $new_freq );
 
+				$new_delay = ( isset( $_POST['mainwp_delay_autoupdate'] ) ? intval( $_POST['mainwp_delay_autoupdate'] ) : 1 );
+				MainWP_Utility::update_option( 'mainwp_delay_autoupdate', $new_delay );
+
 				$val  = ( isset( $_POST['mainwp_sidebarPosition'] ) ? intval( $_POST['mainwp_sidebarPosition'] ) : 1 );
 				$user = wp_get_current_user();
 				if ( $user ) {
@@ -540,6 +562,9 @@ class MainWP_Settings {
 
 				$check_http_response = ( isset( $_POST['mainwp_check_http_response'] ) ? 1 : 0 );
 				MainWP_Utility::update_option( 'mainwp_check_http_response', $check_http_response );
+
+				$actions_notification_enable = ( isset( $_POST['mainwp_site_actions_notification_enable'] ) ? 1 : 0 );
+				MainWP_Utility::update_option( 'mainwp_site_actions_notification_enable', $actions_notification_enable );
 
 				// Handle custom date/time formats.
 				if ( ! empty( $_POST['date_format'] ) && isset( $_POST['date_format_custom'] )
@@ -644,6 +669,7 @@ class MainWP_Settings {
 						$timeDailyUpdate      = get_option( 'mainwp_timeDailyUpdate' );
 						$frequencyDailyUpdate = get_option( 'mainwp_frequencyDailyUpdate' );
 						$run_timestamp        = MainWP_System_Cron_Jobs::get_timestamp_from_hh_mm( $timeDailyUpdate );
+						$delay_autoupdate     = get_option( 'mainwp_delay_autoupdate', 1 );
 
 						?>
 						<div class="ui grid field">
@@ -753,7 +779,7 @@ class MainWP_Settings {
 							</div>
 						</div>
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'WP Core advanced automatic updates.', 'mainwp' ); ?></label>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'WP Core advanced automatic updates', 'mainwp' ); ?></label>
 							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic WordPress core updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<select name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" class="ui dropdown">
 									<option value="1" <?php echo ( 1 == $snAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
@@ -762,6 +788,23 @@ class MainWP_Settings {
 								<div class="ui hidden divider"></div>
 								<div class="ui label"><?php esc_html_e( 'Last run: ', 'mainwp' ); ?><?php echo esc_html( $lastAutomaticUpdate ); ?></div>
 								<div class="ui label" updatescheck-today-count="<?php echo intval( $updatescheck_today_count ); ?>"><?php esc_html_e( 'Next run: ', 'mainwp' ); ?><?php echo esc_html( $nextAutomaticUpdate ); ?></div>
+							</div>
+						</div>
+						<div class="ui grid field">
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Advanced automatic updates delay', 'mainwp' ); ?></label>
+							<div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'Set the number of days to delay automatic updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+								<select name="mainwp_delay_autoupdate" id="mainwp_delay_autoupdate" class="ui dropdown">
+									<option value="0" <?php echo ( 0 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Delay off', 'mainwp' ); ?></option>
+									<option value="1" <?php echo ( 1 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '1 day', 'mainwp' ); ?></option>
+									<option value="2" <?php echo ( 2 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '2 days', 'mainwp' ); ?></option>
+									<option value="3" <?php echo ( 3 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '3 days', 'mainwp' ); ?></option>
+									<option value="4" <?php echo ( 4 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '4 days', 'mainwp' ); ?></option>
+									<option value="5" <?php echo ( 5 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '5 days', 'mainwp' ); ?></option>
+									<option value="6" <?php echo ( 6 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '6 days', 'mainwp' ); ?></option>
+									<option value="7" <?php echo ( 7 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '7 days', 'mainwp' ); ?></option>
+									<option value="14" <?php echo ( 14 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '14 days', 'mainwp' ); ?></option>
+									<option value="30" <?php echo ( 30 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '30 days', 'mainwp' ); ?></option>
+								</select>
 							</div>
 						</div>
 						<div class="ui grid field">
@@ -826,6 +869,14 @@ class MainWP_Settings {
 								<input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo ( ( false === get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ) ? 365 : get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
 							</div>
 						</div>
+						<!--
+						<div class="ui grid field">
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable plugins/themes/wp-core actions notification on child site', 'mainwp' ); ?></label>
+							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want your MainWP Child to send notification if the child site modified by not connected admin user.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+								<input type="checkbox" name="mainwp_site_actions_notification_enable" id="mainwp_site_actions_notification_enable" <?php echo ( ( 1 == get_option( 'mainwp_site_actions_notification_enable', 0 ) ) ? 'checked="true"' : '' ); ?>/>
+							</div>
+						</div>
+						-->
 						<?php MainWP_Monitoring_View::render_settings(); ?>					
 						<?php MainWP_Manage_Backups::render_settings(); ?>
 						<?php
@@ -1222,48 +1273,48 @@ class MainWP_Settings {
 						<h3 class="ui dividing header"><?php esc_html_e( 'Cross IP Settings', 'mainwp' ); ?></h3>
 
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous requests', 'mainwp' ); ?></label>
-							<div class="ten wide column ui right labeled input" data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_maximumRequests" id="mainwp_maximumRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumRequests' ) ) ? 4 : get_option( 'mainwp_maximumRequests' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 4', 'mainwp' ); ?></div>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous requests (Default: 4)', 'mainwp' ); ?></label>
+							<div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+								<input type="text" name="mainwp_maximumRequests" id="mainwp_maximumRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumRequests' ) ) ? 4 : get_option( 'mainwp_maximumRequests' ) ); ?>"/>
 							</div>
 						</div>
 
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Minimum delay between requests', 'mainwp' ); ?></label>
-							<div class="ten wide column ui right labeled input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_minimumDelay" id="mainwp_minimumDelay" value="<?php echo ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 200', 'mainwp' ); ?></div>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Minimum delay between requests (Default: 200)', 'mainwp' ); ?></label>
+							<div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+								<input type="text" name="mainwp_minimumDelay" id="mainwp_minimumDelay" value="<?php echo ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) ); ?>"/>
 							</div>
 						</div>
 
 						<h3 class="ui dividing header"><?php esc_html_e( 'Per IP Settings', 'mainwp' ); ?></h3>
 
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous requests per IP', 'mainwp' ); ?></label>
-							<div class="ten wide column ui right labeled input"  data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_maximumIPRequests" id="mainwp_maximumIPRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumIPRequests' ) ) ? 1 : get_option( 'mainwp_maximumIPRequests' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 1', 'mainwp' ); ?></div>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous requests per IP (Default: 1)', 'mainwp' ); ?></label>
+							<div class="ten wide column ui input"  data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+								<input type="text" name="mainwp_maximumIPRequests" id="mainwp_maximumIPRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumIPRequests' ) ) ? 1 : get_option( 'mainwp_maximumIPRequests' ) ); ?>"/>
 							</div>
 						</div>
 
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Minimum delay between requests to the same IP', 'mainwp' ); ?></label>
-							<div class="ten wide column ui right labeled input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_minimumIPDelay" id="mainwp_minimumIPDelay" value="<?php echo ( ( false === get_option( 'mainwp_minimumIPDelay' ) ) ? 1000 : get_option( 'mainwp_minimumIPDelay' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 1000', 'mainwp' ); ?></div>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Minimum delay between requests to the same IP (Default: 1000)', 'mainwp' ); ?></label>
+							<div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+								<input type="text" name="mainwp_minimumIPDelay" id="mainwp_minimumIPDelay" value="<?php echo ( ( false === get_option( 'mainwp_minimumIPDelay' ) ) ? 1000 : get_option( 'mainwp_minimumIPDelay' ) ); ?>"/>
 							</div>
 						</div>
 
 						<h3 class="ui dividing header"><?php esc_html_e( 'Frontend Request Settings', 'mainwp' ); ?></h3>
 
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous sync requests', 'mainwp' ); ?></label>
-							<div class="ten wide column ui right labeled input" data-tooltip="<?php esc_attr_e( 'This option allows you to control how many sites your MainWP Dashboard should sync at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_maximumSyncRequests" id="mainwp_maximumSyncRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumSyncRequests' ) ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 8', 'mainwp' ); ?></div>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous sync requests (Default: 8)', 'mainwp' ); ?></label>
+							<div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control how many sites your MainWP Dashboard should sync at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+								<input type="text" name="mainwp_maximumSyncRequests" id="mainwp_maximumSyncRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumSyncRequests' ) ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ) ); ?>"/>
 							</div>
 						</div>
 
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous install and update requests', 'mainwp' ); ?></label>
-							<div class="ten wide column ui right labeled input"  data-tooltip="<?php esc_attr_e( 'This option allows you to control how many update and install requests your MainWP Dashboard should process at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 3', 'mainwp' ); ?></div>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous install and update requests (Default: 3)', 'mainwp' ); ?></label>
+							<div class="ten wide column ui input"  data-tooltip="<?php esc_attr_e( 'This option allows you to control how many update and install requests your MainWP Dashboard should process at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+								<input type="text" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/>
 							</div>
 						</div>
 
@@ -1335,12 +1386,22 @@ class MainWP_Settings {
 					<?php echo sprintf( __( 'Use MainWP tools to adjust your MainWP Dashboard to your needs and perform specific actions when needed.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
+			
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-tools-info-custom-theme' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-tools-info-custom-theme"></i>
+					<div><?php _e( 'Here you can select a theme for your MainWP Dashboard.', 'mainwp' ); ?></div>
+					<div><?php _e( 'To create a custom theme, copy the `mainwp-dark-theme.css` file from the MainWP Custom Dashboard Extension located in the `css` directory, make your edits and upload the file to the `../wp-content/uploads/mainwp/custom-dashboard/` directory.', 'mainwp' ); ?></div>
+				</div>
+			<?php endif; ?>
+
 				<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) : ?>
 					<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 				<?php endif; ?>
 			<?php if ( isset( $_POST['mainwp_restore_info_messages'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) : ?>
 				<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Info messages have been restored successfully!', 'mainwp' ); ?></div>
 			<?php endif; ?>
+		
 				<div class="ui form">
 					<form method="POST" action="">
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -1357,6 +1418,8 @@ class MainWP_Settings {
 						do_action( 'mainwp_tools_form_top' );
 
 						$show_qsw = apply_filters( 'mainwp_show_qsw', true );
+
+						self::get_instance()->render_select_custom_themes();
 
 						?>
 						<div class="ui grid field">
@@ -1433,6 +1496,143 @@ class MainWP_Settings {
 		self::render_footer( 'MainWPTools' );
 	}
 
+	/**
+	 * Render MainWP themes selection.
+	 */
+	public function render_select_custom_themes() {
+		$custom_theme = $this->get_current_user_theme();
+		if ( false === $custom_theme ) {
+			// to compatible with Custom Dashboard extension settings.
+			$compat_settings = get_option( 'mainwp_custom_dashboard_settings' );
+			if ( is_array( $compat_settings ) && isset( $compat_settings['theme'] ) ) {
+				$compat_theme = $compat_settings['theme'];
+			}
+			if ( null !== $compat_theme ) {
+				$custom_theme = $compat_theme;
+			}
+		}
+		$themes_files = self::get_instance()->get_custom_themes_files();
+		if ( empty( $themes_files ) ) {
+			$themes_files = array();
+		}
+		?>
+				
+		<div class="ui grid field">
+			<label class="six wide column middle aligned"><?php _e( 'Select MainWP Theme', 'mainwp' ); ?></label>
+			<div class="ten wide column" tabindex="0" data-tooltip="<?php esc_attr_e( 'Select your MainWP Dashboard theme.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+				<select name="mainwp_settings_custom_theme" id="mainwp_settings_custom_theme" class="ui dropdown selection">
+					<option value="default" <?php echo ( $custom_theme == 'default' || '' == $custom_theme ) ? 'selected' : ''; ?>><?php _e( 'Default', 'mainwp' ); ?></option>
+					<option value="classic" <?php echo ( $custom_theme == 'classic' ) ? 'selected' : ''; ?>><?php _e( 'Classic', 'mainwp' ); ?></option>
+					<option value="dark" <?php echo ( $custom_theme == 'dark' ) ? 'selected' : ''; ?>><?php _e( 'Dark', 'mainwp' ); ?></option>
+					<option value="wpadmin" <?php echo ( $custom_theme == 'wpadmin' ) ? 'selected' : ''; ?>><?php _e( 'WP Admin', 'mainwp' ); ?></option>
+					<option value="minimalistic" <?php echo ( $custom_theme == 'minimalistic' ) ? 'selected' : ''; ?>><?php _e( 'Minimalistic', 'mainwp' ); ?></option>
+					<?php
+					foreach ( $themes_files as $file_name => $theme ) {
+						$theme   = ucfirst( $theme );
+						$_select = '';
+						if ( $custom_theme == $file_name ) {
+							$_select = 'selected';
+						}
+						echo '<option value="' . esc_attr( $file_name ) . '" ' . $_select . '>' . esc_html( $theme ) . '</option>';
+					}
+					?>
+				</select>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Get custom themes files.
+	 */
+	public function get_custom_themes_files() {
+		// get themes files.
+		$dirs       = $this->get_custom_theme_folder();
+		$scan_dir   = $dirs[0];
+		$handle     = opendir( $scan_dir );
+		$themes     = array();
+		$scan_files = array();
+		$filename   = readdir( $handle );
+		if ( $handle ) {
+			while ( false !== $filename ) {
+				$correct_file = true;
+				if ( '.' == substr( $filename, 0, 1 ) || 'index.php' == $filename ) {
+					$correct_file = false;
+				} elseif ( '.css' !== substr( $filename, - 4 ) ) {
+					$correct_file = false;
+				}
+				if ( $correct_file ) {
+					$theme               = basename( $filename, '.css' );
+					$theme               = str_replace( '-theme', '', $theme );
+					$themes[ $filename ] = trim( $theme );
+				}
+				$filename = readdir( $handle ); // to while loop.
+			}
+			closedir( $handle );
+		}
+		return $themes;
+	}
+
+	/**
+	 * Get selected MainWP theme name.
+	 */
+	public function get_selected_theme() {
+		$selected_theme = false;
+
+		$custom_theme = $this->get_current_user_theme();
+
+		if ( false === $custom_theme ) {
+			// to compatible with Custom Dashboard extension settings.
+			$compat_settings = get_option( 'mainwp_custom_dashboard_settings' );
+			if ( is_array( $compat_settings ) && isset( $compat_settings['theme'] ) ) {
+				$compat_theme = $compat_settings['theme'];
+			}
+
+			if ( null !== $compat_theme ) {
+				$custom_theme = $compat_theme;
+			}
+		}
+
+		if ( ! empty( $custom_theme ) ) {
+			if ( 'default' == $custom_theme || 'dark' == $custom_theme || 'wpadmin' == $custom_theme || 'minimalistic' == $custom_theme ) {
+				return $custom_theme;
+			}
+			$dirs      = $this->get_custom_theme_folder();
+			$theme_dir = $dirs[0];
+			$file      = $theme_dir . $custom_theme;
+			if ( file_exists( $file ) && '.css' === substr( $file, - 4 ) ) {
+				$selected_theme = $custom_theme;
+			}
+		}
+		return $selected_theme;
+	}
+
+
+	/**
+	 * Get custom MainWP theme folder.
+	 */
+	public function get_custom_theme_folder() {
+		$dirs = MainWP_System_Utility::get_mainwp_dir();
+		global $wp_filesystem;
+		if ( is_array( $dirs ) && ! $wp_filesystem->exists( $dirs[0] . 'themes' ) && $wp_filesystem->exists( $dirs[0] . 'custom-dashboard' ) ) {
+			// re-name the custom-dashboard folder to compatible.
+			$wp_filesystem->move( $dirs[0] . 'custom-dashboard', $dirs[0] . 'themes' );
+		}
+		$dirs = MainWP_System_Utility::get_mainwp_dir_allow_access( 'themes' );
+		return $dirs;
+	}
+
+
+	/**
+	 * Get current user's selected theme.
+	 */
+	public function get_current_user_theme() {
+		$custom_theme = get_user_option( 'mainwp_selected_theme' );
+		if ( empty( $custom_theme ) ) {
+			$custom_theme = get_option( 'mainwp_selected_theme', 'default' );
+		}
+		return $custom_theme;
+	}
 
 	/** Render REST API SubPage */
 	public static function render_rest_api() {

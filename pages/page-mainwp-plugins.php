@@ -381,17 +381,20 @@ class MainWP_Plugins {
 	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
 	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_result()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_empty_bulk_actions()
-	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render() {
-		$cachedSearch    = MainWP_Cache::get_cached_context( 'Plugins' );
-		$selected_sites  = array();
-		$selected_groups = array();
+		$cachedSearch     = MainWP_Cache::get_cached_context( 'Plugins' );
+		$selected_sites   = array();
+		$selected_groups  = array();
+		$selected_clients = array();
+
 		if ( null != $cachedSearch ) {
 			if ( is_array( $cachedSearch['sites'] ) ) {
 				$selected_sites = $cachedSearch['sites'];
 			} elseif ( is_array( $cachedSearch['groups'] ) ) {
 				$selected_groups = $cachedSearch['groups'];
+			} elseif ( is_array( $cachedSearch['clients'] ) ) {
+				$selected_clients = $cachedSearch['clients'];
 			}
 		}
 		$cachedResult = MainWP_Cache::get_cached_result( 'Plugins' );
@@ -404,9 +407,15 @@ class MainWP_Plugins {
 					<div class="ui grid">
 						<div class="ui two column row">
 							<div class="column" >
-								<a href="#"  onclick="jQuery( '.mainwp-selected-plugin' ).prop( 'checked', true ).change();jQuery( '.mainwp-selected-plugin' ).attr('checked-state', 'checked'); jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', true ).change(); return false;" class="ui mini button"><?php esc_html_e( 'Select All', 'mainwp' ); ?></a>
-								<a href="#" onclick="jQuery( '.mainwp-selected-plugin' ).prop( 'checked', false ).change();jQuery( '.mainwp-selected-plugin' ).attr('checked-state', 'un-checked'); jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', false ).change(); return false;"   class="ui mini button"><?php esc_html_e( 'Select None', 'mainwp' ); ?></a>
-								<button id="mainwp-install-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
+								<div id="mainwp-plugins-bulk-actions-wapper">
+									<?php
+									if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
+										echo $cachedResult['bulk_actions'];
+									} else {
+										MainWP_UI::render_empty_bulk_actions();
+									}
+									?>
+								</div>
 								<?php
 								/**
 								 * Action: mainwp_plugins_actions_bar_left
@@ -419,15 +428,7 @@ class MainWP_Plugins {
 								?>
 							</div>
 							<div class="right aligned column">
-								<div id="mainwp-plugins-bulk-actions-wapper">
-									<?php
-									if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
-										echo $cachedResult['bulk_actions'];
-									} else {
-										MainWP_UI::render_empty_bulk_actions();
-									}
-									?>
-								</div>
+								<button id="mainwp-install-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
 								<?php
 								/**
 								 * Action: mainwp_plugins_actions_bar_right
@@ -446,7 +447,7 @@ class MainWP_Plugins {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-plugins-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-plugins-info-message"></i>
-							<div><?php echo __( 'Manage installed plugins on your child sites. Here you can activate, deactive, and delete installed plugins.', 'mainwp' ); ?></div>
+							<div><?php echo __( 'Manage installed plugins on your child sites. Here you can activate, deactivate, and delete installed plugins.', 'mainwp' ); ?></div>
 							<p><?php echo __( 'To Activate or Delete a specific plugin, you must search only for Inactive plugin on your child sites. If you search for Active or both Active and Inactive, the Activate and Delete actions will be disabled.', 'mainwp' ); ?></p>
 							<p><?php echo __( 'To Deactivate a specific plugin, you must search only for Active plugins on your child sites. If you search for Inactive or both Active and Inactive, the Deactivate action will be disabled.', 'mainwp' ); ?></p>
 							<p><?php echo sprintf( __( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">', '</a>' ); ?></p>
@@ -461,18 +462,18 @@ class MainWP_Plugins {
 							<?php if ( is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) : ?>
 								<?php echo $cachedResult['result']; ?>
 							<?php else : ?>
-								<table id="mainwp-manage-plugins-table-placeholder" class="ui table">
-									<thead>
-										<tr>
-											<th><?php esc_html_e( 'Sites / Plugins', 'mainwp' ); ?></th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr>
-											<td><?php esc_html_e( 'Please use the search options to find wanted plugins.', 'mainwp' ); ?></td>
-										</tr>
-									</tbody>
-								</table>
+								<div class="ui padded segment">
+									<div class="ui hidden divider"></div>
+									<div class="ui hidden divider"></div>
+									<div class="ui hidden divider"></div>
+									<h2 class="ui icon header">
+									  <i class="settings icon"></i>
+									  <div class="content">
+										<?php esc_html_e( 'Manage Plugins', 'mainwp' ); ?>
+										<div class="sub header"><?php esc_html_e( 'Use the search options to find the plugin you want to manage.', 'mainwp' ); ?></div>
+									  </div>
+									</h2>
+								</div>
 							<?php endif; ?>
 						</div>
 					</div>
@@ -503,7 +504,18 @@ class MainWP_Plugins {
 					do_action( 'mainwp_manage_plugins_before_select_sites' );
 					?>
 					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-					<div class="content active"><?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?></div>
+					<div class="content active">
+						<?php
+						$sel_params = array(
+							'class'            => 'mainwp_select_sites_box_left',
+							'selected_sites'   => $selected_sites,
+							'selected_groups'  => $selected_groups,
+							'selected_clients' => $selected_clients,
+							'show_client'      => true,
+						);
+						MainWP_UI_Select_Sites::select_sites_box( $sel_params );
+						?>
+						</div>
 					<?php
 					/**
 					 * Action: mainwp_manage_plugins_after_select_sites
@@ -531,7 +543,7 @@ class MainWP_Plugins {
 					?>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="plugins-manage-info"></i>
-						<?php esc_html_e( 'A plugin needs to be Inactive in order for it to be Activated or Deleted.', 'mainwp' ); ?>
+						<?php esc_html_e( 'A plugin needs to be Inactive for it to be Activated or Deleted.', 'mainwp' ); ?>
 					</div>
 					<div class="ui mini form">
 						<div class="field">
@@ -667,6 +679,7 @@ class MainWP_Plugins {
 	 * @param mixed $groups Selected Child Site Groups.
 	 * @param mixed $sites Selected individual Child Sites.
 	 * @param mixed $not_criteria Show not criteria result.
+	 * @param mixed $clients Selected Clients.
 	 *
 	 * @return string Plugin Table.
 	 *
@@ -678,7 +691,6 @@ class MainWP_Plugins {
 	 * @uses MainWP_Utility::map_site()
 	 * @uses MainWP_Utility::fetch_urls_authed()
 	 * @uses MainWP_Utility::get_nice_url()
-	 * @uses MainWP_Cache::add_context()
 	 * @uses MainWP_Cache::add_result()
 	 * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
 	 * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
@@ -693,14 +705,29 @@ class MainWP_Plugins {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
-	public static function render_table( $keyword, $status, $groups, $sites, $not_criteria ) { // phpcs:ignore -- Current complexity required to achieve desired results. Pull request solutions appreciated.
+	public static function render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients ) { // phpcs:ignore -- Current complexity required to achieve desired results. Pull request solutions appreciated.
 		$keyword = trim( $keyword );
 		MainWP_Cache::init_cache( 'Plugins' );
 
-			$output                       = new \stdClass();
-			$output->errors               = array();
-			$output->plugins              = array();
-			$output->not_criteria_plugins = array();
+		$output                       = new \stdClass();
+		$output->errors               = array();
+		$output->plugins              = array();
+		$output->not_criteria_plugins = array();
+
+		$data_fields = array(
+			'id',
+			'url',
+			'name',
+			'adminname',
+			'nossl',
+			'privkey',
+			'nosslkey',
+			'http_user',
+			'http_pass',
+			'ssl_version',
+			'sync_errors',
+			'plugins',
+		);
 
 		if ( 1 == get_option( 'mainwp_optimize' ) ) {
 			if ( '' != $sites ) {
@@ -723,10 +750,11 @@ class MainWP_Plugins {
 								continue;
 							}
 
-							$plugin['websiteid']  = $website->id;
-							$plugin['websiteurl'] = $website->url;
-							$output->plugins[]    = $plugin;
-							$not_found            = false;
+							$plugin['websiteid']   = $website->id;
+							$plugin['websiteurl']  = $website->url;
+							$plugin['websitename'] = $website->name;
+							$output->plugins[]     = $plugin;
+							$not_found             = false;
 						}
 
 						if ( $not_found && $not_criteria ) {
@@ -734,6 +762,7 @@ class MainWP_Plugins {
 								$plugin                         = $allPlugins[ $i ];
 								$plugin['websiteid']            = $website->id;
 								$plugin['websiteurl']           = $website->url;
+								$plugin['websitename']          = $website->name;
 								$output->not_criteria_plugins[] = $plugin;
 							}
 						}
@@ -746,7 +775,7 @@ class MainWP_Plugins {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' !== $website->sync_errors ) {
+							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 								continue;
 							}
 							$allPlugins = json_decode( $website->plugins, true );
@@ -764,21 +793,69 @@ class MainWP_Plugins {
 									continue;
 								}
 
-								$plugin['websiteid']  = $website->id;
-								$plugin['websiteurl'] = $website->url;
-								$output->plugins[]    = $plugin;
-								$not_found            = false;
+								$plugin['websiteid']   = $website->id;
+								$plugin['websiteurl']  = $website->url;
+								$plugin['websitename'] = $website->name;
+								$output->plugins[]     = $plugin;
+								$not_found             = false;
 							}
 							if ( $not_found && $not_criteria ) {
 								for ( $i = 0; $i < $_count; $i ++ ) {
 									$plugin                         = $allPlugins[ $i ];
 									$plugin['websiteid']            = $website->id;
 									$plugin['websiteurl']           = $website->url;
+									$plugin['websitename']          = $website->name;
 									$output->not_criteria_plugins[] = $plugin;
 								}
 							}
 						}
 						MainWP_DB::free_result( $websites );
+					}
+				}
+			}
+
+			if ( '' !== $clients && is_array( $clients ) ) {
+				$websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+					$clients,
+					array(
+						'select_data' => $data_fields,
+					)
+				);
+				if ( $websites ) {
+					foreach ( $websites as $website ) {
+						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							continue;
+						}
+						$allPlugins = json_decode( $website->plugins, true );
+						$_count     = count( $allPlugins );
+						$not_found  = true;
+						for ( $i = 0; $i < $_count; $i ++ ) {
+							$plugin = $allPlugins[ $i ];
+
+							if ( ( 'active' === $status ) || ( 'inactive' === $status ) ) {
+								if ( ( ( 'active' === $status ) ? 1 : 0 ) != $plugin['active'] ) {
+									continue;
+								}
+							}
+							if ( '' != $keyword && ! stristr( $plugin['name'], $keyword ) ) {
+								continue;
+							}
+
+							$plugin['websiteid']   = $website->id;
+							$plugin['websiteurl']  = $website->url;
+							$plugin['websitename'] = $website->name;
+							$output->plugins[]     = $plugin;
+							$not_found             = false;
+						}
+						if ( $not_found && $not_criteria ) {
+							for ( $i = 0; $i < $_count; $i ++ ) {
+								$plugin                         = $allPlugins[ $i ];
+								$plugin['websiteid']            = $website->id;
+								$plugin['websiteurl']           = $website->url;
+								$plugin['websitename']          = $website->name;
+								$output->not_criteria_plugins[] = $plugin;
+							}
+						}
 					}
 				}
 			}
@@ -788,21 +865,15 @@ class MainWP_Plugins {
 			if ( '' !== $sites ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$website                    = MainWP_DB::instance()->get_website_by_id( $v );
+						$website = MainWP_DB::instance()->get_website_by_id( $v );
+
+						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							continue;
+						}
+
 						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 							$website,
-							array(
-								'id',
-								'url',
-								'name',
-								'adminname',
-								'nossl',
-								'privkey',
-								'nosslkey',
-								'http_user',
-								'http_pass',
-								'ssl_version',
-							)
+							$data_fields
 						);
 					}
 				}
@@ -813,26 +884,35 @@ class MainWP_Plugins {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' !== $website->sync_errors ) {
+							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 								continue;
 							}
 							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 								$website,
-								array(
-									'id',
-									'url',
-									'name',
-									'adminname',
-									'nossl',
-									'privkey',
-									'nosslkey',
-									'http_user',
-									'http_pass',
-									'ssl_version',
-								)
+								$data_fields
 							);
 						}
 						MainWP_DB::free_result( $websites );
+					}
+				}
+			}
+
+			if ( '' !== $clients && is_array( $clients ) ) {
+				$websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+					$clients,
+					array(
+						'select_data' => $data_fields,
+					)
+				);
+				if ( $websites ) {
+					foreach ( $websites as $website ) {
+						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							continue;
+						}
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+							$website,
+							$data_fields
+						);
 					}
 				}
 			}
@@ -872,6 +952,7 @@ class MainWP_Plugins {
 				'status'       => $status,
 				'sites'        => ( '' !== $sites ) ? $sites : '',
 				'groups'       => ( '' !== $groups ) ? $groups : '',
+				'clients'      => ( '' !== $clients ) ? $clients : '',
 				'not_criteria' => $not_criteria ? true : false,
 			)
 		);
@@ -888,8 +969,8 @@ class MainWP_Plugins {
 				$sites              = array();
 				$sitePlugins        = array();
 				$plugins            = array();
+				$pluginsNameSites   = array();
 				$muPlugins          = array();
-				$pluginsVersion     = array();
 				$pluginsName        = array();
 				$pluginsMainWP      = array();
 				$pluginsRealVersion = array();
@@ -905,38 +986,34 @@ class MainWP_Plugins {
 			}
 
 			foreach ( $plugins_list as $plugin ) {
-				$pn                            = esc_html( $plugin['name'] . '_' . $plugin['version'] );
-				$sites[ $plugin['websiteid'] ] = esc_html( $plugin['websiteurl'] );
-				$plugins[ $pn ]                = isset( $plugin['slug'] ) ? rawurlencode( $plugin['slug'] ) : '';
-				$muPlugins[ $pn ]              = isset( $plugin['mu'] ) ? esc_html( $plugin['mu'] ) : 0;
-				$pluginsName[ $pn ]            = esc_html( $plugin['name'] );
-				$pluginsVersion[ $pn ]         = array(
-					'name' => $plugin['name'],
-					'ver'  => $plugin['version'],
+				$slug_ver                      = esc_html( $plugin['slug'] . '_' . $plugin['version'] );
+				$sites[ $plugin['websiteid'] ] = array(
+					'websiteurl'  => esc_html( $plugin['websiteurl'] ),
+					'websitename' => $plugin['websitename'],
 				);
-				$pluginsMainWP[ $pn ]          = isset( $plugin['mainwp'] ) ? esc_html( $plugin['mainwp'] ) : 'F';
-				$pluginsRealVersion[ $pn ]     = rawurlencode( $plugin['version'] );
+
+				$pluginsSlug[ $slug_ver ] = isset( $plugin['slug'] ) ? $plugin['slug'] : '';
+				$muPlugins[ $slug_ver ]   = isset( $plugin['mu'] ) ? esc_html( $plugin['mu'] ) : 0;
+				$pluginsName[ $slug_ver ] = esc_html( $plugin['name'] );
+
+				$pluginsNameSites[ $plugin['name'] ][ $plugin['websiteid'] ][] = $slug_ver;
+
+				$pluginsMainWP[ $slug_ver ]      = isset( $plugin['mainwp'] ) ? esc_html( $plugin['mainwp'] ) : 'F';
+				$pluginsRealVersion[ $slug_ver ] = rawurlencode( $plugin['version'] );
 
 				if ( ! isset( $sitePlugins[ $plugin['websiteid'] ] ) || ! is_array( $sitePlugins[ $plugin['websiteid'] ] ) ) {
 					$sitePlugins[ $plugin['websiteid'] ] = array();
 				}
 
-				$sitePlugins[ $plugin['websiteid'] ][ $pn ] = $plugin;
+				$sitePlugins[ $plugin['websiteid'] ][ $slug_ver ] = $plugin;
 			}
 
-				uasort(
-					$pluginsVersion,
-					function( $a, $b ) {
-						$ret = strcasecmp( $a['name'], $b['name'] );
-						if ( 0 != $ret ) {
-							return $ret;
-						}
-						return version_compare( $a['ver'], $b['ver'] );
-					}
-				);
+			ksort( $pluginsNameSites, SORT_STRING );
 
-				self::render_manage_table( $sites, $plugins, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsVersion, $pluginsRealVersion );
+			self::render_manage_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion );
 
+			MainWP_Updates::render_plugin_details_modal();
+			MainWP_UI::render_modal_upload_icon();
 		}
 
 		$newOutput = ob_get_clean();
@@ -959,8 +1036,6 @@ class MainWP_Plugins {
 	public static function render_bulk_actions( $status ) {
 		ob_start();
 		?>
-
-
 		<select class="ui dropdown" id="mainwp-bulk-actions">
 			<option value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
 			<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -1001,8 +1076,8 @@ class MainWP_Plugins {
 		do_action( 'mainwp_plugins_bulk_action' );
 		?>
 		</select>
-	<button class="ui mini basic button" href="javascript:void(0)" id="mainwp-do-plugins-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
-	<span id="mainwp_bulk_action_loading"><i class="ui active inline loader tiny"></i></span>
+		<button class="ui mini basic button" href="javascript:void(0)" id="mainwp-do-plugins-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
+		<span id="mainwp_bulk_action_loading"><i class="ui active inline loader tiny"></i></span>
 		<?php
 		$bulkActions = ob_get_clean();
 		return $bulkActions;
@@ -1014,15 +1089,66 @@ class MainWP_Plugins {
 	 * Render Manage Plugins Table.
 	 *
 	 * @param array $sites Child Sites array.
-	 * @param array $plugins Plugins array.
+	 * @param array $pluginsSlug Plugins slug array.
 	 * @param array $sitePlugins Site plugins array.
 	 * @param array $pluginsMainWP MainWP plugins array.
 	 * @param array $muPlugins Must use plugins array.
 	 * @param array $pluginsName Plugin names array.
-	 * @param array $pluginsVersion Installed plugins versions.
 	 * @param array $pluginsRealVersion Latest plugin release version.
 	 */
-	public static function render_manage_table( $sites, $plugins, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsVersion, $pluginsRealVersion ) {
+	public static function render_manage_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion ) {
+
+		$userExtension         = MainWP_DB_Common::instance()->get_user_extension();
+		$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
+		$trustedPlugins        = json_decode( $userExtension->trusted_plugins, true );
+
+		if ( ! is_array( $trustedPlugins ) ) {
+			$trustedPlugins = array();
+		}
+
+		$updateWebsites = array();
+
+		foreach ( $sites as $site_id => $info ) {
+
+			$plugin_upgrades = array();
+			$website         = MainWP_DB::instance()->get_website_by_id( $site_id );
+			if ( $website ) {
+				if ( ! $website->is_ignorePluginUpdates ) {
+					$plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
+					$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
+					$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+
+					if ( is_array( $decodedPremiumUpgrades ) ) {
+						foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+							$premiumUpgrade['premium'] = true;
+
+							if ( 'plugin' === $premiumUpgrade['type'] ) {
+								if ( ! is_array( $plugin_upgrades ) ) {
+									$plugin_upgrades = array();
+								}
+
+								$premiumUpgrade = array_filter( $premiumUpgrade );
+
+								if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
+									$plugin_upgrades[ $crrSlug ] = array();
+								}
+								$plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
+							}
+						}
+					}
+					$ignored_plugins = json_decode( $website->ignored_plugins, true );
+					if ( is_array( $ignored_plugins ) ) {
+						$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+					}
+
+					if ( is_array( $decodedIgnoredPlugins ) ) {
+						$plugin_upgrades = array_diff_key( $plugin_upgrades, $decodedIgnoredPlugins );
+					}
+				}
+			}
+			$updateWebsites[ $site_id ] = $plugin_upgrades;
+		}
+
 		/**
 		 * Action: mainwp_before_plugins_table
 		 *
@@ -1032,120 +1158,220 @@ class MainWP_Plugins {
 		 */
 		do_action( 'mainwp_before_plugins_table' );
 		?>
-		<table id="mainwp-manage-plugins-table" checked-select-all="0" style="min-width:100%" class="ui celled single line selectable compact unstackable table">
-			<thead>
-				<tr>
-					<th class="mainwp-first-th no-sort"></th>
-					<?php
-					/**
-					 * Action: mainwp_manage_plugins_table_header
-					 *
-					 * @since 4.1
-					 */
-					do_action( 'mainwp_manage_plugins_table_header' );
-					?>
-					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_info ) : ?>
-						<?php
-						$plugin_title = $plugin_info['name'] . ' ' . $plugin_info['ver'];
-						$th_id        = strtolower( $plugin_name );
-						$th_id        = preg_replace( '/[[:space:]]+/', '_', $th_id );
-						?>
-						<th id="<?php echo esc_html( $th_id ); ?>" class="center aligned mainwp-manage-plugins-plugin-name">
-							<?php echo esc_html( $plugin_title ); ?>
-						</th>
-					<?php endforeach; ?>
-				</tr>
-			</thead>
-			<tbody>
-				<?php foreach ( $sites as $site_id => $site_url ) : ?>
-					<?php $website = MainWP_DB::instance()->get_website_by_id( $site_id ); ?>
-				<tr>
-					<td style="padding-left:40px;padding-right:40px;">
-						<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $site_id ); ?>"/>
-						<div class="ui slider checkbox">
-							<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_plugins_site_check_all"/><label></label>
-						</div>
-						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site_id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
-						<a href="<?php echo esc_attr( $site_url ); ?>"><?php echo esc_html( $website->name ); ?></a>
-					</td>
-					<?php
-					/**
-					 * Action: mainwp_manage_plugins_table_column
-					 *
-					 * @param int $site_id Site ID.
-					 *
-					 * @since 4.1
-					 */
-					do_action( 'mainwp_manage_plugins_table_column', $site_id );
-					?>
-					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_info ) : ?>
-						<?php
-						$active_status_class = '';
-
-						if ( isset( $sitePlugins[ $site_id ][ $plugin_name ]['active'] ) && 1 == $sitePlugins[ $site_id ][ $plugin_name ]['active'] ) {
-							$active_status_class = 'positive';
-						} elseif ( isset( $sitePlugins[ $site_id ][ $plugin_name ]['active'] ) && 0 == $sitePlugins[ $site_id ][ $plugin_name ]['active'] ) {
-							$active_status_class = 'negative';
-						} else {
-							$active_status_class = '';
-						}
-
-						if ( isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( 1 == $muPlugins[ $plugin_name ] ) ) {
-							$active_status_class = 'warning';
-						}
-
-						?>
-						<td class="center aligned <?php echo $active_status_class; ?>">
-						<?php if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( 0 == $muPlugins[ $plugin_name ] ) ) : ?>
-							<?php if ( ! isset( $pluginsMainWP[ $plugin_name ] ) || 'F' === $pluginsMainWP[ $plugin_name ] ) : ?>
-						<div class="ui checkbox">
-							<input type="checkbox" value="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] ); ?>" name="<?php echo wp_strip_all_tags( $pluginsName[ $plugin_name ] ); ?>" class="mainwp-selected-plugin" version="<?php echo wp_strip_all_tags( $pluginsRealVersion[ $plugin_name ] ); ?>" />
-								<label></label>
-						</div>
-					<?php elseif ( isset( $pluginsMainWP[ $plugin_name ] ) && 'T' === $pluginsMainWP[ $plugin_name ] ) : ?>
-						<div class="ui disabled checkbox"><input type="checkbox" disabled="disabled"><label></label></div>
-						<?php endif; ?>
-					<?php endif; ?>
-					</td>
-					<?php endforeach; ?>
-				</tr>
-					<?php
-				endforeach;
-				?>
-				</tbody>
-			<tfoot>
-				<tr>
-					<th class="mainwp-first-th"></th>
-					<?php
-					/**
-					 * Action: mainwp_manage_plugins_table_header
-					 *
-					 * @since 4.1
-					 */
-					do_action( 'mainwp_manage_plugins_table_header' );
-					?>
-					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_info ) : ?>
-						<?php
-						$plugin_title = $plugin_info['name'] . ' ' . $plugin_info['ver'];
-						$th_id        = strtolower( $plugin_name );
-						$th_id        = preg_replace( '/[[:space:]]+/', '_', $th_id );
-						?>
-						<th id="<?php echo esc_html( $th_id ); ?>" class="center aligned">
-							<div class="ui slider checkbox mainwp-768-hide">
-								<input type="checkbox" value="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] ); ?>" id="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] . '-' . $pluginsRealVersion[ $plugin_name ] ); ?>" version="<?php echo wp_strip_all_tags( $pluginsRealVersion[ $plugin_name ] ); ?>" class="mainwp_plugin_check_all" />
-								<label></label>
-							</div>
-						</th>
-					<?php endforeach; ?>
-				</tr>
-			</tfoot>
-			</table>
-		<div class="ui horizontal list" id="mainwp-manage-plugins-table-legend">
-			<div class="item"><a class="ui empty circular label" style="background:#f7ffe6;border:1px solid #7fb100;"></a> <?php echo esc_html__( 'Installed/Active', 'mainwp' ); ?></div>
-			<div class="item"><a class="ui empty circular label" style="background:#fff4e4;border:1px solid #ffd598;"></a> <?php echo esc_html__( 'Installed/Active/Must Use', 'mainwp' ); ?></div>
-			<div class="item"><a class="ui empty circular label" style="background:#ffe7e7;border:1px solid #910000;"></a> <?php echo esc_html__( 'Installed/Inactive', 'mainwp' ); ?></div>
-			<div class="item"><a class="ui empty circular label" style="background:#fafafa;border:1px solid #f4f4f4;"></a> <?php echo esc_html__( 'Not installed', 'mainwp' ); ?></div>
+		<div class="ui secondary segment main-master-checkbox">
+			<div class="ui grid">
+				<div class="one wide center aligned middle aligned column">
+					<span class="trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></span>
+				</div>
+				<div class="one wide center aligned middle aligned column"><div class="ui checkbox main-master  not-auto-init"><input type="checkbox"/><label></label></div></div>
+				<div class="one wide center aligned middle aligned column"></div>
+				<div class="five wide middle aligned column"><?php echo esc_html( 'Plugin', 'mainwp' ); ?></div>
+				<div class="two wide center aligned middle aligned column"></div>
+				<div class="two wide center aligned middle aligned column"><?php echo esc_html( 'Latest Version', 'mainwp' ); ?></div>
+				<div class="two wide center aligned middle aligned column"></div>
+				<div class="two wide center aligned middle aligned column"><?php echo esc_html( 'Websites', 'mainwp' ); ?></div>
+			</div>
 		</div>
+
+	<div class="mainwp-manage-plugins-wrapper main-child-checkbox">
+		<?php foreach ( $pluginsNameSites as $plugin_title => $pluginSites ) : ?>
+			<?php
+			$slugVersions      = current( $pluginSites );
+			$slug_ver_first    = $slugVersions[0]; // get the first one [slug]_[version] to get plugin [slug].
+			$plugin_slug_first = $pluginsSlug[ $slug_ver_first ];
+			$plugin_directory  = MainWP_Utility::get_dir_slug( $plugin_slug_first );
+
+			$plugin_status = '';
+
+			$item_id = strtolower( $plugin_title );
+			$item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
+
+			$count_sites = count( $pluginSites );
+
+			$details_link    = self_admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( $plugin_directory ) . '&section=changelog' );
+			$lastest_version = '';
+			?>
+			<div class="ui accordion mainwp-manage-plugin-accordion mainwp-manage-plugin-item main-child-checkbox"  id="<?php echo esc_html( $item_id ); ?>">
+			  <div class="title master-checkbox">
+					<div class="ui grid">
+						<div class="one wide center aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
+						<div class="one wide center aligned middle aligned column">
+							<div class="ui checkbox <?php echo 'mainwp-child' == $plugin_directory ? 'disabled' : ''; ?> master"><input type="checkbox" <?php echo 'mainwp-child' == $plugin_directory ? 'disabled="disabled"' : ''; ?>><label></label></div>
+						</div>
+						<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></div>
+						<div class="five wide middle aligned column"><a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>" target="_blank" ><strong><?php echo esc_html( $plugin_title ); ?></strong></a></div>
+						<div class="two wide center aligned middle aligned column"></div>
+						<div class="two wide center aligned middle aligned column lastest-version-info"></div>
+						<div class="two wide center aligned middle aligned column"></div>
+						<div class="two wide center aligned middle aligned column"><div class="ui label"><i class="icon wordpress"></i> <?php echo intval( $count_sites ); // phpcs:ignore -- Prevent modify WP icon. ?></div></div> 
+					</div>
+			  </div>
+			  <div class="content child-checkbox">
+					<?php
+					foreach ( $pluginSites as $site_id => $slugVersions ) :
+						$site_url  = $sites[ $site_id ]['websiteurl'];
+						$site_name = $sites[ $site_id ]['websitename'];
+
+						foreach ( $slugVersions as $slug_ver ) :
+
+							$plugin_slug  = $pluginsSlug[ $slug_ver ];
+							$trusted      = in_array( $plugin_slug, $trustedPlugins ) ? true : false;
+							$child_plugin = ( isset( $pluginsMainWP[ $slug_ver ] ) && 'T' === $pluginsMainWP[ $slug_ver ] ) ? true : false;
+
+							$plugin_mu = false;
+
+							$plugin_version = $sitePlugins[ $site_id ][ $slug_ver ]['version'];
+
+							$plugin_upgrades = isset( $updateWebsites[ $site_id ] ) ? $updateWebsites[ $site_id ] : array();
+							if ( ! is_array( $plugin_upgrades ) ) {
+								$plugin_upgrades = array();
+							}
+
+							$upgradeInfo = isset( $plugin_upgrades[ $plugin_slug ] ) ? $plugin_upgrades[ $plugin_slug ] : false;
+
+							$new_version = '';
+							if ( ! empty( $upgradeInfo ) && isset( $upgradeInfo['update']['new_version'] ) ) {
+								$new_version = $upgradeInfo['update']['new_version'];
+							}
+
+							if ( '' === $lastest_version ) {
+								$lastest_version = $plugin_version;
+							} elseif ( version_compare( $plugin_version, $lastest_version, '>' ) ) {
+								$lastest_version = $plugin_version;
+							}
+
+							if ( '' !== $new_version ) {
+								if ( version_compare( $new_version, $lastest_version, '>' ) ) {
+									$lastest_version = $new_version;
+								}
+							}
+
+							if ( isset( $sitePlugins[ $site_id ][ $slug_ver ] ) && ( 0 == $sitePlugins[ $site_id ][ $slug_ver ]['active'] || 1 == $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) ) {
+								$actived = true;
+								if ( isset( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) && 1 == $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) {
+									$plugin_status = '<span class="ui small green basic label">Active</span>';
+								} elseif ( isset( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) && 0 == $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) {
+									$plugin_status = '<span class="ui small red basic label">Inactive</span>';
+									$actived       = false;
+								} else {
+									$plugin_status = '';
+								}
+
+								if ( isset( $sitePlugins[ $site_id ][ $slug_ver ] ) && ( 1 == $muPlugins[ $slug_ver ] ) ) {
+									$plugin_mu = true;
+								}
+
+								$item_id = $slug_ver . '_' . $site_id;
+								$item_id = strtolower( $item_id );
+								$item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
+
+
+								?>
+							<div class="ui grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( wp_strip_all_tags( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $pluginsName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
+								<div class="one wide center aligned middle aligned column"></div>
+								<div class="one wide center aligned middle aligned column">
+										<?php if ( $child_plugin ) { ?>	
+											<div class="ui disabled checkbox"><input type="checkbox" disabled="disabled"><label></label></div>
+									<?php } else { ?>
+										<div class="ui checkbox child">	
+											<input type="checkbox" class="mainwp-selected-plugin-site" />
+											<label></label>
+										</div>
+											<?php
+									}
+									?>
+								</div>
+									<div class="three wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $site_id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo $site_id; ?>"><?php echo esc_html( $site_name ); ?></a></div>
+									<div class="one wide middle aligned column"></div>
+								<div class="one wide center aligned middle aligned column"><?php echo $plugin_status; ?></div>
+									<div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
+
+
+									<div class="one wide center aligned middle aligned column"><?php echo $plugin_mu ? '<span class="ui small label"><i class="exclamation yellow triangle icon"></i> Must Use</span>' : ''; ?></div>
+
+									<div class="two wide center aligned middle aligned column current-version">
+										<?php echo esc_html( $plugin_version ); ?>
+										<?php if ( ! empty( $new_version ) ) : ?>
+										&rarr; <?php echo esc_html( $new_version ); ?>
+										<?php endif; ?>
+									</div>
+									<div class="two wide right aligned middle aligned column update-column" updated="0">
+									<?php if ( ! empty( $upgradeInfo ) && MainWP_Updates::user_can_update_plugins() ) : ?>
+										<a href="javascript:void(0)" class="ui mini green basic button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted="" onClick="return manage_plugins_upgrade( '<?php echo rawurlencode( $plugin_slug ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+									<?php endif; ?>
+									</div>
+								<div class="two wide center aligned middle aligned column">
+									<?php if ( ! $child_plugin ) : ?>
+										<?php if ( $actived ) { ?>	
+											<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
+												<a href="#" class="mainwp-manage-plugin-deactivate ui mini fluid button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
+										<?php } ?>
+									<?php } else { ?>
+											<div class="ui mini fluid buttons">
+											<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
+														<a href="#" class="mainwp-manage-plugin-activate ui green button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Activate ', 'mainwp' ) . esc_html( wp_strip_all_tags( $plugin_title ) ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
+										<?php } ?>
+											<?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) ) { ?>
+														<a href="#" class="mainwp-manage-plugin-delete ui button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr_e( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+										<?php } ?>
+											</div>
+									<?php } ?>
+								<?php endif; ?>
+								</div>
+							</div>
+								<?php
+
+							}
+					endforeach;
+						?>
+						<span style="display:none" class="lastest-version-hidden" lastest-version="<?php echo esc_html( $lastest_version ); ?>"></span>
+						<?php
+				endforeach;
+					?>
+				</div>
+			</div>
+		<?php endforeach; ?>
+	</div>
+
+		<script type="text/javascript">
+			jQuery( '.mainwp-manage-plugin-accordion' ).accordion( {
+				"selector": {
+					"trigger"   : '.dropdown-trigger',
+				} 
+			} );
+
+			jQuery( '.trigger-all-accordion' ).on( 'click', function() { // not use document here.
+				if ( jQuery( this ).hasClass( 'active' ) ) {
+					jQuery( this ).removeClass( 'active' );
+					jQuery( '.mainwp-manage-plugins-wrapper .ui.accordion div.title' ).each( function( i ) {
+						if ( jQuery( this ).hasClass( 'active' ) ) {
+							jQuery( this ).find('.dropdown-trigger').trigger( 'click' );
+						}
+					} );
+				} else {
+					jQuery( this ).addClass( 'active' );
+					jQuery( '.mainwp-manage-plugins-wrapper .ui.accordion div.title' ).each( function( i ) {
+						if ( !jQuery( this ).hasClass( 'active' ) ) {
+							jQuery( this ).find('.dropdown-trigger').trigger( 'click' );
+						}
+					} );
+				}
+				return false;
+			} );
+
+
+
+			jQuery(document).ready(function ($) {
+				$( '.lastest-version-hidden' ).each(function(){
+					$(this).closest('.mainwp-manage-plugin-item').find('.lastest-version-info').html( $(this).attr('lastest-version') );
+				});
+				mainwp_master_checkbox_init($);
+				mainwp_get_icon_start();
+				mainwp_show_hide_install_to_selected_sites();
+			} );
+
+		</script>
+
 			<?php
 			/**
 			 * Action: mainwp_after_plugins_table
@@ -1156,75 +1382,6 @@ class MainWP_Plugins {
 			 */
 			do_action( 'mainwp_after_plugins_table' );
 
-			$table_features = array(
-				'searching'      => 'true',
-				'paging'         => 'true', // to fix.
-				'info'           => 'false',
-				'colReorder'     => 'false',
-				'stateSave'      => 'true',
-				'ordering'       => 'true',
-				'scrollCollapse' => 'true',
-				'scrollY'        => '750',
-				'scrollX'        => 'true',
-				'scroller'       => 'true',
-				'responsive'     => 'true',
-			);
-
-			/**
-			 * Filter: mainwp_plugins_table_features
-			 *
-			 * Filter the Plugins table features.
-			 *
-			 * @since 4.1
-			 */
-			$table_features = apply_filters( 'mainwp_plugins_table_features', $table_features );
-			?>
-			<style type="text/css">
-
-			thead th.mainwp-first-th {
-				position: sticky !important;
-				left: 0  !important;
-				top: 0  !important;
-					z-index: 9 !important;
-			}
-
-			#mainwp-manage-plugins-table tbody tr td:first-child {
-				position: sticky !important;
-				left: 0;
-				top: 0;
-					background: #f9fafb;
-					z-index: 9 !important;
-			}
-			</style>
-			<script type="text/javascript">
-			var responsive = <?php echo $table_features['responsive']; ?>;
-			if( jQuery( window ).width() > 1140 ) {
-				responsive = false;
-			}
-			jQuery( document ).ready( function( $ ) {
-
-				try {
-					jQuery( '#mainwp-manage-plugins-table' ).DataTable( {
-						"paging" : <?php echo $table_features['paging']; ?>,
-						"colReorder" : <?php echo $table_features['colReorder']; ?>,
-						"stateSave" :  <?php echo $table_features['stateSave']; ?>,
-						"ordering" : <?php echo $table_features['ordering']; ?>,
-						"searching" : <?php echo $table_features['searching']; ?>,
-						"info" : <?php echo $table_features['info']; ?>,
-						"scrollCollapse" : <?php echo $table_features['scrollCollapse']; ?>,
-						"scrollY" : <?php echo $table_features['scrollY']; ?>,
-						"scrollX" : <?php echo $table_features['scrollX']; ?>,
-						"scroller" : <?php echo $table_features['scroller']; ?>,
-						"columnDefs": [ { "orderable": false, "targets": [ 0 ] } ],
-						"responsive": responsive,
-					} );
-				} catch( err ) {
-					// to fix js issues.
-				}
-				jQuery( '.mainwp-ui-page .ui.checkbox:not(.not-auto-init)' ).checkbox();
-			} );
-			</script>
-		<?php
 	}
 
 	/** Render Install Subpage. */
@@ -1234,11 +1391,12 @@ class MainWP_Plugins {
 		self::render_footer( 'Install' );
 	}
 
+
 	/**
 	 * Render Install plugins Table.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_modal_install_plugin_theme()
-	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_Install_Bulk::render_upload()
 	 */
 	public static function render_plugins_table() {
@@ -1338,8 +1496,7 @@ class MainWP_Plugins {
 		</div>
 	</div>
 		<?php
-		$selected_sites  = array();
-		$selected_groups = array();
+		$selected_sites = array();
 
 		if ( isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] ) ) {
 			$selected_sites = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) ); // sanitize ok.
@@ -1352,7 +1509,16 @@ class MainWP_Plugins {
 		<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 			<?php do_action( 'mainwp_manage_plugins_before_select_sites' ); ?>
 			<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-			<div class="content active"><?php	MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?></div>
+			<div class="content active">
+			<?php
+			$sel_params = array(
+				'class'          => 'mainwp_select_sites_box_left',
+				'selected_sites' => $selected_sites,
+				'show_client'    => true,
+			);
+			MainWP_UI_Select_Sites::select_sites_box( $sel_params );
+			?>
+			</div>
 			<?php do_action( 'mainwp_manage_plugins_after_select_sites' ); ?>
 		</div>
 		<input type="hidden" id="plugin_install_selected_sites" name="plugin_install_selected_sites" value="<?php echo esc_html( implode( '-', $selected_sites ) ); ?>" />
@@ -1602,6 +1768,10 @@ class MainWP_Plugins {
 				$dbwebsites = array();
 				$websites   = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+					if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+						continue;
+					}
+
 					$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 						$website,
 						array(
@@ -1700,6 +1870,7 @@ class MainWP_Plugins {
 			$trustedPluginsNotes = array();
 		}
 		self::render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes );
+		MainWP_UI::render_modal_upload_icon();
 	}
 
 
@@ -1731,6 +1902,7 @@ class MainWP_Plugins {
 			<thead>
 				<tr>
 					<th class="no-sort check-column collapsing"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
+					<th class="no-sort"><?php esc_html_e( '', 'mainwp' ); ?></th>
 					<th data-priority="1"><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					<th class="collapsing" data-priority="2"><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
@@ -1758,10 +1930,13 @@ class MainWP_Plugins {
 						$esc_note   = MainWP_Utility::esc_content( $trustedPluginsNotes[ $slug ] );
 						$strip_note = wp_strip_all_tags( $esc_note );
 					}
+
+					$plugin_directory = dirname( $slug );
 					?>
-					<tr plugin-slug="<?php echo rawurlencode( $slug ); ?>" plugin-name="<?php echo wp_strip_all_tags( $name ); ?>">
+					<tr plugin-slug="<?php echo rawurlencode( $slug ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $name ) ); ?>">
 						<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo rawurlencode( $slug ); ?>"></span></td>
-						<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $slug ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $name ); ?></a></td>
+						<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
+						<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $slug ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $name ); ?></a></td>
 						<td><?php echo ( 1 == $plugin['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); ?></td>
 						<td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
 						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
@@ -1785,6 +1960,7 @@ class MainWP_Plugins {
 					<th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
+					<th class="collapsing"></th>
 					<th><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
 				</tr>
 			</tfoot>
@@ -1919,6 +2095,7 @@ class MainWP_Plugins {
 			?>
 		</div>
 		<?php
+		MainWP_Updates::render_plugin_details_modal();
 		self::render_footer( 'Ignore' );
 	}
 
@@ -1935,6 +2112,7 @@ class MainWP_Plugins {
 		<table id="mainwp-globally-ignored-plugins" class="ui compact selectable table unstackable">
 				<thead>
 					<tr>
+						<th class="no-sort"></th>
 						<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
 						<th><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
 						<th></th>
@@ -1943,8 +2121,10 @@ class MainWP_Plugins {
 				<tbody id="globally-ignored-plugins-list">
 					<?php if ( $ignoredPlugins ) : ?>
 						<?php foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) : ?>
+							<?php $plugin_directory = dirname( $ignoredPlugin ); ?>
 							<tr plugin-slug="<?php echo rawurlencode( $ignoredPlugin ); ?>">
-								<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
+								<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
+								<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $ignoredPlugin ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 								<td><?php echo esc_html( $ignoredPlugin ); ?></td>
 								<td class="right aligned">
 									<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -1963,7 +2143,7 @@ class MainWP_Plugins {
 					<?php if ( $ignoredPlugins ) : ?>
 						<tfoot class="full-width">
 							<tr>
-								<th colspan="3">
+								<th colspan="4">
 									<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_plugins_unignore_globally_all();" id="mainwp-unignore-globally-all">
 										<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
 									</a>
@@ -1976,10 +2156,14 @@ class MainWP_Plugins {
 			<script type="text/javascript">
 			jQuery( document ).ready( function() {
 				jQuery( '#mainwp-globally-ignored-plugins' ).DataTable( {
-					searching: false,
-					paging: false,
-					info: false,
-					responsive: true,
+					"searching": false,
+					"paging": false,
+					"info": false,
+					"responsive": true,
+					"columnDefs": [ {
+						"targets": 'no-sort',
+						"orderable": false
+					} ],
 				} );
 			} );
 			</script>
@@ -2004,6 +2188,7 @@ class MainWP_Plugins {
 			<thead>
 				<tr>
 					<th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+					<th class="no-sort"><?php esc_html_e( '', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
 					<th></th>
@@ -2026,6 +2211,7 @@ class MainWP_Plugins {
 						$first = true;
 
 						foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) {
+							$plugin_directory = MainWP_Utility::get_dir_slug( rawurldecode( $ignoredPlugin ) );
 							?>
 							<tr site-id="<?php echo intval( $website->id ); ?>" plugin-slug="<?php echo rawurlencode( $ignoredPlugin ); ?>">
 							<?php if ( $first ) : ?>
@@ -2034,8 +2220,9 @@ class MainWP_Plugins {
 							<?php else : ?>
 								<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
 							<?php endif; ?>
-							<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
-							<td><?php echo esc_html( $ignoredPlugin ); ?></td>
+								<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
+							<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( $plugin_directory ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
+							<td><?php echo esc_html( rawurldecode( $ignoredPlugin ) ); ?></td>
 							<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 								<td class="right aligned"><a href="#" class="ui mini button" onClick="return updatesoverview_plugins_unignore_detail( '<?php echo rawurlencode( $ignoredPlugin ); ?>', <?php echo esc_attr( $website->id ); ?> )"> <?php esc_html_e( 'Unignore', 'mainwp' ); ?></a></td>
 							<?php endif; ?>
@@ -2054,7 +2241,7 @@ class MainWP_Plugins {
 				<?php if ( 0 < $cnt ) : ?>
 					<tfoot class="full-width">
 						<tr>
-							<th colspan="4">
+							<th colspan="5">
 								<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_plugins_unignore_detail_all();" id="mainwp-unignore-detail-all">
 									<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
 								</a>
@@ -2071,6 +2258,10 @@ class MainWP_Plugins {
 				"searching": false,
 				"paging": false,
 				"info": false,
+				"columnDefs": [ {
+					"targets": 'no-sort',
+					"orderable": false
+				} ],
 			} );
 		} );
 		</script>
@@ -2093,7 +2284,10 @@ class MainWP_Plugins {
 		$ignoredPlugins        = ( is_array( $decodedIgnoredPlugins ) && ( 0 < count( $decodedIgnoredPlugins ) ) );
 		$cnt                   = 0;
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-			$tmpDecodedDismissedPlugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
+			$tmpDecodedDismissedPlugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
+			$tmpDecodedDismissedPlugins = ( '' != $tmpDecodedDismissedPlugins ) ? json_decode( $tmpDecodedDismissedPlugins, true ) : array();
+
+
 			if ( ! is_array( $tmpDecodedDismissedPlugins ) || 0 == count( $tmpDecodedDismissedPlugins ) ) {
 				continue;
 			}
@@ -2158,6 +2352,7 @@ class MainWP_Plugins {
 		<table id="mainwp-globally-ignored-abandoned-plugins" class="ui compact selectable table unstackable">
 			<thead>
 				<tr>
+					<th class="no-sort"><?php esc_html_e( ' ', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
 					<th></th>
@@ -2165,9 +2360,13 @@ class MainWP_Plugins {
 			</thead>
 			<tbody id="ignored-abandoned-plugins-list">
 				<?php if ( $ignoredPlugins ) : ?>
-					<?php foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) : ?>
+					<?php
+					foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) :
+						$plugin_directory = MainWP_Utility::get_dir_slug( rawurldecode( $ignoredPlugin ) );
+						?>
 						<tr plugin-slug="<?php echo rawurlencode( $ignoredPlugin ); ?>">
-							<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
+							<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
+							<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( $plugin_directory ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 							<td><?php echo esc_html( $ignoredPlugin ); ?></td>
 							<td class="right aligned">
 								<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2186,7 +2385,7 @@ class MainWP_Plugins {
 				<?php if ( $ignoredPlugins ) : ?>
 					<tfoot class="full-width">
 						<tr>
-							<th colspan="3">
+							<th colspan="4">
 								<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_plugins_abandoned_unignore_globally_all();" id="mainwp-unignore-globally-all">
 									<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
 								</a>
@@ -2203,6 +2402,10 @@ class MainWP_Plugins {
 				"searching": false,
 				"paging": false,
 				"info": false,
+				"columnDefs": [ {
+					"targets": 'no-sort',
+					"orderable": false
+				} ],
 			} );
 		} );
 		</script>
@@ -2227,6 +2430,7 @@ class MainWP_Plugins {
 			<thead>
 				<tr>
 					<th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+					<th class="no-sort"><?php esc_html_e( ' ', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
 					<th></th>
@@ -2238,26 +2442,30 @@ class MainWP_Plugins {
 					MainWP_DB::data_seek( $websites, 0 );
 
 					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-						$decodedIgnoredPlugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
+						$decodedIgnoredPlugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
+						$decodedIgnoredPlugins = ( '' != $decodedIgnoredPlugins ) ? json_decode( $decodedIgnoredPlugins, true ) : array();
+
 						if ( ! is_array( $decodedIgnoredPlugins ) || 0 == count( $decodedIgnoredPlugins ) ) {
 							continue;
 						}
 						$first = true;
 						foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) {
+							$plugin_directory = MainWP_Utility::get_dir_slug( rawurldecode( $ignoredPlugin ) );
 							?>
-					<tr site-id="<?php echo esc_attr( $website->id ); ?>" plugin-slug="<?php echo rawurlencode( $ignoredPlugin ); ?>">
-							<?php if ( $first ) : ?>
-							<td>
-								<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-							</td>
-								<?php $first = false; ?>
-						<?php else : ?>
-							<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
-						<?php endif; ?>
-						<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
-						<td><?php echo esc_html( $ignoredPlugin ); ?></td>
-						<td class="right aligned"><a href="#" class="ui mini button" onClick="return updatesoverview_plugins_unignore_abandoned_detail( '<?php echo rawurlencode( $ignoredPlugin ); ?>', <?php echo esc_attr( $website->id ); ?> )"> <?php esc_html_e( 'Unignore', 'mainwp' ); ?></a></td>
-					</tr>
+							<tr site-id="<?php echo esc_attr( $website->id ); ?>" plugin-slug="<?php echo rawurlencode( $ignoredPlugin ); ?>">
+									<?php if ( $first ) : ?>
+									<td>
+										<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+									</td>
+										<?php $first = false; ?>
+								<?php else : ?>
+									<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
+								<?php endif; ?>
+										<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
+								<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( $plugin_directory ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
+								<td><?php echo esc_html( $ignoredPlugin ); ?></td>
+								<td class="right aligned"><a href="#" class="ui mini button" onClick="return updatesoverview_plugins_unignore_abandoned_detail( '<?php echo rawurlencode( $ignoredPlugin ); ?>', <?php echo esc_attr( $website->id ); ?> )"> <?php esc_html_e( 'Unignore', 'mainwp' ); ?></a></td>
+							</tr>
 							<?php
 						}
 					}
@@ -2275,7 +2483,7 @@ class MainWP_Plugins {
 			<?php if ( 0 < $cnt ) : ?>
 				<tfoot class="full-width">
 					<tr>
-						<th colspan="4">
+						<th colspan="5">
 							<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_plugins_unignore_abandoned_detail_all();" id="mainwp-unignore-detail-all">
 								<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
 							</a>
@@ -2292,6 +2500,10 @@ class MainWP_Plugins {
 				"searching": false,
 				"paging": false,
 				"info": false,
+				"columnDefs": [ {
+					"targets": 'no-sort',
+					"orderable": false
+				} ],
 			} );
 		} );
 		</script>

@@ -31,7 +31,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getmainwpdir', array( &$this, 'hook_get_mainwp_dir' ), 10, 3 );
 		add_filter( 'mainwp_is_multi_user', array( &$this, 'is_multi_user' ) );
 		add_filter( 'mainwp_qq2fileuploader', array( &$this, 'filter_qq2_file_uploader' ), 10, 2 );
-		add_action( 'mainwp_select_sites_box', array( &$this, 'select_sites_box' ), 10, 8 );
+		add_action( 'mainwp_select_sites_box', array( &$this, 'select_sites_box' ), 10, 10 );
 		add_action( 'mainwp_prepareinstallplugintheme', array( MainWP_Install_Bulk::get_class_name(), 'prepare_install' ) );
 		add_action( 'mainwp_performinstallplugintheme', array( MainWP_Install_Bulk::get_class_name(), 'perform_install' ) );
 		add_filter( 'mainwp_getwpfilesystem', array( MainWP_System_Utility::get_class_name(), 'get_wp_file_system' ) );
@@ -41,11 +41,31 @@ class MainWP_Hooks {
 		add_action( 'mainwp_renderFooter', array( MainWP_UI::get_class_name(), 'render_footer' ), 10, 0 );
 
 		add_action( 'mainwp_notify_user', array( &$this, 'hook_notify_user' ), 10, 3 );
+
+		/**
+		 * The actions has been deprecated.
+		 *
+		 * @deprecated 4.3 Please use actions: mainwp_action_activeplugin, mainwp_action_deactiveplugin ....
+		 */
 		add_action( 'mainwp_activePlugin', array( &$this, 'active_plugin' ), 10, 0 );
 		add_action( 'mainwp_deactivePlugin', array( &$this, 'deactive_plugin' ), 10, 0 );
 		add_action( 'mainwp_upgradePluginTheme', array( &$this, 'upgrade_plugin_theme' ), 10, 0 );
 		add_action( 'mainwp_deletePlugin', array( &$this, 'delete_plugin' ), 10, 0 );
 		add_action( 'mainwp_deleteTheme', array( &$this, 'delete_theme' ), 10, 0 );
+		// End.
+
+		/**
+		 * Plugins/themes/core actions.
+		 *
+		 * @since 4.3
+		 */
+		add_action( 'mainwp_action_activeplugin', array( &$this, 'active_plugin' ), 10, 0 );
+		add_action( 'mainwp_action_deactiveplugin', array( &$this, 'deactive_plugin' ), 10, 0 );
+		add_action( 'mainwp_action_upgradeplugintheme', array( &$this, 'upgrade_plugin_theme' ), 10, 0 );
+		add_action( 'mainwp_action_deleteplugin', array( &$this, 'delete_plugin' ), 10, 0 );
+		add_action( 'mainwp_action_deletetheme', array( &$this, 'delete_theme' ), 10, 0 );
+		add_action( 'mainwp_upgrade_wp', array( &$this, 'upgrade_wp' ), 10, 0 );
+		// End.
 
 		add_filter( 'mainwp_get_user_extension', array( &$this, 'get_user_extension' ), 10, 2 );
 		add_filter( 'mainwp_update_user_extension', array( &$this, 'update_user_extension' ), 10, 3 );
@@ -80,7 +100,7 @@ class MainWP_Hooks {
 		add_action( 'mainwp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
 		add_action( 'mainwp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );
 		add_action( 'mainwp_log_warning', array( &$this, 'mainwp_log_warning' ), 10, 1 );
-		add_action( 'mainwp_log_action', array( &$this, 'mainwp_log_action' ), 10, 2 );
+		add_action( 'mainwp_log_action', array( &$this, 'mainwp_log_action' ), 10, 3 );
 		add_filter( 'mainwp_getactivateextensionnotice', array( &$this, 'get_activate_extension_notice' ), 10, 1 );
 		add_action( 'mainwp_enqueue_meta_boxes_scripts', array( &$this, 'enqueue_meta_boxes_scripts' ), 10, 1 );
 		add_filter( 'mainwp_addsite', array( &$this, 'mainwp_add_site' ), 10, 1 );
@@ -107,13 +127,26 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_db_get_websites_for_current_user', array( &$this, 'db_get_websites_for_current_user' ), 10, 2 );
 
 		add_action( 'mainwp_secure_request', array( &$this, 'hook_secure_request' ), 10, 2 );
+		add_filter( 'mainwp_check_security_request', array( &$this, 'hook_check_security_request' ), 10, 3 );
 		add_filter( 'mainwp_notification_get_settings', array( &$this, 'get_notification_settings' ), 10, 2 );
+
 		add_filter( 'mainwp_send_wp_mail', array( &$this, 'hook_send_wp_mail' ), 10, 5 );
 		add_filter( 'mainwp_notification_get_template_content', array( &$this, 'hook_get_template_html' ), 10, 3 );
 		add_filter( 'mainwp_sitestable_getcolumns', array( $this, 'hook_atarim_default_sitestable_column' ), 10, 1 );
 		add_filter( 'mainwp_sitestable_item', array( $this, 'hook_atarim_manage_sites_default_item' ), 10, 1 );
 		add_filter( 'mainwp_monitoring_sitestable_getcolumns', array( $this, 'hook_atarim_default_sitestable_column' ), 10, 1 );
 		add_filter( 'mainwp_monitoring_sitestable_item', array( $this, 'hook_atarim_manage_sites_default_item' ), 10, 1 );
+		add_filter( 'mainwp_clients_get_website_client_tokens', array( &$this, 'hook_get_website_client_tokens' ), 10, 2 );
+		add_filter( 'mainwp_secure_get_download_sig', array( &$this, 'hook_get_download_sig' ), 10, 2 );
+		add_action( 'mainwp_secure_download', array( &$this, 'hook_secure_download' ), 10, 2 );
+		add_action( 'mainwp_ajax_add_action', array( &$this, 'hook_ajax_add_action' ), 10, 2 );
+		add_filter( 'mainwp_get_plugin_icon', array( &$this, 'hook_get_plugin_icon' ), 10, 2 );
+		add_filter( 'mainwp_get_theme_icon', array( &$this, 'hook_get_theme_icon' ), 10, 2 );
+		add_filter( 'mainwp_get_dir_slug', array( &$this, 'hook_get_dir_slug' ), 10, 2 );
+		add_action( 'mainwp_do_widget_boxes', array( &$this, 'hook_do_widget_boxes' ), 10, 3 );
+		add_action( 'mainwp_add_widget_box', array( &$this, 'hook_add_widget_box' ), 10, 6 );
+		add_action( 'mainwp_render_modal_upload_icon', array( &$this, 'hook_render_modal_upload_icon' ), 10, 2 );
+		add_action( 'mainwp_render_plugin_details_modal', array( &$this, 'hook_render_plugin_details_modal' ), 10, 2 );
 	}
 
 	/**
@@ -161,13 +194,14 @@ class MainWP_Hooks {
 	 * MainWP log action.
 	 *
 	 * @param string $text Debug text.
-	 * @param string $priority priority.
+	 * @param int    $priority priority.
+	 * @param int    $log_color Set color: 0 - LOG, 1 - WARNING, 2 - INFO, 3- DEBUG.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
 	 */
-	public function mainwp_log_action( $text, $priority = 0 ) {
+	public function mainwp_log_action( $text, $priority = 0, $log_color = 0 ) {
 		if ( ! empty( $priority ) ) {
-			MainWP_Logger::instance()->log_action( $text, $priority );
+			MainWP_Logger::instance()->log_action( $text, $priority, $log_color );
 		}
 	}
 
@@ -500,11 +534,22 @@ class MainWP_Hooks {
 	 * @param string $style Default = ''.
 	 * @param array  $selected_websites Selected Child Sites.
 	 * @param array  $selected_groups Selected Groups.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
+	 * @param bool   $show_client Show Clients.
+	 * @param array  $selected_clients Selected Clients.
 	 */
-	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', $selected_websites = array(), $selected_groups = array() ) {
-		MainWP_UI::select_sites_box( $type, $show_group, $show_select_all, $class, $style, $selected_websites, $selected_groups );
+	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', $selected_websites = array(), $selected_groups = array(), $show_client = false, $selected_clients = array() ) {
+		$sel_params = array(
+			'type'             => $type,
+			'show_group'       => $show_group,
+			'show_select_all'  => $show_select_all,
+			'class'            => $class,
+			'style'            => $style,
+			'selected_sites'   => $selected_websites,
+			'selected_groups'  => $selected_groups,
+			'show_client'      => $show_client,
+			'selected_clients' => $selected_clients,
+		);
+		MainWP_UI_Select_Sites::select_sites_box( $sel_params );
 	}
 
 	/**
@@ -665,8 +710,10 @@ class MainWP_Hooks {
 		if ( '' !== $sites ) {
 			foreach ( $sites as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
-					$website                    = MainWP_DB::instance()->get_website_by_id( $v );
-					$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
+					$website = MainWP_DB::instance()->get_website_by_id( $v );
+					if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
+					}
 				}
 			}
 		}
@@ -817,7 +864,7 @@ class MainWP_Hooks {
 	 * @param mixed $false     input value.
 	 * @param mixed $params     params data.
 	 *
-	 * @return bool true.
+	 * @return mixed websites.
 	 */
 	public function db_get_websites_for_current_user( $false, $params = array() ) {
 		return MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
@@ -931,6 +978,22 @@ class MainWP_Hooks {
 	 */
 	public function hook_secure_request( $action = '', $query_arg = 'security' ) {
 		MainWP_Post_Handler::instance()->secure_request( $action, $query_arg );
+	}
+
+	/**
+	 * Method hook_check_security_request()
+	 *
+	 * Security check to request parameter
+	 *
+	 * @param bool   $false Input value.
+	 * @param string $action Action to perform.
+	 * @param string $query_arg Query argument.
+	 */
+	public function hook_check_security_request( $false, $action = '', $query_arg = '' ) {
+		if ( empty( $query_arg ) ) {
+			$query_arg = $action; // to check wp_verify_nonce( sanitize_key( $_REQUEST[ $query_arg ] ), $action ).
+		}
+		return MainWP_Post_Handler::instance()->check_security( $action, $query_arg, false );
 	}
 
 	/**
@@ -1070,6 +1133,36 @@ class MainWP_Hooks {
 	}
 
 	/**
+	 * Method upgrade_wp()
+	 *
+	 * Hook to upgrade WP.
+	 */
+	public function upgrade_wp() {
+
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'update_wordpress' ) ) {
+			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update WordPress', 'mainwp' ), $echo = false ) ) ) );
+		}
+
+		try {
+			$id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false;
+			die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::upgrade_site( $id ) ) ) ); // ok.
+		} catch ( MainWP_Exception $e ) {
+			die(
+				wp_json_encode(
+					array(
+						'error' => array(
+							'message' => $e->getMessage(),
+							'extra'   => $e->get_message_extra(),
+						),
+					)
+				)
+			);
+		}
+
+		die();
+	}
+
+	/**
 	 * Method upgrade_plugin_theme()
 	 *
 	 * Hook to update theme.
@@ -1090,12 +1183,17 @@ class MainWP_Hooks {
 				$error = mainwp_do_not_have_permissions( __( 'update themes', 'mainwp' ), false );
 			}
 
+			$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
+
+			if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
+				$error = __( 'The child site has been suspended.', 'mainwp' );
+			}
+
 			if ( ! empty( $error ) ) {
 				wp_send_json( array( 'error' => $error ) );
 			}
 
 			if ( MainWP_Utility::ctype_digit( $websiteId ) ) {
-				$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 				if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 					/**
 					* Action: mainwp_before_plugin_theme_translation_update
@@ -1208,5 +1306,162 @@ class MainWP_Hooks {
 			}
 		}
 		return $item;
+	}
+
+	/**
+	 * Method hook_get_website_client_tokens()
+	 *
+	 * Hook get client tokens.
+	 *
+	 * @param mixed $false input filter value.
+	 * @param int   $websiteid Website ID.
+	 *
+	 * @return mixed $result Result of tokens.
+	 */
+	public function hook_get_website_client_tokens( $false, $websiteid = false ) {
+		$client_tokens = MainWP_Client_Handler::instance()->get_website_client_tokens_data( $websiteid );
+
+		if ( false === $client_tokens ) {
+			return $false;
+		}
+
+		return $client_tokens;
+	}
+
+	/**
+	 * Method hook_get_download_sig()
+	 *
+	 * Hook get download sig.
+	 *
+	 * @param string $fullfile Full file path.
+	 *
+	 * @return string
+	 */
+	public function hook_get_download_sig( $false, $fullfile ) {
+		return MainWP_System_Utility::get_download_sig( $fullfile );
+	}
+
+	/**
+	 * Method hook_download_valid_sig().
+	 *
+	 * Hook get download sig.
+	 *
+	 * @param string          $fullfile Full file path.
+	 * @param bool true|false
+	 */
+	public function hook_secure_download( $fullfile, $sig ) {
+		$valid = MainWP_System_Utility::valid_download_sig( $fullfile, $sig );
+		if ( ! $valid ) {
+			wp_die( 'Invalid download.' );
+		}
+	}
+
+	/**
+	 * Method hook_ajax_add_action().
+	 *
+	 * Hook add ajax action.
+	 *
+	 * @param string $action action name.
+	 * @param string $callback callback function.
+	 *
+	 * @param void
+	 */
+	public function hook_ajax_add_action( $action, $callback ) {
+		MainWP_Post_Handler::instance()->add_action( $action, $callback );
+	}
+
+	/**
+	 * Method hook_get_plugin_icon().
+	 *
+	 * Hook get plugin icon.
+	 *
+	 * @param mixed       $icon input icon.
+	 * @param string      $slug Plugin slug.
+	 *
+	 * @param string icon.
+	 */
+	public function hook_get_plugin_icon( $icon, $slug ) {
+		return MainWP_System_Utility::get_plugin_icon( $slug );
+	}
+
+	/**
+	 * Method hook_get_theme_icon().
+	 *
+	 * Hook get theme icon.
+	 *
+	 * @param mixed       $icon input icon.
+	 * @param string      $slug Theme slug.
+	 *
+	 * @param string icon.
+	 */
+	public function hook_get_theme_icon( $icon, $slug ) {
+		return MainWP_System_Utility::get_theme_icon( $slug );
+	}
+	/**
+	 * Method hook_get_dir_slug().
+	 *
+	 * Hook get dir slug of plugin/theme.
+	 *
+	 * @param mixed           $input input value.
+	 * @param string          $slug Plugin/Theme slug.
+	 *
+	 * @param string dir slug.
+	 */
+	public function hook_get_dir_slug( $input, $slug ) {
+		return MainWP_Utility::get_dir_slug( $slug );
+	}
+
+	/**
+	 * Method hook_do_widget_boxes()
+	 *
+	 * Customize WordPress do_meta_boxes() function.
+	 *
+	 * @param mixed       $screen Current page.
+	 * @param string|null $context right|null. If 3 columns then = 'middle'.
+	 * @param string      $object Empty string.
+	 *
+	 * @return void Renders widget container box.
+	 */
+	public function hook_do_widget_boxes( $screen, $context = null, $object = '' ) {
+		MainWP_UI::do_widget_boxes( $screen, $context, $object );
+	}
+
+
+	/**
+	 * Method hook_add_widget_box()
+	 *
+	 * hook add MainWP meta box.
+	 *
+	 * @param mixed       $id Widget ID parameter.
+	 * @param mixed       $callback Callback function.
+	 * @param null        $screen Current page.
+	 * @param string|null $context right|null. If 3 columns then = 'middle'.
+	 * @param null        $title Widget title.
+	 * @param string      $priority high|core|default|low, Default: default.
+	 *
+	 * @return void Sets Global $mainwp_widget_boxes[ $page ][ $context ][ $priority ][ $id ].
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
+	 */
+	public function hook_add_widget_box( $id, $callback, $screen = null, $context = null, $title = null, $priority = 'default' ) {
+		MainWP_UI::add_widget_box( $id, $callback, $screen, $context, $title, $priority );
+	}
+
+	/**
+	 * Method hook_render_modal_upload_icon()
+	 *
+	 * Render modal window for upload plugins & themes icon.
+	 */
+	public function hook_render_modal_upload_icon() {
+		MainWP_UI::render_modal_upload_icon();
+	}
+
+	/**
+	 * Method hook_render_plugin_details_modal()
+	 *
+	 * Render modal window plugin details.
+	 */
+	public function hook_render_plugin_details_modal() {
+		MainWP_Updates::render_plugin_details_modal();
 	}
 }

@@ -101,7 +101,7 @@ class MainWP_Api_Manager_Plugin_Update {
 			'api_key'          => $plugin['api_key'],
 			'instance'         => $plugin['instance'],
 			'software_version' => $plugin['software_version'],
-			'extra'            => isset( $plugin['extra'] ) ? $plugin['extra'] : '',
+			'extra'            => isset( $plugin['extra'] ) ? $plugin['extra'] : '',			
 		);
 
 		// Check for a plugin update.
@@ -117,18 +117,19 @@ class MainWP_Api_Manager_Plugin_Update {
 	 * @return array Plugin Information & bulkupdatecheck.
 	 */
 	public function bulk_update_check( $plugins ) {
-		$enscrypt_api_key = get_option( 'mainwp_extensions_master_api_key', false );
-		$mainwp_api_key   = false;
-		if ( false !== $enscrypt_api_key ) {
-			$mainwp_api_key = ! empty( $enscrypt_api_key ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_api_key ) : '';
-		}
+
 		$args = array(
 			'request'    => 'bulkupdatecheck',
-			'extensions' => base64_encode( serialize( $plugins ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			'extensions' => base64_encode( wp_json_encode( $plugins ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			'json'       => true,
 		);
-		if ( false !== $mainwp_api_key ) {
+		
+		$mainwp_api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
+		
+		if ( ! empty( $mainwp_api_key ) ) {
 			$args['api_key'] = $mainwp_api_key;
 		}
+
 		return $this->plugin_information( $args, true ); // bulkupdatecheck.
 	}
 
@@ -165,6 +166,9 @@ class MainWP_Api_Manager_Plugin_Update {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
 	 */
 	public function plugin_information( $args, $bulk_check = false ) {
+
+		$args['object'] = MainWP_Api_Manager::instance()->get_domain();
+		
 		$target_url = $this->create_upgrade_api_url( $args, $bulk_check );
 		$default    = array(
 			'timeout'   => 50,
@@ -182,12 +186,7 @@ class MainWP_Api_Manager_Plugin_Update {
 			return false;
 		}
 
-		if ( $bulk_check ) {
-			$response = wp_remote_retrieve_body( $request );
-			$response = MainWP_System_Utility::maybe_unserialyze( $response );
-		} else {
-			$response = MainWP_System_Utility::maybe_unserialyze( wp_remote_retrieve_body( $request ) );
-		}
+		$response = wp_remote_retrieve_body( $request );
 
 		/**
 		 * For debugging errors from the API

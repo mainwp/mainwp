@@ -64,12 +64,17 @@ class MainWP_Updates_Table_Helper {
 
 		$columns = array(
 			'title'   => $title,
+			'login'   => '<i class="sign in alternate icon"></i>',
 			'version' => __( 'Version', 'mainwp' ),
 			'latest'  => __( 'Latest', 'mainwp' ),
 			'trusted' => __( 'Trusted', 'mainwp' ),
 			'status'  => __( 'Status', 'mainwp' ),
 			'action'  => '',
 		);
+
+		if ( MAINWP_VIEW_PER_PLUGIN_THEME != $this->view_per ) {
+			unset( $columns['login'] );
+		}
 		return $columns;
 	}
 

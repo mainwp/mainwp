@@ -411,7 +411,6 @@ class MainWP_Page {
 	 * @return void
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
-	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
@@ -421,13 +420,17 @@ class MainWP_Page {
 
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Page' );
 
-		$selected_sites  = array();
-		$selected_groups = array();
+		$selected_sites   = array();
+		$selected_groups  = array();
+		$selected_clients = array();
+
 		if ( null != $cachedSearch ) {
 			if ( is_array( $cachedSearch['sites'] ) ) {
 				$selected_sites = $cachedSearch['sites'];
 			} elseif ( is_array( $cachedSearch['groups'] ) ) {
 				$selected_groups = $cachedSearch['groups'];
+			} elseif ( is_array( $cachedSearch['clients'] ) ) {
+				$selected_clients = $cachedSearch['clients'];
 			}
 		}
 
@@ -520,7 +523,18 @@ class MainWP_Page {
 					do_action( 'mainwp_manage_pages_before_select_sites' );
 					?>
 					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-					<div class="content active"><?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?></div>
+					<div class="content active">
+						<?php
+						$sel_params = array(
+							'selected_sites'   => $selected_sites,
+							'selected_groups'  => $selected_groups,
+							'selected_clients' => $selected_clients,
+							'class'            => 'mainwp_select_sites_box_left',
+							'show_client'      => true,
+						);
+						MainWP_UI_Select_Sites::select_sites_box( $sel_params );
+						?>
+					</div>
 					<?php
 					/**
 					 * Action: mainwp_manage_pages_after_select_sites
@@ -722,13 +736,14 @@ class MainWP_Page {
 	 * @param string $groups Groups to display.
 	 * @param string $sites Site URLS.
 	 * @param string $search_on Site on all sites. Default = all.
+	 * @param mixed  $clients Selected Clients.
 	 *
 	 * @return void Page table html.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
-	public static function render_table( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $search_on = 'all' ) {
+	public static function render_table( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $search_on = 'all', $clients = '' ) {
 		?>
 		<div id="mainwp_pages_error"></div>
 		<div id="mainwp-loading-pages-row" style="display: none;">
@@ -763,7 +778,7 @@ class MainWP_Page {
 					<th id="mainwp-title"><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
 					<th id="mainwp-author" class="min-tablet"><?php esc_html_e( 'Author', 'mainwp' ); ?></th>
 					<th id="mainwp-comments"><i class="comment icon"></i></th>
-					<th id="mainwp-date" class="min-tablet"><?php esc_html_e( 'Date', 'mainwp' ); ?></th>
+					<th id="mainwp-date" class="min-tablet"><?php esc_html_e( 'Last Modified', 'mainwp' ); ?></th>
 					<th id="mainwp-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					<?php if ( MainWP_Utility::enabled_wp_seo() ) : ?>
 					<th id="mainwp-seo-links"><span title="<?php echo esc_attr__( 'Number of internal links in this page', 'mainwp' ); ?>"><?php esc_html_e( 'Links', 'mainwp' ); ?></span></th>
@@ -780,7 +795,7 @@ class MainWP_Page {
 				if ( $cached ) {
 					MainWP_Cache::echo_body( 'Page' );
 				} else {
-					self::render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on );
+					self::render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on, $clients );
 				}
 				?>
 			</tbody>
@@ -837,7 +852,7 @@ class MainWP_Page {
 						"targets": 'no-sort',
 						"orderable": false
 					} ],
-					"language" : { "emptyTable": "<?php esc_html_e( 'Please use the search options to find wanted pages.', 'mainwp' ); ?>" },
+					"language" : { "emptyTable": "<?php esc_html_e( 'Use the search options to find the page you want to manage.', 'mainwp' ); ?>" },
 					"preDrawCallback": function( settings ) {
 						jQuery( '#mainwp_pages_wrap_table table .ui.dropdown' ).dropdown();
 						jQuery( '#mainwp_pages_wrap_table table .ui.checkbox' ).checkbox();
@@ -865,6 +880,7 @@ class MainWP_Page {
 	 * @param mixed  $groups Groups to display.
 	 * @param mixed  $sites Site URLS.
 	 * @param string $search_on Site on all sites. Default = all.
+	 * @param mixed  $clients Selected Clients.
 	 *
 	 * @return void Output table body.
 	 *
@@ -880,16 +896,32 @@ class MainWP_Page {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
-	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all' ) {
+	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all', $clients = '' ) {
 
 		MainWP_Cache::init_cache( 'Page' );
+
+		$data_fields = array(
+			'id',
+			'url',
+			'name',
+			'adminname',
+			'nossl',
+			'privkey',
+			'nosslkey',
+			'http_user',
+			'http_pass',
+			'ssl_version',
+			'sync_errors',
+		);
 
 		$dbwebsites = array();
 		if ( '' != $sites ) {
 			foreach ( $sites as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
-					$website                    = MainWP_DB::instance()->get_website_by_id( $v );
-					$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass', 'ssl_version' ) );
+					$website = MainWP_DB::instance()->get_website_by_id( $v );
+					if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
+					}
 				}
 			}
 		}
@@ -898,13 +930,32 @@ class MainWP_Page {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 					while ( $websites && ( $website   = MainWP_DB::fetch_object( $websites ) ) ) {
-						if ( '' != $website->sync_errors ) {
+						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 							continue;
 						}
-						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass', 'ssl_version' ) );
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
 					}
 					MainWP_DB::free_result( $websites );
 				}
+			}
+		}
+
+		if ( '' !== $clients && is_array( $clients ) ) {
+			$websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+				$clients,
+				array(
+					'select_data' => $data_fields,
+				)
+			);
+
+			foreach ( $websites as $website ) {
+				if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+					continue;
+				}
+				$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+					$website,
+					$data_fields
+				);
 			}
 		}
 
@@ -1291,6 +1342,21 @@ class MainWP_Page {
 				$succes_message = __( 'New page created', 'mainwp' );
 			}
 		}
+
+		$data_fields = array(
+			'id',
+			'url',
+			'name',
+			'adminname',
+			'nossl',
+			'privkey',
+			'nosslkey',
+			'http_user',
+			'http_pass',
+			'ssl_version',
+			'sync_errors',
+		);
+
 		?>
 
 		<div class="ui modal" id="mainwp-posting-page-modal">
@@ -1321,13 +1387,14 @@ class MainWP_Page {
 					$id    = intval( $_GET['id'] );
 					$_post = get_post( $id );
 					if ( $_post ) {
-						$selected_by     = get_post_meta( $id, '_selected_by', true );
-						$val             = get_post_meta( $id, '_selected_sites', true );
-						$selected_sites  = MainWP_System_Utility::maybe_unserialyze( $val );
-						$val             = get_post_meta( $id, '_selected_groups', true );
-						$selected_groups = MainWP_System_Utility::maybe_unserialyze( $val );
-						$post_slug       = base64_decode( get_post_meta( $id, '_slug', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-						$post_custom     = get_post_custom( $id );
+						$selected_by      = get_post_meta( $id, '_selected_by', true );
+						$val              = get_post_meta( $id, '_selected_sites', true );
+						$selected_sites   = MainWP_System_Utility::maybe_unserialyze( $val );
+						$val              = get_post_meta( $id, '_selected_groups', true );
+						$selected_groups  = MainWP_System_Utility::maybe_unserialyze( $val );
+						$selected_clients = get_post_meta( $id, '_selected_clients', true );
+						$post_slug        = base64_decode( get_post_meta( $id, '_slug', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+						$post_custom      = get_post_custom( $id );
 						include_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php';
 						$featured_image_id   = get_post_thumbnail_id( $id );
 						$post_featured_image = null;
@@ -1352,14 +1419,14 @@ class MainWP_Page {
 						$post_status = apply_filters( 'mainwp_posting_bulkpost_post_status', $post_status, $id );
 
 						$new_post = array(
-							'post_title'     => $_post->post_title,
+							'post_title'     => htmlspecialchars( $_post->post_title ),
 							'post_content'   => $_post->post_content,
 							'post_status'    => $post_status,
 							'post_date'      => $_post->post_date,
 							'post_date_gmt'  => $_post->post_date_gmt,
 							'post_type'      => 'page',
 							'post_name'      => $post_slug,
-							'post_excerpt'   => $_post->post_excerpt,
+							'post_excerpt'   => htmlspecialchars( $_post->post_excerpt ),
 							'post_password'  => $_post->post_password,
 							'comment_status' => $_post->comment_status,
 							'ping_status'    => $_post->ping_status,
@@ -1372,9 +1439,9 @@ class MainWP_Page {
 							$attachment          = get_post( $featured_image_id );
 							$featured_image_data = array(
 								'alt'         => get_post_meta( $featured_image_id, '_wp_attachment_image_alt', true ),
-								'caption'     => $attachment->post_excerpt,
+								'caption'     => htmlspecialchars( $attachment->post_excerpt ),
 								'description' => $attachment->post_content,
-								'title'       => $attachment->post_title,
+								'title'       => htmlspecialchars( $attachment->post_title ),
 							);
 						}
 
@@ -1389,10 +1456,10 @@ class MainWP_Page {
 									$post_gallery_images[] = array(
 										'id'          => $attachment_id,
 										'alt'         => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
-										'caption'     => $attachment->post_excerpt,
+										'caption'     => htmlspecialchars( $attachment->post_excerpt ),
 										'description' => $attachment->post_content,
 										'src'         => $attachment->guid,
-										'title'       => $attachment->post_title,
+										'title'       => htmlspecialchars( $attachment->post_title ),
 									);
 								}
 							}
@@ -1402,19 +1469,38 @@ class MainWP_Page {
 						if ( 'site' == $selected_by ) {
 							foreach ( $selected_sites as $k ) {
 								if ( MainWP_Utility::ctype_digit( $k ) ) {
-									$website                    = MainWP_DB::instance()->get_website_by_id( $k );
-									$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass', 'ssl_version' ) );
+									$website = MainWP_DB::instance()->get_website_by_id( $k );
+									if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+										$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
+									}
 								}
 							}
-						} else {
+						} elseif ( 'client' == $selected_by ) {
+							if ( is_array( $selected_clients ) ) {
+								$websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+									$selected_clients,
+									array(
+										'select_data' => $data_fields,
+									)
+								);
+								if ( $websites ) {
+									foreach ( $websites as $website ) {
+										if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+											continue;
+										}
+										$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
+									}
+								}
+							}
+						} elseif ( 'group' == $selected_by ) {
 							foreach ( $selected_groups as $k ) {
 								if ( MainWP_Utility::ctype_digit( $k ) ) {
 									$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
 									while ( $websites && ( $website   = MainWP_DB::fetch_object( $websites ) ) ) {
-										if ( '' != $website->sync_errors ) {
+										if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 											continue;
 										}
-										$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass', 'ssl_version' ) );
+										$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
 									}
 									MainWP_DB::free_result( $websites );
 								}

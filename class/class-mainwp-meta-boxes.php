@@ -15,43 +15,6 @@ namespace MainWP\Dashboard;
 class MainWP_Meta_Boxes {
 
 	/**
-	 * Method select_sites()
-	 *
-	 * Select Sites.
-	 *
-	 * @param object $post Post object.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
-	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
-	 */
-	public function select_sites( $post ) {
-
-		$val            = get_post_meta( $post->ID, '_selected_sites', true );
-		$selected_sites = MainWP_System_Utility::maybe_unserialyze( $val );
-
-		if ( '' == $selected_sites ) {
-			$selected_sites = array();
-		}
-
-		if ( isset( $_REQUEST['select'] ) ) {
-			$selected_sites = ( 'all' === $_REQUEST['select'] ? 'all' : array( sanitize_text_field( wp_unslash( $_REQUEST['select'] ) ) ) );
-		}
-
-		$val             = get_post_meta( $post->ID, '_selected_groups', true );
-		$selected_groups = MainWP_System_Utility::maybe_unserialyze( $val );
-
-		if ( '' == $selected_groups ) {
-			$selected_groups = array();
-		}
-		?>
-		<input type="hidden" name="select_sites_nonce" id="select_sites_nonce" value="<?php echo wp_create_nonce( 'select_sites_' . $post->ID ); ?>" />
-		<div class="mainwp-select-sites">
-			<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups, false, $post->ID ); ?>
-		</div>
-		<?php
-	}
-
-	/**
 	 * Method select_sites_handle()
 	 *
 	 * Update Post meta for Select Sites Meta boxes.
@@ -102,13 +65,22 @@ class MainWP_Meta_Boxes {
 				if ( is_array( $_POST['selected_groups'] ) ) {
 					$selected_groups = ! empty( $_POST['selected_groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
 				} else { // radio selection.
-					$selected_wp = ! empty( $_POST['selected_groups'] ) ? array( sanitize_text_field( wp_unslash( $_POST['selected_groups'] ) ) ) : array();
+					$selected_groups = ! empty( $_POST['selected_groups'] ) ? array( sanitize_text_field( wp_unslash( $_POST['selected_groups'] ) ) ) : array();
 				}
 			}
 			update_post_meta( $post_id, '_selected_groups', $selected_groups );
+			$selected_clients = array();
+			if ( isset( $_POST['selected_clients'] ) ) {
+				if ( is_array( $_POST['selected_clients'] ) ) {
+					$selected_clients = ! empty( $_POST['selected_clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_clients'] ) ) : array();
+				} else { // radio selection.
+					$selected_clients = ! empty( $_POST['selected_clients'] ) ? array( sanitize_text_field( wp_unslash( $_POST['selected_clients'] ) ) ) : array();
+				}
+			}
+			update_post_meta( $post_id, '_selected_clients', $selected_clients );
 			update_post_meta( $post_id, '_selected_by', sanitize_text_field( wp_unslash( $_POST['select_by'] ) ) );
 
-			if ( ( 'group' === $_POST['select_by'] && 0 < count( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && 0 < count( $selected_wp ) ) ) {
+			if ( ( 'group' === $_POST['select_by'] && 0 < count( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && 0 < count( $selected_wp ) ) || ( 'client' === $_POST['select_by'] && 0 < count( $selected_clients ) ) ) {
 				return sanitize_text_field( wp_unslash( $_POST['select_by'] ) );
 			}
 		}

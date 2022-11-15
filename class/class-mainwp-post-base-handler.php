@@ -94,8 +94,18 @@ abstract class MainWP_Post_Base_Handler {
 			$adminurl = strtolower( admin_url() );
 			$referer  = strtolower( wp_get_referer() );
 			$result   = isset( $_REQUEST[ $query_arg ] ) ? wp_verify_nonce( sanitize_key( $_REQUEST[ $query_arg ] ), $action ) : false;
-			if ( ! $result && 0 !== strpos( $referer, $adminurl ) ) {
+
+			if ( ! $result ) {
 				$secure = false;
+			}
+
+			$is_admin_referer          = ( 0 === strpos( $referer, $adminurl ) ) ? true : false;
+			$admin_referer_is_accepted = apply_filters( 'mainwp_secure_check_admin_referer_is_accepted', true );
+
+			if ( ! $secure ) {
+				if ( $is_admin_referer & $admin_referer_is_accepted ) {
+					$secure = true;
+				}
 			}
 		}
 
@@ -137,24 +147,6 @@ abstract class MainWP_Post_Base_Handler {
 	}
 
 	/**
-	 * Method add_security_nonce()
-	 *
-	 * Add security nonce.
-	 *
-	 * @param string $action Action to perform.
-	 */
-	public function add_security_nonce( $action ) {
-		if ( ! is_array( self::$security_nonces ) ) {
-			self::$security_nonces = array();
-		}
-
-		if ( ! function_exists( 'wp_create_nonce' ) ) {
-			include_once ABSPATH . WPINC . '/pluggable.php';
-		}
-		self::$security_nonces[ $action ] = wp_create_nonce( $action );
-	}
-
-	/**
 	 * Create the security nonces.
 	 *
 	 * @return self $security_nonces.
@@ -164,7 +156,7 @@ abstract class MainWP_Post_Base_Handler {
 		if ( ! is_array( self::$security_nonces ) ) {
 			self::$security_nonces = array();
 		}
-
+		self::$security_names = apply_filters( 'mainwp_create_security_nonces', self::$security_names );
 		if ( ! empty( self::$security_names ) ) {
 			if ( ! function_exists( 'wp_create_nonce' ) ) {
 				include_once ABSPATH . WPINC . '/pluggable.php';

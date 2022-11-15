@@ -77,18 +77,34 @@ class MainWP_Bulk_Update_Admin_Passwords {
 			check_admin_referer( 'mainwp_updateadminpassword', 'security' );
 
 			if ( isset( $_POST['select_by'] ) ) {
-				$selected_sites  = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
-				$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
-				if ( ( 'group' == $_POST['select_by'] && 0 == count( $selected_groups ) ) || ( 'site' == $_POST['select_by'] && 0 == count( $selected_sites ) ) ) {
-					$errors[] = __( 'Please select the sites or groups where you want to change the administrator password.', 'mainwp' );
+				$selected_sites   = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
+				$selected_groups  = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
+				$selected_clients = ( isset( $_POST['selected_clients'] ) && is_array( $_POST['selected_clients'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_clients'] ) ) : array();
+
+				if ( ( 'group' == $_POST['select_by'] && 0 == count( $selected_groups ) ) || ( 'site' == $_POST['select_by'] && 0 == count( $selected_sites ) ) || ( 'client' == $_POST['select_by'] && 0 == count( $selected_clients ) ) ) {
+					$errors[] = __( 'Please select the sites or groups or clients where you want to change the administrator password.', 'mainwp' );
 				}
 			} else {
-				$errors[] = __( 'Please select whether you want to change the administrator password for specific sites or groups.', 'mainwp' );
+				$errors[] = __( 'Please select whether you want to change the administrator password for specific sites or groups or clients.', 'mainwp' );
 			}
 
 			if ( ! isset( $_POST['password'] ) || '' == $_POST['password'] ) {
 				$errors[] = __( 'Please enter the password.', 'mainwp' );
 			}
+
+			$data_fields = array(
+				'id',
+				'url',
+				'name',
+				'adminname',
+				'nossl',
+				'privkey',
+				'nosslkey',
+				'http_user',
+				'http_pass',
+				'ssl_version',
+				'sync_errors',
+			);
 
 			if ( count( $errors ) == 0 ) {
 				$show_form = false;
@@ -101,21 +117,31 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				if ( 'site' == $_POST['select_by'] ) { // Get all selected websites.
 					foreach ( $selected_sites as $k ) {
 						if ( MainWP_Utility::ctype_digit( $k ) ) {
-							$website                    = MainWP_DB::instance()->get_website_by_id( $k );
+							$website = MainWP_DB::instance()->get_website_by_id( $k );
+							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+								continue;
+							}
 							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 								$website,
-								array(
-									'id',
-									'url',
-									'name',
-									'adminname',
-									'nossl',
-									'privkey',
-									'nosslkey',
-									'http_user',
-									'http_pass',
-									'ssl_version',
-								)
+								$data_fields
+							);
+						}
+					}
+				} elseif ( 'client' == $_POST['select_by'] ) { // Get all selected websites.
+					$websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+						$selected_clients,
+						array(
+							'select_data' => $data_fields,
+						)
+					);
+					if ( $websites ) {
+						foreach ( $websites as $website ) {
+							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+								continue;
+							}
+							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+								$website,
+								$data_fields
 							);
 						}
 					}
@@ -124,23 +150,12 @@ class MainWP_Bulk_Update_Admin_Passwords {
 						if ( MainWP_Utility::ctype_digit( $k ) ) {
 							$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
 							while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-								if ( '' != $website->sync_errors ) {
+								if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 									continue;
 								}
 								$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 									$website,
-									array(
-										'id',
-										'url',
-										'name',
-										'adminname',
-										'nossl',
-										'privkey',
-										'nosslkey',
-										'http_user',
-										'http_pass',
-										'ssl_version',
-									)
+									$data_fields
 								);
 							}
 							MainWP_DB::free_result( $websites );
@@ -236,7 +251,6 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
-	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render_bulk_form( $websites ) {
 
@@ -258,7 +272,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-admin-pass-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-admin-pass-info-message"></i>
-							<?php echo sprintf( __( 'See the list of Admininstrator users used to establish secure connection between your MainWP Dashboard and child sites.  If needed, use the provided form to set a new password for these accounts.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/bulk-update-administrator-passwords/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( __( 'See the list of Admininstrator users used to establish secure connection between your MainWP Dashboard and child sites.  If needed, use the provided form to set a new password for these accounts.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/bulk-update-administrator-passwords/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 						<?php
@@ -372,7 +386,14 @@ class MainWP_Bulk_Update_Admin_Passwords {
 							do_action( 'mainwp_admin_pass_before_select_sites' );
 							?>
 							<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-							<div class="content active"><?php MainWP_UI::select_sites_box(); ?></div>
+							<div class="content active">
+								<?php
+								$sel_params = array(
+									'show_client' => true,
+								);
+								MainWP_UI_Select_Sites::select_sites_box( $sel_params );
+								?>
+								</div>
 							<?php
 							/**
 							 * Action: mainwp_admin_pass_after_select_sites

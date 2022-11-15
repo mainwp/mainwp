@@ -376,7 +376,7 @@ class MainWP_Server_Information {
 
 			self::render_actions_bar();
 
-			echo '<div class="ui segment">';
+			echo '<div>';
 	}
 
 	/**
@@ -463,6 +463,7 @@ class MainWP_Server_Information {
 		 */
 		do_action( 'mainwp_before_server_info_table' );
 		?>
+		<div class="ui segment">
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-server-info-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-server-info-info-message"></i>
@@ -587,6 +588,7 @@ class MainWP_Server_Information {
 			} );
 		} );
 		</script>
+		</div>
 
 						<?php
 
@@ -1018,6 +1020,7 @@ class MainWP_Server_Information {
 		 */
 		do_action( 'mainwp_before_cron_jobs_table' );
 		?>
+		<div class="ui segment">
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-cron-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-cron-info-message"></i>
@@ -1104,6 +1107,7 @@ class MainWP_Server_Information {
 			} );
 		} );
 		</script>
+		</div>
 		<?php
 
 		/**
@@ -1303,6 +1307,7 @@ class MainWP_Server_Information {
 		 */
 		do_action( 'mainwp_before_error_log_table' );
 		?>
+		<div class="ui segment">
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-error-log-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-error-log-info-message"></i>
@@ -1331,6 +1336,7 @@ class MainWP_Server_Information {
 			} );
 		} );
 		</script>
+		</div>
 		<?php
 		/**
 		 * Action: mainwp_after_error_log_table
@@ -1511,7 +1517,7 @@ class MainWP_Server_Information {
 				MainWP_Logger::instance()->set_log_priority( $act_log, $spec_log );
 			}
 
-			MainWP_Logger::instance()->log( 'Action logs set to: ' . MainWP_Logger::instance()->get_log_text( $act_log ), MainWP_Logger::LOG );
+			MainWP_Logger::instance()->log( 'Action logs set to: ' . MainWP_Logger::instance()->get_log_text( $act_log ), ( $spec_log ? $act_log : MainWP_Logger::LOG ) );
 
 			if ( MainWP_Logger::DISABLED == $act_log ) {
 				MainWP_Logger::instance()->set_log_priority( $act_log, $spec_log );
@@ -1536,7 +1542,7 @@ class MainWP_Server_Information {
 		$specific_logs    = apply_filters( 'mainwp_specific_action_logs', $specific_default );
 
 		?>
-		<div class="mainwp-sub-header" style="margin: -14px -14px 0 -14px;">
+		<div class="mainwp-sub-header">
 			<div class="ui mini form two column stackable grid">
 				<div class="column">
 				<form method="POST" action="">
@@ -1575,9 +1581,8 @@ class MainWP_Server_Information {
 				</div>
 			</div>
 		</div>
-		<div>
+		<div class="ui segment">
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-action-logs-info-message' ) ) : ?>
-				<div class="ui hidden divider"></div>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-action-logs-info-message"></i>
 					<div><?php echo __( 'Enable a specific logging system.', 'mainwp' ); ?></div>
@@ -1591,7 +1596,7 @@ class MainWP_Server_Information {
 		if ( $log_to_db ) {
 			return MainWP_Logger::instance()->show_log_db();
 		} else {
-			MainWP_Logger::instance()->show_log();
+			MainWP_Logger::instance()->show_log_file();
 		}
 		?>
 		</div>
@@ -1607,7 +1612,9 @@ class MainWP_Server_Information {
 	public static function render_cache_control_logs() {
 
 		self::render_header( 'CacheControlLogs' );
+		echo '<div class="ui segment">';
 		MainWP_Auto_Cache_Purge_View::instance()->render_cache_control_log_page();
+		echo '</div>';
 		self::render_footer( 'CacheControlLogs' );
 	}
 
@@ -1628,8 +1635,7 @@ class MainWP_Server_Information {
 		 */
 		do_action( 'mainwp_before_plugin_privacy_section' );
 		?>
-		<div class="ui two columns stackable grid">
-				<div class="column">
+		<div class="ui segment">
 					<div id="mainwp-plugin-privacy" class="ui piled segment">
 						<h2 class="ui header">
 							<?php echo __( 'MainWP Dashboard Plugin Privacy Policy', 'mainwp' ); ?>
@@ -1681,13 +1687,6 @@ class MainWP_Server_Information {
 					</div>
 					<div class="ui divider"></div>
 					<a href="<?php echo get_site_url() . '/wp-content/plugins/mainwp/privacy-policy.txt'; ?>" class="ui green basic button" target="_blank"><?php echo __( 'Download MainWP Dashboard Privacy Policy', 'mainwp' ); ?></a> <a href="<?php echo get_site_url() . '/wp-content/plugins/mainwp/mainwp-child-privacy-policy.txt'; ?>" class="ui green basic button" target="_blank"><?php echo __( 'Download MainWP Child Privacy Policy', 'mainwp' ); ?></a>
-				</div>
-				<div class="middle aligned center aligned column">
-					<i class="massive icons">
-					<i style="font-size:350px;color:#eeeeee;" class="file outline icon"></i>
-					<i style="font-size:80px;color:#eeeeee;" class=" lock icon"></i>
-					</i>
-			</div>
 		</div>
 
 		<?php

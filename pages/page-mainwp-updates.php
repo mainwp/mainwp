@@ -71,6 +71,13 @@ class MainWP_Updates {
 	public static $continue_update_slug = '';
 
 	/**
+	 * Public static varable to hold Subpages information.
+	 *
+	 * @var array $subPages
+	 */
+	public static $subPages;
+
+	/**
 	 * Gets Class Name.
 	 *
 	 * @return object
@@ -112,6 +119,19 @@ class MainWP_Updates {
 	 * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
 	 */
 	public static function init_menu() {
+		self::init_left_menu( self::$subPages );
+	}
+
+	/**
+	 * Initiates Updates menu.
+	 *
+	 * @param array $subPages Sub pages array.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 */
+	public static function init_left_menu( $subPages = array() ) {
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Updates', 'mainwp' ),
@@ -131,9 +151,107 @@ class MainWP_Updates {
 				'slug'       => 'UpdatesManage',
 				'href'       => 'admin.php?page=UpdatesManage',
 				'icon'       => '<i class="sync icon"></i>',
+				'desc'       => 'Manage updates on your child sites',
 			),
 			1
 		);
+
+		$show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
+
+		if ( $show_language_updates ) {
+
+		$init_sub_subleftmenu = array(
+			array(
+				'title'      => __( 'Plugins Updates', 'mainwp' ),
+				'parent_key' => 'UpdatesManage',
+				'href'       => 'admin.php?page=UpdatesManage&tab=plugins-updates',
+				'slug'       => 'UpdatesManage',
+				'right'      => '',
+			),
+			array(
+				'title'      => __( 'Themes Updates', 'mainwp' ),
+				'parent_key' => 'UpdatesManage',
+				'href'       => 'admin.php?page=UpdatesManage&tab=themes-updates',
+				'slug'       => 'UpdatesManage',
+				'right'      => '',
+			),
+			array(
+				'title'      => __( 'WordPress Updates', 'mainwp' ),
+				'parent_key' => 'UpdatesManage',
+				'href'       => 'admin.php?page=UpdatesManage&tab=wordpress-updates',
+				'slug'       => 'UpdatesManage&tab=wordpress-updates',
+				'right'      => '',
+			),
+			array(
+					'title'      => __( 'Translation Updatess', 'mainwp' ),
+					'parent_key' => 'UpdatesManage',
+					'href'       => 'admin.php?page=UpdatesManage&tab=translations-updates',
+					'slug'       => 'UpdatesManage&tab=translations-updates',
+					'right'      => '',
+				),
+				array(
+				'title'      => __( 'Abandoned Plugins', 'mainwp' ),
+				'parent_key' => 'UpdatesManage',
+				'href'       => 'admin.php?page=UpdatesManage&tab=abandoned-plugins',
+					'slug'       => 'UpdatesManage&tab=abandoned-plugins',
+				'right'      => '',
+			),
+			array(
+				'title'      => __( 'Abandoned Themes', 'mainwp' ),
+				'parent_key' => 'UpdatesManage',
+				'href'       => 'admin.php?page=UpdatesManage&tab=abandoned-themes',
+				'slug'       => 'UpdatesManage',
+				'right'      => '',
+			),
+		);
+		} else {
+			$init_sub_subleftmenu = array(
+				array(
+					'title'      => __( 'Plugins Updates', 'mainwp' ),
+					'parent_key' => 'UpdatesManage',
+					'href'       => 'admin.php?page=UpdatesManage&tab=plugins-updates',
+					'slug'       => 'UpdatesManage',
+					'right'      => '',
+				),
+				array(
+					'title'      => __( 'Themes Updates', 'mainwp' ),
+					'parent_key' => 'UpdatesManage',
+					'href'       => 'admin.php?page=UpdatesManage&tab=themes-updates',
+					'slug'       => 'UpdatesManage',
+					'right'      => '',
+				),
+				array(
+					'title'      => __( 'WordPress Updates', 'mainwp' ),
+					'parent_key' => 'UpdatesManage',
+					'href'       => 'admin.php?page=UpdatesManage&tab=wordpress-updates',
+					'slug'       => 'UpdatesManage&tab=wordpress-updates',
+					'right'      => '',
+				),
+				array(
+					'title'      => __( 'Abandoned Plugins', 'mainwp' ),
+					'parent_key' => 'UpdatesManage',
+					'href'       => 'admin.php?page=UpdatesManage&tab=abandoned-plugins',
+					'slug'       => 'UpdatesManage&tab=abandoned-plugins',
+					'right'      => '',
+				),
+				array(
+					'title'      => __( 'Abandoned Themes', 'mainwp' ),
+					'parent_key' => 'UpdatesManage',
+					'href'       => 'admin.php?page=UpdatesManage&tab=abandoned-themes',
+					'slug'       => 'UpdatesManage',
+					'right'      => '',
+				),
+			);
+		}
+
+		MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'UpdatesManage', 'UpdatesManage' );
+
+		foreach ( $init_sub_subleftmenu as $item ) {
+			if ( MainWP_Menu::is_disable_menu_item( 3, $item['slug'] ) ) {
+				continue;
+			}
+			MainWP_Menu::add_left_menu( $item, 2 );
+		}
 	}
 
 	/**
@@ -146,7 +264,7 @@ class MainWP_Updates {
 	public static function render_header( $shownPage = '' ) {
 
 		$params = array(
-			'title' => __( 'Update Details', 'mainwp' ),
+			'title' => __( 'Available Updates', 'mainwp' ),
 		);
 
 		MainWP_UI::render_top_header( $params );
@@ -316,7 +434,8 @@ class MainWP_Updates {
 
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 
-			$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
+			$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
+			$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
 			if ( $website->is_ignoreCoreUpdates ) {
 				$wp_upgrades = array();
@@ -338,7 +457,9 @@ class MainWP_Updates {
 				$theme_upgrades = array();
 			}
 
-			$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
+			$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
+			$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+
 			if ( is_array( $decodedPremiumUpgrades ) ) {
 				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 					$premiumUpgrade['premium'] = true;
@@ -398,15 +519,23 @@ class MainWP_Updates {
 			}
 
 			$themesIgnoredAbandoned_perSites = array();
-			$ignoredAbandoned_themes         = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
+			$ignoredAbandoned_themes         = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
+			$ignoredAbandoned_themes = ( '' != $ignoredAbandoned_themes ) ? json_decode( $ignoredAbandoned_themes, true ) : array();
+
+
 			if ( is_array( $ignoredAbandoned_themes ) ) {
 				$ignoredAbandoned_themes         = array_filter( $ignoredAbandoned_themes );
 				$themesIgnoredAbandoned_perSites = array_merge( $themesIgnoredAbandoned_perSites, $ignoredAbandoned_themes );
 			}
 
-			$ignoredAbandoned_plugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
-			$plugins_outdate          = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
-			$themes_outdate           = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
+			$ignoredAbandoned_plugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
+			$ignoredAbandoned_plugins = ( '' != $ignoredAbandoned_plugins ) ? json_decode( $ignoredAbandoned_plugins, true ) : array();
+
+			$plugins_outdate          = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
+			$plugins_outdate = ( '' != $plugins_outdate ) ? json_decode( $plugins_outdate, true ) : array();
+
+			$themes_outdate           = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
+			$themes_outdate = ( '' != $themes_outdate ) ? json_decode( $themes_outdate, true ) : array();
 
 			if ( is_array( $plugins_outdate ) ) {
 				if ( is_array( $ignoredAbandoned_plugins ) ) {
@@ -616,13 +745,6 @@ class MainWP_Updates {
 
 		self::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view );
 
-		$enable_http_check = get_option( 'mainwp_check_http_response', 0 );
-		if ( $enable_http_check ) {
-			echo '<div class="ui segment" style="margin-bottom:0px;">';
-			self::render_http_checks( $websites );
-			echo '</div>';
-		}
-
 		?>
 		<div class="ui segment" id="mainwp-manage-updates">
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-updates-message' ) ) : ?>
@@ -654,7 +776,7 @@ class MainWP_Updates {
 
 		self::render_updates_modal();
 		self::render_plugin_details_modal();
-
+		MainWP_UI::render_modal_upload_icon();
 		self::render_footer();
 	}
 
@@ -1741,9 +1863,9 @@ class MainWP_Updates {
 		?>
 		<div id="mainwp-page-navigation-wrapper">
 			<div class="ui secondary green pointing menu stackable mainwp-page-navigation">
-				<a class="<?php echo( 'wordpress-updates' === $current_tab ? 'active' : '' ); ?> item" data-tab="wordpress-updates" href="admin.php?page=UpdatesManage&tab=wordpress-updates"><?php esc_html_e( 'WordPress Updates', 'mainwp' ); ?><div class="ui small <?php echo 0 === $total_wp_upgrades ? 'green' : 'red'; ?> label"><?php echo $total_wp_upgrades; ?></div></a>
 				<a class="<?php echo( 'plugins-updates' === $current_tab ? 'active' : '' ); ?> item" data-tab="plugins-updates" href="admin.php?page=UpdatesManage&tab=plugins-updates"><?php esc_html_e( 'Plugins Updates', 'mainwp' ); ?><div class="ui small <?php echo 0 === $total_plugin_upgrades ? 'green' : 'red'; ?> label" timestamp="<?php echo time(); ?>"><?php echo $total_plugin_upgrades; ?></div></a>
 				<a class="<?php echo( 'themes-updates' === $current_tab ? 'active' : '' ); ?> item" data-tab="themes-updates" href="admin.php?page=UpdatesManage&tab=themes-updates"><?php esc_html_e( 'Themes Updates', 'mainwp' ); ?><div class="ui small <?php echo 0 === $total_theme_upgrades ? 'green' : 'red'; ?> label"><?php echo $total_theme_upgrades; ?></div></a>
+				<a class="<?php echo( 'wordpress-updates' === $current_tab ? 'active' : '' ); ?> item" data-tab="wordpress-updates" href="admin.php?page=UpdatesManage&tab=wordpress-updates"><?php esc_html_e( 'WordPress Updates', 'mainwp' ); ?><div class="ui small <?php echo 0 === $total_wp_upgrades ? 'green' : 'red'; ?> label"><?php echo $total_wp_upgrades; ?></div></a>
 				<?php if ( $show_language_updates ) : ?>
 				<a class="<?php echo( 'translations-updates' === $current_tab ? 'active' : '' ); ?> item" data-tab="translations-updates" href="admin.php?page=UpdatesManage&tab=translations-updates"><?php esc_html_e( 'Translations Updates', 'mainwp' ); ?><div class="ui small <?php echo 0 === $total_translation_upgrades ? 'green' : 'red'; ?> label"><?php echo $total_translation_upgrades; ?></div></a>
 				<?php endif; ?>
@@ -1779,13 +1901,13 @@ class MainWP_Updates {
 							<div class="inline field">
 								<select class="ui dropdown" onchange="mainwp_siteview_onchange(this)" id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
 									<option value="1" class="item" <?php echo MAINWP_VIEW_PER_SITE == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Site', 'mainwp' ); ?></option>
-									<option value="0" class="item" <?php echo MAINWP_VIEW_PER_PLUGIN_THEME == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Plugin/Theme', 'mainwp' ); ?></option>
-									<option value="2" class="item" <?php echo MAINWP_VIEW_PER_GROUP == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Group', 'mainwp' ); ?></option>
+									<option value="0" class="item" <?php echo MAINWP_VIEW_PER_PLUGIN_THEME == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Item', 'mainwp' ); ?></option>
+									<option value="2" class="item" <?php echo MAINWP_VIEW_PER_GROUP == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Tag', 'mainwp' ); ?></option>
 								</select>
 							</div>
 						</form>
 					</div>
-					<div class="middle aligned column">
+					<div class="middle aligned right aligned column">
 						<?php
 						/**
 						 * Filter: mainwp_widgetupdates_actions_top
@@ -1797,11 +1919,11 @@ class MainWP_Updates {
 						echo apply_filters( 'mainwp_widgetupdates_actions_top', '' );
 						if ( 'abandoned-plugins' === $current_tab ) {
 							?>
-							<a href="#" onClick="updatesoverview_bulk_check_abandoned('plugin'); return false;" class="ui green basic right button" data-tooltip="<?php esc_html_e( 'Check for Abandoned Plugins.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Check for Abandoned Plugins', 'mainwp' ); ?></a>
+							<a href="#" onClick="updatesoverview_bulk_check_abandoned('plugin'); return false;" class="ui green mini basic button" data-tooltip="<?php esc_html_e( 'Check for Abandoned Plugins.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Check for Abandoned Plugins', 'mainwp' ); ?></a>
 							<?php
 						} elseif ( 'abandoned-themes' === $current_tab ) {
 							?>
-							<a href="#" onClick="updatesoverview_bulk_check_abandoned('theme'); return false;" class="ui green basic right button" data-tooltip="<?php esc_html_e( 'Check for Abandoned Themes.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Check for Abandoned Themes', 'mainwp' ); ?></a>
+							<a href="#" onClick="updatesoverview_bulk_check_abandoned('theme'); return false;" class="ui green mini basic button" data-tooltip="<?php esc_html_e( 'Check for Abandoned Themes.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Check for Abandoned Themes', 'mainwp' ); ?></a>
 							<?php
 						}
 						?>

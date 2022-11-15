@@ -159,6 +159,7 @@ class MainWP_Widget_Themes {
 							<a href="#" disabled class="button ui mini grey basic" data-position="top right" data-tooltip="<?php esc_attr_e( 'Active theme cannot be deactivated. If you need to activate another theme, go to the list of inactive themes and activate the wanted theme.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
 						</div>
 						<div class="middle aligned content">
+							<?php echo MainWP_System_Utility::get_theme_icon( $slug ); ?>&nbsp;&nbsp;&nbsp;&nbsp;
 							<?php echo esc_html( $actived_themes[ $i ]['name'] . ' ' . $actived_themes[ $i ]['version'] ); ?>
 						</div>
 						<div class="mainwp-row-actions-working">
@@ -218,6 +219,7 @@ class MainWP_Widget_Themes {
 							<?php } ?>
 						</div>
 						<div class="middle aligned content">
+							<?php echo MainWP_System_Utility::get_theme_icon( $slug ); ?>&nbsp;&nbsp;&nbsp;&nbsp;
 							<?php echo esc_html( $inactive_themes[ $i ]['name'] . ' ' . $inactive_themes[ $i ]['version'] ); ?>
 						</div>
 						<div class="mainwp-row-actions-working">
@@ -302,6 +304,11 @@ class MainWP_Widget_Themes {
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			die( wp_json_encode( array( 'error' => __( 'You cannot edit this website.', 'mainwp' ) ) ) );
 		}
+
+		if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
+			die( wp_json_encode( array( 'error' => __( 'The child site has been suspended.', 'mainwp' ) ) ) );
+		}
+
 
 		/**
 		* Action: mainwp_before_theme_action

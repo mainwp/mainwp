@@ -125,10 +125,6 @@ class MainWP_Monitoring {
 				'site_actions' => 1,
 			);
 
-			if ( ! is_array( $hide_cols ) ) {
-				$hide_cols = array();
-			}
-
 			$show_cols = array();
 			foreach ( $columns as $name => $title ) {
 				if ( isset( $default_cols[ $name ] ) ) {

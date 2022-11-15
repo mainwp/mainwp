@@ -96,6 +96,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			'status_code' => array( 'status_code', false ),
 			'last_check'  => array( 'last_check', false ),
 			'site_health' => array( 'site_health', false ),
+			'client_name' => array( 'client_name', false ),
 		);
 
 		return $sortable_columns;
@@ -113,6 +114,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			'site'         => __( 'Site', 'mainwp' ),
 			'login'        => '<i class="sign in alternate icon"></i>',
 			'url'          => __( 'URL', 'mainwp' ),
+			'client_name'  => __( 'Client', 'mainwp' ),
 			'site_health'  => __( 'Site Health', 'mainwp' ),
 			'status_code'  => __( 'Status Code', 'mainwp' ),
 			'last_check'   => __( 'Last Check', 'mainwp' ),
@@ -185,7 +187,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			'className' => 'mainwp-url-cell',
 		);
 		$defines[] = array(
-			'targets'   => array( 'manage-login-column', 'manage-last_check-column', 'manage-status_code-column', 'manage-site_health-column', 'manage-site_actions-column', 'extra-column' ),
+			'targets'   => array( 'manage-login-column', 'manage-last_check-column', 'manage-status_code-column', 'manage-site_health-column', 'manage-site_actions-column', 'extra-column', 'manage-client_name-column' ),
 			'className' => 'collapsing',
 		);
 		$defines[] = array(
@@ -236,10 +238,12 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
 		$selected_status = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
 		$selected_group  = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
+		$selected_client = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
 
-		if ( empty( $selected_status ) && empty( $selected_group ) ) {
+		if ( empty( $selected_status ) && empty( $selected_group ) && empty( $selected_client ) ) {
 			$selected_status = get_option( 'mainwp_monitoringsites_filter_status' );
 			$selected_group  = get_option( 'mainwp_monitoringsites_filter_group' );
+			$selected_client = get_option( 'mainwp_monitoringsites_filter_client' );
 		}
 
 		?>
@@ -272,7 +276,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 						<div id="mainwp-filter-sites-group" multiple="" class="ui selection multiple dropdown">
 							<input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
 							<i class="dropdown icon"></i>
-							<div class="default text"><?php esc_html_e( 'All groups', 'mainwp' ); ?></div>
+							<div class="default text"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
 							<div class="menu">
 								<?php
 								$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
@@ -282,7 +286,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 									<?php
 								}
 								?>
-								<div class="item" data-value="nogroups"><?php esc_html_e( 'No Groups', 'mainwp' ); ?></div>
+								<div class="item" data-value="nogroups"><?php esc_html_e( 'No Tags', 'mainwp' ); ?></div>
 							</div>
 						</div>
 						<div class="ui selection dropdown" id="mainwp-filter-sites-status">
@@ -294,6 +298,22 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 								<div class="item" data-value="offline"><?php esc_html_e( 'Offline', 'mainwp' ); ?></div>
 								<div class="item" data-value="undefined"><?php esc_html_e( 'Undefined', 'mainwp' ); ?></div>
 						</div>
+						</div>
+						<div id="mainwp-filter-clients" class="ui selection multiple dropdown">
+							<input type="hidden" value="<?php echo esc_html( $selected_client ); ?>">
+							<i class="dropdown icon"></i>
+							<div class="default text"><?php esc_html_e( 'All clients', 'mainwp' ); ?></div>
+							<div class="menu">
+								<?php
+								$clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+								foreach ( $clients as $client ) {
+									?>
+									<div class="item" data-value="<?php echo $client->client_id; ?>"><?php echo esc_html( stripslashes( $client->name ) ); ?></div>
+									<?php
+								}
+								?>
+								<div class="item" data-value="noclients"><?php esc_html_e( 'No Client', 'mainwp' ); ?></div>
+							</div>
 						</div>
 						<button onclick="mainwp_manage_monitor_sites_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
 				</div>
@@ -358,6 +378,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 					$orderby = 'wp.offline_checks_last ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
 				} elseif ( 'site_health' === $req_orderby ) {
 					$orderby = 'wp_sync.health_value ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+				} elseif ( 'client_name' === $req_orderby ) {
+					$orderby = 'client_name ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
 				}
 			}
 		}
@@ -375,10 +397,11 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
 		$search = isset( $_REQUEST['search']['value'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['search']['value'] ) ) : '';
 
-		$get_saved_state = empty( $search ) && ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] );
-		$get_all         = ( '' === $search ) && ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && ( isset( $_REQUEST['g'] ) && -1 == $_REQUEST['g'] ) ? true : false;
+		$get_saved_state = empty( $search ) && ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] ) && ! isset( $_REQUEST['client'] );
+		$get_all         = ( '' === $search ) && ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && ( isset( $_REQUEST['g'] ) && -1 == $_REQUEST['g'] ) && empty( $_REQUEST['client'] ) ? true : false;
 
 		$group_ids   = false;
+		$client_ids  = false;
 		$site_status = '';
 
 		if ( ! isset( $_REQUEST['status'] ) ) {
@@ -393,16 +416,32 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 		}
 
 		if ( $get_all ) {
-			MainWP_Utility::update_option( 'mainwp_monitoringsites_filter_group', '' );
-		} elseif ( ! isset( $_REQUEST['g'] ) ) {
-			if ( $get_saved_state ) {
-				$group_ids = get_option( 'mainwp_monitoringsites_filter_group' );
+			MainWP_Utility::update_user_option( 'mainwp_monitoringsites_filter_group', '' );
+			MainWP_Utility::update_user_option( 'mainwp_monitoringsites_filter_client', '' );
+		}
+
+		if ( ! $get_all ) {
+			if ( ! isset( $_REQUEST['g'] ) ) {
+				if ( $get_saved_state ) {
+					$group_ids = get_option( 'mainwp_monitoringsites_filter_group' );
+				} else {
+					MainWP_Utility::update_option( 'mainwp_monitoringsites_filter_group', '' );
+				}
 			} else {
-				MainWP_Utility::update_option( 'mainwp_monitoringsites_filter_group', '' );
+				MainWP_Utility::update_option( 'mainwp_monitoringsites_filter_group', sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) );
+				$group_ids = sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ); // may be multi groups.
 			}
-		} else {
-			MainWP_Utility::update_option( 'mainwp_monitoringsites_filter_group', sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) );
-			$group_ids = sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ); // may be multi groups.
+
+			if ( ! isset( $_REQUEST['client'] ) ) {
+				if ( $get_saved_state ) {
+					$client_ids = get_user_option( 'mainwp_monitoringsites_filter_client' );
+				} else {
+					MainWP_Utility::update_user_option( 'mainwp_monitoringsites_filter_client', '' );
+				}
+			} else {
+				MainWP_Utility::update_user_option( 'mainwp_monitoringsites_filter_client', sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) );
+				$client_ids = sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ); // may be multi groups.
+			}
 		}
 
 		$where = null;
@@ -454,6 +493,29 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			if ( ! empty( $qry_group_ids ) ) {
 				$total_params['group_id'] = $qry_group_ids;
 				$params['group_id']       = $qry_group_ids;
+			}
+
+			$qry_client_ids = array();
+			if ( ! empty( $client_ids ) ) {
+				$client_ids = explode( ',', $client_ids ); // convert to array.
+				// to fix query deleted client.
+				$clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+				if ( $clients ) {
+					foreach ( $clients as $client ) {
+						if ( in_array( $client->client_id, $client_ids ) ) {
+							$qry_client_ids[] = $client->client_id;
+						}
+					}
+				}
+				// to fix.
+				if ( in_array( 'noclients', $client_ids ) ) {
+					$qry_client_ids[] = 'noclients';
+				}
+			}
+
+			if ( ! empty( $qry_client_ids ) ) {
+				$total_params['client_id'] = $qry_client_ids;
+				$params['client_id']       = $qry_client_ids;
 			}
 
 			if ( ! empty( $where ) ) {
@@ -528,7 +590,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-monitoring-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-monitoring-info-message"></i>
-				<?php echo sprintf( __( 'Monitor your sites uptime and site health.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a>' ); ?>
+				<?php echo sprintf( __( 'Monitor your sites uptime and site health.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a>' ); ?>
 			</div>
 		<?php endif; ?>
 		<table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table">
@@ -670,7 +732,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 								return $.extend( {}, d, mainwp_secure_data( {
 									action: 'mainwp_monitoring_sites_display_rows',
 									status: jQuery("#mainwp-filter-sites-status").dropdown("get value"),
-									g: jQuery("#mainwp-filter-sites-group").dropdown("get value")
+									g: jQuery("#mainwp-filter-sites-group").dropdown("get value"),
+									client: jQuery("#mainwp-filter-clients").dropdown("get value")
 								} )
 							);
 							},
@@ -766,9 +829,11 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 					<?php if ( ! $optimize ) { ?>
 						var group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
 						var status = jQuery( "#mainwp-filter-sites-status" ).dropdown( "get value" );
+						var client = jQuery("#mainwp-filter-clients").dropdown("get value");
 
 						var params = '';						
 						params += '&g=' + group;						
+						params += '&client=' + client;						
 						if ( status != '' )
 							params += '&status=' + status;
 
@@ -1007,13 +1072,29 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				?>
 				</td>
 				<?php
+			} elseif ( 'login' === $column_name ) {
+				?>
+				<td class="collapsing">
+				<a href="<?php echo 'admin.php?page=ManageClients&client_id=' . $website['client_id']; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website['client_name'] ); ?></a>
+				</td>
+				<?php
+			} elseif ( 'client_name' === $column_name ) {
+				?>
+				<td class="collapsing">
+				<a href="<?php echo 'admin.php?page=ManageClients&client_id=' . $website['client_id']; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website['client_name'] ); ?></a>
+				</td>
+				<?php
 			} elseif ( 'url' === $column_name ) {
 
 				$imgfavi = '';
 				if ( $use_favi ) {
 					$siteObj  = (object) $website;
 					$favi_url = MainWP_Connect::get_favico_url( $siteObj );
-					$imgfavi  = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
+					if ( false != $favi_url ) {
+						$imgfavi = '<img src="' . esc_attr( $favi_url ) . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
+					} else {
+						$imgfavi = '<i class="icon wordpress"></i> '; // phpcs:ignore -- Prevent modify WP icon.
+					}
 				}
 
 				?>
@@ -1161,12 +1242,22 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 									<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website['id']; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="right center"  data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
 								<?php endif; ?>
 								<?php
+							} elseif ( 'client_name' === $column_name ) {
+								?>
+								<td class="collapsing">
+								<a href="<?php echo 'admin.php?page=ManageClients&client_id=' . $website['client_id']; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website['client_name'] ); ?></a>
+								</td>
+								<?php
 							} elseif ( 'url' === $column_name ) {
 								$imgfavi = '';
 								if ( $use_favi ) {
 									$siteObj  = (object) $website;
 									$favi_url = MainWP_Connect::get_favico_url( $siteObj );
-									$imgfavi  = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
+									if ( false != $favi_url ) {
+										$imgfavi = '<img src="' . esc_attr( $favi_url ) . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
+									} else {
+										$imgfavi = '<i class="icon wordpress"></i> '; // phpcs:ignore -- Prevent modify WP icon.
+									}
 								}
 								echo $imgfavi;
 								?>

@@ -319,7 +319,6 @@ class MainWP_User {
 	 * @return void
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
-	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
@@ -330,14 +329,17 @@ class MainWP_User {
 
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Users' );
 
-		$selected_sites  = array();
-		$selected_groups = array();
+		$selected_sites   = array();
+		$selected_groups  = array();
+		$selected_clients = array();
 
 		if ( null != $cachedSearch ) {
 			if ( is_array( $cachedSearch['sites'] ) ) {
 				$selected_sites = $cachedSearch['sites'];
 			} elseif ( is_array( $cachedSearch['groups'] ) ) {
 				$selected_groups = $cachedSearch['groups'];
+			} elseif ( is_array( $cachedSearch['clients'] ) ) {
+				$selected_clients = $cachedSearch['clients'];
 			}
 		}
 
@@ -438,7 +440,18 @@ class MainWP_User {
 					do_action( 'mainwp_manage_users_before_select_sites' );
 					?>
 					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-					<div class="content active"><?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?></div>
+					<div class="content active">
+						<?php
+						$sel_params = array(
+							'selected_sites'   => $selected_sites,
+							'selected_groups'  => $selected_groups,
+							'selected_clients' => $selected_clients,
+							'class'            => 'mainwp_select_sites_box_left',
+							'show_client'      => true,
+						);
+						MainWP_UI_Select_Sites::select_sites_box( $sel_params );
+						?>
+						</div>
 					<?php
 					/**
 					 * Action: mainwp_manage_users_after_select_sites
@@ -736,10 +749,11 @@ class MainWP_User {
 	 * @param string $groups Current user groups.
 	 * @param string $sites Current Child Sites the user is on.
 	 * @param null   $search Search field.
+	 * @param mixed  $clients Current Clients's Sites the user is on.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
 	 */
-	public static function render_table( $cached = true, $role = '', $groups = '', $sites = '', $search = null ) {
+	public static function render_table( $cached = true, $role = '', $groups = '', $sites = '', $search = null, $clients = '' ) {
 
 		/**
 		 * Action: mainwp_before_users_table
@@ -769,7 +783,7 @@ class MainWP_User {
 			if ( $cached ) {
 				MainWP_Cache::echo_body( 'Users' );
 			} else {
-				self::render_table_body( $role, $groups, $sites, $search );
+				self::render_table_body( $role, $groups, $sites, $search, $clients );
 			}
 			?>
 			</tbody>
@@ -821,6 +835,7 @@ class MainWP_User {
 					"order": <?php echo $table_features['order']; ?>,
 					"scrollX" : <?php echo $table_features['scrollX']; ?>,
 					"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+					"language" : { "emptyTable": "<?php esc_html_e( 'Use the search options to find the user you want to manage.', 'mainwp' ); ?>" },
 					"columnDefs": [ {
 						"targets": 'no-sort',
 						"orderable": false
@@ -847,6 +862,7 @@ class MainWP_User {
 	 * @param string $groups Usr Group.
 	 * @param string $sites  Users Sites.
 	 * @param string $search Search field.
+	 * @param mixed  $clients Current Clients's Sites the user is on.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
 	 * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
@@ -859,12 +875,27 @@ class MainWP_User {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
-	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
+	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '', $clients = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		MainWP_Cache::init_cache( 'Users' );
 
 		$output         = new \stdClass();
 		$output->errors = array();
 		$output->users  = 0;
+
+		$data_fields = array(
+			'id',
+			'url',
+			'name',
+			'adminname',
+			'nossl',
+			'privkey',
+			'nosslkey',
+			'http_user',
+			'http_pass',
+			'ssl_version',
+			'sync_errors',
+			'users',
+		);
 
 		if ( 1 == get_option( 'mainwp_optimize' ) ) {
 
@@ -877,42 +908,14 @@ class MainWP_User {
 				}
 			}
 
+			$dbwebsites = array();
 			if ( '' != $sites ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$search_user_role = array();
 						$website          = MainWP_DB::instance()->get_website_by_id( $v );
-						$allUsers         = json_decode( $website->users, true );
-						$allUsersCount    = count( $allUsers );
-
-						if ( $check_users_role ) {
-							for ( $i = 0; $i < $allUsersCount; $i ++ ) {
-								$user = $allUsers[ $i ];
-								foreach ( $roles as $_role ) {
-									if ( stristr( $user['role'], $_role ) ) {
-										if ( ! in_array( $user['id'], $search_user_role ) ) {
-											$search_user_role[] = $user['id'];
-										}
-										break;
-									}
-								}
-							}
-						}
-
-						for ( $i = 0; $i < $allUsersCount; $i ++ ) {
-							$user = $allUsers[ $i ];
-							if ( '' != $search && ! stristr( $user['login'], trim( $search ) ) && ! stristr( $user['display_name'], trim( $search ) ) && ! stristr( $user['email'], trim( $search ) ) ) {
-								continue;
-							}
-
-							if ( $check_users_role ) {
-								if ( ! in_array( $user['id'], $search_user_role ) ) {
-									continue;
-								}
-							}
-
-							$tmpUsers       = array( $user );
-							$output->users += self::users_search_handler_renderer( $tmpUsers, $website );
+						if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+							$dbwebsites[ $website->id ] = $website;
 						}
 					}
 				}
@@ -922,41 +925,63 @@ class MainWP_User {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' != $website->sync_errors ) {
+							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 								continue;
 							}
-							$allUsers      = json_decode( $website->users, true );
-							$allUsersCount = count( $allUsers );
-							if ( $check_users_role ) {
-								for ( $i = 0; $i < $allUsersCount; $i ++ ) {
-									$user = $allUsers[ $i ];
-									foreach ( $roles as $_role ) {
-										if ( stristr( $user['role'], $_role ) ) {
-											if ( ! in_array( $user['id'], $search_user_role ) ) {
-												$search_user_role[] = $user['id'];
-											}
-											break;
-										}
-									}
-								}
-							}
-							for ( $i = 0; $i < $allUsersCount; $i ++ ) {
-								$user = $allUsers[ $i ];
-								if ( '' != $search && ! stristr( $user['login'], trim( $search ) ) && ! stristr( $user['display_name'], trim( $search ) ) && ! stristr( $user['email'], trim( $search ) ) ) {
-									continue;
-								}
-
-								if ( $check_users_role ) {
-									if ( ! in_array( $user['id'], $search_user_role ) ) {
-										continue;
-									}
-								}
-
-								$tmpUsers       = array( $user );
-								$output->users += self::users_search_handler_renderer( $tmpUsers, $website );
-							}
+							$dbwebsites[ $website->id ] = $website;
 						}
 						MainWP_DB::free_result( $websites );
+					}
+				}
+			}
+
+			if ( '' !== $clients && is_array( $clients ) ) {
+				$websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+					$clients,
+					array(
+						'select_data' => $data_fields,
+					)
+				);
+
+				foreach ( $websites as $website ) {
+					if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+						continue;
+					}
+					$dbwebsites[ $website->id ] = $website;
+				}
+			}
+
+			if ( $dbwebsites ) {
+				foreach ( $dbwebsites as $website ) {
+					$allUsers      = json_decode( $website->users, true );
+					$allUsersCount = count( $allUsers );
+					if ( $check_users_role ) {
+						for ( $i = 0; $i < $allUsersCount; $i ++ ) {
+							$user = $allUsers[ $i ];
+							foreach ( $roles as $_role ) {
+								if ( stristr( $user['role'], $_role ) ) {
+									if ( ! in_array( $user['id'], $search_user_role ) ) {
+										$search_user_role[] = $user['id'];
+									}
+									break;
+								}
+							}
+						}
+					}
+					for ( $i = 0; $i < $allUsersCount; $i ++ ) {
+						$user = $allUsers[ $i ];
+						if ( '' != $search && ! stristr( $user['login'], trim( $search ) ) && ! stristr( $user['display_name'], trim( $search ) ) && ! stristr( $user['email'], trim( $search ) ) ) {
+							continue;
+						}
+
+						if ( $check_users_role ) {
+							if ( ! in_array( $user['id'], $search_user_role ) ) {
+								continue;
+							}
+						}
+
+						$tmpUsers       = array( $user );
+						$output->users += self::users_search_handler_renderer( $tmpUsers, $website );
 					}
 				}
 			}
@@ -965,22 +990,13 @@ class MainWP_User {
 			if ( '' !== $sites ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$website                    = MainWP_DB::instance()->get_website_by_id( $v );
-						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
-							$website,
-							array(
-								'id',
-								'url',
-								'name',
-								'adminname',
-								'nossl',
-								'privkey',
-								'nosslkey',
-								'http_user',
-								'http_pass',
-								'ssl_version',
-							)
-						);
+						$website = MainWP_DB::instance()->get_website_by_id( $v );
+						if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+								$website,
+								$data_fields
+							);
+						}
 					}
 				}
 			}
@@ -989,26 +1005,35 @@ class MainWP_User {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' !== $website->sync_errors ) {
+							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 								continue;
 							}
 							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 								$website,
-								array(
-									'id',
-									'url',
-									'name',
-									'adminname',
-									'nossl',
-									'privkey',
-									'nosslkey',
-									'http_user',
-									'http_pass',
-									'ssl_version',
-								)
+								$data_fields
 							);
 						}
 						MainWP_DB::free_result( $websites );
+					}
+				}
+			}
+
+			if ( '' !== $clients && is_array( $clients ) ) {
+				$websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+					$clients,
+					array(
+						'select_data' => $data_fields,
+					)
+				);
+				if ( $websites ) {
+					foreach ( $websites as $website ) {
+						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							continue;
+						}
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+							$website,
+							$data_fields
+						);
 					}
 				}
 			}
@@ -1039,6 +1064,7 @@ class MainWP_User {
 				'status'  => ( isset( $_POST['role'] ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : 'administrator' ),
 				'sites'   => '' !== $sites ? $sites : '',
 				'groups'  => '' !== $groups ? $groups : '',
+				'clients' => ( '' !== $clients ) ? $clients : '',
 			)
 		);
 
@@ -1249,6 +1275,11 @@ class MainWP_User {
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
+
+		if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
+			die( wp_json_encode( array( 'error' => __( 'The child site has been suspended.', 'mainwp' ) ) ) );
+		}
+
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			die( wp_json_encode( array( 'error' => __( 'You can not edit this website!', 'mainwp' ) ) ) );
 		}
@@ -1336,8 +1367,6 @@ class MainWP_User {
 
 	/**
 	 * Renders the Add New user form.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render_bulk_add() {
 
@@ -1509,7 +1538,14 @@ class MainWP_User {
 						do_action( 'mainwp_add_new_user_before_select_sites' );
 						?>
 						<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-						<div class="content active"><?php MainWP_UI::select_sites_box(); ?></div>
+						<div class="content active">
+							<?php
+							$sel_params = array(
+								'show_client' => true,
+							);
+							MainWP_UI_Select_Sites::select_sites_box( $sel_params );
+							?>
+							</div>
 						<?php
 						/**
 						 * Action: mainwp_add_new_user_after_select_sites
@@ -1677,14 +1713,15 @@ class MainWP_User {
 		$errorFields = array();
 
 		if ( isset( $_POST['select_by'] ) ) {
-			$selected_sites  = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
-			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
+			$selected_sites   = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
+			$selected_groups  = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
+			$selected_clients = ( isset( $_POST['selected_clients'] ) && is_array( $_POST['selected_clients'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_clients'] ) ) : array();
 
-			if ( ( 'group' === $_POST['select_by'] && 0 == count( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && 0 == count( $selected_sites ) ) ) {
-				$errors[] = __( 'Please select at least one website or group.', 'mainwp' );
+			if ( ( 'group' === $_POST['select_by'] && 0 == count( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && 0 == count( $selected_sites ) ) || ( 'client' === $_POST['select_by'] && 0 == count( $selected_clients ) ) ) {
+				$errors[] = __( 'Please select at least one website or group or client.', 'mainwp' );
 			}
 		} else {
-			$errors[] = __( 'Please select at least one website or group.', 'mainwp' );
+			$errors[] = __( 'Please select at least one website or group or client.', 'mainwp' );
 		}
 
 		if ( ! isset( $_POST['user_login'] ) || '' === $_POST['user_login'] ) {
@@ -1709,6 +1746,20 @@ class MainWP_User {
 			$errorFields[] = 'role';
 		}
 
+		$data_fields = array(
+			'id',
+			'url',
+			'name',
+			'adminname',
+			'nossl',
+			'privkey',
+			'nosslkey',
+			'http_user',
+			'http_pass',
+			'ssl_version',
+			'sync_errors',
+		);
+
 		if ( ( 0 == count( $errors ) ) && ( 0 == count( $errorFields ) ) ) {
 			$user_to_add = array(
 				'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',
@@ -1725,21 +1776,31 @@ class MainWP_User {
 			if ( isset( $_POST['select_by'] ) && 'site' === $_POST['select_by'] ) {
 				foreach ( $selected_sites as $k ) {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
-						$website                    = MainWP_DB::instance()->get_website_by_id( $k );
+						$website = MainWP_DB::instance()->get_website_by_id( $k );
+						if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+								$website,
+								$data_fields
+							);
+						}
+					}
+				}
+			} elseif ( isset( $_POST['select_by'] ) && 'client' === $_POST['select_by'] ) {
+				$websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+					$selected_clients,
+					array(
+						'select_data' => $data_fields,
+					)
+				);
+
+				if ( $websites ) {
+					foreach ( $websites as $website ) {
+						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							continue;
+						}
 						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 							$website,
-							array(
-								'id',
-								'url',
-								'name',
-								'adminname',
-								'nossl',
-								'privkey',
-								'nosslkey',
-								'http_user',
-								'http_pass',
-								'ssl_version',
-							)
+							$data_fields
 						);
 					}
 				}
@@ -1748,20 +1809,12 @@ class MainWP_User {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
 						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+								continue;
+							}
 							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 								$website,
-								array(
-									'id',
-									'url',
-									'name',
-									'adminname',
-									'nossl',
-									'privkey',
-									'nosslkey',
-									'http_user',
-									'http_pass',
-									'ssl_version',
-								)
+								$data_fields
 							);
 						}
 						MainWP_DB::free_result( $websites );
@@ -2045,6 +2098,21 @@ class MainWP_User {
 		$selected_sites  = ( isset( $_POST['select_sites'] ) && is_array( $_POST['select_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_sites'] ) ) : array();
 		$selected_groups = ( isset( $_POST['select_groups'] ) && is_array( $_POST['select_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_groups'] ) ) : array();
 
+		$data_fields = array(
+			'id',
+			'url',
+			'name',
+			'adminname',
+			'nossl',
+			'privkey',
+			'nosslkey',
+			'http_user',
+			'http_pass',
+			'ssl_version',
+			'sync_errors',
+			'users',
+		);
+
 		$user_to_add = array(
 			'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',
 			'user_login' => isset( $_POST['user_login'] ) ? sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) : '',
@@ -2064,20 +2132,12 @@ class MainWP_User {
 				if ( ! empty( $url ) ) {
 					$website = MainWP_DB::instance()->get_websites_by_url( $url );
 					if ( $website ) {
+						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							continue;
+						}
 						$dbwebsites[ $website[0]->id ] = MainWP_Utility::map_site(
 							$website[0],
-							array(
-								'id',
-								'url',
-								'name',
-								'adminname',
-								'nossl',
-								'privkey',
-								'nosslkey',
-								'http_user',
-								'http_pass',
-								'ssl_version',
-							)
+							$data_fields
 						);
 					} else {
 						$not_valid[]  = __( 'Unexisting website. Please try again.', 'mainwp' ) . ' ' . $url;
@@ -2091,20 +2151,12 @@ class MainWP_User {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_name( $group ) );
 					if ( $websites ) {
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+								continue;
+							}
 							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 								$website,
-								array(
-									'id',
-									'url',
-									'name',
-									'adminname',
-									'nossl',
-									'privkey',
-									'nosslkey',
-									'http_user',
-									'http_pass',
-									'ssl_version',
-								)
+								$data_fields
 							);
 						}
 						MainWP_DB::free_result( $websites );

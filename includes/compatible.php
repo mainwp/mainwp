@@ -168,3 +168,17 @@ if ( ! class_exists( 'MainWP_Extensions_View' ) ) {
 		}
 	}
 }
+
+
+/**
+ * To compatible with php version < 7.3.0.
+ */
+if ( ! function_exists( 'array_key_first' ) ) {
+	function array_key_first( array $arr ) {
+		foreach ( $arr as $key => $unused ) {
+			return $key;
+		}
+		return null;
+	}
+}
+

@@ -189,6 +189,30 @@ class MainWP_Post_Page_Handler {
 			}
 
 			$websites = MainWP_DB::instance()->get_websites_by_group_ids( $groupIdsRequested );
+		} elseif ( isset( $_REQUEST['clients'] ) && ( '' !== $_REQUEST['clients'] ) ) {
+			$clientIds          = explode( ',', sanitize_text_field( wp_unslash( urldecode( $_REQUEST['clients'] ) ) ) );  // sanitize ok.
+			$clientIdsRequested = array();
+			foreach ( $clientIds as $clientId ) {
+
+				if ( ! MainWP_Utility::ctype_digit( $clientId ) ) {
+					continue;
+				}
+				$clientIdsRequested[] = $clientId;
+			}
+
+			$data_fields = array(
+				'id',
+				'url',
+				'name',
+				'categories',
+				'sync_errors',
+			);
+			$websites    = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+				$clientIdsRequested,
+				array(
+					'select_data' => $data_fields,
+				)
+			);
 		}
 
 		$selectedCategories  = array();
@@ -437,17 +461,19 @@ class MainWP_Post_Page_Handler {
 		$_post = get_post( $id );
 
 		if ( $_post ) {
-			$selected_by     = 'site';
-			$selected_groups = array();
-			$selected_sites  = array();
+			$selected_by      = 'site';
+			$selected_groups  = array();
+			$selected_sites   = array();
+			$selected_clients = array();
 
 			if ( 'posting' == $what || 'preparing' == $what ) {
-				$selected_by     = get_post_meta( $id, '_selected_by', true );
-				$val             = get_post_meta( $id, '_selected_sites', true );
-				$selected_sites  = MainWP_System_Utility::maybe_unserialyze( $val );
-				$val             = get_post_meta( $id, '_selected_groups', true );
-				$selected_groups = MainWP_System_Utility::maybe_unserialyze( $val );
-				$selected_by     = apply_filters( 'mainwp_posting_post_selected_by', $selected_by, $id );
+				$selected_by      = get_post_meta( $id, '_selected_by', true );
+				$val              = get_post_meta( $id, '_selected_sites', true );
+				$selected_sites   = MainWP_System_Utility::maybe_unserialyze( $val );
+				$val              = get_post_meta( $id, '_selected_groups', true );
+				$selected_groups  = MainWP_System_Utility::maybe_unserialyze( $val );
+				$selected_clients = get_post_meta( $id, '_selected_clients', true );
+				$selected_by      = apply_filters( 'mainwp_posting_post_selected_by', $selected_by, $id );
 			} elseif ( 'ajax_posting' == $what ) {
 				$site_id = $_POST['site_id'] ? $_POST['site_id'] : 0;
 				if ( $site_id ) {
@@ -455,8 +481,9 @@ class MainWP_Post_Page_Handler {
 				}
 			}
 
-			$selected_sites  = apply_filters( 'mainwp_posting_post_selected_sites', $selected_sites, $id );
-			$selected_groups = apply_filters( 'mainwp_posting_selected_groups', $selected_groups, $id );
+			$selected_sites   = apply_filters( 'mainwp_posting_post_selected_sites', $selected_sites, $id );
+			$selected_groups  = apply_filters( 'mainwp_posting_selected_groups', $selected_groups, $id );
+			$selected_clients = apply_filters( 'mainwp_posting_selected_clients', $selected_clients, $id );
 
 			if ( 'preparing' != $what ) {
 				$post_category = base64_decode( get_post_meta( $id, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
@@ -476,10 +503,10 @@ class MainWP_Post_Page_Handler {
 							$post_gallery_images[] = array(
 								'id'          => $attachment_id,
 								'alt'         => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
-								'caption'     => $attachment->post_excerpt,
+								'caption'     => htmlspecialchars( $attachment->post_excerpt ),
 								'description' => $attachment->post_content,
 								'src'         => $attachment->guid,
-								'title'       => $attachment->post_title,
+								'title'       => htmlspecialchars( $attachment->post_title ),
 							);
 						}
 					}
@@ -508,14 +535,14 @@ class MainWP_Post_Page_Handler {
 				 */
 				$post_status = apply_filters( 'mainwp_posting_bulkpost_post_status', $post_status, $id );
 				$new_post    = array(
-					'post_title'     => $_post->post_title,
+					'post_title'     => htmlspecialchars( $_post->post_title ),
 					'post_content'   => $_post->post_content,
 					'post_status'    => $post_status,
 					'post_date'      => $_post->post_date,
 					'post_date_gmt'  => $_post->post_date_gmt,
 					'post_tags'      => $post_tags,
 					'post_name'      => $post_slug,
-					'post_excerpt'   => $_post->post_excerpt,
+					'post_excerpt'   => htmlspecialchars( $_post->post_excerpt ),
 					'post_password'  => $_post->post_password,
 					'comment_status' => $_post->comment_status,
 					'ping_status'    => $_post->ping_status,
@@ -528,59 +555,62 @@ class MainWP_Post_Page_Handler {
 					$attachment          = get_post( $featured_image_id );
 					$featured_image_data = array(
 						'alt'         => get_post_meta( $featured_image_id, '_wp_attachment_image_alt', true ),
-						'caption'     => $attachment->post_excerpt,
+						'caption'     => htmlspecialchars( $attachment->post_excerpt ),
 						'description' => $attachment->post_content,
-						'title'       => $attachment->post_title,
+						'title'       => htmlspecialchars( $attachment->post_title ),
 					);
 				}
 			}
+
+			$data_fields = array(
+				'id',
+				'url',
+				'name',
+				'adminname',
+				'nossl',
+				'privkey',
+				'nosslkey',
+				'http_user',
+				'http_pass',
+				'ssl_version',
+				'sync_errors',
+			);
 
 			$dbwebsites = array();
 
 			if ( 'site' === $selected_by ) {
 				foreach ( $selected_sites as $k ) {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
-						$website                    = MainWP_DB::instance()->get_website_by_id( $k );
-						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
-							$website,
-							array(
-								'id',
-								'url',
-								'name',
-								'adminname',
-								'nossl',
-								'privkey',
-								'nosslkey',
-								'http_user',
-								'http_pass',
-								'ssl_version',
-							)
-						);
+						$website = MainWP_DB::instance()->get_website_by_id( $k );
+						if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+							$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
+						}
 					}
 				}
-			} else {
+			} elseif ( 'client' === $selected_by ) {
+				$websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+					$selected_clients,
+					array(
+						'select_data' => $data_fields,
+					)
+				);
+				if ( $websites ) {
+					foreach ( $websites as $website ) {
+						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							continue;
+						}
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
+					}
+				}
+			} elseif ( 'group' === $selected_by ) {
 				foreach ( $selected_groups as $k ) {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
 						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
 						while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' !== $website->sync_errors ) {
+							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 								continue;
 							}
-							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
-								$website,
-								array(
-									'id',
-									'url',
-									'name',
-									'adminname',
-									'nossl',
-									'privkey',
-									'nosslkey',
-									'http_user',
-									'http_pass',
-									'ssl_version',
-								)
-							);
+							$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
 						}
 						MainWP_DB::free_result( $websites );
 					}

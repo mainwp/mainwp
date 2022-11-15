@@ -311,6 +311,21 @@ class MainWP_Api_Manager_Key {
 		$response = wp_remote_retrieve_body( $request );
 		return $response;
 	}
+
+	/**
+	 * Get decrypt master api key.
+	 *
+	 * @return array Request response.
+	 */
+	public function get_decrypt_master_api_key() {
+		$decryp_api_key   = '';
+		$enscrypt_api_key = get_option( 'mainwp_extensions_master_api_key', false );
+		if ( false !== $enscrypt_api_key ) {
+			$decryp_api_key = ! empty( $enscrypt_api_key ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_api_key ) : '';
+		}
+		return $decryp_api_key;
+	}
+
 }
 
 // Class is instantiated as an object by other classes on-demand.

@@ -35,8 +35,16 @@ class MainWP_Manage_Sites_Handler {
 	 */
 	public static function check_site() {
 		$url = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
+		$url = urldecode( $url );
 
-		if ( 0 !== strpos( $url, 'http://' ) && 0 !== strpos( $url, 'https://' ) ) { // to fix: valid url to check.
+		$invalid = false;
+		$info    = wp_parse_url( $url );
+
+		if ( is_array( $info ) && ! empty( $info['port'] ) && ( 21 === intval( $info['port'] ) || 22 === intval( $info['port'] ) ) ) { // port 21, 22.
+			$invalid = true;
+		}
+
+		if ( $invalid || 0 !== strpos( $url, 'http://' ) && 0 !== strpos( $url, 'https://' ) || false !== strpos( $url, '?=' ) ) { // to fix: valid url to check.
 			die( wp_json_encode( array( 'error' => __( 'Invalid URL! Please enter valid URL to the Site URL field.', 'mainwp' ) ) ) );
 		}
 

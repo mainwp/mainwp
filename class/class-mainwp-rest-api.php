@@ -196,6 +196,11 @@ class Rest_Api {
 				'callback' => 'get-sites-by-url',
 			),
 			array(
+				'route'    => 'sites',
+				'method'   => 'GET',
+				'callback' => 'get-sites-by-client',
+			),
+			array(
 				'route'    => 'site',
 				'method'   => 'GET',
 				'callback' => 'site',
@@ -419,6 +424,21 @@ class Rest_Api {
 				'route'    => 'updates',
 				'method'   => 'POST',
 				'callback' => 'unignore-update',
+			),
+			array(
+				'route'    => 'client',
+				'method'   => 'POST',
+				'callback' => 'add-client',
+			),
+			array(
+				'route'    => 'client',
+				'method'   => 'PUT',
+				'callback' => 'edit-client',
+			),
+			array(
+				'route'    => 'clients',
+				'method'   => 'GET',
+				'callback' => 'all-clients',
 			),
 		);
 
@@ -1076,6 +1096,58 @@ class Rest_Api {
 		return $response;
 	}
 
+	/**
+	 * Method mainwp_rest_api_get_sites_by_client_callback()
+	 *
+	 * Callback function for managing the response to API requests made for the endpoint: get-sites-by-client
+	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/sites/get-sites-by-client
+	 * API Method: GET
+	 *
+	 * @param array $request The request made in the API call which includes all parameters.
+	 *
+	 * @return object $response An object that contains the return data and status of the API request.
+	 */
+	public function mainwp_rest_api_get_sites_by_client_callback( $request ) {
+
+		// first validate the request.
+		if ( $this->mainwp_validate_request( $request ) ) {
+
+			$params = array(
+				'full_data'    => true,
+				'selectgroups' => ( isset( $request['selectgroups'] ) && 'yes' === $request['selectgroups'] ) ? true : false,
+			);
+
+			$format           = isset( $request['format'] ) ? $request['format'] : 'array';
+			$params['format'] = $format;
+
+			if ( isset( $request['client'] ) && ! empty( $request['client'] ) ) {
+				$params['client'] = rawurldecode( $request['client'] );
+			}
+
+			// get data.
+			$data = MainWP_DB::instance()->get_websites_for_current_user( $params );
+
+			$result = $data;
+
+			if ( 'array' == $format ) {
+				if ( is_array( $data ) ) {
+					$result = array(
+						'data' => $data,
+					);
+				}
+			}
+
+			$response = new \WP_REST_Response( $result );
+			$response->set_status( 200 );
+
+		} else {
+			// throw common error.
+			$response = $this->mainwp_authentication_error();
+		}
+
+		return $response;
+	}
+
 
 	/**
 	 * Method mainwp_rest_api_site_callback()
@@ -1159,7 +1231,8 @@ class Rest_Api {
 
 					// get data.
 					$website = MainWP_DB::instance()->get_website_by_id( $site_id );
-					$data    = json_decode( MainWP_DB::instance()->get_website_option( $website, 'site_info' ), true );
+					$data    = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
+					$data    = ( '' != $data ) ? json_decode( $data, true ) : array();
 
 					$response = new \WP_REST_Response( $data );
 					$response->set_status( 200 );
@@ -1732,8 +1805,10 @@ class Rest_Api {
 					$site_id = $request['site_id'];
 
 					// get data.
-					$website              = MainWP_DB::instance()->get_website_by_id( $site_id );
-					$wp_upgrades          = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
+					$website     = MainWP_DB::instance()->get_website_by_id( $site_id );
+					$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
+					$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+
 					$plugin_upgrades      = json_decode( $website->plugin_upgrades, true );
 					$theme_upgrades       = json_decode( $website->theme_upgrades, true );
 					$translation_upgrades = json_decode( $website->translation_upgrades, true );
@@ -1791,7 +1866,9 @@ class Rest_Api {
 					$plugins      = json_decode( $website->plugin_upgrades, true );
 					$themes       = json_decode( $website->theme_upgrades, true );
 					$translations = json_decode( $website->translation_upgrades, true );
-					$wp           = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
+					$wp           = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
+					$wp = ( '' != $wp ) ? json_decode( $wp, true ) : array();
+					
 					if ( count( $wp ) > 0 ) {
 						$wp = 1;
 					} else {
@@ -1850,7 +1927,8 @@ class Rest_Api {
 
 					// get data.
 					$website = MainWP_DB::instance()->get_website_by_id( $site_id );
-					$data    = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
+					$data    = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
+					$data = ( '' != $data ) ? json_decode( $data, true ) : array();
 
 					$response = new \WP_REST_Response( $data );
 					$response->set_status( 200 );
@@ -1896,7 +1974,9 @@ class Rest_Api {
 
 					// get data.
 					$website = MainWP_DB::instance()->get_website_by_id( $site_id );
-					$plugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
+					$plugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
+					$plugins = ( '' != $plugins ) ? json_decode( $plugins, true ) : array();
+
 					$data    = array(
 						'count' => count( $plugins ),
 					);
@@ -1945,7 +2025,8 @@ class Rest_Api {
 
 					// get data.
 					$website = MainWP_DB::instance()->get_website_by_id( $site_id );
-					$data    = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
+					$data    = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
+					$data = ( '' != $data ) ? json_decode( $data, true ) : array();
 
 					$response = new \WP_REST_Response( $data );
 					$response->set_status( 200 );
@@ -1991,7 +2072,9 @@ class Rest_Api {
 
 					// get data.
 					$website = MainWP_DB::instance()->get_website_by_id( $site_id );
-					$themes  = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
+					$themes  = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
+					$themes = ( '' != $themes ) ? json_decode( $themes, true ) : array();
+
 					$data    = array(
 						'count' => count( $themes ),
 					);
@@ -2896,7 +2979,9 @@ class Rest_Api {
 			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( true ) );
 
 			while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-				$wp_upgrades                 = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
+				$wp_upgrades                 = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
+				$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+				
 				$plugin_upgrades             = json_decode( $website->plugin_upgrades, true );
 				$theme_upgrades              = json_decode( $website->theme_upgrades, true );
 				$translation_upgrades        = json_decode( $website->translation_upgrades, true );
@@ -3239,6 +3324,109 @@ class Rest_Api {
 
 		return $response;
 	}
-}
 
+	/**
+	 * Method mainwp_rest_api_add_client_callback()
+	 *
+	 * Callback function for managing the response to API requests made for the endpoint: add-client
+	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/client/add-client
+	 * API Method: POST
+	 *
+	 * @param array $request The request made in the API call which includes all parameters.
+	 *
+	 * @return object $response An object that contains the return data and status of the API request.
+	 */
+	public function mainwp_rest_api_add_client_callback( $request ) {
+
+		// first validate the request.
+		if ( $this->mainwp_validate_request( $request ) ) {
+
+			// get data.
+			$fields = $request->get_json_params();
+
+			$data = MainWP_Client_Handler::rest_api_add_client( $fields );
+
+			$response = new \WP_REST_Response( $data );
+			$response->set_status( 200 );
+
+		} else {
+			// throw common error.
+			$response = $this->mainwp_authentication_error();
+		}
+
+		return $response;
+	}
+
+
+	/**
+	 * Method mainwp_rest_api_edit_client_callback()
+	 *
+	 * Callback function for managing the response to API requests made for the endpoint: edit-client
+	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/client/edit-client
+	 * API Method: POST
+	 *
+	 * @param array $request The request made in the API call which includes all parameters.
+	 *
+	 * @return object $response An object that contains the return data and status of the API request.
+	 */
+	public function mainwp_rest_api_edit_client_callback( $request ) {
+
+		// first validate the request.
+		if ( $this->mainwp_validate_request( $request ) ) {
+
+			// get data.
+			$fields = $request->get_json_params();
+
+			$data = MainWP_Client_Handler::rest_api_add_client( $fields, true );
+
+			$response = new \WP_REST_Response( $data );
+			$response->set_status( 200 );
+
+		} else {
+			// throw common error.
+			$response = $this->mainwp_authentication_error();
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Method mainwp_rest_api_all_clients_callback()
+	 *
+	 * Callback function for managing the response to API requests made for the endpoint: all-clients
+	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/clients/all-clients
+	 * API Method: GET
+	 *
+	 * @param array $request The request made in the API call which includes all parameters.
+	 *
+	 * @return object $response An object that contains the return data and status of the API request.
+	 */
+	public function mainwp_rest_api_all_clients_callback( $request ) {
+
+		// first validate the request.
+		if ( $this->mainwp_validate_request( $request ) ) {
+
+			$params = array(
+				'client'        => isset( $request['client'] ) ? $request['client'] : '',
+				'custom_fields' => isset( $request['custom_fields'] ) && 'yes' == $request['custom_fields'] ? true : false,
+			);
+
+			// get data.
+			$data = MainWP_DB_Client::instance()->get_wp_clients( $params );
+
+			$result = array(
+				'data' => $data,
+			);
+
+			$response = new \WP_REST_Response( $result );
+			$response->set_status( 200 );
+
+		} else {
+			// throw common error.
+			$response = $this->mainwp_authentication_error();
+		}
+
+		return $response;
+	}
+}
 // End of class.

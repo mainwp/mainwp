@@ -46,21 +46,22 @@ class MainWP_Manage_Screenshots {
 	 * Render manage sites table top.
 	 */
 	public function render_manage_sites_table_top() {
-		$selected_group = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
-		$is_not         = isset( $_REQUEST['isnot'] ) && ( 'yes' == $_REQUEST['isnot'] ) ? true : false;
+		$selected_status = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
+		$selected_group  = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
+		$selected_client = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
+		$is_not          = isset( $_REQUEST['isnot'] ) && ( 'yes' == $_REQUEST['isnot'] ) ? true : false;
 
 		if ( ! isset( $_REQUEST['g'] ) ) {
-			$selected_group = get_user_option( 'mainwp_screenshots_filter_group' );
-			$is_not         = get_user_option( 'mainwp_screenshots_filter_is_not' );
+			$selected_status = get_user_option( 'mainwp_screenshots_filter_status', '' );
+			$selected_group  = get_user_option( 'mainwp_screenshots_filter_group', '' );
+			$selected_client = get_user_option( 'mainwp_screenshots_filter_client', '' );
+			$is_not          = get_user_option( 'mainwp_screenshots_filter_is_not', '' );
 		}
 
 		?>
 		<div class="ui grid">
-			<div class="equal width row ui mini form">
-			<div class="middle aligned column">
-					<input type="text" id="mainwp-screenshots-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>">
-				</div>
-				<div class="right aligned middle aligned column">
+			<div class="row ui mini form" id="mainwp-sites-filters-row">
+				<div class="sixteen wide left aligned middle aligned column">
 				<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
 					<div class="ui selection dropdown" id="mainwp_is_not_site">
 							<input type="hidden" value="<?php echo $is_not ? 'yes' : ''; ?>">
@@ -74,7 +75,7 @@ class MainWP_Manage_Screenshots {
 						<div id="mainwp-filter-sites-group" class="ui multiple selection dropdown">
 							<input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
 							<i class="dropdown icon"></i>
-							<div class="default text"><?php esc_html_e( 'All groups', 'mainwp' ); ?></div>
+							<div class="default text"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
 							<div class="menu">
 								<?php
 								$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
@@ -84,25 +85,75 @@ class MainWP_Manage_Screenshots {
 									<?php
 								}
 								?>
-								<div class="item" data-value="nogroups"><?php esc_html_e( 'No Groups', 'mainwp' ); ?></div>
+								<div class="item" data-value="nogroups"><?php esc_html_e( 'No Tags', 'mainwp' ); ?></div>
+							</div>
+						</div>
+						<div class="ui selection dropdown" id="mainwp-filter-sites-status">
+							<input type="hidden" value="<?php echo esc_html( $selected_status ); ?>">
+							<div class="default text"><?php esc_html_e( 'All statuses', 'mainwp' ); ?></div>
+							<i class="dropdown icon"></i>
+							<div class="menu">
+								<div class="item" data-value="all" ><?php esc_html_e( 'All statuses', 'mainwp' ); ?></div>
+								<div class="item" data-value="connected"><?php esc_html_e( 'Connected', 'mainwp' ); ?></div>
+								<div class="item" data-value="disconnected"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></div>
+								<div class="item" data-value="update"><?php esc_html_e( 'Available update', 'mainwp' ); ?></div>
+								<div class="item" data-value="nosslenabled"><?php esc_html_e( 'No SSL Enabled', 'mainwp' ); ?></div>
+								<div class="item" data-value="sitehealthnotgood"><?php esc_html_e( 'Site Health Not Good', 'mainwp' ); ?></div>
+								<div class="item" data-value="phpver7"><?php esc_html_e( 'PHP Ver < 7.0', 'mainwp' ); ?></div>
+								<div class="item" data-value="suspended"><?php esc_html_e( 'Suspended', 'mainwp' ); ?></div>
+							</div>
+						</div>
+						<div id="mainwp-filter-clients" class="ui selection multiple dropdown">
+							<input type="hidden" value="<?php echo esc_html( $selected_client ); ?>">
+							<i class="dropdown icon"></i>
+							<div class="default text"><?php esc_html_e( 'All clients', 'mainwp' ); ?></div>
+							<div class="menu">
+								<?php
+								$clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+								foreach ( $clients as $client ) {
+									?>
+									<div class="item" data-value="<?php echo $client->client_id; ?>"><?php echo esc_html( stripslashes( $client->name ) ); ?></div>
+									<?php
+								}
+								?>
+								<div class="item" data-value="noclients"><?php esc_html_e( 'No Client', 'mainwp' ); ?></div>
 							</div>
 						</div>
 						<button onclick="mainwp_screenshots_sites_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
+				</div>
+				</div>
+			<div class="row ui mini form">
+				<div class="five wide middle aligned column">
+					<input type="text" id="mainwp-screenshots-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>">
+				</div>
+				<div class="ten wide right aligned middle aligned column">
+
+				</div>
+				<div class="one wide right aligned middle aligned column">
+					<?php MainWP_Manage_Sites_List_Table::render_page_navigation_left_items(); ?>
 				</div>
 			</div>
 		</div>
 		<script type="text/javascript">
 				mainwp_screenshots_sites_filter = function() {
-					var group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
-					var isNot = jQuery("#mainwp_is_not_site").dropdown("get value");
-					var params = '';
-					params += '&g=' + group;
-					if ( 'yes' == isNot ){
-						params += '&isnot=yes';
-					}
-					window.location = 'admin.php?page=managesites' + params;
-					return false;
-				};
+						var group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
+						var status = jQuery( "#mainwp-filter-sites-status" ).dropdown( "get value" );
+						var isNot = jQuery("#mainwp_is_not_site").dropdown("get value");
+						var client = jQuery("#mainwp-filter-clients").dropdown("get value");
+						var params = '';						
+						params += '&g=' + group;						
+						params += '&client=' + client;						
+						if ( status != '' ) {
+							params += '&status=' + status;
+						}
+						if ( 'yes' == isNot ){
+							params += '&isnot=yes';
+						}
+						console.log(params);
+						window.location = 'admin.php?page=managesites' + params;
+						return false;
+				};	
+
 
 				jQuery( document ).on( 'keyup', '#mainwp-screenshots-sites-filter', function () {
 					var filter = jQuery(this).val().toLowerCase();
@@ -148,14 +199,15 @@ class MainWP_Manage_Screenshots {
 
 		MainWP_DB::data_seek( $websites, 0 );
 
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
+
 		?>
+
 		<div id="mainwp-screenshots-sites" class="ui segment">
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-grid-view-mode-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-grid-view-mode-info-message"></i>
-				<div><strong><?php echo __( 'Sites view mode is an experimental feature.', 'mainwp' ); ?></strong></div>
 				<div><?php echo __( 'In the Grid mode, sites options are limited in comparison to the Table mode.', 'mainwp' ); ?></div>
-				<div><?php echo __( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you a preview of URLs.', 'mainwp' ); ?></div>
 		</div>
 			<?php endif; ?>
 		<?php
@@ -169,34 +221,182 @@ class MainWP_Manage_Screenshots {
 		$cards_per_row = apply_filters( 'mainwp_cards_per_row', 'five' );
 		?>
 		<div id="mainwp-sites-previews">
+			<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
 				<div class="ui <?php echo $cards_per_row; ?> cards" >
 					<?php
 					while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
+						$hasSyncErrors = ( '' !== $website->sync_errors );
+						$suspendedSite = ( '0' !== $website->suspended );
+
+						$status_color   = '';
+						$status_icon    = '';
+						$status_tooltip = '';
+
+						if ( $hasSyncErrors ) {
+							$status_color   = 'red';
+							$status_icon    = 'unlink';
+							$status_tooltip = __( 'Disconnected', 'mainwp' );
+						} elseif ( $suspendedSite ) {
+							$status_color   = 'yellow';
+							$status_icon    = 'pause';
+							$status_tooltip = __( 'Suspended', 'mainwp' );
+						} else {
+							$status_color   = 'green';
+							$status_icon    = 'check';
+							$status_tooltip = __( 'Connected', 'mainwp' );
+						}
+
+						$total_wp_upgrades     = 0;
+						$total_plugin_upgrades = 0;
+						$total_theme_upgrades  = 0;
+
+						$site_options = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'premium_upgrades' ) );
+						$wp_upgrades  = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
+
+						if ( $website->is_ignoreCoreUpdates ) {
+							$wp_upgrades = array();
+						}
+
+						if ( is_array( $wp_upgrades ) && 0 < count( $wp_upgrades ) ) {
+							$total_wp_upgrades ++;
+						}
+
+						$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
+
+						if ( $website->is_ignorePluginUpdates ) {
+							$plugin_upgrades = array();
+						}
+
+						$theme_upgrades = json_decode( $website->theme_upgrades, true );
+
+						if ( $website->is_ignoreThemeUpdates ) {
+							$theme_upgrades = array();
+						}
+
+						$decodedPremiumUpgrades = isset( $site_options['premium_upgrades'] ) ? json_decode( $site_options['premium_upgrades'], true ) : array();
+
+						if ( is_array( $decodedPremiumUpgrades ) ) {
+							foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+								$premiumUpgrade['premium'] = true;
+
+								if ( 'plugin' === $premiumUpgrade['type'] ) {
+									if ( ! is_array( $plugin_upgrades ) ) {
+										$plugin_upgrades = array();
+									}
+									if ( ! $website->is_ignorePluginUpdates ) {
+										$plugin_upgrades[ $crrSlug ] = $premiumUpgrade;
+									}
+								} elseif ( 'theme' === $premiumUpgrade['type'] ) {
+									if ( ! is_array( $theme_upgrades ) ) {
+										$theme_upgrades = array();
+									}
+									if ( ! $website->is_ignoreThemeUpdates ) {
+										$theme_upgrades[ $crrSlug ] = $premiumUpgrade;
+									}
+								}
+							}
+						}
+
+						if ( is_array( $plugin_upgrades ) ) {
+
+							$ignored_plugins = json_decode( $website->ignored_plugins, true );
+							if ( is_array( $ignored_plugins ) ) {
+								$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+							}
+
+							$ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
+							if ( is_array( $ignored_plugins ) ) {
+								$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+							}
+
+							$total_plugin_upgrades += count( $plugin_upgrades );
+						}
+
+						if ( is_array( $theme_upgrades ) ) {
+
+							$ignored_themes = json_decode( $website->ignored_themes, true );
+							if ( is_array( $ignored_themes ) ) {
+								$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+							}
+
+							$ignored_themes = json_decode( $userExtension->ignored_themes, true );
+							if ( is_array( $ignored_themes ) ) {
+								$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+							}
+
+							$total_theme_upgrades += count( $theme_upgrades );
+						}
+
+						$total_updates = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
+
+						if ( 5 < $total_updates ) {
+							$a_color = 'red';
+						} elseif ( 0 < $total_updates && 5 >= $total_updates ) {
+							$a_color = 'yellow';
+						} else {
+							$a_color = 'green';
+						}
+
+						if ( 5 < $total_wp_upgrades ) {
+							$w_color = 'red';
+						} elseif ( 0 < $total_wp_upgrades && 5 >= $total_wp_upgrades ) {
+							$w_color = 'yellow';
+						} else {
+							$w_color = 'green';
+						}
+
+						if ( 5 < $total_plugin_upgrades ) {
+							$p_color = 'red';
+						} elseif ( 0 < $total_plugin_upgrades && 5 >= $total_plugin_upgrades ) {
+							$p_color = 'yellow';
+						} else {
+							$p_color = 'green';
+						}
+
+						if ( 5 < $total_theme_upgrades ) {
+							$t_color = 'red';
+						} elseif ( 0 < $total_theme_upgrades && 5 >= $total_theme_upgrades ) {
+							$t_color = 'yellow';
+						} else {
+							$t_color = 'green';
+						}
 
 						?>
+
 					<div class="card" site-url="<?php echo $website->url; ?>">
-						<div class="image">
+							<div class="image" data-tooltip="<?php echo esc_attr( $status_tooltip ); ?>" data-position="top center" data-inverted="">
 							<img data-src="//s0.wordpress.com/mshots/v1/<?php echo rawurlencode( $website->url ); ?>?w=900">
 						</div>
+							<div class="ui <?php echo $status_color; ?> corner label">
+								<i class="<?php echo $status_icon; ?> icon"></i>
+							</div>
 						<div class="content">
-						<h5 class="ui small header"><?php echo $website->name; ?></h5>
-						<div class="meta">
+								<h5 class="ui small header">
+									<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php echo esc_attr( 'Go to WP Admin', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php echo $website->name; ?></a>
+									<div class="sub header" style="font-size:11px"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo $website->url; ?></a></div>
+								</h5>
 						</div>
-						<div class="description">
-							<?php echo $website->note; ?>
+							<?php if ( isset( $website->client_id ) && '0' != $website->client_id ) : ?>
+							<div class="extra content">
+								<small data-tooltip="<?php echo esc_attr( 'See client details', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="user icon"></i> <a href="<?php echo esc_attr( 'admin.php?page=ManageClients&client_id=' . $website->client_id ); ?>" class="ui small"><?php echo $website->client_name; ?></a></small>
+							</div>
+							<?php endif; ?>
+							<div class="extra content">
+								<div class="ui mini fluid buttons">
+									<a  data-tooltip="<?php esc_attr_e( 'Available updates.', 'mainwp' ); ?>" data-position="top left" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>" class="ui icon button"><i class="redo <?php esc_attr_e( $a_color ); ?> alternate icon"></i> <?php echo $total_updates; ?></a>
+									<a  data-tooltip="<?php esc_attr_e( 'Available plugins updates.', 'mainwp' ); ?>" data-position="top center" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=plugins-updates" class="ui icon button"><i class="plug <?php esc_attr_e( $p_color ); ?> icon"></i> <?php echo $total_plugin_upgrades; ?></a>
+									<a  data-tooltip="<?php esc_attr_e( 'Available themes updates.', 'mainwp' ); ?>" data-position="top center" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=themes-updates" class="ui icon button"><i class="brush <?php esc_attr_e( $t_color ); ?> icon"></i> <?php echo $total_theme_upgrades; ?></a>
+									<a  data-tooltip="<?php esc_attr_e( 'WordPress core updates.', 'mainwp' ); ?>" data-position="top right" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=wordpress-updates" class="ui icon button"><i class="wordpress <?php esc_attr_e( $w_color ); ?> icon"></i> <?php echo $total_wp_upgrades; ?></a>
 						</div>
 						</div>
 						<div class="extra content">
-							<span class="right floated" data-tooltip="<?php esc_attr_e( 'Last sync time.', 'mainwp' ); ?>">
-							<?php echo 0 != $website->dtsSync ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website->dtsSync ) ) : ''; ?>
-						</span>
-						<span>
-							<a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><i class="grid layout icon"></i></a>
-							<a href="javascript:void(0)" class="mainwp-sync-this-site" site-id="<?php echo $website->id; ?>"><i class="sync alternate icon"></i></a>
-							<a href="admin.php?page=managesites&id=<?php echo $website->id; ?>"><i class="edit icon"></i></a>
-							<a href="admin.php?page=managesites&scanid=<?php echo $website->id; ?>"><i class="shield icon"></i></a>
-							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank"><i class="sign in icon"></i></a>
-						</span>
+							<?php if ( $hasSyncErrors ) : ?>
+								<a class="ui mini green basic icon button fluid mainwp_site_card_reconnect" site-id="<?php echo $website->id; ?>" href="#"><i class="sync alternate icon"></i> <?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
+							<?php else : ?>
+							<div data-tooltip="<?php echo esc_html( 'Last Sync: ', 'mainwp' ); ?> <?php echo 0 != $website->dtsSync ? MainWP_Utility::format_timestamp( MainWP_Utility::format_timestamp( $website->dtsSync ) ) : ''; ?>" data-inverted="" data-position="bottom center">
+								<a href="javascript:void(0)" class="ui mini green icon button fluid mainwp-sync-this-site" site-id="<?php echo $website->id; ?>"><i class="sync alternate icon"></i> <?php echo esc_html( 'Sync Site ', 'mainwp' ); ?></a>
+							</div>
+							<?php endif; ?>
 						</div>
 					</div>
 						<?php
@@ -206,7 +406,7 @@ class MainWP_Manage_Screenshots {
 			</div>
 		</div>
 		<script type="text/javascript">
-			jQuery('#mainwp-sites-previews .image img').visibility({
+			jQuery('#mainwp-sites-previews .image img').visibility( {
 				type       : 'image',
 				transition : 'fade in',
 				duration   : 1000
@@ -323,26 +523,109 @@ class MainWP_Manage_Screenshots {
 		$req_orderby = null;
 		$req_order   = null;
 
-		$perPage   = 9999;
-		$start     = 0;
-		$group_ids = false;
+		$perPage = 9999;
+		$start   = 0;
+		
 
-		$get_saved_params = ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['isnot'] ) ? true : false;
+		$get_saved_state = ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] ) && ! isset( $_REQUEST['client'] );
+		$get_all         = ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && empty( $_REQUEST['g'] ) && empty( $_REQUEST['client'] ) ? true : false;
+		$is_not          = ( isset( $_REQUEST['isnot'] ) && 'yes' == $_REQUEST['isnot'] ) ? true : false;
 
-		if ( $get_saved_params ) {
-			$is_not    = get_user_option( 'mainwp_screenshots_filter_is_not' );
-			$group_ids = get_user_option( 'mainwp_screenshots_filter_group' );
+		$site_status = '';
+
+		if ( ! isset( $_REQUEST['status'] ) ) {
+			if ( $get_saved_state ) {
+				$site_status = get_user_option( 'mainwp_screenshots_filter_status' );
+			} else {
+				MainWP_Utility::update_user_option( 'mainwp_screenshots_filter_status', '' );
+			}
 		} else {
-			$is_not = isset( $_REQUEST['isnot'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['isnot'] ) ) : '';
+			MainWP_Utility::update_user_option( 'mainwp_screenshots_filter_status', sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) );
 			MainWP_Utility::update_user_option( 'mainwp_screenshots_filter_is_not', $is_not );
-
-			$group_ids = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : ''; // may be multi groups.
-			MainWP_Utility::update_user_option( 'mainwp_screenshots_filter_group', sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) );
+			$site_status = sanitize_text_field( wp_unslash( $_REQUEST['status'] ) );
 		}
 
-		$is_not = 'yes' == $is_not ? true : false;
+		if ( $get_all ) {
+			MainWP_Utility::update_user_option( 'mainwp_screenshots_filter_group', '' );
+			MainWP_Utility::update_user_option( 'mainwp_screenshots_filter_client', '' );
+		}
+		
+		$group_ids   = false;
+		$client_ids  = false;
+
+		if ( ! $get_all ) {
+			if ( ! isset( $_REQUEST['g'] ) ) {
+				if ( $get_saved_state ) {
+					$group_ids = get_user_option( 'mainwp_screenshots_filter_group' );
+				} else {
+					MainWP_Utility::update_user_option( 'mainwp_screenshots_filter_group', '' );
+				}
+			} else {
+				MainWP_Utility::update_user_option( 'mainwp_screenshots_filter_group', sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) );
+				$group_ids = sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ); // may be multi groups.
+			}
+
+			if ( ! isset( $_REQUEST['client'] ) ) {
+				if ( $get_saved_state ) {
+					$client_ids = get_user_option( 'mainwp_screenshots_filter_client' );
+				} else {
+					MainWP_Utility::update_user_option( 'mainwp_screenshots_filter_client', '' );
+				}
+			} else {
+				MainWP_Utility::update_user_option( 'mainwp_screenshots_filter_client', sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) );
+				$client_ids = sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ); // may be multi groups.
+			}
+		}
 
 		$where = null;
+
+		if ( '' !== $site_status && 'all' !== $site_status ) {
+			if ( 'connected' === $site_status ) {
+				$where = 'wp_sync.sync_errors = ""';
+				if ( $is_not ) {
+					$where = 'wp_sync.sync_errors != ""';
+				}
+			} elseif ( 'disconnected' === $site_status ) {
+				$where = 'wp_sync.sync_errors != ""';
+				if ( $is_not ) {
+					$where = 'wp_sync.sync_errors = ""';
+				}
+			} elseif ( 'update' === $site_status ) {
+				$available_update_ids = MainWP_Common_Functions::instance()->get_available_update_siteids();
+				if ( empty( $available_update_ids ) ) {
+					$where = 'wp.id = -1';
+					if ( $is_not ) {
+						$where = 'wp.id != -1';
+					}
+				} else {
+					$where = 'wp.id IN (' . implode( ',', $available_update_ids ) . ') ';
+					if ( $is_not ) {
+						$where = 'wp.id NOT IN (' . implode( ',', $available_update_ids ) . ') ';
+					}
+				}
+			} elseif ( 'nosslenabled' === $site_status ) {
+				$where = 'wp.nossl = 1';
+				if ( $is_not ) {
+					$where = 'wp.nossl = 0';
+				}
+			} elseif ( 'sitehealthnotgood' === $site_status ) {
+				$where = ' wp_sync.health_status = 1 ';
+				if ( $is_not ) {
+					$where = 'wp_sync.health_status = 0';
+				}
+			} elseif ( 'phpver7' === $site_status ) {
+				$where = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) < INET_ATON("8.0.0.0") ';
+				if ( $is_not ) {
+					$where = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) >= INET_ATON("8.0.0.0") ';
+				}
+			} elseif ( 'suspended' === $site_status ) {
+				$where = 'wp.suspended = 1';
+				if ( $is_not ) {
+					$where = 'wp.suspended = 0';
+				}
+			}
+		}
+
 
 		$params = array(
 			'selectgroups' => true,
@@ -373,9 +656,28 @@ class MainWP_Manage_Screenshots {
 			$params['group_id'] = $qry_group_ids;
 		}
 
+		$qry_client_ids = array();
+		if ( ! empty( $client_ids ) ) {
+			$client_ids = explode( ',', $client_ids ); // convert to array.
+			// to fix query deleted client.
+			$clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+			foreach ( $clients as $cl ) {
+				if ( in_array( $cl->client_id, $client_ids ) ) {
+					$qry_client_ids[] = $cl->client_id;
+				}
+			}
+			// to fix.
+			if ( in_array( 'noclients', $client_ids ) ) {
+				$qry_client_ids[] = 'noclients';
+			}
+		}
+
+		if ( ! empty( $qry_client_ids ) ) {
+			$params['client_id'] = $qry_client_ids;
+		}
+
 		if ( ! empty( $where ) ) {
-			$total_params['extra_where'] = $where;
-			$params['extra_where']       = $where;
+			$params['extra_where'] = $where;
 		}
 
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );

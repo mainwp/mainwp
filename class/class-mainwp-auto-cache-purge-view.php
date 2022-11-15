@@ -453,7 +453,7 @@ class MainWP_Auto_Cache_Purge_View {
 					<div class="ui grid field">
 					</div>
 					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php echo __( 'Use Cloudflair Cache API', 'mainwp' ); ?></label>
+						<label class="six wide column middle aligned"><?php echo __( 'Use Cloudflare Cache API', 'mainwp' ); ?></label>
 						<div class="ten wide column ui toggle checkbox">
 							<input type="checkbox" value="1" name="mainwp_cache_override_global_settings" <?php checked( $site_cache_override_global_settings, 1 ); ?> id="mainwp_cache_override_global_settings">
 							<label><em><?php echo __( 'Enable to override global Cloudflare API Key', 'mainwp' ); ?></em></label>

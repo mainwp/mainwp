@@ -49,7 +49,8 @@ class MainWP_Install_Bulk {
 	 */
 	public static function admin_init() {
 		if ( isset( $_REQUEST['mainwp_do'] ) ) {
-			if ( 'MainWP_Install_Bulk-uploadfile' == $_REQUEST['mainwp_do'] ) {
+			if ( isset( $_REQUEST['qq_nonce'] ) &&  'MainWP_Install_Bulk-uploadfile' == $_REQUEST['mainwp_do'] ) {
+				do_action( 'mainwp_secure_request', 'qq_nonce', 'qq_nonce' );
 				$allowedExtensions = array( 'zip' ); // Only zip allowed.
 				// max file size in bytes.
 				$sizeLimit = 2 * 1024 * 1024; // 2MB = max allowed.
@@ -114,7 +115,7 @@ class MainWP_Install_Bulk {
 								echo wp_strip_all_tags( $extraOptions ) . ',';
 							}
 							?>
-							params: {mainwp_do: 'MainWP_Install_Bulk-uploadfile'}
+							params: {mainwp_do: 'MainWP_Install_Bulk-uploadfile', qq_nonce: '<?php echo wp_create_nonce('qq_nonce'); ?>' }
 						} );
 					}
 
@@ -146,23 +147,18 @@ class MainWP_Install_Bulk {
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
 
 		if ( ! isset( $_POST['url'] ) ) {
+
+			$what = 'theme';
 			if ( isset( $_POST['type'] ) && 'plugin' == $_POST['type'] ) {
-				$api = plugins_api(
-					'plugin_information',
-					array(
-						'slug'   => isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '',
-						'fields' => array( 'sections' => false ),
-					)
-				); // Save on a bit of bandwidth.
-			} else {
-				$api = themes_api(
-					'theme_information',
-					array(
-						'slug'   => isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '',
-						'fields' => array( 'sections' => false ),
-					)
-				); // Save on a bit of bandwidth.
-			}
+				$what = 'plugin';
+			} 
+			$api = MainWP_System_Utility::get_plugin_theme_info( $what,
+				array(
+					'slug'   => isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '',
+					'fields' => array( 'sections' => false ),
+				)
+			); // Save on a bit of bandwidth.
+
 			$url = $api->download_link;
 			$url = apply_filters( 'mainwp_prepare_install_download_url', $url, $_POST );
 		} else {
@@ -172,13 +168,20 @@ class MainWP_Install_Bulk {
 			$mwpUrl = $mwpDir[1];
 			if ( stristr( $url, $mwpUrl ) ) {
 				$fullFile = $mwpDir[0] . str_replace( $mwpUrl, '', $url );
-				$url      = admin_url( '?sig=' . md5( filesize( $fullFile ) ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir[0], '', $fullFile ) ) );
+				$url      = admin_url( '?sig=' . MainWP_System_Utility::get_download_sig( $fullFile ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir[0], '', $fullFile ) ) );
 			}
 		}
 
 		$output          = array();
 		$output['url']   = $url;
 		$output['sites'] = array();
+
+		$data_fields = array(
+			'id',
+			'url',
+			'name',
+			'sync_errors',
+		);
 
 		if ( isset( $_POST['selected_by'] ) && 'site' == $_POST['selected_by'] ) {
 			$selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
@@ -197,6 +200,30 @@ class MainWP_Install_Bulk {
 					);
 				}
 			}
+		} elseif ( isset( $_POST['selected_by'] ) && 'client' == $_POST['selected_by'] ) {
+			$selected_clients = isset( $_POST['selected_clients'] ) && is_array( $_POST['selected_clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_clients'] ) ) : array();
+			$websites         = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+				$selected_clients,
+				array(
+					'select_data' => $data_fields,
+				)
+			);
+			// Get sites.
+			if ( $websites ) {
+				foreach ( $websites as $website ) {
+					if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+						continue;
+					}
+					$output['sites'][ $website->id ] = MainWP_Utility::map_site(
+						$website,
+						array(
+							'id',
+							'url',
+							'name',
+						)
+					);
+				}
+			}
 		} else {
 			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
 			// Get sites from group.
@@ -205,7 +232,7 @@ class MainWP_Install_Bulk {
 				if ( MainWP_Utility::ctype_digit( $groupid ) ) {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $groupid ) );
 					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-						if ( '' != $website->sync_errors ) {
+						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 							continue;
 						}
 						$output['sites'][ $website->id ] = MainWP_Utility::map_site(
@@ -355,6 +382,14 @@ class MainWP_Install_Bulk {
 
 		$output          = array();
 		$output['sites'] = array();
+
+		$data_fields = array(
+			'id',
+			'url',
+			'name',
+			'sync_errors',
+		);
+
 		if ( isset( $_POST['selected_by'] ) && 'site' == $_POST['selected_by'] ) {
 			$selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
 			// Get sites.
@@ -362,6 +397,30 @@ class MainWP_Install_Bulk {
 				$websiteid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
 					$website                         = MainWP_DB::instance()->get_website_by_id( $websiteid );
+					$output['sites'][ $website->id ] = MainWP_Utility::map_site(
+						$website,
+						array(
+							'id',
+							'url',
+							'name',
+						)
+					);
+				}
+			}
+		} elseif ( isset( $_POST['selected_by'] ) && 'client' == $_POST['selected_by'] ) {
+			$selected_clients = isset( $_POST['selected_clients'] ) && is_array( $_POST['selected_clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_clients'] ) ) : array();
+			$websites         = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+				$selected_clients,
+				array(
+					'select_data' => $data_fields,
+				)
+			);
+			// Get sites.
+			if ( $websites ) {
+				foreach ( $websites as $website ) {
+					if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+						continue;
+					}
 					$output['sites'][ $website->id ] = MainWP_Utility::map_site(
 						$website,
 						array(
@@ -380,7 +439,7 @@ class MainWP_Install_Bulk {
 				if ( MainWP_Utility::ctype_digit( $groupid ) ) {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $groupid ) );
 					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-						if ( '' != $website->sync_errors ) {
+						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 							continue;
 						}
 						$output['sites'][ $website->id ] = MainWP_Utility::map_site(

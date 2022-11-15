@@ -45,7 +45,6 @@ class MainWP_Sync {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension_by_user_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::query()
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_search_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
@@ -119,17 +118,26 @@ class MainWP_Sync {
 			 */
 			$othersData = apply_filters( 'mainwp_sync_others_data', $othersData, $pWebsite );
 
+			$enable_actions_notification = MainWP_DB::instance()->get_website_option( $pWebsite, 'enable_actions_notification', 2 );
+			if ( 2 === intval( $enable_actions_notification ) ) {
+				$enable_actions_notification = get_option( 'mainwp_site_actions_notification_enable', 0 );
+			}
+
+			$saved_days_number = apply_filters( 'minwp_site_actions_saved_days_number', 30 );
+
 			$information = MainWP_Connect::fetch_url_authed(
 				$pWebsite,
 				'stats',
 				array(
-					'optimize'                     => ( ( get_option( 'mainwp_optimize', 0 ) == 1 ) ? 1 : 0 ),
-					'cloneSites'                   => ( ! $cloneEnabled ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ) ),
-					'othersData'                   => wp_json_encode( $othersData ),
-					'server'                       => get_admin_url(),
-					'numberdaysOutdatePluginTheme' => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
-					'primaryBackup'                => $primaryBackup,
-					'siteId'                       => $pWebsite->id,
+					'optimize'                          => ( ( get_option( 'mainwp_optimize', 0 ) == 1 ) ? 1 : 0 ),
+					'cloneSites'                        => ( ! $cloneEnabled ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ) ),
+					'othersData'                        => wp_json_encode( $othersData ),
+					'server'                            => get_admin_url(),
+					'numberdaysOutdatePluginTheme'      => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
+					'primaryBackup'                     => $primaryBackup,
+					'siteId'                            => $pWebsite->id,
+					'child_actions_notification_enable' => intval( $enable_actions_notification ),
+					'child_actions_saved_days_number'   => intval( $saved_days_number ),
 				),
 				true,
 				$pForceFetch
@@ -145,7 +153,7 @@ class MainWP_Sync {
 				$sync_errors  = __( 'HTTP error', 'mainwp' ) . ( $e->get_message_extra() != null ? ' - ' . $e->get_message_extra() : '' );
 				$check_result = - 1;
 			} elseif ( $e->getMessage() == 'NOMAINWP' ) {
-				$sync_errors  = sprintf( __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %sMainWP Community%s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a>' );
+				$sync_errors  = sprintf( __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a>' );
 				$check_result = 1;
 			}
 
@@ -196,6 +204,20 @@ class MainWP_Sync {
 
 		$done = false;
 
+		$current_siteid = 0;
+		if ( is_string( $pWebsite ) || is_int( $pWebsite ) ) {
+			$current_siteid = intval( $pWebsite );
+		} elseif ( is_object( $pWebsite ) && ( ! property_exists( $pWebsite, 'plugin_updates' ) || ! property_exists( $pWebsite, 'theme_updates' ) ) ) {
+			$current_siteid = $pWebsite->id;
+		}
+
+		// to get full data.
+		if ( $current_siteid ) {
+			$pWebsite = MainWP_DB::instance()->get_website_by_id( $current_siteid );
+		}
+
+		$delay_autoupdate = get_option( 'mainwp_delay_autoupdate', 1 );
+
 		/**
 		 * Filter: mainwp_before_save_sync_result
 		 *
@@ -238,13 +260,17 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['wp_updates'] ) && null != $information['wp_updates'] ) {
+			$current_upgrades = MainWP_DB::instance()->get_website_option( $pWebsite, 'wp_upgrades' );
+			$current_upgrades = ( '' != $current_upgrades ) ? json_decode( $current_upgrades, true ) : array();
+
 			MainWP_DB::instance()->update_website_option(
 				$pWebsite,
 				'wp_upgrades',
 				wp_json_encode(
 					array(
-						'current' => $information['wpversion'],
-						'new'     => $information['wp_updates'],
+						'current'         => $information['wpversion'],
+						'new'             => $information['wp_updates'],
+						'check_timestamp' => isset( $current_upgrades['check_timestamp'] ) ? $current_upgrades['check_timestamp'] : time(),
 					)
 				)
 			);
@@ -254,12 +280,36 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['plugin_updates'] ) ) {
-			$websiteValues['plugin_upgrades'] = wp_json_encode( $information['plugin_updates'] );
+			$current_upgrades = ( '' != $pWebsite->plugin_upgrades ) ? json_decode( $pWebsite->plugin_upgrades, true ) : array();
+			$update_values    = array();
+			if ( is_array( $information['plugin_updates'] ) ) {
+				foreach ( $information['plugin_updates'] as $file => $update ) {
+					if ( isset( $current_upgrades[ $file ] ) && isset( $current_upgrades[ $file ]['check_timestamp'] ) ) {
+						$update['check_timestamp'] = $current_upgrades[ $file ]['check_timestamp'];
+					} else {
+						$update['check_timestamp'] = time();
+					}
+					$update_values[ $file ] = $update;
+				}
+			}
+			$websiteValues['plugin_upgrades'] = wp_json_encode( $update_values );
 			$done                             = true;
 		}
 
 		if ( isset( $information['theme_updates'] ) ) {
-			$websiteValues['theme_upgrades'] = wp_json_encode( $information['theme_updates'] );
+			$current_upgrades = ( '' != $pWebsite->theme_upgrades ) ? json_decode( $pWebsite->theme_upgrades, true ) : array();
+			$update_values    = array();
+			if ( is_array( $information['theme_updates'] ) ) {
+				foreach ( $information['theme_updates'] as $file => $update ) {
+					if ( isset( $current_upgrades[ $file ] ) && isset( $current_upgrades[ $file ]['check_timestamp'] ) ) {
+						$update['check_timestamp'] = $current_upgrades[ $file ]['check_timestamp'];
+					} else {
+						$update['check_timestamp'] = time();
+					}
+					$update_values[ $file ] = $update;
+				}
+			}
+			$websiteValues['theme_upgrades'] = wp_json_encode( $update_values );
 			$done                            = true;
 		}
 
@@ -389,11 +439,11 @@ class MainWP_Sync {
 		if ( isset( $information['health_site_status'] ) ) {
 			$health_status                     = $information['health_site_status'];
 			$hstatus                           = MainWP_Utility::get_site_health( $health_status );
-			$new_health_value                  = $hstatus['val'] - $hstatus['critical'] * 100; // computes custom health value to support sorting by sites health and sites health threshold.
-			$websiteSyncValues['health_value'] = $new_health_value;
+			$custom_health_value               = $hstatus['val'] - $hstatus['critical'] * 100; // computes custom health value to support sorting by sites health and sites health threshold.
+			$websiteSyncValues['health_value'] = $custom_health_value;
 			$done                              = true;
 			MainWP_DB::instance()->update_website_option( $pWebsite, 'health_site_status', wp_json_encode( $health_status ) );
-			$new_noticed = MainWP_Monitoring_Handler::get_health_noticed_status_value( $pWebsite, $new_health_value );
+			$new_noticed = MainWP_Monitoring_Handler::get_health_noticed_status_value( $pWebsite, $custom_health_value );
 			if ( null !== $new_noticed ) {
 				MainWP_DB::instance()->update_website_sync_values(
 					$pWebsite->id,
@@ -402,6 +452,16 @@ class MainWP_Sync {
 					)
 				);
 			}
+
+			$hval          = $hstatus['val'];
+			$critical      = $hstatus['critical'];
+			$health_status = 0;
+			if ( 80 <= $hval && 0 == $critical ) {
+				$health_status = 0; // Good.
+			} else {
+				$health_status = 1; // Should be improved'.
+			}
+			$websiteSyncValues['health_status'] = $health_status;
 		} else {
 			MainWP_DB::instance()->update_website_option( $pWebsite, 'health_site_status', $emptyArray );
 		}
@@ -447,6 +507,14 @@ class MainWP_Sync {
 
 		if ( isset( $information['primaryLasttimeBackup'] ) ) {
 			MainWP_DB::instance()->update_website_option( $pWebsite, 'primary_lasttime_backup', $information['primaryLasttimeBackup'] );
+			$done = true;
+		}
+
+		if ( isset( $information['child_site_actions_data'] ) ) {
+			if ( is_array( $information['child_site_actions_data'] ) && isset( $information['child_site_actions_data']['connected_admin'] ) ) {
+				unset( $information['child_site_actions_data']['connected_admin'] );
+			}
+			MainWP_DB_Site_Actions::instance()->sync_site_actions($pWebsite->id, $information['child_site_actions_data'] );
 			$done = true;
 		}
 

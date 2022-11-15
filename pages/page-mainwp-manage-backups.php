@@ -718,8 +718,6 @@ class MainWP_Manage_Backups {
 	 * @param mixed $task Task to edit.
 	 *
 	 * @return string Form.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render_new_edit( $task ) {
 		$selected_websites = array();
@@ -740,7 +738,14 @@ class MainWP_Manage_Backups {
 		<div class="mainwp-side-content mainwp-no-padding">
 			<div class="mainwp-select-sites">
 				<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-				<?php MainWP_UI::select_sites_box( 'checkbox', true, true, '', '', $selected_websites, $selected_groups, true ); ?>
+				<?php
+				$sel_params = array(
+					'selected_sites'       => $selected_websites,
+					'selected_groups'      => $selected_groups,
+					'enable_offline_sites' => true,
+				);
+				MainWP_UI_Select_Sites::select_sites_box( $sel_params );
+				?>
 			</div>
 			<div class="ui divider"></div>
 			<div class="mainwp-search-submit">

@@ -69,6 +69,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_syncsites', array( &$this, 'mainwp_syncsites' ) );
 
 		$this->add_action( 'mainwp_checksites', array( &$this, 'mainwp_checksites' ) );
+		$this->add_action( 'mainwp_manage_sites_suspend_site', array( &$this, 'manage_suspend_site' ) );
 	}
 
 	/**
@@ -215,10 +216,18 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 
 		if ( isset( $_POST['url'] ) ) {
 			$url = sanitize_text_field( wp_unslash( $_POST['url'] ) );
+			$url = urldecode( $url );
+
+			$invalid = false;
+			$info    = wp_parse_url( $url );
+
+			if ( is_array( $info ) && ! empty( $info['port'] ) && ( 21 === intval( $info['port'] ) || 22 === intval( $info['port'] ) ) ) { // port 21, 22.
+				$invalid = true;
+			}
 
 			$temp_url = MainWP_Utility::remove_http_prefix( $url, true );
 
-			if ( strpos( $temp_url, ':' ) ) {
+			if ( $invalid || ( false !== strpos( $url, '?=' ) ) || strpos( $temp_url, ':' ) ) {
 				die( wp_json_encode( array( 'error' => __( 'Invalid URL.', 'mainwp' ) ) ) );
 			}
 
@@ -340,4 +349,30 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		MainWP_Monitoring_Handler::ajax_check_status_site();
 	}
 
+	/**
+	 * Method mainwp_manage_sites_suspend_site()
+	 *
+	 * Check Child Sites.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_site_icon()
+	 */
+	public function manage_suspend_site() {
+		$this->secure_request( 'mainwp_manage_sites_suspend_site' );
+		$siteId = null;
+		if ( isset( $_POST['siteid'] ) ) {
+			$siteId = intval( $_POST['siteid'] );
+		}
+
+		$newValues = array(
+			'suspended' => isset( $_POST['suspended'] ) && '1' === $_POST['suspended'] ? 1 : 0,
+		);
+
+		if ( $siteId ) {
+			MainWP_DB::instance()->update_website_values( $siteId, $newValues );
+			wp_send_json( array( 'result' => 'success' ) );
+		} else {
+			wp_send_json( array( 'error' => 'Error: site id empty' ) );
+		}
+
+	}
 }

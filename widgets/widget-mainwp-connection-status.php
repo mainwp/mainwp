@@ -247,13 +247,18 @@ class MainWP_Connection_Status {
 			<div class="ui two column stackable grid">
 				<div class="column left aligned">
 					<h2 class="ui header">
-					<i class="green check icon"></i>
-					<div class="content"><?php esc_html_e( 'Connected', 'mainwp' ); ?></div>
-					</h2>
+					<?php if(  '1' === $site->suspended ) { ?>
+						<i class="pause yellow circle icon"></i>
+						<div class="content"><?php esc_html_e( 'Suspended', 'mainwp' ); ?></div>
+					<?php } else { ?>
+						<i class="green check icon"></i>
+						<div class="content"><?php esc_html_e( 'Connected', 'mainwp' ); ?></div>
+					<?php } ?>	
+				</h2>
 				</div>
-				<div class="column right aligned">
-					<a href="<?php echo $site->url; ?>" class="ui icon mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><i class="external alternate icon"></i></a>
-					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" class="ui icon mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
+				<div class="column right aligned ui buttons">
+					<a href="<?php echo $site->url; ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Go to Site', 'mainwp' ); ?></a>
+					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( ' Go to WP Admin', 'mainwp' ); ?></a>
 					<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo $site->id; ?>" onClick="updatesoverview_wp_sync( '<?php echo $site->id; ?>' )" data-tooltip="Sync <?php echo stripslashes( $site->name ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 				</div>
 			</div>
@@ -265,8 +270,8 @@ class MainWP_Connection_Status {
 					<div class="content"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></div>
 					</h2>
 				</div>
-				<div class="column right aligned">
-					<a href="<?php echo $site->url; ?>" class="ui icon mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><i class="external alternate icon"></i></a>
+				<div class="column right aligned ui buttons">
+					<a href="<?php echo $site->url; ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Go to Site', 'mainwp' ); ?></a>
 					<a href="#" class="mainwp-updates-overview-reconnect-site ui mini green basic button" siteid="<?php echo $site->id; ?>" data-tooltip="Reconnect <?php echo stripslashes( $site->name ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 				</div>
 			</div>

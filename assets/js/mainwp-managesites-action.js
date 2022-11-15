@@ -12,12 +12,12 @@ jQuery(document).on('click', '#mainwp-do-sites-bulk-actions', function () {
 /* eslint-disable complexity */
 mainwp_managesites_doaction = function (action) {
 
-  if (action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'refresh_favico' || action == 'checknow' || action == 'update_everything' || action == 'check_abandoned_plugin' || action == 'check_abandoned_theme') {
+  if (action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'refresh_favico' || action == 'checknow' || action == 'update_everything' || action == 'check_abandoned_plugin' || action == 'check_abandoned_theme' || action == 'suspend' || action == 'unsuspend' ) {
 
     if (bulkManageSitesTaskRunning)
       return false;
 
-    if (action == 'delete' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'update_everything' || action == 'check_abandoned_plugin' || action == 'check_abandoned_theme') {
+    if (action == 'delete' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'update_everything' || action == 'check_abandoned_plugin' || action == 'check_abandoned_theme' || action == 'suspend') {
       var confirmMsg = '';
       var _selection_cancelled = false;
       switch (action) {
@@ -49,6 +49,10 @@ mainwp_managesites_doaction = function (action) {
           break;
         case 'check_abandoned_theme':
           confirmMsg = __("You are about to check abandoned theme on the selected sites?");
+          _selection_cancelled = true;
+          break;
+        case 'suspend':
+          confirmMsg = __("You are about to suspend the selected sites?");
           _selection_cancelled = true;
           break;
       }
@@ -137,7 +141,9 @@ mainwp_managesites_doaction_process = function (action) {
     mainwp_managesites_bulk_check_abandoned(selectedIds, 'plugin');
   } else if (action == 'check_abandoned_theme') {
     mainwp_managesites_bulk_check_abandoned(selectedIds, 'theme');
-  }
+  } else if (action == 'suspend' || action == 'unsuspend') {
+    mainwp_managesites_bulk_suspend_status(selectedIds, action );
+  } 
 }
 
 
@@ -417,6 +423,110 @@ mainwp_managesites_refresh_favico_int = function (siteid) {
           dashboard_update_site_status(pSiteid, '<i class="red times icon"></i>');
         }
         mainwp_managesites_refresh_favico_all_loop_next();
+      }
+    }(siteid),
+    dataType: 'json'
+  });
+  return false;
+};
+
+
+/* Suspend sites */
+mainwp_managesites_bulk_suspend_status = function (siteIds , status) {
+
+  var allWebsiteIds = jQuery('.dashboard_wp_id').map(function (indx, el) {
+    return jQuery(el).val();
+  });
+
+  var selectedIds = [], excludeIds = [];
+  if (siteIds instanceof Array) {
+    jQuery.grep(allWebsiteIds, function (el) {
+      if (jQuery.inArray(el, siteIds) !== -1) {
+        selectedIds.push(el);
+      } else {
+        excludeIds.push(el);
+      }
+    });
+    for (var i = 0; i < excludeIds.length; i++) {
+      dashboard_update_site_hide(excludeIds[i]);
+    }
+    allWebsiteIds = selectedIds;
+  }
+
+  var nrOfWebsites = allWebsiteIds.length;
+
+  if (nrOfWebsites == 0)
+    return false;
+
+  var siteNames = {};
+
+  for (var i = 0; i < allWebsiteIds.length; i++) {
+    dashboard_update_site_status(allWebsiteIds[i], '<i class="clock outline icon"></i>');
+    siteNames[allWebsiteIds[i]] = jQuery('.sync-site-status[siteid="' + allWebsiteIds[i] + '"]').attr('niceurl');
+  }
+  var initData = {
+    progressMax: nrOfWebsites,
+    title: 'Suspend Site',
+    statusText: __('suspended'),
+    callback: function () {
+      bulkManageSitesTaskRunning = false;
+      window.location.href = location.href;
+    }
+  };
+  mainwpPopup('#mainwp-sync-sites-modal').init(initData);
+
+  mainwp_managesites_suspend_status_all_int(allWebsiteIds, status);
+};
+
+mainwp_managesites_suspend_status_all_int = function (websiteIds, status) {
+  websitesToUpgrade = websiteIds;
+  currentWebsite = 0;
+  websitesDone = 0;
+  websitesTotal = websitesLeft = websitesToUpgrade.length;
+
+  bulkTaskRunning = true;
+  mainwp_managesites_suspend_status_all_loop_next(status);
+};
+
+mainwp_managesites_suspend_status_all_loop_next = function (status) {
+  while (bulkTaskRunning && (currentThreads < maxThreads) && (websitesLeft > 0)) {
+    mainwp_managesites_suspend_status_all_upgrade_next(status);
+  }
+};
+mainwp_managesites_suspend_status_all_upgrade_next = function (status) {
+  currentThreads++;
+  websitesLeft--;
+
+  var websiteId = websitesToUpgrade[currentWebsite++];
+  dashboard_update_site_status(websiteId, '<i class="sync alternate loading icon"></i>');
+
+  mainwp_managesites_suspend_status_int(websiteId, status);
+};
+
+mainwp_managesites_suspend_status_int = function (siteid, status) {
+  var data = mainwp_secure_data({
+    action: 'mainwp_manage_sites_suspend_site',
+    suspended: (status == 'suspend' ) ? 1 : 0,
+    siteid: siteid,
+  });
+
+  jQuery.ajax({
+    type: 'POST',
+    url: ajaxurl,
+    data: data,
+    success: function (pSiteid) {
+      return function (response) {
+        currentThreads--;
+        websitesDone++;
+        mainwpPopup('#mainwp-sync-sites-modal').setProgressSite(websitesDone);
+        if (response.error != undefined) {
+          dashboard_update_site_status(pSiteid, '<span data-inverted="" data-position="left center" data-tooltip="' + response.error + '"><i class="times red icon"></i></span>');
+        } else if (response.result && response.result == 'success') {
+          dashboard_update_site_status(pSiteid, '<i class="green check icon"></i>', true);
+        } else {
+          dashboard_update_site_status(pSiteid, '<i class="red times icon"></i>');
+        }
+        mainwp_managesites_suspend_status_all_loop_next(status);
       }
     }(siteid),
     dataType: 'json'

@@ -83,6 +83,9 @@ class MainWP_System_Handler {
 		add_filter( 'mainwp_getgroups', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_groups' ), 10, 4 );
 		add_action( 'mainwp_fetchurlsauthed', array( &$this, 'filter_fetch_urls_authed' ), 10, 7 );
 		add_filter( 'mainwp_fetchurlauthed', array( &$this, 'filter_fetch_url_authed' ), 10, 6 );
+
+		add_filter( 'mainwp_getsqlwebsites_for_current_user', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_sql_websites_for_current_user' ), 10, 4 );
+
 		add_filter(
 			'mainwp_getdashboardsites',
 			array(
@@ -280,6 +283,37 @@ class MainWP_System_Handler {
 	}
 
 	/**
+	 * Method handle_clients_screen_settings()
+	 *
+	 * Handle manage clients screen settings
+	 */
+	public function handle_clients_screen_settings() {
+		if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'ManageClientsScrOptions' ) ) {
+			$show_cols = array();
+			foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST ) ) as $key => $val ) {
+				if ( false !== strpos( $key, 'mainwp_show_column_' ) ) {
+					$col               = str_replace( 'mainwp_show_column_', '', $key );
+					$show_cols[ $col ] = 1;
+				}
+			}
+			if ( isset( $_POST['show_columns_name'] ) ) {
+				foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['show_columns_name'] ) ) as $col ) {
+					if ( ! isset( $show_cols[ $col ] ) ) {
+						$show_cols[ $col ] = 0; // uncheck, hide columns.
+					}
+				}
+			}
+
+			$user = wp_get_current_user();
+			if ( $user ) {
+				update_user_option( $user->ID, 'mainwp_settings_show_manage_clients_columns', $show_cols, true );
+				update_option( 'mainwp_default_manage_clients_per_page', ( isset( $_POST['mainwp_default_manage_clients_per_page'] ) ? intval( $_POST['mainwp_default_manage_clients_per_page'] ) : 25 ) );
+			}
+		}
+	}
+
+
+	/**
 	 * Method handle_mainwp_tools_settings()
 	 *
 	 * Handle mainwp tools settings.
@@ -290,6 +324,9 @@ class MainWP_System_Handler {
 	public function handle_mainwp_tools_settings() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$user = wp_get_current_user();
+
+		$update_selected_mainwp_themes = false;
+
 		if ( isset( $_GET['page'] ) && 'MainWPTools' === $_GET['page'] ) {
 			if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) {
 				if ( isset( $_POST['mainwp_restore_info_messages'] ) && ! empty( $_POST['mainwp_restore_info_messages'] ) ) {
@@ -302,6 +339,21 @@ class MainWP_System_Handler {
 						MainWP_Twitter::clear_all_twitter_messages();
 					}
 				}
+
+				if ( isset( $_POST['mainwp_settings_custom_theme'] ) ) {
+					$update_selected_mainwp_themes = true;
+				}
+			}
+		}
+
+		if ( isset( $_POST['wp_scr_options_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_scr_options_nonce'] ), 'MainWPSelectThemes' ) ) {
+			$update_selected_mainwp_themes = true;
+		}
+
+		if ( $update_selected_mainwp_themes ) {
+			if ( isset( $_POST['mainwp_settings_custom_theme'] ) ) {
+				$custom_theme = sanitize_text_field( wp_unslash( $_POST['mainwp_settings_custom_theme'] ) );
+				update_user_option( $user->ID, 'mainwp_selected_theme', $custom_theme );
 			}
 		}
 
@@ -342,6 +394,41 @@ class MainWP_System_Handler {
 				update_user_option( $user->ID, 'mainwp_widgets_sorted_mainwp_page_managesites', false, true );
 			}
 		}
+
+		$update_clients_screen_options = false;
+		if ( isset( $_POST['wp_scr_options_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_scr_options_nonce'] ), 'MainWPClientsScrOptions' ) ) {
+			$update_clients_screen_options = true;
+		}
+		if ( $update_clients_screen_options ) {
+
+			$show_wids = array();
+			if ( isset( $_POST['mainwp_show_widgets'] ) && is_array( $_POST['mainwp_show_widgets'] ) ) {
+				$selected_wids = array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_show_widgets'] ) );
+				foreach ( $selected_wids as $name ) {
+					$show_wids[ $name ] = 1;
+				}
+			}
+
+			if ( isset( $_POST['mainwp_widgets_name'] ) && is_array( $_POST['mainwp_widgets_name'] ) ) {
+				$name_wids = array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_widgets_name'] ) );
+				foreach ( $name_wids as $name ) {
+					if ( ! isset( $show_wids[ $name ] ) ) {
+						$show_wids[ $name ] = 0;
+					}
+				}
+			}
+
+			if ( $user ) {
+				update_user_option( $user->ID, 'mainwp_clients_show_widgets', $show_wids, true );
+			}
+
+			MainWP_Utility::update_option( 'mainwp_number_clients_overview_columns', ( isset( $_POST['number_overview_columns'] ) ? intval( $_POST['number_overview_columns'] ) : 2 ) );
+
+			if ( isset( $_POST['reset_client_overview_settings'] ) && ! empty( $_POST['reset_client_overview_settings'] ) ) {
+				update_user_option( $user->ID, 'mainwp_widgets_sorted_mainwp_page_manageclients', false, true );
+			}
+		}
+
 	}
 
 
@@ -351,7 +438,6 @@ class MainWP_System_Handler {
 	 * Handle rest api settings
 	 */
 	public function handle_rest_api_settings() {
-		$update_screen_options = false;
 		if ( isset( $_POST['submit'] ) && isset( $_GET['page'] ) && 'RESTAPI' === $_GET['page'] ) {
 			if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) {
 				MainWP_Utility::update_option( 'mainwp_enable_rest_api', ( ! isset( $_POST['mainwp_enable_rest_api'] ) ? 0 : 1 ) );
@@ -372,12 +458,13 @@ class MainWP_System_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Settings::handle_settings_post()
 	 */
 	public function handle_settings_post() {
-		if ( isset( $_GET['page'] ) && isset( $_POST['wp_nonce'] ) ) {
+		if ( isset( $_GET['page'] ) && ( isset( $_POST['wp_nonce'] ) || isset( $_POST['wp_scr_options_nonce'] ) ) ) {
 			$this->include_pluggable();
 			$this->handle_mainwp_tools_settings();
 			$this->handle_rest_api_settings();
 			$this->handle_manage_sites_screen_settings();
 			$this->handle_monitoring_sites_screen_settings();
+			$this->handle_clients_screen_settings();
 		}
 
 		if ( isset( $_POST['select_mainwp_options_siteview'] ) ) {
@@ -412,6 +499,20 @@ class MainWP_System_Handler {
 			}
 			return true;
 		}
+
+		if ( isset( $_GET['viewmode'] ) && isset( $_GET['modenonce'] ) ) {
+			$viewmode = sanitize_text_field( wp_unslash( $_GET['viewmode'] ) );
+			$nonce    = sanitize_key( $_GET['modenonce'] );
+			if ( ( 'table' === $viewmode || 'grid' === $viewmode ) && wp_verify_nonce( sanitize_key( $nonce ), 'viewmode' ) ) {
+				$user = wp_get_current_user();
+				if ( $user ) {
+					update_user_option( $user->ID, 'mainwp_sitesviewmode', $viewmode, true );
+					wp_safe_redirect( admin_url( 'admin.php?page=managesites' ) );
+					exit;
+				}
+			}
+		}
+
 	}
 
 	/**
@@ -779,7 +880,11 @@ class MainWP_System_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::set_activation_info()
 	 */
 	public function deactivate_extension( $ext_key ) {
-		MainWP_Api_Manager::instance()->set_activation_info( $ext_key, '' );
+		// try to deactivate license.
+		$mainwp_api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
+		$result         = MainWP_Api_Manager::instance()->license_key_deactivation( $ext_key, $mainwp_api_key );
+
+		MainWP_Api_Manager::instance()->remove_activation_info( $ext_key );
 	}
 
 }

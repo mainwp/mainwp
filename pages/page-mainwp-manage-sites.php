@@ -56,6 +56,9 @@ class MainWP_Manage_Sites {
 		'themes'            => true,
 		'notes'             => true,
 		'site_note'         => true,
+		'client_info'       => true,
+		'non_mainwp_changes' => true,
+
 	);
 
 	/**
@@ -347,10 +350,7 @@ class MainWP_Manage_Sites {
 
 		$show_cols = get_user_option( 'mainwp_settings_show_manage_sites_columns' );
 		if ( false === $show_cols ) { // to backwards.
-			$hide_cols = get_user_option( 'mainwp_settings_hide_manage_sites_columns' );
 
-			$default_cols = array();
-			if ( false === $hide_cols ) {
 				$default_cols = array(
 					'site'         => 1,
 					'login'        => 1,
@@ -360,26 +360,19 @@ class MainWP_Manage_Sites {
 					'last_sync'    => 1,
 					'site_actions' => 1,
 				);
-			}
 
-			if ( ! is_array( $hide_cols ) ) {
-				$hide_cols = array();
-			}
-
-			$show_cols = array();
-			foreach ( $columns as $name => $title ) {
-				if ( isset( $default_cols[ $name ] ) ) {
-					$show_cols[ $name ] = 1;
-				} elseif ( in_array( $name, $hide_cols, true ) ) { // to backwards.
-					$show_cols[ $name ] = 0; // hide columns.
-				} else {
-					$show_cols[ $name ] = 1; // show other columns.
+				$show_cols = array();
+				foreach ( $columns as $name => $title ) {
+					if ( isset( $default_cols[ $name ] ) ) {
+						$show_cols[ $name ] = 1;
+					} else {
+						$show_cols[ $name ] = 1; // show other columns.
+					}
 				}
-			}
-			$user = wp_get_current_user();
-			if ( $user ) {
-				update_user_option( $user->ID, 'mainwp_settings_show_manage_sites_columns', $show_cols, true );
-			}
+				$user = wp_get_current_user();
+				if ( $user ) {
+					update_user_option( $user->ID, 'mainwp_settings_show_manage_sites_columns', $show_cols, true );
+				}
 		}
 
 		if ( ! is_array( $show_cols ) ) {
@@ -498,8 +491,8 @@ class MainWP_Manage_Sites {
 						jQuery('#mainwp_sitesviewmode').dropdown( 'set selected', 'table' );
 						jQuery('input[name=mainwp_default_sites_per_page]').val(25);
 						jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
-						//default columns: Site, Open Admin, URL, Updates, Site Health, Last Sync and Actions.
-						var cols = ['site','login','url','update','site_health','last_sync', 'site_actions'];
+						//default columns.
+						var cols = ['status','site','login','url','update','client_name','site_actions'];
 						jQuery.each( cols, function ( index, value ) {
 							jQuery('.mainwp_hide_wpmenu_checkboxes input[id="mainwp_show_column_' + value + '"]').prop( 'checked', true );
 						} );
@@ -661,14 +654,32 @@ class MainWP_Manage_Sites {
 				</div>
 
 				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Groups (optional)', 'mainwp' ); ?></label>
-					<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add the website to existing group(s).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Tags (optional)', 'mainwp' ); ?></label>
+					<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add the website to existing tag(s).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<div class="ui multiple search selection dropdown" init-value="" id="mainwp_managesites_add_addgroups">
 							<i class="dropdown icon"></i>
 							<div class="default text"></div>
 							<div class="menu">
 								<?php foreach ( $groups as $group ) { ?>
 									<div class="item" data-value="<?php echo $group->id; ?>"><?php echo $group->name; ?></div>
+								<?php } ?>
+							</div>
+						</div>
+					</div>
+				</div>
+				<?php
+				$clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+				?>
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Client (optional)', 'mainwp' ); ?></label>
+					<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add a client to the website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<div class="ui search selection dropdown" init-value="" id="mainwp_managesites_add_client_id">
+							<i class="dropdown icon"></i>
+							<div class="default text"></div>
+							<div class="menu">								
+								<div class="item" data-value="0"><?php esc_attr_e( 'Select client', 'mainwp' ); ?></div>
+								<?php foreach ( $clients as $client ) { ?>
+									<div class="item" data-value="<?php echo $client->client_id; ?>"><?php echo $client->name; ?></div>
 								<?php } ?>
 							</div>
 						</div>
@@ -803,7 +814,7 @@ class MainWP_Manage_Sites {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-sites-info-message"></i>
-							<?php echo sprintf( __( 'Use the form to bulk import sites.  You can download the sample CSV file to see how to fomat the import file properly.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( __( 'You can download the sample CSV file to see how to format the import file properly. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -937,7 +948,17 @@ class MainWP_Manage_Sites {
 		}
 
 		// Load the Site Info widget.
-		MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), self::$page, 'right', __( 'Child site info', 'mainwp' ) );
+		MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), self::$page, 'left', __( 'Child site info', 'mainwp' ) );
+
+		// Load the Client widget.
+		if ( self::$enable_widgets['client_info'] ) {
+			MainWP_UI::add_widget_box( 'client_info', array( MainWP_Client_Info::get_class_name(), 'render' ), self::$page, 'left', __( 'Client info', 'mainwp' ) );
+		}
+
+		// Load the Non-MainWP Changes widget.
+		if ( self::$enable_widgets['non_mainwp_changes'] ) {
+			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), self::$page, 'left', __( 'Non-MainWP Changes', 'mainwp' ) );
+		}
 
 		$i = 0;
 		foreach ( $extMetaBoxs as $metaBox ) {
@@ -1434,6 +1455,12 @@ class MainWP_Manage_Sites {
 
 				MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $site_name, $site_admin, $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifycertificate, $archiveFormat, $uniqueId, $http_user, $http_pass, $ssl_version, $disableChecking, $checkInterval, $disableHealthChecking, $healthThreshold );
 
+				$new_client_id = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
+				$update        = array(
+					'client_id' => $new_client_id,
+				);
+				MainWP_DB::instance()->update_website_values( $website->id, $update );
+
 				/**
 				 * Update site
 				 *
@@ -1455,11 +1482,14 @@ class MainWP_Manage_Sites {
 					$forceuseipv4 = 0;
 				}
 
+				$enable_site_notification = isset( $_POST['mainwp_managesites_edit_enable_actions_notification'] ) ? intval( $_POST['mainwp_managesites_edit_enable_actions_notification'] ) : 2;
+
 				$newValues = array(
 					'automatic_update'      => ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : 1 ),
 					'backup_before_upgrade' => $backup_before_upgrade,
 					'force_use_ipv4'        => $forceuseipv4,
 					'loadFilesBeforeZip'    => isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 1 : 0,
+					'suspended'             => isset( $_POST['mainwp_suspended_site'] ) ? 1 : 0,
 				);
 
 				if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
@@ -1473,6 +1503,7 @@ class MainWP_Manage_Sites {
 				$monitoring_emails = isset( $_POST['mainwp_managesites_edit_monitoringNotificationEmails'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_monitoringNotificationEmails'] ) ) : '';
 				$monitoring_emails = MainWP_Utility::valid_input_emails( $monitoring_emails );
 				MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $monitoring_emails );
+				MainWP_DB::instance()->update_website_option( $website, 'enable_actions_notification', $enable_site_notification );
 				$updated = true;
 			}
 		}
@@ -1556,7 +1587,7 @@ class MainWP_Manage_Sites {
 					<div class="item"><a href="https://kb.mainwp.com/docs/reconnect-a-child-site/" target="_blank">Reconnect a Child Site</a></div>
 					<div class="item"><a href="https://kb.mainwp.com/docs/delete-a-child-site/" target="_blank">Delete a Child Site</a></div>
 					<div class="item"><a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">Security Issues</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">Manage Child Site Groups</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">Manage Child Site Tags</a></div>
 					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-site-notes/" target="_blank">Manage Child Site Notes</a></div>
 				</div>
 				<?php

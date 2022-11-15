@@ -42,6 +42,7 @@ class MainWP_Overview {
 		'recent_pages'      => true,
 		'security_issues'   => true,
 		'backup_tasks'      => true,
+		'non_mainwp_changes' => true,
 	);
 
 	/**
@@ -262,6 +263,11 @@ class MainWP_Overview {
 			}
 		}
 
+		// Load the Non-MainWP Changes widget.
+		if ( self::$enable_widgets['non_mainwp_changes'] ) {
+			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, 'left', __( 'Non-MainWP Changes', 'mainwp' ) );
+		}
+
 		$i = 1;
 		foreach ( $extMetaBoxs as $metaBox ) {
 			$enabled = true;
@@ -392,7 +398,7 @@ class MainWP_Overview {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>
-					<?php echo sprintf( __( 'To hide or show a widget, click the "Cog" icon or go to the %1$sMainWP Settings%2$s page and select options from "Show widgets"', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?>
+					<?php echo sprintf( __( 'To hide or show a widget, click the Cog (<i class="cog icon"></i>) icon or go to the %1$sMainWP Settings%2$s page and select options from "Show widgets"', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 
@@ -530,9 +536,12 @@ class MainWP_Overview {
 
 			} );
 			jQuery( '.mainwp-widget .mainwp-dropdown-tab .item' ).tab();
+			mainwp_get_icon_start();
 		} );
 	</script>
 		<?php
+		MainWP_UI::render_modal_upload_icon();
+		MainWP_Updates::render_plugin_details_modal();
 	}
 
 	/**

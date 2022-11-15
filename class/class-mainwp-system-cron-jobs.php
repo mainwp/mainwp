@@ -749,8 +749,11 @@ class MainWP_System_Cron_Jobs {
 				$check_individual_digest = false;
 
 				/** Check core updates * */
-				$websiteLastCoreUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'last_wp_upgrades' ), true );
-				$websiteCoreUpgrades     = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
+				$websiteLastCoreUpgrades = MainWP_DB::instance()->get_website_option( $website, 'last_wp_upgrades' );
+				$websiteLastCoreUpgrades = ( '' != $websiteLastCoreUpgrades ) ? json_decode( $websiteLastCoreUpgrades, true ) : array();
+				
+				$websiteCoreUpgrades     = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
+				$websiteCoreUpgrades = ( '' != $websiteCoreUpgrades ) ? json_decode( $websiteCoreUpgrades, true ) : array();
 
 				if ( isset( $websiteCoreUpgrades['current'] ) ) {
 					$newUpdate = ! ( isset( $websiteLastCoreUpgrades['current'] ) && ( $websiteLastCoreUpgrades['current'] == $websiteCoreUpgrades['current'] ) && ( $websiteLastCoreUpgrades['new'] == $websiteCoreUpgrades['new'] ) );
@@ -769,8 +772,14 @@ class MainWP_System_Cron_Jobs {
 								$item['new']     = 1;
 								$coreNewUpdate[] = $item;
 							} else {
-								$item['new']                 = 0;
-								$coreToUpdateNow[]           = $website->id;
+								$item['new'] = 0;
+								if ( isset( $websiteCoreUpgrades['check_timestamp'] ) ) {
+									if ( time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $websiteCoreUpgrades['check_timestamp'] ) ) {
+										$coreToUpdateNow[] = $website->id;
+									}
+								} else {
+									$coreToUpdateNow[] = $website->id;
+								}
 								$allWebsites[ $website->id ] = $website;
 								$coreToUpdate[]              = $item;
 							}
@@ -788,14 +797,20 @@ class MainWP_System_Cron_Jobs {
 				}
 
 				/** Check plugins * */
-				$websiteLastPlugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'last_plugin_upgrades' ), true );
+				$websiteLastPlugins = MainWP_DB::instance()->get_website_option( $website, 'last_plugin_upgrades' );
+				$websiteLastPlugins = ( '' != $websiteLastPlugins ) ? json_decode( $websiteLastPlugins, true ) : array();
+				
 				$websitePlugins     = json_decode( $website->plugin_upgrades, true );
 
 				/** Check themes * */
-				$websiteLastThemes = json_decode( MainWP_DB::instance()->get_website_option( $website, 'last_theme_upgrades' ), true );
+				$websiteLastThemes = MainWP_DB::instance()->get_website_option( $website, 'last_theme_upgrades' );
+				$websiteLastThemes = ( '' != $websiteLastThemes ) ? json_decode( $websiteLastThemes, true ) : array();
+				
 				$websiteThemes     = json_decode( $website->theme_upgrades, true );
 
-				$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
+				$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
+				$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+				
 				if ( is_array( $decodedPremiumUpgrades ) ) {
 					foreach ( $decodedPremiumUpgrades as $slug => $premiumUpgrade ) {
 						if ( 'plugin' === $premiumUpgrade['type'] ) {
@@ -848,10 +863,16 @@ class MainWP_System_Cron_Jobs {
 							$item['new']        = 1;
 							$pluginsNewUpdate[] = $item;
 						} else {
-							$item['new']                          = 0;
-							$pluginsToUpdateNow[ $website->id ][] = $pluginSlug;
-							$allWebsites[ $website->id ]          = $website;
-							$pluginsToUpdate[]                    = $item;
+							$item['new'] = 0;
+							if ( isset( $pluginInfo['check_timestamp'] ) ) {
+								if ( time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $pluginInfo['check_timestamp'] ) ) {
+									$pluginsToUpdateNow[ $website->id ][] = $pluginSlug;
+								}
+							} else {
+								$pluginsToUpdateNow[ $website->id ][] = $pluginSlug;
+							}
+							$allWebsites[ $website->id ] = $website;
+							$pluginsToUpdate[]           = $item;
 						}
 					} else {
 						$item['trusted'] = 0;
@@ -893,10 +914,16 @@ class MainWP_System_Cron_Jobs {
 							$item['new']       = 1;
 							$themesNewUpdate[] = $item;
 						} else {
-							$item['new']                         = 0;
-							$themesToUpdateNow[ $website->id ][] = $themeSlug;
-							$allWebsites[ $website->id ]         = $website;
-							$themesToUpdate[]                    = $item;
+							$item['new'] = 0;
+							if ( isset( $themeInfo['check_timestamp'] ) ) {
+								if ( time() > $delay_autoupdate * DAY_IN_SECONDS + intval( $themeInfo['check_timestamp'] ) ) {
+									$themesToUpdateNow[ $website->id ][] = $themeSlug;
+								}
+							} else {
+								$themesToUpdateNow[ $website->id ][] = $themeSlug;
+							}
+							$allWebsites[ $website->id ] = $website;
+							$themesToUpdate[]            = $item;
 						}
 					} else {
 						$item['trusted'] = 0;

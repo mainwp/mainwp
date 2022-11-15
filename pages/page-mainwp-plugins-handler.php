@@ -55,6 +55,7 @@ class MainWP_Plugins_Handler {
 					}
 					$plugin['websiteid']            = $website->id;
 					$plugin['websiteurl']           = $website->url;
+					$plugin['websitename']          = $website->name;
 					$output->not_criteria_plugins[] = $plugin;
 				}
 			} else {
@@ -62,8 +63,9 @@ class MainWP_Plugins_Handler {
 					if ( ! isset( $plugin['name'] ) ) {
 						continue;
 					}
-					$plugin['websiteid']  = $website->id;
-					$plugin['websiteurl'] = $website->url;
+					$plugin['websiteid']   = $website->id;
+					$plugin['websiteurl']  = $website->url;
+					$plugin['websitename'] = $website->name;
 
 					$output->plugins[] = $plugin;
 				}
@@ -179,8 +181,12 @@ class MainWP_Plugins_Handler {
 			die( wp_json_encode( array( 'error' => __( 'You are not allowed to edit this website.', 'mainwp' ) ) ) );
 		}
 
+		if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
+			die( wp_json_encode( array( 'error' => __( 'The child site has been suspended.', 'mainwp' ) ) ) );
+		}
+
 		try {
-			$plugins = isset( $_POST['plugins'] ) ? wp_unslash( $_POST['plugins'] ) : '';
+			$plugins = isset( $_POST['plugins'] ) ? wp_unslash( $_POST['plugins'] ) : array();
 			$plugin  = implode( '||', $plugins );
 			$plugin  = urldecode( $plugin );
 

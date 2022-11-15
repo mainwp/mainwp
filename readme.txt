@@ -331,11 +331,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: Extensions categories
 * Updated: Extensions order in the install modal
 * Updated: Manage Plugins and Themes page layout [Feature Request](https://feedback.mainwp.com/admin/plugins/plugins-listed-as-rows-instead-of-columns-cl755dqhx6970531xq3d89ypnye)
-* Removed: Select All and Select None buttons in the Install Extensions modal Child
-* Fixed: Multiple PHP warnings
-* Added: Support for new security checks
-* Added: Support for the Non-MainWP Changes feature
-* Removed: Unused code
+* Removed: Select All and Select None buttons in the Install Extensions modal
 
 = 4.2.7.1 - 9-22-2022 =
 * Added: The `mainwp_extensions_page_top_header` filter for customizing the Extensions page title

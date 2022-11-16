@@ -232,9 +232,9 @@ class MainWP_System_Handler {
 			}
 			$user = wp_get_current_user();
 			if ( $user ) {
-				$val = ( isset( $_POST['mainwp_sitesviewmode'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_sitesviewmode'] ) ) : 'table' );
+				$val = ( isset( $_POST['mainwp_sitesviewmode'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_sitesviewmode'] ) ) : 'grid' );
 				if ( 'grid' !== $val && 'table' !== $val ) {
-					$val = 'table';
+					$val = 'grid';
 				}
 				update_user_option( $user->ID, 'mainwp_sitesviewmode', $val, true );
 				update_user_option( $user->ID, 'mainwp_settings_show_manage_sites_columns', $show_cols, true );
@@ -243,9 +243,9 @@ class MainWP_System_Handler {
 		} elseif ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'SreenshotsSitesScrOptions' ) ) {
 			$user = wp_get_current_user();
 			if ( $user ) {
-				$val = ( isset( $_POST['mainwp_sitesviewmode'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_sitesviewmode'] ) ) : 'table' );
+				$val = ( isset( $_POST['mainwp_sitesviewmode'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_sitesviewmode'] ) ) : 'grid' );
 				if ( 'grid' !== $val && 'table' !== $val ) {
-					$val = 'table';
+					$val = 'grid';
 				}
 				update_user_option( $user->ID, 'mainwp_sitesviewmode', $val, true );
 			}

@@ -1002,4 +1002,18 @@ class MainWP_Utility {
 		return $value;
 	}
 
+	/**
+	 * Metho get_siteview_mode().
+	 *
+	 * Get site view mode.
+	 *
+	 * @return string $viewmode Site view mode.
+	 */
+	public static function get_siteview_mode() {
+		$viewmode = get_user_option( 'mainwp_sitesviewmode' );
+		if ( 'grid' !== $viewmode && 'table' !== $viewmode ) {
+			$viewmode = 'grid';
+		}
+		return $viewmode;
+	}
 }

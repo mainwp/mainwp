@@ -448,7 +448,7 @@ class MainWP_Manage_Screenshots {
 	public static function render_screen_options() {
 
 		$siteViewMode = MainWP_Utility::get_siteview_mode();
-		
+
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
 			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>

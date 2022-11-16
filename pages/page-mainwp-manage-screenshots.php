@@ -447,10 +447,8 @@ class MainWP_Manage_Screenshots {
 	 */
 	public static function render_screen_options() {
 
-		$siteViewMode = get_user_option( 'mainwp_sitesviewmode' );
-		if ( 'grid' !== $siteViewMode && 'table' !== $siteViewMode ) {
-			$siteViewMode = 'table';
-		}
+		$siteViewMode = MainWP_Utility::get_siteview_mode();
+		
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
 			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
@@ -503,7 +501,7 @@ class MainWP_Manage_Screenshots {
 			jQuery( document ).ready( function () {
 				jQuery('#reset-managersites-settings').on( 'click', function () {
 					mainwp_confirm(__( 'Are you sure.' ), function(){
-						jQuery('#mainwp_sitesviewmode').dropdown( 'set selected', 'table' );
+						jQuery('#mainwp_sitesviewmode').dropdown( 'set selected', 'grid' );
 						jQuery('#submit-managersites-settings').click();
 					}, false, false, true );
 					return false;

@@ -530,10 +530,7 @@ class MainWP_Manage_Sites_List_Table {
 	 * Render page navigation left items.
 	 */
 	public static function render_page_navigation_left_items() {
-		$siteViewMode = get_user_option( 'mainwp_sitesviewmode' );
-		if ( 'grid' !== $siteViewMode && 'table' !== $siteViewMode ) {
-			$siteViewMode = 'table';
-		}
+		$siteViewMode = MainWP_Utility::get_siteview_mode();
 
 		$nonce = wp_create_nonce( 'viewmode' );
 		?>

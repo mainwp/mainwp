@@ -243,7 +243,7 @@ class MainWP_Manage_Sites {
 			return;
 		}
 
-		$sitesViewMode = get_user_option( 'mainwp_sitesviewmode' );
+		$sitesViewMode = MainWP_Utility::get_siteview_mode();
 
 		add_filter( 'mainwp_header_actions_right', array( self::get_class_name(), 'screen_options' ), 10, 2 );
 		if ( 'grid' !== $sitesViewMode ) {
@@ -379,10 +379,7 @@ class MainWP_Manage_Sites {
 			$show_cols = array();
 		}
 
-		$siteViewMode = get_user_option( 'mainwp_sitesviewmode' );
-		if ( 'grid' !== $siteViewMode && 'table' !== $siteViewMode ) {
-			$siteViewMode = 'table';
-		}
+		$siteViewMode = MainWP_Utility::get_siteview_mode();
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
 			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
@@ -488,7 +485,7 @@ class MainWP_Manage_Sites {
 				} );
 				jQuery('#reset-managersites-settings').on( 'click', function () {
 					mainwp_confirm(__( 'Are you sure.' ), function(){
-						jQuery('#mainwp_sitesviewmode').dropdown( 'set selected', 'table' );
+						jQuery('#mainwp_sitesviewmode').dropdown( 'set selected', 'grid' );
 						jQuery('input[name=mainwp_default_sites_per_page]').val(25);
 						jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
 						//default columns.
@@ -1317,7 +1314,7 @@ class MainWP_Manage_Sites {
 			}
 		}
 
-		$sitesViewMode = get_user_option( 'mainwp_sitesviewmode' );
+		$sitesViewMode = MainWP_Utility::get_siteview_mode();
 		if ( 'grid' == $sitesViewMode ) {
 			MainWP_Manage_Screenshots::render_all_sites();
 		} else {

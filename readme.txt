@@ -5,7 +5,7 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 5.4
-Tested up to: 6.1
+Tested up to: 6.1.1
 Requires PHP: 7.0
 Stable tag: 4.3
 License: GPLv3 or later
@@ -286,7 +286,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 4.3 - 11-15-2022 =
+= 4.3 - 11-16-2022 =
 * Fixed: Dimmer element padding on laptop screen sizes
 * Fixed: Padding issue of the URL protocol dropdown
 * Fixed: Go to WP Admin menu item layout issue on screens less than 500px high

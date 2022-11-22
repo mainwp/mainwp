@@ -183,7 +183,7 @@ class MainWP_Updates {
 					'right'      => '',
 				),
 				array(
-					'title'      => __( 'Translation Updatess', 'mainwp' ),
+					'title'      => __( 'Translation Updates', 'mainwp' ),
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=translations-updates',
 					'slug'       => 'UpdatesManage&tab=translations-updates',

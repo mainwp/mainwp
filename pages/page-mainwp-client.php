@@ -1150,7 +1150,7 @@ class MainWP_Client {
 				}
 			}
 
-			$client_to_add['primary_contact_id'] = intval( $client_fields['default_field']['primary_contact_id'] );
+			$client_to_add['primary_contact_id'] = isset( $client_fields['default_field']['primary_contact_id'] ) ? intval( $client_fields['default_field']['primary_contact_id'] ) : 0;
 
 			$client_id = isset( $client_fields['client_id'] ) ? intval( $client_fields['client_id'] ) : 0;
 
@@ -1514,8 +1514,6 @@ class MainWP_Client {
 				</div>
 				<div class="ui section hidden divider"></div>
 			<?php
-		} else {
-			self::get_add_contact_temp( false, true, true );
 		}
 
 		$primary_contact_id = 0;

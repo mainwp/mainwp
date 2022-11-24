@@ -1055,6 +1055,7 @@ class MainWP_Manage_Sites_List_Table {
 						mainwp_datatable_fix_menu_overflow();				
 			<?php } else { ?>
 					try {
+						jQuery( '#mainwp-sites-table-loader' ).hide();
 						$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).on( 'processing.dt', function ( e, settings, processing ) {
 							jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
 							if (!processing) {

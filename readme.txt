@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.1.1
 Requires PHP: 7.0
-Stable tag: 4.3
+Stable tag: 4.3.0.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -285,6 +285,28 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.3.0.1 - 11-24-2022 =
+* Fixed: An issue with disabling certain widgets on the Overview page
+* Fixed: An issue with saving Widget order on the Client card
+* Fixed: An issue with logging Non-MainWP changes for the connected admin user
+* Fixed: Problem with the Removing site indicator on the individual site Overview page
+* Fixed: An issue with loading sites caused by a permissions problem in the Team Control Extension
+* Fixed: Active tab indicator problem for Dark and Classic theme
+* Added: Client image to the Manage Clients table
+* Added: Go to WP Admin button on all individual site settings pages
+* Added: Info message to the Select Theme modal
+* Updated: Save Settings button position in the Select Theme modal
+* Updated: Added required fields indicator on the Add/Edit Client form
+* Updated: Field labels on Add/Edit Client Contact form
+* Updated: Missing privacy info for specific extensions
+* Updated: Icon color in labels for the Default theme
+* Updated: Removed double loading indicator on Manage Sites
+* Updated: Custom Dashboard extension type info
+* Updated: Tooltip content for process indicator when trying to update a Suspended site
+* Updated: Pagination menu length in some Overview widgets
+* Updated: WordPress SEO extension icon
+* Removed: Unused DB table columns from the wp_mainwp_wp table
 
 = 4.3 - 11-16-2022 =
 * Fixed: Dimmer element padding on laptop screen sizes

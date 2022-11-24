@@ -794,7 +794,6 @@ class MainWP_Backup_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
 	 * @uses \MainWP\Dashboard\self::get_real_extension()
-	 *
 	 */
 	public static function backup(
 		$pSiteId,
@@ -836,7 +835,7 @@ class MainWP_Backup_Handler {
 		$subfolder = MainWP_Utility::normalize_filename( $subfolder );
 
 		if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
-			throw new MainWP_Exception( 'The child site has been suspended' );
+			throw new MainWP_Exception( 'Suspended site.', '', 'SUSPENDED_SITE' );
 		}
 
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {

@@ -685,7 +685,7 @@ manage_plugin_Action = function (elem, what) {
         plugin: plugin,
         websiteId: websiteId
     });
-    var parent = jQuery(elem).parent();
+    var parent = jQuery(elem).closest('.column.column-actions');
     jQuery(parent).html('<i class="notched circle loading icon"></i>' + __('Please wait...') + '</div>');
     jQuery.post(ajaxurl, data, function (response) {
         if (response && response.error) {
@@ -740,8 +740,8 @@ manage_plugins_upgrade_int = function (slug, websiteId) {
                 success: function (siteHolder) {
                     return function (response) {
                         if (response.error) {
-                            var extErr = getErrorMessage(response.error, true);
-                            siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="red times icon"></i></span>');
+                            var extErr = getErrorMessageInfo(response.error, 'ui')
+                            siteHolder.find('.column.update-column').html(extErr);
                         } else {
                             var res = response.result;
                             if (res[slug]) {
@@ -831,7 +831,7 @@ manages_themeAction = function (elem, what) {
         websiteId: websiteId
     });
 
-    var parent = jQuery(elem).parent();
+    var parent = jQuery(elem).closest('.column.column-actions');
     jQuery(parent).html('<i class="notched circle loading icon"></i>' + __('Please wait...') + '</div>');
 
     jQuery.post(ajaxurl, data, function (response) {
@@ -870,7 +870,6 @@ manage_themes_upgrade_theme = function (slug, websiteid) {
 manage_themes_upgrade_int = function (slug, websiteId) {
     var websiteHolder = jQuery('.mainwp-manage-theme-item-website[theme-slug="' + slug + '"][site-id="' + websiteId + '"]');
     websiteHolder.find('.column.update-column').html('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
-
     manage_themes_upgrade_continueAfterBackup = function () {
         console.log('theme upgrade continue');
         return function () {
@@ -887,8 +886,8 @@ manage_themes_upgrade_int = function (slug, websiteId) {
                 success: function (pSlug, siteHolder) {
                     return function (response) {
                         if (response.error) {
-                            var extErr = getErrorMessage(response.error, true);
-                            siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="red times icon"></i></span>');
+                            var extErr = getErrorMessageInfo(response.error, 'ui')
+                            siteHolder.find('.column.update-column').html(extErr);
                         } else {
                             var res = response.result;
                             if (res[pSlug]) {

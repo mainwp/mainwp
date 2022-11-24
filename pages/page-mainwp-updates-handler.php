@@ -45,7 +45,7 @@ class MainWP_Updates_Handler {
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
 
 			if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
-				throw new MainWP_Exception( 'ERROR', '<i class="red times icon"></i> ' . __( 'The child site has been suspended.', 'mainwp' ) );
+				throw new MainWP_Exception( 'ERROR', '<i class="pause circular yellow inverted icon"></i> ' . __( 'Suspended site.', 'mainwp' ) );
 			}
 
 			$information = self::upgrade_website( $website );
@@ -654,7 +654,7 @@ class MainWP_Updates_Handler {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
 			if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
-				throw new MainWP_Exception( 'ERROR', __( 'The child site has been suspended.', 'mainwp' ) );
+				throw new MainWP_Exception( 'ERROR', __( 'Suspended site.', 'mainwp' ), 'SUSPENDED_SITE' );
 			}
 			$information = self::update_plugin_theme_translation( $website, $type, $list );
 			if ( is_array( $information ) ) {

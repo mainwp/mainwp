@@ -989,9 +989,17 @@ class MainWP_UI {
 				</div>
 			</div>
 		</div>		
-		<?php if ( isset( $_GET['dashboard'] ) || ( isset( $_GET['id'] ) && isset( $_GET['page'] ) && 'managesites' == $_GET['page'] ) ) : ?>
+		<?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) || isset( $_GET['cacheControlId'] ) ) : ?>
 			<?php if ( isset( $_GET['dashboard'] ) ) : ?>
 				<?php $website_id = intval( $_GET['dashboard'] ); ?>
+			<?php elseif ( isset( $_GET['updateid'] ) ) : ?>
+				<?php $website_id = intval( $_GET['updateid'] ); ?>
+			<?php elseif ( isset( $_GET['emailsettingsid'] ) ) : ?>
+				<?php $website_id = intval( $_GET['emailsettingsid'] ); ?>
+			<?php elseif ( isset( $_GET['scanid'] ) ) : ?>
+				<?php $website_id = intval( $_GET['scanid'] ); ?>
+			<?php elseif ( isset( $_GET['cacheControlId'] ) ) : ?>
+				<?php $website_id = intval( $_GET['cacheControlId'] ); ?>
 			<?php else : ?>
 				<?php $website_id = intval( $_GET['id'] ); ?>
 			<?php endif; ?>
@@ -1279,7 +1287,18 @@ class MainWP_UI {
 		if ( null == $context || ! in_array( $context, $contexts ) ) {
 			$context = 'right';
 		}
+
 		$sorted = get_user_option( 'mainwp_widgets_sorted_' . strtolower( $page ) );
+
+		if ( 'mainwp_page_manageclients' == $page ) {
+			$sorted_array = $sorted;
+			$sorted       = '';
+			$client_id    = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0;
+			if ( ! empty( $client_id ) && is_array( $sorted_array ) && isset( $sorted_array[ $client_id ] ) ) {
+				$sorted = $sorted_array[ $client_id ];
+			}
+		}
+
 		// Grab the ones the user has manually sorted. Pull them out of their previous context/priority and into the one the user chose.
 		if ( ! $already_sorted && $sorted ) {
 			foreach ( explode( ',', $sorted ) as $val ) {
@@ -1636,17 +1655,17 @@ class MainWP_UI {
 	public static function render_screen_options( $setting_page = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$default_widgets = array(
-			'overview'          => __( 'Updates Overview', 'mainwp' ),
-			'recent_posts'      => __( 'Recent Posts', 'mainwp' ),
-			'recent_pages'      => __( 'Recent Pages', 'mainwp' ),
-			'plugins'           => __( 'Plugins (Individual Site Overview page)', 'mainwp' ),
-			'themes'            => __( 'Themes (Individual Site Overview page)', 'mainwp' ),
-			'connection_status' => __( 'Connection Status', 'mainwp' ),
-			'security_issues'   => __( 'Security Issues', 'mainwp' ),
-			'notes'             => __( 'Notes (Individual Site Overview page)', 'mainwp' ),
-			'child_site_info'   => __( 'Child site info (Individual Site Overview page)', 'mainwp' ),
-			'client_info'       => __( 'Client info (Individual Site Overview page)', 'mainwp' ),
-			'website_actions'   => __( 'Non-MainWP Changes', 'mainwp' ),
+			'overview'           => __( 'Updates Overview', 'mainwp' ),
+			'recent_posts'       => __( 'Recent Posts', 'mainwp' ),
+			'recent_pages'       => __( 'Recent Pages', 'mainwp' ),
+			'plugins'            => __( 'Plugins (Individual Site Overview page)', 'mainwp' ),
+			'themes'             => __( 'Themes (Individual Site Overview page)', 'mainwp' ),
+			'connection_status'  => __( 'Connection Status', 'mainwp' ),
+			'security_issues'    => __( 'Security Issues', 'mainwp' ),
+			'notes'              => __( 'Notes (Individual Site Overview page)', 'mainwp' ),
+			'child_site_info'    => __( 'Child site info (Individual Site Overview page)', 'mainwp' ),
+			'client_info'        => __( 'Client info (Individual Site Overview page)', 'mainwp' ),
+			'non_mainwp_changes' => __( 'Non-MainWP Changes', 'mainwp' ),
 		);
 
 		$custom_opts = apply_filters_deprecated( 'mainwp-widgets-screen-options', array( array() ), '4.0.7.2', 'mainwp_widgets_screen_options' );  // @deprecated Use 'mainwp_widgets_screen_options' instead.
@@ -1785,6 +1804,9 @@ class MainWP_UI {
 		<div class="ui modal" id="mainwp-select-mainwp-themes-modal">
 		<div class="header"><?php esc_html_e( 'Select MainWP Theme', 'mainwp' ); ?></div>
 		<div class="content ui form">
+			<div class="ui blue message">
+				<div class=""><?php echo sprintf( __( 'Did you know you can create your custom theme? %1$sSee here how to do it%2$s!', '' ), '<a href="https://kb.mainwp.com/docs/how-to-change-the-theme-for-mainwp/" target="_blank">', '</a>' ); ?></div>
+			</div>
 			<form method="POST" action="" name="mainwp_select_mainwp_themes_form" id="mainwp_select_mainwp_themes_form">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<input type="hidden" name="wp_scr_options_nonce" value="<?php echo wp_create_nonce( 'MainWPSelectThemes' ); ?>" />
@@ -1813,9 +1835,9 @@ class MainWP_UI {
 		<div class="actions">
 			<div class="ui two columns grid">
 				<div class="left aligned column">
+					<input type="submit" class="ui green button" id="submit-select-mainwp-themes" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
 				</div>
 				<div class="ui right aligned column">
-					<input type="submit" class="ui green button" id="submit-select-mainwp-themes" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
 					<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 				</div>
 			</div>

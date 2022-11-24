@@ -33,7 +33,8 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getmainwpdir', array( &$this, 'hook_get_mainwp_dir' ), 10, 3 );
 		add_filter( 'mainwp_is_multi_user', array( &$this, 'is_multi_user' ) );
 		add_filter( 'mainwp_qq2fileuploader', array( &$this, 'filter_qq2_file_uploader' ), 10, 2 );
-		add_action( 'mainwp_select_sites_box', array( &$this, 'select_sites_box' ), 10, 10 );
+		add_action( 'mainwp_select_sites_box', array( &$this, 'select_sites_box' ), 10, 11 );
+		add_action( 'mainwp_add_categories_box', array( &$this, 'hook_add_categories_box' ), 10, 1 );
 		add_action( 'mainwp_prepareinstallplugintheme', array( MainWP_Install_Bulk::get_class_name(), 'prepare_install' ) );
 		add_action( 'mainwp_performinstallplugintheme', array( MainWP_Install_Bulk::get_class_name(), 'perform_install' ) );
 		add_filter( 'mainwp_getwpfilesystem', array( MainWP_System_Utility::get_class_name(), 'get_wp_file_system' ) );
@@ -538,8 +539,9 @@ class MainWP_Hooks {
 	 * @param array  $selected_groups Selected Groups.
 	 * @param bool   $show_client Show Clients.
 	 * @param array  $selected_clients Selected Clients.
+	 * @param mixed  $post_id post ID.
 	 */
-	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', $selected_websites = array(), $selected_groups = array(), $show_client = false, $selected_clients = array() ) {
+	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', $selected_websites = array(), $selected_groups = array(), $show_client = false, $selected_clients = array(), $post_id = false ) {
 		$sel_params = array(
 			'type'             => $type,
 			'show_group'       => $show_group,
@@ -550,8 +552,20 @@ class MainWP_Hooks {
 			'selected_groups'  => $selected_groups,
 			'show_client'      => $show_client,
 			'selected_clients' => $selected_clients,
+			'post_id'          => $post_id,
 		);
 		MainWP_UI_Select_Sites::select_sites_box( $sel_params );
+	}
+
+	/**
+	 * Method hook_add_categories_box()
+	 *
+	 * General categories box.
+	 *
+	 * @param int $post_id Post ID.
+	 */
+	public function hook_add_categories_box( $post_id = false ) {
+		MainWP_System::instance()->metaboxes->add_categories( $post_id );
 	}
 
 	/**
@@ -1179,6 +1193,8 @@ class MainWP_Hooks {
 			$type      = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : null;
 			$slugs     = isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ? wp_unslash( $_POST['slugs'] ) : array();
 			$error     = '';
+			$erCode    = '';
+
 			if ( 'plugin' === $type && ! mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) ) {
 				$error = mainwp_do_not_have_permissions( __( 'update plugins', 'mainwp' ), false );
 			} elseif ( 'theme' === $type && ! mainwp_current_user_have_right( 'dashboard', 'update_themes' ) ) {
@@ -1188,11 +1204,17 @@ class MainWP_Hooks {
 			$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 
 			if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
-				$error = __( 'The child site has been suspended.', 'mainwp' );
+				$error  = __( 'Suspended site.', 'mainwp' );
+				$erCode = 'SUSPENDED_SITE';
 			}
 
 			if ( ! empty( $error ) ) {
-				wp_send_json( array( 'error' => $error ) );
+				wp_send_json(
+					array(
+						'error'     => $error,
+						'errorCode' => $erCode,
+					)
+				);
 			}
 
 			if ( MainWP_Utility::ctype_digit( $websiteId ) ) {

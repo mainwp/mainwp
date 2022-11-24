@@ -42,75 +42,88 @@ jQuery(document).ready(function () {
         return false;
     });
 
-  jQuery( document ).on( 'click', '.extension-privacy-info-link', function () {
-    var slug = jQuery( this ).closest( '.extension' ).attr( 'base-slug' );
-    var title = jQuery( '#mainwp-extensions-privacy-info' ).find( "input[base-slug='" + slug + "']" ).attr( 'extension_title' );
-    var privacy = jQuery( '#mainwp-extensions-privacy-info' ).find( "input[base-slug='" + slug + "']" ).attr( 'privacy' );
-    var integration = jQuery( '#mainwp-extensions-privacy-info' ).find( "input[base-slug='" + slug + "']" ).attr( 'integration' );
-    var integration_url = jQuery( '#mainwp-extensions-privacy-info' ).find( "input[base-slug='" + slug + "']" ).attr( 'integration_url' );
-    var integration_owner = jQuery( '#mainwp-extensions-privacy-info' ).find( "input[base-slug='" + slug + "']" ).attr( 'integration_owner' );
-    var integration_owner_pp = jQuery( '#mainwp-extensions-privacy-info' ).find( "input[base-slug='" + slug + "']" ).attr( 'integration_owner_pp' );
-
-    jQuery( '#mainwp-privacy-info-modal' ).modal( 'attach events', '.first.modal .extension-privacy-info-link' ).modal( {
-      allowMultiple: true,
-      onShow : function() {
-        jQuery( '#mainwp-privacy-info-modal' ).find( '.header' ).html( title + ' Privacy Info' );
-        if ( 0 == privacy ) {
-          jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).html( 'Stand alone Extension. This Extension does not use any 3rd party plugins or API\'s to integrate with your Dashboard. This extension falls under the <a href="https://mainwp.com/mainwp-plugin-privacy-policy/" target="_blank">MainWP Plugin Privacy Policy</a>.' );
-        } else if ( 1 == privacy ) {
-          if ( slug == 'advanced-uptime-monitor-extension' ) {
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).html( '<strong>Extension integrates with a 3rd party API.</strong>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( '<div class="ui hidden divider"></div>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( 'Integrates with: <a href="' + integration_url + '" target="_blank">' + integration + '</a>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( '<br/>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( 'Owned by: <a href="' + integration_owner_pp + '" target="_blank">' + integration_owner + '</a>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( '<div class="ui hidden divider"></div>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( 'Integrates with: <a href="https://betteruptime.com/" target="_blank">Better Uptime API</a>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( '<br/>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( 'Owned by: <a href="https://betterstack.com/privacy" target="_blank">Better Stack, Inc.</a>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( '<div class="ui hidden divider"></div>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( 'Integrates with: <a href="https://nodeping.com" target="_blank">NodePing API</a>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( '<br/>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( 'Owned by: <a href="https://nodeping.com/privacy.html" target="_blank">NodePing LLC</a>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( '<div class="ui hidden divider"></div>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( 'Integrates with: <a href="https://www.site24x7.com/" target="_blank">Site24x7 API</a>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( '<br/>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( 'Owned by: <a href="https://www.zoho.com/privacy.html" target="_blank">Zoho Corporation Pvt. Ltd.</a>' );
-          } else if ( slug == 'mainwp-vulnerability-checker-extension' ) {
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).html( '<strong>Extension integrates with a 3rd party API.</strong>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( '<div class="ui hidden divider"></div>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( 'Integrates with: <a href="' + integration_url + '" target="_blank">' + integration + '</a>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( '<br/>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( 'Owned by: <a href="' + integration_owner_pp + '" target="_blank">' + integration_owner + '</a>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( '<div class="ui hidden divider"></div>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( 'Integrates with: <a href="https://nvd.nist.gov/" target="_blank">NVD NIST API</a>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( '<br/>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( 'Owned by: <a href="https://www.nist.gov/privacy-policy" target="_blank">National Institute of Standards and Technology</a>' );
-          } else {
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).html( '<strong>Extension integrates with a 3rd party API.</strong>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( '<div class="ui hidden divider"></div>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( 'Integrates with: <a href="' + integration_url + '" target="_blank">' + integration + '</a>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( '<br/>' );
-            jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( 'Owned by: <a href="' + integration_owner_pp + '" target="_blank">' + integration_owner + '</a>' );
-          }
-        } else if ( 2 == privacy ) {
-          jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).html( '<strong>Extension integrates with a 3rd party Plugin.</strong>' );
-          jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( '<div class="ui hidden divider"></div>' );
-          jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( 'Integrates with: <a href="' + integration_url + '" target="_blank">' + integration + '</a>' );
-          jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( '<br/>' );
-          jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).append( 'Owned by: <a href="' + integration_owner_pp + '" target="_blank">' + integration_owner + '</a>' );
+    jQuery(document).on('click', '.extension-privacy-info-link', function () {
+        var slug = jQuery(this).attr('base-slug');
+        var title = '';
+        if (jQuery('#mainwp-extensions-privacy-info').find("input[base-slug='" + slug + "']").length > 0) {
+            title = jQuery('#mainwp-extensions-privacy-info').find("input[base-slug='" + slug + "']").attr('extension_title');
         } else {
-          jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).html( '<strong>This extension is not developed by MainWP. Privacy info is not available.</strong>' );
+            title = jQuery(this).closest('.ui.card').attr('extension-title');
         }
-      },
-      onHide : function() {
-        jQuery( '#mainwp-privacy-info-modal' ).find( '.header' ).html('');
-        jQuery( '#mainwp-privacy-info-modal' ).find( '.content' ).html('');
-      },
-    } ).modal( 'show' );
+        var privacy = jQuery('#mainwp-extensions-privacy-info').find("input[base-slug='" + slug + "']").attr('privacy');
+        var integration = jQuery('#mainwp-extensions-privacy-info').find("input[base-slug='" + slug + "']").attr('integration');
+        var integration_url = jQuery('#mainwp-extensions-privacy-info').find("input[base-slug='" + slug + "']").attr('integration_url');
+        var integration_owner = jQuery('#mainwp-extensions-privacy-info').find("input[base-slug='" + slug + "']").attr('integration_owner');
+        var integration_owner_pp = jQuery('#mainwp-extensions-privacy-info').find("input[base-slug='" + slug + "']").attr('integration_owner_pp');
+
+        jQuery('#mainwp-privacy-info-modal').modal({
+            allowMultiple: true,
+            onShow: function () {
+                jQuery('#mainwp-privacy-info-modal').find('.header').html(title + ' Privacy Info');
+                if (0 == privacy) {
+                    jQuery('#mainwp-privacy-info-modal').find('.content').html('Stand alone Extension. This Extension does not use any 3rd party plugins or API\'s to integrate with your Dashboard. This extension falls under the <a href="https://mainwp.com/mainwp-plugin-privacy-policy/" target="_blank">MainWP Plugin Privacy Policy</a>.');
+                } else if (1 == privacy) {
+                    if (slug == 'advanced-uptime-monitor-extension') {
+                        jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Extension integrates with a 3rd party API.</strong>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('<div class="ui hidden divider"></div>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('Integrates with: <a href="' + integration_url + '" target="_blank">' + integration + '</a>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('Owned by: <a href="' + integration_owner_pp + '" target="_blank">' + integration_owner + '</a>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('<div class="ui hidden divider"></div>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('Integrates with: <a href="https://betteruptime.com/" target="_blank">Better Uptime API</a>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('Owned by: <a href="https://betterstack.com/privacy" target="_blank">Better Stack, Inc.</a>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('<div class="ui hidden divider"></div>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('Integrates with: <a href="https://nodeping.com" target="_blank">NodePing API</a>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('Owned by: <a href="https://nodeping.com/privacy.html" target="_blank">NodePing LLC</a>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('<div class="ui hidden divider"></div>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('Integrates with: <a href="https://www.site24x7.com/" target="_blank">Site24x7 API</a>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('Owned by: <a href="https://www.zoho.com/privacy.html" target="_blank">Zoho Corporation Pvt. Ltd.</a>');
+                    } else if (slug == 'mainwp-vulnerability-checker-extension') {
+                        jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Extension integrates with a 3rd party API.</strong>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('<div class="ui hidden divider"></div>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('Integrates with: <a href="' + integration_url + '" target="_blank">' + integration + '</a>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('Owned by: <a href="' + integration_owner_pp + '" target="_blank">' + integration_owner + '</a>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('<div class="ui hidden divider"></div>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('Integrates with: <a href="https://nvd.nist.gov/" target="_blank">NVD NIST API</a>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('Owned by: <a href="https://www.nist.gov/privacy-policy" target="_blank">National Institute of Standards and Technology</a>');
+                    } else {
+                        jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Extension integrates with a 3rd party API.</strong>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('<div class="ui hidden divider"></div>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('Integrates with: <a href="' + integration_url + '" target="_blank">' + integration + '</a>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('Owned by: <a href="' + integration_owner_pp + '" target="_blank">' + integration_owner + '</a>');
+                    }
+                } else if (2 == privacy) {
+                    jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Extension integrates with a 3rd party Plugin.</strong>');
+                    jQuery('#mainwp-privacy-info-modal').find('.content').append('<div class="ui hidden divider"></div>');
+                    jQuery('#mainwp-privacy-info-modal').find('.content').append('Integrates with: <a href="' + integration_url + '" target="_blank">' + integration + '</a>');
+                    jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
+                    jQuery('#mainwp-privacy-info-modal').find('.content').append('Owned by: <a href="' + integration_owner_pp + '" target="_blank">' + integration_owner + '</a>');
+                } else {
+                    if ( slug =='mainwp-page-speed-extension' ) {
+                        jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Extension integrates with a 3rd party Plugin.</strong>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('<div class="ui hidden divider"></div>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('Integrates with: <a href="https://wordpress.org/plugins/google-pagespeed-insights/" target="_blank">Insights from Google PageSpeed</a>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('<br/>');
+                        jQuery('#mainwp-privacy-info-modal').find('.content').append('Owned by: <a href="https://mattkeys.me/" target="_blank">Matt Keys</a>');
+                    } else {
+                        jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>This extension is not developed by MainWP. Privacy info is not available.</strong>');
+                    }
+                }
+            },
+            onHide: function () {
+                jQuery('#mainwp-privacy-info-modal').find('.header').html('');
+                jQuery('#mainwp-privacy-info-modal').find('.content').html('');
+            },
+        }).modal('show');
 
         return false;
-  } );
+    });
 
     jQuery(document).on('click', '.extension-the-plugin-action', function () {
         var parent = jQuery(this).closest(".card");
@@ -402,7 +415,7 @@ function mainwp_extensions_grabkeys(retring) {
                         statusEl.fadeOut();
                     }, 3000);
                     totalActivateThreads = jQuery('#mainwp-extensions-list .card[status="queue"]').length;
-                    console.log( totalActivateThreads );
+                    console.log(totalActivateThreads);
                     if (totalActivateThreads > 0)
                         extensions_loop_next();
                 } else if (response.error) {

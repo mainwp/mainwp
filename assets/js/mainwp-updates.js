@@ -1013,10 +1013,10 @@ updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noChe
                             }
 
                             if (response.error) {
-                                var extErr = getErrorMessage(response.error, true);
+                                var extErr = getErrorMessageInfo(response.error, 'ui')
                                 if (!done && pBulkMode)
-                                    updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="red times icon"></i></span>');
-                                websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="red times icon"></i></span>');
+                                    updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, extErr);
+                                websiteHolder.find('td:last-child').html(extErr);
                             } else {
                                 var res = response.result;
                                 if (res[slugParts[i]]) {
@@ -1427,10 +1427,10 @@ updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
                     }
 
                     if (response.error) {
-                        var extErr = getErrorMessage(response.error, true);
+                        var extErr = getErrorMessageInfo(response.error, 'ui')
                         if (!done && pBulkMode)
-                            updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="red times icon"></i></span>');
-                        websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="red times icon"></i></span>');
+                            updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, extErr);
+                        websiteHolder.find('td:last-child').html(extErr);
                     } else {
                         var res = response.result;
 
@@ -2962,10 +2962,7 @@ updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, gr
                     var success = false;
                     var extErr = '';      
                     if (response.error) {
-                        console.log(response.error);                  
-                        if (response.error.message && response.error.message == 'WPERROR' && response.error.extra) {
-                            extErr = response.error.extra;
-                        }
+                        extErr =  getErrorMessageInfo(response.error, 'ui')
                     }
                     else {
                         var res = response.result;
@@ -3015,8 +3012,7 @@ updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, gr
                             var item = newList[i];
                             var elem = document.getElementById('wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item);
                             var parent = jQuery(elem).closest('tr');
-                            //document.getElementById( 'wp_upgrade_' + pWhat + '_' + pId + strGroup + '_' + item ).innerHTML = result;
-                            parent.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="red times icon"></i><span');
+                            parent.find('td:last-child').html(extErr);
                         }
                     }
                 }, 'json');
@@ -3064,7 +3060,8 @@ updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteName,
 
     jQuery.post(ajaxurl, data, function (response) {
         if (response.error) {
-            updatesoverview_plugins_upgrade_all_update_site_status(pId, '<i class="red times icon"></i>');
+            var extErr = getErrorMessageInfo(response.error, 'ui')
+            updatesoverview_plugins_upgrade_all_update_site_status(pId, extErr);
         }
         else {
             updatesoverview_plugins_upgrade_all_update_site_status(pId, '<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin('', pId));

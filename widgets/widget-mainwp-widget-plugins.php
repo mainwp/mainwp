@@ -349,7 +349,14 @@ class MainWP_Widget_Plugins {
 		}
 
 		if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
-			die( wp_json_encode( array( 'error' => __( 'The child site has been suspended.', 'mainwp' ) ) ) );
+			die(
+				wp_json_encode(
+					array(
+						'error'     => __( 'Suspended site.', 'mainwp' ),
+						'errorCode' => 'SUSPENDED_SITE',
+					)
+				)
+			);
 		}
 
 		try {

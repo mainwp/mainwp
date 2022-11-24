@@ -132,7 +132,14 @@
 #mainwp-page-navigation-wrapper .ui.secondary.pointing.menu {
   overflow-x: auto;
   overflow-y: hidden;
+  margin-bottom: -1px;
 }
+
+#mainwp-page-navigation-wrapper .ui.secondary.pointing.menu .item {
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-bottom: 0px;
+  }
 
 .mainwp-page-navigation {
     border-bottom-width: 2px !important;

@@ -95,7 +95,7 @@ class MainWP_Menu {
 
 			// Manage Sites.
 			if ( ! self::is_disable_menu_item( 2, 'managesites' ) ) {
-				if ( mainwp_current_user_have_right( 'dashboard', 'add_sites' ) && mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) && mainwp_current_user_have_right( 'dashboard', 'delete_sites' ) && mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) && mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) && mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) && mainwp_current_user_have_right( 'dashboard', 'test_connection' ) && mainwp_current_user_have_right( 'dashboard', 'manage_groups' ) ) {
+				if ( mainwp_current_user_have_right( 'dashboard', 'add_sites' ) || mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) || mainwp_current_user_have_right( 'dashboard', 'delete_sites' ) || mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) || mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) || mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) && mainwp_current_user_have_right( 'dashboard', 'test_connection' ) || mainwp_current_user_have_right( 'dashboard', 'manage_groups' ) ) {
 					MainWP_Manage_Sites::init_menu();
 				}
 			}
@@ -109,21 +109,21 @@ class MainWP_Menu {
 
 			// Manage Updates.
 			if ( ! self::is_disable_menu_item( 2, 'UpdatesManage' ) ) {
-				if ( mainwp_current_user_have_right( 'dashboard', 'update_wordpress' ) && mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) && mainwp_current_user_have_right( 'dashboard', 'update_themes' ) && mainwp_current_user_have_right( 'dashboard', 'update_translations' ) && mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) && mainwp_current_user_have_right( 'dashboard', 'trust_untrust_updates' ) ) {
+				if ( mainwp_current_user_have_right( 'dashboard', 'update_wordpress' ) || mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) || mainwp_current_user_have_right( 'dashboard', 'update_themes' ) || mainwp_current_user_have_right( 'dashboard', 'update_translations' ) || mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) || mainwp_current_user_have_right( 'dashboard', 'trust_untrust_updates' ) ) {
 					MainWP_Updates::init_menu();
 				}
 			}
 
 			// Manage Plugins.
 			if ( ! self::is_disable_menu_item( 2, 'PluginsManage' ) ) {
-				if ( mainwp_current_user_have_right( 'dashboard', 'install_plugins' ) && mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) && mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) {
+				if ( mainwp_current_user_have_right( 'dashboard', 'install_plugins' ) || mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) || mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) {
 					MainWP_Plugins::init_menu();
 				}
 			}
 
 			// Manage Themes.
 			if ( ! self::is_disable_menu_item( 2, 'ThemesManage' ) ) {
-				if ( mainwp_current_user_have_right( 'dashboard', 'install_themes' ) && mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) && mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) {
+				if ( mainwp_current_user_have_right( 'dashboard', 'install_themes' ) || mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) || mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) {
 					MainWP_Themes::init_menu();
 				}
 			}

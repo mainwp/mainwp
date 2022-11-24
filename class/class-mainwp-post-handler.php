@@ -573,7 +573,18 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		if ( $user && ! empty( $_POST['page'] ) ) {
 			$page  = isset( $_POST['page'] ) ? sanitize_text_field( wp_unslash( $_POST['page'] ) ) : '';
 			$order = isset( $_POST['order'] ) ? sanitize_text_field( wp_unslash( $_POST['order'] ) ) : '';
-			update_user_option( $user->ID, 'mainwp_widgets_sorted_' . $page, $order, true );
+
+			if ( 'mainwp_page_manageclients' == $page ) {
+				$item_id      = isset( $_POST['item_id'] ) ? intval( $_POST['item_id'] ) : 0;
+				$sorted_array = get_user_option( 'mainwp_widgets_sorted_' . strtolower( $page ) );
+				if ( ! is_array( $sorted_array ) ) {
+					$sorted_array = array();
+				}
+				$sorted_array[ $item_id ] = $order;
+				update_user_option( $user->ID, 'mainwp_widgets_sorted_' . $page, $sorted_array, true );
+			} else {
+				update_user_option( $user->ID, 'mainwp_widgets_sorted_' . $page, $order, true );
+			}
 			die( 'ok' );
 		}
 		die( -1 );
@@ -1349,7 +1360,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			wp_die( 'failed' );
 		}
 		$update = array(
-			'dismiss'   => 1,
+			'dismiss' => 1,
 		);
 		MainWP_DB_Site_Actions::instance()->update_action_by_id( $action_id, $update );
 		wp_die( 'success' );

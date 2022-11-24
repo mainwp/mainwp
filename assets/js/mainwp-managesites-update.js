@@ -195,7 +195,7 @@ managesites_update_pluginsthemes_next_int = function (websiteId, data, errors) {
         success: function (pWebsiteId, pData, pErrors) {
             return function (response) {
                 if (response.error) {
-                    dashboard_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
+                    dashboard_update_site_status(pWebsiteId, getErrorMessageInfo(response.error, 'ui'));
                     websitesError++;
                 } else {
                     if (response.result) {

@@ -36,12 +36,14 @@ class MainWP_Exception extends \Exception {
 	 *
 	 * Grab Exception Message upon creation of the object.
 	 *
-	 * @param mixed $message Exception message.
-	 * @param null  $extra Any HTTP Errors.
+	 * @param mixed  $message Exception message.
+	 * @param null   $extra Any extra Errors.
+	 * @param string $errCode Errors code.
 	 */
-	public function __construct( $message, $extra = null ) {
+	public function __construct( $message, $extra = null, $errCode = '' ) {
 		parent::__construct( $message );
 		$this->messageExtra = esc_html( $extra ); // add more secure.
+		$this->errorCode    = esc_html( $errCode );
 	}
 
 	/**
@@ -51,6 +53,15 @@ class MainWP_Exception extends \Exception {
 	 */
 	public function get_message_extra() {
 		return $this->messageExtra;
+	}
+
+	/**
+	 * Method get_message_error_code()
+	 *
+	 * @return string $errorCode Errors code.
+	 */
+	public function get_message_error_code() {
+		return $this->errorCode;
 	}
 
 	/**

@@ -202,6 +202,36 @@ mainwp_createclient = function (fromModal) {
     return;
   }
 
+  var valid_contact = true;
+  jQuery('input[name="client_fields[new_contacts_field][client.contact.name][]"]').each(function () {
+    if (jQuery(this).val() == '') {
+      valid_contact = false;
+    }
+  });
+  jQuery('input[name="client_fields[new_contacts_field][contact.email][]"]').each(function () {
+    if (jQuery(this).val() == '') {
+      valid_contact = false;
+    }
+  });
+
+
+  jQuery('input[name="client_fields[contacts_field][client.contact.name][]"]').each(function () {
+    if (jQuery(this).val() == '') {
+      valid_contact = false;
+    }
+  });
+  jQuery('input[name="client_fields[contacts_field][client.contact.email][]"]').each(function () {
+    if (jQuery(this).val() == '') {
+      valid_contact = false;
+    }
+  });
+
+
+  if (!valid_contact) {
+    feedback('mainwp-message-zone-client', __('Contact Name and Contact Email are required. Please enter a Contact Name and Contact Email.'), 'yellow');
+    return;
+  }
+
   var selected_sites = [];
   jQuery("input[name='selected_sites[]']:checked").each(function () {
     selected_sites.push(jQuery(this).val());

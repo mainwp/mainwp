@@ -25,7 +25,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '8.97';
+	protected $mainwp_db_version = '8.982';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -89,12 +89,9 @@ class MainWP_Install extends MainWP_DB_Base {
 			return;
 		}
 
-		$charset_collate = $this->wpdb->get_charset_collate();
+		$this->pre_update_tables();
 
-		/*
-		* As of WP 4.2, which uses 4 bytes per character. This means that an index, now only has room for floor(767/4) = 191 characters.
-		*/
-		$max_index_length = 191;
+		$charset_collate = $this->wpdb->get_charset_collate();
 
 		$sql = array();
 		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp' ) . " (
@@ -119,7 +116,6 @@ class MainWP_Install extends MainWP_DB_Base {
   status_check_interval tinyint(1) NOT NULL DEFAULT 0,
   health_threshold int(11) NOT NULL DEFAULT 0,  
   note text NOT NULL,
-  note_lastupdate int(11) NOT NULL DEFAULT 0,
   statsUpdate int(11) NOT NULL,
   directories longtext NOT NULL,
   plugin_upgrades longtext NOT NULL,
@@ -131,14 +127,12 @@ class MainWP_Install extends MainWP_DB_Base {
   ignored_themes longtext NOT NULL,
   plugins longtext NOT NULL,
   ignored_plugins longtext NOT NULL,
-  pages longtext NOT NULL,
   users longtext NOT NULL,
   categories longtext NOT NULL,
   pluginDir text NOT NULL,
   automatic_update tinyint(1) NOT NULL,
   backup_before_upgrade tinyint(1) NOT NULL DEFAULT 2,
-  backups text NOT NULL,
-  mainwpdir int(11) NOT NULL,
+  mainwpdir tinyint(1) NOT NULL,
   loadFilesBeforeZip tinyint(1) NOT NULL DEFAULT 1,
   is_ignoreCoreUpdates tinyint(1) NOT NULL DEFAULT 0,
   is_ignorePluginUpdates tinyint(1) NOT NULL DEFAULT 0,
@@ -462,6 +456,32 @@ class MainWP_Install extends MainWP_DB_Base {
 		}
 
 		MainWP_DB_Client::instance()->check_to_updates_reports_data_861( $currentVersion );
+	}
+
+	/**
+	 * Method pre_update_tables()
+	 *
+	 * Handle pre update tables.
+	 *
+	 * @return void
+	 */
+	public function pre_update_tables() {
+		// get_site_option is multisite aware!
+		$currentVersion = get_site_option( 'mainwp_db_version' );
+
+		if ( false == $currentVersion ) {
+			return;
+		}
+
+		$suppress = $this->wpdb->suppress_errors();
+
+		if ( version_compare( $currentVersion, '8.98', '<=' ) ) {
+			$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN backups' );
+			$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN note_lastupdate' );
+			$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN pages' );
+		}
+
+		$this->wpdb->suppress_errors( $suppress );
 	}
 
 	/**

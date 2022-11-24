@@ -482,7 +482,6 @@ class MainWP_Install extends MainWP_DB_Base {
 		}
 
 		$this->wpdb->suppress_errors( $suppress );
-
 	}
 
 	/**

@@ -206,8 +206,9 @@ class MainWP_Extensions_View {
 			</div>
 			<div id="mainwp-extensions-privacy-info">
 				<?php $priv_extensions = self::get_available_extensions( 'all' ); ?>
-				<?php foreach ( $priv_extensions as $priv_extension ) : 
-					$item_slug     = MainWP_Utility::get_dir_slug( $priv_extension['slug'] );
+				<?php
+				foreach ( $priv_extensions as $priv_extension ) :
+					$item_slug = MainWP_Utility::get_dir_slug( $priv_extension['slug'] );
 					?>
 					<?php if ( isset( $priv_extension['privacy'] ) && ( 2 == $priv_extension['privacy'] || 1 == $priv_extension['privacy'] ) ) : ?>
 					<input

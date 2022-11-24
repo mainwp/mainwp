@@ -206,24 +206,24 @@ mainwp_createclient = function (fromModal) {
   jQuery('input[name="client_fields[new_contacts_field][client.contact.name][]"]').each(function () {
     if (jQuery(this).val() == '') {
       valid_contact = false;
-    };
+    }
   });
   jQuery('input[name="client_fields[new_contacts_field][contact.email][]"]').each(function () {
     if (jQuery(this).val() == '') {
       valid_contact = false;
-    };
+    }
   });
 
 
   jQuery('input[name="client_fields[contacts_field][client.contact.name][]"]').each(function () {
     if (jQuery(this).val() == '') {
       valid_contact = false;
-    };
+    }
   });
   jQuery('input[name="client_fields[contacts_field][client.contact.email][]"]').each(function () {
     if (jQuery(this).val() == '') {
       valid_contact = false;
-    };
+    }
   });
 
 

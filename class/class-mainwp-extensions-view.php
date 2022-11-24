@@ -206,13 +206,15 @@ class MainWP_Extensions_View {
 			</div>
 			<div id="mainwp-extensions-privacy-info">
 				<?php $priv_extensions = self::get_available_extensions( 'all' ); ?>
-				<?php foreach ( $priv_extensions as $priv_extension ) : ?>
+				<?php foreach ( $priv_extensions as $priv_extension ) : 
+					$item_slug     = MainWP_Utility::get_dir_slug( $priv_extension['slug'] );
+					?>
 					<?php if ( isset( $priv_extension['privacy'] ) && ( 2 == $priv_extension['privacy'] || 1 == $priv_extension['privacy'] ) ) : ?>
 					<input
 						type="hidden"
 						id="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
 						name="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
-						base-slug="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
+						base-slug="<?php esc_attr_e( $item_slug  ); ?>"
 						privacy="<?php esc_attr_e( $priv_extension['privacy'] ); ?>"
 						integration="<?php esc_attr_e( $priv_extension['integration'] ); ?>"
 						integration_url="<?php esc_attr_e( $priv_extension['integration_url'] ); ?>"
@@ -226,7 +228,7 @@ class MainWP_Extensions_View {
 						type="hidden"
 						id="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
 						name="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
-						base-slug="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
+						base-slug="<?php esc_attr_e( $item_slug ); ?>"
 						privacy="<?php esc_attr_e( $priv_extension['privacy'] ); ?>"
 						extension_title="<?php esc_attr_e( $priv_extension['title'] ); ?>"
 						value="<?php esc_attr_e( $priv_extension['title'] ); ?>"
@@ -236,7 +238,7 @@ class MainWP_Extensions_View {
 							type="hidden"
 							id="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
 							name="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
-							base-slug="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
+							base-slug="<?php esc_attr_e( $item_slug ); ?>"
 							extension_title="<?php esc_attr_e( $priv_extension['title'] ); ?>"
 							value="<?php esc_attr_e( $priv_extension['title'] ); ?>"
 						/>
@@ -420,8 +422,10 @@ class MainWP_Extensions_View {
 		else :
 			$license_class = '<i class="red times icon"></i>';
 		endif;
+
+		$item_slug = MainWP_Utility::get_dir_slug( $extension['slug'] );
 		?>
-			<div class="ui card extension <?php echo ( $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension' ); ?> extension-card-<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( dirname( $extension['slug'] ) ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" <?php echo $queue_status; ?> license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
+			<div class="ui card extension <?php echo ( $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension' ); ?> extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" <?php echo $queue_status; ?> license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
 		<?php
 		/**
 		 * Action: mainwp_extension_card_top
@@ -456,7 +460,7 @@ class MainWP_Extensions_View {
 		<div class="extra content">
 					<div class="ui mini fluid stackable buttons">
 						<a class="ui basic button extension-the-plugin-action" plugin-action="<?php echo $disabled ? 'active' : 'disable'; ?>"><?php echo $disabled ? '<i class="toggle on icon"></i> ' . __( 'Enable', 'mainwp' ) : '<i class="toggle off icon"></i> ' . __( 'Disable', 'mainwp' ); ?></a>
-						<a class="ui extension-privacy-info-link icon basic button" data-tooltip="<?php echo __( 'Click to see more about extension privacy.', 'mainwp' ); ?>" data-position="top left" data-inverted=""><?php echo $privacy_class; ?> <?php echo __( 'Privacy', 'mainwp' ); ?></a>
+						<a class="ui extension-privacy-info-link icon basic button" base-slug="<?php echo esc_attr( $item_slug ); ?>" data-tooltip="<?php echo __( 'Click to see more about extension privacy.', 'mainwp' ); ?>" data-position="top left" data-inverted=""><?php echo $privacy_class; ?> <?php echo __( 'Privacy', 'mainwp' ); ?></a>
 						<?php if ( $disabled ) : ?>
 						<a class="ui basic button extension-the-plugin-action" plugin-action="remove"><i class="trash icon"></i> <?php echo __( 'Delete', 'mainwp' ); ?></a>
 						<?php endif; ?>
@@ -809,7 +813,7 @@ class MainWP_Extensions_View {
 			),
 			'mainwp-custom-dashboard-extension'      =>
 			array(
-				'type'                 => 'pro',
+				'type'                 => 'free',
 				'slug'                 => 'mainwp-custom-dashboard-extension',
 				'title'                => 'MainWP Custom Dashboard Extension',
 				'desc'                 => 'The purpose of this plugin is to contain your customisation snippets for your MainWP Dashboard.',

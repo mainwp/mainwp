@@ -1453,7 +1453,7 @@ class MainWP_Settings {
 							<input type="submit" name="mainwp_restore_info_messages" id="mainwp_restore_info_messages" class="ui button" value="<?php esc_attr_e( 'Restore Info Messages', 'mainwp' ); ?>"/>
 						</div>
 					</div>
-						<?php
+					<?php 
 						$enabled_lcr = ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) ? true : false;
 						?>
 						<div class="ui grid field" <?php echo $enabled_lcr ? '' : 'style="display:none"'; ?>>

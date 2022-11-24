@@ -69,6 +69,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 		$item = apply_filters( 'mainwp_clients_sitestable_item', $item, $item );
 		switch ( $column_name ) {
 			case 'name':
+			case 'image':
 			case 'client_email':
 			case 'client_phone':
 			case 'client_facebook':
@@ -129,6 +130,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 		return array(
 			'cb'               => '<input type="checkbox" />',
 			'name'             => __( 'Client', 'mainwp' ),
+			'image'            => __( 'Image', 'mainwp' ),
 			'tags'             => __( 'Tags', 'mainwp' ),
 			'contact_name'     => __( 'Contact Name', 'mainwp' ),
 			'client_email'     => __( 'Client Email', 'mainwp' ),
@@ -616,6 +618,13 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 						</div>
 					</td>
 				<?php
+			} elseif ( 'image' === $column_name ) {
+				echo "<td $attributes>";
+				?>
+				<?php $image_url = MainWP_Client_Handler::get_client_image_url( $item['image'] ); ?>
+				<a class="item" href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>"><img class="ui mini circular image" src="<?php echo esc_attr( $image_url ); ?>"></a>
+				<?php
+				echo '</td>';
 			} elseif ( 'name' === $column_name ) {
 				echo "<td $attributes>";
 				?>

@@ -1267,7 +1267,7 @@ class MainWP_Plugins {
 								$item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
 
 								?>
-							<div class="ui grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( wp_strip_all_tags( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $pluginsName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
+							<div class="ui grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $pluginsName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
 								<div class="one wide center aligned middle aligned column"></div>
 								<div class="one wide center aligned middle aligned column">
 										<?php if ( $child_plugin ) { ?>	
@@ -1300,7 +1300,7 @@ class MainWP_Plugins {
 										<a href="javascript:void(0)" class="ui mini green basic button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted="" onClick="return manage_plugins_upgrade( '<?php echo rawurlencode( $plugin_slug ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 									<?php endif; ?>
 									</div>
-								<div class="two wide center aligned middle aligned column">
+								<div class="two wide center aligned middle aligned column column-actions">
 									<?php if ( ! $child_plugin ) : ?>
 										<?php if ( $actived ) { ?>	
 											<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>

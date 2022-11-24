@@ -599,8 +599,9 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 				wp_json_encode(
 					array(
 						'error' => array(
-							'message' => $e->getMessage(),
-							'extra'   => $e->get_message_extra(),
+							'message'   => $e->getMessage(),
+							'extra'     => $e->get_message_extra(),
+							'errorCode' => $e->get_message_error_code(),
 						),
 					)
 				)

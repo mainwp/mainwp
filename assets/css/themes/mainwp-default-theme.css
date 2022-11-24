@@ -186,9 +186,14 @@
   color: var( --yellow-color ) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme a.label.ribbon {
+.mainwp-ui.mainwp-custom-theme a.label:not(.tag, .transition) {
   color: #ffffff !important;
 }
+
+.mainwp-ui.mainwp-custom-theme .ui.label:not(.tag, .transition) .icon {
+  color: #ffffff !important;
+}
+
 /* Icons */
 
 .mainwp-ui.mainwp-custom-theme i.icon.inverted {

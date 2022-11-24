@@ -458,7 +458,10 @@ class MainWP_Extensions {
 			$ext_source_label = '';
 			$type             = '';
 			$notice           = '';
-			$privacy          = '<a href="#" class="extension-privacy-info-link" style="text-decoration:none"> <i class="shield alternate small icon"></i></a>';
+
+			$item_slug = MainWP_Utility::get_dir_slug( $ext['slug'] );
+
+			$privacy = '<a href="#" class="extension-privacy-info-link" base-slug="' . esc_attr( $item_slug ) . '" style="text-decoration:none"> <i class="shield alternate small icon"></i></a>';
 
 			$software_title = MainWP_Extensions_Handler::polish_string_name( $ext['title'] );
 

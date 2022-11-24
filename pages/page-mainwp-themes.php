@@ -1224,7 +1224,7 @@ class MainWP_Themes {
 									<a href="javascript:void(0)" class="ui mini green basic button" onClick="return manage_themes_upgrade_theme( '<?php echo rawurlencode( $theme_slug ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 								<?php endif; ?>
 								</div>
-								<div class="two wide center aligned middle aligned column">
+								<div class="two wide center aligned middle aligned column column-actions">
 								<?php if ( $actived ) : ?>	
 											<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
 												<a href="javascript:void(0)" disabled class="ui mini fluid button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Active theme cannot be deactivated. If you need to activate another theme, go to the list of inactive themes and activate the wanted theme.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>

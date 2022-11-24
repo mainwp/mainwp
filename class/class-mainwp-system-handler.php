@@ -457,6 +457,7 @@ class MainWP_System_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Settings::handle_settings_post()
 	 */
 	public function handle_settings_post() {
+
 		if ( isset( $_GET['page'] ) && ( isset( $_POST['wp_nonce'] ) || isset( $_POST['wp_scr_options_nonce'] ) ) ) {
 			$this->include_pluggable();
 			$this->handle_mainwp_tools_settings();

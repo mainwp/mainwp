@@ -758,13 +758,11 @@ class MainWP_DB extends MainWP_DB_Base {
 			'offline_checks_last',
 			'offline_check_result',
 			'http_response_code',
-			'http_code_noticed',
 			'disable_status_check',
 			'disable_health_check',
 			'status_check_interval',
 			'health_threshold',
 			'note',
-			'note_lastupdate',
 			'statsUpdate',
 			'directories',
 			'plugin_upgrades',
@@ -776,15 +774,12 @@ class MainWP_DB extends MainWP_DB_Base {
 			'ignored_themes',
 			'plugins',
 			'ignored_plugins',
-			'pages',
 			'users',
 			'categories',
 			'pluginDir',
 			'automatic_update',
 			'backup_before_upgrade',
-			'backups',
 			'mainwpdir',
-			'loadFilesBeforeZip',
 			'is_ignoreCoreUpdates',
 			'is_ignorePluginUpdates',
 			'is_ignoreThemeUpdates',
@@ -901,7 +896,6 @@ class MainWP_DB extends MainWP_DB_Base {
 				'status_check_interval',
 				'health_threshold',
 				'note',
-				'note_lastupdate',
 				'plugin_upgrades',
 				'theme_upgrades',
 				'translation_upgrades',
@@ -1659,7 +1653,6 @@ class MainWP_DB extends MainWP_DB_Base {
 				'ignored_themes'        => '',
 				'plugins'               => '',
 				'ignored_plugins'       => '',
-				'pages'                 => '',
 				'users'                 => '',
 				'categories'            => '',
 				'pluginDir'             => '',
@@ -1840,8 +1833,13 @@ class MainWP_DB extends MainWP_DB_Base {
 			$website = self::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				// update admin.
-				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( wp_strip_all_tags( $name ) ) . '", adminname="' . $this->escape( $siteadmin ) . '",pluginDir="' . $this->escape( $pluginDir ) . '",maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", wpe="' . intval( $wpe ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '", disable_status_check="' . $this->escape( $disableChecking ) . '", status_check_interval="' . $this->escape( $checkInterval ) . '", disable_health_check="' . $this->escape( $disableHealthChecking ) . '", health_threshold="' . $this->escape( $healthThreshold ) . '" WHERE id=%d', $websiteid ) );
+				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( wp_strip_all_tags( $name ) ) . '", adminname="' . $this->escape( $siteadmin ) . '",pluginDir="' . $this->escape( $pluginDir ) . '", verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", wpe="' . intval( $wpe ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '", disable_status_check="' . $this->escape( $disableChecking ) . '", status_check_interval="' . $this->escape( $checkInterval ) . '", disable_health_check="' . $this->escape( $disableHealthChecking ) . '", health_threshold="' . $this->escape( $healthThreshold ) . '" WHERE id=%d', $websiteid ) );
 				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp_settings_backup' ) . ' SET archiveFormat = "' . $this->escape( $archiveFormat ) . '" WHERE wpid=%d', $websiteid ) );
+
+				if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+					$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ' WHERE id=%d', $websiteid ) );
+				}
+
 				// remove groups.
 				$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_group' ) . ' WHERE wpid=%d', $websiteid ) );
 				// Remove GA stats.

@@ -163,6 +163,7 @@ class MainWP_Site_Actions {
 				</table>
 				<script type="text/javascript">
 				jQuery( document ).ready( function() {
+					jQuery.fn.DataTable.ext.pager.numbers_length = 4;
 					jQuery( '#mainwp-non-mainwp-changes-table' ).DataTable( {
 						"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
 						"stateSave" : true,

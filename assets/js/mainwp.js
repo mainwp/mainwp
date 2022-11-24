@@ -486,19 +486,19 @@ jQuery(document).ready(function () {
     });
 
     for (var i = 0; i < securityIssues_fixes.length; i++) {
-        jQuery('#' + securityIssues_fixes[i] + '_fix').bind('click', function (what) {
-          return function () {
-            securityIssues_fix(what);
-            return false;
-          }
-        }(securityIssues_fixes[i]));
+      jQuery('#' + securityIssues_fixes[i] + '_fix').bind('click', function (what) {
+        return function () {
+          securityIssues_fix(what);
+          return false;
+        }
+      }(securityIssues_fixes[i]));
 
-        jQuery('#' + securityIssues_fixes[i] + '_unfix').bind('click', function (what) {
-          return function () {
-            securityIssues_unfix(what);
-            return false;
-          }
-        }(securityIssues_fixes[i]));
+      jQuery('#' + securityIssues_fixes[i] + '_unfix').bind('click', function (what) {
+        return function () {
+          securityIssues_unfix(what);
+          return false;
+        }
+      }(securityIssues_fixes[i]));
     }
     securityIssues_request(securityIssueSite.val());
   }
@@ -2762,6 +2762,33 @@ getErrorMessage = function (pError, msgOnly) {
     return pError;
   }
 };
+
+getErrorMessageInfo = function (repError, outputType) {
+  var msg = '';
+  var msgUI = '<i class="red times icon"></i>';
+
+  if (repError.errorCode != undefined && repError.errorCode == 'SUSPENDED_SITE') {
+    msg = __('Suspended site.');
+    msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause circular yellow inverted icon"></i></span>';
+  }
+
+  if (msg == '') {
+    msg = getErrorMessage(repError);
+    if (msg != '') {
+      msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + msg + '"><i class="red times icon"></i></span>';
+    }
+  }
+
+  if (msg != '') {
+    if (outputType != undefined && outputType == 'ui') {
+      return msgUI;
+    } else {
+      return msg;
+    }
+  }
+
+  return repError;
+}
 
 dateToHMS = function (date) {
   if (mainwpParams != undefined && mainwpParams['time_format'] != undefined) {

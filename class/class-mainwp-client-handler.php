@@ -50,17 +50,17 @@ class MainWP_Client_Handler {
 
 		return array(
 			'client.name'              => array(
-				'title'    => __( 'Client Name', 'mainwp' ),
+				'title'    => __( 'Client Name (Required)', 'mainwp' ),
 				'desc'     => __( 'Displays the Client name', 'mainwp' ),
 				'db_field' => 'name',
 			),
 			'client.email'             => array(
-				'title'    => __( 'Client contact email', 'mainwp' ),
+				'title'    => __( 'Client email', 'mainwp' ),
 				'desc'     => __( 'Displays the client email', 'mainwp' ),
 				'db_field' => 'client_email',
 			),
 			'client.phone'             => array(
-				'title'    => __( 'Client contact phone', 'mainwp' ),
+				'title'    => __( 'Client phone', 'mainwp' ),
 				'desc'     => __( 'Displays the client phone', 'mainwp' ),
 				'db_field' => 'client_phone',
 			),
@@ -136,22 +136,22 @@ class MainWP_Client_Handler {
 	public static function get_default_contact_fields() {
 		return array(
 			'client.contact.name' => array(
-				'title'    => __( 'Client contact name', 'mainwp' ),
+				'title'    => __( 'Contact name (Required)', 'mainwp' ),
 				'desc'     => __( 'Displays the client contact name', 'mainwp' ),
 				'db_field' => 'contact_name',
 			),
 			'contact.role'        => array(
-				'title'    => __( 'Contact contact role', 'mainwp' ),
+				'title'    => __( 'Contact role', 'mainwp' ),
 				'desc'     => __( 'Displays the contact role', 'mainwp' ),
 				'db_field' => 'contact_role',
 			),
 			'contact.email'       => array(
-				'title'    => __( 'Contact contact email', 'mainwp' ),
+				'title'    => __( 'Contact email (Required)', 'mainwp' ),
 				'desc'     => __( 'Displays the contact email', 'mainwp' ),
 				'db_field' => 'contact_email',
 			),
 			'contact.phone'       => array(
-				'title'    => __( 'Contact contact phone', 'mainwp' ),
+				'title'    => __( 'Contact phone', 'mainwp' ),
 				'desc'     => __( 'Displays the contact phone', 'mainwp' ),
 				'db_field' => 'contact_phone',
 			),

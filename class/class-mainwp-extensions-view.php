@@ -215,7 +215,7 @@ class MainWP_Extensions_View {
 						type="hidden"
 						id="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
 						name="<?php esc_attr_e( $priv_extension['slug'] ); ?>"
-						base-slug="<?php esc_attr_e( $item_slug  ); ?>"
+						base-slug="<?php esc_attr_e( $item_slug ); ?>"
 						privacy="<?php esc_attr_e( $priv_extension['privacy'] ); ?>"
 						integration="<?php esc_attr_e( $priv_extension['integration'] ); ?>"
 						integration_url="<?php esc_attr_e( $priv_extension['integration_url'] ); ?>"

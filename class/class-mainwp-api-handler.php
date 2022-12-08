@@ -64,18 +64,18 @@ class MainWP_API_Handler {
 			$i++;
 			$count++;
 			if ( $count == $max_check || $i == $total_check ) {
-				$results = MainWP_Api_Manager_Plugin_Update::instance()->bulk_update_check( $bulk_checks );
+				$results = MainWP_Api_Manager_Plugin_Update::instance()->bulk_update_check( $bulk_checks ); // bulk check response array of info.
 				if ( is_array( $results ) && 0 < count( $results ) ) {
 					foreach ( $results as $slug => $response ) {
-						$rslt                 = new \stdClass();
-						$rslt->slug           = $slug;
-						$rslt->latest_version = $response->new_version;
-						$rslt->download_url   = $response->package;
-						$rslt->key_status     = '';
-						$rslt->apiManager     = 1;
+						$rslt              = new \stdClass();
+						$rslt->slug        = $slug;
+						$rslt->new_version = $response['new_version'];
+						$rslt->package     = $response['package'];
+						$rslt->key_status  = '';
+						$rslt->apiManager  = 1;
 
-						if ( isset( $response->errors ) ) {
-							$rslt->error = $response->errors;
+						if ( isset( $response['errors'] ) ) {
+							$rslt->error = $response['errors'];
 						}
 						$output[ $slug ] = $rslt;
 					}
@@ -111,14 +111,15 @@ class MainWP_API_Handler {
 				$args['api_key']          = $ext['api_key'];
 				$args['instance']         = $ext['instance_id'];
 				$args['software_version'] = $ext['software_version'];
-				$response                 = MainWP_Api_Manager::instance()->update_check( $args );
+				$response                 = MainWP_Api_Manager_Plugin_Update::instance()->update_check( $args );
+
 				if ( ! empty( $response ) ) {
-					$rslt                 = new \stdClass();
-					$rslt->slug           = $ext['api'];
-					$rslt->latest_version = $response->new_version;
-					$rslt->download_url   = $response->package;
-					$rslt->key_status     = '';
-					$rslt->apiManager     = 1;
+					$rslt              = new \stdClass();
+					$rslt->slug        = $ext['api'];
+					$rslt->new_version = $response->new_version;
+					$rslt->package     = $response->package;
+					$rslt->key_status  = '';
+					$rslt->apiManager  = 1;
 					if ( isset( $response->errors ) ) {
 						$rslt->error = $response->errors;
 					}

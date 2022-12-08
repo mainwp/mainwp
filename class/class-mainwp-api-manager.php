@@ -550,19 +550,6 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Check if Extensions have an update.
-	 *
-	 * @param array $args Request arguments.
-	 *
-	 * @return mixed update_check() plugin info.
-	 *
-	 * @uses MainWP_Api_Manager_Plugin_Update::update_check()
-	 */
-	public function update_check( $args ) {
-		return MainWP_Api_Manager_Plugin_Update::instance()->update_check( $args );
-	}
-
-	/**
 	 * Request plugin information
 	 *
 	 * @param array $args Request arguments.

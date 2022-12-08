@@ -188,6 +188,12 @@ class MainWP_Api_Manager_Plugin_Update {
 
 		$response = wp_remote_retrieve_body( $request );
 
+		if ( isset( $args['json'] ) ) { // bulkupdatecheck: json.
+			$response = json_decode( $response, true );
+		} else { // pluginupdatecheck, plugininformation : serialize.
+			$response = unserialize( $response ); // phpcs:ignore -- data from extensions, to compatible. 
+		}
+
 		/**
 		 * For debugging errors from the API
 		 * For errors like: unserialize(): Error at offset 0 of 170 bytes

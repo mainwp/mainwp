@@ -1426,7 +1426,7 @@ class MainWP_Page {
 							'post_date_gmt'  => $_post->post_date_gmt,
 							'post_type'      => 'page',
 							'post_name'      => $post_slug,
-							'post_excerpt'   => htmlspecialchars( $_post->post_excerpt ),
+							'post_excerpt'   => MainWP_Utility::esc_content( $_post->post_excerpt, 'mixed' ),
 							'post_password'  => $_post->post_password,
 							'comment_status' => $_post->comment_status,
 							'ping_status'    => $_post->ping_status,
@@ -1439,7 +1439,7 @@ class MainWP_Page {
 							$attachment          = get_post( $featured_image_id );
 							$featured_image_data = array(
 								'alt'         => get_post_meta( $featured_image_id, '_wp_attachment_image_alt', true ),
-								'caption'     => htmlspecialchars( $attachment->post_excerpt ),
+								'caption'     => MainWP_Utility::esc_content( $attachment->post_excerpt, 'mixed' ),
 								'description' => $attachment->post_content,
 								'title'       => htmlspecialchars( $attachment->post_title ),
 							);
@@ -1456,7 +1456,7 @@ class MainWP_Page {
 									$post_gallery_images[] = array(
 										'id'          => $attachment_id,
 										'alt'         => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
-										'caption'     => htmlspecialchars( $attachment->post_excerpt ),
+										'caption'     => MainWP_Utility::esc_content( $attachment->post_excerpt, 'mixed' ),
 										'description' => $attachment->post_content,
 										'src'         => $attachment->guid,
 										'title'       => htmlspecialchars( $attachment->post_title ),

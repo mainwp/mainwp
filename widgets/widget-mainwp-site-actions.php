@@ -120,9 +120,10 @@ class MainWP_Site_Actions {
 					?>
 					<?php
 					foreach ( $actions_info as $idx => $data ) {
-						if ( empty( $data->action_user ) ) {
+						if ( empty( $data->action_user ) || empty( $data->meta_data ) ) {
 							continue;
 						}
+
 						$meta_data = json_decode( $data->meta_data );
 						?>
 						<tr>

@@ -503,7 +503,7 @@ class MainWP_Post_Page_Handler {
 							$post_gallery_images[] = array(
 								'id'          => $attachment_id,
 								'alt'         => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
-								'caption'     => htmlspecialchars( $attachment->post_excerpt ),
+								'caption'     => MainWP_Utility::esc_content( $attachment->post_excerpt, 'mixed' ),
 								'description' => $attachment->post_content,
 								'src'         => $attachment->guid,
 								'title'       => htmlspecialchars( $attachment->post_title ),
@@ -542,7 +542,7 @@ class MainWP_Post_Page_Handler {
 					'post_date_gmt'  => $_post->post_date_gmt,
 					'post_tags'      => $post_tags,
 					'post_name'      => $post_slug,
-					'post_excerpt'   => htmlspecialchars( $_post->post_excerpt ),
+					'post_excerpt'   => MainWP_Utility::esc_content( $_post->post_excerpt, 'mixed' ),
 					'post_password'  => $_post->post_password,
 					'comment_status' => $_post->comment_status,
 					'ping_status'    => $_post->ping_status,
@@ -555,7 +555,7 @@ class MainWP_Post_Page_Handler {
 					$attachment          = get_post( $featured_image_id );
 					$featured_image_data = array(
 						'alt'         => get_post_meta( $featured_image_id, '_wp_attachment_image_alt', true ),
-						'caption'     => htmlspecialchars( $attachment->post_excerpt ),
+						'caption'     => MainWP_Utility::esc_content( $attachment->post_excerpt, 'mixed' ),
 						'description' => $attachment->post_content,
 						'title'       => htmlspecialchars( $attachment->post_title ),
 					);
@@ -1073,7 +1073,7 @@ class MainWP_Post_Page_Handler {
 			update_post_meta( $new_post_id, '_sticky', base64_encode( 'sticky' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		}
 
-		if ( null !== $post_featured_image ) {
+		if ( null !== $post_featured_image && ! empty( $post_featured_image ) ) {
 			try {
 				$upload = self::upload_image( $post_featured_image );
 

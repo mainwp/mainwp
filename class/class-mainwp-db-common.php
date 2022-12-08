@@ -518,7 +518,7 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @return void
 	 */
 	public function update_note( $websiteid, $note ) {
-		$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET note= %s, note_lastupdate = %d WHERE id=%d', $this->escape( $note ), time(), $websiteid ) );
+		$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET note= %s WHERE id=%d', $this->escape( $note ), $websiteid ) );
 	}
 
 	/**

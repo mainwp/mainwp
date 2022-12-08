@@ -286,7 +286,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 4.3.0.2 - 12-9-2022 =
+= 4.3.0.2 - 12-8-2022 =
 * Fixed: An issue with saving sites notes
 * Updated: Extensions updates detection improvement
 

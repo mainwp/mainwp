@@ -191,7 +191,7 @@ class MainWP_Api_Manager_Plugin_Update {
 		if ( isset( $args['json'] ) ) { // bulkupdatecheck: json.
 			$response = json_decode( $response, true );
 		} else { // pluginupdatecheck, plugininformation : serialize.
-			$response = unserialize( $response );
+			$response = unserialize( $response ); // phpcs:ignore -- data from extensions, to compatible. 
 		}
 
 		/**

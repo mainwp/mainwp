@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.1.1
 Requires PHP: 7.0
-Stable tag: 4.3.0.1
+Stable tag: 4.3.0.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -285,6 +285,10 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.3.0.2 - 12-9-2022 =
+* Fixed: An issue with saving sites notes
+* Updated: Extensions updates detection improvement
 
 = 4.3.0.1 - 11-24-2022 =
 * Fixed: An issue with disabling certain widgets on the Overview page

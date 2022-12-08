@@ -723,6 +723,8 @@ class MainWP_System_Cron_Jobs {
 			if ( ! is_array( $updatescheckSitesIcon ) ) {
 				$updatescheckSitesIcon = array();
 			}
+			
+			$delay_autoupdate = get_option( 'mainwp_delay_autoupdate', 1 );
 
 			foreach ( $websites as $website ) {
 				$websiteDecodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );

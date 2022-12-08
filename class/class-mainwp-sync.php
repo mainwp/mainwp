@@ -210,8 +210,6 @@ class MainWP_Sync {
 			$pWebsite = MainWP_DB::instance()->get_website_by_id( $current_siteid );
 		}
 
-		$delay_autoupdate = get_option( 'mainwp_delay_autoupdate', 1 );
-
 		/**
 		 * Filter: mainwp_before_save_sync_result
 		 *

@@ -283,6 +283,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 7. Manage Posts Screen
 8. MainWP Settings Screen
 9. Global Dashboard Screen
+10. Manage Clients Screen
 
 == Changelog ==
 

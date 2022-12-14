@@ -1367,7 +1367,7 @@ class MainWP_Plugins {
 				});
 				mainwp_master_checkbox_init($);
 				mainwp_get_icon_start();
-				mainwp_show_hide_install_to_selected_sites();
+				mainwp_show_hide_install_to_selected_sites( 'plugin' );
 			} );
 
 		</script>

@@ -1482,7 +1482,9 @@ class MainWP_Connect {
 		$lastRequest = MainWP_DB_Common::instance()->get_last_request_timestamp( $ip );
 		if ( $lastRequest > ( ( microtime( true ) ) - $minimumDelay ) ) {
 			self::release( $identifier );
-			usleep( ( $minimumDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
+			$sleep = ( $minimumDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000;
+			$sleep = intval( $sleep );
+			usleep( $sleep );
 			return true;
 		}
 		return false;

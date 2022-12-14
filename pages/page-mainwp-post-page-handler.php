@@ -637,14 +637,28 @@ class MainWP_Post_Page_Handler {
 				$startTime      = time();
 
 				if ( 0 < count( $dbwebsites ) ) {
+
+					// prepare $post_custom values.
+					$new_post_custom = array();
+					foreach ( $post_custom as $meta_key => $meta_values ) {
+						$new_meta_values = array();
+						foreach ( $meta_values as $key_value => $meta_value ) {
+							if ( is_serialized( $meta_value ) ) {
+								$meta_value = unserialize( $meta_value ); // phpcs:ignore -- internal value safe.
+							}
+							$new_meta_values[ $key_value ] = $meta_value;
+						}
+						$new_post_custom[ $meta_key ] = $new_meta_values;
+					}
+
 					$post_data = array(
-						'new_post'            => base64_encode( serialize( $new_post ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-						'post_custom'         => base64_encode( serialize( $post_custom ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-						'post_category'       => base64_encode( $post_category ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-						'post_featured_image' => base64_encode( $post_featured_image ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-						'post_gallery_images' => base64_encode( serialize( $post_gallery_images ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-						'mainwp_upload_dir'   => base64_encode( serialize( $mainwp_upload_dir ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-						'featured_image_data' => base64_encode( serialize( $featured_image_data ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+						'new_post'            => base64_encode( wp_json_encode( $new_post ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+						'post_custom'         => base64_encode( wp_json_encode( $new_post_custom ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+						'post_category'       => ! empty( $post_category ) ? base64_encode( $post_category ) : '', // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+						'post_featured_image' => ( null !== $post_featured_image ) ? base64_encode( $post_featured_image ) : null, // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+						'post_gallery_images' => base64_encode( wp_json_encode( $post_gallery_images ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+						'mainwp_upload_dir'   => base64_encode( wp_json_encode( $mainwp_upload_dir ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+						'featured_image_data' => ( null !== $featured_image_data ) ? base64_encode( wp_json_encode( $featured_image_data ) ) : null, // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 					);
 					MainWP_Connect::fetch_urls_authed(
 						$dbwebsites,
@@ -890,13 +904,13 @@ class MainWP_Post_Page_Handler {
 	 * @return array result
 	 */
 	public static function new_post( $post_data = array(), $replaceadvImg = false, $website = false ) {
-		$new_post            = maybe_unserialize( base64_decode( $post_data['new_post'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-		$post_custom         = maybe_unserialize( base64_decode( $post_data['post_custom'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+		$new_post            = json_decode( base64_decode( $post_data['new_post'] ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+		$post_custom         = json_decode( base64_decode( $post_data['post_custom'] ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		$post_category       = rawurldecode( isset( $post_data['post_category'] ) ? base64_decode( $post_data['post_category'] ) : null ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		$post_tags           = rawurldecode( isset( $new_post['post_tags'] ) ? $new_post['post_tags'] : null );
 		$post_featured_image = base64_decode( $post_data['post_featured_image'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		$post_gallery_images = base64_decode( $post_data['post_gallery_images'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-		$upload_dir          = maybe_unserialize( base64_decode( $post_data['child_upload_dir'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+		$upload_dir          = json_decode( base64_decode( $post_data['child_upload_dir'] ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		$post_gallery_images = base64_decode( $post_data['post_gallery_images'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		return self::create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images, $replaceadvImg, $website );
 	}
@@ -1051,12 +1065,7 @@ class MainWP_Post_Page_Handler {
 
 		foreach ( $post_custom as $meta_key => $meta_values ) {
 			foreach ( $meta_values as $meta_value ) {
-				if ( is_serialized( $meta_value ) ) {
-					$meta_value = unserialize( $meta_value ); // phpcs:ignore -- compatible.
 					update_post_meta( $new_post_id, $meta_key, $meta_value );
-				} else {
-					update_post_meta( $new_post_id, $meta_key, $meta_value );
-				}
 			}
 		}
 

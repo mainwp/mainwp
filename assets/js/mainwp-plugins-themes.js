@@ -88,17 +88,26 @@ jQuery(document).ready(function () {
 
     jQuery(document).on('click', '#mainwp-install-to-selected-sites', function () {
         var checkedVals = jQuery('.mainwp-manage-plugin-item-website .mainwp-selected-plugin-site:checked').map(function () {
-            var rowElement = jQuery(this).parents('.ui.grid');
+            var rowElement = jQuery(this).closest('.mainwp-manage-plugin-item-website');
             var val = rowElement.attr("site-id");
             return val;
         }).get();
 
-        if (checkedVals.length == 0) {
+        var selectedIds = [];
+        if (checkedVals instanceof Array) {
+            jQuery.grep(checkedVals, function (val) {
+                if (jQuery.inArray(val, selectedIds) == -1) {
+                    selectedIds.push(val);
+                }
+            });
+        }
+        console.log(selectedIds);
+        if (selectedIds.length == 0) {
             feedback('mainwp-message-zone', __('Please select at least one website.'), 'yellow');
             return false;
         } else {
             jQuery('#mainwp-message-zone').fadeOut(5000);
-            var ids = checkedVals.join("-");
+            var ids = selectedIds.join("-");
             var kwd = jQuery('#mainwp_plugin_search_by_keyword').val();
             if ('' != kwd) {
                 kwd = '&s=' + encodeURIComponent(kwd);
@@ -115,7 +124,7 @@ jQuery(document).ready(function () {
             jQuery('#mainwp-install-to-selected-sites').hide();
         }
     });
-  
+
     jQuery('#mainwp_show_all_active_plugins').on('click', function () {
         mainwp_fetch_all_active_plugins();
         return false;
@@ -300,14 +309,24 @@ jQuery(document).ready(function () {
     }
 });
 
-mainwp_show_hide_install_to_selected_sites = function () {
-    jQuery('#mainwp-plugins-content .checkbox').on('click', function () {
-        if (jQuery('.mainwp-manage-plugin-item-website .checkbox.checked').length > 0) {
-            jQuery('#mainwp-install-to-selected-sites').show();
-        } else {
-            jQuery('#mainwp-install-to-selected-sites').hide();
-        }
-    });
+mainwp_show_hide_install_to_selected_sites = function (what) {
+    if ('plugin' == what) {
+        jQuery('#mainwp-plugins-content .checkbox').on('click', function () {
+            if (jQuery('.mainwp-manage-plugin-item-website .checkbox.checked').length > 0) {
+                jQuery('#mainwp-install-to-selected-sites').show();
+            } else {
+                jQuery('#mainwp-install-to-selected-sites').hide();
+            }
+        });
+    } else {
+        jQuery('#mainwp-themes-content .checkbox').on('click', function () {
+            if (jQuery('.mainwp-manage-theme-item-website .checkbox.checked').length > 0) {
+                jQuery('#mainwp-install-themes-to-selected-sites').show();
+            } else {
+                jQuery('#mainwp-install-themes-to-selected-sites').hide();
+            }
+        });
+    }
 }
 
 // Manage Plugins -- Fetch plugins
@@ -430,18 +449,27 @@ jQuery(document).ready(function () {
     });
 
     jQuery(document).on('click', '#mainwp-install-themes-to-selected-sites', function () {
-        var checkedVals = jQuery('.mainwp-manage-plugin-item-website .mainwp-selected-theme-site:checked').map(function () {
-            var rowElement = jQuery(this).parents('.ui.grid');
-            var val = rowElement.attr('site-id').val();
+        var checkedVals = jQuery('.mainwp-manage-theme-item-website .mainwp-selected-theme-site:checked').map(function () {
+            var rowElement = jQuery(this).closest('.mainwp-manage-theme-item-website');
+            var val = rowElement.attr('site-id');
             return val;
         }).get();
 
-        if (checkedVals.length == 0) {
+        var selectedIds = [];
+        if (checkedVals instanceof Array) {
+            jQuery.grep(checkedVals, function (val) {
+                if (jQuery.inArray(val, selectedIds) == -1) {
+                    selectedIds.push(val);
+                }
+            });
+        }
+
+        if (selectedIds.length == 0) {
             feedback('mainwp-message-zone', __('Please select at least one website.'), 'yellow');
             return false;
         } else {
             jQuery('#mainwp-message-zone').fadeOut(5000);
-            var ids = checkedVals.join("-");
+            var ids = selectedIds.join("-");
             var kwd = jQuery('#mainwp_theme_search_by_keyword').val();
             if ('' != kwd) {
                 kwd = '&s=' + encodeURIComponent(kwd);
@@ -450,6 +478,15 @@ jQuery(document).ready(function () {
         }
         return false;
     });
+
+    jQuery('#mainwp-themes-content .checkbox').on('click', function () {
+        if (jQuery('.mainwp-manage-theme-item-website .checkbox.checked').length > 0) {
+            jQuery('#mainwp-install-themes-to-selected-sites').show();
+        } else {
+            jQuery('#mainwp-install-themes-to-selected-sites').hide();
+        }
+    });
+
 
     jQuery(document).on('click', '#mainwp_show_all_active_themes', function () {
         mainwp_fetch_all_themes();

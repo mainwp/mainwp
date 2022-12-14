@@ -397,7 +397,6 @@ class MainWP_Themes {
 								}
 								?>
 								</div>
-								<button id="mainwp-install-themes-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
 								<?php
 								/**
 								 * Action: mainwp_themes_actions_bar_left
@@ -1193,7 +1192,7 @@ class MainWP_Themes {
 								$item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
 
 								?>
-							<div class="ui grid mainwp-manage-theme-item-website <?php echo $active_status_class; ?>"  updated="0" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" >
+							<div class="ui grid mainwp-manage-theme-item-website <?php echo $active_status_class; ?>"  updated="0" site-id="<?php echo intval($site_id); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" >
 								<div class="one wide center aligned middle aligned column"></div>
 								<div class="one wide center aligned middle aligned column">
 
@@ -1287,6 +1286,7 @@ class MainWP_Themes {
 				});
 				mainwp_master_checkbox_init($);
 				mainwp_get_icon_start();
+				mainwp_show_hide_install_to_selected_sites( 'theme' );
 			});
 
 		</script>

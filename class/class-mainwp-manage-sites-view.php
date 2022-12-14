@@ -1125,8 +1125,10 @@ class MainWP_Manage_Sites_View {
 	 * @uses \MainWP\Dashboard\MainWP_Notification_Template::is_overrided_template()
 	 */
 	public static function render_site_edit_email_settings( $website, $type, $updated_templ ) {
-
-		$emails_settings = json_decode( $website->settings_notification_emails, true );
+		$emails_settings = array();
+		if ( ! empty( $website->settings_notification_emails ) ) {
+			$emails_settings = json_decode( $website->settings_notification_emails, true );
+		}
 		if ( ! is_array( $emails_settings ) ) {
 			$emails_settings = array();
 		}
@@ -1313,7 +1315,11 @@ class MainWP_Manage_Sites_View {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_notification_email()
 	 */
 	public static function render_edit_site_email_settings( $website, $updated ) {
-		$emails_settings = json_decode( $website->settings_notification_emails, true );
+		$emails_settings = array();
+		if ( ! empty( $website->settings_notification_emails ) ) {
+			$emails_settings = json_decode( $website->settings_notification_emails, true );
+		}
+
 		if ( ! is_array( $emails_settings ) ) {
 			$emails_settings = array();
 		}

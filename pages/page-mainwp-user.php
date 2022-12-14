@@ -1832,7 +1832,7 @@ class MainWP_User {
 			$startTime = time();
 			if ( 0 < count( $dbwebsites ) ) {
 				$post_data      = array(
-					'new_user'      => base64_encode( serialize( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+					'new_user'      => base64_encode( wp_json_encode( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 					'send_password' => ( isset( $_POST['send_password'] ) ? intval( $_POST['send_password'] ) : '' ),
 				);
 				$output         = new \stdClass();
@@ -2180,7 +2180,7 @@ class MainWP_User {
 
 		if ( 0 < count( $dbwebsites ) ) {
 			$post_data      = array(
-				'new_user'      => base64_encode( serialize( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+				'new_user'      => base64_encode( wp_json_encode( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 				'send_password' => ( isset( $_POST['send_password'] ) ? intval( $_POST['send_password'] ) : '' ),
 			);
 			$output         = new \stdClass();

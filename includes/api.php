@@ -124,7 +124,7 @@ function check_if_valid_client( $email, $siteid ) {
 
 	return $result;
 }
-$sites = ! empty( $siteid ) ? base64_encode( serialize( array( $siteid ) ) ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+$sites = ! empty( $siteid ) ? base64_encode( wp_json_encode( array( $siteid ) ) ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displaycontent' == $_POST['action'] ) ) {
 	$secureconnection = live_reports_responder_secure_connection();
 	if ( true === $secureconnection ) {

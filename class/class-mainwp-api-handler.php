@@ -67,6 +67,9 @@ class MainWP_API_Handler {
 				$results = MainWP_Api_Manager_Plugin_Update::instance()->bulk_update_check( $bulk_checks ); // bulk check response array of info.
 				if ( is_array( $results ) && 0 < count( $results ) ) {
 					foreach ( $results as $slug => $response ) {
+						if ( ! is_array( $response ) || ! isset( $response['new_version'] ) ) {
+							continue;
+						}
 						$rslt              = new \stdClass();
 						$rslt->slug        = $slug;
 						$rslt->new_version = $response['new_version'];

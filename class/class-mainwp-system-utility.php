@@ -649,11 +649,7 @@ class MainWP_System_Utility {
 	 * @return json $data|true.
 	 */
 	public static function get_child_response( $data ) {
-		if ( is_serialized( $data ) ) {
-			$resp = unserialize( $data, array( 'allowed_classes' => false ) ); // phpcs:ignore -- for compatability.
-		} else {
 			$resp = json_decode( $data, true );
-		}
 
 		if ( is_array( $resp ) ) {
 			if ( isset( $resp['error'] ) ) {

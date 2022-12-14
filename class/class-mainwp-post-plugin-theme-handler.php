@@ -352,7 +352,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	}
 
 	/**
-	 * Method mainwp_widget_plugin_activate()
+	 * Method mainwp_widget_theme_activate()
 	 *
 	 * Activate theme,
 	 * Widget: Themes.
@@ -365,7 +365,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	}
 
 	/**
-	 * Method mainwp_widget_plugin_delete()
+	 * Method mainwp_widget_theme_delete()
 	 *
 	 * Delete theme,
 	 * Widget: Themes.

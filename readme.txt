@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.1.1
 Requires PHP: 7.0
-Stable tag: 4.3.0.2
+Stable tag: 4.3.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -285,6 +285,13 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.3.1 - 12-14-2022 =
+* Fixed: An issue with applying custom themes
+* Fixed: A problem with deactivating plugins
+* Updated: PHP 8.1 compatibility improvements
+* Updated: WordPress SEO extension icon
+* Preventative: Multiple security enhancements
 
 = 4.3.0.2 - 12-8-2022 =
 * Fixed: An issue with saving sites notes

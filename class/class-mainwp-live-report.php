@@ -598,8 +598,8 @@ class MainWP_Live_Reports {
 				$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
 			}
 
-			$report['sites']  = base64_encode( serialize( $selected_sites ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility.
-			$report['groups'] = base64_encode( serialize( $selected_groups ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility.
+			$report['sites']  = base64_encode( wp_json_encode( $selected_sites ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility.
+			$report['groups'] = base64_encode( wp_json_encode( $selected_groups ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility.
 			$action           = isset( $_POST['mwp_creport_report_submit_action'] ) ? sanitize_text_field( wp_unslash( $_POST['mwp_creport_report_submit_action'] ) ) : '';
 
 			if ( 'schedule' === $action ) {
@@ -1198,7 +1198,7 @@ class MainWP_Live_Reports {
 		}
 		$post_data = array(
 			'mwp_action'  => 'save_sucuri_stream',
-			'result'      => base64_encode( serialize( $scan_result ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility. Required to achieve desired results, pull request solutions appreciated.
+			'result'      => base64_encode( wp_json_encode( $scan_result ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility. Required to achieve desired results, pull request solutions appreciated.
 			'scan_status' => $scan_status,
 		);
 
@@ -1756,8 +1756,8 @@ class MainWP_Live_Reports {
 
 		$post_data = array(
 			'mwp_action'   => 'get_stream',
-			'sections'     => base64_encode( serialize( $sections ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatibility.
-			'other_tokens' => base64_encode( serialize( $tokens ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatibility.
+			'sections'     => base64_encode( wp_json_encode( $sections ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatibility.
+			'other_tokens' => base64_encode( wp_json_encode( $tokens ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatibility.
 			'date_from'    => $report->date_from,
 			'date_to'      => $report->date_to,
 		);

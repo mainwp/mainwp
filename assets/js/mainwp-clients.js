@@ -58,8 +58,11 @@ jQuery(document).ready(function () {
     }
 
     var parent = jQuery(this).closest('.ui.grid.field');
-    while (!parent.next().hasClass('bottom-contact-fields')) {
-      parent.next().remove(); // next contact field.
+    while (!parent.prev().hasClass('top-contact-fields')) {
+      parent.prev().remove(); // prev contact field.
+    }
+    if (parent.prev().hasClass('top-contact-fields')) {
+      parent.prev().remove();
     }
     if (parent.next().hasClass('bottom-contact-fields')) {
       parent.next().remove();

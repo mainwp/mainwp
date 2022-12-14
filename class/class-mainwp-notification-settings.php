@@ -475,7 +475,11 @@ class MainWP_Notification_Settings {
 		if ( empty( $website ) || ! property_exists( $website, 'settings_notification_emails' ) ) {
 			return array( 'disable' => 1 );
 		}
-		$settings = json_decode( $website->settings_notification_emails, true );
+		$settings = array();
+		if ( ! empty( $website->settings_notification_emails ) ) {
+			$settings = json_decode( $website->settings_notification_emails, true );
+		}
+
 		if ( ! is_array( $settings ) ) {
 			$settings = array();
 		}

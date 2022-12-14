@@ -99,12 +99,12 @@ class MainWP_Common_Functions {
 					$total_wp_upgrades ++;
 				}
 
-				$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
+				$plugin_upgrades = ! empty( $website->plugin_upgrades ) ? json_decode( $website->plugin_upgrades, true ) : array();
 				if ( $website->is_ignorePluginUpdates ) {
 					$plugin_upgrades = array();
 				}
 
-				$theme_upgrades = json_decode( $website->theme_upgrades, true );
+				$theme_upgrades = ! empty( $website->theme_upgrades ) ? json_decode( $website->theme_upgrades, true ) : array();
 				if ( $website->is_ignoreThemeUpdates ) {
 					$theme_upgrades = array();
 				}

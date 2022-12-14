@@ -35,7 +35,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.3.0.2';
+	public static $version = '4.3.1';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -1000,9 +1000,9 @@ class MainWP_System {
 				} elseif ( 'default' == $selected_theme ) {
 					wp_enqueue_style( 'mainwp-custom-dashboard-extension-default-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-default-theme.css', array(), $this->current_version );
 				} else {
-					$dirs      = MainWP_Settings::get_instance()->get_custom_theme_folder();
-					$theme_dir = $dirs[0];
-					wp_enqueue_style( 'mainwp-custom-dashboard-theme', $theme_dir . $selected_theme, array(), $this->current_version );
+					$dirs             = MainWP_Settings::get_instance()->get_custom_theme_folder();
+					$custom_theme_url = $dirs[1];
+					wp_enqueue_style( 'mainwp-custom-dashboard-theme', $custom_theme_url . $selected_theme, array(), $this->current_version );
 				}
 			}
 		}

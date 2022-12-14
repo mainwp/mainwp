@@ -1513,13 +1513,27 @@ class MainWP_Page {
 						$startTime      = time();
 
 						if ( 0 < count( $dbwebsites ) ) {
+
+							// prepare $post_custom values.
+							$new_post_custom = array();
+							foreach ( $post_custom as $meta_key => $meta_values ) {
+								$new_meta_values = array();
+								foreach ( $meta_values as $key_value => $meta_value ) {
+									if ( is_serialized( $meta_value ) ) {
+										$meta_value = unserialize( $meta_value ); // phpcs:ignore -- internal value safe.
+									}
+									$new_meta_values[ $key_value ] = $meta_value;
+								}
+								$new_post_custom[ $meta_key ] = $new_meta_values;
+							}
+
 							$post_data = array(
-								'new_post'            => base64_encode( serialize( $new_post ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-								'post_custom'         => base64_encode( serialize( $post_custom ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-								'post_featured_image' => base64_encode( $post_featured_image ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-								'post_gallery_images' => base64_encode( serialize( $post_gallery_images ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-								'mainwp_upload_dir'   => base64_encode( serialize( $mainwp_upload_dir ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-								'featured_image_data' => base64_encode( serialize( $featured_image_data ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+								'new_post'            => base64_encode( wp_json_encode( $new_post ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+								'post_custom'         => base64_encode( wp_json_encode( $new_post_custom ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+								'post_featured_image' => ( null !== $post_featured_image ) ? base64_encode( $post_featured_image ) : null, // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+								'post_gallery_images' => base64_encode( wp_json_encode( $post_gallery_images ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+								'mainwp_upload_dir'   => base64_encode( wp_json_encode( $mainwp_upload_dir ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+								'featured_image_data' => ( null !== $featured_image_data ) ? base64_encode( wp_json_encode( $featured_image_data ) ) : null, // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 							);
 
 							/**

@@ -109,9 +109,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 			if ( count( $errors ) == 0 ) {
 				$show_form = false;
 
-				$new_password = array(
-					'user_pass' => wp_unslash( $_POST['password'] ),
-				);
+				$new_password = wp_unslash( $_POST['password'] );
 
 				$dbwebsites = array();
 				if ( 'site' == $_POST['select_by'] ) { // Get all selected websites.
@@ -164,7 +162,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				}
 
 				if ( count( $dbwebsites ) > 0 ) {
-					$post_data      = array( 'new_password' => base64_encode( serialize( $new_password ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+					$post_data      = array( 'new_password' => base64_encode( $new_password ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 					$output         = new \stdClass();
 					$output->ok     = array();
 					$output->errors = array();

@@ -1000,7 +1000,7 @@ class MainWP_System {
 				} elseif ( 'default' == $selected_theme ) {
 					wp_enqueue_style( 'mainwp-custom-dashboard-extension-default-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-default-theme.css', array(), $this->current_version );
 				} else {
-					$dirs      = MainWP_Settings::get_instance()->get_custom_theme_folder();
+					$dirs             = MainWP_Settings::get_instance()->get_custom_theme_folder();
 					$custom_theme_url = $dirs[1];
 					wp_enqueue_style( 'mainwp-custom-dashboard-theme', $custom_theme_url . $selected_theme, array(), $this->current_version );
 				}

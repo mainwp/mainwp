@@ -1599,7 +1599,7 @@ class MainWP_Client {
 			$contact_id    = $edit_contact->contact_id;
 			$contact_image = $edit_contact->contact_image;
 		}
-		
+
 		ob_start();
 		?>
 		<h3 class="ui dividing header top-contact-fields">
@@ -1612,7 +1612,7 @@ class MainWP_Client {
 			<?php endif; ?>
 		</h3>
 						<?php
-			
+
 						$contact_fields = MainWP_Client_Handler::get_default_contact_fields();
 
 						foreach ( $contact_fields as $field_name => $field ) {
@@ -1662,7 +1662,7 @@ class MainWP_Client {
 							}
 						}
 
-							?>
+						?>
 			<div class="ui grid field">
 				<label class="six wide column middle aligned"><?php _e( 'Remove contact', 'mainwp' ); ?></label>
 				<div class="ui six wide column">
@@ -1678,9 +1678,7 @@ class MainWP_Client {
 							?>
 				</div>
 			</div>
-							<?php
-						?>
-		<div class="ui section hidden divider bottom-contact-fields"></div>
+									<div class="ui section hidden divider bottom-contact-fields"></div>
 
 		<?php
 		$html = ob_get_clean();

@@ -288,7 +288,6 @@ class MainWP_Menu {
 	 * @param string $parentKey Parent Menu Slug.
 	 * @param mixed  $slug SubPage Slug.
 	 *
-	 * @return array $initSubpage[] Final SubPages Array.
 	 */
 	public static function init_subpages_left_menu( $subPages, &$initSubpage, $parentKey, $slug ) {
 

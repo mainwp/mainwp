@@ -1509,8 +1509,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 *
 	 * Command Example: wp mainwp updates --ignored-plugins-updates [<websiteid>].
 	 *
-	 * @param array $args       Arguments.
-	 * @param array $assoc_args Arguments.
+	 * @param array       $args       Arguments.
+	 * @param array       $assoc_args Arguments.
+	 * @param object|bool $website Website object.
 	 */
 	public static function callback_updates_ignored_plugins_updates( $args = array(), $assoc_args = array(), $website = false ) {
 		$ignored_all = false;

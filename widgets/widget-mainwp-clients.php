@@ -37,6 +37,8 @@ class MainWP_Clients {
 
 	/**
 	 * Render Clients Info.
+	 * 
+	 * @param mixed $clients Clients data.
 	 */
 	private static function render_clients( $clients ) {
 		?>
@@ -135,7 +137,6 @@ class MainWP_Clients {
 						<a href="admin.php?page=ClientAddNew" class="ui button basic green"><?php esc_html_e( 'Create New Client', 'mainwp' ); ?></a>
 					</div>
 				</div>
-				
 				<script type="text/javascript">
 				jQuery( document ).ready( function() {
 					jQuery.fn.DataTable.ext.pager.numbers_length = 4;

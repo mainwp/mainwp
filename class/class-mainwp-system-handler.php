@@ -255,7 +255,7 @@ class MainWP_System_Handler {
 	 *
 	 * Handle manage sites screen settings
 	 */
-	public function handle_manage_sites_screen_settings() {
+	public function handle_manage_sites_screen_settings() { // phpcs:ignore -- required to achieve desired results, pull request solutions appreciated.
 		if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'ManageSitesScrOptions' ) ) {
 			$show_cols = array();
 			foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST ) ) as $key => $val ) {

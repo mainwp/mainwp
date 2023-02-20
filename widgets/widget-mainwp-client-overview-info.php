@@ -59,7 +59,6 @@ class MainWP_Client_Overview_Info {
 				</div>
 			</h3>
 			<div class="ui section hidden divider"></div>
-			
 			<div class="mainwp-widget-client-card" client-id="<?php echo intval( $client_id ); ?>">
 				<?php
 				/**

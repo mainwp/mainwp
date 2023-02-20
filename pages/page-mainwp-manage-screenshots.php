@@ -381,7 +381,6 @@ class MainWP_Manage_Screenshots {
 								</small>
 								<?php endif; ?>
 						</div>
-							
 							<?php if ( isset( $website->client_id ) && '0' != $website->client_id ) : ?>
 							<div class="extra content">
 								<small data-tooltip="<?php esc_attr_e( 'See client details', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="user icon"></i> <a href="<?php echo esc_attr( 'admin.php?page=ManageClients&client_id=' . $website->client_id ); ?>" class="ui small"><?php echo $website->client_name; ?></a></small>

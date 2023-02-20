@@ -2340,7 +2340,7 @@ class MainWP_Updates {
 	 *
 	 * Renders Page Settings Modal.
 	 */
-	public static function render_screen_options_modal() {
+	public static function render_screen_options_modal() { // phpcs:ignore -- complex method.
 
 		$snAutomaticDailyUpdate       = get_option( 'mainwp_automaticDailyUpdate' );
 		$snPluginAutomaticDailyUpdate = get_option( 'mainwp_pluginAutomaticDailyUpdate' );
@@ -2415,7 +2415,6 @@ class MainWP_Updates {
 							</select>
 						</div>
 					</div>
-					
 					<div class="ui hidden divider"></div>
 					<div class="ui hidden divider"></div>
 				</div>

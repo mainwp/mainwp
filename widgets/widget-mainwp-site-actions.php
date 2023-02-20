@@ -164,7 +164,6 @@ class MainWP_Site_Actions {
 				</table>
 				<div class="ui hidden divider"></div>
 				<a href="javascript:void(0)" id="mainwp-delete-all-nonmainwp-actions-button" class="ui button green"><?php esc_html_e( 'Delete All Non-MainWP Changes', 'mainwp' ); ?></a>
-				
 				<script type="text/javascript">
 				jQuery( document ).ready( function() {
 					jQuery.fn.DataTable.ext.pager.numbers_length = 4;

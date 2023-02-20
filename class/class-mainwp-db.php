@@ -598,6 +598,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param bool   $for_manager  For role manager. Default: false.
 	 * @param mixed  $extra_view   Extra view. Default favi_icon.
 	 * @param string $is_staging   yes|no Is child site a staging site.
+	 * @param array  $params   other params.
 	 *
 	 * @return object|null Database query results or null on failure.
 	 *
@@ -2105,19 +2106,4 @@ class MainWP_DB extends MainWP_DB_Base {
 			OBJECT
 		);
 	}
-
-
-	/**
-	 * Method escape()
-	 *
-	 * Escape SQL Data.
-	 *
-	 * @param mixed $data Data to escape.
-	 *
-	 * @return mixed Escapped SQL Data.
-	 */
-	public function escape( $data ) {
-		return parent::escape( $data );
-	}
-
 }

@@ -215,6 +215,7 @@ class MainWP_Client_Handler {
 	 *  'selected_sites'.
 	 *  'client_id'. - to edit client.
 	 *
+	 * @throws \Exception Error message.
 	 * @return mixed Results.
 	 */
 	public static function rest_api_add_client( $data, $edit = false ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.  

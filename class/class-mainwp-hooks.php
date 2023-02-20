@@ -133,7 +133,6 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_db_query', array( &$this, 'hook_db_query' ), 10, 2 );
 		add_filter( 'mainwp_db_fetch_object', array( &$this, 'db_fetch_object' ), 10, 2 );
 		add_filter( 'mainwp_db_fetch_array', array( &$this, 'db_fetch_array' ), 10, 2 );
-		add_filter( 'mainwp_db_data_seek', array( &$this, 'db_data_seek' ), 10, 3 ); // @deprecated 4.0.7. Please use action mainwp_db_data_seek.
 		add_action( 'mainwp_db_data_seek', array( &$this, 'hook_db_data_seek' ), 10, 2 );
 		add_filter( 'mainwp_db_free_result', array( &$this, 'db_free_result' ), 10, 2 );
 		add_filter( 'mainwp_db_num_rows', array( &$this, 'db_num_rows' ), 10, 2 );
@@ -994,29 +993,12 @@ class MainWP_Hooks {
 	}
 
 	/**
-	 * Method db_data_seek()
-	 *
-	 * To escape response data.
-	 *
-	 * @param mixed $false     input value.
-	 * @param mixed $result     result data.
-	 * @param int   $offset     offset of data.
-	 *
-	 * @return bool true.
-	 */
-	public function db_data_seek( $false, $result, $offset = 0 ) {
-		MainWP_DB::data_seek( $result, $offset );
-	}
-
-	/**
 	 * Method hook_db_data_seek()
 	 *
 	 * To escape response data.
 	 *
 	 * @param mixed $result     result data.
 	 * @param int   $offset     offset of data.
-	 *
-	 * @return bool true.
 	 */
 	public function hook_db_data_seek( $result, $offset = 0 ) {
 		MainWP_DB::data_seek( $result, $offset );

@@ -620,6 +620,9 @@ class MainWP_Setup_Wizard {
 		<?php
 	}
 
+	/**
+	 * Render usetiful tours.
+	 */
 	public function mainwp_usetiful_tours() {
 		echo "
 		<script>

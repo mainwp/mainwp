@@ -14,20 +14,36 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Reports_Helper {
 
+	/**
+	 * Reports sites values
+	 *
+	 * @static
+	 * @var array $reports_sites_values array values.
+	 */
 	private static $reports_sites_values = array();
 
+	/**
+	 * Protected static variable to hold the instance.
+	 *
+	 * @var null Default value.
+	 */
 	private static $instance = null;
 
-	static function get_instance() {
+	/**
+	 * Create Instance.
+	 *
+	 * @return self $instance
+	 */
+	public static function get_instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
 	}
 
-	 /**
-	  * Construct method.
-	  */
+	/**
+	 * Construct method.
+	*/
 	public function __construct() {
 		// construct.
 	}

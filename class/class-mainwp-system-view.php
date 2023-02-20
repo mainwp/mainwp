@@ -662,6 +662,9 @@ class MainWP_System_View {
 		}
 	}
 
+	/**
+	 * Render usetiful tours.
+	 */
 	public static function mainwp_usetiful_tours() {
 		echo "
 		<script>

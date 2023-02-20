@@ -165,7 +165,7 @@ class MainWP_DB_Base {
 	 *
 	 * @return mixed Escapped SQL Data.
 	 */
-	protected function escape( $data ) {
+	public function escape( $data ) {
 		if ( function_exists( 'esc_sql' ) ) {
 			return esc_sql( $data );
 		} else {

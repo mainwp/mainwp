@@ -480,7 +480,7 @@ class MainWP_UI {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_Menu::render_left_menu()
 	 */
-	public static function render_top_header( $params = array() ) {
+	public static function render_top_header( $params = array() ) { // phpcs:ignore Generic.Metrics.CyclomaticComplexity.MaxExceeded
 
 		$title = isset( $params['title'] ) ? $params['title'] : '';
 		$which = isset( $params['which'] ) ? $params['which'] : '';
@@ -736,14 +736,14 @@ class MainWP_UI {
 			<p><?php esc_html_e( 'Click the Start Page Tour button to start the guided tour for the current page.', 'mainwp' ); ?></p>
 			<div class="ui hidden divider"></div>
 			<a href="javacscript:void(0);" id="mainwp-start-page-tour-button" class="ui big green fluid basic button" tour-id="<?php esc_attr_e( $tour_id ); ?>"><?php esc_html_e( 'Start Page Tour', 'mainwp' ); ?></a>
-				<?php if ( isset( $_GET['page']) && 'mainwp_tab' == $_GET['page'] ) : ?>
+				<?php if ( isset( $_GET['page'] ) && 'mainwp_tab' == $_GET['page'] ) : ?>
 				<div class="ui hidden divider"></div>
 				<a href="javacscript:void(0);" id="mainwp-interface-tour-button" class="ui big green fluid basic button"><?php esc_html_e( 'MainWP Interface Basics Tour', 'mainwp' ); ?></a>
 			<?php endif; ?>
 			<?php else : ?>
 			<div class="ui info message">
 				<p><?php esc_html_e( 'MainWP guided tours feature is disabled.', 'mainwp' ); ?></p>
-				<p><?php echo sprintf( esc_html__( 'Go to the %sMainWP Tools%s page to enable it.', 'mainwp' ), '<a href="admin.php?page=MainWPTools">', '</a>' ); ?></p>
+				<p><?php echo sprintf( esc_html__( 'Go to the %1$sMainWP Tools%2$s page to enable it.', 'mainwp' ), '<a href="admin.php?page=MainWPTools">', '</a>' ); ?></p>
 			</div>
 			<?php endif; ?>
 			<div class="ui hidden divider"></div>
@@ -854,7 +854,7 @@ class MainWP_UI {
 						<?php if ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) : ?>
 						<select class="ui mini selection fluid dropdown" id="mainwp-jump-to-site-overview-dropdown">
 							<?php $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() ); ?>
-							<option class="item"><?php echo esc_html( 'Jump to site overview...', 'mainwp' ); ?></option>
+							<option class="item"><?php esc_html_e( 'Jump to site overview...', 'mainwp' ); ?></option>
 							<?php while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) { ?>
 								<option class="item" value="<?php echo esc_attr( $website->id ); ?>"><?php echo esc_html( $website->name ); ?></option>
 							<?php } ?>	

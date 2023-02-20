@@ -375,7 +375,7 @@ class MainWP_Logger {
 	 */
 	private function log_to_db( $text, $priority, $log_color = 0, $forced = false ) {
 
-		if ( $this->logPriority === self::DISABLED ) {
+		if ( self::DISABLED === $this->logPriority ) {
 			return;
 		}
 
@@ -444,7 +444,7 @@ class MainWP_Logger {
 	 */
 	private function log( $text, $priority,  $log_color = 0, $forced = false ) { // phpcs:ignore -- complex function.
 
-		if ( $this->logPriority == self::DISABLED ) {
+		if ( self::DISABLED == $this->logPriority ) {
 			return;
 		}
 

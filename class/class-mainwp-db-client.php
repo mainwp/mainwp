@@ -455,7 +455,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 * @param array $data Client data.
 	 * @param bool  $throw Throw or return error.
 	 *
-	 * @throws MainWP_Exception on errors.
+	 * @throws MainWP_Exception On errors.
 	 *
 	 * @return bool.
 	 */

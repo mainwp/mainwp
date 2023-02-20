@@ -55,7 +55,7 @@ class MainWP_Monitoring {
 		self::$page = add_submenu_page(
 			'mainwp_tab',
 			__( 'Monitoring', 'mainwp' ),
-			'<div class="mainwp-hidden">' . __( 'Monitoring', 'mainwp' ) . '</div>',
+			'<div class="mainwp-hidden">' . esc_html__( 'Monitoring', 'mainwp' ) . '</div>',
 			'read',
 			'MonitoringSites',
 			array(
@@ -82,15 +82,15 @@ class MainWP_Monitoring {
 	/**
 	 * Method screen_options()
 	 *
-	 * Create Screen Options button.
+	 * Create Page Settings button.
 	 *
-	 * @param mixed $input Screen options button HTML.
+	 * @param mixed $input Page Settings button HTML.
 	 *
-	 * @return mixed Screen sptions button.
+	 * @return mixed Page Settings button.
 	 */
 	public static function screen_options( $input ) {
 		return $input .
-				'<a class="ui button basic icon" onclick="mainwp_manage_sites_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Screen Options', 'mainwp' ) . '">
+				'<a class="ui button basic icon" onclick="mainwp_manage_sites_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Page Settings', 'mainwp' ) . '">
 					<i class="cog icon"></i>
 				</a>';
 	}
@@ -98,7 +98,7 @@ class MainWP_Monitoring {
 	/**
 	 * Method render_screen_options()
 	 *
-	 * Render Screen Options Modal.
+	 * Render Page Settings Modal.
 	 */
 	public static function render_screen_options() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -111,7 +111,7 @@ class MainWP_Monitoring {
 		$sites_per_page = get_option( 'mainwp_default_monitoring_sites_per_page', 25 );
 
 		if ( isset( $columns['site_actions'] ) && empty( $columns['site_actions'] ) ) {
-			$columns['site_actions'] = __( 'Actions', 'mainwp' );
+			$columns['site_actions'] = esc_html__( 'Actions', 'mainwp' );
 		}
 
 		$show_cols = get_user_option( 'mainwp_settings_show_monitoring_sites_columns' );
@@ -145,11 +145,13 @@ class MainWP_Monitoring {
 
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
-			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
+			<div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
 			<div class="scrolling content ui form">
 				<form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MonitoringSitesScrOptions' ); ?>" />
+					
+					
 					<div class="ui grid field">
 						<label class="six wide column"><?php esc_html_e( 'Default items per page value', 'mainwp' ); ?></label>
 						<div class="ten wide column">
@@ -193,6 +195,7 @@ class MainWP_Monitoring {
 							</ul>
 						</div>
 					</div>
+					<?php MainWP_Monitoring_View::render_settings(); ?>
 				</div>
 				<div class="actions">
 					<div class="ui two columns grid">
@@ -209,7 +212,7 @@ class MainWP_Monitoring {
 			</form>
 		</div>
 		<div class="ui small modal" id="mainwp-monitoring-sites-site-preview-screen-options-modal">
-			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
+			<div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
 			<div class="scrolling content ui form">
 				<span><?php esc_html_e( 'Would you like to turn on home screen previews?  This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?>
 			</div>
@@ -259,7 +262,7 @@ class MainWP_Monitoring {
 	public static function render_all_sites() {
 
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'monitoring_sites' ) ) {
-			mainwp_do_not_have_permissions( __( 'monitoring sites', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'monitoring sites', 'mainwp' ) );
 
 			return;
 		}

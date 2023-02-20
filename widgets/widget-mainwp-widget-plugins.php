@@ -132,7 +132,7 @@ class MainWP_Widget_Plugins {
 					 *
 					 * @since 4.1
 					 */
-					echo esc_html( apply_filters( 'mainwp_plugins_widget_title', __( 'Plugins', 'mainwp' ), $website ) );
+					echo esc_html( apply_filters( 'mainwp_plugins_widget_title', esc_html__( 'Plugins', 'mainwp' ), $website ) );
 					?>
 					<div class="sub header"><?php esc_html_e( 'Installed plugins on the child site', 'mainwp' ); ?></div>
 				</h3>
@@ -297,7 +297,7 @@ class MainWP_Widget_Plugins {
 	 */
 	public static function activate_plugin() {
 		self::action( 'activate' );
-		die( wp_json_encode( array( 'result' => __( 'Plugin has been activated!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Plugin has been activated!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -307,7 +307,7 @@ class MainWP_Widget_Plugins {
 	 */
 	public static function deactivate_plugin() {
 		self::action( 'deactivate' );
-		die( wp_json_encode( array( 'result' => __( 'Plugin has been deactivated!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Plugin has been deactivated!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -317,7 +317,7 @@ class MainWP_Widget_Plugins {
 	 */
 	public static function delete_plugin() {
 		self::action( 'delete' );
-		die( wp_json_encode( array( 'result' => __( 'Plugin has been permanently deleted!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Plugin has been permanently deleted!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -341,19 +341,19 @@ class MainWP_Widget_Plugins {
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
 		if ( empty( $plugin ) || empty( $websiteId ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Plugin or site ID not found. Please, reload the page and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Plugin or site ID not found. Please, reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
-			die( wp_json_encode( array( 'error' => __( 'You cannot edit this website.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'You cannot edit this website.', 'mainwp' ) ) ) );
 		}
 
 		if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
 			die(
 				wp_json_encode(
 					array(
-						'error'     => __( 'Suspended site.', 'mainwp' ),
+						'error'     => esc_html__( 'Suspended site.', 'mainwp' ),
 						'errorCode' => 'SUSPENDED_SITE',
 					)
 				)
@@ -394,7 +394,7 @@ class MainWP_Widget_Plugins {
 		}
 
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Unexpected error occurred. Please try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Unexpected error occurred. Please try again.', 'mainwp' ) ) ) );
 		}
 	}
 

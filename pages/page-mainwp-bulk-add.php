@@ -59,9 +59,9 @@ class MainWP_Bulk_Add {
 					$output->added_id[ $website->id ] = esc_html( $information['added_id'] );
 				}
 			} elseif ( isset( $information['error'] ) ) {
-				$output->errors[ $website->id ] = __( 'ERROR: ', 'mainwp' ) . esc_html( $information['error'] );
+				$output->errors[ $website->id ] = esc_html__( 'ERROR: ', 'mainwp' ) . esc_html( $information['error'] );
 			} else {
-				$output->errors[ $website->id ] = __( 'Undefined error! Please reinstall the MainWP Child plugin on the child site', 'mainwp' );
+				$output->errors[ $website->id ] = esc_html__( 'Undefined error! Please reinstall the MainWP Child plugin on the child site', 'mainwp' );
 			}
 		} else {
 			MainWP_Logger::instance()->debug_for_website( $website, 'posting_bulk_handler', '[' . $website->url . '] Result was: [data-start]' . $data . '[data-end]' );

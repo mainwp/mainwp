@@ -88,7 +88,7 @@ class MainWP_Post_Page_Handler {
 			}
 			$mid = self::add_meta( $pid );
 			if ( ! $mid ) {
-				wp_send_json( array( 'error' => __( 'Please provide a custom field value.', 'mainwp' ) ) );
+				wp_send_json( array( 'error' => esc_html__( 'Please provide a custom field value.', 'mainwp' ) ) );
 			}
 
 			$meta = get_metadata_by_mid( 'post', $mid );
@@ -121,7 +121,7 @@ class MainWP_Post_Page_Handler {
 			$key   = isset( $_POST['meta'][ $mid ]['key'] ) ? sanitize_text_field( wp_unslash( $_POST['meta'][ $mid ]['key'] ) ) : '';
 			$value = isset( $_POST['meta'][ $mid ]['value'] ) ? sanitize_text_field( wp_unslash( $_POST['meta'][ $mid ]['value'] ) ) : '';
 			if ( '' == trim( $key ) ) {
-				wp_send_json( array( 'error' => __( 'Please provide a custom field name.', 'mainwp' ) ) );
+				wp_send_json( array( 'error' => esc_html__( 'Please provide a custom field name.', 'mainwp' ) ) );
 			}
 			$meta = get_metadata_by_mid( 'post', $mid );
 			if ( ! $meta ) {
@@ -452,9 +452,9 @@ class MainWP_Post_Page_Handler {
 		$succes_message = '';
 		$edit_id        = get_post_meta( $post_id, '_mainwp_edit_post_id', true );
 		if ( $edit_id ) {
-			$succes_message = __( 'Post has been updated successfully', 'mainwp' );
+			$succes_message = esc_html__( 'Post has been updated successfully', 'mainwp' );
 		} else {
-			$succes_message = __( 'New post created', 'mainwp' );
+			$succes_message = esc_html__( 'New post created', 'mainwp' );
 		}
 
 		$id    = $post_id;
@@ -1214,7 +1214,7 @@ class MainWP_Post_Page_Handler {
 					'post_mime_type' => $wp_filetype['type'],
 					'post_title'     => isset( $img_data['title'] ) && ! empty( $img_data['title'] ) ? $img_data['title'] : preg_replace( '/\.[^.]+$/', '', basename( $img_url ) ),
 					'post_content'   => isset( $img_data['description'] ) && ! empty( $img_data['description'] ) ? $img_data['description'] : '',
-					'post_excerpt'   => isset( $img_data['caption'] ) && ! empty( $img_data['caption'] ) ? $img_data['caption'] : '',
+					'post_excerpt'   => isset( $img_data['caption'] ) && ! empty( $img_data['caption'] ) ? MainWP_Utility::esc_content( $img_data['caption'] ) : '',
 					'post_status'    => 'inherit',
 				);
 				$attach_id   = wp_insert_attachment( $attachment, $local_img_path );

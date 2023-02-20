@@ -149,7 +149,7 @@ class MainWP_Recent_Pages {
 					 *
 					 * @since 4.1
 					 */
-					echo esc_html( apply_filters( 'mainwp_recent_pages_widget_title', __( 'Recent Pages', 'mainwp' ) ) );
+					echo esc_html( apply_filters( 'mainwp_recent_pages_widget_title', esc_html__( 'Recent Pages', 'mainwp' ) ) );
 					?>
 					<div class="sub header"><?php esc_html_e( 'The most recent pages from your websites', 'mainwp' ); ?></div>
 				</h3>

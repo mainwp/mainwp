@@ -123,15 +123,15 @@ class MainWP_Client_Overview {
 	/**
 	 * Method screen_options()
 	 *
-	 * Create Screen Options button.
+	 * Create Page Settings button.
 	 *
-	 * @param mixed $input Screen options button HTML.
+	 * @param mixed $input Page Settings button HTML.
 	 *
-	 * @return mixed Screen sptions button.
+	 * @return mixed Page Settings button.
 	 */
 	public static function screen_options( $input ) {
 		return $input .
-				'<a class="ui button basic icon" onclick="mainwp_clients_overview_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Screen Options', 'mainwp' ) . '">
+				'<a class="ui button basic icon" onclick="mainwp_clients_overview_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Page Settings', 'mainwp' ) . '">
 					<i class="cog icon"></i>
 				</a>';
 	}
@@ -197,22 +197,22 @@ class MainWP_Client_Overview {
 
 		// Load the Updates Overview widget.
 		if ( self::$enable_widgets['overview'] ) {
-			MainWP_UI::add_widget_box( 'overview', array( MainWP_Client_Overview_Info::get_class_name(), 'render' ), $page, 'left', __( 'Overview', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'overview', array( MainWP_Client_Overview_Info::get_class_name(), 'render' ), $page, 'left', esc_html__( 'Overview', 'mainwp' ) );
 		}
 
 		// Load the Updates Overview widget.
 		if ( self::$enable_widgets['note'] ) {
-			MainWP_UI::add_widget_box( 'note', array( MainWP_Client_Overview_Note::get_class_name(), 'render' ), $page, 'left', __( 'Notes', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'note', array( MainWP_Client_Overview_Note::get_class_name(), 'render' ), $page, 'left', esc_html__( 'Notes', 'mainwp' ) );
 		}
 
 		// Load the Updates Overview widget.
 		if ( self::$enable_widgets['fields_info'] ) {
-			MainWP_UI::add_widget_box( 'fields_info', array( MainWP_Client_Overview_Custom_Info::get_class_name(), 'render' ), $page, 'right', __( 'Addition Info', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'fields_info', array( MainWP_Client_Overview_Custom_Info::get_class_name(), 'render' ), $page, 'right', esc_html__( 'Addition Info', 'mainwp' ) );
 		}
 
 		// Load the Updates Overview widget.
 		if ( self::$enable_widgets['websites'] ) {
-			MainWP_UI::add_widget_box( 'websites', array( MainWP_Client_Overview_Sites::get_class_name(), 'render' ), $page, 'right', __( 'Websites', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'websites', array( MainWP_Client_Overview_Sites::get_class_name(), 'render' ), $page, 'right', esc_html__( 'Websites', 'mainwp' ) );
 		}
 
 		if ( is_array( $client_contacts ) ) {
@@ -220,7 +220,7 @@ class MainWP_Client_Overview {
 				if ( isset( self::$enable_widgets[ 'contact_' . $contact['contact_id'] ] ) && self::$enable_widgets[ 'contact_' . $contact['contact_id'] ] ) {
 					$contact_widget          = new MainWP_Client_Overview_Contacts();
 					$contact_widget->contact = $contact;
-					MainWP_UI::add_widget_box( 'contact_' . $contact['contact_id'], array( $contact_widget, 'render' ), $page, 'left', __( 'Contacts', 'mainwp' ) );
+					MainWP_UI::add_widget_box( 'contact_' . $contact['contact_id'], array( $contact_widget, 'render' ), $page, 'left', esc_html__( 'Contacts', 'mainwp' ) );
 				}
 			}
 		}
@@ -250,8 +250,8 @@ class MainWP_Client_Overview {
 	 * When the page loads render the body content.
 	 */
 	public function on_show_page() {
-		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_client_dashboard' ) ) {
-			mainwp_do_not_have_permissions( __( 'client dashboard', 'mainwp' ) );
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_clients' ) && ! mainwp_current_user_have_right( 'dashboard', 'access_client_dashboard' ) ) {
+			mainwp_do_not_have_permissions( esc_html__( 'client dashboard', 'mainwp' ) );
 			return;
 		}
 
@@ -284,7 +284,7 @@ class MainWP_Client_Overview {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'client-widgets' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="client-widgets"></i>
-					<?php echo sprintf( __( 'To hide or show a widget, click the Cog (<i class="cog icon"></i>) icon or go to the %1$sMainWP Settings%2$s page and select options from "Show widgets"', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?>
+					<?php echo sprintf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon or go to the %2$sMainWP Settings%3$s page and select options from "Show widgets"', 'mainwp' ), '<i class="cog icon"></i>', '<a href="admin.php?page=Settings">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 
@@ -446,7 +446,7 @@ class MainWP_Client_Overview {
 		} );
 	</script>
 	<div class="ui modal" id="mainwp-clients-overview-screen-options-modal">
-			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
+			<div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
 			<div class="content ui form">
 				<?php
 				/**
@@ -495,17 +495,17 @@ class MainWP_Client_Overview {
 	/**
 	 * Method render_screen_options()
 	 *
-	 * Render Screen Options.
+	 * Render Page Settings.
 	 *
-	 * @return void  Render Screen Options html.
+	 * @return void  Render Page Settings html.
 	 */
 	public static function render_screen_options() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$default_widgets = array(
-			'overview'    => __( 'Overview', 'mainwp' ),
-			'note'        => __( 'Notes', 'mainwp' ),
-			'fields_info' => __( 'Addition Info', 'mainwp' ),
-			'websites'    => __( 'Websites', 'mainwp' ),
+			'overview'    => esc_html__( 'Overview', 'mainwp' ),
+			'note'        => esc_html__( 'Notes', 'mainwp' ),
+			'fields_info' => esc_html__( 'Addition Info', 'mainwp' ),
+			'websites'    => esc_html__( 'Websites', 'mainwp' ),
 		);
 
 		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) {
@@ -540,7 +540,7 @@ class MainWP_Client_Overview {
 		/**
 		 * Action: mainwp_screen_options_modal_top
 		 *
-		 * Fires at the top of the Screen Options modal element.
+		 * Fires at the top of the Page Settings modal element.
 		 *
 		 * @since 4.1
 		 */
@@ -599,7 +599,7 @@ class MainWP_Client_Overview {
 		/**
 		 * Action: mainwp_screen_options_modal_bottom
 		 *
-		 * Fires at the bottom of the Screen Options modal element.
+		 * Fires at the bottom of the Page Settings modal element.
 		 *
 		 * @since 4.1
 		 */
@@ -615,16 +615,11 @@ class MainWP_Client_Overview {
 	 * @return void
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] ) {
+		if ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] ) {
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Dashboard, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://kb.mainwp.com/docs/understanding-mainwp-dashboard-user-interface/" target="_blank">Understanding MainWP Dashboard UI</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-navigation/" target="_blank">MainWP Navigation</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/screen-options/" target="_blank">Screen Options</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-dashboard/" target="_blank">MainWP Dashboard</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-tables/" target="_blank">MainWP Tables</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/individual-child-site-mode/" target="_blank">Individual Child Site Mode</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">Manage Clients</a></div>
 				<?php
 				/**
 				 * Action: mainwp_clients_overview_help_item

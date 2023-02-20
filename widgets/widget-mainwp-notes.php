@@ -59,7 +59,7 @@ class MainWP_Notes {
 			 *
 			 * @since 4.1
 			 */
-			echo esc_html( apply_filters( 'mainwp_notes_widget_title', __( 'Notes', 'mainwp' ), $website ) );
+			echo esc_html( apply_filters( 'mainwp_notes_widget_title', esc_html__( 'Notes', 'mainwp' ), $website ) );
 			?>
 			<div class="sub header"><?php esc_html_e( 'Child site notes', 'mainwp' ); ?></div>
 		</h3>
@@ -84,7 +84,7 @@ class MainWP_Notes {
 					<i class="info circle icon"></i>
 					<div class="content">
 						<?php esc_html_e( 'No saved notes!', 'mainwp' ); ?>
-						<div class="sub header"><?php esc_html_e( 'No saved notes for the child site. ', 'mainwp' ); ?><?php echo '<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-' . intval( $website->id ) . '">' . __( 'Click here to add a note.', 'mainwp' ) . '</a>'; ?></div>
+						<div class="sub header"><?php esc_html_e( 'No saved notes for the child site. ', 'mainwp' ); ?><?php echo '<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-' . intval( $website->id ) . '">' . esc_html__( 'Click here to add a note.', 'mainwp' ) . '</a>'; ?></div>
 					</div>
 				</h2>
 				<?php

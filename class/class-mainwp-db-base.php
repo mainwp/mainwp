@@ -69,7 +69,7 @@ class MainWP_DB_Base {
 	 */
 	protected function test_connection() {
 		if ( ! self::ping( $this->wpdb->dbh ) ) {
-			MainWP_Logger::instance()->info( __( 'Trying to reconnect WordPress database connection...', 'mainwp' ) );
+			MainWP_Logger::instance()->info( esc_html__( 'Trying to reconnect WordPress database connection...', 'mainwp' ) );
 			$this->wpdb->db_connect();
 		}
 	}
@@ -280,6 +280,9 @@ class MainWP_DB_Base {
 		}
 
 		if ( self::use_mysqli() ) {
+			if ( ! ( $result instanceof \mysqli_result ) ) {
+				return $result;
+			}
 			return \mysqli_data_seek( $result, $offset );
 		} else {
 			return \mysql_data_seek( $result, $offset );

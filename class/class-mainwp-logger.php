@@ -18,16 +18,27 @@ class MainWP_Logger {
 
 	// phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write logging file.
 
-	const DISABLED = - 1;
-	const LOG      = 0;
-	const WARNING  = 1;
-	const INFO     = 2;
-	const DEBUG    = 3;
+	public const UPDATE_CHECK_LOG_PRIORITY   = 10;
+	public const EXECUTION_TIME_LOG_PRIORITY = 15;
 
-	const LOG_COLOR     = '#999999';
-	const DEBUG_COLOR   = '#666666';
-	const INFO_COLOR    = '#276f86';
-	const WARNING_COLOR = '#9f3a38;';
+
+	public const DISABLED = - 1;
+	public const LOG      = 0;
+	public const WARNING  = 1;
+	public const INFO     = 2;
+	public const DEBUG    = 3;
+
+	public const LOG_COLOR     = '#999999';
+	public const DEBUG_COLOR   = '#666666';
+	public const INFO_COLOR    = '#276f86';
+	public const WARNING_COLOR = '#9f3a38;';
+
+	/**
+	 * Private variable to hold time start.
+	 *
+	 * @var int
+	 */
+	private static $time_start = null;
 
 	/**
 	 * Private varibale to hold the log file prefix.
@@ -252,11 +263,33 @@ class MainWP_Logger {
 	 * @param string $text Warning message text.
 	 * @param int    $priority priority message.
 	 * @param int    $log_color Set color: 0 - LOG, 1 - WARNING, 2 - INFO, 3- DEBUG.
+	 * @param bool   $forced forced logging.
 	 *
 	 * @return string Log warning message.
 	 */
-	public function log_action( $text, $priority, $log_color = 0 ) {
-		return $this->log( $text, $priority, $log_color );
+	public function log_action( $text, $priority, $log_color = 0, $forced = false ) {
+		return $this->log( $text, $priority, $log_color, $forced );
+	}
+
+	/**
+	 * Method log_execution_time().
+	 *
+	 * @param string $text Log record text.
+	 *
+	 * Log the execution time value.
+	 */
+	public function log_execution_time( $text = '' ) {
+		$exec_time = self::get_execution_time();
+		self::instance()->log_action( 'execution time (sec) :: ' . ( ! empty( $text ) ? (string) $text . ' :: ' : '' ) . $exec_time, self::EXECUTION_TIME_LOG_PRIORITY );
+	}
+
+	/**
+	 * Method log_update_check().
+	 *
+	 * @param string $text Log update check.
+	 */
+	public function log_update_check( $text = '' ) {
+		self::instance()->log_action( $text, self::UPDATE_CHECK_LOG_PRIORITY );
 	}
 
 	/**
@@ -336,12 +369,17 @@ class MainWP_Logger {
 	 * @param string $text Log record text.
 	 * @param int    $priority Set priority.
 	 * @param int    $log_color Set color.
+	 * @param bool   $forced forced logging.
 	 *
 	 * @return bool true|false Default is False.
 	 */
-	public function log_to_db( $text, $priority, $log_color = 0 ) {
+	private function log_to_db( $text, $priority, $log_color = 0, $forced = false ) {
 
-		$text = $this->prepare_log_info( $text );
+		if ( $this->logPriority === self::DISABLED ) {
+			return;
+		}
+
+		$priority = apply_filters( 'mainwp_log_to_db_priority', $priority );
 
 		$do_log = false;
 
@@ -353,7 +391,9 @@ class MainWP_Logger {
 			$do_log = true;
 		}
 
-		if ( $do_log ) {
+		$text = $this->prepare_log_info( $text );
+
+		if ( $forced || $do_log ) {
 
 			$time = gmdate( $this->logDateFormat );
 
@@ -381,6 +421,8 @@ class MainWP_Logger {
 			$data['log_color']     = intval( $log_color );
 			$data['log_timestamp'] = time();
 
+			$data = apply_filters( 'mainwp_log_to_db_data', $data );
+
 			MainWP_DB_Common::instance()->insert_action_log( $data );
 
 			return true;
@@ -396,14 +438,20 @@ class MainWP_Logger {
 	 * @param string $text Log record text.
 	 * @param int    $priority Set priority.
 	 * @param int    $log_color Set color.
+	 * @param bool   $forced forced logging.
 	 *
 	 * @return bool true|false Default is False.
 	 */
-	public function log( $text, $priority,  $log_color = 0 ) { // phpcs:ignore -- complex function.
+	private function log( $text, $priority,  $log_color = 0, $forced = false ) { // phpcs:ignore -- complex function.
+
+		if ( $this->logPriority == self::DISABLED ) {
+			return;
+		}
 
 		$log_to_db = apply_filters( 'mainwp_logger_to_db', true );
+
 		if ( $log_to_db ) {
-			return $this->log_to_db( $text, $priority, $log_color );
+			return $this->log_to_db( $text, $priority, $log_color, $forced );
 		}
 
 		$text = $this->prepare_log_info( $text );
@@ -524,6 +572,40 @@ class MainWP_Logger {
 	}
 
 	/**
+	 * Method init_execution_time().
+	 *
+	 * @param string $code execution time code.
+	 *
+	 * Init execution time start value.
+	 */
+	public function init_execution_time( $code = '' ) {
+		if ( null === self::$time_start || ! is_array( self::$time_start ) ) {
+			self::$time_start = array( 'start' => microtime( true ) );
+			$this->log_action( 'init execution time :: [code=start]', self::EXECUTION_TIME_LOG_PRIORITY );
+			$code = 'start';
+		}
+
+		if ( ! empty( $code ) && is_string( $code ) && 'start' !== $code  ) {
+			self::$time_start[ $code ] = microtime( true );
+			$this->log_action( 'init execution time :: [code=' . $code . ']', self::EXECUTION_TIME_LOG_PRIORITY );
+		}
+	}
+
+	/**
+	 * Method get_execution_time().
+	 *
+	 * Get the execution time value.
+	 *
+	 * @return int execution time.
+	 */
+	private function get_execution_time() {
+		if ( empty( $this->time_start ) ) {
+			return 0;
+		}
+		return round( microtime( true ) - $this->time_start, 6 ); // seconds.
+	}
+
+	/**
 	 * Method get_log_file()
 	 *
 	 * Grab Log File.
@@ -554,7 +636,7 @@ class MainWP_Logger {
 			case self::WARNING:
 				return 'WARNING';
 			default:
-				return 'LOG';
+				return 'SPEC LOG';
 		}
 	}
 

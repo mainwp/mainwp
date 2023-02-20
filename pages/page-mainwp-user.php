@@ -76,7 +76,7 @@ class MainWP_User {
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Users', 'mainwp' ),
-			'<span id="mainwp-Users">' . __( 'Users', 'mainwp' ) . '</span>',
+			'<span id="mainwp-Users">' . esc_html__( 'Users', 'mainwp' ) . '</span>',
 			'read',
 			'UserBulkManage',
 			array(
@@ -88,7 +88,7 @@ class MainWP_User {
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Users', 'mainwp' ),
-			'<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>',
+			'<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>',
 			'read',
 			'UserBulkAdd',
 			array(
@@ -100,7 +100,7 @@ class MainWP_User {
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Import Users', 'mainwp' ),
-			'<div class="mainwp-hidden">' . __( 'Import Users', 'mainwp' ) . '</div>',
+			'<div class="mainwp-hidden">' . esc_html__( 'Import Users', 'mainwp' ) . '</div>',
 			'read',
 			'BulkImportUsers',
 			array(
@@ -183,7 +183,7 @@ class MainWP_User {
 	public static function init_left_menu( $subPages = array(), $level = 2 ) {
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => __( 'Users', 'mainwp' ),
+				'title'      => esc_html__( 'Users', 'mainwp' ),
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'UserBulkManage',
 				'href'       => 'admin.php?page=UserBulkManage',
@@ -195,28 +195,28 @@ class MainWP_User {
 
 		$init_sub_subleftmenu = array(
 			array(
-				'title'      => __( 'Manage Users', 'mainwp' ),
+				'title'      => esc_html__( 'Manage Users', 'mainwp' ),
 				'parent_key' => 'UserBulkManage',
 				'href'       => 'admin.php?page=UserBulkManage',
 				'slug'       => 'UserBulkManage',
 				'right'      => 'manage_users',
 			),
 			array(
-				'title'      => __( 'Add New', 'mainwp' ),
+				'title'      => esc_html__( 'Add New', 'mainwp' ),
 				'parent_key' => 'UserBulkManage',
 				'href'       => 'admin.php?page=UserBulkAdd',
 				'slug'       => 'UserBulkAdd',
 				'right'      => '',
 			),
 			array(
-				'title'      => __( 'Import Users', 'mainwp' ),
+				'title'      => esc_html__( 'Import Users', 'mainwp' ),
 				'parent_key' => 'UserBulkManage',
 				'href'       => 'admin.php?page=BulkImportUsers',
 				'slug'       => 'BulkImportUsers',
 				'right'      => '',
 			),
 			array(
-				'title'      => __( 'Admin Passwords', 'mainwp' ),
+				'title'      => esc_html__( 'Admin Passwords', 'mainwp' ),
 				'parent_key' => 'UserBulkManage',
 				'href'       => 'admin.php?page=UpdateAdminPasswords',
 				'slug'       => 'UpdateAdminPasswords',
@@ -247,7 +247,7 @@ class MainWP_User {
 	 */
 	public static function render_header( $shownPage = '' ) {
 		$params = array(
-			'title' => __( 'Users', 'mainwp' ),
+			'title' => esc_html__( 'Users', 'mainwp' ),
 		);
 		MainWP_UI::render_top_header( $params );
 
@@ -255,7 +255,7 @@ class MainWP_User {
 
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
 			$renderItems[] = array(
-				'title'  => __( 'Manage Users', 'mainwp' ),
+				'title'  => esc_html__( 'Manage Users', 'mainwp' ),
 				'href'   => 'admin.php?page=UserBulkManage',
 				'active' => ( '' === $shownPage ) ? true : false,
 			);
@@ -263,7 +263,7 @@ class MainWP_User {
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'UserBulkAdd' ) ) {
 			$renderItems[] = array(
-				'title'  => __( 'Add New', 'mainwp' ),
+				'title'  => esc_html__( 'Add New', 'mainwp' ),
 				'href'   => 'admin.php?page=UserBulkAdd',
 				'active' => ( 'Add' === $shownPage ) ? true : false,
 			);
@@ -271,7 +271,7 @@ class MainWP_User {
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'BulkImportUsers' ) ) {
 			$renderItems[] = array(
-				'title'  => __( 'Import Users', 'mainwp' ),
+				'title'  => esc_html__( 'Import Users', 'mainwp' ),
 				'href'   => 'admin.php?page=BulkImportUsers',
 				'active' => ( 'Import' === $shownPage ) ? true : false,
 			);
@@ -279,7 +279,7 @@ class MainWP_User {
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'UpdateAdminPasswords' ) ) {
 			$renderItems[] = array(
-				'title'  => __( 'Admin Passwords', 'mainwp' ),
+				'title'  => esc_html__( 'Admin Passwords', 'mainwp' ),
 				'href'   => 'admin.php?page=UpdateAdminPasswords',
 				'active' => ( 'UpdateAdminPasswords' === $shownPage ) ? true : false,
 			);
@@ -322,7 +322,7 @@ class MainWP_User {
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage users', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'manage users', 'mainwp' ) );
 
 			return;
 		}
@@ -407,7 +407,7 @@ class MainWP_User {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-users-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-users-info-message"></i>
-							<?php echo sprintf( __( 'Manage existing users on your child sites.  Here you can Delete, Edit or Change Role for existing users.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-users/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( esc_html__( 'Manage existing users on your child sites.  Here you can Delete, Edit or Change Role for existing users.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-users/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
@@ -466,11 +466,11 @@ class MainWP_User {
 
 				<?php
 				$user_roles = array(
-					'subscriber'    => __( 'Subscriber', 'mainwp' ),
-					'administrator' => __( 'Administrator', 'mainwp' ),
-					'editor'        => __( 'Editor', 'mainwp' ),
-					'author'        => __( 'Author', 'mainwp' ),
-					'contributor'   => __( 'Contributor', 'mainwp' ),
+					'subscriber'    => esc_html__( 'Subscriber', 'mainwp' ),
+					'administrator' => esc_html__( 'Administrator', 'mainwp' ),
+					'editor'        => esc_html__( 'Editor', 'mainwp' ),
+					'author'        => esc_html__( 'Author', 'mainwp' ),
+					'contributor'   => esc_html__( 'Contributor', 'mainwp' ),
 				);
 
 				$user_roles = apply_filters_deprecated( 'mainwp-users-manage-roles', array( $user_roles ), '4.0.7.2', 'mainwp_users_manage_roles' );  // @deprecated Use 'mainwp_users_manage_roles' instead.
@@ -612,18 +612,18 @@ class MainWP_User {
 	public static function render_update_users() {
 
 		$editable_roles = array(
-			'donotupdate'   => __( 'Do not update', 'mainwp' ),
-			'administrator' => __( 'Administrator', 'mainwp' ),
-			'subscriber'    => __( 'Subscriber', 'mainwp' ),
-			'contributor'   => __( 'Contributor', 'mainwp' ),
-			'author'        => __( 'Author', 'mainwp' ),
-			'editor'        => __( 'Editor', 'mainwp' ),
+			'donotupdate'   => esc_html__( 'Do not update', 'mainwp' ),
+			'administrator' => esc_html__( 'Administrator', 'mainwp' ),
+			'subscriber'    => esc_html__( 'Subscriber', 'mainwp' ),
+			'contributor'   => esc_html__( 'Contributor', 'mainwp' ),
+			'author'        => esc_html__( 'Author', 'mainwp' ),
+			'editor'        => esc_html__( 'Editor', 'mainwp' ),
 		);
 
 		$editable_roles = apply_filters_deprecated( 'mainwp-users-manage-roles', array( $editable_roles ), '4.0.7.2', 'mainwp_users_manage_roles' );  // @deprecated Use 'mainwp_users_manage_roles' instead.
 		$editable_roles = apply_filters( 'mainwp_users_manage_roles', $editable_roles );
 
-		$editable_roles[''] = __( '&mdash; No role for this site &mdash;', 'mainwp' );
+		$editable_roles[''] = esc_html__( '&mdash; No role for this site &mdash;', 'mainwp' );
 
 		?>
 		<div id="mainwp-edit-users-modal" class="ui modal">
@@ -1221,7 +1221,7 @@ class MainWP_User {
 	 */
 	public static function delete() {
 		self::action( 'delete' );
-		die( wp_json_encode( array( 'result' => __( 'User has been deleted', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'User has been deleted', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -1237,7 +1237,7 @@ class MainWP_User {
 	 */
 	public static function update_user() {
 		self::action( 'update_user' );
-		die( wp_json_encode( array( 'result' => __( 'User has been updated', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'User has been updated', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -1245,7 +1245,7 @@ class MainWP_User {
 	 */
 	public static function update_password() {
 		self::action( 'update_password' );
-		die( wp_json_encode( array( 'result' => __( 'User password has been updated', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'User password has been updated', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -1271,7 +1271,7 @@ class MainWP_User {
 		$pass      = isset( $_POST['update_password'] ) ? utf8_decode( urldecode( wp_unslash( $_POST['update_password'] ) ) ) : '';
 
 		if ( empty( $userId ) || empty( $websiteId ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Site ID or user ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Site ID or user ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
@@ -1280,7 +1280,7 @@ class MainWP_User {
 			die(
 				wp_json_encode(
 					array(
-						'error'     => __( 'Suspended site.', 'mainwp' ),
+						'error'     => esc_html__( 'Suspended site.', 'mainwp' ),
 						'errorCode' => 'SUSPENDED_SITE',
 					)
 				)
@@ -1288,11 +1288,11 @@ class MainWP_User {
 		}
 
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
-			die( wp_json_encode( array( 'error' => __( 'You can not edit this website!', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'You can not edit this website!', 'mainwp' ) ) ) );
 		}
 
 		if ( ( 'delete' === $pAction ) && ( $website->adminname == $userName ) ) {
-			die( wp_json_encode( array( 'error' => __( 'This user is used for our secure link, it can not be deleted.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'This user is used for our secure link, it can not be deleted.', 'mainwp' ) ) ) );
 		}
 
 		if ( 'update_user' === $pAction ) {
@@ -1352,7 +1352,7 @@ class MainWP_User {
 		}
 
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Unexpected error.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Unexpected error.', 'mainwp' ) ) ) );
 		} elseif ( 'update_user' === $pAction ) {
 			if ( $optimize && isset( $information['users'] ) ) {
 				$websiteValues['users'] = wp_json_encode( $information['users'] );
@@ -1405,7 +1405,7 @@ class MainWP_User {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-user-info-message' ) ) : ?>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-user-info-message"></i>
-						<?php echo sprintf( __( 'Use the provided form to create a new user on your child site.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-user/" target="_blank">', '</a>' ); ?>
+						<?php echo sprintf( esc_html__( 'Use the provided form to create a new user on your child site.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-user/" target="_blank">', '</a>' ); ?>
 					</div>
 				<?php endif; ?>
 					<div class="ui message" id="mainwp-message-zone" style="display:none;"></div>
@@ -1481,11 +1481,11 @@ class MainWP_User {
 
 							<?php
 							$user_roles = array(
-								'subscriber'    => __( 'Subscriber', 'mainwp' ),
-								'administrator' => __( 'Administrator', 'mainwp' ),
-								'editor'        => __( 'Editor', 'mainwp' ),
-								'author'        => __( 'Author', 'mainwp' ),
-								'contributor'   => __( 'Contributor', 'mainwp' ),
+								'subscriber'    => esc_html__( 'Subscriber', 'mainwp' ),
+								'administrator' => esc_html__( 'Administrator', 'mainwp' ),
+								'editor'        => esc_html__( 'Editor', 'mainwp' ),
+								'author'        => esc_html__( 'Author', 'mainwp' ),
+								'contributor'   => esc_html__( 'Contributor', 'mainwp' ),
 							);
 							$user_roles = apply_filters_deprecated( 'mainwp-users-manage-roles', array( $user_roles ), '4.0.7.2', 'mainwp_users_manage_roles' );  // @deprecated Use 'mainwp_users_manage_roles' instead.
 							$user_roles = apply_filters( 'mainwp_users_manage_roles', $user_roles );
@@ -1650,7 +1650,7 @@ class MainWP_User {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-users-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-users-info-message"></i>
-					<?php echo sprintf( __( 'Use the form to bulk import users.  You can download the sample CSV file to see how to fomat the import file properly.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-users/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( esc_html__( 'Use the form to bulk import users.  You can download the sample CSV file to see how to fomat the import file properly.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-users/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 
@@ -1725,10 +1725,10 @@ class MainWP_User {
 			$selected_clients = ( isset( $_POST['selected_clients'] ) && is_array( $_POST['selected_clients'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_clients'] ) ) : array();
 
 			if ( ( 'group' === $_POST['select_by'] && 0 == count( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && 0 == count( $selected_sites ) ) || ( 'client' === $_POST['select_by'] && 0 == count( $selected_clients ) ) ) {
-				$errors[] = __( 'Please select at least one website or group or client.', 'mainwp' );
+				$errors[] = esc_html__( 'Please select at least one website or group or client.', 'mainwp' );
 			}
 		} else {
-			$errors[] = __( 'Please select at least one website or group or client.', 'mainwp' );
+			$errors[] = esc_html__( 'Please select at least one website or group or client.', 'mainwp' );
 		}
 
 		if ( ! isset( $_POST['user_login'] ) || '' === $_POST['user_login'] ) {
@@ -2064,13 +2064,13 @@ class MainWP_User {
 					<?php
 
 				} else {
-					$errors[] = __( 'Invalid data. Please make sure that the Import file has been formated properly.', 'mainwp' );
+					$errors[] = esc_html__( 'Invalid data. Please make sure that the Import file has been formated properly.', 'mainwp' );
 				}
 			} else {
-				$errors[] = __( 'File could not be uploaded. Temporary file cold not be created. Please make sure that the tmpfile() PHP function is enabled on your server.', 'mainwp' );
+				$errors[] = esc_html__( 'File could not be uploaded. Temporary file cold not be created. Please make sure that the tmpfile() PHP function is enabled on your server.', 'mainwp' );
 			}
 		} else {
-			$errors[] = __( 'File could not be uploaded. Please try again. If process keeps failing, please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', 'mainwp' );
+			$errors[] = esc_html__( 'File could not be uploaded. Please try again. If process keeps failing, please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', 'mainwp' );
 		}
 
 		if ( 0 < count( $errors ) ) {
@@ -2147,7 +2147,7 @@ class MainWP_User {
 							$data_fields
 						);
 					} else {
-						$not_valid[]  = __( 'Unexisting website. Please try again.', 'mainwp' ) . ' ' . $url;
+						$not_valid[]  = esc_html__( 'Unexisting website. Please try again.', 'mainwp' ) . ' ' . $url;
 						$error_sites .= $url . ';';
 					}
 				}
@@ -2168,11 +2168,11 @@ class MainWP_User {
 						}
 						MainWP_DB::free_result( $websites );
 					} else {
-						$not_valid[]  = __( 'No websites assigned to the selected group.', 'mainwp' ) . ' ' . $group;
+						$not_valid[]  = esc_html__( 'No websites assigned to the selected group.', 'mainwp' ) . ' ' . $group;
 						$error_sites .= $group . ';';
 					}
 				} else {
-					$not_valid[]  = __( 'Unexisting group selected. Please try again.', 'mainwp' ) . ' ' . $group;
+					$not_valid[]  = esc_html__( 'Unexisting group selected. Please try again.', 'mainwp' ) . ' ' . $group;
 					$error_sites .= $group . ';';
 				}
 			}

@@ -84,7 +84,7 @@ class MainWP_Security_Issues_Widget {
 			 *
 			 * @since 4.1
 			 */
-			echo esc_html( apply_filters( 'mainwp_security_issues_widget_title', __( 'Security Issues', 'mainwp' ) ) );
+			echo esc_html( apply_filters( 'mainwp_security_issues_widget_title', esc_html__( 'Security Issues', 'mainwp' ) ) );
 			?>
 			<div class="sub header"><?php esc_html_e( 'Detected security issues', 'mainwp' ); ?></div>
 		</h3>

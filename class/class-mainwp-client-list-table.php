@@ -129,25 +129,25 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 	public function get_default_columns() {
 		return array(
 			'cb'               => '<input type="checkbox" />',
-			'name'             => __( 'Client', 'mainwp' ),
-			'image'            => __( 'Image', 'mainwp' ),
-			'tags'             => __( 'Tags', 'mainwp' ),
-			'contact_name'     => __( 'Contact Name', 'mainwp' ),
-			'client_email'     => __( 'Client Email', 'mainwp' ),
-			'suspended'        => __( 'Status', 'mainwp' ),
-			'client_phone'     => __( 'Phone', 'mainwp' ),
-			'client_facebook'  => __( 'Facebook', 'mainwp' ),
-			'client_twitter'   => __( 'Twitter', 'mainwp' ),
-			'client_instagram' => __( 'Instagram', 'mainwp' ),
-			'client_linkedin'  => __( 'LinkedIn', 'mainwp' ),
-			'websites'         => __( 'Websites', 'mainwp' ),
-			'address_1'        => __( 'Address 1', 'mainwp' ),
-			'address_2'        => __( 'Address 2', 'mainwp' ),
-			'city'             => __( 'City', 'mainwp' ),
-			'zip'              => __( 'Zip', 'mainwp' ),
-			'state'            => __( 'State', 'mainwp' ),
-			'country'          => __( 'Country', 'mainwp' ),
-			'notes'            => __( 'Notes', 'mainwp' ),
+			'name'             => esc_html__( 'Client', 'mainwp' ),
+			'image'            => esc_html__( 'Image', 'mainwp' ),
+			'tags'             => esc_html__( 'Tags', 'mainwp' ),
+			'contact_name'     => esc_html__( 'Contact Name', 'mainwp' ),
+			'client_email'     => esc_html__( 'Client Email', 'mainwp' ),
+			'suspended'        => esc_html__( 'Status', 'mainwp' ),
+			'client_phone'     => esc_html__( 'Phone', 'mainwp' ),
+			'client_facebook'  => esc_html__( 'Facebook', 'mainwp' ),
+			'client_twitter'   => esc_html__( 'Twitter', 'mainwp' ),
+			'client_instagram' => esc_html__( 'Instagram', 'mainwp' ),
+			'client_linkedin'  => esc_html__( 'LinkedIn', 'mainwp' ),
+			'websites'         => esc_html__( 'Websites', 'mainwp' ),
+			'address_1'        => esc_html__( 'Address 1', 'mainwp' ),
+			'address_2'        => esc_html__( 'Address 2', 'mainwp' ),
+			'city'             => esc_html__( 'City', 'mainwp' ),
+			'zip'              => esc_html__( 'Zip', 'mainwp' ),
+			'state'            => esc_html__( 'State', 'mainwp' ),
+			'country'          => esc_html__( 'Country', 'mainwp' ),
+			'notes'            => esc_html__( 'Notes', 'mainwp' ),
 		);
 	}
 
@@ -209,7 +209,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 	public function get_bulk_actions() {
 
 		$actions = array(
-			'delete' => __( 'Delete', 'mainwp' ),
+			'delete' => esc_html__( 'Delete', 'mainwp' ),
 		);
 
 		/**
@@ -229,6 +229,9 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 	 */
 	public function render_manage_sites_table_top() {
 		$items_bulk = $this->get_bulk_actions();
+
+		$selected_group  = isset( $_REQUEST['tags'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['tags'] ) ) : '';
+
 
 		?>
 		<div class="ui grid">
@@ -256,11 +259,38 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 					<button class="ui tiny basic button" id="mainwp-do-clients-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
 				</div>
 				<div class="right aligned middle aligned column">
+				<?php esc_html_e( 'Filter clients: ', 'mainwp' ); ?>					
+					<div id="mainwp-filter-clients-group" class="ui selection multiple dropdown" style="vertical-align:bottom">
+						<input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
+						<i class="dropdown icon"></i>
+						<div class="default text"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
+						<div class="menu">
+							<?php
+							$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
+							foreach ( $groups as $group ) {
+								?>
+								<div class="item" data-value="<?php echo $group->id; ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
+								<?php
+							}
+							?>
+							<div class="item" data-value="nogroups"><?php esc_html_e( 'No Tags', 'mainwp' ); ?></div>
+						</div>
+					</div>
+					<button onclick="mainwp_manage_clients_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Clients', 'mainwp' ); ?></button>
 				</div>
 		</div>
 		</div>
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
+				mainwp_manage_clients_filter = function() {
+					var group = jQuery( "#mainwp-filter-clients-group" ).dropdown( "get value" );
+					var isNot = jQuery( "#mainwp-is-not-client" ).dropdown( "get value" );
+					var params = '';						
+						params += '&tags=' + group;
+
+					window.location = 'admin.php?page=ManageClients' + params;
+					return false;
+				}
 			} );
 		</script>
 		<?php
@@ -334,7 +364,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-client-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-client-info-message"></i>
-				<?php echo sprintf( __( 'Manage your clients.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">', '</a>' ); ?>
+				<?php echo sprintf( esc_html__( 'Manage your clients.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">', '</a>' ); ?>
 			</div>
 		<?php endif; ?>
 		<table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table">
@@ -643,7 +673,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 				<?php
 			} elseif ( 'suspended' === $column_name ) {
 				?>
-				<td class="collapsing"><?php echo ( 1 === intval( $item['suspended'] ) ) ? '<span class="ui red mini label">' . __( 'Suspended', 'mainwp' ) . '</span>' : '<span class="ui green mini label">' . __( 'Active', 'mainwp' ) . '</span>'; ?></td>
+				<td class="collapsing"><?php echo ( 1 === intval( $item['suspended'] ) ) ? '<span class="ui red mini label">' . esc_html__( 'Suspended', 'mainwp' ) . '</span>' : '<span class="ui green mini label">' . esc_html__( 'Active', 'mainwp' ) . '</span>'; ?></td>
 				<?php
 			} elseif ( 'websites' === $column_name ) {
 				$selected_sites = isset( $item['selected_sites'] ) ? trim( $item['selected_sites'] ) : '';

@@ -225,7 +225,7 @@ class MainWP_Monitoring_Handler {
 		}
 
 		if ( null == $website ) {
-			die( wp_json_encode( array( 'error' => __( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		MainWP_Utility::end_session();
@@ -235,7 +235,7 @@ class MainWP_Monitoring_Handler {
 		if ( is_array( $result ) ) {
 			die( wp_json_encode( array( 'result' => 'success' ) ) );
 		} else {
-			die( wp_json_encode( array( 'error' => __( 'Request failed. Please, try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Request failed. Please, try again.', 'mainwp' ) ) ) );
 		}
 	}
 

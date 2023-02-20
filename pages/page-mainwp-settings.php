@@ -135,7 +135,7 @@ class MainWP_Settings {
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Settings Global options', 'mainwp' ),
-			' <span id="mainwp-Settings">' . __( 'Settings', 'mainwp' ) . '</span>',
+			' <span id="mainwp-Settings">' . esc_html__( 'Settings', 'mainwp' ) . '</span>',
 			'read',
 			'Settings',
 			array(
@@ -148,7 +148,7 @@ class MainWP_Settings {
 			add_submenu_page(
 				'mainwp_tab',
 				__( 'Tools', 'mainwp' ),
-				' <div class="mainwp-hidden">' . __( 'Tools', 'mainwp' ) . '</div>',
+				' <div class="mainwp-hidden">' . esc_html__( 'Tools', 'mainwp' ) . '</div>',
 				'read',
 				'MainWPTools',
 				array(
@@ -162,7 +162,7 @@ class MainWP_Settings {
 			add_submenu_page(
 				'mainwp_tab',
 				__( 'REST API', 'mainwp' ),
-				' <div class="mainwp-hidden">' . __( 'REST API', 'mainwp' ) . '</div>',
+				' <div class="mainwp-hidden">' . esc_html__( 'REST API', 'mainwp' ) . '</div>',
 				'read',
 				'RESTAPI',
 				array(
@@ -176,7 +176,7 @@ class MainWP_Settings {
 			add_submenu_page(
 				'mainwp_tab',
 				__( 'Advanced Options', 'mainwp' ),
-				' <div class="mainwp-hidden">' . __( 'Advanced Options', 'mainwp' ) . '</div>',
+				' <div class="mainwp-hidden">' . esc_html__( 'Advanced Options', 'mainwp' ) . '</div>',
 				'read',
 				'SettingsAdvanced',
 				array(
@@ -190,7 +190,7 @@ class MainWP_Settings {
 			add_submenu_page(
 				'mainwp_tab',
 				__( 'Email Settings', 'mainwp' ),
-				' <div class="mainwp-hidden">' . __( 'Email Settings', 'mainwp' ) . '</div>',
+				' <div class="mainwp-hidden">' . esc_html__( 'Email Settings', 'mainwp' ) . '</div>',
 				'read',
 				'SettingsEmail',
 				array(
@@ -200,26 +200,12 @@ class MainWP_Settings {
 			);
 		}
 
-		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'cache-control' ) ) {
-			add_submenu_page(
-				'mainwp_tab',
-				__( 'Cache Control', 'mainwp' ),
-				' <div class="mainwp-hidden">' . __( 'Cache Control', 'mainwp' ) . '</div>',
-				'read',
-				'cache-control',
-				array(
-					self::get_class_name(),
-					'render_cache_control',
-				)
-			);
-		}
-
 		if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsClientReportsResponder' ) ) {
 				add_submenu_page(
 					'mainwp_tab',
 					__( 'Managed Client Reports', 'mainwp' ),
-					' <div class="mainwp-hidden">' . __( 'Managed Client Reports', 'mainwp' ) . '</div>',
+					' <div class="mainwp-hidden">' . esc_html__( 'Managed Client Reports', 'mainwp' ) . '</div>',
 					'read',
 					'SettingsClientReportsResponder',
 					array(
@@ -318,7 +304,7 @@ class MainWP_Settings {
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => __( 'Settings', 'mainwp' ),
+				'title'      => esc_html__( 'Settings', 'mainwp' ),
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'Settings',
 				'href'       => 'admin.php?page=Settings',
@@ -329,52 +315,45 @@ class MainWP_Settings {
 
 		$init_sub_subleftmenu = array(
 			array(
-				'title'      => __( 'General Settings', 'mainwp' ),
+				'title'      => esc_html__( 'General Settings', 'mainwp' ),
 				'parent_key' => 'Settings',
 				'href'       => 'admin.php?page=Settings',
 				'slug'       => 'Settings',
 				'right'      => '',
 			),
 			array(
-				'title'      => __( 'Advanced Settings', 'mainwp' ),
+				'title'      => esc_html__( 'Advanced Settings', 'mainwp' ),
 				'parent_key' => 'Settings',
 				'href'       => 'admin.php?page=SettingsAdvanced',
 				'slug'       => 'SettingsAdvanced',
 				'right'      => '',
 			),
 			array(
-				'title'      => __( 'Email Settings', 'mainwp' ),
+				'title'      => esc_html__( 'Email Settings', 'mainwp' ),
 				'parent_key' => 'Settings',
 				'href'       => 'admin.php?page=SettingsEmail',
 				'slug'       => 'SettingsEmail',
 				'right'      => '',
 			),
 			array(
-				'title'      => __( 'Tools', 'mainwp' ),
+				'title'      => esc_html__( 'Tools', 'mainwp' ),
 				'parent_key' => 'Settings',
 				'href'       => 'admin.php?page=MainWPTools',
 				'slug'       => 'MainWPTools',
 				'right'      => '',
 			),
 			array(
-				'title'      => __( 'REST API', 'mainwp' ),
+				'title'      => esc_html__( 'REST API', 'mainwp' ),
 				'parent_key' => 'Settings',
 				'href'       => 'admin.php?page=RESTAPI',
 				'slug'       => 'RESTAPI',
-				'right'      => '',
-			),
-			array(
-				'title'      => __( 'Cache Control', 'mainwp' ),
-				'parent_key' => 'Settings',
-				'href'       => 'admin.php?page=cache-control',
-				'slug'       => 'cache-control',
 				'right'      => '',
 			),
 		);
 
 		if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
 			$init_sub_subleftmenu[] = array(
-				'title'      => __( 'Managed Client Reports', 'mainwp' ),
+				'title'      => esc_html__( 'Managed Client Reports', 'mainwp' ),
 				'parent_key' => 'Settings',
 				'href'       => 'admin.php?page=SettingsClientReportsResponder',
 				'slug'       => 'SettingsClientReportsResponder',
@@ -404,7 +383,7 @@ class MainWP_Settings {
 	public static function render_header( $shownPage = '' ) {
 
 		$params = array(
-			'title' => __( 'MainWP Settings', 'mainwp' ),
+			'title' => esc_html__( 'MainWP Settings', 'mainwp' ),
 		);
 
 		MainWP_UI::render_top_header( $params );
@@ -412,14 +391,14 @@ class MainWP_Settings {
 		$renderItems = array();
 
 		$renderItems[] = array(
-			'title'  => __( 'General Settings', 'mainwp' ),
+			'title'  => esc_html__( 'General Settings', 'mainwp' ),
 			'href'   => 'admin.php?page=Settings',
 			'active' => ( '' == $shownPage ) ? true : false,
 		);
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsAdvanced' ) ) {
 			$renderItems[] = array(
-				'title'  => __( 'Advanced Settings', 'mainwp' ),
+				'title'  => esc_html__( 'Advanced Settings', 'mainwp' ),
 				'href'   => 'admin.php?page=SettingsAdvanced',
 				'active' => ( 'Advanced' == $shownPage ) ? true : false,
 			);
@@ -427,7 +406,7 @@ class MainWP_Settings {
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsEmail' ) ) {
 			$renderItems[] = array(
-				'title'  => __( 'Email Settings', 'mainwp' ),
+				'title'  => esc_html__( 'Email Settings', 'mainwp' ),
 				'href'   => 'admin.php?page=SettingsEmail',
 				'active' => ( 'Emails' == $shownPage ) ? true : false,
 			);
@@ -435,7 +414,7 @@ class MainWP_Settings {
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) {
 			$renderItems[] = array(
-				'title'  => __( 'Tools', 'mainwp' ),
+				'title'  => esc_html__( 'Tools', 'mainwp' ),
 				'href'   => 'admin.php?page=MainWPTools',
 				'active' => ( 'MainWPTools' == $shownPage ) ? true : false,
 			);
@@ -443,24 +422,16 @@ class MainWP_Settings {
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'RESTAPI' ) ) {
 			$renderItems[] = array(
-				'title'  => __( 'REST API', 'mainwp' ),
+				'title'  => esc_html__( 'REST API', 'mainwp' ),
 				'href'   => 'admin.php?page=RESTAPI',
 				'active' => ( 'RESTAPI' == $shownPage ) ? true : false,
-			);
-		}
-
-		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'cache-control' ) ) {
-			$renderItems[] = array(
-				'title'  => __( 'Cache Control', 'mainwp' ),
-				'href'   => 'admin.php?page=cache-control',
-				'active' => ( 'cache-control' == $shownPage ) ? true : false,
 			);
 		}
 
 		if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsClientReportsResponder' ) ) {
 				$renderItems[] = array(
-					'title'  => __( 'Managed Client Reports', 'mainwp' ),
+					'title'  => esc_html__( 'Managed Client Reports', 'mainwp' ),
 					'href'   => 'admin.php?page=SettingsClientReportsResponder',
 					'active' => ( 'SettingsClientReportsResponder' == $shownPage ) ? true : false,
 				);
@@ -472,11 +443,11 @@ class MainWP_Settings {
 				if ( MainWP_Menu::is_disable_menu_item( 3, 'Settings' . $subPage['slug'] ) ) {
 					continue;
 				}
-
 				$item           = array();
 				$item['title']  = $subPage['title'];
 				$item['href']   = 'admin.php?page=Settings' . $subPage['slug'];
 				$item['active'] = ( $subPage['slug'] == $shownPage ) ? true : false;
+				$renderItems[]  = $item;
 			}
 		}
 
@@ -632,7 +603,7 @@ class MainWP_Settings {
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
 			return;
 		}
 
@@ -644,7 +615,7 @@ class MainWP_Settings {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-general-settings-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-general-settings-info-message"></i>
-					<?php echo sprintf( __( 'Manage MainWP general settings.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( esc_html__( 'Manage MainWP general settings.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 				<?php if ( isset( $_GET['message'] ) && 'saved' == $_GET['message'] ) : ?>
@@ -927,10 +898,10 @@ class MainWP_Settings {
 				</select>
 				<div class="ui hidden fitted divider"></div>
 				<div class="ui secondary segment">
-					<?php printf( __( 'Universal time is %s.' ), '<code>' . date_i18n( $timezone_format, false, true ) . '</code>' ); ?>
+					<?php printf( esc_html__( 'Universal time is %s.' ), '<code>' . date_i18n( $timezone_format, false, true ) . '</code>' ); ?>
 					<div class="ui hidden fitted divider"></div>
 				<?php if ( get_option( 'timezone_string' ) || ! empty( $current_offset ) ) : ?>
-						<?php printf( __( 'Local time is %s.' ), '<code>' . date_i18n( $timezone_format ) . '</code>' ); ?>
+						<?php printf( esc_html__( 'Local time is %s.' ), '<code>' . date_i18n( $timezone_format ) . '</code>' ); ?>
 						<div class="ui hidden fitted divider"></div>
 				<?php endif; ?>
 				<?php if ( $check_zone_info && $tzstring ) : ?>
@@ -939,9 +910,9 @@ class MainWP_Settings {
 						$dst = (bool) $now->format( 'I' );
 
 						if ( $dst ) {
-							_e( 'This timezone is currently in daylight saving time.', 'mainwp' );
+							esc_html_e( 'This timezone is currently in daylight saving time.', 'mainwp' );
 						} else {
-							_e( 'This timezone is currently in standard time.', 'mainwp' );
+							esc_html_e( 'This timezone is currently in standard time.', 'mainwp' );
 						}
 						?>
 						<div class="ui hidden fitted divider"></div>
@@ -951,10 +922,10 @@ class MainWP_Settings {
 
 							if ( ! empty( $transitions[1] ) ) {
 								echo ' ';
-								$message = $transitions[1]['isdst'] ? __( 'Daylight saving time begins on: %s.', 'mainwp' ) : __( 'Standard time begins on: %s.', 'mainwp' );
-								printf( $message, '<code>' . wp_date( __( 'F j, Y' ) . ' ' . __( 'g:i a' ), $transitions[1]['ts'] ) . '</code>' );
+								$message = $transitions[1]['isdst'] ? esc_html__( 'Daylight saving time begins on: %s.', 'mainwp' ) : esc_html__( 'Standard time begins on: %s.', 'mainwp' );
+								printf( $message, '<code>' . wp_date( esc_html__( 'F j, Y' ) . ' ' . esc_html__( 'g:i a' ), $transitions[1]['ts'] ) . '</code>' );
 							} else {
-								_e( 'This timezone does not observe daylight saving time.', 'mainwp' );
+								esc_html_e( 'This timezone does not observe daylight saving time.', 'mainwp' );
 							}
 						}
 						?>
@@ -982,7 +953,7 @@ class MainWP_Settings {
 				 *
 				 * @param string[] $default_date_formats Array of default date formats.
 				 */
-				$date_formats = array_unique( apply_filters( 'date_formats', array( __( 'F j, Y' ), 'Y-m-d', 'm/d/Y', 'd/m/Y' ) ) );
+				$date_formats = array_unique( apply_filters( 'date_formats', array( esc_html__( 'F j, Y' ), 'Y-m-d', 'm/d/Y', 'd/m/Y' ) ) );
 
 				$custom = true;
 
@@ -997,11 +968,11 @@ class MainWP_Settings {
 
 				echo '<label><input type="radio" name="date_format" id="date_format_custom_radio" value="\c\u\s\t\o\m"';
 				checked( $custom );
-				echo '/> <span class="date-time-text date-time-custom-text">' . __( 'Custom:' ) . '<span class="screen-reader-text"> ' . __( 'enter a custom date format in the following field' ) . '</span></span></label>' .
-					'<label for="date_format_custom" class="screen-reader-text">' . __( 'Custom date format:' ) . '</label>' .
+				echo '/> <span class="date-time-text date-time-custom-text">' . esc_html__( 'Custom:' ) . '<span class="screen-reader-text"> ' . esc_html__( 'enter a custom date format in the following field' ) . '</span></span></label>' .
+					'<label for="date_format_custom" class="screen-reader-text">' . esc_html__( 'Custom date format:' ) . '</label>' .
 					'<input type="text" name="date_format_custom" id="date_format_custom" value="' . esc_attr( get_option( 'date_format' ) ) . '" class="small-text" />' .
 					'<br />' .
-					'<em><strong>' . __( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'date_format' ) ) . '</span>' .
+					'<em><strong>' . esc_html__( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'date_format' ) ) . '</span>' .
 					"<span class='spinner'></span>\n" . '</em>';
 			?>
 		</div>
@@ -1018,7 +989,7 @@ class MainWP_Settings {
 				 *
 				 * @param string[] $default_time_formats Array of default time formats.
 				 */
-				$time_formats = array_unique( apply_filters( 'time_formats', array( __( 'g:i a' ), 'g:i A', 'H:i' ) ) );
+				$time_formats = array_unique( apply_filters( 'time_formats', array( esc_html__( 'g:i a' ), 'g:i A', 'H:i' ) ) );
 
 				$custom = true;
 
@@ -1032,11 +1003,11 @@ class MainWP_Settings {
 		}
 			echo '<label><input type="radio" name="time_format" id="time_format_custom_radio" value="\c\u\s\t\o\m"';
 			checked( $custom );
-			echo '/> <span class="date-time-text date-time-custom-text">' . __( 'Custom:' ) . '<span class="screen-reader-text"> ' . __( 'enter a custom time format in the following field' ) . '</span></span></label>' .
-				'<label for="time_format_custom" class="screen-reader-text">' . __( 'Custom time format:' ) . '</label>' .
+			echo '/> <span class="date-time-text date-time-custom-text">' . esc_html__( 'Custom:' ) . '<span class="screen-reader-text"> ' . esc_html__( 'enter a custom time format in the following field' ) . '</span></span></label>' .
+				'<label for="time_format_custom" class="screen-reader-text">' . esc_html__( 'Custom time format:' ) . '</label>' .
 				'<input type="text" name="time_format_custom" id="time_format_custom" value="' . esc_attr( get_option( 'time_format' ) ) . '" class="small-text" />' .
 				'<br />' .
-			'<em><strong>' . __( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'time_format' ) ) . '</span>' .
+			'<em><strong>' . esc_html__( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'time_format' ) ) . '</span>' .
 			"<span class='spinner'></span>\n" . '</em>';
 		?>
 		</div>
@@ -1109,20 +1080,20 @@ class MainWP_Settings {
 		}
 
 		if ( 0 == $lastAutomaticUpdate ) {
-			$nextAutomaticUpdate = __( 'Any minute', 'mainwp' );
+			$nextAutomaticUpdate = esc_html__( 'Any minute', 'mainwp' );
 		} elseif ( 'yes' == $running && ( 0 < MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start( $lasttimeStartAutomatic ) || 0 < MainWP_DB::instance()->get_websites_check_updates_count( $lasttimeStartAutomatic ) ) ) {
-			$nextAutomaticUpdate = __( 'Processing your websites.', 'mainwp' );
+			$nextAutomaticUpdate = esc_html__( 'Processing your websites.', 'mainwp' );
 		} else {
 			$next_time = MainWP_System_Cron_Jobs::get_next_time_automatic_update_to_show();
 			if ( $next_time < $local_timestamp + 5 * MINUTE_IN_SECONDS ) {
-				$nextAutomaticUpdate = __( 'Any minute', 'mainwp' );
+				$nextAutomaticUpdate = esc_html__( 'Any minute', 'mainwp' );
 			} else {
 				$nextAutomaticUpdate = MainWP_Utility::format_timestamp( $next_time );
 			}
 		}
 
 		if ( 0 == $lastAutomaticUpdate ) {
-			$lastAutomaticUpdate = __( 'Never', 'mainwp' );
+			$lastAutomaticUpdate = esc_html__( 'Never', 'mainwp' );
 		} else {
 			$lastAutomaticUpdate = MainWP_Utility::format_timestamp( $lastAutomaticUpdate );
 		}
@@ -1171,7 +1142,7 @@ class MainWP_Settings {
 	 */
 	public static function render_advanced() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
 			return;
 		}
 
@@ -1224,7 +1195,7 @@ class MainWP_Settings {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-advanced-settings-info-notice' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-advanced-settings-info-notice"></i>
-					<?php echo __( 'Set how many requests are performed at once and delay between requests in order to optimize your MainWP Dashboard performance.  Both Cross IP and IP Settings handle the majority of work connecting to your Child sites, while the sync, update, and installation request have specialized options under the Frontend Requests Settings section.', 'mainwp' ); ?>
+					<?php echo esc_html__( 'Set how many requests are performed at once and delay between requests in order to optimize your MainWP Dashboard performance.  Both Cross IP and IP Settings handle the majority of work connecting to your Child sites, while the sync, update, and installation request have specialized options under the Frontend Requests Settings section.', 'mainwp' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'SettingsAdvanced' ) ) : ?>
@@ -1256,7 +1227,7 @@ class MainWP_Settings {
 									<label class="six wide column middle aligned"><?php esc_html_e( 'OpenSSL.cnf location', 'mainwp' ); ?></label>
 									<div class="ten wide column ui field">
 										<input type="text" name="mainwp_openssl_lib_location" value="<?php echo esc_html( $openssl_loc ); ?>">
-										<em><?php esc_html_e( 'If your openssl.cnf file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?> <?php echo sprintf( __( 'If you are not sure how to find the openssl.cnf location, please %1$scheck this help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a>' ); ?></em>
+										<em><?php esc_html_e( 'If your openssl.cnf file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?> <?php echo sprintf( esc_html__( 'If you are not sure how to find the openssl.cnf location, please %1$scheck this help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a>' ); ?></em>
 										<em><?php esc_html_e( 'If you have confirmed the placement of your openssl.cnf and are still receiving an error banner, click the "Error Fixed" button to dismiss it.', 'mainwp' ); ?></em>
 									</div>
 								</div>
@@ -1363,7 +1334,7 @@ class MainWP_Settings {
 	 */
 	public static function render_mainwp_tools() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
 
 			return;
 		}
@@ -1375,14 +1346,14 @@ class MainWP_Settings {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-tools-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-tools-info-message"></i>
-					<?php echo sprintf( __( 'Use MainWP tools to adjust your MainWP Dashboard to your needs and perform specific actions when needed.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( esc_html__( 'Use MainWP tools to adjust your MainWP Dashboard to your needs and perform specific actions when needed.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-tools-info-custom-theme' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-tools-info-custom-theme"></i>
-					<div><?php _e( 'Here you can select a theme for your MainWP Dashboard.', 'mainwp' ); ?></div>
-					<div><?php _e( 'To create a custom theme, copy the `mainwp-dark-theme.css` file from the MainWP Custom Dashboard Extension located in the `css` directory, make your edits and upload the file to the `../wp-content/uploads/mainwp/custom-dashboard/` directory.', 'mainwp' ); ?></div>
+					<div><?php esc_html_e( 'Here you can select a theme for your MainWP Dashboard.', 'mainwp' ); ?></div>
+					<div><?php esc_html_e( 'To create a custom theme, copy the `mainwp-dark-theme.css` file from the MainWP Custom Dashboard Extension located in the `css` directory, make your edits and upload the file to the `../wp-content/uploads/mainwp/custom-dashboard/` directory.', 'mainwp' ); ?></div>
 				</div>
 			<?php endif; ?>
 				<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) : ?>
@@ -1411,6 +1382,17 @@ class MainWP_Settings {
 						self::get_instance()->render_select_custom_themes();
 
 						?>
+						<div class="ui grid field">
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable MainWP guided tours', 'mainwp' ); ?> <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></label>
+							<div class="ten wide column " data-tooltip="<?php esc_attr_e( 'Check this option to enable, or uncheck to disable MainWP guided tours.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+								<div class="ui info message" style="display:block!important;">
+									<?php echo sprintf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %sUsetiful Privacy Policy%s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
+								</div>
+								<div class="ui toggle checkbox">
+									<input type="checkbox" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" <?php echo ( ( 1 == get_option( 'mainwp_enable_guided_tours', 0 ) ) ? 'checked="true"' : '' ); ?> />
+								</div>
+							</div>
+						</div>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Force your MainWP Dashboard to establish a new connection', 'mainwp' ); ?></label>
 							<div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'Force your MainWP Dashboard to reconnect with your child sites. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><input type="button" name="" id="force-destroy-sessions-button" class="ui green basic button" value="<?php esc_attr_e( 'Re-establish Connections', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Forces your dashboard to reconnect with your child sites. This feature will log out any currently logged in users on the Child sites and require them to re-log in. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>" data-inverted=""/></div>
@@ -1506,14 +1488,14 @@ class MainWP_Settings {
 		}
 		?>
 		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php _e( 'Select MainWP Theme', 'mainwp' ); ?></label>
+			<label class="six wide column middle aligned"><?php esc_html_e( 'Select MainWP Theme', 'mainwp' ); ?></label>
 			<div class="ten wide column" tabindex="0" data-tooltip="<?php esc_attr_e( 'Select your MainWP Dashboard theme.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 				<select name="mainwp_settings_custom_theme" id="mainwp_settings_custom_theme" class="ui dropdown selection">
-					<option value="default" <?php echo ( 'default' == $custom_theme || '' == $custom_theme ) ? 'selected' : ''; ?>><?php _e( 'Default', 'mainwp' ); ?></option>
-					<option value="classic" <?php echo ( 'classic' == $custom_theme ) ? 'selected' : ''; ?>><?php _e( 'Classic', 'mainwp' ); ?></option>
-					<option value="dark" <?php echo ( 'dark' == $custom_theme ) ? 'selected' : ''; ?>><?php _e( 'Dark', 'mainwp' ); ?></option>
-					<option value="wpadmin" <?php echo ( 'wpadmin' == $custom_theme ) ? 'selected' : ''; ?>><?php _e( 'WP Admin', 'mainwp' ); ?></option>
-					<option value="minimalistic" <?php echo ( 'minimalistic' == $custom_theme ) ? 'selected' : ''; ?>><?php _e( 'Minimalistic', 'mainwp' ); ?></option>
+					<option value="default" <?php echo ( 'default' == $custom_theme || '' == $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Default', 'mainwp' ); ?></option>
+					<option value="classic" <?php echo ( 'classic' == $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Classic', 'mainwp' ); ?></option>
+					<option value="dark" <?php echo ( 'dark' == $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Dark', 'mainwp' ); ?></option>
+					<option value="wpadmin" <?php echo ( 'wpadmin' == $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></option>
+					<option value="minimalistic" <?php echo ( 'minimalistic' == $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Minimalistic', 'mainwp' ); ?></option>
 					<?php
 					foreach ( $themes_files as $file_name => $theme ) {
 						$theme   = ucfirst( $theme );
@@ -1625,7 +1607,7 @@ class MainWP_Settings {
 	/** Render REST API SubPage */
 	public static function render_rest_api() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
 
 			return;
 		}
@@ -1637,7 +1619,7 @@ class MainWP_Settings {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-rest-api-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-rest-api-info-message"></i>
-					<?php echo sprintf( __( 'Enable the MainWP REST API functionality and generate API credentials.  Check this %1$shelp document%2$s to see all available endpoints.', 'mainwp' ), '<a href="https://mainwp.dev/rest-api/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( esc_html__( 'Enable the MainWP REST API functionality and generate API credentials.  Check this %1$shelp document%2$s to see all available endpoints.', 'mainwp' ), '<a href="https://mainwp.dev/rest-api/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 				<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) : ?>
@@ -1780,20 +1762,6 @@ class MainWP_Settings {
 	}
 
 	/**
-	 * Render Cache Control Settings SubPage.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Auto_Cache_Purge_View::handle_cache_control_post()
-	 * @uses \MainWP\Dashboard\MainWP_Auto_Cache_Purge_View::render_global_settings()
-	 */
-	public static function render_cache_control() {
-
-		self::render_header( 'cache-control' );
-		$updated = MainWP_Auto_Cache_Purge_View::instance()->handle_cache_control_post();
-		MainWP_Auto_Cache_Purge_View::instance()->render_global_settings( $updated );
-		self::render_footer( 'cache-control' );
-	}
-
-	/**
 	 * Method generate_random_string()
 	 *
 	 * Generate a random string.
@@ -1826,7 +1794,7 @@ class MainWP_Settings {
 	 */
 	public static function render_report_responder() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
 			return;
 		}
 
@@ -1836,14 +1804,14 @@ class MainWP_Settings {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-live-reports-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-live-reports-info-message"></i>
-					<?php echo __( 'This feature is deprecated.  It will be removed in one of the next updates.', 'mainwp' ); ?>
+					<?php echo esc_html__( 'This feature is deprecated.  It will be removed in one of the next updates.', 'mainwp' ); ?>
 				</div>
 			<?php endif; ?>
 				<?php
 				if ( isset( $_POST['save_changes'] ) || isset( $_POST['reset_connection'] ) ) {
 					$nonce = isset( $_REQUEST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : '';
 					if ( ! wp_verify_nonce( $nonce, 'general_settings' ) ) {
-						echo '<div class="ui red message"><i class="close icon"></i>' . __( 'Unable to save settings, please refresh and try again.', 'mainwp' ) . '</div>';
+						echo '<div class="ui red message"><i class="close icon"></i>' . esc_html__( 'Unable to save settings, please refresh and try again.', 'mainwp' ) . '</div>';
 					} else {
 						if ( isset( $_POST['reset_connection'] ) ) {
 							MainWP_Utility::update_option( 'live-report-responder-pubkey', '' );
@@ -1857,7 +1825,7 @@ class MainWP_Settings {
 							$security_token = self::generate_random_string();
 							update_option( 'live-reports-responder-security-id', ( isset( $_POST['requireUniqueSecurityId'] ) ) ? sanitize_text_field( wp_unslash( $_POST['requireUniqueSecurityId'] ) ) : '' );
 							update_option( 'live-reports-responder-security-code', stripslashes( $security_token ) );
-							echo '<div class="ui green message"><i class="close icon"></i>' . __( 'Settings have been saved successfully!', 'mainwp' ) . '</div>';
+							echo '<div class="ui green message"><i class="close icon"></i>' . esc_html__( 'Settings have been saved successfully!', 'mainwp' ) . '</div>';
 						}
 					}
 				}

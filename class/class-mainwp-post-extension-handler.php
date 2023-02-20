@@ -137,7 +137,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 				wp_send_json( $status );
 			}
 		}
-		wp_send_json( array( 'error' => __( 'Invalid data provided.', 'mainwp' ) ) );
+		wp_send_json( array( 'error' => esc_html__( 'Invalid data provided.', 'mainwp' ) ) );
 	}
 
 	/**
@@ -159,7 +159,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 
 			if ( false === $credentials || ! WP_Filesystem( $credentials ) ) {
 				global $wp_filesystem;
-				$status['error'] = __( 'Unable to connect to the filesystem. Please confirm your credentials.', 'mainwp' );
+				$status['error'] = esc_html__( 'Unable to connect to the filesystem. Please confirm your credentials.', 'mainwp' );
 				// Pass through the error from WP_Filesystem if one was raised.
 				if ( $wp_filesystem instanceof WP_Filesystem_Base && is_wp_error( $wp_filesystem->errors ) && $wp_filesystem->errors->has_errors() ) {
 					$status['error'] = esc_html( $wp_filesystem->errors->get_error_message() );
@@ -173,7 +173,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 				$status['error'] = $result->get_error_message();
 				return $status;
 			} elseif ( false === $result ) {
-				$status['error'] = __( 'Plugin could not be deleted.', 'mainwp' );
+				$status['error'] = esc_html__( 'Plugin could not be deleted.', 'mainwp' );
 				return $status;
 			}
 			$status['result'] = 'SUCCESS';
@@ -240,7 +240,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 
 		if ( 4 < $requests ) {
 			$_SESSION['api_login_history'] = $new_api_login_history;
-			die( wp_json_encode( array( 'error' => __( 'Too many requests', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Too many requests', 'mainwp' ) ) ) );
 		} else {
 			$new_api_login_history[]       = array( 'time' => time() );
 			$_SESSION['api_login_history'] = $new_api_login_history;
@@ -366,7 +366,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		$download_link = isset( $_POST['download_link'] ) ? wp_unslash( $_POST['download_link'] ) : '';
 		$plugin_slug   = isset( $_POST['plugin_slug'] ) ? wp_unslash( $_POST['plugin_slug'] ) : '';
 
-		$return = array( 'error' => __( 'Empty or Invalid request data, please try again.', 'mainwp' ) );
+		$return = array( 'error' => esc_html__( 'Empty or Invalid request data, please try again.', 'mainwp' ) );
 
 		if ( ! empty( $download_link ) ) {
 			$return = MainWP_Extensions_Handler::install_plugin( $download_link );
@@ -385,7 +385,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 				$download_link = $api->download_link;
 				$return        = MainWP_Extensions_Handler::install_plugin( $download_link );
 			} else {
-				$return = array( 'error' => __( 'No response from the WordPress update server.', 'mainwp' ) );
+				$return = array( 'error' => esc_html__( 'No response from the WordPress update server.', 'mainwp' ) );
 			}
 		}
 

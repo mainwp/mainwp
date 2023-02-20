@@ -42,10 +42,14 @@ class MainWP_Server_Information {
 	 * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::is_apache_server_software()
 	 */
 	public static function init_menu() {
+
+		add_action( 'mainwp_pageheader_infor', array( self::get_class_name(), 'render_header' ) );
+		add_action( 'mainwp_pagefooter_infor', array( self::get_class_name(), 'render_footer' ) );
+
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Info', 'mainwp' ),
-			' <span id="mainwp-ServerInformation">' . __( 'Info', 'mainwp' ) . '</span>',
+			' <span id="mainwp-ServerInformation">' . esc_html__( 'Info', 'mainwp' ) . '</span>',
 			'read',
 			'ServerInformation',
 			array(
@@ -57,7 +61,7 @@ class MainWP_Server_Information {
 			add_submenu_page(
 				'mainwp_tab',
 				__( 'Cron Schedules', 'mainwp' ),
-				'<div class="mainwp-hidden">' . __( 'Cron Schedules', 'mainwp' ) . '</div>',
+				'<div class="mainwp-hidden">' . esc_html__( 'Cron Schedules', 'mainwp' ) . '</div>',
 				'read',
 				'ServerInformationCron',
 				array(
@@ -71,7 +75,7 @@ class MainWP_Server_Information {
 			add_submenu_page(
 				'mainwp_tab',
 				__( 'Error Log', 'mainwp' ),
-				'<div class="mainwp-hidden">' . __( 'Error Log', 'mainwp' ) . '</div>',
+				'<div class="mainwp-hidden">' . esc_html__( 'Error Log', 'mainwp' ) . '</div>',
 				'read',
 				'ErrorLog',
 				array(
@@ -84,7 +88,7 @@ class MainWP_Server_Information {
 			add_submenu_page(
 				'mainwp_tab',
 				__( 'WP-Config File', 'mainwp' ),
-				'<div class="mainwp-hidden">' . __( 'WP-Config File', 'mainwp' ) . '</div>',
+				'<div class="mainwp-hidden">' . esc_html__( 'WP-Config File', 'mainwp' ) . '</div>',
 				'read',
 				'WPConfig',
 				array(
@@ -98,7 +102,7 @@ class MainWP_Server_Information {
 				add_submenu_page(
 					'mainwp_tab',
 					__( '.htaccess File', 'mainwp' ),
-					'<div class="mainwp-hidden">' . __( '.htaccess File', 'mainwp' ) . '</div>',
+					'<div class="mainwp-hidden">' . esc_html__( '.htaccess File', 'mainwp' ) . '</div>',
 					'read',
 					'.htaccess',
 					array(
@@ -112,7 +116,7 @@ class MainWP_Server_Information {
 			add_submenu_page(
 				'mainwp_tab',
 				__( 'Action logs', 'mainwp' ),
-				'<div class="mainwp-hidden">' . __( 'Action logs', 'mainwp' ) . '</div>',
+				'<div class="mainwp-hidden">' . esc_html__( 'Action logs', 'mainwp' ) . '</div>',
 				'read',
 				'ActionLogs',
 				array(
@@ -122,25 +126,11 @@ class MainWP_Server_Information {
 			);
 		}
 
-		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CacheControlLogs' ) ) {
-			add_submenu_page(
-				'mainwp_tab',
-				__( 'Cache Control Logs', 'mainwp' ),
-				'<div class="mainwp-hidden">' . __( 'Cache Control Logs', 'mainwp' ) . '</div>',
-				'read',
-				'CacheControlLogs',
-				array(
-					self::get_class_name(),
-					'render_cache_control_logs',
-				)
-			);
-		}
-
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginPrivacy' ) ) {
 			add_submenu_page(
 				'mainwp_tab',
 				__( 'Plugin Privacy', 'mainwp' ),
-				'<div class="mainwp-hidden">' . __( 'Plugin Privacy', 'mainwp' ) . '</div>',
+				'<div class="mainwp-hidden">' . esc_html__( 'Plugin Privacy', 'mainwp' ) . '</div>',
 				'read',
 				'PluginPrivacy',
 				array(
@@ -162,6 +152,9 @@ class MainWP_Server_Information {
 
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
+				if ( ! isset( $subPage['slug'] ) ) {
+					continue;
+				}
 				if ( MainWP_Menu::is_disable_menu_item( 3, 'Server' . $subPage['slug'] ) ) {
 					continue;
 				}
@@ -169,6 +162,7 @@ class MainWP_Server_Information {
 			}
 		}
 		self::init_left_menu( self::$subPages );
+
 	}
 
 	/**
@@ -235,7 +229,7 @@ class MainWP_Server_Information {
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => __( 'Info', 'mainwp' ),
+				'title'      => esc_html__( 'Info', 'mainwp' ),
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'ServerInformation',
 				'href'       => 'admin.php?page=ServerInformation',
@@ -255,42 +249,35 @@ class MainWP_Server_Information {
 
 		$init_sub_subleftmenu = array(
 			array(
-				'title'      => __( 'Server', 'mainwp' ),
+				'title'      => esc_html__( 'Server', 'mainwp' ),
 				'parent_key' => 'ServerInformation',
 				'href'       => 'admin.php?page=ServerInformation',
 				'slug'       => 'ServerInformation',
 				'right'      => '',
 			),
 			array(
-				'title'      => __( 'Cron Schedules', 'mainwp' ),
+				'title'      => esc_html__( 'Cron Schedules', 'mainwp' ),
 				'parent_key' => 'ServerInformation',
 				'href'       => 'admin.php?page=ServerInformationCron',
 				'slug'       => 'ServerInformationCron',
 				'right'      => '',
 			),
 			array(
-				'title'      => __( 'Error Log', 'mainwp' ),
+				'title'      => esc_html__( 'Error Log', 'mainwp' ),
 				'parent_key' => 'ServerInformation',
 				'href'       => 'admin.php?page=ErrorLog',
 				'slug'       => 'ErrorLog',
 				'right'      => '',
 			),
 			array(
-				'title'      => __( 'Action Logs', 'mainwp' ),
+				'title'      => esc_html__( 'Action Logs', 'mainwp' ),
 				'parent_key' => 'ServerInformation',
 				'href'       => 'admin.php?page=ActionLogs',
 				'slug'       => 'ActionLogs',
 				'right'      => '',
 			),
 			array(
-				'title'      => __( 'Cache Control Logs', 'mainwp' ),
-				'parent_key' => 'ServerInformation',
-				'href'       => 'admin.php?page=CacheControlLogs',
-				'slug'       => 'CacheControlLogs',
-				'right'      => '',
-			),
-			array(
-				'title'      => __( 'Plugin Privacy', 'mainwp' ),
+				'title'      => esc_html__( 'Plugin Privacy', 'mainwp' ),
 				'parent_key' => 'ServerInformation',
 				'href'       => 'admin.php?page=PluginPrivacy',
 				'slug'       => 'PluginPrivacy',
@@ -319,7 +306,7 @@ class MainWP_Server_Information {
 	 */
 	public static function render_header( $shownPage = '' ) {
 			$params = array(
-				'title' => __( 'Info', 'mainwp' ),
+				'title' => esc_html__( 'Info', 'mainwp' ),
 			);
 
 			MainWP_UI::render_top_header( $params );
@@ -327,14 +314,14 @@ class MainWP_Server_Information {
 			$renderItems = array();
 
 			$renderItems[] = array(
-				'title'  => __( 'Server', 'mainwp' ),
+				'title'  => esc_html__( 'Server', 'mainwp' ),
 				'href'   => 'admin.php?page=ServerInformation',
 				'active' => ( '' === $shownPage ) ? true : false,
 			);
 
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) {
 				$renderItems[] = array(
-					'title'  => __( 'Cron Schedules', 'mainwp' ),
+					'title'  => esc_html__( 'Cron Schedules', 'mainwp' ),
 					'href'   => 'admin.php?page=ServerInformationCron',
 					'active' => ( 'ServerInformationCron' === $shownPage ) ? true : false,
 				);
@@ -342,7 +329,7 @@ class MainWP_Server_Information {
 
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ErrorLog' ) ) {
 				$renderItems[] = array(
-					'title'  => __( 'Error Log', 'mainwp' ),
+					'title'  => esc_html__( 'Error Log', 'mainwp' ),
 					'href'   => 'admin.php?page=ErrorLog',
 					'active' => ( 'ErrorLog' === $shownPage ) ? true : false,
 				);
@@ -350,23 +337,15 @@ class MainWP_Server_Information {
 
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ActionLogs' ) ) {
 				$renderItems[] = array(
-					'title'  => __( 'Action Logs', 'mainwp' ),
+					'title'  => esc_html__( 'Action Logs', 'mainwp' ),
 					'href'   => 'admin.php?page=ActionLogs',
 					'active' => ( 'ActionLogs' === $shownPage ) ? true : false,
 				);
 			}
 
-			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CacheControlLogs' ) ) {
-				$renderItems[] = array(
-					'title'  => __( 'Cache Control Logs', 'mainwp' ),
-					'href'   => 'admin.php?page=CacheControlLogs',
-					'active' => ( 'CacheControlLogs' === $shownPage ) ? true : false,
-				);
-			}
-
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginPrivacy' ) ) {
 				$renderItems[] = array(
-					'title'  => __( 'Plugin Privacy', 'mainwp' ),
+					'title'  => esc_html__( 'Plugin Privacy', 'mainwp' ),
 					'href'   => 'admin.php?page=PluginPrivacy',
 					'active' => ( 'PluginPrivacy' === $shownPage ) ? true : false,
 				);
@@ -467,13 +446,13 @@ class MainWP_Server_Information {
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-server-info-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-server-info-info-message"></i>
-				<?php echo sprintf( __( 'Check your system configuration and make sure your MainWP Dashboard passes all system requirements.  If you need help with resolving specific errors, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/resolving-system-requirement-issues/" target="_blank">', '</a>' ); ?>
+				<?php echo sprintf( esc_html__( 'Check your system configuration and make sure your MainWP Dashboard passes all system requirements.  If you need help with resolving specific errors, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/resolving-system-requirement-issues/" target="_blank">', '</a>' ); ?>
 			</div>
 		<?php endif; ?>
 		<?php
 		if ( function_exists( 'curl_version' ) ) {
 			if ( ! MainWP_Server_Information_Handler::curlssl_compare( 'OpenSSL/1.1.0', '>=' ) ) {
-				echo "<div class='ui yellow message'>" . sprintf( __( 'Your host needs to update OpenSSL to at least version 1.1.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://community.letsencrypt.org/t/openssl-client-compatibility-changes-for-let-s-encrypt-certificates/143816" target="_blank">', '</a>' ) . '</div>';
+				echo "<div class='ui yellow message'>" . sprintf( esc_html__( 'Your host needs to update OpenSSL to at least version 1.1.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://community.letsencrypt.org/t/openssl-client-compatibility-changes-for-let-s-encrypt-certificates/143816" target="_blank">', '</a>' ) . '</div>';
 			}
 		}
 		?>
@@ -861,7 +840,7 @@ class MainWP_Server_Information {
 				<?php
 				if ( isset( $extension['mainwp'] ) && $extension['mainwp'] ) {
 					?>
-					<td><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? __( 'Actived', 'mainwp' ) : __( 'Deactivated', 'mainwp' ); ?></td>
+					<td><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? esc_html__( 'Actived', 'mainwp' ) : esc_html__( 'Deactivated', 'mainwp' ); ?></td>
 					<td class="right aligned"><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? self::get_pass_html() : self::get_warning_html( self::WARNING ); ?></td>
 					<?php
 				} else {
@@ -892,7 +871,7 @@ class MainWP_Server_Information {
 			<tr>
 				<td><?php echo esc_html( $plugin['Name'] ); ?></td>
 				<td><?php echo esc_html( $plugin['Version'] ); ?></td>
-				<td class="right aligned"><?php echo is_plugin_active( $slug ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>
+				<td class="right aligned"><?php echo is_plugin_active( $slug ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); ?></td>
 			</tr>
 			<?php
 		}
@@ -924,9 +903,9 @@ class MainWP_Server_Information {
 			</thead>
 			<tbody>
 				<?php
-				self::render_row_with_description( __( 'PHP Version', 'mainwp' ), '>=', '7.0', 'get_php_version', '', '', null );
-				self::render_row_with_description( __( 'SSL Extension Enabled', 'mainwp' ), '=', true, 'get_ssl_support', '', '', null );
-				self::render_row_with_description( __( 'cURL Extension Enabled', 'mainwp' ), '=', true, 'get_curl_support', '', '', null );
+				self::render_row_with_description( esc_html__( 'PHP Version', 'mainwp' ), '>=', '7.0', 'get_php_version', '', '', null );
+				self::render_row_with_description( esc_html__( 'SSL Extension Enabled', 'mainwp' ), '=', true, 'get_ssl_support', '', '', null );
+				self::render_row_with_description( esc_html__( 'cURL Extension Enabled', 'mainwp' ), '=', true, 'get_curl_support', '', '', null );
 				$openssl_version = 'OpenSSL/1.1.0';
 				self::render_row_with_description(
 					'cURL SSL Version',
@@ -940,9 +919,9 @@ class MainWP_Server_Information {
 				);
 
 				if ( ! MainWP_Server_Information_Handler::curlssl_compare( $openssl_version, '>=' ) ) {
-					echo "<tr class='warning'><td colspan='4'><i class='attention icon'></i>" . sprintf( __( 'Your host needs to update OpenSSL to at least version 1.1.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://community.letsencrypt.org/t/openssl-client-compatibility-changes-for-let-s-encrypt-certificates/143816" target="_blank">', '</a>' ) . '</td></tr>';
+					echo "<tr class='warning'><td colspan='4'><i class='attention icon'></i>" . sprintf( esc_html__( 'Your host needs to update OpenSSL to at least version 1.1.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://community.letsencrypt.org/t/openssl-client-compatibility-changes-for-let-s-encrypt-certificates/143816" target="_blank">', '</a>' ) . '</td></tr>';
 				}
-				self::render_row_with_description( __( 'MySQL Version', 'mainwp' ), '>=', '5.0', 'get_mysql_version', '', '', null );
+				self::render_row_with_description( esc_html__( 'MySQL Version', 'mainwp' ), '>=', '5.0', 'get_mysql_version', '', '', null );
 				?>
 			</tbody>
 		</table>
@@ -991,24 +970,24 @@ class MainWP_Server_Information {
 		self::render_header( 'ServerInformationCron' );
 
 		$cron_jobs = array(
-			'Check for available updates' => array( 'mainwp_updatescheck_start_last_timestamp', 'mainwp_cronupdatescheck_action', __( 'Once every minute', 'mainwp' ) ),
-			'Check for new statistics'    => array( 'mainwp_cron_last_stats', 'mainwp_cronstats_action', __( 'Once hourly', 'mainwp' ) ),
-			'Ping childs sites'           => array( 'mainwp_cron_last_ping', 'mainwp_cronpingchilds_action', __( 'Once daily', 'mainwp' ) ),
+			'Check for available updates' => array( 'mainwp_updatescheck_start_last_timestamp', 'mainwp_cronupdatescheck_action', esc_html__( 'Once every minute', 'mainwp' ) ),
+			'Check for new statistics'    => array( 'mainwp_cron_last_stats', 'mainwp_cronstats_action', esc_html__( 'Once hourly', 'mainwp' ) ),
+			'Ping childs sites'           => array( 'mainwp_cron_last_ping', 'mainwp_cronpingchilds_action', esc_html__( 'Once daily', 'mainwp' ) ),
 		);
 
 		$disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking', 1 );
 		if ( ! $disableSitesMonitoring ) {
-			$cron_jobs['Child site uptime monitoring'] = array( 'mainwp_cron_checksites_last_timestamp', 'mainwp_croncheckstatus_action', __( 'Once every minute', 'mainwp' ) );
+			$cron_jobs['Child site uptime monitoring'] = array( 'mainwp_cron_checksites_last_timestamp', 'mainwp_croncheckstatus_action', esc_html__( 'Once every minute', 'mainwp' ) );
 		}
 
 		$disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring', 1 );  // disabled by default.
 		if ( ! $disableHealthChecking ) {
-			$cron_jobs['Site Health monitoring'] = array( 'mainwp_cron_checksiteshealth_last_timestamp', 'mainwp_cronsitehealthcheck_action', __( 'Once hourly', 'mainwp' ) );
+			$cron_jobs['Site Health monitoring'] = array( 'mainwp_cron_checksiteshealth_last_timestamp', 'mainwp_cronsitehealthcheck_action', esc_html__( 'Once hourly', 'mainwp' ) );
 		}
 
 		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-			$cron_jobs['Start backups (Legacy)']    = array( 'mainwp_cron_last_backups', 'mainwp_cronbackups_action', __( 'Once hourly', 'mainwp' ) );
-			$cron_jobs['Continue backups (Legacy)'] = array( 'mainwp_cron_last_backups_continue', 'mainwp_cronbackups_continue_action', __( 'Once every five minutes', 'mainwp' ) );
+			$cron_jobs['Start backups (Legacy)']    = array( 'mainwp_cron_last_backups', 'mainwp_cronbackups_action', esc_html__( 'Once hourly', 'mainwp' ) );
+			$cron_jobs['Continue backups (Legacy)'] = array( 'mainwp_cron_last_backups_continue', 'mainwp_cronbackups_continue_action', esc_html__( 'Once every five minutes', 'mainwp' ) );
 		}
 
 		/**
@@ -1024,7 +1003,7 @@ class MainWP_Server_Information {
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-cron-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-cron-info-message"></i>
-				<?php echo sprintf( __( 'Make sure scheduled actions are working correctly.  If scheduled actions do not run normally, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/scheduled-events-not-occurring/" target="_blank">', '</a>' ); ?>
+				<?php echo sprintf( esc_html__( 'Make sure scheduled actions are working correctly.  If scheduled actions do not run normally, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/scheduled-events-not-occurring/" target="_blank">', '</a>' ); ?>
 			</div>
 		<?php endif; ?>
 		<table class="ui single line unstackable table" id="mainwp-cron-jobs-table">
@@ -1311,7 +1290,7 @@ class MainWP_Server_Information {
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-error-log-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-error-log-info-message"></i>
-				<?php echo __( 'See the WordPress error log to fix problems that arise on your MainWP Dashboard site.', 'mainwp' ); ?>
+				<?php echo esc_html__( 'See the WordPress error log to fix problems that arise on your MainWP Dashboard site.', 'mainwp' ); ?>
 			</div>
 		<?php endif; ?>
 		<table class="ui unstackable table" id="mainwp-error-log-table">
@@ -1513,11 +1492,7 @@ class MainWP_Server_Information {
 
 			MainWP_Utility::update_option( 'mainwp_specific_logs', $spec_log );
 
-			if ( MainWP_Logger::DISABLED != $act_log ) {
-				MainWP_Logger::instance()->set_log_priority( $act_log, $spec_log );
-			}
-
-			MainWP_Logger::instance()->log( 'Action logs set to: ' . MainWP_Logger::instance()->get_log_text( $act_log ), ( $spec_log ? $act_log : MainWP_Logger::LOG ) );
+			MainWP_Logger::instance()->log_action( 'Action logs set to: ' . MainWP_Logger::instance()->get_log_text( $act_log ), ( $spec_log ? $act_log : MainWP_Logger::LOG ), 2, true );
 
 			if ( MainWP_Logger::DISABLED == $act_log ) {
 				MainWP_Logger::instance()->set_log_priority( $act_log, $spec_log );
@@ -1537,9 +1512,11 @@ class MainWP_Server_Information {
 
 		$enabled          = MainWP_Logger::instance()->get_log_status();
 		$specific_default = array(
-			MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER => __( 'Update Checking', 'mainwp' ),
+			MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY   => esc_html__( 'Update Checking', 'mainwp' ),
+			MainWP_Logger::EXECUTION_TIME_LOG_PRIORITY => esc_html__( 'Execution time', 'mainwp' ),
 		);
-		$specific_logs    = apply_filters( 'mainwp_specific_action_logs', $specific_default );
+		$specific_logs    = apply_filters( 'mainwp_specific_action_logs', $specific_default ); // deprecated since 4.3.1, use 'mainwp_log_specific_actions' instead.
+		$specific_logs    = apply_filters( 'mainwp_log_specific_actions', $specific_logs );
 
 		?>
 		<div class="mainwp-sub-header">
@@ -1585,10 +1562,10 @@ class MainWP_Server_Information {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-action-logs-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-action-logs-info-message"></i>
-					<div><?php echo __( 'Enable a specific logging system.', 'mainwp' ); ?></div>
-					<p><?php echo __( 'Each specific log type changes only the type of information logged. It does not change the log view.', 'mainwp' ); ?></p>
-					<p><?php echo __( 'After disabling the Action Log, logs will still be visible. To remove records, click the Delete Logs button.', 'mainwp' ); ?></p>
-					<p><?php echo sprintf( __( 'For additional help, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/action-logs/" target="_blank">', '</a>' ); ?></p>
+					<div><?php echo esc_html__( 'Enable a specific logging system.', 'mainwp' ); ?></div>
+					<p><?php echo esc_html__( 'Each specific log type changes only the type of information logged. It does not change the log view.', 'mainwp' ); ?></p>
+					<p><?php echo esc_html__( 'After disabling the Action Log, logs will still be visible. To remove records, click the Delete Logs button.', 'mainwp' ); ?></p>
+					<p><?php echo sprintf( esc_html__( 'For additional help, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/action-logs/" target="_blank">', '</a>' ); ?></p>
 				</div>
 			<?php endif; ?>
 		<?php
@@ -1602,20 +1579,6 @@ class MainWP_Server_Information {
 		</div>
 		<?php
 		self::render_footer( 'ActionLogs' );
-	}
-
-	/**
-	 * Render Cache Control Logs SubPage.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Auto_Cache_Purge_View::render_log_page()
-	 */
-	public static function render_cache_control_logs() {
-
-		self::render_header( 'CacheControlLogs' );
-		echo '<div class="ui segment">';
-		MainWP_Auto_Cache_Purge_View::instance()->render_cache_control_log_page();
-		echo '</div>';
-		self::render_footer( 'CacheControlLogs' );
 	}
 
 	/**
@@ -1638,55 +1601,55 @@ class MainWP_Server_Information {
 		<div class="ui segment">
 					<div id="mainwp-plugin-privacy" class="ui piled segment">
 						<h2 class="ui header">
-							<?php echo __( 'MainWP Dashboard Plugin Privacy Policy', 'mainwp' ); ?>
-							<div class="sub header"><em><?php echo __( 'Last updated: April 14, 2022', 'mainwp' ); ?></em></div>
+							<?php echo esc_html__( 'MainWP Dashboard Plugin Privacy Policy', 'mainwp' ); ?>
+							<div class="sub header"><em><?php echo esc_html__( 'Last updated: April 14, 2022', 'mainwp' ); ?></em></div>
 						</h2>
-						<p><?php echo __( 'We value your privacy very highly. Please read this Privacy Policy carefully before using the MainWP Dashboard Plugin ("Plugin") operated by Sick Marketing, LLC d/b/a MainWP, a Limited Liability Company formed in Nevada, United States ("us","we","our") as this Privacy Policy contains important information regarding your privacy.', 'mainwp' ); ?></p>
-						<p><?php echo __( 'Your access to and use of the Plugin is conditional upon your acceptance of and compliance with this Privacy Policy. This Privacy Policy applies to everyone accessing or using the Plugin.', 'mainwp' ); ?></p>
-						<p><?php echo __( 'By accessing or using the Plugin, you agree to be bound by this Privacy Policy. If you disagree with any part of this Privacy Policy, then you do not have our permission to access or use the Plugin.', 'mainwp' ); ?></p>
-						<h3 class="ui header"><?php echo __( 'What personal data we collect', 'mainwp' ); ?></h3>
-						<p><?php echo __( 'We do not collect, store, nor process any personal data through this Plugin.', 'mainwp' ); ?></p>
-						<h3 class="ui header"><?php echo __( 'Third-party extensions and integrations', 'mainwp' ); ?></h3>
-						<p><?php echo __( 'This Plugin may be used with extensions that are operated by parties other than us. We may also provide extensions that have integrations with third party services. We do not control such extensions and integrations and are not responsible for their contents or the privacy or other practices of such extensions or integrations. Further, it is up to you to take precautions to ensure that whatever extensions or integrations you use adequately protect your privacy. Please review the Privacy Policies of such extensions or integrations before using them.', 'mainwp' ); ?></p>
+						<p><?php echo esc_html__( 'We value your privacy very highly. Please read this Privacy Policy carefully before using the MainWP Dashboard Plugin ("Plugin") operated by Sick Marketing, LLC d/b/a MainWP, a Limited Liability Company formed in Nevada, United States ("us","we","our") as this Privacy Policy contains important information regarding your privacy.', 'mainwp' ); ?></p>
+						<p><?php echo esc_html__( 'Your access to and use of the Plugin is conditional upon your acceptance of and compliance with this Privacy Policy. This Privacy Policy applies to everyone accessing or using the Plugin.', 'mainwp' ); ?></p>
+						<p><?php echo esc_html__( 'By accessing or using the Plugin, you agree to be bound by this Privacy Policy. If you disagree with any part of this Privacy Policy, then you do not have our permission to access or use the Plugin.', 'mainwp' ); ?></p>
+						<h3 class="ui header"><?php echo esc_html__( 'What personal data we collect', 'mainwp' ); ?></h3>
+						<p><?php echo esc_html__( 'We do not collect, store, nor process any personal data through this Plugin.', 'mainwp' ); ?></p>
+						<h3 class="ui header"><?php echo esc_html__( 'Third-party extensions and integrations', 'mainwp' ); ?></h3>
+						<p><?php echo esc_html__( 'This Plugin may be used with extensions that are operated by parties other than us. We may also provide extensions that have integrations with third party services. We do not control such extensions and integrations and are not responsible for their contents or the privacy or other practices of such extensions or integrations. Further, it is up to you to take precautions to ensure that whatever extensions or integrations you use adequately protect your privacy. Please review the Privacy Policies of such extensions or integrations before using them.', 'mainwp' ); ?></p>
 						<div class="ui hidden divider"></div>
 					<div class="ui two columns stackable grid">
 							<div class="column">
-								<h3 class="ui header"><?php echo __( 'Our contact information', 'mainwp' ); ?></h3>
-								<p><?php echo __( 'If you have any questions regarding our privacy practices, please do not hesitate to contact us at the following:', 'mainwp' ); ?></p>
+								<h3 class="ui header"><?php echo esc_html__( 'Our contact information', 'mainwp' ); ?></h3>
+								<p><?php echo esc_html__( 'If you have any questions regarding our privacy practices, please do not hesitate to contact us at the following:', 'mainwp' ); ?></p>
 								<div class="ui list">
-									<div class="item"><?php echo __( 'Sick Marketing, LLC d/b/a MainWP', 'mainwp' ); ?></div>
-									<div class="item"><?php echo __( 'support@mainwp.com', 'mainwp' ); ?></div>
-									<div class="item"><?php echo __( '4730 S. Fort Apache Road', 'mainwp' ); ?></div>
-									<div class="item"><?php echo __( 'Suite 300', 'mainwp' ); ?></div>
-									<div class="item"><?php echo __( 'PO Box 27740', 'mainwp' ); ?></div>
-									<div class="item"><?php echo __( 'Las Vegas, NV 89126', 'mainwp' ); ?></div>
-									<div class="item"><?php echo __( 'United States', 'mainwp' ); ?></div>
+									<div class="item"><?php echo esc_html__( 'Sick Marketing, LLC d/b/a MainWP', 'mainwp' ); ?></div>
+									<div class="item"><?php echo esc_html__( 'support@mainwp.com', 'mainwp' ); ?></div>
+									<div class="item"><?php echo esc_html__( '4730 S. Fort Apache Road', 'mainwp' ); ?></div>
+									<div class="item"><?php echo esc_html__( 'Suite 300', 'mainwp' ); ?></div>
+									<div class="item"><?php echo esc_html__( 'PO Box 27740', 'mainwp' ); ?></div>
+									<div class="item"><?php echo esc_html__( 'Las Vegas, NV 89126', 'mainwp' ); ?></div>
+									<div class="item"><?php echo esc_html__( 'United States', 'mainwp' ); ?></div>
 								</div>
 							</div>
 							<div class="column">
-								<h3 class="ui header"><?php echo __( 'Our representative\'s contact information', 'mainwp' ); ?></h3>
-								<p><?php echo __( 'If you are a resident of the European Union or the European Economic Area, you may also contact our representative at the following:', 'mainwp' ); ?></p>
-								<div class="item"><?php echo __( 'Ametros Ltd', 'mainwp' ); ?></div>
-								<div class="item"><?php echo __( 'Unit 3D', 'mainwp' ); ?></div>
-								<div class="item"><?php echo __( 'North Point House', 'mainwp' ); ?></div>
-								<div class="item"><?php echo __( 'North Point Business Park', 'mainwp' ); ?></div>
-								<div class="item"><?php echo __( 'New Mallow Road', 'mainwp' ); ?></div>
-								<div class="item"><?php echo __( 'Cork', 'mainwp' ); ?></div>
-								<div class="item"><?php echo __( 'Ireland', 'mainwp' ); ?></div>
+								<h3 class="ui header"><?php echo esc_html__( 'Our representative\'s contact information', 'mainwp' ); ?></h3>
+								<p><?php echo esc_html__( 'If you are a resident of the European Union or the European Economic Area, you may also contact our representative at the following:', 'mainwp' ); ?></p>
+								<div class="item"><?php echo esc_html__( 'Ametros Ltd', 'mainwp' ); ?></div>
+								<div class="item"><?php echo esc_html__( 'Unit 3D', 'mainwp' ); ?></div>
+								<div class="item"><?php echo esc_html__( 'North Point House', 'mainwp' ); ?></div>
+								<div class="item"><?php echo esc_html__( 'North Point Business Park', 'mainwp' ); ?></div>
+								<div class="item"><?php echo esc_html__( 'New Mallow Road', 'mainwp' ); ?></div>
+								<div class="item"><?php echo esc_html__( 'Cork', 'mainwp' ); ?></div>
+								<div class="item"><?php echo esc_html__( 'Ireland', 'mainwp' ); ?></div>
 								<div class="ui hidden divider"></div>
-								<p><?php echo __( 'If you are a resident of the United Kingdom, you may contact our representative at the following:', 'mainwp' ); ?></p>
-								<div class="item"><?php echo __( 'Ametros Group Ltd', 'mainwp' ); ?></div>
-								<div class="item"><?php echo __( 'Lakeside Offices', 'mainwp' ); ?></div>
-								<div class="item"><?php echo __( 'Thorn Business Park', 'mainwp' ); ?></div>
-								<div class="item"><?php echo __( 'Hereford', 'mainwp' ); ?></div>
-								<div class="item"><?php echo __( 'Herefordshire', 'mainwp' ); ?></div>
-								<div class="item"><?php echo __( 'HR2 6JT', 'mainwp' ); ?></div>
-								<div class="item"><?php echo __( 'England', 'mainwp' ); ?></div>
+								<p><?php echo esc_html__( 'If you are a resident of the United Kingdom, you may contact our representative at the following:', 'mainwp' ); ?></p>
+								<div class="item"><?php echo esc_html__( 'Ametros Group Ltd', 'mainwp' ); ?></div>
+								<div class="item"><?php echo esc_html__( 'Lakeside Offices', 'mainwp' ); ?></div>
+								<div class="item"><?php echo esc_html__( 'Thorn Business Park', 'mainwp' ); ?></div>
+								<div class="item"><?php echo esc_html__( 'Hereford', 'mainwp' ); ?></div>
+								<div class="item"><?php echo esc_html__( 'Herefordshire', 'mainwp' ); ?></div>
+								<div class="item"><?php echo esc_html__( 'HR2 6JT', 'mainwp' ); ?></div>
+								<div class="item"><?php echo esc_html__( 'England', 'mainwp' ); ?></div>
 							</div>
 						</div>
 					</div>
 					<div class="ui divider"></div>
-					<a href="<?php echo get_site_url() . '/wp-content/plugins/mainwp/privacy-policy.txt'; ?>" class="ui green basic button" target="_blank"><?php echo __( 'Download MainWP Dashboard Privacy Policy', 'mainwp' ); ?></a> <a href="<?php echo get_site_url() . '/wp-content/plugins/mainwp/mainwp-child-privacy-policy.txt'; ?>" class="ui green basic button" target="_blank"><?php echo __( 'Download MainWP Child Privacy Policy', 'mainwp' ); ?></a>
+					<a href="<?php echo get_site_url() . '/wp-content/plugins/mainwp/privacy-policy.txt'; ?>" class="ui green basic button" target="_blank"><?php echo esc_html__( 'Download MainWP Dashboard Privacy Policy', 'mainwp' ); ?></a> <a href="<?php echo get_site_url() . '/wp-content/plugins/mainwp/mainwp-child-privacy-policy.txt'; ?>" class="ui green basic button" target="_blank"><?php echo esc_html__( 'Download MainWP Child Privacy Policy', 'mainwp' ); ?></a>
 		</div>
 
 		<?php
@@ -1789,9 +1752,9 @@ class MainWP_Server_Information {
 	 */
 	private static function get_warning_html( $errorType = self::WARNING ) {
 		if ( self::WARNING == $errorType ) {
-			return '<i class="large yellow exclamation icon"></i><span style="display:none">' . __( 'Warning', 'mainwp' ) . '</span>';
+			return '<i class="large yellow exclamation icon"></i><span style="display:none">' . esc_html__( 'Warning', 'mainwp' ) . '</span>';
 		}
-		return '<i class="large red times icon"></i><span style="display:none">' . __( 'Fail', 'mainwp' ) . '</span>';
+		return '<i class="large red times icon"></i><span style="display:none">' . esc_html__( 'Fail', 'mainwp' ) . '</span>';
 	}
 
 	/**
@@ -1800,7 +1763,7 @@ class MainWP_Server_Information {
 	 * @return string PHP Pass html.
 	 */
 	private static function get_pass_html() {
-		return '<i class="large green check icon"></i><span style="display:none">' . __( 'Pass', 'mainwp' ) . '</span>';
+		return '<i class="large green check icon"></i><span style="display:none">' . esc_html__( 'Pass', 'mainwp' ) . '</span>';
 	}
 
 }

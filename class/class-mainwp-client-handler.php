@@ -50,78 +50,78 @@ class MainWP_Client_Handler {
 
 		return array(
 			'client.name'              => array(
-				'title'    => __( 'Client Name (Required)', 'mainwp' ),
-				'desc'     => __( 'Displays the Client name', 'mainwp' ),
+				'title'    => esc_html__( 'Client Name (Required)', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the Client name', 'mainwp' ),
 				'db_field' => 'name',
 			),
 			'client.email'             => array(
-				'title'    => __( 'Client email', 'mainwp' ),
-				'desc'     => __( 'Displays the client email', 'mainwp' ),
+				'title'    => esc_html__( 'Client email', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client email', 'mainwp' ),
 				'db_field' => 'client_email',
 			),
 			'client.phone'             => array(
-				'title'    => __( 'Client phone', 'mainwp' ),
-				'desc'     => __( 'Displays the client phone', 'mainwp' ),
+				'title'    => esc_html__( 'Client phone', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client phone', 'mainwp' ),
 				'db_field' => 'client_phone',
 			),
 			'client.facebook'          => array(
-				'title'    => __( 'Client Facebook', 'mainwp' ),
-				'desc'     => __( 'Displays the client Facebook', 'mainwp' ),
+				'title'    => esc_html__( 'Client Facebook', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client Facebook', 'mainwp' ),
 				'db_field' => 'client_facebook',
 			),
 			'client.twitter'           => array(
-				'title'    => __( 'Client Twitter', 'mainwp' ),
-				'desc'     => __( 'Displays the client Twitter', 'mainwp' ),
+				'title'    => esc_html__( 'Client Twitter', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client Twitter', 'mainwp' ),
 				'db_field' => 'client_twitter',
 			),
 			'client.instagram'         => array(
-				'title'    => __( 'Client Instagram', 'mainwp' ),
-				'desc'     => __( 'Displays the client Instagram', 'mainwp' ),
+				'title'    => esc_html__( 'Client Instagram', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client Instagram', 'mainwp' ),
 				'db_field' => 'client_instagram',
 			),
 			'client.linkedin'          => array(
-				'title'    => __( 'Client LinkedIn', 'mainwp' ),
-				'desc'     => __( 'Displays the client LinkedIn', 'mainwp' ),
+				'title'    => esc_html__( 'Client LinkedIn', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client LinkedIn', 'mainwp' ),
 				'db_field' => 'client_linkedin',
 			),
 			'client.contact.address.1' => array(
-				'title'    => __( 'Client address 1', 'mainwp' ),
-				'desc'     => __( 'Displays the client contact address 1', 'mainwp' ),
+				'title'    => esc_html__( 'Client address 1', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client contact address 1', 'mainwp' ),
 				'db_field' => 'address_1',
 			),
 			'client.contact.address.2' => array(
-				'title'    => __( 'Client address 2', 'mainwp' ),
-				'desc'     => __( 'Displays the client contact address 2', 'mainwp' ),
+				'title'    => esc_html__( 'Client address 2', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client contact address 2', 'mainwp' ),
 				'db_field' => 'address_2',
 			),
 			'client.city'              => array(
-				'title'    => __( 'Client city', 'mainwp' ),
-				'desc'     => __( 'Displays the client city', 'mainwp' ),
+				'title'    => esc_html__( 'Client city', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client city', 'mainwp' ),
 				'db_field' => 'city',
 			),
 			'client.state'             => array(
-				'title'    => __( 'Client state', 'mainwp' ),
-				'desc'     => __( 'Displays the client state', 'mainwp' ),
+				'title'    => esc_html__( 'Client state', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client state', 'mainwp' ),
 				'db_field' => 'state',
 			),
 			'client.zip'               => array(
-				'title'    => __( 'Client ZIP', 'mainwp' ),
-				'desc'     => __( 'Displays the client ZIP code', 'mainwp' ),
+				'title'    => esc_html__( 'Client ZIP', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client ZIP code', 'mainwp' ),
 				'db_field' => 'zip',
 			),
 			'client.country'           => array(
-				'title'    => __( 'Client country', 'mainwp' ),
-				'desc'     => __( 'Displays the client country', 'mainwp' ),
+				'title'    => esc_html__( 'Client country', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client country', 'mainwp' ),
 				'db_field' => 'country',
 			),
 			'client.note'              => array(
-				'title'    => __( 'Client notes', 'mainwp' ),
-				'desc'     => __( 'Displays the client note', 'mainwp' ),
+				'title'    => esc_html__( 'Client notes', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client note', 'mainwp' ),
 				'db_field' => 'note',
 			),
 			'client.suspended'         => array(
-				'title'    => __( 'Client status', 'mainwp' ),
-				'desc'     => __( 'Displays the client suspended state', 'mainwp' ),
+				'title'    => esc_html__( 'Client status', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client suspended state', 'mainwp' ),
 				'db_field' => 'suspended',
 			),
 		);
@@ -136,43 +136,43 @@ class MainWP_Client_Handler {
 	public static function get_default_contact_fields() {
 		return array(
 			'client.contact.name' => array(
-				'title'    => __( 'Contact name (Required)', 'mainwp' ),
-				'desc'     => __( 'Displays the client contact name', 'mainwp' ),
+				'title'    => esc_html__( 'Contact name (Required)', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client contact name', 'mainwp' ),
 				'db_field' => 'contact_name',
 			),
 			'contact.role'        => array(
-				'title'    => __( 'Contact role', 'mainwp' ),
-				'desc'     => __( 'Displays the contact role', 'mainwp' ),
+				'title'    => esc_html__( 'Contact role', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the contact role', 'mainwp' ),
 				'db_field' => 'contact_role',
 			),
 			'contact.email'       => array(
-				'title'    => __( 'Contact email (Required)', 'mainwp' ),
-				'desc'     => __( 'Displays the contact email', 'mainwp' ),
+				'title'    => esc_html__( 'Contact email (Required)', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the contact email', 'mainwp' ),
 				'db_field' => 'contact_email',
 			),
 			'contact.phone'       => array(
-				'title'    => __( 'Contact phone', 'mainwp' ),
-				'desc'     => __( 'Displays the contact phone', 'mainwp' ),
+				'title'    => esc_html__( 'Contact phone', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the contact phone', 'mainwp' ),
 				'db_field' => 'contact_phone',
 			),
 			'contact.facebook'    => array(
-				'title'    => __( 'Contact Facebook', 'mainwp' ),
-				'desc'     => __( 'Displays the contact Facebook', 'mainwp' ),
+				'title'    => esc_html__( 'Contact Facebook', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the contact Facebook', 'mainwp' ),
 				'db_field' => 'facebook',
 			),
 			'contact.twitter'     => array(
-				'title'    => __( 'Contact Twitter', 'mainwp' ),
-				'desc'     => __( 'Displays the contact Twitter', 'mainwp' ),
+				'title'    => esc_html__( 'Contact Twitter', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the contact Twitter', 'mainwp' ),
 				'db_field' => 'twitter',
 			),
 			'contact.instagram'   => array(
-				'title'    => __( 'Contact Instagram', 'mainwp' ),
-				'desc'     => __( 'Displays the contact Instagram', 'mainwp' ),
+				'title'    => esc_html__( 'Contact Instagram', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the contact Instagram', 'mainwp' ),
 				'db_field' => 'instagram',
 			),
 			'contact.linkedin'    => array(
-				'title'    => __( 'Contact LinkedIn', 'mainwp' ),
-				'desc'     => __( 'Displays the contact LinkedIn', 'mainwp' ),
+				'title'    => esc_html__( 'Contact LinkedIn', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the contact LinkedIn', 'mainwp' ),
 				'db_field' => 'linkedin',
 			),
 		);
@@ -200,11 +200,12 @@ class MainWP_Client_Handler {
 	 * @param bool  $edit Is edit.
 	 *
 	 *  $data fields.
-	 *  'email'.
+	 *  'client_email'.
 	 *  'name'.
-	 *  'facebook'.
-	 *  'twitter'.
-	 *  'instagram'.
+	 *  'client_facebook'.
+	 *  'client_twitter'.
+	 *  'client_instagram'.
+	 *  'client_linkedin'.
 	 *  'address_1'.
 	 *  'address_2'.
 	 *  'city'.
@@ -226,7 +227,7 @@ class MainWP_Client_Handler {
 
 			if ( empty( $client_id ) ) { // edit client.
 				return array(
-					'error' => __( 'Client ID field is required! Please enter a Client ID.', 'mainwp' ),
+					'error' => esc_html__( 'Client ID field is required! Please enter a Client ID.', 'mainwp' ),
 				);
 			}
 
@@ -260,7 +261,35 @@ class MainWP_Client_Handler {
 				$params['note'] = sanitize_text_field( wp_unslash( $data['note'] ) );
 			}
 
-			MainWP_DB_Client::instance()->update_client( $params );
+			if ( isset( $data['client_email'] ) ) {
+				$params['client_email'] = sanitize_text_field( wp_unslash( $data['client_email'] ) );
+			}
+
+			if ( isset( $data['client_phone'] ) ) {
+				$params['client_phone'] = sanitize_text_field( wp_unslash( $data['client_phone'] ) );
+			}
+
+			if ( isset( $data['client_facebook'] ) ) {
+				$params['client_facebook'] = sanitize_text_field( wp_unslash( $data['client_facebook'] ) );
+			}
+
+			if ( isset( $data['client_twitter'] ) ) {
+				$params['client_twitter'] = sanitize_text_field( wp_unslash( $data['client_twitter'] ) );
+			}
+
+			if ( isset( $data['client_instagram'] ) ) {
+				$params['client_instagram'] = sanitize_text_field( wp_unslash( $data['client_instagram'] ) );
+			}
+
+			if ( isset( $data['client_linkedin'] ) ) {
+				$params['client_linkedin'] = sanitize_text_field( wp_unslash( $data['client_linkedin'] ) );
+			}
+
+			try {
+				MainWP_DB_Client::instance()->update_client( $params, true );
+			} catch ( \Exception $e ) {
+				throw $e;
+			}
 
 			if ( isset( $data['selected_sites'] ) && is_array( $data['selected_sites'] ) ) {
 				$selected_sites = array_map( 'sanitize_text_field', wp_unslash( $data['selected_sites'] ) );
@@ -268,12 +297,11 @@ class MainWP_Client_Handler {
 			}
 
 			if ( isset( $data['custom_fields'] ) && is_array( $data['custom_fields'] ) ) {
-				$custom_fields = array_map( 'sanitize_text_field', wp_unslash( $data['custom_fields'] ) );
+				$custom_fields = wp_unslash( $data['custom_fields'] );
 				foreach ( $custom_fields as $field ) {
-					$fie_name  = isset( $field['field_name'] ) ? sanitize_text_field( wp_unslash( $data['field_name'] ) ) : '';
-					$fie_value = isset( $field['field_value'] ) ? sanitize_text_field( wp_unslash( $data['field_value'] ) ) : '';
-					$fie_desc  = isset( $field['field_desc'] ) ? sanitize_text_field( wp_unslash( $data['field_desc'] ) ) : '';
-
+					$fie_name  = isset( $field['field_name'] ) ? sanitize_text_field( wp_unslash( $field['field_name'] ) ) : '';
+					$fie_value = isset( $field['field_value'] ) ? sanitize_text_field( wp_unslash( $field['field_value'] ) ) : '';
+					$fie_desc  = isset( $field['field_desc'] ) ? sanitize_text_field( wp_unslash( $field['field_desc'] ) ) : '';
 					if ( ! empty( $fie_name ) && ! empty( $fie_value ) ) {
 						$get_gen_field = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $fie_name, 0 );
 						if ( $get_gen_field ) { // it is general field.
@@ -317,23 +345,29 @@ class MainWP_Client_Handler {
 
 			if ( empty( $params['name'] ) ) {
 				return array(
-					'error' => __( 'Client name field is required! Please enter a Client name.', 'mainwp' ),
+					'error' => esc_html__( 'Client name field is required! Please enter a Client name.', 'mainwp' ),
 				);
 			}
 
-			$params['address_1'] = isset( $data['address_1'] ) ? sanitize_text_field( wp_unslash( $data['address_1'] ) ) : '';
-			$params['address_2'] = isset( $data['address_2'] ) ? sanitize_text_field( wp_unslash( $data['address_2'] ) ) : '';
-			$params['city']      = isset( $data['city'] ) ? sanitize_text_field( wp_unslash( $data['city'] ) ) : '';
-			$params['zip']       = isset( $data['zip'] ) ? sanitize_text_field( wp_unslash( $data['zip'] ) ) : '';
-			$params['state']     = isset( $data['state'] ) ? sanitize_text_field( wp_unslash( $data['state'] ) ) : '';
-			$params['country']   = isset( $data['country'] ) ? sanitize_text_field( wp_unslash( $data['country'] ) ) : '';
-			$params['note']      = isset( $data['note'] ) ? sanitize_text_field( wp_unslash( $data['note'] ) ) : '';
+			$params['address_1']        = isset( $data['address_1'] ) ? sanitize_text_field( wp_unslash( $data['address_1'] ) ) : '';
+			$params['address_2']        = isset( $data['address_2'] ) ? sanitize_text_field( wp_unslash( $data['address_2'] ) ) : '';
+			$params['city']             = isset( $data['city'] ) ? sanitize_text_field( wp_unslash( $data['city'] ) ) : '';
+			$params['zip']              = isset( $data['zip'] ) ? sanitize_text_field( wp_unslash( $data['zip'] ) ) : '';
+			$params['state']            = isset( $data['state'] ) ? sanitize_text_field( wp_unslash( $data['state'] ) ) : '';
+			$params['country']          = isset( $data['country'] ) ? sanitize_text_field( wp_unslash( $data['country'] ) ) : '';
+			$params['note']             = isset( $data['note'] ) ? sanitize_text_field( wp_unslash( $data['note'] ) ) : '';
+			$params['client_email']     = isset( $data['client_email'] ) ? sanitize_text_field( wp_unslash( $data['client_email'] ) ) : '';
+			$params['client_phone']     = isset( $data['client_phone'] ) ? sanitize_text_field( wp_unslash( $data['client_phone'] ) ) : '';
+			$params['client_facebook']  = isset( $data['client_facebook'] ) ? sanitize_text_field( wp_unslash( $data['client_facebook'] ) ) : '';
+			$params['client_twitter']   = isset( $data['client_twitter'] ) ? sanitize_text_field( wp_unslash( $data['client_twitter'] ) ) : '';
+			$params['client_instagram'] = isset( $data['client_instagram'] ) ? sanitize_text_field( wp_unslash( $data['client_instagram'] ) ) : '';
+			$params['client_linkedin']  = isset( $data['client_linkedin'] ) ? sanitize_text_field( wp_unslash( $data['client_linkedin'] ) ) : '';
 
 			$inserted = MainWP_DB_Client::instance()->update_client( $params );
 
 			if ( empty( $inserted ) ) {
 				return array(
-					'error' => __( 'Undefined error. Please try again.', 'mainwp' ),
+					'error' => esc_html__( 'Undefined error. Please try again.', 'mainwp' ),
 				);
 			}
 

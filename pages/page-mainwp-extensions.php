@@ -215,25 +215,25 @@ class MainWP_Extensions {
 
 			$save_extensions[] = $extension;
 			if ( mainwp_current_user_have_right( 'extension', dirname( $slug ) ) ) {
-				if ( isset( $extension['callback'] ) ) {
-
-					$menu_name = MainWP_Extensions_Handler::polish_ext_name( $extension );
-
-					if ( MainWP_Extensions_Handler::added_on_menu( $slug ) ) {
-						$_page = add_submenu_page( 'mainwp_tab', $extension['name'], $menu_name, 'read', $extension['page'], $extension['callback'] );
-					} else {
-						$_page = add_submenu_page( 'mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback'] );
-					}
-
-					if ( isset( $extension['on_load_callback'] ) && ! empty( $extension['on_load_callback'] ) ) {
-						add_action( 'load-' . $_page, $extension['on_load_callback'] );
-					}
-
-					$extsPages[] = array(
-						'title' => $menu_name,
-						'slug'  => $extension['page'],
-					);
+				$callback  = isset( $extension['callback'] ) ? $extension['callback'] : '';
+				$menu_name = MainWP_Extensions_Handler::polish_ext_name( $extension );
+				if ( MainWP_Extensions_Handler::added_on_menu( $slug ) ) {
+					$_page = add_submenu_page( 'mainwp_tab', $extension['name'], $menu_name, 'read', $extension['page'], $callback );
+				} else {
+					$_page = add_submenu_page( 'mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $callback );
 				}
+
+				if ( isset( $extension['on_load_callback'] ) && ! empty( $extension['on_load_callback'] ) ) {
+					add_action( 'load-' . $_page, $extension['on_load_callback'] );
+				}
+
+				$_item = array(
+					'title' => $menu_name,
+					'slug'  => $extension['page'],
+					'href'  => isset( $extension['href'] ) ? $extension['href'] : '',
+				);
+
+				$extsPages[] = $_item;
 			}
 		}
 
@@ -265,7 +265,7 @@ class MainWP_Extensions {
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
 			MainWP_Menu::add_left_menu(
 				array(
-					'title'      => __( 'Extensions', 'mainwp' ),
+					'title'      => esc_html__( 'Extensions', 'mainwp' ),
 					'parent_key' => 'mainwp_tab',
 					'slug'       => 'Extensions',
 					'href'       => 'admin.php?page=Extensions',
@@ -277,7 +277,7 @@ class MainWP_Extensions {
 
 			$init_sub_subleftmenu = array(
 				array(
-					'title'      => __( 'Manage Extensions', 'mainwp' ),
+					'title'      => esc_html__( 'Manage Extensions', 'mainwp' ),
 					'parent_key' => 'Extensions',
 					'href'       => 'admin.php?page=Extensions',
 					'slug'       => 'Extensions',
@@ -332,7 +332,6 @@ class MainWP_Extensions {
 			if ( MainWP_Extensions_Handler::added_on_menu( $extension['slug'] ) ) {
 				continue;
 			}
-
 			$menu_name = MainWP_Extensions_Handler::polish_ext_name( $extension );
 
 			if ( isset( $extension['direct_page'] ) ) {
@@ -516,7 +515,7 @@ class MainWP_Extensions {
 					} elseif ( isset( $product_info['error'] ) && ! empty( $product_info['error'] ) ) {
 						$error = MainWP_Api_Manager::instance()->check_response_for_intall_errors( $product_info, $software_title );
 					} else {
-						$error = __( 'Undefined error occurred. Please try again.', 'mainwp' );
+						$error = esc_html__( 'Undefined error occurred. Please try again.', 'mainwp' );
 					}
 
 					if ( ! empty( $error ) ) {
@@ -548,7 +547,7 @@ class MainWP_Extensions {
 							<div class="ui stackable grid">
 								<div class="two column row">
 									<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . '</label></span></div>
-									<div class="right aligned column"><a href="' . $ext['link'] . '" target="_blank" data-tooltip="' . __( 'Extension not purchased. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
+									<div class="right aligned column"><a href="' . $ext['link'] . '" target="_blank" data-tooltip="' . esc_html__( 'Extension not purchased. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
 								</div>
 							</div>
 						</div>';
@@ -558,7 +557,7 @@ class MainWP_Extensions {
 								<div class="ui stackable grid">
 									<div class="two column row">
 										<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . '</label></span></div>
-										<div class="right aligned column"><a href="' . $ext['url'] . '" target="_blank" data-tooltip="' . __( 'Extension not installed. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
+										<div class="right aligned column"><a href="' . $ext['url'] . '" target="_blank" data-tooltip="' . esc_html__( 'Extension not installed. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
 									</div>
 								</div>
 							</div>';
@@ -590,20 +589,20 @@ class MainWP_Extensions {
 		$html = '<div class="mainwp-installing-extensions">';
 
 		if ( empty( $installing_exts ) && count( $purchased_data ) == count( $all_free_pro_exts ) ) {
-			$html .= '<div class="ui message yellow">' . __( 'All purchased extensions already installed.', 'mainwp' ) . '</div>';
+			$html .= '<div class="ui message yellow">' . esc_html__( 'All purchased extensions already installed.', 'mainwp' ) . '</div>';
 		} else {
 			if ( isset( $not_purchased_exts ) && ! empty( $not_purchased_exts ) ) {
-				$html .= '<div class="ui message info">' . __( 'You have access to all our Free and third-party Extensions on WP.org and any that you have registered for, but you DO NOT need to install them. ', 'mainwp' );
+				$html .= '<div class="ui message info">' . esc_html__( 'You have access to all our Free and third-party Extensions on WP.org and any that you have registered for, but you DO NOT need to install them. ', 'mainwp' );
 				$html .= '<br /><br />';
-				$html .= __( 'To avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Skip any Extension you do not want to install at this time.', 'mainwp' );
+				$html .= esc_html__( 'To avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Skip any Extension you do not want to install at this time.', 'mainwp' );
 				$html .= '<br /><br />';
-				$html .= sprintf( __( 'After installing all your selected Extensions, close the modal by clicking the Close button and %1$sactivate Extensions API license%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank">', '</a>' ) . '</div>';
+				$html .= sprintf( esc_html__( 'After installing all your selected Extensions, close the modal by clicking the Close button and %1$sactivate Extensions API license%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank">', '</a>' ) . '</div>';
 			} else {
-				$html .= '<div class="ui message info">' . __( 'You have access to the MainWP Pro plan, which gives you access to all MainWP-created Extensions, but you DO NOT need to install all of them.', 'mainwp' );
+				$html .= '<div class="ui message info">' . esc_html__( 'You have access to the MainWP Pro plan, which gives you access to all MainWP-created Extensions, but you DO NOT need to install all of them.', 'mainwp' );
 				$html .= '<br /><br />';
-				$html .= __( 'To avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Skip any Extension you do not want to install at this time.', 'mainwp' );
+				$html .= esc_html__( 'To avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Skip any Extension you do not want to install at this time.', 'mainwp' );
 				$html .= '<br /><br />';
-				$html .= sprintf( __( 'After installing all your selected Extensions, close the modal by clicking the Close button and %1$sactivate Extensions API license%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank">', '</a>' ) . '</div>';
+				$html .= sprintf( esc_html__( 'After installing all your selected Extensions, close the modal by clicking the Close button and %1$sactivate Extensions API license%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank">', '</a>' ) . '</div>';
 			}
 
 			$html .= '<div id="mainwp-bulk-activating-extensions-status" class="ui message" style="display:none;"></div>';
@@ -615,7 +614,7 @@ class MainWP_Extensions {
 				}
 			}
 			if ( isset( $grouped_exts['others'] ) && ! empty( $grouped_exts['others'] ) ) {
-				$html .= '<a class="item" data-tab="other">' . __( 'Other', 'mainwp' ) . '</h3>';
+				$html .= '<a class="item" data-tab="other">' . esc_html__( 'Other', 'mainwp' ) . '</h3>';
 			}
 			$html .= '</div>';
 
@@ -643,12 +642,12 @@ class MainWP_Extensions {
 		$html .= '<div class="ui hidden divider"></div>';
 		$html .= '<div class="ui hidden divider"></div>';
 		$html .= '<div class="ui secondary segment">';
-		$html .= '<span class="ui mini green label">FREE</span> - ' . __( 'Free extension developed by MainWP', 'mainwp' ) . '<br/>';
-		$html .= '<span class="ui mini blue label">PRO</span> - ' . __( 'Premium extension developed by MainWP', 'mainwp' ) . '<br/>';
-		$html .= '<span class="ui mini grey label">.ORG</span> - ' . __( 'Free extension developed by 3rd party author, available on WordPress.org', 'mainwp' );
+		$html .= '<span class="ui mini green label">FREE</span> - ' . esc_html__( 'Free extension developed by MainWP', 'mainwp' ) . '<br/>';
+		$html .= '<span class="ui mini blue label">PRO</span> - ' . esc_html__( 'Premium extension developed by MainWP', 'mainwp' ) . '<br/>';
+		$html .= '<span class="ui mini grey label">.ORG</span> - ' . esc_html__( 'Free extension developed by 3rd party author, available on WordPress.org', 'mainwp' );
 		$html .= '<div class="ui hidden fitted divider"></div>';
-		$html .= '<i class="info circle icon"></i> ' . __( 'Extension requires the corresponding plugin on your MainWP Dashboard site too.', 'mainwp' ) . '<br/>';
-		$html .= '<i class="shield alternate icon"></i> ' . __( 'Shows the extension privacy info.', 'mainwp' ) . '<br/>';
+		$html .= '<i class="info circle icon"></i> ' . esc_html__( 'Extension requires the corresponding plugin on your MainWP Dashboard site too.', 'mainwp' ) . '<br/>';
+		$html .= '<i class="shield alternate icon"></i> ' . esc_html__( 'Shows the extension privacy info.', 'mainwp' ) . '<br/>';
 		$html .= '</div>';
 
 		$html .= '<script>jQuery( "#mainwp-install-extensions-menu .item" ).tab();</script>';
@@ -711,7 +710,7 @@ class MainWP_Extensions {
 	public static function render() {
 
 		$params = array(
-			'title' => __( 'Extensions', 'mainwp' ),
+			'title' => esc_html__( 'Extensions', 'mainwp' ),
 		);
 		MainWP_UI::render_top_header( $params );
 

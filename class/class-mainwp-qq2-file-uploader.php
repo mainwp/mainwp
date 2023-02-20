@@ -119,7 +119,7 @@ class MainWP_QQ2_File_Uploader {
 		$postSize   = $this->to_bytes( ini_get( 'post_max_size' ) );
 		$uploadSize = $this->to_bytes( ini_get( 'upload_max_filesize' ) );
 		if ( $postSize < $size || $uploadSize < $size ) {
-			return array( 'error' => __( 'File is too large, increase post_max_size and/or upload_max_filesize', 'mainwp' ) );
+			return array( 'error' => esc_html__( 'File is too large, increase post_max_size and/or upload_max_filesize', 'mainwp' ) );
 		}
 
 		$pathinfo = pathinfo( $this->file->get_name() );
@@ -129,7 +129,7 @@ class MainWP_QQ2_File_Uploader {
 		if ( $this->allowedExtensions && ! in_array( strtolower( $ext ), $this->allowedExtensions ) ) {
 			$these = implode( ', ', $this->allowedExtensions );
 
-			return array( 'error' => __( 'File has an invalid extension, it should be one of ', 'mainwp' ) . $these . '.' );
+			return array( 'error' => esc_html__( 'File has an invalid extension, it should be one of ', 'mainwp' ) . $these . '.' );
 		}
 
 		if ( ! $replaceOldFile ) {
@@ -144,8 +144,8 @@ class MainWP_QQ2_File_Uploader {
 				return array( 'success' => true );
 			} else {
 				return array(
-					'error' => __( 'Could not save uploaded file!', 'mainwp' ) .
-							__( 'The upload was cancelled, or server error encountered.', 'mainwp' ),
+					'error' => esc_html__( 'Could not save uploaded file!', 'mainwp' ) .
+							esc_html__( 'The upload was cancelled, or server error encountered.', 'mainwp' ),
 				);
 			}
 		} catch ( \Exception $e ) {

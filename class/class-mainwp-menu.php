@@ -54,6 +54,8 @@ class MainWP_Menu {
 					// 'mainwp_tab' - Do not hide this menu.
 					'UpdatesManage'     => false,
 					'managesites'       => false,
+					'ManageClients'     => false,
+					'ManageGroups'      => false,
 					'PostBulkManage'    => false,
 					'PageBulkManage'    => false,
 					'ThemesManage'      => false,
@@ -104,6 +106,13 @@ class MainWP_Menu {
 			if ( ! self::is_disable_menu_item( 2, 'ManageClients' ) ) {
 				if ( mainwp_current_user_have_right( 'dashboard', 'manage_clients' ) ) {
 					MainWP_Client::init_menu();
+				}
+			}
+
+			// Manage Tags.
+			if ( ! self::is_disable_menu_item( 2, 'ManageGroups' ) ) {
+				if ( mainwp_current_user_have_right( 'dashboard', 'manage_groups' ) ) {
+					MainWP_Manage_Groups::init_menu();
 				}
 			}
 
@@ -172,13 +181,6 @@ class MainWP_Menu {
 			if ( ! self::is_disable_menu_item( 3, 'UpdateAdminPasswords' ) ) {
 				if ( mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
 					MainWP_Bulk_Update_Admin_Passwords::init_menu();
-				}
-			}
-
-			// Manage Groups/Tags.
-			if ( ! self::is_disable_menu_item( 3, 'ManageGroups' ) ) {
-				if ( mainwp_current_user_have_right( 'dashboard', 'manage_groups' ) ) {
-					MainWP_Manage_Groups::init_menu();
 				}
 			}
 
@@ -289,9 +291,13 @@ class MainWP_Menu {
 	 * @return array $initSubpage[] Final SubPages Array.
 	 */
 	public static function init_subpages_left_menu( $subPages, &$initSubpage, $parentKey, $slug ) {
+
 		if ( ! is_array( $subPages ) ) {
-			return;
+			$subPages = array();
 		}
+
+		$subPages = apply_filters( 'mainwp_subpages_left_menu', $subPages, $initSubpage, $parentKey, $slug );
+
 		foreach ( $subPages as $subPage ) {
 			if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && true != $subPage['menu_hidden'] ) ) {
 				$_item = array(
@@ -305,6 +311,10 @@ class MainWP_Menu {
 				// To support check right to open menu for sometime.
 				if ( isset( $subPage['item_slug'] ) ) {
 					$_item['item_slug'] = $subPage['item_slug'];
+				}
+
+				if ( isset( $subPage['href'] ) && ! empty( $subPage['href'] ) ) { // override href.
+					$_item['href'] = $subPage['href'];
 				}
 
 				$initSubpage[] = $_item;
@@ -478,7 +488,7 @@ class MainWP_Menu {
 				?>
 				" />
 				</a>
-				<span id="mainwp-version-label" class="ui mini green right ribbon label"><?php echo __( 'V. ', 'mainwp' ); ?> <?php echo $version; ?></span>
+				<span id="mainwp-version-label" class="ui mini green right ribbon label"><?php echo esc_html__( 'V. ', 'mainwp' ); ?> <?php echo $version; ?></span>
 			</div>
 			<div class="ui hidden divider"></div>
 			<div class="mainwp-nav-menu">
@@ -541,8 +551,8 @@ class MainWP_Menu {
 
 					$link = array(
 						'url'  => $go_back_wpadmin_url,
-						'text' => __( 'WP Admin', 'mainwp' ),
-						'tip'  => __( 'Click to go back to the site WP Admin area.', 'mainwp' ),
+						'text' => esc_html__( 'WP Admin', 'mainwp' ),
+						'tip'  => esc_html__( 'Click to go back to the site WP Admin area.', 'mainwp' ),
 					);
 
 					/**
@@ -676,9 +686,6 @@ class MainWP_Menu {
 			if ( empty( $right ) || ( ! empty( $right ) && mainwp_current_user_have_right( $right_group, $right ) ) ) {
 				?>
 				<a class="item" href="<?php echo esc_url( $href ); ?>" <?php echo '_blank' == $_blank ? 'target="_blank"' : ''; ?>>
-					<?php if ( 'admin.php?page=cache-control' == $href || 'admin.php?page=CacheControlLogs' == $href ) : ?>
-						<span class="ui mini blue label mainwp-beta-feature-label">BETA!</span>
-					<?php endif; ?>
 					<?php echo esc_html( $title ); ?>
 				</a>
 				<?php

@@ -17,6 +17,31 @@ namespace MainWP\Dashboard;
 class MainWP_System_Utility {
 
 	/**
+	 * Private static variable to hold the single instance of the class.
+	 *
+	 * @static
+	 *
+	 * @var mixed Default null
+	 */
+	private static $instance = null;
+
+	/**
+	 * Method instance()
+	 *
+	 * Create a public static instance.
+	 *
+	 * @static
+	 * @return MainWP_Post_Handler
+	 */
+	public static function instance() {
+		if ( null == self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+
+	/**
 	 * Method get_class_name()
 	 *
 	 * Get Class Name.
@@ -1243,5 +1268,4 @@ class MainWP_System_Utility {
 
 		return $output;
 	}
-
 }

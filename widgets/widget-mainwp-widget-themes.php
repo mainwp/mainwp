@@ -102,7 +102,7 @@ class MainWP_Widget_Themes {
 					 *
 					 * @since 4.1
 					 */
-					echo esc_html( apply_filters( 'mainwp_themes_widget_title', __( 'Themes', 'mainwp' ), $website ) );
+					echo esc_html( apply_filters( 'mainwp_themes_widget_title', esc_html__( 'Themes', 'mainwp' ), $website ) );
 					?>
 					<div class="sub header"><?php esc_html_e( 'Installed themes on the child site', 'mainwp' ); ?></div>
 				</h3>
@@ -213,7 +213,7 @@ class MainWP_Widget_Themes {
 							<?php } ?>
 							<?php
 							if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) ) {
-								$parent_str = sprintf( __( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $inactive_themes[ $i ]['child_theme'] ) ? $inactive_themes[ $i ]['child_theme'] : '' );
+								$parent_str = sprintf( esc_html__( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $inactive_themes[ $i ]['child_theme'] ) ? $inactive_themes[ $i ]['child_theme'] : '' );
 								?>
 								<a href="#" class="<?php echo $is_parent ? '' : 'mainwp-theme-delete'; ?> ui mini basic button" data-position="top right" data-tooltip="<?php echo ! $is_parent ? esc_attr__( 'Delete the ', 'mainwp' ) . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . esc_attr__( ' theme from the child site.', 'mainwp' ) : $parent_str; ?>" <?php echo $is_parent ? 'disabled onclick="javascript:void(0)"' : ''; ?> data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
@@ -263,7 +263,7 @@ class MainWP_Widget_Themes {
 	 */
 	public static function activate_theme() {
 		self::action( 'activate' );
-		die( wp_json_encode( array( 'result' => __( 'Theme has been activated!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Theme has been activated!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -273,7 +273,7 @@ class MainWP_Widget_Themes {
 	 */
 	public static function delete_theme() {
 		self::action( 'delete' );
-		die( wp_json_encode( array( 'result' => __( 'Theme has been permanently deleted!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Theme has been permanently deleted!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -297,19 +297,19 @@ class MainWP_Widget_Themes {
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
 		if ( empty( $theme ) || empty( $websiteId ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Theme or site ID not found. Please, reload the page and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Theme or site ID not found. Please, reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
-			die( wp_json_encode( array( 'error' => __( 'You cannot edit this website.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'You cannot edit this website.', 'mainwp' ) ) ) );
 		}
 
 		if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
 			die(
 				wp_json_encode(
 					array(
-						'error'     => __( 'Suspended site.', 'mainwp' ),
+						'error'     => esc_html__( 'Suspended site.', 'mainwp' ),
 						'errorCode' => 'SUSPENDED_SITE',
 					)
 				)
@@ -347,7 +347,7 @@ class MainWP_Widget_Themes {
 		do_action( 'mainwp_after_theme_action', $information, $action, $theme, $website );
 
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Unexpected error occurred. Please try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Unexpected error occurred. Please try again.', 'mainwp' ) ) ) );
 		}
 	}
 

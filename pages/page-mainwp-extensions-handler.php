@@ -462,7 +462,7 @@ class MainWP_Extensions_Handler {
 
 				if ( null != $thePlugin && '' !== $thePlugin && '' !== $thePlugin['Name'] ) {
 					$the_name    = self::polish_string_name( $thePlugin['Name'] );
-					$output     .= esc_html( $the_name ) . ' ' . __( 'installed successfully. Do not forget to activate the extension API license.', 'mainwp' );
+					$output     .= esc_html( $the_name ) . ' ' . esc_html__( 'installed successfully. Do not forget to activate the extension API license.', 'mainwp' );
 					$plugin_slug = $result['destination_name'] . '/' . $srcFile;
 
 					if ( $activatePlugin ) {
@@ -675,7 +675,7 @@ class MainWP_Extensions_Handler {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 
 		$dbwebsites = array();
-		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version', 'http_user', 'http_pass' );
+		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version', 'http_user', 'http_pass', 'sync_errors' );
 
 		if ( is_array( $options ) ) {
 			foreach ( $options as $option_name => $value ) {
@@ -914,25 +914,6 @@ class MainWP_Extensions_Handler {
 
 
 	/**
-	 * Method hook_get_sql_websites_for_current_user()
-	 *
-	 * Get sql websites for current user.
-	 *
-	 * @param mixed  $false First input filter value.
-	 * @param string $pluginFile Extension plugin file to verify.
-	 * @param string $key The child-key.
-	 * @param mixed  $params  Input params data.
-	 *
-	 * @return string sql.
-	 */
-	public static function hook_get_sql_websites_for_current_user( $false, $pluginFile, $key, $params ) {
-		if ( ! self::hook_verify( $pluginFile, $key ) ) {
-			return false;
-		}
-		return MainWP_DB::instance()->get_sql_wp_for_current_user( $params );
-	}
-
-	/**
 	 * Get all loaded extensions.
 	 *
 	 * @return mainwp_extensions value.
@@ -970,7 +951,7 @@ class MainWP_Extensions_Handler {
 			$website  = MainWP_DB::fetch_object( $websites );
 
 			if ( empty( $website ) ) {
-				return array( 'error' => __( 'Website not found.', 'mainwp' ) );
+				return array( 'error' => esc_html__( 'Website not found.', 'mainwp' ) );
 			}
 
 			$ret = array();
@@ -1008,7 +989,7 @@ class MainWP_Extensions_Handler {
 						);
 					}
 					$ret['siteid']   = $clone_site->id;
-					$ret['response'] = __( 'Site updated.', 'mainwp' );
+					$ret['response'] = esc_html__( 'Site updated.', 'mainwp' );
 				}
 				return $ret;
 			}
@@ -1038,7 +1019,7 @@ class MainWP_Extensions_Handler {
 						}
 					}
 				}
-				$ret['response'] = __( 'Site successfully added.', 'mainwp' );
+				$ret['response'] = esc_html__( 'Site successfully added.', 'mainwp' );
 				$ret['siteid']   = $id;
 			}
 			return $ret;
@@ -1086,7 +1067,7 @@ class MainWP_Extensions_Handler {
 		}
 
 		if ( empty( $clone_site ) ) {
-			return array( 'error' => __( 'Not found the clone website', 'mainwp' ) );
+			return array( 'error' => esc_html__( 'Not found the clone website', 'mainwp' ) );
 		}
 
 		if ( $clone_site ) {

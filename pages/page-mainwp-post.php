@@ -86,24 +86,24 @@ class MainWP_Post {
 	 * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::get_class_name()
 	 */
 	public static function init_menu() {
-		$_page = add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . __( 'Posts', 'mainwp' ) . '</span>', 'read', 'PostBulkManage', array( self::get_class_name(), 'render' ) );
+		$_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . esc_html__( 'Posts', 'mainwp' ) . '</span>', 'read', 'PostBulkManage', array( self::get_class_name(), 'render' ) );
 		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_page' ) );
 		add_filter( 'manage_' . $_page . '_columns', array( self::get_class_name(), 'get_manage_columns' ) );
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkAdd' ) ) {
-			$_page = add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'PostBulkAdd', array( self::get_class_name(), 'render_bulk_add' ) );
+			$_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'read', 'PostBulkAdd', array( self::get_class_name(), 'render_bulk_add' ) );
 			add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
 		}
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkEdit' ) ) {
-			$_page = add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Post', 'mainwp' ) . '</div>', 'read', 'PostBulkEdit', array( self::get_class_name(), 'render_bulk_edit' ) );
+			$_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Edit Post', 'mainwp' ) . '</div>', 'read', 'PostBulkEdit', array( self::get_class_name(), 'render_bulk_edit' ) );
 			add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
 		}
 
 		add_submenu_page(
 			'mainwp_tab',
 			'Posting new bulkpost',
-			'<div class="mainwp-hidden">' . __( 'Posts', 'mainwp' ) . '</div>',
+			'<div class="mainwp-hidden">' . esc_html__( 'Posts', 'mainwp' ) . '</div>',
 			'read',
 			'PostingBulkPost',
 			array(
@@ -173,7 +173,7 @@ class MainWP_Post {
 		}
 
 		if ( ! $post_id ) {
-			wp_die( __( 'Invalid post.', 'mainwp' ) );
+			wp_die( esc_html__( 'Invalid post.', 'mainwp' ) );
 		}
 
 		self::on_load_bulkpost( $post_id );
@@ -224,19 +224,19 @@ class MainWP_Post {
 	 */
 	public static function get_manage_columns() {
 		$colums = array(
-			'title'           => __( 'Title', 'mainwp' ),
-			'author'          => __( 'Author', 'mainwp' ),
-			'date'            => __( 'Date', 'mainwp' ),
-			'categories'      => __( 'Categories', 'mainwp' ),
-			'tags'            => __( 'Tags', 'mainwp' ),
-			'post-type'       => __( 'Post type', 'mainwp' ),
-			'comments'        => __( 'Comments', 'mainwp' ),
-			'status'          => __( 'Status', 'mainwp' ),
-			'seo-links'       => __( 'Links', 'mainwp' ),
-			'seo-linked'      => __( 'Linked', 'mainwp' ),
-			'seo-score'       => __( 'SEO Score', 'mainwp' ),
-			'seo-readability' => __( 'Readability score', 'mainwp' ),
-			'website'         => __( 'Website', 'mainwp' ),
+			'title'           => esc_html__( 'Title', 'mainwp' ),
+			'author'          => esc_html__( 'Author', 'mainwp' ),
+			'date'            => esc_html__( 'Date', 'mainwp' ),
+			'categories'      => esc_html__( 'Categories', 'mainwp' ),
+			'tags'            => esc_html__( 'Tags', 'mainwp' ),
+			'post-type'       => esc_html__( 'Post type', 'mainwp' ),
+			'comments'        => esc_html__( 'Comments', 'mainwp' ),
+			'status'          => esc_html__( 'Status', 'mainwp' ),
+			'seo-links'       => esc_html__( 'Links', 'mainwp' ),
+			'seo-linked'      => esc_html__( 'Linked', 'mainwp' ),
+			'seo-score'       => esc_html__( 'SEO Score', 'mainwp' ),
+			'seo-readability' => esc_html__( 'Readability score', 'mainwp' ),
+			'website'         => esc_html__( 'Website', 'mainwp' ),
 		);
 
 		if ( ! MainWP_Utility::enabled_wp_seo() ) {
@@ -349,7 +349,7 @@ class MainWP_Post {
 
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => __( 'Posts', 'mainwp' ),
+				'title'      => esc_html__( 'Posts', 'mainwp' ),
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'PostBulkManage',
 				'href'       => 'admin.php?page=PostBulkManage',
@@ -360,14 +360,14 @@ class MainWP_Post {
 
 		$init_sub_subleftmenu = array(
 			array(
-				'title'      => __( 'Manage Posts', 'mainwp' ),
+				'title'      => esc_html__( 'Manage Posts', 'mainwp' ),
 				'parent_key' => 'PostBulkManage',
 				'href'       => 'admin.php?page=PostBulkManage',
 				'slug'       => 'PostBulkManage',
 				'right'      => 'manage_posts',
 			),
 			array(
-				'title'      => __( 'Add New', 'mainwp' ),
+				'title'      => esc_html__( 'Add New', 'mainwp' ),
 				'parent_key' => 'PostBulkManage',
 				'href'       => 'admin.php?page=PostBulkAdd',
 				'slug'       => 'PostBulkAdd',
@@ -421,7 +421,7 @@ class MainWP_Post {
 	 */
 	public static function render_header( $shownPage = '', $post_id = null ) {
 		$params = array(
-			'title' => __( 'Posts', 'mainwp' ),
+			'title' => esc_html__( 'Posts', 'mainwp' ),
 		);
 		MainWP_UI::render_top_header( $params );
 
@@ -429,20 +429,20 @@ class MainWP_Post {
 
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
 			$renderItems[] = array(
-				'title'  => __( 'Manage Posts', 'mainwp' ),
+				'title'  => esc_html__( 'Manage Posts', 'mainwp' ),
 				'href'   => 'admin.php?page=PostBulkManage',
 				'active' => ( 'BulkManage' === $shownPage ) ? true : false,
 			);
 			if ( 'BulkEdit' === $shownPage ) {
 				$renderItems[] = array(
-					'title'  => __( 'Edit Post', 'mainwp' ),
+					'title'  => esc_html__( 'Edit Post', 'mainwp' ),
 					'href'   => 'admin.php?page=PostBulkEdit&post_id=' . esc_attr( $post_id ),
 					'active' => true,
 				);
 			}
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkAdd' ) ) {
 				$renderItems[] = array(
-					'title'  => __( 'Add New', 'mainwp' ),
+					'title'  => esc_html__( 'Add New', 'mainwp' ),
 					'href'   => 'admin.php?page=PostBulkAdd',
 					'active' => ( 'BulkAdd' === $shownPage ) ? true : false,
 				);
@@ -494,7 +494,7 @@ class MainWP_Post {
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage posts', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
 			return;
 		}
 
@@ -576,7 +576,7 @@ class MainWP_Post {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-posts-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-posts-info-message"></i>
-							<?php echo sprintf( __( 'Manage existing posts on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( esc_html__( 'Manage existing posts on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<?php self::render_table( true ); ?>
@@ -1442,13 +1442,13 @@ class MainWP_Post {
 		$delete_nonce = wp_create_nonce( 'delete-meta_' . $entry['meta_id'] );
 
 		$r .= "\n\t<div class=\"two column row\" meta-id=\"" . $entry['meta_id'] . '" >';
-		$r .= "\n\t\t<div class=\"column\"><label for='meta-{$entry['meta_id']}-key'>" . __( 'Key', 'mainwp' ) . "</label><input name='meta[{$entry['meta_id']}][key]' id='meta-{$entry['meta_id']}-key' type='text' size='20' value='{$entry['meta_key']}' />";
+		$r .= "\n\t\t<div class=\"column\"><label for='meta-{$entry['meta_id']}-key'>" . esc_html__( 'Key', 'mainwp' ) . "</label><input name='meta[{$entry['meta_id']}][key]' id='meta-{$entry['meta_id']}-key' type='text' size='20' value='{$entry['meta_key']}' />";
 		$r .= "\n\t\t";
 		$r .= "<input type=\"button\" onclick=\"mainwp_post_newmeta_submit( 'delete', this )\" class=\"ui mini button\" _ajax_nonce=\"$delete_nonce\" value=\"" . esc_attr__( 'Delete', 'mainwp' ) . '">';
 		$r .= "\n\t\t";
 		$r .= "<input type=\"button\" onclick=\"mainwp_post_newmeta_submit( 'update', this )\" class=\"ui mini button\" value=\"" . esc_attr__( 'Update', 'mainwp' ) . '">';
 		$r .= '</div>';
-		$r .= "\n\t\t<div class=\"column\"><label for='meta-{$entry['meta_id']}-value'>" . __( 'Value', 'mainwp' ) . "</label><textarea name='meta[{$entry['meta_id']}][value]' id='meta-{$entry['meta_id']}-value' rows='2' cols='30'>{$entry['meta_value']}</textarea></div>\n\t</div>";
+		$r .= "\n\t\t<div class=\"column\"><label for='meta-{$entry['meta_id']}-value'>" . esc_html__( 'Value', 'mainwp' ) . "</label><textarea name='meta[{$entry['meta_id']}][value]' id='meta-{$entry['meta_id']}-value' rows='2' cols='30'>{$entry['meta_value']}</textarea></div>\n\t</div>";
 		return $r;
 	}
 
@@ -1635,7 +1635,7 @@ class MainWP_Post {
 					' aria-describedby="set-post-thumbnail-desc"',
 					$thumbnail_html
 				);
-				$content           .= '<p class="hide-if-no-js howto" id="set-post-thumbnail-desc">' . __( 'Click the image to edit or update', 'mainwp' ) . '</p>';
+				$content           .= '<p class="hide-if-no-js howto" id="set-post-thumbnail-desc">' . esc_html__( 'Click the image to edit or update', 'mainwp' ) . '</p>';
 				$content           .= '<p class="hide-if-no-js"><a href="#" id="remove-post-thumbnail">' . esc_html( $post_type_object->labels->remove_featured_image ) . '</a></p>';
 				$content           .= '</div>';
 			}
@@ -1654,7 +1654,7 @@ class MainWP_Post {
 		$content .= '<input type="hidden" id="_thumbnail_id" name="_thumbnail_id" value="' . esc_attr( $thumbnail_id ? $thumbnail_id : '-1' ) . '" />';
 
 		$html  = '<div class="ui fluid accordion mainwp-sidebar-accordion">';
-		$html .= '<div class="title active"><i class="dropdown icon"></i> ' . __( 'Featured Image', 'mainwp' ) . '</div>';
+		$html .= '<div class="title active"><i class="dropdown icon"></i> ' . esc_html__( 'Featured Image', 'mainwp' ) . '</div>';
 		$html .= '<div class="content active"';
 		$html .= $content;
 		$html .= '</div>';
@@ -1734,24 +1734,24 @@ class MainWP_Post {
 		$cur_hh = current_time( 'H' );
 		$cur_mn = current_time( 'i' );
 
-		$month = '<label><span class="screen-reader-text">' . __( 'Month', 'mainwp' ) . '</span><select ' . ( $multi ? '' : 'id="mm" ' ) . 'name="mm"' . $tab_index_attribute . ">\n";
+		$month = '<label><span class="screen-reader-text">' . esc_html__( 'Month', 'mainwp' ) . '</span><select ' . ( $multi ? '' : 'id="mm" ' ) . 'name="mm"' . $tab_index_attribute . ">\n";
 
 		for ( $i = 1; $i < 13; ++$i ) {
 			$monthnum  = zeroise( $i, 2 );
 			$monthtext = $wp_locale->get_month_abbrev( $wp_locale->get_month( $i ) );
 			$month    .= "\t\t\t" . '<option value="' . $monthnum . '" data-text="' . $monthtext . '" ' . selected( $monthnum, $mm, false ) . '>';
-			$month    .= sprintf( __( '%1$s-%2$s', 'mainwp' ), $monthnum, $monthtext ) . "</option>\n";
+			$month    .= sprintf( esc_html__( '%1$s-%2$s', 'mainwp' ), $monthnum, $monthtext ) . "</option>\n";
 		}
 
 		$month .= '</select></label>';
 
-		$day    = '<label><span class="screen-reader-text">' . __( 'Day', 'mainwp' ) . '</span><input type="text" ' . ( $multi ? '' : 'id="jj" ' ) . 'name="jj" value="' . $jj . '" size="2" maxlength="2"' . $tab_index_attribute . ' autocomplete="off" /></label>';
-		$year   = '<label><span class="screen-reader-text">' . __( 'Year', 'mainwp' ) . '</span><input type="text" ' . ( $multi ? '' : 'id="aa" ' ) . 'name="aa" value="' . $aa . '" size="4" maxlength="4"' . $tab_index_attribute . ' autocomplete="off" /></label>';
-		$hour   = '<label><span class="screen-reader-text">' . __( 'Hour', 'mainwp' ) . '</span><input type="text" ' . ( $multi ? '' : 'id="hh" ' ) . 'name="hh" value="' . $hh . '" size="2" maxlength="2"' . $tab_index_attribute . ' autocomplete="off" /></label>';
-		$minute = '<label><span class="screen-reader-text">' . __( 'Minute', 'mainwp' ) . '</span><input type="text" ' . ( $multi ? '' : 'id="mn" ' ) . 'name="mn" value="' . $mn . '" size="2" maxlength="2"' . $tab_index_attribute . ' autocomplete="off" /></label>';
+		$day    = '<label><span class="screen-reader-text">' . esc_html__( 'Day', 'mainwp' ) . '</span><input type="text" ' . ( $multi ? '' : 'id="jj" ' ) . 'name="jj" value="' . $jj . '" size="2" maxlength="2"' . $tab_index_attribute . ' autocomplete="off" /></label>';
+		$year   = '<label><span class="screen-reader-text">' . esc_html__( 'Year', 'mainwp' ) . '</span><input type="text" ' . ( $multi ? '' : 'id="aa" ' ) . 'name="aa" value="' . $aa . '" size="4" maxlength="4"' . $tab_index_attribute . ' autocomplete="off" /></label>';
+		$hour   = '<label><span class="screen-reader-text">' . esc_html__( 'Hour', 'mainwp' ) . '</span><input type="text" ' . ( $multi ? '' : 'id="hh" ' ) . 'name="hh" value="' . $hh . '" size="2" maxlength="2"' . $tab_index_attribute . ' autocomplete="off" /></label>';
+		$minute = '<label><span class="screen-reader-text">' . esc_html__( 'Minute', 'mainwp' ) . '</span><input type="text" ' . ( $multi ? '' : 'id="mn" ' ) . 'name="mn" value="' . $mn . '" size="2" maxlength="2"' . $tab_index_attribute . ' autocomplete="off" /></label>';
 
 		echo '<div class="timestamp-wrap">';
-		printf( __( '%1$s %2$s, %3$s @ %4$s:%5$s', 'mainwp' ), $month, $day, $year, $hour, $minute );
+		printf( esc_html__( '%1$s %2$s, %3$s @ %4$s:%5$s', 'mainwp' ), $month, $day, $year, $hour, $minute );
 
 		echo '</div><input type="hidden" id="ss" name="ss" value="' . $ss . '" />';
 
@@ -1872,7 +1872,7 @@ class MainWP_Post {
 							}
 
 							echo '<button type="button" class="handlediv" aria-expanded="true">';
-							echo '<span class="screen-reader-text">' . sprintf( __( 'Toggle panel: %s', 'mainwp' ), $widget_title ) . '</span>';
+							echo '<span class="screen-reader-text">' . sprintf( esc_html__( 'Toggle panel: %s', 'mainwp' ), $widget_title ) . '</span>';
 							echo '<span class="toggle-indicator" aria-hidden="true"></span>';
 							echo '</button>';
 						}
@@ -1886,7 +1886,7 @@ class MainWP_Post {
 									<div class="error inline">
 										<p>
 										<?php
-											printf( __( 'This meta box, from the %s plugin, is not compatible with the block editor.', 'mainwp' ), "<strong>{$plugin['Name']}</strong>" );
+											printf( esc_html__( 'This meta box, from the %s plugin, is not compatible with the block editor.', 'mainwp' ), "<strong>{$plugin['Name']}</strong>" );
 										?>
 										</p>
 									</div>
@@ -1956,15 +1956,15 @@ class MainWP_Post {
 
 		if ( isset( $_GET['boilerplate'] ) ) {
 			if ( 'auto-draft' === $post->post_status ) {
-				$note_title = ( 'bulkpost' === $post_type ) ? __( 'Create New Boilerplate Post', 'mainwp' ) : __( 'Create New Boilerplate Page', 'mainwp' );
+				$note_title = ( 'bulkpost' === $post_type ) ? esc_html__( 'Create New Boilerplate Post', 'mainwp' ) : esc_html__( 'Create New Boilerplate Page', 'mainwp' );
 			} else {
-				$note_title = ( 'bulkpost' === $post_type ) ? __( 'Edit Boilerplate Post', 'mainwp' ) : __( 'Edit Boilerplate Page', 'mainwp' );
+				$note_title = ( 'bulkpost' === $post_type ) ? esc_html__( 'Edit Boilerplate Post', 'mainwp' ) : esc_html__( 'Edit Boilerplate Page', 'mainwp' );
 			}
 		} else {
 			if ( 'auto-draft' === $post->post_status ) {
-				$note_title = ( 'bulkpost' === $post_type ) ? __( 'Create New Bulk Post', 'mainwp' ) : __( 'Create New Bulk Page', 'mainwp' );
+				$note_title = ( 'bulkpost' === $post_type ) ? esc_html__( 'Create New Bulk Post', 'mainwp' ) : esc_html__( 'Create New Bulk Page', 'mainwp' );
 			} else {
-				$note_title = ( 'bulkpost' === $post_type ) ? __( 'Edit Bulk Post', 'mainwp' ) : __( 'Edit Bulk Page', 'mainwp' );
+				$note_title = ( 'bulkpost' === $post_type ) ? esc_html__( 'Edit Bulk Post', 'mainwp' ) : esc_html__( 'Edit Bulk Page', 'mainwp' );
 			}
 		}
 
@@ -1973,9 +1973,9 @@ class MainWP_Post {
 		$message = '';
 		if ( isset( $_GET['message'] ) && 1 == $_GET['message'] ) {
 			if ( 'bulkpost' === $post_type ) {
-				$message = __( 'Post updated.', 'mainwp' );
+				$message = esc_html__( 'Post updated.', 'mainwp' );
 			} else {
-				$message = __( 'Page updated.', 'mainwp' );
+				$message = esc_html__( 'Page updated.', 'mainwp' );
 			}
 		}
 
@@ -2010,8 +2010,8 @@ class MainWP_Post {
 						<?php if ( isset( $_GET['boilerplate'] ) ) : ?>
 						<div class="ui message info">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp_boilerplate_info_notice"></i>
-							<div><?php echo __( 'Boilerplate gives you the ability to create quickly, edit, and remove repetitive pages or posts across your network of child sites. Using the available placeholders (tokens), you can customize these pages for each site.', 'mainwp' ); ?></div>
-							<div><?php echo __( 'This is the perfect solution for commonly repeated pages such as your "Privacy Policy", "About Us", "Terms of Use", "Support Policy" or any other page with standard text that you need to distribute across your sites.', 'mainwp' ); ?></div>
+							<div><?php echo esc_html__( 'Boilerplate gives you the ability to create quickly, edit, and remove repetitive pages or posts across your network of child sites. Using the available placeholders (tokens), you can customize these pages for each site.', 'mainwp' ); ?></div>
+							<div><?php echo esc_html__( 'This is the perfect solution for commonly repeated pages such as your "Privacy Policy", "About Us", "Terms of Use", "Support Policy" or any other page with standard text that you need to distribute across your sites.', 'mainwp' ); ?></div>
 						</div>
 						<?php endif; ?>
 					<?php endif; ?>
@@ -2022,9 +2022,9 @@ class MainWP_Post {
 						<div class="ui message info">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-create-new-bulkpost-info-message"></i>
 							<?php if ( 'bulkpost' === $post_type ) : ?>
-								<?php echo sprintf( __( 'Create a new bulk post. Scheduling posts on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-post/" target="_blank">', '</a>' ); ?>
+								<?php echo sprintf( esc_html__( 'Create a new bulk post. Scheduling posts on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-post/" target="_blank">', '</a>' ); ?>
 							<?php else : ?>
-								<?php echo sprintf( __( 'Create a new bulk page. Scheduling pages on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-page/" target="_blank">', '</a>' ); ?>
+								<?php echo sprintf( esc_html__( 'Create a new bulk page. Scheduling pages on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-page/" target="_blank">', '</a>' ); ?>
 							<?php endif; ?>
 						</div>
 						<?php endif; ?>
@@ -2077,7 +2077,7 @@ class MainWP_Post {
 
 						?>
 							<table id="post-status-info"><tbody><tr>
-								<td id="wp-word-count" class="hide-if-no-js"><?php printf( __( 'Word count: %s', 'mainwp' ), '<span class="word-count">0</span>' ); ?></td>
+								<td id="wp-word-count" class="hide-if-no-js"><?php printf( esc_html__( 'Word count: %s', 'mainwp' ), '<span class="word-count">0</span>' ); ?></td>
 								<td class="autosave-info">
 								<span class="autosave-message">&nbsp;</span>
 							<?php
@@ -2085,9 +2085,9 @@ class MainWP_Post {
 								echo '<span id="last-edit">';
 								$last_user = get_userdata( get_post_meta( $post_ID, '_edit_last', true ) );
 								if ( $last_user ) {
-									printf( __( 'Last edited by %1$s on %2$s at %3$s', 'mainwp' ), esc_html( $last_user->display_name ), mysql2date( __( 'F j, Y' ), $post->post_modified ), mysql2date( __( 'g:i a' ), $post->post_modified ) );
+									printf( esc_html__( 'Last edited by %1$s on %2$s at %3$s', 'mainwp' ), esc_html( $last_user->display_name ), mysql2date( esc_html__( 'F j, Y' ), $post->post_modified ), mysql2date( esc_html__( 'g:i a' ), $post->post_modified ) );
 								} else {
-									printf( __( 'Last edited on %1$s at %2$s', 'mainwp' ), mysql2date( __( 'F j, Y' ), $post->post_modified ), mysql2date( __( 'g:i a' ), $post->post_modified ) );
+									printf( esc_html__( 'Last edited on %1$s at %2$s', 'mainwp' ), mysql2date( esc_html__( 'F j, Y' ), $post->post_modified ), mysql2date( esc_html__( 'g:i a' ), $post->post_modified ) );
 								}
 								echo '</span>';
 							}
@@ -2267,7 +2267,7 @@ class MainWP_Post {
 			$categories = array();
 		}
 
-		$uncat     = __( 'Uncategorized', 'mainwp' );
+		$uncat     = esc_html__( 'Uncategorized', 'mainwp' );
 		$post_only = false;
 		if ( $post ) {
 			$post_only = get_post_meta( $post->ID, '_post_to_only_existing_categories', true );
@@ -2372,16 +2372,16 @@ class MainWP_Post {
 				if ( 'private' === $post->post_status ) {
 					$post->post_password = '';
 					$visibility          = 'private';
-					$visibility_trans    = __( 'Private', 'mainwp' );
+					$visibility_trans    = esc_html__( 'Private', 'mainwp' );
 				} elseif ( ! empty( $post->post_password ) ) {
 					$visibility       = 'password';
-					$visibility_trans = __( 'Password protected', 'mainwp' );
+					$visibility_trans = esc_html__( 'Password protected', 'mainwp' );
 				} elseif ( 'bulkpost' === $post_type && is_sticky( $post->ID ) ) {
 					$visibility       = 'public';
-					$visibility_trans = __( 'Public, Sticky', 'mainwp' );
+					$visibility_trans = esc_html__( 'Public, Sticky', 'mainwp' );
 				} else {
 					$visibility       = 'public';
-					$visibility_trans = __( 'Public', 'mainwp' );
+					$visibility_trans = esc_html__( 'Public', 'mainwp' );
 				}
 				?>
 
@@ -2452,7 +2452,7 @@ class MainWP_Post {
 	 */
 	public static function render_bulk_add() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage posts', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
 			return;
 		}
 
@@ -2477,7 +2477,7 @@ class MainWP_Post {
 	 */
 	public static function render_bulk_edit() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage posts', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
 			return;
 		}
 		$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0;

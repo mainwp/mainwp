@@ -27,7 +27,7 @@ class MainWP_Manage_Sites_View {
 		return add_submenu_page(
 			'mainwp_tab',
 			__( 'Sites', 'mainwp' ),
-			'<span id="mainwp-Sites">' . __( 'Sites', 'mainwp' ) . '</span>',
+			'<span id="mainwp-Sites">' . esc_html__( 'Sites', 'mainwp' ) . '</span>',
 			'read',
 			'managesites',
 			array( MainWP_Manage_Sites::get_class_name(), 'render_manage_sites' )
@@ -55,9 +55,6 @@ class MainWP_Manage_Sites_View {
 						<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'managesites_import' ) ) { ?>
 							<a href="<?php echo admin_url( 'admin.php?page=managesites&do=bulknew' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Import Sites', 'mainwp' ); ?></a>
 						<?php } ?>
-					<?php } ?>
-					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageGroups' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=ManageGroups' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Tags', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MonitoringSites' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=MonitoringSites' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Monitoring', 'mainwp' ); ?></a>
@@ -97,7 +94,7 @@ class MainWP_Manage_Sites_View {
 
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => __( 'Sites', 'mainwp' ),
+				'title'      => esc_html__( 'Sites', 'mainwp' ),
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'managesites',
 				'href'       => 'admin.php?page=managesites',
@@ -108,14 +105,14 @@ class MainWP_Manage_Sites_View {
 
 		$items_menu = array(
 			array(
-				'title'      => __( 'Manage Sites', 'mainwp' ),
+				'title'      => esc_html__( 'Manage Sites', 'mainwp' ),
 				'parent_key' => 'managesites',
 				'slug'       => 'managesites',
 				'href'       => 'admin.php?page=managesites',
 				'right'      => '',
 			),
 			array(
-				'title'      => __( 'Add New', 'mainwp' ),
+				'title'      => esc_html__( 'Add New', 'mainwp' ),
 				'parent_key' => 'managesites',
 				'href'       => 'admin.php?page=managesites&do=new',
 				'slug'       => 'managesites',
@@ -123,7 +120,7 @@ class MainWP_Manage_Sites_View {
 				'item_slug'  => 'managesites_add_new',
 			),
 			array(
-				'title'      => __( 'Import Sites', 'mainwp' ),
+				'title'      => esc_html__( 'Import Sites', 'mainwp' ),
 				'parent_key' => 'managesites',
 				'href'       => 'admin.php?page=managesites&do=bulknew',
 				'slug'       => 'managesites',
@@ -131,14 +128,7 @@ class MainWP_Manage_Sites_View {
 				'item_slug'  => 'managesites_import',
 			),
 			array(
-				'title'      => __( 'Tags', 'mainwp' ),
-				'parent_key' => 'managesites',
-				'href'       => 'admin.php?page=ManageGroups',
-				'slug'       => 'ManageGroups',
-				'right'      => '',
-			),
-			array(
-				'title'      => __( 'Monitoring', 'mainwp' ),
+				'title'      => esc_html__( 'Monitoring', 'mainwp' ),
 				'parent_key' => 'managesites',
 				'href'       => 'admin.php?page=MonitoringSites',
 				'slug'       => 'MonitoringSites',
@@ -201,27 +191,22 @@ class MainWP_Manage_Sites_View {
 		$managesites_pages = array(
 			'ManageSites'     => array(
 				'href'   => 'admin.php?page=managesites',
-				'title'  => __( 'Manage Sites', 'mainwp' ),
+				'title'  => esc_html__( 'Manage Sites', 'mainwp' ),
 				'access' => true,
 			),
 			'AddNew'          => array(
 				'href'   => 'admin.php?page=managesites&do=new',
-				'title'  => __( 'Add New', 'mainwp' ),
+				'title'  => esc_html__( 'Add New', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'add_sites' ),
 			),
 			'BulkAddNew'      => array(
 				'href'   => 'admin.php?page=managesites&do=bulknew',
-				'title'  => __( 'Import Sites', 'mainwp' ),
+				'title'  => esc_html__( 'Import Sites', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'add_sites' ),
-			),
-			'ManageGroups'    => array(
-				'href'   => 'admin.php?page=ManageGroups',
-				'title'  => __( 'Tags', 'mainwp' ),
-				'access' => true,
 			),
 			'MonitoringSites' => array(
 				'href'   => 'admin.php?page=MonitoringSites',
-				'title'  => __( 'Monitoring', 'mainwp' ),
+				'title'  => esc_html__( 'Monitoring', 'mainwp' ),
 				'access' => true,
 			),
 		);
@@ -233,38 +218,33 @@ class MainWP_Manage_Sites_View {
 		$site_pages = array(
 			'ManageSitesDashboard'     => array(
 				'href'   => 'admin.php?page=managesites&dashboard=' . $site_id,
-				'title'  => __( 'Overview', 'mainwp' ),
+				'title'  => esc_html__( 'Overview', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
 			),
 			'ManageSitesEdit'          => array(
 				'href'   => 'admin.php?page=managesites&id=' . $site_id,
-				'title'  => __( 'Edit', 'mainwp' ),
+				'title'  => esc_html__( 'Edit', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'edit_sites' ),
 			),
 			'ManageSitesUpdates'       => array(
 				'href'        => 'admin.php?page=managesites&updateid=' . $site_id,
-				'title'       => __( 'Updates', 'mainwp' ),
+				'title'       => esc_html__( 'Updates', 'mainwp' ),
 				'access'      => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
 				'after_title' => $after_title,
 			),
 			'ManageSitesEmailSettings' => array(
 				'href'   => 'admin.php?page=managesites&emailsettingsid=' . $site_id,
-				'title'  => __( 'Email Settings', 'mainwp' ),
+				'title'  => esc_html__( 'Email Settings', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'edit_sites' ),
 			),
 			'ManageSitesBackups'       => array(
 				'href'   => 'admin.php?page=managesites&backupid=' . $site_id,
-				'title'  => __( 'Backups', 'mainwp' ),
+				'title'  => esc_html__( 'Backups', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'execute_backups' ),
 			),
 			'SecurityScan'             => array(
 				'href'   => 'admin.php?page=managesites&scanid=' . $site_id,
-				'title'  => __( 'Security', 'mainwp' ),
-				'access' => true,
-			),
-			'ManageSitesCacheControl'  => array(
-				'href'   => 'admin.php?page=managesites&cacheControlId=' . $site_id,
-				'title'  => __( 'Cache Control', 'mainwp' ),
+				'title'  => esc_html__( 'Security', 'mainwp' ),
 				'access' => true,
 			),
 		);
@@ -284,7 +264,7 @@ class MainWP_Manage_Sites_View {
 			}
 		}
 
-		$pagetitle = __( 'Sites', 'mainwp' );
+		$pagetitle = esc_html__( 'Sites', 'mainwp' );
 
 		if ( 0 !== $site_id ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $site_id );
@@ -495,13 +475,13 @@ class MainWP_Manage_Sites_View {
 
 					<?php
 				} else {
-					$errors[] = __( 'Invalid data. Please, review the import file.', 'mainwp' ) . '<br />';
+					$errors[] = esc_html__( 'Invalid data. Please, review the import file.', 'mainwp' ) . '<br />';
 				}
 			} else {
-				$errors[] = __( 'Upload failed. Please, try again.', 'mainwp' ) . '<br />';
+				$errors[] = esc_html__( 'Upload failed. Please, try again.', 'mainwp' ) . '<br />';
 			}
 		} else {
-			$errors[] = __( 'Upload failed. Please, try again.', 'mainwp' ) . '<br />';
+			$errors[] = esc_html__( 'Upload failed. Please, try again.', 'mainwp' ) . '<br />';
 		}
 
 		if ( 0 < count( $errors ) ) {
@@ -564,13 +544,13 @@ class MainWP_Manage_Sites_View {
 				$html .= '<h4>' . $ext_name . '</h4>';
 				if ( isset( $sync_info['plugin_slug'] ) && ! empty( $sync_info['plugin_slug'] ) ) {
 					$html .= '<div class="sync-install-plugin" slug="' . esc_attr( dirname( $sync_info['plugin_slug'] ) ) . '" plugin_name="' . esc_attr( $sync_info['plugin_name'] ) . '">';
-					$html .= '<div class="ui checkbox"><input type="checkbox" class="chk-sync-install-plugin" /> <label>' . esc_html( sprintf( __( 'Install %1$s plugin', 'mainwp' ), esc_html( $sync_info['plugin_name'] ) ) ) . '</label></div> ';
+					$html .= '<div class="ui checkbox"><input type="checkbox" class="chk-sync-install-plugin" /> <label>' . esc_html( sprintf( esc_html__( 'Install %1$s plugin', 'mainwp' ), esc_html( $sync_info['plugin_name'] ) ) ) . '</label></div> ';
 					$html .= '<i class="ui active inline loader tiny" style="display: none"></i> <span class="status"></span>';
 					$html .= '</div>';
 					if ( ! isset( $sync_info['no_setting'] ) || empty( $sync_info['no_setting'] ) ) {
 						$html .= '<div class="sync-options options-row">';
 						$html .= '<div class="ui checkbox"><input type="checkbox" /><label> ';
-						$html .= sprintf( __( 'Apply %1$s %2$ssettings%3$s', 'mainwp' ), esc_html( $sync_info['plugin_name'] ), '<a href="admin.php?page=' . $data['page'] . '">', '</a>' );
+						$html .= sprintf( esc_html__( 'Apply %1$s %2$ssettings%3$s', 'mainwp' ), esc_html( $sync_info['plugin_name'] ), '<a href="admin.php?page=' . $data['page'] . '">', '</a>' );
 						$html .= '</label>';
 						$html .= '</div> ';
 						$html .= '<i class="ui active inline loader tiny" style="display: none"></i> <span class="status"></span>';
@@ -578,7 +558,7 @@ class MainWP_Manage_Sites_View {
 					}
 				} else {
 					$html .= '<div class="sync-global-options options-row">';
-					$html .= '<div class="ui checkbox"><input type="checkbox" /> <label>' . esc_html( sprintf( __( 'Apply global %1$s options' ), trim( $ext_name ) ) ) . '</label></div> ';
+					$html .= '<div class="ui checkbox"><input type="checkbox" /> <label>' . esc_html( sprintf( esc_html__( 'Apply global %1$s options' ), trim( $ext_name ) ) ) . '</label></div> ';
 					$html .= '<i class="ui active inline loader tiny"  style="display: none"></i> <span class="status"></span>';
 					$html .= '</div>';
 				}
@@ -604,7 +584,7 @@ class MainWP_Manage_Sites_View {
 	 */
 	public static function render_dashboard( &$website, &$page ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) {
-			mainwp_do_not_have_permissions( __( 'individual dashboard', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'individual dashboard', 'mainwp' ) );
 			return;
 		}
 		?>
@@ -681,7 +661,7 @@ class MainWP_Manage_Sites_View {
 	 */
 	public static function render_scan_site( &$website ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
-			mainwp_do_not_have_permissions( __( 'security scan', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'security scan', 'mainwp' ) );
 			return;
 		}
 		?>
@@ -689,7 +669,7 @@ class MainWP_Manage_Sites_View {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-security-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-security-info-message"></i>
-					<?php echo sprintf( __( 'Fix detected security issues on the childs site.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( esc_html__( 'Fix detected security issues on the childs site.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -785,7 +765,7 @@ class MainWP_Manage_Sites_View {
 	 */
 	public static function render_edit_site( $websiteid, $updated ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
-			mainwp_do_not_have_permissions( __( 'edit sites', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'edit sites', 'mainwp' ) );
 			return;
 		}
 
@@ -807,7 +787,7 @@ class MainWP_Manage_Sites_View {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-edit-site-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-edit-site-info-message"></i>
-					<?php echo sprintf( __( 'Edit the %1$s (%2$s) child site settings.  For additional help, please check this %3$shelp documentation%4$s.', 'mainwp' ), $website->name, '<a href="' . $website->url . '" target="_blank">' . $website->url . '</a>', '<a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( esc_html__( 'Edit the %1$s (%2$s) child site settings.  For additional help, please check this %3$shelp documentation%4$s.', 'mainwp' ), $website->name, '<a href="' . $website->url . '" target="_blank">' . $website->url . '</a>', '<a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
@@ -881,7 +861,7 @@ class MainWP_Manage_Sites_View {
 						<div class="ui multiple selection dropdown" init-value="<?php echo esc_attr( $init_groups ); ?>">
 							<input name="mainwp_managesites_edit_addgroups" value="" type="hidden">
 							<i class="dropdown icon"></i>
-							<div class="default text"><?php echo ( '' === $init_groups ) ? __( 'No Tags added yet.', 'mainwp' ) : ''; ?></div>
+							<div class="default text"><?php echo ( '' === $init_groups ) ? esc_html__( 'No Tags added yet.', 'mainwp' ) : ''; ?></div>
 							<div class="menu">
 								<?php foreach ( $groups as $group ) { ?>
 									<div class="item" data-value="<?php echo $group->id; ?>"><?php echo esc_html( $group->name ); ?></div>
@@ -899,9 +879,9 @@ class MainWP_Manage_Sites_View {
 						<div class="ui search selection dropdown">
 							<input type="hidden" name="mainwp_managesites_edit_client_id" value="<?php echo intval( $website->client_id ); ?>">
 							<i class="dropdown icon"></i>
-							<div class="default text"><?php _e( 'Select Client', 'mainwp' ); ?></div>
+							<div class="default text"><?php esc_html_e( 'Select Client', 'mainwp' ); ?></div>
 							<div class="menu">
-								<div class="item" data-value="0"><?php _e( 'No Client', 'mainwp' ); ?></div>
+								<div class="item" data-value="0"><?php esc_html_e( 'No Client', 'mainwp' ); ?></div>
 								<?php
 								foreach ( $clients as $client ) {
 									?>
@@ -1150,7 +1130,7 @@ class MainWP_Manage_Sites_View {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-email-tokens-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-message"></i>
-					<?php _e( '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">Boilerplate</a> and <a href="https://mainwp.com/extension/pro-reports/" target="_blank">Reports</a> extensions tokens are supported in the email settings and templates if Extensions are in use.', 'mainwp' ); ?>
+					<?php echo ( '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">Boilerplate</a> and <a href="https://mainwp.com/extension/pro-reports/" target="_blank">Reports</a> extensions tokens are supported in the email settings and templates if Extensions are in use.' ); ?>
 				</div>
 			<?php endif; ?>
 			<h3 class="ui header"><?php echo $title; ?></h3>
@@ -1480,19 +1460,19 @@ class MainWP_Manage_Sites_View {
 						MainWP_Sync::sync_information_array( $website, $information );
 						return true;
 					} else {
-						throw new \Exception( __( 'Undefined error!', 'mainwp' ) );
+						throw new \Exception( esc_html__( 'Undefined error!', 'mainwp' ) );
 					}
 				}
 			} catch ( MainWP_Exception $e ) {
 				if ( 'HTTPERROR' === $e->getMessage() ) {
 					throw new \Exception( 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' ) );
 				} elseif ( 'NOMAINWP' === $e->getMessage() ) {
-					$error = sprintf( __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank>', '</a>' );
+					$error = sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank>', '</a>' );
 					throw new \Exception( $error );
 				}
 			}
 		} else {
-			throw new \Exception( __( 'This operation is not allowed!', 'mainwp' ) );
+			throw new \Exception( esc_html__( 'This operation is not allowed!', 'mainwp' ) );
 		}
 
 		return false;
@@ -1556,7 +1536,7 @@ class MainWP_Manage_Sites_View {
 		$fetch_data = null;
 
 		if ( $website ) {
-			$error = __( 'The site is already connected to your MainWP Dashboard', 'mainwp' );
+			$error = esc_html__( 'The site is already connected to your MainWP Dashboard', 'mainwp' );
 		} else {
 			try {
 				if ( function_exists( 'openssl_pkey_new' ) ) {
@@ -1667,9 +1647,9 @@ class MainWP_Manage_Sites_View {
 						}
 
 						if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
-							$message = sprintf( __( '<div class="ui header">Congratulations you have connected %1$s.</div> You can add new sites at anytime from the Add New Site page.', 'mainwp' ), '<strong>' . $params['name'] . '</strong>' );
+							$message = sprintf( esc_html__( '%sCongratulations you have connected %s.%s You can add new sites at anytime from the Add New Site page.', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>' );
 						} else {
-							$message = sprintf( __( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . __( 'Dashboard', 'mainwp' ) . '">', '</a>' );
+							$message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>' );
 						}
 
 						$website = MainWP_DB::instance()->get_website_by_id( $id );
@@ -1687,14 +1667,14 @@ class MainWP_Manage_Sites_View {
 
 						MainWP_Sync::sync_information_array( $website, $information );
 					} else {
-						$error = sprintf( __( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a>' );
+						$error = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a>' );
 					}
 				}
 			} catch ( MainWP_Exception $e ) {
 				if ( 'HTTPERROR' == $e->getMessage() ) {
 					$error = 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
 				} elseif ( 'NOMAINWP' == $e->getMessage() ) {
-					$error = sprintf( __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a>' );
+					$error = sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a>' );
 				} else {
 					$error = $e->getMessage();
 				}

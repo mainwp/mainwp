@@ -184,9 +184,9 @@ class MainWP_Notification {
 			$content_type
 		);
 		if ( $sent ) {
-			MainWP_Logger::instance()->log_action( 'CRON :: daily digest :: send mail :: successful :: ' . $email, MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
+			MainWP_Logger::instance()->log_update_check( 'CRON :: daily digest :: send mail :: successful :: ' . $email );
 		} else {
-			MainWP_Logger::instance()->log_action( 'CRON :: daily digest :: send mail :: failed :: ' . $email, MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
+			MainWP_Logger::instance()->log_update_check( 'CRON :: daily digest :: send mail :: failed :: ' . $email );
 		}
 		return true;
 	}

@@ -76,7 +76,7 @@ class MainWP_Client_Info {
 			 *
 			 * @since 4.1
 			 */
-			echo esc_html( apply_filters( 'mainwp_clients_info_widget_title', __( 'Client Info', 'mainwp' ), $website ) );
+			echo esc_html( apply_filters( 'mainwp_clients_info_widget_title', esc_html__( 'Client Info', 'mainwp' ), $website ) );
 			?>
 				<div class="sub header"><?php esc_html_e( 'Client Information', 'mainwp' ); ?></div>
 			</h3>

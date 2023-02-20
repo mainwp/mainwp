@@ -680,16 +680,16 @@ class MainWP_Live_Reports {
 					$file_name = $file_input['name'][ $i ];
 					$file_ext  = strtolower( end( explode( '.', $file_name ) ) );
 					if ( ( $file_size > 5 * 1024 * 1024 ) ) {
-						$output['error'][] = $file_name . ' - ' . __( 'File size too big' );
+						$output['error'][] = $file_name . ' - ' . esc_html__( 'File size too big' );
 					} elseif ( ! in_array( $file_ext, $allowed_files ) ) {
-						$output['error'][] = $file_name . ' - ' . __( 'File type are not allowed' );
+						$output['error'][] = $file_name . ' - ' . esc_html__( 'File type are not allowed' );
 					} else {
 						$dest_file = $dest_dir . $file_name;
 						$dest_file = dirname( $dest_file ) . '/' . wp_unique_filename( dirname( $dest_file ), basename( $dest_file ) );
 						if ( move_uploaded_file( $tmp_file, $dest_file ) ) {
 							$attachFiles[] = basename( $dest_file );
 						} else {
-							$output['error'][] = $file_name . ' - ' . __( 'Can not copy file' );
+							$output['error'][] = $file_name . ' - ' . esc_html__( 'Can not copy file' );
 						};
 					}
 				}
@@ -1187,14 +1187,14 @@ class MainWP_Live_Reports {
 
 			$status = array();
 			if ( $blacklisted ) {
-				$status[] = __( 'Site Blacklisted', 'mainwp-client-reports-extension' );
+				$status[] = esc_html__( 'Site Blacklisted', 'mainwp-client-reports-extension' );
 			}
 			if ( $malware_exists ) {
-				$status[] = __( 'Site With Warnings', 'mainwp-client-reports-extension' );
+				$status[] = esc_html__( 'Site With Warnings', 'mainwp-client-reports-extension' );
 			}
 
-			$scan_result['status']   = count( $status ) > 0 ? implode( ', ', $status ) : __( 'Verified Clear', 'mainwp-client-reports-extension' );
-			$scan_result['webtrust'] = $blacklisted ? __( 'Site Blacklisted', 'mainwp-client-reports-extension' ) : __( 'Trusted', 'mainwp-client-reports-extension' );
+			$scan_result['status']   = count( $status ) > 0 ? implode( ', ', $status ) : esc_html__( 'Verified Clear', 'mainwp-client-reports-extension' );
+			$scan_result['webtrust'] = $blacklisted ? esc_html__( 'Site Blacklisted', 'mainwp-client-reports-extension' ) : esc_html__( 'Trusted', 'mainwp-client-reports-extension' );
 		}
 		$post_data = array(
 			'mwp_action'  => 'save_sucuri_stream',
@@ -1769,7 +1769,7 @@ class MainWP_Live_Reports {
 			if ( isset( $information['error'] ) ) {
 				$error = esc_html( $information['error'] );
 				if ( 'NO_STREAM' === $error ) {
-					$error = __( 'Error: No Stream or MainWP Client Reports plugin installed.' );
+					$error = esc_html__( 'Error: No Stream or MainWP Client Reports plugin installed.' );
 				}
 			} else {
 				$error = is_array( $information ) ? implode( '<br>', $information ) : $information;

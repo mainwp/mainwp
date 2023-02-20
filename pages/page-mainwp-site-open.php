@@ -39,7 +39,7 @@ class MainWP_Site_Open {
 		self::verify_open_nonce();
 
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) {
-			mainwp_do_not_have_permissions( __( 'WP-Admin on child sites', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'WP-Admin on child sites', 'mainwp' ) );
 
 			return;
 		}
@@ -162,7 +162,7 @@ class MainWP_Site_Open {
 		if ( isset( $_GET[ $nonce ] ) && wp_verify_nonce( sanitize_key( $_GET[ $nonce ] ), 'mainwp-admin-nonce' ) ) {
 			return true;
 		} else {
-			wp_die( __( 'Unauthorized request. Invalid or missing nonce, be sure you are using the current version of the MainWP Dashboard and Extensions.', 'mainwp' ) );
+			wp_die( esc_html__( 'Unauthorized request. Invalid or missing nonce, be sure you are using the current version of the MainWP Dashboard and Extensions.', 'mainwp' ) );
 		}
 	}
 

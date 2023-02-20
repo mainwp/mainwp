@@ -207,7 +207,7 @@ class MainWP_Manage_Screenshots {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-grid-view-mode-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-grid-view-mode-info-message"></i>
-				<div><?php echo __( 'In the Grid mode, sites options are limited in comparison to the Table mode.', 'mainwp' ); ?></div>
+				<div><?php echo esc_html__( 'In the Grid mode, sites options are limited in comparison to the Table mode.', 'mainwp' ); ?></div>
 		</div>
 			<?php endif; ?>
 		<?php
@@ -235,15 +235,15 @@ class MainWP_Manage_Screenshots {
 						if ( $hasSyncErrors ) {
 							$status_color   = 'red';
 							$status_icon    = 'unlink';
-							$status_tooltip = __( 'Disconnected', 'mainwp' );
+							$status_tooltip = esc_html__( 'Disconnected', 'mainwp' );
 						} elseif ( $suspendedSite ) {
 							$status_color   = 'yellow';
 							$status_icon    = 'pause';
-							$status_tooltip = __( 'Suspended', 'mainwp' );
+							$status_tooltip = esc_html__( 'Suspended', 'mainwp' );
 						} else {
 							$status_color   = 'green';
 							$status_icon    = 'check';
-							$status_tooltip = __( 'Connected', 'mainwp' );
+							$status_tooltip = esc_html__( 'Connected', 'mainwp' );
 						}
 
 						$total_wp_upgrades     = 0;
@@ -375,7 +375,13 @@ class MainWP_Manage_Screenshots {
 									<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php echo $website->name; ?></a>
 									<div class="sub header" style="font-size:11px"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo $website->url; ?></a></div>
 								</h5>
+								<?php if ( isset( $website->wpgroups ) && '' != $website->wpgroups ) : ?>
+								<small data-tooltip="<?php esc_attr_e( 'Site tags', 'mainwp' ); ?>" data-position="top left" data-inverted="">
+									<?php echo MainWP_System_Utility::get_site_tags( (array) $website ); ?>
+								</small>
+								<?php endif; ?>
 						</div>
+							
 							<?php if ( isset( $website->client_id ) && '0' != $website->client_id ) : ?>
 							<div class="extra content">
 								<small data-tooltip="<?php esc_attr_e( 'See client details', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="user icon"></i> <a href="<?php echo esc_attr( 'admin.php?page=ManageClients&client_id=' . $website->client_id ); ?>" class="ui small"><?php echo $website->client_name; ?></a></small>
@@ -443,7 +449,7 @@ class MainWP_Manage_Screenshots {
 	/**
 	 * Method render_screen_options()
 	 *
-	 * Render Screen Options Modal.
+	 * Render Page Settings Modal.
 	 */
 	public static function render_screen_options() {
 
@@ -451,7 +457,7 @@ class MainWP_Manage_Screenshots {
 
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
-			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
+			<div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
 			<div class="scrolling content ui form">
 				<form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -460,14 +466,24 @@ class MainWP_Manage_Screenshots {
 						<label class="top aligned six wide column" tabindex="0"><?php esc_html_e( 'Sites view mode', 'mainwp' ); ?></label>
 						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Sites view mode.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 							<div class="ui info message">
-								<div><strong><?php echo __( 'Sites view mode is an experimental feature.', 'mainwp' ); ?></strong></div>
-								<div><?php echo __( 'In the Grid mode, sites options are limited in comparison to the Table mode.', 'mainwp' ); ?></div>
-								<div><?php echo __( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you a preview of URLs.', 'mainwp' ); ?></div>
+								<div><strong><?php echo esc_html__( 'Sites view mode is an experimental feature.', 'mainwp' ); ?></strong></div>
+								<div><?php echo esc_html__( 'In the Grid mode, sites options are limited in comparison to the Table mode.', 'mainwp' ); ?></div>
+								<div><?php echo esc_html__( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you a preview of URLs.', 'mainwp' ); ?></div>
 							</div>
 							<select name="mainwp_sitesviewmode" id="mainwp_sitesviewmode" class="ui dropdown">
 								<option value="table" <?php echo ( 'table' == $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Table', 'mainwp' ); ?></option>
 								<option value="grid" <?php echo ( 'grid' == $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Grid', 'mainwp' ); ?></option>
 							</select>
+						</div>
+					</div>
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Export child sites to CSV file', 'mainwp' ); ?></label>
+						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to export all connected sites to a CSV file.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=MainWPTools&doExportSites=yes&_wpnonce=<?php echo wp_create_nonce( 'export_sites' ); ?>" class="ui button green basic"><?php esc_html_e( 'Export Child Sites', 'mainwp' ); ?></a></div>
+					</div>
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Disconnect all child sites', 'mainwp' ); ?></label>
+						<div class="ten wide column" id="mainwp-disconnect-sites-tool" data-tooltip="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+							<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo wp_create_nonce( 'disconnect_sites' ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Websites', 'mainwp' ); ?></a>
 						</div>
 					</div>
 					<div class="ui hidden divider"></div>
@@ -488,7 +504,7 @@ class MainWP_Manage_Screenshots {
 			</form>
 		</div>
 		<div class="ui small modal" id="mainwp-manage-sites-site-preview-screen-options-modal">
-			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
+			<div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
 			<div class="scrolling content ui form">
 				<span><?php esc_html_e( 'Would you like to turn on home screen previews?  This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?>
 			</div>

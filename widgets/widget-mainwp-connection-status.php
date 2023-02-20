@@ -102,7 +102,7 @@ class MainWP_Connection_Status {
 
 				$output_md5 = '';
 				if ( $md5Connection ) {
-					$output_md5 = '<div>' . __( 'MD5 Connection' ) . '<br /><a href="https://kb.mainwp.com/docs/md5-connection-issue/" class="ui button mini green basic" target="_blank" data-tooltip="MD5 Connection" data-inverted="">' . __( 'Read More', 'mainwp' ) . '</a></div>';
+					$output_md5 = '<div>' . esc_html__( 'MD5 Connection' ) . '<br /><a href="https://kb.mainwp.com/docs/md5-connection-issue/" class="ui button mini green basic" target="_blank" data-tooltip="MD5 Connection" data-inverted="">' . esc_html__( 'Read More', 'mainwp' ) . '</a></div>';
 				}
 
 				$lastSyncTime = ! empty( $website->dtsSync ) ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website->dtsSync ) ) : '';
@@ -174,7 +174,7 @@ class MainWP_Connection_Status {
 					 *
 					 * @since 4.1
 					 */
-					echo esc_html( apply_filters( 'mainwp_connection_status_widget_title', __( 'Connection Status', 'mainwp' ) ) );
+					echo esc_html( apply_filters( 'mainwp_connection_status_widget_title', esc_html__( 'Connection Status', 'mainwp' ) ) );
 					?>
 					<div class="sub header"><?php esc_html_e( 'Child sites connection status', 'mainwp' ); ?></div>
 				</h3>

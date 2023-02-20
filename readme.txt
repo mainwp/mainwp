@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.1.1
 Requires PHP: 7.0
-Stable tag: 4.3.1
+Stable tag: 4.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -283,6 +283,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 7. Manage Posts Screen
 8. MainWP Settings Screen
 9. Global Dashboard Screen
+10. Manage Clients Screen
 
 == Changelog ==
 

@@ -1004,11 +1004,16 @@ dashboard_update_done = function (pAction) {
 
   mainwpPopup('#mainwp-sync-sites-modal').setProgressSite(websitesDone);
 
-  if (websitesDone == websitesTotal) {
-    setTimeout(function () {
-      bulkTaskRunning = false;
+  if ( websitesDone == websitesTotal ) {
+    var successSites = jQuery('#mainwp-sync-sites-modal .check.green.icon').length;
+    if ( websitesDone == successSites ) {
+    	 bulkTaskRunning = false;
+    setTimeout(function () {     
       mainwpPopup('#mainwp-sync-sites-modal').close(true);
     }, 3000);
+    } else {
+      bulkTaskRunning = false;
+    }
     return;
   }
 
@@ -2207,8 +2212,8 @@ mainwp_install_bulk = function (type, slug) {
         installQueueContent +=
           '<div class="siteBulkInstall item" siteid="' + siteId + '" status="queue">' +
           '<div class="right floated content">' +
-          '<span class="queue" data-inverted="" data-position="left center" data-tooltip="' + __('Queued', 'mainwp') + '"><i class="clock outline icon"></i></span>' +
-          '<span class="progress" data-inverted="" data-position="left center" data-tooltip="' + __('Installing...', 'mainwp') + '" style="display:none"><i class="notched circle loading icon"></i></span>' +
+          '<span class="queue" data-inverted="" data-position="left center" data-tooltip="' + __('Queued') + '"><i class="clock outline icon"></i></span>' +
+          '<span class="progress" data-inverted="" data-position="left center" data-tooltip="' + __('Installing...') + '" style="display:none"><i class="notched circle loading icon"></i></span>' +
           '<span class="status"></span>' +
           '</div>' +
           '<div class="content">' + mainwp_links_visit_site_and_admin('', siteId) + ' ' + '<a href="' + site['url'] + '">' + site['name'].replace(/\\(.)/mg, "$1") + '</a></div>' +
@@ -3111,6 +3116,25 @@ jQuery(document).on('click', '.mainwp-action-dismiss', function () {
   jQuery.post(ajaxurl, mainwp_secure_data(data), function () {
 
   });
+  return false;
+});
+
+jQuery(document).on('click', '#mainwp-delete-all-nonmainwp-actions-button', function () {
+
+  mainwp_confirm('Are you sure you want to delete all Non-MainWP changes? This action can not be undone!', function () {
+    jQuery( "#mainwp-non-mainwp-changes-table tbody" ).fadeOut("slow");
+    var data = {
+      action: 'mainwp_delete_all_actions'
+    };
+    jQuery.post(ajaxurl, mainwp_secure_data(data), function () {
+  
+    });
+  
+    setTimeout(function () {
+      location.reload();
+    }, 1000);
+  });
+
   return false;
 });
 

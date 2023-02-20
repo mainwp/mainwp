@@ -45,14 +45,14 @@ class MainWP_Manage_Sites_Handler {
 		}
 
 		if ( $invalid || 0 !== strpos( $url, 'http://' ) && 0 !== strpos( $url, 'https://' ) || false !== strpos( $url, '?=' ) ) { // to fix: valid url to check.
-			die( wp_json_encode( array( 'error' => __( 'Invalid URL! Please enter valid URL to the Site URL field.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Invalid URL! Please enter valid URL to the Site URL field.', 'mainwp' ) ) ) );
 		}
 
 		$website = MainWP_DB::instance()->get_websites_by_url( $url );
 		$ret     = array();
 
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-			$ret['response'] = __( 'ERROR Site is already connected to your MainWP Dashboard.', 'mainwp' );
+			$ret['response'] = esc_html__( 'ERROR Site is already connected to your MainWP Dashboard.', 'mainwp' );
 		} else {
 			try {
 				$verify_cert    = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
@@ -101,13 +101,13 @@ class MainWP_Manage_Sites_Handler {
 				$website = MainWP_DB::instance()->get_website_by_id( $siteId );
 				MainWP_Manage_Sites_View::m_reconnect_site( $website );
 			} else {
-				throw new \Exception( __( 'Site could not be connected. Please check the Status page and be sure that all system requirments pass.', 'mainwp' ) );
+				throw new \Exception( esc_html__( 'Site could not be connected. Please check the Status page and be sure that all system requirments pass.', 'mainwp' ) );
 			}
 		} catch ( \Exception $e ) {
 			die( 'ERROR ' . $e->getMessage() );
 		}
 
-		die( __( 'Site has been reconnected successfully!', 'mainwp' ) );
+		die( esc_html__( 'Site has been reconnected successfully!', 'mainwp' ) );
 	}
 
 
@@ -211,7 +211,7 @@ class MainWP_Manage_Sites_Handler {
 		$site_id      = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : false;
 		$ext_dir_slug = isset( $_POST['ext_dir_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['ext_dir_slug'] ) ) : '';
 		if ( empty( $site_id ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid site ID. Please try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Invalid site ID. Please try again.', 'mainwp' ) ) ) );
 		}
 
 		/**
@@ -224,7 +224,7 @@ class MainWP_Manage_Sites_Handler {
 		 * @since Unknown
 		 */
 		do_action( 'mainwp_applypluginsettings_' . $ext_dir_slug, $site_id );
-		die( wp_json_encode( array( 'error' => __( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'error' => esc_html__( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -245,7 +245,7 @@ class MainWP_Manage_Sites_Handler {
 
 				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 			} else {
-				die( wp_json_encode( array( 'error' => __( 'Are you sure this is your website?', 'mainwp' ) ) ) );
+				die( wp_json_encode( array( 'error' => esc_html__( 'Are you sure this is your website?', 'mainwp' ) ) ) );
 			}
 		}
 		die( wp_json_encode( array( 'undefined_error' => true ) ) );
@@ -263,7 +263,7 @@ class MainWP_Manage_Sites_Handler {
 			$error  = is_array( $result ) && isset( $result['error'] ) ? $result['error'] : '';
 
 			if ( 'NOMAINWP' === $error ) {
-				$error = __( 'Be sure to deactivate the child plugin on the child site to avoid potential security issues.', 'mainwp' );
+				$error = esc_html__( 'Be sure to deactivate the child plugin on the child site to avoid potential security issues.', 'mainwp' );
 			}
 
 			if ( '' !== $error ) {

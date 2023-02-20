@@ -228,7 +228,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 			$temp_url = MainWP_Utility::remove_http_prefix( $url, true );
 
 			if ( $invalid || ( false !== strpos( $url, '?=' ) ) || strpos( $temp_url, ':' ) ) {
-				die( wp_json_encode( array( 'error' => __( 'Invalid URL.', 'mainwp' ) ) ) );
+				die( wp_json_encode( array( 'error' => esc_html__( 'Invalid URL.', 'mainwp' ) ) ) );
 			}
 
 			$verifyCertificate = apply_filters( 'mainwp_manage_sites_verify_certificate', true, $url );
@@ -289,7 +289,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_removesite() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'delete_sites' ) ) {
-			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'delete sites', 'mainwp' ), false ) ) ) );
+			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'delete sites', 'mainwp' ), false ) ) ) );
 		}
 
 		$this->secure_request( 'mainwp_removesite' );

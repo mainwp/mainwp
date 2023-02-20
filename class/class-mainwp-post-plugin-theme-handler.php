@@ -473,7 +473,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_upgradewp() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'update_wordpress' ) ) {
-			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update WordPress', 'mainwp' ), $echo = false ) ) ) );
+			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'update WordPress', 'mainwp' ), $echo = false ) ) ) );
 		}
 
 		$this->secure_request( 'mainwp_upgradewp' );
@@ -509,19 +509,19 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_upgrade_plugintheme() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		if ( ! isset( $_POST['type'] ) ) {
-			die( wp_json_encode( array( 'error' => '<i class="red times icon"></i> ' . __( 'Plugin or theme not specified. Please reload the page and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => '<i class="red times icon"></i> ' . esc_html__( 'Plugin or theme not specified. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		if ( 'plugin' === $_POST['type'] && ! mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) ) {
-			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update plugins', 'mainwp' ), $echo = false ) ) ) );
+			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'update plugins', 'mainwp' ), $echo = false ) ) ) );
 		}
 
 		if ( 'theme' === $_POST['type'] && ! mainwp_current_user_have_right( 'dashboard', 'update_themes' ) ) {
-			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update themes', 'mainwp' ), $echo = false ) ) ) );
+			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'update themes', 'mainwp' ), $echo = false ) ) ) );
 		}
 
 		if ( 'translation' === $_POST['type'] && ! mainwp_current_user_have_right( 'dashboard', 'update_translations' ) ) {
-			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update translations', 'mainwp' ), $echo = false ) ) ) );
+			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'update translations', 'mainwp' ), $echo = false ) ) ) );
 		}
 
 		$this->secure_request( 'mainwp_upgradeplugintheme' );
@@ -564,7 +564,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		}
 
 		if ( MainWP_DB_Backup::instance()->backup_full_task_running( $websiteId ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Backup process in progress on the child site. Please, try again later.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Backup process in progress on the child site. Please, try again later.', 'mainwp' ) ) ) );
 		}
 
 		$chunk_slugs = array();
@@ -580,7 +580,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		}
 
 		if ( empty( $slugs ) && ! $chunk_support ) {
-			die( wp_json_encode( array( 'message' => __( 'Item slug could not be found. Update process could not be executed.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'message' => esc_html__( 'Item slug could not be found. Update process could not be executed.', 'mainwp' ) ) ) );
 		}
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		try {
@@ -618,7 +618,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_ignoreplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
@@ -639,7 +639,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_unignoreabandonedplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
@@ -659,7 +659,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_unignoreabandonedpluginsthemes' );
 
 		if ( ! isset( $_POST['slug'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
@@ -678,7 +678,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_dismissoutdateplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
@@ -698,11 +698,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_dismissoutdatepluginsthemes' );
 
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
-			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
 		}
 
 		if ( ! isset( $_POST['slug'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
@@ -723,7 +723,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_unignoreplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
@@ -742,11 +742,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_ignorepluginsthemes' );
 
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
-			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
 		}
 
 		if ( ! isset( $_POST['slug'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
@@ -764,7 +764,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_unignorepluginsthemes' );
 
 		if ( ! isset( $_POST['slug'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';

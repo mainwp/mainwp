@@ -221,7 +221,7 @@ function mainwp_extensions_activate(pObj, retring) {
 
     if (jQuery(pObj).attr('license-status') == 'activated') {
         loadingEl.show();
-        loadingEl.find('.message').html(__('Already activated.'));
+        loadingEl.find('.message').html(__('Allready activated.'));
         return;
     }
 

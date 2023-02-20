@@ -161,7 +161,7 @@ class MainWP_Manage_Sites {
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Sites', 'mainwp' ),
-			'<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>',
+			'<div class="mainwp-hidden">' . esc_html__( 'Sites', 'mainwp' ) . '</div>',
 			'read',
 			'SiteOpen',
 			array(
@@ -172,7 +172,7 @@ class MainWP_Manage_Sites {
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Sites', 'mainwp' ),
-			'<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>',
+			'<div class="mainwp-hidden">' . esc_html__( 'Sites', 'mainwp' ) . '</div>',
 			'read',
 			'SiteRestore',
 			array(
@@ -312,15 +312,15 @@ class MainWP_Manage_Sites {
 	/**
 	 * Method screen_options()
 	 *
-	 * Create Screen Options button.
+	 * Create Page Settings button.
 	 *
-	 * @param mixed $input Screen options button HTML.
+	 * @param mixed $input Page Settings button HTML.
 	 *
-	 * @return mixed Screen sptions button.
+	 * @return mixed Page Settings button.
 	 */
 	public static function screen_options( $input ) {
 		return $input .
-				'<a class="ui button basic icon" onclick="mainwp_manage_sites_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Screen Options', 'mainwp' ) . '">
+				'<a class="ui button basic icon" onclick="mainwp_manage_sites_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Page Settings', 'mainwp' ) . '">
 					<i class="cog icon"></i>
 				</a>';
 	}
@@ -328,7 +328,7 @@ class MainWP_Manage_Sites {
 	/**
 	 * Method render_screen_options()
 	 *
-	 * Render Screen Options Modal.
+	 * Render Page Settings Modal.
 	 */
 	public static function render_screen_options() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -339,13 +339,13 @@ class MainWP_Manage_Sites {
 		}
 
 		if ( isset( $columns['status'] ) ) {
-			$columns['status'] = __( 'Status', 'mainwp' );
+			$columns['status'] = esc_html__( 'Status', 'mainwp' );
 		}
 
 		$sites_per_page = get_option( 'mainwp_default_sites_per_page', 25 );
 
 		if ( isset( $columns['site_actions'] ) && empty( $columns['site_actions'] ) ) {
-			$columns['site_actions'] = __( 'Actions', 'mainwp' );
+			$columns['site_actions'] = esc_html__( 'Actions', 'mainwp' );
 		}
 
 		$show_cols = get_user_option( 'mainwp_settings_show_manage_sites_columns' );
@@ -382,7 +382,7 @@ class MainWP_Manage_Sites {
 		$siteViewMode = MainWP_Utility::get_siteview_mode();
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
-			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
+			<div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
 			<div class="scrolling content ui form">
 				<form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -391,9 +391,9 @@ class MainWP_Manage_Sites {
 						<label class="top aligned six wide column" tabindex="0"><?php esc_html_e( 'Sites view mode', 'mainwp' ); ?></label>
 						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Sites view mode.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 							<div class="ui info message">
-								<div><strong><?php echo __( 'Sites view mode is an experimental feature.', 'mainwp' ); ?></strong></div>
-								<div><?php echo __( 'In the Grid mode, sites options are limited in comparison to the Table mode.', 'mainwp' ); ?></div>
-								<div><?php echo __( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you a preview of URLs.', 'mainwp' ); ?></div>
+								<div><strong><?php echo esc_html__( 'Sites view mode is an experimental feature.', 'mainwp' ); ?></strong></div>
+								<div><?php echo esc_html__( 'In the Grid mode, sites options are limited in comparison to the Table mode.', 'mainwp' ); ?></div>
+								<div><?php echo esc_html__( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you a preview of URLs.', 'mainwp' ); ?></div>
 							</div>
 							<select name="mainwp_sitesviewmode" id="mainwp_sitesviewmode" class="ui dropdown">
 								<option value="table" <?php echo ( 'table' == $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Table', 'mainwp' ); ?></option>
@@ -444,6 +444,30 @@ class MainWP_Manage_Sites {
 							</ul>
 						</div>
 					</div>
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Show favicons', 'mainwp' ); ?></label>
+						<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will download and show child sites favicons.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<input type="checkbox" name="mainwp_use_favicon" id="mainwp_use_favicon" <?php echo ( ( 1 == get_option( 'mainwp_use_favicon', 1 ) ) ? 'checked="true"' : '' ); ?> />
+						</div>
+					</div>
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Optimize for shared hosting or big networks', 'mainwp' ); ?></label>
+						<div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will cache updates for faster loading.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<input type="checkbox" name="mainwp_optimize" id="mainwp_optimize" <?php echo ( ( 1 == get_option( 'mainwp_optimize', 0 ) ) ? 'checked="true"' : '' ); ?> /><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
+						</div>
+					</div>
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Export child sites to CSV file', 'mainwp' ); ?></label>
+						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to export all connected sites to a CSV file.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=MainWPTools&doExportSites=yes&_wpnonce=<?php echo wp_create_nonce( 'export_sites' ); ?>" class="ui button green basic"><?php esc_html_e( 'Export Child Sites', 'mainwp' ); ?></a></div>
+					</div>
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Disconnect all child sites', 'mainwp' ); ?></label>
+						<div class="ten wide column" id="mainwp-disconnect-sites-tool" data-tooltip="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+							<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo wp_create_nonce( 'disconnect_sites' ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Websites', 'mainwp' ); ?></a>
+						</div>
+					</div>
+					<div class="ui hidden divider"></div>
+					<div class="ui hidden divider"></div>
 				</div>
 				<div class="actions">
 					<div class="ui two columns grid">
@@ -460,7 +484,7 @@ class MainWP_Manage_Sites {
 			</form>
 		</div>
 		<div class="ui small modal" id="mainwp-manage-sites-site-preview-screen-options-modal">
-			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
+			<div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
 			<div class="scrolling content ui form">
 				<span><?php esc_html_e( 'Would you like to turn on home screen previews?  This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?>
 			</div>
@@ -515,6 +539,9 @@ class MainWP_Manage_Sites {
 		self::$sitesTable->prepare_items( true );
 		$output = self::$sitesTable->ajax_get_datatable_rows();
 		self::$sitesTable->clear_items();
+
+		MainWP_Logger::instance()->log_execution_time( 'ajax_optimize_display_rows()' );
+
 		wp_send_json( $output );
 	}
 
@@ -537,7 +564,7 @@ class MainWP_Manage_Sites {
 		self::render_header( $showpage );
 
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) {
-			mainwp_do_not_have_permissions( __( 'add sites', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'add sites', 'mainwp' ) );
 			return;
 		} else {
 			$groups = MainWP_DB_Common::instance()->get_groups_for_current_user();
@@ -551,9 +578,9 @@ class MainWP_Manage_Sites {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-site-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-site-info-message"></i>
-					<div><?php echo sprintf( __( 'Use the provided form to connect your websites to your MainWP Dashboard.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">', '</a>' ); ?></div>
-					<div><?php echo sprintf( __( 'If you are experiencing issues with adding a website to your MainWP Dashboard, use the %1$sTest Connection%2$s feature to ensure that your MainWP Dashboard can communicate with your website.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/test-connection-between-your-mainwp-dashboard-and-child-site/" target="_blank">', '</a>' ); ?></div>
-					<div><?php echo sprintf( __( 'If you still can not connect the site, see the list of %1$spotential issues%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( esc_html__( 'Use the provided form to connect your websites to your MainWP Dashboard.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( esc_html__( 'If you are experiencing issues with adding a website to your MainWP Dashboard, use the %1$sTest Connection%2$s feature to ensure that your MainWP Dashboard can communicate with your website.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/test-connection-between-your-mainwp-dashboard-and-child-site/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( esc_html__( 'If you still can not connect the site, see the list of %1$spotential issues%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a>' ); ?></div>
 					</div>
 			<?php endif; ?>
 
@@ -565,11 +592,11 @@ class MainWP_Manage_Sites {
 				<?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard. ', 'mainwp' ); ?>
 				<?php esc_html_e( 'To install the MainWP Child plugin, please follow these steps:', 'mainwp' ); ?>
 				<ol>
-					<li><?php printf( __( 'Login to the WordPress site you want to connect %1$s(open it in a new browser tab)%2$s', 'mainwp' ), '<em>', '</em>' ); ?></li>
-					<li><?php printf( __( 'Go to the %1$sWP > Plugins%2$s page', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-					<li><?php printf( __( 'Click %1$sAdd New%2$s to install a new plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-					<li><?php printf( __( 'In the %1$sSearch Field%2$s, enter "MainWP Child" and once the plugin shows, click the Install button', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-					<li><?php printf( __( '%1$sActivate%2$s the plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+					<li><?php printf( esc_html__( 'Login to the WordPress site you want to connect %1$s(open it in a new browser tab)%2$s', 'mainwp' ), '<em>', '</em>' ); ?></li>
+					<li><?php printf( esc_html__( 'Go to the %1$sWP > Plugins%2$s page', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+					<li><?php printf( esc_html__( 'Click %1$sAdd New%2$s to install a new plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+					<li><?php printf( esc_html__( 'In the %1$sSearch Field%2$s, enter "MainWP Child" and once the plugin shows, click the Install button', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+					<li><?php printf( esc_html__( '%1$sActivate%2$s the plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
 				</ol>
 			</div>
 
@@ -778,7 +805,7 @@ class MainWP_Manage_Sites {
 		$showpage = 'BulkAddNew';
 		self::render_header( $showpage );
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) {
-			mainwp_do_not_have_permissions( __( 'add sites', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'add sites', 'mainwp' ) );
 			return;
 		} else {
 			if ( isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {
@@ -811,7 +838,7 @@ class MainWP_Manage_Sites {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-sites-info-message"></i>
-							<?php echo sprintf( __( 'You can download the sample CSV file to see how to format the import file properly. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( esc_html__( 'You can download the sample CSV file to see how to format the import file properly. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -900,61 +927,61 @@ class MainWP_Manage_Sites {
 
 		// Load the Updates Overview widget.
 		if ( self::$enable_widgets['overview'] ) {
-			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), self::$page, 'left', __( 'Updates Overview', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Updates Overview', 'mainwp' ) );
 		}
 
 		// Load the Recent Posts widget.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
 			if ( self::$enable_widgets['recent_posts'] ) {
-				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), self::$page, 'right', __( 'Recent Posts', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), self::$page, 'right', esc_html__( 'Recent Posts', 'mainwp' ) );
 			}
 		}
 
 		// Load the Recent Pages widget.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			if ( self::$enable_widgets['recent_pages'] ) {
-				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), self::$page, 'right', __( 'Recent Pages', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), self::$page, 'right', esc_html__( 'Recent Pages', 'mainwp' ) );
 			}
 		}
 
 		// Load the Pluins widget.
 		if ( self::$enable_widgets['plugins'] ) {
-			MainWP_UI::add_widget_box( 'plugins', array( MainWP_Widget_Plugins::get_class_name(), 'render' ), self::$page, 'left', __( 'Plugins', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'plugins', array( MainWP_Widget_Plugins::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Plugins', 'mainwp' ) );
 		}
 
 		// Load the Themes widget.
 		if ( self::$enable_widgets['themes'] ) {
-			MainWP_UI::add_widget_box( 'themes', array( MainWP_Widget_Themes::get_class_name(), 'render' ), self::$page, 'left', __( 'Themes', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'themes', array( MainWP_Widget_Themes::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Themes', 'mainwp' ) );
 		}
 
 		// Load the Connection Status widget.
 		if ( self::$enable_widgets['connection_status'] ) {
-			MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), self::$page, 'left', __( 'Connection Status', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Connection Status', 'mainwp' ) );
 		}
 
 		// Load the Securtiy Issues widget.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
 			if ( self::$enable_widgets['security_issues'] ) {
-				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), self::$page, 'right', __( 'Security Issues', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), self::$page, 'right', esc_html__( 'Security Issues', 'mainwp' ) );
 			}
 		}
 
 		// Load the Notes widget.
 		if ( self::$enable_widgets['notes'] ) {
-			MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::get_class_name(), 'render' ), self::$page, 'left', __( 'Notes', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Notes', 'mainwp' ) );
 		}
 
 		// Load the Site Info widget.
-		MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), self::$page, 'left', __( 'Child site info', 'mainwp' ) );
+		MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Child site info', 'mainwp' ) );
 
 		// Load the Client widget.
 		if ( self::$enable_widgets['client_info'] ) {
-			MainWP_UI::add_widget_box( 'client_info', array( MainWP_Client_Info::get_class_name(), 'render' ), self::$page, 'left', __( 'Client info', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'client_info', array( MainWP_Client_Info::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Client info', 'mainwp' ) );
 		}
 
 		// Load the Non-MainWP Changes widget.
 		if ( self::$enable_widgets['non_mainwp_changes'] ) {
-			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), self::$page, 'left', __( 'Non-MainWP Changes', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Non-MainWP Changes', 'mainwp' ) );
 		}
 
 		$i = 0;
@@ -1289,20 +1316,6 @@ class MainWP_Manage_Sites {
 			}
 		}
 
-		// Edit & Update Cache Control Settings.
-		if ( ! empty( $_GET['cacheControlId'] ) ) {
-			$websiteid = intval( $_GET['cacheControlId'] );
-			if ( $websiteid ) {
-				MainWP_System_Utility::set_current_wpid( $websiteid );
-			}
-			$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
-			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-				$updated = MainWP_Auto_Cache_Purge_View::instance()->handle_cache_control_child_site_settings( $website );
-				MainWP_Auto_Cache_Purge_View::render_child_site_settings( $websiteid, $updated );
-				return;
-			}
-		}
-
 		if ( isset( $_GET['id'] ) ) {
 			$websiteid = intval( $_GET['id'] );
 			$website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
@@ -1320,6 +1333,7 @@ class MainWP_Manage_Sites {
 		} else {
 			self::render_all_sites();
 		}
+		MainWP_Logger::instance()->log_execution_time( 'render_manage_sites()' );
 	}
 
 

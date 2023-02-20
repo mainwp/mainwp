@@ -232,7 +232,7 @@ class MainWP_Api_Manager_Key {
 
 		$code = wp_remote_retrieve_response_code( $request );
 		if ( 200 != $code ) {
-			$error = sprintf( __( 'Login verification could not be completed. Please contact %1$sMainWP Support%2$s so we can assist.', 'mainwp' ), '<a href="https://managers.mainwp.com/" target="_blank">', '</a>' );
+			$error = sprintf( esc_html__( 'Login verification could not be completed. Please contact %1$sMainWP Support%2$s so we can assist.', 'mainwp' ), '<a href="https://managers.mainwp.com/" target="_blank">', '</a>' );
 			throw new \Exception( $error );
 		}
 

@@ -112,10 +112,10 @@ class MainWP_Manage_Backups {
 
 		} else {
 			if ( $enable_legacy_backup ) {
-					add_submenu_page( 'mainwp_tab', __( 'Backups', 'mainwp' ), '<span id="mainwp-Backups">' . __( 'Backups', 'mainwp' ) . '</span>', 'read', 'ManageBackups', array( self::get_class_name(), 'render_manager' ) );
+					add_submenu_page( 'mainwp_tab', esc_html__( 'Backups', 'mainwp' ), '<span id="mainwp-Backups">' . esc_html__( 'Backups', 'mainwp' ) . '</span>', 'read', 'ManageBackups', array( self::get_class_name(), 'render_manager' ) );
 				if ( mainwp_current_user_have_right( 'dashboard', 'add_backup_tasks' ) ) {
 					if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsAddNew' ) ) {
-						add_submenu_page( 'mainwp_tab', __( 'Add New Schedule', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'ManageBackupsAddNew', array( self::get_class_name(), 'render_new' ) );
+						add_submenu_page( 'mainwp_tab', esc_html__( 'Add New Schedule', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'read', 'ManageBackupsAddNew', array( self::get_class_name(), 'render_new' ) );
 					}
 				}
 			} else {
@@ -199,7 +199,7 @@ class MainWP_Manage_Backups {
 		if ( ! self::$hideSubmenuBackups && $enableLegacyBackup ) {
 			MainWP_Menu::add_left_menu(
 				array(
-					'title'      => __( 'Backups', 'mainwp' ),
+					'title'      => esc_html__( 'Backups', 'mainwp' ),
 					'parent_key' => 'mainwp_tab',
 					'slug'       => 'ManageBackups',
 					'href'       => 'admin.php?page=ManageBackups',
@@ -210,14 +210,14 @@ class MainWP_Manage_Backups {
 
 			$init_sub_subleftmenu = array(
 				array(
-					'title'      => __( 'Manage Backups', 'mainwp' ),
+					'title'      => esc_html__( 'Manage Backups', 'mainwp' ),
 					'parent_key' => 'ManageBackups',
 					'href'       => 'admin.php?page=ManageBackups',
 					'slug'       => 'ManageBackups',
 					'right'      => '',
 				),
 				array(
-					'title'      => __( 'Add New', 'mainwp' ),
+					'title'      => esc_html__( 'Add New', 'mainwp' ),
 					'parent_key' => 'ManageBackups',
 					'href'       => 'admin.php?page=ManageBackupsAddNew',
 					'slug'       => 'ManageBackupsAddNew',
@@ -248,7 +248,7 @@ class MainWP_Manage_Backups {
 	public static function render_header( $shownPage = '' ) {
 
 		$params = array(
-			'title' => __( 'Backups', 'mainwp' ),
+			'title' => esc_html__( 'Backups', 'mainwp' ),
 		);
 
 		MainWP_UI::render_top_header( $params );
@@ -256,7 +256,7 @@ class MainWP_Manage_Backups {
 		$renderItems = array();
 
 		$renderItems[] = array(
-			'title'    => __( 'Manage Backups', 'mainwp' ),
+			'title'    => esc_html__( 'Manage Backups', 'mainwp' ),
 			'href'     => 'admin.php?page=ManageBackups',
 			'active'   => ( '' == $shownPage ) ? true : false,
 			'disabled' => MainWP_Menu::is_disable_menu_item( 3, 'ManageBackups' ) ? true : false,
@@ -264,7 +264,7 @@ class MainWP_Manage_Backups {
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsAddNew' ) ) {
 			$renderItems[] = array(
-				'title'    => __( 'Add New', 'mainwp' ),
+				'title'    => esc_html__( 'Add New', 'mainwp' ),
 				'href'     => 'admin.php?page=ManageBackupsAddNew',
 				'access'   => mainwp_current_user_have_right( 'dashboard', 'add_backup_tasks' ),
 				'active'   => ( 'AddNew' == $shownPage ) ? true : false,
@@ -275,7 +275,7 @@ class MainWP_Manage_Backups {
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsEdit' ) ) {
 			if ( 'ManageBackupsEdit' == $shownPage ) {
 				$renderItems[] = array(
-					'title'  => __( 'Edit', 'mainwp' ),
+					'title'  => esc_html__( 'Edit', 'mainwp' ),
 					'href'   => '#',
 					'active' => true,
 				);
@@ -323,7 +323,7 @@ class MainWP_Manage_Backups {
 		$backupTask = null;
 		if ( isset( $_GET['id'] ) ) {
 			if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_backup_tasks' ) ) {
-				mainwp_do_not_have_permissions( __( 'edit backup tasks', 'mainwp' ) );
+				mainwp_do_not_have_permissions( esc_html__( 'edit backup tasks', 'mainwp' ) );
 				return;
 			}
 			$backupTaskId = intval( $_GET['id'] );
@@ -358,7 +358,7 @@ class MainWP_Manage_Backups {
 			self::render_header( '' );
 			?>
 			<?php if ( 0 == count( $primaryBackupMethods ) ) { ?>
-				<div class="mainwp-notice mainwp-notice-blue"><?php echo sprintf( __( 'Did you know that MainWP has extensions for working with popular backup plugins? Visit the %1$sextensions site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
+				<div class="mainwp-notice mainwp-notice-blue"><?php echo sprintf( esc_html__( 'Did you know that MainWP has extensions for working with popular backup plugins? Visit the %1$sextensions site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
 			<?php } ?>
 			<div class="ui alt segment">
 				<div id="mainwp_managebackups_add_message" class="mainwp-notice mainwp-notice-green" style="display:
@@ -372,7 +372,7 @@ class MainWP_Manage_Backups {
 				">
 				<?php
 				if ( isset( $_GET['a'] ) && '1' == $_GET['a'] ) {
-					echo '<p>' . __( 'The backup task was added successfully', 'mainwp' ) . '</p>';
+					echo '<p>' . esc_html__( 'The backup task was added successfully', 'mainwp' ) . '</p>';
 				}
 				?>
 					</div>
@@ -434,14 +434,14 @@ class MainWP_Manage_Backups {
 				<?php
 				if ( $backup_items ) {
 					$columns = array(
-						'task_name'   => __( 'Task Name', 'mainwp' ),
-						'type'        => __( 'Type', 'mainwp' ),
-						'schedule'    => __( 'Schedule', 'mainwp' ),
-						'destination' => __( 'Destination', 'mainwp' ),
-						'websites'    => __( 'Websites', 'mainwp' ),
-						'details'     => __( 'Details', 'mainwp' ),
-						'trigger'     => __( 'Trigger', 'mainwp' ),
-						'actions'     => __( 'Trigger', 'mainwp' ),
+						'task_name'   => esc_html__( 'Task Name', 'mainwp' ),
+						'type'        => esc_html__( 'Type', 'mainwp' ),
+						'schedule'    => esc_html__( 'Schedule', 'mainwp' ),
+						'destination' => esc_html__( 'Destination', 'mainwp' ),
+						'websites'    => esc_html__( 'Websites', 'mainwp' ),
+						'details'     => esc_html__( 'Details', 'mainwp' ),
+						'trigger'     => esc_html__( 'Trigger', 'mainwp' ),
+						'actions'     => esc_html__( 'Trigger', 'mainwp' ),
 					);
 
 					if ( ! $can_trigger ) {
@@ -528,8 +528,8 @@ class MainWP_Manage_Backups {
 	public function column_actions( $item ) {
 
 		$actions = array(
-			'edit'   => sprintf( '<a class="item" href="admin.php?page=ManageBackups&id=%s"><i class="edit outline icon"></i> ' . __( 'Edit', 'mainwp' ) . '</a>', $item->id ),
-			'delete' => sprintf( '<a class="submitdelete item" href="#" task_id="%s" onClick="return managebackups_remove(this);"><i class="trash alternate outline icon"></i> ' . __( 'Delete', 'mainwp' ) . '</a>', $item->id ),
+			'edit'   => sprintf( '<a class="item" href="admin.php?page=ManageBackups&id=%s"><i class="edit outline icon"></i> ' . esc_html__( 'Edit', 'mainwp' ) . '</a>', $item->id ),
+			'delete' => sprintf( '<a class="submitdelete item" href="#" task_id="%s" onClick="return managebackups_remove(this);"><i class="trash alternate outline icon"></i> ' . esc_html__( 'Delete', 'mainwp' ) . '</a>', $item->id ),
 		);
 
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_backup_tasks' ) ) {
@@ -542,11 +542,11 @@ class MainWP_Manage_Backups {
 
 		if ( 1 == $item->paused ) {
 			if ( mainwp_current_user_have_right( 'dashboard', 'pause_resume_backup_tasks' ) ) {
-				$actions['resume'] = sprintf( '<a href="#" class="item" task_id="%s" onClick="return managebackups_resume(this)"><i class="play icon"></i> ' . __( 'Resume', 'mainwp' ) . '</a>', $item->id );
+				$actions['resume'] = sprintf( '<a href="#" class="item" task_id="%s" onClick="return managebackups_resume(this)"><i class="play icon"></i> ' . esc_html__( 'Resume', 'mainwp' ) . '</a>', $item->id );
 			}
 		} else {
 			if ( mainwp_current_user_have_right( 'dashboard', 'pause_resume_backup_tasks' ) ) {
-				$actions['pause'] = sprintf( '<a href="#" class="item" task_id="%s" onClick="return managebackups_pause(this)"><i class="pause icon"></i> ' . __( 'Pause', 'mainwp' ) . '</a>', $item->id );
+				$actions['pause'] = sprintf( '<a href="#" class="item" task_id="%s" onClick="return managebackups_pause(this)"><i class="pause icon"></i> ' . esc_html__( 'Pause', 'mainwp' ) . '</a>', $item->id );
 			}
 		}
 
@@ -583,7 +583,7 @@ class MainWP_Manage_Backups {
 	 * @return string Action content.
 	 */
 	public function column_type( $item ) {
-		return ( 'db' == $item->type ? __( 'DATABASE BACKUP', 'mainwp' ) : __( 'FULL BACKUP', 'mainwp' ) );
+		return ( 'db' == $item->type ? esc_html__( 'DATABASE BACKUP', 'mainwp' ) : esc_html__( 'FULL BACKUP', 'mainwp' ) );
 	}
 
 	/**
@@ -610,7 +610,7 @@ class MainWP_Manage_Backups {
 			return trim( $extraOutput, '<br />' );
 		}
 
-		return __( 'SERVER', 'mainwp' );
+		return esc_html__( 'SERVER', 'mainwp' );
 	}
 
 	/**
@@ -639,13 +639,13 @@ class MainWP_Manage_Backups {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public function column_details( $item ) {
-		$output  = '<strong>' . __( 'LAST RUN MANUALLY: ', 'mainwp' ) . '</strong>' . ( 0 == $item->last_run_manually ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->last_run_manually ) ) ) . '<br />';
-		$output .= '<strong>' . __( 'LAST RUN: ', 'mainwp' ) . '</strong>' . ( 0 == $item->last_run ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->last_run ) ) ) . '<br />';
-		$output .= '<strong>' . __( 'LAST COMPLETED: ', 'mainwp' ) . '</strong>' . ( 0 == $item->completed ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->completed ) ) ) . '<br />';
-		$output .= '<strong>' . __( 'NEXT RUN: ', 'mainwp' ) . '</strong>' . ( 0 == $item->last_run ? __( 'Any minute', 'mainwp' ) : MainWP_Utility::format_timestamp( ( 'daily' == $item->schedule ? ( 60 * 60 * 24 ) : ( 'weekly' == $item->schedule ? ( 60 * 60 * 24 * 7 ) : ( 60 * 60 * 24 * 30 ) ) ) + MainWP_Utility::get_timestamp( $item->last_run ) ) );
+		$output  = '<strong>' . esc_html__( 'LAST RUN MANUALLY: ', 'mainwp' ) . '</strong>' . ( 0 == $item->last_run_manually ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->last_run_manually ) ) ) . '<br />';
+		$output .= '<strong>' . esc_html__( 'LAST RUN: ', 'mainwp' ) . '</strong>' . ( 0 == $item->last_run ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->last_run ) ) ) . '<br />';
+		$output .= '<strong>' . esc_html__( 'LAST COMPLETED: ', 'mainwp' ) . '</strong>' . ( 0 == $item->completed ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->completed ) ) ) . '<br />';
+		$output .= '<strong>' . esc_html__( 'NEXT RUN: ', 'mainwp' ) . '</strong>' . ( 0 == $item->last_run ? esc_html__( 'Any minute', 'mainwp' ) : MainWP_Utility::format_timestamp( ( 'daily' == $item->schedule ? ( 60 * 60 * 24 ) : ( 'weekly' == $item->schedule ? ( 60 * 60 * 24 * 7 ) : ( 60 * 60 * 24 * 30 ) ) ) + MainWP_Utility::get_timestamp( $item->last_run ) ) );
 		$output .= '<strong>';
 		if ( 0 != $item->last_run && $item->completed < $item->last_run ) {
-			$output         .= __( '<br />CURRENTLY RUNNING: ', 'mainwp' ) . '</strong>';
+			$output         .= esc_html__( '<br />CURRENTLY RUNNING: ', 'mainwp' ) . '</strong>';
 			$completed_sites = $item->completed_sites;
 			if ( '' != $completed_sites ) {
 				$completed_sites = json_decode( $completed_sites, 1 );
@@ -666,7 +666,7 @@ class MainWP_Manage_Backups {
 	 * @return string Action content.
 	 */
 	public function column_trigger( $item ) {
-		return '<span class="backup_run_loading"><img src="' . MAINWP_PLUGIN_URL . 'assets/images/loader.gif" /></span>&nbsp;<a href="#" class="backup_run_now" task_id="' . $item->id . '" task_type="' . $item->type . '">' . __( 'Run now', 'mainwp' ) . '</a>';
+		return '<span class="backup_run_loading"><img src="' . MAINWP_PLUGIN_URL . 'assets/images/loader.gif" /></span>&nbsp;<a href="#" class="backup_run_now" task_id="' . $item->id . '" task_type="' . $item->type . '">' . esc_html__( 'Run now', 'mainwp' ) . '</a>';
 	}
 
 	/**
@@ -696,7 +696,7 @@ class MainWP_Manage_Backups {
 	/** Render New Task Form. */
 	public static function render_new() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'add_backup_tasks' ) ) {
-			mainwp_do_not_have_permissions( __( 'add backup tasks', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'add backup tasks', 'mainwp' ) );
 			return;
 		}
 		self::render_header( 'AddNew' );
@@ -774,7 +774,7 @@ class MainWP_Manage_Backups {
 
 		if ( ! empty( $backupTaskId ) ) {
 			if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_backup_tasks' ) ) {
-				mainwp_do_not_have_permissions( __( 'edit backup tasks', 'mainwp' ) );
+				mainwp_do_not_have_permissions( esc_html__( 'edit backup tasks', 'mainwp' ) );
 
 				return;
 			}
@@ -1023,7 +1023,7 @@ class MainWP_Manage_Backups {
 		?>
 		<h3 class="ui dividing header">
 			<?php esc_html_e( 'Backup Settings', 'mainwp' ); ?>
-			<div class="sub header"><?php echo sprintf( __( 'MainWP is actively moving away from further development of the native backups feature. The best long-term solution would be one of the %1$sBackup Extensions%2$s.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
+			<div class="sub header"><?php echo sprintf( esc_html__( 'MainWP is actively moving away from further development of the native backups feature. The best long-term solution would be one of the %1$sBackup Extensions%2$s.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
 		</h3>
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Enable legacy backup feature', 'mainwp' ); ?></label>

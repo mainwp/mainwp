@@ -69,9 +69,9 @@ class MainWP_Client_Overview_Note {
 			 *
 			 * @since 4.1
 			 */
-			echo esc_html( apply_filters( 'mainwp_clients_overview_note_widget_title', __( 'Notes', 'mainwp' ), $client_info ) );
+			echo esc_html( apply_filters( 'mainwp_clients_overview_note_widget_title', esc_html__( 'Notes', 'mainwp' ), $client_info ) );
 			?>
-				<div class="sub header"><?php echo __( 'Client notes.', 'mainwp' ); ?></div>
+				<div class="sub header"><?php echo esc_html__( 'Client notes.', 'mainwp' ); ?></div>
 			</h3>
 			<div class="ui hidden divider"></div>
 			<div class="mainwp-widget-client-card">

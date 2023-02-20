@@ -43,7 +43,7 @@ class MainWP_Reports_Helper {
 
 	/**
 	 * Construct method.
-	*/
+	 */
 	public function __construct() {
 		// construct.
 	}

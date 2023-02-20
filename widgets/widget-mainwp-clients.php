@@ -37,7 +37,7 @@ class MainWP_Clients {
 
 	/**
 	 * Render Clients Info.
-	 * 
+	 *
 	 * @param mixed $clients Clients data.
 	 */
 	private static function render_clients( $clients ) {

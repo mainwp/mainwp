@@ -309,6 +309,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: Info message on the Extension page
 * Updated: Removed the Trusted column from the Updates section in the sites view
 * Updated: Renamed Screen Options modal to Page Settings
+* Preventative: Multiple security enhancements
 * Removed: The Cache Control feature and extracted to an extension
 
 = 4.3.1 - 12-14-2022 =

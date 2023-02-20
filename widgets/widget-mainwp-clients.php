@@ -60,7 +60,7 @@ class MainWP_Clients {
 				 * Actoin: mainwp_clients_widget_top
 				 *
 				 * Fires at the top of the Clients widget on the overview page.
-				 * 
+				 *
 				 * @param object $clients Object containing the clients info.
 				 *
 				 * @since 4.4
@@ -96,7 +96,7 @@ class MainWP_Clients {
 							<?php endif; ?>
 							</td>
 							<td class="left aligned middle aligned">
-								<?php 
+								<?php
 								if ( isset( $client['primary_contact_id'] ) && '' != $client['primary_contact_id'] ) {
 									$contact = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', $client['primary_contact_id'] );
 									?>

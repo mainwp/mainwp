@@ -844,7 +844,7 @@ class Rest_Api {
 				$data[ $website->id ] = $ret ? 'success' : 'failed';
 			}
 			MainWP_DB::free_result( $websites );
-			
+
 			update_option( 'mainwp_last_synced_all_sites', time() );
 
 			$response = new \WP_REST_Response( $data );

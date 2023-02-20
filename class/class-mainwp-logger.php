@@ -585,7 +585,7 @@ class MainWP_Logger {
 			$code = 'start';
 		}
 
-		if ( ! empty( $code ) && is_string( $code ) && 'start' !== $code  ) {
+		if ( ! empty( $code ) && is_string( $code ) && 'start' !== $code ) {
 			self::$time_start[ $code ] = microtime( true );
 			$this->log_action( 'init execution time :: [code=' . $code . ']', self::EXECUTION_TIME_LOG_PRIORITY );
 		}

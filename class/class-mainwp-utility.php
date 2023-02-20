@@ -330,7 +330,6 @@ class MainWP_Utility {
 	 */
 	public static function map_fields( &$data, $keys, $object_output = true ) {
 		return self::map_site( $data, $keys, $object_output );
-
 	}
 
 	/**

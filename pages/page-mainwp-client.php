@@ -1212,7 +1212,7 @@ class MainWP_Client {
 			MainWP_DB_Client::instance()->update_client( $update );
 		}
 
-		$is_first_contact = true;
+		$is_first_contact       = true;
 		$auto_assign_contact_id = 0;
 
 		if ( $client_id && isset( $client_fields['contacts_field'] ) ) {
@@ -1249,7 +1249,7 @@ class MainWP_Client {
 
 				$updated = MainWP_DB_Client::instance()->update_client_contact( $contact_to_add );
 
-				$is_first_contact       = false;
+				$is_first_contact = false;
 
 				if ( $updated ) {
 					$contact_image = 'NOTCHANGE';
@@ -1360,7 +1360,6 @@ class MainWP_Client {
 				'client_id' => $client_id,
 			)
 		);
-
 	}
 
 	/**

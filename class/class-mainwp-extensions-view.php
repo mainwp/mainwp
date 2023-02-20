@@ -652,7 +652,7 @@ class MainWP_Extensions_View {
 				'integration_owner_3'    => 'Zoho Corporation Pvt. Ltd.',
 				'integration_owner_pp_3' => 'https://www.zoho.com/privacy.html',
 			),
-			'mainwp-api-backups-extension'      =>
+			'mainwp-api-backups-extension' =>
 			array(
 				'type'                   => 'pro',
 				'slug'                   => 'mainwp-api-backups-extension',
@@ -794,7 +794,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-cache-control-extension'          =>
+			'mainwp-cache-control-extension' =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-cache-control-extension',
@@ -920,7 +920,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-database-updater-extension'        =>
+			'mainwp-database-updater-extension' =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-database-updater-extension',
@@ -1010,7 +1010,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'Google LLC',
 				'integration_owner_pp' => 'https://policies.google.com/privacy',
 			),
-			'mainwp-jetpack-protect-extension'      =>
+			'mainwp-jetpack-protect-extension' =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-jetpack-protect-extension',
@@ -1028,7 +1028,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'Automattic Inc.',
 				'integration_owner_pp' => 'https://automattic.com/privacy/',
 			),
-			'mainwp-jetpack-scan-extension'        =>
+			'mainwp-jetpack-scan-extension' =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-jetpack-scan-extension',
@@ -1208,7 +1208,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'Liquid Web, LLC',
 				'integration_owner_pp' => 'https://www.liquidweb.com/about-us/policies/privacy-policy/',
 			),
-			'mainwp-ssl-monitor-extension'        =>
+			'mainwp-ssl-monitor-extension' =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-ssl-monitor-extension',

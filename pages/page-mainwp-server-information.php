@@ -162,7 +162,6 @@ class MainWP_Server_Information {
 			}
 		}
 		self::init_left_menu( self::$subPages );
-
 	}
 
 	/**

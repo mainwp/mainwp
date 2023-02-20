@@ -230,7 +230,7 @@ class MainWP_System_Handler {
 		}
 	}
 
-	
+
 
 	/**
 	 * Method hook_get_sql_websites_for_current_user()
@@ -324,12 +324,12 @@ class MainWP_System_Handler {
 			}
 
 			update_option( 'mainwp_disableSitesChecking', ( ! isset( $_POST['mainwp_disableSitesChecking'] ) ? 1 : 0 ) );
-			
+
 			$val = isset( $_POST['mainwp_frequency_sitesChecking'] ) ? intval( $_POST['mainwp_frequency_sitesChecking'] ) : 1440;
 			update_option( 'mainwp_frequencySitesChecking', $val );
-			
+
 			update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
-			
+
 			$val = isset( $_POST['mainwp_site_healthThreshold'] ) ? intval( $_POST['mainwp_site_healthThreshold'] ) : 80;
 			update_option( 'mainwp_sitehealthThreshold', $val );
 		}

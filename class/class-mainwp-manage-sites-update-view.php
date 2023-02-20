@@ -387,7 +387,7 @@ class MainWP_Manage_Sites_Update_View {
 		<div class="ui <?php echo 'plugins' === $active_tab ? 'active' : ''; ?> tab" data-tab="plugins">
 			<?php if ( ! $website->is_ignorePluginUpdates ) : ?>
 				<?php
-				$plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
+				$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
 				if ( ! is_array( $plugin_upgrades ) ) {
 					$plugin_upgrades = array();
 				}
@@ -495,7 +495,7 @@ class MainWP_Manage_Sites_Update_View {
 		<div class="ui <?php echo 'themes' === $active_tab ? 'active' : ''; ?> tab" data-tab="themes">
 			<?php if ( ! $website->is_ignoreThemeUpdates ) : ?>
 				<?php
-				$theme_upgrades         = json_decode( $website->theme_upgrades, true );
+				$theme_upgrades = json_decode( $website->theme_upgrades, true );
 				if ( ! is_array( $theme_upgrades ) ) {
 					$theme_upgrades = array();
 				}

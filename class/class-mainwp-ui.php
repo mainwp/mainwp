@@ -736,7 +736,7 @@ class MainWP_UI {
 			<p><?php esc_html_e( 'Click the Start Page Tour button to start the guided tour for the current page.', 'mainwp' ); ?></p>
 			<div class="ui hidden divider"></div>
 			<a href="javacscript:void(0);" id="mainwp-start-page-tour-button" class="ui big green fluid basic button" tour-id="<?php esc_attr_e( $tour_id ); ?>"><?php esc_html_e( 'Start Page Tour', 'mainwp' ); ?></a>
-			<?php if ( isset( $_GET['page']) && 'mainwp_tab' == $_GET['page'] ) : ?>
+				<?php if ( isset( $_GET['page']) && 'mainwp_tab' == $_GET['page'] ) : ?>
 				<div class="ui hidden divider"></div>
 				<a href="javacscript:void(0);" id="mainwp-interface-tour-button" class="ui big green fluid basic button"><?php esc_html_e( 'MainWP Interface Basics Tour', 'mainwp' ); ?></a>
 			<?php endif; ?>

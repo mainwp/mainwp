@@ -133,7 +133,7 @@ class MainWP_Updates_Per_Item {
 										if ( $website->is_ignorePluginUpdates ) {
 											continue;
 										}
-										$plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
+										$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
 										if ( ! is_array( $plugin_upgrades ) ) {
 											$plugin_upgrades = array();
 										}
@@ -143,7 +143,7 @@ class MainWP_Updates_Per_Item {
 										if ( is_array( $decodedPremiumUpgrades ) ) {
 											foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 												$premiumUpgrade['premium'] = true;
-												if ( 'plugin' === $premiumUpgrade['type'] ) {													
+												if ( 'plugin' === $premiumUpgrade['type'] ) {
 													if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
 														$plugin_upgrades[ $crrSlug ] = array();
 													}

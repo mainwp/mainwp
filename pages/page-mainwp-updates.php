@@ -78,6 +78,14 @@ class MainWP_Updates {
 	public static $subPages;
 
 	/**
+	 * Current page.
+	 *
+	 * @static
+	 * @var string $page Current page.
+	 */
+	public static $page;
+
+	/**
 	 * Gets Class Name.
 	 *
 	 * @return object
@@ -120,6 +128,7 @@ class MainWP_Updates {
 	 */
 	public static function init_menu() {
 		self::init_left_menu( self::$subPages );
+		add_action( 'load-' . self::$page, array( self::get_class_name(), 'on_load_page' ) );
 	}
 
 	/**
@@ -132,10 +141,10 @@ class MainWP_Updates {
 	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_left_menu( $subPages = array() ) {
-		add_submenu_page(
+		self::$page = add_submenu_page(
 			'mainwp_tab',
 			__( 'Updates', 'mainwp' ),
-			'<span id="mainwp-Updates">' . __( 'Updates', 'mainwp' ) . '</span>',
+			'<span id="mainwp-Updates">' . esc_html__( 'Updates', 'mainwp' ) . '</span>',
 			'read',
 			'UpdatesManage',
 			array(
@@ -146,7 +155,7 @@ class MainWP_Updates {
 
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => __( 'Updates', 'mainwp' ),
+				'title'      => esc_html__( 'Updates', 'mainwp' ),
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'UpdatesManage',
 				'href'       => 'admin.php?page=UpdatesManage',
@@ -162,42 +171,42 @@ class MainWP_Updates {
 
 			$init_sub_subleftmenu = array(
 				array(
-					'title'      => __( 'Plugins Updates', 'mainwp' ),
+					'title'      => esc_html__( 'Plugins Updates', 'mainwp' ),
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=plugins-updates',
 					'slug'       => 'UpdatesManage',
 					'right'      => '',
 				),
 				array(
-					'title'      => __( 'Themes Updates', 'mainwp' ),
+					'title'      => esc_html__( 'Themes Updates', 'mainwp' ),
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=themes-updates',
 					'slug'       => 'UpdatesManage',
 					'right'      => '',
 				),
 				array(
-					'title'      => __( 'WordPress Updates', 'mainwp' ),
+					'title'      => esc_html__( 'WordPress Updates', 'mainwp' ),
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=wordpress-updates',
 					'slug'       => 'UpdatesManage&tab=wordpress-updates',
 					'right'      => '',
 				),
 				array(
-					'title'      => __( 'Translation Updates', 'mainwp' ),
+					'title'      => esc_html__( 'Translation Updates', 'mainwp' ),
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=translations-updates',
 					'slug'       => 'UpdatesManage&tab=translations-updates',
 					'right'      => '',
 				),
 				array(
-					'title'      => __( 'Abandoned Plugins', 'mainwp' ),
+					'title'      => esc_html__( 'Abandoned Plugins', 'mainwp' ),
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=abandoned-plugins',
 					'slug'       => 'UpdatesManage&tab=abandoned-plugins',
 					'right'      => '',
 				),
 				array(
-					'title'      => __( 'Abandoned Themes', 'mainwp' ),
+					'title'      => esc_html__( 'Abandoned Themes', 'mainwp' ),
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=abandoned-themes',
 					'slug'       => 'UpdatesManage',
@@ -207,35 +216,35 @@ class MainWP_Updates {
 		} else {
 			$init_sub_subleftmenu = array(
 				array(
-					'title'      => __( 'Plugins Updates', 'mainwp' ),
+					'title'      => esc_html__( 'Plugins Updates', 'mainwp' ),
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=plugins-updates',
 					'slug'       => 'UpdatesManage',
 					'right'      => '',
 				),
 				array(
-					'title'      => __( 'Themes Updates', 'mainwp' ),
+					'title'      => esc_html__( 'Themes Updates', 'mainwp' ),
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=themes-updates',
 					'slug'       => 'UpdatesManage',
 					'right'      => '',
 				),
 				array(
-					'title'      => __( 'WordPress Updates', 'mainwp' ),
+					'title'      => esc_html__( 'WordPress Updates', 'mainwp' ),
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=wordpress-updates',
 					'slug'       => 'UpdatesManage&tab=wordpress-updates',
 					'right'      => '',
 				),
 				array(
-					'title'      => __( 'Abandoned Plugins', 'mainwp' ),
+					'title'      => esc_html__( 'Abandoned Plugins', 'mainwp' ),
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=abandoned-plugins',
 					'slug'       => 'UpdatesManage&tab=abandoned-plugins',
 					'right'      => '',
 				),
 				array(
-					'title'      => __( 'Abandoned Themes', 'mainwp' ),
+					'title'      => esc_html__( 'Abandoned Themes', 'mainwp' ),
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=abandoned-themes',
 					'slug'       => 'UpdatesManage',
@@ -243,6 +252,8 @@ class MainWP_Updates {
 				),
 			);
 		}
+
+		$init_sub_subleftmenu = apply_filters( 'mainwp_sub_leftmenu_updates', $init_sub_subleftmenu );
 
 		MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'UpdatesManage', 'UpdatesManage' );
 
@@ -255,6 +266,31 @@ class MainWP_Updates {
 	}
 
 	/**
+	 * Method on_load_page()
+	 *
+	 * Run on page load.
+	 */
+	public static function on_load_page() {
+		add_filter( 'mainwp_header_actions_right', array( self::get_class_name(), 'screen_options' ), 10, 2 );
+	}
+
+	/**
+	 * Method screen_options()
+	 *
+	 * Create Page Settings button.
+	 *
+	 * @param mixed $input Page Settings button HTML.
+	 *
+	 * @return mixed Page Settings button.
+	 */
+	public static function screen_options( $input ) {
+		return $input .
+				'<a class="ui button basic icon" onclick="mainwp_manage_updates_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Page Settings', 'mainwp' ) . '">
+					<i class="cog icon"></i>
+				</a>';
+	}
+
+	/**
 	 * Sets the MainWP Update page page title and pass it off to method MainWP_UI::render_top_header().
 	 *
 	 * @param string $shownPage The page slug shown at this moment.
@@ -264,7 +300,7 @@ class MainWP_Updates {
 	public static function render_header( $shownPage = '' ) {
 
 		$params = array(
-			'title' => __( 'Available Updates', 'mainwp' ),
+			'title' => esc_html__( 'Available Updates', 'mainwp' ),
 		);
 
 		MainWP_UI::render_top_header( $params );
@@ -405,7 +441,7 @@ class MainWP_Updates {
 
 			if ( 0 < count( $sites_not_in_groups ) ) {
 				$all_groups_sites[0] = $sites_not_in_groups;
-				$all_groups[0]       = __( 'Others', 'mainwp' );
+				$all_groups[0]       = esc_html__( 'Others', 'mainwp' );
 			}
 		}
 
@@ -749,34 +785,51 @@ class MainWP_Updates {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-updates-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-message"></i>
-					<div><?php echo sprintf( __( 'Manage available updates for all your child sites.  From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-wordpress-core/" target="_blank">', '</a>' ); ?></div>
-					<div><?php echo sprintf( __( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-wordpress-core-update/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( esc_html__( 'Manage available updates for all your child sites.  From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-wordpress-core/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( esc_html__( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-wordpress-core-update/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">', '</a>' ); ?></div>
 				</div>
 			<?php endif; ?>
 		<?php
-		if ( 'wordpress-updates' === $current_tab ) {
-			self::render_wp_update_tab( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups, $site_view );
-		} elseif ( 'plugins-updates' === $current_tab ) {
-			self::render_plugins_update_tab( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups, $site_view );
-		} elseif ( 'themes-updates' === $current_tab ) {
-			self::render_themes_update_tab( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups, $site_view );
-		} elseif ( 'translations-updates' === $current_tab ) {
-			self::render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups, $site_view );
-		} elseif ( 'abandoned-plugins' === $current_tab ) {
-			self::render_abandoned_plugins_tab( $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups, $site_view );
-		} elseif ( 'abandoned-themes' === $current_tab ) {
-			self::render_abandoned_themes_tab( $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups, $site_view );
-		}
-		?>
-		</div>
-		<?php
 
-		self::render_js_updates( $site_view );
+		$hooks_tabs = apply_filters( 'mainwp_pages_updates_render_tabs', false, $current_tab );
+
+		if ( false === $hooks_tabs ) {
+			if ( 'wordpress-updates' === $current_tab ) {
+				self::render_wp_update_tab( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups, $site_view );
+			} elseif ( 'plugins-updates' === $current_tab ) {
+				self::render_plugins_update_tab( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups, $site_view );
+			} elseif ( 'themes-updates' === $current_tab ) {
+				self::render_themes_update_tab( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups, $site_view );
+			} elseif ( 'translations-updates' === $current_tab ) {
+				self::render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups, $site_view );
+			} elseif ( 'abandoned-plugins' === $current_tab ) {
+				self::render_abandoned_plugins_tab( $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups, $site_view );
+			} elseif ( 'abandoned-themes' === $current_tab ) {
+				self::render_abandoned_themes_tab( $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups, $site_view );
+			}
+			?>
+			</div>
+			<?php
+			self::render_js_updates( $site_view );
+		}
 
 		self::render_updates_modal();
+
 		self::render_plugin_details_modal();
 		MainWP_UI::render_modal_upload_icon();
+		self::render_screen_options_modal();
 		self::render_footer();
+		?>
+		<script type="text/javascript">
+		mainwp_manage_updates_screen_options = function () {
+			jQuery( '#mainwp-manage-updates-screen-options-modal' ).modal( 'show' );
+			jQuery( '#manage-updates-screen-options-form' ).submit( function() {
+				jQuery( '#mainwp-manage-updates-screen-options-modal' ).modal( 'hide' );
+			} );
+			return false;
+		};
+		</script>
+		<?php
 	}
 
 	/**
@@ -1831,7 +1884,10 @@ class MainWP_Updates {
 					$is_staging = 'yes';
 				}
 			}
-			$sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging );
+			$params = array(
+				'connected' => 'yes',
+			);
+			$sql    = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging, $params );
 		}
 		return MainWP_DB::instance()->query( $sql );
 	}
@@ -1859,20 +1915,66 @@ class MainWP_Updates {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_updates_before_nav_tabs' );
+
+		$header_tabs = array(
+			'plugins-updates'   => array(
+				'slug'           => 'plugins-updates',
+				'title'          => esc_html__( 'Plugins Updates', 'mainwp' ),
+				'total_upgrades' => $total_plugin_upgrades,
+			),
+			'themes-updates'    => array(
+				'slug'           => 'themes-updates',
+				'title'          => esc_html__( 'Themes Updates', 'mainwp' ),
+				'total_upgrades' => $total_theme_upgrades,
+			),
+			'wordpress-updates' => array(
+				'slug'           => 'wordpress-updates',
+				'title'          => esc_html__( 'WordPress Updates', 'mainwp' ),
+				'total_upgrades' => $total_wp_upgrades,
+			),
+		);
+
+		if ( $show_language_updates ) {
+			$header_tabs['translations-updates'] = array(
+				'slug'           => 'translations-updates',
+				'title'          => esc_html__( 'Translations Updates', 'mainwp' ),
+				'total_upgrades' => $total_translation_upgrades,
+			);
+		}
+
+		$header_tabs['abandoned-plugins'] = array(
+			'slug'           => 'abandoned-plugins',
+			'title'          => esc_html__( 'Abandoned Plugins', 'mainwp' ),
+			'total_upgrades' => $total_plugins_outdate,
+		);
+
+		$header_tabs['abandoned-themes'] = array(
+			'slug'           => 'abandoned-themes',
+			'title'          => esc_html__( 'Abandoned Themes', 'mainwp' ),
+			'total_upgrades' => $total_themes_outdate,
+		);
+
+		$header_tabs = apply_filters( 'mainwp_page_hearder_tabs_updates', $header_tabs );
+
 		?>
 		<div id="mainwp-page-navigation-wrapper">
 			<div class="ui secondary green pointing menu stackable mainwp-page-navigation">
-				<a class="<?php echo( 'plugins-updates' === $current_tab ? 'active' : '' ); ?> item" data-tab="plugins-updates" href="admin.php?page=UpdatesManage&tab=plugins-updates"><?php esc_html_e( 'Plugins Updates', 'mainwp' ); ?><div class="ui small <?php echo 0 === $total_plugin_upgrades ? 'green' : 'red'; ?> label" timestamp="<?php echo time(); ?>"><?php echo $total_plugin_upgrades; ?></div></a>
-				<a class="<?php echo( 'themes-updates' === $current_tab ? 'active' : '' ); ?> item" data-tab="themes-updates" href="admin.php?page=UpdatesManage&tab=themes-updates"><?php esc_html_e( 'Themes Updates', 'mainwp' ); ?><div class="ui small <?php echo 0 === $total_theme_upgrades ? 'green' : 'red'; ?> label"><?php echo $total_theme_upgrades; ?></div></a>
-				<a class="<?php echo( 'wordpress-updates' === $current_tab ? 'active' : '' ); ?> item" data-tab="wordpress-updates" href="admin.php?page=UpdatesManage&tab=wordpress-updates"><?php esc_html_e( 'WordPress Updates', 'mainwp' ); ?><div class="ui small <?php echo 0 === $total_wp_upgrades ? 'green' : 'red'; ?> label"><?php echo $total_wp_upgrades; ?></div></a>
-				<?php if ( $show_language_updates ) : ?>
-				<a class="<?php echo( 'translations-updates' === $current_tab ? 'active' : '' ); ?> item" data-tab="translations-updates" href="admin.php?page=UpdatesManage&tab=translations-updates"><?php esc_html_e( 'Translations Updates', 'mainwp' ); ?><div class="ui small <?php echo 0 === $total_translation_upgrades ? 'green' : 'red'; ?> label"><?php echo $total_translation_upgrades; ?></div></a>
-				<?php endif; ?>
-				<a class="<?php echo( 'abandoned-plugins' === $current_tab ? 'active' : '' ); ?> item" data-tab="abandoned-plugins" href="admin.php?page=UpdatesManage&tab=abandoned-plugins"><?php esc_html_e( 'Abandoned Plugins', 'mainwp' ); ?><div class="ui small <?php echo 0 === $total_plugins_outdate ? 'green' : 'red'; ?> label"><?php echo $total_plugins_outdate; ?></div></a>
-				<a class="<?php echo( 'abandoned-themes' === $current_tab ? 'active' : '' ); ?> item" data-tab="abandoned-themes" href="admin.php?page=UpdatesManage&tab=abandoned-themes"><?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?><div class="ui small <?php echo 0 === $total_themes_outdate ? 'green' : 'red'; ?> label"><?php echo $total_themes_outdate; ?></div></a>
+				<?php
+				foreach ( $header_tabs as $slug => $tab ) {
+					if ( empty( $tab['title'] ) ) {
+						continue;
+					}
+					?>
+					<a class="<?php echo( $slug === $current_tab ? 'active' : '' ); ?> item" data-tab="<?php echo esc_html( $slug ); ?>" href="admin.php?page=UpdatesManage&tab=<?php echo esc_html( $slug ); ?>"><?php esc_html_e( $tab['title'] ); ?><div class="ui small <?php echo empty( $tab['total_upgrades'] ) ? 'green' : 'red'; ?> label" timestamp="<?php echo time(); ?>"><?php echo intval( $tab['total_upgrades'] ); ?></div></a>
+					<?php
+				}
+				?>
 			</div>
 		</div>
 		<?php
+
+		$hide_show_updates_per = apply_filters( 'mainwp_updates_hide_show_updates_per', false, $current_tab );
+
 		/**
 		 * Action: mainwp_updates_after_nav_tabs
 		 *
@@ -1890,7 +1992,9 @@ class MainWP_Updates {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_updates_before_actions_bar' );
-		?>
+
+		if ( ! $hide_show_updates_per ) {
+			?>
 		<div class="mainwp-sub-header">
 			<div class="ui grid">
 				<div class="equal width row">
@@ -1930,7 +2034,9 @@ class MainWP_Updates {
 			</div>
 			</div>
 		</div>
-		<?php
+			<?php
+		}
+
 		/**
 		 * Action: mainwp_updates_after_actions_bar
 		 *
@@ -2218,16 +2324,114 @@ class MainWP_Updates {
 	public static function render_plugin_details_modal() {
 		?>
 		<div class="ui modal" id="mainwp-plugin-details-modal">
-				<div class="header"><?php echo __( 'Plugin Details', 'mainwp' ); ?></div>
+				<div class="header"><?php echo esc_html__( 'Plugin Details', 'mainwp' ); ?></div>
 				<div class="content">
 					<div class="ui embed"></div>
 				</div>
 				<div class="actions">
-					<div class="ui cancel button"><?php echo __( 'Close', 'mainwp' ); ?></div>
+					<div class="ui cancel button"><?php echo esc_html__( 'Close', 'mainwp' ); ?></div>
 				</div>
 			</div>
 		<?php
 	}
+
+	/**
+	 * Method render_screen_options_modal()
+	 *
+	 * Renders Page Settings Modal.
+	 */
+	public static function render_screen_options_modal() { // phpcs:ignore -- complex method.
+
+		$snAutomaticDailyUpdate       = get_option( 'mainwp_automaticDailyUpdate' );
+		$snPluginAutomaticDailyUpdate = get_option( 'mainwp_pluginAutomaticDailyUpdate' );
+		$snThemeAutomaticDailyUpdate  = get_option( 'mainwp_themeAutomaticDailyUpdate' );
+		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
+		$disableUpdateConfirmations   = get_option( 'mainwp_disable_update_confirmations', 0 );
+		$delay_autoupdate             = get_option( 'mainwp_delay_autoupdate', 1 );
+		?>
+		<div class="ui modal" id="mainwp-manage-updates-screen-options-modal">
+			<div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
+			<div class="scrolling content ui form">
+				<form method="POST" action="" id="manage-updates-screen-options-form" name="manage-updates-screen-options-form">
+					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdatesScrOptions' ); ?>" />
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Plugin advanced automatic updates', 'mainwp' ); ?></label>
+						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic plugins updates.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+							<select name="mainwp_pluginAutomaticDailyUpdate" id="mainwp_pluginAutomaticDailyUpdate" class="ui dropdown">
+								<option value="1" <?php echo ( 1 == $snPluginAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
+								<option value="0" <?php echo ( ( false !== $snPluginAutomaticDailyUpdate && 0 == $snPluginAutomaticDailyUpdate ) || 2 == $snPluginAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
+							</select>
+						</div>
+					</div>
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Theme advanced automatic updates', 'mainwp' ); ?></label>
+						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic themes updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<select name="mainwp_themeAutomaticDailyUpdate" id="mainwp_themeAutomaticDailyUpdate" class="ui dropdown">
+								<option value="1" <?php echo ( 1 == $snThemeAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
+								<option value="0" <?php echo ( ( false !== $snThemeAutomaticDailyUpdate && 0 == $snThemeAutomaticDailyUpdate ) || 2 == $snThemeAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
+							</select>
+						</div>
+					</div>
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'WP Core advanced automatic updates', 'mainwp' ); ?></label>
+						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic WordPress core updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<select name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" class="ui dropdown">
+								<option value="1" <?php echo ( 1 == $snAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
+								<option value="0" <?php echo ( ( false !== $snAutomaticDailyUpdate && 0 == $snAutomaticDailyUpdate ) || 2 == $snAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
+							</select>
+						</div>
+					</div>
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Advanced automatic updates delay', 'mainwp' ); ?></label>
+						<div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'Set the number of days to delay automatic updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<select name="mainwp_delay_autoupdate" id="mainwp_delay_autoupdate" class="ui dropdown">
+								<option value="0" <?php echo ( 0 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Delay off', 'mainwp' ); ?></option>
+								<option value="1" <?php echo ( 1 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '1 day', 'mainwp' ); ?></option>
+								<option value="2" <?php echo ( 2 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '2 days', 'mainwp' ); ?></option>
+								<option value="3" <?php echo ( 3 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '3 days', 'mainwp' ); ?></option>
+								<option value="4" <?php echo ( 4 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '4 days', 'mainwp' ); ?></option>
+								<option value="5" <?php echo ( 5 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '5 days', 'mainwp' ); ?></option>
+								<option value="6" <?php echo ( 6 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '6 days', 'mainwp' ); ?></option>
+								<option value="7" <?php echo ( 7 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '7 days', 'mainwp' ); ?></option>
+								<option value="14" <?php echo ( 14 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '14 days', 'mainwp' ); ?></option>
+								<option value="30" <?php echo ( 30 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '30 days', 'mainwp' ); ?></option>
+							</select>
+						</div>
+					</div>
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Show WordPress language updates', 'mainwp' ); ?></label>
+						<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to manage Translation updates', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<input type="checkbox" name="mainwp_show_language_updates" id="mainwp_show_language_updates" <?php echo ( 1 == $mainwp_show_language_updates ? 'checked="true"' : '' ); ?>/>
+						</div>
+					</div>
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Update confirmations', 'mainwp' ); ?></label>
+						<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Choose if you want to disable the popup confirmations when performing updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<select name="mainwp_disable_update_confirmations" id="mainwp_disable_update_confirmations" class="ui dropdown">
+								<option value="0" <?php echo ( 0 == $disableUpdateConfirmations ? 'selected' : '' ); ?>><?php esc_html_e( 'Enable', 'mainwp' ); ?></option>
+								<option value="2" <?php echo ( 2 == $disableUpdateConfirmations ? 'selected' : '' ); ?>><?php esc_html_e( 'Disable', 'mainwp' ); ?></option>
+								<option value="1" <?php echo ( 1 == $disableUpdateConfirmations ? 'selected' : '' ); ?>><?php esc_html_e( 'Disable for single updates', 'mainwp' ); ?></option>
+							</select>
+						</div>
+					</div>
+					<div class="ui hidden divider"></div>
+					<div class="ui hidden divider"></div>
+				</div>
+				<div class="actions">
+					<div class="ui two columns grid">
+						<div class="left aligned column"></div>
+						<div class="ui right aligned column">
+							<input type="submit" class="ui green button" name="btnSubmit" id="submit-manage-updates-settings" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
+							<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+		<?php
+	}
+
 
 	/**
 	 * MainWP Help Box content. Hook the section help content to the Help Sidebar element.

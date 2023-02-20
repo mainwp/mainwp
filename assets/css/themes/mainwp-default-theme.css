@@ -27,7 +27,7 @@
 /* General styles
   ========================================================================== */
 
-.mainwp-ui.mainwp-custom-theme a:not( .button, .title ) {
+.mainwp-ui.mainwp-custom-theme a:not( .button, .title, .uf-fmuci-button-main ) {
  color: var( --font-color ) !important;
  font-weight: bolder;
  text-decoration: underline dotted;
@@ -186,7 +186,7 @@
   color: var( --yellow-color ) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme a.label:not(.tag, .transition) {
+.mainwp-ui.mainwp-custom-theme a.label:not(.tag, .transition, .basic) {
   color: #ffffff !important;
 }
 

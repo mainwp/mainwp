@@ -70,7 +70,7 @@ class MainWP_Updates_Overview {
 		if ( is_wp_error( $request ) ) {
 			$url  = isset( $_REQUEST['url'] ) ? esc_url_raw( wp_unslash( $_REQUEST['url'] ) ) : '';
 			$name = isset( $_REQUEST['name'] ) ? wp_unslash( $_REQUEST['name'] ) : '';
-			$res  = new \WP_Error( 'plugins_api_failed', __( '<h3>No plugin information found.</h3> This may be a premium plugin and no other details are available from WordPress.', 'mainwp' ) . ' ' . ( '' == $url ? __( 'Please visit the plugin website for more information.', 'mainwp' ) : __( 'Please visit the plugin website for more information: ', 'mainwp' ) . '<a href="' . esc_html( rawurldecode( $url ) ) . '" target="_blank">' . esc_html( rawurldecode( $name ) ) . '</a>' ), $request->get_error_message() );
+			$res  = new \WP_Error( 'plugins_api_failed', esc_html__( '<h3>No plugin information found.</h3> This may be a premium plugin and no other details are available from WordPress.', 'mainwp' ) . ' ' . ( '' == $url ? esc_html__( 'Please visit the plugin website for more information.', 'mainwp' ) : esc_html__( 'Please visit the plugin website for more information: ', 'mainwp' ) . '<a href="' . esc_html( rawurldecode( $url ) ) . '" target="_blank">' . esc_html( rawurldecode( $name ) ) . '</a>' ), $request->get_error_message() );
 
 			return $res;
 		}
@@ -84,7 +84,7 @@ class MainWP_Updates_Overview {
 	 * Define Widget Title.
 	 */
 	public static function get_name() {
-		return __( 'Update Overview', 'mainwp' );
+		return esc_html__( 'Update Overview', 'mainwp' );
 	}
 
 	/**
@@ -113,7 +113,7 @@ class MainWP_Updates_Overview {
 		}
 
 		if ( null == $website ) {
-			die( wp_json_encode( array( 'error' => __( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		if ( MainWP_Sync::sync_website( $website ) ) {
@@ -405,24 +405,19 @@ class MainWP_Updates_Overview {
 		if ( ! $globalView ) {
 			$last_dtsSync = $currentSite->dtsSync;
 		} else {
-			$result                   = MainWP_DB_Common::instance()->get_last_sync_status();
-			$sync_status              = $result['sync_status'];
-			$last_sync                = $result['last_sync'];
-						$last_dtsSync = $result['last_sync'];
+			$result       = MainWP_DB_Common::instance()->get_last_sync_status();
+			$sync_status  = $result['sync_status'];
+			$last_sync    = $result['last_sync'];
+			$last_dtsSync = $result['last_sync'];
 
 			if ( 'all_synced' === $sync_status ) {
-				$now           = time();
-				$last_sync_all = get_option( 'mainwp_last_synced_all_sites', 0 );
-				if ( 0 == $last_sync_all ) {
-					$last_sync_all = $last_sync;
-				}
-				$last_dtsSync = $last_sync_all;
+				$last_dtsSync = get_option( 'mainwp_last_synced_all_sites', $last_sync );
 			}
 		}
 
 		$lastSyncMsg = '';
 		if ( $last_dtsSync ) {
-			$lastSyncMsg = __( 'Last successfully completed synchronization: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $last_dtsSync ) );
+			$lastSyncMsg = esc_html__( 'Last successfully completed synchronization: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $last_dtsSync ) );
 		}
 
 		$user_can_update_translation = mainwp_current_user_have_right( 'dashboard', 'update_translations' );
@@ -485,7 +480,7 @@ class MainWP_Updates_Overview {
 					 *
 					 * @since 4.1
 					 */
-					echo esc_html( apply_filters( 'mainwp_updates_overview_widget_title', __( 'Updates Overview', 'mainwp' ) ) );
+					echo esc_html( apply_filters( 'mainwp_updates_overview_widget_title', esc_html__( 'Updates Overview', 'mainwp' ) ) );
 					?>
 					<div class="sub header"><?php echo $lastSyncMsg; ?></div>
 				</h3>
@@ -525,7 +520,7 @@ class MainWP_Updates_Overview {
 				if ( $can_total_update ) :
 					?>
 					<?php if ( ! get_option( 'mainwp_hide_update_everything', false ) ) : ?>
-						<a href="#" <?php echo 0 == $total_upgrades ? 'disabled' : 'onClick="return updatesoverview_global_upgrade_all( \'all\' );"'; ?> class="ui big button fluid green" id="mainwp-update-everything-button" data-tooltip="<?php $globalView ? esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on ALL your websites.', 'mainwp' ) : esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', __( 'Update Everything', 'mainwp' ) ) ); ?></a>
+						<a href="#" <?php echo 0 == $total_upgrades ? 'disabled' : 'onClick="return updatesoverview_global_upgrade_all( \'all\' );"'; ?> class="ui big button fluid green" id="mainwp-update-everything-button" data-tooltip="<?php $globalView ? esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on ALL your websites.', 'mainwp' ) : esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', esc_html__( 'Update Everything', 'mainwp' ) ) ); ?></a>
 			<?php endif; ?>
 		<?php endif; ?>
 				</div>
@@ -567,7 +562,7 @@ class MainWP_Updates_Overview {
 			 *
 			 * @since 4.1
 			 */
-			echo esc_html( apply_filters( 'mainwp_updates_overview_update_details_divider', __( 'Update Details', 'mainwp' ) ) );
+			echo esc_html( apply_filters( 'mainwp_updates_overview_update_details_divider', esc_html__( 'Update Details', 'mainwp' ) ) );
 			?>
 		</div>
 		<div class="ui hidden divider"></div>
@@ -674,10 +669,10 @@ class MainWP_Updates_Overview {
 						MainWP_Updates::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
 					if ( $globalView ) {
 						$detail_plugins_up  = 'admin.php?page=UpdatesManage&tab=plugins-updates';
-						$update_all_tooltip = __( 'Clicking this button will update all Plugins on All your websites.', 'mainwp' );
+						$update_all_tooltip = esc_html__( 'Clicking this button will update all Plugins on All your websites.', 'mainwp' );
 					} else {
 						$detail_plugins_up  = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=plugins-updates';
-						$update_all_tooltip = __( 'Clicking this button will update all Plugins on the website.', 'mainwp' );
+						$update_all_tooltip = esc_html__( 'Clicking this button will update all Plugins on the website.', 'mainwp' );
 					}
 
 					if ( 0 == $total_plugin_upgrades ) {
@@ -874,7 +869,7 @@ class MainWP_Updates_Overview {
 		 *
 		 * @since 4.1
 		 */
-		echo esc_html( apply_filters( 'mainwp_updates_overview_abandoned_plugins_themes_divider', __( 'Abandoned Plugins & Themes', 'mainwp' ) ) );
+		echo esc_html( apply_filters( 'mainwp_updates_overview_abandoned_plugins_themes_divider', esc_html__( 'Abandoned Plugins & Themes', 'mainwp' ) ) );
 		?>
 		</div>
 		<div class="ui hidden divider"></div>

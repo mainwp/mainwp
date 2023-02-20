@@ -83,8 +83,7 @@ class MainWP_System_Handler {
 		add_filter( 'mainwp_getgroups', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_groups' ), 10, 4 );
 		add_action( 'mainwp_fetchurlsauthed', array( &$this, 'filter_fetch_urls_authed' ), 10, 7 );
 		add_filter( 'mainwp_fetchurlauthed', array( &$this, 'filter_fetch_url_authed' ), 10, 6 );
-
-		add_filter( 'mainwp_getsqlwebsites_for_current_user', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_sql_websites_for_current_user' ), 10, 4 );
+		add_filter( 'mainwp_getsqlwebsites_for_current_user', array( self::class, 'hook_get_sql_websites_for_current_user' ), 10, 4 );
 
 		add_filter(
 			'mainwp_getdashboardsites',
@@ -231,12 +230,32 @@ class MainWP_System_Handler {
 		}
 	}
 
+
+
+	/**
+	 * Method hook_get_sql_websites_for_current_user()
+	 *
+	 * Get sql websites for current user.
+	 *
+	 * @param mixed  $false First input filter value.
+	 * @param string $pluginFile Extension plugin file to verify.
+	 * @param string $key The child-key.
+	 * @param mixed  $params  Input params data.
+	 *
+	 * @return string sql.
+	 */
+	public static function hook_get_sql_websites_for_current_user( $false, $pluginFile, $key, $params ) {
+		if ( ! MainWP_Extensions_Handler::hook_verify( $pluginFile, $key ) ) {
+			return false;
+		}
+		return MainWP_DB::instance()->get_sql_wp_for_current_user( $params );
+	}
 	/**
 	 * Method handle_manage_sites_screen_settings()
 	 *
 	 * Handle manage sites screen settings
 	 */
-	public function handle_manage_sites_screen_settings() {
+	public function handle_manage_sites_screen_settings() { // phpcs:ignore -- required to achieve desired results, pull request solutions appreciated.
 		if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'ManageSitesScrOptions' ) ) {
 			$show_cols = array();
 			foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST ) ) as $key => $val ) {
@@ -252,6 +271,8 @@ class MainWP_System_Handler {
 					}
 				}
 			}
+			MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
+			MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
 			$user = wp_get_current_user();
 			if ( $user ) {
 				$val = ( isset( $_POST['mainwp_sitesviewmode'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_sitesviewmode'] ) ) : 'grid' );
@@ -301,6 +322,16 @@ class MainWP_System_Handler {
 				update_user_option( $user->ID, 'mainwp_settings_show_monitoring_sites_columns', $show_cols, true );
 				update_option( 'mainwp_default_monitoring_sites_per_page', ( isset( $_POST['mainwp_default_monitoring_sites_per_page'] ) ? intval( $_POST['mainwp_default_monitoring_sites_per_page'] ) : 25 ) );
 			}
+
+			update_option( 'mainwp_disableSitesChecking', ( ! isset( $_POST['mainwp_disableSitesChecking'] ) ? 1 : 0 ) );
+
+			$val = isset( $_POST['mainwp_frequency_sitesChecking'] ) ? intval( $_POST['mainwp_frequency_sitesChecking'] ) : 1440;
+			update_option( 'mainwp_frequencySitesChecking', $val );
+
+			update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
+
+			$val = isset( $_POST['mainwp_site_healthThreshold'] ) ? intval( $_POST['mainwp_site_healthThreshold'] ) : 80;
+			update_option( 'mainwp_sitehealthThreshold', $val );
 		}
 	}
 
@@ -334,6 +365,28 @@ class MainWP_System_Handler {
 		}
 	}
 
+	/**
+	 * Method handle_clients_screen_settings()
+	 *
+	 * Handle manage clients screen settings
+	 */
+	public function handle_updates_screen_settings() {
+		if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdatesScrOptions' ) ) {
+			$val = ( ! isset( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) ? 0 : intval( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) );
+			MainWP_Utility::update_option( 'mainwp_pluginAutomaticDailyUpdate', $val );
+			$val = ( ! isset( $_POST['mainwp_themeAutomaticDailyUpdate'] ) ? 0 : intval( $_POST['mainwp_themeAutomaticDailyUpdate'] ) );
+			MainWP_Utility::update_option( 'mainwp_themeAutomaticDailyUpdate', $val );
+			$val = ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : intval( $_POST['mainwp_automaticDailyUpdate'] ) );
+			MainWP_Utility::update_option( 'mainwp_automaticDailyUpdate', $val );
+			$val = ( isset( $_POST['mainwp_delay_autoupdate'] ) ? intval( $_POST['mainwp_delay_autoupdate'] ) : 1 );
+			MainWP_Utility::update_option( 'mainwp_delay_autoupdate', $val );
+			$val = ( ! isset( $_POST['mainwp_show_language_updates'] ) ? 0 : 1 );
+			MainWP_Utility::update_option( 'mainwp_show_language_updates', $val );
+			$val = ( ! isset( $_POST['mainwp_disable_update_confirmations'] ) ? 0 : intval( $_POST['mainwp_disable_update_confirmations'] ) );
+			MainWP_Utility::update_option( 'mainwp_disable_update_confirmations', $val );
+		}
+	}
+
 
 	/**
 	 * Method handle_mainwp_tools_settings()
@@ -361,6 +414,8 @@ class MainWP_System_Handler {
 						MainWP_Twitter::clear_all_twitter_messages();
 					}
 				}
+				$enabled_tours = ! isset( $_POST['mainwp-guided-tours-option'] ) ? 0 : 1;
+				MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enabled_tours );
 
 				if ( isset( $_POST['mainwp_settings_custom_theme'] ) ) {
 					$update_selected_mainwp_themes = true;
@@ -487,6 +542,7 @@ class MainWP_System_Handler {
 			$this->handle_manage_sites_screen_settings();
 			$this->handle_monitoring_sites_screen_settings();
 			$this->handle_clients_screen_settings();
+			$this->handle_updates_screen_settings();
 		}
 
 		if ( isset( $_POST['select_mainwp_options_siteview'] ) ) {

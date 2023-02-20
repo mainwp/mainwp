@@ -57,23 +57,28 @@ class MainWP_Updates_Table_Helper {
 	 */
 	public function get_columns() {
 
-		$title = ( MAINWP_VIEW_PER_PLUGIN_THEME == $this->view_per || MAINWP_VIEW_PER_GROUP == $this->view_per ) ? __( 'Website', 'mainwp' ) : '';
+		$title = ( MAINWP_VIEW_PER_PLUGIN_THEME == $this->view_per || MAINWP_VIEW_PER_GROUP == $this->view_per ) ? esc_html__( 'Website', 'mainwp' ) : '';
 		if ( MAINWP_VIEW_PER_SITE == $this->view_per ) {
-			$title = ( 'plugin' == $this->type ) ? __( 'Plugin', 'mainwp' ) : __( 'Theme', 'mainwp' );
+			$title = ( 'plugin' == $this->type ) ? esc_html__( 'Plugin', 'mainwp' ) : esc_html__( 'Theme', 'mainwp' );
 		}
 
 		$columns = array(
 			'title'   => $title,
 			'login'   => '<i class="sign in alternate icon"></i>',
-			'version' => __( 'Version', 'mainwp' ),
-			'latest'  => __( 'Latest', 'mainwp' ),
-			'trusted' => __( 'Trusted', 'mainwp' ),
-			'status'  => __( 'Status', 'mainwp' ),
+			'version' => esc_html__( 'Version', 'mainwp' ),
+			'latest'  => esc_html__( 'Latest', 'mainwp' ),
+			'trusted' => esc_html__( 'Trusted', 'mainwp' ),
+			'status'  => esc_html__( 'Status', 'mainwp' ),
+			'client'  => esc_html__( 'Client', 'mainwp' ),
 			'action'  => '',
 		);
 
 		if ( MAINWP_VIEW_PER_PLUGIN_THEME != $this->view_per ) {
 			unset( $columns['login'] );
+			unset( $columns['client'] );
+		}
+		if ( MAINWP_VIEW_PER_PLUGIN_THEME == $this->view_per ) {
+			unset( $columns['trusted'] );
 		}
 		return $columns;
 	}

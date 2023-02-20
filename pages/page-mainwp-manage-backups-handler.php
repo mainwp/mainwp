@@ -145,14 +145,14 @@ class MainWP_Manage_Backups_Handler {
 		$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
 
 		if ( '' == $name ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' ) ) ) );
 		}
 
 		$backupId = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
 		$task     = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupId );
 
 		if ( ! self::can_edit_backuptask( $task ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) ) ) );
 		}
 
 		$schedule       = isset( $_POST['schedule'] ) ? sanitize_text_field( wp_unslash( $_POST['schedule'] ) ) : '';
@@ -199,9 +199,9 @@ class MainWP_Manage_Backups_Handler {
 		$excludezip    = isset( $_POST['excludezip'] ) ? sanitize_text_field( wp_unslash( $_POST['excludezip'] ) ) : '';
 
 		if ( MainWP_DB_Backup::instance()->update_backup_task( $task->id, $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, $subfolder, $filename, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip ) === false ) {
-			die( wp_json_encode( array( 'error' => __( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
 		} else {
-			die( wp_json_encode( array( 'result' => __( 'Task updated successfully.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'result' => esc_html__( 'Task updated successfully.', 'mainwp' ) ) ) );
 		}
 	}
 
@@ -218,7 +218,7 @@ class MainWP_Manage_Backups_Handler {
 		$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
 
 		if ( '' == $name ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' ) ) ) );
 		}
 
 		$schedule       = isset( $_POST['schedule'] ) ? sanitize_text_field( wp_unslash( $_POST['schedule'] ) ) : '';
@@ -266,11 +266,11 @@ class MainWP_Manage_Backups_Handler {
 		$task = MainWP_DB_Backup::instance()->add_backup_task( $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, $subfolder, $filename, 0, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip );
 
 		if ( ! $task ) {
-			die( wp_json_encode( array( 'error' => __( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
 		} else {
 			do_action( 'mainwp_add_backuptask', $task->id );
 
-			die( wp_json_encode( array( 'result' => __( 'Task created successfully.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'result' => esc_html__( 'Task created successfully.', 'mainwp' ) ) ) );
 		}
 	}
 

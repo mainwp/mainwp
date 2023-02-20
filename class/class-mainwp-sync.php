@@ -118,7 +118,7 @@ class MainWP_Sync {
 			 */
 			$othersData = apply_filters( 'mainwp_sync_others_data', $othersData, $pWebsite );
 
-			$saved_days_number = apply_filters( 'minwp_site_actions_saved_days_number', 30 );
+			$saved_days_number = apply_filters( 'mainwp_site_actions_saved_days_number', 30 );
 
 			$information = MainWP_Connect::fetch_url_authed(
 				$pWebsite,
@@ -144,10 +144,10 @@ class MainWP_Sync {
 			$check_result = 1;
 
 			if ( $e->getMessage() == 'HTTPERROR' ) {
-				$sync_errors  = __( 'HTTP error', 'mainwp' ) . ( $e->get_message_extra() != null ? ' - ' . $e->get_message_extra() : '' );
+				$sync_errors  = esc_html__( 'HTTP error', 'mainwp' ) . ( $e->get_message_extra() != null ? ' - ' . $e->get_message_extra() : '' );
 				$check_result = - 1;
 			} elseif ( $e->getMessage() == 'NOMAINWP' ) {
-				$sync_errors  = sprintf( __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a>' );
+				$sync_errors  = sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a>' );
 				$check_result = 1;
 			}
 
@@ -517,7 +517,7 @@ class MainWP_Sync {
 				MainWP_Logger::instance()->warning_for_website( $pWebsite, 'SYNC ERROR', '[' . esc_html( $information['error'] ) . ']' );
 				$error                            = true;
 				$done                             = true;
-				$websiteSyncValues['sync_errors'] = __( 'ERROR: ', 'mainwp' ) . esc_html( $information['error'] );
+				$websiteSyncValues['sync_errors'] = esc_html__( 'ERROR: ', 'mainwp' ) . esc_html( $information['error'] );
 			} elseif ( ! empty( $sync_errors ) ) {
 				MainWP_Logger::instance()->warning_for_website( $pWebsite, 'SYNC ERROR', '[' . $sync_errors . ']' );
 
@@ -531,7 +531,7 @@ class MainWP_Sync {
 				MainWP_Logger::instance()->warning_for_website( $pWebsite, 'SYNC ERROR', '[Undefined error]' );
 				$error = true;
 				if ( $pAllowDisconnect ) {
-					$websiteSyncValues['sync_errors'] = __( 'Undefined error! Please, reinstall the MainWP Child plugin on the child site.', 'mainwp' );
+					$websiteSyncValues['sync_errors'] = esc_html__( 'Undefined error! Please, reinstall the MainWP Child plugin on the child site.', 'mainwp' );
 				}
 			}
 		}

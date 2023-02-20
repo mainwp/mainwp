@@ -146,7 +146,7 @@ mainwp_fetch_pages = function () {
         if (selected_sites.length == 0) {
             errors.push('<div class="mainwp-notice mainwp-notice-red">' + __('Please select websites or groups or clients.') + '</div>');
         }
-    } else if( jQuery('#select_by').val() == 'client' ) {
+    } else if (jQuery('#select_by').val() == 'client') {
         jQuery("input[name='selected_clients[]']:checked").each(function () {
             selected_clients.push(jQuery(this).val());
         });
@@ -316,10 +316,10 @@ mainwppost_postAction = function (elem, what, postType) {
         return;
     }
 
-    if ( what == 'get_edit' && postType === 'page' ) {
-        postId = rowElement.find( '.pageId' ).val();
+    if (what == 'get_edit' && postType === 'page') {
+        postId = rowElement.find('.pageId').val();
     }
-    
+
     var data = {
         action: 'mainwp_post_' + what,
         postId: postId,
@@ -342,7 +342,9 @@ mainwppost_postAction = function (elem, what, postType) {
         } else {
             rowElement.hide();
             if (what == 'get_edit' && response.id) {
-                if (postType == 'post') {
+                if (response.redirect_to) {
+                    location.href = response.redirect_to;
+                } else if (postType == 'post') {
                     location.href = 'admin.php?page=PostBulkEdit&post_id=' + response.id;
                 } else if (postType == 'page') {
                     location.href = 'admin.php?page=PageBulkEdit&post_id=' + response.id;
@@ -407,7 +409,7 @@ mainwp_fetch_posts = function (postId, userId, start_sites) {
             errors.push('<div class="ui yellow message">' + __('Please select at least one client or website, group.') + '</div>');
         }
 
-    } else if(jQuery('#select_by').val() == 'group' ) {
+    } else if (jQuery('#select_by').val() == 'group') {
         jQuery("input[name='selected_groups[]']:checked").each(function () {
             selected_groups.push(jQuery(this).val());
         });
@@ -516,7 +518,7 @@ mainwp_fetch_posts_done = function () {
     jQuery('#mainwp-loading-posts-row').hide();
     jQuery('#mainwp_posts_main').show();
     var responsive = true;
-    if( jQuery( window ).width() > 1140 ) {
+    if (jQuery(window).width() > 1140) {
         responsive = false;
     }
     // re-initialize datatable.

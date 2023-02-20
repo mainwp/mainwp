@@ -88,7 +88,7 @@ class MainWP_Updates_Per_Group {
 								</div>
 
 							</td>
-							<td sort-value="0"><span total-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" data-inverted="" data-tooltip="<?php echo esc_attr( __( 'Click to see available updates', 'mainwp' ) ); ?>"></span></td>
+							<td sort-value="0"><span total-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" data-inverted="" data-tooltip="<?php echo esc_attr( esc_html__( 'Click to see available updates', 'mainwp' ) ); ?>"></span></td>
 							<td class="right aligned">
 								<?php if ( MainWP_Updates::user_can_update_wp() ) : ?>
 									<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update all sites in the tag', 'mainwp' ); ?>" data-inverted="" data-position="left center" btn-all-uid2="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-selected-button ui basic green button" onClick="event.stopPropagation(); return updatesoverview_wordpress_global_upgrade_all( <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
@@ -105,6 +105,7 @@ class MainWP_Updates_Per_Group {
 											<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
 											<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
 											<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
+											<th><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
 											<th class="no-sort"></th>
 										</tr>
 									</thead>
@@ -144,6 +145,7 @@ class MainWP_Updates_Per_Group {
 														<strong class="mainwp-768-show"><?php esc_html_e( 'Latest:', 'mainwp' ); ?></strong> <?php echo esc_html( $wp_upgrades['new'] ); ?>
 													<?php endif; ?>
 												</td>
+												<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . $website->client_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
 												<td>
 													<?php if ( MainWP_Updates::user_can_update_wp() ) : ?>
 														<?php if ( 0 < count( $wp_upgrades ) ) : ?>
@@ -267,6 +269,7 @@ class MainWP_Updates_Per_Group {
 										<th class="collapsing no-sort"></th>
 										<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 										<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+										<th class="indicator-accordion-sorting handle-accordion-sorting"><?php echo esc_html__( 'Client', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 										<th class="collapsing no-sort"></th>
 									</tr>
 								</thead>
@@ -322,7 +325,8 @@ class MainWP_Updates_Per_Group {
 													<input type="checkbox" name=""><label><?php MainWP_Updates::render_site_link_dashboard( $website ); ?></label>
 												</div>
 											</td>
-											<td sort-value="<?php echo count( $plugin_upgrades ); ?>"><strong class="mainwp-768-show"><?php echo __( 'Updates: ', 'mainwp' ); ?></strong> <?php echo count( $plugin_upgrades ) . ' ' . _n( 'Update', 'Updates', count( $plugin_upgrades ), 'mainwp' ); ?></td>
+											<td sort-value="<?php echo count( $plugin_upgrades ); ?>"><strong class="mainwp-768-show"><?php echo esc_html__( 'Updates: ', 'mainwp' ); ?></strong> <?php echo count( $plugin_upgrades ) . ' ' . _n( 'Update', 'Updates', count( $plugin_upgrades ), 'mainwp' ); ?></td>
+											<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . $website->client_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
 											<td>
 												<?php if ( MainWP_Updates::user_can_update_plugins() ) : ?>
 													<?php if ( 0 < count( $plugin_upgrades ) ) : ?>
@@ -334,7 +338,7 @@ class MainWP_Updates_Per_Group {
 											</td>
 										</tr>
 										<tr  class="child-checkbox content">
-											<td colspan="4">
+											<td colspan="5">
 												<table id="mainwp-wordpress-updates-plugins-inner-table" class="ui table mainwp-manage-updates-table mainwp-updates-list">
 													<thead class="mainwp-768-hide">
 														<tr>
@@ -348,8 +352,8 @@ class MainWP_Updates_Per_Group {
 														$indent_hidden = '<input type="hidden" id="wp_upgraded_plugin_' . esc_attr( $website->id ) . '_group_' . esc_attr( $group_id ) . '_' . $plugin_name . '" value="0"/>';
 														$row_columns   = array(
 															'title'   => MainWP_System_Utility::get_plugin_icon( dirname( $slug ) ) . '&nbsp;&nbsp;&nbsp;&nbsp;<a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '" target="_blank" class="open-plugin-details-modal">' . esc_html( $plugin_upgrade['Name'] ) . '</a>' . $indent_hidden,
-															'version' => '<strong class="mainwp-768-show">' . __( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $plugin_upgrade['Version'] ),
-															'latest'  => '<strong class="mainwp-768-show">' . __( 'Updates: ', 'mainwp' ) . '</strong><a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog" target="_blank" class="open-plugin-details-modal">' . esc_html( $plugin_upgrade['update']['new_version'] ) . '</a>',
+															'version' => '<strong class="mainwp-768-show">' . esc_html__( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $plugin_upgrade['Version'] ),
+															'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Updates: ', 'mainwp' ) . '</strong><a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog" target="_blank" class="open-plugin-details-modal">' . esc_html( $plugin_upgrade['update']['new_version'] ) . '</a>',
 															'trusted' => ( in_array( $slug, $trustedPlugins ) ? true : false ),
 															'status'  => ( isset( $plugin_upgrade['active'] ) && $plugin_upgrade['active'] ) ? true : false,
 														);
@@ -382,6 +386,7 @@ class MainWP_Updates_Per_Group {
 										<th class="collapsing no-sort"></th>
 										<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
 										<th><?php esc_html_e( 'Updates', 'mainwp' ); ?></th>
+										<th><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
 										<th class="collapsing no-sort"></th>
 									</tr>
 								</tfoot>
@@ -498,6 +503,7 @@ class MainWP_Updates_Per_Group {
 										<th class="collapsing no-sort"></th>
 										<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 										<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+										<th class="indicator-accordion-sorting handle-accordion-sorting"><?php echo esc_html__( 'Client', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 										<th class="collapsing no-sort"></th>
 									</tr>
 								</thead>
@@ -554,6 +560,7 @@ class MainWP_Updates_Per_Group {
 												</div>
 											</td>
 											<td sort-value="<?php echo count( $theme_upgrades ); ?>"><strong class="mainwp-768-show"><?php esc_html_e( 'Updates:', 'mainwp' ); ?></strong> <?php echo count( $theme_upgrades ) . ' ' . _n( 'Update', 'Updates', count( $theme_upgrades ), 'mainwp' ); ?></td>
+											<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . $website->client_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
 											<td class="right aligned">
 												<?php if ( MainWP_Updates::user_can_update_themes() ) : ?>
 													<?php if ( 0 < count( $theme_upgrades ) ) : ?>
@@ -565,7 +572,7 @@ class MainWP_Updates_Per_Group {
 											</td>
 										</tr>
 										<tr class="child-checkbox content">
-											<td colspan="4">
+											<td colspan="5">
 												<table id="mainwp-wordpress-updates-themes-inner-table" class="ui table mainwp-manage-updates-table mainwp-updates-list">
 													<thead class="mainwp-768-hide">
 														<tr>
@@ -579,8 +586,8 @@ class MainWP_Updates_Per_Group {
 														<?php
 															$row_columns = array(
 																'title'   => MainWP_System_Utility::get_theme_icon( $slug ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $theme_upgrade['Name'] ) . $indent_hidden,
-																'version' => '<strong class="mainwp-768-show">' . __( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $theme_upgrade['Version'] ),
-																'latest'  => '<strong class="mainwp-768-show">' . __( 'Latest: ', 'mainwp' ) . '</strong>' . esc_html( $theme_upgrade['update']['new_version'] ),
+																'version' => '<strong class="mainwp-768-show">' . esc_html__( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $theme_upgrade['Version'] ),
+																'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong>' . esc_html( $theme_upgrade['update']['new_version'] ),
 																'trusted' => ( in_array( $slug, $trustedThemes, true ) ? true : false ),
 																'status'  => ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? true : false,
 															);
@@ -613,6 +620,7 @@ class MainWP_Updates_Per_Group {
 										<th class="collapsing no-sort"></th>
 										<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
 										<th><?php esc_html_e( 'Updates', 'mainwp' ); ?></th>
+										<th><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
 										<th class="collapsing no-sort"></th>
 									</tr>
 								</thead>
@@ -713,6 +721,7 @@ class MainWP_Updates_Per_Group {
 										<th class="collapsing no-sort"></th>
 										<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 										<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+										<th class="indicator-accordion-sorting handle-accordion-sorting"><?php echo esc_html__( 'Client', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 										<th></th>
 									</tr>
 								</thead>
@@ -739,6 +748,7 @@ class MainWP_Updates_Per_Group {
 										<td sort-value="<?php echo count( $translation_upgrades ); ?>">
 											<strong class="mainwp-768-show"><?php esc_html_e( 'Updates:', 'mainwp' ); ?></strong> <?php echo _n( 'Update', 'Updates', count( $translation_upgrades ), 'mainwp' ); ?>
 										</td>
+										<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . $website->client_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
 										<td>
 										<?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
 											<?php if ( 0 < count( $translation_upgrades ) ) : ?>
@@ -750,7 +760,7 @@ class MainWP_Updates_Per_Group {
 										</td>
 									</tr>
 									<tr class="child-checkbox content">
-										<td colspan="4">
+										<td colspan="5">
 											<table class="ui table mainwp-manage-updates-table" id="mainwp-translations-table">
 												<thead class="mainwp-768-hide">
 													<tr>
@@ -832,7 +842,7 @@ class MainWP_Updates_Per_Group {
 	 * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
 	 */
 	public static function render_abandoned_plugins( $websites, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedPlugins ) {
-		$str_format = __( 'Updated %s days ago', 'mainwp' );
+		$str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
 		?>
 		<table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-abandoned-plugins-groups-table">
 			<thead>
@@ -860,6 +870,7 @@ class MainWP_Updates_Per_Group {
 								<tr>
 								<th class="collapsing no-sort"></th>
 								<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+								<th class="indicator-accordion-sorting handle-accordion-sorting"><?php echo esc_html__( 'Client', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 								<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Abandoned', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 								</tr>
 							</thead>
@@ -899,12 +910,13 @@ class MainWP_Updates_Per_Group {
 									<td>										
 										<strong class="mainwp-768-show"><?php esc_html_e( 'Website:', 'mainwp' ); ?></strong> <?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 									</td>
+									<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . $website->client_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
 									<td sort-value="<?php echo count( $plugins_outdate ); ?>">
 										<strong class="mainwp-768-show"><?php esc_html_e( 'Abandoned:', 'mainwp' ); ?></strong> <?php echo count( $plugins_outdate ); ?> <?php echo _n( 'Plugin', 'Plugins', count( $plugins_outdate ), 'mainwp' ); ?>
 									</td>
 								</tr>
 								<tr class="child-checkbox content">
-									<td colspan="3">
+									<td colspan="4">
 										<table class="ui mainwp-manage-updates-table table" id="mainwp-abandoned-plugins-table">
 											<thead class="mainwp-768-hide">
 												<tr>
@@ -988,7 +1000,7 @@ class MainWP_Updates_Per_Group {
 	 * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
 	 */
 	public static function render_abandoned_themes( $websites, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedThemes ) {
-		$str_format = __( 'Updated %s days ago', 'mainwp' );
+		$str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
 		?>
 		<table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-abandoned-themes-groups-table">
 			<thead>
@@ -1016,6 +1028,7 @@ class MainWP_Updates_Per_Group {
 								<tr>
 									<th class="collapsing no-sort"></th>
 									<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+									<th class="indicator-accordion-sorting handle-accordion-sorting"><?php echo esc_html__( 'Client', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 									<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Abandoned', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 								</tr>
 							</thead>
@@ -1055,12 +1068,13 @@ class MainWP_Updates_Per_Group {
 									<td>
 										<strong class="mainwp-768-show"><?php esc_html_e( 'Website:', 'mainwp' ); ?></strong> <?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 									</td>
+									<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . $website->client_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
 									<td sort-value="<?php echo count( $themes_outdate ); ?>">
 										<strong class="mainwp-768-show"><?php esc_html_e( 'Abandoned:', 'mainwp' ); ?></strong> <?php echo count( $themes_outdate ); ?> <?php echo _n( 'Theme', 'Themes', count( $themes_outdate ), 'mainwp' ); ?>
 									</td>
 								</tr>
 								<tr class="content">
-									<td colspan="3">
+									<td colspan="4">
 										<table class="ui mainwp-manage-updates-item-table mainwp-manage-updates-table table" id="mainwp-abandoned-themes-table">
 											<thead class="mainwp-768-hide">
 												<tr>

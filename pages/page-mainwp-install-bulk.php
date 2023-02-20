@@ -612,15 +612,15 @@ class MainWP_Install_Bulk {
 			} elseif ( isset( $information['error'] ) ) {
 				$error = esc_html( $information['error'] );
 				if ( isset( $information['error_code'] ) && 'folder_exists' == $information['error_code'] ) {
-					$error = __( 'Already installed', 'mainwp' );
+					$error = esc_html__( 'Already installed', 'mainwp' );
 				}
 
 				if ( 'not found' == strtolower( $error ) ) {
 					if ( is_array( $post_data ) && isset( $post_data['type'] ) ) {
 						if ( 'plugin' == $post_data['type'] ) {
-							$error = __( 'Plugin file not found. Make sure security plugins or server-side security rules are not blocking requests from your child sites.', 'mainwp' );
+							$error = esc_html__( 'Plugin file not found. Make sure security plugins or server-side security rules are not blocking requests from your child sites.', 'mainwp' );
 						} elseif ( 'theme' == $post_data['type'] ) {
-							$error = __( 'Theme file not found. Make sure security plugins or server-side security rules are not blocking requests from your child sites.', 'mainwp' );
+							$error = esc_html__( 'Theme file not found. Make sure security plugins or server-side security rules are not blocking requests from your child sites.', 'mainwp' );
 						}
 					}
 				}

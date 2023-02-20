@@ -6058,8 +6058,8 @@ msgstr ""
 #: pages/page-mainwp-client-overview.php:301 pages/page-mainwp-overview.php:401
 #, php-format
 msgid ""
-"To hide or show a widget, click the Cog (<i class=\"cog icon\"></i>) icon or "
-"go to the %1$sMainWP Settings%2$s page and select options from \"Show widgets"
+"To hide or show a widget, click the Cog ($1$s) icon or "
+"go to the %2$sMainWP Settings%3$s page and select options from \"Show widgets"
 "\""
 msgstr ""
 

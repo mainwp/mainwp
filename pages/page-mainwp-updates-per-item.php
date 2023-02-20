@@ -119,7 +119,7 @@ class MainWP_Updates_Per_Item {
 						</td>
 					</tr>
 					<tr class="plugins-bulk-updates child-checkbox content" plugin_slug="<?php echo $plugin_name; ?>" plugin_name="<?php echo rawurlencode( $pluginsInfo[ $slug ]['name'] ); ?>" premium="<?php echo $pluginsInfo[ $slug ]['premium'] ? 1 : 0; ?>">
-						<td colspan="5">
+						<td colspan="6">
 							<table id="mainwp-plugins-updates-sites-inner-table" class="ui mainwp-manage-updates-table table">
 								<thead class="mainwp-768-hide">
 									<tr>
@@ -133,7 +133,10 @@ class MainWP_Updates_Per_Item {
 										if ( $website->is_ignorePluginUpdates ) {
 											continue;
 										}
-										$plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
+										$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
+										if ( ! is_array( $plugin_upgrades ) ) {
+											$plugin_upgrades = array();
+										}
 										$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
 										$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 
@@ -141,8 +144,8 @@ class MainWP_Updates_Per_Item {
 											foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 												$premiumUpgrade['premium'] = true;
 												if ( 'plugin' === $premiumUpgrade['type'] ) {
-													if ( ! is_array( $plugin_upgrades ) ) {
-														$plugin_upgrades = array();
+													if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
+														$plugin_upgrades[ $crrSlug ] = array();
 													}
 													$premiumUpgrade              = array_filter( $premiumUpgrade );
 													$plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
@@ -163,10 +166,11 @@ class MainWP_Updates_Per_Item {
 										$row_columns = array(
 											'title'   => MainWP_Updates::render_site_link_dashboard( $website, false ),
 											'login'   => '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" data-tooltip="' . esc_attr__( 'Jump to the site WP Admin', 'mainwp' ) . '"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>',
-											'version' => '<strong class="mainwp-768-show">' . __( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $plugin_upgrade['Version'] ),
-											'latest'  => '<strong class="mainwp-768-show">' . __( 'Latest: ', 'mainwp' ) . '</strong><a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog" target="_blank" class="open-plugin-details-modal">' . esc_html( $plugin_upgrade['update']['new_version'] ) . '</a>',
+											'version' => '<strong class="mainwp-768-show">' . esc_html__( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $plugin_upgrade['Version'] ),
+											'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong><a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog" target="_blank" class="open-plugin-details-modal">' . esc_html( $plugin_upgrade['update']['new_version'] ) . '</a>',
 											'trusted' => ( in_array( $slug, $trustedPlugins ) ? true : false ),
 											'status'  => ( isset( $plugin_upgrade['active'] ) && $plugin_upgrade['active'] ) ? true : false,
+											'client'  => ( isset( $website->client_name ) && '' != $website->client_name ) ? $website->client_name : '',
 										);
 										?>
 										<tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0">
@@ -347,10 +351,11 @@ class MainWP_Updates_Per_Item {
 										$row_columns   = array(
 											'title'   => MainWP_Updates::render_site_link_dashboard( $website, false ),
 											'login'   => '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" data-tooltip="' . esc_attr__( 'Jump to the site WP Admin', 'mainwp' ) . '"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>',
-											'version' => '<strong class="mainwp-768-show">' . __( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $theme_upgrade['Version'] ),
-											'latest'  => '<strong class="mainwp-768-show">' . __( 'Latest: ', 'mainwp' ) . '</strong>' . esc_html( $theme_upgrade['update']['new_version'] ),
+											'version' => '<strong class="mainwp-768-show">' . esc_html__( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $theme_upgrade['Version'] ),
+											'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong>' . esc_html( $theme_upgrade['update']['new_version'] ),
 											'trusted' => ( in_array( $slug, $trustedThemes ) ? true : false ),
 											'status'  => ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? true : false,
+											'client'  => ( isset( $website->client_name ) && '' != $website->client_name ) ? $website->client_name : '',
 										);
 										?>
 										<tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0">
@@ -466,6 +471,7 @@ class MainWP_Updates_Per_Item {
 									<tr>
 										<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
 										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+										<th><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
 										<th class="collapsing no-sort"></th>
 									</tr>
 								</thead>
@@ -493,6 +499,7 @@ class MainWP_Updates_Per_Item {
 											<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 											</td>
 											<td><strong class="mainwp-768-show"><?php esc_html_e( 'Version:', 'mainwp' ); ?></strong> <?php echo esc_html( $translation_upgrade['version'] ); ?></td>
+											<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . $website->client_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
 											<td class="right aligned">
 											<?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
 													<a href="javascript:void(0)" class="mainwp-update-now-button ui green mini button" onClick="return updatesoverview_upgrade_translation( <?php echo esc_attr( $website->id ); ?>, '<?php echo esc_js( $slug ); ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
@@ -545,7 +552,7 @@ class MainWP_Updates_Per_Item {
 	 * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
 	 */
 	public static function render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins ) {
-		$str_format = __( 'Updated %s days ago', 'mainwp' );
+		$str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
 		?>
 		<table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-abandoned-plugins-items-table">
 			<thead>
@@ -584,6 +591,7 @@ class MainWP_Updates_Per_Item {
 									<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
 									<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
 									<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
+									<th><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
 									<th class="no-sort"></th>
 								</tr>
 							</thead>
@@ -627,6 +635,7 @@ class MainWP_Updates_Per_Item {
 									</td>
 									<td><strong class="mainwp-768-show"><?php esc_html_e( 'Version:', 'mainwp' ); ?></strong> <?php echo esc_html( $plugin_outdate['Version'] ); ?></td>
 									<td><strong class="mainwp-768-show"><?php esc_html_e( 'Last Update:', 'mainwp' ); ?></strong> <?php echo $outdate_notice; ?></td>
+									<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . $website->client_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
 									<td class="right aligned">
 									<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 										<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
@@ -673,7 +682,7 @@ class MainWP_Updates_Per_Item {
 	 * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
 	 */
 	public static function render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes ) {
-		$str_format = __( 'Updated %s days ago', 'mainwp' );
+		$str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
 		?>
 		<table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-themes-updates-table">
 			<thead>
@@ -710,6 +719,7 @@ class MainWP_Updates_Per_Item {
 									<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
 									<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
 									<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
+									<th><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
 									<th class="no-sort"></th>
 								</tr>
 							</thead>
@@ -754,6 +764,7 @@ class MainWP_Updates_Per_Item {
 									</td>
 									<td><strong class="mainwp-768-show"><?php esc_html_e( 'Version:', 'mainwp' ); ?></strong> <?php echo esc_html( $theme_outdate['Version'] ); ?></td>
 									<td><strong class="mainwp-768-show"><?php esc_html_e( 'Last Update:', 'mainwp' ); ?></strong>  <?php echo $outdate_notice; ?></td>
+									<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . $website->client_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
 									<td class="right aligned">
 									<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 										<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_dismiss_outdate_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>

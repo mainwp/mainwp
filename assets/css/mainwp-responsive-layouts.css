@@ -28,6 +28,7 @@
 @media only screen and ( min-width: 768px ) and ( max-width: 1449px ) {
 	.mainwp-sync-button-icon {
 		display: inline-block !important;
+		margin: 0px !important;
 	}
 	.mainwp-sync-button-text  {
 		display: none !important;

@@ -73,7 +73,7 @@ class MainWP_Site_Actions {
 			 *
 			 * @since 4.1
 			 */
-			echo esc_html( apply_filters( 'mainwp_non_mainwp_changes_widget_title', __( 'Non-MainWP Changes', 'mainwp' ), $website ) );
+			echo esc_html( apply_filters( 'mainwp_non_mainwp_changes_widget_title', esc_html__( 'Non-MainWP Changes', 'mainwp' ), $website ) );
 			?>
 				<div class="sub header"><?php esc_html_e( 'The most recent Non-MainWP plugin and theme changes. Sync to get latest info.', 'mainwp' ); ?></div>
 			</h3>
@@ -162,11 +162,13 @@ class MainWP_Site_Actions {
 					?>
 					</tbody>
 				</table>
+				<div class="ui hidden divider"></div>
+				<a href="javascript:void(0)" id="mainwp-delete-all-nonmainwp-actions-button" class="ui button green"><?php esc_html_e( 'Delete All Non-MainWP Changes', 'mainwp' ); ?></a>
 				<script type="text/javascript">
 				jQuery( document ).ready( function() {
 					jQuery.fn.DataTable.ext.pager.numbers_length = 4;
 					jQuery( '#mainwp-non-mainwp-changes-table' ).DataTable( {
-						"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+						"lengthMenu": [ [5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"] ],
 						"stateSave" : true,
 						"columnDefs": [ {
 							"targets": 'no-sort',

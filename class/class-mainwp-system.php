@@ -35,7 +35,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.3.1';
+	public static $version = '4.4-RC1';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -115,6 +115,7 @@ class MainWP_System {
 	 */
 	public function __construct( $mainwp_plugin_file ) {
 		self::$instance = $this;
+		MainWP_Logger::instance()->init_execution_time();
 		$this->load_all_options();
 		$this->update_install();
 		$this->plugin_slug = plugin_basename( $mainwp_plugin_file );
@@ -230,6 +231,7 @@ class MainWP_System {
 		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			MainWP_Manage_Backups::init();
 		}
+		MainWP_Manage_Groups::init();
 		MainWP_User::init();
 		MainWP_Page::init();
 		MainWP_Themes::init();
@@ -705,13 +707,6 @@ class MainWP_System {
 		MainWP_Post_Plugin_Theme_Handler::instance()->init();
 		MainWP_Post_Extension_Handler::instance()->init();
 		MainWP_Post_Backup_Handler::instance()->init();
-
-		/**
-		 * Initiate MainWP Cache Control Class.
-		 *
-		 * @since 4.2
-		 */
-		MainWP_Auto_Cache_Purge_View::instance()->init();
 
 		/**
 		 * Filter: mainwp_ui_use_wp_calendar

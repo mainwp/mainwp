@@ -168,6 +168,7 @@ class MainWP_Connect {
 		}
 
 		MainWP_Logger::instance()->debug( ' :: tryVisit :: [url=' . $url . '] [http_status=' . $http_status . '] [error=' . $err . '] [data-start]' . $data . '[data-end]' );
+		MainWP_Logger::instance()->log_execution_time( 'tryVisit :: [url=' . $url . '] [http_status=' . $http_status . ']' );
 
 		$host   = wp_parse_url( ( empty( $realurl ) ? $url : $realurl ), PHP_URL_HOST );
 		$ip     = false;
@@ -1364,6 +1365,8 @@ class MainWP_Connect {
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'post data: [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
 		}
 
+		MainWP_Logger::instance()->log_execution_time( 'fetch_url_site :: [url=' . $url . ']' );
+
 		$thr_error = null;
 
 		if ( ( false === $data ) && ( 0 == $http_status ) ) {
@@ -1548,11 +1551,11 @@ class MainWP_Connect {
 		}
 
 		if ( ! $wp_filesystem->exists( dirname( $file ) ) ) {
-			throw new MainWP_Exception( __( 'MainWP plugin could not create directory in order to download the file.', 'mainwp' ) );
+			throw new MainWP_Exception( esc_html__( 'MainWP plugin could not create directory in order to download the file.', 'mainwp' ) );
 		}
 
 		if ( ! is_writable( @dirname( $file ) ) ) {
-			throw new MainWP_Exception( __( 'MainWP upload directory is not writable.', 'mainwp' ) );
+			throw new MainWP_Exception( esc_html__( 'MainWP upload directory is not writable.', 'mainwp' ) );
 		}
 
 		$fp    = fopen( $file, 'a' );

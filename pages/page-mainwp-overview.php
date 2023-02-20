@@ -43,6 +43,7 @@ class MainWP_Overview {
 		'security_issues'    => true,
 		'backup_tasks'       => true,
 		'non_mainwp_changes' => true,
+		'clients'            => true,
 	);
 
 	/**
@@ -156,7 +157,7 @@ class MainWP_Overview {
 	public static function init_left_menu() {
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => __( 'Overview', 'mainwp' ),
+				'title'      => esc_html__( 'Overview', 'mainwp' ),
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'mainwp_tab',
 				'href'       => 'admin.php?page=mainwp_tab',
@@ -232,40 +233,45 @@ class MainWP_Overview {
 
 		// Load the Updates Overview widget.
 		if ( self::$enable_widgets['overview'] ) {
-			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), $page, 'left', __( 'Updates Overview', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), $page, 'left', esc_html__( 'Updates Overview', 'mainwp' ) );
 		}
 
 		// Load the Recent Posts widget.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
 			if ( self::$enable_widgets['recent_posts'] ) {
-				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, 'right', __( 'Recent Posts', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, 'right', esc_html__( 'Recent Posts', 'mainwp' ) );
 			}
 		}
 
 		// Load the Recent Pages widget.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			if ( self::$enable_widgets['recent_pages'] ) {
-				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, 'right', __( 'Recent Pages', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, 'right', esc_html__( 'Recent Pages', 'mainwp' ) );
 			}
 		}
 
 		// Load the Connection Status widget.
 		if ( ! MainWP_System_Utility::get_current_wpid() ) {
 			if ( self::$enable_widgets['connection_status'] ) {
-				MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, 'left', __( 'Connection Status', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, 'left', esc_html__( 'Connection Status', 'mainwp' ) );
 			}
 		}
 
 		// Load the Security Issues widget.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
 			if ( self::$enable_widgets['security_issues'] ) {
-				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), $page, 'left', __( 'Security Issues', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), $page, 'left', esc_html__( 'Security Issues', 'mainwp' ) );
 			}
 		}
 
 		// Load the Non-MainWP Changes widget.
 		if ( self::$enable_widgets['non_mainwp_changes'] ) {
-			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, 'left', __( 'Non-MainWP Changes', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, 'left', esc_html__( 'Non-MainWP Changes', 'mainwp' ) );
+		}
+
+		// Load the Clients widget.
+		if ( self::$enable_widgets['clients'] ) {
+			MainWP_UI::add_widget_box( 'clients', array( MainWP_Clients::get_class_name(), 'render' ), $page, 'left', esc_html__( 'Clients', 'mainwp' ) );
 		}
 
 		$i = 1;
@@ -297,7 +303,7 @@ class MainWP_Overview {
 	 */
 	public function on_show_page() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_global_dashboard' ) ) {
-			mainwp_do_not_have_permissions( __( 'global dashboard', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'global dashboard', 'mainwp' ) );
 			return;
 		}
 
@@ -309,7 +315,7 @@ class MainWP_Overview {
 		global $screen_layout_columns;
 
 		$params = array(
-			'title' => __( 'Overview', 'mainwp' ),
+			'title' => esc_html__( 'Overview', 'mainwp' ),
 		);
 
 		MainWP_UI::render_top_header( $params );
@@ -387,7 +393,7 @@ class MainWP_Overview {
 				if ( ! empty( $website->sync_errors ) ) {
 					?>
 					<div class="ui red message">
-						<p><?php echo '<strong>' . $website->name . '</strong>' . __( ' is Disconnected. Click the Reconnect button to establish the connection again.', 'mainwp' ); ?></p>
+						<p><?php echo '<strong>' . $website->name . '</strong>' . esc_html__( ' is Disconnected. Click the Reconnect button to establish the connection again.', 'mainwp' ); ?></p>
 					</div>
 					<?php
 				}
@@ -398,7 +404,7 @@ class MainWP_Overview {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>
-					<?php echo sprintf( __( 'To hide or show a widget, click the Cog (<i class="cog icon"></i>) icon or go to the %1$sMainWP Settings%2$s page and select options from "Show widgets"', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?>
+					<?php echo sprintf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon or go to the %2$sMainWP Settings%3$s page and select options from "Show widgets"', 'mainwp' ), '<i class="cog icon"></i>', '<a href="admin.php?page=Settings">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 
@@ -558,7 +564,7 @@ class MainWP_Overview {
 			<div class="ui relaxed bulleted list">
 				<div class="item"><a href="https://kb.mainwp.com/docs/understanding-mainwp-dashboard-user-interface/" target="_blank">Understanding MainWP Dashboard UI</a></div>
 				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-navigation/" target="_blank">MainWP Navigation</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/screen-options/" target="_blank">Screen Options</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/screen-options/" target="_blank">Page Settings</a></div>
 				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-dashboard/" target="_blank">MainWP Dashboard</a></div>
 				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-tables/" target="_blank">MainWP Tables</a></div>
 				<div class="item"><a href="https://kb.mainwp.com/docs/individual-child-site-mode/" target="_blank">Individual Child Site Mode</a></div>

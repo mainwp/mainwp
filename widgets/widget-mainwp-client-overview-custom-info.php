@@ -60,7 +60,7 @@ class MainWP_Client_Overview_Custom_Info {
 			 *
 			 * @since 4.1
 			 */
-			echo esc_html( apply_filters( 'mainwp_clients_overview_info_widget_title', __( 'Addition Client Info', 'mainwp' ), $client_info ) );
+			echo esc_html( apply_filters( 'mainwp_clients_overview_info_widget_title', esc_html__( 'Addition Client Info', 'mainwp' ), $client_info ) );
 			?>
 			<div class="sub header"></div>
 			</h3>
@@ -144,7 +144,7 @@ class MainWP_Client_Overview_Custom_Info {
 					<h2 class="ui grey icon header">
 						<i class="info icon"></i>
 						<div class="content">
-							<?php echo __( 'No Custom Info Created', 'mainwp' ); ?>
+							<?php echo esc_html__( 'No Custom Info Created', 'mainwp' ); ?>
 							<div class="ui hidden divider"></div>
 							<div class="sub header"><a href="admin.php?page=ClientAddField" title="" class="ui button basic green"><?php echo esc_html__( 'Add Custom Client Info', 'mainwp' ); ?></a></div>
 						</div>

@@ -34,7 +34,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Admin Passwords', 'mainwp' ),
-			'<div class="mainwp-hidden">' . __( 'Admin Passwords', 'mainwp' ) . '</div>',
+			'<div class="mainwp-hidden">' . esc_html__( 'Admin Passwords', 'mainwp' ) . '</div>',
 			'read',
 			'UpdateAdminPasswords',
 			array(
@@ -82,14 +82,14 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				$selected_clients = ( isset( $_POST['selected_clients'] ) && is_array( $_POST['selected_clients'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_clients'] ) ) : array();
 
 				if ( ( 'group' == $_POST['select_by'] && 0 == count( $selected_groups ) ) || ( 'site' == $_POST['select_by'] && 0 == count( $selected_sites ) ) || ( 'client' == $_POST['select_by'] && 0 == count( $selected_clients ) ) ) {
-					$errors[] = __( 'Please select the sites or groups or clients where you want to change the administrator password.', 'mainwp' );
+					$errors[] = esc_html__( 'Please select the sites or groups or clients where you want to change the administrator password.', 'mainwp' );
 				}
 			} else {
-				$errors[] = __( 'Please select whether you want to change the administrator password for specific sites or groups or clients.', 'mainwp' );
+				$errors[] = esc_html__( 'Please select whether you want to change the administrator password for specific sites or groups or clients.', 'mainwp' );
 			}
 
 			if ( ! isset( $_POST['password'] ) || '' == $_POST['password'] ) {
-				$errors[] = __( 'Please enter the password.', 'mainwp' );
+				$errors[] = esc_html__( 'Please enter the password.', 'mainwp' );
 			}
 
 			$data_fields = array(
@@ -270,7 +270,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-admin-pass-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-admin-pass-info-message"></i>
-							<?php echo sprintf( __( 'See the list of Admininstrator users used to establish secure connection between your MainWP Dashboard and child sites.  If needed, use the provided form to set a new password for these accounts.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/bulk-update-administrator-passwords/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( esc_html__( 'See the list of Admininstrator users used to establish secure connection between your MainWP Dashboard and child sites.  If needed, use the provided form to set a new password for these accounts.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/bulk-update-administrator-passwords/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 						<?php

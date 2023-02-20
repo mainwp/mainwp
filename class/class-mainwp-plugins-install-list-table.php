@@ -86,7 +86,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		$tabs = array();
 
 		if ( 'search' == $tab ) {
-			$tabs['search'] = __( 'Search Results', 'mainwp' );
+			$tabs['search'] = esc_html__( 'Search Results', 'mainwp' );
 		}
 		$tabs['featured']    = _x( 'Featured', 'Plugin Installer' );
 		$tabs['popular']     = _x( 'Popular', 'Plugin Installer' );
@@ -97,7 +97,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		if ( current_user_can( 'upload_plugins' ) ) {
 			// No longer a real tab. Here for filter compatibility.
 			// Gets skipped in get_views().
-			$tabs['upload'] = __( 'Upload Plugin', 'mainwp' );
+			$tabs['upload'] = esc_html__( 'Upload Plugin', 'mainwp' );
 		}
 
 		$nonmenu_tabs = array( 'plugin-information' );
@@ -202,9 +202,9 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 	 */
 	public function no_items() {
 		if ( isset( $this->error ) ) {
-			$message = $this->error->get_error_message() . '<p class="hide-if-no-js"><a href="#" class="button" onclick="document.location.reload(); return false;">' . __( 'Try again', 'mainwp' ) . '</a></p>';
+			$message = $this->error->get_error_message() . '<p class="hide-if-no-js"><a href="#" class="button" onclick="document.location.reload(); return false;">' . esc_html__( 'Try again', 'mainwp' ) . '</a></p>';
 		} else {
-			$message = __( 'No plugins match your request.', 'mainwp' );
+			$message = esc_html__( 'No plugins match your request.', 'mainwp' );
 		}
 		echo '<div class="ui message yellow">' . $message . '</div>';
 	}
@@ -304,13 +304,13 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		if ( $disable_first ) {
 			$page_links[] = '<a class="item disabled" aria-hidden="true"><i class="angle double left icon"></i></a>';
 		} else {
-			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'First page' ) . "' aria-hidden='true'>%s</a>", esc_url( remove_query_arg( 'paged', $current_url ) ), '<i class="angle double left icon"></i>' );
+			$page_links[] = sprintf( "<a class='item' href='%s' title='" . esc_html__( 'First page' ) . "' aria-hidden='true'>%s</a>", esc_url( remove_query_arg( 'paged', $current_url ) ), '<i class="angle double left icon"></i>' );
 		}
 
 		if ( $disable_prev ) {
 			$page_links[] = '<a class="item disabled" aria-hidden="true"><i class="angle left icon"></i></a>';
 		} else {
-			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'Previous page' ) . "' aria-hidden='true'>%s</a>", esc_url( add_query_arg( 'paged', max( 1, $current - 1 ), $current_url ) ), '<i class="angle left icon"></i>' );
+			$page_links[] = sprintf( "<a class='item' href='%s' title='" . esc_html__( 'Previous page' ) . "' aria-hidden='true'>%s</a>", esc_url( add_query_arg( 'paged', max( 1, $current - 1 ), $current_url ) ), '<i class="angle left icon"></i>' );
 		}
 
 		if ( $current - 1 > 0 ) {
@@ -326,13 +326,13 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		if ( $disable_next ) {
 			$page_links[] = '<span class="item disabled " aria-hidden="true"><i class="right angle icon"></i></span>';
 		} else {
-			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'Next page', 'mainwp' ) . "'>%s</a>", esc_url( add_query_arg( 'paged', min( $total_pages, $current + 1 ), $current_url ) ), '<i class="angle right icon"></i>' );
+			$page_links[] = sprintf( "<a class='item' href='%s' title='" . esc_html__( 'Next page', 'mainwp' ) . "'>%s</a>", esc_url( add_query_arg( 'paged', min( $total_pages, $current + 1 ), $current_url ) ), '<i class="angle right icon"></i>' );
 		}
 
 		if ( $disable_last ) {
 			$page_links[] = '<a class="item disabled" aria-hidden="true"><i class="right angle double icon"></i></a>';
 		} else {
-			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'Last page', 'mainwp' ) . "' aria-hidden='true'>%s</a>", esc_url( add_query_arg( 'paged', $total_pages, $current_url ) ), '<i class="right angle double icon"></i>' );
+			$page_links[] = sprintf( "<a class='item' href='%s' title='" . esc_html__( 'Last page', 'mainwp' ) . "' aria-hidden='true'>%s</a>", esc_url( add_query_arg( 'paged', $total_pages, $current_url ) ), '<i class="right angle double icon"></i>' );
 		}
 
 		if ( $total_pages > 1 ) {
@@ -463,7 +463,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 			$author = wp_kses( $plugin['author'], $plugins_allowedtags );
 			if ( ! empty( $author ) ) {
-				$author = ' <cite>' . sprintf( __( 'By %s', 'mainwp' ), $author ) . '</cite>';
+				$author = ' <cite>' . sprintf( esc_html__( 'By %s', 'mainwp' ), $author ) . '</cite>';
 			}
 
 			$details_link = self_admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . $plugin['slug'] . '&url=' . ( isset( $plugin['PluginURI'] ) ? rawurlencode( $plugin['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin['name'] ) );
@@ -506,7 +506,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 					</div>
 				<div class="extra content">
 					<span class="right floated">
-						<strong><?php esc_html_e( 'Last Updated: ', 'mainwp' ); ?></strong><?php printf( __( '%s ago', 'mainwp' ), human_time_diff( $last_updated_timestamp ) ); ?>
+						<strong><?php esc_html_e( 'Last Updated: ', 'mainwp' ); ?></strong><?php printf( esc_html__( '%s ago', 'mainwp' ), human_time_diff( $last_updated_timestamp ) ); ?>
 						</span>
 					<?php
 					wp_star_rating(

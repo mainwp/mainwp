@@ -70,7 +70,7 @@ class MainWP_Hooks {
 		add_action( 'mainwp_upgrade_wp', array( &$this, 'upgrade_wp' ), 10, 0 );
 		// End.
 
-		add_filter( 'mainwp_get_user_extension', array( &$this, 'get_user_extension' ), 10, 2 );
+		add_filter( 'mainwp_get_user_extension', array( &$this, 'hook_get_user_extension' ), 10, 2 );
 		add_filter( 'mainwp_update_user_extension', array( &$this, 'update_user_extension' ), 10, 3 );
 		add_filter( 'mainwp_getwebsitesbyurl', array( &$this, 'get_websites_by_url' ) );
 		add_filter( 'mainwp_getWebsitesByUrl', array( &$this, 'get_websites_by_url' ) );
@@ -100,10 +100,16 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_extension_is_activated', array( &$this, 'is_extension_activated' ), 10, 2 );
 		add_filter( 'mainwp_extension_is_pro_member', array( &$this, 'is_pro_member' ), 10, 1 );
 
+		/**
+		 * Logging debug actions.
+		 */
 		add_action( 'mainwp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
 		add_action( 'mainwp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );
 		add_action( 'mainwp_log_warning', array( &$this, 'mainwp_log_warning' ), 10, 1 );
-		add_action( 'mainwp_log_action', array( &$this, 'mainwp_log_action' ), 10, 3 );
+		add_action( 'mainwp_log_action', array( &$this, 'mainwp_log_action' ), 10, 4 );
+		add_action( 'mainwp_log_execution_time', array( &$this, 'mainwp_log_execution_time' ), 10, 1 );
+		// END.
+
 		add_filter( 'mainwp_getactivateextensionnotice', array( &$this, 'get_activate_extension_notice' ), 10, 1 );
 		add_action( 'mainwp_enqueue_meta_boxes_scripts', array( &$this, 'enqueue_meta_boxes_scripts' ), 10, 1 );
 		add_filter( 'mainwp_addsite', array( &$this, 'mainwp_add_site' ), 10, 1 );
@@ -114,7 +120,9 @@ class MainWP_Hooks {
 		add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hook_add_sub_left_menu' ), 10, 6 );
 		add_filter( 'mainwp_getwebsiteoptions', array( &$this, 'hook_get_site_options' ), 10, 3 );
 		add_filter( 'mainwp_updatewebsiteoptions', array( &$this, 'hook_update_site_options' ), 10, 4 );
+
 		add_filter( 'mainwp_getwebsitesbyuserid', array( &$this, 'hook_get_websites_by_user_id' ), 10, 5 );
+		add_filter( 'mainwp_getwebsite_by_id', array( &$this, 'hook_get_website_by_id' ), 10, 4 );
 
 		add_filter( 'mainwp_addgroup', array( MainWP_Extensions_Handler::get_class_name(), 'hook_add_group' ), 10, 3 );
 		add_filter( 'mainwp_getallposts', array( &$this, 'hook_get_all_posts' ), 10, 2 );
@@ -122,12 +130,16 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_escape_response_data', array( &$this, 'hook_escape_response' ), 10, 3 );
 		add_filter( 'mainwp_escape_content', array( &$this, 'hook_escape_content' ), 10, 3 );
 
+		add_filter( 'mainwp_db_query', array( &$this, 'hook_db_query' ), 10, 2 );
 		add_filter( 'mainwp_db_fetch_object', array( &$this, 'db_fetch_object' ), 10, 2 );
 		add_filter( 'mainwp_db_fetch_array', array( &$this, 'db_fetch_array' ), 10, 2 );
-		add_filter( 'mainwp_db_data_seek', array( &$this, 'db_data_seek' ), 10, 3 );
+		add_action( 'mainwp_db_data_seek', array( &$this, 'hook_db_data_seek' ), 10, 2 );
 		add_filter( 'mainwp_db_free_result', array( &$this, 'db_free_result' ), 10, 2 );
 		add_filter( 'mainwp_db_num_rows', array( &$this, 'db_num_rows' ), 10, 2 );
 		add_filter( 'mainwp_db_get_websites_for_current_user', array( &$this, 'db_get_websites_for_current_user' ), 10, 2 );
+
+		// Sync website.
+		add_filter( 'mainwp_sync_website', array( &$this, 'hook_sync_website' ), 10, 2 );
 
 		add_action( 'mainwp_secure_request', array( &$this, 'hook_secure_request' ), 10, 2 );
 		add_filter( 'mainwp_check_security_request', array( &$this, 'hook_check_security_request' ), 10, 3 );
@@ -150,6 +162,16 @@ class MainWP_Hooks {
 		add_action( 'mainwp_add_widget_box', array( &$this, 'hook_add_widget_box' ), 10, 6 );
 		add_action( 'mainwp_render_modal_upload_icon', array( &$this, 'hook_render_modal_upload_icon' ), 10, 2 );
 		add_action( 'mainwp_render_plugin_details_modal', array( &$this, 'hook_render_plugin_details_modal' ), 10, 2 );
+		add_action( 'mainwp_render_updates', array( &$this, 'hook_render_updates' ), 10, 2 );
+
+		/**
+		 * Filter: mainwp_get_tokens_values
+		 *
+		 * Get tokens values for reports.
+		 *
+		 * @since 4.3.
+		 */
+		add_filter( 'mainwp_get_reports_group_values_website', array( MainWP_Reports_Helper::get_instance(), 'hook_get_reports_group_values' ), 10, 6 );
 	}
 
 	/**
@@ -199,13 +221,27 @@ class MainWP_Hooks {
 	 * @param string $text Debug text.
 	 * @param int    $priority priority.
 	 * @param int    $log_color Set color: 0 - LOG, 1 - WARNING, 2 - INFO, 3- DEBUG.
+	 * @param bool   $forced forced logging.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
 	 */
-	public function mainwp_log_action( $text, $priority = 0, $log_color = 0 ) {
+	public function mainwp_log_action( $text, $priority = 0, $log_color = 0, $forced = false ) {
 		if ( ! empty( $priority ) ) {
-			MainWP_Logger::instance()->log_action( $text, $priority, $log_color );
+			MainWP_Logger::instance()->log_action( $text, $priority, $log_color, $forced );
 		}
+	}
+
+	/**
+	 * Method mainwp_log_execution_time()
+	 *
+	 * MainWP log execution time.
+	 *
+	 * @param string $text Debug text.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
+	 */
+	public function mainwp_log_execution_time( $text = '' ) {
+		MainWP_Logger::instance()->log_execution_time( $text );
 	}
 
 	/**
@@ -282,7 +318,7 @@ class MainWP_Hooks {
 		$site     = MainWP_DB::fetch_object( $websites );
 
 		if ( empty( $site ) ) {
-			return array( 'error' => __( 'Not found the website', 'mainwp' ) );
+			return array( 'error' => esc_html__( 'Not found the website', 'mainwp' ) );
 		}
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
@@ -462,7 +498,7 @@ class MainWP_Hooks {
 			}
 		}
 
-		return sprintf( __( 'You have a MainWP extension that does not have an active API entered. This means you will not receive updates or support. Please visit the %1$sExtensions%2$s page and enter your API key.', 'mainwp' ), '<a href="admin.php?page=Extensions">', '</a>' );
+		return sprintf( esc_html__( 'You have a MainWP extension that does not have an active API entered. This means you will not receive updates or support. Please visit the %1$sExtensions%2$s page and enter your API key.', 'mainwp' ), '<a href="admin.php?page=Extensions">', '</a>' );
 	}
 
 	/**
@@ -600,13 +636,13 @@ class MainWP_Hooks {
 	}
 
 	/**
-	 * Method get_user_extension()
+	 * Method hook_get_user_extension()
 	 *
 	 * Hook to get user extension.
 	 *
 	 * @return object $row User extension.
 	 */
-	public function get_user_extension() {
+	public function hook_get_user_extension() {
 		return MainWP_DB_Common::instance()->get_user_extension();
 	}
 
@@ -633,15 +669,15 @@ class MainWP_Hooks {
 	 *
 	 * Hook to get Child site options.
 	 *
-	 * @param mixed  $boolean Boolean check.
-	 * @param object $website Child site object.
-	 * @param string $name Option table name.
+	 * @param mixed        $boolean Boolean check.
+	 * @param object       $website Child site object.
+	 * @param string|array $options Option table name.
 	 *
 	 * @return string|null Database query result (as string), or null on failure
 	 */
-	public function hook_get_site_options( $boolean, $website, $name = '' ) {
+	public function hook_get_site_options( $boolean, $website, $options = '' ) {
 
-		if ( empty( $name ) ) {
+		if ( empty( $options ) || empty( $website ) ) {
 			return $boolean;
 		}
 
@@ -651,7 +687,12 @@ class MainWP_Hooks {
 			$website = $obj;
 		}
 
-		return MainWP_DB::instance()->get_website_option( $website, $name );
+		if ( is_string( $options ) ) {
+			return MainWP_DB::instance()->get_website_option( $website, $options );
+		} elseif ( is_array( $options ) ) {
+			return MainWP_DB::instance()->get_website_options_array( $website, $options );
+		}
+		return $boolean;
 	}
 
 	/**
@@ -667,6 +708,9 @@ class MainWP_Hooks {
 	 * @return string|null Database query result (as string), or null on failure
 	 */
 	public function hook_update_site_options( $boolean, $website, $option, $value ) {
+		if ( empty( $website ) ) {
+			return false;
+		}
 		if ( is_numeric( $website ) ) {
 			$obj     = new \stdClass();
 			$obj->id = $website;
@@ -689,6 +733,36 @@ class MainWP_Hooks {
 	public function hook_get_websites_by_user_id( $boolean, $userid, $selectgroups = false, $search_site = null, $orderBy = 'wp.url' ) {
 		return MainWP_DB::instance()->get_websites_by_user_id( $userid, $selectgroups, $search_site, $orderBy );
 	}
+
+	/**
+	 * Get sites by website ID.
+	 *
+	 * @param mixed $boolean Boolean check.
+	 * @param int   $website_id       User ID.
+	 * @param bool  $selectGroups     Select groups.
+	 * @param array $extra_view   get extra option fields.
+	 *
+	 * @return object|null Database query results or null on failure.
+	 */
+	public function hook_get_website_by_id( $boolean, $website_id, $selectGroups = false, $extra_view = array() ) {
+
+		if ( empty( $website_id ) ) {
+			return false;
+		}
+
+		$website = MainWP_DB::instance()->get_website_by_id( $website_id, $selectGroups, $extra_view );
+
+		if ( ! empty( $website ) && property_exists( $website, 'privkey' ) ) {
+			unset( $website->privkey );
+		}
+
+		if ( ! empty( $website ) && property_exists( $website, 'nosslkey' ) ) {
+			unset( $website->nosslkey );
+		}
+
+		return $website;
+	}
+
 
 	/**
 	 * Method get_websites_by_url()
@@ -878,28 +952,71 @@ class MainWP_Hooks {
 	 * To escape response data.
 	 *
 	 * @param mixed $false     input value.
-	 * @param mixed $params     params data.
+	 * @param array $params     params data.
 	 *
 	 * @return mixed websites.
 	 */
-	public function db_get_websites_for_current_user( $false, $params = array() ) {
-		return MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+	public function db_get_websites_for_current_user( $false = false, $params = array() ) {
+		if ( ! is_array( $params ) ) {
+			$params = array();
+		}
+
+		$orderBy    = isset( $params['orderby'] ) ? MainWP_DB::instance()->escape( $params['orderby'] ) : 'wp.url';
+		$extra_view = isset( $params['extra_view'] ) ? $params['extra_view'] : array( 'favi_icon' );
+
+		if ( ! is_array( $extra_view ) ) {
+			$extra_view = array( 'favi_icon' );
+		}
+		return MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, $orderBy, false, false, null, false, $extra_view ) );
 	}
 
+
 	/**
-	 * Method db_data_seek()
+	 * Method hook_sync_website()
 	 *
 	 * To escape response data.
 	 *
 	 * @param mixed $false     input value.
+	 * @param int   $website_id  Website ID.
+	 *
+	 * @return mixed websites.
+	 */
+	public function hook_sync_website( $false, $website_id ) {
+		if ( empty( $website_id ) ) {
+			return $false;
+		}
+		$website = MainWP_DB::instance()->get_website_by_id( $website_id );
+		if ( empty( $website ) ) {
+			return $false;
+		}
+		return MainWP_Sync::sync_website( $website );
+	}
+
+	/**
+	 * Method hook_db_data_seek()
+	 *
+	 * To escape response data.
+	 *
 	 * @param mixed $result     result data.
 	 * @param int   $offset     offset of data.
+	 */
+	public function hook_db_data_seek( $result, $offset = 0 ) {
+		MainWP_DB::data_seek( $result, $offset );
+	}
+
+
+	/**
+	 * Method hook_db_query()
+	 *
+	 * To query db.
+	 *
+	 * @param mixed  $false    filter input value.
+	 * @param string $sql     result data.
 	 *
 	 * @return bool true.
 	 */
-	public function db_data_seek( $false, $result, $offset = 0 ) {
-		MainWP_DB::data_seek( $result, $offset );
-		return true;
+	public function hook_db_query( $false, $sql ) {
+		return MainWP_DB::instance()->query( $sql );
 	}
 
 	/**
@@ -1156,7 +1273,7 @@ class MainWP_Hooks {
 	public function upgrade_wp() {
 
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'update_wordpress' ) ) {
-			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update WordPress', 'mainwp' ), $echo = false ) ) ) );
+			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'update WordPress', 'mainwp' ), $echo = false ) ) ) );
 		}
 
 		try {
@@ -1196,15 +1313,15 @@ class MainWP_Hooks {
 			$erCode    = '';
 
 			if ( 'plugin' === $type && ! mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) ) {
-				$error = mainwp_do_not_have_permissions( __( 'update plugins', 'mainwp' ), false );
+				$error = mainwp_do_not_have_permissions( esc_html__( 'update plugins', 'mainwp' ), false );
 			} elseif ( 'theme' === $type && ! mainwp_current_user_have_right( 'dashboard', 'update_themes' ) ) {
-				$error = mainwp_do_not_have_permissions( __( 'update themes', 'mainwp' ), false );
+				$error = mainwp_do_not_have_permissions( esc_html__( 'update themes', 'mainwp' ), false );
 			}
 
 			$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 
 			if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
-				$error  = __( 'Suspended site.', 'mainwp' );
+				$error  = esc_html__( 'Suspended site.', 'mainwp' );
 				$erCode = 'SUSPENDED_SITE';
 			}
 
@@ -1310,7 +1427,7 @@ class MainWP_Hooks {
 	 */
 	public function hook_atarim_default_sitestable_column( $columns ) {
 		if ( ! is_plugin_active( 'mainwp-atarim-extension/mainwp-atarim-extension.php' ) ) {
-			$columns['atarim_tasks'] = __( 'Atarim', 'mainwp-atarim-extension' );
+			$columns['atarim_tasks'] = esc_html__( 'Atarim', 'mainwp-atarim-extension' );
 		}
 		return $columns;
 	}
@@ -1480,5 +1597,14 @@ class MainWP_Hooks {
 	 */
 	public function hook_render_plugin_details_modal() {
 		MainWP_Updates::render_plugin_details_modal();
+	}
+
+	/**
+	 * Method hook_render_plugin_details_modal()
+	 *
+	 * Render modal window plugin details.
+	 */
+	public function hook_render_updates() {
+		MainWP_Updates::render();
 	}
 }

@@ -435,7 +435,7 @@ body.mainwp-ui.mainwp-custom-theme,
 
 /* Invert Buttons, Labels and Icons */
 
-.mainwp-ui.mainwp-custom-theme a:not( .button ) {
+.mainwp-ui.mainwp-custom-theme a:not( .button, .uf-fmuci-button-main ) {
   color: var(--accent-color);
 }
 

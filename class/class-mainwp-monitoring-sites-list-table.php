@@ -111,13 +111,13 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 		return array(
 			'cb'           => '<input type="checkbox" />',
 			'status'       => '',
-			'site'         => __( 'Site', 'mainwp' ),
+			'site'         => esc_html__( 'Site', 'mainwp' ),
 			'login'        => '<i class="sign in alternate icon"></i>',
-			'url'          => __( 'URL', 'mainwp' ),
-			'client_name'  => __( 'Client', 'mainwp' ),
-			'site_health'  => __( 'Site Health', 'mainwp' ),
-			'status_code'  => __( 'Status Code', 'mainwp' ),
-			'last_check'   => __( 'Last Check', 'mainwp' ),
+			'url'          => esc_html__( 'URL', 'mainwp' ),
+			'client_name'  => esc_html__( 'Client', 'mainwp' ),
+			'site_health'  => esc_html__( 'Site Health', 'mainwp' ),
+			'status_code'  => esc_html__( 'Status Code', 'mainwp' ),
+			'last_check'   => esc_html__( 'Last Check', 'mainwp' ),
 			'site_preview' => '<i class="camera icon"></i>',
 		);
 	}
@@ -214,8 +214,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	public function get_bulk_actions() {
 
 		$actions = array(
-			'checknow' => __( 'Check Now', 'mainwp' ),
-			'sync'     => __( 'Sync Data', 'mainwp' ),
+			'checknow' => esc_html__( 'Check Now', 'mainwp' ),
+			'sync'     => esc_html__( 'Sync Data', 'mainwp' ),
 		);
 
 		/**
@@ -530,9 +530,10 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			MainWP_DB::free_result( $total_websites );
 		}
 
-		$params['extra_view'] = array( 'favi_icon', 'health_site_status' );
-
-		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
+		$extra_view           = apply_filters( 'mainwp_monitoring_sitestable_prepare_extra_view', array( 'favi_icon', 'health_site_status' ) );
+		$extra_view           = array_unique( $extra_view );
+		$params['extra_view'] = $extra_view;
+		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
 
 		$site_ids = array();
 		while ( $websites && ( $site = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -590,7 +591,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-monitoring-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-monitoring-info-message"></i>
-				<?php echo sprintf( __( 'Monitor your sites uptime and site health.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a>' ); ?>
+				<?php echo sprintf( esc_html__( 'Monitor your sites uptime and site health.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a>' ); ?>
 			</div>
 		<?php endif; ?>
 		<table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table">
@@ -1008,13 +1009,15 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
 		if ( $good_health ) {
 			$h_color = 'green';
-			$h_text  = __( 'Good', 'mainwp' );
+			$h_text  = esc_html__( 'Good', 'mainwp' );
 		} else {
 			$h_color = 'orange';
-			$h_text  = __( 'Should be improved', 'mainwp' );
+			$h_text  = esc_html__( 'Should be improved', 'mainwp' );
 		}
 
 		$http_error_codes = MainWP_Utility::get_http_codes();
+
+		$website = apply_filters( 'mainwp_monitoring_sitestable_website', $website );
 
 		foreach ( $columns as $column_name => $column_display_name ) {
 
@@ -1199,10 +1202,10 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
 				if ( $good_health ) {
 					$h_color = 'green';
-					$h_text  = __( 'Good', 'mainwp' );
+					$h_text  = esc_html__( 'Good', 'mainwp' );
 				} else {
 					$h_color = 'orange';
-					$h_text  = __( 'Should be improved', 'mainwp' );
+					$h_text  = esc_html__( 'Should be improved', 'mainwp' );
 				}
 
 				$columns = $this->get_columns();

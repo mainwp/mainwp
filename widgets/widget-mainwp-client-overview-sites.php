@@ -106,9 +106,9 @@ class MainWP_Client_Overview_Sites {
 			 *
 			 * @since 4.1
 			 */
-			echo esc_html( apply_filters( 'mainwp_clients_overview_websites_widget_title', __( 'Sites', 'mainwp' ), $client_info ) );
+			echo esc_html( apply_filters( 'mainwp_clients_overview_websites_widget_title', esc_html__( 'Sites', 'mainwp' ), $client_info ) );
 			?>
-			<div class="sub header"><?php echo __( 'Websites that belong to the client.', 'mainwp' ); ?></div>
+			<div class="sub header"><?php echo esc_html__( 'Websites that belong to the client.', 'mainwp' ); ?></div>
 			</h3>
 			<div class="ui section hidden divider"></div>
 			<div class="mainwp-widget-client-card">
@@ -382,9 +382,9 @@ class MainWP_Client_Overview_Sites {
 	public function get_default_columns() {
 		return array(
 			'status' => '',
-			'site'   => __( 'Site', 'mainwp' ),
+			'site'   => esc_html__( 'Site', 'mainwp' ),
 			'login'  => '<i class="sign in alternate icon"></i>',
-			'update' => __( 'Updates', 'mainwp' ),
+			'update' => esc_html__( 'Updates', 'mainwp' ),
 		);
 	}
 

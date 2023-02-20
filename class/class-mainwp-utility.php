@@ -7,7 +7,7 @@
 
 namespace MainWP\Dashboard;
 
-// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
+// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors, Generic.Metrics.CyclomaticComplexity -- Using cURL functions.
 
 /**
  * Class MainWP_Utility
@@ -318,6 +318,21 @@ class MainWP_Utility {
 	}
 
 	/**
+	 * Method map_fields()
+	 *
+	 * Map Site.
+	 *
+	 * @param mixed $data data to map.
+	 * @param mixed $keys Keys to map.
+	 * @param bool  $object_output Output format array|object.
+	 *
+	 * @return mixed Mapped data.
+	 */
+	public static function map_fields( &$data, $keys, $object_output = true ) {
+		return self::map_site( $data, $keys, $object_output );
+	}
+
+	/**
 	 * Method map_site()
 	 *
 	 * Map Site.
@@ -326,7 +341,7 @@ class MainWP_Utility {
 	 * @param mixed $keys Keys to map.
 	 * @param bool  $object_output Output format array|object.
 	 *
-	 * @return object $outputSite Mapped site.
+	 * @return mixed $outputSite Mapped site.
 	 */
 	public static function map_site( &$website, $keys, $object_output = true ) {
 		$outputSite = array();
@@ -553,6 +568,18 @@ class MainWP_Utility {
 					'title'   => array(),
 					'class'   => array(),
 					'onclick' => array(),
+				),
+				'img'    => array(
+					'src'     => array(),
+					'title'   => array(),
+					'class'   => array(),
+					'onclick' => array(),
+					'alt'     => array(),
+					'width'   => array(),
+					'height'  => array(),
+					'sizes'   => array(),
+					'srcset'  => array(),
+					'usemap'  => array(),
 				),
 				'br'     => array(),
 				'em'     => array(),
@@ -1015,5 +1042,33 @@ class MainWP_Utility {
 			$viewmode = 'grid';
 		}
 		return $viewmode;
+	}
+
+
+	/**
+	 * Metho delete_file().
+	 *
+	 * Delete file.
+	 *
+	 * @param string $file_path File path.
+	 *
+	 * @return bool true|false.
+	 */
+	public static function delete_file( $file_path ) {
+
+		global $wp_filesystem;
+
+		if ( ! empty( $file_path ) ) {
+			if ( $wp_filesystem ) {
+				if ( $wp_filesystem->exists( $file_path ) ) {
+					$wp_filesystem->delete( $file_path );
+				}
+			} elseif ( file_exists( $file_path ) ) {
+				unlink( $file_path );
+			}
+			return true;
+		}
+
+		return false;
 	}
 }

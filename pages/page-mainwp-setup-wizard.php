@@ -68,29 +68,38 @@ class MainWP_Setup_Wizard {
 		if ( empty( $_GET['page'] ) || 'mainwp-setup' !== $_GET['page'] ) {
 			return;
 		}
+
+		?>
+		<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo wp_create_nonce( 'mainwp_ajax' ); ?>", mainwp_js_nonce = "<?php echo wp_create_nonce( 'mainwp_nonce' ); ?>";</script>
+		<?php
+		if ( isset( $_GET['page'] ) && 'mainwp-setup' == $_GET['page'] ) {
+			if ( get_option( 'mainwp_enable_guided_tours', 0 ) ) {
+				self::mainwp_usetiful_tours();
+			}
+		}
 		$this->steps = array(
 			'introduction'       => array(
-				'name'    => __( 'Introduction', 'mainwp' ),
+				'name'    => esc_html__( 'Introduction', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_introduction' ),
-				'handler' => '',
+				'handler' => array( $this, 'mwp_setup_introduction_save' ),
 			),
 			'system_check'       => array(
-				'name'    => __( 'System', 'mainwp' ),
+				'name'    => esc_html__( 'System', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_system_requirements' ),
 				'handler' => array( $this, 'mwp_setup_system_requirements_save' ),
 			),
 			'connect_first_site' => array(
-				'name'    => __( 'Connect', 'mainwp' ),
+				'name'    => esc_html__( 'Connect', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_connect_first_site' ),
 				'handler' => '',
 			),
 			'monitoring'         => array(
-				'name'    => __( 'Monitoring', 'mainwp' ),
+				'name'    => esc_html__( 'Monitoring', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_monitoring' ),
 				'handler' => array( $this, 'mwp_setup_monitoring_save' ),
 			),
 			'next_steps'         => array(
-				'name'    => __( 'Finish', 'mainwp' ),
+				'name'    => esc_html__( 'Finish', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_ready' ),
 				'handler' => '',
 			),
@@ -275,13 +284,37 @@ class MainWP_Setup_Wizard {
 		<a href="https://kb.mainwp.com/docs/quick-setup-wizard-video/" target="_blank" class="ui big icon green button"><i class="youtube icon"></i> <?php esc_html_e( 'Walkthrough', 'mainwp' ); ?></a>
 		<div class="ui hidden divider"></div>
 		<p><?php esc_html_e( 'If you don\'t want to go through the setup wizard, you can skip and proceed to your MainWP Dashboard by clicking the "Not right now" button. If you change your mind, you can come back later by starting the Setup Wizard from the MainWP > Settings > MainWP Tools page! ', 'mainwp' ); ?></p>
-		<p><?php esc_html_e( 'To go back to the WordPress Admin section, click the "Back to WP Admin" button.', 'mainwp' ); ?></p>
 		<div class="ui hidden divider"></div>
 		<div class="ui hidden divider"></div>
-		<div class="ui hidden divider"></div>
-		<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="ui big green right floated button"><?php esc_html_e( 'Let\'s Go!', 'mainwp' ); ?></a>
-		<a href="<?php echo esc_url( admin_url( 'index.php' ) ); ?>" class="ui big button"><?php esc_html_e( 'Back to WP Admin', 'mainwp' ); ?></a>
-		<a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>" class="ui big button"><?php esc_html_e( 'Not Right Now', 'mainwp' ); ?></a>
+		<form method="post" class="ui form">
+			<div class="ui green segment">
+				<h3><?php esc_html_e( 'MainWP Guided Tours', 'mainwp' ); ?> <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></h3>
+				<div class="ui info message">
+					<?php echo sprintf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
+				</div>
+				<div class="ui form">
+				<div class="field">
+				<div class="ui hidden divider"></div>
+					<label><?php esc_html_e( 'Do you want to enable MainWP Guided Tours?', 'mainwp' ); ?></label>
+					<div class="ui hidden divider"></div>
+					<div class="ui toggle checkbox">
+						<input type="checkbox" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" <?php echo ( ( 1 == get_option( 'mainwp_enable_guided_tours', 0 ) ) ? 'checked="true"' : '' ); ?>>
+						<label for="mainwp-guided-tours-option"><?php esc_html_e( 'Select to enable the MainWP Guided Tours.', 'mainwp' ); ?></label>
+					</div>
+				</div>
+			</div>
+			</div>
+			<div class="ui hidden divider"></div>
+			<div class="ui hidden divider"></div>
+			<p><?php esc_html_e( 'To go back to the WordPress Admin section, click the "Back to WP Admin" button.', 'mainwp' ); ?></p>
+			<div class="ui hidden divider"></div>
+			<div class="ui hidden divider"></div>
+			<div class="ui hidden divider"></div>
+			<input type="submit" class="ui big green right floated button" value="<?php esc_html_e( 'Let\'s Go!', 'mainwp' ); ?>" name="save_step" />
+			<a href="<?php echo esc_url( admin_url( 'index.php' ) ); ?>" class="ui big button"><?php esc_html_e( 'Back to WP Admin', 'mainwp' ); ?></a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>" class="ui big button"><?php esc_html_e( 'Not Right Now', 'mainwp' ); ?></a>
+			<?php wp_nonce_field( 'mwp-setup' ); ?>
+		</form>
 		<?php
 	}
 
@@ -310,7 +343,7 @@ class MainWP_Setup_Wizard {
 					<div class="ui fluid input">
 						<input type="text" name="mwp_setup_openssl_lib_location" value="<?php echo esc_attr( $openssl_loc ); ?>">
 					</div>
-							<div><em><?php esc_html_e( 'Due to bug with PHP on some servers, enter the openssl.cnf file location so MainWP Dashboard can connect to your child sites. If your openssl.cnf file is saved to a different path from what is entered above please enter your exact path. ', 'mainwp' ); ?><?php echo sprintf( __( '%1$sClick here%2$s to see how to find the OpenSSL.cnf file.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a>' ); ?></em></div>
+							<div><em><?php esc_html_e( 'Due to bug with PHP on some servers, enter the openssl.cnf file location so MainWP Dashboard can connect to your child sites. If your openssl.cnf file is saved to a different path from what is entered above please enter your exact path. ', 'mainwp' ); ?><?php echo sprintf( esc_html__( '%1$sClick here%2$s to see how to find the OpenSSL.cnf file.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a>' ); ?></em></div>
 						</div>
 				</div>
 			</div>
@@ -335,6 +368,22 @@ class MainWP_Setup_Wizard {
 			<?php wp_nonce_field( 'mwp-setup' ); ?>
 		</form>
 		<?php
+	}
+
+
+	/**
+	 * Method mwp_setup_introduction_save()
+	 *
+	 * Installation Step save to DB.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
+	 */
+	public function mwp_setup_introduction_save() {
+		check_admin_referer( 'mwp-setup' );
+		$enabled_tours = ! isset( $_POST['mainwp-guided-tours-option'] ) ? 0 : 1;
+		MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enabled_tours );
+		wp_safe_redirect( $this->get_next_step_link() );
+		exit;
 	}
 
 
@@ -366,11 +415,11 @@ class MainWP_Setup_Wizard {
 				<?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard.  ', 'mainwp' ); ?>
 			<?php esc_html_e( 'To install the MainWP Child plugin, please follow these steps:', 'mainwp' ); ?>
 			<ol>
-				<li><?php printf( __( 'Login to the WordPress site you want to connect %1$s(open it in a new browser tab)%2$s', 'mainwp' ), '<em>', '</em>' ); ?></li>
-				<li><?php printf( __( 'Go to the %1$sWP > Plugins%2$s page', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-				<li><?php printf( __( 'Click %1$sAdd New%2$s to install a new plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-				<li><?php printf( __( 'In the %1$sSearch Field%2$s, enter "MainWP Child" and once the plugin shows, click the Install button', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-				<li><?php printf( __( '%1$sActivate%2$s the plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+				<li><?php printf( esc_html__( 'Login to the WordPress site you want to connect %1$s(open it in a new browser tab)%2$s', 'mainwp' ), '<em>', '</em>' ); ?></li>
+				<li><?php printf( esc_html__( 'Go to the %1$sWP > Plugins%2$s page', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+				<li><?php printf( esc_html__( 'Click %1$sAdd New%2$s to install a new plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+				<li><?php printf( esc_html__( 'In the %1$sSearch Field%2$s, enter "MainWP Child" and once the plugin shows, click the Install button', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+				<li><?php printf( esc_html__( '%1$sActivate%2$s the plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
 			</ol>
 		</div>
 		<div class="ui form">
@@ -467,7 +516,7 @@ class MainWP_Setup_Wizard {
 		<form method="post" class="ui form">
 			<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			<div class="ui grid field">
-				<div class="ui info message"><?php echo sprintf( __( 'Excessive checking can cause server resource issues.  For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a>' ); ?></div>
+				<div class="ui info message"><?php echo sprintf( esc_html__( 'Excessive checking can cause server resource issues.  For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a>' ); ?></div>
 				<label class="six wide column middle aligned"><?php esc_html_e( 'Enable basic uptime monitoring', 'mainwp' ); ?></label>
 				<div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring">
 					<input type="checkbox" name="mainwp_setup_disableSitesChecking" id="mainwp_setup_disableSitesChecking" <?php echo ( 1 == $disableSitesMonitoring ? '' : 'checked="true"' ); ?>/>
@@ -569,6 +618,24 @@ class MainWP_Setup_Wizard {
 		<div class="ui hidden divider"></div>
 		<div class="ui hidden divider"></div>
 		<?php
+	}
+
+	/**
+	 * Render usetiful tours.
+	 */
+	public function mainwp_usetiful_tours() {
+		echo "
+		<script>
+	(function (w, d, s) {
+		var a = d.getElementsByTagName('head')[0];
+		var r = d.createElement('script');
+		r.async = 1;
+		r.src = s;
+		r.setAttribute('id', 'usetifulScript');
+		r.dataset.token = '480fa17b0507a1c60abba94bfdadd0a7';
+							a.appendChild(r);
+	  })(window, document, 'https://www.usetiful.com/dist/usetiful.js');</script>
+		";
 	}
 
 }

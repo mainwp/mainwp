@@ -113,7 +113,7 @@ class MainWP_Notification_Settings {
 	public function render_all_settings( $updated ) {
 
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
 			return;
 		}
 
@@ -130,7 +130,7 @@ class MainWP_Notification_Settings {
 			<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 			<?php endif; ?>
 			<div class="ui info message">
-				<?php _e( 'Email notifications sent from MainWP Dashboard are listed below.  Click on an email to configure it.  For additional help, please see <a href="https://kb.mainwp.com/docs/email-settings/">this help document</a>.', 'mainwp' ); ?>
+				<?php echo sprintf( esc_html__( 'Email notifications sent from MainWP Dashboard are listed below.  Click on an email to configure it.  For additional help, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/email-settings/">', '</a>' ); ?>
 			</div>
 			<table class="ui unstackable table" id="mainwp-emails-settings-table">
 				<thead>
@@ -221,7 +221,7 @@ class MainWP_Notification_Settings {
 	public function render_edit_settings( $type, $updated_templ ) {
 
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
 			return;
 		}
 
@@ -249,7 +249,7 @@ class MainWP_Notification_Settings {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-email-tokens-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-message"></i>
-							<?php _e( '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">Boilerplate</a> and <a href="https://mainwp.com/extension/pro-reports/" target="_blank">Reports</a> extensions tokens are supported in the email settings and templates if Extensions are in use.', 'mainwp' ); ?>
+							<?php echo sprintf( esc_html__( '%1$sBoilerplate%2$s and %3$sReports%4$s extensions tokens are supported in the email settings and templates if Extensions are in use.', 'mainwp' ), '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">', '</a>', '<a href="https://mainwp.com/extension/pro-reports/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<h3 class="ui header"><?php echo $title; ?></h3>
@@ -388,15 +388,15 @@ class MainWP_Notification_Settings {
 	 */
 	public static function get_notification_types( $type = '' ) {
 		$types = array(
-			'daily_digest' => __( 'Daily Digest Email', 'mainwp' ),
-			'uptime'       => __( 'Basic Uptime Monitoring Email', 'mainwp' ),
-			'site_health'  => __( 'Site Health Monitoring Email', 'mainwp' ),
+			'daily_digest' => esc_html__( 'Daily Digest Email', 'mainwp' ),
+			'uptime'       => esc_html__( 'Basic Uptime Monitoring Email', 'mainwp' ),
+			'site_health'  => esc_html__( 'Site Health Monitoring Email', 'mainwp' ),
 		);
 
 		$enable_http_check = get_option( 'mainwp_check_http_response', 0 );
 
 		if ( $enable_http_check ) {
-			$types['http_check'] = __( 'After Updates HTTP Check Email', 'mainwp' );
+			$types['http_check'] = esc_html__( 'After Updates HTTP Check Email', 'mainwp' );
 		}
 
 		$addition_types = apply_filters( 'mainwp_notification_types', array(), $type );

@@ -253,7 +253,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
-				throw new MainWP_Exception( __( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) );
+				throw new MainWP_Exception( esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) );
 			}
 
 			$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0;
@@ -291,7 +291,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 
 		try {
 			if ( ! isset( $_POST['siteId'] ) ) {
-				throw new \Exception( __( 'No site selected!', 'mainwp' ) );
+				throw new \Exception( esc_html__( 'No site selected!', 'mainwp' ) );
 			}
 			$siteId      = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : '';
 			$fileName    = isset( $_POST['fileName'] ) ? sanitize_text_field( wp_unslash( $_POST['fileName'] ) ) : '';
@@ -300,7 +300,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 
 			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
 			if ( ! $website ) {
-				throw new \Exception( __( 'No site selected!', 'mainwp' ) );
+				throw new \Exception( esc_html__( 'No site selected!', 'mainwp' ) );
 			}
 
 			MainWP_Utility::end_session();
@@ -316,7 +316,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 			);
 
 			if ( ! isset( $result['size'] ) ) {
-				throw new \Exception( __( 'Invalid response!', 'mainwp' ) );
+				throw new \Exception( esc_html__( 'Invalid response!', 'mainwp' ) );
 			}
 
 			if ( MainWP_Utility::ctype_digit( $result['size'] ) ) {
@@ -449,7 +449,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 			if ( ! is_array( $array ) || ! isset( $array[ $unique ] ) ) {
 				die( wp_json_encode( array( 'result' => 0 ) ) );
 			} elseif ( isset( $array[ $unique ]['finished'] ) ) {
-				throw new MainWP_Exception( __( 'finished...', 'maiwnp' ) );
+				throw new MainWP_Exception( esc_html__( 'finished...', 'maiwnp' ) );
 			} else {
 				wp_send_json( array( 'result' => ( isset( $array[ $unique ]['offset'] ) ? $array[ $unique ]['offset'] : $array[ $unique ] ) ) );
 			}
@@ -567,7 +567,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 			$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 			$task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : false;
 			if ( ! $site_id || ! $task_id ) {
-				throw new MainWP_Exception( __( 'Site ID or backup task ID not found. Please reload the page and try again.', 'mainwp' ) );
+				throw new MainWP_Exception( esc_html__( 'Site ID or backup task ID not found. Please reload the page and try again.', 'mainwp' ) );
 			}
 
 			$fileNameUID = isset( $_POST['fileNameUID'] ) ? sanitize_text_field( wp_unslash( $_POST['fileNameUID'] ) ) : false;

@@ -240,7 +240,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 */
 	public function get_website_options_array( &$website, $options ) {
 
-		if ( ! is_array( $options ) || empty( $options ) ) {
+		if ( empty( $website ) || ! is_array( $options ) || empty( $options ) ) {
 			return array();
 		}
 
@@ -250,7 +250,30 @@ class MainWP_DB extends MainWP_DB_Base {
 			$site_id = $website->id;
 		}
 
-		$options_name = implode( "','", $options );
+		$arr_options = array();
+		$get_options = array();
+
+		foreach ( $options as $option ) {
+			if ( is_array( $website ) ) {
+				if ( isset( $website[ $option ] ) ) {
+					$arr_options[ $option ] = $website[ $option ];
+				} else {
+					$get_options[] = $option;
+				}
+			} elseif ( is_object( $website ) ) {
+				if ( property_exists( $website, $option ) ) {
+					$arr_options[ $option ] = $website->{$option};
+				} else {
+					$get_options[] = $option;
+				}
+			}
+		}
+
+		if ( empty( $get_options ) ) {
+			return $arr_options; // all options.
+		}
+
+		$options_name = implode( "','", $get_options );
 		$options_name = "'" . $options_name . "'";
 
 		$options_db = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name, value FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name IN (' . $options_name . ')', $site_id ) );
@@ -258,8 +281,6 @@ class MainWP_DB extends MainWP_DB_Base {
 		$fill_options = array(
 			'primary_lasttime_backup',
 		);
-
-		$arr_options = array();
 
 		foreach ( (array) $options_db as $o ) {
 			$arr_options[ $o->name ] = $o->value;
@@ -577,6 +598,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param bool   $for_manager  For role manager. Default: false.
 	 * @param mixed  $extra_view   Extra view. Default favi_icon.
 	 * @param string $is_staging   yes|no Is child site a staging site.
+	 * @param array  $params   other params.
 	 *
 	 * @return object|null Database query results or null on failure.
 	 *
@@ -591,7 +613,8 @@ class MainWP_DB extends MainWP_DB_Base {
 		$extraWhere = null,
 		$for_manager = false,
 		$extra_view = array( 'favi_icon' ),
-		$is_staging = 'no' ) {
+		$is_staging = 'no',
+		$params = array() ) {
 
 		$where = '';
 		if ( MainWP_System::instance()->is_multi_user() ) {
@@ -619,6 +642,17 @@ class MainWP_DB extends MainWP_DB_Base {
 			$where .= $this->get_sql_where_allow_access_sites( 'wp', $is_staging );
 		}
 
+		$connected_sql = '';
+		if ( is_array( $params ) ) {
+			if ( isset( $params['connected'] ) ) {
+				if ( 'yes' == $params['connected'] ) {
+					$connected_sql = ' AND wp_sync.sync_errors = "" ';
+				} elseif ( 'no' == $params['connected'] ) {
+					$connected_sql = '  AND wp_sync.sync_errors <> "" ';
+				}
+			}
+		}
+
 		if ( 'wp.url' === $orderBy ) {
 			$orderBy = "replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www.', '')";
 		}
@@ -633,8 +667,8 @@ class MainWP_DB extends MainWP_DB_Base {
 			LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-            WHERE 1 ' . $where . '
-            GROUP BY wp.id, wp_sync.sync_id
+            WHERE 1 ' . $where . $connected_sql . '
+            GROUP BY wp.id, wp_sync.sync_id 
             ORDER BY ' . $orderBy;
 		} else {
 			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, wpclient.name as client_name
@@ -642,8 +676,8 @@ class MainWP_DB extends MainWP_DB_Base {
 			LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-            WHERE 1 ' . $where . '
-            GROUP BY wp.id, wp_sync.sync_id
+            WHERE 1 ' . $where . $connected_sql . '
+            GROUP BY wp.id, wp_sync.sync_id 
             ORDER BY ' . $orderBy;
 		}
 
@@ -1330,12 +1364,12 @@ class MainWP_DB extends MainWP_DB_Base {
 	 *
 	 * @param int   $id           Child site ID.
 	 * @param array $selectGroups Select groups.
-	 * @param array $fields       Get extra option fields.
+	 * @param array $extra_view       Get extra option fields.
 	 *
 	 * @return object|null Database query results or null on failure.
 	 */
-	public function get_website_by_id( $id, $selectGroups = false, $fields = array() ) {
-		return $this->get_row_result( $this->get_sql_website_by_id( $id, $selectGroups, $fields ) );
+	public function get_website_by_id( $id, $selectGroups = false, $extra_view = array() ) {
+		return $this->get_row_result( $this->get_sql_website_by_id( $id, $selectGroups, $extra_view ) );
 	}
 
 	/**
@@ -1351,7 +1385,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 */
 	public function get_sql_website_by_id( $id, $selectGroups = false, $extra_view = array() ) {
 
-		if ( empty( $extra_view ) ) {
+		if ( ! is_array( $extra_view ) || empty( $extra_view ) ) {
 			$extra_view = array( 'favi_icon', 'site_info' );
 		}
 
@@ -2072,5 +2106,4 @@ class MainWP_DB extends MainWP_DB_Base {
 			OBJECT
 		);
 	}
-
 }

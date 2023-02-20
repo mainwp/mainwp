@@ -65,15 +65,15 @@ class MainWP_Site_Info {
 		}
 
 		$child_site_info = array(
-			'wpversion'     => __( 'WordPress Version', 'mainwp' ),
-			'debug_mode'    => __( 'Debug Mode', 'mainwp' ),
-			'phpversion'    => __( 'PHP Version', 'mainwp' ),
-			'child_version' => __( 'MainWP Child Version', 'mainwp' ),
-			'memory_limit'  => __( 'PHP Memory Limit', 'mainwp' ),
-			'mysql_version' => __( 'MySQL Version', 'mainwp' ),
-			'ip'            => __( 'Server IP', 'mainwp' ),
-			'group'         => __( 'Tags', 'mainwp' ),
-			'last_status'   => __( 'Last Check Status', 'mainwp' ),
+			'wpversion'     => esc_html__( 'WordPress Version', 'mainwp' ),
+			'debug_mode'    => esc_html__( 'Debug Mode', 'mainwp' ),
+			'phpversion'    => esc_html__( 'PHP Version', 'mainwp' ),
+			'child_version' => esc_html__( 'MainWP Child Version', 'mainwp' ),
+			'memory_limit'  => esc_html__( 'PHP Memory Limit', 'mainwp' ),
+			'mysql_version' => esc_html__( 'MySQL Version', 'mainwp' ),
+			'ip'            => esc_html__( 'Server IP', 'mainwp' ),
+			'group'         => esc_html__( 'Tags', 'mainwp' ),
+			'last_status'   => esc_html__( 'Last Check Status', 'mainwp' ),
 		);
 
 		/**
@@ -108,7 +108,7 @@ class MainWP_Site_Info {
 			 *
 			 * @since 4.1
 			 */
-			echo esc_html( apply_filters( 'mainwp_site_info_widget_title', __( 'Site Info', 'mainwp' ), $website ) );
+			echo esc_html( apply_filters( 'mainwp_site_info_widget_title', esc_html__( 'Site Info', 'mainwp' ), $website ) );
 			?>
 			<div class="sub header"><?php esc_html_e( 'Basic child site system information', 'mainwp' ); ?></div>
 		</h3>

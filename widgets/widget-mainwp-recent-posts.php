@@ -156,7 +156,7 @@ class MainWP_Recent_Posts {
 					 *
 					 * @since 4.1
 					 */
-					echo esc_html( apply_filters( 'mainwp_recent_posts_widget_title', __( 'Recent Posts', 'mainwp' ) ) );
+					echo esc_html( apply_filters( 'mainwp_recent_posts_widget_title', esc_html__( 'Recent Posts', 'mainwp' ) ) );
 					?>
 					<div class="sub header"><?php esc_html_e( 'The most recent posts from your websites', 'mainwp' ); ?></div>
 				</h3>
@@ -697,7 +697,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function publish() {
 		self::action( 'publish' );
-		die( wp_json_encode( array( 'result' => __( 'Post has been published!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been published!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -707,7 +707,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function approve() {
 		self::action( 'publish' );
-		die( wp_json_encode( array( 'result' => __( 'Post has been approved!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been approved!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -717,7 +717,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function unpublish() {
 		self::action( 'unpublish' );
-		die( wp_json_encode( array( 'result' => __( 'Post has been unpublished!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been unpublished!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -727,7 +727,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function trash() {
 		self::action( 'trash' );
-		die( wp_json_encode( array( 'result' => __( 'Post has been moved to trash!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been moved to trash!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -737,7 +737,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function delete() {
 		self::action( 'delete' );
-		die( wp_json_encode( array( 'result' => __( 'Post has been permanently deleted!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been permanently deleted!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -747,7 +747,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function restore() {
 		self::action( 'restore' );
-		die( wp_json_encode( array( 'result' => __( 'Post has been restored!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been restored!', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -783,7 +783,7 @@ class MainWP_Recent_Posts {
 			die(
 				wp_json_encode(
 					array(
-						'error'     => __( 'Suspended site.', 'mainwp' ),
+						'error'     => esc_html__( 'Suspended site.', 'mainwp' ),
 						'errorCode' => 'SUSPENDED_SITE',
 					)
 				)

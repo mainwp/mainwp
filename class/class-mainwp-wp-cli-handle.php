@@ -156,11 +156,14 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 				$website = false;
 
 				$requires_site_id = false;
+				$site_id          = 0;
 
 				if ( 'site' == $cli_com && ! isset( $assoc_args['add-site'] ) ) {
 					$requires_site_id = true;
 				} elseif ( 'updates' == $cli_com && ( isset( $assoc_args['site-ignored-plugins-updates'] ) || isset( $assoc_args['site-ignored-themes-updates'] ) || isset( $assoc_args['ignore-update'] ) || isset( $assoc_args['unignore_update'] ) ) ) {
 					$requires_site_id = true;
+				} elseif ( 'updates' == $cli_com && ( isset( $assoc_args['ignored-plugins-updates'] ) || isset( $assoc_args['ignored-themes-updates'] ) ) ) {
+					$site_id = isset( $args[0] ) ? intval( $args[0] ) : false;
 				}
 
 				if ( $requires_site_id ) {
@@ -169,6 +172,12 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 						\WP_CLI::error( 'Empty site id.' );
 						return false;
 					}
+					$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+					if ( empty( $website ) ) {
+						\WP_CLI::error( 'Site not found.' );
+						return false;
+					}
+				} elseif ( $site_id ) {
 					$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 					if ( empty( $website ) ) {
 						\WP_CLI::error( 'Site not found.' );
@@ -226,14 +235,20 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 					'groupids',
 				);
 
-				$data = self::map_assoc_args( $assoc_args, $allow_fields );
+				$required_fields = array(
+					'site-url',
+					'name',
+					'admin',
+				);
+
+				$data = self::map_assoc_args( $assoc_args, $allow_fields, $required_fields );
 				if ( isset( $data['site-url'] ) ) {
 					$data['url'] = $data['site-url'];
 					unset( $data['site-url'] );
 				}
 				return $data;
 			} elseif ( 'edit-site' == $what ) {
-				$allow_fields = array(
+				$allow_fields    = array(
 					'http_user',
 					'http_pass',
 					'name',
@@ -241,7 +256,8 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 					'sslversion',
 					'uniqueid',
 				);
-				return self::map_assoc_args( $assoc_args, $allow_fields );
+				$required_fields = array(); // required_fields.
+				return self::map_assoc_args( $assoc_args, $allow_fields, $required_fields );
 			}
 		} elseif ( is_array( $what ) && ! empty( $what ) ) {
 			$map_fields = $what;
@@ -254,18 +270,23 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	/**
 	 * Maps arguments.
 	 *
-	 * @param array $assoc_args Arguments.
-	 * @param array $fields     Fields.
+	 * @param array        $assoc_args Arguments.
+	 * @param array        $fields     Fields.
+	 * @param array|string $required_fields Fields that are required, default 'all': all fields are required.
 	 *
 	 * @return array $data Required data.
 	 */
-	public static function map_assoc_args( $assoc_args, $fields ) {
+	public static function map_assoc_args( $assoc_args, $fields, $required_fields = 'all' ) {
 		$data = array();
 		foreach ( $fields as $field ) {
 			if ( isset( $assoc_args[ $field ] ) ) {
 				$data[ $field ] = $assoc_args[ $field ];
 			} else {
-				\WP_CLI::error( 'Missing field: ' . $field );
+				if ( 'all' === $required_fields ) {
+					\WP_CLI::error( 'Missing field: ' . $field );
+				} elseif ( is_array( $required_fields ) && ! empty( $required_fields ) && in_array( $field, $required_fields ) ) {
+					\WP_CLI::error( 'Missing field: ' . $field );
+				}
 			}
 		}
 		return $data;
@@ -281,7 +302,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		// get data.
 		$data = MainWP_DB::instance()->get_websites_for_current_user();
 		if ( empty( $data ) ) {
-			\WP_CLI::line( __( 'No child sites added to your MainWP Dashboard.', 'mainwp' ) );
+			\WP_CLI::line( esc_html__( 'No child sites added to your MainWP Dashboard.', 'mainwp' ) );
 		} else {
 			self::print_sites( $data, true );
 		}
@@ -298,7 +319,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$count    = MainWP_DB::num_rows( $websites );
 		MainWP_DB::free_result( $websites );
 		\WP_CLI::line( '' );
-		\WP_CLI::line( __( 'Number of child sites: ', 'mainwp' ) . $count );
+		\WP_CLI::line( esc_html__( 'Number of child sites: ', 'mainwp' ) . $count );
 		\WP_CLI::line( '' );
 	}
 
@@ -310,7 +331,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	public static function callback_sites_connected_sites() {
 		$data = MainWP_DB::instance()->get_connected_websites();
 		if ( empty( $data ) ) {
-			\WP_CLI::line( __( 'No connected child sites fount.', 'mainwp' ) );
+			\WP_CLI::line( esc_html__( 'No connected child sites fount.', 'mainwp' ) );
 		} else {
 			self::print_sites( $data );
 		}
@@ -323,7 +344,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 */
 	public static function callback_sites_connected_sites_count() {
 		$websites = MainWP_DB::instance()->get_connected_websites();
-		\WP_CLI::line( __( 'Number of connected child sites: ', 'mainwp' ) . count( $websites ) );
+		\WP_CLI::line( esc_html__( 'Number of connected child sites: ', 'mainwp' ) . count( $websites ) );
 	}
 
 	/**
@@ -334,7 +355,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	public static function callback_sites_disconnected_sites() {
 		$data = MainWP_DB::instance()->get_disconnected_websites();
 		if ( empty( $data ) ) {
-			\WP_CLI::line( __( 'No disconnected child sites found.', 'mainwp' ) );
+			\WP_CLI::line( esc_html__( 'No disconnected child sites found.', 'mainwp' ) );
 		} else {
 			self::print_sites( $data );
 		}
@@ -375,7 +396,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
 		\WP_CLI::line( '' );
-		\WP_CLI::line( __( 'Check started. Please wait...', 'mainwp' ) );
+		\WP_CLI::line( esc_html__( 'Check started. Please wait...', 'mainwp' ) );
 		\WP_CLI::line( '' );
 		$errors = 0;
 		while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -508,7 +529,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$plugins = json_decode( $website->plugins, 1 );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Installed Plugins', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Installed Plugins', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
 		foreach ( $plugins as $plugin ) {
@@ -517,9 +538,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 			\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Description:%n ' ) . $plugin['description'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Version:%n ' ) . $plugin['version'] );
 			if ( '1' == $plugin['active'] ) {
-				\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Status:%n ' ) . __( 'Active', 'mainwp' ) );
+				\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Status:%n ' ) . esc_html__( 'Active', 'mainwp' ) );
 			} else {
-				\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Status:%n ' ) . __( 'Inactive', 'mainwp' ) );
+				\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Status:%n ' ) . esc_html__( 'Inactive', 'mainwp' ) );
 			}
 			\WP_CLI::line( '' );
 		}
@@ -538,7 +559,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$plugins = json_decode( $website->plugins, 1 );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Installed plugins: ', 'mainwp' ) . '%n' . count( $plugins ) ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Installed plugins: ', 'mainwp' ) . '%n' . count( $plugins ) ) );
 		\WP_CLI::line( '' );
 	}
 
@@ -557,7 +578,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$data    = MainWP_Utility::get_sub_array_having( $plugins, 'active', 1 );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Active Plugins', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Active Plugins', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
 		foreach ( $data as $plugin ) {
@@ -583,7 +604,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$data    = MainWP_Utility::get_sub_array_having( $plugins, 'active', 1 );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Active plugins: ', 'mainwp' ) . '%n' . count( $data ) ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Active plugins: ', 'mainwp' ) . '%n' . count( $data ) ) );
 		\WP_CLI::line( '' );
 	}
 
@@ -601,7 +622,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$data    = MainWP_Utility::get_sub_array_having( $plugins, 'active', 0 );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Inactive Plugins', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Inactive Plugins', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
 		foreach ( $data as $plugin ) {
@@ -627,7 +648,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$data    = MainWP_Utility::get_sub_array_having( $plugins, 'active', 0 );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Inctive plugins: ', 'mainwp' ) . '%n' . count( $data ) ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Inctive plugins: ', 'mainwp' ) . '%n' . count( $data ) ) );
 		\WP_CLI::line( '' );
 	}
 
@@ -645,7 +666,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$themes = json_decode( $website->themes, 1 );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Installed Themes', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Installed Themes', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
 		foreach ( $themes as $theme ) {
@@ -654,9 +675,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 			\WP_CLI::line( \WP_CLI::colorize( '%gTheme Description:%n ' ) . $theme['description'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gTheme Version:%n ' ) . $theme['version'] );
 			if ( '1' == $theme['active'] ) {
-				\WP_CLI::line( \WP_CLI::colorize( '%gTheme Status:%n ' ) . __( 'Active', 'mainwp' ) );
+				\WP_CLI::line( \WP_CLI::colorize( '%gTheme Status:%n ' ) . esc_html__( 'Active', 'mainwp' ) );
 			} else {
-				\WP_CLI::line( \WP_CLI::colorize( '%gTheme Status:%n ' ) . __( 'Inactive', 'mainwp' ) );
+				\WP_CLI::line( \WP_CLI::colorize( '%gTheme Status:%n ' ) . esc_html__( 'Inactive', 'mainwp' ) );
 			}
 			\WP_CLI::line( '' );
 		}
@@ -675,7 +696,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$themes = json_decode( $website->themes, 1 );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Installed themes: ', 'mainwp' ) . '%n' . count( $themes ) ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Installed themes: ', 'mainwp' ) . '%n' . count( $themes ) ) );
 		\WP_CLI::line( '' );
 	}
 
@@ -694,7 +715,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$data   = MainWP_Utility::get_sub_array_having( $themes, 'active', 1 );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Active Theme', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Active Theme', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
 		foreach ( $data as $theme ) {
@@ -720,7 +741,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$data   = MainWP_Utility::get_sub_array_having( $themes, 'active', 0 );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Inactive Themes', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Inactive Themes', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
 		foreach ( $data as $theme ) {
@@ -746,7 +767,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$data   = MainWP_Utility::get_sub_array_having( $themes, 'active', 0 );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Inactive themes: ', 'mainwp' ) . '%n' . count( $data ) ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Inactive themes: ', 'mainwp' ) . '%n' . count( $data ) ) );
 		\WP_CLI::line( '' );
 	}
 
@@ -774,12 +795,12 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		);
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Available Updates', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Available Updates', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
 		if ( 0 < count( $wp_upgrades ) ) {
 			\WP_CLI::line( '' );
-			\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'WordPress Core', 'mainwp' ) . '%n' ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'WordPress Core', 'mainwp' ) . '%n' ) );
 			\WP_CLI::line( '' );
 
 			\WP_CLI::line( \WP_CLI::colorize( '%gDetected:%n ' ) . $wp_upgrades['current'] );
@@ -788,7 +809,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 
 		if ( 0 < count( $plugin_upgrades ) ) {
 			\WP_CLI::line( '' );
-			\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'Available Plugin Updates', 'mainwp' ) . '%n' ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'Available Plugin Updates', 'mainwp' ) . '%n' ) );
 			\WP_CLI::line( '' );
 
 			foreach ( $plugin_upgrades as $plugin_upgrade ) {
@@ -801,7 +822,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 
 		if ( 0 < count( $theme_upgrades ) ) {
 			\WP_CLI::line( '' );
-			\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'Available Theme Updates', 'mainwp' ) . '%n' ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'Available Theme Updates', 'mainwp' ) . '%n' ) );
 			\WP_CLI::line( '' );
 
 			foreach ( $theme_upgrades as $theme_upgrade ) {
@@ -814,7 +835,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 
 		if ( 0 < count( $translation_upgrades ) ) {
 			\WP_CLI::line( '' );
-			\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'Available Translation Updates', 'mainwp' ) . '%n' ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'Available Translation Updates', 'mainwp' ) . '%n' ) );
 			\WP_CLI::line( '' );
 
 			foreach ( $translation_upgrades as $translation_upgrade ) {
@@ -860,7 +881,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		);
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'Available Updates', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'Available Updates', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
 		\WP_CLI::line( \WP_CLI::colorize( '%gWordPress:%n ' ) . $data['wp'] );
@@ -886,7 +907,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$plugins = ( '' != $plugins ) ? json_decode( $plugins, true ) : array();
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Abandoned Plugins', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Abandoned Plugins', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
 		foreach ( $plugins as $plugin ) {
@@ -912,7 +933,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$plugins = ( '' != $plugins ) ? json_decode( $plugins, true ) : array();
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . ' ' . __( 'Abandoned plugins: ', 'mainwp' ) . '%n' . count( $plugins ) ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . ' ' . esc_html__( 'Abandoned plugins: ', 'mainwp' ) . '%n' . count( $plugins ) ) );
 		\WP_CLI::line( '' );
 	}
 
@@ -930,7 +951,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$themes = ( '' != $themes ) ? json_decode( $themes, true ) : array();
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Abandoned Themes', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Abandoned Themes', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
 		foreach ( $themes as $theme ) {
@@ -955,7 +976,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$themes = ( '' != $themes ) ? json_decode( $themes, true ) : array();
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . ' ' . __( 'Abandoned themes: ', 'mainwp' ) . '%n' . count( $themes ) ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . ' ' . esc_html__( 'Abandoned themes: ', 'mainwp' ) . '%n' . count( $themes ) ) );
 		\WP_CLI::line( '' );
 	}
 
@@ -969,9 +990,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_site_http_status( $args = array(), $assoc_args = array(), $website = false ) {
-		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
+		\WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
 		MainWP_Monitoring_Handler::handle_check_website( $website );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Process ran successfully on ', 'mainwp' ) . $website->name . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Process ran successfully on ', 'mainwp' ) . $website->name . '%n' ) );
 	}
 
 	/**
@@ -1013,23 +1034,23 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$data = MainWP_Connect::fetch_url_authed( $website, 'security' );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Security Issues', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Security Issues', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Directories listing prevented:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['listing'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'WordPress version hidden:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['wp_version'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Really Simple Discovery meta tag removed:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['rsd'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Windows Live Writer meta tag removed:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['wlw'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Database error reporting disabled:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['db_reporting'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'PHP error reporting disabled:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['php_reporting'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Version information removed from URLs:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['versions'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Registered version information removed from URLs:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['registered_versions'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'readme.html removed from WordPress root:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['readme'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Administrator username is not "admin":', 'mainwp' ) . '%n ' ) . ( 'N' == $data['admin'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'WordPress is not up to date:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['wp_uptodate'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'PHP version does not match the WordPress requirement:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['phpversion_matched'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'SSL protocol is not in place:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['sslprotocol'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'WP Config debugging is enabled:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['debug_disabled'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Directories listing prevented:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['listing'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'WordPress version hidden:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['wp_version'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Really Simple Discovery meta tag removed:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['rsd'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Windows Live Writer meta tag removed:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['wlw'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Database error reporting disabled:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['db_reporting'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'PHP error reporting disabled:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['php_reporting'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Version information removed from URLs:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['versions'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Registered version information removed from URLs:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['registered_versions'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'readme.html removed from WordPress root:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['readme'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Administrator username is not "admin":', 'mainwp' ) . '%n ' ) . ( 'N' == $data['admin'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'WordPress is not up to date:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['wp_uptodate'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'PHP version does not match the WordPress requirement:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['phpversion_matched'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'SSL protocol is not in place:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['sslprotocol'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'WP Config debugging is enabled:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['debug_disabled'] ? 'NO' : 'YES' ) );
 	}
 
 	/**
@@ -1074,7 +1095,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_sync_site( $args = array(), $assoc_args = array(), $website = false ) {
-		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
+		\WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
 		$error = false;
 		try {
 			MainWP_Sync::sync_site( $website );
@@ -1083,9 +1104,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		}
 
 		if ( empty( $error ) ) {
-			\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' synced successfully.', 'mainwp' ) . '%n' ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . esc_html__( ' synced successfully.', 'mainwp' ) . '%n' ) );
 		} else {
-			\WP_CLI::line( \WP_CLI::colorize( '%r' . __( 'Process failed with error:', 'mainwp' ) . '%n' ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%r' . esc_html__( 'Process failed with error:', 'mainwp' ) . '%n' ) );
 			\WP_CLI::line( $error );
 		}
 	}
@@ -1100,7 +1121,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_reconnect_site( $args = array(), $assoc_args = array(), $website = false ) {
-		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
+		\WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
 		$error = false;
 		try {
 			MainWP_Manage_Sites_View::m_reconnect_site( $website );
@@ -1109,9 +1130,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		}
 
 		if ( empty( $error ) ) {
-			\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' reconnected successfully.', 'mainwp' ) . '%n' ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . esc_html__( ' reconnected successfully.', 'mainwp' ) . '%n' ) );
 		} else {
-			\WP_CLI::line( \WP_CLI::colorize( '%r' . __( 'Process failed with error:', 'mainwp' ) . '%n' ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%r' . esc_html__( 'Process failed with error:', 'mainwp' ) . '%n' ) );
 			\WP_CLI::line( $error );
 		}
 	}
@@ -1126,7 +1147,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_disconnect_site( $args = array(), $assoc_args = array(), $website = false ) {
-		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
+		\WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
 
 		$error = false;
 		try {
@@ -1136,9 +1157,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		}
 
 		if ( empty( $error ) ) {
-			\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' disconnected successfully.', 'mainwp' ) . '%n' ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . esc_html__( ' disconnected successfully.', 'mainwp' ) . '%n' ) );
 		} else {
-			\WP_CLI::line( \WP_CLI::colorize( '%r' . __( 'Process failed with error:', 'mainwp' ) . '%n' ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%r' . esc_html__( 'Process failed with error:', 'mainwp' ) . '%n' ) );
 			\WP_CLI::line( $error );
 		}
 	}
@@ -1153,9 +1174,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_remove_site( $args = array(), $assoc_args = array(), $website = false ) {
-		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
+		\WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
 		$data = MainWP_Manage_Sites_Handler::remove_website( $website->id );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Site removed successfully.', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Site removed successfully.', 'mainwp' ) . '%n' ) );
 	}
 
 	/**
@@ -1168,11 +1189,11 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_site_update_wordpress( $args = array(), $assoc_args = array(), $website = false ) {
-		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
+		\WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
 		$error = false;
 		try {
 			$data = MainWP_Updates_Handler::upgrade_website( $website );
-			\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' updated successfully.', 'mainwp' ) . '%n' ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . esc_html__( ' updated successfully.', 'mainwp' ) . '%n' ) );
 		} catch ( \Exception $e ) {
 			\WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 			if ( $e->getMesage() == 'WPERROR' ) {
@@ -1191,7 +1212,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_site_update_plugins( $args = array(), $assoc_args = array(), $website = false ) {
-		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
+		\WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
 
 		$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
 		$slugs           = array();
@@ -1200,7 +1221,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		}
 		$list = urldecode( implode( ',', $slugs ) );
 
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' plugins updated successfully.', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . esc_html__( ' plugins updated successfully.', 'mainwp' ) . '%n' ) );
 
 		try {
 			MainWP_Connect::fetch_url_authed(
@@ -1226,7 +1247,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_site_update_themes( $args = array(), $assoc_args = array(), $website = false ) {
-		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
+		\WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
 		$theme_upgrades = json_decode( $website->theme_upgrades, true );
 		$slugs          = array();
 		foreach ( $theme_upgrades as $slug => $theme ) {
@@ -1234,7 +1255,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		}
 		$list = urldecode( implode( ',', $slugs ) );
 
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' themes updated successfully.', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . esc_html__( ' themes updated successfully.', 'mainwp' ) . '%n' ) );
 
 		try {
 			MainWP_Connect::fetch_url_authed(
@@ -1260,7 +1281,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_site_update_translations( $args = array(), $assoc_args = array(), $website = false ) {
-		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
+		\WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
 
 		$translation_upgrades = json_decode( $website->translation_upgrades, true );
 		$slugs                = array();
@@ -1269,7 +1290,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		}
 		$list = urldecode( implode( ',', $slugs ) );
 
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' translations updated successfully.', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . esc_html__( ' translations updated successfully.', 'mainwp' ) . '%n' ) );
 
 		try {
 			MainWP_Connect::fetch_url_authed(
@@ -1301,7 +1322,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$type = $params['type'];
 		$slug = $params['slug'];
 
-		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
+		\WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
 
 		try {
 			$data = MainWP_Connect::fetch_url_authed(
@@ -1316,7 +1337,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 			$error = MainWP_Error_Helper::get_console_error_message( $e );
 		}
 
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' item updated successfully.', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . esc_html__( ' item updated successfully.', 'mainwp' ) . '%n' ) );
 	}
 
 	/**
@@ -1332,13 +1353,13 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_site_manage_plugin( $args = array(), $assoc_args = array(), $website = false ) {
-		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
+		\WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
 
 		$params = self::get_cli_params( $args, $assoc_args, array( 'plugin', 'action' ) );
 		$plugin = $params['plugin'];
 		$action = $params['action'];
 
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . $plugin . ' ' . $action . 'd' . __( ' successfully.', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . $plugin . ' ' . $action . 'd' . esc_html__( ' successfully.', 'mainwp' ) . '%n' ) );
 
 		try {
 			MainWP_Connect::fetch_url_authed(
@@ -1367,13 +1388,13 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_site_manage_theme( $args = array(), $assoc_args = array(), $website = false ) {
-		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
+		\WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
 
 		$params = self::get_cli_params( $args, $assoc_args, array( 'theme', 'action' ) );
 		$theme  = $params['theme'];
 		$action = $params['action'];
 
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . $theme . ' ' . $action . 'd' . __( ' successfully.', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . $theme . ' ' . $action . 'd' . esc_html__( ' successfully.', 'mainwp' ) . '%n' ) );
 
 		try {
 			MainWP_Connect::fetch_url_authed(
@@ -1400,10 +1421,10 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 */
 	public static function callback_site_check_site_http_status( $args = array(), $assoc_args = array(), $website = false ) {
 		\WP_CLI::line( '' );
-		\WP_CLI::line( __( 'Checking ', 'mainwp' ) . $website->name . ' (' . $website->url . '). ' . __( 'Please wait... ', 'mainwp' ) );
+		\WP_CLI::line( esc_html__( 'Checking ', 'mainwp' ) . $website->name . ' (' . $website->url . '). ' . esc_html__( 'Please wait... ', 'mainwp' ) );
 		\WP_CLI::line( '' );
 		$data = MainWP_Monitoring_Handler::handle_check_website( $website );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'HTTP Status: ', 'mainwp' ) . '%n' . $data['httpCode'] . ' (' . $data['httpCodeString'] . ')' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'HTTP Status: ', 'mainwp' ) . '%n' . $data['httpCode'] . ' (' . $data['httpCodeString'] . ')' ) );
 		\WP_CLI::line( '' );
 	}
 
@@ -1418,7 +1439,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	public static function callback_updates_available_updates( $args = array(), $assoc_args = array() ) {
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'Available Updates', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'Available Updates', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
 		$all_updates = array();
@@ -1434,7 +1455,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 			\WP_CLI::line( \WP_CLI::colorize( '%B' . $website->name . ' (' . $website->url . ')%n' ) );
 			if ( 0 < count( $wp_upgrades ) ) {
 				\WP_CLI::line( '' );
-				\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'WordPress Core', 'mainwp' ) . '%n' ) );
+				\WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'WordPress Core', 'mainwp' ) . '%n' ) );
 				\WP_CLI::line( '' );
 
 				\WP_CLI::line( \WP_CLI::colorize( '%gDetected:%n ' ) . $wp_upgrades['current'] );
@@ -1443,7 +1464,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 
 			if ( 0 < count( $plugin_upgrades ) ) {
 				\WP_CLI::line( '' );
-				\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'Available Plugin Updates', 'mainwp' ) . '%n' ) );
+				\WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'Available Plugin Updates', 'mainwp' ) . '%n' ) );
 				\WP_CLI::line( '' );
 
 				foreach ( $plugin_upgrades as $plugin_upgrade ) {
@@ -1456,7 +1477,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 
 			if ( 0 < count( $theme_upgrades ) ) {
 				\WP_CLI::line( '' );
-				\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'Available Theme Updates', 'mainwp' ) . '%n' ) );
+				\WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'Available Theme Updates', 'mainwp' ) . '%n' ) );
 				\WP_CLI::line( '' );
 
 				foreach ( $theme_upgrades as $theme_upgrade ) {
@@ -1469,7 +1490,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 
 			if ( 0 < count( $translation_upgrades ) ) {
 				\WP_CLI::line( '' );
-				\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'Available Translation Updates', 'mainwp' ) . '%n' ) );
+				\WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'Available Translation Updates', 'mainwp' ) . '%n' ) );
 				\WP_CLI::line( '' );
 
 				foreach ( $translation_upgrades as $translation_upgrade ) {
@@ -1488,19 +1509,37 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 *
 	 * Command Example: wp mainwp updates --ignored-plugins-updates [<websiteid>].
 	 *
-	 * @param array $args       Arguments.
-	 * @param array $assoc_args Arguments.
+	 * @param array       $args       Arguments.
+	 * @param array       $assoc_args Arguments.
+	 * @param object|bool $website Website object.
 	 */
-	public static function callback_updates_ignored_plugins_updates( $args = array(), $assoc_args = array() ) {
-		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
-		$data          = json_decode( $userExtension->ignored_plugins, true );
+	public static function callback_updates_ignored_plugins_updates( $args = array(), $assoc_args = array(), $website = false ) {
+		$ignored_all = false;
+		if ( $website ) {
+			\WP_CLI::line( '' );
+			\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Ignored Updates', 'mainwp' ) . '%n' ) );
+			\WP_CLI::line( '' );
 
-		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Ignored Updates', 'mainwp' ) . '%n' ) );
-		\WP_CLI::line( '' );
+			if ( $website->is_ignorePluginUpdates ) {
+				\WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'All ignored', 'mainwp' ) . '%n' ) );
+				$ignored_all = true;
+			}
+		}
 
-		foreach ( $data as $plugin => $value ) {
-			\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $value );
+		if ( ! $ignored_all ) {
+			$userExtension = MainWP_DB_Common::instance()->get_user_extension();
+			$data          = json_decode( $userExtension->ignored_plugins, true );
+			foreach ( $data as $plugin => $value ) {
+				\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $value );
+			}
+			if ( $website ) {
+				$ignored_plugins = json_decode( $website->ignored_plugins, true );
+				if ( is_array( $ignored_plugins ) ) {
+					foreach ( $ignored_plugins as $slug => $name ) {
+						\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $name );
+					}
+				}
+			}
 		}
 
 		\WP_CLI::line( '' );
@@ -1519,7 +1558,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$data = json_decode( $website->ignored_plugins, true );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Ignored Updates', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Ignored Updates', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
 		foreach ( $data as $plugin => $value ) {
@@ -1539,15 +1578,32 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_updates_ignored_themes_updates( $args = array(), $assoc_args = array(), $website = false ) {
-		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
-		$data          = json_decode( $userExtension->ignored_themes, true );
 
-		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Ignored Updates', 'mainwp' ) . '%n' ) );
-		\WP_CLI::line( '' );
+		$ignored_all = false;
+		if ( $website ) {
+			if ( $website->is_ignoreThemeUpdates ) {
+				\WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'All ignored', 'mainwp' ) . '%n' ) );
+				$ignored_all = true;
+			}
+			\WP_CLI::line( '' );
+			\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Ignored Updates', 'mainwp' ) . '%n' ) );
+			\WP_CLI::line( '' );
+		}
 
-		foreach ( $data as $theme => $value ) {
-			\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $value );
+		if ( ! $ignored_all ) {
+			$userExtension = MainWP_DB_Common::instance()->get_user_extension();
+			$data          = json_decode( $userExtension->ignored_themes, true );
+			foreach ( $data as $theme => $value ) {
+				\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $value );
+			}
+			if ( $website ) {
+				$ignored_themes = json_decode( $website->ignored_themes, true );
+				if ( is_array( $ignored_themes ) ) {
+					foreach ( $ignored_themes as $slug => $name ) {
+						\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $name );
+					}
+				}
+			}
 		}
 
 		\WP_CLI::line( '' );
@@ -1567,7 +1623,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$data = json_decode( $website->ignored_themes, true );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Ignored Updates', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Ignored Updates', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
 		foreach ( $data as $theme => $value ) {
@@ -1599,7 +1655,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		MainWP_Updates_Handler::ignore_plugins_themes( $type, $slug, $name );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . $name . __( ' ignorred successfully.', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . $name . esc_html__( ' ignorred successfully.', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 	}
 
@@ -1623,7 +1679,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		MainWP_Updates_Handler::ignore_plugin_theme( $type, $slug, $name, $website->id );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . $name . __( ' ignorred successfully.', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . $name . esc_html__( ' ignorred successfully.', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 	}
 
@@ -1645,7 +1701,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		MainWP_Updates_Handler::unignore_plugins_themes( $type, $slug );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . $slug . __( ' unignorred successfully.', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . $slug . esc_html__( ' unignorred successfully.', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 	}
 
@@ -1668,7 +1724,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		MainWP_Updates_Handler::unignore_plugin_theme( $type, $slug, $website->id );
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . $slug . __( ' unignorred successfully.', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . $slug . esc_html__( ' unignorred successfully.', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 	}
 
@@ -1689,7 +1745,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$errors   = 0;
 
 		\WP_CLI::line( '' );
-		\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'Syncing sites. Please wait...', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'Syncing sites. Please wait...', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
 		while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -1701,13 +1757,13 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 
 			try {
 				if ( MainWP_Sync::sync_site( $website ) ) {
-					\WP_CLI::success( __( 'Sync succeeded', 'mainwp' ) );
+					\WP_CLI::success( esc_html__( 'Sync succeeded', 'mainwp' ) );
 				} else {
-					\WP_CLI::warning( __( 'Sync failed', 'mainwp' ) );
+					\WP_CLI::warning( esc_html__( 'Sync failed', 'mainwp' ) );
 					$warnings++;
 				}
 			} catch ( \Exception $e ) {
-				\WP_CLI::error( __( 'Sync failed: ', 'mainwp' ) . MainWP_Error_Helper::get_console_error_message( $e ) );
+				\WP_CLI::error( esc_html__( 'Sync failed: ', 'mainwp' ) . MainWP_Error_Helper::get_console_error_message( $e ) );
 				$errors++;
 			}
 			\WP_CLI::line( '' );
@@ -1715,11 +1771,11 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		MainWP_DB::free_result( $websites );
 
 		if ( $errors > 0 ) {
-			\WP_CLI::error( __( 'Sync process completed with errors.', 'mainwp' ) );
+			\WP_CLI::error( esc_html__( 'Sync process completed with errors.', 'mainwp' ) );
 		} elseif ( $warnings > 0 ) {
-			\WP_CLI::warning( __( 'Sync process completed with warnings.', 'mainwp' ) );
+			\WP_CLI::warning( esc_html__( 'Sync process completed with warnings.', 'mainwp' ) );
 		} else {
-			\WP_CLI::success( __( 'Sync process completed successfully.', 'mainwp' ) );
+			\WP_CLI::success( esc_html__( 'Sync process completed successfully.', 'mainwp' ) );
 		}
 		\WP_CLI::line( '' );
 	}

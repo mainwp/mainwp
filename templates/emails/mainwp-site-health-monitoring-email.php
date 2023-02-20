@@ -103,7 +103,7 @@ if ( empty( $heading ) ) {
 							<?php } ?>
 							<tr>
 								<td align="left" valign="top" style="padding:30px 30px 0 30px;">
-									<a href="<?php echo admin_url( 'admin.php?page=MonitoringSites' ); ?>" style="color:#7fb100;text-decoration:none;"><?php echo __( 'Click here', 'mainwp' ); ?></a> <?php echo __( 'to check your site status.', 'mainwp' ); ?>
+									<a href="<?php echo admin_url( 'admin.php?page=MonitoringSites' ); ?>" style="color:#7fb100;text-decoration:none;"><?php echo esc_html__( 'Click here', 'mainwp' ); ?></a> <?php echo esc_html__( 'to check your site status.', 'mainwp' ); ?>
 								</td>
 							</tr>
 							<!-- End Body -->

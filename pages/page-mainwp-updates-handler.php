@@ -45,7 +45,7 @@ class MainWP_Updates_Handler {
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
 
 			if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
-				throw new MainWP_Exception( 'ERROR', '<i class="pause circular yellow inverted icon"></i> ' . __( 'Suspended site.', 'mainwp' ) );
+				throw new MainWP_Exception( 'ERROR', '<i class="pause circular yellow inverted icon"></i> ' . esc_html__( 'Suspended site.', 'mainwp' ) );
 			}
 
 			$information = self::upgrade_website( $website );
@@ -58,20 +58,20 @@ class MainWP_Updates_Handler {
 				} elseif ( isset( $information['upgrade'] ) ) {
 					$errorMsg = '';
 					if ( 'LOCALIZATION' === $information['upgrade'] ) {
-						$errorMsg = '<i class="red times icon"></i> ' . __( 'No update found for the set locale.', 'mainwp' );
+						$errorMsg = '<i class="red times icon"></i> ' . esc_html__( 'No update found for the set locale.', 'mainwp' );
 					} elseif ( 'NORESPONSE' === $information['upgrade'] ) {
-						$errorMsg = '<i class="red times icon"></i> ' . __( 'No response from the child site server.', 'mainwp' );
+						$errorMsg = '<i class="red times icon"></i> ' . esc_html__( 'No response from the child site server.', 'mainwp' );
 					}
 					throw new MainWP_Exception( 'WPERROR', $errorMsg );
 				} elseif ( isset( $information['error'] ) ) {
 					throw new MainWP_Exception( 'WPERROR', esc_html( $information['error'] ) );
 				} else {
-					throw new MainWP_Exception( 'ERROR', '<i class="red times icon"></i> ' . __( 'Invalid response from child site.', 'mainwp' ) );
+					throw new MainWP_Exception( 'ERROR', '<i class="red times icon"></i> ' . esc_html__( 'Invalid response from child site.', 'mainwp' ) );
 				}
 			}
 		}
 
-		throw new MainWP_Exception( 'ERROR', '<i class="red times icon"></i> ' . __( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) );
+		throw new MainWP_Exception( 'ERROR', '<i class="red times icon"></i> ' . esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) );
 	}
 
 	/**
@@ -654,7 +654,7 @@ class MainWP_Updates_Handler {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
 			if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
-				throw new MainWP_Exception( 'ERROR', __( 'Suspended site.', 'mainwp' ), 'SUSPENDED_SITE' );
+				throw new MainWP_Exception( 'ERROR', esc_html__( 'Suspended site.', 'mainwp' ), 'SUSPENDED_SITE' );
 			}
 			$information = self::update_plugin_theme_translation( $website, $type, $list );
 			if ( is_array( $information ) ) {
@@ -669,11 +669,11 @@ class MainWP_Updates_Handler {
 				} elseif ( isset( $information['error'] ) ) {
 					throw new MainWP_Exception( 'WPERROR', esc_html( $information['error'] ) );
 				} else {
-					throw new MainWP_Exception( 'ERROR', __( 'Invalid response retured from the child site. Please try again.', 'mainwp' ) );
+					throw new MainWP_Exception( 'ERROR', esc_html__( 'Invalid response retured from the child site. Please try again.', 'mainwp' ) );
 				}
 			}
 		}
-		throw new MainWP_Exception( 'ERROR', __( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) );
+		throw new MainWP_Exception( 'ERROR', esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) );
 	}
 
 	/**

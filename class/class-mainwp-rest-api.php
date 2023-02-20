@@ -10,6 +10,8 @@
 
 namespace MainWP\Dashboard;
 
+use Exception;
+
 /**
  * Class Rest_Api
  *
@@ -436,9 +438,19 @@ class Rest_Api {
 				'callback' => 'edit-client',
 			),
 			array(
+				'route'    => 'client',
+				'method'   => 'GET',
+				'callback' => 'remove-client',
+			),
+			array(
 				'route'    => 'clients',
 				'method'   => 'GET',
 				'callback' => 'all-clients',
+			),
+			array(
+				'route'    => 'tags',
+				'method'   => 'GET',
+				'callback' => 'all-tags',
 			),
 		);
 
@@ -529,7 +541,7 @@ class Rest_Api {
 	 */
 	public function mainwp_authentication_error() {
 
-		$data = array( 'ERROR' => __( 'Incorrect or missing consumer key and/or secret. If the issue persists please reset your authentication details from the MainWP > Settings > REST API page, on your MainWP Dashboard site.', 'mainwp' ) );
+		$data = array( 'ERROR' => esc_html__( 'Incorrect or missing consumer key and/or secret. If the issue persists please reset your authentication details from the MainWP > Settings > REST API page, on your MainWP Dashboard site.', 'mainwp' ) );
 
 		$response = new \WP_REST_Response( $data );
 		$response->set_status( 401 );
@@ -546,7 +558,7 @@ class Rest_Api {
 	 */
 	public function mainwp_missing_data_error() {
 
-		$data = array( 'ERROR' => __( 'Required parameter is missing.', 'mainwp' ) );
+		$data = array( 'ERROR' => esc_html__( 'Required parameter is missing.', 'mainwp' ) );
 
 		$response = new \WP_REST_Response( $data );
 		$response->set_status( 400 );
@@ -559,11 +571,17 @@ class Rest_Api {
 	 *
 	 * Common error message when data in request is ivalid.
 	 *
+	 * @param string $error Error message.
+	 *
 	 * @return array $response Array with an error message explaining details are missing.
 	 */
-	public function mainwp_invalid_data_error() {
+	public function mainwp_invalid_data_error( $error = '' ) {
 
-		$data = array( 'ERROR' => __( 'Required parameter data is is not valid.', 'mainwp' ) );
+		if ( ! empty( $error ) ) {
+			$data = array( 'ERROR' => $error );
+		} else {
+			$data = array( 'ERROR' => esc_html__( 'Required parameter data is is not valid.', 'mainwp' ) );
+		}
 
 		$response = new \WP_REST_Response( $data );
 		$response->set_status( 400 );
@@ -580,7 +598,7 @@ class Rest_Api {
 	 */
 	public function mainwp_run_process_success() {
 
-		$data = array( 'SUCCESS' => __( 'Process ran.', 'mainwp' ) );
+		$data = array( 'SUCCESS' => esc_html__( 'Process ran.', 'mainwp' ) );
 
 		$response = new \WP_REST_Response( $data );
 		$response->set_status( 200 );
@@ -826,6 +844,8 @@ class Rest_Api {
 				$data[ $website->id ] = $ret ? 'success' : 'failed';
 			}
 			MainWP_DB::free_result( $websites );
+
+			update_option( 'mainwp_last_synced_all_sites', time() );
 
 			$response = new \WP_REST_Response( $data );
 			$response->set_status( 200 );
@@ -1170,10 +1190,13 @@ class Rest_Api {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
-					$site_id = $request['site_id'];
+					$site_id   = $request['site_id'];
+					$with_tags = isset( $request['with_tags'] ) && $request['with_tags'] ? true : false;
+
+					$selectGroups = $with_tags ? true : false;
 
 					// get data.
-					$data = MainWP_DB::instance()->get_website_by_id( $site_id );
+					$data = MainWP_DB::instance()->get_website_by_id( $site_id, $selectGroups );
 
 					if ( ! empty( $data ) && property_exists( $data, 'privkey' ) ) {
 						unset( $data->privkey );
@@ -1185,6 +1208,21 @@ class Rest_Api {
 
 					if ( ! empty( $data ) && property_exists( $data, 'adminname' ) ) {
 						unset( $data->adminname );
+					}
+
+					if ( $with_tags && ! empty( $data ) && property_exists( $data, 'wpgroups' ) && property_exists( $data, 'wpgroupids' ) ) {
+						$wpgroupids = explode( ',', $data->wpgroupids );
+						$wpgroups   = explode( ',', $data->wpgroups );
+
+						$tags = array();
+						if ( is_array( $wpgroupids ) ) {
+							foreach ( $wpgroupids as $gidx => $groupid ) {
+								if ( $groupid && ! isset( $tags[ $groupid ] ) ) {
+									$tags[ $groupid ] = isset( $wpgroups[ $gidx ] ) ? $wpgroups[ $gidx ] : '';
+								}
+							}
+						}
+						$data->tags = $tags;
 					}
 
 					$response = new \WP_REST_Response( $data );
@@ -3344,11 +3382,13 @@ class Rest_Api {
 			// get data.
 			$fields = $request->get_json_params();
 
-			$data = MainWP_Client_Handler::rest_api_add_client( $fields );
-
-			$response = new \WP_REST_Response( $data );
-			$response->set_status( 200 );
-
+			try {
+				$data     = MainWP_Client_Handler::rest_api_add_client( $fields );
+				$response = new \WP_REST_Response( $data );
+				$response->set_status( 200 );
+			} catch ( Exception $e ) {
+				$response = $this->mainwp_invalid_data_error( $e->getMessage() );
+			}
 		} else {
 			// throw common error.
 			$response = $this->mainwp_authentication_error();
@@ -3363,7 +3403,7 @@ class Rest_Api {
 	 *
 	 * Callback function for managing the response to API requests made for the endpoint: edit-client
 	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/client/edit-client
-	 * API Method: POST
+	 * API Method: PUT
 	 *
 	 * @param array $request The request made in the API call which includes all parameters.
 	 *
@@ -3377,11 +3417,44 @@ class Rest_Api {
 			// get data.
 			$fields = $request->get_json_params();
 
-			$data = MainWP_Client_Handler::rest_api_add_client( $fields, true );
+			try {
+				$data     = MainWP_Client_Handler::rest_api_add_client( $fields, true );
+				$response = new \WP_REST_Response( $data );
+				$response->set_status( 200 );
+			} catch ( Exception $e ) {
+				$response = $this->mainwp_invalid_data_error( $e->getMessage() );
+			}
+		} else {
+			// throw common error.
+			$response = $this->mainwp_authentication_error();
+		}
 
-			$response = new \WP_REST_Response( $data );
-			$response->set_status( 200 );
+		return $response;
+	}
 
+	/**
+	 * Method mainwp_rest_api_remove_client_callback()
+	 *
+	 * Callback function for managing the response to API requests made for the endpoint: remove-client
+	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/client/remove-client
+	 * API Method: GET
+	 *
+	 * @param array $request The request made in the API call which includes all parameters.
+	 *
+	 * @return object $response An object that contains the return data and status of the API request.
+	 */
+	public function mainwp_rest_api_remove_client_callback( $request ) {
+
+		// first validate the request.
+		if ( $this->mainwp_validate_request( $request ) ) {
+			$client_id = isset( $request['client_id'] ) ? intval( $request['client_id'] ) : 0;
+			if ( ! empty( $client_id ) ) {
+				MainWP_DB_Client::instance()->delete_client( $client_id );
+				// do common process response.
+				$response = $this->mainwp_run_process_success();
+			} else {
+				$response = $this->mainwp_invalid_data_error();
+			}
 		} else {
 			// throw common error.
 			$response = $this->mainwp_authentication_error();
@@ -3408,7 +3481,9 @@ class Rest_Api {
 
 			$params = array(
 				'client'        => isset( $request['client'] ) ? $request['client'] : '',
-				'custom_fields' => isset( $request['custom_fields'] ) && 'yes' == $request['custom_fields'] ? true : false,
+				'custom_fields' => isset( $request['custom_fields'] ) && $request['custom_fields'] ? true : false,
+				'with_tags'     => isset( $request['with_tags'] ) && $request['with_tags'] ? true : false,
+				'with_contacts' => isset( $request['with_contacts'] ) && $request['with_contacts'] ? true : false,
 			);
 
 			// get data.
@@ -3428,5 +3503,61 @@ class Rest_Api {
 
 		return $response;
 	}
+
+	/**
+	 * Method mainwp_rest_api_all_tags_callback()
+	 *
+	 * Callback function for managing the response to API requests made for the endpoint: all-tags
+	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/tags/all-tags
+	 * API Method: GET
+	 *
+	 * @param array $request The request made in the API call which includes all parameters.
+	 *
+	 * @return object $response An object that contains the return data and status of the API request.
+	 */
+	public function mainwp_rest_api_all_tags_callback( $request ) {
+
+		// first validate the request.
+		if ( $this->mainwp_validate_request( $request ) ) {
+
+			$data = array();
+
+			$tag_id   = isset( $request['tag_id'] ) ? intval( $request['tag_id'] ) : 0;
+			$tag_name = isset( $request['tag_name'] ) ? (string) $request['tag_name'] : '';
+
+			$groups = MainWP_DB_Common::instance()->get_groups_and_count();
+
+			if ( $groups ) {
+				foreach ( $groups as $group ) {
+					if ( ! empty( $tag_id ) ) {
+						if ( $group->id == $tag_id ) {
+							$data[ $group->id ] = $group->name;
+						}
+					} elseif ( ! empty( $tag_name ) ) {
+						if ( $group->name == $tag_name ) {
+							$data[ $group->id ] = $group->name;
+						}
+					} else {
+						$data[ $group->id ] = $group->name;
+					}
+				}
+			}
+
+			$result = array(
+				'data' => $data,
+			);
+
+			$response = new \WP_REST_Response( $result );
+			$response->set_status( 200 );
+
+		} else {
+			// throw common error.
+			$response = $this->mainwp_authentication_error();
+		}
+
+		return $response;
+	}
+
+
 }
 // End of class.

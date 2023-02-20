@@ -230,6 +230,10 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 			}
 		}
 
+		if ( is_array( $assoc_args ) && isset( $assoc_args['all'] ) ) {
+			update_option( 'mainwp_last_synced_all_sites', time() );
+		}
+
 		if ( ( count( $sites ) == 0 ) && ( ! isset( $assoc_args['all'] ) ) ) {
 			\WP_CLI::error( 'Please specify one or more child sites, or use --all.' );
 		}

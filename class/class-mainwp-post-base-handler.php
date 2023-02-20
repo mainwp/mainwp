@@ -67,7 +67,7 @@ abstract class MainWP_Post_Base_Handler {
 
 			// If already processed, just quit!
 			if ( isset( $ajaxPosts[ $action ] ) && ( $ajaxPosts[ $action ] == $_POST['dts'] ) ) {
-				die( wp_json_encode( array( 'error' => __( 'Double request!', 'mainwp' ) ) ) );
+				die( wp_json_encode( array( 'error' => esc_html__( 'Double request!', 'mainwp' ) ) ) );
 			}
 
 			$ajaxPosts[ $action ] = sanitize_text_field( wp_unslash( $_POST['dts'] ) );
@@ -111,7 +111,7 @@ abstract class MainWP_Post_Base_Handler {
 
 		if ( ! $secure ) {
 			if ( $die ) {
-				die( wp_json_encode( array( 'error' => __( 'Insecure request! Please try again. If you keep experiencing the problem, please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', 'mainwp' ) ) ) );
+				die( wp_json_encode( array( 'error' => esc_html__( 'Insecure request! Please try again. If you keep experiencing the problem, please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', 'mainwp' ) ) ) );
 			} else {
 				return false;
 			}

@@ -263,6 +263,17 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 		return false;
 	}
 
+	/**
+	 * Method delete_all_actions.
+	 *
+	 * Deletes all actions.
+	 *
+	 * @return bool Results.
+	 */
+	public function delete_all_actions() {
+		return $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_actions' ) ) );
+	}
+
 
 	/**
 	 * Method get_wp_actions.

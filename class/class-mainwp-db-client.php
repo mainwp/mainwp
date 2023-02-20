@@ -453,15 +453,30 @@ class MainWP_DB_Client extends MainWP_DB {
 	 * Create or update client.
 	 *
 	 * @param array $data Client data.
+	 * @param bool  $throw Throw or return error.
+	 *
+	 * @throws MainWP_Exception On errors.
 	 *
 	 * @return bool.
 	 */
-	public function update_client( $data ) {
-		if ( empty( $data ) ) {
+	public function update_client( $data, $throw = false ) {
+		if ( empty( $data ) || ! is_array( $data ) ) {
 			return false;
 		}
 
 		$client_id = isset( $data['client_id'] ) ? $data['client_id'] : 0;
+
+		if ( isset( $data['client_email'] ) && ! empty( $data['client_email'] ) ) {
+			$client_existed = $this->get_wp_client_by( 'client_email', $data['client_email'], ARRAY_A );
+			if ( is_array( $client_existed ) && isset( $client_existed['client_id'] ) && ( empty( $client_id ) || $client_id != $client_existed['client_id'] ) ) {
+				if ( $throw ) {
+					throw new MainWP_Exception( esc_html__( 'Client email exists. Please try again.', 'mainwp' ) );
+				} else {
+					return false;
+				}
+			}
+		}
+
 		if ( ! empty( $client_id ) ) {
 			$this->wpdb->update( $this->table_name( 'wp_clients' ), $data, array( 'client_id' => intval( $client_id ) ) );
 			return $this->get_wp_client_by( 'client_id', $client_id );
@@ -578,10 +593,42 @@ class MainWP_DB_Client extends MainWP_DB {
 	 * @return bool Results.
 	 */
 	public function delete_client_contact( $client_id, $contact_id ) {
-		if ( $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_clients_contacts' ) . ' WHERE contact_client_id=%d AND contact_id = %d', $client_id, $contact_id ) ) ) {
+		$current = $this->get_wp_client_contact_by( 'contact_id', $contact_id );
+		if ( $current && $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_clients_contacts' ) . ' WHERE contact_client_id=%d AND contact_id = %d', $client_id, $contact_id ) ) ) {
+			if ( ! empty( $current->contact_image ) ) {
+				$dirs     = MainWP_System_Utility::get_mainwp_dir( 'client-images', true );
+				$base_dir = $dirs[0];
+				$old_file = $base_dir . '/' . $current->contact_image;
+				MainWP_Utility::delete_file( $old_file );
+			}
 			return true;
 		}
 		return false;
+	}
+
+
+	/**
+	 * Method delete_client_contacts_by_client_id.
+	 *
+	 * Delete client contacts by client id.
+	 *
+	 * @param int $client_id Client id.
+	 *
+	 * @return bool Results.
+	 */
+	public function delete_client_contacts_by_client_id( $client_id ) {
+
+		if ( empty( $client_id ) ) {
+			return false;
+		}
+
+		$client_contacts = self::instance()->get_wp_client_contact_by( 'client_id', $client_id, ARRAY_A );
+		if ( $client_contacts ) {
+			foreach ( $client_contacts as $contact ) {
+				self::instance()->delete_client_contact( $client_id, $contact['contact_id'] );
+			}
+		}
+		return true;
 	}
 
 
@@ -664,8 +711,8 @@ class MainWP_DB_Client extends MainWP_DB {
 
 		if ( 'client_id' == $by && is_numeric( $value ) ) {
 			$sql = $this->wpdb->prepare( 'SELECT wc.*, cc.* ' . $select_sites . $select_tags . ' FROM ' . $this->table_name( 'wp_clients' ) . ' wc ' . $join_contact . ' WHERE wc.client_id=%d ', $value );
-		} elseif ( 'email' == $by && ! empty( $value ) ) {
-			$sql = $this->wpdb->prepare( 'SELECT wc.*, cc.* ' . $select_sites . $select_tags . ' FROM ' . $this->table_name( 'wp_clients' ) . ' wc ' . $join_contact . ' WHERE wc.email=%s ', $value );
+		} elseif ( 'client_email' == $by && ! empty( $value ) ) {
+			$sql = $this->wpdb->prepare( 'SELECT wc.*, cc.* ' . $select_sites . $select_tags . ' FROM ' . $this->table_name( 'wp_clients' ) . ' wc ' . $join_contact . ' WHERE wc.client_email=%s ', $value );
 		}
 
 		$result = null;
@@ -684,17 +731,20 @@ class MainWP_DB_Client extends MainWP_DB {
 	 *
 	 * Get clients.
 	 *
-	 * @param mixed $params params.
+	 * @param array $params params.
 	 *
 	 * @return mixed result.
 	 */
-	public function get_wp_clients( $params = false ) {
+	public function get_wp_clients( $params = array() ) {
 
-		$custom_field = false;
+		$custom_field  = false;
+		$with_tags     = false;
+		$with_contacts = false;
 
-		$where = '';
+		$where       = '';
+		$select_tags = '';
 
-		if ( $params ) {
+		if ( $params && is_array( $params ) ) {
 			$client = isset( $params['client'] ) ? sanitize_text_field( wp_unslash( $params['client'] ) ) : '';
 			if ( '' != $client ) {
 				$clients     = explode( ';', $client );
@@ -707,30 +757,88 @@ class MainWP_DB_Client extends MainWP_DB {
 				$where .= ' AND wc.client_id IN (' . $clientWhere . ') ';
 			}
 			$custom_field = $params['custom_fields'] && $params['custom_fields'] ? true : false;
+
+			$with_tags     = isset( $params['with_tags'] ) && $params['with_tags'] ? true : false;
+			$with_contacts = isset( $params['with_contacts'] ) && $params['with_contacts'] ? true : false;
+		}
+
+		if ( $with_tags ) {
+			$select_tags .= ", ( SELECT GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ',') FROM " . $this->table_name( 'wp' ) . ' wp ';
+			$select_tags .= ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid ';
+			$select_tags .= ' LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id ';
+			$select_tags .= ' WHERE wp.client_id = wc.client_id ) as wpgroups ';
+
+			$select_tags .= ", ( SELECT GROUP_CONCAT(gr.id ORDER BY gr.id SEPARATOR ',') FROM " . $this->table_name( 'wp' ) . ' wp ';
+			$select_tags .= ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid ';
+			$select_tags .= ' LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id ';
+			$select_tags .= ' WHERE wp.client_id = wc.client_id ) as wpgroupids ';
 		}
 
 		$sql  = ' SELECT wc.* ';
-		$sql .= ',( SELECT GROUP_CONCAT(wp.id SEPARATOR ",") FROM ' . $this->table_name( 'wp' ) . ' wp WHERE wp.client_id = wc.client_id ) as selected_sites ';
+		$sql .= ',( SELECT GROUP_CONCAT(wp.id SEPARATOR ",") FROM ' . $this->table_name( 'wp' ) . ' wp WHERE wp.client_id = wc.client_id ) as selected_sites ' . $select_tags;
 		$sql .= ' FROM ' . $this->table_name( 'wp_clients' ) . ' wc ';
 		$sql .= ' WHERE 1 ' . $where . ' ORDER BY wc.name';
 
 		$result = $this->wpdb->get_results( $sql, ARRAY_A );
 
-		if ( $custom_field ) {
-			$output = array();
-			foreach ( $result as $rst ) {
+		$contact_fields = array(
+			'contact_id',
+			'contact_client_id',
+			'contact_email',
+			'contact_name',
+			'contact_phone',
+			'contact_role',
+			'contact_image',
+			'facebook',
+			'twitter',
+			'instagram',
+			'linkedin',
+		);
+
+		$output = array();
+
+		foreach ( $result as $rst ) {
+
+			if ( $custom_field ) {
 				$custom_fields = self::instance()->get_client_fields( true, $rst['client_id'] );
 				if ( $custom_fields ) {
 					foreach ( $custom_fields as $field ) {
 						$rst[ $field->field_name ] = $field->field_value;
 					}
 				}
-				$output[] = $rst;
 			}
-			return $output;
-		} else {
-			return $result;
+			if ( $with_tags && ! empty( $rst['wpgroupids'] ) && ! empty( $rst['wpgroups'] ) ) {
+				$wpgroupids = explode( ',', $rst['wpgroupids'] );
+				$wpgroups   = explode( ',', $rst['wpgroups'] );
+
+				$tags = array();
+				if ( is_array( $wpgroupids ) ) {
+					foreach ( $wpgroupids as $gidx => $groupid ) {
+						if ( $groupid && ! isset( $tags[ $groupid ] ) ) {
+							$tags[ $groupid ] = isset( $wpgroups[ $gidx ] ) ? $wpgroups[ $gidx ] : '';
+						}
+					}
+				}
+
+				$rst['tags'] = $tags;
+			}
+
+			if ( $with_contacts ) {
+				$client_contacts = self::instance()->get_wp_client_contact_by( 'client_id', $rst['client_id'], ARRAY_A );
+
+				$contacts = array();
+
+				if ( is_array( $client_contacts ) ) {
+					foreach ( $client_contacts as $gidx => $contact ) {
+						$contacts[ $contact['contact_id'] ] = MainWP_Utility::map_fields( $contact, $contact_fields, false );
+					}
+				}
+				$rst['contacts'] = $contacts;
+			}
+
+			$output[] = $rst;
 		}
+		return $output;
 	}
 
 	/**
@@ -776,7 +884,9 @@ class MainWP_DB_Client extends MainWP_DB {
 	 * @return bool Results.
 	 */
 	public function delete_client( $client_id ) {
-		if ( $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_clients' ) . ' WHERE client_id=%d ', $client_id ) ) ) {
+
+		$current = self::instance()->get_wp_client_by( 'client_id', $client_id );
+		if ( $current && $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_clients' ) . ' WHERE client_id=%d ', $client_id ) ) ) {
 			$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET client_id=0 WHERE client_id=%d ', $client_id ) );
 			$fields = $this->get_client_fields_by( 'client_id', $client_id );
 			if ( $fields ) {
@@ -785,6 +895,15 @@ class MainWP_DB_Client extends MainWP_DB {
 					$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_clients_field_values' ) . ' WHERE field_id=%d AND value_client_id=%d ', $field->field_id, $client_id ) );
 				}
 			}
+
+			if ( ! empty( $current->image ) ) {
+				$dirs     = MainWP_System_Utility::get_mainwp_dir( 'client-images', true );
+				$base_dir = $dirs[0];
+				$old_file = $base_dir . '/' . $current->image;
+				MainWP_Utility::delete_file( $old_file );
+			}
+
+			$this->delete_client_contacts_by_client_id( $client_id );
 			return true;
 		}
 		return false;

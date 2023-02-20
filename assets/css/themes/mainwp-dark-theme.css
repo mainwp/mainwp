@@ -48,7 +48,7 @@
 /* Fix Colors */
 
 .mainwp-ui.mainwp-custom-theme a:not(.ui.button),
-.mainwp-ui.mainwp-custom-theme a:not(.ui.label) {
+.mainwp-ui.mainwp-custom-theme a:not(.ui.label, .uf-fmuci-button-main) {
   color: var(--accent-color);
 }
 

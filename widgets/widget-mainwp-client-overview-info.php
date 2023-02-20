@@ -45,13 +45,18 @@ class MainWP_Client_Overview_Info {
 	 * @param object $client_id Client ID.
 	 */
 	public static function render_client_overview( $client_id ) {  // phpcs:ignore -- complex function.
-		$params      = array( 'with_selected_sites' => true );
+		$params      = array(
+			'with_selected_sites' => true,
+			'with_tags'           => true,
+		);
 		$client_info = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id, ARRAY_A, $params );
 
 		?>
 			<h3 class="ui header handle-drag">
 				<?php echo esc_html( $client_info['name'] ); ?>
-				<div class="sub header"><?php echo esc_html( $client_info['name'] ); ?> <?php echo __( ' information', 'mainwp' ); ?></div>
+				<div class="sub header">
+					<?php echo MainWP_System_Utility::get_site_tags( $client_info, true ); ?>
+				</div>
 			</h3>
 			<div class="ui section hidden divider"></div>
 			<div class="mainwp-widget-client-card" client-id="<?php echo intval( $client_id ); ?>">

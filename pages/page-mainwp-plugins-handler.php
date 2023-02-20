@@ -102,13 +102,13 @@ class MainWP_Plugins_Handler {
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
 		if ( empty( $websiteId ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
-			die( wp_json_encode( array( 'error' => __( 'You are not allowed to edit this website.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'You are not allowed to edit this website.', 'mainwp' ) ) ) );
 		}
 
 		$plugins = isset( $_POST['plugins'] ) ? wp_unslash( $_POST['plugins'] ) : false;
@@ -172,20 +172,20 @@ class MainWP_Plugins_Handler {
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
 		if ( empty( $websiteId ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
-			die( wp_json_encode( array( 'error' => __( 'You are not allowed to edit this website.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'You are not allowed to edit this website.', 'mainwp' ) ) ) );
 		}
 
 		if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
 			die(
 				wp_json_encode(
 					array(
-						'error'     => __( 'Suspended site.', 'mainwp' ),
+						'error'     => esc_html__( 'Suspended site.', 'mainwp' ),
 						'errorCode' => 'SUSPENDED_SITE',
 					)
 				)
@@ -229,7 +229,7 @@ class MainWP_Plugins_Handler {
 		}
 
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Unexpected error. Please try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => esc_html__( 'Unexpected error. Please try again.', 'mainwp' ) ) ) );
 		}
 
 		die( wp_json_encode( array( 'result' => true ) ) );

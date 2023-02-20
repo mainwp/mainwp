@@ -77,7 +77,7 @@ class MainWP_Themes {
 		$_page = add_submenu_page(
 			'mainwp_tab',
 			__( 'Themes', 'mainwp' ),
-			'<span id="mainwp-Themes">' . __( 'Themes', 'mainwp' ) . '</span>',
+			'<span id="mainwp-Themes">' . esc_html__( 'Themes', 'mainwp' ) . '</span>',
 			'read',
 			'ThemesManage',
 			array(
@@ -89,7 +89,7 @@ class MainWP_Themes {
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Themes', 'mainwp' ),
-			'<div class="mainwp-hidden">' . __( 'Install', 'mainwp' ) . '</div>',
+			'<div class="mainwp-hidden">' . esc_html__( 'Install', 'mainwp' ) . '</div>',
 			'read',
 			'ThemesInstall',
 			array(
@@ -100,7 +100,7 @@ class MainWP_Themes {
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Themes', 'mainwp' ),
-			'<div class="mainwp-hidden">' . __( 'Advanced Auto Updates', 'mainwp' ) . '</div>',
+			'<div class="mainwp-hidden">' . esc_html__( 'Advanced Auto Updates', 'mainwp' ) . '</div>',
 			'read',
 			'ThemesAutoUpdate',
 			array(
@@ -111,7 +111,7 @@ class MainWP_Themes {
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Themes', 'mainwp' ),
-			'<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>',
+			'<div class="mainwp-hidden">' . esc_html__( 'Ignored Updates', 'mainwp' ) . '</div>',
 			'read',
 			'ThemesIgnore',
 			array(
@@ -122,7 +122,7 @@ class MainWP_Themes {
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Themes', 'mainwp' ),
-			'<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>',
+			'<div class="mainwp-hidden">' . esc_html__( 'Ignored Abandoned', 'mainwp' ) . '</div>',
 			'read',
 			'ThemesIgnoredAbandoned',
 			array(
@@ -213,7 +213,7 @@ class MainWP_Themes {
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => __( 'Themes', 'mainwp' ),
+				'title'      => esc_html__( 'Themes', 'mainwp' ),
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'ThemesManage',
 				'href'       => 'admin.php?page=ThemesManage',
@@ -224,35 +224,35 @@ class MainWP_Themes {
 
 		$init_sub_subleftmenu = array(
 			array(
-				'title'      => __( 'Manage Themes', 'mainwp' ),
+				'title'      => esc_html__( 'Manage Themes', 'mainwp' ),
 				'parent_key' => 'ThemesManage',
 				'href'       => 'admin.php?page=ThemesManage',
 				'slug'       => 'ThemesManage',
 				'right'      => '',
 			),
 			array(
-				'title'      => __( 'Install', 'mainwp' ),
+				'title'      => esc_html__( 'Install', 'mainwp' ),
 				'parent_key' => 'ThemesManage',
 				'href'       => 'admin.php?page=ThemesInstall',
 				'slug'       => 'ThemesInstall',
 				'right'      => 'install_themes',
 			),
 			array(
-				'title'      => __( 'Advanced Auto Updates', 'mainwp' ),
+				'title'      => esc_html__( 'Advanced Auto Updates', 'mainwp' ),
 				'parent_key' => 'ThemesManage',
 				'href'       => 'admin.php?page=ThemesAutoUpdate',
 				'slug'       => 'ThemesAutoUpdate',
 				'right'      => '',
 			),
 			array(
-				'title'      => __( 'Ignored Updates', 'mainwp' ),
+				'title'      => esc_html__( 'Ignored Updates', 'mainwp' ),
 				'parent_key' => 'ThemesManage',
 				'href'       => 'admin.php?page=ThemesIgnore',
 				'slug'       => 'ThemesIgnore',
 				'right'      => '',
 			),
 			array(
-				'title'      => __( 'Ignored Abandoned', 'mainwp' ),
+				'title'      => esc_html__( 'Ignored Abandoned', 'mainwp' ),
 				'parent_key' => 'ThemesManage',
 				'href'       => 'admin.php?page=ThemesIgnoredAbandoned',
 				'slug'       => 'ThemesIgnoredAbandoned',
@@ -282,21 +282,21 @@ class MainWP_Themes {
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
 	public static function render_header( $shownPage = '' ) {
-		$params = array( 'title' => __( 'Themes', 'mainwp' ) );
+		$params = array( 'title' => esc_html__( 'Themes', 'mainwp' ) );
 
 		MainWP_UI::render_top_header( $params );
 
 			$renderItems = array();
 
 			$renderItems[] = array(
-				'title'  => __( 'Manage Themes', 'mainwp' ),
+				'title'  => esc_html__( 'Manage Themes', 'mainwp' ),
 				'href'   => 'admin.php?page=ThemesManage',
 				'active' => ( 'Manage' === $shownPage ) ? true : false,
 			);
 
 			if ( mainwp_current_user_have_right( 'dashboard', 'install_themes' ) ) {
 				$renderItems[] = array(
-					'title'  => __( 'Install', 'mainwp' ),
+					'title'  => esc_html__( 'Install', 'mainwp' ),
 					'href'   => 'admin.php?page=ThemesInstall',
 					'active' => ( 'Install' === $shownPage ) ? true : false,
 				);
@@ -304,7 +304,7 @@ class MainWP_Themes {
 
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ThemesAutoUpdate' ) ) {
 				$renderItems[] = array(
-					'title'  => __( 'Advanced Auto Updates', 'mainwp' ),
+					'title'  => esc_html__( 'Advanced Auto Updates', 'mainwp' ),
 					'href'   => 'admin.php?page=ThemesAutoUpdate',
 					'active' => ( 'AutoUpdate' === $shownPage ) ? true : false,
 				);
@@ -312,7 +312,7 @@ class MainWP_Themes {
 
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ThemesIgnore' ) ) {
 				$renderItems[] = array(
-					'title'  => __( 'Ignored Updates', 'mainwp' ),
+					'title'  => esc_html__( 'Ignored Updates', 'mainwp' ),
 					'href'   => 'admin.php?page=ThemesIgnore',
 					'active' => ( 'Ignore' === $shownPage ) ? true : false,
 				);
@@ -320,7 +320,7 @@ class MainWP_Themes {
 
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ThemesIgnoredAbandoned' ) ) {
 				$renderItems[] = array(
-					'title'  => __( 'Ignored Abandoned', 'mainwp' ),
+					'title'  => esc_html__( 'Ignored Abandoned', 'mainwp' ),
 					'href'   => 'admin.php?page=ThemesIgnoredAbandoned',
 					'active' => ( 'IgnoreAbandoned' === $shownPage ) ? true : false,
 				);
@@ -428,9 +428,9 @@ class MainWP_Themes {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-themes-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-themes-info-message"></i>
-							<div><?php echo __( 'Manage installed themes on your child sites. Here you can activate, deactivate, and delete installed themes.', 'mainwp' ); ?></div>
-							<p><?php echo __( 'To Activate or Delete a specific theme, you must search only for Inactive themes on your child sites. If you search for Active or both Active and Inactive, the Activate and Delete actions will be disabled.', 'mainwp' ); ?></p>
-							<p><?php echo sprintf( __( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">', '</a>' ); ?></p>
+							<div><?php echo esc_html__( 'Manage installed themes on your child sites. Here you can activate, deactivate, and delete installed themes.', 'mainwp' ); ?></div>
+							<p><?php echo esc_html__( 'To Activate or Delete a specific theme, you must search only for Inactive themes on your child sites. If you search for Active or both Active and Inactive, the Activate and Delete actions will be disabled.', 'mainwp' ); ?></p>
+							<p><?php echo sprintf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">', '</a>' ); ?></p>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -1154,7 +1154,7 @@ class MainWP_Themes {
 							$not_delete = false;
 							$parent_str = '';
 							if ( isset( $siteThemes[ $site_id ][ $slug_ver ]['parent_active'] ) && 1 == $siteThemes[ $site_id ][ $slug_ver ]['parent_active'] ) {
-								$parent_str = '<span data-tooltip="' . sprintf( __( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] ) ? $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] : '' ) . '" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>';
+								$parent_str = '<span data-tooltip="' . sprintf( esc_html__( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] ) ? $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] : '' ) . '" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>';
 								$not_delete = true;
 							}
 
@@ -1378,16 +1378,16 @@ class MainWP_Themes {
 					'adminUrl'   => wp_parse_url( self_admin_url(), PHP_URL_PATH ),
 				),
 				'l10n'            => array(
-					'addNew'            => __( 'Add new theme' ),
-					'search'            => __( 'Search themes' ),
-					'searchPlaceholder' => __( 'Search themes...' ),
-					'upload'            => __( 'Upload theme' ),
-					'back'              => __( 'Back' ),
-					'error'             => __( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="https://wordpress.org/support/">support forums</a>.' ),
-					'themesFound'       => __( 'Number of themes found: %d' ),
-					'noThemesFound'     => __( 'No themes found. Try a different search.' ),
-					'collapseSidebar'   => __( 'Collapse sidebar' ),
-					'expandSidebar'     => __( 'Expand sidebar' ),
+					'addNew'            => esc_html__( 'Add new theme' ),
+					'search'            => esc_html__( 'Search themes' ),
+					'searchPlaceholder' => esc_html__( 'Search themes...' ),
+					'upload'            => esc_html__( 'Upload theme' ),
+					'back'              => esc_html__( 'Back' ),
+					'error'             => esc_html__( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="https://wordpress.org/support/">support forums</a>.' ),
+					'themesFound'       => esc_html__( 'Number of themes found: %d' ),
+					'noThemesFound'     => esc_html__( 'No themes found. Try a different search.' ),
+					'collapseSidebar'   => esc_html__( 'Collapse sidebar' ),
+					'expandSidebar'     => esc_html__( 'Expand sidebar' ),
 				),
 				'installedThemes' => array(),
 			)
@@ -1406,7 +1406,7 @@ class MainWP_Themes {
 	 */
 	public static function render_themes_table() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'install_themes' ) ) {
-			mainwp_do_not_have_permissions( __( 'install themes', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'install themes', 'mainwp' ) );
 			return;
 		}
 		$favorites_enabled = is_plugin_active( 'mainwp-favorites-extension/mainwp-favorites-extension.php' );
@@ -1456,7 +1456,7 @@ class MainWP_Themes {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-install-themes-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-install-themes-info-message"></i>
-							<?php echo sprintf( __( 'Install themes on your child sites.  You can install themes from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-themes/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( esc_html__( 'Install themes on your child sites.  You can install themes from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-themes/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
@@ -1556,11 +1556,11 @@ class MainWP_Themes {
 				<div class="content">
 					<div class="header">{{ data.name }}</div>
 					<div class="meta">
-						<a><?php printf( __( 'By %s', 'mainwp' ), '{{ data.author }}' ); ?></a>
+						<a><?php printf( esc_html__( 'By %s', 'mainwp' ), '{{ data.author }}' ); ?></a>
 					</div>
 				</div>
 				<div class="extra content">
-					<span class="right floated"><?php printf( __( 'Version: %s', 'mainwp' ), '{{ data.version }}' ); ?></span>
+					<span class="right floated"><?php printf( esc_html__( 'Version: %s', 'mainwp' ), '{{ data.version }}' ); ?></span>
 					<# if ( data.rating ) { #>
 						<div class="star-rating rating-{{ Math.round( data.rating / 10 ) * 10 }}">
 							<span class="one"></span><span class="two"></span><span class="three"></span><span class="four"></span><span class="five"></span>
@@ -1597,7 +1597,7 @@ class MainWP_Themes {
 				<div class="wp-full-overlay-sidebar-content">
 					<div class="install-theme-info">
 						<h3 class="theme-name">{{ data.name }}</h3>
-						<span class="theme-by"><?php printf( __( 'By %s', 'mainwp' ), '{{ data.author }}' ); ?></span>
+						<span class="theme-by"><?php printf( esc_html__( 'By %s', 'mainwp' ), '{{ data.author }}' ); ?></span>
 						<img class="theme-screenshot" src="{{ data.screenshot_url }}" alt="" />
 						<div class="theme-details">
 							<# if ( data.rating ) { #>
@@ -1610,7 +1610,7 @@ class MainWP_Themes {
 									<small class="ratings"><?php esc_html_e( 'This theme has not been rated yet.', 'mainwp' ); ?></small>
 								</div>
 							<# } #>
-							<div class="theme-version"><?php printf( __( 'Version: %s', 'mainwp' ), '{{ data.version }}' ); ?></div>
+							<div class="theme-version"><?php printf( esc_html__( 'Version: %s', 'mainwp' ), '{{ data.version }}' ); ?></div>
 							<div class="theme-description">{{{ data.description }}}</div>
 						</div>
 					</div>
@@ -1651,7 +1651,7 @@ class MainWP_Themes {
 		self::render_header( 'AutoUpdate' );
 
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'trust_untrust_updates' ) ) {
-			mainwp_do_not_have_permissions( __( 'trust/untrust updates', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'trust/untrust updates', 'mainwp' ) );
 			return;
 		} else {
 			$snThemeAutomaticDailyUpdate = get_option( 'mainwp_themeAutomaticDailyUpdate' );
@@ -1697,7 +1697,7 @@ class MainWP_Themes {
 						<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-disable-auto-updates-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-disable-auto-updates-info-message"></i>
-							<div><?php echo sprintf( __( 'Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); ?></div>
+							<div><?php echo sprintf( esc_html__( 'Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); ?></div>
 						</div>
 						<?php endif; ?>
 						<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-themes-auto-updates-info-message' ) ) : ?>
@@ -2100,7 +2100,7 @@ class MainWP_Themes {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-themes-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-themes-info-message"></i>
-					<?php echo sprintf( __( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-themes-updates/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( esc_html__( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-themes-updates/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -2322,7 +2322,7 @@ class MainWP_Themes {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-abandoned-themes-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-abandoned-themes-info-message"></i>
-					<?php echo sprintf( __( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-themes/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( esc_html__( 'Manage abandoned themes you have told your MainWP Dashboard to ignore on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-themes/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php

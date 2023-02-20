@@ -91,8 +91,8 @@ class MainWP_Manage_Sites_Update_View {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-updates-site-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-site-message"></i>
-					<div><?php echo sprintf( __( 'Manage available updates for the child site. From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-wordpress-core/" target="_blank">', '</a>' ); ?></div>
-					<div><?php echo sprintf( __( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-wordpress-core-update/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( esc_html__( 'Manage available updates for the child site. From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-wordpress-core/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( esc_html__( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-wordpress-core-update/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">', '</a>' ); ?></div>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -387,20 +387,17 @@ class MainWP_Manage_Sites_Update_View {
 		<div class="ui <?php echo 'plugins' === $active_tab ? 'active' : ''; ?> tab" data-tab="plugins">
 			<?php if ( ! $website->is_ignorePluginUpdates ) : ?>
 				<?php
-				$plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
+				$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
+				if ( ! is_array( $plugin_upgrades ) ) {
+					$plugin_upgrades = array();
+				}
 				$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
 				$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 				if ( is_array( $decodedPremiumUpgrades ) ) {
 					foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 						$premiumUpgrade['premium'] = true;
-
 						if ( 'plugin' === $premiumUpgrade['type'] ) {
-							if ( ! is_array( $plugin_upgrades ) ) {
-								$plugin_upgrades = array();
-							}
-
 							$premiumUpgrade = array_filter( $premiumUpgrade );
-
 							if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
 								$plugin_upgrades[ $crrSlug ] = array();
 							}
@@ -498,21 +495,19 @@ class MainWP_Manage_Sites_Update_View {
 		<div class="ui <?php echo 'themes' === $active_tab ? 'active' : ''; ?> tab" data-tab="themes">
 			<?php if ( ! $website->is_ignoreThemeUpdates ) : ?>
 				<?php
-				$theme_upgrades         = json_decode( $website->theme_upgrades, true );
+				$theme_upgrades = json_decode( $website->theme_upgrades, true );
+				if ( ! is_array( $theme_upgrades ) ) {
+					$theme_upgrades = array();
+				}
+
 				$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
 				$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 
 				if ( is_array( $decodedPremiumUpgrades ) ) {
 					foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 						$premiumUpgrade['premium'] = true;
-
 						if ( 'theme' === $premiumUpgrade['type'] ) {
-							if ( ! is_array( $theme_upgrades ) ) {
-								$theme_upgrades = array();
-							}
-
 							$premiumUpgrade = array_filter( $premiumUpgrade );
-
 							if ( ! isset( $theme_upgrades[ $crrSlug ] ) ) {
 								$theme_upgrades[ $crrSlug ] = array();
 							}
@@ -668,7 +663,7 @@ class MainWP_Manage_Sites_Update_View {
 		if ( is_array( $decodedDismissedPlugins ) ) {
 			$plugins_outdate = array_diff_key( $plugins_outdate, $decodedDismissedPlugins );
 		}
-		$str_format = __( 'Updated %s days ago', 'mainwp' );
+		$str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
 		?>
 
 		<div class="ui <?php echo 'abandoned-plugins' === $active_tab ? 'active' : ''; ?> tab" data-tab="abandoned-plugins">
@@ -761,7 +756,7 @@ class MainWP_Manage_Sites_Update_View {
 			}
 		}
 
-		$str_format = __( 'Updated %s days ago', 'mainwp' );
+		$str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
 
 		?>
 		<div class="ui <?php echo 'abandoned-themes' === $active_tab ? 'active' : ''; ?> tab" data-tab="abandoned-themes">

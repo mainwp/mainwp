@@ -724,7 +724,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 					foreach ( $twitters as $timeid => $twit_mess ) {
 						if ( ! empty( $twit_mess ) ) {
 							$sendText = MainWP_Twitter::get_twit_to_send( $actionName, $timeid );
-							$html    .= '<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="' . esc_attr( $actionName ) . '" twit-id="' . $timeid . '">' . $twit_mess . '</span>&nbsp;' . MainWP_Twitter::gen_twitter_button( $sendText, false ) . '<span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> ' . __( 'Dismiss', 'mainwp' ) . '</a></span></div>';
+							$html    .= '<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="' . esc_attr( $actionName ) . '" twit-id="' . $timeid . '">' . $twit_mess . '</span>&nbsp;' . MainWP_Twitter::gen_twitter_button( $sendText, false ) . '<span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> ' . esc_html__( 'Dismiss', 'mainwp' ) . '</a></span></div>';
 						}
 					}
 				}
@@ -847,7 +847,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		try {
 			$information = MainWP_Connect::fetch_url_authed( $website, 'disconnect' );
 		} catch ( \Exception $e ) {
-			$information = array( 'error' => __( 'fetch_url_authed exception', 'mainwp' ) );
+			$information = array( 'error' => esc_html__( 'fetch_url_authed exception', 'mainwp' ) );
 		}
 
 		wp_send_json( $information );
@@ -932,9 +932,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		if ( $client_id ) {
 			MainWP_DB_Client::instance()->delete_client( $client_id );
 			$ret['success'] = 'SUCCESS';
-			$ret['result']  = __( 'Client removed successfully.', 'mainwp' );
+			$ret['result']  = esc_html__( 'Client removed successfully.', 'mainwp' );
 		} else {
-			$ret['result'] = __( 'Client ID empty.', 'mainwp' );
+			$ret['result'] = esc_html__( 'Client ID empty.', 'mainwp' );
 		}
 
 		echo wp_json_encode( $ret );
@@ -959,7 +959,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Delete client general fields.
 	 */
 	public function mainwp_clients_delete_general_field() {
-		$this->check_security( 'mainwp_clients_delete_field' );
+		$this->check_security( 'mainwp_clients_delete_general_field' );
 		$ret       = array( 'success' => false );
 		$field_id  = intval( $_POST['field_id'] );
 		$client_id = 0; // 0 general fields.
@@ -1123,7 +1123,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_saving_status() {
 		if ( ! isset( $_REQUEST['nonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['nonce'] ), 'mainwp_ajax' ) ) {
-			die( __( 'WP nonce could not be verified. Please reload the page and try again.', 'mainwp' ) );
+			die( esc_html__( 'WP nonce could not be verified. Please reload the page and try again.', 'mainwp' ) );
 		}
 		$saving_status = isset( $_POST['saving_status'] ) ? sanitize_text_field( wp_unslash( $_POST['saving_status'] ) ) : false;
 		if ( ! empty( $saving_status ) ) {
@@ -1230,12 +1230,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$website_id = ( isset( $_POST['website_id'] ) ? (int) $_POST['website_id'] : 0 );
 
 		if ( ! MainWP_DB::instance()->get_website_by_id( $website_id ) ) {
-			die( wp_json_encode( array( 'error' => array( 'message' => __( 'This website does not exist.', 'mainwp' ) ) ) ) );
+			die( wp_json_encode( array( 'error' => array( 'message' => esc_html__( 'This website does not exist.', 'mainwp' ) ) ) ) );
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $website_id );
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
-			die( wp_json_encode( array( 'error' => array( 'message' => __( 'You cannot edit this website.', 'mainwp' ) ) ) ) );
+			die( wp_json_encode( array( 'error' => array( 'message' => esc_html__( 'You cannot edit this website.', 'mainwp' ) ) ) ) );
 		}
 
 		try {
@@ -1260,7 +1260,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 				}
 			}
 		} catch ( \Exception $e ) {
-			$information = array( 'error' => __( 'fetch_url_authed exception', 'mainwp' ) );
+			$information = array( 'error' => esc_html__( 'fetch_url_authed exception', 'mainwp' ) );
 		}
 
 		wp_send_json( $information );

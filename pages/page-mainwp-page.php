@@ -88,17 +88,17 @@ class MainWP_Page {
 	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_menu() {
-		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<span id="mainwp-Pages">' . __( 'Pages', 'mainwp' ) . '</span>', 'read', 'PageBulkManage', array( self::get_class_name(), 'render' ) );
+		$_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Pages', 'mainwp' ), '<span id="mainwp-Pages">' . esc_html__( 'Pages', 'mainwp' ) . '</span>', 'read', 'PageBulkManage', array( self::get_class_name(), 'render' ) );
 		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_page' ) );
 		add_filter( 'manage_' . $_page . '_columns', array( self::get_class_name(), 'get_manage_columns' ) );
 
-		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'PageBulkAdd', array( self::get_class_name(), 'render_bulk_add' ) );
+		$_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'read', 'PageBulkAdd', array( self::get_class_name(), 'render_bulk_add' ) );
 		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
 
-		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Page', 'mainwp' ) . '</div>', 'read', 'PageBulkEdit', array( self::get_class_name(), 'render_bulk_edit' ) );
+		$_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Edit Page', 'mainwp' ) . '</div>', 'read', 'PageBulkEdit', array( self::get_class_name(), 'render_bulk_edit' ) );
 		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
 
-		add_submenu_page( 'mainwp_tab', __( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New Page', 'mainwp' ) . '</div>', 'read', 'PostingBulkPage', array( self::get_class_name(), 'posting' ) ); // removed from menu afterwards.
+		add_submenu_page( 'mainwp_tab', esc_html__( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New Page', 'mainwp' ) . '</div>', 'read', 'PostingBulkPage', array( self::get_class_name(), 'posting' ) ); // removed from menu afterwards.
 
 		/**
 		 * Pages Subpages
@@ -153,7 +153,7 @@ class MainWP_Page {
 		}
 
 		if ( ! $post_id ) {
-			wp_die( __( 'Invalid post.' ) );
+			wp_die( esc_html__( 'Invalid post.' ) );
 		}
 
 		MainWP_Post::on_load_bulkpost( $post_id );
@@ -213,7 +213,7 @@ class MainWP_Page {
 
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => __( 'Pages', 'mainwp' ),
+				'title'      => esc_html__( 'Pages', 'mainwp' ),
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'PageBulkManage',
 				'href'       => 'admin.php?page=PageBulkManage',
@@ -223,14 +223,14 @@ class MainWP_Page {
 		);
 		$init_sub_subleftmenu = array(
 			array(
-				'title'      => __( 'Manage Pages', 'mainwp' ),
+				'title'      => esc_html__( 'Manage Pages', 'mainwp' ),
 				'parent_key' => 'PageBulkManage',
 				'href'       => 'admin.php?page=PageBulkManage',
 				'slug'       => 'PageBulkManage',
 				'right'      => 'manage_pages',
 			),
 			array(
-				'title'      => __( 'Add New', 'mainwp' ),
+				'title'      => esc_html__( 'Add New', 'mainwp' ),
 				'parent_key' => 'PageBulkManage',
 				'href'       => 'admin.php?page=PageBulkAdd',
 				'slug'       => 'PageBulkAdd',
@@ -343,7 +343,7 @@ class MainWP_Page {
 	public static function render_header( $shownPage = '', $post_id = null ) {
 
 		$params = array(
-			'title' => __( 'Pages', 'mainwp' ),
+			'title' => esc_html__( 'Pages', 'mainwp' ),
 		);
 		MainWP_UI::render_top_header( $params );
 
@@ -351,13 +351,13 @@ class MainWP_Page {
 
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			$renderItems[] = array(
-				'title'  => __( 'Manage Pages', 'mainwp' ),
+				'title'  => esc_html__( 'Manage Pages', 'mainwp' ),
 				'href'   => 'admin.php?page=PageBulkManage',
 				'active' => ( 'BulkManage' == $shownPage ) ? true : false,
 			);
 			if ( 'BulkEdit' == $shownPage ) {
 				$renderItems[] = array(
-					'title'  => __( 'Edit Page', 'mainwp' ),
+					'title'  => esc_html__( 'Edit Page', 'mainwp' ),
 					'href'   => 'admin.php?page=PageBulkEdit&post_id=' . esc_attr( $post_id ),
 					'active' => true,
 				);
@@ -365,7 +365,7 @@ class MainWP_Page {
 
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PageBulkAdd' ) ) {
 				$renderItems[] = array(
-					'title'  => __( 'Add New', 'mainwp' ),
+					'title'  => esc_html__( 'Add New', 'mainwp' ),
 					'href'   => 'admin.php?page=PageBulkAdd',
 					'active' => ( 'BulkAdd' == $shownPage ) ? true : false,
 				);
@@ -414,7 +414,7 @@ class MainWP_Page {
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'manage pages', 'mainwp' ) );
 			return;
 		}
 
@@ -494,7 +494,7 @@ class MainWP_Page {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-pages-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-pages-info-message"></i>
-							<?php echo sprintf( __( 'Manage existing pages on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( esc_html__( 'Manage existing pages on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<?php self::render_table( true ); ?>
@@ -1263,7 +1263,7 @@ class MainWP_Page {
 	 */
 	public static function render_bulk_add() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'manage pages', 'mainwp' ) );
 			return;
 		}
 
@@ -1288,7 +1288,7 @@ class MainWP_Page {
 	 */
 	public static function render_bulk_edit() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'manage pages', 'mainwp' ) );
 			return;
 		}
 
@@ -1337,9 +1337,9 @@ class MainWP_Page {
 		if ( isset( $_GET['id'] ) ) {
 			$edit_id = get_post_meta( intval( $_GET['id'] ), '_mainwp_edit_post_id', true );
 			if ( $edit_id ) {
-				$succes_message = __( 'Page has been updated successfully', 'mainwp' );
+				$succes_message = esc_html__( 'Page has been updated successfully', 'mainwp' );
 			} else {
-				$succes_message = __( 'New page created', 'mainwp' );
+				$succes_message = esc_html__( 'New page created', 'mainwp' );
 			}
 		}
 

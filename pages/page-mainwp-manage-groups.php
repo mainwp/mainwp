@@ -24,6 +24,47 @@ class MainWP_Manage_Groups {
 	}
 
 	/**
+	 * Public static varable to hold Subpages information.
+	 *
+	 * @var array $subPages
+	 */
+	public static $subPages;
+
+	/**
+	 * Method init()
+	 *
+	 * Initiate hooks for the users page.
+	 */
+	public static function init() {
+		/**
+		 * This hook allows you to render the Tags page header via the 'mainwp_pageheader_tags' action.
+		 *
+		 * @link http://codex.mainwp.com/#mainwp-pageheader-tags
+		 *
+		 * This hook is normally used in the same context of 'mainwp_getsubpages_tags'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-tags
+		 *
+		 * @see \MainWP_Manage_Groups::render_header
+		 */
+		add_action( 'mainwp_pageheader_tags', array( self::get_class_name(), 'render_header' ) );
+
+		/**
+		 * This hook allows you to render the Tags page footer via the 'mainwp_pagefooter_tags' action.
+		 *
+		 * @link http://codex.mainwp.com/#mainwp-pagefooter-tags
+		 *
+		 * This hook is normally used in the same context of 'mainwp_getsubpages_tags'
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-tags
+		 *
+		 * @see \MainWP_Manage_Groups::render_footer
+		 */
+		add_action( 'mainwp_pagefooter_tags', array( self::get_class_name(), 'render_footer' ) );
+
+		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
+	}
+
+
+	/**
 	 * Method init_menu()
 	 *
 	 * Add Groups Sub Menu.
@@ -32,7 +73,7 @@ class MainWP_Manage_Groups {
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Tags', 'mainwp' ),
-			'<div class="mainwp-hidden">' . __( 'Tags', 'mainwp' ) . '</div>',
+			'<div class="mainwp-hidden">' . esc_html__( 'Tags', 'mainwp' ) . '</div>',
 			'read',
 			'ManageGroups',
 			array(
@@ -40,6 +81,113 @@ class MainWP_Manage_Groups {
 				'render_all_groups',
 			)
 		);
+
+		/**
+		 * This hook allows you to add extra sub pages to the Tags page via the 'mainwp-getsubpages-tags' filter.
+		 *
+		 * @link http://codex.mainwp.com/#mainwp-getsubpages-tags
+		 */
+		self::$subPages = apply_filters( 'mainwp_getsubpages_tags', self::$subPages );
+
+		self::init_left_menu( self::$subPages );
+	}
+
+	/**
+	 * Initiates Tags menu.
+	 *
+	 * @param array $subPages Sub pages array.
+	 * @param int   $level What level to display on.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 */
+	public static function init_left_menu( $subPages = array(), $level = 2 ) {
+		MainWP_Menu::add_left_menu(
+			array(
+				'title'      => esc_html__( 'Tags', 'mainwp' ),
+				'parent_key' => 'mainwp_tab',
+				'slug'       => 'ManageGroups',
+				'href'       => 'admin.php?page=ManageGroups',
+				'icon'       => '<i class="tags icon"></i>',
+				'desc'       => 'Manage tags on your MainWP Dashboard',
+			),
+			1
+		);
+
+		$init_sub_subleftmenu = array(
+			array(
+				'title'      => esc_html__( 'Manage Tags', 'mainwp' ),
+				'parent_key' => 'ManageGroups',
+				'href'       => 'admin.php?page=ManageGroups',
+				'slug'       => 'ManageGroups',
+				'right'      => 'manage_groups',
+			),
+		);
+
+		MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'ManageGroups', 'ManageGroups' );
+
+		foreach ( $init_sub_subleftmenu as $item ) {
+			if ( MainWP_Menu::is_disable_menu_item( 3, $item['slug'] ) ) {
+				continue;
+			}
+			MainWP_Menu::add_left_menu( $item, 2 );
+		}
+	}
+
+	/**
+	 * Method render_header()
+	 *
+	 * Render Tags page header.
+	 *
+	 * @param string $shownPage The page slug shown at this moment.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
+	 */
+	public static function render_header( $shownPage = '' ) {
+		$params = array(
+			'title' => esc_html__( 'Tags', 'mainwp' ),
+		);
+		MainWP_UI::render_top_header( $params );
+
+		$renderItems = array();
+
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_groups' ) ) {
+			$renderItems[] = array(
+				'title'  => esc_html__( 'Manage Tags', 'mainwp' ),
+				'href'   => 'admin.php?page=ManageGroups',
+				'active' => ( 'ManageGroups' === $shownPage ) ? true : false,
+			);
+		}
+
+		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
+			foreach ( self::$subPages as $subPage ) {
+				if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageGroups' . $subPage['slug'] ) ) {
+					continue;
+				}
+
+				$item           = array();
+				$item['title']  = $subPage['title'];
+				$item['href']   = 'admin.php?page=ManageGroups' . $subPage['slug'];
+				$item['active'] = ( $subPage['slug'] == $shownPage ) ? true : false;
+				$renderItems[]  = $item;
+			}
+		}
+
+		MainWP_UI::render_page_navigation( $renderItems );
+	}
+
+	/**
+	 * Method render_footer()
+	 *
+	 * Render Tags page footer. Closes the page container.
+	 *
+	 * @param string $shownPage The page slug shown at this moment.
+	 */
+	public static function render_footer( $shownPage = '' ) {
+		echo '</div>';
 	}
 
 	/**
@@ -106,6 +254,7 @@ class MainWP_Manage_Groups {
 					<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
 				</td>
 				<td><a href="<?php echo $website->url; ?>" target="_blank"><?php echo $website->url; ?></a></td>
+				<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . $website->client_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
 				<td>
 					<span class="mainwp-preview-item" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'Click to see the site homepage screenshot.', 'mainwp' ); ?>" preview-site-url="<?php echo $website->url; ?>" ><i class="camera icon"></i></span>
 				</td>
@@ -132,7 +281,7 @@ class MainWP_Manage_Groups {
 	 */
 	public static function render_all_groups() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_groups' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage groups', 'mainwp' ) );
+			mainwp_do_not_have_permissions( esc_html__( 'manage groups', 'mainwp' ) );
 
 			return;
 		}
@@ -149,7 +298,7 @@ class MainWP_Manage_Groups {
 		 *
 		 * @since Unknown
 		 */
-		do_action( 'mainwp_pageheader_sites', 'ManageGroups' );
+		do_action( 'mainwp_pageheader_tags', 'ManageGroups' );
 		?>
 		<div id="mainwp-manage-groups" class="ui segment">
 			<div id="mainwp-message-zone" style="display: none;">
@@ -160,7 +309,7 @@ class MainWP_Manage_Groups {
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp_groups_info"></i>
 					<div><?php esc_html_e( 'In case you are managing a large number of WordPress sites, it could be useful for you to mark them with different tags. Later, you will be able to make Site Selection by a tag that will speed up your work and makes it much easier.', 'mainwp' ); ?></div>
 					<div><?php esc_html_e( 'One child site can be assigned to multiple Tags at the same time.', 'mainwp' ); ?></div>
-					<div><?php echo sprintf( __( 'For more information check the %1$sKnowledge Base%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( esc_html__( 'For more information check the %1$sKnowledge Base%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">', '</a>' ); ?></div>
 			</div>
 			<?php } ?>
 			<?php
@@ -216,7 +365,7 @@ class MainWP_Manage_Groups {
 			</div>
 			<?php MainWP_UI::render_modal_edit_notes(); ?>
 			<div class="ui mini modal" id="mainwp-create-group-modal">
-				<div class="header"><?php echo __( 'Create Tag', 'mainwp' ); ?></div>
+				<div class="header"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></div>
 				<div class="content">
 					<div class="ui form">
 						<div class="field">
@@ -227,17 +376,17 @@ class MainWP_Manage_Groups {
 				<div class="actions">
 					<div class="ui two columns grid">
 						<div class="left aligned column">
-							<a class="ui green button" id="mainwp-save-new-group-button" href="#"><?php echo __( 'Create Tag', 'mainwp' ); ?></a>
+							<a class="ui green button" id="mainwp-save-new-group-button" href="#"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></a>
 						</div>
 						<div class="right aligned column">
-							<div class="ui cancel button"><?php echo __( 'Close', 'mainwp' ); ?></div>
+							<div class="ui cancel button"><?php echo esc_html__( 'Close', 'mainwp' ); ?></div>
 						</div>
 					</div>
 				</div>
 			</div>
 
 			<div class="ui mini modal" id="mainwp-rename-group-modal">
-				<div class="header"><?php echo __( 'Rename Tag', 'mainwp' ); ?></div>
+				<div class="header"><?php echo esc_html__( 'Rename Tag', 'mainwp' ); ?></div>
 				<div class="content">
 					<div class="ui form">
 						<div class="field">
@@ -248,10 +397,10 @@ class MainWP_Manage_Groups {
 				<div class="actions">
 					<div class="ui two columns stackable grid">
 						<div class="left aligned column">
-							<a class="ui green button" id="mainwp-update-new-group-button" href="#"><?php echo __( 'Update Tag', 'mainwp' ); ?></a>
+							<a class="ui green button" id="mainwp-update-new-group-button" href="#"><?php echo esc_html__( 'Update Tag', 'mainwp' ); ?></a>
 						</div>
 						<div class="right aligned column">
-							<div class="ui cancel button"><?php echo __( 'Close', 'mainwp' ); ?></div>
+							<div class="ui cancel button"><?php echo esc_html__( 'Close', 'mainwp' ); ?></div>
 						</div>
 					</div>
 				</div>
@@ -275,7 +424,7 @@ class MainWP_Manage_Groups {
 		 *
 		 * @since Unknown
 		 */
-		do_action( 'mainwp_pagefooter_sites', 'ManageGroups' );
+		do_action( 'mainwp_pagefooter_tags', 'ManageGroups' );
 	}
 
 	/**
@@ -321,6 +470,7 @@ class MainWP_Manage_Groups {
 					<th><?php esc_html_e( 'Sites', 'mainwp' ); ?></th>
 					<th class="no-sort collapsing"><i class="sign in icon"></i></th>
 					<th><?php esc_html_e( 'URL', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
 					<th class="no-sort collapsing"><i class="camera icon"></i></th>
 					<th class="no-sort collapsing"><i class="sticky note outline icon"></i></th>
 				</tr>
@@ -330,7 +480,7 @@ class MainWP_Manage_Groups {
 			</tbody>
 			<tfoot>
 				<tr>
-					<th colspan="6">
+					<th colspan="7">
 						<a href="#" class="ui tiny green button" id="mainwp-save-sites-groups-selection-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Save the selected tag sites selection.', 'mainwp' ); ?>"><?php esc_html_e( 'Save Selection', 'mainwp' ); ?></a>
 					</th>
 				</tr>
@@ -409,7 +559,7 @@ class MainWP_Manage_Groups {
 	 */
 	public static function check_group_name( $groupName, $groupId = null ) {
 		if ( '' == $groupName ) {
-			$groupName = __( 'New tag', 'mainwp' );
+			$groupName = esc_html__( 'New tag', 'mainwp' );
 		}
 
 		$groupName = esc_html( $groupName );
@@ -527,6 +677,34 @@ class MainWP_Manage_Groups {
 		}
 
 		die( wp_json_encode( array( 'result' => false ) ) );
+	}
+
+	/**
+	 * Hooks the section help content to the Help Sidebar element.
+	 */
+	public static function mainwp_help_content() {
+		if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) {
+			?>
+			<p><?php esc_html_e( 'If you need help with managing tags, please review following help documents', 'mainwp' ); ?></p>
+			<div class="ui relaxed bulleted list">
+				<div class="item"><a href="" target="_blank">Manage Tags</a></div>
+				<?php
+				/**
+				 * Action: mainwp_tags_help_item
+				 *
+				 * Fires at the bottom of the help articles list in the Help sidebar on the Users page.
+				 *
+				 * Suggested HTML markup:
+				 *
+				 * <div class="item"><a href="Your custom URL">Your custom text</a></div>
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_tags_help_item' );
+				?>
+			</div>
+			<?php
+		}
 	}
 
 }

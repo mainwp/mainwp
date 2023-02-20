@@ -430,7 +430,7 @@ class MainWP_Server_Information_Handler {
 			$sql_mode = $mysqlinfo[0]->Value;
 		}
 		if ( empty( $sql_mode ) ) {
-			$sql_mode = __( 'NOT SET', 'mainwp' );
+			$sql_mode = esc_html__( 'NOT SET', 'mainwp' );
 		}
 		echo $sql_mode;
 	}
@@ -440,9 +440,9 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function get_php_allow_url_fopen() {
 		if ( ini_get( 'allow_url_fopen' ) ) {
-			$allow_url_fopen = __( 'YES', 'mainwp' );
+			$allow_url_fopen = esc_html__( 'YES', 'mainwp' );
 		} else {
-			$allow_url_fopen = __( 'NO', 'mainwp' );
+			$allow_url_fopen = esc_html__( 'NO', 'mainwp' );
 		}
 		echo $allow_url_fopen;
 	}
@@ -454,9 +454,9 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function get_php_exif() {
 		if ( is_callable( 'exif_read_data' ) ) {
-			$exif = __( 'YES', 'mainwp' ) . ' ( V' . substr( phpversion( 'exif' ), 0, 4 ) . ')';
+			$exif = esc_html__( 'YES', 'mainwp' ) . ' ( V' . substr( phpversion( 'exif' ), 0, 4 ) . ')';
 		} else {
-			$exif = __( 'NO', 'mainwp' );
+			$exif = esc_html__( 'NO', 'mainwp' );
 		}
 		echo $exif;
 	}
@@ -468,9 +468,9 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function get_php_iptc() {
 		if ( is_callable( 'iptcparse' ) ) {
-			$iptc = __( 'YES', 'mainwp' );
+			$iptc = esc_html__( 'YES', 'mainwp' );
 		} else {
-			$iptc = __( 'NO', 'mainwp' );
+			$iptc = esc_html__( 'NO', 'mainwp' );
 		}
 		echo $iptc;
 	}
@@ -482,9 +482,9 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function get_php_xml() {
 		if ( is_callable( 'xml_parser_create' ) ) {
-			$xml = __( 'YES', 'mainwp' );
+			$xml = esc_html__( 'YES', 'mainwp' );
 		} else {
-			$xml = __( 'NO', 'mainwp' );
+			$xml = esc_html__( 'NO', 'mainwp' );
 		}
 		echo $xml;
 	}
@@ -641,15 +641,15 @@ class MainWP_Server_Information_Handler {
 		$response    = wp_remote_post( $url, $args );
 		$test_result = '';
 		if ( is_wp_error( $response ) ) {
-			$test_result .= sprintf( __( 'The HTTP response test get an error "%s"', 'mainwp' ), $response->get_error_message() );
+			$test_result .= sprintf( esc_html__( 'The HTTP response test get an error "%s"', 'mainwp' ), $response->get_error_message() );
 		}
 		$response_code = wp_remote_retrieve_response_code( $response );
 		if ( 200 > $response_code && 204 < $response_code ) {
-			$test_result .= sprintf( __( 'The HTTP response test get a false http status (%s)', 'mainwp' ), wp_remote_retrieve_response_code( $response ) );
+			$test_result .= sprintf( esc_html__( 'The HTTP response test get a false http status (%s)', 'mainwp' ), wp_remote_retrieve_response_code( $response ) );
 		} else {
 			$response_body = wp_remote_retrieve_body( $response );
 			if ( false === strstr( $response_body, 'MainWP Test' ) ) {
-				$test_result .= sprintf( __( 'Not expected HTTP response body: %s', 'mainwp' ), esc_attr( wp_strip_all_tags( $response_body ) ) );
+				$test_result .= sprintf( esc_html__( 'Not expected HTTP response body: %s', 'mainwp' ), esc_attr( wp_strip_all_tags( $response_body ) ) );
 			}
 		}
 		if ( empty( $test_result ) ) {
@@ -791,30 +791,30 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function mainwp_options() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreaciated.
 		$mainwp_options = array(
-			'mainwp_number_of_child_sites'           => __( 'Number of child sites', 'mainwp' ),
-			'mainwp_wp_cron'                         => __( 'Use WP Cron', 'mainwp' ),
-			'mainwp_optimize'                        => __( 'Optimize for shared hosting or big networks', 'mainwp' ),
-			'mainwp_automaticDailyUpdate'            => __( 'WP Core advanced automatic updates enabled', 'mainwp' ),
-			'mainwp_pluginAutomaticDailyUpdate'      => __( 'Plugin advanced automatic updates enabled', 'mainwp' ),
-			'mainwp_themeAutomaticDailyUpdate'       => __( 'Theme advanced automatic updates enabled', 'mainwp' ),
-			'mainwp_numberdays_Outdate_Plugin_Theme' => __( 'Abandoned plugins/themes tolerance', 'mainwp' ),
-			'mainwp_maximumPosts'                    => __( 'Maximum number of posts to return', 'mainwp' ),
-			'mainwp_maximumPages'                    => __( 'Maximum number of pages to return', 'mainwp' ),
-			'mainwp_maximumComments'                 => __( 'Maximum number of comments', 'mainwp' ),
-			'mainwp_enableLegacyBackupFeature'       => __( 'MainWP legacy backups enabled', 'mainwp' ),
-			'mainwp_primaryBackup'                   => __( 'Primary backup system', 'mainwp' ),
-			'mainwp_disableSitesChecking'            => __( 'Basic uptime monitoring enabled', 'mainwp' ),
-			'mainwp_disableSitesHealthMonitoring'    => __( 'Site health monitoring enabled', 'mainwp' ),
-			'mainwp_maximumRequests'                 => __( 'Maximum simultaneous requests', 'mainwp' ),
-			'mainwp_minimumDelay'                    => __( 'Minimum delay between requests', 'mainwp' ),
-			'mainwp_maximumIPRequests'               => __( 'Maximum simultaneous requests per ip', 'mainwp' ),
-			'mainwp_minimumIPDelay'                  => __( 'Minimum delay between requests to the same ip', 'mainwp' ),
-			'mainwp_maximumSyncRequests'             => __( 'Maximum simultaneous sync requests', 'mainwp' ),
-			'mainwp_maximumInstallUpdateRequests'    => __( 'Minimum simultaneous install/update requests', 'mainwp' ),
-			'mainwp_maximumSyncRequests'             => __( 'Maximum simultaneous sync requests', 'mainwp' ),
-			'mainwp_maximumInstallUpdateRequests'    => __( 'Maximum simultaneous install and update requests', 'mainwp' ),
-			'mainwp_enable_rest_api'                 => __( 'REST API enabled', 'mainwp' ),
-			'mainwp_auto_purge_cache'                => __( 'Cache control enabled', 'mainwp' ),
+			'mainwp_number_of_child_sites'           => esc_html__( 'Number of child sites', 'mainwp' ),
+			'mainwp_wp_cron'                         => esc_html__( 'Use WP Cron', 'mainwp' ),
+			'mainwp_optimize'                        => esc_html__( 'Optimize for shared hosting or big networks', 'mainwp' ),
+			'mainwp_automaticDailyUpdate'            => esc_html__( 'WP Core advanced automatic updates enabled', 'mainwp' ),
+			'mainwp_pluginAutomaticDailyUpdate'      => esc_html__( 'Plugin advanced automatic updates enabled', 'mainwp' ),
+			'mainwp_themeAutomaticDailyUpdate'       => esc_html__( 'Theme advanced automatic updates enabled', 'mainwp' ),
+			'mainwp_numberdays_Outdate_Plugin_Theme' => esc_html__( 'Abandoned plugins/themes tolerance', 'mainwp' ),
+			'mainwp_maximumPosts'                    => esc_html__( 'Maximum number of posts to return', 'mainwp' ),
+			'mainwp_maximumPages'                    => esc_html__( 'Maximum number of pages to return', 'mainwp' ),
+			'mainwp_maximumComments'                 => esc_html__( 'Maximum number of comments', 'mainwp' ),
+			'mainwp_enableLegacyBackupFeature'       => esc_html__( 'MainWP legacy backups enabled', 'mainwp' ),
+			'mainwp_primaryBackup'                   => esc_html__( 'Primary backup system', 'mainwp' ),
+			'mainwp_disableSitesChecking'            => esc_html__( 'Basic uptime monitoring enabled', 'mainwp' ),
+			'mainwp_disableSitesHealthMonitoring'    => esc_html__( 'Site health monitoring enabled', 'mainwp' ),
+			'mainwp_maximumRequests'                 => esc_html__( 'Maximum simultaneous requests', 'mainwp' ),
+			'mainwp_minimumDelay'                    => esc_html__( 'Minimum delay between requests', 'mainwp' ),
+			'mainwp_maximumIPRequests'               => esc_html__( 'Maximum simultaneous requests per ip', 'mainwp' ),
+			'mainwp_minimumIPDelay'                  => esc_html__( 'Minimum delay between requests to the same ip', 'mainwp' ),
+			'mainwp_maximumSyncRequests'             => esc_html__( 'Maximum simultaneous sync requests', 'mainwp' ),
+			'mainwp_maximumInstallUpdateRequests'    => esc_html__( 'Minimum simultaneous install/update requests', 'mainwp' ),
+			'mainwp_maximumSyncRequests'             => esc_html__( 'Maximum simultaneous sync requests', 'mainwp' ),
+			'mainwp_maximumInstallUpdateRequests'    => esc_html__( 'Maximum simultaneous install and update requests', 'mainwp' ),
+			'mainwp_enable_rest_api'                 => esc_html__( 'REST API enabled', 'mainwp' ),
+			'mainwp_auto_purge_cache'                => esc_html__( 'Cache control enabled', 'mainwp' ),
 		);
 
 		if ( ! is_plugin_active( 'mainwp-comments-extension/mainwp-comments-extension.php' ) ) {
@@ -830,7 +830,7 @@ class MainWP_Server_Information_Handler {
 					$value = MainWP_DB::instance()->get_websites_count();
 					break;
 				case 'mainwp_primaryBackup':
-					$value = __( 'MainWP Legacy Backups', 'mainwp' );
+					$value = esc_html__( 'MainWP Legacy Backups', 'mainwp' );
 					break;
 				case 'mainwp_numberdays_Outdate_Plugin_Theme':
 				case 'mainwp_maximumPosts':
@@ -858,13 +858,13 @@ class MainWP_Server_Information_Handler {
 					$value = ( false === $value ) ? 3 : $value;
 					break;
 				case 'mainwp_disableSitesChecking':
-					$value = empty( $value ) ? __( 'Yes', 'mainwp' ) : __( 'No', 'mainwp' );
+					$value = empty( $value ) ? esc_html__( 'Yes', 'mainwp' ) : esc_html__( 'No', 'mainwp' );
 					break;
 				case 'mainwp_disableSitesHealthMonitoring':
-					$value = empty( $value ) ? __( 'Yes', 'mainwp' ) : __( 'No', 'mainwp' );
+					$value = empty( $value ) ? esc_html__( 'Yes', 'mainwp' ) : esc_html__( 'No', 'mainwp' );
 					break;
 				default:
-					$value = empty( $value ) ? __( 'No', 'mainwp' ) : __( 'Yes', 'mainwp' );
+					$value = empty( $value ) ? esc_html__( 'No', 'mainwp' ) : esc_html__( 'Yes', 'mainwp' );
 					break;
 			}
 			$options_value[ $opt ] = array(
@@ -900,7 +900,7 @@ class MainWP_Server_Information_Handler {
 			}
 			if ( $chk ) {
 				$options_value['mainwp_primaryBackup'] = array(
-					'label' => __( 'Primary Backup System', 'mainwp' ),
+					'label' => esc_html__( 'Primary Backup System', 'mainwp' ),
 					'value' => $value,
 				);
 			}

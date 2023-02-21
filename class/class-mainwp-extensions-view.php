@@ -760,7 +760,7 @@ class MainWP_Extensions_View {
 			),
 			'mainwp-buddy-extension'                 =>
 			array(
-				'type'                 => 'pro',
+				'type'                 => 'free',
 				'slug'                 => 'mainwp-buddy-extension',
 				'title'                => 'MainWP Buddy Extension',
 				'desc'                 => 'With the MainWP Buddy Extension, you can control the BackupBuddy Plugin settings for all your child sites directly from your MainWP Dashboard. This includes giving you the ability to create your child site backups and even set Backup schedules directly from your MainWP Dashboard.',
@@ -1264,7 +1264,7 @@ class MainWP_Extensions_View {
 			),
 			'mainwp-timecapsule-extension'           =>
 			array(
-				'type'                 => 'pro',
+				'type'                 => 'free',
 				'slug'                 => 'mainwp-timecapsule-extension',
 				'title'                => 'MainWP Time Capsule Extension',
 				'desc'                 => 'With the MainWP Time Capsule Extension, you can control the WP Time Capsule Plugin on all your child sites directly from your MainWP Dashboard. This includes the ability to create your child site backups and even restore your child sites to a point back in time directly from your dashboard.',

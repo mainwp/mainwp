@@ -287,6 +287,31 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 4.4 - 2-20-2023 =
+* Fixed: An issue with disappearing Sync Sites button on specific screen sizes
+* Added: Tags to the Client card
+* Added: Tags to the Site card on the Manage Sites grid view
+* Added: Tags filter to the Manage Clients page
+* Added: Client column in the Manage Tags page
+* Added: Clients column in the Updates tables
+* Added: Guided tours
+* Added: Start Page Tour button in the help sidebar
+* Added: An Option to enable or disable Guided tours on the MainWP Tools page
+* Added: An Option to enable or disable Guided tours in the quick setup wizard
+* Added: CSS ID to icon buttons in the Header element
+* Added: CSS Class to Manage Sites table cells
+* Added: The Delete All Non-MainWP Actions button in the Non-MainWP Changes widget
+* Added: Individual page settings in the Page Settings modal
+* Added: Jump to the site Overview dropdown menu in the Header element on the individual site Overview page
+* Added: Support for new extensions
+* Updated: Extracted the Manage Tags page to the top-level navigation
+* Updated: Changed the sync modal behavior to auto-close if all sites complete the sync process
+* Updated: Info message on the Extension page
+* Updated: Removed the Trusted column from the Updates section in the sites view
+* Updated: Renamed Screen Options modal to Page Settings
+* Preventative: Multiple security enhancements
+* Removed: The Cache Control feature and extracted to an extension
+
 = 4.3.1 - 12-14-2022 =
 * Fixed: An issue with applying custom themes
 * Fixed: A problem with deactivating plugins

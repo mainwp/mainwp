@@ -1823,6 +1823,7 @@ class MainWP_UI {
 			'connection_status'  => esc_html__( 'Connection Status', 'mainwp' ),
 			'security_issues'    => esc_html__( 'Security Issues', 'mainwp' ),
 			'notes'              => esc_html__( 'Notes (Individual Site Overview page)', 'mainwp' ),
+			'clients'            => esc_html__( 'Clients', 'mainwp' ),
 			'child_site_info'    => esc_html__( 'Child site info (Individual Site Overview page)', 'mainwp' ),
 			'client_info'        => esc_html__( 'Client info (Individual Site Overview page)', 'mainwp' ),
 			'non_mainwp_changes' => esc_html__( 'Non-MainWP Changes', 'mainwp' ),

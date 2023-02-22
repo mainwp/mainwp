@@ -137,6 +137,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_upload_custom_icon', array( &$this, 'ajax_upload_custom_icon' ) );
 		$this->add_action( 'mainwp_select_custom_theme', array( &$this, 'ajax_select_custom_theme' ) );
 		$this->add_action( 'mainwp_site_actions_dismiss', array( &$this, 'ajax_site_actions_dismiss' ) );
+		$this->add_action( 'mainwp_delete_all_actions', array( &$this, 'ajax_delete_all_actions' ) );
 	}
 
 	/**
@@ -1366,5 +1367,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		wp_die( 'success' );
 	}
 
-
+	/**
+	 * Method ajax_site_actions_dismiss()
+	 */
+	public function ajax_delete_all_actions() {
+		$this->secure_request( 'mainwp_delete_all_actions' );
+		MainWP_DB_Site_Actions::instance()->delete_all_actions();
+		wp_die( 'success' );
+	}
 }

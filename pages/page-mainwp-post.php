@@ -1354,7 +1354,7 @@ class MainWP_Post {
 									<?php } else { ?>										
 										<a class="item post_getedit" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 									<?php } ?>
-									<?php do_action( 'mainwp_manage_posts_action_item', $post ); ?>															
+									<?php do_action( 'mainwp_manage_posts_action_item', $post, $child_to_dash_array ); ?>															
 									<a class="item post_submitdelete" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 								<?php endif; ?>
 									<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>

@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.1.1
 Requires PHP: 7.0
-Stable tag: 4.4
+Stable tag: 4.4.0.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -286,6 +286,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 10. Manage Clients Screen
 
 == Changelog ==
+
+= 4.4.0.1 - 2-22-2023 =
+* Fixed: An issue with deleting Non-MainWP changes
+* Added: Option to remove the Clients widget from the Overview page
+* Added: Info notice for guided tours feature
 
 = 4.4 - 2-20-2023 =
 * Fixed: An issue with disappearing Sync Sites button on specific screen sizes

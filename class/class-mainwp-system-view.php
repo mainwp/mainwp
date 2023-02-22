@@ -317,6 +317,8 @@ class MainWP_System_View {
 			}
 		}
 
+		self::render_trours_notice();
+
 		self::check_rating_notice( $current_options );
 
 		self::render_wp_mail_warning();
@@ -351,6 +353,24 @@ class MainWP_System_View {
 					<i class="exclamation circle icon"></i>
 					<?php printf( esc_html__( 'Your server is currently running PHP version %1$s. In the next few months your MainWP Dashboard will require PHP 5.6 as a minimum. Please upgrade your server to at least 5.6 but we recommend PHP 7 or newer. You can find a template email to send your host %2$shere%3$s.', 'mainwp' ), $phpver, '<a href="https://wordpress.org/about/requirements/" target="_blank">', '</a>' ); ?>
 					<i class="close icon mainwp-notice-dismiss" notice-id="phpver_5_5"></i>
+				</div>
+				<?php
+			}
+		}
+	}
+
+	/**
+	 * Renders Guided Tours Notice.
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
+	 */
+	public static function render_trours_notice() {
+		if ( 0 == get_option( 'mainwp_enable_guided_tours', 0 ) ) {
+			if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_guided_tours_notice' ) ) {
+				?>
+				<div class="ui info message" style="margin-bottom: 0; border-radius: 0;">
+					<?php printf( esc_html__( 'Would you like to turn on guided tours? Go to the %sMainWP Tools%s page to enabled them.', 'mainwp' ), '<a href="admin.php?page=MainWPTools">', '</a>' ); ?>
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp_guided_tours_notice"></i>
 				</div>
 				<?php
 			}

@@ -1012,7 +1012,7 @@ class MainWP_Extensions_View {
 			),
 			'mainwp-jetpack-protect-extension' =>
 			array(
-				'type'                 => 'pro',
+				'type'                 => 'free',
 				'slug'                 => 'mainwp-jetpack-protect-extension',
 				'title'                => 'MainWP Jetpack Protect Extension',
 				'desc'                 => 'MainWP Jetpack Protect Extension uses the Jetpack Protect plugin to bring you information about vulnerable plugins and themes on your Child Sites so you can act accordingly.',

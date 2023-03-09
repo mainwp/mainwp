@@ -918,7 +918,7 @@ class MainWP_User {
 				} );
 			};
 			_init_manage_sites_screen();
-			
+
 		} );
 		</script>
 		<?php

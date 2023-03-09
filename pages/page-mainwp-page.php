@@ -335,7 +335,7 @@ class MainWP_Page {
 	 * Render screen options modal bottom.
 	 */
 	public static function hook_screen_options_modal_bottom() {
-		$page = isset($_GET['page']) ? wp_unslash( $_GET['page'] ) : '';
+		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
 		if ( 'PageBulkManage' == $page ) {
 
 			$show_columns = get_user_option( 'mainwp_managepages_show_columns' );
@@ -898,7 +898,6 @@ class MainWP_Page {
 				} );
 			};
 			_init_manage_sites_screen();
-			
 		} );
 		</script>
 		<?php

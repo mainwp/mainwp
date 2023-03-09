@@ -2640,9 +2640,6 @@ mainwp_install_check_plugin_start_next = function (url) {
   while ((siteToInstall = jQuery('.siteBulkInstall[status="queue"]:first')) && (siteToInstall.length > 0) && (bulkInstallCurrentThreads < bulkInstallMaxThreads)) {
     mainwp_install_check_plugin_start_specific(url, siteToInstall);
   }
-  if (bulkInstallDone == bulkInstallTotal && bulkInstallTotal != 0) {
-
-  }
 };
 
 mainwp_install_check_plugin_start_specific = function (url, siteToInstall) {

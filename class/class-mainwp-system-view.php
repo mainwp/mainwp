@@ -859,6 +859,11 @@ class MainWP_System_View {
 		<?php
 	}
 
+	/**
+	 * Method get_plugins_install_check()
+	 *
+	 * Get plugins for install checking.
+	 */
 	public static function get_plugins_install_check() {
 		$plugins = array(
 			array(
@@ -905,7 +910,7 @@ class MainWP_System_View {
 	 * Render plugins install check modal.
 	 * for the exntesion overview page with the missing install plugin only.
 	 */
-	public static function render_plugins_install_check() {
+	public static function render_plugins_install_check() { // phpcs:ignore -- complex function.
 
 		$install_check = get_option( 'mainwp_hide_plugins_install_check_notice', 0 );
 
@@ -957,7 +962,7 @@ class MainWP_System_View {
 				continue;
 			}
 			$not_found = true;
-			if ( $website->plugins != '' ) {
+			if ( '' != $website->plugins ) {
 				$plugins = json_decode( $website->plugins, 1 );
 				if ( is_array( $plugins ) && count( $plugins ) > 0 ) {
 					foreach ( $plugins as $plugin ) {
@@ -1028,7 +1033,7 @@ class MainWP_System_View {
 					},
 				}).modal('show');
 				jQuery(document).on('click', '#mainwp-install-check-btn', function () {
-					mainwp_install_check_plugin_prepare( '<?php echo urlencode( dirname( $plugin_slug ) ); ?>' );
+					mainwp_install_check_plugin_prepare( '<?php echo rawurlencode( dirname( $plugin_slug ) ); ?>' );
 					return false;
 				});
 			});

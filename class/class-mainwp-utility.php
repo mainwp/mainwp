@@ -772,39 +772,6 @@ class MainWP_Utility {
 		return false;
 	}
 
-
-	/**
-	 * Method show_mainwp_notice()
-	 *
-	 * Check whenther or not to show the MainWP notice.
-	 *
-	 * @param string $notice_id Notice ID string.
-	 * @param int    $check_time check time to hide Notice.
-	 *
-	 * @return boolean true|false.
-	 */
-	public static function show_mainwp_notice( $notice_id, $check_time = false ) {
-		$status = get_user_option( 'mainwp_notice_saved_status' );
-		if ( ! is_array( $status ) ) {
-			$status = array();
-		}
-		if ( isset( $status[ $notice_id ] ) ) {
-			if ( $check_time ) {
-				$hidetime = intval( $status[ $notice_id ] );
-				if ( 1 === $hidetime ) {
-					return false;
-				} elseif ( $hidetime > 1 ) {
-					if ( time() > $hidetime + $check_time ) {
-
-					}
-				}
-			}
-			return false;
-		}
-		return true;
-	}
-
-
 	/**
 	 * Method array_sort()
 	 *

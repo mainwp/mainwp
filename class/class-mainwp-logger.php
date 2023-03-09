@@ -18,20 +18,20 @@ class MainWP_Logger {
 
 	// phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write logging file.
 
-	public const UPDATE_CHECK_LOG_PRIORITY   = 10;
-	public const EXECUTION_TIME_LOG_PRIORITY = 15;
+	const UPDATE_CHECK_LOG_PRIORITY   = 10;
+	const EXECUTION_TIME_LOG_PRIORITY = 15;
 
 
-	public const DISABLED = - 1;
-	public const LOG      = 0;
-	public const WARNING  = 1;
-	public const INFO     = 2;
-	public const DEBUG    = 3;
+	const DISABLED = - 1;
+	const LOG      = 0;
+	const WARNING  = 1;
+	const INFO     = 2;
+	const DEBUG    = 3;
 
-	public const LOG_COLOR     = '#999999';
-	public const DEBUG_COLOR   = '#666666';
-	public const INFO_COLOR    = '#276f86';
-	public const WARNING_COLOR = '#9f3a38;';
+	const LOG_COLOR     = '#999999';
+	const DEBUG_COLOR   = '#666666';
+	const INFO_COLOR    = '#276f86';
+	const WARNING_COLOR = '#9f3a38;';
 
 	/**
 	 * Private variable to hold time start.
@@ -122,8 +122,6 @@ class MainWP_Logger {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 */
 	private function __construct() {
-		$this->logDirectory = MainWP_System_Utility::get_mainwp_dir();
-		$this->logDirectory = $this->logDirectory[0];
 
 		$enabled  = $this->get_log_status();
 		$specific = $this->get_log_specific();
@@ -466,7 +464,7 @@ class MainWP_Logger {
 		}
 
 		if ( $do_log ) {
-			$this->logCurrentFile = $this->logDirectory . $this->logFileNamePrefix . $this->logFileNameSuffix;
+			$this->logCurrentFile = $this->get_log_file();
 			$logCurrentHandle     = fopen( $this->logCurrentFile, 'a+' );
 
 			if ( $logCurrentHandle ) {
@@ -613,6 +611,10 @@ class MainWP_Logger {
 	 * @return mixed Log File.
 	 */
 	public function get_log_file() {
+		if ( empty( $this->logDirectory ) ) {
+			$this->logDirectory = MainWP_System_Utility::get_mainwp_dir();
+			$this->logDirectory = $this->logDirectory[0];
+		}
 		return $this->logDirectory . $this->logFileNamePrefix . $this->logFileNameSuffix;
 	}
 

@@ -677,14 +677,8 @@ class MainWP_Hooks {
 	 */
 	public function hook_get_site_options( $boolean, $website, $options = '' ) {
 
-		if ( empty( $options ) || empty( $website ) ) {
+		if ( empty( $options ) ) {
 			return $boolean;
-		}
-
-		if ( is_numeric( $website ) ) {
-			$obj     = new \stdClass();
-			$obj->id = $website;
-			$website = $obj;
 		}
 
 		if ( is_string( $options ) ) {
@@ -708,13 +702,12 @@ class MainWP_Hooks {
 	 * @return string|null Database query result (as string), or null on failure
 	 */
 	public function hook_update_site_options( $boolean, $website, $option, $value ) {
-		if ( empty( $website ) ) {
-			return false;
-		}
 		if ( is_numeric( $website ) ) {
 			$obj     = new \stdClass();
-			$obj->id = $website;
+			$obj->id = intval( $website );
 			$website = $obj;
+		} elseif ( ! is_object( $website ) || ! property_exists( $website, 'id' ) ) {
+			return false;
 		}
 		return MainWP_DB::instance()->update_website_option( $website, $option, $value );
 	}

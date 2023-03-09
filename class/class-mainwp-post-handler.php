@@ -509,7 +509,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 				$status = array();
 			}
 			if ( ! empty( $no_id ) ) {
-				$status[ $no_id ] = 1;
+				$time_set = isset( $_POST['time_set'] ) && 1 === intval( $_POST['time_set'] ) ? true : false;
+				if( $time_set ){
+					$status[ $no_id ] = time();
+				} else {
+					$status[ $no_id ] = 1;
+				}
 				update_user_option( $user_id, 'mainwp_notice_saved_status', $status );
 			}
 		}

@@ -183,8 +183,9 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 		}
 
 		$params  = array(
-			'wpid'      => $wpid,
-			'object_id' => $object_id,
+			'wpid'         => $wpid,
+			'object_id'    => $object_id,
+			'check_access' => false,
 		);
 		$results = $this->get_wp_actions( $params );
 
@@ -287,10 +288,11 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 	 */
 	public function get_wp_actions( $params = array(), $obj = OBJECT ) {
 
-		$action_id   = isset( $params['action_id'] ) ? intval( $params['action_id'] ) : 0;
-		$site_id     = isset( $params['wpid'] ) ? intval( $params['wpid'] ) : 0;
-		$object_id   = isset( $params['object_id'] ) ? strval( $params['object_id'] ) : '';
-		$where_extra = isset( $params['where_extra'] ) ? $params['where_extra'] : '';
+		$action_id    = isset( $params['action_id'] ) ? intval( $params['action_id'] ) : 0;
+		$site_id      = isset( $params['wpid'] ) ? intval( $params['wpid'] ) : 0;
+		$object_id    = isset( $params['object_id'] ) ? strval( $params['object_id'] ) : '';
+		$where_extra  = isset( $params['where_extra'] ) ? $params['where_extra'] : '';
+		$check_access = isset( $params['check_access'] ) ? $params['check_access'] : true;
 
 		$limit = isset( $params['limit'] ) ? intval( $params['limit'] ) : '';
 
@@ -324,8 +326,13 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 			}
 		}
 
-		$sql  = ' SELECT wa.* ';
+		if ( $check_access ) {
+			$where_actions .= $this->get_sql_where_allow_access_sites( 'wp' );
+		}
+
+		$sql  = ' SELECT wp.name,wp.url,wa.* ';
 		$sql .= ' FROM ' . $this->table_name( 'wp_actions' ) . ' wa ';
+		$sql .= ' LEFT JOIN ' . $this->table_name( 'wp' ) . ' wp ON wp.id = wa.wpid';
 		$sql .= ' WHERE 1 ' . $where_actions . $where_extra;
 		$sql .= $order_by . $limit;
 

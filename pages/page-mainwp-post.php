@@ -145,6 +145,7 @@ class MainWP_Post {
 	public static function on_load_page() {
 		add_action( 'admin_head', array( self::get_class_name(), 'admin_head' ) );
 		add_filter( 'hidden_columns', array( self::get_class_name(), 'get_hidden_columns' ), 10, 3 );
+		add_action( 'mainwp_screen_options_modal_bottom', array( self::get_class_name(), 'hook_screen_options_modal_bottom' ), 10, 2 );
 	}
 
 	/**
@@ -226,7 +227,7 @@ class MainWP_Post {
 		$colums = array(
 			'title'           => esc_html__( 'Title', 'mainwp' ),
 			'author'          => esc_html__( 'Author', 'mainwp' ),
-			'date'            => esc_html__( 'Date', 'mainwp' ),
+			'date'            => esc_html__( 'Last Modified', 'mainwp' ),
 			'categories'      => esc_html__( 'Categories', 'mainwp' ),
 			'tags'            => esc_html__( 'Tags', 'mainwp' ),
 			'post-type'       => esc_html__( 'Post type', 'mainwp' ),
@@ -289,6 +290,27 @@ class MainWP_Post {
 			$hidden = array();
 		}
 		return $hidden;
+	}
+	
+	/**
+	 * Method hook_screen_options_modal_bottom()
+	 *
+	 * Render screen options modal bottom.
+	 *
+	 */
+	public static function hook_screen_options_modal_bottom() {
+		$page = isset($_GET['page']) ? wp_unslash( $_GET['page'] ) : '';
+		if( 'PostBulkManage' == $page ){
+
+			$show_columns = get_user_option( 'mainwp_manageposts_show_columns' );
+	
+			if ( ! is_array( $show_columns ) ) {
+				$show_columns = array();
+			}
+
+			$cols = self::get_manage_columns();
+			MainWP_UI::render_showhide_columns_settings( $cols, $show_columns, 'post' );
+		} 
 	}
 
 	/**
@@ -887,26 +909,26 @@ class MainWP_Post {
 					 */
 					do_action( 'mainwp_posts_table_header' );
 					?>
-					<th id="mainwp-title"><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
-					<th id="mainwp-author" class="min-tablet"><?php esc_html_e( 'Author', 'mainwp' ); ?></th>
-					<th id="mainwp-categories" class="min-tablet"><?php esc_html_e( 'Categories', 'mainwp' ); ?></th>
-					<th id="mainwp-tags" class="min-tablet"><?php esc_html_e( 'Tags', 'mainwp' ); ?></th>
+					<th id="title"><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
+					<th id="author" class="min-tablet"><?php esc_html_e( 'Author', 'mainwp' ); ?></th>
+					<th id="categories" class="min-tablet"><?php esc_html_e( 'Categories', 'mainwp' ); ?></th>
+					<th id="tags" class="min-tablet"><?php esc_html_e( 'Tags', 'mainwp' ); ?></th>
 					<?php if ( is_plugin_active( 'mainwp-custom-post-types/mainwp-custom-post-types.php' ) ) : ?>
-						<th id="mainwp-post-type"><?php esc_html_e( 'Post Type', 'mainwp' ); ?></th>
+						<th id="post-type"><?php esc_html_e( 'Post Type', 'mainwp' ); ?></th>
 					<?php endif; ?>
 					<?php if ( is_plugin_active( 'mainwp-comments-extension/mainwp-comments-extension.php' ) ) : ?>
-						<th id="mainwp-comments"><i class="comment icon"></i></th>
+						<th id="comments"><i class="comment icon"></i></th>
 					<?php endif; ?>
-					<th id="mainwp-date" class="min-tablet"><?php esc_html_e( 'Last Modified', 'mainwp' ); ?></th>
-					<th id="mainwp-status" class=""><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+					<th id="date" class="min-tablet"><?php esc_html_e( 'Last Modified', 'mainwp' ); ?></th>
+					<th id="status" class=""><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					<?php if ( MainWP_Utility::enabled_wp_seo() ) : ?>
-						<th id="mainwp-seo-links"><?php esc_html_e( 'Links', 'mainwp' ); ?></th>
-						<th id="mainwp-seo-linked"><?php esc_html_e( 'Linked', 'mainwp' ); ?></th>
-						<th id="mainwp-seo-score"><?php esc_html_e( 'SEO Score', 'mainwp' ); ?></th>
-						<th id="mainwp-seo-readability"><?php esc_html_e( 'Readability score', 'mainwp' ); ?></th>
+						<th id="seo-links"><?php esc_html_e( 'Links', 'mainwp' ); ?></th>
+						<th id="seo-linked"><?php esc_html_e( 'Linked', 'mainwp' ); ?></th>
+						<th id="seo-score"><?php esc_html_e( 'SEO Score', 'mainwp' ); ?></th>
+						<th id="seo-readability"><?php esc_html_e( 'Readability score', 'mainwp' ); ?></th>
 					<?php endif; ?>
-					<th id="mainwp-website" class="min-tablet"><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-					<th id="mainwp-posts-actions" class="no-sort min-tablet"></th>
+					<th id="website" class="min-tablet"><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+					<th id="posts-actions" class="no-sort min-tablet"></th>
 				</tr>
 			</thead>
 
@@ -960,7 +982,7 @@ class MainWP_Post {
 			jQuery( document ).ready( function () {
 				try {
 					jQuery("#mainwp-posts-table").DataTable().destroy(); // to fix re-init database issue.
-					jQuery('#mainwp-posts-table').DataTable( {
+					$manage_posts_table = jQuery('#mainwp-posts-table').DataTable( {
 						"responsive" : responsive,
 						"searching" : <?php echo $table_features['searching']; ?>,
 						"colReorder" : <?php echo $table_features['colReorder']; ?>,
@@ -985,6 +1007,20 @@ class MainWP_Post {
 				} catch ( err ) {
 					// to fix js error.
 				}
+
+				_init_manage_sites_screen = function() {
+					jQuery( '#mainwp-overview-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
+						var col_id = jQuery( this ).attr( 'id' );
+						col_id = col_id.replace( "mainwp_show_column_", "" );
+						try {	
+							$manage_posts_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
+						} catch(err) {
+							// to fix js error.
+						}
+					} );
+				};
+				_init_manage_sites_screen();
+
 			} );
 			</script>
 			<?php

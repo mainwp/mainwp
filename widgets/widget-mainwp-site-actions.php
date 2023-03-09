@@ -134,9 +134,8 @@ class MainWP_Site_Actions {
 							</td>
 							<?php
 							if ( empty( $website ) ) {
-								$site = MainWP_DB::instance()->get_website_by_id( $data->wpid );
 								?>
-								<td class="center aligned"><a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $site->id ); ?>"><?php echo esc_html( $site->name ); ?></a></td>
+								<td class="center aligned"><a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $data->wpid ); ?>"><?php echo esc_html( $data->name ); ?></a></td>
 								<?php
 							}
 							?>

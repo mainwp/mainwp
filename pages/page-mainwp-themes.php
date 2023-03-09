@@ -1576,7 +1576,7 @@ class MainWP_Themes {
 					<a href="#" id="mainwp-{{data.slug}}-preview" class="ui mini button mainwp-theme-preview"><?php esc_html_e( 'Preview', 'mainwp' ); ?></a>
 					<div class="ui radio checkbox right floated">
 						<input name="install-theme" type="radio" id="install-theme-{{data.slug}}" title="Install {{data.name}}">
-						<label for="install-theme-{{data.slug}}"><?php esc_html_e( 'Install this Theme', 'mainwp' ); ?></label>
+						<label for="install-theme-{{data.slug}}"><?php esc_html_e( 'Install Theme', 'mainwp' ); ?></label>
 					</div>
 				</div>
 				<?php if ( $favorites_enabled ) { ?>

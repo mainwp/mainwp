@@ -31,6 +31,13 @@ class MainWP_Overview {
 	protected static $instance = null;
 
 	/**
+	 * Screen dashdoard ID value.
+	 *
+	 * @var int $dashBoard default 0.
+	 */
+	public $dashBoard = 0;
+
+	/**
 	 * Enabled widgets
 	 *
 	 * @var array $enable_widgets

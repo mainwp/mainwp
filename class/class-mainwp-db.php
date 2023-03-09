@@ -220,6 +220,10 @@ class MainWP_DB extends MainWP_DB_Base {
 				return $website->{$option};
 			}
 			$site_id = $website->id;
+		} elseif ( is_numeric( $website ) ) { // to support $site_id = 0, for global options.
+			$site_id = $website;
+		} else {
+			return false;
 		}
 
 		$var = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT value FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', $site_id ) );
@@ -240,7 +244,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 */
 	public function get_website_options_array( &$website, $options ) {
 
-		if ( empty( $website ) || ! is_array( $options ) || empty( $options ) ) {
+		if ( ! is_array( $options ) || empty( $options ) ) {
 			return array();
 		}
 
@@ -248,6 +252,10 @@ class MainWP_DB extends MainWP_DB_Base {
 			$site_id = $website['id'];
 		} elseif ( is_object( $website ) ) {
 			$site_id = $website->id;
+		}  elseif ( is_numeric( $website ) ) { // to support $site_id = 0 for global options.
+			$site_id = $website;
+		} else {
+			return array();
 		}
 
 		$arr_options = array();

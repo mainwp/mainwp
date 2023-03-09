@@ -73,7 +73,7 @@ class MainWP_User {
 	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_menu() {
-		add_submenu_page(
+		$_page = add_submenu_page(
 			'mainwp_tab',
 			__( 'Users', 'mainwp' ),
 			'<span id="mainwp-Users">' . esc_html__( 'Users', 'mainwp' ) . '</span>',
@@ -84,6 +84,8 @@ class MainWP_User {
 				'render',
 			)
 		);
+
+		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_page' ) );
 
 		add_submenu_page(
 			'mainwp_tab',
@@ -168,6 +170,59 @@ class MainWP_User {
 			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Method get_manage_columns()
+	 *
+	 * Get columns to display.
+	 *
+	 * @return array $colums Array of columns to display on the page.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
+	 */
+	public static function get_manage_columns() {
+		$colums = array(
+			'name'     => esc_html__( 'Name', 'mainwp' ),
+			'username' => esc_html__( 'Username', 'mainwp' ),
+			'email'    => esc_html__( 'E-mail', 'mainwp' ),
+			'role'     => esc_html__( 'Role', 'mainwp' ),
+			'posts'    => esc_html__( 'Posts', 'mainwp' ),
+			'website'  => esc_html__( 'Website', 'mainwp' ),
+		);
+		return $colums;
+	}
+
+	/**
+	 * Method on_load_page()
+	 *
+	 * Used during init_menu() to get the class names of,
+	 * admin_head and get_hidden_columns.
+	 *
+	 * @return void
+	 */
+	public static function on_load_page() {
+		add_action( 'mainwp_screen_options_modal_bottom', array( self::get_class_name(), 'hook_screen_options_modal_bottom' ), 10, 2 );
+	}
+
+	/**
+	 * Method hook_screen_options_modal_bottom()
+	 *
+	 * Render screen options modal bottom.
+	 */
+	public static function hook_screen_options_modal_bottom() {
+		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
+		if ( 'UserBulkManage' == $page ) {
+
+			$show_columns = get_user_option( 'mainwp_manageusers_show_columns' );
+
+			if ( ! is_array( $show_columns ) ) {
+				$show_columns = array();
+			}
+
+			$cols = self::get_manage_columns();
+			MainWP_UI::render_showhide_columns_settings( $cols, $show_columns, 'user' );
+		}
 	}
 
 	/**
@@ -769,12 +824,12 @@ class MainWP_User {
 				<tr>
 					<th  class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
 					<?php do_action( 'mainwp_users_table_header' ); ?>
-					<th><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
-					<th ><?php esc_html_e( 'Username', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'E-mail', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Role', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Posts', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
+					<th id="name"><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
+					<th id="username"><?php esc_html_e( 'Username', 'mainwp' ); ?></th>
+					<th id="email"><?php esc_html_e( 'E-mail', 'mainwp' ); ?></th>
+					<th id="role"><?php esc_html_e( 'Role', 'mainwp' ); ?></th>
+					<th id="posts"><?php esc_html_e( 'Posts', 'mainwp' ); ?></th>
+					<th id="website"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
 					<th id="mainwp-users-actions" class="no-sort collapsing"></th>
 				</tr>
 			</thead>
@@ -825,7 +880,7 @@ class MainWP_User {
 		jQuery( document ).ready( function () {
 			try {
 				jQuery( "#mainwp-users-table" ).DataTable().destroy(); // to fix re-init database issue.
-				jQuery( "#mainwp-users-table" ).DataTable( {
+				$manage_users_table = jQuery( "#mainwp-users-table" ).DataTable( {
 					"responsive" : responsive,
 					"searching" : <?php echo $table_features['searching']; ?>,
 					"colReorder" : <?php echo $table_features['colReorder']; ?>,
@@ -850,6 +905,20 @@ class MainWP_User {
 			} catch ( err ) {
 				// to fix js error.
 			}
+
+			_init_manage_sites_screen = function() {
+				jQuery( '#mainwp-overview-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
+					var col_id = jQuery( this ).attr( 'id' );
+					col_id = col_id.replace( "mainwp_show_column_", "" );
+					try {	
+						$manage_users_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
+					} catch(err) {
+						// to fix js error.
+					}
+				} );
+			};
+			_init_manage_sites_screen();
+
 		} );
 		</script>
 		<?php

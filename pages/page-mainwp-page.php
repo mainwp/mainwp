@@ -255,6 +255,7 @@ class MainWP_Page {
 	public static function on_load_page() {
 		add_action( 'admin_head', array( self::get_class_name(), 'admin_head' ) );
 		add_filter( 'hidden_columns', array( self::get_class_name(), 'get_hidden_columns' ), 10, 3 );
+		add_action( 'mainwp_screen_options_modal_bottom', array( self::get_class_name(), 'hook_screen_options_modal_bottom' ), 10, 2 );
 	}
 
 	/**
@@ -326,6 +327,27 @@ class MainWP_Page {
 			$hidden = array();
 		}
 		return $hidden;
+	}
+
+	/**
+	 * Method hook_screen_options_modal_bottom()
+	 *
+	 * Render screen options modal bottom.
+	 */
+	public static function hook_screen_options_modal_bottom() {
+		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
+		if ( 'PageBulkManage' == $page ) {
+
+			$show_columns = get_user_option( 'mainwp_managepages_show_columns' );
+
+			if ( ! is_array( $show_columns ) ) {
+				$show_columns = array();
+			}
+
+			$cols = self::get_manage_columns();
+
+			MainWP_UI::render_showhide_columns_settings( $cols, $show_columns, 'page' );
+		}
 	}
 
 	/**
@@ -775,19 +797,19 @@ class MainWP_Page {
 					 */
 					do_action( 'mainwp_pages_table_header' );
 					?>
-					<th id="mainwp-title"><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
-					<th id="mainwp-author" class="min-tablet"><?php esc_html_e( 'Author', 'mainwp' ); ?></th>
-					<th id="mainwp-comments"><i class="comment icon"></i></th>
-					<th id="mainwp-date" class="min-tablet"><?php esc_html_e( 'Last Modified', 'mainwp' ); ?></th>
-					<th id="mainwp-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+					<th id="title"><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
+					<th id="author" class="min-tablet"><?php esc_html_e( 'Author', 'mainwp' ); ?></th>
+					<th id="comments"><i class="comment icon"></i></th>
+					<th id="date" class="min-tablet"><?php esc_html_e( 'Last Modified', 'mainwp' ); ?></th>
+					<th id="status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					<?php if ( MainWP_Utility::enabled_wp_seo() ) : ?>
-					<th id="mainwp-seo-links"><span title="<?php echo esc_attr__( 'Number of internal links in this page', 'mainwp' ); ?>"><?php esc_html_e( 'Links', 'mainwp' ); ?></span></th>
-					<th id="mainwp-seo-linked"><span title="<?php echo esc_attr__( 'Number of internal links linking to this page', 'mainwp' ); ?>"><?php esc_html_e( 'Linked', 'mainwp' ); ?></span></th>
-					<th id="mainwp-seo-score"><span title="<?php echo esc_attr__( 'SEO score', 'mainwp' ); ?>"><?php esc_html_e( 'SEO score', 'mainwp' ); ?></span></th>
-					<th id="mainwp-seo-readability"><span title="<?php echo esc_attr__( 'Readability score', 'mainwp' ); ?>"><?php esc_html_e( 'Readability score', 'mainwp' ); ?></span></th>
+					<th id="seo-links"><span title="<?php echo esc_attr__( 'Number of internal links in this page', 'mainwp' ); ?>"><?php esc_html_e( 'Links', 'mainwp' ); ?></span></th>
+					<th id="seo-linked"><span title="<?php echo esc_attr__( 'Number of internal links linking to this page', 'mainwp' ); ?>"><?php esc_html_e( 'Linked', 'mainwp' ); ?></span></th>
+					<th id="seo-score"><span title="<?php echo esc_attr__( 'SEO score', 'mainwp' ); ?>"><?php esc_html_e( 'SEO score', 'mainwp' ); ?></span></th>
+					<th id="seo-readability"><span title="<?php echo esc_attr__( 'Readability score', 'mainwp' ); ?>"><?php esc_html_e( 'Readability score', 'mainwp' ); ?></span></th>
 					<?php endif; ?>
-					<th id="mainwp-website" class="min-tablet"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-					<th id="mainwp-pages-actions" class="no-sort min-tablet"></th>
+					<th id="website" class="min-tablet"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
+					<th id="pages-actions" class="no-sort min-tablet"></th>
 				</tr>
 			</thead>
 			<tbody id="mainwp-posts-list">
@@ -838,7 +860,7 @@ class MainWP_Page {
 		jQuery( document ).ready( function () {
 			try {
 				jQuery("#mainwp-pages-table").DataTable().destroy(); // fixed re-initialize datatable issue.
-				jQuery( '#mainwp-pages-table' ).DataTable( {
+				$manage_pages_table = jQuery( '#mainwp-pages-table' ).DataTable( {
 					"responsive" : responsive,
 					"searching" : <?php echo $table_features['searching']; ?>,
 					"colReorder" : <?php echo $table_features['colReorder']; ?>,
@@ -863,6 +885,19 @@ class MainWP_Page {
 			} catch( err ) {
 				// to fix js error.
 			}
+
+			_init_manage_sites_screen = function() {
+				jQuery( '#mainwp-overview-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
+					var col_id = jQuery( this ).attr( 'id' );
+					col_id = col_id.replace( "mainwp_show_column_", "" );
+					try {	
+						$manage_pages_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
+					} catch(err) {
+						// to fix js error.
+					}
+				} );
+			};
+			_init_manage_sites_screen();
 		} );
 		</script>
 		<?php

@@ -457,10 +457,39 @@ class MainWP_System_Handler {
 				}
 			}
 
+			$show_cols = array();
+			if ( isset( $_POST['mainwp_show_columns'] ) && is_array( $_POST['mainwp_show_columns'] ) ) {
+				$selected_cols = array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_show_columns'] ) );
+				foreach ( $selected_cols as $name ) {
+					$show_cols[ $name ] = 1;
+				}
+			}
+
+			if ( isset( $_POST['mainwp_columns_name'] ) && is_array( $_POST['mainwp_columns_name'] ) ) {
+				$name_cols = array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_columns_name'] ) );
+				foreach ( $name_cols as $name ) {
+					if ( ! isset( $show_cols[ $name ] ) ) {
+						$show_cols[ $name ] = 0;
+					}
+				}
+			}
+
 			$val = ( isset( $_POST['mainwp_sidebarPosition'] ) ? intval( $_POST['mainwp_sidebarPosition'] ) : 1 );
 			if ( $user ) {
 				update_user_option( $user->ID, 'mainwp_settings_show_widgets', $show_wids, true );
 				update_user_option( $user->ID, 'mainwp_sidebarPosition', $val, true );
+
+				if ( isset( $_POST['mainwp_manageposts_show_columns_settings'] ) ) {
+					update_user_option( $user->ID, 'mainwp_manageposts_show_columns', $show_cols, true );
+				}
+
+				if ( isset( $_POST['mainwp_managepages_show_columns_settings'] ) ) {
+					update_user_option( $user->ID, 'mainwp_managepages_show_columns', $show_cols, true );
+				}
+
+				if ( isset( $_POST['mainwp_manageusers_show_columns_settings'] ) ) {
+					update_user_option( $user->ID, 'mainwp_manageusers_show_columns', $show_cols, true );
+				}
 			}
 
 			MainWP_Utility::update_option( 'mainwp_hide_update_everything', ( ! isset( $_POST['hide_update_everything'] ) ? 0 : 1 ) );

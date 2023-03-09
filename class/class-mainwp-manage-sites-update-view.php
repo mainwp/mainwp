@@ -384,7 +384,7 @@ class MainWP_Manage_Sites_Update_View {
 		$user_can_update_plugins  = mainwp_current_user_have_right( 'dashboard', 'update_plugins' );
 		$user_can_ignore_unignore = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
 		?>
-		<div class="ui <?php echo 'plugins' === $active_tab ? 'active' : ''; ?> tab" data-tab="plugins">
+		<div id="plugins-updates-global" class="ui <?php echo 'plugins' === $active_tab ? 'active' : ''; ?> tab" data-tab="plugins">
 			<?php if ( ! $website->is_ignorePluginUpdates ) : ?>
 				<?php
 				$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
@@ -415,16 +415,18 @@ class MainWP_Manage_Sites_Update_View {
 					$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
 				}
 
-				$updates_table_helper = new MainWP_Updates_Table_Helper( MAINWP_VIEW_PER_SITE );
+				$updates_table_helper = new MainWP_Updates_Table_Helper( MAINWP_VIEW_PER_SITE, 'plugin', array( 'show_select' => true ) );
+
+				add_filter( 'mainwp_updates_table_header_content', array( self::class, 'hook_table_update_plugins_header_content' ), 10, 4 );
 
 				?>
 				<table id="mainwp-updates-plugins-table" class="ui tablet stackable table mainwp-updates-list mainwp-manage-updates-table">
-					<thead>
+					<thead class="master-checkbox">
 						<tr>
 						<?php $updates_table_helper->print_column_headers(); ?>						
 						</tr>
 					</thead>
-					<tbody class="plugins-bulk-updates" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
+					<tbody class="plugins-bulk-updates child-checkbox" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
 					<?php foreach ( $plugin_upgrades as $slug => $plugin_upgrade ) : ?>
 						<?php $plugin_name = rawurlencode( $slug ); ?>
 						<?php
@@ -465,8 +467,54 @@ class MainWP_Manage_Sites_Update_View {
 			<?php endif; ?>
 			</div>
 		<?php
+		remove_filter( 'mainwp_updates_table_header_content', array( self::class, 'hook_table_update_plugins_header_content' ), 10, 4 );
+
 		MainWP_Updates::render_updates_modal();
 		MainWP_Updates::render_plugin_details_modal();
+	}
+
+	/**
+	 * Method hook_table_update_plugins_header_content()
+	 *
+	 * Hook render the column header updates table.
+	 *
+	 * @param string $column_display_name column display name.
+	 * @param mixed  $column_key column key.
+	 * @param bool   $top Top or bottom header.
+	 * @param mixed  $tbl_helper Table updates helper object.
+	 */
+	public static function hook_table_update_plugins_header_content( $column_display_name, $column_key, $top, $tbl_helper ) {
+		if ( $top ) {
+			if ( 'action' == $column_key ) {
+				$selected_act         = '<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all( false, true );" class="ui mini green basic button" data-tooltip="' . esc_html__( 'Update Selected Plugins.', 'mainwp' ) . '" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>';
+				$column_display_name .= $selected_act;
+			} elseif ( 'title' == $column_key ) {
+				$column_display_name = '<div class="ui master checkbox "><input type="checkbox" name=""><label>' . $column_display_name . '</label></div>';
+			}
+		}
+		return $column_display_name;
+	}
+
+	/**
+	 * Method hook_table_update_themes_header_content()
+	 *
+	 * Hook render the column header updates table.
+	 *
+	 * @param string $column_display_name column display name.
+	 * @param mixed  $column_key column key.
+	 * @param bool   $top Top or bottom header.
+	 * @param mixed  $tbl_helper Table updates helper object.
+	 */
+	public static function hook_table_update_themes_header_content( $column_display_name, $column_key, $top, $tbl_helper ) {
+		if ( $top ) {
+			if ( 'action' == $column_key ) {
+				$selected_act         = '<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all( false, true );" class="ui mini green basic button" data-tooltip="' . esc_html__( 'Update Selected Themes.', 'mainwp' ) . '" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>';
+				$column_display_name .= $selected_act;
+			} elseif ( 'title' == $column_key ) {
+				$column_display_name = '<div class="ui master checkbox "><input type="checkbox" name=""><label>' . $column_display_name . '</label></div>';
+			}
+		}
+		return $column_display_name;
 	}
 
 	/**
@@ -492,7 +540,7 @@ class MainWP_Manage_Sites_Update_View {
 		$user_can_ignore_unignore = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
 
 		?>
-		<div class="ui <?php echo 'themes' === $active_tab ? 'active' : ''; ?> tab" data-tab="themes">
+		<div id="themes-updates-global" class="ui <?php echo 'themes' === $active_tab ? 'active' : ''; ?> tab" data-tab="themes">
 			<?php if ( ! $website->is_ignoreThemeUpdates ) : ?>
 				<?php
 				$theme_upgrades = json_decode( $website->theme_upgrades, true );
@@ -525,16 +573,18 @@ class MainWP_Manage_Sites_Update_View {
 					$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
 				}
 
-				$updates_table_helper = new MainWP_Updates_Table_Helper( MAINWP_VIEW_PER_SITE, 'theme' );
+				$updates_table_helper = new MainWP_Updates_Table_Helper( MAINWP_VIEW_PER_SITE, 'theme', array( 'show_select' => true ) );
+
+				add_filter( 'mainwp_updates_table_header_content', array( self::class, 'hook_table_update_themes_header_content' ), 10, 4 );
 
 				?>
 				<table id="mainwp-updates-themes-table" class="ui tablet stackable table mainwp-updates-list mainwp-manage-updates-table">
-					<thead>
+					<thead class="master-checkbox" >
 						<tr>
 						<?php $updates_table_helper->print_column_headers(); ?>
 						</tr>
 					</thead>
-					<tbody class="themes-bulk-updates" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
+					<tbody class="themes-bulk-updates child-checkbox" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
 						<?php foreach ( $theme_upgrades as $slug => $theme_upgrade ) : ?>
 							<?php $theme_name = rawurlencode( $slug ); ?>
 							<?php $indent_hidden = '<input type="hidden" id="wp_upgraded_theme_' . esc_attr( $website->id ) . '_' . $theme_name . '" value="0" />'; ?>
@@ -574,6 +624,7 @@ class MainWP_Manage_Sites_Update_View {
 			<?php endif; ?>
 			</div>
 		<?php
+		remove_filter( 'mainwp_updates_table_header_content', array( self::class, 'hook_table_update_themes_header_content' ), 10, 4 );
 	}
 
 	/**

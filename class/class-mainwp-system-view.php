@@ -369,7 +369,7 @@ class MainWP_System_View {
 			if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_guided_tours_notice' ) ) {
 				?>
 				<div class="ui info message" style="margin-bottom: 0; border-radius: 0;">
-					<?php printf( esc_html__( 'Would you like to turn on guided tours? Go to the %sMainWP Tools%s page to enabled them.', 'mainwp' ), '<a href="admin.php?page=MainWPTools">', '</a>' ); ?>
+					<?php printf( esc_html__( 'Would you like to turn on guided tours? Go to the %1$sMainWP Tools%2$s page to enabled them.', 'mainwp' ), '<a href="admin.php?page=MainWPTools">', '</a>' ); ?>
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp_guided_tours_notice"></i>
 				</div>
 				<?php
@@ -859,5 +859,185 @@ class MainWP_System_View {
 		<?php
 	}
 
+	/**
+	 * Method get_plugins_install_check()
+	 *
+	 * Get plugins for install checking.
+	 */
+	public static function get_plugins_install_check() {
+		$plugins = array(
+			array(
+				'page' => 'Extensions-Mainwp-Backwpup-Extension',
+				'slug' => 'backwpup/backwpup.php',
+				'name' => 'BackWPup',
+			),
+			array(
+				'page'     => 'Extensions-Mainwp-Ithemes-Security-Extension',
+				'slug'     => 'better-wp-security/better-wp-security.php',
+				'slug_pro' => 'ithemes-security-pro/ithemes-security-pro.php',
+				'name'     => 'iThemes Security',
+			),
+			array(
+				'page' => 'Extensions-Mainwp-Updraftplus-Extension',
+				'slug' => 'updraftplus/updraftplus.php',
+				'name' => 'UpdraftPlus',
+			),
+			array(
+				'page' => 'Extensions-Mainwp-Wordfence-Extension',
+				'slug' => 'wordfence/wordfence.php',
+				'name' => 'Wordfence',
+			),
+			array(
+				'page' => 'Extensions-Wordpress-Seo-Extension',
+				'slug' => 'wordpress-seo/wp-seo.php',
+				'name' => 'Yoast SEO',
+			),
+			array(
+				'page' => 'Extensions-Mainwp-Jetpack-Protect-Extension',
+				'slug' => 'jetpack-protect/jetpack-protect.php',
+				'name' => 'Jetpack Protect',
+			),
+			array(
+				'page' => 'Extensions-Mainwp-Jetpack-Scan-Extension',
+				'slug' => 'jetpack/jetpack.php',
+				'name' => 'Jetpack',
+			),
+		);
+		return apply_filters( 'mainwp_plugins_install_checks', $plugins );
+	}
 
+	/**
+	 * Render plugins install check modal.
+	 * for the exntesion overview page with the missing install plugin only.
+	 */
+	public static function render_plugins_install_check() { // phpcs:ignore -- complex function.
+
+		$install_check = get_option( 'mainwp_hide_plugins_install_check_notice', 0 );
+
+		$plugins_to_checks = self::get_plugins_install_check();
+
+		$page = sanitize_text_field( wp_unslash( $_GET['page'] ) );
+
+		$plugin_check = MainWP_Utility::get_sub_array_having( $plugins_to_checks, 'page', $page );
+
+		if ( ! empty( $plugin_check ) ) {
+			$plugin_check = current( $plugin_check );
+		}
+
+		if ( empty( $plugin_check ) ) {
+			return;
+		}
+
+		// if is not overview extension page return.
+		if ( isset( $_GET['tab'] ) && 'overview' !== $_GET['tab'] && 'dashboard' !== $_GET['tab'] ) {
+			return;
+		}
+
+		$plugin_slug = isset( $plugin_check['slug'] ) ? $plugin_check['slug'] : '';
+		$slug_pro    = isset( $plugin_check['slug_pro'] ) ? $plugin_check['slug_pro'] : '';
+		$plugin_name = isset( $plugin_check['name'] ) ? $plugin_check['name'] : '';
+
+		if ( empty( $plugin_slug ) || empty( $plugin_name ) ) {
+			return;
+		}
+
+		$check_slug     = 'install_check_' . sanitize_text_field( wp_unslash( dirname( $plugin_slug ) ) );
+		$check_hidetime = MainWP_Utility::get_hide_notice_status( $check_slug );
+
+		if ( $check_hidetime && time() < $check_hidetime + 30 * DAY_IN_SECONDS ) {
+			return;
+		}
+
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+
+		if ( empty( $websites ) ) {
+			return;
+		}
+
+		$missing_installed = array();
+
+		while ( $websites && $website = MainWP_DB::fetch_object( $websites ) ) {
+			$site_name = $website->name;
+			if ( '' != $website->sync_errors ) {
+				continue;
+			}
+			$not_found = true;
+			if ( '' != $website->plugins ) {
+				$plugins = json_decode( $website->plugins, 1 );
+				if ( is_array( $plugins ) && count( $plugins ) > 0 ) {
+					foreach ( $plugins as $plugin ) {
+						if ( isset( $plugin['slug'] ) && ( $plugin_slug === $plugin['slug'] || ( '' !== $slug_pro && $slug_pro === $plugin['slug'] ) ) ) {
+							$not_found = false;
+							break; // foreach.
+						}
+					}
+				}
+			}
+
+			if ( $not_found ) {
+				$missing_installed[ $website->id ] = $website->name;
+			}
+		}
+
+		if ( empty( $missing_installed ) ) {
+			return;
+		}
+
+		?>
+		<div class="ui modal" id="mainwp-install-check-modal" noti-slug="<?php echo esc_html( $check_slug ); ?>">
+			<div class="header"><?php esc_html_e( 'Plugin Install Check', 'mainwp' ); ?></div>
+			<div class="scrolling content mainwp-modal-content">
+				<div class="ui message" id="mainwp-message-zone-install" style="display:none;"></div>
+				<div class="ui message blue"><?php printf( esc_html__( 'We have detected the following sites do not have the %s plugin installed. This plugin is required to be installed on your Child Sites for the Extension to work on those sites. Please select sites where you want to install it and click the Install Plugin button. Uncheck any site you don\'t want to add the plugin to or cancel to skip this step. After the installation process, resync your sites to see sites with the newly installed plugin.', 'mainwp' ), $plugin_name ); ?></div>
+				<div class="ui middle aligned divided selection list" id="sync-sites-status">
+					<?php foreach ( $missing_installed as $siteid => $site_name ) : ?>
+						<div class="item siteBulkInstall" siteid="<?php echo intval( $siteid ); ?>" status="">
+							<div class="right floated content">
+								<span class="queue" data-inverted="" data-position="left center" data-tooltip="<?php echo esc_html__( 'Queued', 'mainwp' ); ?>"><i class="clock outline icon"></i></span>
+								<span class="progress" data-inverted="" data-position="left center" data-tooltip="<?php echo esc_html__( 'Installing...', 'mainwp' ); ?>" style="display:none"><i class="notched circle loading icon"></i></span>
+								<span class="status"></span>
+							</div>
+							<div class="content">
+							<div class="ui checkbox checked">
+								<input type="checkbox" checked="" id="install-check-<?php echo intval( $siteid ); ?>" name="install_checker[]"/>
+							</div>
+							<?php echo esc_html( $site_name ); ?>
+							</div>
+						</div>
+					<?php endforeach; ?>
+				</div>
+			</div>
+			<div class="actions mainwp-modal-actions">
+				<div class="ui two columns grid">
+					<div class="left aligned column">
+						<input type="button" class="ui green button" id="mainwp-install-check-btn" value="<?php esc_html_e( 'Install Plugin', 'mainwp' ); ?>">	
+					</div>
+					<div class="ui right aligned column">
+						<div class="mainwp-modal-close ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+					</div>
+				</div>
+
+			</div>
+		</div>
+		<script type="text/javascript">
+			jQuery( document ).ready( function () {
+				jQuery('#mainwp-install-check-modal').modal({
+					allowMultiple: false,
+					closable: false,
+					onHide: function () {
+						var noti_id = jQuery('#mainwp-install-check-modal').attr('noti-slug');
+						mainwp_notice_dismiss(noti_id, 1);
+						setTimeout(function () {
+							location.href = location.href;
+						}, 1000);					
+					},
+				}).modal('show');
+				jQuery(document).on('click', '#mainwp-install-check-btn', function () {
+					mainwp_install_check_plugin_prepare( '<?php echo rawurlencode( dirname( $plugin_slug ) ); ?>' );
+					return false;
+				});
+			});
+		</script>
+		<?php
+	}
 }

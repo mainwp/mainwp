@@ -52,6 +52,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_preparebulkuploadplugintheme', array( &$this, 'mainwp_preparebulkuploadplugintheme' ) );
 		$this->add_action( 'mainwp_installbulkuploadplugintheme', array( &$this, 'mainwp_installbulkuploadplugintheme' ) );
 		$this->add_action( 'mainwp_cleanbulkuploadplugintheme', array( &$this, 'mainwp_cleanbulkuploadplugintheme' ) );
+		$this->add_action( 'mainwp_preparebulkinstallcheckplugin', array( &$this, 'hook_prepare_installcheck_plugin' ) );
 
 		// Widget: RightNow.
 		$this->add_action( 'mainwp_upgradewp', array( &$this, 'mainwp_upgradewp' ) );
@@ -461,6 +462,27 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_ext_performinstallplugintheme() {
 		$this->secure_request( 'mainwp_ext_performinstallplugintheme' );
 		do_action( 'mainwp_performinstallplugintheme' );
+	}
+
+	/**
+	 * Method hook_prepare_installcheck_plugin()
+	 *
+	 * Prepair bulk installation of plugins,
+	 */
+	public function hook_prepare_installcheck_plugin() {
+		$this->secure_request( 'mainwp_preparebulkinstallcheckplugin' );
+		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
+		$api           = MainWP_System_Utility::get_plugin_theme_info(
+			'plugin',
+			array(
+				'slug'   => isset( $_POST['slug'] ) ? rawurldecode( wp_unslash( $_POST['slug'] ) ) : '',
+				'fields' => array( 'sections' => false ),
+			)
+		); // Save on a bit of bandwidth.
+		$url           = $api->download_link;
+		$output        = array();
+		$output['url'] = $url;
+		wp_send_json( $output );
 	}
 
 	/**

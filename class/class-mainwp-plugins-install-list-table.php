@@ -216,7 +216,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 	 */
 	public function display() {
 		?>
-		<div id="mainwp-install-plugins-container" class="ui stackable four cards">
+		<div id="mainwp-install-plugins-container" class="ui four cards">
 				<?php $this->display_rows_or_placeholder(); ?>
 			</div>
 			<div class="ui hidden divider"></div>
@@ -505,9 +505,8 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 				</div>
 					</div>
 				<div class="extra content">
-					<span class="right floated">
-						<strong><?php esc_html_e( 'Last Updated: ', 'mainwp' ); ?></strong><?php printf( esc_html__( '%s ago', 'mainwp' ), human_time_diff( $last_updated_timestamp ) ); ?>
-						</span>
+					<div class="ui stacking grid">
+						<div class="four wide left aligned column">
 					<?php
 					wp_star_rating(
 						array(
@@ -518,11 +517,14 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 					);
 					?>
 					</div>
+						<div class="twelve wide right aligned column"><strong><?php esc_html_e( 'Updated: ', 'mainwp' ); ?></strong><?php printf( esc_html__( '%s ago', 'mainwp' ), human_time_diff( $last_updated_timestamp ) ); ?></div>
+					</div>
+				</div>
 					<div class="extra content">
 						<a href="<?php echo esc_attr( $details_link ); ?>" class="ui mini button open-plugin-details-modal"><?php echo esc_html( 'Plugin Details' ); ?></a>
 						<div class="ui radio checkbox right floated">
 						<input name="install-plugin" type="radio" id="install-plugin-<?php echo sanitize_html_class( $plugin['slug'] ); ?>">
-						<label><?php esc_html_e( 'Install this Plugin', 'mainwp' ); ?></label>
+					<label><?php esc_html_e( 'Install Plugin', 'mainwp' ); ?></label>
 						</div>
 					</div>
 				<?php

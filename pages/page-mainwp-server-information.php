@@ -607,7 +607,7 @@ class MainWP_Server_Information {
 	 * @return void
 	 */
 	public static function render_php_check_tbody() {
-					self::render_row( 'PHP Version', '>=', '7.0', 'get_php_version', '', '', null, null, self::ERROR );
+					self::render_row( 'PHP Version', '>=', '7.4', 'get_php_version', '', '', null, null, self::ERROR );
 					self::render_row( 'PHP Safe Mode Disabled', '=', true, 'get_php_safe_mode', '', '', null );
 					self::render_row( 'PHP Max Execution Time', '>=', '30', 'get_max_execution_time', 'seconds', '=', '0' );
 					self::render_row( 'PHP Max Input Time', '>=', '30', 'get_max_input_time', 'seconds', '=', '0' );
@@ -627,7 +627,7 @@ class MainWP_Server_Information {
 			self::render_row( 'cURL Version', '>=', $reuire_curl, 'get_curl_version', '', '', null );
 			$openssl_version = 'OpenSSL/1.1.0';
 			self::render_row(
-				'cURL SSL Version',
+				'OpenSSL Version',
 				'>=',
 				$openssl_version,
 				'get_curl_ssl_version',

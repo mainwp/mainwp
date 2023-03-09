@@ -753,6 +753,26 @@ class MainWP_Utility {
 	}
 
 	/**
+	 * Method get_hide_notice_status()
+	 *
+	 * Check whenther or not to show the MainWP Message.
+	 *
+	 * @param mixed $notice_id Notice ID.
+	 *
+	 * @return mixed true|false|time.
+	 */
+	public static function get_hide_notice_status( $notice_id ) {
+		$notices = get_user_option( 'mainwp_notice_saved_status' );
+		if ( ! is_array( $notices ) ) {
+			$notices = array();
+		}
+		if ( isset( $notices[ $notice_id ] ) ) {
+			return $notices[ $notice_id ];
+		}
+		return false;
+	}
+
+	/**
 	 * Method array_sort()
 	 *
 	 * Sort given array by given flags.

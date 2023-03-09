@@ -932,6 +932,61 @@ class MainWP_UI {
 		<?php
 	}
 
+
+	/**
+	 * Method render_showhide_columns_settings()
+	 *
+	 * Render show/hide columns settings.
+	 *
+	 * @param array  $cols Columns.
+	 * @param array  $show_columns Show Columns.
+	 * @param string $what what.
+	 */
+	public static function render_showhide_columns_settings( $cols, $show_columns, $what ) {
+		?>
+		<div class="ui grid field">
+			<label class="six wide column"><?php esc_html_e( 'Show columns', 'mainwp' ); ?></label>
+			<div class="ten wide column" data-tooltip="<?php echo esc_attr_e( 'Select columns that you want to hide.', 'mainwp' ); ?> data-inverted="" data-position="top left">
+				<ul>
+				<?php
+				foreach ( $cols as $name => $title ) {
+					$_selected = '';
+					if ( ! isset( $show_columns[ $name ] ) || 1 == $show_columns[ $name ] ) {
+						$_selected = 'checked';
+					}
+					?>
+					<li>
+						<div class="ui checkbox">
+							<input type="checkbox" id="mainwp_show_column_<?php echo esc_attr( $name ); ?>" name="mainwp_show_columns[]" <?php echo $_selected; ?> value="<?php echo esc_attr( $name ); ?>">
+							<label for="mainwp_show_column_<?php echo esc_attr( $name ); ?>" ><?php echo esc_html( $title ); ?></label>
+						</div>
+						<input type="hidden" name="mainwp_columns_name[]" value="<?php echo esc_attr( $name ); ?>">
+					</li>
+					<?php
+				}
+				?>
+				</ul>
+			</div>
+
+			</div>
+			<?php
+
+			$input_name = '';
+			if ( 'post' === $what ) {
+				$input_name = 'mainwp_manageposts_show_columns_settings';
+			} elseif ( 'page' === $what ) {
+				$input_name = 'mainwp_managepages_show_columns_settings';
+			} elseif ( 'user' === $what ) {
+				$input_name = 'mainwp_manageusers_show_columns_settings';
+			}
+
+			if ( ! empty( $input_name ) ) {
+				?>
+				<input type="hidden" name="<?php echo esc_attr( $input_name ); ?>" value="1">
+				<?php
+			}
+	}
+
 	/**
 	 * Method render_second_top_header()
 	 *
@@ -1074,7 +1129,8 @@ class MainWP_UI {
 		$sites_count   = MainWP_DB::instance()->get_websites_count();
 		$website_id    = '';
 		$sidebar_pages = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
-		$sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages );
+		$sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
+		$sidebar_pages = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
 		ob_start();
 		if ( isset( $_GET['dashboard'] ) ) :
 			$id      = intval( $_GET['dashboard'] );
@@ -1851,7 +1907,8 @@ class MainWP_UI {
 		}
 
 		$sidebar_pages = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
-		$sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages );
+		$sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
+		$sidebar_pages = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
 
 		/**
 		 * Action: mainwp_screen_options_modal_top

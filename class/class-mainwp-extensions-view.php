@@ -427,6 +427,12 @@ class MainWP_Extensions_View {
 		endif;
 
 		$item_slug = MainWP_Utility::get_dir_slug( $extension['slug'] );
+
+		$new = '';
+
+		if ( isset( $extensions_data['release_date'] ) && ( time() - $extensions_data['release_date'] < MONTH_IN_SECONDS ) ) {
+			$new = '<span class="ui floating green mini label">NEW!</span>';
+		}
 		?>
 			<div class="ui card extension <?php echo ( $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension' ); ?> extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" <?php echo $queue_status; ?> license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
 		<?php
@@ -441,15 +447,18 @@ class MainWP_Extensions_View {
 		 */
 		do_action( 'mainwp_extension_card_top', $extension );
 		?>
+
 				<div class="content">
 					<img class="right floated mini ui image" src="<?php echo esc_html( $img_url ); ?>">
 					<div class="header">
+
 						<?php if ( ! $disabled ) : ?>
 						<a href="<?php echo esc_url( $extension_page_url ); ?>"><?php echo esc_html( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?></a>
 						<?php else : ?>
 							<?php echo esc_html( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>
 						<?php endif; ?>
 					</div>
+
 					<div class="meta">
 				<?php echo '<i class="code branch icon"></i>' . $extension['version']; ?> <?php echo ( isset( $extension['DocumentationURI'] ) && ! empty( $extension['DocumentationURI'] ) ) ? ' - <a href="' . str_replace( array( 'http:', 'https:' ), '', $extension['DocumentationURI'] ) . '" target="_blank">' . esc_html__( 'Documentation', 'mainwp' ) . '</a>' : ''; ?>
 					</div>
@@ -460,6 +469,7 @@ class MainWP_Extensions_View {
 		<?php echo preg_replace( '/\<cite\>.*\<\/cite\>/', '', $extension['description'] ); ?>
 					</div>
 				</div>
+				<?php echo $new; ?>
 		<div class="extra content">
 					<div class="ui mini fluid stackable buttons">
 						<a class="ui basic button extension-the-plugin-action" plugin-action="<?php echo $disabled ? 'active' : 'disable'; ?>"><?php echo $disabled ? '<i class="toggle on icon"></i> ' . esc_html__( 'Enable', 'mainwp' ) : '<i class="toggle off icon"></i> ' . esc_html__( 'Disable', 'mainwp' ); ?></a>
@@ -685,6 +695,7 @@ class MainWP_Extensions_View {
 				'integration_url_4'      => 'https://www.vultr.com/',
 				'integration_owner_4'    => 'Constant Company, LLC.',
 				'integration_owner_pp_4' => 'https://www.vultr.com/legal/privacy/',
+				'release_date'           => 1677193200,
 			),
 			'mainwp-article-uploader-extension'      =>
 			array(
@@ -811,6 +822,7 @@ class MainWP_Extensions_View {
 				'integration_url'      => 'https://www.cloudflare.com/',
 				'integration_owner'    => 'Cloudflare, Inc.',
 				'integration_owner_pp' => 'https://www.cloudflare.com/privacypolicy/',
+				'release_date'         => 1676847600,
 			),
 			'mainwp-clone-extension'                 =>
 			array(
@@ -937,6 +949,7 @@ class MainWP_Extensions_View {
 				'integration_url'      => '',
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
+				'release_date'         => 1677106800,
 			),
 			'mainwp-domain-monitor-extension'        =>
 			array(
@@ -1027,6 +1040,7 @@ class MainWP_Extensions_View {
 				'integration_url'      => 'https://jetpack.com/',
 				'integration_owner'    => 'Automattic Inc.',
 				'integration_owner_pp' => 'https://automattic.com/privacy/',
+				'release_date'         => 1677020400,
 			),
 			'mainwp-jetpack-scan-extension' =>
 			array(
@@ -1045,6 +1059,7 @@ class MainWP_Extensions_View {
 				'integration_url'      => 'https://jetpack.com/',
 				'integration_owner'    => 'Automattic Inc.',
 				'integration_owner_pp' => 'https://automattic.com/privacy/',
+				'release_date'         => 1677020400,
 			),
 			'mainwp-lighthouse-extension'            =>
 			array(
@@ -1225,6 +1240,7 @@ class MainWP_Extensions_View {
 				'integration_url'      => '',
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
+				'release_date'         => 1676934000,
 			),
 			'mainwp-staging-extension'               =>
 			array(

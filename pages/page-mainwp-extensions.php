@@ -462,6 +462,8 @@ class MainWP_Extensions {
 
 			$privacy = '<a href="#" class="extension-privacy-info-link" base-slug="' . esc_attr( $item_slug ) . '" style="text-decoration:none"> <i class="shield alternate small icon"></i></a>';
 
+			$new = '';
+
 			$software_title = MainWP_Extensions_Handler::polish_string_name( $ext['title'] );
 
 			if ( ! empty( $ext['type'] ) ) {
@@ -473,6 +475,10 @@ class MainWP_Extensions {
 				} elseif ( 'org' == $type ) {
 					$ext_source_label = '<span class="ui mini grey label">.ORG</span>';
 				}
+			}
+
+			if ( isset( $ext['release_date'] ) && ( time() - $ext['release_date'] < MONTH_IN_SECONDS ) ) {
+				$new = '<span class="ui mini green label">NEW!</span>';
 			}
 
 			if ( 'MainWP WordPress SEO Extension' == $product_id || 'wp-seopress-mainwp' == $product_id ) {
@@ -506,7 +512,7 @@ class MainWP_Extensions {
 									<div class="item extension extension-to-install" download-link="' . esc_url( $package_url ) . '" plugin-slug="" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
 										<div class="ui stackable grid">
 											<div class="two column row">
-												<div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $ext_source_label . '<strong><a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . '</strong></label></span></div>
+												<div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $ext_source_label . '<strong><a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</strong></label></span></div>
 												<div class="right aligned column"><span class="installing-extension" status="queue"></span></div>
 											</div>
 										</div>
@@ -523,7 +529,7 @@ class MainWP_Extensions {
 									<div class="item extension">
 										<div class="ui stackable grid">
 											<div class="two column row">
-												<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . '</label></span></div>
+												<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</label></span></div>
 												<div class="right aligned column"><span data-tooltip="' . $error . '" data-inverted="" data-position="left center"><i class="times red icon"></i></span></div>
 											</div>
 										</div>
@@ -534,7 +540,7 @@ class MainWP_Extensions {
 								<div class="item extension extension-to-install" download-link="" plugin-slug="' . esc_attr( $ext['slug'] ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
 									<div class="ui stackable grid">
 										<div class="two column row">
-											<div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $ext_source_label . '<strong><a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . '</strong></label></span></div>
+											<div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $ext_source_label . '<strong><a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</strong></label></span></div>
 											<div class="right aligned column"><span class="installing-extension" status="queue"></span></div>
 										</div>
 									</div>
@@ -546,7 +552,7 @@ class MainWP_Extensions {
 						<div class="item extension" product-id="' . $product_id . '" slug="' . esc_attr( $ext['slug'] ) . '">
 							<div class="ui stackable grid">
 								<div class="two column row">
-									<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . '</label></span></div>
+									<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</label></span></div>
 									<div class="right aligned column"><a href="' . $ext['link'] . '" target="_blank" data-tooltip="' . esc_html__( 'Extension not purchased. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
 								</div>
 							</div>
@@ -556,7 +562,7 @@ class MainWP_Extensions {
 							<div class="item extension" product-id="' . $product_id . '" slug="' . esc_attr( $ext['slug'] ) . '">
 								<div class="ui stackable grid">
 									<div class="two column row">
-										<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . '</label></span></div>
+										<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</label></span></div>
 										<div class="right aligned column"><a href="' . $ext['url'] . '" target="_blank" data-tooltip="' . esc_html__( 'Extension not installed. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
 									</div>
 								</div>
@@ -567,7 +573,7 @@ class MainWP_Extensions {
 					<div class="item extension" slug="' . esc_attr( $ext['slug'] ) . '">
 						<div class="ui stackable grid">
 							<div class="two column row">
-								<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a> ' . $notice . '</label></span>' . $privacy . '</div>
+								<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a> ' . $notice . '</label></span>' . $privacy . ' ' . $new . '</div>
 								<div class="right aligned column">Installed</div>
 							</div>
 						</div>

@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.1.1
 Requires PHP: 7.0
-Stable tag: 4.4.0.1
+Stable tag: 4.4.0.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -286,6 +286,21 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 10. Manage Clients Screen
 
 == Changelog ==
+
+= 4.4.0.2 - 23-9-2023 =
+* Fixed: An issue with displaying Non-MainWP changes
+* Fixed: Content overlapping issue on smaller screens in the Plugin and the Theme card element
+* Added: Imunify360 blocking connection detection
+* Added: Option to Page Settings to hide unwanted columns on the Manage Posts page
+* Added: Option to Page Settings to hide unwanted columns on the Manage Pages page
+* Added: Option to Page Settings to hide unwanted columns on the Manage Users page
+* Added: Option to update only selected plugins and themes on the individual site Updates page
+* Added: Feature to easily install plugins required by extensions that integrate with 3rd party plugin
+* Added: `NEW` label to mark recently released extensions on the Extensions page
+* Added: `NEW` label to mark recently released extensions in the Install Extensions modal
+* Updated: Increased the PHP version minimal requirement to PHP 7.4
+* Updated: Renamed cURL SSL Version check to OpenSSL check on the Server Information page
+* Removed: Redundant code
 
 = 4.4.0.1 - 2-22-2023 =
 * Fixed: An issue with deleting Non-MainWP changes

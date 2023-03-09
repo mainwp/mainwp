@@ -22,11 +22,19 @@ class MainWP_Updates_Table_Helper {
 	protected $columns_info;
 
 	/**
-	 * Protected variable to type
+	 * Public variable to type
 	 *
 	 * @var string
 	 */
 	public $type = 'plugin';
+
+	/**
+	 * Public variable to show select box on rows.
+	 *
+	 * @var string
+	 */
+	public $show_select = false;
+
 
 	/**
 	 * Protected variable to view per
@@ -42,10 +50,12 @@ class MainWP_Updates_Table_Helper {
 	 *
 	 * @param string $view_per View per value.
 	 * @param string $type Type of plugin or theme, option, default: 'plugin'.
+	 * @param array  $others others parameters.
 	 */
-	public function __construct( $view_per, $type = 'plugin' ) {
-		$this->type     = $type;
-		$this->view_per = $view_per;
+	public function __construct( $view_per, $type = 'plugin', $others = array() ) {
+		$this->type        = $type;
+		$this->view_per    = $view_per;
+		$this->show_select = is_array( $others ) && isset( $others['show_select'] ) && $others['show_select'] ? true : false;
 	}
 
 	/**
@@ -131,6 +141,7 @@ class MainWP_Updates_Table_Helper {
 			} else {
 				$class = '';
 			}
+			$column_display_name = apply_filters( 'mainwp_updates_table_header_content', $column_display_name, $column_key, $top, $this );
 			echo "<th $class>$column_display_name</th>";
 		}
 	}
@@ -176,13 +187,16 @@ class MainWP_Updates_Table_Helper {
 		if ( 'version' == $column_name || 'latest' == $column_name ) {
 			$class = 'mainwp-768-half-width-cell';
 		}
-		$col = '<td class="' . $class . '">';
-		if ( 'title' == $column_name && empty( $current_wpid ) ) {
-			$col .= '<div class="ui child checkbox">
+
+		$column_content = '';
+		if ( 'title' == $column_name && ( empty( $current_wpid ) || $this->show_select ) ) {
+			$column_content .= '<div class="ui child checkbox">
 			<input type="checkbox" name="">
 		  </div>';
 		}
-		$col .= $value . '</td>';
+		$column_content .= $value;
+
+		$col = '<td class="' . $class . '">' . $column_content . '</td>';
 		return $col;
 	}
 

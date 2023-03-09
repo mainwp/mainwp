@@ -35,7 +35,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.4.0.1';
+	public static $version = '4.4.0.2';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -165,7 +165,6 @@ class MainWP_System {
 
 		$systemHandler = MainWP_System_Handler::instance();
 
-		add_action( 'parse_request', array( &$this, 'parse_request' ) );
 		add_action( 'init', array( &$this, 'localization' ) );
 		add_filter( 'site_transient_update_plugins', array( $systemHandler, 'check_update_custom' ) );
 		add_filter( 'pre_set_site_transient_update_plugins', array( $systemHandler, 'pre_check_update_custom' ) );
@@ -354,15 +353,6 @@ class MainWP_System {
 		}
 
 		return $alloptions;
-	}
-
-	/**
-	 * Method parse_request()
-	 *
-	 * Includes api.php.
-	 */
-	public function parse_request() {
-		include_once MAINWP_PLUGIN_DIR . 'includes/api.php';
 	}
 
 	/**
@@ -1114,6 +1104,8 @@ class MainWP_System {
 		}
 
 		MainWP_System_View::admin_footer();
+		MainWP_System_View::render_plugins_install_check();
+
 		MainWP_Menu::init_sub_pages();
 
 		/**

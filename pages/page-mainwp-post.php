@@ -291,26 +291,25 @@ class MainWP_Post {
 		}
 		return $hidden;
 	}
-	
+
 	/**
 	 * Method hook_screen_options_modal_bottom()
 	 *
 	 * Render screen options modal bottom.
-	 *
 	 */
 	public static function hook_screen_options_modal_bottom() {
 		$page = isset($_GET['page']) ? wp_unslash( $_GET['page'] ) : '';
-		if( 'PostBulkManage' == $page ){
+		if ( 'PostBulkManage' == $page ) {
 
 			$show_columns = get_user_option( 'mainwp_manageposts_show_columns' );
-	
+
 			if ( ! is_array( $show_columns ) ) {
 				$show_columns = array();
 			}
 
 			$cols = self::get_manage_columns();
 			MainWP_UI::render_showhide_columns_settings( $cols, $show_columns, 'post' );
-		} 
+		}
 	}
 
 	/**

@@ -468,7 +468,7 @@ class MainWP_Manage_Sites_Update_View {
 			</div>
 		<?php
 		remove_filter( 'mainwp_updates_table_header_content', array( self::class, 'hook_table_update_plugins_header_content' ), 10, 4 );
-		
+
 		MainWP_Updates::render_updates_modal();
 		MainWP_Updates::render_plugin_details_modal();
 	}
@@ -625,7 +625,6 @@ class MainWP_Manage_Sites_Update_View {
 			</div>
 		<?php
 		remove_filter( 'mainwp_updates_table_header_content', array( self::class, 'hook_table_update_themes_header_content' ), 10, 4 );
-		
 	}
 
 	/**

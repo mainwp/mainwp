@@ -976,16 +976,15 @@ class MainWP_UI {
 				$input_name = 'mainwp_manageposts_show_columns_settings';
 			} elseif ( 'page' === $what ) {
 				$input_name = 'mainwp_managepages_show_columns_settings';
-			} else if ( 'user' === $what ) {
+			} elseif ( 'user' === $what ) {
 				$input_name = 'mainwp_manageusers_show_columns_settings';
-			} 
+			}
 
 			if ( ! empty( $input_name ) ) {
 				?>
 				<input type="hidden" name="<?php echo esc_attr( $input_name ); ?>" value="1">
 				<?php
 			}
-
 	}
 
 	/**

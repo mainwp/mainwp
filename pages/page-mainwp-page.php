@@ -333,14 +333,13 @@ class MainWP_Page {
 	 * Method hook_screen_options_modal_bottom()
 	 *
 	 * Render screen options modal bottom.
-	 *
 	 */
 	public static function hook_screen_options_modal_bottom() {
 		$page = isset($_GET['page']) ? wp_unslash( $_GET['page'] ) : '';
-		if( 'PageBulkManage' == $page ){
+		if ( 'PageBulkManage' == $page ) {
 
 			$show_columns = get_user_option( 'mainwp_managepages_show_columns' );
-	
+
 			if ( ! is_array( $show_columns ) ) {
 				$show_columns = array();
 			}
@@ -348,7 +347,7 @@ class MainWP_Page {
 			$cols = self::get_manage_columns();
 
 			MainWP_UI::render_showhide_columns_settings( $cols, $show_columns, 'page' );
-		} 
+		}
 	}
 
 	/**

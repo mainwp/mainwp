@@ -252,7 +252,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			$site_id = $website['id'];
 		} elseif ( is_object( $website ) ) {
 			$site_id = $website->id;
-		}  elseif ( is_numeric( $website ) ) { // to support $site_id = 0 for global options.
+		} elseif ( is_numeric( $website ) ) { // to support $site_id = 0 for global options.
 			$site_id = $website;
 		} else {
 			return array();

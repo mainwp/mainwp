@@ -673,6 +673,6 @@ mainwp_guidedtours_onchange = function (me) {
         enable: jQuery(me).is(":checked") ? 1 : 0,
     });
     jQuery.post(ajaxurl, data, function () {
-        location.href = location.href;
+        window.location.href = location.href;
     });
 }

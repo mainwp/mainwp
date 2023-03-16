@@ -1075,7 +1075,6 @@ mainwp_delete_nonmainwp_data_start = function (syncSiteIds) {
   var allWebsiteIds = jQuery('.dashboard_wp_id').map(function (indx, el) {
     return jQuery(el).val();
   });
-  var globalSync = true;
   var selectedIds = [], excludeIds = [];
   if (syncSiteIds instanceof Array) {
     jQuery.grep(allWebsiteIds, function (el) {
@@ -1089,7 +1088,6 @@ mainwp_delete_nonmainwp_data_start = function (syncSiteIds) {
       dashboard_update_site_hide(excludeIds[i]);
     }
     allWebsiteIds = selectedIds;
-    globalSync = false;
   }
 
   for (var i = 0; i < allWebsiteIds.length; i++) {
@@ -1108,16 +1106,11 @@ mainwp_delete_nonmainwp_data_start = function (syncSiteIds) {
       window.location.href = location.href;
     }
   });
-
-  if (jQuery('#mainwp-sync-sites-modal').attr('current-wpid') > 0) {
-    globalSync = false;
-  }
-
-  mainwp_delete_nonmainwp_data_start_next(allWebsiteIds, globalSync);
+  mainwp_delete_nonmainwp_data_start_next(allWebsiteIds);
 };
 
 
-mainwp_delete_nonmainwp_data_start_next = function (websiteIds, isGlobalSync) {
+mainwp_delete_nonmainwp_data_start_next = function (websiteIds) {
   websitesToUpdate = websiteIds;
   currentWebsite = 0;
   websitesDone = 0;

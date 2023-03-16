@@ -161,14 +161,27 @@ class MainWP_Site_Actions {
 					?>
 					</tbody>
 				</table>
+					<?php
+					$widget_columns = get_option( 'mainwp_number_overview_columns', 2 );
+					if ( 3 == $widget_columns ) {
+						?>
+					<style>
+						#widget-non_mainwp_changes #mainwp-non-mainwp-changes-table_wrapper .seven.wide.column { width: 25% !important; }
+						#widget-non_mainwp_changes #mainwp-non-mainwp-changes-table_wrapper .nine.wide.column { width: 75% !important; }
+					</style>
+						<?php
+					}
+					?>
 				<div class="ui hidden divider"></div>
 				<a href="javascript:void(0)" id="mainwp-delete-all-nonmainwp-actions-button" class="ui button green"><?php esc_html_e( 'Delete All Non-MainWP Changes', 'mainwp' ); ?></a>
 				<script type="text/javascript">
 				jQuery( document ).ready( function() {
 					jQuery.fn.DataTable.ext.pager.numbers_length = 4;
 					jQuery( '#mainwp-non-mainwp-changes-table' ).DataTable( {
+						"pageLength": 10,
 						"lengthMenu": [ [5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"] ],
 						"stateSave" : true,
+						"stateDuration" : 0,
 						"columnDefs": [ {
 							"targets": 'no-sort',
 							"orderable": false

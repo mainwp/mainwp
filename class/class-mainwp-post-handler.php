@@ -71,6 +71,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_leftmenu_filter_group', array( &$this, 'mainwp_leftmenu_filter_group' ) );
 		$this->add_action( 'mainwp_widgets_order', array( &$this, 'ajax_widgets_order' ) );
 		$this->add_action( 'mainwp_save_settings', array( &$this, 'ajax_mainwp_save_settings' ) );
+		$this->add_action( 'mainwp_guided_tours_option_update', array( &$this, 'ajax_guided_tours_option_update' ) );
 
 		$this->add_action( 'mainwp_twitter_dashboard_action', array( &$this, 'mainwp_twitter_dashboard_action' ) );
 
@@ -137,7 +138,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_upload_custom_icon', array( &$this, 'ajax_upload_custom_icon' ) );
 		$this->add_action( 'mainwp_select_custom_theme', array( &$this, 'ajax_select_custom_theme' ) );
 		$this->add_action( 'mainwp_site_actions_dismiss', array( &$this, 'ajax_site_actions_dismiss' ) );
-		$this->add_action( 'mainwp_delete_all_actions', array( &$this, 'ajax_delete_all_actions' ) );
+		$this->add_action( 'mainwp_delete_non_mainwp_actions', array( &$this, 'ajax_delete_non_mainwp_actions' ) );
 	}
 
 	/**
@@ -611,6 +612,20 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			$val         = isset( $_POST['value'] ) ? sanitize_text_field( wp_unslash( $_POST['value'] ) ) : '';
 			MainWP_Utility::update_option( $option_name, $val );
 		}
+		die( 'ok' );
+	}
+
+	/**
+	 * Method ajax_guided_tours_option_update()
+	 *
+	 * Update saved MainWP Settings.
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
+	 */
+	public function ajax_guided_tours_option_update() {
+		$this->secure_request( 'mainwp_guided_tours_option_update' );
+		$enable = isset( $_POST['enable'] ) ? intval( $_POST['enable'] ) : 0;
+		MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enable );
 		die( 'ok' );
 	}
 
@@ -1375,9 +1390,35 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	/**
 	 * Method ajax_site_actions_dismiss()
 	 */
-	public function ajax_delete_all_actions() {
-		$this->secure_request( 'mainwp_delete_all_actions' );
-		MainWP_DB_Site_Actions::instance()->delete_all_actions();
-		wp_die( 'success' );
+	public function ajax_delete_non_mainwp_actions() {
+		$this->secure_request( 'mainwp_delete_non_mainwp_actions' );
+		$siteid = isset( $_POST['wp_id'] ) ? intval( $_POST['wp_id'] ) : 0;
+		if ( empty( $siteid ) ) {
+			wp_die( wp_json_encode( array( 'error' => 'Empty site ID' ) ) );
+		}
+		$website = MainWP_DB::instance()->get_website_by_id( $siteid );
+		$success = false;
+		$error   = '';
+		try {
+			$response = MainWP_Connect::fetch_url_authed( $website, 'delete_actions', array( 'del' => 'act' ) );
+			if ( is_array( $response ) ) {
+				if ( isset( $response['success'] ) ) {
+					$success = true;
+				} elseif ( isset( $response['error'] ) ) {
+					$error = $response['error'];
+				}
+			}
+		} catch ( \Exception $e ) {
+			// ok!
+		}
+		if ( $success ) {
+			MainWP_DB_Site_Actions::instance()->delete_action_by( 'wpid', $siteid );
+			wp_die( wp_json_encode( array( 'success' => 'ok' ) ) );
+		}
+
+		if ( empty( $error ) ) {
+			$error = __( 'Undefined error. Please try again.', 'mainwp' );
+		}
+		wp_die( wp_json_encode( array( 'error' => $error ) ) );
 	}
 }

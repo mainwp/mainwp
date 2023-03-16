@@ -1028,7 +1028,7 @@ class MainWP_System_View {
 						var noti_id = jQuery('#mainwp-install-check-modal').attr('noti-slug');
 						mainwp_notice_dismiss(noti_id, 1);
 						setTimeout(function () {
-							location.href = location.href;
+							window.location.href = location.href;
 						}, 1000);					
 					},
 				}).modal('show');

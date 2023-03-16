@@ -690,6 +690,22 @@ class MainWP_System_Utility {
 			if ( isset( $resp['error_message'] ) ) {
 				$resp['error_message'] = MainWP_Utility::esc_content( $resp['error_message'] );
 			}
+
+			if ( isset( $resp['notices'] ) ) {
+				$notices = array();
+				if ( is_string( $resp['notices'] ) ) {
+					$notices = MainWP_Utility::esc_content( $resp['notices'] );
+				} elseif ( is_array( $resp['notices'] ) ) {
+					foreach ( $resp['notices'] as $noti ) {
+						if ( is_string( $noti ) ) {
+							$notices[] = MainWP_Utility::esc_content( $noti );
+						}
+					}
+				}
+				if ( ! empty( $notices ) ) {
+					$resp['notices'] = $notices;
+				}
+			}
 		}
 
 		return $resp;

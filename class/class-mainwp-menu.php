@@ -575,7 +575,7 @@ class MainWP_Menu {
 							}
 						}
 						?>
-					<div class="item item-wp-admin" style="background-color: rgba(255,255,255,.15);">
+					<div class="item item-wp-admin">
 						<a href="<?php echo esc_html( $link['url'] ); ?>" class="title" style="display:inline" data-position="top left" data-tooltip="<?php echo esc_html( $link['tip'] ); ?>"><b><i class="icon wordpress"></i> <?php echo esc_html( $link['text'] ); ?></b></a> <a class="ui small label" data-position="top right" data-tooltip="<?php esc_html_e( 'Logout', 'mainwp' ); ?>" href="<?php echo wp_logout_url(); ?>"><i class="sign out icon" style="margin:0"></i></a> <?php //phpcs:ignore -- to avoid auto fix icon wordpress ?>
 					</div>
 					<?php } ?>

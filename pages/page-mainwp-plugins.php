@@ -2132,10 +2132,6 @@ class MainWP_Plugins {
 								</td>
 							</tr>
 						<?php endforeach; ?>
-					<?php else : ?>
-						<tr>
-							<td colspan="3"><?php esc_html_e( 'No ignored plugins', 'mainwp' ); ?></td>
-						</tr>
 					<?php endif; ?>
 				</tbody>
 				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2163,6 +2159,9 @@ class MainWP_Plugins {
 						"targets": 'no-sort',
 						"orderable": false
 					} ],
+					"language": {
+						"emptyTable": "<?php esc_html_e( 'No ignored plugins.', 'mainwp' ); ?>"
+					},
 				} );
 			} );
 			</script>
@@ -2232,8 +2231,6 @@ class MainWP_Plugins {
 
 					MainWP_DB::free_result( $websites );
 					?>
-				<?php else : ?>
-					<tr><td colspan="999"><?php esc_html_e( 'No ignored plugins', 'mainwp' ); ?></td></tr>
 				<?php endif; ?>
 			</tbody>
 			<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2261,6 +2258,9 @@ class MainWP_Plugins {
 					"targets": 'no-sort',
 					"orderable": false
 				} ],
+				"language": {
+					"emptyTable": "<?php esc_html_e( 'No ignored plugins', 'mainwp' ); ?>"
+				},
 			} );
 		} );
 		</script>
@@ -2373,10 +2373,6 @@ class MainWP_Plugins {
 							</td>
 						</tr>
 					<?php endforeach; ?>
-				<?php else : ?>
-					<tr>
-						<td colspan="999"><?php esc_html_e( 'No ignored abandoned plugins.', 'mainwp' ); ?></td>
-					</tr>
 				<?php endif; ?>
 			</tbody>
 			<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2404,6 +2400,9 @@ class MainWP_Plugins {
 					"targets": 'no-sort',
 					"orderable": false
 				} ],
+				"language": {
+					"emptyTable": "<?php esc_html_e( 'No ignored abandoned plugins.', 'mainwp' ); ?>"
+				},
 			} );
 		} );
 		</script>
@@ -2467,14 +2466,8 @@ class MainWP_Plugins {
 							<?php
 						}
 					}
-
 					MainWP_DB::free_result( $websites );
-
-		else :
-			?>
-			<tr>
-				<td colspan="4"><?php esc_html_e( 'No ignored abandoned plugins', 'mainwp' ); ?></td>
-			</tr>
+					?>
 		<?php endif; ?>
 		</tbody>
 		<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2502,6 +2495,9 @@ class MainWP_Plugins {
 					"targets": 'no-sort',
 					"orderable": false
 				} ],
+				"language": {
+					"emptyTable": "<?php esc_html_e( 'No ignored abandoned plugins.', 'mainwp' ); ?>"
+				},
 			} );
 		} );
 		</script>

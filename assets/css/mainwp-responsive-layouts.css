@@ -26,6 +26,7 @@
 }
 
 @media only screen and ( min-width: 768px ) and ( max-width: 1449px ) {
+
 	.mainwp-sync-button-icon {
 		display: inline-block !important;
 		margin: 0px !important;
@@ -48,9 +49,8 @@
 
 @media only screen and ( min-width: 768px ) and ( max-width: 1365px ) {
 
-	#mainwp-main-menu {
-		max-height: 75vh;
-		overflow-y: scroll;
+	.item-wp-admin {
+		z-index: 9999 !important;
 	}
 
 	#mainwp-updates-overview-menu,

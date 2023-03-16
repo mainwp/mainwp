@@ -1369,8 +1369,11 @@ class MainWP_Page {
 	 */
 	public static function posting() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		$succes_message = '';
-		if ( isset( $_GET['id'] ) ) {
-			$edit_id = get_post_meta( intval( $_GET['id'] ), '_mainwp_edit_post_id', true );
+		$post_id        = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
+		$edit_id        = 0;
+		if ( $post_id ) {
+			$edit_id = get_post_meta( $post_id, '_mainwp_edit_post_id', true );
+			$edit_id = intval( $edit_id );
 			if ( $edit_id ) {
 				$succes_message = esc_html__( 'Page has been updated successfully', 'mainwp' );
 			} else {
@@ -1407,19 +1410,19 @@ class MainWP_Page {
 			 *
 			 * @since Unknown
 			 */
-			do_action( 'mainwp_bulkpage_before_post', intval( $_GET['id'] ) );
+			do_action( 'mainwp_bulkpage_before_post', $post_id );
 
 			$skip_post = false;
-			if ( isset( $_GET['id'] ) ) {
-				if ( 'yes' == get_post_meta( intval( $_GET['id'] ), '_mainwp_skip_posting', true ) ) {
+			if ( $post_id ) {
+				if ( 'yes' == get_post_meta( $post_id, '_mainwp_skip_posting', true ) ) {
 					$skip_post = true;
-					wp_delete_post( intval( $_GET['id'] ), true );
+					wp_delete_post( $post_id, true );
 				}
 			}
 
 			if ( ! $skip_post ) {
-				if ( isset( $_GET['id'] ) ) {
-					$id    = intval( $_GET['id'] );
+				if ( $post_id ) {
+					$id    = $post_id;
 					$_post = get_post( $id );
 					if ( $_post ) {
 						$selected_by      = get_post_meta( $id, '_selected_by', true );

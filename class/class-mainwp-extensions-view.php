@@ -613,6 +613,7 @@ class MainWP_Extensions_View {
 			'hosting'     => esc_html__( 'Hosting', 'mainwp' ),
 			'monitoring'  => esc_html__( 'Monitoring', 'mainwp' ),
 			'performance' => esc_html__( 'Performance', 'mainwp' ),
+			'policies'    => esc_html__( 'Policies', 'mainwp' ),
 			'security'    => esc_html__( 'Security', 'mainwp' ),
 			'visitor'     => esc_html__( 'Analytics', 'mainwp' ),
 		);
@@ -1277,6 +1278,25 @@ class MainWP_Extensions_View {
 				'integration_url'      => '',
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
+			),
+			'termageddon-for-mainwp' =>
+			array(
+				'type'                 => 'free',
+				'slug'                 => 'termageddon-for-mainwp',
+				'title'                => 'Termageddon for MainWP',
+				'desc'                 => 'This extension is used for creating Privacy Policy, ToS, Disclaimer and Cookie Policy & Consent Tool pages automatically on your websites.',
+				'link'                 => 'https://mainwp.com/extension/termageddon-for-mainwp/',
+				'img'                  => $folder_url . 'termageddon.png',
+				'product_id'           => 'Termageddon for MainWP',
+				'product_item_id'      => 0,
+				'catalog_id'           => '1200201',
+				'group'                => array( 'policies' ),
+				'privacy'              => 1,
+				'integration'          => 'Termageddon API',
+				'integration_url'      => 'https://termageddon.com/',
+				'integration_owner'    => 'Termageddon, LLC',
+				'integration_owner_pp' => 'https://termageddon.com/privacy-policy/',
+				'release_date'         => 1678921200,
 			),
 			'mainwp-timecapsule-extension'           =>
 			array(

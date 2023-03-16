@@ -741,11 +741,16 @@ class MainWP_UI {
 				<a href="javacscript:void(0);" id="mainwp-interface-tour-button" class="ui big green fluid basic button"><?php esc_html_e( 'MainWP Interface Basics Tour', 'mainwp' ); ?></a>
 			<?php endif; ?>
 			<?php else : ?>
-			<div class="ui info message">
-				<p><?php esc_html_e( 'MainWP guided tours feature is disabled.', 'mainwp' ); ?></p>
-				<p><?php echo sprintf( esc_html__( 'Go to the %1$sMainWP Tools%2$s page to enable it.', 'mainwp' ), '<a href="admin.php?page=MainWPTools">', '</a>' ); ?></p>
-			</div>
-			<?php endif; ?>
+				<h4><?php esc_html_e( 'Enable MainWP guided tours', 'mainwp' ); ?> <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></h4>
+				<div class="ui info message" style="display:block!important;">
+					<?php echo sprintf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %sUsetiful Privacy Policy%s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
+				</div>
+				<div>
+					<div class="ui toggle checkbox">
+						<input type="checkbox" id="mainwp-select-guided-tours-option" onchange="mainwp_guidedtours_onchange(this);"<?php echo ( ( 1 == get_option( 'mainwp_enable_guided_tours', 0 ) ) ? 'checked="true"' : '' ); ?> />
+					</div>
+				</div>
+			<?php endif; ?>			
 			<div class="ui hidden divider"></div>
 			<div class="ui header"><?php esc_html_e( 'MainWP Documenation', 'mainwp' ); ?></div>
 			<div class="ui hidden divider"></div>

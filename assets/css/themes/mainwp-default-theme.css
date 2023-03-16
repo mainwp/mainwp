@@ -481,6 +481,8 @@
 
 .mainwp-ui.mainwp-custom-theme .mainwp-nav-wrap .ui.vertical.inverted.menu .item.item-wp-admin {
   border-left: 3px solid #4C5860;
+  background-color: var( --grey-dark ) !important;
+  box-shadow: inset 0 0 0 10em rgba(255, 255, 255, 0.15);
 }
 
 .mainwp-ui.mainwp-custom-theme .mainwp-nav-wrap .ui.vertical.inverted.menu .item.active:after {

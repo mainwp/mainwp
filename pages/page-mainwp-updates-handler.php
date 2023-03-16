@@ -656,18 +656,20 @@ class MainWP_Updates_Handler {
 			if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
 				throw new MainWP_Exception( 'ERROR', esc_html__( 'Suspended site.', 'mainwp' ), 'SUSPENDED_SITE' );
 			}
-			$information = self::update_plugin_theme_translation( $website, $type, $list );
-			if ( is_array( $information ) ) {
-				if ( isset( $information['upgrades'] ) ) {
+			$result = self::update_plugin_theme_translation( $website, $type, $list );
+			if ( is_array( $result ) ) {
+				if ( isset( $result['upgrades'] ) ) {
 					$tmp = array();
-					if ( isset( $information['upgrades'] ) ) {
-						foreach ( $information['upgrades'] as $k => $v ) {
+					if ( isset( $result['upgrades'] ) ) {
+						foreach ( $result['upgrades'] as $k => $v ) {
 							$tmp[ rawurlencode( $k ) ] = $v;
 						}
 					}
 					return $tmp;
-				} elseif ( isset( $information['error'] ) ) {
-					throw new MainWP_Exception( 'WPERROR', esc_html( $information['error'] ) );
+				} elseif ( isset( $result['error'] ) ) {
+					throw new MainWP_Exception( 'WPERROR', esc_html( $result['error'] ) );
+				} elseif ( isset( $result['notices'] ) ) {
+					throw new MainWP_Exception( $result['notices'], '', 'MAINWP_NOTICE' );
 				} else {
 					throw new MainWP_Exception( 'ERROR', esc_html__( 'Invalid response retured from the child site. Please try again.', 'mainwp' ) );
 				}

@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.1.1
 Requires PHP: 7.0
-Stable tag: 4.4.0.2
+Stable tag: 4.4.0.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -287,7 +287,16 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 4.4.0.2 - 23-9-2023 =
+= 4.4.0.3 - 3-16-2023 =
+* Fixed: Conflict with the SVG Support plugin
+* Fixed: Undefined variable PHP warning
+* Fixed: Undefined array key PHP warning
+* Fixed: Issue with overlapping menu items on smaller screens
+* Added: Termageddon for MainWP extension info
+* Added: Ability to enable the Guided Tours option to the Help sidebar
+* Updated: Delete Non-MainWP changes process to delete actions from child sites
+
+= 4.4.0.2 - 3-9-2023 =
 * Fixed: An issue with displaying Non-MainWP changes
 * Fixed: Content overlapping issue on smaller screens in the Plugin and the Theme card element
 * Added: Imunify360 blocking connection detection

@@ -2169,8 +2169,6 @@ class MainWP_Themes {
 							</td>
 						</tr>
 						<?php endforeach; ?>
-					<?php else : ?>
-						<tr><td colspan="3"><?php esc_html_e( 'No ignored themes.', 'mainwp' ); ?></td></tr>
 					<?php endif; ?>
 				</tbody>
 				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2194,6 +2192,9 @@ class MainWP_Themes {
 				paging: false,
 				info: false,
 				responsive: true,
+				"language": {
+					"emptyTable": "<?php esc_html_e( 'No ignored themes.', 'mainwp' ); ?>"
+				},
 			} );
 		} );
 		</script>
@@ -2260,8 +2261,6 @@ class MainWP_Themes {
 				}
 				MainWP_DB::free_result( $websites );
 				?>
-				<?php else : ?>
-					<tr><td colspan="4"><?php esc_html_e( 'No ignored themes', 'mainwp' ); ?></td></tr>
 				<?php endif; ?>
 			</tbody>
 			<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2285,6 +2284,9 @@ class MainWP_Themes {
 				paging: false,
 				info: false,
 				responsive: true,
+				"language": {
+					"emptyTable": "<?php esc_html_e( 'No ignored themes', 'mainwp' ); ?>"
+				},
 			} );
 		} );
 		</script>
@@ -2390,8 +2392,6 @@ class MainWP_Themes {
 						</td>
 					</tr>
 					<?php endforeach; ?>
-				<?php else : ?>
-					<tr><td colspan="3"><?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?></td></tr>
 				<?php endif; ?>
 				</tbody>
 				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2415,6 +2415,9 @@ class MainWP_Themes {
 				"searching": false,
 				"paging": false,
 				"info": false,
+				"language": {
+					"emptyTable": "<?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?>"
+				},
 			} );
 		} );
 		</script>
@@ -2481,8 +2484,6 @@ class MainWP_Themes {
 				}
 				MainWP_DB::free_result( $websites );
 				?>
-			<?php else : ?>
-			<tr><td colspan="4"><?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?></td></tr>
 			<?php endif; ?>
 			</tbody>
 			<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2506,6 +2507,9 @@ class MainWP_Themes {
 				"searching": false,
 				"paging": false,
 				"info": false,
+				"language": {
+					"emptyTable": "<?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?>"
+				},
 			} );
 		} );
 		</script>

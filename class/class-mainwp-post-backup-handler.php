@@ -344,7 +344,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 
 		try {
 			$local = isset( $_POST['local'] ) ? sanitize_text_field( wp_unslash( $_POST['local'] ) ) : '';
-			die( wp_json_encode( array( 'result' => MainWP_Manage_Sites::backup_get_file_size( $local ) ) ) );
+			die( wp_json_encode( array( 'result' => MainWP_Backup_Handler::backup_get_file_size( $local ) ) ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(

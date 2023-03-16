@@ -1012,7 +1012,7 @@ updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noChe
                                 websiteHolder = jQuery('.plugins-bulk-updates[site_id="' + pWebsiteId + '"] tr[plugin_slug="' + slugParts[i] + '"]');
                             }
 
-                            if (response.error) {
+                            if (response.error || response.notices) {
                                 var extErr = getErrorMessageInfo(response.error, 'ui')
                                 if (!done && pBulkMode)
                                     updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, extErr);

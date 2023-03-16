@@ -35,7 +35,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.4.0.2';
+	public static $version = '4.4.0.3';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -184,6 +184,7 @@ class MainWP_System {
 		add_action( 'admin_head', array( MainWP_System_View::get_class_name(), 'admin_head' ) );
 		add_action( 'admin_enqueue_scripts', array( &$this, 'admin_enqueue_styles' ) );
 		add_action( 'admin_enqueue_scripts', array( &$this, 'admin_enqueue_scripts' ) );
+		add_action( 'admin_enqueue_scripts', array( &$this, 'admin_enqueue_scripts_fix_conflict' ), 9 );
 		add_action( 'admin_body_class', array( MainWP_System_View::get_class_name(), 'admin_body_class' ) );
 
 		new MainWP_Bulk_Post();
@@ -928,6 +929,20 @@ class MainWP_System {
 		wp_enqueue_script( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'assets/js/fileuploader.js', array(), $this->current_version ); // phpcs:ignore -- fileuploader scripts need to load at header.
 		wp_enqueue_script( 'mainwp-date', MAINWP_PLUGIN_URL . 'assets/js/date.js', array(), $this->current_version, true );
 		wp_enqueue_script( 'mainwp-filesaver', MAINWP_PLUGIN_URL . 'assets/js/FileSaver.js', array(), $this->current_version, true );
+	}
+
+	/**
+	 * Method admin_enqueue_scripts_fix_conflict()
+	 *
+	 * Enqueue Admin Scripts fix conflict.
+	 *
+	 * @param mixed $hook Enqueue hook.
+	 */
+	public function admin_enqueue_scripts_fix_conflict( $hook ) {
+		if ( self::is_mainwp_pages() ) {
+			// to fix conflict with the SVG Support plugin.
+			remove_action( 'admin_enqueue_scripts', 'bodhi_svgs_admin_multiselect' );
+		}
 	}
 
 	/**

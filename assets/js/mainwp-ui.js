@@ -666,3 +666,13 @@ mainwp_upload_custom_icon = function (iconObj) {
     });
 
 };
+
+mainwp_guidedtours_onchange = function (me) {
+    var data = mainwp_secure_data({
+        action: 'mainwp_guided_tours_option_update',
+        enable: jQuery(me).is(":checked") ? 1 : 0,
+    });
+    jQuery.post(ajaxurl, data, function () {
+        location.href = location.href;
+    });
+}

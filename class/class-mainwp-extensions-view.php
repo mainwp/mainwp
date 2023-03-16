@@ -1279,7 +1279,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'termageddon-for-mainwp'                  =>
+			'termageddon-for-mainwp' =>
 			array(
 				'type'                 => 'free',
 				'slug'                 => 'termageddon-for-mainwp',

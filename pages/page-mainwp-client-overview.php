@@ -117,7 +117,7 @@ class MainWP_Client_Overview {
 		wp_enqueue_script( 'widgets' );
 
 		self::add_meta_boxes( $page );
-		
+
 		add_filter( 'mainwp_header_actions_right', array( self::get_class_name(), 'screen_options' ), 10, 2 );
 	}
 

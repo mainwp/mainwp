@@ -1130,7 +1130,7 @@ class MainWP_UI {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
 	 */
-	public static function render_header_actions() {
+	public static function render_header_actions() { //phpcs:ignore -- complex method.
 		$sites_count   = MainWP_DB::instance()->get_websites_count();
 		$website_id    = '';
 		$sidebar_pages = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );

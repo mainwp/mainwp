@@ -1139,21 +1139,21 @@ class MainWP_UI {
 		ob_start();
 		if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) :
 			if ( isset( $_GET['dashboard'] ) ) {
-			$id      = intval( $_GET['dashboard'] );
-			} else if ( isset( $_GET['id'] ) ) {
+				$id = intval( $_GET['dashboard'] );
+			} elseif ( isset( $_GET['id'] ) ) {
 				$id = intval( $_GET['id'] );
-			} else if ( isset( $_GET['updateid'] ) ) {
+			} elseif ( isset( $_GET['updateid'] ) ) {
 				$id = intval( $_GET['updateid'] );
-			} else if ( isset( $_GET['emailsettingsid'] ) ) {
+			} elseif ( isset( $_GET['emailsettingsid'] ) ) {
 				$id = intval( $_GET['emailsettingsid'] );
-			} else if ( isset( $_GET['scanid'] ) ) {
+			} elseif ( isset( $_GET['scanid'] ) ) {
 				$id = intval( $_GET['scanid'] );
 			}
-			
-			
+
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
 
-			if ( '' != $website->sync_errors ) : ?>
+			if ( '' != $website->sync_errors ) :
+				?>
 				<a href="#" class="mainwp-updates-overview-reconnect-site ui green button" siteid="<?php echo $website->id; ?>" data-position="bottom right" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></a>
 			<?php else : ?>
 				<button class="ui button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?>" id="mainwp-sync-sites" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>">

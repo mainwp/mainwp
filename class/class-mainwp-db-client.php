@@ -1139,7 +1139,7 @@ class MainWP_DB_Client extends MainWP_DB {
 			if ( $gene_results ) {
 				foreach ( $gene_results as $gene_item ) {
 					if ( ! isset( $fields_list[ $gene_item->field_name ] ) ) {
-						$gene_item->field_value = '';
+						$gene_item->field_value                = '';
 						$fields_list[ $gene_item->field_name ] = $gene_item;
 					}
 				}
@@ -1156,8 +1156,8 @@ class MainWP_DB_Client extends MainWP_DB {
 				foreach ( $gene_results as $gene_item ) {
 					if ( ! isset( $check_list[ $gene_item->field_name ] ) ) {
 						$check_list[ $gene_item->field_name ] = true;
-						$gene_item->field_value = '';
-						$fields_list[] = $gene_item;
+						$gene_item->field_value               = '';
+						$fields_list[]                        = $gene_item;
 					}
 				}
 			}

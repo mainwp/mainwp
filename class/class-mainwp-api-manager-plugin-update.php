@@ -171,7 +171,7 @@ class MainWP_Api_Manager_Plugin_Update {
 
 		$target_url = $this->create_upgrade_api_url( $args, $bulk_check );
 		$default    = array(
-			'timeout'   => 50,
+			'timeout'   => 150,
 			'sslverify' => 1,
 		);
 

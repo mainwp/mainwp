@@ -658,6 +658,7 @@ class MainWP_Updates_Handler {
 			}
 			$result = self::update_plugin_theme_translation( $website, $type, $list );
 			if ( is_array( $result ) ) {
+				$undefined = true;
 				if ( isset( $result['upgrades'] ) ) {
 					$tmp = array();
 					if ( isset( $result['upgrades'] ) ) {
@@ -669,8 +670,13 @@ class MainWP_Updates_Handler {
 				} elseif ( isset( $result['error'] ) ) {
 					throw new MainWP_Exception( 'WPERROR', esc_html( $result['error'] ) );
 				} elseif ( isset( $result['notices'] ) ) {
-					throw new MainWP_Exception( $result['notices'], '', 'MAINWP_NOTICE' );
-				} else {
+					$noti = $result['notices'];
+					if ( ! empty( $noti ) && is_string( $noti ) ) {
+						throw new MainWP_Exception( $noti, '', 'MAINWP_NOTICE' );
+					}
+				}
+
+				if ( $undefined ) {
 					throw new MainWP_Exception( 'ERROR', esc_html__( 'Invalid response retured from the child site. Please try again.', 'mainwp' ) );
 				}
 			}

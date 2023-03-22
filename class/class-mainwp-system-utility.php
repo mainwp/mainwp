@@ -692,18 +692,18 @@ class MainWP_System_Utility {
 			}
 
 			if ( isset( $resp['notices'] ) ) {
-				$notices = array();
 				if ( is_string( $resp['notices'] ) ) {
-					$notices = MainWP_Utility::esc_content( $resp['notices'] );
+					$resp['notices'] = MainWP_Utility::esc_content( $resp['notices'] );
 				} elseif ( is_array( $resp['notices'] ) ) {
+					$notices = array();
 					foreach ( $resp['notices'] as $noti ) {
-						if ( is_string( $noti ) ) {
+						if ( ! empty( $noti ) && is_string( $noti ) ) {
 							$notices[] = MainWP_Utility::esc_content( $noti );
 						}
 					}
-				}
-				if ( ! empty( $notices ) ) {
-					$resp['notices'] = $notices;
+					if ( ! empty( $notices ) ) {
+						$resp['notices'] = implode( ' || ', $notices );
+					}
 				}
 			}
 		}

@@ -99,19 +99,23 @@ class MainWP_Clients {
 							</td>
 							<td class="left aligned middle aligned">
 								<?php
+								$contact = false;
 								if ( isset( $client['primary_contact_id'] ) && '' != $client['primary_contact_id'] ) {
 									$contact = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', $client['primary_contact_id'] );
-									?>
+									if ( $contact ) {
+										?>
 									<span><?php echo esc_html( $contact->contact_name ); ?> <?php echo ( isset( $contact->contact_role ) && '' != $contact->contact_role ) ? ' - ' . esc_html( $contact->contact_role ) : ''; ?></span><br/>
-									<?php if ( isset( $contact->contact_email ) && '' != $contact->contact_email ) : ?>
+										<?php if ( isset( $contact->contact_email ) && '' != $contact->contact_email ) : ?>
 										<span class="ui small text"><a href="mailto:<?php echo $contact->contact_email; ?>"><i class="envelope icon"></i> <?php echo esc_html( $contact->contact_email ); ?></a></span><br/>
 									<?php endif; ?>
-									<?php if ( isset( $contact->contact_phone ) && '' != $contact->contact_phone ) : ?>
+										<?php if ( isset( $contact->contact_phone ) && '' != $contact->contact_phone ) : ?>
 										<span class="ui small text"><a href="tel:<?php echo $contact->contact_phone; ?>"><i class="phone alternate icon"></i> <?php echo esc_html( $contact->contact_phone ); ?></a></span>
 									<?php endif; ?>
-									<?php
-								} else {
-									echo esc_html_( 'No Contacts', 'mainwp' );
+										<?php
+									}
+								}
+								if ( empty( $contact ) ) {
+									echo esc_html__( 'No Contacts', 'mainwp' );
 								}
 								?>
 							</td>

@@ -126,7 +126,7 @@ class MainWP_System {
 
 		if ( is_admin() ) {
 			include_once ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'plugin.php';
-			$pluginData            = get_plugin_data( $mainwp_plugin_file );
+			$pluginData            = get_plugin_data( $mainwp_plugin_file, true, false ); // to fix issue of user language setting.
 			$this->current_version = $pluginData['Version'];
 			$currentVersion        = get_option( 'mainwp_plugin_version' );
 
@@ -165,7 +165,7 @@ class MainWP_System {
 
 		$systemHandler = MainWP_System_Handler::instance();
 
-		add_action( 'init', array( &$this, 'localization' ) );
+		add_action( 'plugins_loaded', array( &$this, 'localization' ) );
 		add_filter( 'site_transient_update_plugins', array( $systemHandler, 'check_update_custom' ) );
 		add_filter( 'pre_set_site_transient_update_plugins', array( $systemHandler, 'pre_check_update_custom' ) );
 		add_filter( 'plugins_api', array( $systemHandler, 'plugins_api_info' ), 10, 3 );

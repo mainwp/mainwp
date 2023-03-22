@@ -898,7 +898,7 @@ class MainWP_System_View {
 				'name' => 'Jetpack Protect',
 			),
 			array(
-				'page' => 'Extensions-Mainwp-Jetpack-Scan-Extension',
+				'page'     => 'Extensions-Mainwp-Jetpack-Scan-Extension',
 				'slug' => 'jetpack/jetpack.php',
 				'name' => 'Jetpack',
 			),

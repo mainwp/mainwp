@@ -274,6 +274,8 @@ class MainWP_DB extends MainWP_DB_Base {
 				} else {
 					$get_options[] = $option;
 				}
+			} else {
+				$get_options[] = $option;
 			}
 		}
 

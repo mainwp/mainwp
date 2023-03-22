@@ -1137,16 +1137,25 @@ class MainWP_UI {
 		$sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
 		$sidebar_pages = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
 		ob_start();
-		if ( isset( $_GET['dashboard'] ) ) :
+		if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) :
+			if ( isset( $_GET['dashboard'] ) ) {
 			$id      = intval( $_GET['dashboard'] );
+			} else if ( isset( $_GET['id'] ) ) {
+				$id = intval( $_GET['id'] );
+			} else if ( isset( $_GET['updateid'] ) ) {
+				$id = intval( $_GET['updateid'] );
+			} else if ( isset( $_GET['emailsettingsid'] ) ) {
+				$id = intval( $_GET['emailsettingsid'] );
+			} else if ( isset( $_GET['scanid'] ) ) {
+				$id = intval( $_GET['scanid'] );
+			}
+			
+			
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
 
-			if ( '' != $website->sync_errors ) :
-				?>
+			if ( '' != $website->sync_errors ) : ?>
 				<a href="#" class="mainwp-updates-overview-reconnect-site ui green button" siteid="<?php echo $website->id; ?>" data-position="bottom right" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></a>
-				<?php
-			else :
-				?>
+			<?php else : ?>
 				<button class="ui button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?>" id="mainwp-sync-sites" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>">
 					<i class="sync icon mainwp-sync-button-icon"></i>
 					<span class="mainwp-sync-button-text">
@@ -1158,7 +1167,7 @@ class MainWP_UI {
 					 *
 					 * @since 4.1
 					 */
-					echo esc_html( apply_filters( 'mainwp_site_sync_button_text', esc_html__( 'Sync Dashboard with Site', 'mainwp' ) ) );
+					echo esc_html( apply_filters( 'mainwp_site_sync_button_text', esc_html__( 'Sync Site', 'mainwp' ) ) );
 					?>
 					</span>
 				</button>

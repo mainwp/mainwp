@@ -264,10 +264,12 @@ class MainWP_Api_Manager_Key {
 			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api',
 			array(
 				'body'      => $args,
-				'timeout'   => 50,
+				'timeout'   => 200,
 				'sslverify' => self::$apisslverify,
 			)
 		);
+
+		MainWP_Logger::instance()->debug( 'Get purchased softwares: ' . MainWP_Utility::value_to_string( $request ) );
 
 		if ( is_wp_error( $request ) || 200 != wp_remote_retrieve_response_code( $request ) ) {
 			// Request failed.

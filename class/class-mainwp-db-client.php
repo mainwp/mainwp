@@ -1112,25 +1112,57 @@ class MainWP_DB_Client extends MainWP_DB {
 			return false;
 		}
 
+		$gene_results = array();
+
+		if ( $general ) {
+			// to fix: missing general fields for client without client fields values.
+			$gene_sql     = 'SELECT f.* FROM ' . $this->table_name( 'wp_clients_fields' ) . ' f WHERE f.client_id = 0 ORDER BY f.field_name ';
+			$gene_results = $this->wpdb->get_results( $gene_sql );
+		}
+
 		if ( $client_id ) { // get fields values of client.
-			$sql = 'SELECT f.*,v.value_client_id, v.field_value as field_value FROM ' . $this->table_name( 'wp_clients_fields' ) . ' f LEFT JOIN ' .
+			$sql = 'SELECT f.*, v.field_value as field_value FROM ' . $this->table_name( 'wp_clients_fields' ) . ' f LEFT JOIN ' .
 			$this->table_name( 'wp_clients_field_values' ) . ' v ON f.field_id = v.field_id WHERE ' . $where . ' ORDER BY f.field_name ';
 		} else {
 			$sql = 'SELECT f.* FROM ' . $this->table_name( 'wp_clients_fields' ) . ' f WHERE ' . $where . ' ORDER BY f.field_name '; // value_client_id to compatible result.
 		}
 
+		$results = $this->wpdb->get_results( $sql );
+
+		$fields_list = array();
 		if ( $field_name_index ) {
-			$results     = $this->wpdb->get_results( $sql );
-			$fields_list = array();
 			if ( $results ) {
 				foreach ( $results as $item ) {
 					$fields_list[ $item->field_name ] = $item;
 				}
 			}
-			return $fields_list;
+			if ( $gene_results ) {
+				foreach ( $gene_results as $gene_item ) {
+					if ( ! isset( $fields_list[ $gene_item->field_name ] ) ) {
+						$gene_item->field_value                = '';
+						$fields_list[ $gene_item->field_name ] = $gene_item;
+					}
+				}
+			}
 		} else {
-			return $this->wpdb->get_results( $sql );
+			$check_list = array();
+			if ( $results ) {
+				foreach ( $results as $item ) {
+					$check_list[ $item->field_name ] = true;
+					$fields_list[]                   = $item;
+				}
+			}
+			if ( $gene_results ) {
+				foreach ( $gene_results as $gene_item ) {
+					if ( ! isset( $check_list[ $gene_item->field_name ] ) ) {
+						$check_list[ $gene_item->field_name ] = true;
+						$gene_item->field_value               = '';
+						$fields_list[]                        = $gene_item;
+					}
+				}
+			}
 		}
+		return $fields_list;
 	}
 
 	/**

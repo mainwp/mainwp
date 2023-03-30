@@ -316,7 +316,6 @@ class MainWP_Extensions_View {
 	 * Method render_search_box()
 	 *
 	 * Render Search Box.
-	 *
 	 */
 	public static function render_search_box() {
 		?>

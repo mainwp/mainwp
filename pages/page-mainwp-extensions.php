@@ -465,7 +465,7 @@ class MainWP_Extensions {
 				$integration_type = 'api-extension';
 			} elseif ( 2 == $ext['privacy'] ) {
 				$integration_type = 'plugin-extension';
-			} 
+			}
 
 			$item_slug = MainWP_Utility::get_dir_slug( $ext['slug'] );
 

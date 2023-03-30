@@ -764,8 +764,7 @@ class MainWP_UI {
 				<div class="ui hidden divider"></div>
 				<a href="javacscript:void(0);" id="mainwp-interface-tour-button" class="ui big green fluid basic button"><?php esc_html_e( 'MainWP Interface Basics Tour', 'mainwp' ); ?></a>
 			<?php endif; ?>
-			<?php endif; ?>			
-			
+			<?php endif; ?>
 			<div class="ui header"><?php esc_html_e( 'MainWP Documenation', 'mainwp' ); ?></div>
 			<div class="ui hidden divider"></div>
 			<?php

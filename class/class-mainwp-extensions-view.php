@@ -142,7 +142,7 @@ class MainWP_Extensions_View {
 					</div>
 					<?php endif; ?>
 					<div class="ui segment" id="mainwp-extensions-search-no-results" style="display:none">
-						<div class="ui info message"><?php esc_html_e( 'Your search returned no results. The extension may need to be installed or does not exist.'); ?></div>
+						<div class="ui info message"><?php esc_html_e( 'Your search returned no results. The extension may need to be installed or does not exist.' ); ?></div>
 					</div>
 				<div class="ui five stackable cards" id="mainwp-extensions-list">
 					<?php if ( isset( $extensions ) && is_array( $extensions ) ) : ?>

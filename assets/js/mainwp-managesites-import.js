@@ -58,7 +58,7 @@ mainwp_managesites_import_sites = function () {
         if ( import_count_success < import_total ) {
             jQuery( '#mainwp_managesites_btn_save_csv' ).removeAttr( "disabled" ); //Enable
         }
-        jQuery( '#mainwp_managesites_import_logging .log' ).append( '\n' + __( 'Number of sites to Import: %1 Created sites: %2 Failed: %3', import_total, import_count_success, import_count_fails ) + "\n" );
+        jQuery( '#mainwp_managesites_import_logging .log' ).append( '<div class="ui divider"></div>' + __( 'Number of sites to Import: %1 Created sites: %2 Failed: %3', import_total, import_count_success, import_count_fails ) );
         jQuery( '#mainwp_managesites_import_logging' ).scrollTop( jQuery( '#mainwp_managesites_import_logging .log' ).height() );
         jQuery( '#mainwp-importing-sites' ).hide();
         return;
@@ -88,7 +88,7 @@ mainwp_managesites_import_sites = function () {
     if ( typeof ( import_uniqueId ) == "undefined" )
         import_uniqueId = '';
 
-    jQuery( '#mainwp_managesites_import_logging .log' ).append( '[' + import_current + '] ' + import_line_orig );
+    jQuery( '#mainwp_managesites_import_logging .log' ).append( '[' + import_current + '] ' + import_line_orig + '<br/>');
 
     var errors = [ ];
 

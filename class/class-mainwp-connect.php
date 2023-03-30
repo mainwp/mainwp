@@ -330,6 +330,8 @@ class MainWP_Connect {
 			if ( null != $params ) {
 				$data = array_merge( $data, $params );
 			}
+			
+			$data = apply_filters( 'mainwp_get_post_data_authed', $data, $website, $what, $params );
 
 			if ( ( 0 == $website->nossl ) && function_exists( 'openssl_verify' ) ) {
 				$data['nossl'] = 0;

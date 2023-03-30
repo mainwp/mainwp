@@ -656,6 +656,22 @@ class MainWP_UI {
 			$tour_id = '28876';
 		} elseif ( isset( $_GET['page'] ) && 'ActionLogs' == $_GET['page'] ) {
 			$tour_id = '28877';
+		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Jetpack-Protect-Extension' == $_GET['page'] ) {
+			$tour_id = '31700';
+		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Jetpack-Scan-Extension' == $_GET['page'] ) {
+			$tour_id = '31694';
+		} elseif ( isset( $_GET['page'] ) && 'Extensions-Termageddon-For-Mainwp' == $_GET['page'] ) {
+			$tour_id = '32104';
+		} elseif ( isset( $_GET['page'] ) && 'Extensions-Advanced-Uptime-Monitor-Extension' == $_GET['page'] ) {
+			$tour_id = '32149';
+		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Custom-Dashboard-Extension' == $_GET['page'] ) {
+			$tour_id = '32150';
+		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Updraftplus-Extension' == $_GET['page'] ) {
+			$tour_id = '32151';
+		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Sucuri-Extension' == $_GET['page'] ) {
+			$tour_id = '32152';
+		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Clean-And-Lock-Extension' == $_GET['page'] ) {
+			$tour_id = '32153';
 		}
 
 		?>
@@ -729,7 +745,15 @@ class MainWP_UI {
 			</div>
 		</div>
 		<div class="ui segment right wide help sidebar" id="mainwp-documentation-sidebar">
-			<div class="ui header"><?php esc_html_e( 'MainWP Guided Tours', 'mainwp' ); ?></div>
+			<div class="ui header"><?php esc_html_e( 'MainWP Guided Tours', 'mainwp' ); ?> <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></div>
+			<div class="ui hidden divider"></div>
+			<div class="ui info message" style="display:block!important;">
+				<?php echo sprintf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %sUsetiful Privacy Policy%s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
+			</div>
+			<div class="ui hidden divider"></div>
+			<div class="ui toggle checkbox">
+				<input type="checkbox" id="mainwp-select-guided-tours-option" onchange="mainwp_guidedtours_onchange(this);"<?php echo ( ( 1 == get_option( 'mainwp_enable_guided_tours', 0 ) ) ? 'checked="true"' : '' ); ?> /> <label><?php esc_html_e( 'Switch to enable or disable tours.', 'mainwp' ); ?></label>
+			</div>
 			<div class="ui hidden divider"></div>
 			<?php if ( 1 == get_option( 'mainwp_enable_guided_tours', 0 ) ) : ?>
 			<p><?php esc_html_e( 'MainWP guided tours are designed to provide information about all essential features on each MainWP Dashboard page.', 'mainwp' ); ?></p>
@@ -740,18 +764,7 @@ class MainWP_UI {
 				<div class="ui hidden divider"></div>
 				<a href="javacscript:void(0);" id="mainwp-interface-tour-button" class="ui big green fluid basic button"><?php esc_html_e( 'MainWP Interface Basics Tour', 'mainwp' ); ?></a>
 			<?php endif; ?>
-			<?php else : ?>
-				<h4><?php esc_html_e( 'Enable MainWP guided tours', 'mainwp' ); ?> <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></h4>
-				<div class="ui info message" style="display:block!important;">
-					<?php echo sprintf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %sUsetiful Privacy Policy%s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
-				</div>
-				<div>
-					<div class="ui toggle checkbox">
-						<input type="checkbox" id="mainwp-select-guided-tours-option" onchange="mainwp_guidedtours_onchange(this);"<?php echo ( ( 1 == get_option( 'mainwp_enable_guided_tours', 0 ) ) ? 'checked="true"' : '' ); ?> />
-					</div>
-				</div>
-			<?php endif; ?>			
-			<div class="ui hidden divider"></div>
+			<?php endif; ?>
 			<div class="ui header"><?php esc_html_e( 'MainWP Documenation', 'mainwp' ); ?></div>
 			<div class="ui hidden divider"></div>
 			<?php

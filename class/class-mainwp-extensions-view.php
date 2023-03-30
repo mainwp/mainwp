@@ -141,6 +141,9 @@ class MainWP_Extensions_View {
 						<?php echo sprintf( esc_html__( 'Quickly access, install, and activate your MainWP extensions.  If you need additional help with managing your MainWP Extensions, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/category/getting-started/first-steps-with-extensions/" target="_blank">', '</a>' ); ?>
 					</div>
 					<?php endif; ?>
+					<div class="ui segment" id="mainwp-extensions-search-no-results" style="display:none">
+						<div class="ui info message"><?php esc_html_e( 'Your search returned no results. The extension may need to be installed or does not exist.' ); ?></div>
+					</div>
 				<div class="ui five stackable cards" id="mainwp-extensions-list">
 					<?php if ( isset( $extensions ) && is_array( $extensions ) ) : ?>
 							<?php foreach ( $extensions as $extension ) : ?>
@@ -200,7 +203,7 @@ class MainWP_Extensions_View {
 			</div>
 			<div class="mainwp-side-content mainwp-no-padding">
 					<?php if ( 0 != count( $extensions ) || 0 != count( $extensions_disabled ) ) : ?>
-						<?php self::render_search_box( $extensions ); ?>
+						<?php self::render_search_box(); ?>
 				<?php endif; ?>
 					<?php self::render_side_box( $mainwp_api_key ); ?>
 			</div>
@@ -313,10 +316,8 @@ class MainWP_Extensions_View {
 	 * Method render_search_box()
 	 *
 	 * Render Search Box.
-	 *
-	 * @param mixed $extensions Extentions array.
 	 */
-	public static function render_search_box( $extensions ) {
+	public static function render_search_box() {
 		?>
 		<div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
 			<div class="title">
@@ -326,31 +327,38 @@ class MainWP_Extensions_View {
 			<div class="content">
 				<div id="mainwp-search-extensions" class="ui fluid search">
 					<div class="ui icon fluid input">
-						<input class="prompt" type="text" placeholder="Find extension...">
+						<input class="prompt" id="mainwp-search-extensions-input" type="text" placeholder="<?php esc_attr_e( 'Find extension...', 'mainwp' ); ?>">
 						<i class="search icon"></i>
 					</div>
-					<div class="results"></div>
 				</div>
 			</div>
 		</div>
 		<div class="ui fitted divider"></div>
 				<script type="text/javascript">
 				jQuery( document ).ready( function () {
-				jQuery( '.ui.search' ).search( {
-					source: [
-					<?php
-					if ( isset( $extensions ) && is_array( $extensions ) ) {
-						foreach ( $extensions as $extension ) {
-							echo "{ title: '" . esc_html( $extension['name'] ) . "', url: '" . admin_url( 'admin.php?page=' . $extension['page'] ) . "' },";
+					jQuery( '#mainwp-search-extensions-input' ).on( 'keyup', function () {
+						var searchQuery = jQuery( this ).val().toLowerCase();
+						var extensions = jQuery( '#mainwp-extensions-list' ).find( '.ui.extension.card' );
+						for ( var i = 0; i < extensions.length; i++ ) {
+							var currentExtension = jQuery( extensions[i] );
+							var extensionTitle = jQuery( currentExtension ).attr( 'extension-title' ).toLowerCase();
+							if ( extensionTitle.indexOf( searchQuery ) > -1 ) {
+								currentExtension.show();
+								currentExtension.addClass( 'mainwp-found' );
+							} else {
+								currentExtension.removeClass( 'mainwp-found' );
+								currentExtension.hide();
+							}
+							var foundExtensions = jQuery( '#mainwp-extensions-list' ).find( '.ui.extension.card.mainwp-found' );
+							if ( foundExtensions.length < 1 ) {
+								jQuery( '#mainwp-extensions-search-no-results' ).show();
+							} else {
+								jQuery( '#mainwp-extensions-search-no-results' ).hide();
 						}
 					}
-					?>
-				]
 				} );
 				} );
 				</script>
-
-
 			<?php
 	}
 
@@ -1422,7 +1430,7 @@ class MainWP_Extensions_View {
 				'product_item_id'      => 0,
 				'catalog_id'           => '12706',
 				'group'                => array( 'admin' ),
-				'privacy'              => 0,
+				'privacy'              => 2,
 				'integration'          => 'WooCommerce Plugin',
 				'integration_url'      => 'https://woocommerce.com',
 				'integration_owner'    => 'Automattic Inc.',

@@ -810,7 +810,7 @@ class MainWP_Manage_Sites {
 		} else {
 			if ( isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {
 				?>
-				<div class="ui modal" id="mainwp-import-sites-modal">
+				<div class="ui large modal" id="mainwp-import-sites-modal">
 					<div class="header"><?php esc_html_e( 'Import Sites', 'mainwp' ); ?></div>
 					<div class="scrolling header">
 					<?php MainWP_Manage_Sites_View::render_import_sites(); ?>

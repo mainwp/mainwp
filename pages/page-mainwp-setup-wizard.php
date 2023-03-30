@@ -68,15 +68,6 @@ class MainWP_Setup_Wizard {
 		if ( empty( $_GET['page'] ) || 'mainwp-setup' !== $_GET['page'] ) {
 			return;
 		}
-
-		?>
-		<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo wp_create_nonce( 'mainwp_ajax' ); ?>", mainwp_js_nonce = "<?php echo wp_create_nonce( 'mainwp_nonce' ); ?>";</script>
-		<?php
-		if ( isset( $_GET['page'] ) && 'mainwp-setup' == $_GET['page'] ) {
-			if ( get_option( 'mainwp_enable_guided_tours', 0 ) ) {
-				self::mainwp_usetiful_tours();
-			}
-		}
 		$this->steps = array(
 			'introduction'       => array(
 				'name'    => esc_html__( 'Introduction', 'mainwp' ),
@@ -138,11 +129,15 @@ class MainWP_Setup_Wizard {
 		}
 
 		ob_start();
-
 		$this->setup_wizard_header();
 		$this->setup_wizard_steps();
 		$this->setup_wizard_content();
 		$this->setup_wizard_footer();
+		?>
+		<?php
+		if ( get_option( 'mainwp_enable_guided_tours', 0 ) ) {
+			self::mainwp_usetiful_tours();
+		}
 		exit;
 	}
 
@@ -198,6 +193,7 @@ class MainWP_Setup_Wizard {
 				<?php wp_print_scripts( 'fomantic' ); ?>
 				<?php do_action( 'admin_print_styles' ); ?>
 				<script type="text/javascript"> var ajaxurl = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';</script>
+				<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo wp_create_nonce( 'mainwp_ajax' ); ?>", mainwp_js_nonce = "<?php echo wp_create_nonce( 'mainwp_nonce' ); ?>";</script>
 			</head>
 			<body class="mainwp-ui <?php echo ! empty( $selected_theme ) ? 'mainwp-custom-theme' : ''; ?> mainwp-ui-setup">
 				<div class="ui hidden divider"></div>

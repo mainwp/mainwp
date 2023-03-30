@@ -331,6 +331,8 @@ class MainWP_Connect {
 				$data = array_merge( $data, $params );
 			}
 
+			$data = apply_filters( 'mainwp_get_post_data_authed', $data, $website, $what, $params );
+
 			if ( ( 0 == $website->nossl ) && function_exists( 'openssl_verify' ) ) {
 				$data['nossl'] = 0;
 				openssl_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.

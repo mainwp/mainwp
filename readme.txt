@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 5.4
-Tested up to: 6.1.1
+Tested up to: 6.2
 Requires PHP: 7.0
-Stable tag: 4.4.0.3
+Stable tag: 4.4.0.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -286,6 +286,17 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 10. Manage Clients Screen
 
 == Changelog ==
+
+= 4.4.0.4 - 3-30-2023 =
+* Fixed: An issue with loading per user-selected language
+* Fixed: A problem caused by empty space in the URL field in Add new site form
+* Fixed: PHP Warning in Quick Setup Wizard
+* Added: Search extensions feature to the Install Extensions modal
+* Added: Filter to show extensions by type to the Install Extensions modal
+* Added: Display logic for new guided tours
+* Added: Ability to disable guided tours in the Help Sidebar
+* Updated: Search Extensions field on the Extensions page
+* Updated: Import sites process display
 
 = 4.4.0.3 - 3-16-2023 =
 * Fixed: Conflict with the SVG Support plugin

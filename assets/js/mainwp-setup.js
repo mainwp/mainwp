@@ -30,7 +30,7 @@ jQuery( document ).ready( function () {
   } );
 
   jQuery( document ).on( 'change', '#mainwp_managesites_add_wpurl', function() {
-    var url = jQuery( '#mainwp_managesites_add_wpurl' ).val();
+    var url = jQuery( '#mainwp_managesites_add_wpurl' ).val().trim();
     var protocol = jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val();
       
     if ( url.lastIndexOf( 'http://' ) === 0 ) {
@@ -58,14 +58,14 @@ mainwp_setup_managesites_add = function () {
 
   var errors = [ ];
 
-  if ( jQuery( '#mainwp_managesites_add_wpname' ).val() == '' ) {
+  if ( jQuery( '#mainwp_managesites_add_wpname' ).val().trim() == '' ) {
     errors.push( 'Please enter a title for the website.' );
   }
 
-  if ( jQuery( '#mainwp_managesites_add_wpurl' ).val() == '' ) {
+  if ( jQuery( '#mainwp_managesites_add_wpurl' ).val().trim() == '' ) {
     errors.push( 'Please enter a valid URL for the site.' );
   } else {
-    var url = jQuery( '#mainwp_managesites_add_wpurl' ).val();
+    var url = jQuery( '#mainwp_managesites_add_wpurl' ).val().trim();
     if ( url.substr( -1 ) != '/' ) {
       url += '/';
     }
@@ -77,7 +77,7 @@ mainwp_setup_managesites_add = function () {
     }
   }
 
-  if ( jQuery( '#mainwp_managesites_add_wpadmin' ).val() == '' ) {
+  if ( jQuery( '#mainwp_managesites_add_wpadmin' ).val().trim() == '' ) {
     errors.push( 'Please enter a username of the website administrator.' );
   }
 
@@ -87,27 +87,27 @@ mainwp_setup_managesites_add = function () {
     jQuery( '#mainwp-message-zone' ).html( 'Adding the site to your MainWP Dashboard. Please wait...'  ).removeClass( 'green red yellow' ).show();
     jQuery( '#mainwp_managesites_add' ).attr( 'disabled', 'true' ); //disable button to add..
 
-    var url = jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val() + '://' + jQuery( '#mainwp_managesites_add_wpurl' ).val();
+    var url = jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val() + '://' + jQuery( '#mainwp_managesites_add_wpurl' ).val().trim();
 
     if ( url.substr( -1 ) != '/' ) {
       url += '/';
     }
 
-    var name = jQuery( '#mainwp_managesites_add_wpname' ).val();
+    var name = jQuery( '#mainwp_managesites_add_wpname' ).val().trim();
         name = name.replace( /"/g, '&quot;' );
 
     var data = mainwp_setup_secure_data( {
       action: 'mainwp_checkwp',
       name: name,
       url: url,
-      admin: jQuery( '#mainwp_managesites_add_wpadmin' ).val(),
+      admin: jQuery( '#mainwp_managesites_add_wpadmin' ).val().trim(),
     } );
 
     jQuery.post( ajaxurl, data, function ( res_things ) {
       response = res_things.response;
       response = jQuery.trim( response );
 
-      var url = jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val() + '://' + jQuery( '#mainwp_managesites_add_wpurl' ).val();
+      var url = jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val() + '://' + jQuery( '#mainwp_managesites_add_wpurl' ).val().trim();
       if ( url.substr( -1 ) != '/' ) {
         url += '/';
       }

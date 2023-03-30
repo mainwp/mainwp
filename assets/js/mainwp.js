@@ -1348,7 +1348,7 @@ jQuery(document).ready(function ($) {
 
 jQuery(document).ready(function () {
   jQuery(document).on('change', '#mainwp_managesites_add_wpurl', function () {
-    var url = jQuery('#mainwp_managesites_add_wpurl').val();
+    var url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
     var protocol = jQuery('#mainwp_managesites_add_wpurl_protocol').val();
 
     if (url.lastIndexOf('http://') === 0) {
@@ -1508,13 +1508,13 @@ mainwp_managesites_add = function () {
 
   var errors = [];
 
-  if (jQuery('#mainwp_managesites_add_wpname').val() == '') {
+  if (jQuery('#mainwp_managesites_add_wpname').val().trim() == '') {
     errors.push(__('Please enter a name for the website.'));
   }
-  if (jQuery('#mainwp_managesites_add_wpurl').val() == '') {
+  if (jQuery('#mainwp_managesites_add_wpurl').val().trim() == '') {
     errors.push(__('Please enter a valid URL for your site.'));
   } else {
-    var url = jQuery('#mainwp_managesites_add_wpurl').val();
+    var url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
     if (url.substr(-1) != '/') {
       url += '/';
     }
@@ -1525,7 +1525,7 @@ mainwp_managesites_add = function () {
       errors.push(__('Please enter a valid URL for your site.'));
     }
   }
-  if (jQuery('#mainwp_managesites_add_wpadmin').val() == '') {
+  if (jQuery('#mainwp_managesites_add_wpadmin').val().trim() == '') {
     errors.push(__('Please enter a username of the website administrator.'));
   }
 
@@ -1537,28 +1537,28 @@ mainwp_managesites_add = function () {
     jQuery('#mainwp_managesites_add').attr('disabled', 'true'); //disable button to add..
 
     //Check if valid user & rulewp is installed?
-    var url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val();
+    var url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
     if (url.substr(-1) != '/') {
       url += '/';
     }
 
-    var name = jQuery('#mainwp_managesites_add_wpname').val();
+    var name = jQuery('#mainwp_managesites_add_wpname').val().trim();
     name = name.replace(/"/g, '&quot;');
 
     var data = mainwp_secure_data({
       action: 'mainwp_checkwp',
       name: name,
       url: url,
-      admin: jQuery('#mainwp_managesites_add_wpadmin').val(),
+      admin: jQuery('#mainwp_managesites_add_wpadmin').val().trim(),
       verify_certificate: jQuery('#mainwp_managesites_verify_certificate').is(':checked') ? 1 : 0,
-      http_user: jQuery('#mainwp_managesites_add_http_user').val(),
-      http_pass: jQuery('#mainwp_managesites_add_http_pass').val()
+      http_user: jQuery('#mainwp_managesites_add_http_user').val().trim(),
+      http_pass: jQuery('#mainwp_managesites_add_http_pass').val().trim()
     });
 
     jQuery.post(ajaxurl, data, function (res_things) {
       response = res_things.response;
       response = jQuery.trim(response);
-      var url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val();
+      var url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
       if (url.substr(-1) != '/') {
         url += '/';
       }
@@ -1852,10 +1852,10 @@ mainwp_managesites_test = function () {
 
   var errors = [];
 
-  if (jQuery('#mainwp_managesites_add_wpurl').val() == '') {
+  if (jQuery('#mainwp_managesites_add_wpurl').val().trim() == '') {
     errors.push(__('Please enter a valid URL for your site.'));
   } else {
-    var clean_url = jQuery('#mainwp_managesites_add_wpurl').val();
+    var clean_url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
     var protocol = jQuery('#mainwp_managesites_add_wpurl_protocol').val();
     url = protocol + '://' + clean_url;
     if (url.substr(-1) != '/') {
@@ -1874,7 +1874,7 @@ mainwp_managesites_test = function () {
     jQuery('#mainwp-test-connection-modal .dimmer').show();
     jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result').hide();
 
-    var clean_url = jQuery('#mainwp_managesites_add_wpurl').val();
+    var clean_url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
     var protocol = jQuery('#mainwp_managesites_add_wpurl_protocol').val();
     url = protocol + '://' + clean_url;
 

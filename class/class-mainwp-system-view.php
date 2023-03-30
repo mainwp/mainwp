@@ -898,9 +898,10 @@ class MainWP_System_View {
 				'name' => 'Jetpack Protect',
 			),
 			array(
-				'page' => 'Extensions-Mainwp-Jetpack-Scan-Extension',
-				'slug' => 'jetpack/jetpack.php',
-				'name' => 'Jetpack',
+				'page'     => 'Extensions-Mainwp-Jetpack-Scan-Extension',
+				'slug'     => 'jetpack-protect/jetpack-protect.php', // tweaked: to requires install the JP protect plugin.
+				'slug_pro' => 'jetpack/jetpack.php',
+				'name'     => 'Jetpack Protect',
 			),
 		);
 		return apply_filters( 'mainwp_plugins_install_checks', $plugins );

@@ -61,7 +61,7 @@ jQuery(document).ready(function () {
             onShow: function () {
                 jQuery('#mainwp-privacy-info-modal').find('.header').html(title + ' Privacy Info');
                 if (0 == privacy) {
-                    jQuery('#mainwp-privacy-info-modal').find('.content').html('Stand alone Extension. This Extension does not use any 3rd party plugins or API\'s to integrate with your Dashboard. This extension falls under the <a href="https://mainwp.com/mainwp-plugin-privacy-policy/" target="_blank">MainWP Plugin Privacy Policy</a>.');
+                    jQuery('#mainwp-privacy-info-modal').find('.content').html('Standalone Extension. This Extension does not use any 3rd party plugins or API\'s to integrate with your Dashboard. This extension falls under the <a href="https://mainwp.com/mainwp-plugin-privacy-policy/" target="_blank">MainWP Plugin Privacy Policy</a>.');
                 } else if (1 == privacy) {
                     if (slug == 'advanced-uptime-monitor-extension') {
                         jQuery('#mainwp-privacy-info-modal').find('.content').html('<strong>Extension integrates with a 3rd party API.</strong>');

@@ -659,11 +659,19 @@ class MainWP_Updates_Handler {
 			$result = self::update_plugin_theme_translation( $website, $type, $list );
 			if ( is_array( $result ) ) {
 				$undefined = true;
+
+				$tmp = array();
+
+				if ( isset( $result['upgrades_error'] ) ) {
+					foreach ( $result['upgrades_error'] as $k => $v ) {
+						$tmp['result_error'][ rawurlencode( $k ) ] = esc_html( $v );
+					}
+				}
+
 				if ( isset( $result['upgrades'] ) ) {
-					$tmp = array();
 					if ( isset( $result['upgrades'] ) ) {
 						foreach ( $result['upgrades'] as $k => $v ) {
-							$tmp[ rawurlencode( $k ) ] = $v;
+							$tmp['result'][ rawurlencode( $k ) ] = $v;
 						}
 					}
 					return $tmp;

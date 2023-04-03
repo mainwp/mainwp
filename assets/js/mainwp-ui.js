@@ -676,3 +676,18 @@ mainwp_guidedtours_onchange = function (me) {
         window.location.href = location.href;
     });
 }
+
+
+jQuery(function ($) {
+    mainwp_ui_items_swap = function (elements) {
+        elements.sort(function (a, b) {
+            a = $(a); b = $(b);
+            var tmp = $('<span>').hide();
+            a.before(tmp);
+            b.before(a);
+            tmp.replaceWith(b);
+        });
+    };
+})
+
+

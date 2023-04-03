@@ -718,8 +718,13 @@ class MainWP_Post_Page_Handler {
 				* @since Unknown
 				*/
 				$newExtensions = apply_filters_deprecated( 'mainwp-after-posting-bulkpost-result', array( false, $_post, $dbwebsites, $output ), '4.0.7.2', 'mainwp_after_posting_bulkpost_result' );
-				$after_posting = apply_filters( 'mainwp_after_posting_bulkpost_result', $newExtensions, $_post, $dbwebsites, $output );
-
+				
+				$after_posting = false;
+				if( 'posting' == $what ){
+					//supported for bulk posting, not for ajax posting.
+					$after_posting = apply_filters( 'mainwp_after_posting_bulkpost_result', $newExtensions, $_post, $dbwebsites, $output );
+				}
+				
 				$posting_succeed = false;
 
 				if ( false === $after_posting ) {

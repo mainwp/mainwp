@@ -164,7 +164,7 @@ class MainWP_Manage_Sites_Update_View {
 			$wp_upgrades = array();
 		}
 
-		$return['total_wp'] = $wp_upgrades ? count( $wp_upgrades ) : 0;
+		$return['total_wp'] = ! empty( $wp_upgrades ) ? 1 : 0;
 
 		$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
 

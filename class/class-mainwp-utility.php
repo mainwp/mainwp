@@ -773,6 +773,57 @@ class MainWP_Utility {
 	}
 
 	/**
+	 * Method get_flash_message()
+	 *
+	 * Get saved flash Message.
+	 *
+	 * @param mixed $message_id Notice ID.
+	 * @param bool  $delete True to delete the message after get it.
+	 *
+	 * @return boolean true|false.
+	 */
+	public static function get_flash_message( $message_id, $delete = true ) {
+		$flash_messages = get_user_option( 'mainwp_flash_messages' );
+		if ( ! is_array( $flash_messages ) ) {
+			$flash_messages = array();
+		}
+		if ( ! isset( $flash_messages[ $message_id ] ) ) {
+			return false;
+		}
+		$content = $flash_messages[ $message_id ];
+		if ( $delete ) {
+			unset( $flash_messages[ $message_id ] );
+			self::update_user_option( 'mainwp_flash_messages', $flash_messages );
+		}
+		return $content;
+	}
+
+	/**
+	 * Method update_flash_message()
+	 *
+	 * Check whenther or not to show the MainWP Message.
+	 *
+	 * @param mixed $message_id Notice ID.
+	 * @param mixed $content Content of message.
+	 *
+	 * @return boolean true|false.
+	 */
+	public static function update_flash_message( $message_id, $content ) {
+		$flash_messages = get_user_option( 'mainwp_flash_messages' );
+		if ( ! is_array( $flash_messages ) ) {
+			$flash_messages = array();
+		}
+		$current = isset( $flash_messages[ $message_id ] ) ? $flash_messages[ $message_id ] : '';
+		if ( empty( $current ) ) {
+			$current = $content;
+		} else {
+			$current .= '|' . $content;
+		}
+		$flash_messages[ $message_id ] = $current;
+		return self::update_user_option( 'mainwp_flash_messages', $flash_messages );
+	}
+
+	/**
 	 * Method array_sort()
 	 *
 	 * Sort given array by given flags.

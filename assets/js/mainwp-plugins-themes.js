@@ -781,9 +781,12 @@ manage_plugins_upgrade_int = function (slug, websiteId) {
                             siteHolder.find('.column.update-column').html(extErr);
                         } else {
                             var res = response.result;
+                            var res_error = response.result_error;
                             if (res[slug]) {
                                 siteHolder.attr('updated', 1);
                                 siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
+                            } else if (res_error[slug]) {
+                                siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + res_error[slug] + '"><i class="red times icon"></i></span>');
                             } else {
                                 siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
                             }

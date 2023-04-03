@@ -583,7 +583,6 @@ updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMode, 
                                 websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
                             } else {
                                 var res = response.result;
-
                                 if (res[slugParts[i]]) {
                                     if (!done && pBulkMode)
                                         updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, '<i class="green check icon"></i>');
@@ -1019,6 +1018,7 @@ updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noChe
                                 websiteHolder.find('td:last-child').html(extErr);
                             } else {
                                 var res = response.result;
+                                var res_error = response.result_error;
                                 if (res[slugParts[i]]) {
                                     if (!done && pBulkMode)
                                         updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
@@ -1028,6 +1028,10 @@ updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noChe
                                     countRealItemsUpdated++;
                                     if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
 
+                                } else if (res_error[slugParts[i]]) {
+                                    if (!done && pBulkMode)
+                                        updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + res_error[slugParts[i]] + '"><i class="red times icon"></i></span>');
+                                    websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + res_error[slugParts[i]] + '"><i class="red times icon"></i></span>');
                                 } else {
                                     if (!done && pBulkMode)
                                         updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
@@ -1924,11 +1928,14 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                             pErrorMessage = result;
                         }
                         else {
-                            var res = response.result;   // result is an object                                                     
+                            var res = response.result;   // result is an object     
+                            var res_error = response.result_error;
                             if (res[encodeURIComponent(slugParts[i])]) {
                                 websiteHolder.attr('updated', 1);
                                 countRealItemsUpdated++;
                                 if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
+                            } else if (res_error[encodeURIComponent(slugParts[i])]) {
+                                pErrorMessage = res_error[encodeURIComponent(slugParts[i])];
                             } else {
                                 result = __('Update failed!');
                                 pErrorMessage = result;
@@ -2073,7 +2080,6 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                             pErrorMessage = result;
                         } else {
                             var res = response.result;
-
                             if (res[slugParts[i]]) {
                                 websiteHolder.attr('updated', 1);
                                 countRealItemsUpdated++;
@@ -2960,12 +2966,14 @@ updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, gr
                 });
                 jQuery.post(ajaxurl, data, function (response) {
                     var success = false;
-                    var extErr = '';      
+                    var extErr = '';
                     if (response.error) {
-                        extErr =  getErrorMessageInfo(response.error, 'ui')
+                        extErr = getErrorMessageInfo(response.error, 'ui')
                     }
                     else {
                         var res = response.result;
+                        var res_error = response.result_error;
+
                         for (var i = 0; i < newList.length; i++) {
                             var item = newList[i];
 
@@ -2975,6 +2983,8 @@ updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, gr
                             if (res[item]) {
                                 parent.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful.', 'mainwp') + '"><i class="green check icon"></i></span>');
                                 countRealItemsUpdated++;
+                            } else if (what == 'plugin' && res_error[item]) {
+                                parent.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + res_error[item] + '"><i class="red times icon"></i></span>');
                             } else {
                                 parent.find('td:last-child').html('<i class="red times icon"></i>');
                             }
@@ -3079,7 +3089,7 @@ jQuery(document).ready(function () {
     mainwp_master_checkbox_init(jQuery);
 });
 
-mainwp_master_checkbox_init = function($){
+mainwp_master_checkbox_init = function ($) {
     // Master Checkboxes.
     $('.master-checkbox .master.checkbox').checkbox();
     $('.master-checkbox .master.checkbox').on('click', function (e) {

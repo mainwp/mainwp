@@ -1290,7 +1290,7 @@ class MainWP_System_Utility {
 	 *
 	 * Get disabled wpcore update by.
 	 *
-	 * @param string $by By host.
+	 * @param string $website The website.
 	 */
 	public static function disabled_wpcore_update_by( $website ) {
 		$by = self::get_disabled_wpcore_update_host( $website );

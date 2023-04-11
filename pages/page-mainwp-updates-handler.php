@@ -82,7 +82,7 @@ class MainWP_Updates_Handler {
 	 * @param object $website Child site object.
 	 *
 	 * @return mixed|false update result or false.
-	 * @throws \Exception Error message.
+	 * @throws MainWP_Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
@@ -655,7 +655,7 @@ class MainWP_Updates_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
-	public static function upgrade_plugin_theme_translation( $id, $type, $list ) {
+	public static function upgrade_plugin_theme_translation( $id, $type, $list ) { // phpcs:ignore -- complex method.
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
 			if ( MainWP_System_Utility::is_suspended_site( $website ) ) {

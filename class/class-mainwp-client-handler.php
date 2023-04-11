@@ -493,7 +493,7 @@ class MainWP_Client_Handler {
 		$existed_emails = MainWP_Utility::get_flash_message( 'contact_existed_emails' );
 		if ( ! empty( $existed_emails ) ) {
 			$existed_emails = esc_html( $existed_emails );
-			$existed_emails = str_replace('|', '<br/>', $existed_emails );
+			$existed_emails = str_replace( '|', '<br/>', $existed_emails );
 			?>
 			<div class="ui yellow message">
 				<?php echo sprintf( esc_html__( 'Existed contact emails.%sPlease try again.', 'mainwp' ), '<br/>' . $existed_emails . '</br>' ); ?>

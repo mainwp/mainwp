@@ -56,6 +56,7 @@ class MainWP_Manage_Sites_Handler {
 		} else {
 			try {
 				$verify_cert    = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
+				$ssl_version    = empty( $_POST['ssl_version'] ) ? 0 : intval( $_POST['ssl_version'] );
 				$force_use_ipv4 = apply_filters( 'mainwp_manage_sites_force_use_ipv4', null, $url );
 				$http_user      = ( isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : '' );
 				$http_pass      = ( isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : '' );
@@ -63,7 +64,7 @@ class MainWP_Manage_Sites_Handler {
 
 				$output = array();
 
-				$information = MainWP_Connect::fetch_url_not_authed( $url, $admin, 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array( 'force_use_ipv4' => $force_use_ipv4 ), $output ); // Fetch the stats with the given admin name.
+				$information = MainWP_Connect::fetch_url_not_authed( $url, $admin, 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion, $others = array( 'force_use_ipv4' => $force_use_ipv4 ), $output ); // Fetch the stats with the given admin name.
 
 				if ( isset( $information['wpversion'] ) ) {
 					$ret['response'] = 'OK';

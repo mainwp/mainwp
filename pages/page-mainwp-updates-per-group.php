@@ -126,9 +126,11 @@ class MainWP_Updates_Per_Group {
 												continue;
 											}
 
+											$wpcore_update_disabled_by = MainWP_System_Utility::disabled_wpcore_update_by( $website );
+
 											$total_group_wp_updates++;
 											?>
-											<tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) ) ? '0' : '1'; ?>">
+											<tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) && '' == $wpcore_update_disabled_by ) ? '0' : '1'; ?>">
 												<td>
 													<div class="ui child checkbox">
 														<input type="checkbox" name=""><label><?php MainWP_Updates::render_site_link_dashboard( $website ); ?></label>
@@ -148,8 +150,16 @@ class MainWP_Updates_Per_Group {
 												<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . $website->client_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
 												<td>
 													<?php if ( MainWP_Updates::user_can_update_wp() ) : ?>
-														<?php if ( 0 < count( $wp_upgrades ) ) : ?>
-															<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . $website->name; ?>" data-inverted="" data-position="left center" class="mainwp-update-now-button ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+														<?php
+														if ( 0 < count( $wp_upgrades ) ) :
+															if ( '' != $wpcore_update_disabled_by ) {
+																?>
+																<span data-tooltip="<?php echo esc_html( $wpcore_update_disabled_by ); ?>" data-inverted="" data-position="left center"><a href="javascript:void(0)" class="ui green button mini disabled"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a></span>
+																<?php
+															} else {
+																?>
+																<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . $website->name; ?>" data-inverted="" data-position="left center" class="mainwp-update-now-button ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+															<?php }; ?>
 														<?php endif; ?>
 													<?php endif; ?>
 												</td>

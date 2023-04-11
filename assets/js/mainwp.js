@@ -444,6 +444,9 @@ feedback = function (id, text, type, append) {
 
 scrollElementTop = function (id) {
   var scrolltop = jQuery(window).scrollTop();
+  if (jQuery('#' + id).length == 0) {
+    return;
+  }
   var off = jQuery('#' + id).offset();
   if (scrolltop > off.top - 40)
     jQuery('html, body').animate({
@@ -1551,6 +1554,7 @@ mainwp_managesites_add = function () {
       url: url,
       admin: jQuery('#mainwp_managesites_add_wpadmin').val().trim(),
       verify_certificate: jQuery('#mainwp_managesites_verify_certificate').is(':checked') ? 1 : 0,
+      ssl_version: jQuery('#mainwp_managesites_add_ssl_version').val(),
       http_user: jQuery('#mainwp_managesites_add_http_user').val().trim(),
       http_pass: jQuery('#mainwp_managesites_add_http_pass').val().trim()
     });
@@ -1596,6 +1600,8 @@ mainwp_managesites_add = function () {
           managesites_add_wpurl: url,
           managesites_add_wpadmin: jQuery('#mainwp_managesites_add_wpadmin').val(),
           managesites_add_uniqueId: jQuery('#mainwp_managesites_add_uniqueId').val(),
+          ssl_verify: jQuery('#mainwp_managesites_verify_certificate').is(':checked') ? 1 : 0,
+          ssl_version: jQuery('#mainwp_managesites_add_ssl_version').val(),
           groupids: group_ids,
           clientid: client_id,
           managesites_add_http_user: jQuery('#mainwp_managesites_add_http_user').val(),
@@ -1885,7 +1891,8 @@ mainwp_managesites_test = function () {
     var data = mainwp_secure_data({
       action: 'mainwp_testwp',
       url: url,
-      test_verify_cert: jQuery('#mainwp_managesites_verify_certificate').val(),
+      test_verify_cert: jQuery('#mainwp_managesites_verify_certificate').is(':checked') ? 1 : 0,
+      ssl_version: jQuery('#mainwp_managesites_add_ssl_version').val(),
       http_user: jQuery('#mainwp_managesites_add_http_user').val(),
       http_pass: jQuery('#mainwp_managesites_add_http_pass').val()
     });
@@ -1949,6 +1956,7 @@ mainwp_managesites_edit_test = function () {
     action: 'mainwp_testwp',
     url: url,
     test_verify_cert: jQuery('#mainwp_managesites_edit_verifycertificate').val(),
+    ssl_version: jQuery('#mainwp_managesites_edit_ssl_version').val(),
     http_user: jQuery('#mainwp_managesites_edit_http_user').val(),
     http_pass: jQuery('#mainwp_managesites_edit_http_pass').val()
   });

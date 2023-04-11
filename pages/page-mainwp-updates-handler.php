@@ -88,25 +88,30 @@ class MainWP_Updates_Handler {
 	 */
 	public static function upgrade_website( $website ) {
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+
+			$wpcore_update_disabled_by = MainWP_System_Utility::disabled_wpcore_update_by( $website );
+			if ( '' != $wpcore_update_disabled_by ) {
+				throw new MainWP_Exception( 'ERROR', $wpcore_update_disabled_by );
+			}
 			/**
-				* Action: mainwp_before_wp_update
-				*
-				* Fires before WP update.
-				*
-				* @since 4.1
-				*/
-				do_action( 'mainwp_before_wp_update', $website );
+			* Action: mainwp_before_wp_update
+			*
+			* Fires before WP update.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_before_wp_update', $website );
 
-				$information = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
+			$information = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
 
-				/**
-				* Action: mainwp_after_wp_update
-				*
-				* Fires after WP update.
-				*
-				* @since 4.1
-				*/
-				do_action( 'mainwp_after_wp_update', $information, $website );
+			/**
+			* Action: mainwp_after_wp_update
+			*
+			* Fires after WP update.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_after_wp_update', $information, $website );
 
 				return $information;
 		}
@@ -674,6 +679,26 @@ class MainWP_Updates_Handler {
 							$tmp['result'][ rawurlencode( $k ) ] = $v;
 						}
 					}
+
+					if ( 'plugin' === $type ) {
+						if ( ! empty( $website->plugin_upgrades ) ) {
+							$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
+							if ( is_array( $plugin_upgrades ) ) {
+								$updated = false;
+								foreach ( $tmp['result'] as $k => $v ) {
+									$k = rawurldecode( $k );
+									if ( isset( $plugin_upgrades[ $k ] ) ) {
+										unset( $plugin_upgrades[ $k ] ); // updated.
+										$updated = true;
+									}
+								}
+								if ( $updated ) {
+									MainWP_DB::instance()->update_website_values( $id, array( 'plugin_upgrades' => wp_json_encode( $plugin_upgrades ) ) );
+								}
+							}
+						}
+					}
+
 					return $tmp;
 				} elseif ( isset( $result['error'] ) ) {
 					throw new MainWP_Exception( 'WPERROR', esc_html( $result['error'] ) );

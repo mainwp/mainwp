@@ -2568,8 +2568,11 @@ class Rest_Api {
 
 					// get data.
 					$website = MainWP_DB::instance()->get_website_by_id( $site_id );
-					$data    = MainWP_Updates_Handler::upgrade_website( $website );
-
+					try {
+						$data = MainWP_Updates_Handler::upgrade_website( $website );
+					} catch ( \Exception $e ) {
+						$data = array( 'error' => MainWP_Error_Helper::get_console_error_message( $e ) );
+					}
 					$response = new \WP_REST_Response( $data );
 					$response->set_status( 200 );
 

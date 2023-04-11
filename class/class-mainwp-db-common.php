@@ -788,6 +788,10 @@ class MainWP_DB_Common extends MainWP_DB {
 			$sql_set .= ' health_threshold = "' . intval( $data['healththreshold'] ) . '",';
 		}
 
+		if ( isset( $data['suspended'] ) ) {
+			$sql_set .= ' suspended = "' . ( 1 === intval( $data['suspended'] ) ? 1 : 0 ) . '",';
+		}
+
 		if ( ! empty( $sql_set ) ) {
 			$sql_set = rtrim( $sql_set, ',' );
 			$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET ' . $sql_set . ' WHERE id=%d', $websiteid ) );

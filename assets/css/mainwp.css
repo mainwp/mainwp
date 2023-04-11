@@ -1131,3 +1131,10 @@ th .sort.icon,
 #mainwp-themes-content td.child-active {
     background: #e3ffa7 !important;
 }
+
+.mainwp-ui #wpbody-content .notice.notice-success,
+.mainwp-ui #wpbody-content .notice.notice-info,
+.mainwp-ui #wpbody-content .notice.notice-error,
+.mainwp-ui #wpbody-content .notice.notice-warrning {
+    margin-left: 190px !important;
+}

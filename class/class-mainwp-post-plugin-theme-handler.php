@@ -606,7 +606,21 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		}
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		try {
-			$info = array( 'result' => MainWP_Updates_Handler::upgrade_plugin_theme_translation( $websiteId, sanitize_text_field( wp_unslash( $_POST['type'] ) ), $slugs ) );
+			$info = array(
+				'result'       => array(),
+				'result_error' => array(),
+			);
+
+			$result = MainWP_Updates_Handler::upgrade_plugin_theme_translation( $websiteId, sanitize_text_field( wp_unslash( $_POST['type'] ) ), $slugs );
+
+			if ( is_array( $result ) ) {
+				if ( isset( $result['result'] ) ) {
+					$info['result'] = $result['result'];
+				}
+				if ( isset( $result['result_error'] ) ) {
+					$info['result_error'] = $result['result_error'];
+				}
+			}
 
 			if ( $chunk_support && ( 0 < count( $chunk_slugs ) ) ) {
 				$info['chunk_slugs'] = implode( ',', $chunk_slugs );

@@ -717,7 +717,22 @@ class MainWP_Manage_Sites {
 					</div>
 				</div>
 
-						<!-- fake fields are a workaround for chrome autofill getting the wrong fields. -->
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'SSL version (optional)', 'mainwp' ); ?></label>
+					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select SSL Version. If you are not sure, select "Auto Detect".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<select class="ui dropdown" id="mainwp_managesites_add_ssl_version" name="mainwp_managesites_add_ssl_version">
+							<option value="0"><?php esc_html_e( 'Auto detect', 'mainwp' ); ?></option>
+							<option value="6"><?php esc_html_e( 'TLS v1.2', 'mainwp' ); ?></option>
+							<option value="1"><?php esc_html_e( 'TLS v1.x', 'mainwp' ); ?></option>
+							<option value="2"><?php esc_html_e( 'SSL v2', 'mainwp' ); ?></option>
+							<option value="3"><?php esc_html_e( 'SSL v3', 'mainwp' ); ?></option>
+							<option value="4"><?php esc_html_e( 'TLS v1.0', 'mainwp' ); ?></option>
+							<option value="5"><?php esc_html_e( 'TLS v1.1', 'mainwp' ); ?></option>
+						</select>
+					</div>
+				</div>
+
+				<!-- fake fields are a workaround for chrome autofill getting the wrong fields. -->
 				<input style="display:none" type="text" name="fakeusernameremembered"/>
 				<input style="display:none" type="password" name="fakepasswordremembered"/>
 

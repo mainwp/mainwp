@@ -164,7 +164,7 @@ class MainWP_Manage_Sites_Update_View {
 			$wp_upgrades = array();
 		}
 
-		$return['total_wp'] = $wp_upgrades ? count( $wp_upgrades ) : 0;
+		$return['total_wp'] = ! empty( $wp_upgrades ) ? 1 : 0;
 
 		$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
 
@@ -325,9 +325,14 @@ class MainWP_Manage_Sites_Update_View {
 						<?php
 							$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
 							$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+
+							$wpcore_update_disabled_by = '';
+						if ( 0 < count( $wp_upgrades ) ) {
+							$wpcore_update_disabled_by = MainWP_System_Utility::disabled_wpcore_update_by( $website );
+						}
 						?>
 						<?php if ( ( 0 !== count( $wp_upgrades ) ) && ! ( '' !== $website->sync_errors ) ) : ?>
-						<tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) ) ? '0' : '1'; ?>">
+						<tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) && '' == $wpcore_update_disabled_by ) ? '0' : '1'; ?>">
 							<td>								
 								<?php if ( 0 < count( $wp_upgrades ) ) : ?>
 									<?php echo esc_html( $wp_upgrades['current'] ); ?>
@@ -340,10 +345,20 @@ class MainWP_Manage_Sites_Update_View {
 							</td>
 						<td>
 								<?php if ( $user_can_update_wp ) : ?>
-									<?php if ( 0 < count( $wp_upgrades ) ) : ?>
-										<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . $website->name; ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-										<input type="hidden" id="wp-updated-<?php echo esc_attr( $website->id ); ?>" value="<?php echo ( 0 < count( $wp_upgrades ) ? '0' : '1' ); ?>" />
-									<?php endif; ?>
+									<?php
+									if ( 0 < count( $wp_upgrades ) ) :
+										if ( '' != $wpcore_update_disabled_by ) {
+											?>
+											<span data-tooltip="<?php echo esc_html( $wpcore_update_disabled_by ); ?>" data-inverted="" data-position="left center"><a href="javascript:void(0)" class="ui green button mini disabled"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a></span>
+											<?php
+										} else {
+											?>
+											<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . $website->name; ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+											<input type="hidden" id="wp-updated-<?php echo esc_attr( $website->id ); ?>" value="<?php echo ( 0 < count( $wp_upgrades ) ? '0' : '1' ); ?>" />
+											<?php
+										}
+										endif;
+									?>
 								<?php endif; ?>
 							</td>
 						</tr>

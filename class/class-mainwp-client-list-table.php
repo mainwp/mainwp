@@ -366,6 +366,9 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 				<?php echo sprintf( esc_html__( 'Manage your clients.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">', '</a>' ); ?>
 			</div>
 		<?php endif; ?>
+		<?php
+		MainWP_Client_Handler::show_notice_existed_contact_emails();
+		?>
 		<table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table">
 			<thead>
 				<tr>

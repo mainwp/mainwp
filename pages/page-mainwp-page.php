@@ -1457,7 +1457,7 @@ class MainWP_Page {
 						$post_status = apply_filters( 'mainwp_posting_bulkpost_post_status', $post_status, $id );
 
 						$new_post = array(
-							'post_title'     => htmlspecialchars( $_post->post_title ),
+							'post_title'     => $_post->post_title,
 							'post_content'   => $_post->post_content,
 							'post_status'    => $post_status,
 							'post_date'      => $_post->post_date,

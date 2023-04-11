@@ -383,7 +383,10 @@ class MainWP_Extensions {
 
 		$all_groups = MainWP_Extensions_View::get_extension_groups();
 
-		$grouped_exts = array( 'others' => '' );
+		$grouped_exts = array(
+			'others' => '',
+			'all'    => '',
+		);
 
 		foreach ( MainWP_Extensions_View::get_available_extensions( 'all' ) as $ext ) {
 			$all_available_extensions_compatible_api_response[ $ext['product_id'] ] = $ext;

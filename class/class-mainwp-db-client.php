@@ -166,12 +166,12 @@ class MainWP_DB_Client extends MainWP_DB {
 		}
 
 		if ( ! $convert_pro_reports_dt && ! $convert_client_reports_dt ) {
-			$rslt = self::instance()->query( "SHOW TABLES LIKE '" . $this->table_name( 'pro_reports_token' ) . "'" );
+			$rslt = $this->query( "SHOW TABLES LIKE '" . $this->table_name( 'pro_reports_token' ) . "'" );
 			if ( self::num_rows( $rslt ) ) {
 				$convert_pro_reports_dt = true;
 			}
 
-			$rslt = self::instance()->query( "SHOW TABLES LIKE '" . $this->table_name( 'client_report_token' ) . "'" );
+			$rslt = $this->query( "SHOW TABLES LIKE '" . $this->table_name( 'client_report_token' ) . "'" );
 			if ( self::num_rows( $rslt ) ) {
 				$convert_client_reports_dt = true;
 			}
@@ -218,7 +218,7 @@ class MainWP_DB_Client extends MainWP_DB {
 		foreach ( $default_tokens as $field_name => $field_desc ) {
 			$current = $this->get_client_fields_by( 'field_name', $field_name );
 			if ( $current ) {
-				self::instance()->update_client_field(
+				$this->update_client_field(
 					$current->field_id,
 					array(
 						'field_name' => $field_name,
@@ -226,7 +226,7 @@ class MainWP_DB_Client extends MainWP_DB {
 					)
 				);
 			} else {
-				self::instance()->add_client_field(
+				$this->add_client_field(
 					array(
 						'field_name' => $field_name,
 						'field_desc' => $field_desc,
@@ -409,13 +409,13 @@ class MainWP_DB_Client extends MainWP_DB {
 			if ( isset( $primary_contacts_to_add[ $email ] ) ) {
 				$contact_add                      = $primary_contacts_to_add[ $email ];
 				$contact_add['contact_client_id'] = $client_id;
-				$inserted                         = self::instance()->update_client_contact( $contact_add );
+				$inserted                         = $this->update_client_contact( $contact_add );
 				if ( $inserted ) {
 					$params = array(
 						'client_id'          => $client_id, // update the client.
 						'primary_contact_id' => $inserted->contact_id,
 					);
-					self::instance()->update_client( $params );
+					$this->update_client( $params );
 				}
 			}
 
@@ -508,16 +508,22 @@ class MainWP_DB_Client extends MainWP_DB {
 
 		$contact_email = isset( $data['contact_email'] ) ? $data['contact_email'] : '';
 		if ( ! empty( $contact_email ) ) {
+			$existed_email = false;
 			// check to valid email.
 			$curret_contact = $this->get_wp_client_contact_by( 'contact_email', $contact_email );
 			if ( $curret_contact && empty( $contact_id ) ) { // add new contact with existed email => failed.
-				return false;
+				$existed_email = true;
 			}
 
 			if ( $curret_contact && ! empty( $contact_id ) ) {
 				if ( $curret_contact->contact_id != $contact_id ) { // update contact with existed email => failed.
-					return false;
+					$existed_email = true;
 				}
+			}
+
+			if ( $existed_email ) {
+				MainWP_Utility::update_flash_message( 'contact_existed_emails', $contact_email );
+				return false;
 			}
 		}
 
@@ -622,10 +628,10 @@ class MainWP_DB_Client extends MainWP_DB {
 			return false;
 		}
 
-		$client_contacts = self::instance()->get_wp_client_contact_by( 'client_id', $client_id, ARRAY_A );
+		$client_contacts = $this->get_wp_client_contact_by( 'client_id', $client_id, ARRAY_A );
 		if ( $client_contacts ) {
 			foreach ( $client_contacts as $contact ) {
-				self::instance()->delete_client_contact( $client_id, $contact['contact_id'] );
+				$this->delete_client_contact( $client_id, $contact['contact_id'] );
 			}
 		}
 		return true;
@@ -800,7 +806,7 @@ class MainWP_DB_Client extends MainWP_DB {
 		foreach ( $result as $rst ) {
 
 			if ( $custom_field ) {
-				$custom_fields = self::instance()->get_client_fields( true, $rst['client_id'] );
+				$custom_fields = $this->get_client_fields( true, $rst['client_id'] );
 				if ( $custom_fields ) {
 					foreach ( $custom_fields as $field ) {
 						$rst[ $field->field_name ] = $field->field_value;
@@ -824,7 +830,7 @@ class MainWP_DB_Client extends MainWP_DB {
 			}
 
 			if ( $with_contacts ) {
-				$client_contacts = self::instance()->get_wp_client_contact_by( 'client_id', $rst['client_id'], ARRAY_A );
+				$client_contacts = $this->get_wp_client_contact_by( 'client_id', $rst['client_id'], ARRAY_A );
 
 				$contacts = array();
 
@@ -885,7 +891,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 */
 	public function delete_client( $client_id ) {
 
-		$current = self::instance()->get_wp_client_by( 'client_id', $client_id );
+		$current = $this->get_wp_client_by( 'client_id', $client_id );
 		if ( $current && $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_clients' ) . ' WHERE client_id=%d ', $client_id ) ) ) {
 			$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET client_id=0 WHERE client_id=%d ', $client_id ) );
 			$fields = $this->get_client_fields_by( 'client_id', $client_id );

@@ -790,6 +790,9 @@ class MainWP_Manage_Sites_View {
 					<?php echo sprintf( esc_html__( 'Edit the %1$s (%2$s) child site settings.  For additional help, please check this %3$shelp documentation%4$s.', 'mainwp' ), $website->name, '<a href="' . $website->url . '" target="_blank">' . $website->url . '</a>', '<a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
+			<?php
+			MainWP_Client_Handler::show_notice_existed_contact_emails();
+			?>
 			<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
 			<?php if ( $updated ) : ?>
 			<div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Child site settings saved successfully.', 'mainwp' ); ?></div>
@@ -1495,6 +1498,7 @@ class MainWP_Manage_Sites_View {
 		$params['wpadmin']           = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : '';
 		$params['unique_id']         = isset( $_POST['managesites_add_uniqueId'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_uniqueId'] ) ) : '';
 		$params['ssl_verify']        = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
+		$params['ssl_version']       = empty( $_POST['ssl_version'] ) ? false : intval( $_POST['ssl_version'] );
 		$params['force_use_ipv4']    = apply_filters( 'mainwp_manage_sites_force_use_ipv4', null, $params['url'] );
 		$params['http_user']         = isset( $_POST['managesites_add_http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_http_user'] ) ) : '';
 		$params['http_pass']         = isset( $_POST['managesites_add_http_pass'] ) ? wp_unslash( $_POST['managesites_add_http_pass'] ) : '';
@@ -1647,7 +1651,7 @@ class MainWP_Manage_Sites_View {
 						}
 
 						if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
-							$message = sprintf( esc_html__( '%sCongratulations you have connected %s.%s You can add new sites at anytime from the Add New Site page.', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>' );
+							$message = sprintf( esc_html__( '%1$sCongratulations you have connected %2$s.%3$s You can add new sites at anytime from the Add New Site page.', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>' );
 						} else {
 							$message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>' );
 						}

@@ -89,7 +89,7 @@ class MainWP_Common_Functions {
 				$total_theme_upgrades  = 0;
 
 				$site_options = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'premium_upgrades' ) );
-				$wp_upgrades  = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
+				$wp_upgrades  = isset( $site_options['wp_upgrades'] ) && ! empty( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
 
 				if ( $website->is_ignoreCoreUpdates ) {
 					$wp_upgrades = array();

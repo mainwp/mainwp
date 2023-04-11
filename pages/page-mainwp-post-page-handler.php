@@ -535,7 +535,7 @@ class MainWP_Post_Page_Handler {
 				 */
 				$post_status = apply_filters( 'mainwp_posting_bulkpost_post_status', $post_status, $id );
 				$new_post    = array(
-					'post_title'     => htmlspecialchars( $_post->post_title ),
+					'post_title'     => $_post->post_title,
 					'post_content'   => $_post->post_content,
 					'post_status'    => $post_status,
 					'post_date'      => $_post->post_date,
@@ -718,7 +718,12 @@ class MainWP_Post_Page_Handler {
 				* @since Unknown
 				*/
 				$newExtensions = apply_filters_deprecated( 'mainwp-after-posting-bulkpost-result', array( false, $_post, $dbwebsites, $output ), '4.0.7.2', 'mainwp_after_posting_bulkpost_result' );
-				$after_posting = apply_filters( 'mainwp_after_posting_bulkpost_result', $newExtensions, $_post, $dbwebsites, $output );
+
+				$after_posting = false;
+				if ( 'posting' == $what ) {
+					// supported for bulk posting, not for ajax posting.
+					$after_posting = apply_filters( 'mainwp_after_posting_bulkpost_result', $newExtensions, $_post, $dbwebsites, $output );
+				}
 
 				$posting_succeed = false;
 
@@ -1041,6 +1046,10 @@ class MainWP_Post_Page_Handler {
 		}
 		$edit_id = $new_post['edit_id'];
 		unset( $new_post['edit_id'] );
+
+		if ( isset( $new_post['post_title'] ) ) {
+			$new_post['post_title'] = MainWP_Utility::esc_content( $new_post['post_title'], 'mixed' );
+		}
 
 		$wp_error = null;
 		remove_filter( 'content_save_pre', 'wp_filter_post_kses' );

@@ -1151,6 +1151,7 @@ class MainWP_UI {
 		$sidebar_pages = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
 		ob_start();
 		if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) :
+			$id = 0;
 			if ( isset( $_GET['dashboard'] ) ) {
 				$id = intval( $_GET['dashboard'] );
 			} elseif ( isset( $_GET['id'] ) ) {
@@ -1165,7 +1166,7 @@ class MainWP_UI {
 
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
 
-			if ( '' != $website->sync_errors ) :
+			if ( $id && $website && '' != $website->sync_errors ) :
 				?>
 				<a href="#" class="mainwp-updates-overview-reconnect-site ui green button" siteid="<?php echo $website->id; ?>" data-position="bottom right" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></a>
 			<?php else : ?>

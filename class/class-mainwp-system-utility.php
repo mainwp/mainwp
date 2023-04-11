@@ -1284,4 +1284,41 @@ class MainWP_System_Utility {
 
 		return $output;
 	}
+
+	/**
+	 * Method disabled_wpcore_update_by().
+	 *
+	 * Get disabled wpcore update by.
+	 *
+	 * @param string $website The website.
+	 */
+	public static function disabled_wpcore_update_by( $website ) {
+		$by = self::get_disabled_wpcore_update_host( $website );
+		if ( 'flywheel' === $by ) {
+			return esc_html__( 'FlyWheel disables WP core updates. For more information contact FlyWheel support.', 'mainwp' );
+		} elseif ( 'pressable' === $by ) {
+			return esc_html__( 'Pressable disables WP core updates. For more information contact Pressable support.', 'mainwp' );
+		}
+		return '';
+	}
+
+
+	/**
+	 * Method get_disabled_wpcore_update_host().
+	 *
+	 * Get wpcore update disabled for the websites on FlyWheel host or Pressable host.
+	 *
+	 * @param mixed $website data.
+	 */
+	public static function get_disabled_wpcore_update_host( $website ) {
+		if ( empty( $website ) ) {
+			return '';
+		}
+		$wphost = MainWP_DB::instance()->get_website_option( $website, 'wphost' );
+		if ( ! empty( $wphost ) && ( 'flywheel' != $wphost && 'pressable' != $wphost ) ) {
+			$wphost = '';
+		}
+		return empty( $wphost ) ? '' : $wphost;
+	}
+
 }

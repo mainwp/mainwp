@@ -323,13 +323,13 @@ class MainWP_Manage_Sites_Update_View {
 					<tbody>
 					<?php if ( ! $website->is_ignoreCoreUpdates ) : ?>
 						<?php
-							$wp_upgrades               = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-							$wp_upgrades               = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
-							
+							$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
+							$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+
 							$wpcore_update_disabled_by = '';
-							if ( 0 < count( $wp_upgrades ) ) {
-								$wpcore_update_disabled_by = MainWP_System_Utility::disabled_wpcore_update_by( $website );
-							}
+						if ( 0 < count( $wp_upgrades ) ) {
+							$wpcore_update_disabled_by = MainWP_System_Utility::disabled_wpcore_update_by( $website );
+						}
 						?>
 						<?php if ( ( 0 !== count( $wp_upgrades ) ) && ! ( '' !== $website->sync_errors ) ) : ?>
 						<tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) && '' == $wpcore_update_disabled_by ) ? '0' : '1'; ?>">

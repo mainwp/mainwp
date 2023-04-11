@@ -285,7 +285,7 @@ class MainWP_Client_Handler {
 			if ( isset( $data['client_linkedin'] ) ) {
 				$params['client_linkedin'] = sanitize_text_field( wp_unslash( $data['client_linkedin'] ) );
 			}
-			
+
 			try {
 				MainWP_DB_Client::instance()->update_client( $params, true );
 			} catch ( \Exception $e ) {

@@ -604,7 +604,7 @@ class MainWP_Updates_Overview {
 					if ( $globalView ) {
 						$detail_wp_up = 'admin.php?page=UpdatesManage&tab=wordpress-updates';
 					} else {
-						$detail_wp_up = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=wordpress-updates';
+						$detail_wp_up              = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=wordpress-updates';
 						$wpcore_update_disabled_by = MainWP_System_Utility::disabled_wpcore_update_by( $current_wpid );
 					}
 					?>
@@ -613,10 +613,11 @@ class MainWP_Updates_Overview {
 						<a href="<?php echo $detail_wp_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 						<?php
 						if ( '' != $wpcore_update_disabled_by ) {
-						?>
+							?>
 							<span data-tooltip="<?php echo esc_html( $wpcore_update_disabled_by ); ?>" data-inverted="" data-position="left center"><a href="javascript:void(0)"  class="ui button basic green disabled"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a></span>
-						<?php
-						} else { ?>
+							<?php
+						} else {
+							?>
 						<a href="#" onClick="return updatesoverview_global_upgrade_all('wp');" class="ui green basic button <?php echo MainWP_Updates::get_continue_update_selector(); ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update WP Core files on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 						<?php } ?>
 					<?php else : ?>

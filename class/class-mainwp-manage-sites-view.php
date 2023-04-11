@@ -1498,7 +1498,7 @@ class MainWP_Manage_Sites_View {
 		$params['wpadmin']           = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : '';
 		$params['unique_id']         = isset( $_POST['managesites_add_uniqueId'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_uniqueId'] ) ) : '';
 		$params['ssl_verify']        = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
-		$params['ssl_version']        = empty( $_POST['ssl_version'] ) ? false : intval( $_POST['ssl_version'] );		
+		$params['ssl_version']       = empty( $_POST['ssl_version'] ) ? false : intval( $_POST['ssl_version'] );
 		$params['force_use_ipv4']    = apply_filters( 'mainwp_manage_sites_force_use_ipv4', null, $params['url'] );
 		$params['http_user']         = isset( $_POST['managesites_add_http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_http_user'] ) ) : '';
 		$params['http_pass']         = isset( $_POST['managesites_add_http_pass'] ) ? wp_unslash( $_POST['managesites_add_http_pass'] ) : '';

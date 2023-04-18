@@ -369,7 +369,18 @@ class MainWP_System_View {
 			if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_guided_tours_notice' ) ) {
 				?>
 				<div class="ui info message" style="margin-bottom: 0; border-radius: 0;">
-					<?php printf( esc_html__( 'Would you like to turn on guided tours? Go to the %1$sMainWP Tools%2$s page to enabled them.', 'mainwp' ), '<a href="admin.php?page=MainWPTools">', '</a>' ); ?>
+					<h3><?php esc_html_e( 'Would you like to turn on guided tours?', 'mainwp' ); ?> <span class="ui green mini label"><?php esc_html_e( 'RECOMMENDED', 'mainwp' ); ?></span></h3>
+					<div><?php esc_html_e( 'MainWP guided tours are designed to provide information about all essential features on each MainWP Dashboard page.', 'mainwp' ); ?></div>
+					
+					<div class="ui form">
+				<div class="field">
+				<div class="ui hidden divider"></div>
+					<div class="ui toggle checkbox">
+						<input type="checkbox" name="mainwp-select-guided-tours-option" onchange="mainwp_guidedtours_onchange(this);" id="mainwp-select-guided-tours-option" <?php echo ( ( 1 == get_option( 'mainwp_enable_guided_tours', 0 ) ) ? 'checked="true"' : '' ); ?>>
+						<label for="mainwp-select-guided-tours-option"><?php esc_html_e( 'Select to enable the MainWP Guided Tours.', 'mainwp' ); ?></label>
+						</div>
+				</div>
+					</div>
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp_guided_tours_notice"></i>
 				</div>
 				<?php

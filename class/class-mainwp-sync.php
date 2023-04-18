@@ -23,15 +23,16 @@ class MainWP_Sync {
 	 * Sync Child Site.
 	 *
 	 * @param object $website object.
-
+	 * @param bool   $clear_session to run the ending session or not.
+	 *
 	 * @return bool sync result.
 	 */
-	public static function sync_website( $website ) {
+	public static function sync_website( $website, $clear_session = true ) {
 		if ( ! is_object( $website ) ) {
 			return false;
 		}
 		MainWP_DB::instance()->update_website_sync_values( $website->id, array( 'dtsSyncStart' => time() ) );
-		return self::sync_site( $website );
+		return self::sync_site( $website, false, true, $clear_session );
 	}
 
 	/**
@@ -40,6 +41,7 @@ class MainWP_Sync {
 	 * @param mixed $pWebsite         Null|userid.
 	 * @param bool  $pForceFetch      Check if a fourced Sync.
 	 * @param bool  $pAllowDisconnect Check if allowed to disconect.
+	 * @param bool  $clear_session to run the ending session or not.
 	 *
 	 * @return bool sync_information_array
 	 *
@@ -52,7 +54,7 @@ class MainWP_Sync {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_primary_backup()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::end_session()
 	 */
-	public static function sync_site( &$pWebsite = null, $pForceFetch = false, $pAllowDisconnect = true ) {
+	public static function sync_site( &$pWebsite = null, $pForceFetch = false, $pAllowDisconnect = true, $clear_session = true ) {
 		if ( null == $pWebsite ) {
 			return false;
 		}
@@ -61,7 +63,9 @@ class MainWP_Sync {
 			return false;
 		}
 
-		MainWP_Utility::end_session();
+		if( $clear_session ) {
+			MainWP_Utility::end_session();
+		}
 
 		try {
 
@@ -235,6 +239,9 @@ class MainWP_Sync {
 		if ( isset( $information['site_info'] ) && null != $information['site_info'] ) {
 			if ( is_array( $information['site_info'] ) && isset( $information['site_info']['phpversion'] ) ) {
 				$phpversion = $information['site_info']['phpversion'];
+			}
+			if ( is_array( $information['site_info'] ) && isset( $information['site_info']['ip'] ) ) {
+				$websiteValues['ip'] = sanitize_text_field( wp_unslash( $information['site_info']['ip'] ) );
 			}
 			MainWP_DB::instance()->update_website_option( $pWebsite, 'site_info', wp_json_encode( $information['site_info'] ) );
 			$done = true;

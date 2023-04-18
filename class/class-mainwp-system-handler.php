@@ -634,7 +634,7 @@ class MainWP_System_Handler {
 	}
 
 	/**
-	 * Method plugins_api_info()
+	 * Method plugins_api_extension_info()
 	 *
 	 * Get MainWP Extension api information.
 	 *
@@ -649,7 +649,7 @@ class MainWP_System_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_System::get_plugin_slug()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_slugs()
 	 */
-	public function plugins_api_info( $false, $action, $arg ) {
+	public function plugins_api_extension_info( $false, $action, $arg ) {
 		if ( 'plugin_information' !== $action ) {
 			return $false;
 		}
@@ -695,6 +695,59 @@ class MainWP_System_Handler {
 
 		return $false;
 	}
+
+
+	/**
+	 * Method plugins_api_wp_plugin_info()
+	 *
+	 * Get plugins api information.
+	 *
+	 * @param mixed $false Return value.
+	 * @param mixed $action Action being performed.
+	 * @param mixed $arg Action arguments. Should be the plugin slug.
+	 *
+	 * @return mixed $info|$false
+	 */
+	public function plugins_api_wp_plugin_info( $false, $action, $arg ) {
+		if ( 'plugin_information' !== $action ) {
+			return $false;
+		}
+
+		if ( ! isset( $_GET['wpplugin'] ) || ! is_numeric( $_GET['wpplugin'] ) || empty( $_GET['wpplugin'] ) ) {
+			return $false;
+		}
+
+		if ( is_array( $arg ) ) {
+			$arg = (object) $arg;
+		}
+
+		if ( ! isset( $arg->slug ) || ( '' === $arg->slug ) ) {
+			return $false;
+		}
+
+		$site_id = intval( $_GET['wpplugin'] );
+
+		if ( $site_id ) {
+			$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+			if ( $website && ! empty( $website->plugin_upgrades ) ) {
+				$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
+				if ( is_array( $plugin_upgrades ) ) {
+					foreach ( $plugin_upgrades as $plugin_slug => $info ) {
+						if ( false !== strpos( $plugin_slug, $arg->slug . '.php' ) && isset( $info['update'] ) ) {
+							if ( isset( $info['update']['slug'] ) && $arg->slug == $info['update']['slug'] && isset( $info['update']['new_version'] ) && ! empty( $info['update']['new_version'] ) && isset( $info['update']['sections'] ) && ! empty( $info['update']['sections'] ) ) {
+								$info_update = (object) $info['update'];
+								return $info_update;
+							}
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		return $false;
+	}
+
 
 	/**
 	 * Method check_update_custom()

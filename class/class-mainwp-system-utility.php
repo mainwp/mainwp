@@ -589,7 +589,12 @@ class MainWP_System_Utility {
 		if ( is_array( $website ) ) {
 			return ( '1' === $website['suspended'] );
 		} elseif ( is_object( $website ) ) {
-			return ( '1' === $website->suspended );
+			if ( ! property_exists( $website, 'suspended' ) && property_exists( $website, 'id' ) ) {
+				$website = MainWP_DB::instance()->get_website_by_id( $website->id );
+			}
+			if ( property_exists( $website, 'suspended' ) ) {
+				return ( '1' === $website->suspended );
+			}
 		} elseif ( is_numeric( $website ) ) {
 			$siteId  = $website;
 			$website = MainWP_DB::instance()->get_website_by_id( $siteId );

@@ -139,7 +139,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_db_get_websites_for_current_user', array( &$this, 'db_get_websites_for_current_user' ), 10, 2 );
 
 		// Sync website.
-		add_filter( 'mainwp_sync_website', array( &$this, 'hook_sync_website' ), 10, 2 );
+		add_filter( 'mainwp_sync_website', array( &$this, 'hook_sync_website' ), 10, 3 );
 
 		add_action( 'mainwp_secure_request', array( &$this, 'hook_secure_request' ), 10, 2 );
 		add_filter( 'mainwp_check_security_request', array( &$this, 'hook_check_security_request' ), 10, 3 );
@@ -971,10 +971,11 @@ class MainWP_Hooks {
 	 *
 	 * @param mixed $false     input value.
 	 * @param int   $website_id  Website ID.
+	 * @param bool  $fire_end_session to run the ending session or not.
 	 *
 	 * @return mixed websites.
 	 */
-	public function hook_sync_website( $false, $website_id ) {
+	public function hook_sync_website( $false, $website_id, $fire_end_session = true ) {
 		if ( empty( $website_id ) ) {
 			return $false;
 		}
@@ -982,7 +983,7 @@ class MainWP_Hooks {
 		if ( empty( $website ) ) {
 			return $false;
 		}
-		return MainWP_Sync::sync_website( $website );
+		return MainWP_Sync::sync_website( $website, $fire_end_session );
 	}
 
 	/**

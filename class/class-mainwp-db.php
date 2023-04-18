@@ -911,7 +911,9 @@ class MainWP_DB extends MainWP_DB_Base {
 		if ( ! empty( $clients ) ) {
 			$clients = explode( ';', $clients );
 			foreach ( $clients as $client ) {
-				$clientWhere .= $this->escape( $client ) . ', ';
+				if ( is_numeric( $client ) ) {
+					$clientWhere .= intval( $client ) . ', ';
+				}
 			}
 			$clientWhere = rtrim( $clientWhere, ', ' );
 		}
@@ -1069,8 +1071,7 @@ class MainWP_DB extends MainWP_DB_Base {
 				if ( 'noclients' == $e ) {
 					return true;
 				}
-				$e = intval( $e );
-				return ( 0 < $e ) ? true : false;
+				return is_numeric( $e ) && ! empty( $e ) ? true : false; // to valid client ids.
 			}
 		);
 
@@ -1180,9 +1181,6 @@ class MainWP_DB extends MainWP_DB_Base {
 				$clients = implode( ',', $client_ids );
 				if ( $is_not ) {
 					$where_client = ' AND wpclient.client_id IS NOT NULL AND wp.client_id NOT IN (' . $clients . ') ';
-					// to fix.
-					// $sub_select_is_not = ' SELECT wp.id FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id WHERE wpclient.client_id IN (' . $clients . ') ';.
-					// $where_client      .= ' AND wp.id NOT IN ( ' . $sub_select_is_not . ' ) ';.
 				} else {
 					$where_client = ' AND wpclient.client_id IN (' . $clients . ') ';
 				}
@@ -1198,9 +1196,6 @@ class MainWP_DB extends MainWP_DB_Base {
 			if ( $is_not ) {
 				$join_client  = ' LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id ';
 				$where_client = ' AND ( wpclient.client_id NOT IN (' . $clients . ') OR wpclient.client_id IS NULL ) ';
-				// to fix.
-				// $sub_select_is_not = ' SELECT wp.id FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id WHERE wpclient.client_id IN (' . $clients . ') ';.
-				// $where_client     .= ' AND wp.id NOT IN ( ' . $sub_select_is_not . ' ) ';.
 			} else {
 				$join_client  = ' JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id ';
 				$where_client = ' AND wpclient.client_id IN (' . $clients . ') ';

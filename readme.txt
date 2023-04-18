@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.2
 Requires PHP: 7.0
-Stable tag: 4.4.1-beta1
+Stable tag: 4.4.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -286,6 +286,21 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 10. Manage Clients Screen
 
 == Changelog ==
+
+= 4.4.1 - 4-18-2023 =
+* Fixed: Incorrect feedback after a failed update for Premium plugins
+* Fixed: An issue with removing allowed tags in post titles
+* Fixed: Incorrect rendering of the error message when an update fails
+* Fixed: Multiple PHP warnings
+* Added: Support for suspending sites via REST API
+* Added: Check for specific hosts that disable WordPress Core updates for users
+* Added: Support to check changelogs and plugin info for premium plugins
+* Added: New parameter to the `mainwp_sync_website` filter to avoid call session end
+* Updated: Info message for an attempt to create an already existing client contact
+* Updated: Updates process to prevent updates for Premium plugins from reappearing after a sync when updates fail
+* Updated: Error message for an attempt to reconnect site where Imunify360 blocks requests
+* Updated: Tour IDs information
+* Updated: Guided tours notification
 
 = 4.4.0.4 - 3-30-2023 =
 * Fixed: An issue with loading per user-selected language

@@ -1189,7 +1189,10 @@ class MainWP_Plugins {
 
 			$count_sites = count( $pluginSites );
 
-			$details_link    = self_admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( $plugin_directory ) . '&section=changelog' );
+			reset($pluginSites);
+			$first_siteid = key($pluginSites);
+
+			$details_link    = self_admin_url( 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $first_siteid ) . '&plugin=' . rawurlencode( $plugin_directory ) . '&section=changelog' );
 			$lastest_version = '';
 			?>
 			<div class="ui accordion mainwp-manage-plugin-accordion mainwp-manage-plugin-item main-child-checkbox"  id="<?php echo esc_html( $item_id ); ?>">
@@ -1914,6 +1917,8 @@ class MainWP_Plugins {
 				<?php foreach ( $plugins as $slug => $plugin ) : ?>
 					<?php
 					$name = $plugin['name'];
+					$wpid = isset($plugin['websiteid']) ? intval($plugin['websiteid']) : 0; 
+					
 					if ( ! empty( $search_status ) && 'all' !== $search_status ) {
 						if ( 'trust' === $search_status && ! in_array( $slug, $trustedPlugins ) ) {
 							continue;
@@ -1935,7 +1940,7 @@ class MainWP_Plugins {
 					<tr plugin-slug="<?php echo rawurlencode( $slug ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $name ) ); ?>">
 						<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo rawurlencode( $slug ); ?>"></span></td>
 						<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
-						<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $slug ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $name ); ?></a></td>
+						<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . $wpid . '&plugin=' . rawurlencode( dirname( $slug ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $name ); ?></a></td>
 						<td><?php echo ( 1 == $plugin['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); ?></td>
 						<td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
 						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
@@ -2048,8 +2053,7 @@ class MainWP_Plugins {
 			if ( ! is_array( $tmpDecodedIgnoredPlugins ) || 0 == count( $tmpDecodedIgnoredPlugins ) ) {
 				continue;
 			}
-
-				$cnt ++;
+			$cnt ++;
 		}
 
 		self::render_header( 'Ignore' );
@@ -2219,7 +2223,7 @@ class MainWP_Plugins {
 								<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
 							<?php endif; ?>
 								<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
-							<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( $plugin_directory ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
+							<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . rawurlencode( $plugin_directory ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 							<td><?php echo esc_html( rawurldecode( $ignoredPlugin ) ); ?></td>
 							<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 								<td class="right aligned"><a href="#" class="ui mini button" onClick="return updatesoverview_plugins_unignore_detail( '<?php echo rawurlencode( $ignoredPlugin ); ?>', <?php echo esc_attr( $website->id ); ?> )"> <?php esc_html_e( 'Unignore', 'mainwp' ); ?></a></td>
@@ -2459,7 +2463,7 @@ class MainWP_Plugins {
 									<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
 								<?php endif; ?>
 										<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
-								<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( $plugin_directory ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
+								<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . $website->id . '&plugin=' . rawurlencode( $plugin_directory ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 								<td><?php echo esc_html( $ignoredPlugin ); ?></td>
 								<td class="right aligned"><a href="#" class="ui mini button" onClick="return updatesoverview_plugins_unignore_abandoned_detail( '<?php echo rawurlencode( $ignoredPlugin ); ?>', <?php echo esc_attr( $website->id ); ?> )"> <?php esc_html_e( 'Unignore', 'mainwp' ); ?></a></td>
 							</tr>

@@ -289,7 +289,6 @@ class MainWP_Setup_Wizard {
 				<div class="ui blue message">
 					<?php echo sprintf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
 				</div>
-				
 				<div class="ui form">
 				<div class="field">
 				<div class="ui hidden divider"></div>

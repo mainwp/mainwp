@@ -1189,8 +1189,8 @@ class MainWP_Plugins {
 
 			$count_sites = count( $pluginSites );
 
-			reset($pluginSites);
-			$first_siteid = key($pluginSites);
+			reset( $pluginSites );
+			$first_siteid = key( $pluginSites );
 
 			$details_link    = self_admin_url( 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $first_siteid ) . '&plugin=' . rawurlencode( $plugin_directory ) . '&section=changelog' );
 			$lastest_version = '';
@@ -1917,7 +1917,7 @@ class MainWP_Plugins {
 				<?php foreach ( $plugins as $slug => $plugin ) : ?>
 					<?php
 					$name = $plugin['name'];
-					$wpid = isset($plugin['websiteid']) ? intval($plugin['websiteid']) : 0;
+					$wpid = isset( $plugin['websiteid'] ) ? intval( $plugin['websiteid'] ) : 0;
 
 					if ( ! empty( $search_status ) && 'all' !== $search_status ) {
 						if ( 'trust' === $search_status && ! in_array( $slug, $trustedPlugins ) ) {

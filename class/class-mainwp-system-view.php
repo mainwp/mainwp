@@ -371,7 +371,6 @@ class MainWP_System_View {
 				<div class="ui info message" style="margin-bottom: 0; border-radius: 0;">
 					<h3><?php esc_html_e( 'Would you like to turn on guided tours?', 'mainwp' ); ?> <span class="ui green mini label"><?php esc_html_e( 'RECOMMENDED', 'mainwp' ); ?></span></h3>
 					<div><?php esc_html_e( 'MainWP guided tours are designed to provide information about all essential features on each MainWP Dashboard page.', 'mainwp' ); ?></div>
-					
 					<div class="ui form">
 				<div class="field">
 				<div class="ui hidden divider"></div>

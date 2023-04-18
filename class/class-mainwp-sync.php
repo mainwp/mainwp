@@ -54,7 +54,7 @@ class MainWP_Sync {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_primary_backup()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::end_session()
 	 */
-	public static function sync_site( &$pWebsite = null, $pForceFetch = false, $pAllowDisconnect = true, $clear_session = true ) {
+	public static function sync_site( &$pWebsite = null, $pForceFetch = false, $pAllowDisconnect = true, $clear_session = true ) { // phpcs:ignore -- complexity method.
 		if ( null == $pWebsite ) {
 			return false;
 		}

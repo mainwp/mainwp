@@ -95,7 +95,7 @@ class MainWP_Updates_Per_Item {
 								<input type="checkbox" name="">
 							</div>
 							&nbsp;&nbsp;<?php echo MainWP_System_Utility::get_plugin_icon( $pluginsInfo[ $slug ]['slug'] ); ?>&nbsp;&nbsp;&nbsp;&nbsp;
-							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $pluginsInfo[ $slug ]['slug'] ) . '&url=' . ( isset( $pluginsInfo[ $slug ]['PluginURI'] ) ? rawurlencode( $pluginsInfo[ $slug ]['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $pluginsInfo[ $slug ]['name'] ); ?>" target="_blank" class="open-plugin-details-modal">
+							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $pluginsInfo[ $slug ]['slug'] ) . '&url=' . ( isset( $pluginsInfo[ $slug ]['PluginURI'] ) ? rawurlencode( $pluginsInfo[ $slug ]['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $pluginsInfo[ $slug ]['name'] ); ?>" target="_blank" class="open-plugin-details-modal" open-wpplugin="yes">
 								<?php echo esc_html( $pluginsInfo[ $slug ]['name'] ); ?>
 							</a>
 						</td>
@@ -128,6 +128,7 @@ class MainWP_Updates_Per_Item {
 								</thead>
 								<tbody plugin_slug="<?php echo $plugin_name; ?>">
 									<?php
+									$first_wpplugin = true;
 									MainWP_DB::data_seek( $websites, 0 );
 									while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 										if ( $website->is_ignorePluginUpdates ) {
@@ -167,13 +168,13 @@ class MainWP_Updates_Per_Item {
 											'title'   => MainWP_Updates::render_site_link_dashboard( $website, false ),
 											'login'   => '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" data-tooltip="' . esc_attr__( 'Jump to the site WP Admin', 'mainwp' ) . '"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>',
 											'version' => '<strong class="mainwp-768-show">' . esc_html__( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $plugin_upgrade['Version'] ),
-											'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong><a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog" target="_blank" class="open-plugin-details-modal">' . esc_html( $plugin_upgrade['update']['new_version'] ) . '</a>',
+											'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong><a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog" target="_blank" class="open-plugin-details-modal">' . esc_html( $plugin_upgrade['update']['new_version'] ) . '</a>',
 											'trusted' => ( in_array( $slug, $trustedPlugins ) ? true : false ),
 											'status'  => ( isset( $plugin_upgrade['active'] ) && $plugin_upgrade['active'] ) ? true : false,
 											'client'  => ( isset( $website->client_name ) && '' != $website->client_name ) ? $website->client_name : '',
 										);
 										?>
-										<tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0">
+										<tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . $website->id . '"' : ''; ?>>
 											<?php
 											$row_columns     = $updates_table_helper->render_columns( $row_columns, $website );
 											$action_rendered = isset( $row_columns['action'] ) ? true : false;
@@ -190,6 +191,7 @@ class MainWP_Updates_Per_Item {
 											<?php endif; ?>		
 										</tr>
 										<?php
+										$first_wpplugin = false;
 									}
 									?>
 								</tbody>
@@ -575,7 +577,7 @@ class MainWP_Updates_Per_Item {
 				<tr class="title">
 					<td class="accordion-trigger"><i class="dropdown icon"></i></td>
 					<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( dirname( $slug ) ); ?></td>
-					<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $val['uri'] ) ? rawurlencode( $val['uri'] ) : '' ) . '&name=' . rawurlencode( $val['name'] ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $val['name'] ); ?></a></td>
+					<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $val['uri'] ) ? rawurlencode( $val['uri'] ) : '' ) . '&name=' . rawurlencode( $val['name'] ); ?>" target="_blank" class="open-plugin-details-modal" open-wpplugin="yes"><?php echo esc_html( $val['name'] ); ?></a></td>
 					<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Website', 'Websites', $cnt, 'mainwp' ); ?></td>
 					<td class="right aligned">
 						<?php if ( MainWP_Updates::user_can_ignore_updates() ) { ?>
@@ -597,6 +599,7 @@ class MainWP_Updates_Per_Item {
 							</thead>
 							<tbody class="abandoned-plugins-ignore-global" plugin_slug="<?php echo rawurlencode( $slug ); ?>" plugin_name="<?php echo rawurlencode( $val['name'] ); ?>" dismissed="0">
 							<?php
+							$first_wpplugin = true;
 							MainWP_DB::data_seek( $websites, 0 );
 							while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 								$plugins_outdate = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
@@ -630,7 +633,7 @@ class MainWP_Updates_Per_Item {
 								$diff_in_days             = $now->diff( $plugin_last_updated_date )->format( '%a' );
 								$outdate_notice           = sprintf( $str_format, $diff_in_days );
 								?>
-								<tr site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" dismissed="0">
+								<tr site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" dismissed="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . $website->id . '"' : ''; ?>>
 									<td><strong class="mainwp-768-show"><?php esc_html_e( 'Website:', 'mainwp' ); ?></strong> <?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 									</td>
 									<td><strong class="mainwp-768-show"><?php esc_html_e( 'Version:', 'mainwp' ); ?></strong> <?php echo esc_html( $plugin_outdate['Version'] ); ?></td>
@@ -643,6 +646,7 @@ class MainWP_Updates_Per_Item {
 									</td>
 								</tr>
 								<?php
+								$first_wpplugin = false;
 							}
 							?>
 							</tbody>

@@ -1392,7 +1392,7 @@ class MainWP_Connect {
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] Error: NOMAINWP' );
 			$detect_wsidchk = is_string( $data ) ? strpos( $data, 'wsidchk' ) : false;
 			if ( false !== $detect_wsidchk ) {
-				$thr_error = new MainWP_Exception( 'Connection Failed. We suspect that Imunify360, a security layer added by your host, is causing this problem. Please contact your host to whitelist your Dashboard IP in their system. If you need help determining your MainWP Dashboard site IP address, check with your hosting provider.', $url );
+				$thr_error = new MainWP_Exception( 'ERROR:Connection Failed. We suspect that Imunify360, a security layer added by your host, is causing this problem. Please contact your host to whitelist your Dashboard IP in their system. If you need help determining your MainWP Dashboard site IP address, check with your hosting provider.', $url );
 			} else {
 				$thr_error = new MainWP_Exception( 'NOMAINWP', $url );
 			}

@@ -599,6 +599,8 @@ class MainWP_UI {
 				$tour_id = '29008';
 			} elseif ( isset( $_GET['tab'] ) && 'abandoned-themes' == $_GET['tab'] ) {
 				$tour_id = '29009';
+			} elseif ( isset( $_GET['tab'] ) && 'plugin-db-updates' == $_GET['tab'] ) {
+				$tour_id = '33161';
 			} else {
 				$tour_id = '28259';
 			}
@@ -672,6 +674,20 @@ class MainWP_UI {
 			$tour_id = '32152';
 		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Clean-And-Lock-Extension' == $_GET['page'] ) {
 			$tour_id = '32153';
+		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Woocommerce-Shortcuts-Extension' == $_GET['page'] ) {
+			$tour_id = '32851';
+		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Buddy-Extension' == $_GET['page'] ) {
+			$tour_id = '33064';
+		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Backwpup-Extension' == $_GET['page'] ) {
+			$tour_id = '32923';
+		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Ssl-Monitor-Extension' == $_GET['page'] ) {
+			$tour_id = '33164';
+		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Cache-Control-Extension' == $_GET['page'] ) {
+			$tour_id = '33167';
+		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Maintenance-Extension' == $_GET['page'] ) {
+			$tour_id = '33301';
+		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Domain-Monitor-Extension' == $_GET['page'] ) {
+			$tour_id = '33300';
 		}
 
 		?>

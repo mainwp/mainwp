@@ -284,8 +284,9 @@ class MainWP_Setup_Wizard {
 		<div class="ui hidden divider"></div>
 		<form method="post" class="ui form">
 			<div class="ui green segment">
-				<h3><?php esc_html_e( 'MainWP Guided Tours', 'mainwp' ); ?> <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></h3>
-				<div class="ui info message">
+				<h2><?php esc_html_e( 'MainWP Guided Tours', 'mainwp' ); ?> <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></h2>
+				<?php esc_html_e( 'MainWP guided tours are designed to provide information about all essential features on each MainWP Dashboard page.', 'mainwp' ); ?>
+				<div class="ui blue message">
 					<?php echo sprintf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
 				</div>
 				<div class="ui form">
@@ -295,7 +296,7 @@ class MainWP_Setup_Wizard {
 					<div class="ui hidden divider"></div>
 					<div class="ui toggle checkbox">
 						<input type="checkbox" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" <?php echo ( ( 1 == get_option( 'mainwp_enable_guided_tours', 0 ) ) ? 'checked="true"' : '' ); ?>>
-						<label for="mainwp-guided-tours-option"><?php esc_html_e( 'Select to enable the MainWP Guided Tours.', 'mainwp' ); ?></label>
+						<label for="mainwp-guided-tours-option"><?php esc_html_e( 'Select to enable the MainWP Guided Tours.', 'mainwp' ); ?><span class="ui left pointing green label"><?php esc_html_e( 'Highly recommended if new to MainWP!', 'mainwp' ); ?></span></label>
 					</div>
 				</div>
 			</div>

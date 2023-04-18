@@ -2736,13 +2736,22 @@ mainwp_upload_bulk_start_specific = function (type, urls, activatePlugin, overwr
 jQuery(document).ready(function ($) {
   jQuery(document).on('click', '.open-plugin-details-modal', function () {
     var itemDetail = this;
+
+    var openwpp = jQuery(this).attr('open-wpplugin');
+    var openwpp_site = '';
+    if (typeof openwpp != "undefined" && 'yes' == openwpp) {
+      var findNext = jQuery(this).closest('tr').next().find('tr[open-wpplugin-siteid]');
+      if (findNext.length > 0) {
+        openwpp_site = '&wpplugin=' + jQuery(findNext).attr('open-wpplugin-siteid');
+      }
+    }
     $('#mainwp-plugin-details-modal').modal({
       onHide: function () {
       },
       onShow: function () {
         $('#mainwp-plugin-details-modal').find('.ui.embed').embed({
           source: 'WP',
-          url: $(itemDetail).attr('href'),
+          url: $(itemDetail).attr('href') + openwpp_site,
         });
         return false;
       }
@@ -3011,6 +3020,11 @@ getErrorMessageInfo = function (repError, outputType) {
 
   if (msg == '') {
     msg = getErrorMessage(repError);
+    
+    if (repError.message == 'NOMAINWP' || repError == 'NOMAINWP' ){
+        msg = __('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the MainWP Community for help.');
+    }
+    
     if (msg != '') {
       msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + msg + '"><i class="red times icon"></i></span>';
     }

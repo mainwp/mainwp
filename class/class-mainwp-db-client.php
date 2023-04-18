@@ -756,7 +756,9 @@ class MainWP_DB_Client extends MainWP_DB {
 				$clients     = explode( ';', $client );
 				$clientWhere = '';
 				foreach ( $clients as $clt ) {
-					$clientWhere .= $this->escape( $clt ) . ', ';
+					if ( is_numeric( $clt ) ) {
+						$clientWhere .= intval( $clt ) . ', ';
+					}
 				}
 				$clientWhere = rtrim( $clientWhere, ', ' );
 
@@ -941,8 +943,7 @@ class MainWP_DB_Client extends MainWP_DB {
 			$client_ids = array_filter(
 				$client_ids,
 				function( $e ) {
-					$e = intval( $e );
-					return ( 0 < $e ) ? true : false;
+					return is_numeric( $e ) && ! empty( $e ) ? true : false; // to valid client ids.
 				}
 			);
 			$client     = implode( ';', $client_ids );

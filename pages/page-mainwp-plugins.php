@@ -1917,8 +1917,8 @@ class MainWP_Plugins {
 				<?php foreach ( $plugins as $slug => $plugin ) : ?>
 					<?php
 					$name = $plugin['name'];
-					$wpid = isset($plugin['websiteid']) ? intval($plugin['websiteid']) : 0; 
-					
+					$wpid = isset($plugin['websiteid']) ? intval($plugin['websiteid']) : 0;
+
 					if ( ! empty( $search_status ) && 'all' !== $search_status ) {
 						if ( 'trust' === $search_status && ! in_array( $slug, $trustedPlugins ) ) {
 							continue;

@@ -63,7 +63,7 @@ class MainWP_Sync {
 			return false;
 		}
 
-		if( $clear_session ) {
+		if ( $clear_session ) {
 			MainWP_Utility::end_session();
 		}
 

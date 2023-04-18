@@ -174,7 +174,7 @@ class MainWP_Updates_Per_Item {
 											'client'  => ( isset( $website->client_name ) && '' != $website->client_name ) ? $website->client_name : '',
 										);
 										?>
-										<tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . $website->id . '"' : ""; ?>>
+										<tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . $website->id . '"' : ''; ?>>
 											<?php
 											$row_columns     = $updates_table_helper->render_columns( $row_columns, $website );
 											$action_rendered = isset( $row_columns['action'] ) ? true : false;
@@ -633,7 +633,7 @@ class MainWP_Updates_Per_Item {
 								$diff_in_days             = $now->diff( $plugin_last_updated_date )->format( '%a' );
 								$outdate_notice           = sprintf( $str_format, $diff_in_days );
 								?>
-								<tr site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" dismissed="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . $website->id . '"' : ""; ?>>
+								<tr site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" dismissed="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . $website->id . '"' : ''; ?>>
 									<td><strong class="mainwp-768-show"><?php esc_html_e( 'Website:', 'mainwp' ); ?></strong> <?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 									</td>
 									<td><strong class="mainwp-768-show"><?php esc_html_e( 'Version:', 'mainwp' ); ?></strong> <?php echo esc_html( $plugin_outdate['Version'] ); ?></td>

@@ -46,17 +46,18 @@ class MainWP_Extensions_Handler {
 	 * @var array $possible_options
 	 */
 	private static $possible_options = array(
-		'plugin_upgrades'  => 'plugin_upgrades',
-		'theme_upgrades'   => 'theme_upgrades',
-		'premium_upgrades' => 'premium_upgrades',
-		'plugins'          => 'plugins',
-		'themes'           => 'themes',
-		'dtsSync'          => 'dtsSync',
-		'version'          => 'version',
-		'sync_errors'      => 'sync_errors',
-		'ignored_plugins'  => 'ignored_plugins',
-		'wp_upgrades'      => 'wp_upgrades',
-		'site_info'        => 'site_info',
+		'plugin_upgrades',
+		'theme_upgrades',
+		'premium_upgrades',
+		'plugins',
+		'themes',
+		'dtsSync',
+		'version',
+		'sync_errors',
+		'ignored_plugins',
+		'wp_upgrades',
+		'site_info',
+		'client',
 	);
 
 
@@ -679,8 +680,8 @@ class MainWP_Extensions_Handler {
 
 		if ( is_array( $options ) ) {
 			foreach ( $options as $option_name => $value ) {
-				if ( ( true == $value ) && isset( self::$possible_options[ $option_name ] ) ) {
-					$data[] = self::$possible_options[ $option_name ];
+				if ( ( true == $value ) && in_array( $option_name, self::$possible_options ) ) {
+					$data[] = $option_name;
 				}
 			}
 		}
@@ -711,6 +712,78 @@ class MainWP_Extensions_Handler {
 
 		return $dbwebsites;
 	}
+
+
+	/**
+	 * Get DB Sites.
+	 *
+	 * @since 4.4.2
+	 *
+	 * @param mixed $pluginFile Extension plugin file to verify.
+	 * @param mixed $key The child-key.
+	 * @param mixed $params params.
+	 *
+	 * @return array $dbwebsites.
+	 */
+	public static function hook_get_db_websites( $pluginFile, $key, $params = array() ) {
+		if ( ! self::hook_verify( $pluginFile, $key ) ) {
+			return false;
+		}
+
+		if ( empty( $params ) || ! is_array( $params ) ) {
+			return false;
+		}
+
+		$dbwebsites = array();
+		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version', 'http_user', 'http_pass', 'sync_errors' );
+
+		$fields  = isset( $params['fields'] ) && is_array( $params['fields'] ) ? $params['fields'] : array();
+		$sites   = isset( $params['sites'] ) && is_array( $params['sites'] ) ? $params['sites'] : array();
+		$groups  = isset( $params['groups'] ) && is_array( $params['groups'] ) ? $params['groups'] : array();
+		$clients = isset( $params['clients'] ) && is_array( $params['clients'] ) ? $params['clients'] : array();
+
+		if ( is_array( $fields ) ) {
+			foreach ( $fields as $field ) {
+				if ( in_array( $field, self::$possible_options ) ) {
+					$data[] = $field;
+				}
+			}
+		}
+
+		if ( ! empty( $sites ) ) {
+			foreach ( $sites as $k => $v ) {
+				if ( MainWP_Utility::ctype_digit( $v ) ) {
+					$website = MainWP_DB::instance()->get_website_by_id( $v );
+					if ( empty( $website ) ) {
+						continue;
+					}
+					$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
+				}
+			}
+		}
+
+		if ( ! empty( $groups ) ) {
+			foreach ( $groups as $k => $v ) {
+				if ( MainWP_Utility::ctype_digit( $v ) ) {
+					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
+					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
+					}
+					MainWP_DB::free_result( $websites );
+				}
+			}
+		}
+
+		$client_sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $clients );
+		if ( $client_sites ) {
+			foreach ( $client_sites as $website ) {
+				$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
+			}
+		}
+
+		return $dbwebsites;
+	}
+
 
 	/**
 	 * Get Sites.

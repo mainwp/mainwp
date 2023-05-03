@@ -877,6 +877,16 @@ class MainWP_System_View {
 	public static function get_plugins_install_check() {
 		$plugins = array(
 			array(
+				'page' => 'Extensions-Mainwp-Pro-Reports-Extension',
+				'slug' => 'mainwp-child-reports/mainwp-child-reports.php',
+				'name' => 'MainWP Child Reports',
+			),
+			array(
+				'page' => 'Extensions-Mainwp-Client-Reports-Extension',
+				'slug' => 'mainwp-child-reports/mainwp-child-reports.php',
+				'name' => 'MainWP Child Reports',
+			),
+			array(
 				'page' => 'Extensions-Mainwp-Backwpup-Extension',
 				'slug' => 'backwpup/backwpup.php',
 				'name' => 'BackWPup',

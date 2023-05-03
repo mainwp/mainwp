@@ -714,7 +714,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			$params = array();
 		}
 
-		$selectgroups = isset( $params['select_groups'] ) ? $params['select_groups'] : false;
+		$selectgroups = ! empty( $params['select_groups'] ) ? true : false;
 		$search_site  = isset( $params['search_site'] ) && ! empty( $params['search_site'] ) ? $params['search_site'] : null;
 		$orderBy      = isset( $params['order_by'] ) && ! empty( $params['order_by'] ) ? $params['order_by'] : 'wp.url';
 		$offset       = isset( $params['offset'] ) ? $params['offset'] : false;
@@ -728,6 +728,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		$extra_select_sql_fields = isset( $params['extra_select_sql_fields'] ) && ! empty( $params['extra_select_sql_fields'] ) ? $params['extra_select_sql_fields'] : '';
 
 		$is_staging = isset( $params['is_staging'] ) && 'yes' === $params['is_staging'] ? 'yes' : 'no';
+		$count_only = isset( $params['count_only'] ) && $params['count_only'] ? true : false;
 
 		$where = '';
 
@@ -756,8 +757,14 @@ class MainWP_DB extends MainWP_DB_Base {
 
 		// wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
 		if ( $selectgroups ) {
-			$qry = 'SELECT' . $select_wp_fields . $extra_select_sql_fields . ',wp_sync.sync_errors,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids,
-            wpclient.name as client_name
+			if ( $count_only ) {
+				$select = ' COUNT(DISTINCT(wp.id)) ';
+			} else {
+				$select = $select_wp_fields . '
+				' . $extra_select_sql_fields . '
+				,wp_sync.sync_errors,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, wpclient.name as client_name ';
+			}
+			$qry = 'SELECT ' . $select . '
             FROM ' . $this->table_name( 'wp' ) . ' wp
             LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
             LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
@@ -765,25 +772,38 @@ class MainWP_DB extends MainWP_DB_Base {
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid ' .
 			$extra_join . '
-            WHERE 1 ' . $where . '
-            GROUP BY wp.id, wp_sync.sync_id
-            ORDER BY ' . $orderBy;
+            WHERE 1 ' . $where;
+			if ( ! $count_only ) {
+				$qry .= ' GROUP BY wp.id, wp_sync.sync_id';
+			}
+			$qry .= ' ORDER BY ' . $orderBy;
 		} else {
-			$qry = 'SELECT ' . $select_wp_fields . $extra_select_sql_fields . ',wp_sync.sync_errors,wp_optionview.*, wpclient.name as client_name
+			if ( $count_only ) {
+				$select = ' COUNT(DISTINCT(wp.id)) ';
+			} else {
+				$select = $select_wp_fields . '
+				' . $extra_select_sql_fields . '
+				,wp_sync.sync_errors,wp_optionview.*, wpclient.name as client_name ';
+			}
+			$qry = 'SELECT ' . $select . '
             FROM ' . $this->table_name( 'wp' ) . ' wp
 			LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid ' .
 			$extra_join . '
-            WHERE 1 ' . $where . '
-            GROUP BY wp.id, wp_sync.sync_id
-            ORDER BY ' . $orderBy;
+            WHERE 1 ' . $where;
+			if ( ! $count_only ) {
+				$qry .= ' GROUP BY wp.id, wp_sync.sync_id';
+			}
+			$qry .= ' ORDER BY ' . $orderBy;
 		}
 
-		if ( ( false !== $offset ) && ( false !== $rowcount ) ) {
-			$qry .= ' LIMIT ' . intval( $offset ) . ', ' . intval( $rowcount );
-		} elseif ( false !== $rowcount ) {
-			$qry .= ' LIMIT ' . intval( $rowcount );
+		if ( ! $count_only ) {
+			if ( ( false !== $offset ) && ( false !== $rowcount ) ) {
+				$qry .= ' LIMIT ' . intval( $offset ) . ', ' . intval( $rowcount );
+			} elseif ( false !== $rowcount ) {
+				$qry .= ' LIMIT ' . intval( $rowcount );
+			}
 		}
 		return $qry;
 	}
@@ -846,6 +866,9 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 		foreach ( $other_fields as $field ) {
 			if ( ! in_array( $field, $allow_other_fields ) ) {
+				continue;
+			}
+			if ( in_array( $field, $default_fields ) ) {
 				continue;
 			}
 			$select .= 'wp.' . $this->escape( $field ) . ',';

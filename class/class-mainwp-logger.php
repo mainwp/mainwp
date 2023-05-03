@@ -709,6 +709,9 @@ class MainWP_Logger {
 		while ( $rows && ( $row  = MainWP_DB::fetch_object( $rows ) ) ) {
 			$type = $row->log_type;
 			$line = $row->log_content;
+			if ( 120 * 1024 < strlen( $line ) ) {
+				$line = '[Data row too long]';
+			}
 
 			$time = gmdate( $this->logDateFormat, $row->log_timestamp );
 

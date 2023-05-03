@@ -71,6 +71,7 @@ class MainWP_System_Handler {
 
 		add_filter( 'mainwp_getsites', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_sites' ), 10, 5 );
 		add_filter( 'mainwp_getdbsites', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_db_sites' ), 10, 5 );
+		add_filter( 'mainwp_get_db_websites', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_db_websites' ), 10, 5 );
 
 		/**
 		 * This hook allows you to get a information about groups via the 'mainwp-getgroups' filter.

@@ -287,10 +287,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 4.4.2 - 5-3-2023 =
+= 4.4.2 - 5-9-2023 =
 * Fixed: Multiple PHP warnings
 * Added: Required plugin check for the Pro Reports extension
 * Added: Support for selecting sites by Client in Pro Reports extension
+* Added: Ability to create multiple authentication credentials for the MainWP REST API
+* Updated: Moved the MainWP REST API settings page to the top-level navigation
 
 = 4.4.1 - 4-18-2023 =
 * Fixed: Incorrect feedback after a failed update for Premium plugins

@@ -228,7 +228,6 @@ class MainWP_Rest_Api_Page {
 				$desc            = sanitize_text_field( wp_unslash( $_POST['mainwp_rest_add_api_key_desc'] ) );
 				$enabled         = ! empty( $_POST['mainwp_enable_rest_api'] ) ? 1 : 0;
 				// hash the password.
-				// $consumer_key_hashed    = wp_hash_password( $consumer_key );
 				$consumer_secret_hashed    = wp_hash_password( $consumer_secret );
 				$all_keys[ $consumer_key ] = array(
 					'cs'      => $consumer_secret_hashed,
@@ -397,12 +396,9 @@ class MainWP_Rest_Api_Page {
 		if ( ! is_array( $all_keys ) ) {
 			$all_keys = array();
 		}
-
 		self::render_header();
 		self::render_table_top();
 		?>
-		
-					
 		<div id="mainwp-rest-api-keys" class="ui segment">
 			<div class="ui message" id="mainwp-message-zone-apikeys" style="display:none;"></div>
 			<?php self::show_messages(); ?>
@@ -662,9 +658,7 @@ class MainWP_Rest_Api_Page {
 					</form>
 				</div>
 			</div>
-
 			<script type="text/javascript">
-						
 				jQuery(document).ready(function ($) {
 					//we are going to inject the values into the copy buttons to make things easier for people
 					$('#mainwp_consumer_key_clipboard_button').attr('data-clipboard-text', '<?php echo esc_html( $consumer_key ); ?>');
@@ -695,7 +689,14 @@ class MainWP_Rest_Api_Page {
 		return bin2hex( openssl_random_pseudo_bytes( 20 ) ); // @codingStandardsIgnoreLine
 	}
 
-	/** Render REST API SubPage */
+	/**
+	 * Method render_rest_api_edit().
+	 *
+	 * Render REST API edit screen.
+	 *
+	 * @param string $keyid Key ID edit.
+	 * @param array  $item The Key edit.
+	 */
 	public static function render_rest_api_edit( $keyid, $item ) {
 
 		$edit_desc = is_array( $item ) && isset( $item['desc'] ) ? $item['desc'] : '';
@@ -709,14 +710,12 @@ class MainWP_Rest_Api_Page {
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<input type="hidden" name="edit_key_nonce" value="<?php echo wp_create_nonce( 'edit-key-nonce-' . $keyid ); ?>" />
 						<input type="hidden" name="editkey_id" value="<?php echo esc_html( $keyid ); ?>" />
-											
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable REST API Key', 'mainwp' ); ?></label>
 							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the REST API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
 								<input type="checkbox" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" value="1" <?php echo ( $enabled ? 'checked="true"' : '' ); ?> />
 							</div>
 						</div>
-
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Description', 'mainwp' ); ?></label>
 							<div class="five wide column">

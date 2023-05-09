@@ -408,7 +408,6 @@ class MainWP_System_Handler {
 				if ( isset( $_POST['mainwp_restore_info_messages'] ) && ! empty( $_POST['mainwp_restore_info_messages'] ) ) {
 					delete_user_option( $user->ID, 'mainwp_notice_saved_status' );
 				} else {
-					MainWP_Utility::update_option( 'mainwp_enable_managed_cr_for_wc', ( ! isset( $_POST['enable_managed_cr_for_wc'] ) ? 0 : 1 ) );
 					$enabled_twit = ! isset( $_POST['mainwp_hide_twitters_message'] ) ? 0 : 1;
 					MainWP_Utility::update_option( 'mainwp_hide_twitters_message', $enabled_twit );
 					if ( ! $enabled_twit ) {
@@ -537,21 +536,6 @@ class MainWP_System_Handler {
 		}
 	}
 
-
-	/**
-	 * Method handle_rest_api_settings()
-	 *
-	 * Handle rest api settings
-	 */
-	public function handle_rest_api_settings() {
-		if ( isset( $_POST['submit'] ) && isset( $_GET['page'] ) && 'RESTAPI' === $_GET['page'] ) {
-			if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) {
-				MainWP_Utility::update_option( 'mainwp_enable_rest_api', ( ! isset( $_POST['mainwp_enable_rest_api'] ) ? 0 : 1 ) );
-
-			}
-		}
-	}
-
 	/**
 	 * Method handle_settings_post()
 	 *
@@ -568,7 +552,6 @@ class MainWP_System_Handler {
 		if ( isset( $_GET['page'] ) && ( isset( $_POST['wp_nonce'] ) || isset( $_POST['wp_scr_options_nonce'] ) ) ) {
 			$this->include_pluggable();
 			$this->handle_mainwp_tools_settings();
-			$this->handle_rest_api_settings();
 			$this->handle_manage_sites_screen_settings();
 			$this->handle_monitoring_sites_screen_settings();
 			$this->handle_clients_screen_settings();

@@ -436,15 +436,21 @@ class MainWP_Server_Information_Handler {
 	}
 
 	/**
-	 * Checks if PHP fopen is allowed.
+	 * Checks if PHP url fopen is allowed.
 	 */
 	public static function get_php_allow_url_fopen() {
-		if ( ini_get( 'allow_url_fopen' ) ) {
-			$allow_url_fopen = esc_html__( 'YES', 'mainwp' );
-		} else {
-			$allow_url_fopen = esc_html__( 'NO', 'mainwp' );
+		$allow = ini_get( 'allow_url_fopen' );
+		if ( is_numeric( $allow ) ) {
+			$allow = intval( $allow );
+			if ( $allow ) {
+				$allow_url_fopen = esc_html__( 'YES', 'mainwp' );
+			} else {
+				$allow_url_fopen = esc_html__( 'NO', 'mainwp' );
+			}
+			echo $allow_url_fopen;
+		} elseif ( is_string( $allow ) ) {
+			echo esc_html( $allow );
 		}
-		echo $allow_url_fopen;
 	}
 
 	/**
@@ -813,7 +819,6 @@ class MainWP_Server_Information_Handler {
 			'mainwp_maximumInstallUpdateRequests'    => esc_html__( 'Minimum simultaneous install/update requests', 'mainwp' ),
 			'mainwp_maximumSyncRequests'             => esc_html__( 'Maximum simultaneous sync requests', 'mainwp' ),
 			'mainwp_maximumInstallUpdateRequests'    => esc_html__( 'Maximum simultaneous install and update requests', 'mainwp' ),
-			'mainwp_enable_rest_api'                 => esc_html__( 'REST API enabled', 'mainwp' ),
 			'mainwp_auto_purge_cache'                => esc_html__( 'Cache control enabled', 'mainwp' ),
 		);
 
@@ -872,6 +877,11 @@ class MainWP_Server_Information_Handler {
 				'value' => $value,
 			);
 		}
+
+		$options_value[ $opt ] = array(
+			'label' => esc_html__( 'REST API enabled', 'mainwp' ),
+			'value' => Rest_Api::instance()->enabled_rest_api() ? esc_html__( 'Yes', 'mainwp' ) : esc_html__( 'No', 'mainwp' ),
+		);
 
 		/**
 		 * Filter: mainwp_getprimarybackup_methods

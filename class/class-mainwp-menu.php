@@ -170,6 +170,13 @@ class MainWP_Menu {
 				}
 			}
 
+			// Manage RESTAPI.
+			if ( ! self::is_disable_menu_item( 2, 'RESTAPI' ) ) {
+				if ( mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_restapi' ) ) {
+					MainWP_Rest_Api_Page::init_menu();
+				}
+			}
+
 			// Manage Settings.
 			if ( ! self::is_disable_menu_item( 2, 'Settings' ) ) {
 				if ( mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
@@ -230,6 +237,10 @@ class MainWP_Menu {
 		}
 		if ( ! self::is_disable_menu_item( 2, 'managesites' ) ) {
 			MainWP_Manage_Sites::init_subpages_menu();
+		}
+
+		if ( ! self::is_disable_menu_item( 2, 'RESTAPI' ) ) {
+			MainWP_Rest_Api_Page::init_subpages_menu();
 		}
 
 		if ( ! self::is_disable_menu_item( 2, 'Settings' ) ) {

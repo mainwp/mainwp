@@ -239,6 +239,8 @@ class MainWP_System {
 		MainWP_Plugins::init();
 		MainWP_Updates_Overview::init();
 		MainWP_Client::init();
+		MainWP_Rest_Api_Page::init();
+
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			MainWP_WP_CLI_Command::init();
 		}
@@ -301,7 +303,6 @@ class MainWP_System {
 				'mainwp_delay_autoupdate',
 				'mainwp_wpcreport_extension',
 				'mainwp_daily_digest_plain_text',
-				'mainwp_enable_managed_cr_for_wc',
 				'mainwp_hide_update_everything',
 				'mainwp_number_overview_columns',
 				'mainwp_number_clients_overview_columns',

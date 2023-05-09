@@ -91,7 +91,7 @@ class MainWP_Client {
 	public static function init_menu() {
 		self::$page = add_submenu_page(
 			'mainwp_tab',
-			__( 'Clients', 'mainwp' ),
+			esc_html__( 'Clients', 'mainwp' ),
 			'<span id="mainwp-clients">' . esc_html__( 'Manage Clients', 'mainwp' ) . '</span>',
 			'read',
 			'ManageClients',
@@ -103,7 +103,7 @@ class MainWP_Client {
 
 		add_submenu_page(
 			'mainwp_tab',
-			__( 'Clients', 'mainwp' ),
+			esc_html__( 'Clients', 'mainwp' ),
 			'<div class="mainwp-hidden">' . esc_html__( 'Add Client', 'mainwp' ) . '</div>',
 			'read',
 			'ClientAddNew',
@@ -115,7 +115,7 @@ class MainWP_Client {
 
 		add_submenu_page(
 			'mainwp_tab',
-			__( 'Clients', 'mainwp' ),
+			esc_html__( 'Clients', 'mainwp' ),
 			'<div class="mainwp-hidden">' . esc_html__( 'Client Fields', 'mainwp' ) . '</div>',
 			'read',
 			'ClientAddField',

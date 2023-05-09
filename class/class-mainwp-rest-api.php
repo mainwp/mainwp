@@ -50,64 +50,38 @@ class Rest_Api {
 	 * Adds an action to create the rest API endpoints if activated in the plugin settings.
 	 */
 	public function init() {
+		if ( $this->enabled_rest_api() ) {
+			add_filter( 'mainwp_rest_api_validate', array( &$this, 'rest_api_validate' ), 10, 2 );
+			// run API.
+			add_action( 'rest_api_init', array( &$this, 'mainwp_register_routes' ) );
+		}
+	}
 
-		// add ajax action.
-		MainWP_Post_Handler::instance()->add_post_action( 'mainwp_generate_api_credentials', array( &$this, 'mainwp_generate_api_credentials' ) );
-		add_filter( 'mainwp_rest_api_validate', array( &$this, 'rest_api_validate' ), 10, 2 );
-		// only activate the api if enabled in the plugin settings.
-		if ( get_option( 'mainwp_enable_rest_api' ) ) {
-			// check to see whether activated or not.
-			$activated = get_option( 'mainwp_enable_rest_api' );
+	/**
+	 * Method enabled_rest_api()
+	 *
+	 * Enabled the REST API.
+	 */
+	public function enabled_rest_api() {
+		$disabled = apply_filters( 'mainwp_rest_api_disabled', false );
 
-			if ( $activated ) {
-				// run API.
-				add_action( 'rest_api_init', array( &$this, 'mainwp_register_routes' ) );
+		if ( $disabled ) {
+			false;
+		}
+
+		$all_keys = get_option( 'mainwp_rest_api_keys', false );
+
+		if ( ! is_array( $all_keys ) ) {
+			return false;
+		}
+
+		foreach ( $all_keys as $item ) {
+			if ( ! empty( $item['cs'] ) && ! empty( $item['enabled'] ) ) {
+				return true; // one key enabled, enabled the REST API.
 			}
 		}
-	}
 
-	/**
-	 * Method mainwp_generate_rand_hash()
-	 *
-	 * Generates a random hash to be used when generating the consumer key and secret.
-	 *
-	 * @return string Returns random string.
-	 */
-	public function mainwp_generate_rand_hash() {
-		if ( ! function_exists( 'openssl_random_pseudo_bytes' ) ) {
-			return sha1( wp_rand() );
-		}
-
-		return bin2hex( openssl_random_pseudo_bytes( 20 ) ); // @codingStandardsIgnoreLine
-	}
-
-	/**
-	 * Method mainwp_generate_api_credentials()
-	 *
-	 * Generates consumer key and secret and saves to the database encrypted.
-	 */
-	public function mainwp_generate_api_credentials() {
-
-		MainWP_Post_Handler::instance()->secure_request( 'mainwp_generate_api_credentials' );
-
-		// we need to generate a consumer key and secret and return the result and save it into the database.
-		$consumer_key    = 'ck_' . $this->mainwp_generate_rand_hash();
-		$consumer_secret = 'cs_' . $this->mainwp_generate_rand_hash();
-
-		$return_data = array(
-			'consumer_key'    => $consumer_key,
-			'consumer_secret' => $consumer_secret,
-		);
-
-		// hash the password.
-		$consumer_key_hashed    = wp_hash_password( $consumer_key );
-		$consumer_secret_hashed = wp_hash_password( $consumer_secret );
-
-		// store the data.
-		update_option( 'mainwp_rest_api_consumer_key', $consumer_key_hashed );
-		update_option( 'mainwp_rest_api_consumer_secret', $consumer_secret_hashed );
-
-		wp_die( wp_json_encode( $return_data ) );
+		return false; // all keys disabled.
 	}
 
 	/**
@@ -504,17 +478,25 @@ class Rest_Api {
 		}
 
 		// data stored in database.
-		$consumer_key_option    = get_option( 'mainwp_rest_api_consumer_key' );
-		$consumer_secret_option = get_option( 'mainwp_rest_api_consumer_secret' );
-
-		if ( wp_check_password( $consumer_key, $consumer_key_option ) && wp_check_password( $consumer_secret, $consumer_secret_option ) ) {
-			if ( ! defined( 'MAINWP_REST_API' ) ) {
-				define( 'MAINWP_REST_API', true );
-			}
-			return true;
-		} else {
-			return false;
+		$all_keys = MainWP_Rest_Api_Page::check_rest_api_updates();
+		if ( ! is_array( $all_keys ) ) {
+			$all_keys = array();
 		}
+
+		if ( isset( $all_keys[ $consumer_key ] ) ) {
+			$existed_key = $all_keys[ $consumer_key ];
+			if ( is_array( $existed_key ) && isset( $existed_key['cs'] ) ) {
+				$consumer_secret_key = $existed_key['cs'];
+				$enabled             = isset( $existed_key['enabled'] ) && ! empty( $existed_key['enabled'] ) ? true : false;
+				if ( $enabled && wp_check_password( $consumer_secret, $consumer_secret_key ) ) {
+					if ( ! defined( 'MAINWP_REST_API' ) ) {
+						define( 'MAINWP_REST_API', true );
+					}
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 

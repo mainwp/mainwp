@@ -158,20 +158,6 @@ class MainWP_Settings {
 			);
 		}
 
-		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'RESTAPI' ) ) {
-			add_submenu_page(
-				'mainwp_tab',
-				__( 'REST API', 'mainwp' ),
-				' <div class="mainwp-hidden">' . esc_html__( 'REST API', 'mainwp' ) . '</div>',
-				'read',
-				'RESTAPI',
-				array(
-					self::get_class_name(),
-					'render_rest_api',
-				)
-			);
-		}
-
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsAdvanced' ) ) {
 			add_submenu_page(
 				'mainwp_tab',
@@ -198,22 +184,6 @@ class MainWP_Settings {
 					'render_email_settings',
 				)
 			);
-		}
-
-		if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
-			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsClientReportsResponder' ) ) {
-				add_submenu_page(
-					'mainwp_tab',
-					__( 'Managed Client Reports', 'mainwp' ),
-					' <div class="mainwp-hidden">' . esc_html__( 'Managed Client Reports', 'mainwp' ) . '</div>',
-					'read',
-					'SettingsClientReportsResponder',
-					array(
-						self::get_class_name(),
-						'render_report_responder',
-					)
-				);
-			}
 		}
 
 		/**
@@ -258,20 +228,7 @@ class MainWP_Settings {
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=MainWPTools' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Tools', 'mainwp' ); ?></a>
-					<?php } ?>					
-					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'RESTAPI' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=RESTAPI' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'REST API', 'mainwp' ); ?></a>
-					<?php } ?>
-
-					<?php
-					if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
-						if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsClientReportsResponder' ) ) {
-							?>
-						<a href="<?php echo admin_url( 'admin.php?page=SettingsClientReportsResponder' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Managed Client Reports', 'mainwp' ); ?></a>
-							<?php
-						}
-					}
-					?>
+					<?php } ?>				
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) && ( count( self::$subPages ) > 0 ) ) {
 						foreach ( self::$subPages as $subPage ) {
@@ -342,24 +299,7 @@ class MainWP_Settings {
 				'slug'       => 'MainWPTools',
 				'right'      => '',
 			),
-			array(
-				'title'      => esc_html__( 'REST API', 'mainwp' ),
-				'parent_key' => 'Settings',
-				'href'       => 'admin.php?page=RESTAPI',
-				'slug'       => 'RESTAPI',
-				'right'      => '',
-			),
 		);
-
-		if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
-			$init_sub_subleftmenu[] = array(
-				'title'      => esc_html__( 'Managed Client Reports', 'mainwp' ),
-				'parent_key' => 'Settings',
-				'href'       => 'admin.php?page=SettingsClientReportsResponder',
-				'slug'       => 'SettingsClientReportsResponder',
-				'right'      => '',
-			);
-		}
 
 		MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'Settings', 'Settings' );
 		foreach ( $init_sub_subleftmenu as $item ) {
@@ -418,24 +358,6 @@ class MainWP_Settings {
 				'href'   => 'admin.php?page=MainWPTools',
 				'active' => ( 'MainWPTools' == $shownPage ) ? true : false,
 			);
-		}
-
-		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'RESTAPI' ) ) {
-			$renderItems[] = array(
-				'title'  => esc_html__( 'REST API', 'mainwp' ),
-				'href'   => 'admin.php?page=RESTAPI',
-				'active' => ( 'RESTAPI' == $shownPage ) ? true : false,
-			);
-		}
-
-		if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
-			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsClientReportsResponder' ) ) {
-				$renderItems[] = array(
-					'title'  => esc_html__( 'Managed Client Reports', 'mainwp' ),
-					'href'   => 'admin.php?page=SettingsClientReportsResponder',
-					'active' => ( 'SettingsClientReportsResponder' == $shownPage ) ? true : false,
-				);
-			}
 		}
 
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
@@ -1436,15 +1358,6 @@ class MainWP_Settings {
 						</div>
 					</div>
 					<?php
-						$enabled_lcr = ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) ? true : false;
-					?>
-						<div class="ui grid field" <?php echo $enabled_lcr ? '' : 'style="display:none"'; ?>>
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable Managed Client Reports for WooCommerce', 'mainwp' ); ?></label>
-							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable Managed Client Reports for WooCommerce', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="checkbox" name="enable_managed_cr_for_wc" <?php echo $enabled_lcr ? 'checked="true"' : ''; ?> />
-							</div>
-						</div>
-						<?php
 						/**
 						 * Action: mainwp_tools_form_bottom
 						 *
@@ -1453,7 +1366,7 @@ class MainWP_Settings {
 						 * @since 4.1
 						 */
 						do_action( 'mainwp_tools_form_bottom' );
-						?>
+					?>
 						<div class="ui divider"></div>
 						<input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 					</form>
@@ -1604,101 +1517,6 @@ class MainWP_Settings {
 		return $custom_theme;
 	}
 
-	/** Render REST API SubPage */
-	public static function render_rest_api() {
-		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
-
-			return;
-		}
-
-		self::render_header( 'RESTAPI' );
-
-		?>
-		<div id="rest-api-settings" class="ui segment">
-			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-rest-api-info-message' ) ) : ?>
-				<div class="ui info message">
-					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-rest-api-info-message"></i>
-					<?php echo sprintf( esc_html__( 'Enable the MainWP REST API functionality and generate API credentials.  Check this %1$shelp document%2$s to see all available endpoints.', 'mainwp' ), '<a href="https://mainwp.dev/rest-api/" target="_blank">', '</a>' ); ?>
-				</div>
-			<?php endif; ?>
-				<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) : ?>
-					<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
-				<?php endif; ?>
-				<div id="api-credentials-created" style="display: none;" class="ui green message"><i class="close icon"></i><?php esc_html_e( 'API credentials have been successfully generated. Please copy the consumer key and secret now as after you leave this page the credentials will no longer be accessible. You can retrieve new credentials any time by clicking the "Generate new API credentials" button below.', 'mainwp' ); ?></div>
-				<div class="ui form">
-					<form method="POST" action="">
-						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'RESTAPI' ); ?>" />
-						<?php
-						/**
-						 * Action: rest_api_form_top
-						 *
-						 * Fires at the top of REST API form.
-						 *
-						 * @since 4.1
-						 */
-						do_action( 'rest_api_form_top' );
-						?>
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable REST API', 'mainwp' ); ?></label>
-							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the REST API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-								<input type="checkbox" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" <?php echo ( ( 1 == get_option( 'mainwp_enable_rest_api', 0 ) ) ? 'checked="true"' : '' ); ?> />
-							</div>
-						</div>
-						<div class="ui grid field">
-							<div class="six wide column">
-							</div>
-							<div class="ten wide column">
-								<a id="generate-new-api-credentials" href="#" data-tooltip="<?php esc_attr_e( 'Generate new API credentials.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="ui green button"><?php esc_html_e( 'Generate New API Credentials.', 'mainwp' ); ?></a>	
-							</div>
-						</div>
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Consumer Key', 'mainwp' ); ?></label>
-
-							<div class="five wide column">
-								<input type="password" name="mainwp_consumer_key" id="mainwp_consumer_key" value="<?php echo ( ( false === get_option( 'mainwp_rest_api_consumer_key' ) ) ? '' : get_option( 'mainwp_rest_api_consumer_key' ) ); ?>" readonly />
-							</div>
-
-							<div class="five wide column">
-								<input id="mainwp_consumer_key_clipboard_button" style="display: none;" type="button" name="" class="ui green basic button copy-to-clipboard" value="<?php esc_attr_e( 'Copy to Clipboard', 'mainwp' ); ?>">
-							</div>
-						</div>
-
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Consumer Secret', 'mainwp' ); ?></label>
-
-							<div class="five wide column">
-								<input type="password" name="mainwp_consumer_secret" id="mainwp_consumer_secret" value="<?php echo ( ( false === get_option( 'mainwp_rest_api_consumer_secret' ) ) ? '' : get_option( 'mainwp_rest_api_consumer_secret' ) ); ?>" readonly />
-							</div>
-
-							<div class="five wide column">
-								<input id="mainwp_consumer_secret_clipboard_button" style="display: none;" type="button" name="" class="ui green basic button copy-to-clipboard" value="<?php esc_attr_e( 'Copy to Clipboard', 'mainwp' ); ?>">
-							</div>
-						</div>
-						<?php
-						/**
-						 * Action: rest_api_form_bottom
-						 *
-						 * Fires at the bottom of REST API form.
-						 *
-						 * @since 4.1
-						 */
-						do_action( 'rest_api_form_bottom' );
-						?>
-						<div class="ui divider"></div>
-						<input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
-						<div style="clear:both"></div>
-					</form>
-				</div>
-			</div>
-		<?php
-
-		self::render_footer( 'RESTAPI' );
-	}
-
-
-
 	/**
 	 * Export Child Sites and save as .csv file.
 	 *
@@ -1762,163 +1580,10 @@ class MainWP_Settings {
 	}
 
 	/**
-	 * Method generate_random_string()
-	 *
-	 * Generate a random string.
-	 *
-	 * @param integer $length Lenght of final string.
-	 *
-	 * @return string $randomString Random String.
-	 */
-	public static function generate_random_string( $length = 8 ) {
-
-		$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-		$charactersLength = strlen( $characters );
-
-		$randomString = '';
-
-		for ( $i = 0; $i < $length; $i++ ) {
-
-			$randomString .= $characters[ wp_rand( 0, $charactersLength - 1 ) ];
-		}
-
-		return $randomString;
-	}
-
-
-	/**
-	 * Render Client Reports Responder.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
-	 */
-	public static function render_report_responder() {
-		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
-			mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
-			return;
-		}
-
-		self::render_header( 'SettingsClientReportsResponder' );
-		?>
-		<div id="mainwp-mcrwc-settings" class="ui segment">
-			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-live-reports-info-message' ) ) : ?>
-				<div class="ui info message">
-					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-live-reports-info-message"></i>
-					<?php echo esc_html__( 'This feature is deprecated.  It will be removed in one of the next updates.', 'mainwp' ); ?>
-				</div>
-			<?php endif; ?>
-				<?php
-				if ( isset( $_POST['save_changes'] ) || isset( $_POST['reset_connection'] ) ) {
-					$nonce = isset( $_REQUEST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : '';
-					if ( ! wp_verify_nonce( $nonce, 'general_settings' ) ) {
-						echo '<div class="ui red message"><i class="close icon"></i>' . esc_html__( 'Unable to save settings, please refresh and try again.', 'mainwp' ) . '</div>';
-					} else {
-						if ( isset( $_POST['reset_connection'] ) ) {
-							MainWP_Utility::update_option( 'live-report-responder-pubkey', '' );
-						} else {
-							$siteurl = isset( $_POST['live_reponder_site_url'] ) ? sanitize_text_field( wp_unslash( $_POST['live_reponder_site_url'] ) ) : '';
-							if ( ! empty( $siteurl ) && '/' != substr( $siteurl, - 1 ) ) {
-								$siteurl = $siteurl . '/';
-							}
-							update_option( 'live-report-responder-siteurl', $siteurl );
-							update_option( 'live-report-responder-provideaccess', ( isset( $_POST['live_reponder_provideaccess'] ) ) ? sanitize_text_field( wp_unslash( $_POST['live_reponder_provideaccess'] ) ) : '' );
-							$security_token = self::generate_random_string();
-							update_option( 'live-reports-responder-security-id', ( isset( $_POST['requireUniqueSecurityId'] ) ) ? sanitize_text_field( wp_unslash( $_POST['requireUniqueSecurityId'] ) ) : '' );
-							update_option( 'live-reports-responder-security-code', stripslashes( $security_token ) );
-							echo '<div class="ui green message"><i class="close icon"></i>' . esc_html__( 'Settings have been saved successfully!', 'mainwp' ) . '</div>';
-						}
-					}
-				}
-				?>
-				<div class="ui form">
-					<form method="POST">
-					<?php
-					wp_nonce_field( 'general_settings' );
-					$pubkey = get_option( 'live-report-responder-pubkey' );
-					?>
-					<h3 class="ui dividing header"><?php esc_html_e( 'Managed Client Reports for WooCommerce Settings', 'mainwp' ); ?></h3>
-					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php esc_html_e( 'Managed Client Reports site URL', 'mainwp' ); ?></label>
-						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter your WooCommerce reporting site URL here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-							<input type="text"  name="live_reponder_site_url" placeholder="https://yourwoosite.com/" value="<?php echo esc_attr( get_option( 'live-report-responder-siteurl' ) ); ?>" autocomplete="off"
-							<?php
-							if ( ! empty( $pubkey ) ) {
-								echo 'disabled'; }
-							?>
-							>
-						</div>
-					</div>
-					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php esc_html_e( 'Allow connection', 'mainwp' ); ?></label>
-						<div class="ten wide column">
-							<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable to allow connection.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="checkbox" name="live_reponder_provideaccess" value="yes"
-								<?php
-								if ( 'yes' == get_option( 'live-report-responder-provideaccess' ) ) {
-									echo 'checked';
-								}
-
-								if ( ! empty( $pubkey ) ) {
-									echo 'disabled';
-								}
-								?>
-								>
-							</div>
-						</div>
-					</div>
-					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php esc_html_e( 'Require unique security ID to secure the connection', 'mainwp' ); ?></label>
-						<div class="ten wide column">
-							<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable to generate unique security ID for additional security.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-								<input name="requireUniqueSecurityId" type="checkbox" id="requireUniqueSecurityId"
-								<?php
-								if ( 'on' == get_option( 'live-reports-responder-security-id' ) ) {
-									echo 'checked';
-								}
-								?>
-								<?php
-								if ( ! empty( $pubkey ) ) {
-									echo 'disabled'; }
-								?>
-								/>
-							</div>
-						</div>
-					</div>
-					<?php if ( 'on' == get_option( 'live-reports-responder-security-id' ) ) { ?>
-					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php esc_html_e( 'Your unique Security ID', 'mainwp' ); ?></label>
-						<div class="ten wide column">
-							<div class="ui label huge">
-								<i class="key icon"></i>
-								<?php echo get_option( 'live-reports-responder-security-code' ); ?>
-							</div>
-						</div>
-					</div>
-					<?php } ?>
-					<div class="ui divider"></div>
-					<input type="submit" name="save_changes" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" class="ui button green big"
-						<?php
-						if ( ! empty( $pubkey ) ) {
-							echo 'disabled'; }
-						?>
-					/>
-					<?php if ( ! empty( $pubkey ) ) { ?>
-						<input type="submit" name="reset_connection" value="<?php esc_attr_e( 'Reset Connection', 'mainwp' ); ?>" class="ui button green big basic">
-					<?php } ?>
-					<div style="clear:both"></div>
-					</form>
-				</div>
-			</div>
-
-		<?php
-		self::render_footer( 'SettingsClientReportsResponder' );
-	}
-
-	/**
 	 * Hook the section help content to the Help Sidebar element
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && ( 'Settings' == $_GET['page'] || 'SettingsAdvanced' == $_GET['page'] || 'MainWPTools' == $_GET['page'] || 'SettingsClientReportsResponder' == $_GET['page'] ) ) {
+		if ( isset( $_GET['page'] ) && ( 'Settings' == $_GET['page'] || 'SettingsAdvanced' == $_GET['page'] || 'MainWPTools' == $_GET['page'] ) ) {
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Dashboard settings, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">

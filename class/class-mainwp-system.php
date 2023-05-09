@@ -240,7 +240,7 @@ class MainWP_System {
 		MainWP_Updates_Overview::init();
 		MainWP_Client::init();
 		MainWP_Rest_Api_Page::init();
-		
+
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			MainWP_WP_CLI_Command::init();
 		}

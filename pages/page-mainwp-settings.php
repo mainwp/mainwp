@@ -1366,7 +1366,7 @@ class MainWP_Settings {
 						 * @since 4.1
 						 */
 						do_action( 'mainwp_tools_form_bottom' );
-						?>
+					?>
 						<div class="ui divider"></div>
 						<input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 					</form>

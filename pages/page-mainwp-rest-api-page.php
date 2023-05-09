@@ -69,7 +69,6 @@ class MainWP_Rest_Api_Page {
 		add_action( 'mainwp-pagefooter-restapi', array( self::get_class_name(), 'render_footer' ) );
 
 		add_action( 'admin_init', array( self::get_instance(), 'admin_init' ) );
-
 	}
 
 	/** Run the export_sites method that exports the Child Sites .csv file */
@@ -284,7 +283,6 @@ class MainWP_Rest_Api_Page {
 			wp_safe_redirect( admin_url( 'admin.php?page=RESTAPI' . $msg ) );
 			exit();
 		}
-
 	}
 
 	/**

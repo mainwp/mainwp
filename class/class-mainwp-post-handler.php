@@ -139,7 +139,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_select_custom_theme', array( &$this, 'ajax_select_custom_theme' ) );
 		$this->add_action( 'mainwp_site_actions_dismiss', array( &$this, 'ajax_site_actions_dismiss' ) );
 		$this->add_action( 'mainwp_delete_non_mainwp_actions', array( &$this, 'ajax_delete_non_mainwp_actions' ) );
-
 	}
 
 	/**

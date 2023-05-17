@@ -33,7 +33,7 @@ Helping make changes to the MainWP Dashboard is a key way to help us improve Mai
 
 If you think something could be improved and you're able to do so, make your changes and submit a Pull Request. We'll be pleased to get it :)
 
-#### How To Submit A PR
+#### How To Submit a Pull Request
 
 * Fork the repository on GitHub
 * Make the changes to your forked repository

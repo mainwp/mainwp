@@ -27,14 +27,14 @@ class Rest_Api {
 	 * @var mixed Default null
 	 */
 	private static $instance = null;
-	
+
 	/**
 	 * Protected variable to hold the API version.
 	 *
 	 * @var string API version
 	 */
 	protected $api_version = '1';
-	
+
 	/**
 	 * private variable enabled api.
 	 *
@@ -64,7 +64,7 @@ class Rest_Api {
 	 * Adds an action to create the rest API endpoints if activated in the plugin settings.
 	 */
 	public function init() {
-		if( $this->is_rest_api_enabled() ){
+		if ( $this->is_rest_api_enabled() ) {
 			add_filter( 'mainwp_rest_api_validate', array( &$this, 'rest_api_validate' ), 10, 2 );
 			// run API.
 			add_action( 'rest_api_init', array( &$this, 'mainwp_register_routes' ) );
@@ -1077,8 +1077,8 @@ class Rest_Api {
 
 		// first validate the request.
 		if ( $this->mainwp_validate_request( $request ) ) {
-			$data = MainWP_Common_Handler::instance()->sites_available_updates_count();
-			$response       = new \WP_REST_Response( $data );
+			$data     = MainWP_Common_Handler::instance()->sites_available_updates_count();
+			$response = new \WP_REST_Response( $data );
 		} else {
 			// throw common error.
 			$response = $this->mainwp_authentication_error();
@@ -3045,7 +3045,7 @@ class Rest_Api {
 
 					$site_id = $request['site_id'];
 
-					$params  = array(
+					$params = array(
 						'wpid'        => $site_id,
 						'where_extra' => ' AND dismiss = 0 ',
 					);
@@ -3055,13 +3055,13 @@ class Rest_Api {
 					$response = new \WP_REST_Response( $data );
 					$response->set_status( 200 );
 
-				} else if ( 'all' == $request['site_id'] ) {
+				} elseif ( 'all' == $request['site_id'] ) {
 					$limit  = apply_filters( 'mainwp_widget_site_actions_limit_number', 10000 );
 					$params = array(
 						'limit'       => $limit,
 						'where_extra' => ' AND dismiss = 0 ',
 					);
-					
+
 					$data = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
 
 					$response = new \WP_REST_Response( $data );
@@ -3105,7 +3105,7 @@ class Rest_Api {
 
 					$site_id = $request['site_id'];
 
-					$params  = array(
+					$params = array(
 						'wpid'        => $site_id,
 						'where_extra' => ' AND dismiss = 0 ',
 					);
@@ -3119,13 +3119,13 @@ class Rest_Api {
 					$response = new \WP_REST_Response( $data_count );
 					$response->set_status( 200 );
 
-				} else if ( 'all' == $request['site_id'] ) {
+				} elseif ( 'all' == $request['site_id'] ) {
 					$limit  = apply_filters( 'mainwp_widget_site_actions_limit_number', 10000 );
 					$params = array(
 						'limit'       => $limit,
 						'where_extra' => ' AND dismiss = 0 ',
 					);
-					
+
 					$data = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
 
 					$data_count = array(

@@ -858,7 +858,10 @@ class MainWP_DB_Common extends MainWP_DB {
 			MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $monitoring_emails );
 		}
 
-		return array( 'message' => 'Site updated successfully.', 'site' => $website->url );
+		return array(
+			'message' => 'Site updated successfully.',
+			'site'    => $website->url,
+		);
 	}
 
 

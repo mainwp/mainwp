@@ -560,7 +560,7 @@ class MainWP_Manage_Groups {
 				$name = self::check_group_name( $name, $group->id );
 
 				$color = isset( $_POST['newColor'] ) ? sanitize_text_field( wp_unslash( $_POST['newColor'] ) ) : '';
-				
+
 				// update group.
 				$nr = MainWP_DB_Common::instance()->update_group( $group->id, $name, $color );
 

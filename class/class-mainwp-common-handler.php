@@ -155,7 +155,7 @@ class MainWP_Common_Handler {
 		// to fix incorrect total updates.
 		if ( $mainwp_show_language_updates ) {
 			$total_upgrades += $total_translation_upgrades;
-			$data  = array(
+			$data            = array(
 				'total'        => $total_upgrades,
 				'wp'           => $total_wp_upgrades,
 				'plugins'      => $total_plugin_upgrades,
@@ -163,7 +163,7 @@ class MainWP_Common_Handler {
 				'translations' => $total_translation_upgrades,
 			);
 		} else {
-			$data  = array(
+			$data = array(
 				'total'        => $total_upgrades,
 				'wp'           => $total_wp_upgrades,
 				'plugins'      => $total_plugin_upgrades,

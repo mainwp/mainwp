@@ -268,9 +268,7 @@ class MainWP_UI_Select_Sites {
 						return false;
 					},
 				} ).modal( 'show' );
-					
 			} );
-						
 			// Create a new group (Select Sites UI)
 			jQuery( document ).on( 'click', '#mainwp-save-new-tag-button', function () {
 				var newName = jQuery( '#mainwp-create-group-sites-modal' ).find( '#mainwp-group-name' ).val().trim();

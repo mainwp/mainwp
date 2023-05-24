@@ -430,7 +430,7 @@ class MainWP_Manage_Sites {
 											<?php
 											$show_col = ! isset( $show_cols[ $name ] ) || ( 1 == $show_cols[ $name ] );
 
-											if ( 'added_datetime' == $name && ! isset($show_cols[ $name ]) ) {
+											if ( 'added_datetime' == $name && ! isset( $show_cols[ $name ] ) ) {
 												$show_col = false; // default is hidden.
 											}
 
@@ -1537,8 +1537,8 @@ class MainWP_Manage_Sites {
 				MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $monitoring_emails );
 
 				$added = isset( $_POST['mainwp_managesites_edit_dt_added'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_dt_added'] ) ) : '';
-				if ( ! empty($added) ) {
-					$added = strtotime($added);
+				if ( ! empty( $added ) ) {
+					$added = strtotime( $added );
 				}
 				MainWP_DB::instance()->update_website_option( $website, 'added_timestamp', $added );
 

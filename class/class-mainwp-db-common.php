@@ -528,8 +528,9 @@ class MainWP_DB_Common extends MainWP_DB {
 	 *
 	 * Update group.
 	 *
-	 * @param mixed $groupid Group ID.
-	 * @param mixed $groupname Group Name.
+	 * @param mixed  $groupid Group ID.
+	 * @param mixed  $groupname Group Name.
+	 * @param string $groupcolor Group Color.
 	 *
 	 * @return boolean true|false.
 	 *

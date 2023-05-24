@@ -36,9 +36,9 @@ class Rest_Api {
 	protected $api_version = '1';
 
 	/**
-	 * private variable enabled api.
+	 * Private variable enabled api.
 	 *
-	 * @var bool API version
+	 * @var bool API enabled.
 	 */
 	private static $enabled_api = null;
 

@@ -949,7 +949,7 @@ class MainWP_Manage_Sites_View {
 							<div class="ui calendar mainwp_datepicker" >
 									<div class="ui input left icon">
 										<i class="calendar icon"></i>
-										<input type="text" autocomplete="off" name="mainwp_managesites_edit_dt_added" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_managesites_edit_dt_added" value="<?php echo '' != $website->added_timestamp ? esc_attr( date( 'Y-m-d', $website->added_timestamp ) ) : ''; ?>"/>
+										<input type="text" autocomplete="off" name="mainwp_managesites_edit_dt_added" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_managesites_edit_dt_added" value="<?php echo '' != $website->added_timestamp ? esc_attr( date( 'Y-m-d', $website->added_timestamp ) ) : ''; // phpcs:ignore -- local time works. ?>"/>
 									</div>
 							</div>
 						</div>

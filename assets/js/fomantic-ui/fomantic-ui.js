@@ -18,6 +18,8 @@
  *
  */
 
+/* eslint-disable */
+
 (function ($, window, document) {
     'use strict';
 

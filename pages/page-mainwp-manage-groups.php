@@ -218,7 +218,7 @@ class MainWP_Manage_Groups {
 		<a class="item" id="<?php echo $group->id; ?>" style="border-left: 4px solid <?php echo '' == $group->color ? '#fff' : $group->color; ?>">
 			<div class="ui small label"><?php echo property_exists( $group, 'nrsites' ) ? $group->nrsites : 0; ?></div>
 			<input type="hidden" value="<?php echo esc_html( $group->name ); ?>" id="mainwp-hidden-group-name">
-			<input type="hidden" value="<?php echo esc_html( $group->color); ?>" id="mainwp-hidden-group-color">
+			<input type="hidden" value="<?php echo esc_html( $group->color ); ?>" id="mainwp-hidden-group-color">
 			<input type="hidden" value="<?php echo $group->id; ?>" id="mainwp-hidden-group-id">
 			<?php echo $group->name; ?>
 		</a>

@@ -215,9 +215,10 @@ class MainWP_Manage_Groups {
 	 */
 	private static function create_group_item( $group ) {
 		?>
-		<a class="item" id="<?php echo $group->id; ?>">
+		<a class="item" id="<?php echo $group->id; ?>" style="border-left: 4px solid <?php echo '' == $group->color ? '#fff' : $group->color; ?>">
 			<div class="ui small label"><?php echo property_exists( $group, 'nrsites' ) ? $group->nrsites : 0; ?></div>
-			<input type="hidden" value="<?php echo $group->name; ?>" id="mainwp-hidden-group-name">
+			<input type="hidden" value="<?php echo esc_html( $group->name ); ?>" id="mainwp-hidden-group-name">
+			<input type="hidden" value="<?php echo esc_html( $group->color); ?>" id="mainwp-hidden-group-color">
 			<input type="hidden" value="<?php echo $group->id; ?>" id="mainwp-hidden-group-id">
 			<?php echo $group->name; ?>
 		</a>
@@ -343,6 +344,7 @@ class MainWP_Manage_Groups {
 					responsive = false;
 				}
 				jQuery( document ).ready( function() {
+					
 					jQuery( '#mainwp-manage-groups-sites-table' ).dataTable( {
 						"searching" : true,
 						"responsive" : responsive,
@@ -369,7 +371,12 @@ class MainWP_Manage_Groups {
 				<div class="content">
 					<div class="ui form">
 						<div class="field">
-							<input type="text" value="" name="mainwp-group-name" id="mainwp-group-name" placeholder="<?php esc_attr_e( 'Enter tag name', 'mainwp' ); ?>" >
+							<label><?php esc_html_e( 'Enter tag name', 'mainwp' ); ?></label>
+							<input type="text" value="" name="mainwp-group-name" id="mainwp-group-name">
+						</div>
+						<div class="field">
+							<label><?php esc_html_e( 'Select tag color', 'mainwp' ); ?></label>
+							<input type="text" name="mainwp-new-tag-color" class="mainwp-tag-color-picker" id="mainwp-new-tag-color"  value="" />
 						</div>
 					</div>
 				</div>
@@ -383,6 +390,24 @@ class MainWP_Manage_Groups {
 						</div>
 					</div>
 				</div>
+				<style>
+					.mainwp-ui .ui.modal .wp-picker-clear {
+						display:none;
+					}
+					.mainwp-ui .ui.modal #mainwp-new-tag-color {
+						height: 28px;
+						margin-left: 5px;
+					}
+				</style>
+				<script type="text/javascript">
+					jQuery( document ).ready( function() {
+						jQuery('.mainwp-tag-color-picker').wpColorPicker({
+							hide: true,
+							clear: false,
+							palettes: [ '#18a4e0','#0253b3','#7fb100','#446200','#ad0000','#ffd300','#2d3b44','#6435c9','#e03997','#00b5ad' ],
+						});
+					} );
+				</script>
 			</div>
 
 			<div class="ui mini modal" id="mainwp-rename-group-modal">
@@ -390,7 +415,12 @@ class MainWP_Manage_Groups {
 				<div class="content">
 					<div class="ui form">
 						<div class="field">
-							<input type="text" value="" name="mainwp-group-name" id="mainwp-group-name" placeholder="<?php esc_attr_e( 'Enter tag name', 'mainwp' ); ?>" >
+							<label><?php esc_html_e( 'Enter tag name', 'mainwp' ); ?></label>
+							<input type="text" value="" name="mainwp-group-name" id="mainwp-group-name">
+						</div>
+						<div class="field">
+							<label><?php esc_html_e( 'Select tag color', 'mainwp' ); ?></label>
+							<input type="text" name="mainwp-new-tag-color" class="mainwp-tag-color-picker" id="mainwp-new-tag-color" value="" />
 						</div>
 					</div>
 				</div>
@@ -404,6 +434,24 @@ class MainWP_Manage_Groups {
 						</div>
 					</div>
 				</div>
+				<style>
+					.mainwp-ui .ui.modal .wp-picker-clear {
+						display:none;
+					}
+					.mainwp-ui .ui.modal #mainwp-new-tag-color {
+						height: 28px;
+						margin-left: 5px;
+					}
+				</style>
+				<script type="text/javascript">
+					jQuery( document ).ready( function() {
+						jQuery('.mainwp-tag-color-picker').wpColorPicker({
+							hide: true,
+							clear: false,
+							palettes: [ '#18a4e0','#0253b3','#7fb100','#446200','#ad0000','#ffd300','#2d3b44','#6435c9','#e03997','#00b5ad' ],
+						});
+					} );
+				</script>
 			</div>
 			<?php
 			/**
@@ -439,16 +487,16 @@ class MainWP_Manage_Groups {
 		}
 		?>
 		<div class="ui fluid <?php echo 1 == $sidebarPosition ? 'right' : ''; ?> pointing vertical menu sticky" id="mainwp-groups-menu" style="margin-top:52px">
-			<h4 class="item ui header"><?php esc_html_e( 'Sites Tags', 'mainwp' ); ?></h4>
+			<h4 class="item ui header"><?php esc_html_e( 'Tags', 'mainwp' ); ?></h4>
 			<?php echo self::get_group_list_content(); ?>
 			<div class="item">
 				<div class="ui two columns stackable grid">
 					<div class="left aligned column">
-						<a href="#" class="ui tiny green button" id="mainwp-new-sites-group-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Click here to create a new tag.', 'mainwp' ); ?>"><?php esc_html_e( 'New Tag', 'mainwp' ); ?></a>
+						<a href="javascript:void(0);" class="ui tiny green button" id="mainwp-new-sites-group-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Click here to create a new tag.', 'mainwp' ); ?>"><?php esc_html_e( 'New Tag', 'mainwp' ); ?></a>
 					</div>
 					<div class="right aligned column">
-						<a href="#" class="ui tiny icon green basic button disabled" id="mainwp-rename-group-button" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Edit selected tag.', 'mainwp' ); ?>"><i class="edit icon"></i></a>
-						<a href="#" class="ui tiny icon button disabled" id="mainwp-delete-group-button" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete selected tag.', 'mainwp' ); ?>"><i class="trash icon"></i></a>
+						<a href="javascript:void(0);" class="ui tiny icon green basic button disabled" id="mainwp-rename-group-button" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Edit selected tag.', 'mainwp' ); ?>"><i class="edit icon"></i></a>
+						<a href="javascript:void(0);" class="ui tiny icon button disabled" id="mainwp-delete-group-button" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete selected tag.', 'mainwp' ); ?>"><i class="trash icon"></i></a>
 					</div>
 				</div>
 			</div>
@@ -510,8 +558,11 @@ class MainWP_Manage_Groups {
 				}
 
 				$name = self::check_group_name( $name, $group->id );
+
+				$color = isset( $_POST['newColor'] ) ? sanitize_text_field( wp_unslash( $_POST['newColor'] ) ) : '';
+				
 				// update group.
-				$nr = MainWP_DB_Common::instance()->update_group( $group->id, $name );
+				$nr = MainWP_DB_Common::instance()->update_group( $group->id, $name, $color );
 
 				// Reload group.
 				$group = MainWP_DB_Common::instance()->get_group_by_id( $group->id );
@@ -601,7 +652,7 @@ class MainWP_Manage_Groups {
 		global $current_user;
 
 		if ( isset( $_POST['newName'] ) ) {
-			$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( sanitize_text_field( wp_unslash( $_POST['newName'] ) ) ) );
+			$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( sanitize_text_field( wp_unslash( $_POST['newName'] ) ) ), sanitize_text_field( wp_unslash( $_POST['newColor'] ) ) );
 
 			/**
 			 * New Group Added
@@ -616,6 +667,51 @@ class MainWP_Manage_Groups {
 			die();
 		}
 		die( wp_json_encode( array( 'error' => 1 ) ) );
+	}
+
+	/**
+	 * Method add_group_sites()
+	 *
+	 * Add Group sites.
+	 *
+	 * @param string $gname Group Name.
+	 * @param array  $site_ids Sites IDs.
+	 */
+	public static function add_group_sites( $gname, $site_ids, $gcolor ) {
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
+		global $current_user;
+
+		$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( $gname ), $gcolor );
+
+		if ( $groupId ) {
+			$group = MainWP_DB_Common::instance()->get_group_by_id( $groupId );
+			if ( ! empty( $group ) ) {
+				if ( ! empty( $site_ids ) ) {
+					foreach ( $site_ids as $websiteId ) {
+						$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
+						if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+							MainWP_DB_Common::instance()->update_group_site( $group->id, $website->id );
+						}
+					}
+				}
+			}
+
+			/**
+			 * New Group Added
+			 *
+			 * Fires after a new sites group has been created.
+			 *
+			 * @param int $groupId Group ID.
+			 */
+			do_action( 'mainwp_added_new_group', $groupId );
+			return true;
+		}
+
+		return false;
 	}
 
 	/**

@@ -942,6 +942,20 @@ class MainWP_Manage_Sites_View {
 					</div>
 				<?php endif; ?>
 
+				<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Connected on', 'mainwp' ); ?></label>
+						<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Set the date your site was added to your MainWP Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<div class="ui left labeled input">
+							<div class="ui calendar mainwp_datepicker" >
+									<div class="ui input left icon">
+										<i class="calendar icon"></i>
+										<input type="text" autocomplete="off" name="mainwp_managesites_edit_dt_added" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_managesites_edit_dt_added" value="<?php echo '' != $website->added_timestamp ? esc_attr( date( 'Y-m-d', $website->added_timestamp ) ) : ''; ?>"/>
+									</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
 				<h3 class="ui dividing header"><?php esc_html_e( 'Child Site Uptime Monitoring (Optional)', 'mainwp' ); ?></h3>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Enable basic uptime monitoring (optional)', 'mainwp' ); ?></label>					
@@ -1081,6 +1095,40 @@ class MainWP_Manage_Sites_View {
 				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 			</div>
 		</div>
+
+			<script type="text/javascript">
+				jQuery( document ).ready( function () {
+					// to fix issue not loaded calendar js library
+					if (jQuery('.ui.calendar').length > 0) {
+						if (mainwpParams.use_wp_datepicker == 1) {
+							jQuery('#mainwp-edit-site .ui.calendar input[type=text]').datepicker({ dateFormat: "yy-mm-dd" });
+						} else {
+							jQuery('#mainwp-edit-site .ui.calendar').calendar({
+								type: 'date',
+								monthFirst: false,
+								today: true,
+								touchReadonly: false,
+								formatter: {
+									date: function (date) {
+										if (!date) return '';
+										var day = date.getDate();
+										var month = date.getMonth() + 1;
+										var year = date.getFullYear();
+
+										if (month < 10) {
+											month = '0' + month;
+										}
+										if (day < 10) {
+											day = '0' + day;
+										}
+										return year + '-' + month + '-' + day;
+									}
+								}
+							});
+						}
+					}
+				} );
+			</script>
 		<?php
 		MainWP_Client::render_add_client_modal();
 	}
@@ -1648,6 +1696,11 @@ class MainWP_Manage_Sites_View {
 
 						if ( $id && isset( $params['clientid'] ) ) {
 							MainWP_DB::instance()->update_website_values( $id, array( 'client_id' => intval( $params['clientid'] ) ) );
+						}
+
+						if ( $id ) {
+							$obj_site = (object) array( 'id' => $id );
+							MainWP_DB::instance()->update_website_option( $obj_site, 'added_timestamp', time() );
 						}
 
 						if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {

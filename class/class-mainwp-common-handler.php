@@ -41,7 +41,7 @@ class MainWP_Common_Handler {
 	/**
 	 * Method sites_available_updates_count()
 	 *
-	 * Handle get sites available updates count.
+	 * Returns the number of available udpates for sites.
 	 *
 	 * @return object $response An object that contains the return data and status of the API request.
 	 */
@@ -155,11 +155,25 @@ class MainWP_Common_Handler {
 		// to fix incorrect total updates.
 		if ( $mainwp_show_language_updates ) {
 			$total_upgrades += $total_translation_upgrades;
+			$data  = array(
+				'total'        => $total_upgrades,
+				'wp'           => $total_wp_upgrades,
+				'plugins'      => $total_plugin_upgrades,
+				'themes'       => $total_theme_upgrades,
+				'translations' => $total_translation_upgrades,
+			);
+		} else {
+			$data  = array(
+				'total'        => $total_upgrades,
+				'wp'           => $total_wp_upgrades,
+				'plugins'      => $total_plugin_upgrades,
+				'themes'       => $total_theme_upgrades,
+			);
 		}
 
 		MainWP_DB::free_result( $websites );
 
-		return $total_upgrades;
+		return $data;
 	}
 
 }

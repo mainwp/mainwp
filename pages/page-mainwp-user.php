@@ -1741,7 +1741,9 @@ class MainWP_User {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Upload the CSV file', 'mainwp' ); ?></label>
 						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click to upload the import file.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+								<div class="ui file input">
 								<input type="file" name="import_user_file_bulkupload" id="import_user_file_bulkupload" accept="text/comma-separated-values" />
+								</div>
 							</div>
 						</div>
 						<div class="ui grid field">

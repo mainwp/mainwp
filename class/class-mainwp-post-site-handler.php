@@ -62,6 +62,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_group_rename', array( &$this, 'mainwp_group_rename' ) );
 		$this->add_action( 'mainwp_group_delete', array( &$this, 'mainwp_group_delete' ) );
 		$this->add_action( 'mainwp_group_add', array( &$this, 'mainwp_group_add' ) );
+
 		$this->add_action( 'mainwp_group_getsites', array( &$this, 'mainwp_group_getsites' ) );
 		$this->add_action( 'mainwp_group_updategroup', array( &$this, 'mainwp_group_updategroup' ) );
 
@@ -70,6 +71,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 
 		$this->add_action( 'mainwp_checksites', array( &$this, 'mainwp_checksites' ) );
 		$this->add_action( 'mainwp_manage_sites_suspend_site', array( &$this, 'manage_suspend_site' ) );
+		$this->add_action( 'mainwp_group_sites_add', array( &$this, 'ajax_group_sites_add' ) );
 	}
 
 	/**
@@ -107,9 +109,31 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_group_add() {
 		$this->secure_request( 'mainwp_group_add' );
-
 		MainWP_Manage_Groups::add_group();
 	}
+
+	/**
+	 * Method ajax_group_sites_add()
+	 *
+	 * Add Group in modal.
+	 */
+	public function ajax_group_sites_add() {
+		$this->secure_request( 'mainwp_group_sites_add' );
+		$newName        = sanitize_text_field( wp_unslash( $_POST['newName'] ) );
+		$newColor       = sanitize_text_field( wp_unslash( $_POST['newColor'] ) );
+		$selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'intval', wp_unslash( $_POST['selected_sites'] ) ) : array();
+		$selected_sites = array_filter( $selected_sites );
+		$success        = false;
+		if ( ! empty( $newName ) ) {
+			$success = MainWP_Manage_Groups::add_group_sites( $newName, $selected_sites, $newColor );
+		}
+		if ( ! $success ) {
+			wp_die( wp_json_encode( array( 'error' => esc_html__( 'Unexpected error occurred. Please try again.', 'mainwp' ) ) ) );
+		} else {
+			wp_die( wp_json_encode( array( 'success' => 1 ) ) );
+		}
+	}
+
 
 	/**
 	 * Method mainwp_group_getsites()

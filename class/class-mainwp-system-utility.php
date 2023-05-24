@@ -524,6 +524,8 @@ class MainWP_System_Utility {
 
 		$tags        = '';
 		$tags_labels = '';
+		$tag_style   = '';
+
 		if ( isset( $item['wpgroups'] ) && ! empty( $item['wpgroups'] ) ) {
 
 			if ( $client_tag ) {
@@ -540,11 +542,19 @@ class MainWP_System_Utility {
 			if ( is_array( $tags ) ) {
 				foreach ( $tags as $idx => $tag ) {
 					$tag = trim( $tag );
+					$tagx = MainWP_DB_Common::instance()->get_group_by_id( $tags_ids[ $idx ] );
+					$tag_style   = 'style="background-color:' . esc_html( $tagx->color) . '"';
+					if ( '' != $tagx->color ) {
+						$tag_a_style = 'style="color:#fff!important;opacity:1;"';
+					} else {
+						$tag_a_style = '';
+					}
+					
 					if ( isset( $tags_ids[ $idx ] ) && ! empty( $tags_ids[ $idx ] ) ) {
 						$tag_id       = $tags_ids[ $idx ];
-						$tags_labels .= '<span class="ui tag mini label"><a href="' . $href . $tag_id . '">' . $tag . '</a></span>';
+						$tags_labels .= '<span ' . $tag_style . ' class="ui tag mini label"><a ' . $tag_a_style . ' href="' . $href . $tag_id . '">' . $tag . '</a></span>';
 					} else {
-						$tags_labels .= '<span class="ui tag mini label">' . $tag . '</span>';
+						$tags_labels .= '<span ' . $tag_style . ' class="ui tag mini label">' . $tag . '</span>';
 					}
 				}
 			}

@@ -609,7 +609,7 @@ body.mainwp-ui.mainwp-custom-theme,
 }
 
 .mainwp-ui.mainwp-custom-theme .mainwp-side-content #mainwp-select-sites-select-all-actions {
-  background-color: var( --grey-light ) !important;
+  background-color: var( --grey-light-alt ) !important;
   border-bottom: 1px solid var( --grey-light-alt ) !important;
 }
 

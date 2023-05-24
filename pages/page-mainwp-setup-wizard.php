@@ -100,6 +100,7 @@ class MainWP_Setup_Wizard {
 
 		wp_enqueue_script( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.js', array( 'jquery' ), MAINWP_VERSION, false );
 		wp_localize_script( 'mainwp-setup', 'mainwpSetupLocalize', array( 'nonce' => wp_create_nonce( 'MainWPSetup' ) ) );
+		wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', array( 'jquery' ), MAINWP_VERSION, true );
 		wp_enqueue_script( 'mainwp-setup', MAINWP_PLUGIN_URL . 'assets/js/mainwp-setup.js', array( 'jquery', 'fomantic-ui' ), MAINWP_VERSION, true );
 		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'assets/css/mainwp.css', array(), MAINWP_VERSION );
 		wp_enqueue_style( 'mainwp-fonts', MAINWP_PLUGIN_URL . 'assets/css/mainwp-fonts.css', array(), MAINWP_VERSION );
@@ -189,6 +190,7 @@ class MainWP_Setup_Wizard {
 				<meta name="viewport" content="width=device-width" />
 				<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 				<title><?php esc_html_e( 'MainWP &rsaquo; Setup Wizard', 'mainwp' ); ?></title>
+				<?php wp_print_scripts( 'mainwp' ); ?>
 				<?php wp_print_scripts( 'mainwp-setup' ); ?>
 				<?php wp_print_scripts( 'fomantic' ); ?>
 				<?php do_action( 'admin_print_styles' ); ?>
@@ -324,6 +326,7 @@ class MainWP_Setup_Wizard {
 	 * @uses \MainWP\Dashboard\MainWP_Server_Information::render_quick_setup_system_check()
 	 */
 	public function mwp_setup_system_requirements() {
+		MainWP_System_View::mainwp_warning_notice();
 		?>
 		<h1><?php esc_html_e( 'System Requirements Check', 'mainwp' ); ?></h1>
 	<form method="post" class="ui form">

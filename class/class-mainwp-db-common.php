@@ -462,19 +462,21 @@ class MainWP_DB_Common extends MainWP_DB {
 	 *
 	 * @param mixed $userid Current User ID.
 	 * @param mixed $name Name of group to add.
+	 * @param mixed $color  Color of group to add.
 	 *
 	 * @return boolean true
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
-	public function add_group( $userid, $name ) {
+	public function add_group( $userid, $name, $color ) {
 		if ( MainWP_Utility::ctype_digit( $userid ) ) {
 			if ( $this->wpdb->insert(
 				$this->table_name( 'group' ),
 				array(
 					'userid' => $userid,
 					'name'   => $this->escape( $name ),
+					'color'  => $this->escape( $color ),
 				)
 			)
 			) {
@@ -533,10 +535,10 @@ class MainWP_DB_Common extends MainWP_DB {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
-	public function update_group( $groupid, $groupname ) {
+	public function update_group( $groupid, $groupname, $groupcolor ) {
 		if ( MainWP_Utility::ctype_digit( $groupid ) ) {
 			// update groupname.
-			$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'group' ) . ' SET name=%s WHERE id=%d', $this->escape( $groupname ), $groupid ) );
+			$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'group' ) . ' SET name=%s, color=%s WHERE id=%d', $this->escape( $groupname ), $this->escape( $groupcolor ), $groupid ) );
 
 			return true;
 		}
@@ -856,7 +858,7 @@ class MainWP_DB_Common extends MainWP_DB {
 			MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $monitoring_emails );
 		}
 
-		return true;
+		return array( 'message' => 'Site updated successfully.', 'site' => $website->url );
 	}
 
 

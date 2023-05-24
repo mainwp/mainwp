@@ -880,7 +880,7 @@ class MainWP_Server_Information_Handler {
 
 		$options_value[ $opt ] = array(
 			'label' => esc_html__( 'REST API enabled', 'mainwp' ),
-			'value' => Rest_Api::instance()->enabled_rest_api() ? esc_html__( 'Yes', 'mainwp' ) : esc_html__( 'No', 'mainwp' ),
+			'value' => Rest_Api::instance()->is_rest_api_enabled() ? esc_html__( 'Yes', 'mainwp' ) : esc_html__( 'No', 'mainwp' ),
 		);
 
 		/**

@@ -202,9 +202,14 @@ class MainWP_UI_Select_Sites {
 
 		if ( $show_select_all ) :
 			?>
-			<div id="mainwp-select-sites-select-all-actions">
+			<div id="mainwp-select-sites-select-all-actions" class="ui two columns grid">
+				<div class="ui middle aligned column">
 				<div onClick="return mainwp_ss_select( this, true )" class="mainwp-ss-select"><i class="square outline icon"></i> <?php esc_attr_e( 'Select All', 'mainwp' ); ?></div>
 				<div onClick="return mainwp_ss_select( this, false )" class="mainwp-ss-deselect" style="display:none;padding-top:0;"><i class="check square outline icon"></i> <?php esc_attr_e( 'Deselect All', 'mainwp' ); ?></div>
+			</div>
+				<div class="ui right aligned middle aligned column">
+					<a class="ui mini basic icon button" href="javascript:void(0)" id="mainwp-create-new-tag-button" data-tooltip="<?php esc_attr_e( 'Create a tag with selected sites.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="tag icon"></i></a>
+				</div>
 			</div>
 			<div class="ui hidden divider"></div>
 			<?php
@@ -251,10 +256,52 @@ class MainWP_UI_Select_Sites {
 			<?php
 		}
 
+		self::render_create_tag_modal();
 		?>
 		<script type="text/javascript">
 		jQuery( document ).ready( function () {
 			jQuery('#mainwp-select-sites-header .ui.menu .item').tab( {'onVisible': function() { mainwp_sites_selection_onvisible_callback( this ); } } );
+			jQuery( '#mainwp-create-new-tag-button' ).on( 'click', function() {
+				jQuery( '#mainwp-create-group-sites-modal' ).modal( {
+					onHide: function () {
+						window.location.href = location.href;
+						return false;
+					},
+				} ).modal( 'show' );
+					
+			} );
+						
+			// Create a new group (Select Sites UI)
+			jQuery( document ).on( 'click', '#mainwp-save-new-tag-button', function () {
+				var newName = jQuery( '#mainwp-create-group-sites-modal' ).find( '#mainwp-group-name' ).val().trim();
+				var newColor = jQuery( '#mainwp-create-group-sites-modal' ).find( '#mainwp-group-color' ).val();
+				if('' == newName ){
+					return false;
+				}
+				jQuery(this).attr('disabled', 'disabled');
+				var selected_sites = [ ];
+				jQuery( "input[name='selected_sites[]']:checked" ).each( function () {
+					selected_sites.push( jQuery( this ).val() );
+				} );
+				var data = mainwp_secure_data( {
+					action: 'mainwp_group_sites_add',
+					selected_sites: selected_sites,
+					newName: newName,
+					newColor: newColor
+				} );
+				jQuery.post( ajaxurl, data, function ( response ) {
+					try {
+						if ( response.error != undefined ){
+							jQuery('#mainwp-message-zone-tag').show().find('.ui.message').html(response.error);
+							return;
+						}
+					} catch ( err ) {
+						// to fix js error.
+					}
+					jQuery( '#mainwp-create-group-sites-modal' ).modal( 'hide' );
+				}, 'json' );
+				return false;
+			} );
 		} );
 		</script>
 			<?php
@@ -351,5 +398,61 @@ class MainWP_UI_Select_Sites {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_after_select_clients_list', $clients );
+	}
+
+	/**
+	 * Method render_create_tag_modal()
+	 *
+	 * Renders the Create Tag modal.
+	 */
+	public static function render_create_tag_modal() {
+		?>
+		<div class="ui mini modal" id="mainwp-create-group-sites-modal">
+			<div class="header"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></div>
+				<div class="content">
+					<div id="mainwp-message-zone-tag" style="display: none;">
+						<div class="ui message red"></div>
+					</div>					
+					<div class="ui form">
+						<div class="field">
+							<label><?php esc_html_e( 'Enter tag name', 'mainwp' ); ?></label>
+							<input type="text" value="" name="mainwp-group-name" id="mainwp-group-name">
+						</div>
+						<div class="field">
+							<label><?php esc_html_e( 'Select tag color', 'mainwp' ); ?></label>
+							<input type="text" name="mainwp-group-color" class="mainwp-tag-color-picker" id="mainwp-group-color"  value="" />
+						</div>
+					</div>
+				</div>
+				<div class="actions">
+					<div class="ui two columns grid">
+						<div class="left aligned column">
+							<a class="ui green button" id="mainwp-save-new-tag-button" href="javascript:void(0);"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></a>
+						</div>
+						<div class="right aligned column">
+							<div class="ui cancel button"><?php echo esc_html__( 'Close', 'mainwp' ); ?></div>
+						</div>
+					</div>
+				</div>
+				<style>
+					.mainwp-ui .ui.modal .wp-picker-clear {
+						display:none;
+					}
+					.mainwp-ui .ui.modal #mainwp-group-color {
+						height: 28px;
+						margin-left: 5px;
+					}
+				</style>
+				<script type="text/javascript">
+					jQuery( document ).ready( function() {
+						jQuery('.mainwp-tag-color-picker').wpColorPicker({
+							hide: true,
+							clear: false,
+							palettes: [ '#18a4e0','#0253b3','#7fb100','#446200','#ad0000','#ffd300','#2d3b44','#6435c9','#e03997','#00b5ad' ],
+						});
+					} );
+				</script>
+			</div>
+		<?php
 	}
 }

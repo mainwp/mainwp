@@ -171,6 +171,10 @@
     background: rgba(255, 255, 255, .15);
 }
 
+.mainwp-nav-menu .ui.accordion.menu .item a {
+    line-height: 1.3em;
+}
+
 .mainwp-nav-menu .item-wp-admin {
     width: 200px;
     position: fixed !important;
@@ -245,8 +249,7 @@
 }
 
 #mainwp-select-sites-select-all-actions {
-    background: #f9fafb;
-    padding: 12px 5px;
+    background: #dadada;
     border-bottom: 1px solid #dadada;
     margin-top: 0;
 }

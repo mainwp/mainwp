@@ -215,17 +215,18 @@ class MainWP_Manage_Sites_List_Table {
 	 */
 	public function get_sortable_columns() {
 		$sortable_columns = array(
-			'site'        => array( 'site', false ),
-			'url'         => array( 'url', false ),
-			'tags'        => array( 'tags', false ),
-			'client_name' => array( 'client_name', false ),
-			'last_sync'   => array( 'last_sync', false ),
-			'last_post'   => array( 'last_post', false ),
-			'site_health' => array( 'site_health', false ),
-			'status_code' => array( 'status_code', false ),
-			'notes'       => array( 'notes', false ),
-			'phpversion'  => array( 'phpversion', false ),
-			'update'      => array( 'update', false ),
+			'site'           => array( 'site', false ),
+			'url'            => array( 'url', false ),
+			'tags'           => array( 'tags', false ),
+			'client_name'    => array( 'client_name', false ),
+			'last_sync'      => array( 'last_sync', false ),
+			'last_post'      => array( 'last_post', false ),
+			'site_health'    => array( 'site_health', false ),
+			'status_code'    => array( 'status_code', false ),
+			'notes'          => array( 'notes', false ),
+			'phpversion'     => array( 'phpversion', false ),
+			'update'         => array( 'update', false ),
+			'added_datetime' => array( 'added_datetime', false ),
 		);
 
 		$sortable_columns = apply_filters( 'mainwp_sitestable_sortable_columns', $sortable_columns );
@@ -240,25 +241,26 @@ class MainWP_Manage_Sites_List_Table {
 	 */
 	public function get_default_columns() {
 		return array(
-			'cb'            => '<input type="checkbox" />',
-			'status'        => '',
-			'site'          => esc_html__( 'Site', 'mainwp' ),
-			'login'         => '<i class="sign in alternate icon"></i>',
-			'url'           => esc_html__( 'URL', 'mainwp' ),
-			'tags'          => esc_html__( 'Tags', 'mainwp' ),
-			'client_name'   => esc_html__( 'Client', 'mainwp' ),
-			'update'        => esc_html__( 'Updates', 'mainwp' ),
+			'cb'             => '<input type="checkbox" />',
+			'status'         => '',
+			'site'           => esc_html__( 'Site', 'mainwp' ),
+			'login'          => '<i class="sign in alternate icon"></i>',
+			'url'            => esc_html__( 'URL', 'mainwp' ),
+			'tags'           => esc_html__( 'Tags', 'mainwp' ),
+			'client_name'    => esc_html__( 'Client', 'mainwp' ),
+			'update'         => esc_html__( 'Updates', 'mainwp' ),
 			'wpcore_update' => '<i class="icon wordpress"></i>', // phpcs:ignore -- Prevent modify WP icon.
-			'plugin_update' => '<i class="plug icon"></i>',
-			'theme_update'  => '<i class="tint icon"></i>',
-			'last_sync'     => esc_html__( 'Last Sync', 'mainwp' ),
-			'backup'        => esc_html__( 'Last Backup', 'mainwp' ),
-			'phpversion'    => esc_html__( 'PHP', 'mainwp' ),
-			'last_post'     => esc_html__( 'Last Post', 'mainwp' ),
-			'site_health'   => esc_html__( 'Site Health', 'mainwp' ),
-			'status_code'   => esc_html__( 'Status Code', 'mainwp' ),
-			'site_preview'  => '<i class="camera icon"></i>',
-			'notes'         => esc_html__( 'Notes', 'mainwp' ),
+			'plugin_update'  => '<i class="plug icon"></i>',
+			'theme_update'   => '<i class="tint icon"></i>',
+			'last_sync'      => esc_html__( 'Last Sync', 'mainwp' ),
+			'backup'         => esc_html__( 'Last Backup', 'mainwp' ),
+			'phpversion'     => esc_html__( 'PHP', 'mainwp' ),
+			'last_post'      => esc_html__( 'Last Post', 'mainwp' ),
+			'site_health'    => esc_html__( 'Site Health', 'mainwp' ),
+			'status_code'    => esc_html__( 'Status Code', 'mainwp' ),
+			'added_datetime' => esc_html__( 'Connected', 'mainwp' ),
+			'site_preview'   => '<i class="camera icon"></i>',
+			'notes'          => esc_html__( 'Notes', 'mainwp' ),
 		);
 	}
 
@@ -644,6 +646,8 @@ class MainWP_Manage_Sites_List_Table {
 					$orderby = 'wp_sync.last_post_gmt ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
 				} elseif ( 'status_code' === $req_orderby ) {
 					$orderby = 'wp.http_response_code ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+				} elseif ( 'added_datetime' === $req_orderby ) {
+					$orderby = 'wp_optionview.added_timestamp ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
 				} elseif ( 'site_health' === $req_orderby ) {
 					$orderby = 'wp_sync.health_value ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
 				} elseif ( 'client_name' === $req_orderby ) {
@@ -1602,7 +1606,9 @@ class MainWP_Manage_Sites_List_Table {
 										<span style="display: none" id="mainwp-notes-<?php echo $website['id']; ?>-note"><?php echo wp_unslash( $esc_note ); ?></span>
 							<?php } elseif ( 'phpversion' === $column_name ) { ?>
 								<span data-tooltip="<?php esc_attr_e( 'Detected PHP version.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php echo esc_html( substr( $website['phpversion'], 0, 6 ) ); ?></span>
-							<?php } elseif ( 'site_actions' === $column_name ) { ?>
+							<?php } elseif ( 'added_datetime' === $column_name ) { ?>
+								<span data-tooltip="<?php esc_attr_e( 'Date the site was connected to the MainWP Dashboard.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php echo ! empty( $website['added_timestamp'] ) ? MainWP_Utility::format_date( MainWP_Utility::get_timestamp( $website['added_timestamp'] ) ) : 'N/A'; ?></span>
+								<?php } elseif ( 'site_actions' === $column_name ) { ?>
 									<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999;">
 										<i class="ellipsis horizontal icon"></i>
 										<div class="menu" siteid="<?php echo $website['id']; ?>">
@@ -1636,12 +1642,12 @@ class MainWP_Manage_Sites_List_Table {
 										</div>										
 									</div>
 										<?php
-							} elseif ( method_exists( $this, 'column_' . $column_name ) ) {
-								echo call_user_func( array( $this, 'column_' . $column_name ), $website );
-							} else {
-								echo $this->column_default( $website, $column_name );
-							}
-							$cols_data[ $column_name ] = ob_get_clean();
+								} elseif ( method_exists( $this, 'column_' . $column_name ) ) {
+									echo call_user_func( array( $this, 'column_' . $column_name ), $website );
+								} else {
+									echo $this->column_default( $website, $column_name );
+								}
+								$cols_data[ $column_name ] = ob_get_clean();
 				}
 				$all_rows[]  = $cols_data;
 				$info_rows[] = $info_item;
@@ -1998,39 +2004,43 @@ class MainWP_Manage_Sites_List_Table {
 		<?php } elseif ( 'phpversion' === $column_name ) { ?>
 				<td class="collapsing center aligned mainwp-php-cell"><span data-tooltip="<?php esc_attr_e( 'Detected PHP version.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php echo esc_html( substr( $website['phpversion'], 0, 6 ) ); ?></span></td>
 				<?php
+		} elseif ( 'added_datetime' === $column_name ) {
+			?>
+				<td class="collapsing center aligned mainwp-connected-cell" data-order="<?php echo intval( $website['added_timestamp'] ); ?>"><span data-tooltip="<?php esc_attr_e( 'Date the site was connected.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php echo ! empty( $website['added_timestamp'] ) ? MainWP_Utility::format_date( MainWP_Utility::get_timestamp( $website['added_timestamp'] ) ) : 'N/A'; ?></span></td>
+				<?php
 		} elseif ( 'site_actions' === $column_name ) {
 			?>
 					<td class="collapsing mainwp-site-actions-cell">
 						<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999;">
 							<i class="ellipsis horizontal icon"></i>
 							<div class="menu" siteid="<?php echo $website['id']; ?>">
-					<?php if ( '' !== $website['sync_errors'] ) : ?>
+				<?php if ( '' !== $website['sync_errors'] ) : ?>
 							<a class="mainwp_site_reconnect item" href="#"><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 							<?php else : ?>
 							<a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 							<?php endif; ?>
-					<?php if ( mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) : ?>
+				<?php if ( mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) : ?>
 							<a class="item" href="admin.php?page=managesites&dashboard=<?php echo $website['id']; ?>"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a>
 							<?php endif; ?>
-					<?php if ( mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) : ?>
+				<?php if ( mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) : ?>
 							<a class="item" href="admin.php?page=managesites&id=<?php echo $website['id']; ?>"><?php esc_html_e( 'Edit Site', 'mainwp' ); ?></a>
 							<?php endif; ?>
-					<?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) : ?>
+				<?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) : ?>
 							<a class="item" href="admin.php?page=managesites&scanid=<?php echo $website['id']; ?>"><?php esc_html_e( 'Security Scan', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							<a class="item" site-name="<?php echo esc_html( $website['name'] ); ?>" site-id="<?php echo esc_html( $website['id'] ); ?>" onclick="return managesites_remove( this )"><?php esc_html_e( 'Remove Site', 'mainwp' ); ?></a>
-							<?php
-							/**
-							 * Action: mainwp_manage_sites_action
-							 *
-							 * Adds custom manage sites action item.
-							 *
-							 * @param array $website Array containing website data.
-							 *
-							 * @since 4.1
-							 */
-							do_action( 'mainwp_manage_sites_action', $website );
-							?>
+						<?php
+						/**
+						 * Action: mainwp_manage_sites_action
+						 *
+						 * Adds custom manage sites action item.
+						 *
+						 * @param array $website Array containing website data.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_manage_sites_action', $website );
+						?>
 							</div>
 						</div>
 					</td>

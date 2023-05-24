@@ -35,7 +35,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.4.2';
+	public static $version = '4.4.3';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -713,7 +713,7 @@ class MainWP_System {
 			wp_enqueue_script( 'jquery-ui-datepicker' );
 		}
 		wp_enqueue_script( 'jquery-ui-dialog' );
-		$en_params = array( 'jquery-ui-dialog' );
+		$en_params = array( 'jquery-ui-dialog', 'wp-color-picker' );
 		if ( $use_wp_datepicker ) {
 			$en_params[] = 'jquery-ui-datepicker';
 		}
@@ -774,6 +774,8 @@ class MainWP_System {
 			wp_enqueue_script( 'preview', MAINWP_PLUGIN_URL . 'assets/js/preview.js', array(), $this->current_version, true );
 			wp_enqueue_style( 'preview', MAINWP_PLUGIN_URL . 'assets/css/preview.css', array(), $this->current_version );
 		}
+
+		wp_enqueue_style( 'wp-color-picker' );
 
 		$this->init_session();
 

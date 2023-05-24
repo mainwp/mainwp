@@ -25,7 +25,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '8.982';
+	protected $mainwp_db_version = '8.983';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -251,7 +251,8 @@ class MainWP_Install extends MainWP_DB_Base {
 		$tbl = 'CREATE TABLE ' . $this->table_name( 'group' ) . ' (
   id int(11) NOT NULL auto_increment,
   userid int(11) NOT NULL,
-  name text NOT NULL';
+  name text NOT NULL,
+  color varchar(32) NOT NULL DEFAULT ""';
 		if ( '' == $currentVersion ) {
 			$tbl .= ',
   PRIMARY KEY  (id)  ';

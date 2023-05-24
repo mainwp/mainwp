@@ -1065,7 +1065,11 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	public static function callback_site_add_site( $args = array(), $assoc_args = array(), $website = false ) {
 		$fields = self::get_cli_params( $args, $assoc_args, 'add-site' );
 		$data   = MainWP_Manage_Sites_Handler::rest_api_add_site( $fields );
-		\WP_CLI::line( '  -> Add site result: ' . print_r( $data, true ) ); // phpcs:ignore -- for cli result. 
+		if ( is_array( $data ) && ! empty( $data['siteid'] ) ) {
+			\WP_CLI::success( '  -> Add site result: ' . print_r( $data, true ) ); // phpcs:ignore -- for cli result. 
+		} else {
+			\WP_CLI::error( '  -> Add site result: ' . print_r( $data, true ) ); // phpcs:ignore -- for cli result. 
+		}
 	}
 
 	/**

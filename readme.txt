@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 5.4
-Tested up to: 6.2
+Tested up to: 6.2.2
 Requires PHP: 7.0
-Stable tag: 4.4.2
+Stable tag: 4.4.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -286,6 +286,21 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 10. Manage Clients Screen
 
 == Changelog ==
+
+= 4.4.3 - 5-24-2023 =
+* Fixed: Incorrect response code when adding site via WP CLI
+* Fixed: An issue with saving the auto-update MainWP Child plugin option
+* Added: Ability to add custom colors for Tags
+* Added: Feature to create tags based on site selection in the Select Sites element
+* Added: Timestamp when child site is connected
+* Added: Production site warning to the Quick Setup Wizard
+* Added: `non-mainwp-changes` REST API endpoint
+* Added: `non-mainwp-changes-count` REST API endpoint
+* Added: Option to update date when child site is connected
+* Added: Connected on Manage Sites column
+* Updated: Fomantic UI framework version
+* Updated: Show Consumer Secret and Key as plain text until the keys are saved
+* Updated: Edit REST API Key edit screen
 
 = 4.4.2 - 5-9-2023 =
 * Fixed: Multiple PHP warnings

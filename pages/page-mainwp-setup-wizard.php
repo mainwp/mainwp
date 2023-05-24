@@ -326,9 +326,9 @@ class MainWP_Setup_Wizard {
 	 * @uses \MainWP\Dashboard\MainWP_Server_Information::render_quick_setup_system_check()
 	 */
 	public function mwp_setup_system_requirements() {
-		MainWP_System_View::mainwp_warning_notice();
 		?>
 		<h1><?php esc_html_e( 'System Requirements Check', 'mainwp' ); ?></h1>
+		<?php MainWP_System_View::mainwp_warning_notice(); ?>
 	<form method="post" class="ui form">
 		<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 		<?php

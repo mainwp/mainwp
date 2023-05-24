@@ -300,6 +300,19 @@ class MainWP_Utility {
 	}
 
 	/**
+	 * Method format_timestamp()
+	 *
+	 * Format the given timestamp.
+	 *
+	 * @param mixed $timestamp Timestamp to format.
+	 *
+	 * @return string Formatted timestamp.
+	 */
+	public static function format_date( $timestamp ) {
+		return date_i18n( get_option( 'date_format' ), $timestamp );
+	}
+
+	/**
 	 * Method human_filesize()
 	 *
 	 * Convert to human readable file size format,

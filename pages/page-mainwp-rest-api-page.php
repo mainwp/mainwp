@@ -608,7 +608,7 @@ class MainWP_Rest_Api_Page {
 						do_action( 'rest_api_form_top' );
 						?>
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable REST API Key', 'mainwp' ); ?></label>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable REST API key', 'mainwp' ); ?></label>
 							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the REST API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
 								<input type="checkbox" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" checked="true" />
 							</div>
@@ -620,10 +620,10 @@ class MainWP_Rest_Api_Page {
 							</div>
 						</div>				
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Consumer Key', 'mainwp' ); ?></label>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Consumer key', 'mainwp' ); ?></label>
 
 							<div class="five wide column">
-								<input type="password" name="mainwp_consumer_key" id="mainwp_consumer_key" value="<?php echo esc_html( $consumer_key ); ?>" readonly />
+								<input type="text" name="mainwp_consumer_key" id="mainwp_consumer_key" value="<?php echo esc_html( $consumer_key ); ?>" readonly />
 							</div>
 
 							<div class="five wide column">
@@ -632,10 +632,10 @@ class MainWP_Rest_Api_Page {
 						</div>
 
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Consumer Secret', 'mainwp' ); ?></label>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Consumer secret', 'mainwp' ); ?></label>
 
 							<div class="five wide column">
-								<input type="password" name="mainwp_consumer_secret" id="mainwp_consumer_secret" value="<?php echo esc_html( $consumer_secret ); ?>" readonly />
+								<input type="text" name="mainwp_consumer_secret" id="mainwp_consumer_secret" value="<?php echo esc_html( $consumer_secret ); ?>" readonly />
 							</div>
 
 							<div class="five wide column">
@@ -701,6 +701,7 @@ class MainWP_Rest_Api_Page {
 
 		$edit_desc = is_array( $item ) && isset( $item['desc'] ) ? $item['desc'] : '';
 		$enabled   = is_array( $item ) && isset( $item['enabled'] ) && ! empty( $item['enabled'] ) ? true : false;
+		$ending    = substr( $keyid, -8 );
 
 		self::render_header( 'Edit' );
 		?>
@@ -720,6 +721,14 @@ class MainWP_Rest_Api_Page {
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Description', 'mainwp' ); ?></label>
 							<div class="five wide column">
 								<input type="text" name="mainwp_rest_api_key_desc" id="mainwp_rest_api_key_desc" value="<?php echo esc_html( $edit_desc ); ?>" />
+							</div>
+						</div>
+						<div class="ui grid field">
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Consumer key ending in', 'mainwp' ); ?></label>
+							<div class="five wide column">
+								<div class="ui disabled input">
+									<input type="text" value="<?php echo esc_attr( '...' . $ending ); ?>" />
+								</div>
 							</div>
 						</div>
 						<div class="ui divider"></div>

@@ -65,7 +65,7 @@ class MainWP_Updates_Per_Group {
 								if ( 0 < $total_wp_upgrades ) {
 									MainWP_Updates::set_continue_update_html_selector( 'wpcore_global_upgrade_all' );
 									?>
-									<a class="ui green mini basic button" onclick="event.stopPropagation(); return updatesoverview_wordpress_global_upgrade_all( false, true );" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update All Selected', 'mainwp' ); ?></a>
+									<a class="ui green mini basic button" onclick="event.stopPropagation(); return updatesoverview_wordpress_global_upgrade_all( false, true );" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update Selected Sites', 'mainwp' ); ?></a>
 									<a class="mainwp-update-all-button ui green mini button" onclick="return updatesoverview_wordpress_global_upgrade_all();" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update All Tags', 'mainwp' ); ?></a>
 									<?php
 								}

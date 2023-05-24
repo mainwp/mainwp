@@ -29,6 +29,20 @@ class Rest_Api {
 	private static $instance = null;
 
 	/**
+	 * Protected variable to hold the API version.
+	 *
+	 * @var string API version
+	 */
+	protected $api_version = '1';
+
+	/**
+	 * Private variable enabled api.
+	 *
+	 * @var bool API enabled.
+	 */
+	private static $enabled_api = null;
+
+	/**
 	 * Method instance()
 	 *
 	 * Create public static instance.
@@ -50,11 +64,25 @@ class Rest_Api {
 	 * Adds an action to create the rest API endpoints if activated in the plugin settings.
 	 */
 	public function init() {
-		if ( $this->enabled_rest_api() ) {
+		if ( $this->is_rest_api_enabled() ) {
 			add_filter( 'mainwp_rest_api_validate', array( &$this, 'rest_api_validate' ), 10, 2 );
 			// run API.
 			add_action( 'rest_api_init', array( &$this, 'mainwp_register_routes' ) );
 		}
+		add_filter( 'mainwp_rest_api_enabled', array( &$this, 'hook_rest_api_enabled' ), 10, 1 );
+	}
+
+
+	/**
+	 * Method is_rest_api_enabled()
+	 *
+	 * Check if Enabled the REST API.
+	 */
+	public function is_rest_api_enabled() {
+		if ( null === self::$enabled_api ) {
+			self::$enabled_api = $this->enabled_rest_api();
+		}
+		return self::$enabled_api;
 	}
 
 	/**
@@ -63,10 +91,11 @@ class Rest_Api {
 	 * Enabled the REST API.
 	 */
 	public function enabled_rest_api() {
+
 		$disabled = apply_filters( 'mainwp_rest_api_disabled', false );
 
 		if ( $disabled ) {
-			false;
+			return false;
 		}
 
 		$all_keys = get_option( 'mainwp_rest_api_keys', false );
@@ -85,11 +114,13 @@ class Rest_Api {
 	}
 
 	/**
-	 * Protected variable to hold the API version.
+	 * Method hook_rest_api_enabled()
 	 *
-	 * @var string API version
+	 * Hook to check if Enabled the REST API.
 	 */
-	protected $api_version = '1';
+	public function hook_rest_api_enabled() {
+		return $this->is_rest_api_enabled();
+	}
 
 	/**
 	 * Method mainwp_rest_api_init()
@@ -357,6 +388,16 @@ class Rest_Api {
 				'callback' => 'check-site-http-status',
 			),
 			array(
+				'route'    => 'site',
+				'method'   => 'GET',
+				'callback' => 'non-mainwp-changes',
+			),
+			array(
+				'route'    => 'site',
+				'method'   => 'GET',
+				'callback' => 'non-mainwp-changes-count',
+			),
+			array(
 				'route'    => 'updates',
 				'method'   => 'GET',
 				'callback' => 'available-updates',
@@ -413,7 +454,7 @@ class Rest_Api {
 			),
 			array(
 				'route'    => 'client',
-				'method'   => 'GET',
+				'method'   => 'DELETE',
 				'callback' => 'remove-client',
 			),
 			array(
@@ -1036,8 +1077,8 @@ class Rest_Api {
 
 		// first validate the request.
 		if ( $this->mainwp_validate_request( $request ) ) {
-			$total_upgrades = MainWP_Common_Handler::instance()->sites_available_updates_count();
-			$response       = new \WP_REST_Response( $total_upgrades );
+			$data     = MainWP_Common_Handler::instance()->sites_available_updates_count();
+			$response = new \WP_REST_Response( $data );
 		} else {
 			// throw common error.
 			$response = $this->mainwp_authentication_error();
@@ -2965,6 +3006,134 @@ class Rest_Api {
 					// do common process response.
 					$response = $this->mainwp_run_process_success();
 
+				} else {
+					// throw invalid data error.
+					$response = $this->mainwp_invalid_data_error();
+				}
+			} else {
+				// throw missing data error.
+				$response = $this->mainwp_missing_data_error();
+			}
+		} else {
+			// throw common error.
+			$response = $this->mainwp_authentication_error();
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Method mainwp_rest_api_non_mainwp_changes_callback()
+	 *
+	 * Callback function for managing the response to API requests made for the endpoint: non-mainwp-changes
+	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/site/non-mainwp-changes
+	 * API Method: GET
+	 *
+	 * @param array $request The request made in the API call which includes all parameters.
+	 *
+	 * @return object $response An object that contains the return data and status of the API request.
+	 */
+	public function mainwp_rest_api_non_mainwp_changes_callback( $request ) {
+
+		// first validate the request.
+		if ( $this->mainwp_validate_request( $request ) ) {
+
+			// get parameters.
+			if ( null != $request['site_id'] ) {
+
+				if ( is_numeric( $request['site_id'] ) ) {
+
+					$site_id = $request['site_id'];
+
+					$params = array(
+						'wpid'        => $site_id,
+						'where_extra' => ' AND dismiss = 0 ',
+					);
+
+					$data = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
+
+					$response = new \WP_REST_Response( $data );
+					$response->set_status( 200 );
+
+				} elseif ( 'all' == $request['site_id'] ) {
+					$limit  = apply_filters( 'mainwp_widget_site_actions_limit_number', 10000 );
+					$params = array(
+						'limit'       => $limit,
+						'where_extra' => ' AND dismiss = 0 ',
+					);
+
+					$data = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
+
+					$response = new \WP_REST_Response( $data );
+					$response->set_status( 200 );
+				} else {
+					// throw invalid data error.
+					$response = $this->mainwp_invalid_data_error();
+				}
+			} else {
+				// throw missing data error.
+				$response = $this->mainwp_missing_data_error();
+			}
+		} else {
+			// throw common error.
+			$response = $this->mainwp_authentication_error();
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Method mainwp_rest_api_non_mainwp_changes_count_callback()
+	 *
+	 * Callback function for managing the response to API requests made for the endpoint: non-mainwp-changes-count
+	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/site/non-mainwp-changes-count
+	 * API Method: GET
+	 *
+	 * @param array $request The request made in the API call which includes all parameters.
+	 *
+	 * @return object $response An object that contains the return data and status of the API request.
+	 */
+	public function mainwp_rest_api_non_mainwp_changes_count_callback( $request ) {
+
+		// first validate the request.
+		if ( $this->mainwp_validate_request( $request ) ) {
+
+			// get parameters.
+			if ( null != $request['site_id'] ) {
+
+				if ( is_numeric( $request['site_id'] ) ) {
+
+					$site_id = $request['site_id'];
+
+					$params = array(
+						'wpid'        => $site_id,
+						'where_extra' => ' AND dismiss = 0 ',
+					);
+
+					$data = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
+
+					$data_count = array(
+						'count' => count( $data ),
+					);
+
+					$response = new \WP_REST_Response( $data_count );
+					$response->set_status( 200 );
+
+				} elseif ( 'all' == $request['site_id'] ) {
+					$limit  = apply_filters( 'mainwp_widget_site_actions_limit_number', 10000 );
+					$params = array(
+						'limit'       => $limit,
+						'where_extra' => ' AND dismiss = 0 ',
+					);
+
+					$data = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
+
+					$data_count = array(
+						'count' => count( $data ),
+					);
+
+					$response = new \WP_REST_Response( $data_count );
+					$response->set_status( 200 );
 				} else {
 					// throw invalid data error.
 					$response = $this->mainwp_invalid_data_error();

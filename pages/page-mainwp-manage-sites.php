@@ -429,9 +429,15 @@ class MainWP_Manage_Sites {
 											<input type="checkbox"
 											<?php
 											$show_col = ! isset( $show_cols[ $name ] ) || ( 1 == $show_cols[ $name ] );
+
+											if ( 'added_datetime' == $name && ! isset( $show_cols[ $name ] ) ) {
+												$show_col = false; // default is hidden.
+											}
+
 											if ( $show_col ) {
 												echo 'checked="checked"';
 											}
+
 											?>
 											id="mainwp_show_column_<?php echo esc_attr( $name ); ?>" name="mainwp_show_column_<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $name ); ?>">
 											<label for="mainwp_show_column_<?php echo esc_attr( $name ); ?>" ><?php echo $title; ?></label>
@@ -862,7 +868,9 @@ class MainWP_Manage_Sites {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Upload the CSV file', 'mainwp' ); ?></label>
 							<div class="ten wide column">
+								<div class="ui file input">
 								<input type="file" name="mainwp_managesites_file_bulkupload" id="mainwp_managesites_file_bulkupload" accept="text/comma-separated-values"/>
+								</div>
 							</div>
 						</div>
 						<div class="ui grid field">
@@ -1527,6 +1535,13 @@ class MainWP_Manage_Sites {
 				$monitoring_emails = isset( $_POST['mainwp_managesites_edit_monitoringNotificationEmails'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_monitoringNotificationEmails'] ) ) : '';
 				$monitoring_emails = MainWP_Utility::valid_input_emails( $monitoring_emails );
 				MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $monitoring_emails );
+
+				$added = isset( $_POST['mainwp_managesites_edit_dt_added'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_dt_added'] ) ) : '';
+				if ( ! empty( $added ) ) {
+					$added = strtotime( $added );
+				}
+				MainWP_DB::instance()->update_website_option( $website, 'added_timestamp', $added );
+
 				$updated = true;
 			}
 		}

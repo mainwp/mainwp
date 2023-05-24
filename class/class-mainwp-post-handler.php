@@ -1228,8 +1228,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_autoupdate_and_trust_child() {
 		$this->secure_request( 'mainwp_autoupdate_and_trust_child' );
-		if ( get_option( 'mainwp_automaticDailyUpdate' ) != 1 ) {
-			update_option( 'mainwp_automaticDailyUpdate', 1 );
+		if ( get_option( 'mainwp_pluginAutomaticDailyUpdate' ) != 1 ) {
+			update_option( 'mainwp_pluginAutomaticDailyUpdate', 1 );
 		}
 		MainWP_Plugins_Handler::trust_plugin( 'mainwp-child/mainwp-child.php' );
 		die( 'ok' );

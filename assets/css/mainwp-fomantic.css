@@ -160,3 +160,7 @@
 .mainwp-ui .ui.selection.active.dropdown {
   z-index: 9999 !important;
 }
+
+.mainwp-ui i.plug.circular.icon {
+  height: auto !important;
+}

@@ -344,7 +344,7 @@ class MainWP_Manage_Groups {
 					responsive = false;
 				}
 				jQuery( document ).ready( function() {
-					
+
 					jQuery( '#mainwp-manage-groups-sites-table' ).dataTable( {
 						"searching" : true,
 						"responsive" : responsive,

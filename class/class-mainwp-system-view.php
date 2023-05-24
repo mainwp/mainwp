@@ -651,7 +651,7 @@ class MainWP_System_View {
 
 	/**
 	 * Productions site warning.
-	 * 
+	 *
 	 * Renders the warning if the production site is detected.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()

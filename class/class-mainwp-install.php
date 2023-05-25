@@ -362,11 +362,6 @@ class MainWP_Install extends MainWP_DB_Base {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-		if ( ! function_exists( '\error_log' ) ) {
-			// make sure to disable any error output.
-			error_reporting( 0 ); // phpcs:ignore -- to solve rarely error only.
-		}
-
 		foreach ( $sql as $query ) {
 			dbDelta( $query );
 		}

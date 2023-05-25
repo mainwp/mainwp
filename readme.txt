@@ -292,7 +292,6 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: Hue slider not working in the Tag color picker
 * Fixed: Error with loading Plugin info in the Updates table
 * Added: Horizontal scroll in the Updates table on specific screen resolutions
-* Updated: Check if the PHP `error_log()` function exists before calling it to prevent potential errors
 
 = 4.4.3 - 5-24-2023 =
 * Fixed: Incorrect response code when adding site via WP CLI

@@ -33,7 +33,7 @@
  text-decoration: underline dotted;
 }
 
-.mainwp-ui.mainwp-custom-theme a:not( .button ) .icon,
+.mainwp-ui.mainwp-custom-theme a:not( .button ) .icon:not( .green, .red ),
 .mainwp-ui.mainwp-custom-theme .statistic a {
  color: var( --font-color ) !important;
  font-weight: normal !important;
@@ -568,6 +568,10 @@
 
 .mainwp-ui.mainwp-custom-theme  .ui.inverted.pointing.menu .item .icon {
   color: #ffffff !important;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-groups-menu.ui.pointing.vertical.menu .item:after {
+  display: none !important;
 }
 
 /* Main Content Area

@@ -713,7 +713,7 @@ class MainWP_System {
 			wp_enqueue_script( 'jquery-ui-datepicker' );
 		}
 		wp_enqueue_script( 'jquery-ui-dialog' );
-		$en_params = array( 'jquery-ui-dialog', 'wp-color-picker' );
+		$en_params = array( 'jquery-ui-dialog' );
 		if ( $use_wp_datepicker ) {
 			$en_params[] = 'jquery-ui-datepicker';
 		}
@@ -776,6 +776,7 @@ class MainWP_System {
 		}
 
 		wp_enqueue_style( 'wp-color-picker' );
+		wp_enqueue_script( 'wp-color-picker' );
 
 		$this->init_session();
 

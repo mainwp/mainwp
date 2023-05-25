@@ -364,7 +364,7 @@ class MainWP_Install extends MainWP_DB_Base {
 
 		if ( ! function_exists( '\error_log' ) ) {
 			// make sure to disable any error output.
-			error_reporting( 0 );
+			error_reporting( 0 ); // phpcs:ignore -- to solve rarely error only.
 		}
 
 		foreach ( $sql as $query ) {

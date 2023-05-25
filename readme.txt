@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.2.2
 Requires PHP: 7.0
-Stable tag: 4.4.3
+Stable tag: 4.4.3.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -286,6 +286,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 10. Manage Clients Screen
 
 == Changelog ==
+
+= 4.4.3.1 - 5-25-2023 =
+* Fixed: An issue with displaying a Tag color in the Tags menu
+* Fixed: Hue slider not working in the Tag color picker
+* Fixed: Error with loading Plugin info in the Updates table
+* Added: Horizontal scroll in the Updates table on specific screen resolutions
 
 = 4.4.3 - 5-24-2023 =
 * Fixed: Incorrect response code when adding site via WP CLI

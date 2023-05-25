@@ -361,6 +361,7 @@ class MainWP_Install extends MainWP_DB_Base {
 		$sql = apply_filters( 'mainwp_db_install_tables', $sql, $currentVersion, $charset_collate );
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
 		foreach ( $sql as $query ) {
 			dbDelta( $query );
 		}

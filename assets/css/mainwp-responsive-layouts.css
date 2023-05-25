@@ -25,6 +25,12 @@
 	}
 }
 
+@media only screen and ( min-width: 992px ) and ( max-width: 1449px ) {
+	#mainwp-manage-updates {
+		overflow-x: scroll !important;
+	}
+}
+
 @media only screen and ( min-width: 768px ) and ( max-width: 1449px ) {
 
 	.mainwp-sync-button-icon {

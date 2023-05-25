@@ -213,7 +213,7 @@ body.mainwp-ui.mainwp-custom-theme,
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-select-sites-select-all-actions {
-  background-color: var(--background-color-2);
+  background-color: var(--border-color);
   border-color: var(--border-color);
 }
 
@@ -617,7 +617,7 @@ body.mainwp-ui.mainwp-custom-theme,
   color: var(--font-color);
 }
 
-.mainwp-ui.mainwp-custom-theme a:not( .button ) .icon {
+.mainwp-ui.mainwp-custom-theme a:not( .button ) .icon:not( .green, .red ) {
   color: var(--accent-color);
 }
 
@@ -721,7 +721,7 @@ body.mainwp-ui.mainwp-custom-theme,
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.pointing.vertical.menu .item {
-  border-color: var(--border-color) !important;
+  border-color: var(--border-color);
   color: var(--font-color);
 }
 .mainwp-ui.mainwp-custom-theme #mainwp-sites-sidebar-menu.ui.vertical.menu .item:hover,
@@ -730,7 +730,7 @@ body.mainwp-ui.mainwp-custom-theme,
 }
 .mainwp-ui.mainwp-custom-theme #mainwp-sites-sidebar-menu.ui.vertical.menu .item.active,
 .mainwp-ui.mainwp-custom-theme .ui.pointing.vertical.menu .item.active {
-  border-color: var(--border-color) !important;
+  border-color: var(--border-color);
   background-color: var(--background-color-4);
   color: var(--font-color);
 }

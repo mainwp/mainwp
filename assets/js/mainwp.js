@@ -2744,7 +2744,7 @@ jQuery(document).ready(function ($) {
       if (findNext.length > 0) {
         openwpp_site = '&wpplugin=' + jQuery(findNext).attr('open-wpplugin-siteid');
       }
-    }
+    }    
     $('#mainwp-plugin-details-modal').modal({
       onHide: function () {
       },
@@ -2753,7 +2753,6 @@ jQuery(document).ready(function ($) {
           source: 'WP',
           url: $(itemDetail).attr('href') + openwpp_site,
         });
-        return false;
       }
     }).modal('show');
     return false;

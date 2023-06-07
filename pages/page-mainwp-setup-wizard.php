@@ -132,7 +132,7 @@ class MainWP_Setup_Wizard {
 		if ( MainWP_Utility::instance()->is_disabled_functions( 'error_log' ) || ! function_exists( '\error_log' ) ) {
 			error_reporting(0); // phpcs:ignore -- try to disabled the error_log somewhere in WP.
 		}
-		
+
 		ob_start();
 		$this->setup_wizard_header();
 		$this->setup_wizard_steps();

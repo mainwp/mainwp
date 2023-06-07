@@ -1213,7 +1213,7 @@ class MainWP_Utility {
 	 */
 	public function is_disabled_functions( $func ) {
 		$dis_funcs = $this->get_disable_functions();
-		
+
 		if ( ! empty( $dis_funcs ) && ( false !== stristr( $dis_funcs, func ) ) ) {
 			return true;
 		}

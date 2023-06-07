@@ -469,7 +469,7 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
-	public function add_group( $userid, $name, $color ) {
+	public function add_group( $userid, $name, $color = '' ) {
 		if ( MainWP_Utility::ctype_digit( $userid ) ) {
 			if ( $this->wpdb->insert(
 				$this->table_name( 'group' ),

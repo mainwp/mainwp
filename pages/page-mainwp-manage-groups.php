@@ -678,7 +678,7 @@ class MainWP_Manage_Groups {
 	 * @param array  $site_ids Sites IDs.
 	 * @param string $gcolor Tag color.
 	 */
-	public static function add_group_sites( $gname, $site_ids, $gcolor ) {
+	public static function add_group_sites( $gname, $site_ids, $gcolor = '' ) {
 		/**
 		 * Current user global.
 		 *

@@ -25,6 +25,23 @@ class MainWP_Utility {
 	public static $enabled_wp_seo = null;
 
 	/**
+	 * Private static variable to hold the single instance of the class.
+	 *
+	 * @static
+	 *
+	 * @var mixed Default null
+	 */
+	private static $instance = null;
+
+	/**
+	 * Store the disabled php functions.
+	 *
+	 * @static
+	 * @var string $disabled_functions disabled php functions.
+	 */
+	public static $disabled_functions = null;
+
+	/**
 	 * Method get_class_name()
 	 *
 	 * Get Class Name.
@@ -33,6 +50,22 @@ class MainWP_Utility {
 	 */
 	public static function get_class_name() {
 		return __CLASS__;
+	}
+
+	/**
+	 * Method instance()
+	 *
+	 * Create public static instance.
+	 *
+	 * @static
+	 * @return MainWP_Utility
+	 */
+	public static function instance() {
+		if ( null == self::$instance ) {
+			self::$instance = new self();
+		}
+
+		return self::$instance;
 	}
 
 	/**
@@ -1153,6 +1186,37 @@ class MainWP_Utility {
 			return true;
 		}
 
+		return false;
+	}
+
+	/**
+	 * Method get_disable_functions()
+	 *
+	 * Get disable functions.
+	 *
+	 * @return string
+	 */
+	public function get_disable_functions() {
+		$length = strlen( $needle );
+		if ( null === $this->disabled_functions ) {
+			$this->disabled_functions = ini_get( 'disable_functions' );
+		}
+		return $this->disabled_functions;
+	}
+
+	/**
+	 * Method is_disable_functions()
+	 *
+	 * Check if it is disabled functions.
+	 *
+	 * @return string
+	 */
+	public function is_disabled_functions( $func ) {
+		$dis_funcs = $this->get_disable_functions();
+		
+		if ( ! empty( $dis_funcs ) && ( false !== stristr( $dis_funcs, func ) ) ) {
+			return true;
+		}
 		return false;
 	}
 }

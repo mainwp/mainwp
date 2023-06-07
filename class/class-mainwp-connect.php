@@ -108,7 +108,12 @@ class MainWP_Connect {
 
 		$headers           = array( 'X-Requested-With' => 'XMLHttpRequest' );
 		$headers['Expect'] = self::get_expect_header( $postdata );
-		$headers           = \Requests::flatten( $headers );
+
+		if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
+			$headers = \WpOrg\Requests\Requests::flatten( $headers );
+		} else {
+			$headers = \Requests::flatten( $headers );
+		}
 
 		curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
 		curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
@@ -1282,7 +1287,12 @@ class MainWP_Connect {
 
 		$headers           = array( 'X-Requested-With' => 'XMLHttpRequest' );
 		$headers['Expect'] = self::get_expect_header( $postdata );
-		$headers           = \Requests::flatten( $headers );
+
+		if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
+			$headers = \WpOrg\Requests\Requests::flatten( $headers );
+		} else {
+			$headers = \Requests::flatten( $headers );
+		}
 
 		curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
 		curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );

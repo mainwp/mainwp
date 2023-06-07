@@ -362,9 +362,17 @@ class MainWP_Install extends MainWP_DB_Base {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
+		global $wpdb;
+
+		if ( MainWP_Utility::instance()->is_disabled_functions( 'error_log' ) || ! function_exists( '\error_log' ) ) {
+			error_reporting(0); // phpcs:ignore -- try to disabled the error_log somewhere in WP.
+		}
+
+		$suppress = $wpdb->suppress_errors();
 		foreach ( $sql as $query ) {
 			dbDelta( $query );
 		}
+		$wpdb->suppress_errors( $suppress );
 
 		$this->post_update();
 

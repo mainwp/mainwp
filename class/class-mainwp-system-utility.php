@@ -542,7 +542,7 @@ class MainWP_System_Utility {
 			if ( is_array( $tags ) ) {
 				foreach ( $tags as $idx => $tag ) {
 					$tag       = trim( $tag );
-					$tagx      = MainWP_DB_Common::instance()->get_group_by_id( $tags_ids[ $idx ] );
+					$tagx      = MainWP_DB_Common::instance()->get_group_by_name( $tag );
 					$tag_style = 'style="background-color:' . esc_html( $tagx->color ) . '"';
 					if ( '' != $tagx->color ) {
 						$tag_a_style = 'style="color:#fff!important;opacity:1;"';

@@ -306,8 +306,12 @@ class MainWP_Updates_Per_Group {
 													if ( ! is_array( $plugin_upgrades ) ) {
 														$plugin_upgrades = array();
 													}
-													$premiumUpgrade              = array_filter( $premiumUpgrade );
-													$plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
+													$premiumUpgrade = array_filter( $premiumUpgrade );
+													if ( isset( $plugin_upgrades[ $crrSlug ] ) && is_array( $plugin_upgrades[ $crrSlug ] ) ) {
+														$plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
+													} else {
+														$plugin_upgrades[ $crrSlug ] = $premiumUpgrade;
+													}
 												}
 											}
 										}
@@ -540,8 +544,12 @@ class MainWP_Updates_Per_Group {
 													if ( ! is_array( $theme_upgrades ) ) {
 														$theme_upgrades = array();
 													}
-													$premiumUpgrade             = array_filter( $premiumUpgrade );
-													$theme_upgrades[ $crrSlug ] = array_merge( $theme_upgrades[ $crrSlug ], $premiumUpgrade );
+													$premiumUpgrade = array_filter( $premiumUpgrade );
+													if ( isset( $theme_upgrades[ $crrSlug ] ) && is_array( $theme_upgrades[ $crrSlug ] ) ) {
+														$theme_upgrades[ $crrSlug ] = array_merge( $theme_upgrades[ $crrSlug ], $premiumUpgrade );
+													} else {
+														$theme_upgrades[ $crrSlug ] = $premiumUpgrade;
+													}
 												}
 											}
 										}

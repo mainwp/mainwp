@@ -1209,12 +1209,14 @@ class MainWP_Utility {
 	 *
 	 * Check if it is disabled functions.
 	 *
+	 * @param string $func Function name to check.
+	 *
 	 * @return string
 	 */
 	public function is_disabled_functions( $func ) {
 		$dis_funcs = $this->get_disable_functions();
 
-		if ( ! empty( $dis_funcs ) && ( false !== stristr( $dis_funcs, func ) ) ) {
+		if ( ! empty( $dis_funcs ) && ( false !== stristr( $dis_funcs, $func ) ) ) {
 			return true;
 		}
 		return false;

@@ -374,13 +374,17 @@ table#mainwp-manage-sites-table .error a {
 }
 
 
-/* Manaage Extensions */
+/* Manage Extensions */
 
 .mainwp-disabled-extension .header,
 .mainwp-disabled-extension .content:not( .extra ) {
   opacity: 0.7;
 }
 
+#mainwp-install-extensions-menu {
+    overflow-x: auto;
+    overflow-y: hidden;
+}
 /* temporary */
 .hidden.divider {
     display: block !important;

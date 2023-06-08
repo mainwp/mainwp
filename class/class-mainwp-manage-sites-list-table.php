@@ -974,6 +974,7 @@ class MainWP_Manage_Sites_List_Table {
 			'order'         => '[]',
 			'scrollX'       => 'true',
 			'responsive'    => 'true',
+			'fixedColumns'  => '',
 		);
 
 		/**
@@ -1030,6 +1031,9 @@ class MainWP_Manage_Sites_List_Table {
 								"stateSave" : <?php echo $table_features['stateSave']; ?>,
 								"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
 								"order" : <?php echo $table_features['order']; ?>,
+								<?php if ( isset( $table_features['fixedColumns'] ) && '' != $table_features['fixedColumns'] ) : ?>
+								"fixedColumns" : <?php echo $table_features['fixedColumns']; ?>,
+								<?php endif; ?>
 								"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All" ] ],
 								"columnDefs": [ 
 									{ 
@@ -1113,6 +1117,7 @@ class MainWP_Manage_Sites_List_Table {
 							"stateSave" : <?php echo $table_features['stateSave']; ?>,
 							"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
 							"order" : <?php echo $table_features['order']; ?>,
+							"fixedColumns" : <?php echo $table_features['fixedColumns']; ?>,
 							"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All"] ],
 							serverSide: true,
 							"pageLength": <?php echo intval( $sites_per_page ); ?>,

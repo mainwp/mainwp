@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.2.2
 Requires PHP: 7.0
-Stable tag: 4.4.3.1
+Stable tag: 4.4.3.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -286,6 +286,13 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 10. Manage Clients Screen
 
 == Changelog ==
+
+= 4.4.3.2 - 6-8-2023 =
+* Added: Check if `error_log()` PHP function is disabled on server to prevent potential errors
+* Fixed: Auto-focus sites filter field when Sites sidebar shows
+* Fixed: Issues with displaying updates per group
+* Fixed: Multiple PHP warnings
+* Fixed: Overflow-x issue with the Install Extensions menu
 
 = 4.4.3.1 - 5-25-2023 =
 * Fixed: An issue with displaying a Tag color in the Tags menu

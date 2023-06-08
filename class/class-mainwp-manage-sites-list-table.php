@@ -1117,7 +1117,7 @@ class MainWP_Manage_Sites_List_Table {
 							"stateSave" : <?php echo $table_features['stateSave']; ?>,
 							"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
 							"order" : <?php echo $table_features['order']; ?>,
-							"fixedColumns" : <?php echo $table_features['fixedColumns']; ?>,
+							"fixedColumns" : <?php echo ! empty( $table_features['fixedColumns'] ) ? esc_js( $table_features['fixedColumns'] ) : '""'; ?>,
 							"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All"] ],
 							serverSide: true,
 							"pageLength": <?php echo intval( $sites_per_page ); ?>,

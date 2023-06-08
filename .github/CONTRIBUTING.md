@@ -29,11 +29,11 @@ If something isn't working, congratulations you've found a bug! Help us fix it b
 
 ### Making Changes
 
-Helping aking changes to the MainWP Dashboard is a key way to help us improve MainWP overall. You will need some technical skills to make a change, like knowing a bit of PHP, CSS, SASS or JavaScript.
+Helping make changes to the MainWP Dashboard is a key way to help us improve MainWP overall. You will need some technical skills to make a change, like knowing a bit of PHP, CSS, SASS or JavaScript.
 
 If you think something could be improved and you're able to do so, make your changes and submit a Pull Request. We'll be pleased to get it :)
 
-#### How To Submit A PR
+#### How To Submit a Pull Request
 
 * Fork the repository on GitHub
 * Make the changes to your forked repository

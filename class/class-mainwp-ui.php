@@ -941,7 +941,7 @@ class MainWP_UI {
 				jQuery( '#mainwp-sites-sidebar' ).on( 'click', function() {
 					jQuery( '.ui.sites.sidebar' ).sidebar( {
 						transition: 'overlay',
-						'onShow': function() {
+						'onVisible': function() {
 							jQuery( '#mainwp-sites-menu-filter' ).focus();
 						}
 					} );

@@ -681,9 +681,9 @@ class MainWP_Themes {
 	public static function render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients = '' ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Themes' );
 
-		$output                      = new \stdClass();
-		$output->errors              = array();
-		$output->themes              = array();
+		$output         = new \stdClass();
+		$output->errors = array();
+		$output->themes = array();
 
 		$data_fields = array(
 			'id',
@@ -717,12 +717,12 @@ class MainWP_Themes {
 								}
 							}
 
-							if( '' != $keyword ){
-								if( $not_criteria ){
+							if ( '' != $keyword ) {
+								if ( $not_criteria ) {
 									if ( stristr( $theme['title'], $keyword ) ) {
 										continue;
 									}
-								} else if ( ! stristr( $theme['title'], $keyword ) ) {
+								} elseif ( ! stristr( $theme['title'], $keyword ) ) {
 									continue;
 								}
 							}
@@ -755,13 +755,13 @@ class MainWP_Themes {
 										continue;
 									}
 								}
-								
-								if( '' != $keyword ){
-									if( $not_criteria ){
+
+								if ( '' != $keyword ) {
+									if ( $not_criteria ) {
 										if ( stristr( $theme['title'], $keyword ) ) {
 											continue;
 										}
-									} else if ( ! stristr( $theme['title'], $keyword ) ) {
+									} elseif ( ! stristr( $theme['title'], $keyword ) ) {
 										continue;
 									}
 								}
@@ -801,12 +801,12 @@ class MainWP_Themes {
 									continue;
 								}
 							}
-							if( '' != $keyword ){
-								if( $not_criteria ){
+							if ( '' != $keyword ) {
+								if ( $not_criteria ) {
 									if ( stristr( $theme['title'], $keyword ) ) {
 										continue;
 									}
-								} else if ( ! stristr( $theme['title'], $keyword ) ) {
+								} elseif ( ! stristr( $theme['title'], $keyword ) ) {
 									continue;
 								}
 							}

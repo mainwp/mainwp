@@ -709,9 +709,9 @@ class MainWP_Plugins {
 		$keyword = trim( $keyword );
 		MainWP_Cache::init_cache( 'Plugins' );
 
-		$output                       = new \stdClass();
-		$output->errors               = array();
-		$output->plugins              = array();
+		$output          = new \stdClass();
+		$output->errors  = array();
+		$output->plugins = array();
 
 		$data_fields = array(
 			'id',
@@ -744,12 +744,12 @@ class MainWP_Plugins {
 								}
 							}
 
-							if( '' != $keyword ){
-								if( $not_criteria ){
+							if ( '' != $keyword ) {
+								if ( $not_criteria ) {
 									if ( stristr( $plugin['name'], $keyword ) ) {
 										continue;
 									}
-								} else if ( ! stristr( $plugin['name'], $keyword ) ) {
+								} elseif ( ! stristr( $plugin['name'], $keyword ) ) {
 									continue;
 								}
 							}
@@ -782,13 +782,13 @@ class MainWP_Plugins {
 										continue;
 									}
 								}
-								
-								if( '' != $keyword ){
-									if( $not_criteria ){
+
+								if ( '' != $keyword ) {
+									if ( $not_criteria ) {
 										if ( stristr( $plugin['name'], $keyword ) ) {
 											continue;
 										}
-									} else if ( ! stristr( $plugin['name'], $keyword ) ) {
+									} elseif ( ! stristr( $plugin['name'], $keyword ) ) {
 										continue;
 									}
 								}
@@ -798,7 +798,6 @@ class MainWP_Plugins {
 								$plugin['websitename'] = $website->name;
 								$output->plugins[]     = $plugin;
 							}
-							
 						}
 						MainWP_DB::free_result( $websites );
 					}
@@ -828,12 +827,12 @@ class MainWP_Plugins {
 								}
 							}
 
-							if( '' != $keyword ){
-								if( $not_criteria ){
+							if ( '' != $keyword ) {
+								if ( $not_criteria ) {
 									if ( stristr( $plugin['name'], $keyword ) ) {
 										continue;
 									}
-								} else if ( ! stristr( $plugin['name'], $keyword ) ) {
+								} elseif ( ! stristr( $plugin['name'], $keyword ) ) {
 									continue;
 								}
 							}
@@ -961,7 +960,7 @@ class MainWP_Plugins {
 				$pluginsName        = array();
 				$pluginsMainWP      = array();
 				$pluginsRealVersion = array();
-			
+
 				$plugins_list = $output->plugins;
 
 			foreach ( $plugins_list as $plugin ) {

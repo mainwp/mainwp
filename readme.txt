@@ -1,13 +1,13 @@
 === MainWP Dashboard  – WordPress Manager for Multiple Websites Maintenance ===
 Contributors: mainwp
-Tags: WordPress Manager, WordPress Management, Manage WordPress, Manage Multiple Sites, Control Multiple Sites, WordPress Site Management, WordPress Management Dashboard, ManageWP, Manage WP Sites, WordPress Maintenance, Uptime Monitor, Backup, Security, Lighthouse, Client Reports, Manage Plugins, Updates Manager, Manage WordPress Websites, Client Management, REST API, Hooks
+Tags: Manage Multiple Sites, Maintenance, Client, Admin, Update, Monitoring, Dashboard, Backup, Performance, Lighthouse, Analytics, Security
 Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.2.2
 Requires PHP: 7.0
-Stable tag: 4.4.3.2
+Stable tag: 4.4.3.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -15,16 +15,15 @@ Perform WordPress maintenance tasks like Updates, Backups, Uptime Monitoring, Se
 
 == Description ==
 
-The [MainWP WordPress Manager](https://mainwp.com) Dashboard plugin allows you to control multiple WordPress websites **(even those on different hosting)** from your own private self-hosted WordPress website.
+The [MainWP WordPress Manager](https://mainwp.com) Dashboard plugin allows you to control multiple WordPress websites **(even those on different hosting)** from your own WordPress website.
 
 🎉 Over **600k websites are being managed by 10k active dashboards**, which makes 60 sites on average.
 
-And, MainWP is the only WordPress sites management plugin with **over 2000** ⭐⭐⭐⭐⭐ reviews.
-
+And, MainWP is the only WordPress sites management plugin with **over 2000** ⭐⭐⭐⭐⭐ reviews on wp.org. Additionally, [here's](https://mainwp.com/love/) what our users have to say about MainWP.
 
 == How is MainWP different from ManageWP and other SaaS WordPress Management plugins? ==
 
-MainWP is a free, open-source, and self-hosted plugin to manage multiple WordPress websites from a single WordPress website, ensuring **complete privacy for you and your clients.**
+MainWP is a free, open-source, and self-hosted plugin to manage multiple sites from a single WordPress website, ensuring **complete privacy for you and your clients.**
 
 It is designed for WordPress professionals who realize that WP management for yourself and your clients is **more than just plugin and theme updates.**
 
@@ -37,7 +36,7 @@ MainWP is the **perfect solution for**
 - Designers
 - Consultants
 - Marketers
-- In fact, anyone who wants to manage multiple WordPress sites.
+- In fact, anyone who wants to manage multiple sites.
 
 
 == Why WordPress Managers Love MainWP! ==
@@ -45,25 +44,34 @@ MainWP is the **perfect solution for**
 💰 Free Forever
 🏷️ White Label
 ♾️ Connect Unlimited Websites
+🧑‍💻 Manage all Sites, Users, Plugins, Themes, Updates
 👥 Full Client Management
-🌐 Organize Sites via Tags
+🌐 Organize Sites & Clients via Colorful Tags
 🕒 Uptime & Site Health Monitoring
-🚩 1-Click Lighthouse Stats
+🚩 1-Click Lighthouse Stats for all Sites
 🔄 Effortless Bulk Updates
 🚧 Staging, Cloning
-📝 Professional Reports
-🔗 Security & Backup Integrations
+📝 Professional Reports for Clients
 💬 Bulk Manage Comments
 🛡️ Bulk Manage Security
-📈 SEO, Traffic, Analytics, etc.
-🚀 WP Rocket, Cache-Control
+🚀 Purge Cache from the Dashboard
 ✏️ Fully Customizable
-🌐 Domain Monitoring
+🔍 Domain & SSL Certificate Monitoring
+🔑 Passwordless 1-click Login to all Connected Sites
 🔒 Full Privacy, Self-hosted, Lock Your Dashboard
 😌 Bulk Content Management (Draft, Publish, Edit, Trash)
-🦾 40+ Integrations
+➕ Perform Pressable hosting-specific tasks
 
-And [a lot more](https://mainwp.com/mainwp-extensions/)…
+With MainWP, you can **easily manage & control settings** for several plugins/services directly from the dashboard.
+
+🗃️ UpdraftPlus, WPvivid, WP Staging, BackWPup, BackupBuddy, Time Capsule
+🔒 Termageddon, Wordfence, Jetpack Protect & Scan, Sucuri, iThemes Security, Virusdie, Activity Log, Security Ninja
+🚀 WP Rocket, WP Compress, Google Lighthouse Stats
+✅ Atarim, WooCommerce, Database Updater
+📈 Yoast, SEOPress, Google Analytics (GA4), Matomo Stats
+🌐 Uptime Robot, NodePing, Site24x7, Better Uptime
+
+And [a lot more](https://mainwp.com/free-vs-pro/)…
 
 
 == Your Guarantee of Privacy ==
@@ -73,9 +81,9 @@ The MainWP plugins come with their own [privacy policies](https://mainwp.com/mai
 
 == How Does MainWP Work? ==
 
-First, Install and Activate this MainWP Dashboard plugin on a WordPress site you will use for controlling all other sites (even those on different hosting); this is your Dashboard Site.
+First, Install and Activate this MainWP Dashboard plugin on a WordPress site you will use to manage all other sites (even those on different hosting); this is your Dashboard Site.
 
-We highly recommend this be a new, clean WordPress installation and not on one of your operating sites. Using a clean site helps to eliminate any unnecessary plugin conflicts or security issues.
+We highly recommend this be a new, clean WordPress installation and not on one of your production sites. Using a clean site helps to eliminate any unnecessary plugin conflicts or security issues.
 
 Next, Install and Activate the [MainWP Child plugin](https://wordpress.org/plugins/mainwp-child/) on all WordPress sites you want to manage from your MainWP Dashboard. WordPress sites connected to your Dashboard are referred to as Child Sites.
 
@@ -85,14 +93,16 @@ Still, trying to figure out how MainWP works? [Review these detailed steps on in
 
 == How Is MainWP Free? What’s the Catch? How Will You Continue to Pay Development Costs? ==
 
-The MainWP WordPress manager plugin is [100% FREE!](https://mainwp.com/mainwp-free-features/) However, MainWP Pro offers a wide range of [30+ Premium Extensions](https://mainwp.com/mainwp-extensions/) at a single price.
+The MainWP WordPress manager plugin is [100% FREE!](https://mainwp.com/mainwp-free-features/) However, MainWP Pro offers a wide range of [32+ Premium Extensions](https://mainwp.com/mainwp-extensions/) at a single price.
+
+👉 [Free vs. Pro: Know the Difference](https://mainwp.com/free-vs-pro/)
 
 Extensions enhance your MainWP Dashboard with additional features for backups, marketing, SEO, maintenance, security, monitoring, and other tools to help you better organize and manage websites.
 
 
 == Some Powerful MainWP Features: ==
 
-MainWP is a feature-rich WP management plugin to manage multiple WordPress sites from a single self-hosted dashboard. Here are some of the highlighted features.
+MainWP is a feature-rich WP management plugin to manage multiple sites from a single self-hosted dashboard. Here are some of the highlighted features.
 
 = – Easy WordPress Management =
 
@@ -105,7 +115,7 @@ With the Easy [Plugin Manager feature](https://mainwp.com/easy-plugin-manager/),
 
 With the MainWP Client Management feature, you can create new profiles for your clients, add their contact person details, map websites to specific clients, add tags, suspend clients, and much more!
 
-Have a look at how you can [easily manage your clients](https://kb.mainwp.com/docs/manage-clients/).
+Take a look at how you can [easily manage your clients](https://kb.mainwp.com/docs/manage-clients/).
 
 
 = – One-Click Login to wp-admin =
@@ -120,7 +130,7 @@ With the click of a button from your MainWP WordPress Manager Dashboard, all you
 
 = – Automated Updates =
 
-The Trusted Plugin and Theme option in your MainWP Dashboard will automatically update the Trusted Plugins and Themes without further interaction.
+The Trusted Plugin and Theme option in your MainWP Dashboard will [automatically update](https://kb.mainwp.com/docs/manage-updates/) the Trusted Plugins and Themes without further interaction.
 
 You will get an alert via email with available updates, and your Dashboard will auto-update them the next day.
 
@@ -198,24 +208,18 @@ Build around a proven WordPress Management System!
 
 We are [partnered with industry-leading](https://mainwp.com/mainwp-extensions/) plugins and solutions to provide more flexibility.
 
-If you want to build an extension or integration for MainWP, you may get a massive boost. We may list it on our [Extensions page](https://mainwp.com/mainwp-extensions/) and market it, and with the 1000 extension installs, you could get 60k new active installations for your plugin.
+If you want to build an Extension or integration for MainWP, you may get a massive boost. We may list it on our [Extensions page](https://mainwp.com/mainwp-extensions/) and market it, and with 1000 Extension installs, you could get 60k new active installations for your plugin.
 
 Find more details on the [Develop MainWP Extensions](https://mainwp.com/develop-mainwp/) page.
 
 = More Information =
-[MainWP Documentation](https://kb.mainwp.com/)
-
-[MainWP Community](https://managers.mainwp.com/)
-
-[MainWP Support](https://mainwp.com/support/)
-
-[MainWP Videos](http://www.youtube.com/user/MyMainWP)
-
-[MainWP Extensions](https://mainwp.com/mainwp-extensions/)
-
-[Develop MainWP Extensions](https://mainwp.com/develop-mainwp/)
-
-[MainWP on Github](https://mainwp.com/github/)
+- [MainWP Documentation](https://kb.mainwp.com/)
+- [MainWP Community](https://managers.mainwp.com/)
+- [MainWP Support](https://mainwp.com/support/)
+- [MainWP Videos](https://www.youtube.com/user/MyMainWP)
+- [MainWP Extensions](https://mainwp.com/mainwp-extensions/)
+- [Develop MainWP Extensions](https://mainwp.com/develop-mainwp/)
+- [MainWP on Github](https://mainwp.com/github/)
 
 == Installation ==
 
@@ -226,15 +230,15 @@ However, we have reports that most functions work correctly, but support will be
 1. We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.
 
 Using a new WordPress install will help cut down on Plugin Conflicts and other issues caused by trying to run your MainWP Main Dashboard from an active site. Most hosting companies provide free subdomains ("demo.yourdomain.com"), and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard.
-If you are not sure how to set up a subdomain, contact your hosting companies support.
+If you are not sure how to set up a subdomain, contact your hosting company's support.
 
-You can even install your MainWP Dashboard on a WordPress site located on your local computer using [DesktopServer](https://mainwp.com/how-to-use-desktopserver-to-run-your-mainwp-dashboard-locally/), WAMP or any other setup that allows you to run [WordPress locally](https://make.wordpress.org/core/handbook/tutorials/installing-a-local-server/).
+You can even install your MainWP Dashboard on a WordPress site located on your local computer using WAMP or any other setup that allows you to run [WordPress locally](https://make.wordpress.org/core/handbook/tutorials/installing-a-local-server/).
 
-2. Once you have set up the separate WordPress install, you can install the MainWP Dashboard plugin following your normal installation procedure, either the Automatic process by searching MainWP or by uploading the MainWP plugin to the '/wp-content/plugins/' directory.
+2. Once you have set up the separate WordPress website, install the MainWP Dashboard plugin following your normal installation procedure, either the Automatic process by searching MainWP or by uploading the MainWP plugin to the '/wp-content/plugins/' directory.
 
-3. Once installed then Activate the plugin through the Plugins menu in WordPress
+3. Once installed then Activate the plugin through the Plugins menu in WordPress.
 
-4. Add your first child site to the MainWP Dashboard - [Documentation](https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/add-site-to-your-dashboard/)
+4. Add your first Child Site to the MainWP Dashboard - [Documentation](https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/add-site-to-your-dashboard/)
 
 5. Set your MainWP Settings - [Documentation](https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/mainwp-dashboard-settings/)
 
@@ -246,31 +250,38 @@ Yes, you need to install the [MainWP Child Plugin](https://wordpress.org/plugins
 Yes, please review the [documentation site](https://kb.mainwp.com).
 
 = I just want to start using MainWP, do you have a Quick Start Guide? =
-Yes, please read the [Quick Start – Setting up your MainWP](https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/) guide on the doc site.
+Yes, please read the [Quick Start – Setting up your MainWP](https://mainwp.com/install-mainwp/).
 
 = Where do I go for support or to ask for help? =
-Please post in the [MainWP Community](https://managers.mainwp.com)
+Please post in the [MainWP Community](https://managers.mainwp.com), or feel free to [contact us](https://mainwp.com/support/).
 
 = What is the difference between ManageWP and MainWP? =
 Essentially MainWP and ManageWP provide the same type of service but with different philosophies on WordPress management.
 
-ManageWP is a Service as a Solution (SaaS) property owned by Godaddy.  The SaaS system makes ManageWP a type of "Walled Garden" with limited customization options.
+ManageWP is a Service as a Solution (SaaS) property owned by GoDaddy. The SaaS system makes ManageWP a type of "Walled Garden" with limited customization options.
 
-MainWP follows the tradition of WordPress and is [open source](https://github.com/mainwp/mainwp), [private](https://mainwp.com/protect-your-data/), and [fully extendable](https://mainwp.dev).   The fact that MainWP is open source and extendable means you have almost unlimited customization option, this allows you to run your WordPress management business as you see fit.
+MainWP follows the tradition of WordPress and is [open source](https://github.com/mainwp/mainwp), [private](https://mainwp.com/protect-your-data/), and [fully extendable](https://mainwp.dev). The fact that MainWP is open source and extendable means you have almost unlimited customization options, allowing you to run your WordPress management business as you see fit.
+
+👉 [ManageWP vs. MainWP: Know the Difference](https://mainwp.com/managewp-vs-mainwp/)
 
 = How do I know my sites are secure using MainWP? =
 We take security very seriously at MainWP. We welcome any peer review of our [100% open source code](https://github.com/mainwp/mainwp) to ensure nobody's MainWP management system is ever compromised or hacked.
 
-We also participate in the [HackerOne](https://www.hackerone.com) bug bounty program; this allows ethical hackers to review MainWP code and directly share any vulnerability information with us in return for a monetary reward.
+We participate in the [HackerOne](https://www.hackerone.com) bug bounty program; this allows ethical hackers to review MainWP code and directly share any vulnerability information with us in return for a monetary reward.
+
+We are also a part of the [Patchstack Vulnerability Disclosure Program](https://patchstack.com/database/vdp/mainwp/), which assists in enhancing the security of MainWP plugins.
+
+= Where do I report security bugs found in MainWP? =
+You can report any security bugs found in the source code of MainWP plugins through the [Patchstack Vulnerability Disclosure Program](https://patchstack.com/database/vdp/mainwp/). The Patchstack team will assist you with verification, CVE assignment and take care of notifying us.
 
 = How do I customize MainWP for my needs? =
-If you want to make some basic changes to the look of your Dashboard, you can use our prebuilt [Custom Dashbboard](https://mainwp.com/extension/mainwp-custom-dashboard-extension/) Extension, or if you want to dig in and build Extensions, you can learn all about Extension creation at [MainWP.dev](https://mainwp.dev)
+If you want to make some basic changes to the look of your Dashboard, you can use our prebuilt [Custom Dashbboard](https://mainwp.com/extension/mainwp-custom-dashboard-extension/) Extension, or if you want to dig in and build Extensions, you can learn all about developing Extension at [MainWP.dev](https://mainwp.dev)
 
 = I have an idea for MainWP; how do I let you know? =
-Please follow the steps outlined in the [MainWP Feature Requests](https://managers.mainwp.com/c/feature/16) so you can add your idea to the MainWP Community to be voted on.
+Please follow the steps outlined in the [MainWP Feature Requests](https://feedback.mainwp.com/) so you can add your idea to the MainWP Community to be voted on.
 
 = I have more questions, do you have any other information? =
-Sure we have a quick FAQ with a lot more questions and answers [here](https://mainwp.com/presales-faq/).
+Yes, we have a quick FAQ with a lot more questions and answers [here](https://mainwp.com/preinstall-faq/).
 
 == Screenshots ==
 
@@ -286,6 +297,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 10. Manage Clients Screen
 
 == Changelog ==
+
+= 4.4.3.3 - 6-19-2023 =
+* Added: Upcomming extension info data
+* Fixed: An issue with the negative search feature
+* Updated: Plugin info in readme.txt file
 
 = 4.4.3.2 - 6-8-2023 =
 * Added: Check if `error_log()` PHP function is disabled on server to prevent potential errors

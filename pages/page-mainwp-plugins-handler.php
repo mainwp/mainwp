@@ -48,28 +48,17 @@ class MainWP_Plugins_Handler {
 				return;
 			}
 
-			if ( isset( $plugins['not_criteria_plugins'] ) && is_array( $plugins['not_criteria_plugins'] ) ) {
-				foreach ( $plugins['not_criteria_plugins'] as $plugin ) {
-					if ( ! isset( $plugin['name'] ) ) {
-						continue;
-					}
-					$plugin['websiteid']            = $website->id;
-					$plugin['websiteurl']           = $website->url;
-					$plugin['websitename']          = $website->name;
-					$output->not_criteria_plugins[] = $plugin;
+			foreach ( $plugins as $plugin ) {
+				if ( ! isset( $plugin['name'] ) ) {
+					continue;
 				}
-			} else {
-				foreach ( $plugins as $plugin ) {
-					if ( ! isset( $plugin['name'] ) ) {
-						continue;
-					}
-					$plugin['websiteid']   = $website->id;
-					$plugin['websiteurl']  = $website->url;
-					$plugin['websitename'] = $website->name;
+				$plugin['websiteid']   = $website->id;
+				$plugin['websiteurl']  = $website->url;
+				$plugin['websitename'] = $website->name;
 
-					$output->plugins[] = $plugin;
-				}
+				$output->plugins[] = $plugin;
 			}
+
 			unset( $plugins );
 		} else {
 			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );

@@ -684,7 +684,6 @@ class MainWP_Themes {
 		$output                      = new \stdClass();
 		$output->errors              = array();
 		$output->themes              = array();
-		$output->not_criteria_themes = array();
 
 		$data_fields = array(
 			'id',
@@ -708,7 +707,6 @@ class MainWP_Themes {
 						$website   = MainWP_DB::instance()->get_website_by_id( $v );
 						$allThemes = json_decode( $website->themes, true );
 						$_count    = count( $allThemes );
-						$not_found = true;
 						for ( $i = 0; $i < $_count; $i ++ ) {
 							$theme = $allThemes[ $i ];
 							if ( 'active' === $status || 'inactive' === $status ) {
@@ -719,24 +717,20 @@ class MainWP_Themes {
 								}
 							}
 
-							if ( '' != $keyword && ! stristr( $theme['title'], $keyword ) ) {
-								continue;
+							if( '' != $keyword ){
+								if( $not_criteria ){
+									if ( stristr( $theme['title'], $keyword ) ) {
+										continue;
+									}
+								} else if ( ! stristr( $theme['title'], $keyword ) ) {
+									continue;
+								}
 							}
 
 							$theme['websiteid']   = $website->id;
 							$theme['websiteurl']  = $website->url;
 							$theme['websitename'] = $website->name;
 							$output->themes[]     = $theme;
-							$not_found            = false;
-						}
-						if ( $not_found && $not_criteria ) {
-							for ( $i = 0; $i < $_count; $i ++ ) {
-								$theme                         = $allThemes[ $i ];
-								$theme['websiteid']            = $website->id;
-								$theme['websiteurl']           = $website->url;
-								$theme['websitename']          = $website->name;
-								$output->not_criteria_themes[] = $theme;
-							}
 						}
 					}
 				}
@@ -752,7 +746,6 @@ class MainWP_Themes {
 							}
 							$allThemes = json_decode( $website->themes, true );
 							$_count    = count( $allThemes );
-							$not_found = true;
 							for ( $i = 0; $i < $_count; $i ++ ) {
 								$theme = $allThemes[ $i ];
 								if ( 'active' === $status || 'inactive' === $status ) {
@@ -762,25 +755,21 @@ class MainWP_Themes {
 										continue;
 									}
 								}
-								if ( '' != $keyword && ! stristr( $theme['title'], $keyword ) ) {
-									continue;
+								
+								if( '' != $keyword ){
+									if( $not_criteria ){
+										if ( stristr( $theme['title'], $keyword ) ) {
+											continue;
+										}
+									} else if ( ! stristr( $theme['title'], $keyword ) ) {
+										continue;
+									}
 								}
 
 								$theme['websiteid']   = $website->id;
 								$theme['websiteurl']  = $website->url;
 								$theme['websitename'] = $website->name;
 								$output->themes[]     = $theme;
-								$not_found            = false;
-							}
-
-							if ( $not_found && $not_criteria ) {
-								for ( $i = 0; $i < $_count; $i ++ ) {
-									$theme                         = $allThemes[ $i ];
-									$theme['websiteid']            = $website->id;
-									$theme['websiteurl']           = $website->url;
-									$theme['websitename']          = $website->name;
-									$output->not_criteria_themes[] = $theme;
-								}
 							}
 						}
 						MainWP_DB::free_result( $websites );
@@ -802,9 +791,9 @@ class MainWP_Themes {
 						}
 						$allThemes = json_decode( $website->themes, true );
 						$_count    = count( $allThemes );
-						$not_found = true;
 						for ( $i = 0; $i < $_count; $i ++ ) {
 							$theme = $allThemes[ $i ];
+
 							if ( 'active' === $status || 'inactive' === $status ) {
 								if ( 1 == $theme['active'] && 'active' !== $status ) {
 									continue;
@@ -812,25 +801,20 @@ class MainWP_Themes {
 									continue;
 								}
 							}
-							if ( '' != $keyword && ! stristr( $theme['title'], $keyword ) ) {
-								continue;
+							if( '' != $keyword ){
+								if( $not_criteria ){
+									if ( stristr( $theme['title'], $keyword ) ) {
+										continue;
+									}
+								} else if ( ! stristr( $theme['title'], $keyword ) ) {
+									continue;
+								}
 							}
 
 							$theme['websiteid']   = $website->id;
 							$theme['websiteurl']  = $website->url;
 							$theme['websitename'] = $website->name;
 							$output->themes[]     = $theme;
-							$not_found            = false;
-						}
-
-						if ( $not_found && $not_criteria ) {
-							for ( $i = 0; $i < $_count; $i ++ ) {
-								$theme                         = $allThemes[ $i ];
-								$theme['websiteid']            = $website->id;
-								$theme['websiteurl']           = $website->url;
-								$theme['websitename']          = $website->name;
-								$output->not_criteria_themes[] = $theme;
-							}
 						}
 					}
 				}
@@ -933,7 +917,7 @@ class MainWP_Themes {
 
 		$bulkActions = self::render_bulk_actions( $status );
 
-		if ( 0 == count( $output->themes ) && ! $not_criteria ) {
+		if ( 0 == count( $output->themes ) ) {
 			ob_start();
 			?>
 			<div class="ui message yellow"><?php esc_html_e( 'No themes found.', 'mainwp' ); ?></div>
@@ -947,15 +931,8 @@ class MainWP_Themes {
 			$themesNameSites   = array();
 			$themesRealVersion = array();
 			$themesSlug        = array();
-			$themes_list       = array();
 
-			if ( $not_criteria ) {
-				if ( property_exists( $output, 'not_criteria_themes' ) && ! empty( $output->not_criteria_themes ) ) {
-					$themes_list = $output->not_criteria_themes;
-				}
-			} else {
-				$themes_list = $output->themes;
-			}
+			$themes_list = $output->themes;
 
 			foreach ( $themes_list as $theme ) {
 				$slug_ver            = esc_html( $theme['name'] . '_' . $theme['version'] );

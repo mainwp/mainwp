@@ -712,7 +712,6 @@ class MainWP_Plugins {
 		$output                       = new \stdClass();
 		$output->errors               = array();
 		$output->plugins              = array();
-		$output->not_criteria_plugins = array();
 
 		$data_fields = array(
 			'id',
@@ -736,7 +735,6 @@ class MainWP_Plugins {
 						$website    = MainWP_DB::instance()->get_website_by_id( $v );
 						$allPlugins = json_decode( $website->plugins, true );
 						$_count     = count( $allPlugins );
-						$not_found  = true;
 						for ( $i = 0; $i < $_count; $i ++ ) {
 							$plugin = $allPlugins[ $i ];
 
@@ -746,25 +744,20 @@ class MainWP_Plugins {
 								}
 							}
 
-							if ( '' != $keyword && ! stristr( $plugin['name'], $keyword ) ) {
-								continue;
+							if( '' != $keyword ){
+								if( $not_criteria ){
+									if ( stristr( $plugin['name'], $keyword ) ) {
+										continue;
+									}
+								} else if ( ! stristr( $plugin['name'], $keyword ) ) {
+									continue;
+								}
 							}
 
 							$plugin['websiteid']   = $website->id;
 							$plugin['websiteurl']  = $website->url;
 							$plugin['websitename'] = $website->name;
 							$output->plugins[]     = $plugin;
-							$not_found             = false;
-						}
-
-						if ( $not_found && $not_criteria ) {
-							for ( $i = 0; $i < $_count; $i ++ ) {
-								$plugin                         = $allPlugins[ $i ];
-								$plugin['websiteid']            = $website->id;
-								$plugin['websiteurl']           = $website->url;
-								$plugin['websitename']          = $website->name;
-								$output->not_criteria_plugins[] = $plugin;
-							}
 						}
 					}
 				}
@@ -789,25 +782,23 @@ class MainWP_Plugins {
 										continue;
 									}
 								}
-								if ( '' != $keyword && ! stristr( $plugin['name'], $keyword ) ) {
-									continue;
+								
+								if( '' != $keyword ){
+									if( $not_criteria ){
+										if ( stristr( $plugin['name'], $keyword ) ) {
+											continue;
+										}
+									} else if ( ! stristr( $plugin['name'], $keyword ) ) {
+										continue;
+									}
 								}
 
 								$plugin['websiteid']   = $website->id;
 								$plugin['websiteurl']  = $website->url;
 								$plugin['websitename'] = $website->name;
 								$output->plugins[]     = $plugin;
-								$not_found             = false;
 							}
-							if ( $not_found && $not_criteria ) {
-								for ( $i = 0; $i < $_count; $i ++ ) {
-									$plugin                         = $allPlugins[ $i ];
-									$plugin['websiteid']            = $website->id;
-									$plugin['websiteurl']           = $website->url;
-									$plugin['websitename']          = $website->name;
-									$output->not_criteria_plugins[] = $plugin;
-								}
-							}
+							
 						}
 						MainWP_DB::free_result( $websites );
 					}
@@ -828,7 +819,6 @@ class MainWP_Plugins {
 						}
 						$allPlugins = json_decode( $website->plugins, true );
 						$_count     = count( $allPlugins );
-						$not_found  = true;
 						for ( $i = 0; $i < $_count; $i ++ ) {
 							$plugin = $allPlugins[ $i ];
 
@@ -837,24 +827,21 @@ class MainWP_Plugins {
 									continue;
 								}
 							}
-							if ( '' != $keyword && ! stristr( $plugin['name'], $keyword ) ) {
-								continue;
+
+							if( '' != $keyword ){
+								if( $not_criteria ){
+									if ( stristr( $plugin['name'], $keyword ) ) {
+										continue;
+									}
+								} else if ( ! stristr( $plugin['name'], $keyword ) ) {
+									continue;
+								}
 							}
 
 							$plugin['websiteid']   = $website->id;
 							$plugin['websiteurl']  = $website->url;
 							$plugin['websitename'] = $website->name;
 							$output->plugins[]     = $plugin;
-							$not_found             = false;
-						}
-						if ( $not_found && $not_criteria ) {
-							for ( $i = 0; $i < $_count; $i ++ ) {
-								$plugin                         = $allPlugins[ $i ];
-								$plugin['websiteid']            = $website->id;
-								$plugin['websiteurl']           = $website->url;
-								$plugin['websitename']          = $website->name;
-								$output->not_criteria_plugins[] = $plugin;
-							}
 						}
 					}
 				}
@@ -961,7 +948,7 @@ class MainWP_Plugins {
 
 		ob_start();
 
-		if ( 0 == count( $output->plugins ) && ! $not_criteria ) {
+		if ( 0 == count( $output->plugins ) ) {
 			?>
 			<div class="ui message yellow"><?php esc_html_e( 'No plugins found.', 'mainwp' ); ?></div>
 			<?php
@@ -974,16 +961,8 @@ class MainWP_Plugins {
 				$pluginsName        = array();
 				$pluginsMainWP      = array();
 				$pluginsRealVersion = array();
-
-				$plugins_list = array();
-
-			if ( $not_criteria ) {
-				if ( property_exists( $output, 'not_criteria_plugins' ) && ! empty( $output->not_criteria_plugins ) ) {
-					$plugins_list = $output->not_criteria_plugins;
-				}
-			} else {
+			
 				$plugins_list = $output->plugins;
-			}
 
 			foreach ( $plugins_list as $plugin ) {
 				$slug_ver                      = esc_html( $plugin['slug'] . '_' . $plugin['version'] );
@@ -1801,7 +1780,6 @@ class MainWP_Plugins {
 					$post_data['status'] = '';
 					$post_data['filter'] = false;
 				}
-
 				MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( MainWP_Plugins_Handler::get_class_name(), 'plugins_search_handler' ), $output );
 
 				if ( 0 < count( $output->errors ) ) {

@@ -546,7 +546,7 @@ class MainWP_Extensions_View {
 	 */
 	public static function render_purchase_notice() {
 		?>
-		<div id="mainwp-get-purchased-extensions-modal" class="ui first coupled modal">
+		<div id="mainwp-get-purchased-extensions-modal" class="ui first coupled large modal">
 			<div class="header"><?php esc_html_e( 'Install purchased extensions', 'mainwp' ); ?></div>
 			<div class="scrolling content"></div>
 			<div class="actions">
@@ -1159,6 +1159,24 @@ class MainWP_Extensions_View {
 				'integration_url'      => '',
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
+			),
+			'mainwp-pressable-extension'             =>
+			array(
+				'type'                 => 'pro',
+				'slug'                 => 'mainwp-pressable-extension',
+				'title'                => 'MainWP Pressable Extension',
+				'desc'                 => 'MainWP Pressable Extension simplifies your Pressable hosting management experience, such as creating, disabling, and deleting websites, enabling/disabling CDN, managing backups, and more without the need to log in to your Pressable account.',
+				'link'                 => 'https://mainwp.com/extension/pressable/',
+				'img'                  => $folder_url . 'pressable.png',
+				'product_id'           => 'MainWP Pressable Extension',
+				'product_item_id'      => 0,
+				'catalog_id'           => '1271427',
+				'group'                => array( 'hosting' ),
+				'privacy'              => 1,
+				'integration'          => 'Pressable API',
+				'integration_url'      => 'https://pressable.com/',
+				'integration_owner'    => 'Pressable, Inc.',
+				'integration_owner_pp' => 'https://automattic.com/privacy/',
 			),
 			'mainwp-pro-reports-extension'           =>
 			array(

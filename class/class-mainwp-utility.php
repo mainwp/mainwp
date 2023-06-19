@@ -1197,11 +1197,10 @@ class MainWP_Utility {
 	 * @return string
 	 */
 	public function get_disable_functions() {
-		$length = strlen( $needle );
-		if ( null === $this->disabled_functions ) {
-			$this->disabled_functions = ini_get( 'disable_functions' );
+		if ( null === self::$disabled_functions ) {
+			self::$disabled_functions = ini_get( 'disable_functions' );
 		}
-		return $this->disabled_functions;
+		return self::$disabled_functions;
 	}
 
 	/**

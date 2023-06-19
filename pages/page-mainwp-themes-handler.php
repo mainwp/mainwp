@@ -49,29 +49,15 @@ class MainWP_Themes_Handler {
 
 				return;
 			}
-
-			if ( isset( $themes['not_criteria_themes'] ) && is_array( $themes['not_criteria_themes'] ) ) {
-				foreach ( $themes['not_criteria_themes'] as $theme ) {
-					if ( ! isset( $theme['name'] ) ) {
-						continue;
-					}
-					$theme['websiteid']   = $website->id;
-					$theme['websiteurl']  = $website->url;
-					$theme['websitename'] = $website->name;
-
-					$output->not_criteria_themes[] = $theme;
+			foreach ( $themes as $theme ) {
+				if ( ! isset( $theme['name'] ) ) {
+					continue;
 				}
-			} else {
-				foreach ( $themes as $theme ) {
-					if ( ! isset( $theme['name'] ) ) {
-						continue;
-					}
-					$theme['websiteid']   = $website->id;
-					$theme['websiteurl']  = $website->url;
-					$theme['websitename'] = $website->name;
+				$theme['websiteid']   = $website->id;
+				$theme['websiteurl']  = $website->url;
+				$theme['websitename'] = $website->name;
 
-					$output->themes[] = $theme;
-				}
+				$output->themes[] = $theme;
 			}
 			unset( $themes );
 		} else {

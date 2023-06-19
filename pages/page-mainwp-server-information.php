@@ -607,18 +607,18 @@ class MainWP_Server_Information {
 	 * @return void
 	 */
 	public static function render_php_check_tbody() {
-					self::render_row( 'PHP Version', '>=', '7.4', 'get_php_version', '', '', null, null, self::ERROR );
-					self::render_row( 'PHP Safe Mode Disabled', '=', true, 'get_php_safe_mode', '', '', null );
-					self::render_row( 'PHP Max Execution Time', '>=', '30', 'get_max_execution_time', 'seconds', '=', '0' );
-					self::render_row( 'PHP Max Input Time', '>=', '30', 'get_max_input_time', 'seconds', '=', '0' );
-					self::render_row( 'PHP Memory Limit', '>=', '128M', 'get_php_memory_limit', '', '', null, 'filesize' );
-					self::render_row( 'PCRE Backtracking Limit', '>=', '10000', 'get_output_buffer_size', '', '', null );
-					self::render_row( 'PHP Upload Max Filesize', '>=', '2M', 'get_upload_max_filesize', '', '', null, 'filesize' );
-					self::render_row( 'PHP Post Max Size', '>=', '2M', 'get_post_max_size', '', '', null, 'filesize' );
-					self::render_row( 'SSL Extension Enabled', '=', true, 'get_ssl_support', '', '', null );
-					self::render_row( 'SSL Warnings', '=', '', 'get_ssl_warning', 'empty', '', null );
-					self::render_row( 'cURL Extension Enabled', '=', true, 'get_curl_support', '', '', null, null, self::ERROR );
-					self::render_row( 'cURL Timeout', '>=', '300', 'get_curl_timeout', 'seconds', '=', '0' );
+		self::render_row( 'PHP Version', '>=', '7.4', 'get_php_version', '', '', null, null, self::ERROR );
+		self::render_row( 'PHP Safe Mode Disabled', '=', true, 'get_php_safe_mode', '', '', null );
+		self::render_row( 'PHP Max Execution Time', '>=', '30', 'get_max_execution_time', 'seconds', '=', '0' );
+		self::render_row( 'PHP Max Input Time', '>=', '30', 'get_max_input_time', 'seconds', '=', '0' );
+		self::render_row( 'PHP Memory Limit', '>=', '128M', 'get_php_memory_limit', '', '', null, 'filesize' );
+		self::render_row( 'PCRE Backtracking Limit', '>=', '10000', 'get_output_buffer_size', '', '', null );
+		self::render_row( 'PHP Upload Max Filesize', '>=', '2M', 'get_upload_max_filesize', '', '', null, 'filesize' );
+		self::render_row( 'PHP Post Max Size', '>=', '2M', 'get_post_max_size', '', '', null, 'filesize' );
+		self::render_row( 'SSL Extension Enabled', '=', true, 'get_ssl_support', '', '', null );
+		self::render_row( 'SSL Warnings', '=', '', 'get_ssl_warning', 'empty', '', null );
+		self::render_row( 'cURL Extension Enabled', '=', true, 'get_curl_support', '', '', null, null, self::ERROR );
+		self::render_row( 'cURL Timeout', '>=', '300', 'get_curl_timeout', 'seconds', '=', '0' );
 		if ( function_exists( 'curl_version' ) ) {
 			$reuire_curl = '7.18.1';
 			if ( version_compare( MainWP_Server_Information_Handler::get_php_version(), '8.0.0' ) >= 0 ) {
@@ -639,7 +639,7 @@ class MainWP_Server_Information {
 
 		}
 		?>
-					<tr>
+		<tr>
 			<td><?php esc_html_e( 'PHP Allow URL fopen', 'mainwp' ); ?></td>
 			<td><?php esc_html_e( 'N/A', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_php_allow_url_fopen(); ?></td>

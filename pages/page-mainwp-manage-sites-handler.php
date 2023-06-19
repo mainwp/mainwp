@@ -64,7 +64,7 @@ class MainWP_Manage_Sites_Handler {
 
 				$output = array();
 
-				$information = MainWP_Connect::fetch_url_not_authed( $url, $admin, 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion, $others = array( 'force_use_ipv4' => $force_use_ipv4 ), $output ); // Fetch the stats with the given admin name.
+				$information = MainWP_Connect::fetch_url_not_authed( $url, $admin, 'stats', null, false, $verify_cert, $http_user, $http_pass, $ssl_version, $others = array( 'force_use_ipv4' => $force_use_ipv4 ), $output ); // Fetch the stats with the given admin name.
 
 				if ( isset( $information['wpversion'] ) ) {
 					$ret['response'] = 'OK';

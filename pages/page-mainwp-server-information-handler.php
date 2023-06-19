@@ -212,8 +212,8 @@ class MainWP_Server_Information_Handler {
 		if ( ! empty( $conf_loc ) ) {
 			$conf['config'] = $conf_loc;
 		}
-		$res = openssl_pkey_new( $conf );
-		@openssl_pkey_export( $res, $privkey, null, $conf );  // phpcs:ignore -- prevent warning.
+			$res = openssl_pkey_new( $conf );
+			@openssl_pkey_export( $res, $privkey, null, $conf ); // phpcs:ignore -- prevent warning.
 
 		$str = openssl_error_string();
 

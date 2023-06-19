@@ -1034,7 +1034,7 @@ class MainWP_Manage_Sites_View {
 							<option <?php echo ( 5 == $website->ssl_version ) ? 'selected' : ''; ?> value="5"><?php esc_html_e( 'TLS v1.1', 'mainwp' ); ?></option>
 						</select>
 					</div>
-				</div>
+				</div> 
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Force IPv4 (optional)', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Do you want to force IPv4 for this child site?', 'mainwp' ); ?>" data-inverted="" data-position="top left">

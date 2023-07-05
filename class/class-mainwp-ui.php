@@ -907,7 +907,6 @@ class MainWP_UI {
 							<?php } ?>	
 							<?php MainWP_DB::free_result( $websites ); ?>
 							</select>
-							
 						<?php endif; ?>
 					</div>
 					<div class="nine wide right aligned column"><?php echo $right; ?></div>

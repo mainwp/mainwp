@@ -65,6 +65,10 @@ class MainWP_DB extends MainWP_DB_Base {
 	 */
 	public function get_option_view( $fields = array(), $default = true ) {
 
+		if ( ! is_array( $fields ) ) {
+			$fields = array();
+		}
+
 		$view = '(SELECT intwp.id AS wpid ';
 
 		if ( empty( $fields ) || $default ) {
@@ -74,6 +78,14 @@ class MainWP_DB extends MainWP_DB_Base {
 					(SELECT phpversion.value FROM ' . $this->table_name( 'wp_options' ) . ' phpversion WHERE  phpversion.wpid = intwp.id AND phpversion.name = "phpversion" LIMIT 1) AS phpversion,
 					(SELECT added_timestamp.value FROM ' . $this->table_name( 'wp_options' ) . ' added_timestamp WHERE  added_timestamp.wpid = intwp.id AND added_timestamp.name = "added_timestamp" LIMIT 1) AS added_timestamp,
 					(SELECT wp_upgrades.value FROM ' . $this->table_name( 'wp_options' ) . ' wp_upgrades WHERE  wp_upgrades.wpid = intwp.id AND wp_upgrades.name = "wp_upgrades" LIMIT 1) AS wp_upgrades ';
+		}
+
+		if ( ! in_array( 'signature_algo', $fields ) ) {
+			$fields[] = 'signature_algo';
+		}
+
+		if ( ! in_array( 'verify_method', $fields ) ) {
+			$fields[] = 'verify_method';
 		}
 
 		if ( is_array( $fields ) ) {

@@ -156,7 +156,7 @@ class MainWP_Updates {
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => esc_html__( 'Updates', 'mainwp' ),
-				'parent_key' => 'mainwp_tab',
+				'parent_key' => 'managesites',
 				'slug'       => 'UpdatesManage',
 				'href'       => 'admin.php?page=UpdatesManage',
 				'icon'       => '<i class="sync icon"></i>',

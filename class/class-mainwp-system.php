@@ -35,7 +35,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.4.3.3';
+	public static $version = '4.5-beta1';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -240,6 +240,8 @@ class MainWP_System {
 		MainWP_Updates_Overview::init();
 		MainWP_Client::init();
 		MainWP_Rest_Api_Page::init();
+
+		MainWP_Connect_Lib::autoload_files();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			MainWP_WP_CLI_Command::init();

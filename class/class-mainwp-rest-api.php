@@ -3540,7 +3540,7 @@ class Rest_Api {
 				$data     = MainWP_Client_Handler::rest_api_add_client( $fields );
 				$response = new \WP_REST_Response( $data );
 				$response->set_status( 200 );
-			} catch ( Exception $e ) {
+			} catch ( \Exception $e ) {
 				$response = $this->mainwp_invalid_data_error( $e->getMessage() );
 			}
 		} else {
@@ -3575,7 +3575,7 @@ class Rest_Api {
 				$data     = MainWP_Client_Handler::rest_api_add_client( $fields, true );
 				$response = new \WP_REST_Response( $data );
 				$response->set_status( 200 );
-			} catch ( Exception $e ) {
+			} catch ( \Exception $e ) {
 				$response = $this->mainwp_invalid_data_error( $e->getMessage() );
 			}
 		} else {

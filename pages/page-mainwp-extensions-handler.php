@@ -58,6 +58,8 @@ class MainWP_Extensions_Handler {
 		'wp_upgrades',
 		'site_info',
 		'client',
+		'signature_algo',
+		'verify_method',
 	);
 
 
@@ -676,12 +678,16 @@ class MainWP_Extensions_Handler {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 
 		$dbwebsites = array();
-		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version', 'http_user', 'http_pass', 'sync_errors' );
+
+		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
+		$data_fields[] = 'verify_certificate';
 
 		if ( is_array( $options ) ) {
 			foreach ( $options as $option_name => $value ) {
 				if ( ( true == $value ) && in_array( $option_name, self::$possible_options ) ) {
-					$data[] = $option_name;
+					if ( ! in_array( $option_name, $data_fields ) ) {
+						$data_fields[] = $option_name;
+					}
 				}
 			}
 		}
@@ -693,7 +699,7 @@ class MainWP_Extensions_Handler {
 					if ( empty( $website ) ) {
 						continue;
 					}
-					$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
+					$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
 				}
 			}
 		}
@@ -703,7 +709,7 @@ class MainWP_Extensions_Handler {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
 					}
 					MainWP_DB::free_result( $websites );
 				}
@@ -735,7 +741,9 @@ class MainWP_Extensions_Handler {
 		}
 
 		$dbwebsites = array();
-		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version', 'http_user', 'http_pass', 'sync_errors' );
+
+		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
+		$data_fields[] = 'verify_certificate';
 
 		$fields  = isset( $params['fields'] ) && is_array( $params['fields'] ) ? $params['fields'] : array();
 		$sites   = isset( $params['sites'] ) && is_array( $params['sites'] ) ? $params['sites'] : array();
@@ -745,7 +753,9 @@ class MainWP_Extensions_Handler {
 		if ( is_array( $fields ) ) {
 			foreach ( $fields as $field ) {
 				if ( in_array( $field, self::$possible_options ) ) {
-					$data[] = $field;
+					if ( ! in_array( $field, $data_fields ) ) {
+						$data_fields[] = $field;
+					}
 				}
 			}
 		}
@@ -757,7 +767,7 @@ class MainWP_Extensions_Handler {
 					if ( empty( $website ) ) {
 						continue;
 					}
-					$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
+					$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
 				}
 			}
 		}
@@ -767,7 +777,7 @@ class MainWP_Extensions_Handler {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
 					}
 					MainWP_DB::free_result( $websites );
 				}
@@ -777,7 +787,7 @@ class MainWP_Extensions_Handler {
 		$client_sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $clients );
 		if ( $client_sites ) {
 			foreach ( $client_sites as $website ) {
-				$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
+				$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
 			}
 		}
 

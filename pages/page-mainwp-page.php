@@ -213,11 +213,11 @@ class MainWP_Page {
 
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => esc_html__( 'Pages', 'mainwp' ),
-				'parent_key' => 'mainwp_tab',
-				'slug'       => 'PageBulkManage',
-				'href'       => 'admin.php?page=PageBulkManage',
-				'icon'       => '<i class="file icon"></i>',
+				'title'             => esc_html__( 'Pages', 'mainwp' ),
+				'parent_key'        => 'managesites',
+				'slug'              => 'PageBulkManage',
+				'href'              => 'admin.php?page=PageBulkManage',
+				'icon'              => '<i class="file icon"></i>',
 			),
 			1
 		);
@@ -935,19 +935,7 @@ class MainWP_Page {
 
 		MainWP_Cache::init_cache( 'Page' );
 
-		$data_fields = array(
-			'id',
-			'url',
-			'name',
-			'adminname',
-			'nossl',
-			'privkey',
-			'nosslkey',
-			'http_user',
-			'http_pass',
-			'ssl_version',
-			'sync_errors',
-		);
+		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
 		$dbwebsites = array();
 		if ( '' != $sites ) {
@@ -1380,23 +1368,8 @@ class MainWP_Page {
 				$succes_message = esc_html__( 'New page created', 'mainwp' );
 			}
 		}
-
-		$data_fields = array(
-			'id',
-			'url',
-			'name',
-			'adminname',
-			'nossl',
-			'privkey',
-			'nosslkey',
-			'http_user',
-			'http_pass',
-			'ssl_version',
-			'sync_errors',
-		);
-
+		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 		?>
-
 		<div class="ui modal" id="mainwp-posting-page-modal">
 			<div class="header"><?php $edit_id ? esc_html_e( 'Edit Page', 'mainwp' ) : esc_html_e( 'New Page', 'mainwp' ); ?></div>
 			<div class="scrolling content">

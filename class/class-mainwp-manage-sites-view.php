@@ -1080,8 +1080,7 @@ class MainWP_Manage_Sites_View {
 							?>
 							<option <?php echo ( 9999 === $site_sign_algo ) ? 'selected' : ''; ?> value="9999"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
 						</select>
-						<br>
-						<span class="mainwp-hide-elemenent-sign-algo-note" <?php echo 1 === $site_sign_algo ? '' : 'style="display:none;"'; ?>><?php echo esc_html( $sign_note ); ?></span>
+						<div class="ui yellow message mainwp-hide-elemenent-sign-algo-note" <?php echo ( 1 === $site_sign_algo ) ? '' : 'style="display:none;"'; ?>><?php echo esc_html( $sign_note ); ?></div>
 					</div>
 				</div>
 

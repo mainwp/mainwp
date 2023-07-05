@@ -560,7 +560,7 @@ class MainWP_Logger {
 	/**
 	 * Method init_execution_time().
 	 *
-	 * @param string $code execution time code.
+	 * @param string $time_index index for timer.
 	 *
 	 * Init execution time start value.
 	 */

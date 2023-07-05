@@ -62,6 +62,11 @@ class MainWP_Connect_Lib {
 	public function __construct() {
 	}
 
+	/**
+	 * Method autoload_files()
+	 *
+	 * Handle autoload files.
+	 */
 	public static function autoload_files() {
 		require_once MAINWP_PLUGIN_DIR . 'libs' . DIRECTORY_SEPARATOR . 'phpseclib' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
 	}
@@ -73,7 +78,8 @@ class MainWP_Connect_Lib {
 	 */
 	public function create_connect_keys() {
 		try {
-			// RSA::useInternalEngine(); // to use PHP engine. //phpcs:ignore -- note.
+			//phpcs:ignore -- note.
+			// RSA::useInternalEngine(); // to use PHP engine.
 			$private     = RSA::createKey();
 			$public      = $private->getPublicKey();
 			$private_key = $private->toString( 'PKCS1' );

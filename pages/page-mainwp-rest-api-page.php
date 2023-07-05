@@ -177,9 +177,9 @@ class MainWP_Rest_Api_Page {
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'RESTAPI',
 				'href'       => 'admin.php?page=RESTAPI',
-				'icon'       => '<i class="cogs icon"></i>',
+				'icon'       => '<div class="mainwp-api-icon">API</div>',
 			),
-			1
+			0
 		);
 
 		$init_sub_subleftmenu = array(

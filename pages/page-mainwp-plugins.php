@@ -232,11 +232,11 @@ class MainWP_Plugins {
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => esc_html__( 'Plugins', 'mainwp' ),
-				'parent_key' => 'mainwp_tab',
-				'slug'       => 'PluginsManage',
-				'href'       => 'admin.php?page=PluginsManage',
-				'icon'       => '<i class="plug icon"></i>',
+				'title'             => esc_html__( 'Plugins', 'mainwp' ),
+				'parent_key'        => 'managesites',
+				'slug'              => 'PluginsManage',
+				'href'              => 'admin.php?page=PluginsManage',
+				'icon'              => '<i class="plug icon"></i>',
 			),
 			1
 		);
@@ -713,20 +713,8 @@ class MainWP_Plugins {
 		$output->errors  = array();
 		$output->plugins = array();
 
-		$data_fields = array(
-			'id',
-			'url',
-			'name',
-			'adminname',
-			'nossl',
-			'privkey',
-			'nosslkey',
-			'http_user',
-			'http_pass',
-			'ssl_version',
-			'sync_errors',
-			'plugins',
-		);
+		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
+		$data_fields[] = 'plugins';
 
 		if ( 1 == get_option( 'mainwp_optimize' ) ) {
 			if ( '' != $sites ) {

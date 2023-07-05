@@ -100,7 +100,7 @@ class MainWP_Manage_Sites_View {
 				'href'       => 'admin.php?page=managesites',
 				'icon'       => '<i class="globe icon"></i>',
 			),
-			1
+			0
 		);
 
 		$items_menu = array(
@@ -780,6 +780,10 @@ class MainWP_Manage_Sites_View {
 
 		$groups = MainWP_DB_Common::instance()->get_groups_for_current_user();
 
+		if ( ! is_array( $groups ) ) {
+			$groups = array();
+		}
+
 		$website_url = MainWP_Utility::remove_http_www_prefix( $website->url, true );
 
 		?>
@@ -853,8 +857,10 @@ class MainWP_Manage_Sites_View {
 				<?php
 				$groupsSite  = MainWP_DB_Common::instance()->get_groups_by_website_id( $website->id );
 				$init_groups = '';
-				foreach ( $groups as $group ) {
-					$init_groups .= ( isset( $groupsSite[ $group->id ] ) && $groupsSite[ $group->id ] ) ? ',' . $group->id : '';
+				if ( is_array( $groupsSite ) ) {
+					foreach ( $groupsSite as $gpsSite ) {
+						$init_groups .= ( isset( $groups[ $gpsSite->id ] ) && $groups[ $gpsSite->id ] ) ? ',' . $gpsSite->id : '';
+					}
 				}
 				$init_groups = ltrim( $init_groups, ',' );
 				?>
@@ -1035,6 +1041,50 @@ class MainWP_Manage_Sites_View {
 						</select>
 					</div>
 				</div> 
+				<?php
+				if ( empty( $website->verify_method ) ) {
+					$verify_conn_method = 3;
+				} else {
+					$verify_conn_method = (int) $website->verify_method;
+				}
+				?>
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Verify connection method', 'mainwp' ); ?></label>
+					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select Verify connection method. If you are not sure, select "Default".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<select class="ui dropdown"id="mainwp_managesites_edit_verify_connection_method" name="mainwp_managesites_edit_verify_connection_method">
+							<option <?php echo ( 1 === $verify_conn_method ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'OpenSSL (default)', 'mainwp' ); ?></option>
+							<option <?php echo ( 2 === $verify_conn_method ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'PHPSECLIB (fallback)', 'mainwp' ); ?></option>
+							<option <?php echo ( 3 === $verify_conn_method ) ? 'selected' : ''; ?> value="3"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+						</select>
+					</div>
+				</div>
+				<?php
+				$sign_note = MainWP_Connect_Lib::get_connection_algo_settings_note();
+				$sign_algs = MainWP_System_Utility::get_open_ssl_sign_algos();
+				if ( empty( $website->signature_algo ) ) {
+					$site_sign_algo = 9999;
+				} else {
+					$site_sign_algo = (int) $website->signature_algo;
+				}
+				?>
+				<div class="ui grid field mainwp-hide-elemenent-sign-algo" <?php echo ( 2 === $verify_conn_method ) ? 'style="display:none;"' : ''; ?> >
+					<label class="six wide column middle aligned"><?php esc_html_e( 'OpenSSL signature algorithm', 'mainwp' ); ?></label>
+					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select OpenSSL signature algorithm. If you are not sure, select "Default".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<select class="ui dropdown" id="mainwp_managesites_edit_openssl_alg" name="mainwp_managesites_edit_openssl_alg">
+							<?php
+							foreach ( $sign_algs as $val => $text ) {
+								?>
+								<option <?php echo ( $val === $site_sign_algo ) ? 'selected' : ''; ?> value="<?php echo esc_attr( $val ); ?>"><?php echo esc_html( $text ); ?></option>
+								<?php
+							}
+							?>
+							<option <?php echo ( 9999 === $site_sign_algo ) ? 'selected' : ''; ?> value="9999"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+						</select>
+						<br>
+						<span class="mainwp-hide-elemenent-sign-algo-note" <?php echo 1 === $site_sign_algo ? '' : 'style="display:none;"'; ?>><?php echo esc_html( $sign_note ); ?></span>
+					</div>
+				</div>
+
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Force IPv4 (optional)', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Do you want to force IPv4 for this child site?', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -1461,7 +1511,16 @@ class MainWP_Manage_Sites_View {
 					return true;
 				}
 
-				if ( function_exists( 'openssl_pkey_new' ) ) {
+				if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
+					$details = MainWP_Connect_Lib::instance()->create_connect_keys();
+					if ( is_array( $details ) ) {
+						$pubkey  = $details['pub'];
+						$privkey = $details['priv'];
+					} else {
+						$privkey = '-1';
+						$pubkey  = '-1';
+					}
+				} elseif ( function_exists( 'openssl_pkey_new' ) ) {
 					$conf     = array( 'private_key_bits' => 2048 );
 					$conf_loc = MainWP_System_Utility::get_openssl_conf();
 					if ( ! empty( $conf_loc ) ) {
@@ -1469,8 +1528,8 @@ class MainWP_Manage_Sites_View {
 					}
 					$res = openssl_pkey_new( $conf );
 					@openssl_pkey_export( $res, $privkey, null, $conf ); // phpcs:ignore -- prevent warning.
-					$pubkey = openssl_pkey_get_details( $res );
-					$pubkey = $pubkey['key'];
+					$details = openssl_pkey_get_details( $res );
+					$pubkey  = $details['key'];
 				} else {
 					$privkey = '-1';
 					$pubkey  = '-1';
@@ -1591,7 +1650,16 @@ class MainWP_Manage_Sites_View {
 			$error = esc_html__( 'The site is already connected to your MainWP Dashboard', 'mainwp' );
 		} else {
 			try {
-				if ( function_exists( 'openssl_pkey_new' ) ) {
+				if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
+					$details = MainWP_Connect_Lib::instance()->create_connect_keys();
+					if ( is_array( $details ) ) {
+						$pubkey  = $details['pub'];
+						$privkey = $details['priv'];
+					} else {
+						$privkey = '-1';
+						$pubkey  = '-1';
+					}
+				} elseif ( function_exists( 'openssl_pkey_new' ) ) {
 					$conf     = array( 'private_key_bits' => 2048 );
 					$conf_loc = MainWP_System_Utility::get_openssl_conf();
 					if ( ! empty( $conf_loc ) ) {

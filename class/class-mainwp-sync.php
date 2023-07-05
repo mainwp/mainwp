@@ -141,7 +141,7 @@ class MainWP_Sync {
 				$pForceFetch
 			);
 			$return      = self::sync_information_array( $pWebsite, $information, '', 1, false, $pAllowDisconnect );
-
+			MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );
 			return $return;
 		} catch ( MainWP_Exception $e ) {
 			$sync_errors  = '';
@@ -155,6 +155,7 @@ class MainWP_Sync {
 				$check_result = 1;
 			}
 
+			MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );
 			return self::sync_information_array( $pWebsite, $information, $sync_errors, $check_result, true, $pAllowDisconnect );
 		}
 	}

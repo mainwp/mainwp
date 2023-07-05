@@ -562,20 +562,8 @@ class MainWP_Post_Page_Handler {
 				}
 			}
 
-			$data_fields = array(
-				'id',
-				'url',
-				'name',
-				'adminname',
-				'nossl',
-				'privkey',
-				'nosslkey',
-				'http_user',
-				'http_pass',
-				'ssl_version',
-				'sync_errors',
-			);
-
+			$data_fields = MainWP_System_Utility::get_default_map_site_fields();
+				
 			$dbwebsites = array();
 
 			if ( 'site' === $selected_by ) {

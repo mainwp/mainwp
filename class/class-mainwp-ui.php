@@ -291,8 +291,10 @@ class MainWP_UI {
 									}
 								}
 
+								$site_client_editing = ( $add_edit_client_id && $website->client_id && $add_edit_client_id == $website->client_id ) ? true : false;
+
 								$selected = false;
-								if ( ( '' == $website->sync_errors || $enableOfflineSites ) && ! MainWP_System_Utility::is_suspended_site( $website ) && $enable_site ) {
+								if ( ( '' == $website->sync_errors || $enableOfflineSites ) && ( ! MainWP_System_Utility::is_suspended_site( $website ) || $site_client_editing ) && $enable_site ) {
 									$selected = ( 'all' === $selected_websites || in_array( $website->id, $selected_websites ) );
 									$disabled = '';
 									if ( $edit_site_id ) {
@@ -532,6 +534,7 @@ class MainWP_UI {
 
 		if ( $show_menu ) {
 			MainWP_Menu::render_left_menu();
+			MainWP_Menu::render_mobile_menu();
 		}
 
 		$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
@@ -716,7 +719,7 @@ class MainWP_UI {
 									<?php esc_html_e( 'Overview', 'mainwp' ); ?>
 								</a>
 								<a class="item" href="<?php echo 'admin.php?page=managesites&updateid=' . $website->id; ?>">
-									<i class="sync alternate icon"></i>
+									<i class="redo icon"></i>
 									<?php esc_html_e( 'Updates', 'mainwp' ); ?>
 								</a>
 								<a class="item" href="<?php echo 'admin.php?page=managesites&id=' . $website->id; ?>">
@@ -764,7 +767,7 @@ class MainWP_UI {
 			<div class="ui header"><?php esc_html_e( 'MainWP Guided Tours', 'mainwp' ); ?> <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></div>
 			<div class="ui hidden divider"></div>
 			<div class="ui info message" style="display:block!important;">
-				<?php echo sprintf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %sUsetiful Privacy Policy%s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
+				<?php echo sprintf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
 			</div>
 			<div class="ui hidden divider"></div>
 			<div class="ui toggle checkbox">

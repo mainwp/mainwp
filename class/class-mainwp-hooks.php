@@ -172,6 +172,13 @@ class MainWP_Hooks {
 		 * @since 4.3.
 		 */
 		add_filter( 'mainwp_get_reports_group_values_website', array( MainWP_Reports_Helper::get_instance(), 'hook_get_reports_group_values' ), 10, 6 );
+
+		/**
+		* @since 4.5.
+		*/
+		add_filter( 'mainwp_extension_get_activation_info', array( &$this, 'hook_get_activation_info' ), 10, 2 );
+		add_filter( 'mainwp_get_api_url', array( &$this, 'hook_get_api_url' ), 10, 1 );
+		add_filter( 'mainwp_hook_run_dashboard_action', array( &$this, 'hook_run_dashboard_action' ), 10, 2 );
 	}
 
 	/**
@@ -1601,4 +1608,116 @@ class MainWP_Hooks {
 	public function hook_render_updates() {
 		MainWP_Updates::render();
 	}
+
+	/**
+	 * Method hook_get_activation_info()
+	 *
+	 * Get extension activation info.
+	 * 
+	 * @param bool $boolean Input bool value.
+	 * @param string $ext_slug extension api slug.
+	 */
+	public function hook_get_activation_info( $boolea, $ext_slug ) {
+		$data = MainWP_Api_Manager::instance()->get_activation_info( $ext_slug );
+
+		$info = array();
+
+		if ( is_array( $data ) && ! empty( $data['api_key'] ) ) {
+			$info['api_key']          = $data['api_key'];
+			$info['product_id']       = isset( $data['product_id'] ) ? $data['product_id'] : '';
+			$info['instance']         = isset( $data['instance_id'] ) ? $data['instance_id'] : '';
+			$info['software_version'] = isset( $data['software_version'] ) ? $data['software_version'] : '';
+			$info['object']           = MainWP_Api_Manager::instance()->get_domain();
+			if ( isset( $data['product_item_id'] ) ) {
+				$info['product_item_id'] = $data['product_item_id'];
+			}
+		} else {
+			$info['activated_key'] = 'Deactivated';
+		}
+
+		return $info;
+	}
+
+	/**
+	 * Method hook_get_api_url()
+	 *
+	 * Get MainWP API Url.
+	 */
+	public function hook_get_api_url() {
+		return MainWP_Api_Manager::instance()->get_upgrade_url();
+	}
+
+	/**
+	 * Method hook_run_dashboard_action().
+	 *
+	 * Handle run dashboard action.
+	 *
+	 * @param bool $boolean Input bool value.
+	 * @param string $action The action to run.
+	 * @param bool   $die The function die or return.
+	 *
+	 * @return void
+	 */
+	public function hook_run_dashboard_action( $boolean, $action, $die = false ) {
+
+		if ( ! isset( $action ) ) {
+			return false;
+		}
+
+		if ( 'master_api_key_check' === $action ) {
+			$return = $this->hook_master_api_key_check();
+		} else {
+			return false;
+		}
+
+		if ( $die ) {
+			wp_send_json( $return );
+		}
+
+		return $return;
+	}
+
+
+
+	/**
+	 * Method hook_master_api_key_check().
+	 *
+	 * Handle to valid MainWP API key.
+	 *
+	 * @return void
+	 */
+	public function hook_master_api_key_check() {
+		$api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
+		$return  = array();
+		$error   = '';
+		if ( ! empty( $api_key ) ) {
+			$result = array();
+			try {
+				$test   = MainWP_Api_Manager::instance()->verify_mainwp_api( $api_key );
+				$result = json_decode( $test, true );
+				if ( is_array( $result ) ) {
+					if ( isset( $result['success'] ) && $result['success'] ) {
+						$return['success'] = true;
+					} elseif ( isset( $result['error'] ) ) {
+						$error = $result['error'];
+					}
+				}
+			} catch ( \Exception $e ) {
+				$error = $e->getMessage();
+			}
+		} else {
+			$error = esc_html__( 'MainWP API key are required.', 'mainwp' );
+		}
+
+		if ( ! empty( $error ) ) {
+			$return['error'] = $error;
+		}
+
+		if ( ! isset( $return['success'] ) ) {
+			$return['success'] = false;
+		}
+
+		return $return;
+	}
+
 }

@@ -1541,13 +1541,13 @@ class MainWP_Manage_Sites {
 					$added = strtotime( $added );
 				}
 				MainWP_DB::instance()->update_website_option( $website, 'added_timestamp', $added );
-				
+
 				$new_alg = isset( $_POST['mainwp_managesites_edit_openssl_alg'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_openssl_alg'] ) ) : '';
 				MainWP_DB::instance()->update_website_option( $website, 'signature_algo', $new_alg );
 
 				$use_lib = isset( $_POST['mainwp_managesites_edit_verify_connection_method'] ) ? intval( $_POST['mainwp_managesites_edit_verify_connection_method'] ) : 0;
 				MainWP_DB::instance()->update_website_option( $website, 'verify_method', $use_lib );
-				
+
 				$updated = true;
 			}
 		}

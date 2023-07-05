@@ -563,7 +563,7 @@ class MainWP_Post_Page_Handler {
 			}
 
 			$data_fields = MainWP_System_Utility::get_default_map_site_fields();
-				
+
 			$dbwebsites = array();
 
 			if ( 'site' === $selected_by ) {

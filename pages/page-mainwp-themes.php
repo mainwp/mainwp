@@ -685,9 +685,8 @@ class MainWP_Themes {
 		$output->errors = array();
 		$output->themes = array();
 
-		$data_fields = MainWP_System_Utility::get_default_map_site_fields(); 
+		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 		$data_fields[] = 'themes';
-		
 
 		if ( 1 == get_option( 'mainwp_optimize' ) ) {
 			if ( '' != $sites ) {

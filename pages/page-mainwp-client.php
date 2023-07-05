@@ -982,10 +982,10 @@ class MainWP_Client {
 						<div class="content active">
 							<?php
 							$sel_params = array(
-								'selected_sites'     => $selected_sites,
-								'show_group'         => false,
-								'add_edit_client_id' => $client_id,
-								'enable_offline_sites' => $client_id ? true : false
+								'selected_sites'       => $selected_sites,
+								'show_group'           => false,
+								'add_edit_client_id'   => $client_id,
+								'enable_offline_sites' => $client_id ? true : false,
 							);
 
 							MainWP_UI_Select_Sites::select_sites_box( $sel_params );

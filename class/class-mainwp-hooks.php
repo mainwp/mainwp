@@ -1613,8 +1613,8 @@ class MainWP_Hooks {
 	 * Method hook_get_activation_info()
 	 *
 	 * Get extension activation info.
-	 * 
-	 * @param bool $boolean Input bool value.
+	 *
+	 * @param bool   $boolean Input bool value.
 	 * @param string $ext_slug extension api slug.
 	 */
 	public function hook_get_activation_info( $boolea, $ext_slug ) {
@@ -1652,7 +1652,7 @@ class MainWP_Hooks {
 	 *
 	 * Handle run dashboard action.
 	 *
-	 * @param bool $boolean Input bool value.
+	 * @param bool   $boolean Input bool value.
 	 * @param string $action The action to run.
 	 * @param bool   $die The function die or return.
 	 *

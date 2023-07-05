@@ -542,7 +542,7 @@ class MainWP_Menu {
 					}
 
 					$bar_item_active = null;
-					
+
 					if ( is_array( $bar_leftmenu ) && ! empty( $bar_leftmenu ) ) {
 						foreach ( $bar_leftmenu as $item ) {
 							$title     = wptexturize( $item[0] );
@@ -1038,7 +1038,6 @@ class MainWP_Menu {
 		</div>
 		
 		<?php
-
 	}
 
 	/**

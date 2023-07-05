@@ -1091,7 +1091,7 @@ class MainWP_Settings {
 			MainWP_Utility::update_option( 'mainwp_forceUseIPv4', isset( $_POST['mainwp_forceUseIPv4'] ) ? 1 : 0 );
 			MainWP_Utility::update_option( 'mainwp_wp_cron', ( ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1 ) );
 			MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
-							
+
 			if ( isset( $_POST['mainwp_openssl_lib_location'] ) ) {
 				$openssl_loc = ! empty( $_POST['mainwp_openssl_lib_location'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_openssl_lib_location'] ) ) : '';
 				MainWP_Utility::update_option( 'mainwp_opensslLibLocation', $openssl_loc );
@@ -1237,7 +1237,7 @@ class MainWP_Settings {
 							</div>
 						</div>
 						<?php
-						$sign_note = MainWP_Connect_Lib::get_connection_algo_settings_note();
+						$sign_note        = MainWP_Connect_Lib::get_connection_algo_settings_note();
 						$sign_algs        = MainWP_System_Utility::get_open_ssl_sign_algos();
 						$general_sign_alg = get_option( 'mainwp_connect_signature_algo', false );
 						if ( false == $general_sign_alg ) {
@@ -1246,7 +1246,7 @@ class MainWP_Settings {
 							$general_sign_alg = intval( $general_sign_alg );
 						}
 						?>
-						<div class="ui grid field mainwp-hide-elemenent-sign-algo" <?php echo ( 2 === $general_verify_con ) ? 'style="display:none;"': ''; ?> >
+						<div class="ui grid field mainwp-hide-elemenent-sign-algo" <?php echo ( 2 === $general_verify_con ) ? 'style="display:none;"' : ''; ?> >
 							<label class="six wide column middle aligned"><?php esc_html_e( 'OpenSSL signature algorithm', 'mainwp' ); ?></label>
 							<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select OpenSSL signature algorithm. If you are not sure, select "Default".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<select class="ui dropdown" id="mainwp_settings_openssl_alg" name="mainwp_settings_openssl_alg">

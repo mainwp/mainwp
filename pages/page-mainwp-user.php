@@ -951,9 +951,8 @@ class MainWP_User {
 		$output->errors = array();
 		$output->users  = 0;
 
-		$data_fields = MainWP_System_Utility::get_default_map_site_fields(); 
+		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 		$data_fields[] = 'users';
-		
 
 		if ( 1 == get_option( 'mainwp_optimize' ) ) {
 
@@ -1813,7 +1812,7 @@ class MainWP_User {
 			$errorFields[] = 'role';
 		}
 
-		$data_fields = MainWP_System_Utility::get_default_map_site_fields(); 
+		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
 		if ( ( 0 == count( $errors ) ) && ( 0 == count( $errorFields ) ) ) {
 			$user_to_add = array(
@@ -2153,9 +2152,8 @@ class MainWP_User {
 		$selected_sites  = ( isset( $_POST['select_sites'] ) && is_array( $_POST['select_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_sites'] ) ) : array();
 		$selected_groups = ( isset( $_POST['select_groups'] ) && is_array( $_POST['select_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_groups'] ) ) : array();
 
-		$data_fields = MainWP_System_Utility::get_default_map_site_fields(); 
+		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 		$data_fields[] = 'users';
-	
 
 		$user_to_add = array(
 			'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',

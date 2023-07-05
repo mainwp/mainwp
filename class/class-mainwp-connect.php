@@ -342,13 +342,13 @@ class MainWP_Connect {
 			$data = apply_filters( 'mainwp_get_post_data_authed', $data, $website, $what, $params );
 
 			if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
-				$data['nossl']  = 0;
-				$sign_success   = MainWP_Connect_Lib::connect_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+				$data['nossl']     = 0;
+				$sign_success      = MainWP_Connect_Lib::connect_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 				$data['verifylib'] = 1;
 			} elseif ( ( 0 == $website->nossl ) && function_exists( 'openssl_verify' ) ) {
 				$data['nossl'] = 0;
 				$alg           = MainWP_System_Utility::get_connect_sign_algorithm( $website );
-				$sign_success = self::connect_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+				$sign_success  = self::connect_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 				if ( false !== $alg ) {
 					$data['sign_algo'] = $alg;
 				}

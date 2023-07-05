@@ -68,9 +68,9 @@ class MainWP_Connect_Lib {
 
 	public function create_connect_keys() {
 		try {
-			//RSA::useInternalEngine(); // to use PHP engine. 
-			$private = RSA::createKey();
-			$public  = $private->getPublicKey();
+			// RSA::useInternalEngine(); // to use PHP engine.
+			$private     = RSA::createKey();
+			$public      = $private->getPublicKey();
 			$private_key = $private->toString( 'PKCS1' );
 			$public_key  = $public->toString( 'PKCS1' );
 			return array(

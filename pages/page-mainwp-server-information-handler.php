@@ -230,7 +230,6 @@ class MainWP_Server_Information_Handler {
 		}
 
 		return empty( $errors ) ? '' : implode( ' - ', $errors );
-
 	}
 
 	/**
@@ -260,7 +259,7 @@ class MainWP_Server_Information_Handler {
 
 			if ( is_array( $details ) && isset( $details['key'] ) ) {
 				$publicKey = $details['key'];
-				$data = 'working status';
+				$data      = 'working status';
 				openssl_sign( $data, $signature, $privkey ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 				if ( ! empty( $signature ) ) {
 					$ok = openssl_verify( $data, $signature, $publicKey );

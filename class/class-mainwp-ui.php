@@ -881,7 +881,7 @@ class MainWP_UI {
 			 */
 			do_action( 'mainwp_before_header', $websites );
 
-			$algo      = get_option( 'mainwp_connect_signature_algo', false );
+			$algo = get_option( 'mainwp_connect_signature_algo', false );
 			if ( false == $algo ) {
 				$algo = defined( 'OPENSSL_ALGO_SHA256' ) ? 7 : 1;
 			} else {
@@ -894,7 +894,7 @@ class MainWP_UI {
 
 					<div class="five wide middle aligned column">
 						<h4 class="mainwp-page-title" style="margin-bottom:0px;margin-top:0px;"><?php echo $left; ?></h4>
-						<span class="ui mini label">BETA INFO: Signature Algorithm - <?php echo $sign_algs[$algo]; ?></span>
+						<span class="ui mini label">BETA INFO: Signature Algorithm - <?php echo $sign_algs[ $algo ]; ?></span>
 					</div>
 
 					<div class="two wide column middle aligned right aligned">

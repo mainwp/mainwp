@@ -595,7 +595,7 @@ class MainWP_Logger {
 	 * Get the execution time value.
 	 *
 	 * @param string $time_index Index for timer.
-	 * 
+	 *
 	 * @return int execution time.
 	 */
 	private function get_execution_time( $time_index = '' ) {

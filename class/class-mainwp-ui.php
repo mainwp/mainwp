@@ -881,11 +881,21 @@ class MainWP_UI {
 			 */
 			do_action( 'mainwp_before_header', $websites );
 
+			$algo      = get_option( 'mainwp_connect_signature_algo', false );
+			if ( false == $algo ) {
+				$algo = defined( 'OPENSSL_ALGO_SHA256' ) ? 7 : 1;
+			} else {
+				$algo = intval( $algo );
+			}
+			$sign_algs = MainWP_System_Utility::get_open_ssl_sign_algos();
 			?>
 			<div id="mainwp-top-header" class="">
 				<div class="ui grid">
 
-					<div class="five wide column"><h4 class="mainwp-page-title"><?php echo $left; ?></h4></div>
+					<div class="five wide middle aligned column">
+						<h4 class="mainwp-page-title" style="margin-bottom:0px;margin-top:0px;"><?php echo $left; ?></h4>
+						<span class="ui mini label">BETA INFO: Signature Algorithm - <?php echo $sign_algs[$algo]; ?></span>
+					</div>
 
 					<div class="two wide column middle aligned right aligned">
 						<?php if ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) : ?>
@@ -897,6 +907,7 @@ class MainWP_UI {
 							<?php } ?>	
 							<?php MainWP_DB::free_result( $websites ); ?>
 							</select>
+							
 						<?php endif; ?>
 					</div>
 					<div class="nine wide right aligned column"><?php echo $right; ?></div>

@@ -145,7 +145,7 @@ class MainWP_Connect_Lib {
 	 * Get connection settings note.
 	 */
 	public static function get_connection_algo_settings_note() {
-		return esc_html__( 'Select the OPENSSL_ALGO_SHA1 algorithm will need go to child site(s) Administration to deactive/active the mainwp-child plugin and reconnect the site', 'mainwp' );
+		return esc_html__( 'Due to security reasons, switching back to OPENSSL_ALGO_SHA1 breaks the connection to your child site(s). It is required to deactivate & reactivate the MainWP Child plugin on child sites before you can reconnect them. Use OPENSSL_ALGO_SHA1 only if necessary.', 'mainwp' );
 	}
 
 }

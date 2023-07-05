@@ -1258,8 +1258,7 @@ class MainWP_Settings {
 									}
 									?>
 								</select>
-								<br>
-								<span class="mainwp-hide-elemenent-sign-algo-note" <?php echo ( 1 === $general_sign_alg ) ? '' : 'style="display:none;"'; ?>><?php echo esc_html( $sign_note ); ?></span>
+								<div class="ui yellow message mainwp-hide-elemenent-sign-algo-note" <?php echo ( 1 === $general_sign_alg ) ? '' : 'style="display:none;"'; ?>><?php echo esc_html( $sign_note ); ?></div>
 							</div>
 						</div>
 						<div class="ui grid field">

@@ -66,9 +66,14 @@ class MainWP_Connect_Lib {
 		require_once MAINWP_PLUGIN_DIR . 'libs' . DIRECTORY_SEPARATOR . 'phpseclib' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
 	}
 
+	/**
+	 * Method create_connect_keys()
+	 *
+	 * Create connect keys.
+	 */
 	public function create_connect_keys() {
 		try {
-			// RSA::useInternalEngine(); // to use PHP engine.
+			// RSA::useInternalEngine(); // to use PHP engine. //phpcs:ignore -- note.
 			$private     = RSA::createKey();
 			$public      = $private->getPublicKey();
 			$private_key = $private->toString( 'PKCS1' );
@@ -83,6 +88,15 @@ class MainWP_Connect_Lib {
 		return false;
 	}
 
+	/**
+	 * Method connect_sign()
+	 *
+	 * Sign to connect.
+	 *
+	 * @param mixed $data The data.
+	 * @param mixed $signature The signature.
+	 * @param mixed $privkey The privkey.
+	 */
 	public static function connect_sign( $data, &$signature, $privkey ) {
 		try {
 			$private   = PublicKeyLoader::loadPrivateKey( $privkey );
@@ -101,6 +115,8 @@ class MainWP_Connect_Lib {
 	 * Method is_use_fallback_sec_lib()
 	 *
 	 * Use php connect lib or not.
+	 *
+	 * @param mixed $website The website.
 	 */
 	public static function is_use_fallback_sec_lib( $website ) {
 		$use_fallback_lib = false;

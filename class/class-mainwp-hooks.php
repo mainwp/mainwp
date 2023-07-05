@@ -174,6 +174,8 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_get_reports_group_values_website', array( MainWP_Reports_Helper::get_instance(), 'hook_get_reports_group_values' ), 10, 6 );
 
 		/**
+		 *  MainWP API hooks.
+		 *
 		* @since 4.5.
 		*/
 		add_filter( 'mainwp_extension_get_activation_info', array( &$this, 'hook_get_activation_info' ), 10, 2 );
@@ -1617,7 +1619,7 @@ class MainWP_Hooks {
 	 * @param bool   $boolean Input bool value.
 	 * @param string $ext_slug extension api slug.
 	 */
-	public function hook_get_activation_info( $boolea, $ext_slug ) {
+	public function hook_get_activation_info( $boolean, $ext_slug ) {
 		$data = MainWP_Api_Manager::instance()->get_activation_info( $ext_slug );
 
 		$info = array();
@@ -1656,7 +1658,7 @@ class MainWP_Hooks {
 	 * @param string $action The action to run.
 	 * @param bool   $die The function die or return.
 	 *
-	 * @return void
+	 * @return mixed $return result.
 	 */
 	public function hook_run_dashboard_action( $boolean, $action, $die = false ) {
 
@@ -1684,7 +1686,7 @@ class MainWP_Hooks {
 	 *
 	 * Handle to valid MainWP API key.
 	 *
-	 * @return void
+	 * @return array $return Data.
 	 */
 	public function hook_master_api_key_check() {
 		$api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();

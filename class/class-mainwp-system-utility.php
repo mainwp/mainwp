@@ -1377,6 +1377,8 @@ class MainWP_System_Utility {
 	 * Method is_valid_supported_sign_alg()
 	 *
 	 * Check if is supported sign algorithms.
+	 * 
+	 * @param int $alg The Sign Algo value.
 	 */
 	public static function is_valid_supported_sign_alg( $alg ) {
 		$valid = false;
@@ -1410,7 +1412,7 @@ class MainWP_System_Utility {
 		}
 
 		if ( defined( 'OPENSSL_ALGO_SHA256' ) ) {
-			$values[ OPENSSL_ALGO_SHA256 ] = 'OPENSSL_ALGO_SHA256' . ' ' . esc_html__( '(Default)', 'mainwp' );
+			$values[ OPENSSL_ALGO_SHA256 ] = 'OPENSSL_ALGO_SHA256 ' . esc_html__( '(Default)', 'mainwp' );
 		}
 
 		if ( defined( 'OPENSSL_ALGO_SHA384' ) ) {

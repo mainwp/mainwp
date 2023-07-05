@@ -222,8 +222,6 @@ class MainWP_Server_Information_Handler {
 			while ( ( $errorRow = openssl_error_string() ) !== false ) {
 				$error = $errorRow . "\n" . $error;
 			}
-			// $error = ( stristr( $error, 'NCONF_get_string:no value' ) ? '' : $error );
-
 			if ( ! empty( $error ) ) {
 				$errors[] = $error;
 			}

@@ -583,7 +583,7 @@ class MainWP_Logger {
 	 *
 	 * Log the execution time value.
 	 */
-	public function log_execution_time( $text = '', $time_index = '' ) {
+	public function log_execution_time( $text = '' ) {
 		$exec_time = $this->get_execution_time();
 		$this->log_action( 'execution time :: ' . ( ! empty( $text ) ? (string) $text : '<empty>' ) . ' :: [time=' . $exec_time . '] (microsec)', self::EXECUTION_TIME_LOG_PRIORITY );
 	}
@@ -594,6 +594,8 @@ class MainWP_Logger {
 	 *
 	 * Get the execution time value.
 	 *
+	 * @param string $time_index Index for timer.
+	 * 
 	 * @return int execution time.
 	 */
 	private function get_execution_time( $time_index = '' ) {

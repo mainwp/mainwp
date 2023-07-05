@@ -621,15 +621,15 @@ class MainWP_Menu {
 				<div id="mainwp-first-level-wpitems-menu" class="ui vertical labeled inverted icon tiny menu">
 					<a class="item" href="#" id="mainwp-collapse-second-level-navigation">
 						<i class="angle double left icon"></i>
-						<span class="ui small text" style="font-size:8px"><?php echo esc_html( 'Hide Menu', 'mainwp' ); ?></span>
+						<span class="ui small text" style="font-size:8px"><?php esc_html_e( 'Hide Menu', 'mainwp' ); ?></span>
 					</a>
 					<a class="item" href="<?php echo esc_html( $link['url'] ); ?>">
 						<i class="wordpress icon"></i> <?php //phpcs:ignore -- ignore wordpress icon. ?>
-						<span class="ui small text"><?php echo esc_html( 'WP Admin', 'mainwp' ); ?></span>
+						<span class="ui small text"><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></span>
 					</a> 
 					<a class="item" href="<?php echo wp_logout_url(); ?>">
 						<i class="sign out icon"></i>
-						<span class="ui small text"><?php echo esc_html( 'Log Out', 'mainwp' ); ?></span>
+						<span class="ui small text"><?php esc_html_e( 'Log Out', 'mainwp' ); ?></span>
 					</a>
 				</div>
 			</div>
@@ -742,7 +742,6 @@ class MainWP_Menu {
 				 */
 				do_action( 'after_mainwp_menu' );
 				?>
-		
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {
 				jQuery( '#mainwp-collapse-second-level-navigation' ).on( 'click', function() {
@@ -766,7 +765,6 @@ class MainWP_Menu {
 					
 					return false;
 				} );
-				
 					// click on menu with-sub icon.
 					jQuery( '#mainwp-main-navigation-container #mainwp-main-menu a.title.with-sub .icon' ).on( "click", function ( event ) {
 							var pr = jQuery( this ).closest( '.item' );
@@ -962,7 +960,6 @@ class MainWP_Menu {
 					</div>
 					<div class="item">
 						<div class="title"><a href="admin.php?page=Extensions" class=""><?php esc_html_e( 'Extensions', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
-						
 					</div>
 					<div class="item">
 						<div class="title"><a href="admin.php?page=Settings" class="with-sub"><?php esc_html_e( 'Settings', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
@@ -1036,7 +1033,6 @@ class MainWP_Menu {
 				?>
 			</div>
 		</div>
-		
 		<?php
 	}
 
@@ -1100,11 +1096,11 @@ class MainWP_Menu {
 
 
 	/**
-	 * Method render_sub_item
+	 * Method is_level2_menu_item_active().
 	 *
-	 * Grabs all submenu items and attatches to Main Menu.
+	 * Check if menu item level 2 is active.
 	 *
-	 * @param mixed $parent_key The parent key.
+	 * @param mixed $href The href value.
 	 */
 	public static function is_level2_menu_item_active( $href ) {
 		$current_path = $_SERVER['REQUEST_URI'];

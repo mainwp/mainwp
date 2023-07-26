@@ -92,7 +92,19 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				$errors[] = esc_html__( 'Please enter the password.', 'mainwp' );
 			}
 
-			$data_fields = MainWP_System_Utility::get_default_map_site_fields();
+			$data_fields = array(
+				'id',
+				'url',
+				'name',
+				'adminname',
+				'nossl',
+				'privkey',
+				'nosslkey',
+				'http_user',
+				'http_pass',
+				'ssl_version',
+				'sync_errors',
+			);
 
 			if ( count( $errors ) == 0 ) {
 				$show_form = false;

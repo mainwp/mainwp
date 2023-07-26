@@ -235,10 +235,10 @@ class MainWP_Client {
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'ManageClients',
 				'href'       => 'admin.php?page=ManageClients',
-				'icon'       => '<i class="users icon"></i>',
+				'icon'       => '<i class="client icon"></i>',
 				'desc'       => 'Manage clients on your child sites',
 			),
-			0
+			1
 		);
 
 		$init_sub_subleftmenu = array(
@@ -982,10 +982,9 @@ class MainWP_Client {
 						<div class="content active">
 							<?php
 							$sel_params = array(
-								'selected_sites'       => $selected_sites,
-								'show_group'           => false,
-								'add_edit_client_id'   => $client_id,
-								'enable_offline_sites' => $client_id ? true : false,
+								'selected_sites'     => $selected_sites,
+								'show_group'         => false,
+								'add_edit_client_id' => $client_id,
 							);
 
 							MainWP_UI_Select_Sites::select_sites_box( $sel_params );

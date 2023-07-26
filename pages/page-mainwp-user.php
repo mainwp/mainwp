@@ -239,7 +239,7 @@ class MainWP_User {
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => esc_html__( 'Users', 'mainwp' ),
-				'parent_key' => 'managesites',
+				'parent_key' => 'mainwp_tab',
 				'slug'       => 'UserBulkManage',
 				'href'       => 'admin.php?page=UserBulkManage',
 				'icon'       => '<i class="user icon"></i>',
@@ -951,8 +951,20 @@ class MainWP_User {
 		$output->errors = array();
 		$output->users  = 0;
 
-		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
-		$data_fields[] = 'users';
+		$data_fields = array(
+			'id',
+			'url',
+			'name',
+			'adminname',
+			'nossl',
+			'privkey',
+			'nosslkey',
+			'http_user',
+			'http_pass',
+			'ssl_version',
+			'sync_errors',
+			'users',
+		);
 
 		if ( 1 == get_option( 'mainwp_optimize' ) ) {
 
@@ -1812,7 +1824,19 @@ class MainWP_User {
 			$errorFields[] = 'role';
 		}
 
-		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
+		$data_fields = array(
+			'id',
+			'url',
+			'name',
+			'adminname',
+			'nossl',
+			'privkey',
+			'nosslkey',
+			'http_user',
+			'http_pass',
+			'ssl_version',
+			'sync_errors',
+		);
 
 		if ( ( 0 == count( $errors ) ) && ( 0 == count( $errorFields ) ) ) {
 			$user_to_add = array(
@@ -2152,8 +2176,20 @@ class MainWP_User {
 		$selected_sites  = ( isset( $_POST['select_sites'] ) && is_array( $_POST['select_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_sites'] ) ) : array();
 		$selected_groups = ( isset( $_POST['select_groups'] ) && is_array( $_POST['select_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_groups'] ) ) : array();
 
-		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
-		$data_fields[] = 'users';
+		$data_fields = array(
+			'id',
+			'url',
+			'name',
+			'adminname',
+			'nossl',
+			'privkey',
+			'nosslkey',
+			'http_user',
+			'http_pass',
+			'ssl_version',
+			'sync_errors',
+			'users',
+		);
 
 		$user_to_add = array(
 			'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',

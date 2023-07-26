@@ -265,22 +265,6 @@ class MainWP_Utility {
 	}
 
 	/**
-	 * Method sanitize_alphanumeric()
-	 *
-	 * Sanitize given string.
-	 *
-	 * @param mixed $str String to sanitize.
-	 *
-	 * @return string Sanitized string.
-	 */
-	public static function sanitize_attr_slug( $str ) {
-		$str = strtolower( $str );
-		$str = str_replace( array( '=', '?', '/' ), '-', $str );
-		$str = preg_replace( '/[^A-Za-z0-9^\-]/', '', $str );
-		return $str;
-	}
-
-	/**
 	 * Method end_session()
 	 *
 	 * End a session.

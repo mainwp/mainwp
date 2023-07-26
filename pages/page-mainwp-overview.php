@@ -168,9 +168,9 @@ class MainWP_Overview {
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'mainwp_tab',
 				'href'       => 'admin.php?page=mainwp_tab',
-				'icon'       => '<i class="th large icon"></i>',
+				'icon'       => '<i class="tachometer alternate icon"></i>',
 			),
-			0
+			1
 		);
 	}
 

@@ -269,10 +269,10 @@ class MainWP_Extensions {
 					'parent_key' => 'mainwp_tab',
 					'slug'       => 'Extensions',
 					'href'       => 'admin.php?page=Extensions',
-					'icon'       => '<i class="puzzle piece icon"></i>',
+					'icon'       => '<i class="plug icon"></i>',
 					'id'         => 'menu-item-extensions',
 				),
-				0
+				1
 			);
 
 			$init_sub_subleftmenu = array(

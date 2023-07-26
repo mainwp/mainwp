@@ -124,20 +124,6 @@
 		padding: 0 !important;
 	}
 
-	/*--- Menu ---*/
-
-	#mainwp-main-navigation-container {
-		display: none !important;
-	}
-
-	.mainwp-main-mobile-navigation-container {
-		display: block;
-	}
-
-	.mainwp-main-mobile-navigation-container .hamburger {
-		top: 23px !important;
-	}
-
 	/*--- General ---*/
 
 	.mainwp-ui table.dataTable thead th .ui.checkbox {
@@ -151,6 +137,19 @@
 
 	.mainwp-ui .ui.dropdown {
 		width: 100% !important;
+	}
+
+	.mainwp-nav-wrap {
+		width: 100%;
+		position: relative;
+	}
+
+	.mainwp-nav-wrap .ui.vertical.menu {
+		width: 100%;
+	}
+
+	#mainwp-version-label {
+		display: none !important;
 	}
 
 	.mainwp-content-wrap {
@@ -451,6 +450,20 @@
 	#mainwp-sync-sites.ui.button.green {
 		padding-left: 15px !important;
 		padding-right: 15px !important;
+	}
+
+	.mainwp-nav-wrap #mainwp-logo {
+		height: auto;
+		margin: 0;
+		padding: 1rem 1rem 0.5rem;
+	}
+
+	.mainwp-ui .hamburger {
+		top: 23px !important;
+	}
+
+	.mainwp-nav-wrap .ui.hidden.divider {
+		display: none !important;
 	}
 
 	#mainwp-main-menu.ui.menu {

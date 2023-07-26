@@ -67,7 +67,7 @@ class MainWP_Security_Issues {
 						<strong id="listing-status-nok"><?php esc_html_e( '/wp-content/, /wp-content/plugins/, /wp-content/themes/ and /wp-content/uploads/ directories listing has not been prevented', 'mainwp' ); ?></strong>
 						<strong id="listing-status-ok" style="display: none;"><?php esc_html_e( '/wp-content/, /wp-content/plugins/, /wp-content/themes/ and /wp-content/uploads/ directories listing has been prevented', 'mainwp' ); ?></strong>
 						<br />
-						<em><?php esc_html_e( 'After fixing this issue, an empty index.php will be inserted in these directories to prevent listing.', 'mainwp' ); ?></em>
+						<em><?php esc_html_e( 'After fixing this issue, an empty index.php will inserted in these directories to prevent listing.', 'mainwp' ); ?></em>
 					</td>
 					<td>
 						<span id="listing_fix" style="display: none"><a href="#" class="ui mini green fluid button"><?php esc_html_e( 'Fix', 'mainwp' ); ?></a></span>

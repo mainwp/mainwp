@@ -232,9 +232,9 @@ class MainWP_Server_Information {
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'ServerInformation',
 				'href'       => 'admin.php?page=ServerInformation',
-				'icon'       => '<i class="info circle icon"></i>',
+				'icon'       => '<i class="server icon"></i>',
 			),
-			0
+			1
 		);
 
 		/**
@@ -636,16 +636,6 @@ class MainWP_Server_Information {
 				null,
 				'curlssl'
 			);
-
-			$wk = MainWP_Server_Information_Handler::get_openssl_working_status();
-			?>
-			<tr>
-				<td>OpenSSL Working Status</td>
-				<td>Yes</td>
-				<td><?php echo( $wk ? 'Yes' : 'No' ); ?></td>
-				<td class="right aligned"><?php echo ( $wk ? self::get_pass_html() : self::get_warning_html() ); ?></td>
-			</tr>
-			<?php
 
 		}
 		?>

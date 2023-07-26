@@ -657,7 +657,7 @@ class MainWP_Updates_Handler {
 	 */
 	public static function upgrade_plugin_theme_translation( $id, $type, $list ) { // phpcs:ignore -- complex method.
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
-			$website = MainWP_DB::instance()->get_website_by_id( $id, false, array( 'premium_upgrades' ) ); // to fix loading premium_upgrades.
+			$website = MainWP_DB::instance()->get_website_by_id( $id );
 			if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
 				throw new MainWP_Exception( 'ERROR', esc_html__( 'Suspended site.', 'mainwp' ), 'SUSPENDED_SITE' );
 			}
@@ -697,25 +697,8 @@ class MainWP_Updates_Handler {
 								}
 							}
 						}
-
-						if ( isset( $tmp['result'] ) && is_array( $tmp['result'] ) && ! empty( $tmp['result'] ) ) {
-							$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-							$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
-							if ( is_array( $decodedPremiumUpgrades ) && ! empty( $decodedPremiumUpgrades ) ) {
-								$updated = false;
-								foreach ( $tmp['result'] as $k => $v ) {
-									$k = rawurldecode( $k );
-									if ( isset( $decodedPremiumUpgrades[ $k ] ) ) {
-										unset( $decodedPremiumUpgrades[ $k ] ); // updated.
-										$updated = true;
-									}
-								}
-								if ( $updated ) {
-									MainWP_DB::instance()->update_website_option( $website, 'premium_upgrades', wp_json_encode( $decodedPremiumUpgrades ) );
-								}
-							}
-						}
 					}
+
 					return $tmp;
 				} elseif ( isset( $result['error'] ) ) {
 					throw new MainWP_Exception( 'WPERROR', esc_html( $result['error'] ) );

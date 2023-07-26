@@ -371,7 +371,7 @@ class MainWP_Post {
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => esc_html__( 'Posts', 'mainwp' ),
-				'parent_key' => 'managesites',
+				'parent_key' => 'mainwp_tab',
 				'slug'       => 'PostBulkManage',
 				'href'       => 'admin.php?page=PostBulkManage',
 				'icon'       => '<i class="file alternate icon"></i>',
@@ -1061,7 +1061,19 @@ class MainWP_Post {
 	 */
 	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all', $table_content = false, $clients = '' ) { // phpcs:ignore -- complex function.
 
-		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
+		$data_fields = array(
+			'id',
+			'url',
+			'name',
+			'adminname',
+			'nossl',
+			'privkey',
+			'nosslkey',
+			'http_user',
+			'http_pass',
+			'ssl_version',
+			'sync_errors',
+		);
 
 		$dbwebsites = array();
 		if ( '' !== $sites ) {

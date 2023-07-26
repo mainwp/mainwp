@@ -54,7 +54,7 @@ class MainWP_Monitoring_View {
 		</div>
 		<h3 class="ui dividing header">
 			<?php esc_html_e( 'Site Health Monitoring', 'mainwp' ); ?>
-			<div class="sub header"><?php echo sprintf( esc_html__( 'For additional help with setting up the Site Health monitoring, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a>' ); ?></div>
+			<div class="sub header"><?php echo esc_html__( 'For additional help with setting up the Site Health monitoring, please see <a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">this help document</a>.', 'mainwp' ); ?></div>
 		</h3>
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Enable Site Health monitoring', 'mainwp' ); ?></label>

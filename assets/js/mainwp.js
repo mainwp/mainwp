@@ -1326,67 +1326,28 @@ jQuery(document).ready(function ($) {
   });
   jQuery('.mainwp-checkbox-showhide-elements').on('click', function () {
     var hiel = $(this).attr('hide-parent');
-    mainwp_showhide_elements(hiel, $(this).find('input').is(':checked'));
+    // if semantic ui checkbox is checked.
+    if ($(this).find('input').is(':checked')) {
+      $('[hide-element=' + hiel + ']').fadeOut(200);
+    } else {
+      $('[hide-element=' + hiel + ']').fadeIn(300);
+    }
   });
 
   jQuery('.mainwp-selecter-showhide-elements').on('change', function () {
     var hiel = $(this).attr('hide-parent');
     var hival = $(this).attr('hide-value');
     hival = hival.split('-'); // support multi hide values.
-    var selectedval = $(this).val();
-    mainwp_showhide_elements(hiel, hival.includes(selectedval));
+    var selval = $(this).val();
+    // if selected hide value.
+    if (hival.includes(selval)) {
+      $('[hide-element=' + hiel + ']').fadeOut(300);
+    } else {
+      $('[hide-element=' + hiel + ']').fadeIn(200);
+    }
   });
 });
 
-function mainwp_showhide_elements(attEl, valHi) {
-  if (valHi) {
-    jQuery('[hide-element=' + attEl + ']').fadeOut(300);
-  } else {
-    jQuery('[hide-element=' + attEl + ']').fadeIn(200);
-  }
-}
-
-
-jQuery(document).ready(function ($) {
-  $('#mainwp_settings_verify_connection_method').on('change', function () {
-    var selectedval = $(this).val();
-    var selectedval = $(this).val();
-    if (selectedval == 2) { // phpseclib.
-      $('.mainwp-hide-elemenent-sign-algo').fadeOut(200);
-    } else {
-      $('.mainwp-hide-elemenent-sign-algo').fadeIn(200);
-    }    
-  });
-
-  $('#mainwp_managesites_edit_verify_connection_method').on('change', function () {
-    var selectedval = $(this).val();
-    if (selectedval == 2 || selectedval == 3) { // phpseclib.
-      $('.mainwp-hide-elemenent-sign-algo').fadeOut(200);
-    } else {
-      $('.mainwp-hide-elemenent-sign-algo').fadeIn(200);
-    }
-  });
-
-
-  $('#mainwp_managesites_edit_openssl_alg').on('change', function () {
-    var selectedval = $(this).val();
-    if(selectedval == 1){
-      $('.mainwp-hide-elemenent-sign-algo-note').fadeIn(200);
-    } else {
-      $('.mainwp-hide-elemenent-sign-algo-note').fadeOut(200);
-    }
-  });
-
-  $('#mainwp_settings_openssl_alg').on('change', function () {
-    var selectedval = $(this).val();
-    if(selectedval == 1){
-      $('.mainwp-hide-elemenent-sign-algo-note').fadeIn(200);
-    } else {
-      $('.mainwp-hide-elemenent-sign-algo-note').fadeOut(200);
-    }
-  });
-
-})
 
 jQuery(document).ready(function () {
   jQuery(document).on('change', '#mainwp_managesites_add_wpurl', function () {
@@ -2783,7 +2744,7 @@ jQuery(document).ready(function ($) {
       if (findNext.length > 0) {
         openwpp_site = '&wpplugin=' + jQuery(findNext).attr('open-wpplugin-siteid');
       }
-    }
+    }    
     $('#mainwp-plugin-details-modal').modal({
       onHide: function () {
       },
@@ -3058,11 +3019,11 @@ getErrorMessageInfo = function (repError, outputType) {
 
   if (msg == '') {
     msg = getErrorMessage(repError);
-
-    if (repError.message == 'NOMAINWP' || repError == 'NOMAINWP') {
-      msg = __('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the MainWP Community for help.');
+    
+    if (repError.message == 'NOMAINWP' || repError == 'NOMAINWP' ){
+        msg = __('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the MainWP Community for help.');
     }
-
+    
     if (msg != '') {
       msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + msg + '"><i class="red times icon"></i></span>';
     }

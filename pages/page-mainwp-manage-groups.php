@@ -106,7 +106,7 @@ class MainWP_Manage_Groups {
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => esc_html__( 'Tags', 'mainwp' ),
-				'parent_key' => 'managesites',
+				'parent_key' => 'mainwp_tab',
 				'slug'       => 'ManageGroups',
 				'href'       => 'admin.php?page=ManageGroups',
 				'icon'       => '<i class="tags icon"></i>',

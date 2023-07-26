@@ -252,7 +252,7 @@ class MainWP_UI {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
-	public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false ) { //phpcs:ignore -- complex method.
+	public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false ) {
 		?>
 			<?php
 			/**
@@ -291,10 +291,8 @@ class MainWP_UI {
 									}
 								}
 
-								$site_client_editing = ( $add_edit_client_id && $website->client_id && $add_edit_client_id == $website->client_id ) ? true : false;
-
 								$selected = false;
-								if ( ( '' == $website->sync_errors || $enableOfflineSites ) && ( ! MainWP_System_Utility::is_suspended_site( $website ) || $site_client_editing ) && $enable_site ) {
+								if ( ( '' == $website->sync_errors || $enableOfflineSites ) && ! MainWP_System_Utility::is_suspended_site( $website ) && $enable_site ) {
 									$selected = ( 'all' === $selected_websites || in_array( $website->id, $selected_websites ) );
 									$disabled = '';
 									if ( $edit_site_id ) {
@@ -534,7 +532,6 @@ class MainWP_UI {
 
 		if ( $show_menu ) {
 			MainWP_Menu::render_left_menu();
-			MainWP_Menu::render_mobile_menu();
 		}
 
 		$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
@@ -719,7 +716,7 @@ class MainWP_UI {
 									<?php esc_html_e( 'Overview', 'mainwp' ); ?>
 								</a>
 								<a class="item" href="<?php echo 'admin.php?page=managesites&updateid=' . $website->id; ?>">
-									<i class="redo icon"></i>
+									<i class="sync alternate icon"></i>
 									<?php esc_html_e( 'Updates', 'mainwp' ); ?>
 								</a>
 								<a class="item" href="<?php echo 'admin.php?page=managesites&id=' . $website->id; ?>">
@@ -767,7 +764,7 @@ class MainWP_UI {
 			<div class="ui header"><?php esc_html_e( 'MainWP Guided Tours', 'mainwp' ); ?> <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></div>
 			<div class="ui hidden divider"></div>
 			<div class="ui info message" style="display:block!important;">
-				<?php echo sprintf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
+				<?php echo sprintf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %sUsetiful Privacy Policy%s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
 			</div>
 			<div class="ui hidden divider"></div>
 			<div class="ui toggle checkbox">
@@ -881,21 +878,11 @@ class MainWP_UI {
 			 */
 			do_action( 'mainwp_before_header', $websites );
 
-			$algo = get_option( 'mainwp_connect_signature_algo', false );
-			if ( false == $algo ) {
-				$algo = defined( 'OPENSSL_ALGO_SHA256' ) ? 7 : 1;
-			} else {
-				$algo = intval( $algo );
-			}
-			$sign_algs = MainWP_System_Utility::get_open_ssl_sign_algos();
 			?>
 			<div id="mainwp-top-header" class="">
 				<div class="ui grid">
 
-					<div class="five wide middle aligned column">
-						<h4 class="mainwp-page-title" style="margin-bottom:0px;margin-top:0px;"><?php echo $left; ?></h4>
-						<span class="ui mini label">BETA INFO: Signature Algorithm - <?php echo $sign_algs[ $algo ]; ?></span>
-					</div>
+					<div class="five wide column"><h4 class="mainwp-page-title"><?php echo $left; ?></h4></div>
 
 					<div class="two wide column middle aligned right aligned">
 						<?php if ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) : ?>

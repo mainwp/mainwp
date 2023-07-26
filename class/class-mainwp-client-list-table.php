@@ -309,9 +309,13 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 		);
 
 		if ( isset( $_GET['tags'] ) && ! empty( $_GET['tags'] ) ) {
-			$tags = sanitize_text_field( wp_unslash( $_GET['tags'] ) );
+			$tags = sanitize_text_field( wp_unslash( rawurldecode( $_GET['tags'] ) ) );
 			if ( ! empty( $tags ) ) {
-				$tags              = explode( ';', $tags );
+				if ( false !== strpos( $tags, ',' ) ) {
+					$tags = explode( ',', $tags );
+				} else {
+					$tags = explode( ';', $tags );
+				}
 				$params['by_tags'] = array_filter( $tags );
 			}
 		}

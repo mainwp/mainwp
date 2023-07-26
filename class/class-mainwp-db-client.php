@@ -682,9 +682,33 @@ class MainWP_DB_Client extends MainWP_DB {
 		}
 
 		if ( ! empty( $group_ids ) ) {
+
+			$join_group  = '';
+			$where_group = '';
+
+			if ( in_array( 'nogroups', $group_ids ) ) {
+				$join_group = ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
+				$group_ids  = array_filter(
+					$group_ids,
+					function( $e ) {
+						return 'nogroups' != $e;
+					}
+				);
+				if ( 0 < count( $group_ids ) ) {
+					$groups      = implode( ',', $group_ids );
+					$where_group = ' AND ( wpgroup.groupid IS NULL OR wpgroup.groupid IN (' . $groups . ') ) ';
+				} else {
+					$where_group = ' AND wpgroup.groupid IS NULL ';
+				}
+			} else {
+				$groups      = implode( ',', $group_ids );
+				$join_group  = ' JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
+				$where_group = ' AND wpgroup.groupid IN (' . $groups . ') ';
+			}
+
 			$sql_tags    = ' SELECT wp.client_id FROM ' . $this->table_name( 'wp' ) . ' wp ';
-			$sql_tags   .= ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid ';
-			$sql_tags   .= ' LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id WHERE wp.client_id != 0 AND gr.id IN (' . implode( ',', $group_ids ) . ')';
+			$sql_tags   .= $join_group;
+			$sql_tags   .= ' WHERE 1 ' . $where_group;
 			$result_tags = $this->wpdb->get_results( $sql_tags );
 
 			if ( empty( $result_tags ) ) {

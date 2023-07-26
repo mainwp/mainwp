@@ -656,6 +656,21 @@ class MainWP_DB_Client extends MainWP_DB {
 		$with_tags           = isset( $params['with_tags'] ) && $params['with_tags'] ? true : false;
 		$group_ids           = isset( $params['by_tags'] ) ? $params['by_tags'] : '';
 
+		// valid group ids.
+		if ( is_array( $group_ids ) ) {
+			$group_ids = array_filter(
+				$group_ids,
+				function( $e ) {
+					if ( 'nogroups' === $e ) {
+						return true;
+					}
+					return ( is_numeric( $e ) && 0 < $e ) ? true : false;
+				}
+			);
+		} else {
+			$group_ids = '';
+		}
+
 		$select_sites  = '';
 		$select_tags   = '';
 		$where_clients = '';
@@ -867,8 +882,7 @@ class MainWP_DB_Client extends MainWP_DB {
 		$site_ids = array_filter(
 			$site_ids,
 			function( $e ) {
-				$e = intval( $e );
-				return ( 0 < $e ) ? true : false;
+				return ( is_numeric( $e ) && 0 < $e ) ? true : false;
 			}
 		);
 

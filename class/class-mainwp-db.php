@@ -1076,7 +1076,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		$group_ids = array_filter(
 			$group_ids,
 			function( $e ) {
-				if ( 'nogroups' == $e ) {
+				if ( 'nogroups' === $e ) {
 					return true;
 				}
 				$e = intval( $e );
@@ -1092,7 +1092,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		$client_ids = array_filter(
 			$client_ids,
 			function( $e ) {
-				if ( 'noclients' == $e ) {
+				if ( 'noclients' === $e ) {
 					return true;
 				}
 				return is_numeric( $e ) && ! empty( $e ) ? true : false; // to valid client ids.

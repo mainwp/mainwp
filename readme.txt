@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.2.2
 Requires PHP: 7.4
-Stable tag: 4.4.3.3
+Stable tag: 4.4.3.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -297,6 +297,9 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 10. Manage Clients Screen
 
 == Changelog ==
+
+= 4.4.3.4 - 6-26-2023 =
+* Security: Added `tag` parameter value validation on the Manage Clients page
 
 = 4.4.3.3 - 6-19-2023 =
 * Added: Upcomming extension info data

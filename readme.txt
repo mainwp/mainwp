@@ -298,7 +298,7 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 4.4.3.4 - 6-26-2023 =
+= 4.4.3.4 - 7-27-2023 =
 * Security: Added `tag` parameter value validation on the Manage Clients page
 
 = 4.4.3.3 - 6-19-2023 =

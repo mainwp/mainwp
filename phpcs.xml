@@ -5,35 +5,30 @@
 
 	<file>.</file>
 
-	<arg value="sp"/>
-	<arg name="extensions" value="php"/>
-	<arg name="basepath" value="."/>
-	<arg name="parallel" value="8"/>
+	<arg value="sp" />
+	<arg name="extensions" value="php" />
+	<arg name="basepath" value="." />
+	<arg name="parallel" value="8" />
 
 	<exclude-pattern>*/vendor/*</exclude-pattern>
 	<exclude-pattern>*/bin/*</exclude-pattern>
 	<exclude-pattern>*/.github/*</exclude-pattern>
 	<exclude-pattern>*/tests/*</exclude-pattern>
+	<exclude-pattern>libs/</exclude-pattern>
 	
 	<rule ref="WordPress">
 		<exclude name="WordPress.Files.FileName"/>
 		<exclude name="WordPress.NamingConventions.ValidVariableName"/>
 		<exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition"/>
-		
-		<!-- Disable Nonce verification due to large number of false positives. -->
-		<exclude name="WordPress.Security.NonceVerification"/>
-		
-		<!-- Disable Escaping output check due to large number of false positives. -->
-		<exclude name="WordPress.Security.EscapeOutput"/>
-		
+			
 		<!-- Disable Strict comparison check. Not applicable in the mojority of cases. -->
 		<exclude name="WordPress.PHP.StrictComparisons"/>
                 
-                <!-- Disable Strict comparison in array check. Not applicable in the mojority of cases. -->               
-                <exclude name="WordPress.PHP.StrictInArray"/>
+		<!-- Disable Strict comparison in array check. Not applicable in the mojority of cases. -->               
+		<exclude name="WordPress.PHP.StrictInArray"/>
 		
 		<!-- Disable Misuse of WP internationalization function check. -->               
-                <exclude name="WordPress.WP.I18n"/>                
+		<exclude name="WordPress.WP.I18n"/>                
 	</rule>
 	
 	<!-- Enforce PSR1 compatible namespaces. -->

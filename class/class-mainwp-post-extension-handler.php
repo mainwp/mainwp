@@ -87,7 +87,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::add_extension_menu()
 	 */
 	public function add_extension_menu() {
-		$this->check_security( 'mainwp_extension_add_menu' ); 
+		$this->check_security( 'mainwp_extension_add_menu' );
 		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		MainWP_Extensions_Handler::add_extension_menu( $slug );
 		die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );

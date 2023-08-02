@@ -684,7 +684,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 						"responsive" : responsive,
 						"searching" : <?php echo esc_js( $table_features['searching'] ); ?>,
 						"paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
-						"pagingType" : "<?php echo esc_js( $table_features['pagingType'] );?>",
+						"pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
 						"info" : <?php echo esc_js( $table_features['info'] ); ?>,
 						"colReorder" : <?php echo esc_js( $table_features['colReorder'] ); ?>,
 						"stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,

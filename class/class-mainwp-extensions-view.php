@@ -53,7 +53,7 @@ class MainWP_Extensions_View {
 	 */
 	public static function render_header( $shownPage = '' ) {
 		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( !empty( $page ) && 'Extensions' === $_GET['page'] ) {
+		if ( ! empty( $page ) && 'Extensions' === $_GET['page'] ) {
 			$params = array(
 				'title' => esc_html__( 'Extensions', 'mainwp' ),
 			);

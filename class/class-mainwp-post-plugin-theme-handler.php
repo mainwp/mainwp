@@ -646,7 +646,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 					)
 				)
 			);
-		}	
+		}
 	}
 
 	/**

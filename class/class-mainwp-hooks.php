@@ -1271,7 +1271,7 @@ class MainWP_Hooks {
 		}
 
 		try {
-			$id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 			die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::upgrade_site( $id ) ) ) ); // ok.
 		} catch ( MainWP_Exception $e ) {
 			die(
@@ -1407,7 +1407,7 @@ class MainWP_Hooks {
 	 * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::get_post()
 	 */
 	public function hook_posts_bulk_posting() {
-		$post_id = isset( $_POST['post_id'] ) && $_POST['post_id'] ? intval( $_POST['post_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$post_id = isset( $_POST['post_id'] ) && $_POST['post_id'] ? intval( $_POST['post_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( $post_id ) {
 			MainWP_Post_Page_Handler::posting_posts( $post_id, 'ajax_posting' );
 		}

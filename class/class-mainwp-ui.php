@@ -63,8 +63,8 @@ class MainWP_UI {
 			}
 		}
 
-		if ( empty( $selected_websites ) && isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$selected_sites    = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) );// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( empty( $selected_websites ) && isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$selected_sites    = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) );// phpcs:ignore WordPress.Security.NonceVerification
 			$selected_sites    = array_map( 'intval', $selected_sites );
 			$selected_websites = array_filter( $selected_sites );
 		}
@@ -543,25 +543,26 @@ class MainWP_UI {
 
 		$count_sites = MainWP_DB::instance()->get_websites_count();
 
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( 0 == $count_sites ) {
-			if ( ! isset( $_GET['do'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( ! isset( $_GET['do'] ) ) {
 				self::render_modal_no_sites_note();
 			}
 		}
 
 		$siteViewMode = MainWP_Utility::get_siteview_mode();
 
-		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
 
 		$tour_id = '';
 		if ( 'mainwp_tab' === $page ) {
 			$tour_id = '13112';
 		} elseif ( 'managesites' === $page ) {
-			if ( isset( $_GET['do'] ) && 'new' == $_GET['do'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( isset( $_GET['do'] ) && 'new' == $_GET['do'] ) {
 				$tour_id = '13210';
-			} elseif ( isset( $_GET['do'] ) && 'bulknew' == $_GET['do'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			} elseif ( isset( $_GET['do'] ) && 'bulknew' == $_GET['do'] ) {
 				$tour_id = '27274';
-			} elseif ( ! isset( $_GET['dashboard'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['updateid'] ) && ! isset( $_GET['emailsettingsid'] ) && ! isset( $_GET['scanid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			} elseif ( ! isset( $_GET['dashboard'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['updateid'] ) && ! isset( $_GET['emailsettingsid'] ) && ! isset( $_GET['scanid'] ) ) {
 				if ( 'grid' == $siteViewMode ) {
 					$tour_id = '27217';
 				} else {
@@ -692,7 +693,7 @@ class MainWP_UI {
 		} elseif ( 'Extensions-Mainwp-Domain-Monitor-Extension' === $page ) {
 			$tour_id = '33300';
 		}
-
+		// phpcs:enable
 		?>
 		<div class="ui segment right sites sidebar" style="padding:0px" id="mainwp-sites-menu-sidebar">
 			<div class="ui segment" style="margin-bottom:0px">
@@ -888,7 +889,7 @@ class MainWP_UI {
 					<div class="five wide column"><h4 class="mainwp-page-title"><?php echo $left; ?></h4></div> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
 
 					<div class="two wide column middle aligned right aligned">
-						<?php if ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) : // phpcs:ignore WordPress.Security.EscapeOutput ?>
+						<?php if ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
 						<select class="ui mini selection fluid dropdown" id="mainwp-jump-to-site-overview-dropdown">
 							<?php $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() ); ?>
 							<option class="item"><?php esc_html_e( 'Jump to site overview...', 'mainwp' ); ?></option>
@@ -1107,8 +1108,8 @@ class MainWP_UI {
 	public static function gen_groups_sites_selection() {
 		$sql      = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
 		$websites = MainWP_DB::instance()->query( $sql );
-		$g        = isset( $_GET['g'] ) ? intval( $_GET['g'] ) : -1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$s        = isset( $_GET['dashboard'] ) ? intval( $_GET['dashboard'] ) : -1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$g        = isset( $_GET['g'] ) ? intval( $_GET['g'] ) : -1; // phpcs:ignore WordPress.Security.NonceVerification
+		$s        = isset( $_GET['dashboard'] ) ? intval( $_GET['dashboard'] ) : -1; // phpcs:ignore WordPress.Security.NonceVerification
 		?>
 		<div class="column full wide">
 			<select id="mainwp_top_quick_jump_group" class="ui dropdown">
@@ -1273,9 +1274,9 @@ class MainWP_UI {
 				<?php $website_id = intval( $_GET['id'] ); ?>
 			<?php endif; ?>
 			<a id="mainwp-go-wp-admin-button" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website_id ); ?>&_opennonce=<?php echo esc_attr( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><i class="sign in icon"></i></a>
-			<a id="mainwp-remove-site-button" href="#" site-id="<?php echo intval( $website_id); ?>" data-tooltip="<?php esc_attr_e( 'Remove the site from your MainWP Dashboard.', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="mainwp-remove-site-button ui red basic icon button" target="_blank"><i class="times icon"></i></a>
+			<a id="mainwp-remove-site-button" href="#" site-id="<?php echo intval( $website_id ); ?>" data-tooltip="<?php esc_attr_e( 'Remove the site from your MainWP Dashboard.', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="mainwp-remove-site-button ui red basic icon button" target="_blank"><i class="times icon"></i></a>
 		<?php endif; ?>
-		<?php if ( ( 'mainwp_tab' === $page ) || isset( $_GET['dashboard'] ) || in_array( $page, $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+		<?php if ( ( 'mainwp_tab' === $page ) || isset( $_GET['dashboard'] ) || in_array( $page, $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
 		<a id="mainwp-screen-options-button" class="ui button basic icon" onclick="jQuery( '#mainwp-overview-screen-options-modal' ).modal({allowMultiple:true}).modal( 'show' ); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_html_e( 'Page Settings', 'mainwp' ); ?>">
 			<i class="cog icon"></i>
 		</a>
@@ -1560,7 +1561,7 @@ class MainWP_UI {
 		if ( 'mainwp_page_manageclients' == $page ) {
 			$sorted_array = $sorted;
 			$sorted       = '';
-			$client_id    = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$client_id    = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 			if ( ! empty( $client_id ) && is_array( $sorted_array ) && isset( $sorted_array[ $client_id ] ) ) {
 				$sorted = $sorted_array[ $client_id ];
 			}
@@ -1972,7 +1973,7 @@ class MainWP_UI {
 		$which_settings = 'overview_settings';
 		?>
 		<?php if ( ! $setting_page ) : ?>
-			<?php if ( isset( $_GET['page'] ) && in_array( $_GET['page'], $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+			<?php if ( isset( $_GET['page'] ) && in_array( $_GET['page'], $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
 				<?php
 				$which_settings  = 'sidebar_settings';
 				$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
@@ -1980,7 +1981,7 @@ class MainWP_UI {
 					$sidebarPosition = 1;
 				}
 				$manageGroupsPage = false;
-				if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 					$manageGroupsPage = true;
 				}
 				?>
@@ -1995,7 +1996,7 @@ class MainWP_UI {
 			</div>
 			<?php endif; ?>
 		<?php endif; ?>
-		<?php if ( isset( $_GET['page'] ) && ! in_array( $_GET['page'], $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+		<?php if ( isset( $_GET['page'] ) && ! in_array( $_GET['page'], $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Hide the Update Everything button', 'mainwp' ); ?></label>
 			<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the "Update Everything" button will be hidden in the Updates Overview widget.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -2037,7 +2038,7 @@ class MainWP_UI {
 					?>
 					<li>
 						<div class="ui checkbox">
-							<input type="checkbox" id="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" name="mainwp_show_widgets[]" <?php echo esc_html( $_selected); ?> value="<?php echo esc_attr( $name ); ?>">
+							<input type="checkbox" id="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" name="mainwp_show_widgets[]" <?php echo esc_html( $_selected ); ?> value="<?php echo esc_attr( $name ); ?>">
 							<label for="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" ><?php echo esc_html( $title ); ?></label>
 						</div>
 						<input type="hidden" name="mainwp_widgets_name[]" value="<?php echo esc_attr( $name ); ?>">

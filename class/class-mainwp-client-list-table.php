@@ -230,7 +230,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 	public function render_manage_sites_table_top() {
 		$items_bulk = $this->get_bulk_actions();
 
-		$selected_group = isset( $_REQUEST['tags'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['tags'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$selected_group = isset( $_REQUEST['tags'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['tags'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 
 		?>
 		<div class="ui grid">
@@ -703,7 +703,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 					?>
 					<a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Edit client notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
 				<?php else : ?>
-					<a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+					<a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
 				<?php endif; ?>
 				<span style="display: none" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 				<?php

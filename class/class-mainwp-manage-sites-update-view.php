@@ -760,7 +760,7 @@ class MainWP_Manage_Sites_Update_View {
 						?>
 						<tr dismissed="0">
 							<td> <?php echo MainWP_System_Utility::get_plugin_icon( $item_slug ) . '&nbsp;'; // phpcs:ignore WordPress.Security.EscapeOutput ?>							
-								<a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . dirname( $slug ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? rawurlencode( $plugin_outdate['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_outdate['Name'] ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $plugin_outdate['Name'] ); ?></a>
+								<a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . dirname( $slug ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? esc_url( rawurlencode( $plugin_outdate['PluginURI'] ) ) : '' ) . '&name=' . esc_url( rawurlencode( $plugin_outdate['Name'] ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $plugin_outdate['Name'] ); ?></a>
 								<input type="hidden" id="wp_dismissed_plugin_<?php echo intval( $website->id ); ?>_<?php echo esc_attr( $plugin_name ); ?>" value="0"/>
 							</td>
 							<td><?php echo esc_html( $plugin_outdate['Version'] ); ?></td>

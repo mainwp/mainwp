@@ -378,7 +378,7 @@ class MainWP_Manage_Sites_View {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::starts_with()
 	 */
-	public static function render_import_sites() {
+	public static function render_import_sites() { // phpcs:ignore -- complex.
 		?>
 		<div id="mainwp-importing-sites" class="ui active inverted dimmer" style="display:none">
 			<div class="ui medium text loader"><?php esc_html_e( 'Importing', 'mainwp' ); ?></div>
@@ -676,7 +676,7 @@ class MainWP_Manage_Sites_View {
 			<?php endif; ?>
 			<?php
 			// Render security check issues.
-			$websiteid = isset( $_GET['scanid'] ) ? intval( $_GET['scanid'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$websiteid = isset( $_GET['scanid'] ) ? intval( $_GET['scanid'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification
 			$website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( empty( $website ) ) {
 				return;
@@ -765,7 +765,7 @@ class MainWP_Manage_Sites_View {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::starts_with()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
 	 */
-	public static function render_edit_site( $websiteid, $updated ) {
+	public static function render_edit_site( $websiteid, $updated ) { // phpcs:ignore -- complex.
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
 			mainwp_do_not_have_permissions( esc_html__( 'edit sites', 'mainwp' ) );
 			return;

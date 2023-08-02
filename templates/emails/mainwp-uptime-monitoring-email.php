@@ -71,8 +71,8 @@ if ( empty( $heading ) ) {
 								<td align="left" valign="top" style="padding:30px 30px 0 30px;">
 									<strong><?php esc_html_e( 'Hi there', 'mainwp' ); ?>,</strong>
 									<p><?php esc_html_e( 'Based on the HTTP response from your monitor, it appears that your child site is DOWN.', 'mainwp' ); ?></p>
-									<p><strong><?php esc_html_e( 'Monitor', 'mainwp' ); ?>:</strong> <?php echo esc_html( $site_name); ?></p>
-									<p><strong><?php esc_html_e( 'Site URL', 'mainwp' ); ?>:</strong> <a href="<?php echo esc_url( $site_url); ?>" target="_blank"><?php echo esc_html( $site_url); ?></a></p>
+									<p><strong><?php esc_html_e( 'Monitor', 'mainwp' ); ?>:</strong> <?php echo esc_html( $site_name ); ?></p>
+									<p><strong><?php esc_html_e( 'Site URL', 'mainwp' ); ?>:</strong> <a href="<?php echo esc_url( $site_url ); ?>" target="_blank"><?php echo esc_html( $site_url ); ?></a></p>
 									<p><strong><?php esc_html_e( 'Status Code', 'mainwp' ); ?>:</strong> <?php echo esc_html( $code ); ?></p>
 								</td>
 							</tr>
@@ -97,7 +97,7 @@ if ( empty( $heading ) ) {
 												<strong><?php esc_html_e( 'Hi there', 'mainwp' ); ?>,</strong>
 												<p><?php esc_html_e( 'Based on the HTTP response from your monitor, it appears that your child site is DOWN.', 'mainwp' ); ?></p>
 												<p><strong><?php esc_html_e( 'Monitor', 'mainwp' ); ?>:</strong> <?php echo esc_html( $site_name ); ?></p>
-												<p><strong><?php esc_html_e( 'Site URL', 'mainwp' ); ?>:</strong> <a href="<?php echo esc_url( $site_url); ?>" target="_blank"><?php echo esc_html( $site_url ); ?></a></p>
+												<p><strong><?php esc_html_e( 'Site URL', 'mainwp' ); ?>:</strong> <a href="<?php echo esc_url( $site_url ); ?>" target="_blank"><?php echo esc_html( $site_url ); ?></a></p>
 												<p><strong><?php esc_html_e( 'Status Code', 'mainwp' ); ?>:</strong> <?php echo esc_html( $code ); ?></p>
 											</td>
 										</tr>

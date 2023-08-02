@@ -809,7 +809,7 @@ class MainWP_Logger {
 				$fontOpen = true;
 			}
 
-			echo esc_html( htmlentities( $line ));
+			echo esc_html( htmlentities( $line ) );
 		}
 
 		if ( $fontOpen ) {

@@ -394,7 +394,7 @@ class MainWP_System_View {
 	 */
 	public static function render_notice_config_warning() {
 		if ( MainWP_Server_Information_Handler::is_openssl_config_warning() ) {
-			if ( isset( $_GET['page'] ) && 'SettingsAdvanced' != $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( isset( $_GET['page'] ) && 'SettingsAdvanced' != $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 				if ( MainWP_Utility::show_mainwp_message( 'notice', 'ssl_warn' ) ) {
 					?>
 					<div class="ui yellow message" style="margin-bottom: 0; border-radius: 0;">
@@ -683,7 +683,7 @@ class MainWP_System_View {
 		?>
 		<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_ajax' ) ); ?>", mainwp_js_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_nonce' ) ); ?>";</script>
 		<?php
-		if ( MainWP_System::is_mainwp_pages() || ( isset( $_GET['page'] ) && 'mainwp-setup' == $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( MainWP_System::is_mainwp_pages() || ( isset( $_GET['page'] ) && 'mainwp-setup' == $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			if ( get_option( 'mainwp_enable_guided_tours', 0 ) ) {
 				self::mainwp_usetiful_tours();
 			}
@@ -935,7 +935,7 @@ class MainWP_System_View {
 
 		$plugins_to_checks = self::get_plugins_install_check();
 
-		$page = sanitize_text_field( wp_unslash( $_GET['page'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$page = sanitize_text_field( wp_unslash( $_GET['page'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 
 		$plugin_check = MainWP_Utility::get_sub_array_having( $plugins_to_checks, 'page', $page );
 
@@ -948,7 +948,7 @@ class MainWP_System_View {
 		}
 
 		// if is not overview extension page return.
-		if ( isset( $_GET['tab'] ) && 'overview' !== $_GET['tab'] && 'dashboard' !== $_GET['tab'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['tab'] ) && 'overview' !== $_GET['tab'] && 'dashboard' !== $_GET['tab'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			return;
 		}
 

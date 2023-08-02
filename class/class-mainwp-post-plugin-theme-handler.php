@@ -477,7 +477,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$api           = MainWP_System_Utility::get_plugin_theme_info(
 			'plugin',
 			array(
-				'slug'   => isset( $_POST['slug'] ) ? rawurldecode( wp_unslash( $_POST['slug'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'slug'   => isset( $_POST['slug'] ) ? rawurldecode( wp_unslash( $_POST['slug'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification
 				'fields' => array( 'sections' => false ),
 			)
 		); // Save on a bit of bandwidth.

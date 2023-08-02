@@ -52,8 +52,8 @@ class MainWP_Extensions_View {
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
 	 */
 	public static function render_header( $shownPage = '' ) {
-		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( ! empty( $page ) && 'Extensions' === $_GET['page'] ) {
+		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		if ( !empty( $page ) && 'Extensions' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$params = array(
 				'title' => esc_html__( 'Extensions', 'mainwp' ),
 			);
@@ -469,7 +469,7 @@ class MainWP_Extensions_View {
 					</div>
 
 					<div class="meta">
-				<?php echo '<i class="code branch icon"></i>' . esc_html( $extension['version'] ); ?> <?php echo ( isset( $extension['DocumentationURI'] ) && ! empty( $extension['DocumentationURI'] ) ) ? ' - <a href="' . str_replace( array( 'http:', 'https:' ), '', esc_url( $extension['DocumentationURI'] ) ) . '" target="_blank">' . esc_html__( 'Documentation', 'mainwp' ) . '</a>' : ''; ?>
+				<?php echo '<i class="code branch icon"></i>' . esc_html( $extension['version'] ); ?> <?php echo ( isset( $extension['DocumentationURI'] ) && ! empty( $extension['DocumentationURI'] ) ) ? ' - <a href="' . usc_url( str_replace( array( 'http:', 'https:' ), '', esc_url( $extension['DocumentationURI'] ) ) ) . '" target="_blank">' . esc_html__( 'Documentation', 'mainwp' ) . '</a>' : ''; ?>
 					</div>
 		<?php if ( isset( $extension_update->response[ $extension['slug'] ] ) ) : ?>
 						<a href="<?php echo esc_url( admin_url( 'plugins.php' ) ); ?>" class="ui red ribbon label"><?php esc_html_e( 'Update available', 'mainwp' ); ?></a>

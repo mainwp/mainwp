@@ -199,7 +199,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Post::render_table()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
-	public function mainwp_posts_search() {
+	public function mainwp_posts_search() { // phpcs:ignore --  complex.
 		$this->secure_request( 'mainwp_posts_search' );
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$post_type = ( isset( $_POST['post_type'] ) && 0 < strlen( sanitize_text_field( wp_unslash( $_POST['post_type'] ) ) ) ? sanitize_text_field( wp_unslash( $_POST['post_type'] ) ) : 'post' );

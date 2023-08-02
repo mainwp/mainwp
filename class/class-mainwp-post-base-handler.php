@@ -93,7 +93,7 @@ abstract class MainWP_Post_Base_Handler {
 		} else {
 			$adminurl = strtolower( admin_url() );
 			$referer  = strtolower( wp_get_referer() );
-			$result   = isset( $_REQUEST[ $query_arg ] ) ? wp_verify_nonce( sanitize_key( $_REQUEST[ $query_arg ] ), $action ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$result   = isset( $_REQUEST[ $query_arg ] ) ? wp_verify_nonce( sanitize_key( $_REQUEST[ $query_arg ] ), $action ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
 			if ( ! $result ) {
 				$secure = false;

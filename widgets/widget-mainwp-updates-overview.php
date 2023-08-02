@@ -501,7 +501,7 @@ class MainWP_Updates_Overview {
 				<div class="eight wide column">
 					<div class="ui large statistic horizontal">
 						<div class="value">
-						<?php echo intval( $total_upgrades); ?>
+						<?php echo intval( $total_upgrades ); ?>
 					</div>
 					<div class="label">
 						<?php esc_html_e( 'Total Updates', 'mainwp' ); ?>
@@ -739,7 +739,7 @@ class MainWP_Updates_Overview {
 			<div class="column">
 				<div class="ui horizontal statistic">
 					<div class="value">
-						<?php echo intval( $total_theme_upgrades); ?>
+						<?php echo intval( $total_theme_upgrades ); ?>
 					</div>
 					<div class="label">
 						<?php esc_html_e( 'Theme Updates', 'mainwp' ); ?>
@@ -757,7 +757,7 @@ class MainWP_Updates_Overview {
 				}
 				if ( 0 == $total_theme_upgrades ) {
 					?>
-					<a href="<?php echo esc_url( $detail_themes_up); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( $detail_themes_up ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 					<a href="#" class="ui disabled green basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php
 				} else {
@@ -808,7 +808,7 @@ class MainWP_Updates_Overview {
 			<div class="column">
 				<div class="ui horizontal statistic">
 					<div class="value">
-						<?php echo intval( $total_translation_upgrades); ?>
+						<?php echo intval( $total_translation_upgrades ); ?>
 					</div>
 					<div class="label">
 						<?php esc_html_e( 'Translation Updates', 'mainwp' ); ?>

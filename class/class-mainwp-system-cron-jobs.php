@@ -171,12 +171,6 @@ class MainWP_System_Cron_Jobs {
 	 * @uses \MainWP\Dashboard\MainWP_System::$version
 	 */
 	public function cron_active() {
-		if ( ! defined( 'DOING_CRON' ) || ! DOING_CRON ) {
-			return;
-		}
-		if ( empty( $_GET['mainwp_run'] ) || 'test' !== $_GET['mainwp_run'] ) {
-			return;
-		}
 		session_write_close();
 		if ( ! headers_sent() ) {
 			header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ), true );

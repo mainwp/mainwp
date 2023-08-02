@@ -1271,7 +1271,7 @@ class MainWP_Hooks {
 		}
 
 		try {
-			$id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false;
+			$id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::upgrade_site( $id ) ) ) ); // ok.
 		} catch ( MainWP_Exception $e ) {
 			die(
@@ -1300,11 +1300,13 @@ class MainWP_Hooks {
 	 */
 	public function upgrade_plugin_theme() {
 		try {
+			// phpcs:disable WordPress.Security.NonceVerification.Recommended
 			$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : null;
 			$type      = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : null;
 			$slugs     = isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ? wp_unslash( $_POST['slugs'] ) : array();
 			$error     = '';
 			$erCode    = '';
+			// phpcs:enable
 
 			if ( 'plugin' === $type && ! mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) ) {
 				$error = mainwp_do_not_have_permissions( esc_html__( 'update plugins', 'mainwp' ), false );
@@ -1405,7 +1407,7 @@ class MainWP_Hooks {
 	 * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::get_post()
 	 */
 	public function hook_posts_bulk_posting() {
-		$post_id = isset( $_POST['post_id'] ) && $_POST['post_id'] ? intval( $_POST['post_id'] ) : false;
+		$post_id = isset( $_POST['post_id'] ) && $_POST['post_id'] ? intval( $_POST['post_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( $post_id ) {
 			MainWP_Post_Page_Handler::posting_posts( $post_id, 'ajax_posting' );
 		}

@@ -218,7 +218,7 @@ class MainWP_Client_Handler {
 	 * @throws \Exception Error message.
 	 * @return mixed Results.
 	 */
-	public static function rest_api_add_client( $data, $edit = false ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.  
+	public static function rest_api_add_client( $data, $edit = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.  
 
 		$params = array();
 
@@ -393,7 +393,7 @@ class MainWP_Client_Handler {
 	 *
 	 * @return mixed $result Result of tokens.
 	 */
-	public function get_website_client_tokens_data( $websiteid = false ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated. 
+	public function get_website_client_tokens_data( $websiteid = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated. 
 		if ( empty( $websiteid ) ) {
 			return false;
 		}
@@ -496,7 +496,7 @@ class MainWP_Client_Handler {
 			$existed_emails = str_replace( '|', '<br/>', $existed_emails );
 			?>
 			<div class="ui yellow message">
-				<?php echo sprintf( esc_html__( 'Existed contact emails.%sPlease try again.', 'mainwp' ), '<br/>' . $existed_emails . '</br>' ); ?>
+				<?php echo sprintf( esc_html__( 'Existed contact emails.%sPlease try again.', 'mainwp' ), '<br/>' . $existed_emails . '</br>' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 			</div>
 			<?php
 		}

@@ -48,7 +48,7 @@ class MainWP_UI_Select_Sites {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
 	 */
-	public static function select_sites_box( $params = array() ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function select_sites_box( $params = array() ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$type                   = isset( $params['type'] ) ? $params['type'] : 'checkbox';
 		$show_group             = isset( $params['show_group'] ) ? $params['show_group'] : true;
@@ -88,8 +88,8 @@ class MainWP_UI_Select_Sites {
 			}
 		}
 
-		if ( empty( $selected_sites ) && isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] ) ) {
-			$selected_sites = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) ); // sanitize ok.
+		if ( empty( $selected_sites ) && isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$selected_sites = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) ); // // phpcs:ignore WordPress.Security.NonceVerification - sanitize ok.
 			$selected_sites = array_map( 'intval', $selected_sites );
 			$selected_sites = array_filter( $selected_sites );
 		}
@@ -151,7 +151,7 @@ class MainWP_UI_Select_Sites {
 	 *  @type bool   $enable_suspended_clients (bool) True, if suspended clients is enabled. False if not.
 	 * }
 	 */
-	public static function select_sites_box_body( $params = array() ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function select_sites_box_body( $params = array() ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$type                   = isset( $params['type'] ) ? $params['type'] : 'checkbox';
 		$show_group             = isset( $params['show_group'] ) ? $params['show_group'] : true;
@@ -215,13 +215,13 @@ class MainWP_UI_Select_Sites {
 			<?php
 			endif;
 		?>
-		<div class="ui tab <?php echo 'site' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-sites-<?php echo $tab_id; ?>" id="mainwp-select-sites">
+		<div class="ui tab <?php echo 'site' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-sites-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-sites">
 		<?php
 			MainWP_UI::render_select_sites( $websites, $type, $selected_sites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id );
 		?>
 		</div>
 		<?php if ( $staging_enabled ) { ?>
-			<div class="ui tab <?php echo 'staging' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-staging-sites-<?php echo $tab_id; ?>">
+			<div class="ui tab <?php echo 'staging' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-staging-sites-<?php echo esc_attr( $tab_id ); ?>">
 				<?php
 					MainWP_UI::render_select_sites_staging( $selected_sites, $edit_site_id, $type );
 				?>
@@ -231,7 +231,7 @@ class MainWP_UI_Select_Sites {
 
 		if ( $show_group ) {
 			?>
-			<div class="ui tab <?php echo 'group' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-groups-<?php echo $tab_id; ?>" id="mainwp-select-groups">
+			<div class="ui tab <?php echo 'group' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-groups-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-groups">
 			<?php
 				MainWP_UI::render_select_sites_group( $groups, $selected_groups, $type );
 			?>
@@ -248,7 +248,7 @@ class MainWP_UI_Select_Sites {
 				'enable_suspended_clients' => $enableSuspendedClients,
 			);
 			?>
-			<div class="ui tab <?php echo 'client' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-clients-<?php echo $tab_id; ?>" id="mainwp-select-clients">
+			<div class="ui tab <?php echo 'client' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-clients-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-clients">
 			<?php
 			self::render_select_clients( $params );
 			?>
@@ -364,7 +364,7 @@ class MainWP_UI_Select_Sites {
 									$selected = ( 'all' === $selected_clients || in_array( $client->client_id, $selected_clients ) );
 									?>
 									<div title="<?php echo esc_html( $client->name ); ?>" class="mainwp_selected_clients_item ui <?php echo esc_html( $type ); ?> item <?php echo ( $selected ? 'selected_clients_item_checked' : '' ); ?>">
-										<input type="<?php echo $type; ?>" name="<?php echo ( 'radio' === $type ? 'selected_clients' : 'selected_clients[]' ); ?>" siteid="<?php echo intval( $client->client_id ); ?>" value="<?php echo intval( $client->client_id ); ?>" id="selected_clients_<?php echo intval( $client->client_id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
+										<input type="<?php echo esc_attr( $type ); ?>" name="<?php echo ( 'radio' === $type ? 'selected_clients' : 'selected_clients[]' ); ?>" siteid="<?php echo intval( $client->client_id ); ?>" value="<?php echo intval( $client->client_id ); ?>" id="selected_clients_<?php echo intval( $client->client_id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
 										<label for="selected_clients_<?php echo intval( $client->client_id ); ?>">
 											<span class="client-contact-name"><?php echo esc_html( $client->name ); ?></span>
 										</label>

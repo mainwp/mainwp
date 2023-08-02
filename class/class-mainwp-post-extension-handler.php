@@ -87,8 +87,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::add_extension_menu()
 	 */
 	public function add_extension_menu() {
-		$this->check_security( 'mainwp_extension_add_menu' );
-		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
+		$this->check_security( 'mainwp_extension_add_menu' ); 
+		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		MainWP_Extensions_Handler::add_extension_menu( $slug );
 		die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
@@ -104,8 +104,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	public function activate_api_extension() {
 		$this->check_security( 'mainwp_extension_api_activate' );
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
-		$api_slug = isset( $_POST['slug'] ) ? dirname( $_POST['slug'] ) : '';
-		$api_key  = isset( $_POST['key'] ) ? sanitize_text_field( wp_unslash( $_POST['key'] ) ) : '';
+		$api_slug = isset( $_POST['slug'] ) ? dirname( $_POST['slug'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$api_key  = isset( $_POST['key'] ) ? sanitize_text_field( wp_unslash( $_POST['key'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		$result   = MainWP_Api_Manager::instance()->license_key_activation( $api_slug, $api_key );
 		wp_send_json( $result );
 	}
@@ -118,8 +118,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function ajax_extension_plugin_action() {
 		$this->check_security( 'mainwp_extension_plugin_action' );
-		$plugin_slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
-		$action      = isset( $_POST['what'] ) ? sanitize_text_field( wp_unslash( $_POST['what'] ) ) : '';
+		$plugin_slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$action      = isset( $_POST['what'] ) ? sanitize_text_field( wp_unslash( $_POST['what'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( ! empty( $plugin_slug ) && in_array( $action, array( 'active', 'disable', 'remove' ) ) ) {
 			if ( 'disable' == $action ) {
 				if ( is_plugin_active( $plugin_slug ) ) {
@@ -194,8 +194,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function deactivate_extension() {
 		$this->check_security( 'mainwp_extension_deactivate' );
-		$api_slug = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : '';
-		$api_key  = isset( $_POST['api_key'] ) ? wp_unslash( $_POST['api_key'] ) : '';
+		$api_slug = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$api_key  = isset( $_POST['api_key'] ) ? wp_unslash( $_POST['api_key'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		$result   = MainWP_Api_Manager::instance()->license_key_deactivation( $api_slug, $api_key );
 		wp_send_json( $result );
 	}
@@ -209,8 +209,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function grab_extension_api_key() {
 		$this->check_security( 'mainwp_extension_grabapikey' );
-		$api_slug       = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : '';
-		$master_api_key = isset( $_POST['master_api_key'] ) ? wp_unslash( $_POST['master_api_key'] ) : '';
+		$api_slug       = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$master_api_key = isset( $_POST['master_api_key'] ) ? wp_unslash( $_POST['master_api_key'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		$result         = MainWP_Api_Manager::instance()->grab_license_key( $api_slug, $master_api_key );
 		wp_send_json( $result );
 	}
@@ -246,7 +246,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 			$_SESSION['api_login_history'] = $new_api_login_history;
 		}
 
-		$api_key = isset( $_POST['api_key'] ) ? trim( $_POST['api_key'] ) : false;
+		$api_key = isset( $_POST['api_key'] ) ? trim( $_POST['api_key'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( '' === $api_key && false !== $api_key ) {
 			MainWP_Utility::update_option( 'mainwp_extensions_master_api_key', '' );
@@ -269,7 +269,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		}
 
 		$result     = json_decode( $test, true );
-		$save_login = ( isset( $_POST['saveLogin'] ) && ( 1 == $_POST['saveLogin'] ) ) ? true : false;
+		$save_login = ( isset( $_POST['saveLogin'] ) && ( 1 == $_POST['saveLogin'] ) ) ? true : false; // phpcs:ignore WordPress.Security.NonceVerification
 		$return     = array();
 		if ( is_array( $result ) ) {
 			if ( isset( $result['success'] ) && $result['success'] ) {
@@ -306,7 +306,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function save_api_ssl_verify() {
 		$this->check_security( 'mainwp_extension_apisslverifycertificate' );
-		MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', isset( $_POST['api_sslverify'] ) ? intval( $_POST['api_sslverify'] ) : 0 );
+		MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', isset( $_POST['api_sslverify'] ) ? intval( $_POST['api_sslverify'] ) : 0 ); // phpcs:ignore WordPress.Security.NonceVerification
 		die( wp_json_encode( array( 'saved' => 1 ) ) );
 	}
 
@@ -363,8 +363,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		$this->check_security( 'mainwp_extension_downloadandinstall' );
 		// phpcs:ignore -- custom setting to install plugin.
 		ini_set( 'zlib.output_compression', 'Off' );
-		$download_link = isset( $_POST['download_link'] ) ? wp_unslash( $_POST['download_link'] ) : '';
-		$plugin_slug   = isset( $_POST['plugin_slug'] ) ? wp_unslash( $_POST['plugin_slug'] ) : '';
+		$download_link = isset( $_POST['download_link'] ) ? wp_unslash( $_POST['download_link'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$plugin_slug   = isset( $_POST['plugin_slug'] ) ? wp_unslash( $_POST['plugin_slug'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 
 		$return = array( 'error' => esc_html__( 'Empty or Invalid request data, please try again.', 'mainwp' ) );
 
@@ -399,7 +399,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function bulk_activate() {
 		$this->check_security( 'mainwp_extension_bulk_activate' );
-		$plugins = isset( $_POST['plugins'] ) ? wp_unslash( $_POST['plugins'] ) : false;
+		$plugins = isset( $_POST['plugins'] ) ? wp_unslash( $_POST['plugins'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( is_array( $plugins ) && 0 < count( $plugins ) ) {
 			if ( current_user_can( 'activate_plugins' ) ) {
 				activate_plugins( $plugins );
@@ -423,7 +423,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 			$snMenuExtensions = array();
 		}
 
-		$key = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
+		$key = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( ! empty( $key ) && isset( $snMenuExtensions[ $key ] ) ) {
 			unset( $snMenuExtensions[ $key ] );

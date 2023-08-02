@@ -470,7 +470,7 @@ class MainWP_Menu {
 				 *
 				 * @since 4.1.4
 				 */
-				echo apply_filters( 'mainwp_menu_logo_href', admin_url( 'admin.php?page=mainwp_tab' ) );
+				echo esc_url( apply_filters( 'mainwp_menu_logo_href', admin_url( 'admin.php?page=mainwp_tab' ) ) );
 				?>
 				">
 				<img src="
@@ -482,7 +482,7 @@ class MainWP_Menu {
 				 *
 				 * @since 4.1
 				 */
-				echo apply_filters( 'mainwp_menu_logo_src', MAINWP_PLUGIN_URL . 'assets/images/logo.png' );
+				echo esc_url( apply_filters( 'mainwp_menu_logo_src', MAINWP_PLUGIN_URL . 'assets/images/logo.png' ) );
 				?>
 				" alt="
 				<?php
@@ -493,11 +493,11 @@ class MainWP_Menu {
 				 *
 				 * @since 4.1
 				 */
-				echo apply_filters( 'mainwp_menu_logo_alt', 'MainWP' );
+				echo esc_html( apply_filters( 'mainwp_menu_logo_alt', 'MainWP' ) );
 				?>
 				" />
 				</a>
-				<span id="mainwp-version-label" class="ui mini green right ribbon label"><?php echo esc_html__( 'V. ', 'mainwp' ); ?> <?php echo $version; ?></span>
+				<span id="mainwp-version-label" class="ui mini green right ribbon label"><?php echo esc_html__( 'V. ', 'mainwp' ); ?> <?php echo esc_html( $version ); ?></span>
 			</div>
 			<div class="ui hidden divider"></div>
 			<div class="mainwp-nav-menu">
@@ -539,15 +539,15 @@ class MainWP_Menu {
 							$id_attr = ! empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
 
 							if ( $has_sub ) {
-								echo '<div ' . $id_attr . " class=\"item $active_item\">";
-								echo "<a class=\"title with-sub $active_item\" href=\"$href\"><b>$title</b> <i class=\"dropdown icon\"></i></a>";
-								echo "<div class=\"content menu $active_item\">";
+								echo '<div ' . $id_attr . " class=\"item $active_item\">"; // phpcs:ignore WordPress.Security.EscapeOutput
+								echo "<a class=\"title with-sub $active_item\" href=\"$href\"><b>$title</b> <i class=\"dropdown icon\"></i></a>"; // phpcs:ignore WordPress.Security.EscapeOutput
+								echo "<div class=\"content menu $active_item\">"; // phpcs:ignore WordPress.Security.EscapeOutput
 								self::render_sub_item( $item_key );
 								echo '</div>';
 								echo '</div>';
 							} else {
-								echo '<div ' . $id_attr . ' class="item">';
-								echo "<a class='title $active_item' href=\"$href\"><b>$title</b></a>";
+								echo '<div ' . $id_attr . ' class="item">'; // phpcs:ignore WordPress.Security.EscapeOutput
+								echo "<a class='title $active_item' href=\"$href\"><b>$title</b></a>"; // phpcs:ignore WordPress.Security.EscapeOutput
 								echo '</div>';
 							}
 						}

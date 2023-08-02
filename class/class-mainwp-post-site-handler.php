@@ -119,11 +119,13 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function ajax_group_sites_add() {
 		$this->secure_request( 'mainwp_group_sites_add' );
+		// phpcs:disable WordPress.Security.NonceVerification
 		$newName        = sanitize_text_field( wp_unslash( $_POST['newName'] ) );
 		$newColor       = sanitize_text_field( wp_unslash( $_POST['newColor'] ) );
 		$selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'intval', wp_unslash( $_POST['selected_sites'] ) ) : array();
 		$selected_sites = array_filter( $selected_sites );
-		$success        = false;
+		// phpcs:enable
+		$success = false;
 		if ( ! empty( $newName ) ) {
 			$success = MainWP_Manage_Groups::add_group_sites( $newName, $selected_sites, $newColor );
 		}
@@ -145,7 +147,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_group_getsites() {
 		$this->secure_request( 'mainwp_group_getsites' );
 
-		die( MainWP_Manage_Groups::get_sites() );
+		die( MainWP_Manage_Groups::get_sites() ); // phpcs:ignore WordPress.Security.EscapeOutput
 	}
 
 	/**
@@ -194,10 +196,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function get_site_icon() {
 		$this->check_security( 'mainwp_get_site_icon', 'security' );
-		$siteId = null;
-		if ( isset( $_POST['siteId'] ) ) {
-			$siteId = intval( $_POST['siteId'] );
-		}
+		$siteId = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification
 		$result = MainWP_Sync::sync_site_icon( $siteId );
 		wp_send_json( $result );
 	}
@@ -209,12 +208,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function check_abandoned() {
 		$this->check_security( 'mainwp_check_abandoned', 'security' );
-		$siteId = null;
-		if ( isset( $_POST['siteId'] ) ) {
-			$siteId = intval( $_POST['siteId'] );
-		}
-		$which = sanitize_text_field( wp_unslash( $_POST['which'] ) );
-
+		$siteId = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification
+		$which  = sanitize_text_field( wp_unslash( $_POST['which'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 		$result = MainWP_Utility::check_abandoned( $siteId, $which );
 		wp_send_json( $result );
 	}
@@ -228,7 +223,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
 	 */
-	public function mainwp_testwp() { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public function mainwp_testwp() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$this->secure_request( 'mainwp_testwp' );
 
 		$url               = null;
@@ -238,6 +233,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		$verifyCertificate = 1;
 		$sslVersion        = 0;
 
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_POST['url'] ) ) {
 			$url = sanitize_text_field( wp_unslash( $_POST['url'] ) );
 			$url = urldecode( $url );
@@ -273,6 +269,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 				$http_pass         = $website->http_pass;
 			}
 		}
+		// phpcs:enable
 
 		$ssl_verifyhost = false;
 
@@ -382,13 +379,9 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function manage_suspend_site() {
 		$this->secure_request( 'mainwp_manage_sites_suspend_site' );
-		$siteId = null;
-		if ( isset( $_POST['siteid'] ) ) {
-			$siteId = intval( $_POST['siteid'] );
-		}
-
+		$siteId    = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification
 		$newValues = array(
-			'suspended' => isset( $_POST['suspended'] ) && '1' === $_POST['suspended'] ? 1 : 0,
+			'suspended' => isset( $_POST['suspended'] ) && '1' === $_POST['suspended'] ? 1 : 0, // phpcs:ignore WordPress.Security.NonceVerification
 		);
 
 		if ( $siteId ) {

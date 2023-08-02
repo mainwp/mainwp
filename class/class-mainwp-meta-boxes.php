@@ -24,10 +24,12 @@ class MainWP_Meta_Boxes {
 	 *
 	 * @return int $post_id Post ID.
 	 */
-	public function select_sites_handle( $post_id, $post_type ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public function select_sites_handle( $post_id, $post_type ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+
 		/**
 		 * Verify this came from the our screen and with proper authorization.
 		 */
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( ! isset( $_POST['select_sites_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['select_sites_nonce'] ), 'select_sites_' . $post_id ) ) {
 			return $post_id;
 		}
@@ -84,6 +86,7 @@ class MainWP_Meta_Boxes {
 				return sanitize_text_field( wp_unslash( $_POST['select_by'] ) );
 			}
 		}
+		// phpcs:enable
 
 		return $post_id;
 	}
@@ -115,6 +118,8 @@ class MainWP_Meta_Boxes {
 		/**
 		 * Verify this came from the our screen and with proper authorization.
 		 */
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( ! isset( $_POST['post_category_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['post_category_nonce'] ), 'post_category_' . $post_id ) ) {
 			return;
 		}
@@ -148,6 +153,7 @@ class MainWP_Meta_Boxes {
 
 			return;
 		}
+		// phpcs:enable
 	}
 
 	/**
@@ -171,8 +177,8 @@ class MainWP_Meta_Boxes {
 	 */
 	public function add_tags_handle( $post_id, $post_type ) {
 		$this->add_extra_handle( 'Tags', '_tags', 'add_tags', $post_id, $post_type );
-		if ( isset( $_POST['add_tags'] ) ) {
-			do_action( 'mainwp_bulkpost_tags_handle', $post_id, $post_type, wp_unslash( $_POST['add_tags'] ) );
+		if ( isset( $_POST['add_tags'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			do_action( 'mainwp_bulkpost_tags_handle', $post_id, $post_type, wp_unslash( $_POST['add_tags'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 		}
 	}
 
@@ -235,6 +241,7 @@ class MainWP_Meta_Boxes {
 		/**
 		 * Verify this came from the our screen and with proper authorization.
 		 */
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( ! isset( $_POST[ $prefix . '_nonce' ] ) || ! wp_verify_nonce( sanitize_key( $_POST[ $prefix . '_nonce' ] ), $prefix . '_' . $post_id ) ) {
 			return $post_id;
 		}
@@ -262,6 +269,7 @@ class MainWP_Meta_Boxes {
 			update_post_meta( $post_id, $saveto, $value );
 			return $value;
 		}
+		// phpcs:enable
 
 		return $post_id;
 	}

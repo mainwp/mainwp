@@ -89,7 +89,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_backup_run_site() {
 		$this->secure_request( 'mainwp_backup_run_site' );
-		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
+		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 		try {
 			if ( ! $site_id ) {
 				throw new MainWP_Exception( 'Site ID not found. Please reload the page and try again.', 'mainwp' );
@@ -123,6 +123,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_backup() {
 		$this->secure_request( 'mainwp_backup' );
+		// phpcs:disable WordPress.Security.NonceVerification
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
@@ -165,6 +166,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				)
 			);
 		}
+		// phpcs:enable
 	}
 
 	/**
@@ -179,6 +181,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_backup_checkpid() {
 		$this->secure_request( 'mainwp_backup_checkpid' );
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
@@ -201,6 +204,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				)
 			);
 		}
+		// phpcs:enable
 	}
 
 	/**
@@ -215,6 +219,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_backup_download_file() {
 		$this->secure_request( 'mainwp_backup_download_file' );
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
@@ -236,6 +241,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				)
 			);
 		}
+		// phpcs:enable
 	}
 
 	/**
@@ -250,6 +256,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_backup_delete_file() {
 		$this->secure_request( 'mainwp_backup_delete_file' );
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
@@ -272,6 +279,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				)
 			);
 		}
+		// phpcs:enable
 	}
 
 	/**
@@ -289,6 +297,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_createbackup_getfilesize() {
 		$this->secure_request( 'mainwp_createbackup_getfilesize' );
 
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		try {
 			if ( ! isset( $_POST['siteId'] ) ) {
 				throw new \Exception( esc_html__( 'No site selected!', 'mainwp' ) );
@@ -327,6 +336,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 		} catch ( \Exception $e ) {
 			$output = array( 'error' => $e->getMessage() );
 		}
+		// phpcs:enable
 
 		die( wp_json_encode( $output ) );
 	}
@@ -343,7 +353,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_backup_getfilesize' );
 
 		try {
-			$local = isset( $_POST['local'] ) ? sanitize_text_field( wp_unslash( $_POST['local'] ) ) : '';
+			$local = isset( $_POST['local'] ) ? sanitize_text_field( wp_unslash( $_POST['local'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 			die( wp_json_encode( array( 'result' => MainWP_Backup_Handler::backup_get_file_size( $local ) ) ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
@@ -372,9 +382,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_backup_upload_checkstatus' );
 
 		try {
-			$unique = isset( $_POST['unique'] ) ? sanitize_text_field( wp_unslash( $_POST['unique'] ) ) : false;
+			$unique = isset( $_POST['unique'] ) ? sanitize_text_field( wp_unslash( $_POST['unique'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 			$array  = get_option( 'mainwp_upload_progress' );
-			$info   = apply_filters( 'mainwp_remote_destination_info', array(), ( isset( $_POST['remote_destination'] ) ? sanitize_text_field( wp_unslash( $_POST['remote_destination'] ) ) : '' ) );
+			$info   = apply_filters( 'mainwp_remote_destination_info', array(), ( isset( $_POST['remote_destination'] ) ? sanitize_text_field( wp_unslash( $_POST['remote_destination'] ) ) : '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
 
 			if ( ! is_array( $array ) || empty( $unique ) || empty( $array[ $unique ] ) || empty( $array[ $unique ]['dts'] ) ) {
 				die(
@@ -444,7 +454,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 
 		try {
 			$array  = get_option( 'mainwp_upload_progress' );
-			$unique = isset( $_POST['unique'] ) ? sanitize_text_field( wp_unslash( $_POST['unique'] ) ) : false;
+			$unique = isset( $_POST['unique'] ) ? sanitize_text_field( wp_unslash( $_POST['unique'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
 			if ( ! is_array( $array ) || ! isset( $array[ $unique ] ) ) {
 				die( wp_json_encode( array( 'result' => 0 ) ) );
@@ -546,7 +556,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_backuptask_get_sites() {
 		$this->secure_request( 'mainwp_backuptask_get_sites' );
 
-		$taskID = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
+		$taskID = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 
 		wp_send_json( array( 'result' => MainWP_Manage_Backups_Handler::get_backup_task_sites( $taskID ) ) );
 	}
@@ -564,13 +574,13 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_backuptask_run_site() {
 		try {
 			$this->secure_request( 'mainwp_backuptask_run_site' );
-			$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
-			$task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : false;
+			$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+			$task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 			if ( ! $site_id || ! $task_id ) {
 				throw new MainWP_Exception( esc_html__( 'Site ID or backup task ID not found. Please reload the page and try again.', 'mainwp' ) );
 			}
 
-			$fileNameUID = isset( $_POST['fileNameUID'] ) ? sanitize_text_field( wp_unslash( $_POST['fileNameUID'] ) ) : false;
+			$fileNameUID = isset( $_POST['fileNameUID'] ) ? sanitize_text_field( wp_unslash( $_POST['fileNameUID'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 			wp_send_json( array( 'result' => MainWP_Manage_Backups_Handler::backup( $task_id, $site_id, $fileNameUID ) ) );
 		} catch ( MainWP_Exception $e ) {
 			die(

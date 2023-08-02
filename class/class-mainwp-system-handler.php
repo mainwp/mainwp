@@ -223,7 +223,7 @@ class MainWP_System_Handler {
 
 		global $pagenow;
 
-		if ( 'plugins.php' === $pagenow && isset( $_GET['do'] ) && 'checkUpgrade' === $_GET['do'] && ( ( time() - $this->upgradeVersionInfo->updated ) > 30 ) ) {
+		if ( 'plugins.php' === $pagenow && isset( $_GET['do'] ) && 'checkUpgrade' === $_GET['do'] && ( ( time() - $this->upgradeVersionInfo->updated ) > 30 ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$this->check_upgrade();
 			delete_site_transient( 'update_plugins' ); // to forced refresh 'update_plugins' transient.
 			wp_safe_redirect( admin_url( 'plugins.php' ) );
@@ -697,7 +697,7 @@ class MainWP_System_Handler {
 			return $false;
 		}
 
-		if ( ! isset( $_GET['wpplugin'] ) || ! is_numeric( $_GET['wpplugin'] ) || empty( $_GET['wpplugin'] ) ) {
+		if ( ! isset( $_GET['wpplugin'] ) || ! is_numeric( $_GET['wpplugin'] ) || empty( $_GET['wpplugin'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			return $false;
 		}
 
@@ -709,7 +709,7 @@ class MainWP_System_Handler {
 			return $false;
 		}
 
-		$site_id = intval( $_GET['wpplugin'] );
+		$site_id = intval( $_GET['wpplugin'] ); // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( $site_id ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $site_id );
@@ -748,15 +748,15 @@ class MainWP_System_Handler {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function check_update_custom( $transient ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) && is_object( $transient ) && property_exists( $transient, 'response' ) ) {
+		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) && is_object( $transient ) && property_exists( $transient, 'response' ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$extensions = MainWP_Extensions_Handler::get_indexed_extensions_infor( array( 'activated' => true ) );
-			if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && 'update-plugin' == $_POST['action'] ) {
+			if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && 'update-plugin' == $_POST['action'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 
 				if ( empty( $transient->response ) ) {
 					$transient->response = array();
 				}
 
-				$plugin_slug = sanitize_text_field( wp_unslash( $_POST['plugin'] ) );
+				$plugin_slug = sanitize_text_field( wp_unslash( $_POST['plugin'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 				if ( isset( $extensions[ $plugin_slug ] ) ) {
 
 					if ( ! isset( $transient->response[ $plugin_slug ] ) || ! is_object( $transient->response[ $plugin_slug ] ) || ! property_exists( $transient->response[ $plugin_slug ], 'new_version' ) ) {
@@ -776,14 +776,14 @@ class MainWP_System_Handler {
 
 					return $transient;
 				}
-			} elseif ( 'update-selected' === $_POST['action'] && isset( $_POST['checked'] ) && is_array( $_POST['checked'] ) ) {
+			} elseif ( 'update-selected' === $_POST['action'] && isset( $_POST['checked'] ) && is_array( $_POST['checked'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 
 				if ( empty( $transient->response ) ) {
 					$transient->response = array();
 				}
 
 				$updated = false;
-				foreach ( wp_unslash( $_POST['checked'] ) as $plugin_slug ) {
+				foreach ( wp_unslash( $_POST['checked'] ) as $plugin_slug ) { // phpcs:ignore WordPress.Security.NonceVerification
 					if ( isset( $extensions[ $plugin_slug ] ) ) {
 
 						if ( ! isset( $transient->response[ $plugin_slug ] ) ) {
@@ -957,7 +957,7 @@ class MainWP_System_Handler {
 
 		while ( ! feof( $handle ) ) {
 			$buffer = fread( $handle, $chunksize );
-			echo $buffer;
+			echo $buffer; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			if ( ob_get_length() ) {
 				ob_flush();
 				flush();

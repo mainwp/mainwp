@@ -63,8 +63,8 @@ class MainWP_UI {
 			}
 		}
 
-		if ( empty( $selected_websites ) && isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] ) ) {
-			$selected_sites    = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) ); // sanitize ok.
+		if ( empty( $selected_websites ) && isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$selected_sites    = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) );// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$selected_sites    = array_map( 'intval', $selected_sites );
 			$selected_websites = array_filter( $selected_sites );
 		}
@@ -146,13 +146,13 @@ class MainWP_UI {
 
 		self::render_select_sites_header( $tab_id, $staging_enabled, $selectedby, $show_group );
 		?>
-		<div class="ui tab <?php echo 'site' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-sites-<?php echo $tab_id; ?>" id="mainwp-select-sites">
+		<div class="ui tab <?php echo 'site' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-sites-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-sites">
 		<?php
 		self::render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all );
 		?>
 		</div>
 		<?php if ( $staging_enabled ) { ?>
-		<div class="ui tab <?php echo 'staging' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-staging-sites-<?php echo $tab_id; ?>">
+		<div class="ui tab <?php echo 'staging' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-staging-sites-<?php echo esc_attr( $tab_id ); ?>">
 			<?php
 			self::render_select_sites_staging( $selected_websites, $edit_site_id, $type );
 			?>
@@ -161,7 +161,7 @@ class MainWP_UI {
 		}
 		if ( $show_group ) {
 			?>
-			<div class="ui tab <?php echo 'group' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-groups-<?php echo $tab_id; ?>" id="mainwp-select-groups">
+			<div class="ui tab <?php echo 'group' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-groups-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-groups">
 			<?php
 			self::render_select_sites_group( $groups, $selected_groups, $type );
 			?>
@@ -221,15 +221,15 @@ class MainWP_UI {
 		<input type="hidden" id="select_sites_tab" value="<?php echo esc_attr( $selectedby ); ?>"/>
 		<div id="mainwp-select-sites-header">
 			<div class="ui pointing green secondary menu">
-				<a class="item ui tab <?php echo ( 'site' == $selectedby ) ? 'active' : ''; ?>" data-tab="mainwp-select-sites-<?php echo $tab_id; ?>" select-by="site"><?php esc_html_e( 'Sites', 'mainwp' ); ?></a>
+				<a class="item ui tab <?php echo ( 'site' == $selectedby ) ? 'active' : ''; ?>" data-tab="mainwp-select-sites-<?php echo esc_attr( $tab_id ); ?>" select-by="site"><?php esc_html_e( 'Sites', 'mainwp' ); ?></a>
 				<?php if ( $show_group ) : ?>
-				<a class="item ui tab <?php echo ( 'group' == $selectedby ) ? 'active' : ''; ?>" data-tab="mainwp-select-groups-<?php echo $tab_id; ?>" select-by="group"><?php esc_html_e( 'Tags', 'mainwp' ); ?></a>
+				<a class="item ui tab <?php echo ( 'group' == $selectedby ) ? 'active' : ''; ?>" data-tab="mainwp-select-groups-<?php echo esc_attr( $tab_id ); ?>" select-by="group"><?php esc_html_e( 'Tags', 'mainwp' ); ?></a>
 				<?php endif; ?>
 				<?php if ( $show_client ) : ?>
-				<a class="item ui tab <?php echo ( 'client' == $selectedby ) ? 'active' : ''; ?>" data-tab="mainwp-select-clients-<?php echo $tab_id; ?>" select-by="client"><?php esc_html_e( 'Clients', 'mainwp' ); ?></a>
+				<a class="item ui tab <?php echo ( 'client' == $selectedby ) ? 'active' : ''; ?>" data-tab="mainwp-select-clients-<?php echo esc_attr( $tab_id ); ?>" select-by="client"><?php esc_html_e( 'Clients', 'mainwp' ); ?></a>
 				<?php endif; ?>
 				<?php if ( $staging_enabled ) : ?>
-					<a class="item ui tab" data-tab="mainwp-select-staging-sites-<?php echo $tab_id; ?>" select-by="staging"><?php esc_html_e( 'Staging', 'mainwp' ); ?></a>
+					<a class="item ui tab" data-tab="mainwp-select-staging-sites-<?php echo esc_attr( $tab_id ); ?>" select-by="staging"><?php esc_html_e( 'Staging', 'mainwp' ); ?></a>
 				<?php endif; ?>
 			</div>
 		</div>
@@ -304,9 +304,9 @@ class MainWP_UI {
 									}
 									?>
 									<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui <?php echo esc_html( $type ); ?> item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
-										<input <?php echo $disabled; ?> type="<?php echo $type; ?>" name="<?php echo ( 'radio' === $type ? 'selected_sites' : 'selected_sites[]' ); ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
+										<input <?php echo esc_html( $disabled ); ?> type="<?php echo esc_html( $type ); ?>" name="<?php echo ( 'radio' === $type ? 'selected_sites' : 'selected_sites[]' ); ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
 										<label for="selected_sites_<?php echo intval( $website->id ); ?>">
-											<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
+											<?php echo esc_html( stripslashes( $website->name ) ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 										</label>
 									</div>
 									<?php
@@ -315,7 +315,7 @@ class MainWP_UI {
 								<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui <?php echo esc_html( $type ); ?> <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
 									<input type="<?php echo esc_html( $type ); ?>" disabled="disabled"/>
 									<label for="selected_sites_<?php echo intval( $website->id ); ?>">
-										<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
+										<?php echo esc_html( stripslashes( $website->name ) ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 									</label>
 								</div>
 									<?php
@@ -381,9 +381,9 @@ class MainWP_UI {
 								}
 								?>
 								<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui <?php echo esc_html( $type ); ?> item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
-									<input <?php echo $disabled; ?> type="<?php echo esc_html( $type ); ?>" name="<?php echo ( 'radio' === $type ? 'selected_sites' : 'selected_sites[]' ); ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
+									<input <?php echo esc_html( $disabled ); ?> type="<?php echo esc_html( $type ); ?>" name="<?php echo ( 'radio' === $type ? 'selected_sites' : 'selected_sites[]' ); ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
 									<label for="selected_sites_<?php echo intval( $website->id ); ?>">
-										<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
+										<?php echo esc_html( stripslashes( $website->name ) ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 									</label>
 								</div>
 								<?php
@@ -392,7 +392,7 @@ class MainWP_UI {
 								<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui <?php echo esc_html( $type ); ?> <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
 									<input type="<?php echo esc_html( $type ); ?>" disabled="disabled"/>
 									<label for="selected_sites_<?php echo intval( $website->id ); ?>">
-										<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
+										<?php echo esc_html( stripslashes( $website->name ) ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 									</label>
 								</div>
 								<?php
@@ -446,9 +446,9 @@ class MainWP_UI {
 					$selected = in_array( $group->id, $selected_groups );
 					?>
 					<div class="mainwp_selected_groups_item ui item <?php echo esc_html( $type ); ?> <?php echo ( $selected ? 'selected_groups_item_checked' : '' ); ?>">
-						<input type="<?php echo esc_html( $type ); ?>" name="<?php echo ( 'radio' === $type ? 'selected_groups' : 'selected_groups[]' ); ?>" value="<?php echo $group->id; ?>" id="selected_groups_<?php echo $group->id; ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
-						<label for="selected_groups_<?php echo $group->id; ?>">
-							<?php echo stripslashes( $group->name ); ?>
+						<input type="<?php echo esc_html( $type ); ?>" name="<?php echo ( 'radio' === $type ? 'selected_groups' : 'selected_groups[]' ); ?>" value="<?php echo esc_attr( $group->id ); ?>" id="selected_groups_<?php echo esc_attr( $group->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
+						<label for="selected_groups_<?php echo esc_attr( $group->id ); ?>">
+							<?php echo esc_html( stripslashes( $group->name ) ); ?>
 						</label>
 					</div>
 					<?php
@@ -480,7 +480,7 @@ class MainWP_UI {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_Menu::render_left_menu()
 	 */
-	public static function render_top_header( $params = array() ) { // phpcs:ignore Generic.Metrics.CyclomaticComplexity.MaxExceeded
+	public static function render_top_header( $params = array() ) { // phpcs:ignore -- complex.
 
 		$title = isset( $params['title'] ) ? $params['title'] : '';
 		$which = isset( $params['which'] ) ? $params['which'] : '';
@@ -544,149 +544,152 @@ class MainWP_UI {
 		$count_sites = MainWP_DB::instance()->get_websites_count();
 
 		if ( 0 == $count_sites ) {
-			if ( ! isset( $_GET['do'] ) ) {
-				echo self::render_modal_no_sites_note();
+			if ( ! isset( $_GET['do'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				self::render_modal_no_sites_note();
 			}
 		}
 
 		$siteViewMode = MainWP_Utility::get_siteview_mode();
 
+		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
 		$tour_id = '';
-		if ( isset( $_GET['page'] ) && 'mainwp_tab' == $_GET['page'] ) {
+		if ( 'mainwp_tab' === $page ) {
 			$tour_id = '13112';
-		} elseif ( isset( $_GET['page'] ) && 'managesites' == $_GET['page'] ) {
-			if ( isset( $_GET['do'] ) && 'new' == $_GET['do'] ) {
+		} elseif ( 'managesites' === $page  ) {
+			if ( isset( $_GET['do'] ) && 'new' == $_GET['do'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$tour_id = '13210';
-			} elseif ( isset( $_GET['do'] ) && 'bulknew' == $_GET['do'] ) {
+			} elseif ( isset( $_GET['do'] ) && 'bulknew' == $_GET['do'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$tour_id = '27274';
-			} elseif ( ! isset( $_GET['dashboard'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['updateid'] ) && ! isset( $_GET['emailsettingsid'] ) && ! isset( $_GET['scanid'] ) ) {
+			} elseif ( ! isset( $_GET['dashboard'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['updateid'] ) && ! isset( $_GET['emailsettingsid'] ) && ! isset( $_GET['scanid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				if ( 'grid' == $siteViewMode ) {
 					$tour_id = '27217';
 				} else {
 					$tour_id = '29331';
 				}
 			}
-		} elseif ( isset( $_GET['page'] ) && 'MonitoringSites' == $_GET['page'] ) {
+		} elseif ( 'MonitoringSites' === $page ) {
 			$tour_id = '29003';
-		} elseif ( isset( $_GET['page'] ) && 'ManageClients' == $_GET['page'] ) {
+		} elseif ( 'ManageClients' === $page ) {
 			if ( isset( $_GET['client_id'] ) ) {
 				$tour_id = '28258';
 			} else {
 				$tour_id = '28240';
 			}
-		} elseif ( isset( $_GET['page'] ) && 'ClientAddNew' == $_GET['page'] ) {
+		} elseif ( 'ClientAddNew' === $page ) {
 			if ( isset( $_GET['client_id'] ) ) {
 				$tour_id = '28962';
 			} else {
 				$tour_id = '28256';
 			}
-		} elseif ( isset( $_GET['page'] ) && 'ClientAddField' == $_GET['page'] ) {
+		} elseif ( 'ClientAddField' === $page ) {
 			$tour_id = '28257';
-		} elseif ( isset( $_GET['page'] ) && 'PluginsManage' == $_GET['page'] ) {
+		} elseif ( 'PluginsManage' === $page ) {
 			$tour_id = '28510';
-		} elseif ( isset( $_GET['page'] ) && 'ManageGroups' == $_GET['page'] ) {
+		} elseif ( 'ManageGroups' === $page ) {
 			$tour_id = '27275';
-		} elseif ( isset( $_GET['page'] ) && 'UpdatesManage' == $_GET['page'] ) {
-			if ( isset( $_GET['tab'] ) && 'plugins-updates' == $_GET['tab'] ) {
+		} elseif ( 'UpdatesManage' === $page ) {
+			$tab = isset( $_GET['tab'] ) ? wp_unslash( $_GET['tab'] ) : '';
+			if ( 'plugins-updates' === $tab ) {
 				$tour_id = '28259';
-			} elseif ( isset( $_GET['tab'] ) && 'themes-updates' == $_GET['tab'] ) {
+			} elseif ( 'themes-updates' === $tab ) {
 				$tour_id = '28447';
-			} elseif ( isset( $_GET['tab'] ) && 'wordpress-updates' == $_GET['tab'] ) {
+			} elseif ( 'wordpress-updates' === $tab ) {
 				$tour_id = '29005';
-			} elseif ( isset( $_GET['tab'] ) && 'translations-updates' == $_GET['tab'] ) {
+			} elseif ( 'translations-updates' === $tab ) {
 				$tour_id = '29007';
-			} elseif ( isset( $_GET['tab'] ) && 'abandoned-plugins' == $_GET['tab'] ) {
+			} elseif ( 'abandoned-plugins' === $tab ) {
 				$tour_id = '29008';
-			} elseif ( isset( $_GET['tab'] ) && 'abandoned-themes' == $_GET['tab'] ) {
+			} elseif ( 'abandoned-themes' === $tab ) {
 				$tour_id = '29009';
-			} elseif ( isset( $_GET['tab'] ) && 'plugin-db-updates' == $_GET['tab'] ) {
+			} elseif ( 'plugin-db-updates' === $tab ) {
 				$tour_id = '33161';
 			} else {
 				$tour_id = '28259';
 			}
-		} elseif ( isset( $_GET['page'] ) && 'PluginsInstall' == $_GET['page'] ) {
+		} elseif ( 'PluginsInstall' === $page ) {
 			$tour_id = '29011';
-		} elseif ( isset( $_GET['page'] ) && 'PluginsAutoUpdate' == $_GET['page'] ) {
+		} elseif ( 'PluginsAutoUpdate' === $page ) {
 			$tour_id = '29015';
-		} elseif ( isset( $_GET['page'] ) && 'PluginsIgnore' == $_GET['page'] ) {
+		} elseif ( 'PluginsIgnore' === $page ) {
 			$tour_id = '29018';
-		} elseif ( isset( $_GET['page'] ) && 'PluginsIgnoredAbandoned' == $_GET['page'] ) {
+		} elseif ( 'PluginsIgnoredAbandoned' === $page ) {
 			$tour_id = '29329';
-		} elseif ( isset( $_GET['page'] ) && 'ThemesManage' == $_GET['page'] ) {
+		} elseif ( 'ThemesManage' === $page ) {
 			$tour_id = '28511';
-		} elseif ( isset( $_GET['page'] ) && 'ThemesInstall' == $_GET['page'] ) {
+		} elseif ( 'ThemesInstall' === $page ) {
 			$tour_id = '29010';
-		} elseif ( isset( $_GET['page'] ) && 'ThemesAutoUpdate' == $_GET['page'] ) {
+		} elseif ( 'ThemesAutoUpdate' === $page ) {
 			$tour_id = '29016';
-		} elseif ( isset( $_GET['page'] ) && 'ThemesIgnore' == $_GET['page'] ) {
+		} elseif ( 'ThemesIgnore' === $page ) {
 			$tour_id = '29019';
-		} elseif ( isset( $_GET['page'] ) && 'ThemesIgnoredAbandoned' == $_GET['page'] ) {
+		} elseif ( 'ThemesIgnoredAbandoned' === $page ) {
 			$tour_id = '29330';
-		} elseif ( isset( $_GET['page'] ) && 'UserBulkManage' == $_GET['page'] ) {
+		} elseif ( 'UserBulkManage' === $page ) {
 			$tour_id = '28574';
-		} elseif ( isset( $_GET['page'] ) && 'UserBulkAdd' == $_GET['page'] ) {
+		} elseif ( 'UserBulkAdd' === $page ) {
 			$tour_id = '28575';
-		} elseif ( isset( $_GET['page'] ) && 'BulkImportUsers' == $_GET['page'] ) {
+		} elseif ( 'BulkImportUsers' === $page ) {
 			$tour_id = '28736';
-		} elseif ( isset( $_GET['page'] ) && 'UpdateAdminPasswords' == $_GET['page'] ) {
+		} elseif ( 'UpdateAdminPasswords' === $page ) {
 			$tour_id = '28737';
-		} elseif ( isset( $_GET['page'] ) && 'PostBulkManage' == $_GET['page'] ) {
+		} elseif ( 'PostBulkManage' === $page ) {
 			$tour_id = '28796';
-		} elseif ( isset( $_GET['page'] ) && 'PostBulkAdd' == $_GET['page'] ) {
+		} elseif ( 'PostBulkAdd' === $page ) {
 			$tour_id = '28799';
-		} elseif ( isset( $_GET['page'] ) && 'PageBulkManage' == $_GET['page'] ) {
+		} elseif ( 'PageBulkManage' === $page ) {
 			$tour_id = '29045';
-		} elseif ( isset( $_GET['page'] ) && 'PageBulkAdd' == $_GET['page'] ) {
+		} elseif ( 'PageBulkAdd' === $page ) {
 			$tour_id = '29048';
-		} elseif ( isset( $_GET['page'] ) && 'Extensions' == $_GET['page'] ) {
+		} elseif ( 'Extensions' === $page ) {
 			$tour_id = '28800';
-		} elseif ( isset( $_GET['page'] ) && 'Settings' == $_GET['page'] ) {
+		} elseif ( 'Settings' === $page ) {
 			$tour_id = '28883';
-		} elseif ( isset( $_GET['page'] ) && 'SettingsAdvanced' == $_GET['page'] ) {
+		} elseif ( 'SettingsAdvanced' === $page ) {
 			$tour_id = '28886';
-		} elseif ( isset( $_GET['page'] ) && 'SettingsEmail' == $_GET['page'] ) {
+		} elseif ( 'SettingsEmail' === $page ) {
 			$tour_id = '29054';
-		} elseif ( isset( $_GET['page'] ) && 'MainWPTools' == $_GET['page'] ) {
+		} elseif ( 'MainWPTools' === $page ) {
 			$tour_id = '29272';
-		} elseif ( isset( $_GET['page'] ) && 'RESTAPI' == $_GET['page'] ) {
+		} elseif ( 'RESTAPI' === $page ) {
 			$tour_id = '29273';
-		} elseif ( isset( $_GET['page'] ) && 'ServerInformation' == $_GET['page'] ) {
+		} elseif ( 'ServerInformation' === $page ) {
 			$tour_id = '28873';
-		} elseif ( isset( $_GET['page'] ) && 'ServerInformationCron' == $_GET['page'] ) {
+		} elseif ( 'ServerInformationCron' === $page ) {
 			$tour_id = '28874';
-		} elseif ( isset( $_GET['page'] ) && 'ErrorLog' == $_GET['page'] ) {
+		} elseif ( 'ErrorLog' === $page ) {
 			$tour_id = '28876';
-		} elseif ( isset( $_GET['page'] ) && 'ActionLogs' == $_GET['page'] ) {
+		} elseif ( 'ActionLogs' === $page ) {
 			$tour_id = '28877';
-		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Jetpack-Protect-Extension' == $_GET['page'] ) {
+		} elseif ( 'Extensions-Mainwp-Jetpack-Protect-Extension' === $page ) {
 			$tour_id = '31700';
-		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Jetpack-Scan-Extension' == $_GET['page'] ) {
+		} elseif ( 'Extensions-Mainwp-Jetpack-Scan-Extension' === $page ) {
 			$tour_id = '31694';
-		} elseif ( isset( $_GET['page'] ) && 'Extensions-Termageddon-For-Mainwp' == $_GET['page'] ) {
+		} elseif ( 'Extensions-Termageddon-For-Mainwp' === $page ) {
 			$tour_id = '32104';
-		} elseif ( isset( $_GET['page'] ) && 'Extensions-Advanced-Uptime-Monitor-Extension' == $_GET['page'] ) {
+		} elseif ( 'Extensions-Advanced-Uptime-Monitor-Extension' === $page ) {
 			$tour_id = '32149';
-		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Custom-Dashboard-Extension' == $_GET['page'] ) {
+		} elseif ( 'Extensions-Mainwp-Custom-Dashboard-Extension' === $page ) {
 			$tour_id = '32150';
-		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Updraftplus-Extension' == $_GET['page'] ) {
+		} elseif ( 'Extensions-Mainwp-Updraftplus-Extension' === $page ) {
 			$tour_id = '32151';
-		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Sucuri-Extension' == $_GET['page'] ) {
+		} elseif ( 'Extensions-Mainwp-Sucuri-Extension' === $page ) {
 			$tour_id = '32152';
-		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Clean-And-Lock-Extension' == $_GET['page'] ) {
+		} elseif ( 'Extensions-Mainwp-Clean-And-Lock-Extension' === $page ) {
 			$tour_id = '32153';
-		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Woocommerce-Shortcuts-Extension' == $_GET['page'] ) {
+		} elseif ( 'Extensions-Mainwp-Woocommerce-Shortcuts-Extension' === $page ) {
 			$tour_id = '32851';
-		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Buddy-Extension' == $_GET['page'] ) {
+		} elseif ( 'Extensions-Mainwp-Buddy-Extension' === $page ) {
 			$tour_id = '33064';
-		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Backwpup-Extension' == $_GET['page'] ) {
+		} elseif ( 'Extensions-Mainwp-Backwpup-Extension' === $page ) {
 			$tour_id = '32923';
-		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Ssl-Monitor-Extension' == $_GET['page'] ) {
+		} elseif ( 'Extensions-Mainwp-Ssl-Monitor-Extension' === $page ) {
 			$tour_id = '33164';
-		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Cache-Control-Extension' == $_GET['page'] ) {
+		} elseif ( 'Extensions-Mainwp-Cache-Control-Extension' === $page ) {
 			$tour_id = '33167';
-		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Maintenance-Extension' == $_GET['page'] ) {
+		} elseif ( 'Extensions-Mainwp-Maintenance-Extension' === $page ) {
 			$tour_id = '33301';
-		} elseif ( isset( $_GET['page'] ) && 'Extensions-Mainwp-Domain-Monitor-Extension' == $_GET['page'] ) {
+		} elseif ( 'Extensions-Mainwp-Domain-Monitor-Extension' === $page ) {
 			$tour_id = '33300';
 		}
 
@@ -711,23 +714,23 @@ class MainWP_UI {
 						</a>
 						<div class="content">
 							<div class="ui link tiny list">
-								<a class="item" href="<?php echo 'admin.php?page=managesites&dashboard=' . $website->id; ?>">
+								<a class="item" href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website->id ); ?>">
 									<i class="grid layout icon"></i>
 									<?php esc_html_e( 'Overview', 'mainwp' ); ?>
 								</a>
-								<a class="item" href="<?php echo 'admin.php?page=managesites&updateid=' . $website->id; ?>">
+								<a class="item" href="<?php echo 'admin.php?page=managesites&updateid=' . intval( $website->id ); ?>">
 									<i class="sync alternate icon"></i>
 									<?php esc_html_e( 'Updates', 'mainwp' ); ?>
 								</a>
-								<a class="item" href="<?php echo 'admin.php?page=managesites&id=' . $website->id; ?>">
+								<a class="item" href="<?php echo 'admin.php?page=managesites&id=' . intval( $website->id ); ?>">
 									<i class="edit icon"></i>
 									<?php esc_html_e( 'Edit Site', 'mainwp' ); ?>
 								</a>
-								<a class="item" href="<?php echo 'admin.php?page=managesites&scanid=' . $website->id; ?>">
+								<a class="item" href="<?php echo 'admin.php?page=managesites&scanid=' . intval( $website->id ); ?>">
 									<i class="shield icon"></i>
 									<?php esc_html_e( 'Security Scan', 'mainwp' ); ?>
 								</a>
-								<a class="item" target="_blank" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>">
+								<a class="item" target="_blank" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_attr( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>">
 									<i class="sign in icon"></i>
 									<?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?>
 								</a>
@@ -764,7 +767,7 @@ class MainWP_UI {
 			<div class="ui header"><?php esc_html_e( 'MainWP Guided Tours', 'mainwp' ); ?> <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></div>
 			<div class="ui hidden divider"></div>
 			<div class="ui info message" style="display:block!important;">
-				<?php echo sprintf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %sUsetiful Privacy Policy%s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
+				<?php echo sprintf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
 			</div>
 			<div class="ui hidden divider"></div>
 			<div class="ui toggle checkbox">
@@ -776,7 +779,7 @@ class MainWP_UI {
 			<p><?php esc_html_e( 'Click the Start Page Tour button to start the guided tour for the current page.', 'mainwp' ); ?></p>
 			<div class="ui hidden divider"></div>
 			<a href="javacscript:void(0);" id="mainwp-start-page-tour-button" class="ui big green fluid basic button" tour-id="<?php esc_attr_e( $tour_id ); ?>"><?php esc_html_e( 'Start Page Tour', 'mainwp' ); ?></a>
-				<?php if ( isset( $_GET['page'] ) && 'mainwp_tab' == $_GET['page'] ) : ?>
+				<?php if ( 'mainwp_tab' === $page ) : ?>
 				<div class="ui hidden divider"></div>
 				<a href="javacscript:void(0);" id="mainwp-interface-tour-button" class="ui big green fluid basic button"><?php esc_html_e( 'MainWP Interface Basics Tour', 'mainwp' ); ?></a>
 			<?php endif; ?>
@@ -835,8 +838,8 @@ class MainWP_UI {
 				?>
 				<form method="POST" action="" name="mainwp_overview_screen_options_form" id="mainwp-overview-screen-options-form">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPScrOptions' ); ?>" />
-					<?php echo self::render_screen_options( false ); ?>
+					<input type="hidden" name="wp_nonce" value="<?php echo esc_html( wp_create_nonce( 'MainWPScrOptions' ) ); ?>" />
+					<?php self::render_screen_options( false ); ?>
 					<?php
 					/**
 					 * Action: mainwp_overview_screen_options_bottom
@@ -882,10 +885,10 @@ class MainWP_UI {
 			<div id="mainwp-top-header" class="">
 				<div class="ui grid">
 
-					<div class="five wide column"><h4 class="mainwp-page-title"><?php echo $left; ?></h4></div>
+					<div class="five wide column"><h4 class="mainwp-page-title"><?php echo $left; ?></h4></div> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
 
 					<div class="two wide column middle aligned right aligned">
-						<?php if ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) : ?>
+						<?php if ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) : // phpcs:ignore WordPress.Security.EscapeOutput ?>
 						<select class="ui mini selection fluid dropdown" id="mainwp-jump-to-site-overview-dropdown">
 							<?php $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() ); ?>
 							<option class="item"><?php esc_html_e( 'Jump to site overview...', 'mainwp' ); ?></option>
@@ -896,7 +899,7 @@ class MainWP_UI {
 							</select>
 						<?php endif; ?>
 					</div>
-					<div class="nine wide right aligned column"><?php echo $right; ?></div>
+					<div class="nine wide right aligned column"><?php echo $right; ?></div> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
 
 				</div>
 			</div>
@@ -991,7 +994,7 @@ class MainWP_UI {
 					?>
 					<li>
 						<div class="ui checkbox">
-							<input type="checkbox" id="mainwp_show_column_<?php echo esc_attr( $name ); ?>" name="mainwp_show_columns[]" <?php echo $_selected; ?> value="<?php echo esc_attr( $name ); ?>">
+							<input type="checkbox" id="mainwp_show_column_<?php echo esc_attr( $name ); ?>" name="mainwp_show_columns[]" <?php echo esc_html( $_selected ); ?> value="<?php echo esc_attr( $name ); ?>">
 							<label for="mainwp_show_column_<?php echo esc_attr( $name ); ?>" ><?php echo esc_html( $title ); ?></label>
 						</div>
 						<input type="hidden" name="mainwp_columns_name[]" value="<?php echo esc_attr( $name ); ?>">
@@ -1104,8 +1107,8 @@ class MainWP_UI {
 	public static function gen_groups_sites_selection() {
 		$sql      = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
 		$websites = MainWP_DB::instance()->query( $sql );
-		$g        = isset( $_GET['g'] ) ? intval( $_GET['g'] ) : -1;
-		$s        = isset( $_GET['dashboard'] ) ? intval( $_GET['dashboard'] ) : -1;
+		$g        = isset( $_GET['g'] ) ? intval( $_GET['g'] ) : -1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$s        = isset( $_GET['dashboard'] ) ? intval( $_GET['dashboard'] ) : -1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		?>
 		<div class="column full wide">
 			<select id="mainwp_top_quick_jump_group" class="ui dropdown">
@@ -1115,7 +1118,7 @@ class MainWP_UI {
 				$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
 				foreach ( $groups as $group ) {
 					?>
-					<option class="item" <?php echo ( $g == $group->id ) ? 'selected' : ''; ?> value="<?php echo $group->id; ?>"><?php echo stripslashes( $group->name ); ?></option>
+					<option class="item" <?php echo ( $g == $group->id ) ? 'selected' : ''; ?> value="<?php echo esc_attr( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></option>
 					<?php
 				}
 				?>
@@ -1126,7 +1129,7 @@ class MainWP_UI {
 				<?php
 				while ( $websites && ( $website   = MainWP_DB::fetch_object( $websites ) ) ) {
 					?>
-					<option value="<?php echo intval( $website->id ); ?>" <?php echo ( $s == $website->id ) ? 'selected' : ''; ?> class="item" ><?php echo stripslashes( $website->name ); ?></option>
+					<option value="<?php echo intval( $website->id ); ?>" <?php echo ( $s == $website->id ) ? 'selected' : ''; ?> class="item" ><?php echo esc_html( stripslashes( $website->name ) ); ?></option>
 					<?php
 				}
 				?>
@@ -1165,16 +1168,19 @@ class MainWP_UI {
 		$sidebar_pages = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
 		$sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
 		$sidebar_pages = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
 		ob_start();
 		if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) :
 			$id = 0;
 			if ( isset( $_GET['dashboard'] ) ) {
 				$id = intval( $_GET['dashboard'] );
-			} elseif ( isset( $_GET['id'] ) ) {
+			} elseif ( isset( $_GET['id'] ) ) { 
 				$id = intval( $_GET['id'] );
-			} elseif ( isset( $_GET['updateid'] ) ) {
+			} elseif ( isset( $_GET['updateid'] ) ) { 
 				$id = intval( $_GET['updateid'] );
-			} elseif ( isset( $_GET['emailsettingsid'] ) ) {
+			} elseif ( isset( $_GET['emailsettingsid'] ) ) { 
 				$id = intval( $_GET['emailsettingsid'] );
 			} elseif ( isset( $_GET['scanid'] ) ) {
 				$id = intval( $_GET['scanid'] );
@@ -1184,7 +1190,7 @@ class MainWP_UI {
 
 			if ( $id && $website && '' != $website->sync_errors ) :
 				?>
-				<a href="#" class="mainwp-updates-overview-reconnect-site ui green button" siteid="<?php echo $website->id; ?>" data-position="bottom right" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></a>
+				<a href="#" class="mainwp-updates-overview-reconnect-site ui green button" siteid="<?php echo intval( $website->id ); ?>" data-position="bottom right" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></a>
 			<?php else : ?>
 				<button class="ui button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?>" id="mainwp-sync-sites" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>">
 					<i class="sync icon mainwp-sync-button-icon"></i>
@@ -1266,15 +1272,16 @@ class MainWP_UI {
 			<?php else : ?>
 				<?php $website_id = intval( $_GET['id'] ); ?>
 			<?php endif; ?>
-			<a id="mainwp-go-wp-admin-button" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website_id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><i class="sign in icon"></i></a>
-			<a id="mainwp-remove-site-button" href="#" site-id="<?php echo $website_id; ?>" data-tooltip="<?php esc_attr_e( 'Remove the site from your MainWP Dashboard.', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="mainwp-remove-site-button ui red basic icon button" target="_blank"><i class="times icon"></i></a>
+			<a id="mainwp-go-wp-admin-button" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website_id ); ?>&_opennonce=<?php echo esc_attr( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><i class="sign in icon"></i></a>
+			<a id="mainwp-remove-site-button" href="#" site-id="<?php echo intval( $website_id); ?>" data-tooltip="<?php esc_attr_e( 'Remove the site from your MainWP Dashboard.', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="mainwp-remove-site-button ui red basic icon button" target="_blank"><i class="times icon"></i></a>
 		<?php endif; ?>
-		<?php if ( ( isset( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] ) || isset( $_GET['dashboard'] ) || in_array( $_GET['page'], $sidebar_pages ) ) : ?>
+		<?php if ( ( 'mainwp_tab' === $page ) || isset( $_GET['dashboard'] ) || in_array( $page, $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
 		<a id="mainwp-screen-options-button" class="ui button basic icon" onclick="jQuery( '#mainwp-overview-screen-options-modal' ).modal({allowMultiple:true}).modal( 'show' ); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_html_e( 'Page Settings', 'mainwp' ); ?>">
 			<i class="cog icon"></i>
 		</a>
 		<?php endif; ?>
 		<?php
+		// phpcs:enable
 		/**
 		 * Filter: mainwp_header_actions_right
 		 *
@@ -1284,7 +1291,7 @@ class MainWP_UI {
 		 */
 		$actions = apply_filters( 'mainwp_header_actions_right', '' );
 		if ( ! empty( $actions ) ) {
-			echo $actions;
+			echo $actions; // phpcs:ignore WordPress.Security.EscapeOutput
 		}
 		?>
 		<a class="ui button basic icon" id="mainwp-sites-sidebar" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_attr_e( 'Quick sites shortcuts', 'mainwp' ); ?>">
@@ -1363,7 +1370,7 @@ class MainWP_UI {
 
 						?>
 						<a class="<?php echo esc_attr( $active ); ?> item" <?php echo esc_attr( $style ); ?> href="<?php echo esc_url( $item['href'] ); ?>">
-							<?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; ?>
+							<?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 						</a>
 						<?php
 					}
@@ -1553,7 +1560,7 @@ class MainWP_UI {
 		if ( 'mainwp_page_manageclients' == $page ) {
 			$sorted_array = $sorted;
 			$sorted       = '';
-			$client_id    = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0;
+			$client_id    = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			if ( ! empty( $client_id ) && is_array( $sorted_array ) && isset( $sorted_array[ $client_id ] ) ) {
 				$sorted = $sorted_array[ $client_id ];
 			}
@@ -1965,7 +1972,7 @@ class MainWP_UI {
 		$which_settings = 'overview_settings';
 		?>
 		<?php if ( ! $setting_page ) : ?>
-			<?php if ( isset( $_GET['page'] ) && in_array( $_GET['page'], $sidebar_pages ) ) : ?>
+			<?php if ( isset( $_GET['page'] ) && in_array( $_GET['page'], $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
 				<?php
 				$which_settings  = 'sidebar_settings';
 				$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
@@ -1973,7 +1980,7 @@ class MainWP_UI {
 					$sidebarPosition = 1;
 				}
 				$manageGroupsPage = false;
-				if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) {
+				if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 					$manageGroupsPage = true;
 				}
 				?>
@@ -1988,7 +1995,7 @@ class MainWP_UI {
 			</div>
 			<?php endif; ?>
 		<?php endif; ?>
-		<?php if ( isset( $_GET['page'] ) && ! in_array( $_GET['page'], $sidebar_pages ) ) : ?>
+		<?php if ( isset( $_GET['page'] ) && ! in_array( $_GET['page'], $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Hide the Update Everything button', 'mainwp' ); ?></label>
 			<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the "Update Everything" button will be hidden in the Updates Overview widget.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -2030,7 +2037,7 @@ class MainWP_UI {
 					?>
 					<li>
 						<div class="ui checkbox">
-							<input type="checkbox" id="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" name="mainwp_show_widgets[]" <?php echo $_selected; ?> value="<?php echo esc_attr( $name ); ?>">
+							<input type="checkbox" id="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" name="mainwp_show_widgets[]" <?php echo esc_html( $_selected); ?> value="<?php echo esc_attr( $name ); ?>">
 							<label for="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" ><?php echo esc_html( $title ); ?></label>
 						</div>
 						<input type="hidden" name="mainwp_widgets_name[]" value="<?php echo esc_attr( $name ); ?>">
@@ -2071,7 +2078,7 @@ class MainWP_UI {
 			</div>
 			<form method="POST" action="" name="mainwp_select_mainwp_themes_form" id="mainwp_select_mainwp_themes_form">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-				<input type="hidden" name="wp_scr_options_nonce" value="<?php echo wp_create_nonce( 'MainWPSelectThemes' ); ?>" />
+				<input type="hidden" name="wp_scr_options_nonce" value="<?php echo esc_attr( wp_create_nonce( 'MainWPSelectThemes' ) ); ?>" />
 				<?php
 				/**
 				 * Action: mainwp_select_themes_modal_top

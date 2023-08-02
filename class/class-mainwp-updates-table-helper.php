@@ -142,7 +142,7 @@ class MainWP_Updates_Table_Helper {
 				$class = '';
 			}
 			$column_display_name = apply_filters( 'mainwp_updates_table_header_content', $column_display_name, $column_key, $top, $this );
-			echo "<th $class>$column_display_name</th>";
+			echo "<th $class>$column_display_name</th>"; // phpcs:ignore WordPress.Security.EscapeOutput
 		}
 	}
 
@@ -215,9 +215,9 @@ class MainWP_Updates_Table_Helper {
 			if ( isset( $row_columns[ $col ] ) ) {
 				$value = $row_columns[ $col ];
 				if ( method_exists( $this, 'column_' . $col ) ) {
-					echo call_user_func( array( &$this, 'column_' . $col ), $value );
+					echo call_user_func( array( &$this, 'column_' . $col ), $value ); // phpcs:ignore WordPress.Security.EscapeOutput
 				} else {
-					echo $this->column_default( $value, $col );
+					echo $this->column_default( $value, $col ); // phpcs:ignore WordPress.Security.EscapeOutput
 				}
 			}
 		}

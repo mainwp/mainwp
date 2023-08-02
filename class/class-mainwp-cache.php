@@ -105,7 +105,7 @@ class MainWP_Cache {
 	 */
 	public static function echo_body( $page ) {
 		if ( isset( $_SESSION[ 'MainWP' . $page . 'Search' ] ) ) {
-			echo $_SESSION[ 'MainWP' . $page . 'Search' ];
+			echo $_SESSION[ 'MainWP' . $page . 'Search' ]; // phpcs:ignore WordPress.Security.EscapeOutput
 		}
 	}
 

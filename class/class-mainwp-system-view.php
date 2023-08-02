@@ -351,7 +351,7 @@ class MainWP_System_View {
 				?>
 				<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
 					<i class="exclamation circle icon"></i>
-					<?php printf( esc_html__( 'Your server is currently running PHP version %1$s. In the next few months your MainWP Dashboard will require PHP 5.6 as a minimum. Please upgrade your server to at least 5.6 but we recommend PHP 7 or newer. You can find a template email to send your host %2$shere%3$s.', 'mainwp' ), $phpver, '<a href="https://wordpress.org/about/requirements/" target="_blank">', '</a>' ); ?>
+					<?php printf( esc_html__( 'Your server is currently running PHP version %1$s. In the next few months your MainWP Dashboard will require PHP 5.6 as a minimum. Please upgrade your server to at least 5.6 but we recommend PHP 7 or newer. You can find a template email to send your host %2$shere%3$s.', 'mainwp' ), esc_html( $phpver ), '<a href="https://wordpress.org/about/requirements/" target="_blank">', '</a>' ); ?>
 					<i class="close icon mainwp-notice-dismiss" notice-id="phpver_5_5"></i>
 				</div>
 				<?php
@@ -394,7 +394,7 @@ class MainWP_System_View {
 	 */
 	public static function render_notice_config_warning() {
 		if ( MainWP_Server_Information_Handler::is_openssl_config_warning() ) {
-			if ( isset( $_GET['page'] ) && 'SettingsAdvanced' != $_GET['page'] ) {
+			if ( isset( $_GET['page'] ) && 'SettingsAdvanced' != $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				if ( MainWP_Utility::show_mainwp_message( 'notice', 'ssl_warn' ) ) {
 					?>
 					<div class="ui yellow message" style="margin-bottom: 0; border-radius: 0;">
@@ -681,9 +681,9 @@ class MainWP_System_View {
 	/** Render Admin Header */
 	public static function admin_head() {
 		?>
-		<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo wp_create_nonce( 'mainwp_ajax' ); ?>", mainwp_js_nonce = "<?php echo wp_create_nonce( 'mainwp_nonce' ); ?>";</script>
+		<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_ajax' ) ); ?>", mainwp_js_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_nonce' ) ); ?>";</script>
 		<?php
-		if ( MainWP_System::is_mainwp_pages() || ( isset( $_GET['page'] ) && 'mainwp-setup' == $_GET['page'] ) ) {
+		if ( MainWP_System::is_mainwp_pages() || ( isset( $_GET['page'] ) && 'mainwp-setup' == $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			if ( get_option( 'mainwp_enable_guided_tours', 0 ) ) {
 				self::mainwp_usetiful_tours();
 			}
@@ -935,7 +935,7 @@ class MainWP_System_View {
 
 		$plugins_to_checks = self::get_plugins_install_check();
 
-		$page = sanitize_text_field( wp_unslash( $_GET['page'] ) );
+		$page = sanitize_text_field( wp_unslash( $_GET['page'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		$plugin_check = MainWP_Utility::get_sub_array_having( $plugins_to_checks, 'page', $page );
 
@@ -948,7 +948,7 @@ class MainWP_System_View {
 		}
 
 		// if is not overview extension page return.
-		if ( isset( $_GET['tab'] ) && 'overview' !== $_GET['tab'] && 'dashboard' !== $_GET['tab'] ) {
+		if ( isset( $_GET['tab'] ) && 'overview' !== $_GET['tab'] && 'dashboard' !== $_GET['tab'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return;
 		}
 
@@ -1007,7 +1007,7 @@ class MainWP_System_View {
 			<div class="header"><?php esc_html_e( 'Plugin Install Check', 'mainwp' ); ?></div>
 			<div class="scrolling content mainwp-modal-content">
 				<div class="ui message" id="mainwp-message-zone-install" style="display:none;"></div>
-				<div class="ui message blue"><?php printf( esc_html__( 'We have detected the following sites do not have the %s plugin installed. This plugin is required to be installed on your Child Sites for the Extension to work on those sites. Please select sites where you want to install it and click the Install Plugin button. Uncheck any site you don\'t want to add the plugin to or cancel to skip this step. After the installation process, resync your sites to see sites with the newly installed plugin.', 'mainwp' ), $plugin_name ); ?></div>
+				<div class="ui message blue"><?php printf( esc_html__( 'We have detected the following sites do not have the %s plugin installed. This plugin is required to be installed on your Child Sites for the Extension to work on those sites. Please select sites where you want to install it and click the Install Plugin button. Uncheck any site you don\'t want to add the plugin to or cancel to skip this step. After the installation process, resync your sites to see sites with the newly installed plugin.', 'mainwp' ), esc_html( $plugin_name ) ); ?></div>
 				<div class="ui middle aligned divided selection list" id="sync-sites-status">
 					<?php foreach ( $missing_installed as $siteid => $site_name ) : ?>
 						<div class="item siteBulkInstall" siteid="<?php echo intval( $siteid ); ?>" status="">

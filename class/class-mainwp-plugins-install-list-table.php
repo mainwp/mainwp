@@ -122,8 +122,8 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 		switch ( $tab ) {
 			case 'search':
-				$type = isset( $_REQUEST['type'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['type'] ) ) : 'term';
-				$term = isset( $_REQUEST['s'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) : '';
+				$type = isset( $_REQUEST['type'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['type'] ) ) : 'term'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$term = isset( $_REQUEST['s'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 				switch ( $type ) {
 					case 'tag':
@@ -151,7 +151,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 				break;
 
 			case 'favorites':
-				$user = isset( $_GET['user'] ) ? sanitize_text_field( wp_unslash( $_GET['user'] ) ) : get_user_option( 'wporg_favorites' );
+				$user = isset( $_GET['user'] ) ? sanitize_text_field( wp_unslash( $_GET['user'] ) ) : get_user_option( 'wporg_favorites' ); // phpcs:ignore WordPress.Security.NonceVerification
 				update_user_meta( get_current_user_id(), 'wporg_favorites', $user );
 				if ( $user ) {
 					$args['user'] = $user;
@@ -206,7 +206,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		} else {
 			$message = esc_html__( 'No plugins match your request.', 'mainwp' );
 		}
-		echo '<div class="ui message yellow">' . $message . '</div>';
+		echo '<div class="ui message yellow">' . $message . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput
 	}
 
 	/**
@@ -275,7 +275,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		$current              = $this->get_pagenum();
 		$removable_query_args = wp_removable_query_args();
 
-		$current_url = set_url_scheme( 'http://' . ( isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '' ) . ( isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '' ) );
+		$current_url = set_url_scheme( 'http://' . ( isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '' ) . ( isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		$current_url = remove_query_arg( $removable_query_args, $current_url );
 
@@ -343,13 +343,13 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 		ob_start();
 
-		echo $perpage_paging;
+		echo $perpage_paging; // phpcs:ignore WordPress.Security.EscapeOutput
 
 		$output = ob_get_clean();
 
 		$this->_pagination = $output;
 
-		echo $this->_pagination;
+		echo $this->_pagination; // phpcs:ignore WordPress.Security.EscapeOutput
 	}
 
 	/**
@@ -495,10 +495,10 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 			<div class="content">
 			<a class="right floated mini ui image open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><img src="<?php echo esc_attr( $plugin_icon_url ); ?>" /></a>
 			<div class="header">
-				<a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><?php echo $title; ?></a>
+				<a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><?php echo $title; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
 					</div>
 			<div class="meta">
-						<?php echo $author; ?>
+						<?php echo $author; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 					</div>
 			<div class="description">
 			<?php echo esc_html( wp_strip_all_tags( $description ) ); ?>
@@ -517,7 +517,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 					);
 					?>
 					</div>
-						<div class="twelve wide right aligned column"><strong><?php esc_html_e( 'Updated: ', 'mainwp' ); ?></strong><?php printf( esc_html__( '%s ago', 'mainwp' ), human_time_diff( $last_updated_timestamp ) ); ?></div>
+						<div class="twelve wide right aligned column"><strong><?php esc_html_e( 'Updated: ', 'mainwp' ); ?></strong><?php printf( esc_html__( '%s ago', 'mainwp' ), human_time_diff( $last_updated_timestamp ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
 					</div>
 				</div>
 					<div class="extra content">

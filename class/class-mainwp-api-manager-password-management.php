@@ -92,6 +92,9 @@ class MainWP_Api_Manager_Password_Management {
 	 * @return string Encrypted string.
 	 */
 	public static function encrypt( $str, $pass ) {
+		if ( ! is_string( $str ) ) {
+			return '';
+		}
 		$pass = str_split( str_pad( '', strlen( $str ), $pass, STR_PAD_RIGHT ) );
 		$stra = str_split( $str );
 		foreach ( $stra as $k => $v ) {
@@ -111,6 +114,9 @@ class MainWP_Api_Manager_Password_Management {
 	 * @return string Decrypted string.
 	 */
 	public static function decrypt( $str, $pass ) {
+		if ( ! is_string( $str ) ) {
+			return '';
+		}
 		$str  = base64_decode( $str ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		$pass = str_split( str_pad( '', strlen( $str ), $pass, STR_PAD_RIGHT ) );
 		$stra = str_split( $str );

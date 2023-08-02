@@ -55,7 +55,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 	 *
 	 * @return string Column name.
 	 */
-	public function column_default( $item, $column_name ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public function column_default( $item, $column_name ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		/**
 		 * Filter: mainwp_clients_sitestable_item
@@ -230,7 +230,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 	public function render_manage_sites_table_top() {
 		$items_bulk = $this->get_bulk_actions();
 
-		$selected_group = isset( $_REQUEST['tags'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['tags'] ) ) : '';
+		$selected_group = isset( $_REQUEST['tags'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['tags'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		?>
 		<div class="ui grid">
@@ -268,7 +268,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 							$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
 							foreach ( $groups as $group ) {
 								?>
-								<div class="item" data-value="<?php echo $group->id; ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
+								<div class="item" data-value="<?php echo intval( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
 								<?php
 							}
 							?>
@@ -308,8 +308,8 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 			'with_tags'           => true,
 		);
 
-		if ( isset( $_GET['tags'] ) && ! empty( $_GET['tags'] ) ) {
-			$tags = sanitize_text_field( wp_unslash( rawurldecode( $_GET['tags'] ) ) );
+		if ( isset( $_GET['tags'] ) && ! empty( $_GET['tags'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$tags = sanitize_text_field( wp_unslash( rawurldecode( $_GET['tags'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
 			if ( ! empty( $tags ) ) {
 				if ( false !== strpos( $tags, ',' ) ) {
 					$tags = explode( ',', $tags );
@@ -399,7 +399,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 		$table_features = array(
 			'searching'     => 'true',
 			'paging'        => 'true',
-			'pagingType'    => '"full_numbers"',
+			'pagingType'    => 'full_numbers',
 			'info'          => 'true',
 			'colReorder'    => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
 			'stateSave'     => 'true',
@@ -443,7 +443,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 					return false;
 				};
 
-				var responsive = <?php echo $table_features['responsive']; ?>;
+				var responsive = <?php echo esc_js( $table_features['responsive'] ); ?>;
 				if( jQuery( window ).width() > 1140 ) {
 					responsive = false;
 				}
@@ -451,15 +451,15 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 				try {
 					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
 						"responsive" : responsive,
-						"searching" : <?php echo $table_features['searching']; ?>,
-						"paging" : <?php echo $table_features['paging']; ?>,
-						"pagingType" : <?php echo $table_features['pagingType']; ?>,
-						"info" : <?php echo $table_features['info']; ?>,
-						"colReorder" : <?php echo $table_features['colReorder']; ?>,
-						"stateSave" : <?php echo $table_features['stateSave']; ?>,
-						"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
-						"order" : <?php echo $table_features['order']; ?>,
-						"scrollX" : <?php echo $table_features['scrollX']; ?>,
+						"searching" : <?php echo esc_js( $table_features['searching'] ); ?>,
+						"paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
+						"pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
+						"info" : <?php echo esc_js( $table_features['info'] ); ?>,
+						"colReorder" : <?php echo esc_js( $table_features['colReorder'] ); ?>,
+						"stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
+						"stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
+						"order" : <?php echo esc_js( $table_features['order'] ); ?>,
+						"scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
 						"columnDefs": [
 							{
 								"targets": 'no-sort',
@@ -471,7 +471,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 							},
 							<?php do_action( 'mainwp_manage_sites_table_columns_defs' ); ?>
 						],
-						"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All" ] ],
+						"lengthMenu" : [ [<?php echo intval( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All" ] ],
 						"pageLength": <?php echo intval( $sites_per_page ); ?>
 					} );
 				} catch(err) {
@@ -540,7 +540,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 				$class = "class='" . join( ' ', $class ) . "'";
 			}
 
-			echo "<$tag $id $class $attr>$column_display_name</$tag>";
+			echo "<$tag $id $class $attr>$column_display_name</$tag>"; // phpcs:ignore WordPress.Security.EscapeOutput
 		}
 	}
 
@@ -604,7 +604,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 	 * @param mixed $item Object containing the client info.
 	 */
 	public function single_row( $item ) {
-		echo '<tr id="client-site-' . $item['client_id'] . '"  clientid=' . $item['client_id'] . ' >';
+		echo '<tr id="client-site-' . intval( $item['client_id'] ) . '"  clientid=' . intval( $item['client_id'] ) . ' >';
 		$this->single_row_columns( $item );
 		echo '</tr>';
 	}
@@ -616,7 +616,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 	 * @param mixed $item     Object containing the client info.
 	 * @param bool  $compatible to compatible param - DO NOT remove.
 	 */
-	protected function single_row_columns( $item, $compatible = true ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	protected function single_row_columns( $item, $compatible = true ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		list( $columns ) = $this->get_column_info();
 
@@ -655,27 +655,27 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 					</td>
 				<?php
 			} elseif ( 'image' === $column_name ) {
-				echo "<td $attributes>";
+				echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
 				?>
 				<?php $image_url = MainWP_Client_Handler::get_client_image_url( $item['image'] ); ?>
 				<a class="item" href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>"><img class="ui mini circular image" src="<?php echo esc_attr( $image_url ); ?>"></a>
 				<?php
 				echo '</td>';
 			} elseif ( 'name' === $column_name ) {
-				echo "<td $attributes>";
+				echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
 				?>
 				<a class="item" href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php echo esc_html( $item['name'] ); ?></a>
 				<?php
 				echo '</td>';
 			} elseif ( 'client_email' === $column_name ) {
-				echo "<td $attributes>";
+				echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
 				?>
 				<a class="item" href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php echo esc_html( $item['client_email'] ); ?></a>
 				<?php
 				echo '</td>';
 			} elseif ( 'tags' === $column_name ) {
 				?>
-				<td class="collapsing"><?php echo MainWP_System_Utility::get_site_tags( $item, true ); ?></td>
+				<td class="collapsing"><?php echo MainWP_System_Utility::get_site_tags( $item, true ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 				<?php
 			} elseif ( 'suspended' === $column_name ) {
 				?>
@@ -686,7 +686,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 				$selected_ids   = ( '' != $selected_sites ) ? explode( ',', $selected_sites ) : array();
 
 				$count = count( $selected_ids );
-				echo "<td $attributes>";
+				echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
 				?>
 				<a class="item" href="admin.php?page=managesites&client=<?php echo intval( $item['client_id'] ); ?>"><?php echo intval( $count ); ?></a>
 				<?php
@@ -698,23 +698,23 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 				$strip_note = wp_strip_all_tags( $esc_note );
 
 				$col_class = 'collapsing center aligned';
-				echo "<td $attributes>";
+				echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
 				if ( '' == $item['note'] ) :
 					?>
-					<a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo $item['client_id']; ?>" data-tooltip="<?php esc_attr_e( 'Edit client notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
+					<a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Edit client notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
 				<?php else : ?>
-					<a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo $item['client_id']; ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+					<a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
 				<?php endif; ?>
-				<span style="display: none" id="mainwp-notes-<?php echo $item['client_id']; ?>-note"><?php echo wp_unslash( $esc_note ); ?></span>
+				<span style="display: none" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 				<?php
 				echo '</td>';
 			} elseif ( method_exists( $this, 'column_' . $column_name ) ) {
-				echo "<td $attributes>";
-				echo call_user_func( array( $this, 'column_' . $column_name ), $item );
+				echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
+				echo call_user_func( array( $this, 'column_' . $column_name ), $item ); // phpcs:ignore WordPress.Security.EscapeOutput
 				echo '</td>';
 			} else {
-				echo "<td $attributes>";
-				echo $this->column_default( $item, $column_name );
+				echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
+				echo $this->column_default( $item, $column_name ); // phpcs:ignore WordPress.Security.EscapeOutput
 				echo '</td>';
 			}
 		}

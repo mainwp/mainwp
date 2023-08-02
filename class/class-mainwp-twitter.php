@@ -193,7 +193,7 @@ class MainWP_Twitter {
 		$return = ob_get_clean();
 
 		if ( $echo ) {
-			echo $return;
+			echo $return; // phpcs:ignore WordPress.Security.EscapeOutput
 		} else {
 			return $return;
 		}

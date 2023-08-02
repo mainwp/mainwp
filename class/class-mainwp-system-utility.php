@@ -552,9 +552,9 @@ class MainWP_System_Utility {
 
 					if ( isset( $tags_ids[ $idx ] ) && ! empty( $tags_ids[ $idx ] ) ) {
 						$tag_id       = $tags_ids[ $idx ];
-						$tags_labels .= '<span ' . $tag_style . ' class="ui tag mini label"><a ' . $tag_a_style . ' href="' . $href . $tag_id . '">' . $tag . '</a></span>';
+						$tags_labels .= '<span ' . $tag_style . ' class="ui tag mini label"><a ' . $tag_a_style . ' href="' . esc_url( $href . $tag_id ) . '">' . esc_html( $tag ) . '</a></span>';
 					} else {
-						$tags_labels .= '<span ' . $tag_style . ' class="ui tag mini label">' . $tag . '</span>';
+						$tags_labels .= '<span ' . $tag_style . ' class="ui tag mini label">' . esc_html( $tag ) . '</span>';
 					}
 				}
 			}
@@ -1198,7 +1198,7 @@ class MainWP_System_Utility {
 	 * @param int    $max_width max image width.
 	 * @param int    $max_height max image height.
 	 */
-	public static function handle_upload_image( $sub_folder, $file_uploader, $file_index, $file_subindex = false, $max_width = 300, $max_height = 300 ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function handle_upload_image( $sub_folder, $file_uploader, $file_index, $file_subindex = false, $max_width = 300, $max_height = 300 ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$dirs     = self::get_mainwp_dir( $sub_folder, true );
 		$base_dir = $dirs[0];

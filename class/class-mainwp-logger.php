@@ -727,9 +727,9 @@ class MainWP_Logger {
 				$line = str_replace( '[data-end]', $end_wrapper, $line );
 			}
 
-			echo '<div class="item" style="color:' . $currentColor . '"><div class="mainwpactionlogsline">';
+			echo '<div class="item" style="color:' . esc_html( $currentColor ) . '"><div class="mainwpactionlogsline">';
 
-			echo $prefix . ' ' . $line;
+			echo $prefix . ' ' . $line; // phpcs:ignore WordPress.Security.EscapeOutput
 
 			echo '</div></div>';
 		}
@@ -805,11 +805,11 @@ class MainWP_Logger {
 					echo '</div></div>';
 				}
 
-				echo '<div class="item" style="color:' . $currentColor . '"><div class="mainwpactionlogsline">';
+				echo '<div class="item" style="color:' . esc_html( $currentColor ) . '"><div class="mainwpactionlogsline">';
 				$fontOpen = true;
 			}
 
-			echo htmlentities( $line );
+			echo esc_html( htmlentities( $line ));
 		}
 
 		if ( $fontOpen ) {

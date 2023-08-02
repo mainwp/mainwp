@@ -123,10 +123,10 @@ class MainWP_Recent_Posts {
 
 		<div class="ui stackable grid">
 			<div class="eight wide column">
-				<a href="<?php echo admin_url( 'admin.php?page=PostBulkManage' ); ?>" title="" class="ui button green basic"><?php esc_html_e( 'Manage Posts', 'mainwp' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkManage' ) ); ?>" title="" class="ui button green basic"><?php esc_html_e( 'Manage Posts', 'mainwp' ); ?></a>
 			</div>
 			<div class="eight wide column right aligned">
-				<a href="<?php echo admin_url( 'admin.php?page=PostBulkAdd' ); ?>" title="" class="ui button green"><?php esc_html_e( 'Create New Post', 'mainwp' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkAdd' ) ); ?>" title="" class="ui button green"><?php esc_html_e( 'Create New Post', 'mainwp' ); ?></a>
 			</div>
 		</div>
 		<?php
@@ -240,14 +240,14 @@ class MainWP_Recent_Posts {
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_published[ $i ]['id'] ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_published[ $i ]['website']->id ); ?>"/>
 						<div class="six wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_published[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_posts_published[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
+							<a href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_published[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_posts_published[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
 						</div>
 						<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
 						<?php echo esc_html( $recent_posts_published[ $i ]['dts'] ); ?>
 						</div>
 						<?php if ( ! $individual ) : ?>
 						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $name; ?></a>
+							<a href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( $name ); ?></a>
 						</div>
 						<?php endif; ?>
 						<div class="two wide column right aligned">
@@ -255,7 +255,7 @@ class MainWP_Recent_Posts {
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
 										<a class="item mainwp-post-unpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $recent_posts_published[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_published[ $i ]['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $recent_posts_published[ $i ]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_published[ $i ]['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 										<a class="item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 										<a class="item" href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ) . ( '/' != substr( $recent_posts_published[ $i ]['website']->url, - 1 ) ? '/' : '' ) . '?p=' . esc_attr( $recent_posts_published[ $i ]['id'] ); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
 									</div>
@@ -343,14 +343,14 @@ class MainWP_Recent_Posts {
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_draft[ $i ]['id'] ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_draft[ $i ]['website']->id ); ?>"/>
 						<div class="six wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_draft[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_draft[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_posts_draft[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
+							<a href="<?php echo esc_url( $recent_posts_draft[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_draft[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_posts_draft[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
 						</div>
 						<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
 							<?php echo esc_html( $recent_posts_draft[ $i ]['dts'] ); ?>
 						</div>
 						<?php if ( ! $individual ) : ?>
 						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_draft[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $name; ?></a>
+							<a href="<?php echo esc_url( $recent_posts_draft[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( $name ); ?></a>
 						</div>
 						<?php endif; ?>
 						<div class="two wide column right aligned">
@@ -445,14 +445,14 @@ class MainWP_Recent_Posts {
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_pending[ $i ]['id'] ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_pending[ $i ]['website']->id ); ?>"/>
 						<div class="six wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_pending[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_pending[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_posts_pending[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
+							<a href="<?php echo esc_url( $recent_posts_pending[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_pending[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_posts_pending[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
 						</div>
 						<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
 							<?php echo esc_html( $recent_posts_pending[ $i ]['dts'] ); ?>
 						</div>
 						<?php if ( ! $individual ) : ?>
 						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_pending[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $name; ?></a>
+							<a href="<?php echo esc_url( $recent_posts_pending[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( $name ); ?></a>
 						</div>
 						<?php endif; ?>
 						<div class="two wide column right aligned">
@@ -546,14 +546,14 @@ class MainWP_Recent_Posts {
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_future[ $i ]['id'] ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_future[ $i ]['website']->id ); ?>"/>
 						<div class="six wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_future[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_future[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer"  target="_blank"><?php echo htmlentities( $recent_posts_future[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
+							<a href="<?php echo esc_url( $recent_posts_future[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_future[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer"  target="_blank"><?php echo htmlentities( $recent_posts_future[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
 						</div>
 						<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
 							<?php echo esc_html( $recent_posts_future[ $i ]['dts'] ); ?>
 						</div>
 						<?php if ( ! $individual ) : ?>
 						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_future[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $name; ?></a>
+							<a href="<?php echo esc_url( $recent_posts_future[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( $name ); ?></a>
 						</div>
 						<?php endif; ?>
 						<div class="two wide column right aligned">
@@ -649,14 +649,14 @@ class MainWP_Recent_Posts {
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_trash[ $i ]['id'] ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_trash[ $i ]['website']->id ); ?>"/>
 						<div class="six wide column middle aligned">
-						<?php echo htmlentities( $recent_posts_trash[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?>
+						<?php echo htmlentities( $recent_posts_trash[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 						</div>
 						<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
 						<?php echo esc_html( $recent_posts_trash[ $i ]['dts'] ); ?>
 						</div>
 						<?php if ( ! $individual ) : ?>
 						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_trash[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer"  target="_blank"><?php echo $name; ?></a>
+							<a href="<?php echo esc_url( $recent_posts_trash[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer"  target="_blank"><?php echo esc_html( $name ); ?></a>
 						</div>
 						<?php endif; ?>
 						<div class="two wide column right aligned">
@@ -767,8 +767,8 @@ class MainWP_Recent_Posts {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action( $pAction, $type = 'post' ) {
-		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
-		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
+		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( empty( $postId ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => 'Post ID or site ID not found. Please, reload the page and try again.' ) ) );
@@ -841,9 +841,9 @@ class MainWP_Recent_Posts {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action_update( $pAction ) {
-		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
-		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
-		$post_data = isset( $_POST['post_data'] ) ? wp_unslash( $_POST['post_data'] ) : array();
+		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$post_data = isset( $_POST['post_data'] ) ? wp_unslash( $_POST['post_data'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( empty( $postId ) || empty( $websiteId ) ) {
 			die( 'FAIL' );

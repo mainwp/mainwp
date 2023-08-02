@@ -100,8 +100,8 @@ class MainWP_Backup_Tasks {
 					?>
 					<div class="ui grid mainwp-recent">
 						<div class="eight wide column">
-							<strong><a href="admin.php?page=ManageBackups&id=<?php echo esc_attr( $task->id ); ?>"><?php echo stripslashes( $task->name ); ?></a></strong><br />
-							<span style="font-size: 11px">(<?php echo strtoupper( $task->schedule ); ?> - <?php echo ( 'db' == $task->type ? esc_html__( 'Database backup', 'mainwp' ) : esc_html__( 'Full backup', 'mainwp' ) ); ?>)</span>
+							<strong><a href="admin.php?page=ManageBackups&id=<?php echo esc_attr( $task->id ); ?>"><?php echo esc_html( stripslashes( $task->name ) ); ?></a></strong><br />
+							<span style="font-size: 11px">(<?php echo esc_html( strtoupper( $task->schedule ) ); ?> - <?php echo ( 'db' == $task->type ? esc_html__( 'Database backup', 'mainwp' ) : esc_html__( 'Full backup', 'mainwp' ) ); ?>)</span>
 						</div>
 						<div class="two wide column">
 							<?php
@@ -117,8 +117,8 @@ class MainWP_Backup_Tasks {
 							?>
 						</div>
 						<div class="six wide column">
-							<strong><?php esc_html_e( 'LAST RUN: ', 'mainwp' ); ?></strong>&nbsp;<?php echo ( 0 == $task->last_run ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $task->last_run ) ) ); ?><br />
-							<strong><?php esc_html_e( 'NEXT RUN: ', 'mainwp' ); ?></strong>&nbsp;<?php echo ( 0 == $task->last_run ? esc_html__( 'Any minute', 'mainwp' ) : MainWP_Utility::format_timestamp( ( 'daily' == $task->schedule ? ( 60 * 60 * 24 ) : ( 'weekly' == $task->schedule ? ( 60 * 60 * 24 * 7 ) : ( 60 * 60 * 24 * 30 ) ) ) + MainWP_Utility::get_timestamp( $task->last_run ) ) ); ?>
+							<strong><?php esc_html_e( 'LAST RUN: ', 'mainwp' ); ?></strong>&nbsp;<?php echo ( 0 == $task->last_run ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $task->last_run ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?><br />
+							<strong><?php esc_html_e( 'NEXT RUN: ', 'mainwp' ); ?></strong>&nbsp;<?php echo ( 0 == $task->last_run ? esc_html__( 'Any minute', 'mainwp' ) : MainWP_Utility::format_timestamp( ( 'daily' == $task->schedule ? ( 60 * 60 * 24 ) : ( 'weekly' == $task->schedule ? ( 60 * 60 * 24 * 7 ) : ( 60 * 60 * 24 * 30 ) ) ) + MainWP_Utility::get_timestamp( $task->last_run ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 						</div>
 					</div>
 					<?php

@@ -107,7 +107,7 @@ class MainWP_Security_Issues_Widget {
 				<div class="ui horizontal statistics">
 					<div class="statistic" style="margin: 0px;">
 						<div class="value">
-							<?php echo $total_securityIssues; ?>
+							<?php echo intval( $total_securityIssues ); ?>
 						</div>
 						<div class="label">
 							<?php echo _n( 'Security Issue Detected', 'Security Issues Detected', $total_securityIssues, 'mainwp' ); ?>
@@ -150,7 +150,7 @@ class MainWP_Security_Issues_Widget {
 								 *
 								 * @since 4.1
 								 */
-								echo stripslashes( apply_filters( 'mainwp_security_issues_list_item_title', $website->name, $website ) );
+								echo esc_attr( stripslashes( apply_filters( 'mainwp_security_issues_list_item_title', $website->name, $website ) ) );
 								?>
 							</a>
 				</div>

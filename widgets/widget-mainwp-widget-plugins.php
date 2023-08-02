@@ -192,8 +192,8 @@ class MainWP_Widget_Plugins {
 							<?php } ?>
 						</div>
 						<div class="middle aligned content">
-							<?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?>&nbsp;&nbsp;&nbsp;&nbsp;
-							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . dirname( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ); ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $actived_plugins[ $i ]['name'] ); ?>">
+							<?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;
+							<a href="<?php echo esc_url( admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . dirname( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ) ); ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $actived_plugins[ $i ]['name'] ); ?>">
 								<?php echo esc_html( $actived_plugins[ $i ]['name'] . ' ' . $actived_plugins[ $i ]['version'] ); ?>
 							</a>
 							</div>
@@ -250,8 +250,8 @@ class MainWP_Widget_Plugins {
 							<?php } ?>
 						</div>
 						<div class="middle aligned content">
-							<?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?>&nbsp;&nbsp;&nbsp;&nbsp;
-							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ); ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ); ?>">
+							<?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;
+							<a href="<?php echo esc_url( admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ) ); ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ); ?>">
 								<?php echo esc_html( $inactive_plugins[ $i ]['name'] . ' ' . $inactive_plugins[ $i ]['version'] ); ?>
 							</a>
 						</div>
@@ -336,9 +336,9 @@ class MainWP_Widget_Plugins {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action( $action ) {
-		$plugin    = isset( $_POST['plugin'] ) ? wp_unslash( $_POST['plugin'] ) : '';
+		$plugin    = isset( $_POST['plugin'] ) ? wp_unslash( $_POST['plugin'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		$plugin    = urldecode( $plugin );
-		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( empty( $plugin ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Plugin or site ID not found. Please, reload the page and try again.', 'mainwp' ) ) ) );

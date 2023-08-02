@@ -31,7 +31,7 @@ class MainWP_Client_Overview_Note {
 	 * @return mixed render_site_info()
 	 */
 	public static function render() {
-		$client_id = isset( $_GET['client_id'] ) ? $_GET['client_id'] : 0;
+		$client_id = isset( $_GET['client_id'] ) ? $_GET['client_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( empty( $client_id ) ) {
 			return;
 		}
@@ -89,19 +89,19 @@ class MainWP_Client_Overview_Note {
 				?>
 				<?php
 				if ( $client_info ) {
-					echo $esc_note;
+					echo $esc_note; // phpcs:ignore WordPress.Security.EscapeOutput
 				}
 				?>
 				<div class="ui hidden divider"></div>
 				<div class="ui hidden divider"></div>
 
 				<?php if ( '' == $note ) : ?>
-					<a href="javascript:void(0)" class="mainwp-edit-client-note ui button green" id="mainwp-notes-<?php echo $client_info['client_id']; ?>" data-tooltip="<?php esc_attr_e( 'Add notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Add Notes', 'mainwp' ); ?></a>
+					<a href="javascript:void(0)" class="mainwp-edit-client-note ui button green" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Add notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Add Notes', 'mainwp' ); ?></a>
 				<?php else : ?>
-					<a href="javascript:void(0)" class="mainwp-edit-client-note ui button green" id="mainwp-notes-<?php echo $client_info['client_id']; ?>" data-tooltip="<?php esc_attr_e( 'Edit notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Edit Notes', 'mainwp' ); ?></a>
+					<a href="javascript:void(0)" class="mainwp-edit-client-note ui button green" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Edit notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Edit Notes', 'mainwp' ); ?></a>
 				<?php endif; ?>
 
-				<div style="display:none" id="mainwp-notes-<?php echo $client_info['client_id']; ?>-note"><?php echo wp_unslash( $esc_note ); ?></div>
+				<div style="display:none" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); ?></div>
 
 				<?php
 

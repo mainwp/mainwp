@@ -159,7 +159,7 @@ class MainWP_Widget_Themes {
 							<a href="#" disabled class="button ui mini grey basic" data-position="top right" data-tooltip="<?php esc_attr_e( 'Active theme cannot be deactivated. If you need to activate another theme, go to the list of inactive themes and activate the wanted theme.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
 						</div>
 						<div class="middle aligned content">
-							<?php echo MainWP_System_Utility::get_theme_icon( $slug ); ?>&nbsp;&nbsp;&nbsp;&nbsp;
+							<?php echo MainWP_System_Utility::get_theme_icon( $slug ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;
 							<?php echo esc_html( $actived_themes[ $i ]['name'] . ' ' . $actived_themes[ $i ]['version'] ); ?>
 						</div>
 						<div class="mainwp-row-actions-working">
@@ -215,11 +215,11 @@ class MainWP_Widget_Themes {
 							if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) ) {
 								$parent_str = sprintf( esc_html__( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $inactive_themes[ $i ]['child_theme'] ) ? $inactive_themes[ $i ]['child_theme'] : '' );
 								?>
-								<a href="#" class="<?php echo $is_parent ? '' : 'mainwp-theme-delete'; ?> ui mini basic button" data-position="top right" data-tooltip="<?php echo ! $is_parent ? esc_attr__( 'Delete the ', 'mainwp' ) . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . esc_attr__( ' theme from the child site.', 'mainwp' ) : $parent_str; ?>" <?php echo $is_parent ? 'disabled onclick="javascript:void(0)"' : ''; ?> data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+								<a href="#" class="<?php echo $is_parent ? '' : 'mainwp-theme-delete'; ?> ui mini basic button" data-position="top right" data-tooltip="<?php echo ! $is_parent ? esc_attr__( 'Delete the ', 'mainwp' ) . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . esc_attr__( ' theme from the child site.', 'mainwp' ) : $parent_str; ?>" <?php echo $is_parent ? 'disabled onclick="javascript:void(0)"' : ''; ?> data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
 							<?php } ?>
 						</div>
 						<div class="middle aligned content">
-							<?php echo MainWP_System_Utility::get_theme_icon( $slug ); ?>&nbsp;&nbsp;&nbsp;&nbsp;
+							<?php echo MainWP_System_Utility::get_theme_icon( $slug ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;
 							<?php echo esc_html( $inactive_themes[ $i ]['name'] . ' ' . $inactive_themes[ $i ]['version'] ); ?>
 						</div>
 						<div class="mainwp-row-actions-working">
@@ -293,8 +293,8 @@ class MainWP_Widget_Themes {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action( $action ) {
-		$theme     = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : '';
-		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
+		$theme     = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( empty( $theme ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Theme or site ID not found. Please, reload the page and try again.', 'mainwp' ) ) ) );

@@ -31,7 +31,7 @@ class MainWP_Client_Overview_Info {
 	 * @return mixed render_site_info()
 	 */
 	public static function render() {
-		$client_id = isset( $_GET['client_id'] ) ? $_GET['client_id'] : 0;
+		$client_id = isset( $_GET['client_id'] ) ? $_GET['client_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( empty( $client_id ) ) {
 			return;
 		}
@@ -55,7 +55,7 @@ class MainWP_Client_Overview_Info {
 			<h3 class="ui header handle-drag">
 				<?php echo esc_html( $client_info['name'] ); ?>
 				<div class="sub header">
-					<?php echo MainWP_System_Utility::get_site_tags( $client_info, true ); ?>
+					<?php echo MainWP_System_Utility::get_site_tags( $client_info, true ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 				</div>
 			</h3>
 			<div class="ui section hidden divider"></div>

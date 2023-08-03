@@ -737,20 +737,20 @@ class MainWP_System {
 		wp_enqueue_script( 'user-profile' );
 		wp_enqueue_style( 'thickbox' );
 
-		//$load_dragula = false;
+		// $load_dragula = false;
 
-		//if ( isset( $_GET['page'] ) && ( 'mainwp_tab' === $_GET['page'] || ( 'managesites' === $_GET['page'] && isset( $_GET['dashboard'] ) ) ) ) {
-		//	$load_dragula = true;
-		//} elseif ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) ) {
-		//	$load_dragula = true;
-		//} elseif ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'ManageSites' ) ) { // individual page.
-		//	$load_dragula = true;
-		//}
+		// if ( isset( $_GET['page'] ) && ( 'mainwp_tab' === $_GET['page'] || ( 'managesites' === $_GET['page'] && isset( $_GET['dashboard'] ) ) ) ) {
+		// $load_dragula = true;
+		// } elseif ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) ) {
+		// $load_dragula = true;
+		// } elseif ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'ManageSites' ) ) { // individual page.
+		// $load_dragula = true;
+		// }
 
-		//if ( $load_dragula ) {
-		//	wp_enqueue_script( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/dragula/dragula.min.js', array(), $this->current_version, true );
-		//	wp_enqueue_style( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/dragula/dragula.min.css', array(), $this->current_version );
-		//}
+		// if ( $load_dragula ) {
+		// wp_enqueue_script( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/dragula/dragula.min.js', array(), $this->current_version, true );
+		// wp_enqueue_style( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/dragula/dragula.min.css', array(), $this->current_version );
+		// }
 
 		$load_gridster = false;
 
@@ -1204,7 +1204,6 @@ class MainWP_System {
 		if ( false === $update_ver ) {
 			return;
 		}
-
 	}
 
 	/**

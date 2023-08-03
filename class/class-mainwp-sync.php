@@ -125,14 +125,14 @@ class MainWP_Sync {
 			$saved_days_number = apply_filters( 'mainwp_site_actions_saved_days_number', 30 );
 
 			$postdata = array(
-					'optimize'                        => ( ( get_option( 'mainwp_optimize', 0 ) == 1 ) ? 1 : 0 ),
-					'cloneSites'                      => ( ! $cloneEnabled ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ) ),
-					'othersData'                      => wp_json_encode( $othersData ),
-					'server'                          => get_admin_url(),
-					'numberdaysOutdatePluginTheme'    => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
-					'primaryBackup'                   => $primaryBackup,
-					'siteId'                          => $pWebsite->id,
-					'child_actions_saved_days_number' => intval( $saved_days_number ),
+				'optimize'                        => ( ( get_option( 'mainwp_optimize', 0 ) == 1 ) ? 1 : 0 ),
+				'cloneSites'                      => ( ! $cloneEnabled ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ) ),
+				'othersData'                      => wp_json_encode( $othersData ),
+				'server'                          => get_admin_url(),
+				'numberdaysOutdatePluginTheme'    => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
+				'primaryBackup'                   => $primaryBackup,
+				'siteId'                          => $pWebsite->id,
+				'child_actions_saved_days_number' => intval( $saved_days_number ),
 				'pingnonce'                       => MainWP_Utility::instance()->create_site_nonce( 'pingnonce', $pWebsite->id ),
 			);
 

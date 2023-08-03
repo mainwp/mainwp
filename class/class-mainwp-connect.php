@@ -420,7 +420,7 @@ class MainWP_Connect {
 			$sign_success = null;
 			$alg          = false;
 			$use_seclib   = false;
-			$nonce = wp_rand( 0, 9999 );
+			$nonce        = wp_rand( 0, 9999 );
 			if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
 				$sign_success = MainWP_Connect_Lib::connect_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 				$use_seclib   = true;

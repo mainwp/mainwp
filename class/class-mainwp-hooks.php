@@ -1591,7 +1591,6 @@ class MainWP_Hooks {
 	 * @param string|null $layout widget's layout .
 	 *
 	 * @return void Sets Global $mainwp_widget_boxes[ $page ][ $context ][ $priority ][ $id ].
-	 *
 	 */
 	public function hook_add_widget_box( $id, $callback, $screen = null, $layout = null ) {
 		if ( ! is_array( $layout ) ) {

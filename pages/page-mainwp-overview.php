@@ -285,7 +285,7 @@ class MainWP_Overview {
 			if ( self::$enable_widgets['recent_pages'] ) {
 				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( 1, 1, 3, 3 ) );
 				// MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, 'right', esc_html__( 'Recent Pages', 'mainwp' ) );
-		}
+			}
 		}
 
 		$i = 1;
@@ -405,7 +405,7 @@ class MainWP_Overview {
 			 */
 			do_action( 'mainwp_before_overview_widgets' );
 
-						?>
+			?>
 			<div id="mainwp-grid-wrapper" class="gridster">
 				<?php MainWP_UI::do_widget_boxes( $screen->id ); ?>
 			</div>

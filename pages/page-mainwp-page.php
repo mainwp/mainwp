@@ -214,7 +214,7 @@ class MainWP_Page {
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => esc_html__( 'Pages', 'mainwp' ),
-				'parent_key'        => 'managesites',
+				'parent_key' => 'managesites',
 				'slug'       => 'PageBulkManage',
 				'href'       => 'admin.php?page=PageBulkManage',
 				'icon'       => '<i class="file icon"></i>',

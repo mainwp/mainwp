@@ -111,7 +111,7 @@ class MainWP_Notes {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_notes_widget_bottom', $website );
-			?>
+		?>
 			</div>
 			<?php if ( '' != $website->note ) : ?>
 			<div class="ui two columns grid mainwp-widget-footer">
@@ -124,7 +124,7 @@ class MainWP_Notes {
 			</div>
 			<?php endif; ?>
 			<?php
-		MainWP_UI::render_modal_edit_notes();
+			MainWP_UI::render_modal_edit_notes();
 	}
 
 }

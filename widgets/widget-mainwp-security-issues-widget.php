@@ -129,13 +129,12 @@ class MainWP_Security_Issues_Widget {
 					$count_security_issues = '';
 			MainWP_DB::data_seek( $websites, 0 );
 			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-						if ( '[]' === $website->securityIssues ) {
-							$count_security_issues = '';
-						} else {
-							$count_security_issues = intval( $website->securityIssues );
-						}
+				if ( '[]' === $website->securityIssues ) {
+					$count_security_issues = '';
+				} else {
+					$count_security_issues = intval( $website->securityIssues );
+				}
 
-								
 				?>
 						<div class="item" <?php echo $count_security_issues > 0 && '' != $count_security_issues ? 'status="queue"' : ''; ?> siteid="<?php echo intval( $website->id ); ?>">
 				<div class="ui three column grid stackable">
@@ -176,7 +175,6 @@ class MainWP_Security_Issues_Widget {
 
 						<?php
 
-								
 						/**
 						 * Action: mainwp_security_issues_list_item_column
 						 *

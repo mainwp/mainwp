@@ -319,7 +319,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 					$site_ids = array_filter( $site_ids );
 					if ( ! empty( $site_ids ) ) {
 						$site_ids       = implode( ',', $site_ids );
-				$sql_and        = ' AND ';
+						$sql_and        = ' AND ';
 						$where_actions .= $sql_and . ' wa.wpid IN ( ' . $site_ids . ' )';
 					}
 				} elseif ( is_numeric( $site_id ) ) {

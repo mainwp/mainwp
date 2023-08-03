@@ -36,10 +36,10 @@ class MainWP_Client_Overview {
 	 * @var array $enable_widgets
 	 */
 	private static $enable_widgets = array(
-		'overview'    => true,
-		'note'        => true,
-		'fields_info' => true,
-		'websites'    => true,
+		'overview'           => true,
+		'note'               => true,
+		'fields_info'        => true,
+		'websites'           => true,
 		'recent_posts'       => true,
 		'recent_pages'       => true,
 		'non_mainwp_changes' => true,
@@ -317,7 +317,7 @@ class MainWP_Client_Overview {
 			 * @since 4.3
 			 */
 			do_action( 'mainwp_before_overview_widgets' );
-						?>
+			?>
 			<div id="mainwp-grid-wrapper" class="gridster">
 				<?php MainWP_UI::do_widget_boxes( $screen->id ); ?>
 		</div>
@@ -413,10 +413,10 @@ class MainWP_Client_Overview {
 	public static function render_screen_options() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$default_widgets = array(
-			'overview'    => esc_html__( 'Overview', 'mainwp' ),
-			'note'        => esc_html__( 'Notes', 'mainwp' ),
-			'fields_info' => esc_html__( 'Addition Info', 'mainwp' ),
-			'websites'    => esc_html__( 'Websites', 'mainwp' ),
+			'overview'           => esc_html__( 'Overview', 'mainwp' ),
+			'note'               => esc_html__( 'Notes', 'mainwp' ),
+			'fields_info'        => esc_html__( 'Addition Info', 'mainwp' ),
+			'websites'           => esc_html__( 'Websites', 'mainwp' ),
 			'recent_posts'       => esc_html__( 'Recent Posts', 'mainwp' ),
 			'recent_pages'       => esc_html__( 'Recent Pages', 'mainwp' ),
 			'non_mainwp_changes' => esc_html__( 'Non-MainWP Changes', 'mainwp' ),

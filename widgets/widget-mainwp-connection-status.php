@@ -140,7 +140,7 @@ class MainWP_Connection_Status {
 		self::render_status( $current_wpid );
 
 		if ( empty( $current_wpid ) ) {
-			
+
 			self::render_multi_status( $count_connected, $count_disconnected );
 		} else {
 			// Get site by ID $current_wpid.

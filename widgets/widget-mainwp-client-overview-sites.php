@@ -362,10 +362,10 @@ class MainWP_Client_Overview_Sites {
 		 * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
 		 */
 	public function single_row( $website ) {
-		$classes = '';
+		$classes       = '';
 		$hasSyncErrors = ( '' !== $website['sync_errors'] );
-		$classes = trim( $classes );
-		$classes = ' class="child-site mainwp-child-site-' . intval( $website['id'] ) . ' ' . ( $hasSyncErrors ? 'error' : '' ) . ' ' . $classes . '"';
+		$classes       = trim( $classes );
+		$classes       = ' class="child-site mainwp-child-site-' . intval( $website['id'] ) . ' ' . ( $hasSyncErrors ? 'error' : '' ) . ' ' . $classes . '"';
 
 		echo '<tr id="child-site-' . intval( $website['id'] ) . '"' . $classes . ' siteid="' . intval( $website['id'] ) . '" site-url="' . $website['url'] . '">';
 		$this->single_row_columns( $website );

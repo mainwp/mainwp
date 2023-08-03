@@ -1722,9 +1722,9 @@ class MainWP_Manage_Sites_List_Table {
 		$hasSyncErrors = ( '' !== $website['sync_errors'] );
 		$suspendedSite = ( '0' !== $website['suspended'] );
 
-		$classes = trim( $classes );		
+		$classes = trim( $classes );
 		$classes = ' class="child-site mainwp-child-site-' . intval( $website['id'] ) . ' ' . ( $hasSyncErrors ? 'error' : '' ) . ' ' . ( $suspendedSite ? 'suspended' : '' ) . ' ' . $classes . '"';
-		echo '<tr id="child-site-' . intval( $website['id'] ) . '"' . esc_html( $classes ) . ' siteid="' . intval( $website['id'] ) . '" site-url="' . esc_url( $website['url'] ) . '">';	
+		echo '<tr id="child-site-' . intval( $website['id'] ) . '"' . esc_html( $classes ) . ' siteid="' . intval( $website['id'] ) . '" site-url="' . esc_url( $website['url'] ) . '">';
 		$this->single_row_columns( $website );
 		echo '</tr>';
 	}

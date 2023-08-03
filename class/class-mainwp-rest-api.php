@@ -532,11 +532,11 @@ class Rest_Api {
 				if ( $enabled && wp_check_password( $consumer_secret, $consumer_secret_key ) ) {
 					try {
 						if ( $this->mainwp_permission_check_request( $request, $existed_key ) ) {
-					if ( ! defined( 'MAINWP_REST_API' ) ) {
-						define( 'MAINWP_REST_API', true );
-					}
-					return true;
-				}
+							if ( ! defined( 'MAINWP_REST_API' ) ) {
+								define( 'MAINWP_REST_API', true );
+							}
+							return true;
+						}
 					} catch ( \Exception $ex ) {
 						$err = $ex->getMessage();
 						return new \WP_Error(

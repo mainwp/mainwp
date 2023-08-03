@@ -408,7 +408,7 @@ class MainWP_Updates_Overview {
 		}
 		self::render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid );
 		self::render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid );
-		
+
 		self::render_global_update(
 			$user_can_update_wordpress,
 			$total_wp_upgrades,
@@ -494,7 +494,7 @@ class MainWP_Updates_Overview {
 				 *
 				 * @since 4.1
 				 */
-					?>
+				?>
 				<?php if ( $can_total_update ) : ?>
 					<?php if ( ! get_option( 'mainwp_hide_update_everything', false ) ) : ?>
 						<a href="#" <?php echo 0 == $total_upgrades ? 'disabled' : 'onClick="return updatesoverview_global_upgrade_all( \'all\' );"'; ?> class="ui big button fluid green" id="mainwp-update-everything-button" data-tooltip="<?php $globalView ? esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on ALL your websites.', 'mainwp' ) : esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', esc_html__( 'Update Everything', 'mainwp' ) ) ); ?></a>
@@ -511,7 +511,6 @@ class MainWP_Updates_Overview {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_updates_overview_after_total_updates' );
-
 	}
 
 	/**

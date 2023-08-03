@@ -734,13 +734,13 @@ class MainWP_System_View {
 				$class_string .= ' mainwp-sites-table-view ';
 			}
 
-			if ( isset( $_GET['page'] ) && 'managesites' == $_GET['page'] )  {
+			if ( isset( $_GET['page'] ) && 'managesites' == $_GET['page'] ) {
 				if ( isset( $_GET['dashboard'] ) && '' != $_GET['dashboard'] ) {
 					$class_string .= ' mainwp-individual-site-overview ';
 				}
 			}
 
-			if ( isset( $_GET['page'] ) && 'ManageClients' == $_GET['page'] )  {
+			if ( isset( $_GET['page'] ) && 'ManageClients' == $_GET['page'] ) {
 				if ( isset( $_GET['client_id'] ) && '' != $_GET['client_id'] ) {
 					$class_string .= ' mainwp-individual-client-overview ';
 				}

@@ -61,18 +61,18 @@ class MainWP_Recent_Posts {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
 
 		if ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$data_fields = MainWP_System_Utility::get_default_map_site_fields();
-  			$data_fields[] = 'recent_posts';
-			$individual = false;
-			$client_id = isset( $_GET['client_id'] ) ? $_GET['client_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
-			$websites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id, array( 'select_data' => $data_fields ) );
+			$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
+			$data_fields[] = 'recent_posts';
+			$individual    = false;
+			$client_id     = isset( $_GET['client_id'] ) ? $_GET['client_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
+			$websites      = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id, array( 'select_data' => $data_fields ) );
 
 			if ( $websites ) {
 				foreach ( $websites as $website ) {
 					if ( '' == $website->recent_posts ) {
 						continue;
 					}
-	
+
 					$posts = json_decode( $website->recent_posts, 1 );
 					if ( 0 == count( $posts ) ) {
 						continue;
@@ -88,36 +88,36 @@ class MainWP_Recent_Posts {
 				}
 			}
 		} else {
-		if ( $current_wpid ) {
-			$sql        = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid );
-			$individual = true;
-		} else {
-			$sql        = MainWP_DB::instance()->get_sql_websites_for_current_user();
-			$individual = false;
-		}
-		$websites = MainWP_DB::instance()->query( $sql );
-
-		if ( $websites ) {
-			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-				if ( '' == $website->recent_posts ) {
-					continue;
-				}
-
-				$posts = json_decode( $website->recent_posts, 1 );
-				if ( 0 == count( $posts ) ) {
-					continue;
-				}
-				foreach ( $posts as $post ) {
-					$post['website'] = (object) array(
-						'id'   => $website->id,
-						'url'  => $website->url,
-						'name' => $website->name,
-					);
-					$allPosts[]      = $post;
-				}
+			if ( $current_wpid ) {
+				$sql        = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid );
+				$individual = true;
+			} else {
+				$sql        = MainWP_DB::instance()->get_sql_websites_for_current_user();
+				$individual = false;
 			}
-			MainWP_DB::free_result( $websites );
-		}
+			$websites = MainWP_DB::instance()->query( $sql );
+
+			if ( $websites ) {
+				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+					if ( '' == $website->recent_posts ) {
+						continue;
+					}
+
+					$posts = json_decode( $website->recent_posts, 1 );
+					if ( 0 == count( $posts ) ) {
+						continue;
+					}
+					foreach ( $posts as $post ) {
+						$post['website'] = (object) array(
+							'id'   => $website->id,
+							'url'  => $website->url,
+							'name' => $website->name,
+						);
+						$allPosts[]      = $post;
+					}
+				}
+				MainWP_DB::free_result( $websites );
+			}
 		}
 
 		self::render_top_grid();

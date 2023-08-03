@@ -1454,7 +1454,6 @@ class MainWP_UI {
 			return;
 		}
 
-
 		if ( ! isset( $mainwp_widget_boxes ) ) {
 			$mainwp_widget_boxes = array();
 		}
@@ -1552,7 +1551,7 @@ class MainWP_UI {
 			$client_id    = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0;
 			if ( ! empty( $client_id ) && is_array( $sorted_array ) && isset( $sorted_array[ $client_id ] ) ) {
 				$wgsorted = $sorted_array[ $client_id ];
-		}
+			}
 		}
 
 		if ( ! is_array( $wgsorted ) ) {
@@ -1588,14 +1587,14 @@ class MainWP_UI {
 		if ( isset( $mainwp_widget_boxes[ $page ] ) ) {
 			// foreach ( (array) $mainwp_widget_boxes[ $page ][ $context ][ $priority ] as $box ) {
 			foreach ( (array) $mainwp_widget_boxes[ $page ] as $box ) {
-						if ( false == $box || ! isset( $box['callback'] ) ) {
-							continue;
-						}
+				if ( false == $box || ! isset( $box['callback'] ) ) {
+					continue;
+				}
 
 						// to avoid hidden widgets.
-						if ( isset( $show_widgets[ $box['id'] ] ) && 0 == $show_widgets[ $box['id'] ] ) {
-							continue;
-						}
+				if ( isset( $show_widgets[ $box['id'] ] ) && 0 == $show_widgets[ $box['id'] ] ) {
+					continue;
+				}
 
 				$layout = array();
 				if ( isset( $wgsorted[ $box['id'] ] ) ) {
@@ -1642,8 +1641,8 @@ class MainWP_UI {
 				echo '<span class="mainwp-resize-handle"></span>' . "\n";
 				echo "</div>\n";
 
-				}
 			}
+		}
 		?>
 		<script type="text/javascript">
 				var page_sortablewidgets = '<?php echo esc_js( $page ); ?>';

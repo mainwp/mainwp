@@ -426,13 +426,13 @@ class MainWP_Menu {
 			}
 
 			if ( 'mainwp_tab' === $parent_key ) {
-			$mainwp_leftmenu[ $parent_key ][] = array( $title, $slug, $href, $id );
+				$mainwp_leftmenu[ $parent_key ][] = array( $title, $slug, $href, $id );
 			} else {
 				$mainwp_sub_leftmenu['leftbar'][ $parent_key ][] = array( $title, $slug, $href, $id );
 
-			if ( ! empty( $slug ) ) {
+				if ( ! empty( $slug ) ) {
 					$_mainwp_menu_active_slugs['leftbar'][ $slug ] = $parent_key; // to get active menu.
-			}
+				}
 			}
 		} else {
 			if ( isset( $params['parent_key'] ) ) {
@@ -443,10 +443,10 @@ class MainWP_Menu {
 			$mainwp_sub_leftmenu[ $parent_key ][] = array( $title, $href, $right, $id, $slug );
 		}
 
-			if ( ! empty( $slug ) ) {
-				$_mainwp_menu_active_slugs[ $slug ] = $parent_key; // to get active menu.
-			}
+		if ( ! empty( $slug ) ) {
+			$_mainwp_menu_active_slugs[ $slug ] = $parent_key; // to get active menu.
 		}
+	}
 
 	/**
 	 * Method render_left_menu
@@ -542,60 +542,60 @@ class MainWP_Menu {
 				<?php
 
 					$bar_item_actived_key = '';
-					if ( is_array( $_mainwp_menu_active_slugs ) && isset( $_mainwp_menu_active_slugs[ $plugin_page ] ) ) {
-						$menu_item_actived_key = $_mainwp_menu_active_slugs[ $plugin_page ];
-						if ( isset( $_mainwp_menu_active_slugs['leftbar'] ) && is_array( $_mainwp_menu_active_slugs['leftbar'] ) && isset( $_mainwp_menu_active_slugs['leftbar'][ $menu_item_actived_key ] ) ) {
-							$bar_item_actived_key = $_mainwp_menu_active_slugs['leftbar'][ $menu_item_actived_key ];
-						}
+				if ( is_array( $_mainwp_menu_active_slugs ) && isset( $_mainwp_menu_active_slugs[ $plugin_page ] ) ) {
+					$menu_item_actived_key = $_mainwp_menu_active_slugs[ $plugin_page ];
+					if ( isset( $_mainwp_menu_active_slugs['leftbar'] ) && is_array( $_mainwp_menu_active_slugs['leftbar'] ) && isset( $_mainwp_menu_active_slugs['leftbar'][ $menu_item_actived_key ] ) ) {
+						$bar_item_actived_key = $_mainwp_menu_active_slugs['leftbar'][ $menu_item_actived_key ];
 					}
+				}
 
 					$bar_item_active = null;
 
-					if ( is_array( $bar_leftmenu ) && ! empty( $bar_leftmenu ) ) {
-						foreach ( $bar_leftmenu as $item ) {
-							$title    = wptexturize( $item[0] );
-							$item_key = $item[1];
-							$href     = $item[2];
-							$item_id  = isset( $item[3] ) ? $item[3] : '';
-							$item_icon = isset( $item[4] ) ? $item[4] : '';
+				if ( is_array( $bar_leftmenu ) && ! empty( $bar_leftmenu ) ) {
+					foreach ( $bar_leftmenu as $item ) {
+						$title     = wptexturize( $item[0] );
+						$item_key  = $item[1];
+						$href      = $item[2];
+						$item_id   = isset( $item[3] ) ? $item[3] : '';
+						$item_icon = isset( $item[4] ) ? $item[4] : '';
 
-							$has_sub = true;
-							if ( ! isset( $mainwp_sub_leftmenu[ $item_key ] ) || empty( $mainwp_sub_leftmenu[ $item_key ] ) ) {
-								$has_sub = false;
-							}
-							$active_item = '';
-
-							if ( empty( $bar_item_actived_key ) ) {
-								if ( isset( $_mainwp_menu_active_slugs[ $plugin_page ] ) ) {
-									if ( $item_key == $_mainwp_menu_active_slugs[ $plugin_page ] ) {
-										$bar_item_actived_key = $item_key;
-									}
-									}
-								}
-
-							if ( ! empty( $bar_item_actived_key ) && $item_key == $bar_item_actived_key ) {
-								$active_item     = 'active';
-								$bar_item_active = $item;
-							}
-
-							$id_attr = ! empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
-
-							// phpcs:disable WordPress.Security.EscapeOutput
-							if ( $has_sub ) {
-								echo '<a ' . $id_attr . ' title="' . esc_html( $title ) . "\" class=\"item $active_item\" href=\"$href\">";
-								echo ! empty( $item_icon ) ? $item_icon : '<i class="th large icon"></i>';
-								echo '<span class="ui small text">' . esc_html( $title ) . '</span>';
-								echo '</a>';
-							} else {
-								echo '<a ' . $id_attr . ' title="' . esc_html( $title ) . "\" class=\"item $active_item\" href=\"$href\">";
-								echo ! empty( $item_icon ) ? $item_icon : '<i class="th large icon"></i>';
-								echo '<span class="ui small text">' . esc_html( $title ) . '</span>';
-								echo '</a>';
-							}
-							// phpcs:enable
+						$has_sub = true;
+						if ( ! isset( $mainwp_sub_leftmenu[ $item_key ] ) || empty( $mainwp_sub_leftmenu[ $item_key ] ) ) {
+							$has_sub = false;
 						}
+						$active_item = '';
+
+						if ( empty( $bar_item_actived_key ) ) {
+							if ( isset( $_mainwp_menu_active_slugs[ $plugin_page ] ) ) {
+								if ( $item_key == $_mainwp_menu_active_slugs[ $plugin_page ] ) {
+									$bar_item_actived_key = $item_key;
+								}
+							}
+						}
+
+						if ( ! empty( $bar_item_actived_key ) && $item_key == $bar_item_actived_key ) {
+							$active_item     = 'active';
+							$bar_item_active = $item;
+						}
+
+						$id_attr = ! empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
+
+						// phpcs:disable WordPress.Security.EscapeOutput
+						if ( $has_sub ) {
+							echo '<a ' . $id_attr . ' title="' . esc_html( $title ) . "\" class=\"item $active_item\" href=\"$href\">";
+							echo ! empty( $item_icon ) ? $item_icon : '<i class="th large icon"></i>';
+							echo '<span class="ui small text">' . esc_html( $title ) . '</span>';
+							echo '</a>';
+						} else {
+							echo '<a ' . $id_attr . ' title="' . esc_html( $title ) . "\" class=\"item $active_item\" href=\"$href\">";
+							echo ! empty( $item_icon ) ? $item_icon : '<i class="th large icon"></i>';
+							echo '<span class="ui small text">' . esc_html( $title ) . '</span>';
+							echo '</a>';
+						}
+						// phpcs:enable
 					}
-					?>
+				}
+				?>
 				</div>
 				<?php
 					$go_back_wpadmin_url = admin_url( 'index.php' );
@@ -738,7 +738,7 @@ class MainWP_Menu {
 							}
 						}
 					}
-						?>
+					?>
 					</div>
 					</div>
 				</div>
@@ -1074,9 +1074,9 @@ class MainWP_Menu {
 		global $plugin_page;
 
 		foreach ( $submenu_items as $sub_key => $sub_item ) {
-			$title  = $sub_item[0];
-			$href   = $sub_item[1];
-			$right  = $sub_item[2];
+			$title = $sub_item[0];
+			$href  = $sub_item[1];
+			$right = $sub_item[2];
 			$id    = isset( $sub_item[3] ) ? $sub_item[3] : '';
 			$slug  = isset( $sub_item[4] ) ? $sub_item[4] : '';
 

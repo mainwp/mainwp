@@ -565,7 +565,7 @@ class MainWP_Extensions_View {
 	 * @param string $mainwp_api_key MainWP.com api key.
 	 */
 	public static function render_side_box( $mainwp_api_key ) {
-		
+
 		?>
 		<div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
 			<div class="title active">

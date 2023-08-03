@@ -39,7 +39,7 @@ class MainWP_Site_Actions {
 				'where_extra' => ' AND dismiss = 0 ',
 			);
 			$website = MainWP_DB::instance()->get_website_by_id( $current_wpid );
-		} else if ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		} elseif ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$client_id = isset( $_GET['client_id'] ) ? $_GET['client_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
 			$websites  = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id );
 			$site_ids  = array();
@@ -48,7 +48,7 @@ class MainWP_Site_Actions {
 				$site_ids[] = $website->id;
 			}
 
-			$limit = apply_filters( 'mainwp_widget_site_actions_limit_number', 10000 );
+			$limit  = apply_filters( 'mainwp_widget_site_actions_limit_number', 10000 );
 			$params = array(
 				'limit'       => $limit,
 				'where_extra' => ' AND dismiss = 0 ',
@@ -62,7 +62,7 @@ class MainWP_Site_Actions {
 			);
 		}
 		$actions_info = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
-		
+
 		self::render_info( $actions_info, $website );
 	}
 
@@ -136,20 +136,20 @@ class MainWP_Site_Actions {
 					do_action( 'mainwp_non_mainwp_changes_table_top', $website );
 					?>
 					<?php foreach ( $actions_info as $idx => $data ) : ?>
-					<?php
+						<?php
 						if ( empty( $data->action_user ) || empty( $data->meta_data ) ) {
 							continue;
 						}
 
 						$meta_data = json_decode( $data->meta_data );
 
-						$action_class = "";
+						$action_class = '';
 						if ( 'activated' == $data->action ) {
-							$action_class = "green";
-						} else if ( 'deactivated' == $data->action ) {
-							$action_class = "red";
-						} else if ( 'installed' == $data->action ) {
-							$action_class = "blue";
+							$action_class = 'green';
+						} elseif ( 'deactivated' == $data->action ) {
+							$action_class = 'red';
+						} elseif ( 'installed' == $data->action ) {
+							$action_class = 'blue';
 						}
 
 						?>
@@ -228,7 +228,6 @@ class MainWP_Site_Actions {
 				 * @since 4.0
 				 */
 				do_action( 'mainwp_non_mainwp_changes_widget_bottom', $website );
-			
 	}
 
 }

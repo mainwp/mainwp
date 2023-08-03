@@ -469,7 +469,7 @@ class MainWP_Extensions_View {
 					</div>
 
 					<div class="meta">
-				<?php echo '<i class="code branch icon"></i>' . esc_html( $extension['version'] ); ?> <?php echo ( isset( $extension['DocumentationURI'] ) && ! empty( $extension['DocumentationURI'] ) ) ? ' - <a href="' . usc_url( str_replace( array( 'http:', 'https:' ), '', esc_url( $extension['DocumentationURI'] ) ) ) . '" target="_blank">' . esc_html__( 'Documentation', 'mainwp' ) . '</a>' : ''; ?>
+				<?php echo '<i class="code branch icon"></i>' . esc_html( $extension['version'] ); ?> <?php echo ( isset( $extension['DocumentationURI'] ) && ! empty( $extension['DocumentationURI'] ) ) ? ' - <a href="' . esc_url( str_replace( array( 'http:', 'https:' ), '', $extension['DocumentationURI'] ) ) . '" target="_blank">' . esc_html__( 'Documentation', 'mainwp' ) . '</a>' : ''; ?>
 					</div>
 		<?php if ( isset( $extension_update->response[ $extension['slug'] ] ) ) : ?>
 						<a href="<?php echo esc_url( admin_url( 'plugins.php' ) ); ?>" class="ui red ribbon label"><?php esc_html_e( 'Update available', 'mainwp' ); ?></a>

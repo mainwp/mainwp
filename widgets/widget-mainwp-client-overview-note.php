@@ -101,7 +101,7 @@ class MainWP_Client_Overview_Note {
 					<a href="javascript:void(0)" class="mainwp-edit-client-note ui button green" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Edit notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Edit Notes', 'mainwp' ); ?></a>
 				<?php endif; ?>
 
-				<div style="display:none" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); ?></div>
+				<div style="display:none" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
 
 				<?php
 

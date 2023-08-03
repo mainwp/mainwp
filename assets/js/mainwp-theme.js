@@ -65,7 +65,7 @@ window.wp = window.wp || {};
             this.SearchView = options.SearchView ? options.SearchView : themes.view.Search;
             // Bind to the scroll event and throttle
             // the results from this.scroller
-            this.window.bind('scroll', _.throttle(this.scroller, 300));
+            this.window.on('scroll', _.throttle(this.scroller, 300));
         },
 
         // Main render control
@@ -554,7 +554,7 @@ window.wp = window.wp || {};
                 // Render and append.
                 preview.render();
                 this.setNavButtonsState();
-                $('.next-theme').focus();
+                $('.next-theme').trigger('focus');
             })
                 .listenTo(preview, 'theme:previous', function () {
 
@@ -584,7 +584,7 @@ window.wp = window.wp || {};
                     // Render and append.
                     preview.render();
                     this.setNavButtonsState();
-                    $('.previous-theme').focus();
+                    $('.previous-theme').trigger('focus');
                 });
 
             this.listenTo(preview, 'preview:close', function () {
@@ -652,7 +652,7 @@ window.wp = window.wp || {};
 
             // Move focus to the primary action
             _.delay(function () {
-                $('.theme-wrap a.button-primary:visible').focus();
+                $('.theme-wrap a.button-primary:visible').trigger('focus');
             }, 500);
 
             $el.on('keydown.wp-themes', function (event) {
@@ -664,10 +664,10 @@ window.wp = window.wp || {};
                     // Keep focus within the overlay by making the last link on theme actions
                     // switch focus to button.left on tabbing and vice versa
                     if ($target.is('button.left') && event.shiftKey) {
-                        $el.find('.theme-actions a:last-child').focus();
+                        $el.find('.theme-actions a:last-child').trigger('focus');
                         event.preventDefault();
                     } else if ($target.is('.theme-actions a:last-child')) {
-                        $el.find('button.left').focus();
+                        $el.find('button.left').trigger('focus');
                         event.preventDefault();
                     }
                 }
@@ -713,7 +713,7 @@ window.wp = window.wp || {};
 
                     // Return focus to the theme div
                     if (themes.focusedTheme) {
-                        themes.focusedTheme.focus();
+                        themes.focusedTheme.trigger('focus');
                     }
                 });
             }
@@ -800,7 +800,7 @@ window.wp = window.wp || {};
 
             this.$el.fadeIn(200, function () {
                 $('body').addClass('theme-installer-active full-overlay-active');
-                $('.close-full-overlay').focus();
+                $('.close-full-overlay').trigger('focus');
             });
         },
 
@@ -810,7 +810,7 @@ window.wp = window.wp || {};
 
                 // Return focus to the theme div
                 if (themes.focusedTheme) {
-                    themes.focusedTheme.focus();
+                    themes.focusedTheme.trigger('focus');
                 }
             });
 
@@ -960,7 +960,7 @@ window.wp = window.wp || {};
             // Generate the themes
             // Using page instance
             // While checking the collection has items
-            if (this.options.collection.size() > 0) {
+            if (this.options.collection.length > 0) {
                 this.renderThemes(this.parent.page);
             }
 
@@ -979,7 +979,7 @@ window.wp = window.wp || {};
             self.instance = self.collection.paginate(page);
 
             // If we have no more themes bail
-            if (self.instance.size() === 0) {
+            if (self.instance.length === 0) {
                 // Fire a no-more-themes event.
                 this.parent.trigger('theme:end');
                 return;
@@ -1714,7 +1714,7 @@ window.wp = window.wp || {};
 
             // The `search` route event. The router populates the input field.
             themes.router.on('route:search', function () {
-                $('.wp-filter-search').focus().trigger('keyup');
+                $('.wp-filter-search').trigger('focus').trigger('keyup');
             });
 
             this.extraRoutes();
@@ -1754,7 +1754,7 @@ jQuery(document).ready(function ($) {
             adminbar_height = parseInt($('#wpadminbar').css('height'), 10);
         }
 
-        if (tbWindow.size()) {
+        if (tbWindow.length) {
             tbWindow.width(W - 50).height(H - 45 - adminbar_height);
             $('#TB_iframeContent').width(W - 50).height(H - 75 - adminbar_height);
             tbWindow.css({ 'margin-left': '-' + parseInt(((W - 50) / 2), 10) + 'px' });
@@ -1764,7 +1764,7 @@ jQuery(document).ready(function ($) {
         }
     };
 
-    $(window).resize(function () {
+    $(window).on('resize',function () {
         tb_position();
     });
 });

@@ -265,6 +265,22 @@ class MainWP_Utility {
 	}
 
 	/**
+	 * Method sanitize_alphanumeric()
+	 *
+	 * Sanitize given string.
+	 *
+	 * @param mixed $str String to sanitize.
+	 *
+	 * @return string Sanitized string.
+	 */
+	public static function sanitize_attr_slug( $str ) {
+		$str = strtolower( $str );
+		$str = str_replace( array( '=', '?', '/' ), '-', $str );
+		$str = preg_replace( '/[^A-Za-z0-9^\-]/', '', $str );
+		return $str;
+	}
+
+	/**
 	 * Method end_session()
 	 *
 	 * End a session.
@@ -926,16 +942,6 @@ class MainWP_Utility {
 	}
 
 	/**
-	 * Method render_mainwp_nonce()
-	 *
-	 * Render MainWP nonce.
-	 */
-	public static function render_mainwp_nonce() {
-		wp_nonce_field( 'mainwp-admin-nonce' );
-	}
-
-
-	/**
 	 * Get Health Site value.
 	 *
 	 * @param mixed $issue_counts Health site issues.
@@ -1217,6 +1223,79 @@ class MainWP_Utility {
 
 		if ( ! empty( $dis_funcs ) && ( false !== stristr( $dis_funcs, $func ) ) ) {
 			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Method hook_create_ping_nonce()
+	 *
+	 * Create action nonce for site.
+	 *
+	 * @param bool  $false Boolean value, it should always be FALSE.
+	 * @param mixed $siteid Site ID.
+	 *
+	 * @return string Custom nonce.
+	 */
+	public static function hook_create_ping_nonce( $false, $siteid = false ) {
+		$action = 'pingnonce';
+		return self::create_site_nonce( $action, $siteid );
+	}
+
+
+	/**
+	 * Method hook_verify_ping_nonce()
+	 *
+	 * Verify nonce without session and user id.
+	 *
+	 * @param bool   $false Boolean value, it should always be FALSE.
+	 * @param string $nonce Nonce to verify.
+	 * @param mixed  $siteid Site ID.
+	 *
+	 * @return mixed If verified return 1 or 2, if not return false.
+	 */
+	public static function hook_verify_ping_nonce( $false, $nonce = '', $siteid = false ) {
+		$action = 'pingnonce';
+		return self::verify_site_nonce( $nonce, $action, $siteid );
+	}
+
+	/**
+	 * Method create_site_nonce()
+	 *
+	 * Create action nonce for site.
+	 *
+	 * @param mixed $action Action to perform.
+	 * @param mixed $siteid Site ID.
+	 *
+	 * @return string Custom nonce.
+	 */
+	public static function create_site_nonce( $action = - 1, $siteid = false ) {
+		if ( empty( $action ) || empty( $siteid || ! is_numeric( $siteid ) ) ) {
+			return false;
+		}
+		return substr( wp_hash( 'site|' . $siteid . '|' . $action, 'nonce' ), - 12, 10 );
+	}
+
+	/**
+	 * Method verify_site_nonce()
+	 *
+	 * Verify nonce without session and user id.
+	 *
+	 * @param string $nonce Nonce to verify.
+	 * @param mixed  $action Action to perform.
+	 * @param mixed  $siteid Site ID.
+	 *
+	 * @return mixed If verified return 1 or 2, if not return false.
+	 */
+	public static function verify_site_nonce( $nonce, $action = - 1, $siteid = 0 ) {
+		$nonce = (string) $nonce;
+		if ( empty( $nonce ) || empty( $siteid || ! is_numeric( $siteid ) ) ) {
+			return false;
+		}
+
+		$expected = substr( wp_hash( 'site|' . $siteid . '|' . $action, 'nonce' ), - 12, 10 );
+		if ( hash_equals( $expected, $nonce ) ) {
+			return 1;
 		}
 		return false;
 	}

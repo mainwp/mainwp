@@ -269,7 +269,7 @@ mainwp_createclient = function (fromModal) {
     data: formdata,
     success: function (response) {
       jQuery('#mainwp-message-zone-client').hide();
-      jQuery('#bulk_add_createclient').removeAttr('disabled');
+      jQuery('#bulk_add_createclient').prop("disabled", false);
       if (response && response.success) {
         if (fromModal) {
           window.location.href = location.href;

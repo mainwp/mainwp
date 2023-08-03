@@ -58,7 +58,7 @@ jQuery(document).ready(function () {
     });
     jQuery.post(ajaxurl, data, function (response) {
       try {
-        resp = jQuery.parseJSON(response);
+        resp = JSON.parse(response);
 
         if (resp.error != undefined)
           return;
@@ -85,7 +85,7 @@ jQuery(document).ready(function () {
       });
       jQuery.post(ajaxurl, data, function (gruopItem) {
         return function (response) {
-          response = jQuery.trim(response);
+          response = response.trim();
           if (response == 'OK') {
             gruopItem.fadeOut(300);
           }
@@ -111,7 +111,6 @@ jQuery(document).ready(function () {
         if (response.error) {
           return;
         }
-        response = jQuery.trim(response.result);
         jQuery('#mainwp-create-group-modal').modal({
           onHide: function () {
             window.location.reload();
@@ -186,13 +185,13 @@ jQuery(document).ready(function () {
     jQuery('.dimmer').addClass('active');
     jQuery.post(ajaxurl, data, function (response) {
       jQuery('.dimmer').removeClass('active');
-      response = jQuery.trim(response);
+      response = response.trim();
       if (response == 'ERROR') {
         return;
       }
       jQuery('input.mainwp-site-checkbox').prop('checked', false);
       jQuery('input.mainwp-site-checkbox').closest('tr').removeClass('active');
-      var sites = jQuery.parseJSON(response);
+      var sites = JSON.parse(response);
       for (var i = 0; i < sites.length; i++) {
         jQuery('input[value="' + sites[i] + '"].mainwp-site-checkbox').prop('checked', true);
         jQuery('input[value="' + sites[i] + '"].mainwp-site-checkbox').closest('tr').addClass('active');

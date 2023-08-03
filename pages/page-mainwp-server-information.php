@@ -176,21 +176,21 @@ class MainWP_Server_Information {
 			<div class="wp-submenu sub-open">
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
-					<a href="<?php echo admin_url( 'admin.php?page=ServerInformation' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Server', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ServerInformation' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Server', 'mainwp' ); ?></a>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=ServerInformationCron' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Cron Schedules', 'mainwp' ); ?></a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ServerInformationCron' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Cron Schedules', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ErrorLog' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=ErrorLog' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Error Log', 'mainwp' ); ?></a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ErrorLog' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Error Log', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'WPConfig' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=WPConfig' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'WP-Config File', 'mainwp' ); ?></a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=WPConfig' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'WP-Config File', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php
 					if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
 						if ( MainWP_Server_Information_Handler::is_apache_server_software() ) {
 							?>
-							<a href="<?php echo admin_url( 'admin.php?page=.htaccess' ); ?>" class="mainwp-submenu"><?php esc_html_e( '.htaccess File', 'mainwp' ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=.htaccess' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( '.htaccess File', 'mainwp' ); ?></a>
 							<?php
 						}
 					}
@@ -203,7 +203,7 @@ class MainWP_Server_Information {
 									continue;
 								}
 								?>
-								<a href="<?php echo admin_url( 'admin.php?page=Server' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
+								<a href="<?php echo esc_url( admin_url( 'admin.php?page=Server' . $subPage['slug'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
 								<?php
 							}
 						}
@@ -232,9 +232,9 @@ class MainWP_Server_Information {
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'ServerInformation',
 				'href'       => 'admin.php?page=ServerInformation',
-				'icon'       => '<i class="server icon"></i>',
+				'icon'       => '<i class="info circle icon"></i>',
 			),
-			1
+			0
 		);
 
 		/**
@@ -636,6 +636,16 @@ class MainWP_Server_Information {
 				null,
 				'curlssl'
 			);
+
+			$wk = MainWP_Server_Information_Handler::get_openssl_working_status();
+			?>
+			<tr>
+				<td>OpenSSL Working Status</td>
+				<td>Yes</td>
+				<td><?php echo( $wk ? 'Yes' : 'No' ); ?></td>
+				<td class="right aligned"><?php echo ( $wk ? self::get_pass_html() : self::get_warning_html() ); ?></td>
+			</tr>
+			<?php
 
 		}
 		?>
@@ -1072,15 +1082,15 @@ class MainWP_Server_Information {
 		$table_features = apply_filters( 'mainwp_cron_jobs_table_features', $table_features );
 		?>
 		<script type="text/javascript">
-		var responsive = <?php echo $table_features['responsive']; ?>;
+		var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
 		if( jQuery( window ).width() > 1140 ) {
 			responsive = false;
 		}
 		jQuery( document ).ready( function() {
 		jQuery( '#mainwp-cron-jobs-table' ).DataTable( {
-			"searching": <?php echo $table_features['searching']; ?>,
-			"paging": <?php echo $table_features['paging']; ?>,
-			"info": <?php echo $table_features['info']; ?>,
+			"searching": <?php echo esc_html( $table_features['searching'] ); ?>,
+			"paging": <?php echo esc_html( $table_features['paging'] ); ?>,
+			"info": <?php echo esc_html( $table_features['info'] ); ?>,
 				"responsive": responsive,
 			} );
 		} );

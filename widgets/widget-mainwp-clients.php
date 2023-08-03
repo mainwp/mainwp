@@ -42,6 +42,7 @@ class MainWP_Clients {
 	 */
 	private static function render_clients( $clients ) {
 		?>
+		<div class="mainwp-widget-header">
 			<h3 class="ui header handle-drag">
 				<?php
 				/**
@@ -55,8 +56,8 @@ class MainWP_Clients {
 				?>
 				<div class="sub header"><?php esc_html_e( 'Clients information', 'mainwp' ); ?></div>
 			</h3>
-			<div class="ui section hidden divider"></div>
-			<div class="mainwp-clients-widget">
+		</div>
+		<div id="mainwp-clients-widget"  class="mainwp-scrolly-overflow">
 				<?php
 				/**
 				 * Actoin: mainwp_clients_widget_top
@@ -132,13 +133,12 @@ class MainWP_Clients {
 					<?php endforeach; ?>
 					</tbody>
 				</table>
-				<div class="ui hidden divider"></div>
-				<div class="ui two columns grid">
+				<div class="ui two columns grid mainwp-widget-footer">
 					<div class="left aligned column">
-						<a href="admin.php?page=ManageClients" class="ui button green"><?php esc_html_e( 'Manage Clients', 'mainwp' ); ?></a>
+						<a href="admin.php?page=ManageClients" class="ui button mini fluid green"><?php esc_html_e( 'Manage Clients', 'mainwp' ); ?></a>
 					</div>
 					<div class="right aligned column">
-						<a href="admin.php?page=ClientAddNew" class="ui button basic green"><?php esc_html_e( 'Create New Client', 'mainwp' ); ?></a>
+						<a href="admin.php?page=ClientAddNew" class="ui button basic mini fluid green"><?php esc_html_e( 'New Client', 'mainwp' ); ?></a>
 					</div>
 				</div>
 				<script type="text/javascript">

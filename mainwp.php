@@ -8,7 +8,7 @@
  * Author URI: https://mainwp.com
  * Plugin URI: https://mainwp.com/
  * Text Domain: mainwp
- * Version:  4.4.3.4
+ * Version:  4.5-beta3
  *
  * @package MainWP/Dashboard
  *

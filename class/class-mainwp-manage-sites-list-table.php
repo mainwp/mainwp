@@ -164,7 +164,7 @@ class MainWP_Manage_Sites_List_Table {
 	 *
 	 * @return string Column Name.
 	 */
-	public function column_default( $item, $column_name ) { 	// phpcs:ignore -- complexxxxxxxxxxxxxx function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public function column_default( $item, $column_name ) { 	// phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		/**
 		 * Filter is being replaced with mainwp_sitestable_item
@@ -473,7 +473,6 @@ class MainWP_Manage_Sites_List_Table {
 								<div class="item" data-value="connected"><?php esc_html_e( 'Connected', 'mainwp' ); ?></div>
 								<div class="item" data-value="disconnected"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></div>
 								<div class="item" data-value="update"><?php esc_html_e( 'Available update', 'mainwp' ); ?></div>
-								<div class="item" data-value="nosslenabled"><?php esc_html_e( 'No SSL Enabled', 'mainwp' ); ?></div>
 								<div class="item" data-value="sitehealthnotgood"><?php esc_html_e( 'Site Health Not Good', 'mainwp' ); ?></div>
 								<div class="item" data-value="phpver7"><?php esc_html_e( 'PHP Ver < 7.0', 'mainwp' ); ?></div>
 								<div class="item" data-value="suspended"><?php esc_html_e( 'Suspended', 'mainwp' ); ?></div>
@@ -1542,8 +1541,6 @@ class MainWP_Manage_Sites_List_Table {
 							<?php } elseif ( 'status' === $column_name ) { ?>
 								<?php if ( $hasSyncErrors ) : ?>
 									<span data-tooltip="<?php esc_attr_e( 'The site appears to be disconnected. Click here to reconnect.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a class="mainwp_site_reconnect" href="#"><i class="circular inverted red unlink icon"></i></a></span>
-								<?php elseif ( $md5Connection ) : ?>
-								<span data-tooltip="<?php esc_attr_e( 'The site appears to be connected over the insecure MD5 connection.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><i class="circular inverted orange shield icon"></i></span>
 								<?php else : ?>
 									<span data-tooltip="<?php $suspendedSite ? esc_attr_e( 'This is a suspended site, and no activity will be performed on this until unsuspended.', 'mainwp' ) : esc_attr_e( 'Site appears to be connected properly. Click here to sync the site.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a class="managesites_syncdata" href="#"><?php echo $suspendedSite ? '<i class="pause circular yellow inverted circle icon"></i>' : '<i class="circular inverted green check icon"></i>'; ?></a></span>
 								<?php endif; ?>
@@ -1723,13 +1720,11 @@ class MainWP_Manage_Sites_List_Table {
 		$classes = $this->get_groups_classes( $website );
 
 		$hasSyncErrors = ( '' !== $website['sync_errors'] );
-		$md5Connection = ( ! $hasSyncErrors && ( 1 == $website['nossl'] ) );
 		$suspendedSite = ( '0' !== $website['suspended'] );
 
-		$classes = trim( $classes );
-		$classes = ' class="child-site mainwp-child-site-' . intval( $website['id'] ) . ' ' . ( $hasSyncErrors ? 'error' : '' ) . ' ' . ( $suspendedSite ? 'suspended' : '' ) . ' ' . ( $md5Connection ? 'warning' : '' ) . ' ' . $classes . '"';
-
-		echo '<tr id="child-site-' . intval( $website['id'] ) . '"' . esc_html( $classes ) . ' siteid="' . intval( $website['id'] ) . '" site-url="' . esc_url( $website['url'] ) . '">';
+		$classes = trim( $classes );		
+		$classes = ' class="child-site mainwp-child-site-' . intval( $website['id'] ) . ' ' . ( $hasSyncErrors ? 'error' : '' ) . ' ' . ( $suspendedSite ? 'suspended' : '' ) . ' ' . $classes . '"';
+		echo '<tr id="child-site-' . intval( $website['id'] ) . '"' . esc_html( $classes ) . ' siteid="' . intval( $website['id'] ) . '" site-url="' . esc_url( $website['url'] ) . '">';	
 		$this->single_row_columns( $website );
 		echo '</tr>';
 	}
@@ -1866,7 +1861,6 @@ class MainWP_Manage_Sites_List_Table {
 		}
 
 		$hasSyncErrors = ( '' !== $website['sync_errors'] );
-		$md5Connection = ( ! $hasSyncErrors && ( 1 == $website['nossl'] ) );
 		$suspendedSite = ( '0' !== $website['suspended'] );
 
 		if ( $hasSyncErrors ) {
@@ -1922,8 +1916,6 @@ class MainWP_Manage_Sites_List_Table {
 				<td class="center aligned collapsing mainwp-status-cell">
 					<?php if ( $hasSyncErrors ) : ?>
 						<span data-tooltip="<?php esc_attr_e( 'Site appears to be disconnected. Click here to reconnect.', 'mainwp' ); ?>"  data-position="right center"  data-inverted=""><a class="mainwp_site_reconnect" href="#"><i class="circular inverted red unlink icon"></i></a></span>
-					<?php elseif ( $md5Connection ) : ?>
-						<span data-tooltip="<?php esc_attr_e( 'Site appears to be connected over the insecure MD5 connection.', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><i class="circular inverted orange shield icon"></i></span>
 					<?php else : ?>
 						<span data-tooltip="<?php $suspendedSite ? esc_attr_e( 'This is a suspended site, and no activity will be performed on this until unsuspended.', 'mainwp' ) : esc_attr_e( 'Site appears to be connected properly. Click here to sync the site.', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><a class="managesites_syncdata" href="#"><?php echo $suspendedSite ? '<i class="pause circular yellow inverted icon"></i>' : '<i class="circular inverted green check icon"></i>'; ?></a></span>
 					<?php endif; ?>

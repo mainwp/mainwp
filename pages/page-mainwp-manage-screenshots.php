@@ -97,7 +97,6 @@ class MainWP_Manage_Screenshots {
 								<div class="item" data-value="connected"><?php esc_html_e( 'Connected', 'mainwp' ); ?></div>
 								<div class="item" data-value="disconnected"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></div>
 								<div class="item" data-value="update"><?php esc_html_e( 'Available update', 'mainwp' ); ?></div>
-								<div class="item" data-value="nosslenabled"><?php esc_html_e( 'No SSL Enabled', 'mainwp' ); ?></div>
 								<div class="item" data-value="sitehealthnotgood"><?php esc_html_e( 'Site Health Not Good', 'mainwp' ); ?></div>
 								<div class="item" data-value="phpver7"><?php esc_html_e( 'PHP Ver < 7.0', 'mainwp' ); ?></div>
 								<div class="item" data-value="suspended"><?php esc_html_e( 'Suspended', 'mainwp' ); ?></div>
@@ -614,11 +613,6 @@ class MainWP_Manage_Screenshots {
 					if ( $is_not ) {
 						$where = 'wp.id NOT IN (' . implode( ',', $available_update_ids ) . ') ';
 					}
-				}
-			} elseif ( 'nosslenabled' === $site_status ) {
-				$where = 'wp.nossl = 1';
-				if ( $is_not ) {
-					$where = 'wp.nossl = 0';
 				}
 			} elseif ( 'sitehealthnotgood' === $site_status ) {
 				$where = ' wp_sync.health_status = 1 ';

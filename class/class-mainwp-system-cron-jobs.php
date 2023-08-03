@@ -327,7 +327,7 @@ class MainWP_System_Cron_Jobs {
 	 * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_site_email_settings()
 	 * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_default_emails_fields()
 	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_site()
-	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_site_icon()
+	 * @uses \MainWP\Dashboard\MainWP_Sync::get_wp_icon()
 	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_information_array()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
@@ -950,7 +950,7 @@ class MainWP_System_Cron_Jobs {
 				MainWP_DB::instance()->update_website_option( $website, 'last_theme_upgrades', $website->theme_upgrades );
 
 				if ( ! in_array( $website->id, $updatescheckSitesIcon ) ) {
-					MainWP_Sync::sync_site_icon( $website->id );
+					MainWP_Sync::get_wp_icon( $website->id );
 					$updatescheckSitesIcon[] = $website->id;
 				}
 

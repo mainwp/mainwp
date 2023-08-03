@@ -17,7 +17,7 @@ jQuery( document ).ready( function () {
             import_stop_by_user = true;
             jQuery( '#mainwp_managesites_import_logging .log' ).append( __( 'Paused import by user.' ) + "\n" );
             jQuery( '#mainwp_managesites_btn_import' ).val( __( 'Continue' ) );
-            jQuery( '#mainwp_managesites_btn_save_csv' ).removeAttr( "disabled" ); //Enable
+            jQuery( '#mainwp_managesites_btn_save_csv' ).prop("disabled", false); //Enable
             jQuery( '#mainwp-importing-sites' ).hide();
         } else
         {
@@ -56,7 +56,7 @@ mainwp_managesites_import_sites = function () {
         jQuery( '#mainwp_managesites_btn_import' ).val( __( 'Finished!' ) );
         jQuery( '#mainwp_managesites_btn_import' ).attr( 'disabled', 'true' ); //Disable
         if ( import_count_success < import_total ) {
-            jQuery( '#mainwp_managesites_btn_save_csv' ).removeAttr( "disabled" ); //Enable
+            jQuery( '#mainwp_managesites_btn_save_csv' ).prop("disabled", false); //Enable
         }
         jQuery( '#mainwp_managesites_import_logging .log' ).append( '<div class="ui divider"></div>' + __( 'Number of sites to Import: %1 Created sites: %2 Failed: %3', import_total, import_count_success, import_count_fails ) );
         jQuery( '#mainwp_managesites_import_logging' ).scrollTop( jQuery( '#mainwp_managesites_import_logging .log' ).height() );
@@ -128,7 +128,7 @@ mainwp_managesites_import_sites = function () {
 
         var check_result = '[' + res_things.check_me + ']>> ';
 
-        response = jQuery.trim( response );
+        response = response.trim();
         var url = import_wpurl;
         if ( url.substr( 0, 4 ) != 'http' ) {
             url = 'http://' + url;
@@ -174,7 +174,7 @@ mainwp_managesites_import_sites = function () {
                 }
                 var add_result = '[' + res_things.add_me + ']>> ';
 
-                response = jQuery.trim( response );
+                response = response.trim();
 
                 if ( response.substr( 0, 5 ) == 'ERROR' ) {
                     jQuery( '#mainwp_managesites_import_fail_logging' ).append( '<span>' + import_line_orig + '</span>' );

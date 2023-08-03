@@ -40,6 +40,9 @@ class MainWP_Client_Overview {
 		'note'        => true,
 		'fields_info' => true,
 		'websites'    => true,
+		'recent_posts'       => true,
+		'recent_pages'       => true,
+		'non_mainwp_changes' => true,
 	);
 
 	/**
@@ -196,24 +199,19 @@ class MainWP_Client_Overview {
 		$values               = apply_filters( 'mainwp_clients_overview_enabled_widgets', $values, null );
 		self::$enable_widgets = array_merge( self::$enable_widgets, $values );
 
-		// Load the Updates Overview widget.
+		// Load the Overview widget.
 		if ( self::$enable_widgets['overview'] ) {
-			MainWP_UI::add_widget_box( 'overview', array( MainWP_Client_Overview_Info::get_class_name(), 'render' ), $page, 'left', esc_html__( 'Overview', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'overview', array( MainWP_Client_Overview_Info::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
 		}
 
-		// Load the Updates Overview widget.
-		if ( self::$enable_widgets['note'] ) {
-			MainWP_UI::add_widget_box( 'note', array( MainWP_Client_Overview_Note::get_class_name(), 'render' ), $page, 'left', esc_html__( 'Notes', 'mainwp' ) );
-		}
-
-		// Load the Updates Overview widget.
+		// Load the Info widget.
 		if ( self::$enable_widgets['fields_info'] ) {
-			MainWP_UI::add_widget_box( 'fields_info', array( MainWP_Client_Overview_Custom_Info::get_class_name(), 'render' ), $page, 'right', esc_html__( 'Addition Info', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'fields_info', array( MainWP_Client_Overview_Custom_Info::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
 		}
 
-		// Load the Updates Overview widget.
+		// Load the Websites widget.
 		if ( self::$enable_widgets['websites'] ) {
-			MainWP_UI::add_widget_box( 'websites', array( MainWP_Client_Overview_Sites::get_class_name(), 'render' ), $page, 'right', esc_html__( 'Websites', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'websites', array( MainWP_Client_Overview_Sites::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
 		}
 
 		if ( is_array( $client_contacts ) ) {
@@ -221,9 +219,29 @@ class MainWP_Client_Overview {
 				if ( isset( self::$enable_widgets[ 'contact_' . $contact['contact_id'] ] ) && self::$enable_widgets[ 'contact_' . $contact['contact_id'] ] ) {
 					$contact_widget          = new MainWP_Client_Overview_Contacts();
 					$contact_widget->contact = $contact;
-					MainWP_UI::add_widget_box( 'contact_' . $contact['contact_id'], array( $contact_widget, 'render' ), $page, 'left', esc_html__( 'Contacts', 'mainwp' ) );
+					MainWP_UI::add_widget_box( 'contact_' . $contact['contact_id'], array( $contact_widget, 'render' ), $page, array( 1, 1, 2, 3 ) );
 				}
 			}
+		}
+
+		// Load the Notes widget.
+		if ( self::$enable_widgets['note'] ) {
+			MainWP_UI::add_widget_box( 'note', array( MainWP_Client_Overview_Note::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
+		}
+
+		// Load the Recent Posts widget.
+		if ( self::$enable_widgets['recent_posts'] ) {
+			MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
+		}
+
+		// Load the Recent Pages widget.
+		if ( self::$enable_widgets['recent_pages'] ) {
+			MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
+		}
+
+		// Load the Non-MainWP Changes widget.
+		if ( self::$enable_widgets['non_mainwp_changes'] ) {
+			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
 		}
 
 		$i = 1;
@@ -282,6 +300,7 @@ class MainWP_Client_Overview {
 		?>
 		<div class="mainwp-primary-content-wrap">
 		<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
+			
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'client-widgets' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="client-widgets"></i>
@@ -298,81 +317,11 @@ class MainWP_Client_Overview {
 			 * @since 4.3
 			 */
 			do_action( 'mainwp_before_overview_widgets' );
-
-			$overviewColumns = get_option( 'mainwp_number_clients_overview_columns', 2 );
-
-			$cls_grid = 'two';
-			if ( 3 == $overviewColumns ) {
-				$cls_grid = 'three';
-			}
-			?>
-			<div class="ui <?php echo $cls_grid; ?> column tablet stackable grid mainwp-grid-wrapper">
-		<div class="column grid-item" id="mainwp-grid-left" widget-context="left">
-						<?php
-						/**
-						 * Action: mainwp_clients_overview_before_left_column
-						 *
-						 * Fires at the top of the left column on the Overview page.
-						 *
-						 * @since 4.3
-						 */
-						do_action( 'mainwp_clients_overview_before_left_column' );
-						MainWP_UI::do_widget_boxes( $screen->id, 'left' );
-						/**
-						 * Action: mainwp_clients_overview_after_left_column
-						 *
-						 * Fires at the bottom of the left column on the Overview page.
-						 *
-						 * @since 4.3
-						 */
-						do_action( 'mainwp_clients_overview_after_left_column' );
 						?>
+			<div id="mainwp-grid-wrapper" class="gridster">
+				<?php MainWP_UI::do_widget_boxes( $screen->id ); ?>
 		</div>
-		<?php if ( 3 == $overviewColumns ) : ?>
-		<div class="column grid-item" id="mainwp-grid-middle" widget-context="middle">
-						<?php
-						/**
-						 * Action: mainwp_clients_overview_before_middle_column
-						 *
-						 * Fires at the top of the middle column on the Overview page.
-						 *
-						 * @since 4.3
-						 */
-						do_action( 'mainwp_clients_overview_before_middle_column' );
-						MainWP_UI::do_widget_boxes( $screen->id, 'middle' );
-						/**
-						 * Action: mainwp_clients_overview_after_middle_column
-						 *
-						 * Fires at the bottom of the middle column on the Overview page.
-						 *
-						 * @since 4.3
-						 */
-						do_action( 'mainwp_clients_overview_after_middle_column' );
-						?>
-		</div>
-		<?php endif; ?>
-		<div class="column grid-item" id="mainwp-grid-right" widget-context="right">
-						<?php
-						/**
-						 * Action: mainwp_clients_overview_before_right_column
-						 *
-						 * Fires at the top of the right column on the Overview page.
-						 *
-						 * @since 4.3
-						 */
-						do_action( 'mainwp_clients_overview_before_right_column' );
-						MainWP_UI::do_widget_boxes( $screen->id, 'right' );
-						/**
-						 * Action: mainwp_clients_overview_after_right_column
-						 *
-						 * Fires at the bottom of the right column on the Overview page.
-						 *
-						 * @since 4.3
-						 */
-						do_action( 'mainwp_clients_overview_after_right_column' );
-						?>
-		</div>
-			</div>
+		
 			<?php
 			/**
 			 * Action: 'mainwp_after_overview_widgets'
@@ -383,48 +332,10 @@ class MainWP_Client_Overview {
 			 */
 			do_action( 'mainwp_after_overview_widgets' );
 			?>
+	
 	<script type="text/javascript">
-		var page_sortablewidgets = '<?php echo esc_js( MainWP_System_Utility::get_page_id( $screen->id ) ); ?>';
 		jQuery( document ).ready( function( $ ) {
 
-			var $mainwp_drake = dragula( [document.getElementById( 'mainwp-grid-left' ),
-			<?php
-			if ( 3 == $overviewColumns ) {
-				?>
-				document.getElementById( 'mainwp-grid-middle' ), 
-			<?php }; ?> 
-				document.getElementById( 'mainwp-grid-right' )], {
-				moves: function ( el, container, handle ) {
-					return handle.classList.contains( 'handle-drag' );
-				}
-			} );
-
-			$mainwp_drake.on( 'drop', function ( el, target, source, sibling ) {
-				var conts = $mainwp_drake.containers;
-				var order = new Array();
-				for ( var i = 0; i < conts.length; i++ ) {
-					var context = jQuery( conts[i] ).attr( 'widget-context' );
-					if ( undefined === context || '' == context )
-						continue;
-					var searchEles = conts[i].children;
-					for( var idx = 0; idx < searchEles.length; idx++ ) {
-						var itemElem = searchEles[idx];
-						var wid = $( itemElem ).attr( 'id' );
-						wid = wid.replace( "widget-", "" );
-						order.push( context + ":" + wid );
-					}
-				}
-
-				var postVars = {
-					action:'mainwp_widgets_order',
-					page: page_sortablewidgets,
-					item_id: <?php echo intval( $clientid ); ?>
-				};
-				postVars['order'] = order.join( ',' );
-				jQuery.post( ajaxurl, mainwp_secure_data( postVars ), function ( res ) {
-				} );
-
-			} );
 			jQuery( '.mainwp-widget .mainwp-dropdown-tab .item' ).tab();
 
 			mainwp_clients_overview_screen_options = function () {
@@ -437,7 +348,6 @@ class MainWP_Client_Overview {
 			};
 			jQuery('#reset-clients-overview-settings').on('click', function () {
 				mainwp_confirm(__('Are you sure.'), function(){
-					jQuery('input[name=number_overview_columns][value=2]').prop('checked', true);
 					jQuery('.mainwp_hide_wpmenu_checkboxes input[name="mainwp_show_widgets[]"]').prop('checked', true);
 					jQuery('input[name=reset_client_overview_settings]').attr('value', 1);
 					jQuery('#submit-client-overview-settings').click();
@@ -489,7 +399,7 @@ class MainWP_Client_Overview {
 			<input type="hidden" name="reset_client_overview_settings" value="" />
 			</form>
 		</div>
-
+		</div>
 		<?php
 	}
 
@@ -507,6 +417,9 @@ class MainWP_Client_Overview {
 			'note'        => esc_html__( 'Notes', 'mainwp' ),
 			'fields_info' => esc_html__( 'Addition Info', 'mainwp' ),
 			'websites'    => esc_html__( 'Websites', 'mainwp' ),
+			'recent_posts'       => esc_html__( 'Recent Posts', 'mainwp' ),
+			'recent_pages'       => esc_html__( 'Recent Pages', 'mainwp' ),
+			'non_mainwp_changes' => esc_html__( 'Non-MainWP Changes', 'mainwp' ),
 		);
 
 		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) {
@@ -556,21 +469,6 @@ class MainWP_Client_Overview {
 			}
 
 			?>
-		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Widgets columns', 'mainwp' ); ?></label>
-			<div class="ten wide column">
-				<div class="ui radio checkbox">
-					<input type="radio" name="number_overview_columns" required="required" <?php echo ( 2 == $overviewColumns ? 'checked="true"' : '' ); ?> value="2">
-					<label><?php esc_html_e( 'Show widgets in 2 columns', 'mainwp' ); ?></label>
-				</div>
-					<div class="ui fitted hidden divider"></div>
-				<div class="ui radio checkbox">
-					<input type="radio" name="number_overview_columns" required="required" <?php echo ( 3 == $overviewColumns ? 'checked="true"' : '' ); ?> value="3">
-					<label><?php esc_html_e( 'Show widgets in 3 columns', 'mainwp' ); ?></label>
-				</div>
-			</div>
-		</div>
-
 		<div class="ui grid field">
 			<label class="six wide column"><?php esc_html_e( 'Show widgets', 'mainwp' ); ?></label>
 			<div class="ten wide column" <?php echo 'data-tooltip="' . esc_attr_e( 'Select widgets that you want to hide in the MainWP Overview page.', 'mainwp' ); ?> data-inverted="" data-position="top left">

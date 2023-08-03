@@ -58,6 +58,7 @@ class MainWP_Client_Overview_Contacts {
 		}
 
 		?>
+		<div class="mainwp-widget-header">
 			<h3 class="ui header handle-drag">
 			<?php
 			/**
@@ -75,8 +76,8 @@ class MainWP_Client_Overview_Contacts {
 					<?php echo esc_html( apply_filters( 'mainwp_clients_overview_contact_widget_sutbitle', $contact_info['contact_role'], $contact_info ) ); ?>
 				</div>
 			</h3>
-			<div class="ui section hidden divider"></div>
-			<div class="mainwp-widget-client-card">
+		</div>
+			<div class="mainwp-widget-client-card mainwp-scrolly-overflow">
 				<?php
 				/**
 				 * Actoin: mainwp_clients_overview_contact_widget_top

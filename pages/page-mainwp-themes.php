@@ -164,22 +164,22 @@ class MainWP_Themes {
 			<div class="wp-submenu sub-open">
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
-					<a href="<?php echo admin_url( 'admin.php?page=ThemesManage' ); ?>" class="mainwp-submenu">
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ThemesManage' ) ); ?>" class="mainwp-submenu">
 						<?php esc_html_e( 'Manage Themes', 'mainwp' ); ?>
 					</a>
 					<?php if ( mainwp_current_user_have_right( 'dashboard', 'install_themes' ) ) { ?>
 						<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ThemesInstall' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=ThemesInstall' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Install', 'mainwp' ); ?></a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ThemesInstall' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Install', 'mainwp' ); ?></a>
 						<?php } ?>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ThemesAutoUpdate' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=ThemesAutoUpdate' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Advanced Auto Updates', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ThemesAutoUpdate' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Advanced Auto Updates', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ThemesIgnore' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=ThemesIgnore' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Ignored Updates', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ThemesIgnore' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Ignored Updates', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ThemesIgnoredAbandoned' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=ThemesIgnoredAbandoned' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Ignored Abandoned', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ThemesIgnoredAbandoned' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Ignored Abandoned', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
@@ -188,7 +188,7 @@ class MainWP_Themes {
 								continue;
 							}
 							?>
-							<a href="<?php echo admin_url( 'admin.php?page=Themes' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=Themes' . $subPage['slug'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
 							<?php
 						}
 					}
@@ -214,7 +214,7 @@ class MainWP_Themes {
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => esc_html__( 'Themes', 'mainwp' ),
-				'parent_key' => 'mainwp_tab',
+				'parent_key' => 'managesites',
 				'slug'       => 'ThemesManage',
 				'href'       => 'admin.php?page=ThemesManage',
 				'icon'       => '<i class="paint brush icon"></i>',
@@ -640,7 +640,7 @@ class MainWP_Themes {
 		<script type="text/javascript">
 			jQuery( document ).on( 'keyup', '#mainwp_theme_search_by_keyword', function () {
 				if( jQuery(this).val() != '' ){
-					jQuery( '#display_sites_not_meeting_criteria' ).removeAttr('disabled');
+					jQuery( '#display_sites_not_meeting_criteria' ).prop("disabled", false);
 				} else {
 					jQuery( '#display_sites_not_meeting_criteria' ).closest('.checkbox').checkbox('set unchecked');
 					jQuery( '#display_sites_not_meeting_criteria' ).attr('disabled', 'true');
@@ -685,20 +685,8 @@ class MainWP_Themes {
 		$output->errors = array();
 		$output->themes = array();
 
-		$data_fields = array(
-			'id',
-			'url',
-			'name',
-			'adminname',
-			'nossl',
-			'privkey',
-			'nosslkey',
-			'http_user',
-			'http_pass',
-			'ssl_version',
-			'sync_errors',
-			'themes',
-		);
+		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
+		$data_fields[] = 'themes';
 
 		if ( 1 == get_option( 'mainwp_optimize' ) ) {
 			if ( '' != $sites ) {
@@ -1086,7 +1074,7 @@ class MainWP_Themes {
 					<div class="ui grid">
 						<div class="one wide center aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
 						<div class="one wide center aligned middle aligned column"><div class="ui checkbox master"><input type="checkbox"><label></label></div></div>
-						<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_theme_icon( $theme_slug_first ); ?></div>
+						<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_theme_icon( esc_html( $theme_slug_first ) ); ?></div>
 						<div class="five wide middle aligned column"><strong><?php echo esc_html( $theme_title ); ?></strong></div>
 						<div class="two wide center aligned middle aligned column"></div>
 						<div class="two wide center aligned middle aligned column lastest-version-info"></div>
@@ -1169,12 +1157,12 @@ class MainWP_Themes {
 								$item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
 
 								?>
-							<div class="ui grid mainwp-manage-theme-item-website <?php echo $active_status_class; ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" >
+							<div class="ui grid mainwp-manage-theme-item-website <?php echo esc_html( $active_status_class ); ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" >
 								<div class="one wide center aligned middle aligned column"></div>
 								<div class="one wide center aligned middle aligned column">
 
 								<?php if ( '' != $parent_str ) : ?>
-									<?php echo $parent_str; ?>
+									<?php echo $parent_str; //phpcs:ignore -- escaped. ?>
 								<?php elseif ( $actived ) : ?>
 									<span data-tooltip="<?php echo esc_html__( 'Active theme on the site can not be deleted.', 'mainwp' ); ?>" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>
 								<?php else : ?>
@@ -1774,19 +1762,7 @@ class MainWP_Themes {
 		$keyword       = null;
 		$search_status = 'all';
 
-		$data_fields = array(
-			'id',
-			'url',
-			'name',
-			'adminname',
-			'nossl',
-			'privkey',
-			'nosslkey',
-			'http_user',
-			'http_pass',
-			'ssl_version',
-			'sync_errors',
-		);
+		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
 		if ( null == $output ) {
 			$keyword             = isset( $_POST['keyword'] ) && ! empty( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : null;
@@ -1958,8 +1934,8 @@ class MainWP_Themes {
 				?>
 				<tr theme-slug="<?php echo rawurlencode( $slug ); ?>" theme-name="<?php echo esc_attr( $name ); ?>">
 					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="theme[]" value="<?php echo rawurlencode( $slug ); ?>"></span></td>
-					<td><?php echo MainWP_System_Utility::get_theme_icon( $slug ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $name ); ?></td>
-					<td><?php echo ( 1 == $theme['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); ?></td>
+					<td><?php echo MainWP_System_Utility::get_theme_icon( $slug ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $name ); //phpcs:ignore -- escaped. ?></td>
+					<td><?php echo ( 1 == $theme['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); //phpcs:ignore -- escaped. ?></td>
 					<td><?php echo ( in_array( $slug, $trustedThemes ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
 					<td><?php echo ( isset( $decodedIgnoredThemes[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
 					<td><?php echo ( isset( $decodedIgnoredThemes[ $slug ] ) ) ? '<span data-tooltip="Ignored themes will not be automatically updated." data-inverted=""><i class="info red circle icon"></i></span>' : ''; ?></td>
@@ -1967,9 +1943,9 @@ class MainWP_Themes {
 					<?php if ( '' === $esc_note ) : ?>
 						<a href="javascript:void(0)" class="mainwp-edit-theme-note"><i class="sticky note outline icon"></i></a>
 					<?php else : ?>
-						<a href="javascript:void(0)" class="mainwp-edit-theme-note" data-tooltip="<?php echo substr( $strip_note, 0, 100 ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+						<a href="javascript:void(0)" class="mainwp-edit-theme-note" data-tooltip="<?php echo substr( $strip_note, 0, 100 ); //phpcs:ignore -- escaped. ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
 					<?php endif; ?>
-						<span style="display: none" class="esc-content-note"><?php echo $esc_note; ?></span>
+						<span style="display: none" class="esc-content-note"><?php echo $esc_note; //phpcs:ignore -- escaped. ?></span>
 					</td>
 				</tr>
 			<?php endforeach; ?>
@@ -2018,7 +1994,7 @@ class MainWP_Themes {
 		$table_features = apply_filters( 'mainwp_theme_auto_updates_table_fatures', $table_features );
 		?>
 		<script type="text/javascript">
-		var responsive = <?php echo $table_features['responsive']; ?>;
+		var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
 			if( jQuery( window ).width() > 1140 ) {
 				responsive = false;
 			}
@@ -2026,13 +2002,13 @@ class MainWP_Themes {
 				jQuery( '.mainwp-ui-page .ui.checkbox' ).checkbox();
 
 				jQuery( '#mainwp-all-active-themes-table' ).DataTable( {
-					"searching" : <?php echo $table_features['searching']; ?>,
-					"stateSave" : <?php echo $table_features['stateSave']; ?>,
-					"colReorder" : <?php echo $table_features['colReorder']; ?>,
-					"info" : <?php echo $table_features['info']; ?>,
-					"paging" : <?php echo $table_features['paging']; ?>,
-					"ordering" : <?php echo $table_features['ordering']; ?>,
-					"order" : <?php echo $table_features['order']; ?>,
+					"searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
+					"stateSave" : <?php echo esc_html( $table_features['stateSave'] ); ?>,
+					"colReorder" : <?php echo esc_html( $table_features['colReorder'] ); ?>,
+					"info" : <?php echo esc_html( $table_features['info'] ); ?>,
+					"paging" : <?php echo esc_html( $table_features['paging'] ); ?>,
+					"ordering" : <?php echo esc_html( $table_features['ordering'] ); ?>,
+					"order" : <?php echo esc_html( $table_features['order'] ); ?>,
 					"columnDefs": [ { "orderable": false, "targets": [ 0, 1, 6 ] } ],
 					"responsive": responsive,
 				} );
@@ -2137,11 +2113,11 @@ class MainWP_Themes {
 					<?php if ( $ignoredThemes ) : ?>
 						<?php foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) : ?>
 						<tr theme-slug="<?php echo rawurlencode( $ignoredTheme ); ?>">
-							<td><?php echo MainWP_System_Utility::get_theme_icon( $ignoredTheme ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $ignoredThemeName ); ?></td>
+							<td><?php echo MainWP_System_Utility::get_theme_icon( $ignoredTheme ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $ignoredThemeName ); //phpcs:ignore -- escaped. ?></td>
 							<td><?php echo esc_html( $ignoredTheme ); ?></td>
 							<td class="right aligned">
 							<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_globally( '<?php echo rawurlencode( $ignoredTheme ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
+								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_globally( '<?php echo rawurlencode( $ignoredTheme ); //phpcs:ignore -- escaped. ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							</td>
 						</tr>
@@ -2220,10 +2196,10 @@ class MainWP_Themes {
 						?>
 						<tr site-id="<?php echo esc_attr( $website->id ); ?>" theme-slug="<?php echo rawurlencode( $ignoredTheme ); ?>">
 							<?php if ( $first ) : ?>
-								<td><div><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
+								<td><div><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
 								<?php $first = false; ?>
 							<?php else : ?>
-								<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
+								<td><div style="display:none;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
 							<?php endif; ?>
 							<td><?php echo MainWP_System_Utility::get_theme_icon( $ignoredTheme ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $ignoredThemeName ); ?></td>
 							<td><?php echo esc_html( $ignoredTheme ); ?></td>
@@ -2443,10 +2419,10 @@ class MainWP_Themes {
 						?>
 					<tr site-id="<?php echo esc_attr( $website->id ); ?>" theme-slug="<?php echo rawurlencode( $ignoredTheme ); ?>">
 						<?php if ( $first ) : ?>
-						<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
+						<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
 							<?php $first = false; ?>
 						<?php else : ?>
-						<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
+						<td><div style="display:none;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
 						<?php endif; ?>
 						<td><?php echo esc_html( $ignoredThemeName ); ?></td>
 						<td><?php echo esc_html( $ignoredTheme ); ?></td>

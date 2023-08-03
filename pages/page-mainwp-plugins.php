@@ -186,20 +186,20 @@ class MainWP_Plugins {
 			<div class="wp-submenu sub-open" >
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
-					<a href="<?php echo admin_url( 'admin.php?page=PluginsManage' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Plugins', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=PluginsManage' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Plugins', 'mainwp' ); ?></a>
 					<?php if ( mainwp_current_user_have_right( 'dashboard', 'install_plugins' ) ) : ?>
 						<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginsInstall' ) ) : ?>
-							<a href="<?php echo admin_url( 'admin.php?page=PluginsInstall' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Install Plugins', 'mainwp' ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=PluginsInstall' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Install Plugins', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							<?php endif; ?>
 							<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginsAutoUpdate' ) ) : ?>
-							<a href="<?php echo admin_url( 'admin.php?page=PluginsAutoUpdate' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Advanced Auto Updates', 'mainwp' ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=PluginsAutoUpdate' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Advanced Auto Updates', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginsIgnore' ) ) : ?>
-								<a href="<?php echo admin_url( 'admin.php?page=PluginsIgnore' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Ignored Updates', 'mainwp' ); ?></a>
+								<a href="<?php echo esc_url( admin_url( 'admin.php?page=PluginsIgnore' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Ignored Updates', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginsIgnoredAbandoned' ) ) : ?>
-								<a href="<?php echo admin_url( 'admin.php?page=PluginsIgnoredAbandoned' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Ignored Abandoned', 'mainwp' ); ?></a>
+								<a href="<?php echo esc_url( admin_url( 'admin.php?page=PluginsIgnoredAbandoned' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Ignored Abandoned', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							<?php
 							if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
@@ -208,7 +208,7 @@ class MainWP_Plugins {
 										continue;
 									}
 									?>
-									<a href="<?php echo admin_url( 'admin.php?page=Plugins' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
+									<a href="<?php echo esc_url( admin_url( 'admin.php?page=Plugins' . $subPage['slug'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
 									<?php
 								}
 							}
@@ -233,7 +233,7 @@ class MainWP_Plugins {
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => esc_html__( 'Plugins', 'mainwp' ),
-				'parent_key' => 'mainwp_tab',
+				'parent_key' => 'managesites',
 				'slug'       => 'PluginsManage',
 				'href'       => 'admin.php?page=PluginsManage',
 				'icon'       => '<i class="plug icon"></i>',
@@ -629,7 +629,7 @@ class MainWP_Plugins {
 				<div class="ui mini form">
 					<div class="field">
 						<div class="ui input fluid">
-							<input type="text" placeholder="<?php esc_attr_e( 'Plugin name', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>" />
+							<input type="text" placeholder="<?php esc_attr_e( 'Plugin name', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; //phpcs:ignore -- escaped. ?>" />
 						</div>
 					</div>
 					<div class="ui hidden fitted divider"></div>
@@ -661,7 +661,7 @@ class MainWP_Plugins {
 		<script type="text/javascript">
 			jQuery( document ).on( 'keyup', '#mainwp_plugin_search_by_keyword', function () {
 				if( jQuery(this).val() != '' ){
-					jQuery( '#display_sites_not_meeting_criteria' ).removeAttr('disabled');
+					jQuery( '#display_sites_not_meeting_criteria' ).prop("disabled", false);
 				} else {
 					jQuery( '#display_sites_not_meeting_criteria' ).closest('.checkbox').checkbox('set unchecked');
 					jQuery( '#display_sites_not_meeting_criteria' ).attr('disabled', 'true');					
@@ -713,20 +713,8 @@ class MainWP_Plugins {
 		$output->errors  = array();
 		$output->plugins = array();
 
-		$data_fields = array(
-			'id',
-			'url',
-			'name',
-			'adminname',
-			'nossl',
-			'privkey',
-			'nosslkey',
-			'http_user',
-			'http_pass',
-			'ssl_version',
-			'sync_errors',
-			'plugins',
-		);
+		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
+		$data_fields[] = 'plugins';
 
 		if ( 1 == get_option( 'mainwp_optimize' ) ) {
 			if ( '' != $sites ) {
@@ -1180,7 +1168,7 @@ class MainWP_Plugins {
 						<div class="one wide center aligned middle aligned column">
 							<div class="ui checkbox <?php echo 'mainwp-child' == $plugin_directory ? 'disabled' : ''; ?> master"><input type="checkbox" <?php echo 'mainwp-child' == $plugin_directory ? 'disabled="disabled"' : ''; ?>><label></label></div>
 						</div>
-						<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></div>
+						<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( esc_html( $plugin_directory ) ); ?></div>
 						<div class="five wide middle aligned column"><a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>" target="_blank" ><strong><?php echo esc_html( $plugin_title ); ?></strong></a></div>
 						<div class="two wide center aligned middle aligned column"></div>
 						<div class="two wide center aligned middle aligned column lastest-version-info"></div>
@@ -1231,9 +1219,9 @@ class MainWP_Plugins {
 							if ( isset( $sitePlugins[ $site_id ][ $slug_ver ] ) && ( 0 == $sitePlugins[ $site_id ][ $slug_ver ]['active'] || 1 == $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) ) {
 								$actived = true;
 								if ( isset( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) && 1 == $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) {
-									$plugin_status = '<span class="ui small green basic label">Active</span>';
+									$plugin_status = '<span class="ui small green basic label">' . esc_html__( 'Active', 'mainwp' ) . '</span>';
 								} elseif ( isset( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) && 0 == $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) {
-									$plugin_status = '<span class="ui small red basic label">Inactive</span>';
+									$plugin_status = '<span class="ui small red basic label">' . esc_html__( 'Inactive', 'mainwp' ) . '</span>';
 									$actived       = false;
 								} else {
 									$plugin_status = '';
@@ -1264,7 +1252,7 @@ class MainWP_Plugins {
 								</div>
 									<div class="three wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $site_id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo $site_id; ?>"><?php echo esc_html( $site_name ); ?></a></div>
 									<div class="one wide middle aligned column"></div>
-								<div class="one wide center aligned middle aligned column"><?php echo $plugin_status; ?></div>
+								<div class="one wide center aligned middle aligned column"><?php echo $plugin_status; //phpcs:ignore -- escaped. ?></div>
 									<div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
 
 
@@ -1414,7 +1402,7 @@ class MainWP_Plugins {
 										var sel_ids = jQuery( '#plugin_install_selected_sites' ).val();										
 										if ( '' != sel_ids )
 											sel_ids = '&selected_sites=' + sel_ids;
-										var origin   = '<?php echo get_admin_url(); ?>';
+										var origin   = '<?php echo esc_url( get_admin_url() ); ?>';
 										if ( 13 === e.which ) {
 											location.href = origin + 'admin.php?page=PluginsInstall&tab=search&s=' + encodeURIComponent(search) + sel_ids;
 										}
@@ -1712,6 +1700,8 @@ class MainWP_Plugins {
 		$keyword       = null;
 		$search_status = 'all';
 
+		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
+
 		if ( null == $output ) {
 			$keyword              = isset( $_POST['keyword'] ) && ! empty( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : null;
 			$search_status        = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : 'all';
@@ -1754,18 +1744,7 @@ class MainWP_Plugins {
 
 					$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 						$website,
-						array(
-							'id',
-							'url',
-							'name',
-							'adminname',
-							'nossl',
-							'privkey',
-							'nosslkey',
-							'http_user',
-							'http_pass',
-							'ssl_version',
-						)
+						$data_fields
 					);
 				}
 				MainWP_DB::free_result( $websites );
@@ -1916,9 +1895,9 @@ class MainWP_Plugins {
 					?>
 					<tr plugin-slug="<?php echo rawurlencode( $slug ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $name ) ); ?>">
 						<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo rawurlencode( $slug ); ?>"></span></td>
-						<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
+						<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( esc_html( $plugin_directory ) ); ?></td>
 						<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . $wpid . '&plugin=' . rawurlencode( dirname( $slug ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $name ); ?></a></td>
-						<td><?php echo ( 1 == $plugin['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); ?></td>
+						<td><?php echo ( 1 == $plugin['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); //phpcs:ignore -- escaped. ?></td>
 						<td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
 						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
 						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span data-tooltip="Ignored plugins will not be automatically updated." data-inverted=""><i class="info red circle icon" ></i></span>' : ''; ?></td>
@@ -1926,9 +1905,9 @@ class MainWP_Plugins {
 						<?php if ( '' === $esc_note ) : ?>
 							<a href="javascript:void(0)" class="mainwp-edit-plugin-note" ><i class="sticky note outline icon"></i></a>
 						<?php else : ?>
-							<a href="javascript:void(0)" class="mainwp-edit-plugin-note" data-tooltip="<?php echo substr( $strip_note, 0, 100 ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+							<a href="javascript:void(0)" class="mainwp-edit-plugin-note" data-tooltip="<?php echo substr( $strip_note, 0, 100 ); //phpcs:ignore -- escaped. ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
 						<?php endif; ?>
-							<span style="display: none" class="esc-content-note"><?php echo $esc_note; ?></span>
+							<span style="display: none" class="esc-content-note"><?php echo $esc_note; //phpcs:ignore -- escaped. ?></span>
 						</td>
 					</tr>
 				<?php endforeach; ?>
@@ -1977,19 +1956,19 @@ class MainWP_Plugins {
 		$table_features = apply_filters( 'mainwp_plugin_auto_updates_table_fatures', $table_features );
 		?>
 		<script type="text/javascript">
-		var responsive = <?php echo $table_features['responsive']; ?>;
+		var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
 			if( jQuery( window ).width() > 1140 ) {
 				responsive = false;
 			}
 		jQuery( document ).ready( function() {
 			jQuery( '#mainwp-all-active-plugins-table' ).DataTable( {
-				"searching" : <?php echo $table_features['searching']; ?>,
-				"stateSave" : <?php echo $table_features['stateSave']; ?>,
-				"colReorder" : <?php echo $table_features['colReorder']; ?>,
-				"info" : <?php echo $table_features['info']; ?>,
-				"paging" : <?php echo $table_features['paging']; ?>,
-				"ordering" : <?php echo $table_features['ordering']; ?>,
-				"order" : <?php echo $table_features['order']; ?>,
+				"searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
+				"stateSave" : <?php echo esc_html( $table_features['stateSave'] ); ?>,
+				"colReorder" : <?php echo esc_html( $table_features['colReorder'] ); ?>,
+				"info" : <?php echo esc_html( $table_features['info'] ); ?>,
+				"paging" : <?php echo esc_html( $table_features['paging'] ); ?>,
+				"ordering" : <?php echo esc_html( $table_features['ordering'] ); ?>,
+				"order" : <?php echo esc_html( $table_features['order'] ); ?>,
 				"columnDefs": [ { "orderable": false, "targets": [ 0, 1, 6 ] } ],
 				"responsive": responsive,
 			} );
@@ -2194,10 +2173,10 @@ class MainWP_Plugins {
 							?>
 							<tr site-id="<?php echo intval( $website->id ); ?>" plugin-slug="<?php echo rawurlencode( $ignoredPlugin ); ?>">
 							<?php if ( $first ) : ?>
-								<td><div><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
+								<td><div><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
 								<?php $first = false; ?>
 							<?php else : ?>
-								<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
+								<td><div style="display:none;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
 							<?php endif; ?>
 								<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
 							<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . rawurlencode( $plugin_directory ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
@@ -2433,11 +2412,11 @@ class MainWP_Plugins {
 							<tr site-id="<?php echo esc_attr( $website->id ); ?>" plugin-slug="<?php echo rawurlencode( $ignoredPlugin ); ?>">
 									<?php if ( $first ) : ?>
 									<td>
-										<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+										<a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a>
 									</td>
 										<?php $first = false; ?>
 								<?php else : ?>
-									<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
+									<td><div style="display:none;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
 								<?php endif; ?>
 										<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
 								<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . $website->id . '&plugin=' . rawurlencode( $plugin_directory ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>

@@ -97,35 +97,6 @@ class MainWP_Updates_Overview {
 	}
 
 	/**
-	 * Method sync_site()
-	 *
-	 * Sync Child Site.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_sync_values()
-	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_website()
-	 */
-	public static function sync_site() {
-		$website = null;
-		$wp_id   = isset( $_POST['wp_id'] ) ? intval( $_POST['wp_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
-		if ( $wp_id ) {
-			$website = MainWP_DB::instance()->get_website_by_id( $wp_id );
-		}
-
-		if ( null == $website ) {
-			die( wp_json_encode( array( 'error' => esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
-		}
-
-		if ( MainWP_Sync::sync_website( $website ) ) {
-			die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
-		}
-
-		$website = MainWP_DB::instance()->get_website_by_id( $website->id );
-
-		die( wp_json_encode( array( 'error' => esc_html( wp_strip_all_tags( $website->sync_errors ) ) ) ) );
-	}
-
-	/**
 	 * Method render_sites()
 	 *
 	 * Grab available Child Sites updates a build Widget.
@@ -428,6 +399,7 @@ class MainWP_Updates_Overview {
 		$can_total_update = ( $user_can_update_wordpress && $user_can_update_plugins && $user_can_update_themes && $user_can_update_translation ) ? true : false;
 
 		self::render_total_update( $total_upgrades, $lastSyncMsg, $can_total_update, $limit_updates_all );
+		echo '<div class="mainwp-scrolly-overflow">';
 		self::render_wordpress_update( $user_can_update_wordpress, $total_wp_upgrades, $globalView, $current_wpid, $continue_update );
 		self::render_plugins_update( $user_can_update_plugins, $total_plugin_upgrades, $globalView, $current_wpid, $continue_update );
 		self::render_themes_update( $user_can_update_themes, $total_theme_upgrades, $globalView, $current_wpid, $continue_update );
@@ -436,6 +408,7 @@ class MainWP_Updates_Overview {
 		}
 		self::render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid );
 		self::render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid );
+		
 		self::render_global_update(
 			$user_can_update_wordpress,
 			$total_wp_upgrades,
@@ -452,6 +425,7 @@ class MainWP_Updates_Overview {
 			$all_translations_updates
 		);
 		self::render_bottom( $websites, $globalView );
+		echo '</div>';
 	}
 
 	/**
@@ -469,7 +443,7 @@ class MainWP_Updates_Overview {
 			$globalView = false;
 		}
 		?>
-		<div class="ui grid">
+		<div class="ui grid mainwp-widget-header">
 			<div class="sixteen wide column">
 				<h3 class="ui header handle-drag">
 					<?php
@@ -486,7 +460,9 @@ class MainWP_Updates_Overview {
 				</h3>
 			</div>
 		</div>
+
 		<input type="hidden" name="updatesoverview_limit_updates_all" id="updatesoverview_limit_updates_all" value="<?php echo intval( $limit_updates_all ); ?>">
+			
 			<?php
 			/**
 			 * Action: mainwp_updates_overview_before_total_updates
@@ -508,6 +484,7 @@ class MainWP_Updates_Overview {
 					</div>
 					</div>
 				</div>
+
 				<div class="eight wide column middle aligned">
 				<?php
 				/**
@@ -517,8 +494,8 @@ class MainWP_Updates_Overview {
 				 *
 				 * @since 4.1
 				 */
-				if ( $can_total_update ) :
 					?>
+				<?php if ( $can_total_update ) : ?>
 					<?php if ( ! get_option( 'mainwp_hide_update_everything', false ) ) : ?>
 						<a href="#" <?php echo 0 == $total_upgrades ? 'disabled' : 'onClick="return updatesoverview_global_upgrade_all( \'all\' );"'; ?> class="ui big button fluid green" id="mainwp-update-everything-button" data-tooltip="<?php $globalView ? esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on ALL your websites.', 'mainwp' ) : esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', esc_html__( 'Update Everything', 'mainwp' ) ) ); ?></a>
 			<?php endif; ?>
@@ -534,8 +511,7 @@ class MainWP_Updates_Overview {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_updates_overview_after_total_updates' );
-		?>
-		<?php
+
 	}
 
 	/**

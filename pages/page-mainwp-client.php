@@ -192,13 +192,13 @@ class MainWP_Client {
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
 					<?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_clients' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=ManageClients' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Clients', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageClients' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Clients', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ClientAddNew' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=ClientAddNew' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add Client', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ClientAddNew' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add Client', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ClientAddField' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=ClientAddField' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Client Properties', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ClientAddField' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Client Properties', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
@@ -207,7 +207,7 @@ class MainWP_Client {
 								continue;
 							}
 							?>
-							<a href="<?php echo admin_url( 'admin.php?page=ClientAdd' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=ClientAdd' . $subPage['slug'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
 							<?php
 						}
 					}
@@ -235,10 +235,10 @@ class MainWP_Client {
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'ManageClients',
 				'href'       => 'admin.php?page=ManageClients',
-				'icon'       => '<i class="client icon"></i>',
+				'icon'       => '<i class="users icon"></i>',
 				'desc'       => 'Manage clients on your child sites',
 			),
-			1
+			0
 		);
 
 		$init_sub_subleftmenu = array(
@@ -773,7 +773,7 @@ class MainWP_Client {
 		$table_features = apply_filters( 'mainwp_clients_table_fatures', $table_features );
 		?>
 		<script type="text/javascript">
-		var responsive = <?php echo $table_features['responsive']; ?>;
+		var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
 		if( jQuery( window ).width() > 1140 ) {
 			responsive = false;
 		}
@@ -782,13 +782,13 @@ class MainWP_Client {
 				jQuery( "#mainwp-clients-table" ).DataTable().destroy(); // to fix re-init database issue.
 				jQuery( "#mainwp-clients-table" ).DataTable( {
 					"responsive" : responsive,
-					"searching" : <?php echo $table_features['searching']; ?>,
-					"colReorder" : <?php echo $table_features['colReorder']; ?>,
-					"stateSave":  <?php echo $table_features['stateSave']; ?>,
-					"paging": <?php echo $table_features['paging']; ?>,
-					"info": <?php echo $table_features['info']; ?>,
-					"order": <?php echo $table_features['order']; ?>,
-					"scrollX" : <?php echo $table_features['scrollX']; ?>,
+					"searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
+					"colReorder" : <?php echo esc_html( $table_features['colReorder'] ); ?>,
+					"stateSave":  <?php echo esc_html( $table_features['stateSave'] ); ?>,
+					"paging": <?php echo esc_html( $table_features['paging'] ); ?>,
+					"info": <?php echo esc_html( $table_features['info'] ); ?>,
+					"order": <?php echo esc_html( $table_features['order'] ); ?>,
+					"scrollX" : <?php echo esc_html( $table_features['scrollX'] ); ?>,
 					"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
 					"columnDefs": [ {
 						"targets": 'no-sort',
@@ -867,7 +867,7 @@ class MainWP_Client {
 				</td>
 				<td class="clientname column-clientname"><strong><abbr title="<?php echo esc_attr( $client['login'] ); ?>"><?php echo esc_html( $client['login'] ); ?></abbr></strong></td>
 				<td class="email column-email"><a href="mailto:<?php echo esc_attr( $client['email'] ); ?>"><?php echo esc_html( $client['email'] ); ?></a></td>
-				<td class="posts column-posts"><a href="<?php echo admin_url( 'admin.php?page=PostBulkManage&siteid=' . intval( $website->id ) . '&clientid=' . $client['id'] ); ?>"><?php echo esc_html( $client['post_count'] ); ?></a></td>
+				<td class="posts column-posts"><a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkManage&siteid=' . intval( $website->id ) ) . '&clientid=' . $client['id'] ); ?>"><?php echo esc_html( $client['post_count'] ); ?></a></td>
 				<td class="website column-website"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
 				<td class="right aligned">
 					<input class="clientId" type="hidden" name="id" value="<?php echo esc_attr( $client['id'] ); ?>" />
@@ -985,6 +985,7 @@ class MainWP_Client {
 								'selected_sites'     => $selected_sites,
 								'show_group'         => false,
 								'add_edit_client_id' => $client_id,
+								'enable_offline_sites' => $client_id ? true : false,
 							);
 
 							MainWP_UI_Select_Sites::select_sites_box( $sel_params );

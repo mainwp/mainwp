@@ -270,9 +270,6 @@ updatesoverview_wordpress_upgrade_int = function (websiteId, bulkMode) {
                 couttItemsToUpdate++;
             }
             updatesoverview_wordpress_upgrade_all_update_done();
-            if (websitesDone == websitesTotal) {
-                updatesoverview_send_twitt_info();
-            }
         }
     }(websiteId, bulkMode), 'json');
 
@@ -601,11 +598,6 @@ updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMode, 
                                 done = true;
                             }
                         }
-
-                        if (websitesDone == websitesTotal) {
-                            couttItemsToUpdate = itemsToUpdate.length;
-                            updatesoverview_send_twitt_info();
-                        }
                     }
                 }(pSlug, pWebsiteId, pBulkMode),
                 tryCount: 0,
@@ -629,11 +621,6 @@ updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMode, 
                             }
 
                             websiteHolder.find('td:last-child').html(result);
-                        }
-
-                        if (websitesDone == websitesTotal) {
-                            couttItemsToUpdate = itemsToUpdate.length;
-                            updatesoverview_send_twitt_info();
                         }
                     }
                 }(pSlug, pWebsiteId, pBulkMode),
@@ -1043,11 +1030,6 @@ updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noChe
                                 done = true;
                             }
                         }
-
-                        if (websitesDone == websitesTotal) {
-                            couttItemsToUpdate = itemsToUpdate.length;
-                            updatesoverview_send_twitt_info();
-                        }
                     }
                 }(pSlug, pWebsiteId, pBulkMode),
                 tryCount: 0,
@@ -1069,11 +1051,6 @@ updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noChe
                                 done = true;
                             }
                             websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
-                        }
-
-                        if (websitesDone == websitesTotal) {
-                            couttItemsToUpdate = itemsToUpdate.length;
-                            updatesoverview_send_twitt_info();
                         }
                     }
                 }(pSlug, pWebsiteId, pBulkMode),
@@ -1457,11 +1434,6 @@ updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
                         updatesoverview_themes_upgrade_all_update_done();
                         done = true;
                     }
-
-                    if (websitesDone == websitesTotal) {
-                        couttItemsToUpdate = itemsToUpdate.length;
-                        updatesoverview_send_twitt_info();
-                    }
                 }
             }
         }(slug, websiteId, bulkMode),
@@ -1483,11 +1455,6 @@ updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
                         done = true;
                     }
                     websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
-                }
-
-                if (websitesDone == websitesTotal) {
-                    couttItemsToUpdate = itemsToUpdate.length;
-                    updatesoverview_send_twitt_info();
                 }
             }
         }(slug, websiteId, bulkMode),
@@ -2142,10 +2109,6 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
         }
         updatesoverview_upgrade_all_update_done();
 
-        if (websitesDone == websitesTotal) {
-            couttItemsToUpdate = itemsToUpdate.length;
-            updatesoverview_send_twitt_info();
-        }
         return false;
     }
 };
@@ -2230,7 +2193,7 @@ updatesoverview_unignore_plugintheme_abandoned_by_site = function (what, slug, i
 
                 siteElement.remove();
 
-                if (parent.children('tr').size() == 0) {
+                if (parent.children('tr').length == 0) {
                     jQuery('#mainwp-unignore-detail-all').addClass('disabled');
                     parent.append('<tr><td colspan="999">' + __('No ignored abandoned %1s', pWhat) + '</td></tr>');
                 }
@@ -2319,7 +2282,7 @@ updatesoverview_plugins_abandoned_unignore_globally = function (slug) {
             var ignoreElement = jQuery('#ignored-abandoned-plugins-list tr[plugin-slug="' + slug + '"]');
             var parent = ignoreElement.parent();
             ignoreElement.remove();
-            if (parent.children('tr').size() == 0) {
+            if (parent.children('tr').length == 0) {
                 jQuery('.mainwp-unignore-globally-all').addClass('disabled');
                 parent.append('<tr><td colspan="999">' + __('No ignored abandoned plugins.') + '</td></tr>');
             }
@@ -2382,7 +2345,7 @@ updatesoverview_themes_abandoned_unignore_globally = function (slug) {
             var ignoreElement = jQuery('#globally-ignored-themes-list tr[theme-slug="' + slug + '"]');
             var parent = ignoreElement.parent();
             ignoreElement.remove();
-            if (parent.children('tr').size() == 0) {
+            if (parent.children('tr').length == 0) {
                 jQuery('.mainwp-unignore-globally-all').addClass('disabled');
                 parent.append('<tr><td colspan="999">' + __('No ignored abandoned themes.') + '</td></tr>');
             }
@@ -2401,7 +2364,7 @@ jQuery(document).ready(function () {
         limitUpdateAll = jQuery('#updatesoverview_limit_updates_all').val();
         if (jQuery('.updatesoverview_continue_update_me').length > 0) {
             continueUpdating = true;
-            jQuery('.updatesoverview_continue_update_me')[0].click();
+            jQuery('.updatesoverview_continue_update_me')[0].trigger('click');
         }
     }
 });
@@ -2414,7 +2377,7 @@ updatesoverview_recheck_http = function (elem, id) {
     jQuery(elem).attr('disabled', 'true');
     jQuery('#wp_http_response_code_' + id + ' .http-code').html('<i class="ui active inline loader tiny"></i>');
     jQuery.post(ajaxurl, data, function (response) {
-        jQuery(elem).removeAttr('disabled');
+        jQuery(elem).prop("disabled", false);
         if (response) {
             var hc = (response && response.httpcode) ? response.httpcode : '';
             jQuery('#wp_http_response_code_' + id + ' .http-code').html('HTTP ' + hc);
@@ -2438,7 +2401,7 @@ updatesoverview_ignore_http_response = function (elem, id) {
     jQuery(elem).attr('disabled', 'true');
     jQuery('#wp_http_response_code_' + id + ' .http-code').html('<i class="ui active inline loader tiny"></i>');
     jQuery.post(ajaxurl, data, function (response) {
-        jQuery(elem).removeAttr('disabled');
+        jQuery(elem).prop("disabled", false);
         if (response && response.ok) {
             jQuery(elem).closest('.mainwp-sub-row').remove();
         }
@@ -2506,7 +2469,7 @@ updatesoverview_unignore_plugintheme_by_site = function (what, slug, id) {
                 var parent = siteElement.parent();
                 mainwp_responsive_fix_remove_child_row(siteElement);
                 siteElement.remove();
-                if (parent.children('tr').size() == 0) {
+                if (parent.children('tr').length == 0) {
                     parent.append('<tr><td colspan="999">' + __('No ignored %1s', pWhat) + '</td></tr>');
                     jQuery('.mainwp-unignore-detail-all').addClass('disabled');
                 }
@@ -2624,7 +2587,7 @@ updatesoverview_plugins_unignore_globally = function (slug) {
             var ignoreElement = jQuery('#globally-ignored-plugins-list tr[plugin-slug="' + slug + '"]');
             var parent = ignoreElement.parent();
             ignoreElement.remove();
-            if (parent.children('tr').size() == 0) {
+            if (parent.children('tr').length == 0) {
                 jQuery('#mainwp-unignore-globally-all').addClass('disabled');
                 parent.append('<tr><td colspan="999">' + __('No ignored plugins.') + '</td></tr>');
             }
@@ -2688,7 +2651,7 @@ updatesoverview_themes_unignore_globally = function (slug) {
             var ignoreElement = jQuery('#globally-ignored-themes-list tr[theme-slug="' + slug + '"]');
             var parent = ignoreElement.parent();
             ignoreElement.remove();
-            if (parent.children('tr').size() == 0) {
+            if (parent.children('tr').length == 0) {
                 jQuery('#mainwp-unignore-globally-all').addClass('disabled');
                 parent.append('<tr><td colspan="999">' + __('No ignored themes.') + '</td></tr>');
             }
@@ -2990,32 +2953,6 @@ updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, gr
                             }
                         }
                         success = true;
-
-                        if (mainwpParams.enabledTwit == true) {
-                            var dateObj = new Date();
-                            var countSec = (dateObj.getTime() - starttimeDashboardAction) / 1000;
-                            jQuery('#bulk_install_info').html('<i class="fa fa-spinner fa-pulse"></i>');
-                            if (countSec <= mainwpParams.maxSecondsTwit) {
-                                var data = mainwp_secure_data({
-                                    action: 'mainwp_twitter_dashboard_action',
-                                    actionName: dashboardActionName,
-                                    countSites: 1,
-                                    countSeconds: countSec,
-                                    countItems: couttItemsToUpdate,
-                                    countRealItems: countRealItemsUpdated,
-                                    showNotice: 1
-                                });
-                                jQuery.post(ajaxurl, data, function (res) {
-                                    if (res && res != '') {
-                                        jQuery('#mainwp-dashboard-info-box').html(res);
-                                        if (typeof twttr !== "undefined")
-                                            twttr.widgets.load();
-                                    } else {
-                                        jQuery('#mainwp-dashboard-info-box').html('');
-                                    }
-                                });
-                            }
-                        }
                     }
                     if (!success) {
                         for (var i = 0; i < newList.length; i++) {

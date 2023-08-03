@@ -275,7 +275,6 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 		return $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_actions' ) ) );
 	}
 
-
 	/**
 	 * Method get_wp_actions.
 	 *
@@ -315,8 +314,18 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 
 			$sql_and = '';
 			if ( ! empty( $site_id ) ) {
+				if ( is_array( $site_id ) ) {
+					$site_ids = array_map( 'intval', $site_id );
+					$site_ids = array_filter( $site_ids );
+					if ( ! empty( $site_ids ) ) {
+						$site_ids       = implode( ',', $site_ids );
 				$sql_and        = ' AND ';
-				$where_actions .= $sql_and . ' wa.wpid = ' . $site_id;
+						$where_actions .= $sql_and . ' wa.wpid IN ( ' . $site_ids . ' )';
+					}
+				} elseif ( is_numeric( $site_id ) ) {
+					$sql_and        = ' AND ';
+					$where_actions .= $sql_and . ' wa.wpid = ' . intval( $site_id );
+				}
 			}
 			if ( ! empty( $object_id ) ) {
 				if ( empty( $sql_and ) ) {

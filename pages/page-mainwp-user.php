@@ -143,16 +143,16 @@ class MainWP_User {
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
 					<?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=UserBulkManage' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Users', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=UserBulkManage' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Users', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'UserBulkAdd' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=UserBulkAdd' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=UserBulkAdd' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'BulkImportUsers' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=BulkImportUsers' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Import Users', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=BulkImportUsers' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Import Users', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'UpdateAdminPasswords' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=UpdateAdminPasswords' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Admin Passwords', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=UpdateAdminPasswords' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Admin Passwords', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
@@ -161,7 +161,7 @@ class MainWP_User {
 								continue;
 							}
 							?>
-							<a href="<?php echo admin_url( 'admin.php?page=UserBulk' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=UserBulk' . $subPage['slug'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
 							<?php
 						}
 					}
@@ -239,7 +239,7 @@ class MainWP_User {
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => esc_html__( 'Users', 'mainwp' ),
-				'parent_key' => 'mainwp_tab',
+				'parent_key' => 'managesites',
 				'slug'       => 'UserBulkManage',
 				'href'       => 'admin.php?page=UserBulkManage',
 				'icon'       => '<i class="user icon"></i>',
@@ -873,7 +873,7 @@ class MainWP_User {
 		$table_features = apply_filters( 'mainwp_users_table_fatures', $table_features );
 		?>
 		<script type="text/javascript">
-		var responsive = <?php echo $table_features['responsive']; ?>;
+		var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
 		if( jQuery( window ).width() > 1140 ) {
 			responsive = false;
 		}
@@ -882,15 +882,15 @@ class MainWP_User {
 				jQuery( "#mainwp-users-table" ).DataTable().destroy(); // to fix re-init database issue.
 				$manage_users_table = jQuery( "#mainwp-users-table" ).DataTable( {
 					"responsive" : responsive,
-					"searching" : <?php echo $table_features['searching']; ?>,
-					"colReorder" : <?php echo $table_features['colReorder']; ?>,
-					"stateSave":  <?php echo $table_features['stateSave']; ?>,
-					"paging": <?php echo $table_features['paging']; ?>,
-					"info": <?php echo $table_features['info']; ?>,
-					"order": <?php echo $table_features['order']; ?>,
-					"scrollX" : <?php echo $table_features['scrollX']; ?>,
+					"searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
+					"colReorder" : <?php echo esc_html( $table_features['colReorder'] ); ?>,
+					"stateSave":  <?php echo esc_html( $table_features['stateSave'] ); ?>,
+					"paging": <?php echo esc_html( $table_features['paging'] ); ?>,
+					"info": <?php echo esc_html( $table_features['info'] ); ?>,
+					"order": <?php echo esc_html( $table_features['order'] ); ?>,
+					"scrollX" : <?php echo esc_html( $table_features['scrollX'] ); ?>,
 					"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-					"language" : { "emptyTable": "<?php esc_html_e( 'Use the search options to find the user you want to manage.', 'mainwp' ); ?>" },
+					"language" : { "emptyTable": "<?php esc_html_e( 'Please use the search options to find wanted users.', 'mainwp' ); ?>" },
 					"columnDefs": [ {
 						"targets": 'no-sort',
 						"orderable": false
@@ -951,20 +951,8 @@ class MainWP_User {
 		$output->errors = array();
 		$output->users  = 0;
 
-		$data_fields = array(
-			'id',
-			'url',
-			'name',
-			'adminname',
-			'nossl',
-			'privkey',
-			'nosslkey',
-			'http_user',
-			'http_pass',
-			'ssl_version',
-			'sync_errors',
-			'users',
-		);
+		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
+		$data_fields[] = 'users';
 
 		if ( 1 == get_option( 'mainwp_optimize' ) ) {
 
@@ -1152,9 +1140,6 @@ class MainWP_User {
 	 */
 	public static function render_cache_not_found() {
 		ob_start();
-		?>
-			<tr><td colspan="999"><?php esc_html_e( 'Please use the search options to find wanted users.', 'mainwp' ); ?></td></tr>
-		<?php
 		$newOutput = ob_get_clean();
 		echo $newOutput;
 		MainWP_Cache::add_body( 'Users', $newOutput );
@@ -1215,13 +1200,13 @@ class MainWP_User {
 					</td>
 				<td class="username column-username"><strong><abbr title="<?php echo esc_attr( $user['login'] ); ?>"><?php echo esc_html( $user['login'] ); ?></abbr></strong></td>
 				<td class="email column-email"><a href="mailto:<?php echo esc_attr( $user['email'] ); ?>"><?php echo esc_html( $user['email'] ); ?></a></td>
-				<td class="role column-role"><?php echo self::get_role( $user['role'] ); ?></td>
-				<td class="posts column-posts"><a href="<?php echo admin_url( 'admin.php?page=PostBulkManage&siteid=' . intval( $website->id ) . '&userid=' . $user['id'] ); ?>"><?php echo esc_html( $user['post_count'] ); ?></a></td>
+				<td class="role column-role"><?php echo self::get_role( esc_html( $user['role'] ) ); ?></td>
+				<td class="posts column-posts"><a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkManage&siteid=' . intval( $website->id ) ) . '&userid=' . $user['id'] ); ?>"><?php echo esc_html( $user['post_count'] ); ?></a></td>
 				<td class="website column-website"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
 				<td class="right aligned">
 					<input class="userId" type="hidden" name="id" value="<?php echo esc_attr( $user['id'] ); ?>" />
 					<input class="userName" type="hidden" name="name" value="<?php echo esc_attr( $user['login'] ); ?>" />
-					<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>" />
+					<input class="websiteId" type="hidden" name="id" value="<?php echo intval( esc_html( $website->id ) ); ?>" />
 					<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
 						<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 						<div class="menu">
@@ -1544,7 +1529,7 @@ class MainWP_User {
 							<div class="ui grid field">
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Send Password?', 'mainwp' ); ?></label>
 								<div class="six wide column ui toggle checkbox">
-									<input type="checkbox" name="send_password" id="send_password" <?php echo ( isset( $_POST['send_password'] ) ) ? 'checked' : ''; ?> >
+									<input type="checkbox" name="send_password" id="send_password" <?php echo ( isset( $_POST['send_password'] ) ) ? esc_html( 'checked' ) : ''; ?> >
 								</div>
 							</div>
 
@@ -1570,7 +1555,7 @@ class MainWP_User {
 												continue;
 											}
 											?>
-											<option value="<?php echo esc_html( $r ); ?>" <?php echo ( isset( $_POST['role'] ) && $_POST['role'] == $r ) ? 'selected' : ''; ?>><?php echo esc_html( $n ); ?></option>
+											<option value="<?php echo esc_html( $r ); ?>" <?php echo ( isset( $_POST['role'] ) && $_POST['role'] == $r ) ? esc_html( 'selected' ) : ''; ?>><?php echo esc_html( $n ); ?></option>
 											<?php
 										}
 										?>
@@ -1781,7 +1766,6 @@ class MainWP_User {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::update_twitter_info()
 	 * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
@@ -1824,19 +1808,7 @@ class MainWP_User {
 			$errorFields[] = 'role';
 		}
 
-		$data_fields = array(
-			'id',
-			'url',
-			'name',
-			'adminname',
-			'nossl',
-			'privkey',
-			'nosslkey',
-			'http_user',
-			'http_pass',
-			'ssl_version',
-			'sync_errors',
-		);
+		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
 		if ( ( 0 == count( $errors ) ) && ( 0 == count( $errorFields ) ) ) {
 			$user_to_add = array(
@@ -1948,42 +1920,9 @@ class MainWP_User {
 					$countRealItems++;
 				}
 			}
-
-			if ( ! empty( $countSites ) ) {
-				$seconds = ( time() - $startTime );
-				MainWP_Twitter::update_twitter_info( 'create_new_user', $countSites, $seconds, $countRealItems, $startTime, 1 );
-			}
-
-			self::render_twitter_notice();
 			self::render_bulk_add_modal( $dbwebsites, $output );
 		} else {
 			echo wp_json_encode( array( $errorFields, $errors ) );
-		}
-	}
-
-	/**
-	 * Renders twitter bragger notice.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter
-	 */
-	public static function render_twitter_notice() {
-		if ( MainWP_Twitter::enabled_twitter_messages() ) {
-			$twitters = MainWP_Twitter::get_twitter_notice( 'create_new_user' );
-			if ( is_array( $twitters ) ) {
-				foreach ( $twitters as $timeid => $twit_mess ) {
-					if ( ! empty( $twit_mess ) ) {
-						$sendText = MainWP_Twitter::get_twit_to_send( 'create_new_user', $timeid );
-						?>
-						<div class="mainwp-tips ui info message twitter" style="margin:0">
-							<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="create_new_user" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
-						</div>
-						<?php
-					}
-				}
-			}
 		}
 	}
 
@@ -2001,7 +1940,7 @@ class MainWP_User {
 					<div class="ui middle aligned divided selection list">
 						<?php foreach ( $dbwebsites as $website ) : ?>
 						<div class="item ui grid">
-							<span class="content"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></span>
+							<span class="content"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a></span>
 							<span class="right floated content"><?php echo( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? '<i class="check green icon"></i> ' : '<i class="times red icon"></i> ' . $output->errors[ $website->id ] ); ?></span>
 						</div>
 						<?php endforeach; ?>
@@ -2095,7 +2034,7 @@ class MainWP_User {
 							?>
 							<div id="MainWPBulkUploadUserLoading" style="display: none;"><i class="ui active inline loader tiny"></i> <?php esc_html_e( 'Importing Users', 'mainwp' ); ?></div>
 							<input type="hidden" id="import_user_do_import" value="1"/>
-							<input type="hidden" id="import_user_total_import" value="<?php echo $i; ?>"/>
+							<input type="hidden" id="import_user_total_import" value="<?php echo esc_attr( $i ); ?>"/>
 							<p>
 								<div class="import_user_import_listing" id="import_user_import_logging">
 									<pre class="log"><?php echo esc_html( $header_line ) . "\n"; ?></pre>
@@ -2176,20 +2115,8 @@ class MainWP_User {
 		$selected_sites  = ( isset( $_POST['select_sites'] ) && is_array( $_POST['select_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_sites'] ) ) : array();
 		$selected_groups = ( isset( $_POST['select_groups'] ) && is_array( $_POST['select_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_groups'] ) ) : array();
 
-		$data_fields = array(
-			'id',
-			'url',
-			'name',
-			'adminname',
-			'nossl',
-			'privkey',
-			'nosslkey',
-			'http_user',
-			'http_pass',
-			'ssl_version',
-			'sync_errors',
-			'users',
-		);
+		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
+		$data_fields[] = 'users';
 
 		$user_to_add = array(
 			'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',

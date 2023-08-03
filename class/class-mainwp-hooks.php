@@ -172,6 +172,31 @@ class MainWP_Hooks {
 		 * @since 4.3.
 		 */
 		add_filter( 'mainwp_get_reports_group_values_website', array( MainWP_Reports_Helper::get_instance(), 'hook_get_reports_group_values' ), 10, 6 );
+
+		/**
+		 *  MainWP API hooks.
+		 *
+		 * @since 4.5.
+		 */
+		add_filter( 'mainwp_extension_get_activation_info', array( &$this, 'hook_get_activation_info' ), 10, 2 );
+		add_filter( 'mainwp_get_api_url', array( &$this, 'hook_get_api_url' ), 10, 1 );
+		add_filter( 'mainwp_hook_run_dashboard_action', array( &$this, 'hook_run_dashboard_action' ), 10, 2 );
+
+		/**
+		 *  Key encrypt hooks.
+		 *
+		 * @since 4.5.
+		 */
+		add_filter( 'mainwp_get_key_value', array( &$this, 'hook_get_key_value' ), 10, 3 );
+		add_filter( 'mainwp_update_key_value', array( &$this, 'hook_update_key_value' ), 10, 4 );
+		add_action( 'mainwp_delete_key_value', array( &$this, 'hook_delete_key_value' ), 10, 1 );
+
+		add_filter( 'mainwp_encrypt_key_value', array( &$this, 'hook_encrypt_key_value' ), 10, 4 );
+		add_filter( 'mainwp_decrypt_key_value', array( &$this, 'hook_decrypt_key_value' ), 10, 3 );
+		add_action( 'mainwp_delete_key_file', array( &$this, 'hook_delete_key_file' ), 10, 1 );
+
+		add_filter( 'mainwp_create_ping_nonce', array( MainWP_Utility::class, 'hook_create_ping_nonce' ), 10, 2 );
+		add_filter( 'mainwp_verify_ping_nonce', array( MainWP_Utility::class, 'hook_verify_ping_nonce' ), 10, 3 );
 	}
 
 	/**
@@ -749,10 +774,6 @@ class MainWP_Hooks {
 			unset( $website->privkey );
 		}
 
-		if ( ! empty( $website ) && property_exists( $website, 'nosslkey' ) ) {
-			unset( $website->nosslkey );
-		}
-
 		return $website;
 	}
 
@@ -788,7 +809,9 @@ class MainWP_Hooks {
 	public function hook_get_all_posts( $sites, $post_data = array() ) {
 
 		$dbwebsites = array();
-		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'http_user', 'http_pass', 'ssl_version' );
+
+		$data   = MainWP_System_Utility::get_default_map_site_fields();
+		$data[] = 'verify_certificate';
 
 		if ( '' !== $sites ) {
 			foreach ( $sites as $k => $v ) {
@@ -1546,14 +1569,14 @@ class MainWP_Hooks {
 	 *
 	 * Customize WordPress do_meta_boxes() function.
 	 *
-	 * @param mixed       $screen Current page.
+	 * @param mixed       $screen_id Current page ID.
 	 * @param string|null $context right|null. If 3 columns then = 'middle'.
 	 * @param string      $object Empty string.
 	 *
 	 * @return void Renders widget container box.
 	 */
-	public function hook_do_widget_boxes( $screen, $context = null, $object = '' ) {
-		MainWP_UI::do_widget_boxes( $screen, $context, $object );
+	public function hook_do_widget_boxes( $screen_id, $context = null, $object = '' ) {
+		MainWP_UI::do_widget_boxes( $screen_id, $context, $object );
 	}
 
 
@@ -1565,16 +1588,16 @@ class MainWP_Hooks {
 	 * @param mixed       $id Widget ID parameter.
 	 * @param mixed       $callback Callback function.
 	 * @param null        $screen Current page.
-	 * @param string|null $context right|null. If 3 columns then = 'middle'.
-	 * @param null        $title Widget title.
-	 * @param string      $priority high|core|default|low, Default: default.
+	 * @param string|null $layout widget's layout .
 	 *
 	 * @return void Sets Global $mainwp_widget_boxes[ $page ][ $context ][ $priority ][ $id ].
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
 	 */
-	public function hook_add_widget_box( $id, $callback, $screen = null, $context = null, $title = null, $priority = 'default' ) {
-		MainWP_UI::add_widget_box( $id, $callback, $screen, $context, $title, $priority );
+	public function hook_add_widget_box( $id, $callback, $screen = null, $layout = null ) {
+		if ( ! is_array( $layout ) ) {
+			$layout = array();
+		}
+		MainWP_UI::add_widget_box( $id, $callback, $screen, $layout );
 	}
 
 	/**
@@ -1602,5 +1625,206 @@ class MainWP_Hooks {
 	 */
 	public function hook_render_updates() {
 		MainWP_Updates::render();
+	}
+
+	/**
+	 * Method hook_get_activation_info()
+	 *
+	 * Get extension activation info.
+	 *
+	 * @param bool   $boolean Input bool value.
+	 * @param string $ext_slug extension api slug.
+	 */
+	public function hook_get_activation_info( $boolean, $ext_slug ) {
+		$data = MainWP_Api_Manager::instance()->get_activation_info( $ext_slug );
+
+		$info = array();
+
+		if ( is_array( $data ) && ! empty( $data['api_key'] ) ) {
+			$info['api_key']          = $data['api_key'];
+			$info['product_id']       = isset( $data['product_id'] ) ? $data['product_id'] : '';
+			$info['instance']         = isset( $data['instance_id'] ) ? $data['instance_id'] : '';
+			$info['software_version'] = isset( $data['software_version'] ) ? $data['software_version'] : '';
+			$info['object']           = MainWP_Api_Manager::instance()->get_domain();
+			if ( isset( $data['product_item_id'] ) ) {
+				$info['product_item_id'] = $data['product_item_id'];
+			}
+		} else {
+			$info['activated_key'] = 'Deactivated';
+		}
+
+		return $info;
+	}
+
+	/**
+	 * Method hook_get_api_url()
+	 *
+	 * Get MainWP API Url.
+	 */
+	public function hook_get_api_url() {
+		return MainWP_Api_Manager::instance()->get_upgrade_url();
+	}
+
+	/**
+	 * Method hook_run_dashboard_action().
+	 *
+	 * Handle run dashboard action.
+	 *
+	 * @param bool   $boolean Input bool value.
+	 * @param string $action The action to run.
+	 * @param bool   $die The function die or return.
+	 *
+	 * @return mixed $return result.
+	 */
+	public function hook_run_dashboard_action( $boolean, $action, $die = false ) {
+
+		if ( ! isset( $action ) ) {
+			return false;
+		}
+
+		if ( 'master_api_key_check' === $action ) {
+			$return = $this->hook_master_api_key_check();
+		} else {
+			return false;
+		}
+
+		if ( $die ) {
+			wp_send_json( $return );
+		}
+
+		return $return;
+	}
+
+
+
+	/**
+	 * Method hook_master_api_key_check().
+	 *
+	 * Handle to valid MainWP API key.
+	 *
+	 * @return array $return Data.
+	 */
+	public function hook_master_api_key_check() {
+		$api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
+		$return  = array();
+		$error   = '';
+		if ( ! empty( $api_key ) ) {
+			$result = array();
+			try {
+				$test   = MainWP_Api_Manager::instance()->verify_mainwp_api( $api_key );
+				$result = json_decode( $test, true );
+				if ( is_array( $result ) ) {
+					if ( isset( $result['success'] ) && $result['success'] ) {
+						$return['success'] = true;
+					} elseif ( isset( $result['error'] ) ) {
+						$error = $result['error'];
+					}
+				}
+			} catch ( \Exception $e ) {
+				$error = $e->getMessage();
+			}
+		} else {
+			$error = esc_html__( 'MainWP API key are required.', 'mainwp' );
+		}
+
+		if ( ! empty( $error ) ) {
+			$return['error'] = $error;
+		}
+
+		if ( ! isset( $return['success'] ) ) {
+			$return['success'] = false;
+		}
+
+		return $return;
+	}
+
+	/**
+	 * Method hook_get_key_value().
+	 *
+	 * Handle get key value.
+	 *
+	 * @param bool   $false Boolean value, it should always be FALSE.
+	 * @param string $name Key option name.
+	 * @param mixed  $default default value.
+	 *
+	 * @return array $return Decrypted Key value.
+	 */
+	public function hook_get_key_value( $false, $name, $default = false ) {
+		return MainWP_Keys_Manager::instance()->get_keys_value( $name, $default );
+	}
+
+	/**
+	 * Method hook_update_key_value().
+	 *
+	 * Handle update key value.
+	 *
+	 * @param bool   $false Boolean value, it should always be FALSE.
+	 * @param string $name Key option name.
+	 * @param mixed  $value Key value.
+	 * @param string $prefix prefix of key file name.
+	 *
+	 * @return array $return Decrypted Key value.
+	 */
+	public function hook_update_key_value( $false, $name, $value = false, $prefix = 'ext_' ) {
+		return MainWP_Keys_Manager::instance()->update_key_value( $name, $value, $prefix );
+	}
+
+
+	/**
+	 * Method hook_delete_key_value().
+	 *
+	 * Handle delete key value.
+	 *
+	 * @param string $name Key option name.
+	 *
+	 * @return mixed Return Result.
+	 */
+	public function hook_delete_key_value( $name ) {
+		return MainWP_Keys_Manager::instance()->update_key_value( $name, false ); // false: to delete.
+	}
+
+	/**
+	 * Method hook_encrypt_key_value().
+	 *
+	 * Handle get key value.
+	 *
+	 * @param bool  $false Boolean value, it should always be FALSE.
+	 * @param array $encrypted_data Encrypted data.
+	 * @param mixed $default default value.
+	 * @param mixed $key_file Key file value.
+	 *
+	 * @return array $return Decrypted Key value.
+	 */
+	public function hook_encrypt_key_value( $false, $data, $prefix = 'ext_', $key_file = false ) {
+		return MainWP_Keys_Manager::instance()->encrypt_keys_data( $data, $prefix, $key_file );
+	}
+
+	/**
+	 * Method hook_decrypt_key_value().
+	 *
+	 * Handle get key value.
+	 *
+	 * @param bool  $false Boolean value, it should always be FALSE.
+	 * @param array $encrypted_data Encrypted data.
+	 * @param mixed $default default value.
+	 *
+	 * @return array $return Decrypted Key value.
+	 */
+	public function hook_decrypt_key_value( $false, $encrypted_data, $default = false ) {
+		return MainWP_Keys_Manager::instance()->decrypt_keys_data( $encrypted_data, $default );
+	}
+
+
+	/**
+	 * Method hook_delete_key_file().
+	 *
+	 * Handle delete key value.
+	 *
+	 * @param string $name Key option name.
+	 *
+	 * @return array $return Decrypted Key value.
+	 */
+	public function hook_delete_key_file( $key_file ) {
+		return MainWP_Keys_Manager::instance()->delete_key_file( $key_file );
 	}
 }

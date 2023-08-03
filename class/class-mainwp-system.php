@@ -9,14 +9,6 @@ namespace MainWP\Dashboard;
 
 // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
-/**
- * Defines MainWP Twitter Max Seconds.
- *
- * @const ( string ) 60 * 5
- * @source https://github.com/mainwp/mainwp/blob/master/cron/bootstrap.php
- */
-define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 );
-
 const MAINWP_VIEW_PER_SITE         = 1;
 const MAINWP_VIEW_PER_PLUGIN_THEME = 0;
 const MAINWP_VIEW_PER_GROUP        = 2;
@@ -35,7 +27,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.4.3.4';
+	public static $version = '4.5-beta3';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -57,6 +49,14 @@ class MainWP_System {
 	 * @var string The plugin current version.
 	 */
 	private $current_version = null;
+
+
+	/**
+	 * Private variable to hold the check update version number.
+	 *
+	 * @var string The plugin current update version.
+	 */
+	private $check_ver_update = '0.0.1';
 
 	/**
 	 * Private variable to hold the plugin slug (mainwp/mainwp.php)
@@ -116,6 +116,9 @@ class MainWP_System {
 	public function __construct( $mainwp_plugin_file ) {
 		self::$instance = $this;
 		MainWP_Logger::instance()->init_execution_time();
+
+		MainWP_Keys_Manager::autoload_files();
+
 		$this->load_all_options();
 		$this->update_install();
 		$this->plugin_slug = plugin_basename( $mainwp_plugin_file );
@@ -290,7 +293,6 @@ class MainWP_System {
 				'mainwp_automaticDailyUpdate',
 				'mainwp_backup_before_upgrade',
 				'mainwp_enableLegacyBackupFeature',
-				'mainwp_hide_twitters_message',
 				'mainwp_maximumInstallUpdateRequests',
 				'mainwp_maximumSyncRequests',
 				'mainwp_primaryBackup',
@@ -303,7 +305,6 @@ class MainWP_System {
 				'mainwp_wpcreport_extension',
 				'mainwp_daily_digest_plain_text',
 				'mainwp_hide_update_everything',
-				'mainwp_number_overview_columns',
 				'mainwp_number_clients_overview_columns',
 				'mainwp_disable_update_confirmations',
 				'mainwp_settings_show_widgets',
@@ -323,6 +324,7 @@ class MainWP_System {
 				'mainwp_show_language_updates',
 				'mainwp_logger_check_daily',
 				'mainwp_site_actions_notification_enable',
+				'mainwp_update_check_version',
 			);
 
 			$query = "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in (";
@@ -644,7 +646,6 @@ class MainWP_System {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
 	 * @uses \MainWP\Dashboard\MainWP_System_View::get_class_name()
 	 * @uses \MainWP\Dashboard\MainWP_System_View::get_mainwp_translations()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
 	 */
 	public function admin_init() { // phpcs:ignore -- complex function.
 
@@ -714,8 +715,6 @@ class MainWP_System {
 			'use_wp_datepicker'                => $use_wp_datepicker ? 1 : 0,
 			'date_format'                      => get_option( 'date_format' ),
 			'time_format'                      => get_option( 'time_format' ),
-			'enabledTwit'                      => MainWP_Twitter::enabled_twitter_messages(),
-			'maxSecondsTwit'                   => MAINWP_TWITTER_MAX_SECONDS,
 			'installedBulkSettingsManager'     => is_plugin_active( 'mainwp-bulk-settings-manager/mainwp-bulk-settings-manager.php' ) ? 1 : 0,
 			'maximumSyncRequests'              => ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ),
 			'maximumInstallUpdateRequests'     => ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ),
@@ -738,22 +737,37 @@ class MainWP_System {
 		wp_enqueue_script( 'user-profile' );
 		wp_enqueue_style( 'thickbox' );
 
-		$load_dragula = false;
+		//$load_dragula = false;
 
-		if ( isset( $_GET['page'] ) && ( 'mainwp_tab' === $_GET['page'] || ( 'managesites' === $_GET['page'] && isset( $_GET['dashboard'] ) ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$load_dragula = true;
-		} elseif ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$load_dragula = true;
-		} elseif ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'ManageSites' ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$load_dragula = true;
+		//if ( isset( $_GET['page'] ) && ( 'mainwp_tab' === $_GET['page'] || ( 'managesites' === $_GET['page'] && isset( $_GET['dashboard'] ) ) ) ) {
+		//	$load_dragula = true;
+		//} elseif ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) ) {
+		//	$load_dragula = true;
+		//} elseif ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'ManageSites' ) ) { // individual page.
+		//	$load_dragula = true;
+		//}
+
+		//if ( $load_dragula ) {
+		//	wp_enqueue_script( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/dragula/dragula.min.js', array(), $this->current_version, true );
+		//	wp_enqueue_style( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/dragula/dragula.min.css', array(), $this->current_version );
+		//}
+
+		$load_gridster = false;
+
+		if ( isset( $_GET['page'] ) && ( 'mainwp_tab' === $_GET['page'] || ( 'managesites' === $_GET['page'] && isset( $_GET['dashboard'] ) ) ) ) {
+			$load_gridster = true;
+		} elseif ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) ) {
+			$load_gridster = true;
+		} elseif ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'ManageSites' ) ) { // individual page.
+			$load_gridster = true;
 		}
 
-		if ( $load_dragula ) {
-			wp_enqueue_script( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/dragula/dragula.min.js', array(), $this->current_version, true );
-			wp_enqueue_style( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/dragula/dragula.min.css', array(), $this->current_version );
+		if ( $load_gridster ) {
+			wp_enqueue_script( 'gridster', MAINWP_PLUGIN_URL . 'assets/js/gridster/jquery.gridster.min.js', array(), $this->current_version, true );
+			wp_enqueue_style( 'gridster', MAINWP_PLUGIN_URL . 'assets/js/gridster/jquery.gridster.min.css', array(), $this->current_version );
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['page'] ) && ( 'managesites' === $_GET['page'] || 'MonitoringSites' === $_GET['page'] || 'ManageGroups' === $_GET['page'] ) ) {
 			wp_enqueue_script( 'preview', MAINWP_PLUGIN_URL . 'assets/js/preview.js', array(), $this->current_version, true );
 			wp_enqueue_style( 'preview', MAINWP_PLUGIN_URL . 'assets/css/preview.css', array(), $this->current_version );
@@ -1168,6 +1182,29 @@ class MainWP_System {
 		MainWP_DB_Client::instance();
 		MainWP_DB_Site_Actions::instance();
 		MainWP_Install::instance()->install();
+		$this->check_to_updates();
+	}
+
+
+	/**
+	 * Method check_to_updates()
+	 *
+	 * To check updates options.
+	 */
+	public function check_to_updates() {
+		$update_ver  = get_option( 'mainwp_update_check_version', false );
+		$current_ver = $this->check_ver_update;
+
+		if ( false === $update_ver && version_compare( $current_ver, '0.0.1', '=' ) ) {
+			// to update new saving format.
+			MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
+			MainWP_Utility::update_option( 'mainwp_update_check_version', $current_ver );
+		}
+
+		if ( false === $update_ver ) {
+			return;
+		}
+
 	}
 
 	/**

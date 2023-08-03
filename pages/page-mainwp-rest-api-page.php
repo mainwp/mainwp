@@ -143,7 +143,7 @@ class MainWP_Rest_Api_Page {
 			<div class="wp-submenu sub-open" style="">
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
-					<a href="<?php echo admin_url( 'admin.php?page=RESTAPI' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'REST API', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=RESTAPI' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'REST API', 'mainwp' ); ?></a>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) && ( count( self::$subPages ) > 0 ) ) {
 						foreach ( self::$subPages as $subPage ) {
@@ -151,7 +151,7 @@ class MainWP_Rest_Api_Page {
 								continue;
 							}
 							?>
-							<a href="<?php echo admin_url( 'admin.php?page=RESTAPI' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=RESTAPI' . $subPage['slug'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
 							<?php
 						}
 					}
@@ -177,9 +177,9 @@ class MainWP_Rest_Api_Page {
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'RESTAPI',
 				'href'       => 'admin.php?page=RESTAPI',
-				'icon'       => '<i class="cogs icon"></i>',
+				'icon'       => '<div class="mainwp-api-icon">API</div>',
 			),
-			1
+			0
 		);
 
 		$init_sub_subleftmenu = array(
@@ -227,16 +227,19 @@ class MainWP_Rest_Api_Page {
 				$consumer_secret = sanitize_text_field( wp_unslash( $_POST['mainwp_consumer_secret'] ) );
 				$desc            = sanitize_text_field( wp_unslash( $_POST['mainwp_rest_add_api_key_desc'] ) );
 				$enabled         = ! empty( $_POST['mainwp_enable_rest_api'] ) ? 1 : 0;
+				$pers            = ! empty( $_POST['mainwp_rest_api_key_edit_pers'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_rest_api_key_edit_pers'] ) ) : '';
+
 				// hash the password.
 				$consumer_secret_hashed    = wp_hash_password( $consumer_secret );
 				$all_keys[ $consumer_key ] = array(
 					'cs'      => $consumer_secret_hashed,
 					'desc'    => $desc,
 					'enabled' => $enabled,
+					'perms'   => $pers,
 				);
 				// store the data.
 				MainWP_Utility::update_option( 'mainwp_rest_api_keys', $all_keys );
-				wp_safe_redirect( admin_url( 'admin.php?page=RESTAPI&message=created' ) );
+				wp_safe_redirect( esc_url( admin_url( 'admin.php?page=RESTAPI&message=created' ) ) );
 				exit();
 			}
 		}
@@ -260,6 +263,7 @@ class MainWP_Rest_Api_Page {
 					if ( is_array( $item ) && isset( $item['cs'] ) ) {
 						$item['desc']    = isset( $_POST['mainwp_rest_api_key_desc'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_rest_api_key_desc'] ) ) : '';
 						$item['enabled'] = ! empty( $_POST['mainwp_enable_rest_api'] ) ? 1 : 0;
+						$item['perms']   = ! empty( $_POST['mainwp_rest_api_key_edit_pers'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_rest_api_key_edit_pers'] ) ) : '';
 
 						$all_keys[ $edit_id ] = $item;
 						$updated              = true;
@@ -279,7 +283,7 @@ class MainWP_Rest_Api_Page {
 			if ( $updated ) {
 				$msg = '&message=saved';
 			}
-			wp_safe_redirect( admin_url( 'admin.php?page=RESTAPI' . $msg ) );
+			wp_safe_redirect( esc_url( admin_url( 'admin.php?page=RESTAPI' . $msg ) ) );
 			exit();
 		}
 	}
@@ -407,6 +411,7 @@ class MainWP_Rest_Api_Page {
 					<tr>
 						<th  class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
 						<th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Permissions', 'mainwp' ); ?></th>
 						<th><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
 						<th class="no-sort collapsing"><?php esc_html_e( 'Consumer key ending in', 'mainwp' ); ?></th>
 						<th class="no-sort"></th>
@@ -423,6 +428,29 @@ class MainWP_Rest_Api_Page {
 						$enabled     = isset( $item['enabled'] ) && ! empty( $item['enabled'] ) ? true : false;
 						$endcoded_ck = rawurlencode( $ck );
 
+						$pers_codes = '';
+						if ( ! isset( $item['perms'] ) ) {
+							$pers_codes = 'r,w,d'; // to compatible.
+						} elseif ( ! empty( $item['perms'] ) ) {
+							$pers_codes = $item['perms'];
+						}
+
+						$pers_names = array();
+						if ( ! empty( $pers_codes ) && is_string( $pers_codes ) ) {
+							$pers_codes = explode( ',', $pers_codes );
+							if ( is_array( $pers_codes ) ) {
+								if ( in_array( 'r', $pers_codes ) ) {
+									$pers_names[] = esc_html__( 'Read', 'mainwp' );
+								}
+								if ( in_array( 'w', $pers_codes ) ) {
+									$pers_names[] = esc_html__( 'Write', 'mainwp' );
+								}
+								if ( in_array( 'd', $pers_codes ) ) {
+									$pers_names[] = esc_html__( 'Delete', 'mainwp' );
+								}
+							}
+						}
+
 						?>
 						<tr key-ck-id="<?php echo esc_html( $endcoded_ck ); ?>">
 							<td class="check-column">
@@ -431,6 +459,7 @@ class MainWP_Rest_Api_Page {
 								</div>
 							</td>
 							<td><?php echo $enabled ? '<span class="ui green fluid label">' . esc_html__( 'Enabled', 'mainwp' ) . '</span>' : '<span class="ui gray fluid label">' . esc_html__( 'Disabled', 'mainwp' ) . '</span>'; ?></td>
+							<td><?php echo ! empty( $pers_names ) ? implode( ', ', $pers_names ) : 'N/A'; ?></td>	
 							<td><?php echo esc_html( $desc ); ?></td>							
 							<td style="text-align:center"><code><?php echo esc_html( '...' . $ending ); ?></code></td>
 							<td class="collapsing">
@@ -642,6 +671,22 @@ class MainWP_Rest_Api_Page {
 								<input id="mainwp_consumer_secret_clipboard_button" style="display:nonce;" type="button" name="" class="ui green basic button copy-to-clipboard" value="<?php esc_attr_e( 'Copy to Clipboard', 'mainwp' ); ?>">
 							</div>
 						</div>
+						<?php $init_pers = 'r,w,d'; ?>
+						<div class="ui grid field">
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Permissions', 'mainwp' ); ?></label>
+							<div class="five wide column">
+								<div class="ui multiple selection dropdown" init-value="<?php echo esc_attr( $init_pers ); ?>">
+									<input name="mainwp_rest_api_key_edit_pers" value="" type="hidden">
+									<i class="dropdown icon"></i>
+									<div class="default text"><?php echo ( '' === $init_pers ) ? esc_html__( 'No Permissions selected.', 'mainwp' ) : ''; ?></div>
+									<div class="menu">
+										<div class="item" data-value="r"><?php esc_html_e( 'Read', 'mainwp' ); ?></div>
+										<div class="item" data-value="w"><?php esc_html_e( 'Write', 'mainwp' ); ?></div>
+										<div class="item" data-value="d"><?php esc_html_e( 'Delete', 'mainwp' ); ?></div>
+									</div>
+								</div>
+							</div>
+						</div>
 						<?php
 						/**
 						 * Action: rest_api_form_bottom
@@ -703,6 +748,15 @@ class MainWP_Rest_Api_Page {
 		$enabled   = is_array( $item ) && isset( $item['enabled'] ) && ! empty( $item['enabled'] ) ? true : false;
 		$ending    = substr( $keyid, -8 );
 
+		$init_pers = '';
+		if ( isset( $item['perms'] ) ) {
+			$init_pers = $item['perms'];
+		} else {
+			$init_pers = 'r,w,d'; // to compatible.
+		}
+
+		$item_pers = is_string( $init_pers ) ? explode( ',', $init_pers ) : array();
+
 		self::render_header( 'Edit' );
 		?>
 		<div id="rest-api-settings" class="ui segment">
@@ -728,6 +782,21 @@ class MainWP_Rest_Api_Page {
 							<div class="five wide column">
 								<div class="ui disabled input">
 									<input type="text" value="<?php echo esc_attr( '...' . $ending ); ?>" />
+								</div>
+							</div>
+						</div>
+						<div class="ui grid field">
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Permissions', 'mainwp' ); ?></label>
+							<div class="five wide column">
+								<div class="ui multiple selection dropdown" init-value="<?php echo esc_attr( $init_pers ); ?>">
+									<input name="mainwp_rest_api_key_edit_pers" value="" type="hidden">
+									<i class="dropdown icon"></i>
+									<div class="default text"><?php echo ( '' === $init_pers ) ? esc_html__( 'No Permissions selected.', 'mainwp' ) : ''; ?></div>
+									<div class="menu">
+										<div class="item" data-value="r"><?php esc_html_e( 'Read', 'mainwp' ); ?></div>
+										<div class="item" data-value="w"><?php esc_html_e( 'Write', 'mainwp' ); ?></div>
+										<div class="item" data-value="d"><?php esc_html_e( 'Delete', 'mainwp' ); ?></div>
+									</div>
 								</div>
 							</div>
 						</div>

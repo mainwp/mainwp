@@ -108,7 +108,6 @@ class MainWP_Extensions_View {
 	 *
 	 * Render the extensions page.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::added_on_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
@@ -145,7 +144,7 @@ class MainWP_Extensions_View {
 					<div class="ui segment" id="mainwp-extensions-search-no-results" style="display:none">
 						<div class="ui info message"><?php esc_html_e( 'Your search returned no results. The extension may need to be installed or does not exist.' ); ?></div>
 					</div>
-				<div class="ui five stackable cards" id="mainwp-extensions-list">
+				<div class="ui four stackable cards" id="mainwp-extensions-list">
 					<?php if ( isset( $extensions ) && is_array( $extensions ) ) : ?>
 							<?php foreach ( $extensions as $extension ) : ?>
 									<?php
@@ -566,6 +565,7 @@ class MainWP_Extensions_View {
 	 * @param string $mainwp_api_key MainWP.com api key.
 	 */
 	public static function render_side_box( $mainwp_api_key ) {
+		
 		?>
 		<div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
 			<div class="title active">

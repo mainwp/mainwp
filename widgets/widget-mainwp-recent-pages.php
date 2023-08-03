@@ -50,8 +50,38 @@ class MainWP_Recent_Pages {
 		/** This filter is documented in /widgets/widget-mainwp-recent-posts.php */
 		$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 );
 
+		$allPages = array();
+
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
 
+		if ( isset( $_GET['client_id'] ) ) {
+			$data_fields = MainWP_System_Utility::get_default_map_site_fields();
+  			$data_fields[] = 'recent_pages';
+			$individual = false;
+			$client_id = isset( $_GET['client_id'] ) ? $_GET['client_id'] : 0;
+			$websites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id, array( 'select_data' => $data_fields ) );
+
+			if ( $websites ) {
+				foreach ( $websites as $website ) {
+					if ( '' == $website->recent_pages ) {
+						continue;
+					}
+	
+					$pages = json_decode( $website->recent_pages, 1 );
+					if ( 0 == count( $pages ) ) {
+						continue;
+					}
+					foreach ( $pages as $page ) {
+						$page['website'] = (object) array(
+							'id'   => $website->id,
+							'url'  => $website->url,
+							'name' => $website->name,
+						);
+						$allPages[] = $page;
+					}
+				}
+			}
+		} else {
 		if ( $current_wpid ) {
 			$sql        = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid );
 			$individual = true;
@@ -59,10 +89,8 @@ class MainWP_Recent_Pages {
 			$sql        = MainWP_DB::instance()->get_sql_websites_for_current_user();
 			$individual = false;
 		}
-
 		$websites = MainWP_DB::instance()->query( $sql );
 
-		$allPages = array();
 		if ( $websites ) {
 			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( '' == $website->recent_pages ) {
@@ -70,7 +98,7 @@ class MainWP_Recent_Pages {
 				}
 
 				$pages = json_decode( $website->recent_pages, 1 );
-				if ( count( $pages ) == 0 ) {
+					if ( 0 == count( $pages ) ) {
 					continue;
 				}
 				foreach ( $pages as $page ) {
@@ -84,6 +112,7 @@ class MainWP_Recent_Pages {
 			}
 			MainWP_DB::free_result( $websites );
 		}
+		}
 
 		self::render_top_grid();
 
@@ -96,12 +125,17 @@ class MainWP_Recent_Pages {
 		 */
 		do_action( 'mainwp_recent_pages_widget_top' );
 
+		?>
+		<div class="mainwp-scrolly-overflow">
+		<?php
 		self::render_published_posts( $allPages, $recent_number, $individual );
 		self::render_draft_posts( $allPages, $recent_number, $individual );
 		self::render_pending_posts( $allPages, $recent_number, $individual );
 		self::render_future_posts( $allPages, $recent_number, $individual );
 		self::render_trash_posts( $allPages, $recent_number, $individual );
-
+		?>
+		</div>
+		<?php
 		/**
 		 * Action: mainwp_recent_pages_after_lists
 		 *
@@ -112,14 +146,13 @@ class MainWP_Recent_Pages {
 		do_action( 'mainwp_recent_pages_after_lists' );
 
 		?>
-		<div class="ui hidden divider"></div>
 
-		<div class="ui stackable grid">
+		<div class="ui stackable grid mainwp-widget-footer">
 			<div class="eight wide column">
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkManage' ) ); ?>" title="" class="ui button green basic"><?php esc_html_e( 'Manage Pages', 'mainwp' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkManage' ) ); ?>" title="" class="ui button fluid mini green basic"><?php esc_html_e( 'Manage Pages', 'mainwp' ); ?></a>
 			</div>
 			<div class="eight wide column right aligned">
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkAdd' ) ); ?>" title="" class="ui button green"><?php esc_html_e( 'Create New Page', 'mainwp' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkAdd' ) ); ?>" title="" class="ui button fluid mini green"><?php esc_html_e( 'New Page', 'mainwp' ); ?></a>
 			</div>
 		</div>
 		<?php
@@ -138,7 +171,7 @@ class MainWP_Recent_Pages {
 	 */
 	public static function render_top_grid() {
 		?>
-		<div class="ui grid">
+		<div class="ui grid mainwp-widget-header">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
 					<?php
@@ -151,7 +184,11 @@ class MainWP_Recent_Pages {
 					 */
 					echo esc_html( apply_filters( 'mainwp_recent_pages_widget_title', esc_html__( 'Recent Pages', 'mainwp' ) ) );
 					?>
+					<?php if ( isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+					<div class="sub header"><?php esc_html_e( 'The most recent pages from the Client websites', 'mainwp' ); ?></div>
+					<?php else : ?>
 					<div class="sub header"><?php esc_html_e( 'The most recent pages from your websites', 'mainwp' ); ?></div>
+					<?php endif; ?>
 				</h3>
 			</div>
 			<div class="four wide column right aligned">
@@ -168,7 +205,6 @@ class MainWP_Recent_Pages {
 				</div>
 			</div>
 			</div>
-			<div class="ui section hidden divider"></div>
 		<?php
 	}
 

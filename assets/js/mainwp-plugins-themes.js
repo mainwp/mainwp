@@ -6,8 +6,8 @@ jQuery(document).ready(function () {
             jQuery('input[name="plugins"]').attr('checked', 'checked');
             jQuery('input[name="plugin[]"]').attr('checked', 'checked');
         } else {
-            jQuery('input[name="plugins"]').removeAttr('checked');
-            jQuery('input[name="plugin[]"]').removeAttr('checked');
+            jQuery('input[name="plugins"]').prop("checked", false);
+            jQuery('input[name="plugin[]"]').prop("checked", false);
         }
     });
     jQuery(document).on('click', 'input[name="themes"]', function () {
@@ -15,8 +15,8 @@ jQuery(document).ready(function () {
             jQuery('input[name="themes"]').attr('checked', 'checked');
             jQuery('input[name="theme[]"]').attr('checked', 'checked');
         } else {
-            jQuery('input[name="themes"]').removeAttr('checked');
-            jQuery('input[name="theme[]"]').removeAttr('checked');
+            jQuery('input[name="themes"]').prop("checked", false);
+            jQuery('input[name="theme[]"]').prop("checked", false);
         }
     });
 
@@ -43,7 +43,7 @@ jQuery(document).ready(function () {
         });
 
         jQuery.post(ajaxurl, data, function () {
-            jQuery('#mainwp-bulk-trust-plugins-action-apply').removeAttr('disabled');
+            jQuery('#mainwp-bulk-trust-plugins-action-apply').prop("disabled", false);
             mainwp_fetch_all_active_plugins();
         }, 'json');
 
@@ -69,7 +69,7 @@ jQuery(document).ready(function () {
         });
 
         jQuery.post(ajaxurl, data, function () {
-            jQuery('#mainwp-bulk-trust-themes-action-apply').removeAttr('disabled');
+            jQuery('#mainwp-bulk-trust-themes-action-apply').prop("disabled", false);
             mainwp_fetch_all_themes();
         }, 'json');
 
@@ -415,7 +415,7 @@ mainwp_fetch_all_active_plugins = function () {
     jQuery('#mainwp-auto-updates-plugins-content').find('.dimmer').addClass('active');
 
     jQuery.post(ajaxurl, data, function (response) {
-        response = jQuery.trim(response);
+        response = response.trim();
         jQuery('#mainwp-auto-updates-plugins-content').find('.dimmer').removeClass('active');
         jQuery('#mainwp-auto-updates-plugins-table-wrapper').html(response);
     });

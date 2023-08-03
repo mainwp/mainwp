@@ -53,7 +53,7 @@ class MainWP_UI_Select_Sites {
 		$type                   = isset( $params['type'] ) ? $params['type'] : 'checkbox';
 		$show_group             = isset( $params['show_group'] ) ? $params['show_group'] : true;
 		$show_select_all        = isset( $params['show_select_all'] ) ? $params['show_select_all'] : true;
-		$class                  = isset( $params['show_select_all'] ) ? $params['show_select_all'] : '';
+		$class                  = isset( $params['class'] ) ? $params['class'] : '';
 		$style                  = isset( $params['style'] ) ? $params['style'] : '';
 		$selected_sites         = isset( $params['selected_sites'] ) ? $params['selected_sites'] : array();
 		$selected_groups        = isset( $params['selected_groups'] ) ? $params['selected_groups'] : array();

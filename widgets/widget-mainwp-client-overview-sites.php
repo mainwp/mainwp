@@ -95,6 +95,7 @@ class MainWP_Client_Overview_Sites {
 		$client_info = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id, ARRAY_A );
 
 		?>
+		<div class="mainwp-widget-header">
 			<h3 class="ui header handle-drag">
 			<?php
 			/**
@@ -110,8 +111,8 @@ class MainWP_Client_Overview_Sites {
 			?>
 			<div class="sub header"><?php echo esc_html__( 'Websites that belong to the client.', 'mainwp' ); ?></div>
 			</h3>
-			<div class="ui section hidden divider"></div>
-			<div class="mainwp-widget-client-card">
+		</div>
+			<div class="mainwp-widget-client-card mainwp-scrolly-overflow">
 				<?php
 				/**
 				 * Actoin: mainwp_clients_overview_websites_widget_top
@@ -362,12 +363,9 @@ class MainWP_Client_Overview_Sites {
 		 */
 	public function single_row( $website ) {
 		$classes = '';
-
 		$hasSyncErrors = ( '' !== $website['sync_errors'] );
-		$md5Connection = ( ! $hasSyncErrors && ( 1 == $website['nossl'] ) );
-
 		$classes = trim( $classes );
-		$classes = ' class="child-site mainwp-child-site-' . intval( $website['id'] ) . ' ' . ( $hasSyncErrors ? 'error' : '' ) . ' ' . ( $md5Connection ? 'warning' : '' ) . ' ' . $classes . '"';
+		$classes = ' class="child-site mainwp-child-site-' . intval( $website['id'] ) . ' ' . ( $hasSyncErrors ? 'error' : '' ) . ' ' . $classes . '"';
 
 		echo '<tr id="child-site-' . intval( $website['id'] ) . '"' . $classes . ' siteid="' . intval( $website['id'] ) . '" site-url="' . $website['url'] . '">';
 		$this->single_row_columns( $website );
@@ -561,7 +559,6 @@ class MainWP_Client_Overview_Sites {
 		}
 
 		$hasSyncErrors = ( '' !== $website['sync_errors'] );
-		$md5Connection = ( ! $hasSyncErrors && ( 1 == $website['nossl'] ) );
 
 		if ( $hasSyncErrors ) {
 			$a_color = '';
@@ -591,8 +588,6 @@ class MainWP_Client_Overview_Sites {
 				<td class="center aligned collapsing">
 					<?php if ( $hasSyncErrors ) : ?>
 						<span data-tooltip="<?php esc_attr_e( 'Site appears to be disconnected. Click here to reconnect.', 'mainwp' ); ?>"  data-position="right center"  data-inverted=""><a class="mainwp_site_reconnect" href="#"><i class="circular inverted red unlink icon"></i></a></span>
-					<?php elseif ( $md5Connection ) : ?>
-						<span data-tooltip="<?php esc_attr_e( 'Site appears to be connected over the insecure MD5 connection.', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><i class="circular inverted orange shield icon"></i></span>
 					<?php else : ?>
 						<span data-tooltip="<?php esc_attr_e( 'Site appears to be connected properly. Click here to sync the site.', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><a class="managesites_syncdata" href="#"><?php echo '1' === $website['suspended'] ? '<i class="pause circular yellow inverted circle icon"></i>' : '<i class="circular inverted green check icon"></i>'; ?></a></span>
 					<?php endif; ?>

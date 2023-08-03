@@ -156,7 +156,7 @@ class MainWP_Updates {
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => esc_html__( 'Updates', 'mainwp' ),
-				'parent_key' => 'mainwp_tab',
+				'parent_key' => 'managesites',
 				'slug'       => 'UpdatesManage',
 				'href'       => 'admin.php?page=UpdatesManage',
 				'icon'       => '<i class="sync icon"></i>',
@@ -322,7 +322,7 @@ class MainWP_Updates {
 	 * @return string Dashboard link.
 	 */
 	public static function render_site_link_dashboard( $website, $echo = true ) {
-		$lnk = '<a href="' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) . '"  data-inverted="" data-tooltip="' . esc_html__( 'Visit this dashboard.', 'mainwp' ) . '">' . stripslashes( $website->name ) . '</a>';
+		$lnk = '<a href="' . esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ) . '"  data-inverted="" data-tooltip="' . esc_html__( 'Visit this dashboard.', 'mainwp' ) . '">' . stripslashes( $website->name ) . '</a>';
 		if ( $echo ) {
 			echo $lnk;
 		} else {
@@ -775,8 +775,6 @@ class MainWP_Updates {
 		}
 
 		self::render_header( 'UpdatesManage' );
-
-		self::render_twitter_notice();
 
 		self::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view );
 
@@ -1791,8 +1789,8 @@ class MainWP_Updates {
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
 				jQuery( '#mainwp-manage-updates .ui.accordion' ).accordion( {
-					"exclusive": <?php echo $table_features['exclusive']; ?>,
-					"duration": <?php echo $table_features['duration']; ?>,
+					"exclusive": <?php echo esc_html( $table_features['exclusive'] ); ?>,
+					"duration": <?php echo esc_html( $table_features['duration'] ); ?>,
 					onOpen: function(){
 						//mainwp_datatable_init_and_fix_recalc('table.mainwp-manage-updates-item-table');
 					}
@@ -1965,7 +1963,7 @@ class MainWP_Updates {
 						continue;
 					}
 					?>
-					<a class="<?php echo( $slug === $current_tab ? 'active' : '' ); ?> item" data-tab="<?php echo esc_html( $slug ); ?>" href="admin.php?page=UpdatesManage&tab=<?php echo esc_html( $slug ); ?>"><?php esc_html_e( $tab['title'] ); ?><div class="ui small <?php echo empty( $tab['total_upgrades'] ) ? 'green' : 'red'; ?> label" timestamp="<?php echo time(); ?>"><?php echo intval( $tab['total_upgrades'] ); ?></div></a>
+					<a class="<?php echo( $slug === $current_tab ? esc_attr( 'active' ) : '' ); ?> item" data-tab="<?php echo esc_html( $slug ); ?>" href="admin.php?page=UpdatesManage&tab=<?php echo esc_html( $slug ); ?>"><?php esc_html_e( $tab['title'] ); ?><div class="ui small <?php echo empty( $tab['total_upgrades'] ) ? esc_attr( 'green' ) : esc_attr( 'red' ); ?> label" timestamp="<?php echo time(); ?>"><?php echo intval( $tab['total_upgrades'] ); ?></div></a>
 					<?php
 				}
 				?>
@@ -2045,40 +2043,6 @@ class MainWP_Updates {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_updates_after_actions_bar' );
-	}
-
-	/**
-	 * Renders the twitter bragger message.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Twitter
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
-	 */
-	public static function render_twitter_notice() {
-
-		if ( MainWP_Twitter::enabled_twitter_messages() ) {
-			$filter = array(
-				'upgrade_all_plugins',
-				'upgrade_all_themes',
-				'upgrade_all_wp_core',
-			);
-			foreach ( $filter as $what ) {
-				$twitters = MainWP_Twitter::get_twitter_notice( $what );
-				if ( is_array( $twitters ) ) {
-					foreach ( $twitters as $timeid => $twit_mess ) {
-						if ( ! empty( $twit_mess ) ) {
-							$sendText = MainWP_Twitter::get_twit_to_send( $what, $timeid );
-							if ( ! empty( $sendText ) ) {
-								?>
-								<div class="mainwp-tips ui info message twitter" style="margin:0"><i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo $what; ?>" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?></div>
-								<?php
-							}
-						}
-					}
-				}
-			}
-		}
 	}
 
 	/**
@@ -2210,17 +2174,17 @@ class MainWP_Updates {
 			$table_features = apply_filters( 'mainwp_updates_http_responses_datatable_features', $table_features );
 			?>
 			<script>
-			var responsive = <?php echo $table_features['responsive']; ?>;
+			var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
 			if( jQuery( window ).width() > 1140 ) {
 				responsive = false;
 			}
 			jQuery( document ).ready( function() {
 				jQuery( '#mainwp-http-response-issues-table' ).DataTable( {
 						"responsive": responsive,
-						"searching": <?php echo $table_features['searching']; ?>,
-						"paging" : <?php echo $table_features['paging']; ?>,
-						"stateSave": <?php echo $table_features['stateSave']; ?>,
-						"info" : <?php echo $table_features['info']; ?>,
+						"searching": <?php echo esc_html( $table_features['searching'] ); ?>,
+						"paging" : <?php echo esc_html( $table_features['paging'] ); ?>,
+						"stateSave": <?php echo esc_html( $table_features['stateSave'] ); ?>,
+						"info" : <?php echo esc_html( $table_features['info'] ); ?>,
 						"columnDefs" : [ { "orderable": false, "targets": "no-sort" } ],
 						"language" : { "emptyTable": "No HTTP issues detected." }
 				} );

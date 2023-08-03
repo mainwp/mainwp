@@ -108,7 +108,7 @@
                     var self = this;
                     var closebuttonEl = this.$overlayElementId.find( '.mainwp-modal-close' );
                     if ( closebuttonEl.length > 0 ) {
-                        $( closebuttonEl ).click( function () {
+                        $( closebuttonEl ).on('click', function () {
                             self.close(true);
                         } );
                     }

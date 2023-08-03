@@ -1169,7 +1169,7 @@ mainwp_managebackups_update = function () {
                 feedback( 'mainwp-message-zone', response.result, 'green' );
             }
 
-            jQuery( '#mainwp_managebackups_update' ).removeAttr( 'disabled' ); //Enable add button
+            jQuery( '#mainwp_managebackups_update' ).prop("disabled", false); //Enable add button
         }, 'json' );
     }
 };
@@ -1241,7 +1241,7 @@ mainwp_managebackups_add = function () {
                 location.href = 'admin.php?page=ManageBackups&a=1';
                 feedback( 'mainwp-message-zone', response.result, 'green' );
             }
-            jQuery( '#mainwp_managebackups_add' ).removeAttr( 'disabled' ); //Enable add button
+            jQuery( '#mainwp_managebackups_add' ).prop("disabled", false); //Enable add button
         }, 'json' );
     }
 };

@@ -695,8 +695,12 @@ body.mainwp-ui.mainwp-custom-theme,
   border-color: var(--border-color) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme #mainwp-nav-wrap {
+.mainwp-ui.mainwp-custom-theme #mainwp-first-level-navigation {
   background-color: var(--background-color-1);
+}
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation,
+.mainwp-ui.mainwp-custom-theme #mainwp-second-level-navigation .ui.inverted.menu {
+  background-color: var(--background-color-3);
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-sites-sidebar-menu.ui.vertical.menu {

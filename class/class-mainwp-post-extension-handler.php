@@ -249,7 +249,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		$api_key = isset( $_POST['api_key'] ) ? trim( $_POST['api_key'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( '' === $api_key && false !== $api_key ) {
-			MainWP_Utility::update_option( 'mainwp_extensions_master_api_key', '' );
+			MainWP_Keys_Manager::instance()->update_key_value( 'mainwp_extensions_master_api_key', false );
 		}
 
 		if ( empty( $api_key ) ) {
@@ -277,8 +277,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 					if ( empty( $api_key ) && isset( $result['master_api_key'] ) ) {
 						$api_key = $result['master_api_key'];
 					}
-					$enscrypt_api_key = MainWP_Api_Manager_Password_Management::encrypt_string( $api_key );
-					MainWP_Utility::update_option( 'mainwp_extensions_master_api_key', $enscrypt_api_key );
+					MainWP_Keys_Manager::instance()->update_key_value( 'mainwp_extensions_master_api_key', $api_key );
 					MainWP_Utility::update_option( 'mainwp_extensions_api_save_login', true );
 					$plan_info = isset( $result['plan_info'] ) ? wp_json_encode( $result['plan_info'] ) : '';
 					MainWP_Utility::update_option( 'mainwp_extensions_plan_info', $plan_info );
@@ -316,7 +315,6 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 * @return void
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::verify_mainwp_api()
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function test_extensions_api_login() {

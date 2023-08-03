@@ -97,6 +97,7 @@ class MainWP_Site_Info {
 	 */
 	public static function render_info( $website, $website_info, $child_site_info ) {
 		?>
+		<div class="mainwp-widget-header">
 		<h3 class="ui header handle-drag">
 			<?php
 			/**
@@ -112,10 +113,9 @@ class MainWP_Site_Info {
 			?>
 			<div class="sub header"><?php esc_html_e( 'Basic child site system information', 'mainwp' ); ?></div>
 		</h3>
+		</div>
 
-		<div class="ui section hidden divider"></div>
-
-		<div class="mainwp-widget-site-info">
+		<div class="mainwp-widget-site-info mainwp-scrolly-overflow">
 			<?php
 			/**
 			 * Actoin: mainwp_site_info_widget_top

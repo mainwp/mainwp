@@ -85,6 +85,7 @@ class MainWP_System_Handler {
 		add_action( 'mainwp_fetchurlsauthed', array( &$this, 'filter_fetch_urls_authed' ), 10, 7 );
 		add_filter( 'mainwp_fetchurlauthed', array( &$this, 'filter_fetch_url_authed' ), 10, 6 );
 		add_filter( 'mainwp_getsqlwebsites_for_current_user', array( self::class, 'hook_get_sql_websites_for_current_user' ), 10, 4 );
+		add_filter( 'mainwp_fetchurlverifyaction', array( &$this, 'hook_fetch_url_verify_action' ), 10, 4 );
 
 		add_filter(
 			'mainwp_getdashboardsites',
@@ -162,6 +163,27 @@ class MainWP_System_Handler {
 	 */
 	public function filter_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $raw_response = null ) {
 		return MainWP_Extensions_Handler::hook_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $raw_response );
+	}
+
+	/**
+	 * Method hook_fetch_url_verify_action()
+	 *
+	 * Filter fetch Authorized URL.
+	 *
+	 * @param mixed  $pluginFile MainWP extention.
+	 * @param string $childKey Extension child key.
+	 * @param int    $websiteId Website ID.
+	 * @param array  $params Function paramerters.
+	 * @param null   $raw_response Raw response.
+	 *
+	 * @return mixed MainWP_Extensions_Handler::hook_fetch_url_authed() Hook fetch authorized URL.
+	 */
+	public function hook_fetch_url_verify_action( $pluginFile, $childKey, $websiteId, $params ) {
+		if ( ! is_array( $params ) || ! isset( $params['actionnonce'] ) ) {
+			return false;
+		}
+		$what = 'verify_action';
+		return MainWP_Extensions_Handler::hook_fetch_url_authed( $pluginFile, $childKey, $websiteId, $what, $params );
 	}
 
 	/**
@@ -407,12 +429,6 @@ class MainWP_System_Handler {
 			if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) {
 				if ( isset( $_POST['mainwp_restore_info_messages'] ) && ! empty( $_POST['mainwp_restore_info_messages'] ) ) {
 					delete_user_option( $user->ID, 'mainwp_notice_saved_status' );
-				} else {
-					$enabled_twit = ! isset( $_POST['mainwp_hide_twitters_message'] ) ? 0 : 1;
-					MainWP_Utility::update_option( 'mainwp_hide_twitters_message', $enabled_twit );
-					if ( ! $enabled_twit ) {
-						MainWP_Twitter::clear_all_twitter_messages();
-					}
 				}
 				$enabled_tours = ! isset( $_POST['mainwp-guided-tours-option'] ) ? 0 : 1;
 				MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enabled_tours );
@@ -493,7 +509,6 @@ class MainWP_System_Handler {
 			}
 
 			MainWP_Utility::update_option( 'mainwp_hide_update_everything', ( ! isset( $_POST['hide_update_everything'] ) ? 0 : 1 ) );
-			MainWP_Utility::update_option( 'mainwp_number_overview_columns', ( isset( $_POST['number_overview_columns'] ) ? intval( $_POST['number_overview_columns'] ) : 2 ) );
 
 			if ( isset( $_POST['reset_overview_settings'] ) && ! empty( $_POST['reset_overview_settings'] ) && isset( $_POST['reset_overview_which_settings'] ) && 'overview_settings' == $_POST['reset_overview_which_settings'] ) {
 				update_user_option( $user->ID, 'mainwp_widgets_sorted_toplevel_page_mainwp_tab', false, true );
@@ -527,8 +542,6 @@ class MainWP_System_Handler {
 			if ( $user ) {
 				update_user_option( $user->ID, 'mainwp_clients_show_widgets', $show_wids, true );
 			}
-
-			MainWP_Utility::update_option( 'mainwp_number_clients_overview_columns', ( isset( $_POST['number_overview_columns'] ) ? intval( $_POST['number_overview_columns'] ) : 2 ) );
 
 			if ( isset( $_POST['reset_client_overview_settings'] ) && ! empty( $_POST['reset_client_overview_settings'] ) ) {
 				update_user_option( $user->ID, 'mainwp_widgets_sorted_mainwp_page_manageclients', false, true );

@@ -726,7 +726,7 @@ mainwp_extension_bulk_install_specific = function (pExtToInstall) {
 
                 if (matches) {
                     response_json = matches[1];
-                    response = jQuery.parseJSON(response_json);
+                    response = JSON.parse(response_json);
                 }
 
                 if (response != '') {

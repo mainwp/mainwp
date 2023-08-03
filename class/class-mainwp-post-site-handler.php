@@ -192,12 +192,12 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Get Child Site Favicon.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_site_icon()
+	 * @uses \MainWP\Dashboard\MainWP_Sync::get_wp_icon()
 	 */
 	public function get_site_icon() {
 		$this->check_security( 'mainwp_get_site_icon', 'security' );
 		$siteId = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification
-		$result = MainWP_Sync::sync_site_icon( $siteId );
+		$result = MainWP_Sync::get_wp_icon( $siteId );
 		wp_send_json( $result );
 	}
 
@@ -350,12 +350,28 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Sync Child Sites.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Updates_Overview::dismiss_sync_errors()
-	 * @uses \MainWP\Dashboard\MainWP_Updates_Overview::sync_site()
 	 */
 	public function mainwp_syncsites() {
 		$this->secure_request( 'mainwp_syncsites' );
 		MainWP_Updates_Overview::dismiss_sync_errors( false );
-		MainWP_Updates_Overview::sync_site();
+
+		$website = null;
+		$wp_id   = isset( $_POST['wp_id'] ) ? intval( $_POST['wp_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		if ( $wp_id ) {
+			$website = MainWP_DB::instance()->get_website_by_id( $wp_id );
+		}
+
+		if ( null == $website ) {
+			die( wp_json_encode( array( 'error' => esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
+		}
+
+		if ( MainWP_Sync::sync_website( $website ) ) {
+			die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
+		}
+
+		$website = MainWP_DB::instance()->get_website_by_id( $website->id );
+
+		die( wp_json_encode( array( 'error' => esc_html( wp_strip_all_tags( $website->sync_errors ) ) ) ) );
 	}
 
 	/**
@@ -375,7 +391,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Check Child Sites.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_site_icon()
+	 * @uses \MainWP\Dashboard\MainWP_Sync::get_wp_icon()
 	 */
 	public function manage_suspend_site() {
 		$this->secure_request( 'mainwp_manage_sites_suspend_site' );

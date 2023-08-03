@@ -173,9 +173,9 @@ class MainWP_Page {
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
 					<?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=PageBulkManage' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Pages', 'mainwp' ); ?></a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkManage' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Pages', 'mainwp' ); ?></a>
 						<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PageBulkAdd' ) ) { ?>
-							<a href="<?php echo admin_url( 'admin.php?page=PageBulkAdd' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=PageBulkAdd' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
 						<?php } ?>
 					<?php } ?>
 					<?php
@@ -186,7 +186,7 @@ class MainWP_Page {
 									continue;
 								}
 								?>
-								<a href="<?php echo admin_url( 'admin.php?page=Page' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
+								<a href="<?php echo esc_url( admin_url( 'admin.php?page=Page' . $subPage['slug'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
 								<?php
 							}
 						}
@@ -214,7 +214,7 @@ class MainWP_Page {
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => esc_html__( 'Pages', 'mainwp' ),
-				'parent_key' => 'mainwp_tab',
+				'parent_key'        => 'managesites',
 				'slug'       => 'PageBulkManage',
 				'href'       => 'admin.php?page=PageBulkManage',
 				'icon'       => '<i class="file icon"></i>',
@@ -853,7 +853,7 @@ class MainWP_Page {
 		$table_features = apply_filters( 'mainwp_pages_table_fatures', $table_features );
 		?>
 		<script type="text/javascript">
-		var responsive = <?php echo $table_features['responsive']; ?>;
+		var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
 		if( jQuery( window ).width() > 1140 ) {
 			responsive = false;
 		}
@@ -862,13 +862,13 @@ class MainWP_Page {
 				jQuery("#mainwp-pages-table").DataTable().destroy(); // fixed re-initialize datatable issue.
 				$manage_pages_table = jQuery( '#mainwp-pages-table' ).DataTable( {
 					"responsive" : responsive,
-					"searching" : <?php echo $table_features['searching']; ?>,
-					"colReorder" : <?php echo $table_features['colReorder']; ?>,
-					"stateSave":  <?php echo $table_features['stateSave']; ?>,
-					"paging": <?php echo $table_features['paging']; ?>,
-					"info": <?php echo $table_features['info']; ?>,
-					"order": <?php echo $table_features['order']; ?>,
-					"scrollX" : <?php echo $table_features['scrollX']; ?>,
+					"searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
+					"colReorder" : <?php echo esc_html( $table_features['colReorder'] ); ?>,
+					"stateSave":  <?php echo esc_html( $table_features['stateSave'] ); ?>,
+					"paging": <?php echo esc_html( $table_features['paging'] ); ?>,
+					"info": <?php echo esc_html( $table_features['info'] ); ?>,
+					"order": <?php echo esc_html( $table_features['order'] ); ?>,
+					"scrollX" : <?php echo esc_html( $table_features['scrollX'] ); ?>,
 					"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
 					"columnDefs": [ {
 						"targets": 'no-sort',
@@ -935,19 +935,7 @@ class MainWP_Page {
 
 		MainWP_Cache::init_cache( 'Page' );
 
-		$data_fields = array(
-			'id',
-			'url',
-			'name',
-			'adminname',
-			'nossl',
-			'privkey',
-			'nosslkey',
-			'http_user',
-			'http_pass',
-			'ssl_version',
-			'sync_errors',
-		);
+		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
 		$dbwebsites = array();
 		if ( '' != $sites ) {
@@ -1362,7 +1350,6 @@ class MainWP_Page {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::update_twitter_info()
 	 * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
@@ -1380,23 +1367,8 @@ class MainWP_Page {
 				$succes_message = esc_html__( 'New page created', 'mainwp' );
 			}
 		}
-
-		$data_fields = array(
-			'id',
-			'url',
-			'name',
-			'adminname',
-			'nossl',
-			'privkey',
-			'nosslkey',
-			'http_user',
-			'http_pass',
-			'ssl_version',
-			'sync_errors',
-		);
-
+		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 		?>
-
 		<div class="ui modal" id="mainwp-posting-page-modal">
 			<div class="header"><?php $edit_id ? esc_html_e( 'Edit Page', 'mainwp' ) : esc_html_e( 'New Page', 'mainwp' ); ?></div>
 			<div class="scrolling content">
@@ -1640,7 +1612,7 @@ class MainWP_Page {
 							?>
 							<div class="ui relaxed list">
 								<?php foreach ( $dbwebsites as $website ) { ?>
-									<div class="item"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+									<div class="item"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a>
 										: <?php echo ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '"  class="mainwp-may-hide-referrer" target="_blank">View Page</a>' : 'ERROR: ' . $output->errors[ $website->id ] ); ?>
 									</div>
 								<?php } ?>
@@ -1663,13 +1635,6 @@ class MainWP_Page {
 								$countRealItems++;
 							}
 						}
-
-						if ( ! empty( $countSites ) ) {
-							$seconds = ( time() - $startTime );
-							MainWP_Twitter::update_twitter_info( 'new_page', $countSites, $seconds, $countRealItems, $startTime, 1 );
-						}
-
-						self::render_twitter_notice();
 					}
 				} else {
 					?>
@@ -1701,36 +1666,6 @@ class MainWP_Page {
 			} );
 		</script>
 		<?php
-	}
-
-	/**
-	 * Method render_twitter_notice()
-	 *
-	 * Render twitter notice.
-	 *
-	 * @return void Output twitter notice.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter
-	 */
-	public static function render_twitter_notice() {
-		if ( MainWP_Twitter::enabled_twitter_messages() ) {
-			$twitters = MainWP_Twitter::get_twitter_notice( 'new_page' );
-			if ( is_array( $twitters ) ) {
-				foreach ( $twitters as $timeid => $twit_mess ) {
-					if ( ! empty( $twit_mess ) ) {
-						$sendText = MainWP_Twitter::get_twit_to_send( 'new_page', $timeid );
-						?>
-						<div class="mainwp-tips ui info message twitter" style="margin:0">
-							<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="new_page" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
-						</div>
-						<?php
-					}
-				}
-			}
-		}
 	}
 
 	/**

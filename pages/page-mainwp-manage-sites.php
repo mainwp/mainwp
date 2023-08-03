@@ -47,7 +47,6 @@ class MainWP_Manage_Sites {
 	 */
 	private static $enable_widgets = array(
 		'overview'           => true,
-		'connection_status'  => true,
 		'recent_posts'       => true,
 		'recent_pages'       => true,
 		'security_issues'    => true,
@@ -897,7 +896,6 @@ class MainWP_Manage_Sites {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Handler::apply_filters()
 	 * @uses \MainWP\Dashboard\MainWP_UI::add_widget_box()
-	 * @uses \MainWP\Dashboard\MainWP_Connection_Status::get_class_name()
 	 * @uses \MainWP\Dashboard\MainWP_Notes::get_class_name()
 	 * @uses \MainWP\Dashboard\MainWP_Recent_Pages::get_class_name()
 	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::get_class_name()
@@ -950,61 +948,66 @@ class MainWP_Manage_Sites {
 
 		// Load the Updates Overview widget.
 		if ( self::$enable_widgets['overview'] ) {
-			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Updates Overview', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 6 ) );
+			// MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Updates Overview', 'mainwp' ) );
+		}
+
+		// Load the Securtiy Issues widget.
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
+			if ( self::$enable_widgets['security_issues'] ) {
+				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), self::$page, array( 1, 1, 2, 2 ) );
+				// MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), self::$page, 'right', esc_html__( 'Security Issues', 'mainwp' ) );
+			}
+		}
+
+		// Load the Client widget.
+		if ( self::$enable_widgets['client_info'] ) {
+			MainWP_UI::add_widget_box( 'client_info', array( MainWP_Client_Info::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 3 ) );
+			// MainWP_UI::add_widget_box( 'client_info', array( MainWP_Client_Info::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Client info', 'mainwp' ) );
+		}
+
+		// Load the Non-MainWP Changes widget.
+		if ( self::$enable_widgets['non_mainwp_changes'] ) {
+			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 3 ) );
+			// MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Non-MainWP Changes', 'mainwp' ) );
+		}
+
+		// Load the Notes widget.
+		if ( self::$enable_widgets['notes'] ) {
+			MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 2 ) );
+			// MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Notes', 'mainwp' ) );
 		}
 
 		// Load the Recent Posts widget.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
 			if ( self::$enable_widgets['recent_posts'] ) {
-				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), self::$page, 'right', esc_html__( 'Recent Posts', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 3 ) );
+				// MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), self::$page, 'right', esc_html__( 'Recent Posts', 'mainwp' ) );
 			}
 		}
 
 		// Load the Recent Pages widget.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			if ( self::$enable_widgets['recent_pages'] ) {
-				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), self::$page, 'right', esc_html__( 'Recent Pages', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 3 ) );
+				// MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), self::$page, 'right', esc_html__( 'Recent Pages', 'mainwp' ) );
 			}
 		}
 
+		// Load the Site Info widget.
+		MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 2 ) );
+		// MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Child site info', 'mainwp' ) );
+
 		// Load the Pluins widget.
 		if ( self::$enable_widgets['plugins'] ) {
-			MainWP_UI::add_widget_box( 'plugins', array( MainWP_Widget_Plugins::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Plugins', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'plugins', array( MainWP_Widget_Plugins::get_class_name(), 'render' ), self::$page, array( 1, 1, 3, 3 ) );
+			// MainWP_UI::add_widget_box( 'plugins', array( MainWP_Widget_Plugins::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Plugins', 'mainwp' ) );
 		}
 
 		// Load the Themes widget.
 		if ( self::$enable_widgets['themes'] ) {
-			MainWP_UI::add_widget_box( 'themes', array( MainWP_Widget_Themes::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Themes', 'mainwp' ) );
-		}
-
-		// Load the Connection Status widget.
-		if ( self::$enable_widgets['connection_status'] ) {
-			MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Connection Status', 'mainwp' ) );
-		}
-
-		// Load the Securtiy Issues widget.
-		if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
-			if ( self::$enable_widgets['security_issues'] ) {
-				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), self::$page, 'right', esc_html__( 'Security Issues', 'mainwp' ) );
-			}
-		}
-
-		// Load the Notes widget.
-		if ( self::$enable_widgets['notes'] ) {
-			MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Notes', 'mainwp' ) );
-		}
-
-		// Load the Site Info widget.
-		MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Child site info', 'mainwp' ) );
-
-		// Load the Client widget.
-		if ( self::$enable_widgets['client_info'] ) {
-			MainWP_UI::add_widget_box( 'client_info', array( MainWP_Client_Info::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Client info', 'mainwp' ) );
-		}
-
-		// Load the Non-MainWP Changes widget.
-		if ( self::$enable_widgets['non_mainwp_changes'] ) {
-			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Non-MainWP Changes', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'themes', array( MainWP_Widget_Themes::get_class_name(), 'render' ), self::$page, array( 1, 1, 3, 3 ) );
+			// MainWP_UI::add_widget_box( 'themes', array( MainWP_Widget_Themes::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Themes', 'mainwp' ) );
 		}
 
 		$i = 0;
@@ -1021,7 +1024,11 @@ class MainWP_Manage_Sites {
 			$id = 'advanced-' . $id;
 
 			if ( $enabled ) {
-				MainWP_UI::add_widget_box( $id, $metaBox['callback'], self::$page, 'right', $metaBox['metabox_title'] );
+				$layout = array( 1, 1, 2, 3 );
+				if ( isset( $metaBox['id'] ) && ( 'google-widget' === $metaBox['id'] || 'matomo' === $metaBox['id'] ) ) {
+					$layout = array( 1, 1, 2, 7 );
+				}
+				MainWP_UI::add_widget_box( $id, $metaBox['callback'], self::$page, $layout );
 			}
 		}
 	}
@@ -1182,10 +1189,6 @@ class MainWP_Manage_Sites {
 	 * @param bool $showDelete true|false Show delete option.
 	 * @param bool $showAddNew true|false Show add new option.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Twitter
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_modal_edit_notes()
 	 */
 	public static function render_all_sites( $showDelete = true, $showAddNew = true ) {
@@ -1199,31 +1202,6 @@ class MainWP_Manage_Sites {
 		}
 
 		self::render_header( '' );
-
-		if ( MainWP_Twitter::enabled_twitter_messages() ) {
-			$filter = array(
-				'upgrade_all_plugins',
-				'upgrade_all_themes',
-				'upgrade_all_wp_core',
-			);
-			foreach ( $filter as $what ) {
-				$twitters = MainWP_Twitter::get_twitter_notice( $what );
-				if ( is_array( $twitters ) ) {
-					foreach ( $twitters as $timeid => $twit_mess ) {
-						if ( ! empty( $twit_mess ) ) {
-							$sendText = MainWP_Twitter::get_twit_to_send( $what, $timeid );
-							if ( ! empty( $sendText ) ) {
-								?>
-								<div class="mainwp-tips ui info message twitter" style="margin:0">
-									<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo esc_attr( $what ); ?>" twit-id="<?php echo esc_attr( $timeid ); ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
-								</div>
-								<?php
-							}
-						}
-					}
-				}
-			}
-		}
 
 		$hide_loading = apply_filters( 'mainwp_manage_sites_hide_loading', false );
 		?>
@@ -1541,6 +1519,12 @@ class MainWP_Manage_Sites {
 					$added = strtotime( $added );
 				}
 				MainWP_DB::instance()->update_website_option( $website, 'added_timestamp', $added );
+
+				$new_alg = isset( $_POST['mainwp_managesites_edit_openssl_alg'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_openssl_alg'] ) ) : '';
+				MainWP_DB::instance()->update_website_option( $website, 'signature_algo', $new_alg );
+
+				$use_lib = isset( $_POST['mainwp_managesites_edit_verify_connection_method'] ) ? intval( $_POST['mainwp_managesites_edit_verify_connection_method'] ) : 0;
+				MainWP_DB::instance()->update_website_option( $website, 'verify_method', $use_lib );
 
 				$updated = true;
 			}

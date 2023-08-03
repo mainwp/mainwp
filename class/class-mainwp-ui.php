@@ -291,8 +291,10 @@ class MainWP_UI {
 									}
 								}
 
+								$site_client_editing = ( $add_edit_client_id && $website->client_id && $add_edit_client_id == $website->client_id ) ? true : false;
+
 								$selected = false;
-								if ( ( '' == $website->sync_errors || $enableOfflineSites ) && ! MainWP_System_Utility::is_suspended_site( $website ) && $enable_site ) {
+								if ( ( '' == $website->sync_errors || $enableOfflineSites ) && ( ! MainWP_System_Utility::is_suspended_site( $website ) || $site_client_editing ) && $enable_site ) {
 									$selected = ( 'all' === $selected_websites || in_array( $website->id, $selected_websites ) );
 									$disabled = '';
 									if ( $edit_site_id ) {
@@ -532,6 +534,7 @@ class MainWP_UI {
 
 		if ( $show_menu ) {
 			MainWP_Menu::render_left_menu();
+			MainWP_Menu::render_mobile_menu();
 		}
 
 		$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
@@ -720,7 +723,7 @@ class MainWP_UI {
 									<?php esc_html_e( 'Overview', 'mainwp' ); ?>
 								</a>
 								<a class="item" href="<?php echo 'admin.php?page=managesites&updateid=' . intval( $website->id ); ?>">
-									<i class="sync alternate icon"></i>
+									<i class="redo icon"></i>
 									<?php esc_html_e( 'Updates', 'mainwp' ); ?>
 								</a>
 								<a class="item" href="<?php echo 'admin.php?page=managesites&id=' . intval( $website->id ); ?>">
@@ -882,11 +885,21 @@ class MainWP_UI {
 			 */
 			do_action( 'mainwp_before_header', $websites );
 
+			$algo = get_option( 'mainwp_connect_signature_algo', false );
+			if ( false == $algo ) {
+				$algo = defined( 'OPENSSL_ALGO_SHA256' ) ? 7 : 1;
+			} else {
+				$algo = intval( $algo );
+			}
+			$sign_algs = MainWP_System_Utility::get_open_ssl_sign_algos();
 			?>
 			<div id="mainwp-top-header" class="">
 				<div class="ui grid">
 
-					<div class="five wide column"><h4 class="mainwp-page-title"><?php echo $left; ?></h4></div> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
+					<div class="five wide middle aligned column">
+						<h4 class="mainwp-page-title" style="margin-bottom:0px;margin-top:0px;"><?php echo $left; ?></h4>
+						<span class="ui mini label">BETA INFO: Signature Algorithm - <?php echo $sign_algs[ $algo ]; ?></span>
+					</div>
 
 					<div class="two wide column middle aligned right aligned">
 						<?php if ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
@@ -1426,7 +1439,8 @@ class MainWP_UI {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
 	 */
-	public static function add_widget_box( $id, $callback, $screen = null, $context = null, $title = null, $priority = 'default' ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function add_widget_box( $id, $callback, $screen = null, $layout = array() ) {
+		// public static function add_widget_box( $id, $callback, $screen = null, $context = null, $title = null, $priority = 'default' ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		/**
 		* MainWP widget boxes array.
 		*
@@ -1440,22 +1454,6 @@ class MainWP_UI {
 			return;
 		}
 
-		if ( 'mainwp_page_manageclients' == $page ) {
-			$overviewColumns = get_option( 'mainwp_number_clients_overview_columns', 2 );
-		} elseif ( 'toplevel_page_mainwp_tab' === $page || 'mainwp_page_managesites' === $page ) {
-			$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
-		} else {
-			$overviewColumns = apply_filters( 'mainwp_widget_boxes_number_columns', 2, $page );
-		}
-
-		$contexts = array( 'left', 'right' );
-		if ( 3 == $overviewColumns ) {
-			$contexts[] = 'middle';
-		}
-
-		if ( null === $context || ! in_array( $context, $contexts ) ) {
-			$context = 'right';
-		}
 
 		if ( ! isset( $mainwp_widget_boxes ) ) {
 			$mainwp_widget_boxes = array();
@@ -1463,56 +1461,58 @@ class MainWP_UI {
 		if ( ! isset( $mainwp_widget_boxes[ $page ] ) ) {
 			$mainwp_widget_boxes[ $page ] = array();
 		}
-		if ( ! isset( $mainwp_widget_boxes[ $page ][ $context ] ) ) {
-			$mainwp_widget_boxes[ $page ][ $context ] = array();
-		}
+		// if ( ! isset( $mainwp_widget_boxes[ $page ][ $context ] ) ) {
+		// $mainwp_widget_boxes[ $page ][ $context ] = array();
+		// }
 
-		foreach ( array_keys( $mainwp_widget_boxes[ $page ] ) as $a_context ) {
-			foreach ( array( 'high', 'core', 'default', 'low' ) as $a_priority ) {
-				if ( ! isset( $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ] ) ) {
-					continue;
-				}
+		// foreach ( array_keys( $mainwp_widget_boxes[ $page ] ) as $a_context ) {
+			// foreach ( array( 'high', 'core', 'default', 'low' ) as $a_priority ) {
+				// if ( ! isset( $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ] ) ) {
+				// continue;
+				// }
 
 				// If box previously deleted, don't add.
-				if ( false == $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ] ) {
-					return;
-				}
+				// if ( false == $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ] ) {
+				// return;
+				// }
 
 				// If no priority given and id already present, use existing priority.
-				if ( empty( $priority ) ) {
-					$priority = $a_priority;
+				// if ( empty( $priority ) ) {
+				// $priority = $a_priority;
 
 					/*
 					* Else, if we're adding to the sorted priority, we don't know the title
 					* or callback. Grab them from the previously added context/priority.
 					*/
-				} elseif ( 'sorted' == $priority ) {
-					$title    = $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ]['title'];
-					$callback = $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ]['callback'];
-				}
+				// } elseif ( 'sorted' == $priority ) {
+				// $title    = $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ]['title'];
+				// $callback = $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ]['callback'];
+				// }
 
 				// An id can be in only one context.
-				if ( $priority != $a_priority || $context != $a_context ) {
-					unset( $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ] );
-				}
-			}
-		}
+				// if ( $priority != $a_priority || $context != $a_context ) {
+				// unset( $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ] );
+				// }
+			// }
+		// }
 
-		if ( ! isset( $mainwp_widget_boxes[ $page ][ $context ] ) ) {
-			$mainwp_widget_boxes[ $page ][ $context ] = array();
-		}
+		// if ( ! isset( $mainwp_widget_boxes[ $page ][ $context ] ) ) {
+		// $mainwp_widget_boxes[ $page ][ $context ] = array();
+		// }
 
-		if ( empty( $priority ) ) {
-			$priority = 'default';
-		}
+		// if ( empty( $priority ) ) {
+		// $priority = 'default';
+		// }
 
 		if ( empty( $title ) ) {
 			$title = 'No Title';
 		}
-		$mainwp_widget_boxes[ $page ][ $context ][ $priority ][ $id ] = array(
+		// $mainwp_widget_boxes[ $page ][ $context ][ $priority ][ $id ] = array(
+		$mainwp_widget_boxes[ $page ][ $id ] = array(
 			'id'       => $id,
-			'title'    => $title,
+			// 'title'    => $title,
 			'callback' => $callback,
+			'layout'   => $layout,
 		);
 	}
 
@@ -1529,54 +1529,46 @@ class MainWP_UI {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
 	 */
-	public static function do_widget_boxes( $screen, $context = null, $object = '' ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function do_widget_boxes( $screen_id ) {
+		// public static function do_widget_boxes( $screen, $context = null, $object = '' ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		global $mainwp_widget_boxes;
-		static $already_sorted = false;
+		// static $already_sorted = false;
 
-		$page = MainWP_System_Utility::get_page_id( $screen );
+		$page = MainWP_System_Utility::get_page_id( $screen_id );
 
 		if ( empty( $page ) ) {
 			return;
 		}
 
+		$wgsorted = get_user_option( 'mainwp_widgets_sorted_' . strtolower( $page ) );
+		if ( ! empty( $wgsorted ) && is_string( $wgsorted ) ) {
+			$wgsorted = json_decode( $wgsorted, true );
+		}
+
+		$client_id = 0;
 		if ( 'mainwp_page_manageclients' == $page ) {
-			$overviewColumns = get_option( 'mainwp_number_clients_overview_columns', 2 );
-		} elseif ( 'toplevel_page_mainwp_tab' === $page || 'mainwp_page_managesites' === $page ) {
-			$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
-		} else {
-			$overviewColumns = apply_filters( 'mainwp_widget_boxes_number_columns', 2, $page );
-		}
-
-		$contexts = array( 'left', 'right' );
-		if ( 3 == $overviewColumns ) {
-			$contexts[] = 'middle';
-		}
-
-		if ( null == $context || ! in_array( $context, $contexts ) ) {
-			$context = 'right';
-		}
-
-		$sorted = get_user_option( 'mainwp_widgets_sorted_' . strtolower( $page ) );
-
-		if ( 'mainwp_page_manageclients' == $page ) {
-			$sorted_array = $sorted;
-			$sorted       = '';
-			$client_id    = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+			$sorted_array = is_array( $wgsorted ) ? $wgsorted : array();
+			$wgsorted     = array();
+			$client_id    = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0;
 			if ( ! empty( $client_id ) && is_array( $sorted_array ) && isset( $sorted_array[ $client_id ] ) ) {
-				$sorted = $sorted_array[ $client_id ];
-			}
+				$wgsorted = $sorted_array[ $client_id ];
+		}
+		}
+
+		if ( ! is_array( $wgsorted ) ) {
+			$wgsorted = array();
 		}
 
 		// Grab the ones the user has manually sorted. Pull them out of their previous context/priority and into the one the user chose.
-		if ( ! $already_sorted && $sorted ) {
-			foreach ( explode( ',', $sorted ) as $val ) {
-				list( $widget_context, $id ) = explode( ':', $val );
-				if ( ! empty( $widget_context ) && ! empty( $id ) ) {
-					self::add_widget_box( $id, null, $screen, $widget_context, null, $priority = 'sorted' );
-					$already_sorted = true;
-				}
-			}
-		}
+		// if ( ! $already_sorted && $sorted ) {
+		// foreach ( explode( ',', $sorted ) as $val ) {
+		// list( $widget_context, $id ) = explode( ':', $val );
+		// if ( ! empty( $widget_context ) && ! empty( $id ) ) {
+		// self::add_widget_box( $id, null, $screen, $widget_context, null, $priority = 'sorted' );
+		// $already_sorted = true;
+		// }
+		// }
+		// }
 
 		if ( 'mainwp_page_manageclients' == $page ) {
 			$show_widgets = get_user_option( 'mainwp_clients_show_widgets' );
@@ -1590,10 +1582,12 @@ class MainWP_UI {
 			$show_widgets = array();
 		}
 
-		if ( isset( $mainwp_widget_boxes[ $page ][ $context ] ) ) {
-			foreach ( array( 'high', 'sorted', 'core', 'default', 'low' ) as $priority ) {
-				if ( isset( $mainwp_widget_boxes[ $page ][ $context ][ $priority ] ) ) {
-					foreach ( (array) $mainwp_widget_boxes[ $page ][ $context ][ $priority ] as $box ) {
+		// if ( isset( $mainwp_widget_boxes[ $page ][ $context ] ) ) {
+			// foreach ( array( 'high', 'sorted', 'core', 'default', 'low' ) as $priority ) {
+				// if ( isset( $mainwp_widget_boxes[ $page ][ $context ][ $priority ] ) ) {
+		if ( isset( $mainwp_widget_boxes[ $page ] ) ) {
+			// foreach ( (array) $mainwp_widget_boxes[ $page ][ $context ][ $priority ] as $box ) {
+			foreach ( (array) $mainwp_widget_boxes[ $page ] as $box ) {
 						if ( false == $box || ! isset( $box['callback'] ) ) {
 							continue;
 						}
@@ -1603,8 +1597,27 @@ class MainWP_UI {
 							continue;
 						}
 
-						echo '<div class="column grid-item" id="widget-' . esc_html( $box['id'] ) . '">' . "\n";
-						echo '<div class="ui segment mainwp-widget" >' . "\n";
+				$layout = array();
+				if ( isset( $wgsorted[ $box['id'] ] ) ) {
+					$val = $wgsorted[ $box['id'] ];
+					if ( is_array( $val ) && isset( $val['col'] ) ) {
+						$layout = array(
+							'col'    => $val['col'],
+							'row'    => $val['row'],
+							'size_x' => $val['size_x'],
+							'size_y' => $val['size_y'],
+						);
+					}
+				}
+				if ( ! isset( $layout['col'] ) && isset( $box['layout'][0] ) ) {
+					$layout = array(
+						'col'    => $box['layout'][0],
+						'row'    => $box['layout'][1],
+						'size_x' => $box['layout'][2],
+						'size_y' => $box['layout'][3],
+					);
+				}
+				echo '<div id="widget-' . esc_html( $box['id'] ) . '" class="ui segment mainwp-widget" data-row="' . ( isset( $layout['row'] ) ? esc_attr( $layout['row'] ) : '' ) . '" data-col="' . ( isset( $layout['col'] ) ? esc_attr( $layout['col'] ) : '' ) . '" data-sizex="' . ( isset( $layout['size_x'] ) ? esc_attr( $layout['size_x'] ) : '' ) . '" data-sizey="' . ( isset( $layout['size_y'] ) ? esc_attr( $layout['size_y'] ) : '' ) . '">' . "\n";
 
 						/**
 						* Action: mainwp_widget_content_top
@@ -1613,9 +1626,10 @@ class MainWP_UI {
 						*
 						* @since 4.1
 						*/
-						do_action( 'mainwp_widget_content_top', $box, $page );
+				// do_action( 'mainwp_widget_content_top', $box, $page );
 
-						call_user_func( $box['callback'], $object, $box );
+				call_user_func( $box['callback'] );
+				// call_user_func( $box['callback'], $object, $box );
 
 						/**
 						* Action: mainwp_widget_content_bottom
@@ -1624,14 +1638,71 @@ class MainWP_UI {
 						*
 						* @since 4.1
 						*/
-						do_action( 'mainwp_widget_content_bottom', $box, $page );
+				// do_action( 'mainwp_widget_content_bottom', $box, $page );
+				echo '<span class="mainwp-resize-handle"></span>' . "\n";
+				echo "</div>\n";
 
-						echo "</div>\n";
-						echo "</div>\n";
-					}
 				}
 			}
+		?>
+		<script type="text/javascript">
+				var page_sortablewidgets = '<?php echo esc_js( $page ); ?>';
+				jQuery( document ).ready( function( $ ) {
+					var wgIds = [];
+					jQuery( ".mainwp-widget" ).each( function () {
+						wgIds.push( jQuery( this ).attr('id') );
+					} );
+
+					jQuery( '.gridster' ).gridster( {
+						auto_init: true,
+						autogenerate_stylesheet: true,
+						shift_larger_widgets_down: false,
+						shift_widgets_up: true,
+						widget_selector: "div.mainwp-widget",
+						widget_margins: [20, 20],
+						widget_base_dimensions: ["auto", 100],
+						min_cols: 1,
+						max_cols: 6,
+						max_size_x: 6,
+						max_rows: 300,
+						avoid_overlapped_widgets: true,
+						collision: {
+							wait_for_mouseup: true
+						},
+						draggable: {
+							handle: '.handle-drag',
+							stop: function (e, ui, $widget) {
+								mainwp_overview_gridster_reorder(this);
+							}
+						},
+						resize: {
+							enabled: true,
+							handle_append_to: ".mainwp-resize-handle",
+							stop: function (e, ui, $widget) {
+								mainwp_overview_gridster_reorder(this);
+							}
+						}
+					} ).data('gridster');
+
+					mainwp_overview_gridster_reorder = function( $gridObj ){
+						var orders = $gridObj.serialize();
+						var postVars = {
+							action:'mainwp_widgets_order',
+							page: page_sortablewidgets,
+							order:JSON.stringify(orders),
+							wgids: JSON.stringify(wgIds),
+							item_id: <?php echo intval( $client_id ); ?>
+						};
+						jQuery.post( ajaxurl, mainwp_secure_data( postVars ), function ( res ) {
+						} );
 		}
+
+				});
+		</script>
+
+		<?php
+			// }
+		// }
 	}
 
 	/**
@@ -2003,28 +2074,6 @@ class MainWP_UI {
 				<input type="checkbox" name="hide_update_everything" <?php echo ( ( 1 == get_option( 'mainwp_hide_update_everything' ) ) ? 'checked="true"' : '' ); ?> />
 			</div>
 		</div>
-			<?php
-			$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
-			if ( 2 != $overviewColumns && 3 != $overviewColumns ) {
-				$overviewColumns = 2;
-			}
-
-			?>
-		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Widgets columns', 'mainwp' ); ?></label>
-			<div class="ten wide column">
-				<div class="ui radio checkbox">
-					<input type="radio" name="number_overview_columns" required="required" <?php echo ( 2 == $overviewColumns ? 'checked="true"' : '' ); ?> value="2">
-					<label><?php esc_html_e( 'Show widgets in 2 columns', 'mainwp' ); ?></label>
-				</div>
-					<div class="ui fitted hidden divider"></div>
-				<div class="ui radio checkbox">
-					<input type="radio" name="number_overview_columns" required="required" <?php echo ( 3 == $overviewColumns ? 'checked="true"' : '' ); ?> value="3">
-					<label><?php esc_html_e( 'Show widgets in 3 columns', 'mainwp' ); ?></label>
-				</div>
-			</div>
-		</div>
-
 		<div class="ui grid field">
 			<label class="six wide column"><?php esc_html_e( 'Show widgets', 'mainwp' ); ?></label>
 			<div class="ten wide column" <?php echo $setting_page ? 'data-tooltip="' . esc_attr_e( 'Select widgets that you want to hide in the MainWP Overview page.', 'mainwp' ) . '"' : ''; ?> data-inverted="" data-position="top left">

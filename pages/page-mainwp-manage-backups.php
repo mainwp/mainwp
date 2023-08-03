@@ -160,10 +160,10 @@ class MainWP_Manage_Backups {
 					if ( ! self::$hideSubmenuBackups ) {
 						?>
 						<div class="mainwp_boxoutin"></div>
-						<a href="<?php echo admin_url( 'admin.php?page=ManageBackups' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Backups', 'mainwp' ); ?></a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackups' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Backups', 'mainwp' ); ?></a>
 						<?php if ( mainwp_current_user_have_right( 'dashboard', 'add_backup_tasks' ) ) { ?>
 							<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsAddNew' ) ) { ?>
-							<a href="<?php echo admin_url( 'admin.php?page=ManageBackupsAddNew' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsAddNew' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
 							<?php } ?>
 						<?php } ?>
 					<?php } ?>
@@ -174,7 +174,7 @@ class MainWP_Manage_Backups {
 									continue;
 							}
 							?>
-							<a href="<?php echo admin_url( 'admin.php?page=ManageBackups' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackups' . $subPage['slug'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
 							<?php
 						}
 					}
@@ -200,7 +200,7 @@ class MainWP_Manage_Backups {
 			MainWP_Menu::add_left_menu(
 				array(
 					'title'      => esc_html__( 'Backups', 'mainwp' ),
-					'parent_key' => 'mainwp_tab',
+					'parent_key' => 'managesites',
 					'slug'       => 'ManageBackups',
 					'href'       => 'admin.php?page=ManageBackups',
 					'icon'       => '<i class="hdd outline icon"></i>',
@@ -1025,12 +1025,6 @@ class MainWP_Manage_Backups {
 			<?php esc_html_e( 'Backup Settings', 'mainwp' ); ?>
 			<div class="sub header"><?php echo sprintf( esc_html__( 'MainWP is actively moving away from further development of the native backups feature. The best long-term solution would be one of the %1$sBackup Extensions%2$s.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
 		</h3>
-		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Enable legacy backup feature', 'mainwp' ); ?></label>
-			<div class="ten wide column ui toggle checkbox">
-				<input type="checkbox" name="mainwp_options_enableLegacyBackupFeature" id="mainwp_options_enableLegacyBackupFeature" <?php echo ( 0 == $enableLegacyBackupFeature ? '' : 'checked="true"' ); ?>/>
-			</div>
-		</div>
 
 		<?php if ( 0 < count( $primaryBackupMethods ) ) : ?>
 		<div class="ui grid field">
@@ -1039,18 +1033,24 @@ class MainWP_Manage_Backups {
 				<select class="ui dropdown" name="mainwp_primaryBackup" id="mainwp_primaryBackup">
 					<?php if ( $enableLegacyBackupFeature ) { ?>
 						<option value="" ><?php esc_html_e( 'Native backups', 'mainwp' ); ?></option>
-					<?php } else { ?>
-						<option value="" ><?php esc_html_e( 'N/A', 'mainwp' ); ?></option>
 					<?php } ?>
 					<?php
 					foreach ( $primaryBackupMethods as $method ) {
 						echo '<option value="' . esc_attr( $method['value'] ) . '" ' . ( ( $primaryBackup == $method['value'] ) ? 'selected' : '' ) . '>' . $method['title'] . '</option>';
 					}
 					?>
+					
 				</select>
 			</div>
 		</div>
 		<?php endif; ?>
+
+		<div class="ui grid field">
+			<label class="six wide column middle aligned"><?php esc_html_e( 'Enable legacy backup feature', 'mainwp' ); ?></label>
+			<div class="ten wide column ui toggle checkbox">
+				<input type="checkbox" name="mainwp_options_enableLegacyBackupFeature" id="mainwp_options_enableLegacyBackupFeature" <?php echo ( 0 == $enableLegacyBackupFeature ? '' : 'checked="true"' ); ?>/>
+			</div>
+		</div>
 
 		<div class="ui grid field" <?php echo $hiddenCls; ?>>
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Backups on server', 'mainwp' ); ?></label>

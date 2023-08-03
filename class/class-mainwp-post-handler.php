@@ -65,15 +65,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		}
 
 		$this->add_action( 'mainwp_notice_status_update', array( &$this, 'mainwp_notice_status_update' ) );
-		$this->add_action( 'mainwp_dismiss_twit', array( &$this, 'mainwp_dismiss_twit' ) );
 		$this->add_action( 'mainwp_dismiss_activate_notice', array( &$this, 'dismiss_activate_notice' ) );
 		$this->add_action( 'mainwp_status_saving', array( &$this, 'mainwp_status_saving' ) );
 		$this->add_action( 'mainwp_leftmenu_filter_group', array( &$this, 'mainwp_leftmenu_filter_group' ) );
 		$this->add_action( 'mainwp_widgets_order', array( &$this, 'ajax_widgets_order' ) );
 		$this->add_action( 'mainwp_save_settings', array( &$this, 'ajax_mainwp_save_settings' ) );
 		$this->add_action( 'mainwp_guided_tours_option_update', array( &$this, 'ajax_guided_tours_option_update' ) );
-
-		$this->add_action( 'mainwp_twitter_dashboard_action', array( &$this, 'mainwp_twitter_dashboard_action' ) );
 
 		// Page: Recent Posts.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
@@ -494,7 +491,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_notice_status_update' );
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		$no_id = isset( $_POST['notice_id'] ) ? sanitize_text_field( wp_unslash( $_POST['notice_id'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$no_id = isset( $_POST['notice_id'] ) ? sanitize_text_field( wp_unslash( $_POST['notice_id'] ) ) : false;
 		if ( 'mail_failed' === $no_id ) {
 			MainWP_Utility::update_option( 'mainwp_notice_wp_mail_failed', 'hide' );
 			die( 'ok' );
@@ -513,7 +510,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 				$status = array();
 			}
 			if ( ! empty( $no_id ) ) {
-				$time_set = isset( $_POST['time_set'] ) && 1 === intval( $_POST['time_set'] ) ? true : false; // phpcs:ignore WordPress.Security.NonceVerification
+				$time_set = isset( $_POST['time_set'] ) && 1 === intval( $_POST['time_set'] ) ? true : false;
 				if ( $time_set ) {
 					$status[ $no_id ] = time();
 				} else {
@@ -587,17 +584,39 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		if ( $user && ! empty( $_POST['page'] ) ) {
 			$page  = isset( $_POST['page'] ) ? sanitize_text_field( wp_unslash( $_POST['page'] ) ) : '';
 			$order = isset( $_POST['order'] ) ? sanitize_text_field( wp_unslash( $_POST['order'] ) ) : '';
+			$wgids = isset( $_POST['wgids'] ) ? sanitize_text_field( wp_unslash( $_POST['wgids'] ) ) : '';
+
+			$wgs_orders = array();
+
+			if ( ! empty( $wgids ) ) {
+				$wgids = json_decode( $wgids, true );
+				$order = json_decode( $order, true );
+				if ( is_array( $wgids ) && is_array( $order ) ) {
+					foreach ( $wgids as $idx => $wgid ) {
+						if ( isset( $order[ $idx ] ) ) {
+							$pre = 'widget-';
+							if ( 0 === strpos( $wgid, $pre ) ) {
+								$wgid = substr( $wgid, strlen( $pre ) );
+							}
+							$wgs_orders[ $wgid ] = $order[ $idx ];
+						}
+					}
+				}
+			}
 
 			if ( 'mainwp_page_manageclients' == $page ) {
 				$item_id      = isset( $_POST['item_id'] ) ? intval( $_POST['item_id'] ) : 0;
 				$sorted_array = get_user_option( 'mainwp_widgets_sorted_' . strtolower( $page ) );
+				if ( ! empty( $sorted_array ) ) {
+					$sorted_array = json_decode( $sorted_array, true );
+				}
 				if ( ! is_array( $sorted_array ) ) {
 					$sorted_array = array();
 				}
-				$sorted_array[ $item_id ] = $order;
-				update_user_option( $user->ID, 'mainwp_widgets_sorted_' . $page, $sorted_array, true );
+				$sorted_array[ $item_id ] = $wgs_orders;
+				update_user_option( $user->ID, 'mainwp_widgets_sorted_' . $page, wp_json_encode( $sorted_array ), true );
 			} else {
-				update_user_option( $user->ID, 'mainwp_widgets_sorted_' . $page, $order, true );
+				update_user_option( $user->ID, 'mainwp_widgets_sorted_' . $page, wp_json_encode( $wgs_orders ), true );
 			}
 			die( 'ok' );
 		}
@@ -668,30 +687,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	}
 
 	/**
-	 * Method mainwp_dismiss_twit()
-	 *
-	 * Dismiss the twitter bragger.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::clear_twitter_info()
-	 */
-	public function mainwp_dismiss_twit() {
-		$this->secure_request( 'mainwp_dismiss_twit' );
-
-		/**
-		 * Current user global.
-		 *
-		 * @global string
-		 */
-		global $current_user;
-
-		$user_id = $current_user->ID;
-		if ( $user_id && isset( $_POST['twitId'] ) && ! empty( $_POST['twitId'] ) && isset( $_POST['what'] ) && ! empty( $_POST['what'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			MainWP_Twitter::clear_twitter_info( sanitize_text_field( wp_unslash( $_POST['what'] ) ), sanitize_text_field( wp_unslash( $_POST['twitId'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
-		}
-		die( 1 );
-	}
-
-	/**
 	 * Method dismiss_activate_notice()
 	 *
 	 * Dismiss activate notice.
@@ -720,55 +715,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		die( 1 );
 	}
 
-	/**
-	 * Method mainwp_twitter_dashboard_action()
-	 *
-	 * Post handler for twitter bragger.
-	 *
-	 * @return mixed $html|$success
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Twitter
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::update_twitter_info()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
-	 */
-	public function mainwp_twitter_dashboard_action() {
-		$this->secure_request( 'mainwp_twitter_dashboard_action' );
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		$success        = false;
-		$actionName     = isset( $_POST['actionName'] ) ? sanitize_text_field( wp_unslash( $_POST['actionName'] ) ) : '';
-		$countSites     = isset( $_POST['countSites'] ) ? intval( $_POST['countSites'] ) : 0;
-		$countRealItems = isset( $_POST['countRealItems'] ) ? intval( $_POST['countRealItems'] ) : 0;
-		$countItems     = isset( $_POST['countItems'] ) ? intval( $_POST['countItems'] ) : 0;
-		$countSeconds   = isset( $_POST['countSeconds'] ) ? intval( $_POST['countSeconds'] ) : 0;
-
-		if ( ! empty( $actionName ) && ! empty( $countSites ) ) {
-			$success = MainWP_Twitter::update_twitter_info( $actionName, $countSites, $countSeconds, $countRealItems, time(), $countItems );
-		}
-
-		if ( ! empty( $_POST['showNotice'] ) ) {
-			if ( MainWP_Twitter::enabled_twitter_messages() ) {
-				$twitters = MainWP_Twitter::get_twitter_notice( $actionName );
-				$html     = '';
-				if ( is_array( $twitters ) ) {
-					foreach ( $twitters as $timeid => $twit_mess ) {
-						if ( ! empty( $twit_mess ) ) {
-							$sendText = MainWP_Twitter::get_twit_to_send( $actionName, $timeid );
-							$html    .= '<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="' . esc_attr( $actionName ) . '" twit-id="' . $timeid . '">' . $twit_mess . '</span>&nbsp;' . MainWP_Twitter::gen_twitter_button( $sendText, false ) . '<span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> ' . esc_html__( 'Dismiss', 'mainwp' ) . '</a></span></div>';
-						}
-					}
-				}
-				die( $html ); // phpcs:ignore WordPress.Security.EscapeOutput
-			}
-		} elseif ( $success ) {
-			die( 'ok' );
-		}
-		// phpcs:enable
-
-		die( '' );
-	}
 
 	/**
 	 * Method mainwp_security_issues_request()

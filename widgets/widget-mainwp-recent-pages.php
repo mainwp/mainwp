@@ -380,7 +380,7 @@ class MainWP_Recent_Pages {
 						</div>
 							<?php if ( ! $individual ) : ?>
 							<div class="four wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_draft[ $i ]['website']->url ); ?>" target="_blank" class="mainwp-may-hide-referrer" ><?php echo $name // phpcs:ignore WordPress.Security.EscapeOutput ; ?></a>
+								<a href="<?php echo esc_url( $recent_pages_draft[ $i ]['website']->url ); ?>" target="_blank" class="mainwp-may-hide-referrer" ><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ; ?></a>
 							</div>
 							<?php endif; ?>
 							<div class="two wide column right aligned">
@@ -483,7 +483,7 @@ class MainWP_Recent_Pages {
 						</div>
 							<?php if ( ! $individual ) : ?>
 							<div class="four wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_pending[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank" ><?php echo $name // phpcs:ignore WordPress.Security.EscapeOutput ; ?></a>
+								<a href="<?php echo esc_url( $recent_pages_pending[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank" ><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ; ?></a>
 							</div>
 							<?php endif; ?>
 							<div class="two wide column right aligned">
@@ -586,7 +586,7 @@ class MainWP_Recent_Pages {
 						</div>
 							<?php if ( ! $individual ) : ?>
 							<div class="four wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_future[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $name // phpcs:ignore WordPress.Security.EscapeOutput ; ?></a>
+								<a href="<?php echo esc_url( $recent_pages_future[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ; ?></a>
 							</div>
 							<?php endif; ?>
 							<div class="two wide column right aligned">
@@ -691,7 +691,7 @@ class MainWP_Recent_Pages {
 						</div>
 							<?php if ( ! $individual ) : ?>
 							<div class="four wide column middle aligned">
-								<?php echo $name // phpcs:ignore WordPress.Security.EscapeOutput ; ?>
+								<?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ; ?>
 							</div>
 							<?php endif; ?>
 							<div class="two wide column right aligned">

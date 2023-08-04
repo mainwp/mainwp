@@ -737,7 +737,6 @@ class MainWP_System {
 		wp_enqueue_script( 'user-profile' );
 		wp_enqueue_style( 'thickbox' );
 
-
 		$load_gridster = false;
 
 		if ( isset( $_GET['page'] ) && ( 'mainwp_tab' === $_GET['page'] || ( 'managesites' === $_GET['page'] && isset( $_GET['dashboard'] ) ) ) ) {

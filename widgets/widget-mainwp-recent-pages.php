@@ -58,7 +58,7 @@ class MainWP_Recent_Pages {
 			$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 			$data_fields[] = 'recent_pages';
 			$individual    = false;
-			$client_id     = isset( $_GET['client_id'] ) ? $_GET['client_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
+			$client_id     = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 			$websites      = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id, array( 'select_data' => $data_fields ) );
 
 			if ( $websites ) {

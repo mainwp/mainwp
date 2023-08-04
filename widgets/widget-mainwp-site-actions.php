@@ -40,7 +40,7 @@ class MainWP_Site_Actions {
 			);
 			$website = MainWP_DB::instance()->get_website_by_id( $current_wpid );
 		} elseif ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$client_id = isset( $_GET['client_id'] ) ? $_GET['client_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
+			$client_id = isset( $_GET['client_id'] ) ? intval($_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 			$websites  = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id );
 			$site_ids  = array();
 
@@ -115,7 +115,7 @@ class MainWP_Site_Actions {
 					<thead>
 						<tr>
 							<th><?php esc_html_e( 'Change', 'mainwp' ); ?></th>
-							<?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : ?>
+							<?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
 						<th class="collapsing center aligned"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
 							<?php endif; ?>
 						<th class="collapsing center aligned"><?php esc_html_e( 'User', 'mainwp' ); ?></th>
@@ -159,7 +159,7 @@ class MainWP_Site_Actions {
 								<div><strong><span class="ui medium <?php echo esc_attr( $action_class ); ?> text"><?php echo esc_html( ucfirst( $data->action ) ); ?></span></strong></div>
 								<span class="ui small text"><?php echo esc_html( MainWP_Utility::format_timestamp( $data->created ) ); ?></span>
 							</td>
-							<?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : ?>
+							<?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
 								<td class="collapsing center aligned"><a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $data->wpid ); ?>"><?php echo esc_html( $data->name ); ?></a></td>
 							<?php endif; ?>
 							<td class="collapsing center aligned"><?php echo esc_html( $data->action_user ); ?></td>

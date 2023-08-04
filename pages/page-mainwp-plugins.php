@@ -1467,7 +1467,7 @@ class MainWP_Plugins {
 		$selected_sites = array();
 
 		if ( isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] ) ) {
-			$selected_sites = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) ); // sanitize ok.
+			$selected_sites = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification -- sanitize ok.
 			$selected_sites = array_map( 'intval', $selected_sites );
 			$selected_sites = array_filter( $selected_sites );
 		}

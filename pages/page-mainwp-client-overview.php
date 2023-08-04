@@ -296,7 +296,7 @@ class MainWP_Client_Overview {
 	 */
 	public static function render_dashboard_body() {
 		$screen   = get_current_screen();
-		$clientid = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0;
+		$clientid = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		?>
 		<div class="mainwp-primary-content-wrap">
 		<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>

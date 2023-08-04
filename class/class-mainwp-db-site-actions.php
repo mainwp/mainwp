@@ -285,7 +285,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 	 *
 	 * @return mixed $result result.
 	 */
-	public function get_wp_actions( $params = array(), $obj = OBJECT ) {
+	public function get_wp_actions( $params = array(), $obj = OBJECT ) { //phpcs:ignore -- complex.
 
 		$action_id    = isset( $params['action_id'] ) ? intval( $params['action_id'] ) : 0;
 		$site_id      = isset( $params['wpid'] ) ? intval( $params['wpid'] ) : 0;

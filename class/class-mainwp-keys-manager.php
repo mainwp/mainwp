@@ -91,8 +91,9 @@ class MainWP_Keys_Manager {
 	 *
 	 * Get decrypt value.
 	 *
-	 * @param mixed $encodedValue Encoded The value to decrypt.
-	 * @param mixed $key_file The value key.
+	 * @param mixed $option_name option name.
+	 * @param mixed $value The option value.
+	 * @param mixed $prefix The prefix value.
 	 *
 	 * @return string Decrypt value.
 	 */
@@ -156,10 +157,11 @@ class MainWP_Keys_Manager {
 	 *
 	 * @param mixed $encodedValue Encoded The value to decrypt.
 	 * @param mixed $key_file The value key.
+	 * @param mixed $default The default value.
 	 *
 	 * @return string Decrypt value.
 	 */
-	private function get_decrypt_values( $encodedValue, $key_file, $default ) {
+	private function get_decrypt_values( $encodedValue, $key_file, $default = '' ) {
 		// find the key file, and get saved key.
 		$key = $this->get_key_val( $key_file );
 		if ( ! empty( $key ) ) {
@@ -211,7 +213,7 @@ class MainWP_Keys_Manager {
 	 *
 	 * Handle decrypt value.
 	 *
-	 * @param mixed $keypass The value to decrypt.
+	 * @param mixed $encodedValue The value to decrypt.
 	 * @param mixed $key Key to decrypt.
 	 *
 	 * @return string Decrypt value.
@@ -233,7 +235,7 @@ class MainWP_Keys_Manager {
 	private function save_key_file( $key_file, $key_val ) {
 		$key_dir   = self::get_keys_dir();
 		$file_path = $key_dir . $key_file;
-		$saved     = file_put_contents( $file_path, $key_val );
+		$saved     = file_put_contents( $file_path, $key_val ); //phpcs:ignore
 		return false === $saved ? false : true;
 	}
 
@@ -288,7 +290,7 @@ class MainWP_Keys_Manager {
 		$encryptedValue = $iv . $ciphertext . $tag;
 
 		// Encode the encrypted value using base64 for storage.
-		$encodedValue = base64_encode( $encryptedValue );
+		$encodedValue = base64_encode( $encryptedValue ); //phpcs:ignore
 
 		return $encodedValue;
 	}
@@ -305,7 +307,7 @@ class MainWP_Keys_Manager {
 	 */
 	private function decrypt_with_key( $encodedValue, $key ) {
 		// Decode the base64 encoded value.
-		$encryptedValue = base64_decode( $encodedValue );
+		$encryptedValue = base64_decode( $encodedValue ); //phpcs:ignore
 
 		// Extract the IV, ciphertext, and tag.
 		$iv         = substr( $encryptedValue, 0, 16 );
@@ -323,7 +325,7 @@ class MainWP_Keys_Manager {
 		$aes->setTag( $tag );
 
 		// Decrypt the value.
-		 $keypass = $aes->decrypt( $ciphertext );
+		$keypass = $aes->decrypt( $ciphertext );
 
 		return $keypass;
 	}
@@ -374,6 +376,7 @@ class MainWP_Keys_Manager {
 			}
 		} else {
 
+			//phpcs:disable
 			if ( ! file_exists( $keysDir ) ) {
 				mkdir( $keysDir, 0777, true );
 			}
@@ -388,6 +391,7 @@ class MainWP_Keys_Manager {
 				$file_index = @fopen( $keysDir . 'index.php', 'w+' );
 				fclose( $file_index );
 			}
+			// phpcs:enable
 		}
 	}
 
@@ -411,7 +415,8 @@ class MainWP_Keys_Manager {
 	 * Handle encrypt value.
 	 *
 	 * @param mixed  $data The value to encrypt.
-	 * @param string $prefix using for prefix key file name.
+	 * @param string $prefix prefix key file name.
+	 * @param string $key_file key file name.
 	 *
 	 * @return string Encrypted value.
 	 */

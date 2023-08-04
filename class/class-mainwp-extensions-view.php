@@ -442,7 +442,7 @@ class MainWP_Extensions_View {
 			$new = '<span class="ui floating green mini label">NEW!</span>';
 		}
 		?>
-			<div class="ui card extension <?php echo ( $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension' ); ?> extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" <?php echo esc_html( $queue_status); ?> license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
+			<div class="ui card extension <?php echo ( $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension' ); ?> extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" <?php echo esc_html( $queue_status ); ?> license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
 		<?php
 		/**
 		 * Action: mainwp_extension_card_top

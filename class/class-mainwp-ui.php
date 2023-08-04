@@ -1491,7 +1491,7 @@ class MainWP_UI {
 		if ( 'mainwp_page_manageclients' == $page ) {
 			$sorted_array = is_array( $wgsorted ) ? $wgsorted : array();
 			$wgsorted     = array();
-			$client_id    = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0;
+			$client_id    = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 			if ( ! empty( $client_id ) && is_array( $sorted_array ) && isset( $sorted_array[ $client_id ] ) ) {
 				$wgsorted = $sorted_array[ $client_id ];
 			}

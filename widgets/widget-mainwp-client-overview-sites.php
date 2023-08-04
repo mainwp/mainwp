@@ -77,7 +77,7 @@ class MainWP_Client_Overview_Sites {
 	 * @return mixed render_site_info()
 	 */
 	public static function render() {
-		$client_id = isset( $_GET['client_id'] ) ? $_GET['client_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( empty( $client_id ) ) {
 			return;
 		}
@@ -209,7 +209,7 @@ class MainWP_Client_Overview_Sites {
 							"stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
 							"stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
 							"order" : <?php echo esc_js( $table_features['order'] ); ?>,
-							"lengthMenu" : [ [<?php echo intval( $pagelength_val); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All" ] ],
+							"lengthMenu" : [ [<?php echo intval( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All" ] ],
 							"columnDefs": [ 
 								{ 
 									"targets": 'no-sort', 
@@ -354,20 +354,18 @@ class MainWP_Client_Overview_Sites {
 		}
 	}
 
-		/**
-		 * Single Row.
-		 *
-		 * @param mixed $website Child Site.
-		 *
-		 * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
-		 */
+	/**
+	 * Single Row.
+	 *
+	 * @param mixed $website Child Site.
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
+	 */
 	public function single_row( $website ) {
 		$classes       = '';
 		$hasSyncErrors = ( '' !== $website['sync_errors'] );
-		$classes       = trim( $classes );
 		$classes       = ' class="child-site mainwp-child-site-' . intval( $website['id'] ) . ' ' . ( $hasSyncErrors ? 'error' : '' ) . ' ' . $classes . '"';
-
-		echo '<tr id="child-site-' . intval( $website['id'] ) . '"' . $classes . ' siteid="' . intval( $website['id'] ) . '" site-url="' . $website['url'] . '">';
+		echo '<tr id="child-site-' . intval( $website['id'] ) . '"' . $classes . ' siteid="' . intval( $website['id'] ) . '" site-url="' . esc_url( $website['url'] ) . '">'; // phpcs:ignore WordPress.Security.EscapeOutput
 		$this->single_row_columns( $website );
 		echo '</tr>';
 	}
@@ -611,7 +609,7 @@ class MainWP_Client_Overview_Sites {
 				<?php
 			} elseif ( 'update' === $column_name ) {
 				?>
-				<td class="collapsing center aligned"><span data-tooltip="<?php esc_attr_e( 'Number of available updates. Click to see details.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><a class="ui mini compact button <?php echo esc_attr( $a_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>"><?php echo intval( $total_updates); ?></a></span></td>
+				<td class="collapsing center aligned"><span data-tooltip="<?php esc_attr_e( 'Number of available updates. Click to see details.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><a class="ui mini compact button <?php echo esc_attr( $a_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>"><?php echo intval( $total_updates ); ?></a></span></td>
 				<?php
 			} elseif ( 'site_actions' === $column_name ) {
 				?>

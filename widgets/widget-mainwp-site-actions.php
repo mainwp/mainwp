@@ -218,14 +218,14 @@ class MainWP_Site_Actions {
 		</div>
 		<?php
 		/**
-			* Action: mainwp_non_mainwp_changes_widget_bottom
-			*
-			* Fires at the bottom of the Site Info widget on the Individual site overview page.
-			*
-			* @param object $website Object containing the child site info.
-			*
-			* @since 4.0
-			*/
+		 * Action: mainwp_non_mainwp_changes_widget_bottom
+		 *
+		 * Fires at the bottom of the Site Info widget on the Individual site overview page.
+		 *
+		 * @param object $website Object containing the child site info.
+		 *
+		 * @since 4.0
+		 */
 		do_action( 'mainwp_non_mainwp_changes_widget_bottom', $website );
 	}
 

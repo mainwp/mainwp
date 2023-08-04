@@ -1940,7 +1940,7 @@ class MainWP_User {
 					<div class="ui middle aligned divided selection list">
 						<?php foreach ( $dbwebsites as $website ) : ?>
 						<div class="item ui grid">
-							<span class="content"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a></span>
+							<span class="content"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></span>
 							<span class="right floated content"><?php echo( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? '<i class="check green icon"></i> ' : '<i class="times red icon"></i> ' . $output->errors[ $website->id ] ); ?></span>
 						</div>
 						<?php endforeach; ?>

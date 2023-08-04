@@ -1788,8 +1788,8 @@ class MainWP_Hooks {
 	 * Handle get key value.
 	 *
 	 * @param bool  $false Boolean value, it should always be FALSE.
-	 * @param array $encrypted_data Encrypted data.
-	 * @param mixed $default default value.
+	 * @param array $data Encrypted data.
+	 * @param mixed $prefix prefix value.
 	 * @param mixed $key_file Key file value.
 	 *
 	 * @return array $return Decrypted Key value.
@@ -1819,7 +1819,7 @@ class MainWP_Hooks {
 	 *
 	 * Handle delete key value.
 	 *
-	 * @param string $name Key option name.
+	 * @param string $key_file Key file name.
 	 *
 	 * @return array $return Decrypted Key value.
 	 */

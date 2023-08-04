@@ -1040,8 +1040,8 @@ class MainWP_Client {
 							continue;}
 						?>
 						<tr class="mainwp-field" field-id="<?php echo intval( $field->field_id ); ?>">
-							<td class="field-name">[<?php echo stripslashes( $field->field_name ); ?>]</td>
-							<td class="field-description"><?php echo stripslashes( $field->field_desc ); ?></td>
+							<td class="field-name">[<?php echo esc_html( stripslashes( $field->field_name ) ); ?>]</td>
+							<td class="field-description"><?php echo esc_html( stripslashes( $field->field_desc ) ); ?></td>
 							<td>
 								<div class="ui left pointing dropdown icon mini basic green button">
 									<i class="ellipsis horizontal icon"></i>

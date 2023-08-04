@@ -2196,10 +2196,10 @@ class MainWP_Themes {
 						?>
 						<tr site-id="<?php echo esc_attr( $website->id ); ?>" theme-slug="<?php echo rawurlencode( $ignoredTheme ); ?>">
 							<?php if ( $first ) : ?>
-								<td><div><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
+								<td><div><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></div></td>
 								<?php $first = false; ?>
 							<?php else : ?>
-								<td><div style="display:none;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
+								<td><div style="display:none;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></div></td>
 							<?php endif; ?>
 							<td><?php echo MainWP_System_Utility::get_theme_icon( $ignoredTheme ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $ignoredThemeName ); ?></td>
 							<td><?php echo esc_html( $ignoredTheme ); ?></td>
@@ -2419,10 +2419,10 @@ class MainWP_Themes {
 						?>
 					<tr site-id="<?php echo esc_attr( $website->id ); ?>" theme-slug="<?php echo rawurlencode( $ignoredTheme ); ?>">
 						<?php if ( $first ) : ?>
-						<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
+						<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></td>
 							<?php $first = false; ?>
 						<?php else : ?>
-						<td><div style="display:none;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
+						<td><div style="display:none;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></div></td>
 						<?php endif; ?>
 						<td><?php echo esc_html( $ignoredThemeName ); ?></td>
 						<td><?php echo esc_html( $ignoredTheme ); ?></td>

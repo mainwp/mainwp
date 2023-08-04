@@ -104,9 +104,6 @@ managesites_update_pluginsthemes = function (pType, websiteIds) {
 
     bulkManageSitesTaskRunning = true;
 
-    var dateObj = new Date();
-    starttimeDashboardAction = dateObj.getTime();
-
     if (websitesTotal == 0) {
         managesites_update_pluginsthemes_done(pType);
     } else {

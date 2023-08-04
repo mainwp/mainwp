@@ -84,7 +84,7 @@ class MainWP_Updates_Per_Group {
 							<td  class="accordion-trigger"><i class="icon dropdown"></i></td>
 							<td>
 								<div class="ui master checkbox">
-									<input type="checkbox" name=""><label><?php echo stripslashes( $group_name ); ?></label>
+									<input type="checkbox" name=""><label><?php echo esc_html( stripslashes( $group_name ) ); ?></label>
 								</div>
 
 							</td>
@@ -259,7 +259,7 @@ class MainWP_Updates_Per_Group {
 						<td class="accordion-trigger"><i class="icon dropdown"></i></td>
 						<td>
 						<div class="ui main-master checkbox ">
-							<input type="checkbox" name=""><label><?php echo stripslashes( $group_name ); ?></label>
+							<input type="checkbox" name=""><label><?php echo esc_html( stripslashes( $group_name ) ); ?></label>
 						</div>
 						</td>
 						<td total-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
@@ -497,7 +497,7 @@ class MainWP_Updates_Per_Group {
 						<td class="accordion-trigger"><i class="icon dropdown"></i></td>
 						<td>
 						<div class="ui main-master checkbox ">
-								<input type="checkbox" name=""><label><?php echo stripslashes( $group_name ); ?></label>
+								<input type="checkbox" name=""><label><?php echo esc_html( stripslashes( $group_name ) ); ?></label>
 						</div>
 						</td>
 						<td total-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
@@ -720,7 +720,7 @@ class MainWP_Updates_Per_Group {
 							<div class="ui main-master checkbox">
 								<input type="checkbox" name="">
 							</div>
-							<?php echo stripslashes( $group_name ); ?>
+							<?php echo esc_html( stripslashes( $group_name ) ); ?>
 						</td>
 						<td total-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
 						<td class="right aligned">
@@ -878,7 +878,7 @@ class MainWP_Updates_Per_Group {
 				?>
 				<tr class="title" row-uid="uid_plugins_outdate_<?php echo esc_attr( $group_id ); ?>">
 					<td class="accordion-trigger"><i class="dropdown icon"></i></td>
-					<td><?php echo stripslashes( $group_name ); ?></td>
+					<td><?php echo esc_html( stripslashes( $group_name ) ); ?></td>
 					<td total-uid="uid_plugins_outdate_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
 				</tr>
 				<tr class="content" row-uid="uid_plugins_outdate_<?php echo esc_attr( $group_id ); ?>">
@@ -1036,7 +1036,7 @@ class MainWP_Updates_Per_Group {
 				?>
 				<tr row-uid="uid_themes_outdate_<?php echo esc_attr( $group_id ); ?>" class="title">
 					<td class="accordion-trigger"><i class="dropdown icon"></i></td>
-					<td><?php echo stripslashes( $group_name ); ?></td>
+					<td><?php echo esc_html( stripslashes( $group_name ) ); ?></td>
 					<td total-uid="uid_themes_outdate_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
 				</tr>
 				<tr class="content" row-uid="uid_themes_outdate_<?php echo esc_attr( $group_id ); ?>">

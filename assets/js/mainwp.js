@@ -2374,9 +2374,6 @@ mainwp_install_bulk = function (type, slug) {
   jQuery.post(ajaxurl, data, function (type, activatePlugin, overwrite) {
     return function (response) {
       var installQueueContent = '';
-      var dateObj = new Date();
-
-      starttimeDashboardAction = dateObj.getTime();
 
       bulkInstallDone = 0;
 

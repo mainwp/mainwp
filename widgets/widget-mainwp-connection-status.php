@@ -447,9 +447,9 @@ class MainWP_Connection_Status {
 				<a class="ui button" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted="" data-position="left center"><i class="sign in alternate icon"></i></a>
 				<a class="ui button" href="<?php echo esc_html( $website->url ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted="" data-position="left center"><i class="external alternate icon"></i></a>
 					<?php if ( $hasSyncErrors ) : ?>
-						<a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site ui button green basic" siteid="<?php echo intval( $website->id ); ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>" data-inverted="" data-position="left center"><i class="linkify icon"></i></a>
+						<a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site ui button green basic" siteid="<?php echo intval( $website->id ); ?>" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted="" data-position="left center"><i class="linkify icon"></i></a>
 					<?php else : ?>
-						<a href="javascript:void(0)" class="ui button green" siteid="<?php echo intval( $website->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $website->id ); ?>' )" data-tooltip="Sync <?php echo stripslashes( $website->name ); ?> data" data-inverted="" data-position="left center"><i class="sync alternate icon"></i></a>
+						<a href="javascript:void(0)" class="ui button green" siteid="<?php echo intval( $website->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $website->id ); ?>' )" data-tooltip="Sync <?php echo esc_html( stripslashes( $website->name ) ); ?> data" data-inverted="" data-position="left center"><i class="sync alternate icon"></i></a>
 					<?php endif; ?>
 				</div>
 				</div>
@@ -503,7 +503,7 @@ class MainWP_Connection_Status {
 				<span><?php echo esc_attr( $lastSyncTime ); ?></span>
 			</div>
 			<div class="four wide column middle aligned right aligned">
-			<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo intval( $website->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $website->id ); ?>' )" data-tooltip="Sync <?php echo stripslashes( $website->name ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
+			<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo intval( $website->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $website->id ); ?>' )" data-tooltip="Sync <?php echo esc_html( stripslashes( $website->name ) ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 			</div>
 		</div>
 	</div>
@@ -555,7 +555,7 @@ class MainWP_Connection_Status {
 					<span><?php echo esc_attr( $lastSyncTime ); ?></span>
 				</div>
 				<div class="four wide column middle aligned right aligned reconnect-wrapper">
-				<a href="#" class="mainwp-updates-overview-reconnect-site" siteid="<?php echo intval( $website->id ); ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
+				<a href="#" class="mainwp-updates-overview-reconnect-site" siteid="<?php echo intval( $website->id ); ?>" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 				</div>
 			</div>
 		</div>

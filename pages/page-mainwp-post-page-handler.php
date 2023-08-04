@@ -606,7 +606,7 @@ class MainWP_Post_Page_Handler {
 				<?php
 				foreach ( $dbwebsites as $website ) {
 					?>
-					<div class="item site-bulk-posting" site-id="<?php echo intval( $website->id ); ?>" status="queue"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+					<div class="item site-bulk-posting" site-id="<?php echo intval( $website->id ); ?>" status="queue"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
 					<div class="right floated content progress"><i class="clock outline icon"></i></div>
 					</div>
 			<?php } ?>
@@ -717,7 +717,7 @@ class MainWP_Post_Page_Handler {
 						<?php
 						foreach ( $dbwebsites as $website ) {
 							?>
-							<div class="item"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+							<div class="item"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
 							: 
 							<?php
 							if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {

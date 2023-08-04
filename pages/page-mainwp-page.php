@@ -1612,7 +1612,7 @@ class MainWP_Page {
 							?>
 							<div class="ui relaxed list">
 								<?php foreach ( $dbwebsites as $website ) { ?>
-									<div class="item"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+									<div class="item"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
 										: <?php echo ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '"  class="mainwp-may-hide-referrer" target="_blank">View Page</a>' : 'ERROR: ' . $output->errors[ $website->id ] ); ?>
 									</div>
 								<?php } ?>

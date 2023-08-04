@@ -202,7 +202,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				<div class="ui relaxed divided list">
 					<?php foreach ( $dbwebsites as $website ) : ?>
 						<div class="item">
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
 							<span class="right floated content">
 								<?php echo( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? '<i class="green check icon"></i>' : '<i class="red times icon"></i> ' . $output->errors[ $website->id ] ); ?>
 							</span>
@@ -284,7 +284,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 							<tbody>
 								<?php while ( $websites && $website = MainWP_DB::fetch_object( $websites ) ) : ?>
 									<tr>
-									<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
+									<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></td>
 									<td><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>"><i class="sign in icon"></i></a></td>
 									<td><?php echo esc_html( $website->adminname ); ?></td>
 									<td><?php echo esc_html( $website->admin_nicename ); ?></td>

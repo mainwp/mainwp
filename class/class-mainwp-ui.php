@@ -252,10 +252,7 @@ class MainWP_UI {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
-	public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false ) {
-		// phpcs:ingnore -- complex.
-		?>
-			<?php
+	public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false ) { // phpcs:ingnore -- complex.
 			/**
 			 * Action: mainwp_before_select_sites_list
 			 *
@@ -1460,10 +1457,8 @@ class MainWP_UI {
 		if ( empty( $title ) ) {
 			$title = 'No Title';
 		}
-		// $mainwp_widget_boxes[ $page ][ $context ][ $priority ][ $id ] = array(
 		$mainwp_widget_boxes[ $page ][ $id ] = array(
 			'id'       => $id,
-			// 'title'    => $title,
 			'callback' => $callback,
 			'layout'   => $layout,
 		);

@@ -78,8 +78,6 @@ var limitUpdateAll = 0;
 var continueUpdatesAll = '', continueUpdatesSlug = '';
 var continueUpdating = false;
 
-var starttimeDashboardAction = 0;
-
 updatesoverview_update_popup_init = function (data) {
     data = data || {};
     data.callback = function () {
@@ -170,10 +168,6 @@ updatesoverview_wordpress_global_upgrade_all = function (groupId, updatesSelecte
                 };
 
                 updatesoverview_update_popup_init(initData);
-
-                var dateObj = new Date();
-                starttimeDashboardAction = dateObj.getTime();
-
                 //Step 3: start updates
                 updatesoverview_wordpress_upgrade_all_int(pSitesToUpdate);
 
@@ -373,9 +367,6 @@ updatesoverview_translations_global_upgrade_all = function (groupId, updatesSele
                 };
                 updatesoverview_update_popup_init(initData);
 
-                var dateObj = new Date();
-                starttimeDashboardAction = dateObj.getTime();
-
                 //Step 3: start updates
                 updatesoverview_translations_upgrade_all_int(undefined, pSitesToUpdate, pSitesTranslationSlugs);
 
@@ -453,9 +444,6 @@ updatesoverview_translations_upgrade_all = function (slug, translationName) {
                     progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init(initData);
-                var dateObj = new Date();
-                starttimeDashboardAction = dateObj.getTime();
-
                 //Step 3: start updates
                 updatesoverview_translations_upgrade_all_int(pSlug, pSitesToUpdate);
 
@@ -753,9 +741,6 @@ updatesoverview_plugins_global_upgrade_all = function (groupId, updatesSelected)
                 };
                 updatesoverview_update_popup_init(initData);
 
-                var dateObj = new Date();
-                starttimeDashboardAction = dateObj.getTime();
-
                 //Step 3: start updates
                 updatesoverview_plugins_upgrade_all_int(undefined, pSitesToUpdate, pSitesPluginSlugs);
 
@@ -845,9 +830,6 @@ updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSelecte
                     progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init(initData);
-
-                var dateObj = new Date();
-                starttimeDashboardAction = dateObj.getTime();
 
                 //Step 3: start updates
                 updatesoverview_plugins_upgrade_all_int(pSlug, pSitesToUpdate);
@@ -1177,9 +1159,6 @@ updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelected) 
                 };
                 updatesoverview_update_popup_init(initData);
 
-                var dateObj = new Date();
-                starttimeDashboardAction = dateObj.getTime();
-
                 //Step 3: start updates
                 updatesoverview_themes_upgrade_all_int(undefined, pSitesToUpdate, pSitesPluginSlugs);
 
@@ -1274,9 +1253,6 @@ updatesoverview_themes_upgrade_all = function (slug, themeName, updatesSelected)
                     progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init(initData);
-
-                var dateObj = new Date();
-                starttimeDashboardAction = dateObj.getTime();
 
                 //Step 3: start updates
                 updatesoverview_themes_upgrade_all_int(pSlug, pSitesToUpdate);
@@ -1638,9 +1614,6 @@ updatesoverview_global_upgrade_all = function (which) {
                     progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init(initData);
-
-                var dateObj = new Date();
-                starttimeDashboardAction = dateObj.getTime();
 
                 //Step 3: start updates
                 updatesoverview_upgrade_all_int(pSitesToUpdate, pSitesToUpgrade, pSitesPluginSlugs, pSitesThemeSlugs, psitesTranslationSlugs);
@@ -2870,10 +2843,6 @@ updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, gr
                     newList.push(item);
                 }
             }
-
-            var dateObj = new Date();
-            starttimeDashboardAction = dateObj.getTime();
-           
 
             if (newList.length > 0) {
                 var data = mainwp_secure_data({

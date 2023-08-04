@@ -257,7 +257,7 @@ class MainWP_Manage_Groups {
 				<td><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url); ?></a></td>
 				<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
 				<td>
-					<span class="mainwp-preview-item" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'Click to see the site homepage screenshot . ', 'mainwp' ); ?>" preview-site-url="<?php echo  esc_url( $website->url); ?>" ><i class="camera icon"></i></span>
+					<span class="mainwp-preview-item" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'Click to see the site homepage screenshot . ', 'mainwp' ); ?>" preview-site-url="<?php echo esc_url( $website->url); ?>" ><i class="camera icon"></i></span>
 				</td>
 				<td>
 				<?php if ( '' == $website->note ) : ?>

@@ -487,9 +487,7 @@ class MainWP_Recent_Posts {
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
 										<a class="item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_pending[ $i ]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_pending[ $i ]['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=
-																														 <?php
-																															echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); - nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_pending[ $i ]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_pending[ $i ]['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 										<a class="item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 									</div>
 							</div>
@@ -522,54 +520,54 @@ class MainWP_Recent_Posts {
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
 	 * @param bool  $individual    Determins if it's individual site dashbaord .
-																															*
-																															* @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
-																															* @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
-																															* @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
-																															* @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
-																															* /
-																															public static function render_future_posts( $allPosts, $recent_number, $individual ) {
-																																$recent_posts_future = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'future' );
-																																$recent_posts_future = MainWP_Utility::sortmulti( $recent_posts_future, 'dts', 'desc' );
-																																?>
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
+	 */
+	public static function render_future_posts( $allPosts, $recent_number, $individual ) {
+		$recent_posts_future = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'future' );
+		$recent_posts_future = MainWP_Utility::sortmulti( $recent_posts_future, 'dts', 'desc' );
+		?>
 		<div class="recent_posts_future ui tab" data-tab="future">
-																																		<?php
-																																		/**
-																																		 * Action: mainwp_recent_posts_before_future_list
-																																		 *
-																																		 * Fires before the list of recent future Posts.
-																																		 *
-																																		 * @param array $allPosts      All posts data.
-																																		 * @param int   $recent_number Number of posts.
-																																		 *
-																																		 * @since 4.1
-																																		 */
-																																		do_action( 'mainwp_recent_posts_before_future_list', $allPosts, $recent_number );
-																																		if ( 0 == count( $recent_posts_future ) ) {
-																																			?>
-				<h2 class="ui icon header">
-					<i class="folder open outline icon"></i>
-					<div class="content">
-																																				<?php esc_html_e( 'No future posts found!', 'mainwp' ); ?>
-					</div>
-				</h2>
-																																			<?php
-																																		}
-																																		?>
-			<div class="ui middle aligned divided selection list">
-																																	<?php
-																																	$_count = count( $recent_posts_future );
-																																	for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-																																		if ( ! isset( $recent_posts_future[ $i ]['title'] ) || ( '' == $recent_posts_future[ $i ]['title'] ) ) {
-																																			$recent_posts_future[ $i ]['title'] = '(No Title)';
-																																		}
-																																		if ( isset( $recent_posts_future[ $i ]['dts'] ) ) {
-																																			if ( ! stristr( $recent_posts_future[ $i ]['dts'], '-' ) ) {
-																																				$recent_posts_future[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_posts_future[ $i ]['dts'] ) );
-																																			}
-																																		}
-																																		$name = wp_strip_all_tags( $recent_posts_future[ $i ]['website']->name );
-																																		?>
+		<?php
+		/**
+		 * Action: mainwp_recent_posts_before_future_list
+		 *
+		 * Fires before the list of recent future Posts.
+		 *
+		 * @param array $allPosts      All posts data.
+		 * @param int   $recent_number Number of posts.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_recent_posts_before_future_list', $allPosts, $recent_number );
+		if ( 0 == count( $recent_posts_future ) ) {
+			?>
+			<h2 class="ui icon header">
+				<i class="folder open outline icon"></i>
+				<div class="content">
+				<?php esc_html_e( 'No future posts found!', 'mainwp' ); ?>
+				</div>
+			</h2>
+			<?php
+		}
+		?>
+		<div class="ui middle aligned divided selection list">
+		<?php
+		$_count = count( $recent_posts_future );
+		for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
+			if ( ! isset( $recent_posts_future[ $i ]['title'] ) || ( '' == $recent_posts_future[ $i ]['title'] ) ) {
+				$recent_posts_future[ $i ]['title'] = '(No Title)';
+			}
+			if ( isset( $recent_posts_future[ $i ]['dts'] ) ) {
+				if ( ! stristr( $recent_posts_future[ $i ]['dts'], '-' ) ) {
+					$recent_posts_future[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_posts_future[ $i ]['dts'] ) );
+				}
+			}
+			$name = wp_strip_all_tags( $recent_posts_future[ $i ]['website']->name );
+			?>
 				<div class="item">
 					<div class="ui grid">
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_future[ $i ]['id'] ); ?>"/>
@@ -588,9 +586,7 @@ class MainWP_Recent_Posts {
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
 										<a class="item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_future[ $i ]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_future[ $i ]['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=
-																																		<?php
-																																		echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); - nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_future[ $i ]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_future[ $i ]['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 										<a class="item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_future[ $i ]['website']->id ); ?>&newWindow=yes&openUrl=yes&location=<?php echo base64_encode( ' ? p = ' . $recent_posts_future[ $i ]['id'] . ' & preview = true' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp - admin - nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Preview', 'mainwp' ); ?></a>
 									</div>
@@ -624,282 +620,278 @@ class MainWP_Recent_Posts {
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
 	 * @param bool  $individual    Determins if it's individual site dashbaord .
-																																		*
-																																		* @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
-																																		* @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
-																																		* @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
-																																		* @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
-																																		* /
-																																		public static function render_trash_posts( $allPosts, $recent_number, $individual ) {
-																																			$recent_posts_trash = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'trash' );
-																																			$recent_posts_trash = MainWP_Utility::sortmulti( $recent_posts_trash, 'dts', 'desc' );
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
+	 */
+	public static function render_trash_posts( $allPosts, $recent_number, $individual ) {
+		$recent_posts_trash = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'trash' );
+		$recent_posts_trash = MainWP_Utility::sortmulti( $recent_posts_trash, 'dts', 'desc' );
 
-																																			?>
+		?>
 		<div class="recent_posts_trash ui tab" data-tab="trash">
-																																			<?php
-																																			/**
-																																			 * Action: mainwp_recent_posts_before_trash_list
-																																			 *
-																																			 * Fires before the list of recent trash Posts.
-																																			 *
-																																			 * @param array $allPosts      All posts data.
-																																			 * @param int   $recent_number Number of posts.
-																																			 *
-																																			 * @since 4.1
-																																			 */
-																																			do_action( 'mainwp_recent_posts_before_trash_list', $allPosts, $recent_number );
-																																			if ( 0 == count( $recent_posts_trash ) ) {
-																																				?>
+		<?php
+		/**
+		 * Action: mainwp_recent_posts_before_trash_list
+		 *
+		 * Fires before the list of recent trash Posts.
+		 *
+		 * @param array $allPosts      All posts data.
+		 * @param int   $recent_number Number of posts.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_recent_posts_before_trash_list', $allPosts, $recent_number );
+		if ( 0 == count( $recent_posts_trash ) ) {
+			?>
 				<h2 class="ui icon header">
 					<i class="folder open outline icon"></i>
 					<div class="content">
-																																																	<?php esc_html_e( 'No trashed posts found!', 'mainwp' ); ?>
+						<?php esc_html_e( 'No trashed posts found!', 'mainwp' ); ?>
 					</div>
 				</h2>
-																																																	<?php
-																																			}
-																																			?>
-			<div class="ui middle aligned divided selection list">
-																																			<?php
-																																			$_count = count( $recent_posts_trash );
-																																			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-																																				if ( ! isset( $recent_posts_trash[ $i ]['title'] ) || ( '' == $recent_posts_trash[ $i ]['title'] ) ) {
-																																					$recent_posts_trash[ $i ]['title'] = '(No Title)';
-																																				}
-																																				if ( isset( $recent_posts_trash[ $i ]['dts'] ) ) {
-																																					if ( ! stristr( $recent_posts_trash[ $i ]['dts'], '-' ) ) {
-																																						$recent_posts_trash[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_posts_trash[ $i ]['dts'] ) );
-																																					}
-																																				}
-																																												$name = wp_strip_all_tags( $recent_posts_trash[ $i ]['website']->name );
-																																				?>
-				<div class="item">
-					<div class="ui grid">
-						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_trash[ $i ]['id'] ); ?>"/>
-						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_trash[ $i ]['website']->id ); ?>"/>
-						<div class="<?php echo $individual ? 'fourteen' : 'ten'; ?> wide column middle aligned">
-							<div><?php echo esc_html( htmlentities( $recent_posts_trash[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></div>
-							<span class="ui small text"><?php echo esc_html( $recent_posts_trash[ $i ]['dts'] ); ?></span>
-						</div>
-																																				<?php
-																																				if ( ! $individual ) {
-																																					: ;}
-																																				?>
-						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_trash[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
-						</div>
-																							<?php endif; ?>
-						<div class="two wide column right aligned">
-							<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
-								<i class="ellipsis horizontal icon"></i>
-									<div class="menu">
-										<a href="#" class="item mainwp-post-restore"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
-										<a href="#" class="item mainwp-post-delete"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>
-									</div>
-							</div>
+				<?php
+		}
+		?>
+		<div class="ui middle aligned divided selection list">
+		<?php
+		$_count = count( $recent_posts_trash );
+		for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
+			if ( ! isset( $recent_posts_trash[ $i ]['title'] ) || ( '' == $recent_posts_trash[ $i ]['title'] ) ) {
+				$recent_posts_trash[ $i ]['title'] = '(No Title)';
+			}
+			if ( isset( $recent_posts_trash[ $i ]['dts'] ) ) {
+				if ( ! stristr( $recent_posts_trash[ $i ]['dts'], '-' ) ) {
+					$recent_posts_trash[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_posts_trash[ $i ]['dts'] ) );
+				}
+			}
+			$name = wp_strip_all_tags( $recent_posts_trash[ $i ]['website']->name );
+			?>
+			<div class="item">
+				<div class="ui grid">
+					<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_trash[ $i ]['id'] ); ?>"/>
+					<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_trash[ $i ]['website']->id ); ?>"/>
+					<div class="<?php echo $individual ? 'fourteen' : 'ten'; ?> wide column middle aligned">
+						<div><?php echo esc_html( htmlentities( $recent_posts_trash[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></div>
+						<span class="ui small text"><?php echo esc_html( $recent_posts_trash[ $i ]['dts'] ); ?></span>
+					</div>
+					<?php if ( ! $individual ) : ?>
+					?>
+					<div class="four wide column middle aligned">
+						<a href="<?php echo esc_url( $recent_posts_trash[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+					</div>
+					<?php endif; ?>
+					<div class="two wide column right aligned">
+						<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
+							<i class="ellipsis horizontal icon"></i>
+								<div class="menu">
+									<a href="#" class="item mainwp-post-restore"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
+									<a href="#" class="item mainwp-post-delete"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>
+								</div>
 						</div>
 					</div>
-					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e( 'Please wait...', 'mainwp' ); ?></div>
-					</div>
-																																				<?php }; ?>
+				</div>
+				<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e( 'Please wait...', 'mainwp' ); ?></div>
+				</div>
+					<?php }; ?>
 			</div>
-																																				<?php
-																																												/**
-																																												 * Action: mainwp_recent_posts_after_trash_list
-																																												 *
-																																												 * Fires after the list of recent trash Posts.
-																																												 *
-																																												 * @param array $allPosts      All posts data.
-																																												 * @param int   $recent_number Number of posts.
-																																												 *
-																																												 * @since 4.1
-																																												 */
-																																												do_action( 'mainwp_recent_posts_after_trash_list', $allPosts, $recent_number );
-																																				?>
+		<?php
+		/**
+		 * Action: mainwp_recent_posts_after_trash_list
+		 *
+		 * Fires after the list of recent trash Posts.
+		 *
+		 * @param array $allPosts      All posts data.
+		 * @param int   $recent_number Number of posts.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_recent_posts_after_trash_list', $allPosts, $recent_number );
+		?>
 		</div>
-																																																		<?php
-																																																													}
+		<?php
+	}
 
-																																																													/**
-																																																													 * Method publish()
-																																																													 *
-																																																													 * Publish Post.
-																																																													 */
-																																																		public static function publish() {
-																																																			self::action( 'publish' );
-																																																			die( wp_json_encode( array( 'result' => esc_html__( 'Post has been published!', 'mainwp' ) ) ) );
-																																																		}
+	/**
+	 * Method publish()
+	 *
+	 * Publish Post.
+	 */
+	public static function publish() {
+		self::action( 'publish' );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been published!', 'mainwp' ) ) ) );
+	}
 
-																																																		/**
-																																																		 * Method approve()
-																																																		 *
-																																																		 * Approve Post.
-																																																		 */
-																																																		public static function approve() {
-																																																			self::action( 'publish' );
-																																																			die( wp_json_encode( array( 'result' => esc_html__( 'Post has been approved!', 'mainwp' ) ) ) );
-																																																		}
+	/**
+	 * Method approve()
+	 *
+	 * Approve Post.
+	 */
+	public static function approve() {
+		self::action( 'publish' );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been approved!', 'mainwp' ) ) ) );
+	}
 
-																																																		/**
-																																																		 * Method unpublish()
-																																																		 *
-																																																		 * Unpublish Post.
-																																																		 */
-																																																		public static function unpublish() {
-																																																			self::action( 'unpublish' );
-																																																			die( wp_json_encode( array( 'result' => esc_html__( 'Post has been unpublished!', 'mainwp' ) ) ) );
-																																																		}
+	/**
+	 * Method unpublish()
+	 *
+	 * Unpublish Post.
+	 */
+	public static function unpublish() {
+		self::action( 'unpublish' );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been unpublished!', 'mainwp' ) ) ) );
+	}
 
-																																																		/**
-																																																		 * Method trash()
-																																																		 *
-																																																		 * Trash Post.
-																																																		 */
-																																																		public static function trash() {
-																																																			self::action( 'trash' );
-																																																			die( wp_json_encode( array( 'result' => esc_html__( 'Post has been moved to trash!', 'mainwp' ) ) ) );
-																																																		}
+	/**
+	 * Method trash()
+	 *
+	 * Trash Post.
+	 */
+	public static function trash() {
+		self::action( 'trash' );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been moved to trash!', 'mainwp' ) ) ) );
+	}
 
-																																																		/**
-																																																		 * Method delete()
-																																																		 *
-																																																		 * Delete Post.
-																																																		 */
-																																																		public static function delete() {
-																																																			self::action( 'delete' );
-																																																			die( wp_json_encode( array( 'result' => esc_html__( 'Post has been permanently deleted!', 'mainwp' ) ) ) );
-																																																		}
+	/**
+	 * Method delete()
+	 *
+	 * Delete Post.
+	 */
+	public static function delete() {
+		self::action( 'delete' );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been permanently deleted!', 'mainwp' ) ) ) );
+	}
 
-																																																		/**
-																																																		 * Method restore()
-																																																		 *
-																																																		 * Restore Post.
-																																																		 */
-																																																		public static function restore() {
-																																																			self::action( 'restore' );
-																																																			die( wp_json_encode( array( 'result' => esc_html__( 'Post has been restored!', 'mainwp' ) ) ) );
-																																																		}
+	/**
+	 * Method restore()
+	 *
+	 * Restore Post.
+	 */
+	public static function restore() {
+		self::action( 'restore' );
+		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been restored!', 'mainwp' ) ) ) );
+	}
 
-																																																		/**
-																																																		 * Method action()
-																																																		 *
-																																																		 * Initiate try catch for chosen Action
-																																																		 *
-																																																		 * @param string $pAction Post Action.
-																																																		 * @param string $type    Post type.
-																																																		 *
-																																																		 * @throws \Exception Error message.
-																																																		 *
-																																																		 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-																																																		 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
-																																																		 * @uses \MainWP\Dashboard\MainWP_Exception
-																																																		 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-																																																		 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
-																																																		 */
-																																																		public static function action( $pAction, $type = 'post' ) {
-																																																			$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
-																																																			$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+	/**
+	 * Method action()
+	 *
+	 * Initiate try catch for chosen Action
+	 *
+	 * @param string $pAction Post Action.
+	 * @param string $type    Post type.
+	 *
+	 * @throws \Exception Error message.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 */
+	public static function action( $pAction, $type = 'post' ) {
+		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
-																																																			if ( empty( $postId ) || empty( $websiteId ) ) {
-																																																				die( wp_json_encode( array( 'error' => 'Post ID or site ID not found. Please, reload the page and try again.' ) ) );
-																																																			}
+		if ( empty( $postId ) || empty( $websiteId ) ) {
+			die( wp_json_encode( array( 'error' => 'Post ID or site ID not found. Please, reload the page and try again.' ) ) );
+		}
 
-																																																			$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
-																																																			if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
-																																																				die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
-																																																			}
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
+			die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
+		}
 
-																																																			if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
-																																																										die(
-																																																										wp_json_encode(
-																																																										array(
-																																																											'error'     => esc_html__( 'Suspended site.', 'mainwp' ),
-																																																											'errorCode' => 'SUSPENDED_SITE',
-																																																										)
-																																																										)
-																																																															);
-																																																			}
+		if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
+			die(
+				wp_json_encode(
+					array(
+						'error'     => esc_html__( 'Suspended site.', 'mainwp' ),
+						'errorCode' => 'SUSPENDED_SITE',
+					)
+				)
+			);
+		}
 
-																																																			/**
-																																																			 Action: mainwp_before_post_action
+		/**
+		* Action: mainwp_before_post_action
+		*
+		* Fires before post/page publish/unpublish/trash/delete/restore actions.
+		*
+		* @since 4.1
+		*/
+		do_action( 'mainwp_before_post_action', $type, $pAction, $postId, $website );
+		try {
+			$information = MainWP_Connect::fetch_url_authed(
+				$website,
+				'post_action',
+				array(
+					'action' => $pAction,
+					'id'     => $postId,
+				)
+			);
+		} catch ( MainWP_Exception $e ) {
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
+		}
 
-																																																			 Fires before post/page publish/unpublish/trash/delete/restore actions.
+		/**
+		* Action: mainwp_after_post_action
+		* Fires after post/page publish/unpublish/trash/delete/restore actions.
+		*
+		* @since 4.1
+		*/
+		do_action( 'mainwp_after_post_action', $information, $type, $pAction, $postId, $website );
 
-																																																			 @since 4.1
-*/
-																																																			do_action( 'mainwp_before_post_action', $type, $pAction, $postId, $website );
+		if ( ! isset( $information['status'] ) || ( 'SUCCESS' != $information['status'] ) ) {
+			die( wp_json_encode( array( 'error' => 'Unexpected error!' ) ) );
+		}
+	}
 
-																																																			try {
-																																																				$information = MainWP_Connect::fetch_url_authed(
-																																																				$website,
-																																																				'post_action',
-																																																				array(
-																																																					'action' => $pAction,
-																																																					'id'     => $postId,
-																																																				)
-																																																				);
-																																																			} catch ( MainWP_Exception $e ) {
-																																																				die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
-																																																			}
+	/**
+	 * Method action_update()
+	 *
+	 * Update Post Action.
+	 *
+	 * @param mixed $pAction Post Action.
+	 *
+	 * @throws \Exception Error message.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 */
+	public static function action_update( $pAction ) {
+		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$post_data = isset( $_POST['post_data'] ) ? wp_unslash( $_POST['post_data'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification
 
-																																																			/**
-																																																			 Action: mainwp_after_post_action
+		if ( empty( $postId ) || empty( $websiteId ) ) {
+			die( 'FAIL' );
+		}
 
-																																																			 Fires after post/page publish/unpublish/trash/delete/restore actions.
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
+			die( 'FAIL' );
+		}
 
-																																																			 @since 4.1
-*/
-																																																			do_action( 'mainwp_after_post_action', $information, $type, $pAction, $postId, $website );
+		try {
+			$information = MainWP_Connect::fetch_url_authed(
+				$website,
+				'post_action',
+				array(
+					'action'    => $pAction,
+					'id'        => $postId,
+					'post_data' => $post_data,
+				)
+			);
+		} catch ( MainWP_Exception $e ) {
+			die( 'FAIL' );
+		}
+		if ( ! isset( $information['status'] ) || ( 'SUCCESS' != $information['status'] ) ) {
+			die( 'FAIL' );
+		}
+	}
 
-																																																			if ( ! isset( $information['status'] ) || ( 'SUCCESS' != $information['status'] ) ) {
-																																																				die( wp_json_encode( array( 'error' => 'Unexpected error!' ) ) );
-																																																			}
-																																																		}
-
-																																																		/**
-																																																		 * Method action_update()
-																																																		 *
-																																																		 * Update Post Action.
-																																																		 *
-																																																		 * @param mixed $pAction Post Action.
-																																																		 *
-																																																		 * @throws \Exception Error message.
-																																																		 *
-																																																		 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-																																																		 * @uses \MainWP\Dashboard\MainWP_Exception
-																																																		 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-																																																		 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
-																																																		 */
-																																																		public static function action_update( $pAction ) {
-																																																			$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
-																																																			$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
-																																																			$post_data = isset( $_POST['post_data'] ) ? wp_unslash( $_POST['post_data'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification
-
-																																																			if ( empty( $postId ) || empty( $websiteId ) ) {
-																																																				die( 'FAIL' );
-																																																			}
-
-																																																			$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
-																																																			if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
-																																																				die( 'FAIL' );
-																																																			}
-
-																																																			try {
-																																																										$information = MainWP_Connect::fetch_url_authed(
-																																																										$website,
-																																																										'post_action',
-																																																										array(
-																																																											'action'    => $pAction,
-																																																											'id'        => $postId,
-																																																											'post_data' => $post_data,
-																																																										)
-																																																															);
-																																																			} catch ( MainWP_Exception $e ) {
-																																																				die( 'FAIL' );
-																																																			}
-																																																			if ( ! isset( $information['status'] ) || ( 'SUCCESS' != $information['status'] ) ) {
-																																																				die( 'FAIL' );
-																																																			}
-																																																		}
-
-																																																		}
+}

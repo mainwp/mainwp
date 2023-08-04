@@ -44,7 +44,7 @@ class MainWP_Keys_Manager {
 		if ( null == self::$instance ) {
 			self::$instance = new self();
 		}
-		self::autoload_files(); // to fix.
+		self::auto_load_files(); // to fix.
 		return self::$instance;
 	}
 
@@ -60,11 +60,11 @@ class MainWP_Keys_Manager {
 	}
 
 	/**
-	 * Method autoload_files()
+	 * Method auto_load_files()
 	 *
 	 * Handle autoload files.
 	 */
-	public static function autoload_files() {
+	public static function auto_load_files() {
 		require_once MAINWP_PLUGIN_DIR . 'libs' . DIRECTORY_SEPARATOR . 'phpseclib' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
 	}
 

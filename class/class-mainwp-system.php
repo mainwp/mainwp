@@ -117,7 +117,7 @@ class MainWP_System {
 		self::$instance = $this;
 		MainWP_Logger::instance()->init_execution_time();
 
-		MainWP_Keys_Manager::autoload_files();
+		MainWP_Keys_Manager::auto_load_files();
 
 		$this->load_all_options();
 		$this->update_install();

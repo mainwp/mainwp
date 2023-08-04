@@ -60,6 +60,7 @@ class MainWP_Extensions_Handler {
 		'client',
 		'signature_algo',
 		'verify_method',
+		'pubkey',
 	);
 
 

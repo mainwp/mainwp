@@ -882,14 +882,7 @@ class MainWP_Client {
 							<?php } elseif ( ( 1 == $client['id'] ) || ( $client['login'] == $website->adminname ) ) { ?>
 							<a href="javascript:void(0)" class="item" data-tooltip="This client is used for our secure link, it can not be deleted." data-inverted="" data-position="left center"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
-							<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=
-															 <?php
-																echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) );
-																- nonce' ) );-nonce' ) );
-																- nonce' ) );-nonce' ) );
-																- nonce' ) );-nonce' ) );
-																- nonce' ) );-nonce' ) );
-																- nonce' ) );-nonce' ) ); - nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
+							<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
 							<?php
 							/**
 							 * Action: mainwp_clients_table_action
@@ -951,7 +944,7 @@ class MainWP_Client {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp - add - client - info - message' ) ) : ?>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-client-info-message"></i>
-						<?php echo sprintf( esc_html__( 'use the provided form to create a new client on your child site() . for additional help, please check this % 1$shelp documentation % 2$s . ', 'mainwp' ), ' < a href = 'https://kb.mainwp.com/docs/create-a-new-client/' target = '_blank' > ', ' < / a > ' ); ?>
+						<?php echo sprintf( esc_html__( 'use the provided form to create a new client on your child site(). for additional help, please check this %1$shelp documentation %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-client/" target="_blank">', '</a>' ); ?>
 					</div>
 				<?php endif; ?>
 					<div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
@@ -962,12 +955,13 @@ class MainWP_Client {
 					</div>
 				</div>
 				<div class="mainwp-side-content mainwp-no-padding">
+
 					<?php if ( $client_id ) : ?>
 					<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 						<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Tokens Info', 'mainwp' ); ?></div>
 						<div class="content active">
 							<div class="ui info message">
-								<?php esc_html_e( 'Client info is available as tokens for reports and boilerplate content . Toggle the switch to see available tokens . ', 'mainwp' ); ?>
+								<?php esc_html_e( 'Client info is available as tokens for reports and boilerplate content. Toggle the switch to see available tokens.', 'mainwp' ); ?>
 							</div>
 							<div class="ui toggle checkbox">
 								<input type="checkbox" name="mainwp_toggle_tokens_info" id="mainwp_toggle_tokens_info">
@@ -977,16 +971,14 @@ class MainWP_Client {
 					</div>
 					<script type="text/javascript">
 					jQuery( document ).ready( function() {
-					jQuery( '// mainwp_toggle_tokens_info' ).on( 'change', function() {
-																jQuery( '.hidden.token.column' ) {
-																	. toggle();
-																}
-		} );
-	} );
-					< / script >
-					< div class = 'ui fitted divider' > < / div >
-					< ? php endif;
-	?>
+					jQuery( '#mainwp_toggle_tokens_info' ).on( 'change', function() {
+							jQuery( '.hidden.token.column' ).toggle();
+						} );
+					} );
+					</script>
+					<div class="ui fitted divider"></div>
+					<?php endif; ?>
+
 					<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 						<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 						<div class="content active">
@@ -998,7 +990,7 @@ class MainWP_Client {
 								'enable_offline_sites' => $client_id ? true : false,
 							);
 
-							MainWP_UI_Select_Sites::select_sites_box ( $sel_params );
+							MainWP_UI_Select_Sites::select_sites_box( $sel_params );
 							?>
 						</div>
 					</div>
@@ -1013,22 +1005,22 @@ class MainWP_Client {
 
 		</div>
 		<?php
-		self::render_footer ( $show );
-		self::render_add_field_modal ( $client_id );
-}
+		self::render_footer( $show );
+		self::render_add_field_modal( $client_id );
+	}
 
 
 	/**
 	 * Renders the Add New Client Fields form.
 	 */
-public static function render_client_fields() {
+	public static function render_client_fields() {
 
-	self::render_header( 'AddField' );
-	?>
+		self::render_header( 'AddField' );
+		?>
 		<div class="ui segment" id="mainwp-add-clients">
-	<?php
-	$fields = MainWP_DB_Client::instance()->get_client_fields();
-	?>
+		<?php
+		$fields = MainWP_DB_Client::instance()->get_client_fields();
+		?>
 		<div class="ui info message" <?php echo ! MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-clients-manage-fields' ) ? 'style="display: none"' : ''; ?>>
 		<?php esc_html_e( 'Create and manage custom Client fields.', 'mainwp' ); ?>
 			<i class="ui close icon mainwp-notice-dismiss" notice-id="mainwp-clients-manage-fields"></i>
@@ -1043,15 +1035,12 @@ public static function render_client_fields() {
 				</tr>
 			</thead>
 			<tbody>
-			<?php
-			if ( is_array( $fields ) && count( $fields ) > 0 ) {
-				:;}
-			?>
+			<?php if ( is_array( $fields ) && count( $fields ) > 0 ) : ?>
 				<?php foreach ( $fields as $field ) : ?>
-						<?php
-						if ( ! $field ) {
-							continue;}
-						?>
+					<?php
+					if ( ! $field ) {
+						continue;}
+					?>
 						<tr class="mainwp-field" field-id="<?php echo intval( $field->field_id ); ?>">
 							<td class="field-name">[<?php echo esc_html( stripslashes( $field->field_name ) ); ?>]</td>
 							<td class="field-description"><?php echo esc_html( stripslashes( $field->field_desc ) ); ?></td>
@@ -1093,10 +1082,10 @@ public static function render_client_fields() {
 		</script>
 		</div>
 
-		<?php
-		self::render_add_field_modal();
-		self::render_footer( 'AddField' );
-		}
+			<?php
+			self::render_add_field_modal();
+			self::render_footer( 'AddField' );
+	}
 
 		/**
 		 * Method render_add_field_modal()
@@ -1105,8 +1094,8 @@ public static function render_client_fields() {
 		 *
 		 * @param int $client_id The client id.
 		 */
-		public static function render_add_field_modal( $client_id = 0 ) {
-			?>
+	public static function render_add_field_modal( $client_id = 0 ) {
+		?>
 		<div class="ui modal" id="mainwp-clients-custom-field-modal">
 			<div class="header"><?php esc_html_e( 'Custom Field', 'mainwp' ); ?></div>
 			<div class="content ui mini form">
@@ -1127,7 +1116,7 @@ public static function render_client_fields() {
 			<input type="hidden" value="0" name="field-id">
 		</div>
 			<?php
-		}
+	}
 
 		/**
 		 * Method add_client()
@@ -1136,17 +1125,17 @@ public static function render_client_fields() {
 		 */
 	public static function add_client() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 
-			$selected_sites = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
-			$client_fields  = isset( $_POST['client_fields'] ) ? wp_unslash( $_POST['client_fields'] ) : array();
+			$selected_sites = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification
+			$client_fields  = isset( $_POST['client_fields'] ) ? wp_unslash( $_POST['client_fields'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification
 
-			if ( ! is_array( $client_fields ) ) {
-				$client_fields = array();
-			}
+		if ( ! is_array( $client_fields ) ) {
+			$client_fields = array();
+		}
 
-			if ( ! isset( $client_fields['default_field']['client.name'] ) || '' == $client_fields['default_field']['client.name'] ) {
-				echo wp_json_encode( array( 'error' => esc_html__( 'Client name are empty. Please try again.', 'mainwp' ) ) );
-				return;
-			}
+		if ( ! isset( $client_fields['default_field']['client.name'] ) || '' == $client_fields['default_field']['client.name'] ) {
+			echo wp_json_encode( array( 'error' => esc_html__( 'Client name are empty. Please try again.', 'mainwp' ) ) );
+			return;
+		}
 
 			$add_new = true;
 
@@ -1155,242 +1144,242 @@ public static function render_client_fields() {
 
 			$default_client_fields = MainWP_Client_Handler::get_default_client_fields();
 			$client_to_add         = array();
-			foreach ( $default_client_fields as $field_name => $item ) {
-				if ( ! empty( $item['db_field'] ) ) {
-					if ( isset( $client_fields['default_field'][ $field_name ] ) ) {
-						$client_to_add[ $item['db_field'] ] = sanitize_text_field( wp_unslash( $client_fields['default_field'][ $field_name ] ) );
-					}
+		foreach ( $default_client_fields as $field_name => $item ) {
+			if ( ! empty( $item['db_field'] ) ) {
+				if ( isset( $client_fields['default_field'][ $field_name ] ) ) {
+					$client_to_add[ $item['db_field'] ] = sanitize_text_field( wp_unslash( $client_fields['default_field'][ $field_name ] ) );
 				}
 			}
+		}
 
 			$client_to_add['primary_contact_id'] = isset( $client_fields['default_field']['primary_contact_id'] ) ? intval( $client_fields['default_field']['primary_contact_id'] ) : 0;
 
 			$client_id = isset( $client_fields['client_id'] ) ? intval( $client_fields['client_id'] ) : 0;
 
-			if ( $client_id ) {
-				$client_to_add['client_id'] = $client_id; // update client.
-				$add_new                    = false;
-			}
+		if ( $client_id ) {
+			$client_to_add['client_id'] = $client_id; // update client.
+			$add_new                    = false;
+		}
 
-			try {
-				$inserted = MainWP_DB_Client::instance()->update_client( $client_to_add, true );
-			} catch ( \Exception $e ) {
-				echo wp_json_encode( array( 'error' => $e->getMessage() ) );
-				return;
-			}
+		try {
+			$inserted = MainWP_DB_Client::instance()->update_client( $client_to_add, true );
+		} catch ( \Exception $e ) {
+			echo wp_json_encode( array( 'error' => $e->getMessage() ) );
+			return;
+		}
 
-			if ( $client_id ) {
-				MainWP_DB_Client::instance()->update_selected_sites_for_client( $client_id, $selected_sites );
-			} elseif ( $inserted ) {
-				MainWP_DB_Client::instance()->update_selected_sites_for_client( $inserted->client_id, $selected_sites );
-				$client_id = $inserted->client_id;
-			}
+		if ( $client_id ) {
+			MainWP_DB_Client::instance()->update_selected_sites_for_client( $client_id, $selected_sites );
+		} elseif ( $inserted ) {
+			MainWP_DB_Client::instance()->update_selected_sites_for_client( $inserted->client_id, $selected_sites );
+			$client_id = $inserted->client_id;
+		}
 
-			if ( $client_id && isset( $client_fields['custom_fields'] ) && is_array( $client_fields['custom_fields'] ) ) {
-				foreach ( $client_fields['custom_fields'] as $input_name => $field_val ) {
-					$field_id = array_key_first( $field_val );
-					// update custom field value for client.
-					if ( $field_id ) {
-						$val = $field_val[ $field_id ];
-						MainWP_DB_Client::instance()->update_client_field_value( $field_id, $val, $client_id );
-					}
+		if ( $client_id && isset( $client_fields['custom_fields'] ) && is_array( $client_fields['custom_fields'] ) ) {
+			foreach ( $client_fields['custom_fields'] as $input_name => $field_val ) {
+				$field_id = array_key_first( $field_val );
+				// update custom field value for client.
+				if ( $field_id ) {
+					$val = $field_val[ $field_id ];
+					MainWP_DB_Client::instance()->update_client_field_value( $field_id, $val, $client_id );
 				}
 			}
+		}
 
-			$client_image = 'NOTCHANGE';
-			if ( isset( $_POST['mainwp_client_delete_image']['client_field'] ) && $client_id == $_POST['mainwp_client_delete_image']['client_field'] ) {
-				$client_image = '';
+		$client_image = 'NOTCHANGE';
+		if ( isset( $_POST['mainwp_client_delete_image']['client_field'] ) && $client_id == $_POST['mainwp_client_delete_image']['client_field'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$client_image = '';
+		}
+
+		if ( UPLOAD_ERR_OK == $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) {
+			$output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'client_field' );
+			if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
+				$client_image = $output['filename'];
 			}
+		}
 
-			if ( UPLOAD_ERR_OK == $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) {
-				$output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'client_field' );
-				if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
-					$client_image = $output['filename'];
+		if ( 'NOTCHANGE' !== $client_image && $client_id ) {
+			$client_data = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id );
+
+			$old_file = $client_data->image;
+			if ( $old_file != $client_image && ! empty( $old_file ) ) {
+				$delete_old_file = $base_dir . '/' . $old_file;
+				if ( file_exists( $delete_old_file ) ) {
+					unlink( $delete_old_file );
 				}
 			}
-
-			if ( 'NOTCHANGE' !== $client_image && $client_id ) {
-				$client_data = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id );
-
-				$old_file = $client_data->image;
-				if ( $old_file != $client_image && ! empty( $old_file ) ) {
-					$delete_old_file = $base_dir . '/' . $old_file;
-					if ( file_exists( $delete_old_file ) ) {
-						unlink( $delete_old_file );
-					}
-				}
-				$update = array(
+			$update = array(
 				'client_id' => $client_id,
 				'image'     => $client_image,
-				);
-				MainWP_DB_Client::instance()->update_client( $update );
-			}
+			);
+			MainWP_DB_Client::instance()->update_client( $update );
+		}
 
 			$is_first_contact       = true;
 			$auto_assign_contact_id = 0;
 
-			if ( $client_id && isset( $client_fields['contacts_field'] ) ) {
+		if ( $client_id && isset( $client_fields['contacts_field'] ) ) {
 
-				foreach ( $client_fields['contacts_field']['client.contact.name'] as $indx => $contact_name ) {
-					$contact_to_add = array();
-					if ( empty( $contact_name ) ) {
-						continue;
-					}
-					$contact_to_add['contact_name'] = $contact_name;
-
-					$contact_email = $client_fields['contacts_field']['contact.email'][ $indx ];
-					if ( empty( $contact_email ) ) {
-						continue;
-					}
-
-					$contact_id = isset( $client_fields['contacts_field']['contact_id'][ $indx ] ) ? intval( $client_fields['contacts_field']['contact_id'][ $indx ] ) : 0;
-
-					if ( empty( $contact_id ) ) {
-						continue;
-					}
-
-					$contact_to_add['contact_email'] = $contact_email;
-
-					$contact_to_add['contact_phone'] = $client_fields['contacts_field']['contact.phone'][ $indx ];
-					$contact_to_add['contact_role']  = $client_fields['contacts_field']['contact.role'][ $indx ];
-					$contact_to_add['facebook']      = $client_fields['contacts_field']['contact.facebook'][ $indx ];
-					$contact_to_add['twitter']       = $client_fields['contacts_field']['contact.twitter'][ $indx ];
-					$contact_to_add['instagram']     = $client_fields['contacts_field']['contact.instagram'][ $indx ];
-					$contact_to_add['linkedin']      = $client_fields['contacts_field']['contact.linkedin'][ $indx ];
-
-					$contact_to_add['contact_client_id'] = $client_id;
-					$contact_to_add['contact_id']        = $contact_id;
-
-					$updated = MainWP_DB_Client::instance()->update_client_contact( $contact_to_add );
-
-					$is_first_contact = false;
-
-					if ( $updated ) {
-						$contact_image = 'NOTCHANGE';
-						if ( isset( $_POST['mainwp_client_delete_image']['contacts_field'][ $contact_id ] ) && $contact_id == $_POST['mainwp_client_delete_image']['contacts_field'][ $contact_id ] ) {
-							$contact_image = '';
-						}
-
-						if ( UPLOAD_ERR_OK == $_FILES['mainwp_client_image_uploader']['error']['contacts_field'][ $indx ] ) {
-							$output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'contacts_field', $indx );
-							if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
-								$contact_image = $output['filename'];
-							}
-						}
-
-						if ( 'NOTCHANGE' !== $contact_image && $client_id ) {
-							$contact_data = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', $contact_id );
-
-							$old_file = $contact_data->contact_image;
-							if ( $old_file != $contact_image && ! empty( $old_file ) ) {
-								$delete_old_file = $base_dir . '/' . $old_file;
-								if ( file_exists( $delete_old_file ) ) {
-									unlink( $delete_old_file );
-								}
-							}
-							$update = array(
-							'contact_id'    => $contact_id,
-							'contact_image' => $contact_image,
-							);
-							MainWP_DB_Client::instance()->update_client_contact( $update );
-						}
-					}
+			foreach ( $client_fields['contacts_field']['client.contact.name'] as $indx => $contact_name ) {
+				$contact_to_add = array();
+				if ( empty( $contact_name ) ) {
+					continue;
 				}
-			}
+				$contact_to_add['contact_name'] = $contact_name;
 
-			if ( $client_id && isset( $client_fields['new_contacts_field'] ) ) {
+				$contact_email = $client_fields['contacts_field']['contact.email'][ $indx ];
+				if ( empty( $contact_email ) ) {
+					continue;
+				}
 
-				$first_contact_id = 0;
-				foreach ( $client_fields['new_contacts_field']['client.contact.name'] as $indx => $contact_name ) {
-					$contact_to_add = array();
-					if ( empty( $contact_name ) ) {
-						continue;
-					}
-					$contact_to_add['contact_name'] = $contact_name;
+				$contact_id = isset( $client_fields['contacts_field']['contact_id'][ $indx ] ) ? intval( $client_fields['contacts_field']['contact_id'][ $indx ] ) : 0;
 
-					$contact_email = $client_fields['new_contacts_field']['contact.email'][ $indx ];
-					if ( empty( $contact_email ) ) {
-						continue;
-					}
-					$contact_to_add['contact_email'] = $contact_email;
+				if ( empty( $contact_id ) ) {
+					continue;
+				}
 
-					$contact_to_add['contact_phone'] = $client_fields['new_contacts_field']['contact.phone'][ $indx ];
-					$contact_to_add['contact_role']  = $client_fields['new_contacts_field']['contact.role'][ $indx ];
-					$contact_to_add['facebook']      = $client_fields['new_contacts_field']['contact.facebook'][ $indx ];
-					$contact_to_add['twitter']       = $client_fields['new_contacts_field']['contact.twitter'][ $indx ];
-					$contact_to_add['instagram']     = $client_fields['new_contacts_field']['contact.instagram'][ $indx ];
-					$contact_to_add['linkedin']      = $client_fields['new_contacts_field']['contact.linkedin'][ $indx ];
+				$contact_to_add['contact_email'] = $contact_email;
 
-					$contact_to_add['contact_client_id'] = $client_id;
+				$contact_to_add['contact_phone'] = $client_fields['contacts_field']['contact.phone'][ $indx ];
+				$contact_to_add['contact_role']  = $client_fields['contacts_field']['contact.role'][ $indx ];
+				$contact_to_add['facebook']      = $client_fields['contacts_field']['contact.facebook'][ $indx ];
+				$contact_to_add['twitter']       = $client_fields['contacts_field']['contact.twitter'][ $indx ];
+				$contact_to_add['instagram']     = $client_fields['contacts_field']['contact.instagram'][ $indx ];
+				$contact_to_add['linkedin']      = $client_fields['contacts_field']['contact.linkedin'][ $indx ];
 
-					$inserted = MainWP_DB_Client::instance()->update_client_contact( $contact_to_add );
+				$contact_to_add['contact_client_id'] = $client_id;
+				$contact_to_add['contact_id']        = $contact_id;
 
-					if ( $inserted ) {
+				$updated = MainWP_DB_Client::instance()->update_client_contact( $contact_to_add );
 
-						$contact_id    = $inserted->contact_id;
+				$is_first_contact = false;
+
+				if ( $updated ) {
+					$contact_image = 'NOTCHANGE';
+					if ( isset( $_POST['mainwp_client_delete_image']['contacts_field'][ $contact_id ] ) && $contact_id == $_POST['mainwp_client_delete_image']['contacts_field'][ $contact_id ] ) { // phpcs:ignore WordPress.Security.NonceVerification
 						$contact_image = '';
+					}
 
-						if ( UPLOAD_ERR_OK == $_FILES['mainwp_client_image_uploader']['error']['new_contacts_field'][ $indx ] ) {
-							$output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'new_contacts_field', $indx );
-							if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
-								$contact_image = $output['filename'];
+					if ( UPLOAD_ERR_OK == $_FILES['mainwp_client_image_uploader']['error']['contacts_field'][ $indx ] ) {
+						$output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'contacts_field', $indx );
+						if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
+							$contact_image = $output['filename'];
+						}
+					}
+
+					if ( 'NOTCHANGE' !== $contact_image && $client_id ) {
+						$contact_data = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', $contact_id );
+
+						$old_file = $contact_data->contact_image;
+						if ( $old_file != $contact_image && ! empty( $old_file ) ) {
+							$delete_old_file = $base_dir . '/' . $old_file;
+							if ( file_exists( $delete_old_file ) ) {
+								unlink( $delete_old_file );
 							}
 						}
-
-						if ( '' !== $contact_image && $contact_id ) {
-							$update = array(
+						$update = array(
 							'contact_id'    => $contact_id,
 							'contact_image' => $contact_image,
-							);
-							MainWP_DB_Client::instance()->update_client_contact( $update );
-						}
-
-						if ( $is_first_contact && empty( $auto_assign_contact_id ) ) {
-							$auto_assign_contact_id = $contact_id;
-						}
+						);
+						MainWP_DB_Client::instance()->update_client_contact( $update );
 					}
 				}
 			}
+		}
 
-			if ( $client_id && isset( $client_fields['delele_contacts'] ) && is_array( $client_fields['delele_contacts'] ) ) {
-				foreach ( $client_fields['delele_contacts'] as $delete_id ) {
-					MainWP_DB_Client::instance()->delete_client_contact( $client_id, $delete_id );
-					$is_first_contact = false;
+		if ( $client_id && isset( $client_fields['new_contacts_field'] ) ) {
+
+			$first_contact_id = 0;
+			foreach ( $client_fields['new_contacts_field']['client.contact.name'] as $indx => $contact_name ) {
+				$contact_to_add = array();
+				if ( empty( $contact_name ) ) {
+					continue;
+				}
+				$contact_to_add['contact_name'] = $contact_name;
+
+				$contact_email = $client_fields['new_contacts_field']['contact.email'][ $indx ];
+				if ( empty( $contact_email ) ) {
+					continue;
+				}
+				$contact_to_add['contact_email'] = $contact_email;
+
+				$contact_to_add['contact_phone'] = $client_fields['new_contacts_field']['contact.phone'][ $indx ];
+				$contact_to_add['contact_role']  = $client_fields['new_contacts_field']['contact.role'][ $indx ];
+				$contact_to_add['facebook']      = $client_fields['new_contacts_field']['contact.facebook'][ $indx ];
+				$contact_to_add['twitter']       = $client_fields['new_contacts_field']['contact.twitter'][ $indx ];
+				$contact_to_add['instagram']     = $client_fields['new_contacts_field']['contact.instagram'][ $indx ];
+				$contact_to_add['linkedin']      = $client_fields['new_contacts_field']['contact.linkedin'][ $indx ];
+
+				$contact_to_add['contact_client_id'] = $client_id;
+
+				$inserted = MainWP_DB_Client::instance()->update_client_contact( $contact_to_add );
+
+				if ( $inserted ) {
+
+					$contact_id    = $inserted->contact_id;
+					$contact_image = '';
+
+					if ( UPLOAD_ERR_OK == $_FILES['mainwp_client_image_uploader']['error']['new_contacts_field'][ $indx ] ) {
+						$output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'new_contacts_field', $indx );
+						if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
+							$contact_image = $output['filename'];
+						}
+					}
+
+					if ( '' !== $contact_image && $contact_id ) {
+						$update = array(
+							'contact_id'    => $contact_id,
+							'contact_image' => $contact_image,
+						);
+						MainWP_DB_Client::instance()->update_client_contact( $update );
+					}
+
+					if ( $is_first_contact && empty( $auto_assign_contact_id ) ) {
+						$auto_assign_contact_id = $contact_id;
+					}
 				}
 			}
+		}
 
-			if ( $is_first_contact && $auto_assign_contact_id && $client_id ) {
-				// auto assign.
-				$update = array(
+		if ( $client_id && isset( $client_fields['delele_contacts'] ) && is_array( $client_fields['delele_contacts'] ) ) {
+			foreach ( $client_fields['delele_contacts'] as $delete_id ) {
+				MainWP_DB_Client::instance()->delete_client_contact( $client_id, $delete_id );
+				$is_first_contact = false;
+			}
+		}
+
+		if ( $is_first_contact && $auto_assign_contact_id && $client_id ) {
+			// auto assign.
+			$update = array(
 				'client_id'          => $client_id,
 				'primary_contact_id' => $auto_assign_contact_id,
-				);
-				MainWP_DB_Client::instance()->update_client( $update );
-			}
+			);
+			MainWP_DB_Client::instance()->update_client( $update );
+		}
 
 			echo wp_json_encode(
-			array(
-				'success'   => 'yes',
-				'client_id' => $client_id,
-			)
+				array(
+					'success'   => 'yes',
+					'client_id' => $client_id,
+				)
 			);
-		}
+	}
 
 		/**
 		 * Method render_add_client_modal().
 		 *
 		 * Renders add client Modal window.
 		 */
-		public static function render_add_client_modal() {
-			?>
+	public static function render_add_client_modal() {
+		?>
 			<div id="mainwp-creating-new-client-modal" class="ui modal">
 				<div class="header"><?php esc_html_e( 'New client', 'mainwp' ); ?></div>
 				<div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
 				<div class="scrolling content mainwp-modal-content">				
 					<form action="" method="post" enctype="multipart/form-data" name="createclient_form" id="createclient_form" class="add:clients: validate">
-					<?php
-						self::render_add_client_content();
-					?>
+				<?php
+					self::render_add_client_content();
+				?>
 					</form>
 				</div>
 				<div class="actions">
@@ -1408,7 +1397,7 @@ public static function render_client_fields() {
 				});
 			</script>
 			<?php
-		}
+	}
 
 		/**
 		 * Method render_add_client_content().
@@ -1426,7 +1415,7 @@ public static function render_client_fields() {
 
 			$client_image = $edit_client ? $edit_client->image : '';
 
-			?>
+		?>
 		<h3 class="ui dividing header">
 			<?php if ( $client_id ) : ?>
 				<?php echo esc_html__( 'Edit Client', 'mainwp' ); ?>
@@ -1501,7 +1490,7 @@ public static function render_client_fields() {
 					<?php endif; ?>
 						<?php
 					}
-					}
+			}
 
 			$client_contacts = array();
 			if ( $client_id ) {
@@ -1596,7 +1585,7 @@ public static function render_client_fields() {
 		</div>
 		<input type="hidden" name="client_fields[client_id]" value="<?php echo intval( $client_id ); ?>">
 			<?php
-		}
+	}
 
 		/**
 		 * Method get_add_contact_temp().
@@ -1606,21 +1595,21 @@ public static function render_client_fields() {
 		 * @param mixed $edit_contact The contact data to edit.
 		 * @param bool  $echo Echo template or not.
 		 */
-		public static function get_add_contact_temp( $edit_contact = false, $echo = false ) {
+	public static function get_add_contact_temp( $edit_contact = false, $echo = false ) {
 
-			$input_name    = 'new_contacts_field';
-			$contact_id    = 0;
-			$contact_image = '';
-			if ( $edit_contact ) {
-				$input_name    = 'contacts_field';
-				$contact_id    = $edit_contact->contact_id;
-				$contact_image = $edit_contact->contact_image;
-			}
+		$input_name    = 'new_contacts_field';
+		$contact_id    = 0;
+		$contact_image = '';
+		if ( $edit_contact ) {
+			$input_name    = 'contacts_field';
+			$contact_id    = $edit_contact->contact_id;
+			$contact_image = $edit_contact->contact_image;
+		}
 
-			ob_start();
-			?>
+		ob_start();
+		?>
 		<h3 class="ui dividing header top-contact-fields">
-			<?php if ( $edit_contact ) : ?>
+		<?php if ( $edit_contact ) : ?>
 				<?php echo esc_html__( 'Edit Contact', 'mainwp' ); ?>
 				<div class="sub header"><?php esc_html_e( 'Edit contact person information.', 'mainwp' ); ?></div>
 			<?php else : ?>
@@ -1628,16 +1617,16 @@ public static function render_client_fields() {
 				<div class="sub header"><?php esc_html_e( 'Enter contact person information.', 'mainwp' ); ?></div>
 			<?php endif; ?>
 		</h3>
-						<?php
+					<?php
 
-						$contact_fields = MainWP_Client_Handler::get_default_contact_fields();
+					$contact_fields = MainWP_Client_Handler::get_default_contact_fields();
 
-						foreach ( $contact_fields as $field_name => $field ) {
-							$db_field   = isset( $field['db_field'] ) ? $field['db_field'] : '';
-							$val        = $edit_contact && '' != $db_field && property_exists( $edit_contact, $db_field ) ? $edit_contact->{$db_field} : '';
-							$contact_id = $edit_contact && property_exists( $edit_contact, 'contact_id' ) ? $edit_contact->contact_id : '';
+					foreach ( $contact_fields as $field_name => $field ) {
+						$db_field   = isset( $field['db_field'] ) ? $field['db_field'] : '';
+						$val        = $edit_contact && '' != $db_field && property_exists( $edit_contact, $db_field ) ? $edit_contact->{$db_field} : '';
+						$contact_id = $edit_contact && property_exists( $edit_contact, 'contact_id' ) ? $edit_contact->contact_id : '';
 
-							?>
+						?>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php echo esc_html( $field['title'] ); ?></label>
 					<div class="ui six wide column">
@@ -1677,22 +1666,22 @@ public static function render_client_fields() {
 									<?php
 		endif;
 							}
-						}
+					}
 
-						?>
+					?>
 			<div class="ui grid field">
 				<label class="six wide column middle aligned"><?php esc_html_e( 'Remove contact', 'mainwp' ); ?></label>
 				<div class="ui six wide column">
 					<div class="ui left labeled input">
 					<a href="javascript:void(0);" contact-id="<?php echo intval( $contact_id ); ?>" class="ui basic button mainwp-client-remove-contact"><?php esc_html_e( 'Remove contact', 'mainwp' ); ?></a>
 					</div>
-							<?php
-							if ( $edit_contact ) {
-								?>
+						<?php
+						if ( $edit_contact ) {
+							?>
 						<input type="hidden" value="<?php echo intval( $edit_contact->contact_id ); ?>" name="client_fields[contacts_field][contact_id][]"/>
 								<?php
-							}
-							?>
+						}
+						?>
 				</div>
 			</div>
 									<div class="ui section hidden divider bottom-contact-fields"></div>
@@ -1705,101 +1694,103 @@ public static function render_client_fields() {
 			}
 
 			return $html;
-		}
+	}
 
 		/**
 		 * Method save_client_field().
 		 *
 		 * Save custom fields.
 		 */
-		public static function save_client_field() {
+	public static function save_client_field() {
 
-			$return = array(
-				'success' => false,
-				'error'   => '',
-				'message' => '',
-			);
+		$return = array(
+			'success' => false,
+			'error'   => '',
+			'message' => '',
+		);
 
-			$client_id  = isset( $_POST['client_id'] ) ? intval( $_POST['client_id'] ) : 0; // 0 is global client's field.
-			$field_id   = isset( $_POST['field_id'] ) ? intval( $_POST['field_id'] ) : 0;
-			$field_desc = sanitize_text_field( $_POST['field_desc'] );
-			$field_name = sanitize_text_field( $_POST['field_name'] );
-			$field_name = trim( $field_name, '[]' );
+		// phpcs:disable WordPress.Security.NonceVerification
+		$client_id  = isset( $_POST['client_id'] ) ? intval( $_POST['client_id'] ) : 0; // 0 is global client's field.
+		$field_id   = isset( $_POST['field_id'] ) ? intval( $_POST['field_id'] ) : 0;
+		$field_desc = sanitize_text_field( $_POST['field_desc'] );
+		$field_name = sanitize_text_field( $_POST['field_name'] );
+		$field_name = trim( $field_name, '[]' );
+		// phpcs:enable
 
-			// update general or individual client field.
-			if ( $field_id ) {
-				$current = MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field_id );
-				if ( $current && $current->field_name == $field_name && $current->field_desc == $field_desc ) {
-					$return['success'] = true;
-					$return['message'] = esc_html__( 'Field has been saved without changes.', 'mainwp' );
+		// update general or individual client field.
+		if ( $field_id ) {
+			$current = MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field_id );
+			if ( $current && $current->field_name == $field_name && $current->field_desc == $field_desc ) {
+				$return['success'] = true;
+				$return['message'] = esc_html__( 'Field has been saved without changes.', 'mainwp' );
+			} else {
+				$current = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $field_name, $client_id ); // check if other field with the same name existed.
+				if ( $current && $current->field_id != $field_id ) {
+					$return['error'] = esc_html__( 'Field already exists, try different field name.', 'mainwp' );
 				} else {
-					$current = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $field_name, $client_id ); // check if other field with the same name existed.
-					if ( $current && $current->field_id != $field_id ) {
-						$return['error'] = esc_html__( 'Field already exists, try different field name.', 'mainwp' );
-					} else {
-						// update general or individual field name.
-						$field = MainWP_DB_Client::instance()->update_client_field(
+					// update general or individual field name.
+					$field = MainWP_DB_Client::instance()->update_client_field(
 						$field_id,
 						array(
 							'field_name' => $field_name,
 							'field_desc' => $field_desc,
 							'client_id'  => $client_id,
 						)
-						);
-						if ( $field ) {
-							$return['success'] = true;
-						}
+					);
+					if ( $field ) {
+						$return['success'] = true;
 					}
 				}
-			} else { // add new.
-				$current = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $field_name, $client_id );
-				if ( $current ) { // checking general or individual field name.
-					$return['error'] = esc_html__( 'Field already exists, try different field name.', 'mainwp' );
-				} else {
-					// insert general or individual field name.
-					$field = MainWP_DB_Client::instance()->add_client_field(
+			}
+		} else { // add new.
+			$current = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $field_name, $client_id );
+			if ( $current ) { // checking general or individual field name.
+				$return['error'] = esc_html__( 'Field already exists, try different field name.', 'mainwp' );
+			} else {
+				// insert general or individual field name.
+				$field = MainWP_DB_Client::instance()->add_client_field(
 					array(
 						'field_name' => $field_name,
 						'field_desc' => $field_desc,
 						'client_id'  => $client_id,
 					)
-					);
+				);
 
-					if ( $field ) {
-						$return['success'] = true;
-					} else {
-						$return['error'] = esc_html__( 'Undefined error occurred. Please try again.', 'mainwp' ); }
-				}
+				if ( $field ) {
+					$return['success'] = true;
+				} else {
+					$return['error'] = esc_html__( 'Undefined error occurred. Please try again.', 'mainwp' ); }
 			}
-			echo wp_json_encode( $return );
-			exit;
 		}
+		echo wp_json_encode( $return );
+		exit;
+	}
 
 		/**
 		 * Method save_note()
 		 *
 		 * Save Client Note.
 		 */
-		public static function save_note() {
-			if ( isset( $_POST['clientid'] ) && $_POST['clientid'] ) {
-				$note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : '';
-				$esc_note = MainWP_Utility::esc_content( $note );
-				$update   = array(
-					'client_id' => $_POST['clientid'],
-					'note'      => $esc_note,
-				);
-				MainWP_DB_Client::instance()->update_client( $update );
-				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
-			}
-			die( wp_json_encode( array( 'undefined_error' => true ) ) );
+	public static function save_note() {
+		if ( isset( $_POST['clientid'] ) && $_POST['clientid'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+			$esc_note = MainWP_Utility::esc_content( $note );
+			$update   = array(
+				'client_id' => $_POST['clientid'], // phpcs:ignore WordPress.Security.NonceVerification
+				'note'      => $esc_note,
+			);
+			MainWP_DB_Client::instance()->update_client( $update );
+			die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 		}
+		die( wp_json_encode( array( 'undefined_error' => true ) ) );
+	}
 
 		/**
 		 * Hooks the section help content to the Help Sidebar element.
 		 */
-		public static function mainwp_help_content() {
-			if ( isset( $_GET['page'] ) && ( 'ManageClients' === $_GET['page'] || 'ClientAddNew' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) {
-				?>
+	public static function mainwp_help_content() {
+		if ( isset( $_GET['page'] ) && ( 'ManageClients' === $_GET['page'] || 'ClientAddNew' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) {
+			?>
 			<p><?php esc_html_e( 'If you need help with managing clients, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
 				<div class="item"><a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">Manage Clients</a></div>
@@ -1819,7 +1810,7 @@ public static function render_client_fields() {
 				?>
 			</div>
 				<?php
-			}
 		}
+	}
 
-		}
+}

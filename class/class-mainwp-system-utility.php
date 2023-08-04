@@ -524,7 +524,6 @@ class MainWP_System_Utility {
 
 		$tags        = '';
 		$tags_labels = '';
-		$tag_style   = '';
 
 		if ( isset( $item['wpgroups'] ) && ! empty( $item['wpgroups'] ) ) {
 
@@ -541,13 +540,15 @@ class MainWP_System_Utility {
 
 			if ( is_array( $tags ) ) {
 				foreach ( $tags as $idx => $tag ) {
-					$tag       = trim( $tag );
-					$tagx      = MainWP_DB_Common::instance()->get_group_by_name( $tag );
-					$tag_style = 'style="background-color:' . esc_html( $tagx->color ) . '"';
-					if ( '' != $tagx->color ) {
+					$tag  = trim( $tag );
+					$tagx = MainWP_DB_Common::instance()->get_group_by_name( $tag );
+
+					if ( is_object( $tagx ) && '' != $tagx->color ) {
 						$tag_a_style = 'style="color:#fff!important;opacity:1;"';
+						$tag_style   = 'style="background-color:' . esc_html( $tagx->color ) . '"';
 					} else {
 						$tag_a_style = '';
+						$tag_style   = '';
 					}
 
 					if ( isset( $tags_ids[ $idx ] ) && ! empty( $tags_ids[ $idx ] ) ) {

@@ -552,7 +552,6 @@ class MainWP_Utility {
 	 */
 	public static function sanitize_file_name( $filename ) {
 		$filename = str_replace( array( '|', '/', '\\', ' ', ':' ), array( '-', '-', '-', '-', '-' ), $filename );
-
 		return sanitize_file_name( $filename );
 	}
 

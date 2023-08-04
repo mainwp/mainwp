@@ -169,7 +169,7 @@ class MainWP_Security_Issues_Widget {
 									<?php elseif ( '' == $count_security_issues ) : ?>
 										<span class="ui grey empty circular label"></span> <?php esc_html_e( 'No data available.', 'mainwp' ); ?>
 									<?php else : ?>
-										<span class="ui red empty circular label"></span> <?php echo esc_html( $count_security_issues ); ?> <?php echo  esc_html( _n( 'issue detected', 'issues detected', $count_security_issues, 'mainwp' ) ); ?>
+										<span class="ui red empty circular label"></span> <?php echo esc_html( $count_security_issues ); ?> <?php echo esc_html( _n( 'issue detected', 'issues detected', $count_security_issues, 'mainwp' ) ); ?>
 									<?php endif; ?>
 				</div>
 

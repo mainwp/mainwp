@@ -1206,7 +1206,7 @@ class MainWP_User {
 				<td class="right aligned">
 					<input class="userId" type="hidden" name="id" value="<?php echo esc_attr( $user['id'] ); ?>" />
 					<input class="userName" type="hidden" name="name" value="<?php echo esc_attr( $user['login'] ); ?>" />
-					<input class="websiteId" type="hidden" name="id" value="<?php echo intval( esc_html( $website->id ) ); ?>" />
+					<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>" />
 					<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
 						<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 						<div class="menu">

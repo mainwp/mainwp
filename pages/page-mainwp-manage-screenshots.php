@@ -364,7 +364,7 @@ class MainWP_Manage_Screenshots {
 
 					<div class="card" site-url="<?php echo $website->url; ?>">
 							<div class="image" data-tooltip="<?php echo esc_attr( $status_tooltip ); ?>" data-position="top center" data-inverted="">
-							<img data-src="//s0.wordpress.com/mshots/v1/<?php echo rawurlencode( $website->url ); ?>?w=900">
+							<img data-src="//s0.wordpress.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=900">
 						</div>
 							<div class="ui <?php echo $status_color; ?> corner label">
 								<i class="<?php echo $status_icon; ?> icon"></i>

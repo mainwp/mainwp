@@ -153,10 +153,10 @@ class MainWP_Notification_Settings {
 						?>
 						<tr>
 							<td><?php echo ( ! $options['disable'] ) ? '<span data-tooltip="Enabled." data-position="right center" data-inverted=""><i class="circular green check inverted icon"></i></span>' : '<span data-tooltip="Disabled." data-position="right center" data-inverted=""><i class="circular x icon inverted disabled"></i></span>'; ?></td>
-							<td><a href="admin.php?page=SettingsEmail&edit-email=<?php echo rawurlencode( $type ); ?>" data-tooltip="<?php esc_attr_e( 'Click to configure the email.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php echo esc_html( $name ); ?></a></td>
+							<td><a href="admin.php?page=SettingsEmail&edit-email=<?php echo esc_html( rawurlencode( $type ) ); ?>" data-tooltip="<?php esc_attr_e( 'Click to configure the email.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php echo esc_html( $name ); ?></a></td>
 							<td><?php echo esc_html( $email_description ); ?></td>
 							<td><?php echo esc_html( $options['recipients'] ); ?></td>
-							<td style="text-align:right"><a href="admin.php?page=SettingsEmail&edit-email=<?php echo rawurlencode( $type ); ?>" data-tooltip="<?php esc_attr_e( 'Click to configure the email.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="ui green mini button"><?php esc_html_e( 'Manage', 'mainwp' ); ?></a></td>
+							<td style="text-align:right"><a href="admin.php?page=SettingsEmail&edit-email=<?php echo esc_html( rawurlencode( $type ) ); ?>" data-tooltip="<?php esc_attr_e( 'Click to configure the email.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="ui green mini button"><?php esc_html_e( 'Manage', 'mainwp' ); ?></a></td>
 						</tr>
 					<?php endforeach; ?>
 				</tbody>

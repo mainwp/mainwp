@@ -1066,7 +1066,7 @@ class MainWP_System_View {
 					},
 				}).modal('show');
 				jQuery(document).on('click', '#mainwp-install-check-btn', function () {
-					mainwp_install_check_plugin_prepare( '<?php echo rawurlencode( dirname( $plugin_slug ) ); ?>' );
+					mainwp_install_check_plugin_prepare( '<?php echo esc_js( rawurlencode( dirname( $plugin_slug ) ) ); ?>' );
 					return false;
 				});
 			});

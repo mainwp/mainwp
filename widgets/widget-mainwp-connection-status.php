@@ -411,7 +411,7 @@ class MainWP_Connection_Status {
 	 */
 	public static function render_all_item( $website, $lastSyncTime, $hasSyncErrors ) {
 		?>
-		<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
+		<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( $website->name ) ); ?>">
 			<div class="ui grid">
 				<div class="twelve wide column middle aligned">
 					<div>
@@ -444,7 +444,7 @@ class MainWP_Connection_Status {
 				
 				<div class="four wide middle aligned right aligned column reconnect-wrapper">
 				<div class="ui mini icon buttons">
-				<a class="ui button" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted="" data-position="left center"><i class="sign in alternate icon"></i></a>
+				<a class="ui button" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted="" data-position="left center"><i class="sign in alternate icon"></i></a>
 				<a class="ui button" href="<?php echo esc_html( $website->url ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted="" data-position="left center"><i class="external alternate icon"></i></a>
 					<?php if ( $hasSyncErrors ) : ?>
 						<a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site ui button green basic" siteid="<?php echo intval( $website->id ); ?>" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted="" data-position="left center"><i class="linkify icon"></i></a>
@@ -466,7 +466,7 @@ class MainWP_Connection_Status {
 	 */
 	public static function render_up_item( $website, $lastSyncTime ) {
 		?>
-	<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
+	<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( $website->name ) ); ?>">
 		<div class="ui grid">
 			<div class="six wide column middle aligned">
 					<a href="
@@ -518,7 +518,7 @@ class MainWP_Connection_Status {
 	 */
 	public static function render_down_item( $website, $lastSyncTime ) {
 		?>
-		<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
+		<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( $website->name ) ); ?>">
 			<div class="ui grid">
 				<div class="six wide column middle aligned">
 					<a href="

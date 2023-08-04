@@ -268,7 +268,7 @@ class MainWP_Recent_Pages {
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_published[ $i ]['id'] ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_published[ $i ]['website']->id ); ?>"/>
 						<div class="six wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_published[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_pages_published[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+							<a href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_published[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_pages_published[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) );?></a>
 						</div>
 						<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
 						<?php echo esc_html( $recent_pages_published[ $i ]['dts'] ); ?>
@@ -373,14 +373,14 @@ class MainWP_Recent_Pages {
 							<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_draft[ $i ]['id'] ); ?>"/>
 							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_draft[ $i ]['website']->id ); ?>"/>
 							<div class="six wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_draft[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_draft[ $i ]['id'] ); ?>" target="_blank" class="mainwp-may-hide-referrer" ><?php echo htmlentities( $recent_pages_draft[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+								<a href="<?php echo esc_url( $recent_pages_draft[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_draft[ $i ]['id'] ); ?>" target="_blank" class="mainwp-may-hide-referrer" ><?php echo esc_html( htmlentities( $recent_pages_draft[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
 							</div>
 							<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
 							<?php echo esc_html( $recent_pages_draft[ $i ]['dts'] ); ?>
 						</div>
 							<?php if ( ! $individual ) : ?>
 							<div class="four wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_draft[ $i ]['website']->url ); ?>" target="_blank" class="mainwp-may-hide-referrer" ><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ; ?></a>
+								<a href="<?php echo esc_url( $recent_pages_draft[ $i ]['website']->url ); ?>" target="_blank" class="mainwp-may-hide-referrer" ><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput?></a>
 							</div>
 							<?php endif; ?>
 							<div class="two wide column right aligned">
@@ -476,14 +476,14 @@ class MainWP_Recent_Pages {
 							<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_pending[ $i ]['id'] ); ?>"/>
 							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_pending[ $i ]['website']->id ); ?>"/>
 							<div class="six wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_pending[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_pending[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_pages_pending[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+								<a href="<?php echo esc_url( $recent_pages_pending[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_pending[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_pages_pending[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
 							</div>
 							<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
 							<?php echo esc_html( $recent_pages_pending[ $i ]['dts'] ); ?>
 						</div>
 							<?php if ( ! $individual ) : ?>
 							<div class="four wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_pending[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank" ><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ; ?></a>
+								<a href="<?php echo esc_url( $recent_pages_pending[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank" ><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
 							</div>
 							<?php endif; ?>
 							<div class="two wide column right aligned">
@@ -579,14 +579,14 @@ class MainWP_Recent_Pages {
 							<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_future[ $i ]['id'] ); ?>"/>
 							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_future[ $i ]['website']->id ); ?>"/>
 							<div class="six wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_future[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_future[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_pages_future[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+								<a href="<?php echo esc_url( $recent_pages_future[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_future[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_pages_future[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
 							</div>
 							<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
 							<?php echo esc_html( $recent_pages_future[ $i ]['dts'] ); ?>
 						</div>
 							<?php if ( ! $individual ) : ?>
 							<div class="four wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_future[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ; ?></a>
+								<a href="<?php echo esc_url( $recent_pages_future[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput?></a>
 							</div>
 							<?php endif; ?>
 							<div class="two wide column right aligned">
@@ -691,7 +691,7 @@ class MainWP_Recent_Pages {
 						</div>
 							<?php if ( ! $individual ) : ?>
 							<div class="four wide column middle aligned">
-								<?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ; ?>
+								<?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 							</div>
 							<?php endif; ?>
 							<div class="two wide column right aligned">

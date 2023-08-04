@@ -2109,9 +2109,9 @@ class MainWP_Updates {
 
 					if ( ! empty( $restorePageSlug ) ) {
 						if ( $enable_legacy_backup ) {
-							$restoreSlug = $restorePageSlug . '&backupid=' . $website->id;
+							$restoreSlug = $restorePageSlug . '&backupid=' . intval( $website->id );
 						} elseif ( self::activated_primary_backup_plugin( $mainwp_primaryBackup, $website ) ) {
-							$restoreSlug = $restorePageSlug . '&id=' . $website->id;
+							$restoreSlug = $restorePageSlug . '&id=' . intval( $website->id );
 						}
 					}
 					?>

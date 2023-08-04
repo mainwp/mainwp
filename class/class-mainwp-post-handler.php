@@ -653,7 +653,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function ajax_guided_tours_option_update() {
 		$this->secure_request( 'mainwp_guided_tours_option_update' );
-		$enable = isset( $_POST['enable'] ) ? intval( $_POST['enable'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$enable = isset( $_POST['enable'] ) ? intval( $_POST['enable'] ) : 0;
 		MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enable );
 		die( 'ok' );
 	}
@@ -671,7 +672,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_leftmenu_filter_group() {
 		$this->secure_request( 'mainwp_leftmenu_filter_group' );
 
-		$gid = isset( $_POST['group_id'] ) ? intval( $_POST['group_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$gid = isset( $_POST['group_id'] ) ? intval( $_POST['group_id'] ) : false;
 
 		if ( ! empty( $gid ) ) {
 			$ids      = '';
@@ -702,7 +704,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		global $current_user;
 
 		$user_id = $current_user->ID;
-		$slug    = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
 		if ( $user_id && ! empty( $slug ) ) {
 			$activate_notices = get_user_option( 'mainwp_hide_activate_notices' );
 			if ( ! is_array( $activate_notices ) ) {
@@ -812,7 +815,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function ajax_disconnect_site() {
 		$this->secure_request( 'mainwp_disconnect_site' );
 
-		$siteid = isset( $_POST['wp_id'] ) ? intval( $_POST['wp_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$siteid = isset( $_POST['wp_id'] ) ? intval( $_POST['wp_id'] ) : 0;
 
 		if ( empty( $siteid ) ) {
 			die( wp_json_encode( array( 'error' => 'Error: site id empty' ) ) );
@@ -906,8 +910,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_clients_delete_client() {
 		$this->check_security( 'mainwp_clients_delete_client' );
-		$ret       = array( 'success' => false );
-		$client_id = isset( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		$ret = array( 'success' => false );
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$client_id = isset( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0;
 
 		if ( $client_id ) {
 			MainWP_DB_Client::instance()->delete_client( $client_id );
@@ -940,8 +945,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_clients_delete_general_field() {
 		$this->check_security( 'mainwp_clients_delete_general_field' );
-		$ret       = array( 'success' => false );
-		$field_id  = intval( $_POST['field_id'] ); // phpcs:ignore WordPress.Security.NonceVerification
+		$ret = array( 'success' => false );
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$field_id  = intval( $_POST['field_id'] );
 		$client_id = 0; // 0 general fields.
 		if ( MainWP_DB_Client::instance()->delete_client_field_by( 'field_id', $field_id, $client_id ) ) {
 			$ret['success'] = true;
@@ -958,9 +964,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		 */
 	public function mainwp_clients_delete_field() {
 		$this->check_security( 'mainwp_clients_delete_field' );
-		$ret       = array( 'success' => false );
-		$field_id  = intval( $_POST['field_id'] ); // phpcs:ignore WordPress.Security.NonceVerification
-		$client_id = isset( $_POST['client_id'] ) ? intval( $_POST['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification -- $client_id > 0, individual token.
+		$ret = array( 'success' => false );
+		// phpcs:disable WordPress.Security.NonceVerification
+		$field_id  = intval( $_POST['field_id'] );
+		$client_id = isset( $_POST['client_id'] ) ? intval( $_POST['client_id'] ) : 0; -- $client_id > 0, individual token .
+		// phpcs:enable WordPress.Security.NonceVerification
 		if ( $client_id ) {
 			if ( MainWP_DB_Client::instance()->delete_client_field_by( 'field_id', $field_id, $client_id ) ) {
 				$ret['success'] = true;
@@ -1006,8 +1014,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_clients_suspend_client() {
 		$this->secure_request( 'mainwp_clients_suspend_client' );
-		$clientid  = isset( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
-		$suspended = isset( $_POST['suspend_status'] ) && $_POST['suspend_status'] ? 1 : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$clientid  = isset( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0;
+		$suspended = isset( $_POST['suspend_status'] ) && $_POST['suspend_status'] ? 1 : 0;
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		if ( empty( $clientid ) ) {
 			wp_die( 'Error - empty client id!' );
@@ -1136,11 +1146,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function ajax_recheck_http() {
 		$this->check_security( 'mainwp_recheck_http' );
 
-		if ( ! isset( $_POST['websiteid'] ) || empty( $_POST['websiteid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:ignore WordPress.Security.NonceVerification
+		if ( ! isset( $_POST['websiteid'] ) || empty( $_POST['websiteid'] ) ) {
 			die( -1 );
 		}
 
-		$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['websiteid'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['websiteid'] ) );
 		if ( empty( $website ) ) {
 			die( -1 );
 		}
@@ -1168,7 +1180,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_ignore_http_response() {
 		$this->check_security( 'mainwp_ignore_http_response' );
-		$siteid = isset( $_POST['websiteid'] ) ? intval( $_POST['websiteid'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		 // phpcs:ignore WordPress.Security.NonceVerification
+		$siteid = isset( $_POST['websiteid'] ) ? intval( $_POST['websiteid'] ) : false;
 
 		if ( empty( $siteid ) ) {
 			die( -1 );
@@ -1212,7 +1225,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_force_destroy_sessions() {
 		$this->secure_request( 'mainwp_force_destroy_sessions' );
 
-		$website_id = ( isset( $_POST['website_id'] ) ? (int) $_POST['website_id'] : 0 ); // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$website_id = ( isset( $_POST['website_id'] ) ? (int) $_POST['website_id'] : 0 );
 
 		if ( ! MainWP_DB::instance()->get_website_by_id( $website_id ) ) {
 			die( wp_json_encode( array( 'error' => array( 'message' => esc_html__( 'This website does not exist.', 'mainwp' ) ) ) ) );
@@ -1256,8 +1270,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function ajax_refresh_icon() {
 		$this->secure_request( 'mainwp_refresh_icon' );
-		$slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
-		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 
 		if ( empty( $slug ) ) {
 			wp_die( 'failed' );
@@ -1277,9 +1293,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function ajax_upload_custom_icon() {
 		$this->secure_request( 'mainwp_upload_custom_icon' );
-		$slug   = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
-		$type   = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
-		$delete = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification
+		$slug   = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
+		$type   = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
+		$delete = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0;
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		if ( empty( $slug ) || ( 'plugin' !== $type && 'theme' !== $type ) ) {
 			wp_die( 'failed' );
@@ -1320,7 +1338,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function ajax_select_custom_theme() {
 		$this->secure_request( 'mainwp_select_custom_theme' );
-		$theme = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$theme = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : '';
 		if ( empty( $theme ) ) {
 			wp_die( 'failed' );
 		}
@@ -1340,7 +1359,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function ajax_site_actions_dismiss() {
 		$this->secure_request( 'mainwp_site_actions_dismiss' );
-		$action_id = isset( $_POST['action_id'] ) ? intval( $_POST['action_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$action_id = isset( $_POST['action_id'] ) ? intval( $_POST['action_id'] ) : 0;
 		if ( empty( $action_id ) ) {
 			wp_die( 'failed' );
 		}
@@ -1356,7 +1376,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function ajax_delete_non_mainwp_actions() {
 		$this->secure_request( 'mainwp_delete_non_mainwp_actions' );
-		$siteid = isset( $_POST['wp_id'] ) ? intval( $_POST['wp_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$siteid = isset( $_POST['wp_id'] ) ? intval( $_POST['wp_id'] ) : 0;
 		if ( empty( $siteid ) ) {
 			wp_die( wp_json_encode( array( 'error' => 'Empty site ID' ) ) );
 		}

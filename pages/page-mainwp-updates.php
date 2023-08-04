@@ -2115,7 +2115,7 @@ class MainWP_Updates {
 						}
 					}
 					?>
-					<tr id="child-site-<?php echo intval( $website->id ); ?>" class="child-site mainwp-child-site-<?php echo intval( $website->id ); ?>" siteid="<?php echo intval( $website->id ); ?>" site-url="<?php echo $website->url; ?>">
+					<tr id="child-site-<?php echo intval( $website->id ); ?>" class="child-site mainwp-child-site-<?php echo intval( $website->id ); ?>" siteid="<?php echo intval( $website->id ); ?>" site-url="<?php echo  esc_url( $website->url ); ?>">
 						<td>
 							<?php self::render_site_link_dashboard( $website ); ?>
 						</td>

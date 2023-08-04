@@ -362,7 +362,7 @@ class MainWP_Manage_Screenshots {
 
 						?>
 
-					<div class="card" site-url="<?php echo $website->url; ?>">
+					<div class="card" site-url="<?php echo  esc_url( $website->url ); ?>">
 							<div class="image" data-tooltip="<?php echo esc_attr( $status_tooltip ); ?>" data-position="top center" data-inverted="">
 							<img data-src="//s0.wordpress.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=900">
 						</div>
@@ -372,7 +372,7 @@ class MainWP_Manage_Screenshots {
 						<div class="content">
 								<h5 class="ui small header">
 									<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $website->id ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
-									<div class="sub header" style="font-size:11px"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo $website->url; ?></a></div>
+									<div class="sub header" style="font-size:11px"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_url( $website->url); ?></a></div>
 								</h5>
 								<?php if ( isset( $website->wpgroups ) && '' != $website->wpgroups ) : ?>
 								<small data-tooltip="<?php esc_attr_e( 'Site tags', 'mainwp' ); ?>" data-position="top left" data-inverted="">
@@ -382,7 +382,7 @@ class MainWP_Manage_Screenshots {
 						</div>
 							<?php if ( isset( $website->client_id ) && '0' != $website->client_id ) : ?>
 							<div class="extra content">
-								<small data-tooltip="<?php esc_attr_e( 'See client details', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="user icon"></i> <a href="<?php echo esc_attr( 'admin.php?page=ManageClients&client_id=' . $website->client_id ); ?>" class="ui small"><?php echo $website->client_name; ?></a></small>
+								<small data-tooltip="<?php esc_attr_e( 'See client details', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="user icon"></i> <a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" class="ui small"><?php echo $website->client_name; ?></a></small>
 							</div>
 							<?php endif; ?>
 							<div class="extra content">

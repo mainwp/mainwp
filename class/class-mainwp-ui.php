@@ -252,7 +252,7 @@ class MainWP_UI {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
-	public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false ) {
+	public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false ) { // phpcs:ingnore -- complex.
 		?>
 			<?php
 			/**
@@ -897,8 +897,8 @@ class MainWP_UI {
 				<div class="ui grid">
 
 					<div class="five wide middle aligned column">
-						<h4 class="mainwp-page-title" style="margin-bottom:0px;margin-top:0px;"><?php echo $left; ?></h4>
-						<span class="ui mini label">BETA INFO: Signature Algorithm - <?php echo $sign_algs[ $algo ]; ?></span>
+						<h4 class="mainwp-page-title" style="margin-bottom:0px;margin-top:0px;"><?php echo $left; // phpcs:ignore WordPress.Security.EscapeOutput ?></h4>
+						<span class="ui mini label">BETA INFO: Signature Algorithm - <?php echo esc_html( $sign_algs[ $algo ] ); ?></span>
 					</div>
 
 					<div class="two wide column middle aligned right aligned">
@@ -1428,19 +1428,14 @@ class MainWP_UI {
 	 *
 	 * Customize WordPress add_meta_box() function.
 	 *
-	 * @param mixed       $id Widget ID parameter.
-	 * @param mixed       $callback Callback function.
-	 * @param null        $screen Current page.
-	 * @param string|null $context right|null. If 3 columns then = 'middle'.
-	 * @param null        $title Widget title.
-	 * @param string      $priority high|core|default|low, Default: default.
-	 *
-	 * @return void Sets Global $mainwp_widget_boxes[ $page ][ $context ][ $priority ][ $id ].
+	 * @param mixed $id Widget ID parameter.
+	 * @param mixed $callback Callback function.
+	 * @param null  $screen Current page.
+	 * @param array $layout widget layout.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
 	 */
 	public static function add_widget_box( $id, $callback, $screen = null, $layout = array() ) {
-		// public static function add_widget_box( $id, $callback, $screen = null, $context = null, $title = null, $priority = 'default' ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		/**
 		* MainWP widget boxes array.
 		*
@@ -1460,48 +1455,6 @@ class MainWP_UI {
 		if ( ! isset( $mainwp_widget_boxes[ $page ] ) ) {
 			$mainwp_widget_boxes[ $page ] = array();
 		}
-		// if ( ! isset( $mainwp_widget_boxes[ $page ][ $context ] ) ) {
-		// $mainwp_widget_boxes[ $page ][ $context ] = array();
-		// }
-
-		// foreach ( array_keys( $mainwp_widget_boxes[ $page ] ) as $a_context ) {
-			// foreach ( array( 'high', 'core', 'default', 'low' ) as $a_priority ) {
-				// if ( ! isset( $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ] ) ) {
-				// continue;
-				// }
-
-				// If box previously deleted, don't add.
-				// if ( false == $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ] ) {
-				// return;
-				// }
-
-				// If no priority given and id already present, use existing priority.
-				// if ( empty( $priority ) ) {
-				// $priority = $a_priority;
-
-					/*
-					* Else, if we're adding to the sorted priority, we don't know the title
-					* or callback. Grab them from the previously added context/priority.
-					*/
-				// } elseif ( 'sorted' == $priority ) {
-				// $title    = $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ]['title'];
-				// $callback = $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ]['callback'];
-				// }
-
-				// An id can be in only one context.
-				// if ( $priority != $a_priority || $context != $a_context ) {
-				// unset( $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ] );
-				// }
-			// }
-		// }
-
-		// if ( ! isset( $mainwp_widget_boxes[ $page ][ $context ] ) ) {
-		// $mainwp_widget_boxes[ $page ][ $context ] = array();
-		// }
-
-		// if ( empty( $priority ) ) {
-		// $priority = 'default';
-		// }
 
 		if ( empty( $title ) ) {
 			$title = 'No Title';
@@ -1520,25 +1473,18 @@ class MainWP_UI {
 	 *
 	 * Customize WordPress do_meta_boxes() function.
 	 *
-	 * @param mixed       $screen Current page.
-	 * @param string|null $context right|null. If 3 columns then = 'middle'.
-	 * @param string      $object Empty string.
+	 * @param mixed $screen_id Current page ID.
 	 *
 	 * @return void Renders widget container box.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
 	 */
-	public static function do_widget_boxes( $screen_id ) {
-		// public static function do_widget_boxes( $screen, $context = null, $object = '' ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function do_widget_boxes( $screen_id ) { // phpcs:ignore -- complex.
 		global $mainwp_widget_boxes;
-		// static $already_sorted = false;
-
 		$page = MainWP_System_Utility::get_page_id( $screen_id );
-
 		if ( empty( $page ) ) {
 			return;
 		}
-
 		$wgsorted = get_user_option( 'mainwp_widgets_sorted_' . strtolower( $page ) );
 		if ( ! empty( $wgsorted ) && is_string( $wgsorted ) ) {
 			$wgsorted = json_decode( $wgsorted, true );
@@ -1558,17 +1504,6 @@ class MainWP_UI {
 			$wgsorted = array();
 		}
 
-		// Grab the ones the user has manually sorted. Pull them out of their previous context/priority and into the one the user chose.
-		// if ( ! $already_sorted && $sorted ) {
-		// foreach ( explode( ',', $sorted ) as $val ) {
-		// list( $widget_context, $id ) = explode( ':', $val );
-		// if ( ! empty( $widget_context ) && ! empty( $id ) ) {
-		// self::add_widget_box( $id, null, $screen, $widget_context, null, $priority = 'sorted' );
-		// $already_sorted = true;
-		// }
-		// }
-		// }
-
 		if ( 'mainwp_page_manageclients' == $page ) {
 			$show_widgets = get_user_option( 'mainwp_clients_show_widgets' );
 		} elseif ( 'toplevel_page_mainwp_tab' === $page || 'mainwp_page_managesites' === $page ) {
@@ -1581,11 +1516,7 @@ class MainWP_UI {
 			$show_widgets = array();
 		}
 
-		// if ( isset( $mainwp_widget_boxes[ $page ][ $context ] ) ) {
-			// foreach ( array( 'high', 'sorted', 'core', 'default', 'low' ) as $priority ) {
-				// if ( isset( $mainwp_widget_boxes[ $page ][ $context ][ $priority ] ) ) {
 		if ( isset( $mainwp_widget_boxes[ $page ] ) ) {
-			// foreach ( (array) $mainwp_widget_boxes[ $page ][ $context ][ $priority ] as $box ) {
 			foreach ( (array) $mainwp_widget_boxes[ $page ] as $box ) {
 				if ( false == $box || ! isset( $box['callback'] ) ) {
 					continue;
@@ -1617,27 +1548,7 @@ class MainWP_UI {
 					);
 				}
 				echo '<div id="widget-' . esc_html( $box['id'] ) . '" class="ui segment mainwp-widget" data-row="' . ( isset( $layout['row'] ) ? esc_attr( $layout['row'] ) : '' ) . '" data-col="' . ( isset( $layout['col'] ) ? esc_attr( $layout['col'] ) : '' ) . '" data-sizex="' . ( isset( $layout['size_x'] ) ? esc_attr( $layout['size_x'] ) : '' ) . '" data-sizey="' . ( isset( $layout['size_y'] ) ? esc_attr( $layout['size_y'] ) : '' ) . '">' . "\n";
-
-						/**
-						* Action: mainwp_widget_content_top
-						*
-						* Fires at the top of widget content.
-						*
-						* @since 4.1
-						*/
-				// do_action( 'mainwp_widget_content_top', $box, $page );
-
 				call_user_func( $box['callback'] );
-				// call_user_func( $box['callback'], $object, $box );
-
-						/**
-						* Action: mainwp_widget_content_bottom
-						*
-						* Fires at the bottom of widget content.
-						*
-						* @since 4.1
-						*/
-				// do_action( 'mainwp_widget_content_bottom', $box, $page );
 				echo '<span class="mainwp-resize-handle"></span>' . "\n";
 				echo "</div>\n";
 

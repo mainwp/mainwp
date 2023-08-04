@@ -78,11 +78,7 @@ var limitUpdateAll = 0;
 var continueUpdatesAll = '', continueUpdatesSlug = '';
 var continueUpdating = false;
 
-var dashboardActionName = '';
 var starttimeDashboardAction = 0;
-var countRealItemsUpdated = 0;
-var couttItemsToUpdate = 0;
-var itemsToUpdate = [];
 
 updatesoverview_update_popup_init = function (data) {
     data = data || {};
@@ -176,7 +172,6 @@ updatesoverview_wordpress_global_upgrade_all = function (groupId, updatesSelecte
                 updatesoverview_update_popup_init(initData);
 
                 var dateObj = new Date();
-                dashboardActionName = 'upgrade_all_wp_core';
                 starttimeDashboardAction = dateObj.getTime();
 
                 //Step 3: start updates
@@ -266,8 +261,6 @@ updatesoverview_wordpress_upgrade_int = function (websiteId, bulkMode) {
                 result = response.result;
                 if (pBulkMode)
                     updatesoverview_wordpress_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
-                countRealItemsUpdated++;
-                couttItemsToUpdate++;
             }
             updatesoverview_wordpress_upgrade_all_update_done();
         }
@@ -381,9 +374,7 @@ updatesoverview_translations_global_upgrade_all = function (groupId, updatesSele
                 updatesoverview_update_popup_init(initData);
 
                 var dateObj = new Date();
-                dashboardActionName = 'upgrade_all_translations';
                 starttimeDashboardAction = dateObj.getTime();
-                countRealItemsUpdated = 0;
 
                 //Step 3: start updates
                 updatesoverview_translations_upgrade_all_int(undefined, pSitesToUpdate, pSitesTranslationSlugs);
@@ -463,10 +454,7 @@ updatesoverview_translations_upgrade_all = function (slug, translationName) {
                 };
                 updatesoverview_update_popup_init(initData);
                 var dateObj = new Date();
-                dashboardActionName = 'upgrade_all_translations';
                 starttimeDashboardAction = dateObj.getTime();
-                countRealItemsUpdated = 0;
-                itemsToUpdate = [];
 
                 //Step 3: start updates
                 updatesoverview_translations_upgrade_all_int(pSlug, pSitesToUpdate);
@@ -585,8 +573,6 @@ updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMode, 
                                         updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, '<i class="green check icon"></i>');
                                     websiteHolder.attr('updated', 1);
                                     websiteHolder.find('td:last-child').html('<i class="green check icon"></i>');
-                                    countRealItemsUpdated++;
-                                    if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
                                 } else {
                                     if (!done && pBulkMode)
                                         updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
@@ -768,9 +754,7 @@ updatesoverview_plugins_global_upgrade_all = function (groupId, updatesSelected)
                 updatesoverview_update_popup_init(initData);
 
                 var dateObj = new Date();
-                dashboardActionName = 'upgrade_all_plugins';
                 starttimeDashboardAction = dateObj.getTime();
-                countRealItemsUpdated = 0;
 
                 //Step 3: start updates
                 updatesoverview_plugins_upgrade_all_int(undefined, pSitesToUpdate, pSitesPluginSlugs);
@@ -863,9 +847,7 @@ updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSelecte
                 updatesoverview_update_popup_init(initData);
 
                 var dateObj = new Date();
-                dashboardActionName = 'upgrade_all_plugins';
                 starttimeDashboardAction = dateObj.getTime();
-                countRealItemsUpdated = 0;
 
                 //Step 3: start updates
                 updatesoverview_plugins_upgrade_all_int(pSlug, pSitesToUpdate);
@@ -1011,9 +993,6 @@ updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noChe
                                         updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
                                     websiteHolder.attr('updated', 1);
                                     websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
-
-                                    countRealItemsUpdated++;
-                                    if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
 
                                 } else if (res_error[slugParts[i]]) {
                                     if (!done && pBulkMode)
@@ -1199,9 +1178,7 @@ updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelected) 
                 updatesoverview_update_popup_init(initData);
 
                 var dateObj = new Date();
-                dashboardActionName = 'upgrade_all_themes';
                 starttimeDashboardAction = dateObj.getTime();
-                countRealItemsUpdated = 0;
 
                 //Step 3: start updates
                 updatesoverview_themes_upgrade_all_int(undefined, pSitesToUpdate, pSitesPluginSlugs);
@@ -1299,9 +1276,7 @@ updatesoverview_themes_upgrade_all = function (slug, themeName, updatesSelected)
                 updatesoverview_update_popup_init(initData);
 
                 var dateObj = new Date();
-                dashboardActionName = 'upgrade_all_themes';
                 starttimeDashboardAction = dateObj.getTime();
-                itemsToUpdate = [];
 
                 //Step 3: start updates
                 updatesoverview_themes_upgrade_all_int(pSlug, pSitesToUpdate);
@@ -1420,9 +1395,6 @@ updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
                                 updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
                             websiteHolder.attr('updated', 1);
                             websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
-
-                            countRealItemsUpdated++;
-                            if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
                         } else {
                             if (!done && pBulkMode)
                                 updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
@@ -1668,9 +1640,7 @@ updatesoverview_global_upgrade_all = function (which) {
                 updatesoverview_update_popup_init(initData);
 
                 var dateObj = new Date();
-                dashboardActionName = 'upgrade_everything';
                 starttimeDashboardAction = dateObj.getTime();
-                countRealItemsUpdated = 0;
 
                 //Step 3: start updates
                 updatesoverview_upgrade_all_int(pSitesToUpdate, pSitesToUpgrade, pSitesPluginSlugs, pSitesThemeSlugs, psitesTranslationSlugs);
@@ -1817,8 +1787,6 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
 
                             if (res[slugParts[i]]) {
                                 websiteHolder.attr('updated', 1);
-                                countRealItemsUpdated++;
-                                if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
                             } else {
                                 result = __('Update failed!');
                                 pErrorMessage = result;
@@ -1899,8 +1867,6 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                             var res_error = response.result_error;
                             if (res[encodeURIComponent(slugParts[i])]) {
                                 websiteHolder.attr('updated', 1);
-                                countRealItemsUpdated++;
-                                if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
                             } else if (res_error[encodeURIComponent(slugParts[i])]) {
                                 pErrorMessage = res_error[encodeURIComponent(slugParts[i])];
                             } else {
@@ -1974,8 +1940,6 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                     } else {
                         result = response.result;
                         websiteHolder.attr('updated', 1);
-                        countRealItemsUpdated++;
-                        //                        if (itemsToUpdate.indexOf('upgradewp_site_' + pWebsiteId) == -1) itemsToUpdate.push('upgradewp_site_' + pWebsiteId);
                     }
 
                     updatesoverview_upgrade_all_update_site_bold(pWebsiteId, 'wordpress');
@@ -2049,8 +2013,6 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                             var res = response.result;
                             if (res[slugParts[i]]) {
                                 websiteHolder.attr('updated', 1);
-                                countRealItemsUpdated++;
-                                if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);
                             } else {
                                 result = __('Update failed!');
                                 pErrorMessage = result;
@@ -2911,14 +2873,7 @@ updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, gr
 
             var dateObj = new Date();
             starttimeDashboardAction = dateObj.getTime();
-            if (pWhat == 'plugin')
-                dashboardActionName = 'upgrade_all_plugins';
-            else if (pWhat == 'translation')
-                dashboardActionName = 'upgrade_all_translations';
-            else
-                dashboardActionName = 'upgrade_all_themes';
-            countRealItemsUpdated = 0;
-            couttItemsToUpdate = 0;
+           
 
             if (newList.length > 0) {
                 var data = mainwp_secure_data({
@@ -2940,12 +2895,10 @@ updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, gr
                         for (var i = 0; i < newList.length; i++) {
                             var item = newList[i];
 
-                            couttItemsToUpdate++;
                             var elem = document.getElementById('wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item);
                             var parent = jQuery(elem).closest('tr');
                             if (res[item]) {
                                 parent.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful.', 'mainwp') + '"><i class="green check icon"></i></span>');
-                                countRealItemsUpdated++;
                             } else if (what == 'plugin' && res_error[item]) {
                                 parent.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + res_error[item] + '"><i class="red times icon"></i></span>');
                             } else {

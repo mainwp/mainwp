@@ -728,14 +728,38 @@ class MainWP_System_Handler {
 			$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 			if ( $website && ! empty( $website->plugin_upgrades ) ) {
 				$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
+
 				if ( is_array( $plugin_upgrades ) ) {
+					$found_update   = false;
+					$empty_sections = false;
 					foreach ( $plugin_upgrades as $plugin_slug => $info ) {
-						if ( false !== strpos( $plugin_slug, $arg->slug . '.php' ) && isset( $info['update'] ) ) {
+						if ( false !== strpos( $plugin_slug, $arg->slug . '/' ) && isset( $info['update'] ) ) {
+							$found_update = true;
 							if ( isset( $info['update']['slug'] ) && $arg->slug == $info['update']['slug'] && isset( $info['update']['new_version'] ) && ! empty( $info['update']['new_version'] ) && isset( $info['update']['sections'] ) && ! empty( $info['update']['sections'] ) ) {
 								$info_update = (object) $info['update'];
 								return $info_update;
 							}
+							$empty_sections = true;
 							break;
+						}
+					}
+
+					if ( $found_update && $empty_sections ) {
+						try {
+							$info = MainWP_Connect::fetch_url_authed(
+								$website,
+								'plugin_action',
+								array(
+									'action' => 'changelog_info', // try to get changelog from the child site.
+									'slug'   => $arg->slug,
+								)
+							);
+							if ( is_array( $info ) && isset( $info['update'] ) && ! empty( $info['update']['sections'] ) ) {
+								$info_update = (object) $info['update'];
+								return $info_update;
+							}
+						} catch ( \Exception $e ) {
+							// error happen.
 						}
 					}
 				}

@@ -2378,14 +2378,6 @@ mainwp_install_bulk = function (type, slug) {
 
       starttimeDashboardAction = dateObj.getTime();
 
-      if (type == 'plugin') {
-        dashboardActionName = 'installing_new_plugin';
-      } else {
-        dashboardActionName = 'installing_new_theme';
-      }
-
-      countRealItemsUpdated = 0;
-
       bulkInstallDone = 0;
 
       installQueueContent += '<div id="bulk_install_info"></div>';
@@ -2485,7 +2477,6 @@ mainwp_install_bulk_start_specific = function (type, url, activatePlugin, overwr
         statusEl.css('color', 'red');
       } else if ((response.ok != undefined) && (response.ok[siteToInstall.attr('siteid')] != undefined)) {
         statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Installation completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>');
-        countRealItemsUpdated++;
       } else if ((response.errors != undefined) && (response.errors[siteToInstall.attr('siteid')] != undefined)) {
         statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + response.errors[siteToInstall.attr('siteid')][1] + '"><i class="times red icon"></i></span>');
       } else {
@@ -2835,7 +2826,6 @@ mainwp_install_check_plugin_start_specific = function (url, siteToInstall) {
         statusEl.css('color', 'red');
       } else if ((response.ok != undefined) && (response.ok[siteToInstall.attr('siteid')] != undefined)) {
         statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Installation completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>');
-        countRealItemsUpdated++;
       } else if ((response.errors != undefined) && (response.errors[siteToInstall.attr('siteid')] != undefined)) {
         statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + response.errors[siteToInstall.attr('siteid')][1] + '"><i class="times red icon"></i></span>');
       } else {

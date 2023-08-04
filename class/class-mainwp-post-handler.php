@@ -15,7 +15,7 @@ namespace MainWP\Dashboard;
  * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
 class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- This is the only way to achieve desired results, pull request solutions appreciated.
+	// phpcs:disable Generic.Metrics.CyclomaticComplexity, -- This is the only way to achieve desired results, pull request solutions appreciated.
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -181,7 +181,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$sites   = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
 		$clients = isset( $_POST['clients'] ) && is_array( $_POST['clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['clients'] ) ) : '';
 		$search  = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 		MainWP_User::render_table( false, $role, $groups, $sites, $search, $clients );
 		die();
 	}
@@ -214,7 +214,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$userId             = isset( $_POST['userId'] ) ? sanitize_text_field( wp_unslash( $_POST['userId'] ) ) : '';
 		$search_on          = isset( $_POST['search_on'] ) ? sanitize_text_field( wp_unslash( $_POST['search_on'] ) ) : '';
 		$table_content_only = isset( $_POST['table_content'] ) && $_POST['table_content'] ? true : false;
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		MainWP_Cache::init_session();
 		if ( $table_content_only ) {
@@ -519,7 +519,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 				update_user_option( $user_id, 'mainwp_notice_saved_status', $status );
 			}
 		}
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 		die( 1 );
 	}
 
@@ -555,7 +555,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 		$status = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
 		$value  = isset( $_POST['value'] ) ? sanitize_text_field( wp_unslash( $_POST['value'] ) ) : '';
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		if ( ! empty( $status ) ) {
 			if ( empty( $value ) ) {
@@ -620,7 +620,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			}
 			die( 'ok' );
 		}
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 		die( -1 );
 	}
 
@@ -640,7 +640,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			$val         = isset( $_POST['value'] ) ? sanitize_text_field( wp_unslash( $_POST['value'] ) ) : '';
 			MainWP_Utility::update_option( $option_name, $val );
 		}
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 		die( 'ok' );
 	}
 
@@ -1075,7 +1075,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			}
 			update_option( 'mainwp_showhide_events_notice', $current_options );
 		}
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 		die( 'ok' );
 	}
 
@@ -1095,7 +1095,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			update_option( 'mainwp_opts_showhide_sections', $opts );
 			die( 'ok' );
 		}
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 		die( 'failed' );
 	}
 
@@ -1120,7 +1120,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			}
 			update_option( 'mainwp_opts_saving_status', $current_options );
 		}
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 		die( 'ok' );
 	}
 

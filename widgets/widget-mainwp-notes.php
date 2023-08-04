@@ -95,7 +95,6 @@ class MainWP_Notes {
 				echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput
 				?>
 				</div>
-				
 				<?php
 			}
 			?>

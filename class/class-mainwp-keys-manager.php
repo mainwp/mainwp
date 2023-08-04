@@ -347,7 +347,7 @@ class MainWP_Keys_Manager {
 		}
 
 		if ( ! is_string( $keysDir ) || stristr( $keysDir, '..' ) ) {
-			return false;
+			return;
 		}
 
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();

@@ -776,7 +776,6 @@ class MainWP_Menu {
 						jQuery( this ).find( '.text' ).html( 'Show Menu' );
 						jQuery( this ).addClass( 'collapsed' );
 					}
-					
 					return false;
 				} );
 					// click on menu with-sub icon.

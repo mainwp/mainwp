@@ -306,7 +306,7 @@ class MainWP_UI_Select_Sites {
 	}
 
 		/**
-		 * Method render_select_sites()
+		 * Method render_select_clients()
 		 *
 		 *  @param array $params {
 		 *

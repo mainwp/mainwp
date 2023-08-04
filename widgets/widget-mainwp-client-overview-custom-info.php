@@ -138,7 +138,6 @@ class MainWP_Client_Overview_Custom_Info {
 					?>
 					</tbody>
 				</table>
-				
 					<?php
 				} else {
 					?>

@@ -300,7 +300,6 @@ class MainWP_Client_Overview {
 		?>
 		<div class="mainwp-primary-content-wrap">
 		<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
-			
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'client-widgets' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="client-widgets"></i>
@@ -332,7 +331,6 @@ class MainWP_Client_Overview {
 			 */
 			do_action( 'mainwp_after_overview_widgets' );
 			?>
-	
 	<script type="text/javascript">
 		jQuery( document ).ready( function( $ ) {
 

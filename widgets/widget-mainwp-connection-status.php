@@ -441,7 +441,6 @@ class MainWP_Connection_Status {
 				</div>
 					<span class="ui small text"><?php esc_html_e( 'Last Synced: ', 'mainwp' ); ?> <?php echo esc_html( $lastSyncTime ); ?></span>
 				</div>
-				
 				<div class="four wide middle aligned right aligned column reconnect-wrapper">
 				<div class="ui mini icon buttons">
 				<a class="ui button" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted="" data-position="left center"><i class="sign in alternate icon"></i></a>

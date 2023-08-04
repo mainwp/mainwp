@@ -40,7 +40,7 @@ class MainWP_Site_Actions {
 			);
 			$website = MainWP_DB::instance()->get_website_by_id( $current_wpid );
 		} elseif ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$client_id = isset( $_GET['client_id'] ) ? intval($_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+			$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 			$websites  = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id );
 			$site_ids  = array();
 
@@ -216,18 +216,17 @@ class MainWP_Site_Actions {
 				<div class="middle aligned column"></div>
 			</div>
 		</div>
-		
-				<?php
-				/**
-				 * Action: mainwp_non_mainwp_changes_widget_bottom
-				 *
-				 * Fires at the bottom of the Site Info widget on the Individual site overview page.
-				 *
-				 * @param object $website Object containing the child site info.
-				 *
-				 * @since 4.0
-				 */
-				do_action( 'mainwp_non_mainwp_changes_widget_bottom', $website );
+		<?php
+		/**
+			* Action: mainwp_non_mainwp_changes_widget_bottom
+			*
+			* Fires at the bottom of the Site Info widget on the Individual site overview page.
+			*
+			* @param object $website Object containing the child site info.
+			*
+			* @since 4.0
+			*/
+		do_action( 'mainwp_non_mainwp_changes_widget_bottom', $website );
 	}
 
 }

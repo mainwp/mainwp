@@ -389,7 +389,7 @@ class MainWP_Rest_Api_Page {
 	}
 
 	/** Render REST API SubPage */
-	public static function render_all_api_keys() {
+	public static function render_all_api_keys() { // phpcs:ignore -- complex.
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_restapi' ) ) {
 			mainwp_do_not_have_permissions( esc_html__( 'manage dashboard REST API', 'mainwp' ) );
 			return;

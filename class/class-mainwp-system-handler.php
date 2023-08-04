@@ -174,7 +174,6 @@ class MainWP_System_Handler {
 	 * @param string $childKey Extension child key.
 	 * @param int    $websiteId Website ID.
 	 * @param array  $params Function paramerters.
-	 * @param null   $raw_response Raw response.
 	 *
 	 * @return mixed MainWP_Extensions_Handler::hook_fetch_url_authed() Hook fetch authorized URL.
 	 */

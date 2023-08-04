@@ -60,7 +60,7 @@ class MainWP_Updates_Per_Item {
 					</div>
 					<?php MainWP_UI::render_sorting_icons(); ?>
 					</th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php echo $total_plugin_upgrades . ' ' . _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php echo intval( $total_plugin_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ) ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Trusted', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 					<th class="no-sort right aligned">
 						<?php MainWP_UI::render_show_all_updates_button(); ?>
@@ -99,7 +99,7 @@ class MainWP_Updates_Per_Item {
 								<?php echo esc_html( $pluginsInfo[ $slug ]['name'] ); ?>
 							</a>
 						</td>
-						<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Update', 'Updates', $cnt, 'mainwp' ); ?></td>
+						<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo esc_html( _n( 'Update', 'Updates', $cnt, 'mainwp' ) ); ?></td>
 						<td sort-value="<?php echo $trusted; ?>"><?php echo ( $trusted ? '<span class="ui tiny green label">Trusted</span>' : '<span class="ui tiny grey label">Not Trusted</span>' ); ?></td>
 						<td class="right aligned">
 							<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
@@ -209,7 +209,7 @@ class MainWP_Updates_Per_Item {
 					</div>
 					<?php esc_html_e( 'Plugin', 'mainwp' ); ?>
 					</th>
-					<th><?php echo $total_plugin_upgrades . ' ' . _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ); ?></th>
+					<th><?php echo intval( $total_plugin_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ) ); ?></th>
 					<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
 					<th class="no-sort right aligned"></th>
 				</tr>
@@ -256,7 +256,7 @@ class MainWP_Updates_Per_Item {
 						</div>
 						<?php MainWP_UI::render_sorting_icons(); ?>
 					</th>
-					<th class="handle-accordion-sorting indicator-accordion-sorting"><?php echo $total_theme_upgrades . ' ' . _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+					<th class="handle-accordion-sorting indicator-accordion-sorting"><?php echo intval( $total_theme_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ) ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 					<th class="handle-accordion-sorting indicator-accordion-sorting"><?php esc_html_e( 'Trusted', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 					<th class="no-sort right aligned">
 						<?php MainWP_UI::render_show_all_updates_button(); ?>
@@ -288,7 +288,7 @@ class MainWP_Updates_Per_Item {
 							<input type="checkbox" name=""><label><?php echo MainWP_System_Utility::get_theme_icon( $slug ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;<?php echo esc_html( $themesInfo[ $slug ]['name'] ); ?></label>
 						</div>
 						</td>
-						<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Update', 'Updates', $cnt, 'mainwp' ); ?></td>
+						<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo esc_html( _n( 'Update', 'Updates', $cnt, 'mainwp' ) ); ?></td>
 						<td sort-value="<?php echo $trusted; ?>"><?php echo ( $trusted ? '<span class="ui tiny green label">Trusted</span>' : '<span class="ui tiny grey label">Not Trusted</span>' ); ?></td>
 						<td class="right aligned">
 							<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
@@ -389,7 +389,7 @@ class MainWP_Updates_Per_Item {
 				<tr>
 					<th class="collapsing no-sort"></th>
 					<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-					<th><?php echo $total_theme_upgrades . ' ' . _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ); ?></th>
+					<th><?php echo intval( $total_theme_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ) ); ?></th>
 					<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
 					<th class="no-sort right aligned"></th>
 				</tr>
@@ -452,7 +452,7 @@ class MainWP_Updates_Per_Item {
 							<input type="checkbox" name=""><label><?php echo esc_html( $translationsInfo[ $slug ]['name'] ); ?></label>
 						</div>
 						</td>
-						<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Update', 'Updates', $cnt, 'mainwp' ); ?></td>
+						<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo esc_html( _n( 'Update', 'Updates', $cnt, 'mainwp' ) ); ?></td>
 						<td class="right aligned">
 						<?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
 							<?php
@@ -578,7 +578,7 @@ class MainWP_Updates_Per_Item {
 					<td class="accordion-trigger"><i class="dropdown icon"></i></td>
 					<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( dirname( $slug ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 					<td><a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&plugin=' . esc_html( dirname( $slug ) ) . '&url=' . ( isset( $val['uri'] ) ? rawurlencode( $val['uri'] ) : '' ) . '&name=' . rawurlencode( $val['name'] ); ?>" target="_blank" class="open-plugin-details-modal" open-wpplugin="yes"><?php echo esc_html( $val['name'] ); ?></a></td>
-					<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Website', 'Websites', $cnt, 'mainwp' ); ?></td>
+					<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo esc_html( _n( 'Website', 'Websites', $cnt, 'mainwp' ) ); ?></td>
 					<td class="right aligned">
 						<?php if ( MainWP_Updates::user_can_ignore_updates() ) { ?>
 							<a href="javascript:void(0)" class="ui mini green mainwp-ignore-globally-button button" onClick="return updatesoverview_plugins_abandoned_ignore_all( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_js( rawurlencode( $val['name'] ) ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
@@ -708,7 +708,7 @@ class MainWP_Updates_Per_Item {
 				<tr class="title">
 					<td class="accordion-trigger"><i class="dropdown icon"></i></td>
 					<td><?php echo MainWP_System_Utility::get_theme_icon( $slug ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $val['name'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-					<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Website', 'Websites', $cnt, 'mainwp' ); ?></td>
+					<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo esc_html( _n( 'Website', 'Websites', $cnt, 'mainwp' ) ); ?></td>
 					<td class="right aligned">
 						<?php if ( MainWP_Updates::user_can_ignore_updates() ) { ?>
 							<a href="javascript:void(0)" class="ui mini green mainwp-ignore-globally-button button" onClick="return updatesoverview_themes_abandoned_ignore_all( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $val['name'] ) ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>

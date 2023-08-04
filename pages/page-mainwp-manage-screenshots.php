@@ -372,7 +372,7 @@ class MainWP_Manage_Screenshots {
 						<div class="content">
 								<h5 class="ui small header">
 									<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $website->id ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
-									<div class="sub header" style="font-size:11px"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_url( $website->url); ?></a></div>
+									<div class="sub header" style="font-size:11px"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_url( $website->url ); ?></a></div>
 								</h5>
 								<?php if ( isset( $website->wpgroups ) && '' != $website->wpgroups ) : ?>
 								<small data-tooltip="<?php esc_attr_e( 'Site tags', 'mainwp' ); ?>" data-position="top left" data-inverted="">
@@ -387,10 +387,10 @@ class MainWP_Manage_Screenshots {
 							<?php endif; ?>
 							<div class="extra content">
 								<div class="ui mini fluid buttons">
-									<a  data-tooltip="<?php esc_attr_e( 'Available updates.', 'mainwp' ); ?>" data-position="top left" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>" class="ui icon button"><i class="redo <?php esc_attr_e( $a_color ); ?> alternate icon"></i> <?php echo $total_updates; ?></a>
-									<a  data-tooltip="<?php esc_attr_e( 'Available plugins updates.', 'mainwp' ); ?>" data-position="top center" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=plugins-updates" class="ui icon button"><i class="plug <?php esc_attr_e( $p_color ); ?> icon"></i> <?php echo $total_plugin_upgrades; ?></a>
-									<a  data-tooltip="<?php esc_attr_e( 'Available themes updates.', 'mainwp' ); ?>" data-position="top center" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=themes-updates" class="ui icon button"><i class="brush <?php esc_attr_e( $t_color ); ?> icon"></i> <?php echo $total_theme_upgrades; ?></a>
-									<a  data-tooltip="<?php esc_attr_e( 'WordPress core updates.', 'mainwp' ); ?>" data-position="top right" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=wordpress-updates" class="ui icon button"><i class="WordPress <?php esc_attr_e( $w_color ); ?> icon"></i> <?php echo $total_wp_upgrades; ?></a>
+									<a  data-tooltip="<?php esc_attr_e( 'Available updates.', 'mainwp' ); ?>" data-position="top left" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>" class="ui icon button"><i class="redo <?php esc_attr_e( $a_color ); ?> alternate icon"></i> <?php echo intval( $total_updates ); ?></a>
+									<a  data-tooltip="<?php esc_attr_e( 'Available plugins updates.', 'mainwp' ); ?>" data-position="top center" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=plugins-updates" class="ui icon button"><i class="plug <?php esc_attr_e( $p_color ); ?> icon"></i> <?php echo intval( $total_plugin_upgrades ); ?></a>
+									<a  data-tooltip="<?php esc_attr_e( 'Available themes updates.', 'mainwp' ); ?>" data-position="top center" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=themes-updates" class="ui icon button"><i class="brush <?php esc_attr_e( $t_color ); ?> icon"></i> <?php echo intval( $total_theme_upgrades ); ?></a>
+									<a  data-tooltip="<?php esc_attr_e( 'WordPress core updates.', 'mainwp' ); ?>" data-position="top right" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=wordpress-updates" class="ui icon button"><i class="WordPress <?php esc_attr_e( $w_color ); ?> icon"></i> <?php echo intval( $total_wp_upgrades ); ?></a>
 						</div>
 						</div>
 						<div class="extra content">

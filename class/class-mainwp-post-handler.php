@@ -249,7 +249,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$sites     = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
 		$clients   = isset( $_POST['clients'] ) && is_array( $_POST['clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['clients'] ) ) : '';
 		$search_on = isset( $_POST['search_on'] ) ? sanitize_text_field( wp_unslash( $_POST['search_on'] ) ) : '';
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 		MainWP_Cache::init_session();
 		MainWP_Page::render_table( false, $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on, $clients );
 		die();

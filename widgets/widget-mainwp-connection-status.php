@@ -208,7 +208,6 @@ class MainWP_Connection_Status {
 
 			<?php } ?>
 		</div>
-		
 		<?php
 		/**
 		 * Action: mainwp_connection_status_widget_top

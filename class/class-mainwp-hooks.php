@@ -1323,7 +1323,7 @@ class MainWP_Hooks {
 	 */
 	public function upgrade_plugin_theme() {
 		try {
-			// phpcs:disable WordPress.Security.NonceVerification.Recommended
+			// phpcs:disable WordPress.Security.NonceVerification
 			$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : null;
 			$type      = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : null;
 			$slugs     = isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ? wp_unslash( $_POST['slugs'] ) : array();

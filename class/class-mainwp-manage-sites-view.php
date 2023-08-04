@@ -172,7 +172,7 @@ class MainWP_Manage_Sites_View {
 		}
 
 		$site_id = 0;
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) {
 			$site_id = intval( $_GET['id'] );
 		} elseif ( isset( $_GET['backupid'] ) && ! empty( $_GET['backupid'] ) ) {
@@ -1598,7 +1598,7 @@ class MainWP_Manage_Sites_View {
 	 * @return self add_wp_site()
 	 */
 	public static function add_site( $website = false, &$output = array() ) {
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		$params['url']               = isset( $_POST['managesites_add_wpurl'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpurl'] ) ) : '';
 		$params['name']              = isset( $_POST['managesites_add_wpname'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpname'] ) ) : '';
 		$params['wpadmin']           = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : '';

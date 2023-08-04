@@ -1074,7 +1074,7 @@ class MainWP_Themes {
 					<div class="ui grid">
 						<div class="one wide center aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
 						<div class="one wide center aligned middle aligned column"><div class="ui checkbox master"><input type="checkbox"><label></label></div></div>
-						<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_theme_icon( esc_html( $theme_slug_first ) ); ?></div>
+						<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_theme_icon( $theme_slug_first ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
 						<div class="five wide middle aligned column"><strong><?php echo esc_html( $theme_title ); ?></strong></div>
 						<div class="two wide center aligned middle aligned column"></div>
 						<div class="two wide center aligned middle aligned column lastest-version-info"></div>
@@ -2201,7 +2201,7 @@ class MainWP_Themes {
 							<?php else : ?>
 								<td><div style="display:none;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></div></td>
 							<?php endif; ?>
-							<td><?php echo MainWP_System_Utility::get_theme_icon( $ignoredTheme ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $ignoredThemeName ); ?></td>
+							<td><?php echo MainWP_System_Utility::get_theme_icon( $ignoredTheme ) . '&nbsp;&nbsp;&nbsp;&nbsp;' . esc_html( $ignoredThemeName ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 							<td><?php echo esc_html( $ignoredTheme ); ?></td>
 							<td class="right aligned">
 							<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>

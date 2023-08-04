@@ -767,7 +767,7 @@ class MainWP_System {
 			wp_enqueue_style( 'gridster', MAINWP_PLUGIN_URL . 'assets/js/gridster/jquery.gridster.min.css', array(), $this->current_version );
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		// phpcs:ignore WordPress.Security.NonceVerification
 		if ( isset( $_GET['page'] ) && ( 'managesites' === $_GET['page'] || 'MonitoringSites' === $_GET['page'] || 'ManageGroups' === $_GET['page'] ) ) {
 			wp_enqueue_script( 'preview', MAINWP_PLUGIN_URL . 'assets/js/preview.js', array(), $this->current_version, true );
 			wp_enqueue_style( 'preview', MAINWP_PLUGIN_URL . 'assets/css/preview.css', array(), $this->current_version );

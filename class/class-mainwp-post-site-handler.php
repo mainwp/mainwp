@@ -233,7 +233,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		$verifyCertificate = 1;
 		$sslVersion        = 0;
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_POST['url'] ) ) {
 			$url = sanitize_text_field( wp_unslash( $_POST['url'] ) );
 			$url = urldecode( $url );

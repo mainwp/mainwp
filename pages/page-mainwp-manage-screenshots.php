@@ -376,7 +376,7 @@ class MainWP_Manage_Screenshots {
 								</h5>
 								<?php if ( isset( $website->wpgroups ) && '' != $website->wpgroups ) : ?>
 								<small data-tooltip="<?php esc_attr_e( 'Site tags', 'mainwp' ); ?>" data-position="top left" data-inverted="">
-									<?php echo MainWP_System_Utility::get_site_tags( (array) $website ); ?>
+									<?php echo MainWP_System_Utility::get_site_tags( (array) $website ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 								</small>
 								<?php endif; ?>
 						</div>

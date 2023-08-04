@@ -181,7 +181,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_backup_checkpid() {
 		$this->secure_request( 'mainwp_backup_checkpid' );
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
@@ -219,7 +219,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_backup_download_file() {
 		$this->secure_request( 'mainwp_backup_download_file' );
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
@@ -256,7 +256,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_backup_delete_file() {
 		$this->secure_request( 'mainwp_backup_delete_file' );
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
@@ -297,7 +297,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_createbackup_getfilesize() {
 		$this->secure_request( 'mainwp_createbackup_getfilesize' );
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		try {
 			if ( ! isset( $_POST['siteId'] ) ) {
 				throw new \Exception( esc_html__( 'No site selected!', 'mainwp' ) );

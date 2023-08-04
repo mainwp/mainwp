@@ -175,7 +175,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_users_search' );
 		MainWP_Cache::init_session();
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		$role    = isset( $_POST['role'] ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : '';
 		$groups  = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
 		$sites   = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
@@ -198,7 +198,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_posts_search() { // phpcs:ignore --  complex.
 		$this->secure_request( 'mainwp_posts_search' );
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		$post_type = ( isset( $_POST['post_type'] ) && 0 < strlen( sanitize_text_field( wp_unslash( $_POST['post_type'] ) ) ) ? sanitize_text_field( wp_unslash( $_POST['post_type'] ) ) : 'post' );
 		if ( isset( $_POST['maximum'] ) ) {
 			MainWP_Utility::update_option( 'mainwp_maximumPosts', isset( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
@@ -237,7 +237,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_pages_search() {
 		$this->secure_request( 'mainwp_pages_search' );
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_POST['maximum'] ) ) {
 			MainWP_Utility::update_option( 'mainwp_maximumPages', intval( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
 		}
@@ -490,7 +490,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_notice_status_update() {
 		$this->secure_request( 'mainwp_notice_status_update' );
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		$no_id = isset( $_POST['notice_id'] ) ? sanitize_text_field( wp_unslash( $_POST['notice_id'] ) ) : false;
 		if ( 'mail_failed' === $no_id ) {
 			MainWP_Utility::update_option( 'mainwp_notice_wp_mail_failed', 'hide' );
@@ -532,7 +532,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_status_saving' );
 		$values = get_option( 'mainwp_status_saved_values' );
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_POST['status'] ) ) {
 			die( -1 );
 		}
@@ -580,7 +580,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 		$this->secure_request( 'mainwp_widgets_order' );
 		$user = wp_get_current_user();
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( $user && ! empty( $_POST['page'] ) ) {
 			$page  = isset( $_POST['page'] ) ? sanitize_text_field( wp_unslash( $_POST['page'] ) ) : '';
 			$order = isset( $_POST['order'] ) ? sanitize_text_field( wp_unslash( $_POST['order'] ) ) : '';
@@ -633,7 +633,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function ajax_mainwp_save_settings() {
 		$this->secure_request( 'mainwp_save_settings' );
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
 		if ( ! empty( $name ) ) {
 			$option_name = 'mainwp_' . $name;
@@ -1051,7 +1051,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_events_notice_hide() {
 		$this->secure_request( 'mainwp_events_notice_hide' );
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_POST['notice'] ) ) {
 			$current_options = get_option( 'mainwp_showhide_events_notice' );
 			if ( ! is_array( $current_options ) ) {
@@ -1085,7 +1085,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Show/Hide sections.
 	 */
 	public function mainwp_showhide_sections() {
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_POST['sec'] ) && isset( $_POST['status'] ) ) {
 			$opts = get_option( 'mainwp_opts_showhide_sections' );
 			if ( ! is_array( $opts ) ) {
@@ -1105,7 +1105,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * MainWP Saving Status.
 	 */
 	public function mainwp_saving_status() {
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_REQUEST['nonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['nonce'] ), 'mainwp_ajax' ) ) {
 			die( esc_html__( 'WP nonce could not be verified. Please reload the page and try again.', 'mainwp' ) );
 		}

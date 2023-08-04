@@ -120,7 +120,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_themes_search() {
 		$this->secure_request( 'mainwp_themes_search' );
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		$keyword = isset( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : '';
 		$status  = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
 		$groups  = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : array();
@@ -216,7 +216,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_plugins_search() {
 		$this->secure_request( 'mainwp_plugins_search' );
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		$keyword      = isset( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : '';
 		$status       = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
 		$groups       = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
@@ -532,7 +532,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_upgrade_plugintheme() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_POST['type'] ) ) {
 			die( wp_json_encode( array( 'error' => '<i class="red times icon"></i> ' . esc_html__( 'Plugin or theme not specified. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
@@ -657,7 +657,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_ignoreplugintheme() {
 		$this->secure_request( 'mainwp_ignoreplugintheme' );
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_POST['id'] ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
@@ -680,7 +680,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_unignoreabandonedplugintheme() {
 		$this->secure_request( 'mainwp_unignoreabandonedplugintheme' );
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_POST['id'] ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
@@ -702,7 +702,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_unignoreabandonedpluginsthemes() {
 		$this->secure_request( 'mainwp_unignoreabandonedpluginsthemes' );
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_POST['slug'] ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
@@ -723,7 +723,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_dismissoutdateplugintheme() {
 		$this->secure_request( 'mainwp_dismissoutdateplugintheme' );
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_POST['id'] ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
@@ -749,7 +749,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_POST['slug'] ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
@@ -772,7 +772,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_unignoreplugintheme() {
 		$this->secure_request( 'mainwp_unignoreplugintheme' );
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_POST['id'] ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
@@ -797,7 +797,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_POST['slug'] ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
@@ -817,7 +817,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_unignorepluginsthemes() {
 		$this->secure_request( 'mainwp_unignorepluginsthemes' );
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_POST['slug'] ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}

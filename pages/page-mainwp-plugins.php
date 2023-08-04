@@ -1168,7 +1168,7 @@ class MainWP_Plugins {
 						<div class="one wide center aligned middle aligned column">
 							<div class="ui checkbox <?php echo 'mainwp-child' == $plugin_directory ? 'disabled' : ''; ?> master"><input type="checkbox" <?php echo 'mainwp-child' == $plugin_directory ? 'disabled="disabled"' : ''; ?>><label></label></div>
 						</div>
-						<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( esc_html( $plugin_directory ) ); ?></div>
+						<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
 						<div class="five wide middle aligned column"><a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>" target="_blank" ><strong><?php echo esc_html( $plugin_title ); ?></strong></a></div>
 						<div class="two wide center aligned middle aligned column"></div>
 						<div class="two wide center aligned middle aligned column lastest-version-info"></div>
@@ -1895,7 +1895,7 @@ class MainWP_Plugins {
 					?>
 					<tr plugin-slug="<?php echo rawurlencode( $slug ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $name ) ); ?>">
 						<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo rawurlencode( $slug ); ?>"></span></td>
-						<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( esc_html( $plugin_directory ) ); ?></td>
+						<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 						<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . $wpid . '&plugin=' . rawurlencode( dirname( $slug ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $name ); ?></a></td>
 						<td><?php echo ( 1 == $plugin['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); //phpcs:ignore -- escaped. ?></td>
 						<td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
@@ -2082,7 +2082,7 @@ class MainWP_Plugins {
 						<?php foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) : ?>
 							<?php $plugin_directory = dirname( $ignoredPlugin ); ?>
 							<tr plugin-slug="<?php echo rawurlencode( $ignoredPlugin ); ?>">
-								<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
+								<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 								<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $ignoredPlugin ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 								<td><?php echo esc_html( $ignoredPlugin ); ?></td>
 								<td class="right aligned">
@@ -2178,7 +2178,7 @@ class MainWP_Plugins {
 							<?php else : ?>
 								<td><div style="display:none;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></div></td>
 							<?php endif; ?>
-								<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
+								<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 							<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . rawurlencode( $plugin_directory ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 							<td><?php echo esc_html( rawurldecode( $ignoredPlugin ) ); ?></td>
 							<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2323,7 +2323,7 @@ class MainWP_Plugins {
 						$plugin_directory = MainWP_Utility::get_dir_slug( rawurldecode( $ignoredPlugin ) );
 						?>
 						<tr plugin-slug="<?php echo rawurlencode( $ignoredPlugin ); ?>">
-							<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
+							<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 							<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( $plugin_directory ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 							<td><?php echo esc_html( $ignoredPlugin ); ?></td>
 							<td class="right aligned">
@@ -2418,7 +2418,7 @@ class MainWP_Plugins {
 								<?php else : ?>
 									<td><div style="display:none;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></div></td>
 								<?php endif; ?>
-										<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
+										<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 								<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . $website->id . '&plugin=' . rawurlencode( $plugin_directory ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 								<td><?php echo esc_html( $ignoredPlugin ); ?></td>
 								<td class="right aligned"><a href="#" class="ui mini button" onClick="return updatesoverview_plugins_unignore_abandoned_detail( '<?php echo rawurlencode( $ignoredPlugin ); ?>', <?php echo esc_attr( $website->id ); ?> )"> <?php esc_html_e( 'Unignore', 'mainwp' ); ?></a></td>

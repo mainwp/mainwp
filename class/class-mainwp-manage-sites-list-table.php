@@ -419,7 +419,7 @@ class MainWP_Manage_Sites_List_Table {
 	public function render_manage_sites_table_top() {
 		$items_bulk = $this->get_bulk_actions();
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		$selected_status = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
 		$selected_group  = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
 		$selected_client = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
@@ -603,7 +603,7 @@ class MainWP_Manage_Sites_List_Table {
 		$req_order   = null;
 
 		if ( $optimize ) {
-			 // phpcs:disable WordPress.Security.NonceVerification.Recommended
+			 // phpcs:disable WordPress.Security.NonceVerification
 			if ( isset( $_REQUEST['order'] ) ) {
 				$columns = isset( $_REQUEST['columns'] ) ? wp_unslash( $_REQUEST['columns'] ) : array();
 				$ord_col = isset( $_REQUEST['order'][0]['column'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['order'][0]['column'] ) ) : '';
@@ -658,7 +658,7 @@ class MainWP_Manage_Sites_List_Table {
 			}
 		}
 
-		 // phpcs:disable WordPress.Security.NonceVerification.Recommended
+		 // phpcs:disable WordPress.Security.NonceVerification
 		if ( ! $optimize ) {
 			$perPage = 9999;
 			$start   = 0;

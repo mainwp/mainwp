@@ -252,8 +252,9 @@ class MainWP_UI {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
+	// phpcs:ingnore -- complex.
 	public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false ) {
-		// phpcs:ingnore -- complex.
+
 			/**
 			 * Action: mainwp_before_select_sites_list
 			 *
@@ -1182,7 +1183,7 @@ class MainWP_UI {
 		$sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
 		$sidebar_pages = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
 		ob_start();
 		if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) :

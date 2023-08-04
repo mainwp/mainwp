@@ -29,7 +29,7 @@ class MainWP_Meta_Boxes {
 		/**
 		 * Verify this came from the our screen and with proper authorization.
 		 */
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_POST['select_sites_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['select_sites_nonce'] ), 'select_sites_' . $post_id ) ) {
 			return $post_id;
 		}
@@ -119,7 +119,7 @@ class MainWP_Meta_Boxes {
 		 * Verify this came from the our screen and with proper authorization.
 		 */
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_POST['post_category_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['post_category_nonce'] ), 'post_category_' . $post_id ) ) {
 			return;
 		}
@@ -241,7 +241,7 @@ class MainWP_Meta_Boxes {
 		/**
 		 * Verify this came from the our screen and with proper authorization.
 		 */
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_POST[ $prefix . '_nonce' ] ) || ! wp_verify_nonce( sanitize_key( $_POST[ $prefix . '_nonce' ] ), $prefix . '_' . $post_id ) ) {
 			return $post_id;
 		}

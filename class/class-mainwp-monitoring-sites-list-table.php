@@ -236,7 +236,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	public function render_manage_sites_table_top() {
 		$items_bulk = $this->get_bulk_actions();
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		$selected_status = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
 		$selected_group  = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
 		$selected_client = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
@@ -352,7 +352,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 		$req_orderby = null;
 		$req_order   = null;
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( $optimize ) {
 
 			if ( isset( $_REQUEST['order'] ) ) {

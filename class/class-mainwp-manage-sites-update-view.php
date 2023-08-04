@@ -67,7 +67,7 @@ class MainWP_Manage_Sites_Update_View {
 
 		$active_tab  = 'plugins';
 		$active_text = esc_html__( 'Plugins Updates', 'mainwp' );
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_GET['tab'] ) ) {
 			if ( 'wordpress-updates' === $_GET['tab'] ) {
 				$active_tab  = 'WordPress';

@@ -2205,7 +2205,7 @@ class MainWP_Themes {
 							<td><?php echo esc_html( $ignoredTheme ); ?></td>
 							<td class="right aligned">
 							<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_detail( '<?php echo rawurlencode( $ignoredTheme ); ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
+								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_detail( '<?php echo rawurlencode( $ignoredTheme ); ?>', <?php echo intval( $website->id ); ?> )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							</td>
 						</tr>
@@ -2428,7 +2428,7 @@ class MainWP_Themes {
 						<td><?php echo esc_html( $ignoredTheme ); ?></td>
 						<td class="right aligned">
 						<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-							<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_abandoned_detail( '<?php echo rawurlencode( $ignoredTheme ); ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
+							<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_abandoned_detail( '<?php echo rawurlencode( $ignoredTheme ); ?>', <?php echo intval( $website->id ); ?> )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
 						<?php endif; ?>
 						</td>
 					</tr>

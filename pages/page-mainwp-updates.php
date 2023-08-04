@@ -2124,11 +2124,11 @@ class MainWP_Updates {
 						</td>
 						<td class="right aligned">
 							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" class="ui mini button" target="_blank"><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></a>
-							<a href="javascript:void(0)" onclick="return updatesoverview_recheck_http( this, <?php echo esc_attr( $website->id ); ?> )" class="ui basic mini green button"><?php esc_html_e( 'Recheck', 'mainwp' ); ?></a>
+							<a href="javascript:void(0)" onclick="return updatesoverview_recheck_http( this, <?php echo intval( $website->id ); ?> )" class="ui basic mini green button"><?php esc_html_e( 'Recheck', 'mainwp' ); ?></a>
 							<?php if ( ! empty( $website->sync_errors ) ) { ?>
 							<a href="#" class="mainwp_site_reconnect ui green mini button"><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 							<?php } ?>
-							<a href="javascript:void(0)" onClick="return updatesoverview_ignore_http_response( this, <?php echo esc_attr( $website->id ); ?> )" class="ui basic mini button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?></a>
+							<a href="javascript:void(0)" onClick="return updatesoverview_ignore_http_response( this, <?php echo intval( $website->id ); ?> )" class="ui basic mini button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?></a>
 					<?php if ( ! empty( $restoreSlug ) ) { ?>
 							<a href="<?php echo $restoreSlug; ?>" class="ui green mini basic button"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
 						<?php } ?>

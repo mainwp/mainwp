@@ -1250,7 +1250,7 @@ class MainWP_Plugins {
 									}
 									?>
 								</div>
-									<div class="three wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $site_id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo $site_id; ?>"><?php echo esc_html( $site_name ); ?></a></div>
+									<div class="three wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $site_id; ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo $site_id; ?>"><?php echo esc_html( $site_name ); ?></a></div>
 									<div class="one wide middle aligned column"></div>
 								<div class="one wide center aligned middle aligned column"><?php echo $plugin_status; //phpcs:ignore -- escaped. ?></div>
 									<div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
@@ -1896,7 +1896,7 @@ class MainWP_Plugins {
 					<tr plugin-slug="<?php echo esc_attr( rawurlencode( $slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $name ) ); ?>">
 						<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo esc_attr( rawurlencode( $slug ) ); ?>"></span></td>
 						<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-						<td><a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $wpid) . '&plugin=' . rawurlencode( dirname( $slug ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $name ); ?></a></td>
+						<td><a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $wpid ) . '&plugin=' . rawurlencode( dirname( $slug ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $name ); ?></a></td>
 						<td><?php echo ( 1 == $plugin['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); //phpcs:ignore -- escaped. ?></td>
 						<td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
 						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
@@ -2324,7 +2324,7 @@ class MainWP_Plugins {
 						?>
 						<tr plugin-slug="<?php echo esc_attr( rawurlencode( $ignoredPlugin ) ); ?>">
 							<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-							<td><a href="<?php echo esc_url( admin_url()) . 'plugin-install.php?tab=plugin-information&plugin=' . esc_html( rawurlencode( $plugin_directory ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
+							<td><a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&plugin=' . esc_html( rawurlencode( $plugin_directory ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 							<td><?php echo esc_html( $ignoredPlugin ); ?></td>
 							<td class="right aligned">
 								<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>

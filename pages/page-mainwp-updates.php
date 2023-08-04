@@ -2123,7 +2123,7 @@ class MainWP_Updates {
 							<label class="ui red label http-code"><?php echo 'HTTP ' . $website->http_response_code; ?></label>
 						</td>
 						<td class="right aligned">
-							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" class="ui mini button" target="_blank"><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></a>
+							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" class="ui mini button" target="_blank"><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></a>
 							<a href="javascript:void(0)" onclick="return updatesoverview_recheck_http( this, <?php echo intval( $website->id ); ?> )" class="ui basic mini green button"><?php esc_html_e( 'Recheck', 'mainwp' ); ?></a>
 							<?php if ( ! empty( $website->sync_errors ) ) { ?>
 							<a href="#" class="mainwp_site_reconnect ui green mini button"><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
@@ -2318,7 +2318,7 @@ class MainWP_Updates {
 			<div class="scrolling content ui form">
 				<form method="POST" action="" id="manage-updates-screen-options-form" name="manage-updates-screen-options-form">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdatesScrOptions' ); ?>" />
+					<input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'UpdatesScrOptions' ) ); ?>" />
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Plugin advanced automatic updates', 'mainwp' ); ?></label>
 						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic plugins updates.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">

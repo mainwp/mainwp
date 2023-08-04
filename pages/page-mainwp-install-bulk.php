@@ -115,7 +115,7 @@ class MainWP_Install_Bulk {
 								echo wp_strip_all_tags( $extraOptions ) . ',';
 							}
 							?>
-							params: {mainwp_do: 'MainWP_Install_Bulk-uploadfile', qq_nonce: '<?php echo wp_create_nonce( 'qq_nonce' ); ?>' }
+							params: {mainwp_do: 'MainWP_Install_Bulk-uploadfile', qq_nonce: '<?php echo esc_js( wp_create_nonce( 'qq_nonce' ) ); ?>' }
 						} );
 					}
 

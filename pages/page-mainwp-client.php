@@ -591,7 +591,7 @@ class MainWP_Client {
 			<div class="scrolling content ui form">
 				<form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'ManageClientsScrOptions' ); ?>" />
+					<input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'ManageClientsScrOptions' ) ); ?>" />
 					<div class="ui grid field">
 						<label class="six wide column"><?php esc_html_e( 'Default items per page value', 'mainwp' ); ?></label>
 						<div class="ten wide column">
@@ -882,7 +882,7 @@ class MainWP_Client {
 							<?php } elseif ( ( 1 == $client['id'] ) || ( $client['login'] == $website->adminname ) ) { ?>
 							<a href="javascript:void(0)" class="item" data-tooltip="This client is used for our secure link, it can not be deleted." data-inverted="" data-position="left center"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
-							<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
+							<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) );-nonce' ) );-nonce' ) );-nonce' ) );-nonce' ) );-nonce' ) );-nonce' ) );-nonce' ) );-nonce' ) );-nonce' ) );-nonce' ) );-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
 							<?php
 							/**
 							 * Action: mainwp_clients_table_action

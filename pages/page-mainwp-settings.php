@@ -546,7 +546,7 @@ class MainWP_Settings {
 				<div class="ui form">
 					<form method="POST" action="admin.php?page=Settings" id="mainwp-settings-page-form">
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'Settings' ); ?>" />
+						<input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'Settings' ) ); ?>" />
 						<?php
 						/**
 						 * Action: mainwp_settings_form_top
@@ -1128,7 +1128,7 @@ class MainWP_Settings {
 				<div class="ui form">
 					<form method="POST" action="">
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'SettingsAdvanced' ); ?>" />
+						<input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'SettingsAdvanced' ) ); ?>" />
 						<?php
 
 						/**
@@ -1326,7 +1326,7 @@ class MainWP_Settings {
 				<div class="ui form">
 					<form method="POST" action="">
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPTools' ); ?>" />
+						<input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'MainWPTools' ) ); ?>" />
 						<h3 class="ui dividing header"><?php esc_html_e( 'MainWP Dashboard Tools', 'mainwp' ); ?></h3>
 						<?php
 						/**
@@ -1366,7 +1366,7 @@ class MainWP_Settings {
 						<?php } ?>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Export child sites to CSV file', 'mainwp' ); ?></label>
-							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to export all connected sites to a CSV file.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=MainWPTools&doExportSites=yes&_wpnonce=<?php echo wp_create_nonce( 'export_sites' ); ?>" class="ui button green basic"><?php esc_html_e( 'Export Child Sites', 'mainwp' ); ?></a></div>
+							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to export all connected sites to a CSV file.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=MainWPTools&doExportSites=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'export_sites' ) ); ?>" class="ui button green basic"><?php esc_html_e( 'Export Child Sites', 'mainwp' ); ?></a></div>
 						</div>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Import child sites', 'mainwp' ); ?></label>
@@ -1375,13 +1375,13 @@ class MainWP_Settings {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Disconnect all child sites', 'mainwp' ); ?></label>
 						<div class="ten wide column" id="mainwp-disconnect-sites-tool" data-content="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active and which makes your sites vulnerable. Use only if you attend to reconnect site to the same or a different dashboard right away.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
-						<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo wp_create_nonce( 'disconnect_sites' ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Websites', 'mainwp' ); ?></a>
+						<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'disconnect_sites' ) ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Websites', 'mainwp' ); ?></a>
 					</div>
 						</div>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Delete extensions API Activation data', 'mainwp' ); ?></label>
 							<div class="ten wide column" id="mainwp-clear-activation-data" data-content="<?php esc_attr_e( 'Delete extensions API activation data. This will not affect extensions settings, it just removes API activation data.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
-								<a href="admin.php?page=MainWPTools&clearActivationData=yes&_wpnonce=<?php echo wp_create_nonce( 'clear_activation_data' ); ?>" onclick="mainwp_tool_clear_activation_data(this); return false;" class="ui button green basic"><?php esc_html_e( 'Delete Extensions API Activation Data', 'mainwp' ); ?></a>
+								<a href="admin.php?page=MainWPTools&clearActivationData=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'clear_activation_data' ) ); ?>" onclick="mainwp_tool_clear_activation_data(this); return false;" class="ui button green basic"><?php esc_html_e( 'Delete Extensions API Activation Data', 'mainwp' ); ?></a>
 							</div>
 						</div>
 						

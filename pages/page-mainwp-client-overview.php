@@ -371,7 +371,7 @@ class MainWP_Client_Overview {
 				?>
 				<form method="POST" action="" name="mainwp_clients_overview_screen_options_form" id="mainwp-clients-overview-screen-options-form">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-					<input type="hidden" name="wp_scr_options_nonce" value="<?php echo wp_create_nonce( 'MainWPClientsScrOptions' ); ?>" />
+					<input type="hidden" name="wp_scr_options_nonce" value="<?php echo esc_attr( wp_create_nonce( 'MainWPClientsScrOptions' ) ); ?>" />
 					<?php echo self::render_screen_options( false ); ?>
 					<?php
 					/**

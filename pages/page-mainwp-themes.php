@@ -1172,7 +1172,7 @@ class MainWP_Themes {
 								</div>
 								<?php endif; ?>
 								</div>
-								<div class="three wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $site_id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo $site_id; ?>"><?php echo esc_html( $site_name ); ?></a></div>
+								<div class="three wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $site_id; ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo $site_id; ?>"><?php echo esc_html( $site_name ); ?></a></div>
 								<div class="one wide middle aligned column"></div>
 								<div class="one wide center aligned middle aligned column"><?php echo $theme_status; ?></div>
 								<div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>

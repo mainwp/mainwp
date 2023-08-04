@@ -252,7 +252,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 		<div class="ui alt segment" id="mainwp-bulk-update-admin-passwords">
 				<form action="" method="post" name="createuser" id="createuser">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-				<input type="hidden" name="security" value="<?php echo wp_create_nonce( 'mainwp_updateadminpassword' ); ?>"/>
+				<input type="hidden" name="security" value="<?php echo esc_attr( wp_create_nonce( 'mainwp_updateadminpassword' ) ); ?>"/>
 				<div class="mainwp-main-content" >
 					<div class="ui em hidden divider"></div>
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-admin-pass-info-message' ) ) : ?>
@@ -285,7 +285,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 								<?php while ( $websites && $website = MainWP_DB::fetch_object( $websites ) ) : ?>
 									<tr>
 									<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></td>
-									<td><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>"><i class="sign in icon"></i></a></td>
+									<td><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a></td>
 									<td><?php echo esc_html( $website->adminname ); ?></td>
 									<td><?php echo esc_html( $website->admin_nicename ); ?></td>
 									<td><?php echo esc_html( $website->admin_useremail ); ?></td>

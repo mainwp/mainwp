@@ -253,7 +253,7 @@ class MainWP_Connection_Status {
 				</div>
 				<div class="column right aligned ui buttons">
 					<a href="<?php echo esc_url( $site->url ); ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Go to Site', 'mainwp' ); ?></a>
-					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( ' Go to WP Admin', 'mainwp' ); ?></a>
+					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site->id; ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( ' Go to WP Admin', 'mainwp' ); ?></a>
 					<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo intval( $site->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $site->id ); ?>' )" data-tooltip="Sync <?php echo esc_attr( stripslashes( $site->name ) ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 				</div>
 			</div>
@@ -444,7 +444,7 @@ class MainWP_Connection_Status {
 				
 				<div class="four wide middle aligned right aligned column reconnect-wrapper">
 				<div class="ui mini icon buttons">
-				<a class="ui button" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted="" data-position="left center"><i class="sign in alternate icon"></i></a>
+				<a class="ui button" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted="" data-position="left center"><i class="sign in alternate icon"></i></a>
 				<a class="ui button" href="<?php echo esc_html( $website->url ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted="" data-position="left center"><i class="external alternate icon"></i></a>
 					<?php if ( $hasSyncErrors ) : ?>
 						<a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site ui button green basic" siteid="<?php echo intval( $website->id ); ?>" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted="" data-position="left center"><i class="linkify icon"></i></a>
@@ -494,7 +494,7 @@ class MainWP_Connection_Status {
 					</a>
 			</div>
 			<div class="one wide column middle aligned">
-				<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
+				<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
 			</div>
 			<div class="one wide column middle aligned">
 				<a href="<?php echo esc_html( $website->url ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><i class="external alternate icon"></i></a>
@@ -546,7 +546,7 @@ class MainWP_Connection_Status {
 					</a>
 				</div>
 				<div class="one wide column middle aligned">
-					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
+					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
 				</div>
 				<div class="one wide column middle aligned">
 					<a href="<?php echo esc_html( $website->url ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><i class="external alternate icon"></i></a>

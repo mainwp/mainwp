@@ -371,7 +371,7 @@ class MainWP_Manage_Screenshots {
 							</div>
 						<div class="content">
 								<h5 class="ui small header">
-									<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $website->id ); ?>"><?php echo $website->name; ?></a>
+									<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $website->id ); ?>"><?php echo $website->name; ?></a>
 									<div class="sub header" style="font-size:11px"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo $website->url; ?></a></div>
 								</h5>
 								<?php if ( isset( $website->wpgroups ) && '' != $website->wpgroups ) : ?>
@@ -459,7 +459,7 @@ class MainWP_Manage_Screenshots {
 			<div class="scrolling content ui form">
 				<form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'SreenshotsSitesScrOptions' ); ?>" />
+					<input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'SreenshotsSitesScrOptions' ) ); ?>" />
 					<div class="ui grid field">
 						<label class="top aligned six wide column" tabindex="0"><?php esc_html_e( 'Sites view mode', 'mainwp' ); ?></label>
 						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Sites view mode.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
@@ -476,12 +476,12 @@ class MainWP_Manage_Screenshots {
 					</div>
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Export child sites to CSV file', 'mainwp' ); ?></label>
-						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to export all connected sites to a CSV file.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=MainWPTools&doExportSites=yes&_wpnonce=<?php echo wp_create_nonce( 'export_sites' ); ?>" class="ui button green basic"><?php esc_html_e( 'Export Child Sites', 'mainwp' ); ?></a></div>
+						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to export all connected sites to a CSV file.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=MainWPTools&doExportSites=yes&_wpnonce=<?php echo esc_html( wp_create_nonce( 'export_sites' ) ); ?>" class="ui button green basic"><?php esc_html_e( 'Export Child Sites', 'mainwp' ); ?></a></div>
 					</div>
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Disconnect all child sites', 'mainwp' ); ?></label>
 						<div class="ten wide column" id="mainwp-disconnect-sites-tool" data-tooltip="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
-							<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo wp_create_nonce( 'disconnect_sites' ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Websites', 'mainwp' ); ?></a>
+							<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo esc_html( wp_create_nonce( 'disconnect_sites' ) ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Websites', 'mainwp' ); ?></a>
 						</div>
 					</div>
 					<div class="ui hidden divider"></div>

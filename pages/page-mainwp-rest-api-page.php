@@ -625,7 +625,7 @@ class MainWP_Rest_Api_Page {
 				<div class="ui form">
 					<form method="POST" action="">
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'RESTAPI' ); ?>" />
+						<input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'RESTAPI' ) ); ?>" />
 						<?php
 						/**
 						 * Action: rest_api_form_top
@@ -763,7 +763,7 @@ class MainWP_Rest_Api_Page {
 			<div class="ui form">
 					<form method="POST" action="">
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-						<input type="hidden" name="edit_key_nonce" value="<?php echo wp_create_nonce( 'edit-key-nonce-' . $keyid ); ?>" />
+						<input type="hidden" name="edit_key_nonce" value="<?php echo esc_attr( wp_create_nonce( 'edit-key-nonce-' . $keyid ) ); ?>" />
 						<input type="hidden" name="editkey_id" value="<?php echo esc_html( $keyid ); ?>" />
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable REST API Key', 'mainwp' ); ?></label>

@@ -252,7 +252,7 @@ class MainWP_Manage_Groups {
 				</td>
 				<td><a href="admin.php?page=managesites&dashboard=<?php echo intval( $website->id ); ?>" data-tooltip="<?php esc_attr_e( 'Go to the site overview.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php echo $website->name; ?></a></td>
 				<td>
-					<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
+					<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) );-nonce' ) );-nonce' ) );-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
 				</td>
 				<td><a href="<?php echo $website->url; ?>" target="_blank"><?php echo $website->url; ?></a></td>
 				<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . $website->client_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>

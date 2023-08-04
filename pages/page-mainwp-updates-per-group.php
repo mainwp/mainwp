@@ -960,7 +960,7 @@ class MainWP_Updates_Per_Group {
 													<tr dismissed="0">
 														<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( dirname( $slug ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 														<td>
-															<a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . dirname( $slug ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? esc_html( rawurlencode( $plugin_outdate['PluginURI'] ) ) : '' ) . '&name=' . esc_html( rawurlencode( $plugin_outdate['Name'] ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $plugin_outdate['Name'] ); ?></a>
+															<a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_html( dirname( $slug ) ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? esc_html( rawurlencode( $plugin_outdate['PluginURI'] ) ) : '' ) . '&name=' . esc_html( rawurlencode( $plugin_outdate['Name'] ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $plugin_outdate['Name'] ); ?></a>
 															<input type="hidden" id="wp_dismissed_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo esc_attr( $plugin_name ); ?>" value="0"/>
 														</td>
 														<td><strong class="mainwp-768-show"><?php esc_html_e( 'Version:', 'mainwp' ); ?></strong> <?php echo esc_html( $plugin_outdate['Version'] ); ?></td>

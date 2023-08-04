@@ -371,7 +371,7 @@ class MainWP_Manage_Screenshots {
 							</div>
 						<div class="content">
 								<h5 class="ui small header">
-									<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>"><?php echo $website->name; ?></a>
+									<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $website->id ); ?>"><?php echo $website->name; ?></a>
 									<div class="sub header" style="font-size:11px"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo $website->url; ?></a></div>
 								</h5>
 								<?php if ( isset( $website->wpgroups ) && '' != $website->wpgroups ) : ?>
@@ -395,10 +395,10 @@ class MainWP_Manage_Screenshots {
 						</div>
 						<div class="extra content">
 							<?php if ( $hasSyncErrors ) : ?>
-								<a class="ui mini green basic icon button fluid mainwp_site_card_reconnect" site-id="<?php echo $website->id; ?>" href="#"><i class="sync alternate icon"></i> <?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
+								<a class="ui mini green basic icon button fluid mainwp_site_card_reconnect" site-id="<?php echo intval( $website->id ); ?>" href="#"><i class="sync alternate icon"></i> <?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 							<?php else : ?>
 							<div data-tooltip="<?php esc_html_e( 'Last Sync: ', 'mainwp' ); ?> <?php echo 0 != $website->dtsSync ? MainWP_Utility::format_timestamp( MainWP_Utility::format_timestamp( $website->dtsSync ) ) : ''; ?>" data-inverted="" data-position="bottom center">
-								<a href="javascript:void(0)" class="ui mini green icon button fluid mainwp-sync-this-site" site-id="<?php echo $website->id; ?>"><i class="sync alternate icon"></i> <?php esc_html_e( 'Sync Site ', 'mainwp' ); ?></a>
+								<a href="javascript:void(0)" class="ui mini green icon button fluid mainwp-sync-this-site" site-id="<?php echo intval( $website->id ); ?>"><i class="sync alternate icon"></i> <?php esc_html_e( 'Sync Site ', 'mainwp' ); ?></a>
 							</div>
 							<?php endif; ?>
 						</div>

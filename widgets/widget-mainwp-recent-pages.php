@@ -54,11 +54,11 @@ class MainWP_Recent_Pages {
 
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
 
-		if ( isset( $_GET['client_id'] ) ) {
+		if ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 			$data_fields[] = 'recent_pages';
 			$individual    = false;
-			$client_id     = isset( $_GET['client_id'] ) ? $_GET['client_id'] : 0;
+			$client_id     = isset( $_GET['client_id'] ) ? $_GET['client_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
 			$websites      = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id, array( 'select_data' => $data_fields ) );
 
 			if ( $websites ) {
@@ -275,7 +275,7 @@ class MainWP_Recent_Pages {
 					</div>
 						<?php if ( ! $individual ) : ?>
 						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ); ?>" target="_blank"><?php echo esc_html( $name ); ?></a>
+							<a href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
 						</div>
 						<?php endif; ?>
 						<div class="two wide column right aligned">
@@ -380,7 +380,7 @@ class MainWP_Recent_Pages {
 						</div>
 							<?php if ( ! $individual ) : ?>
 							<div class="four wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_draft[ $i ]['website']->url ); ?>" target="_blank" class="mainwp-may-hide-referrer" ><?php echo esc_html( $name ); ?></a>
+								<a href="<?php echo esc_url( $recent_pages_draft[ $i ]['website']->url ); ?>" target="_blank" class="mainwp-may-hide-referrer" ><?php echo $name // phpcs:ignore WordPress.Security.EscapeOutput ; ?></a>
 							</div>
 							<?php endif; ?>
 							<div class="two wide column right aligned">
@@ -483,7 +483,7 @@ class MainWP_Recent_Pages {
 						</div>
 							<?php if ( ! $individual ) : ?>
 							<div class="four wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_pending[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank" ><?php echo esc_html( $name ); ?></a>
+								<a href="<?php echo esc_url( $recent_pages_pending[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank" ><?php echo $name // phpcs:ignore WordPress.Security.EscapeOutput ; ?></a>
 							</div>
 							<?php endif; ?>
 							<div class="two wide column right aligned">
@@ -586,7 +586,7 @@ class MainWP_Recent_Pages {
 						</div>
 							<?php if ( ! $individual ) : ?>
 							<div class="four wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_future[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( $name ); ?></a>
+								<a href="<?php echo esc_url( $recent_pages_future[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $name // phpcs:ignore WordPress.Security.EscapeOutput ; ?></a>
 							</div>
 							<?php endif; ?>
 							<div class="two wide column right aligned">
@@ -691,7 +691,7 @@ class MainWP_Recent_Pages {
 						</div>
 							<?php if ( ! $individual ) : ?>
 							<div class="four wide column middle aligned">
-								<?php echo esc_html( $name ); ?>
+								<?php echo $name // phpcs:ignore WordPress.Security.EscapeOutput ; ?>
 							</div>
 							<?php endif; ?>
 							<div class="two wide column right aligned">

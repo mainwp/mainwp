@@ -643,7 +643,7 @@ class MainWP_Server_Information {
 				<td>OpenSSL Working Status</td>
 				<td>Yes</td>
 				<td><?php echo( $wk ? 'Yes' : 'No' ); ?></td>
-				<td class="right aligned"><?php echo ( $wk ? self::get_pass_html() : self::get_warning_html() ); ?></td>
+				<td class="right aligned"><?php echo ( $wk ? self::get_pass_html() : self::get_warning_html() ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			</tr>
 			<?php
 
@@ -850,7 +850,7 @@ class MainWP_Server_Information {
 				if ( isset( $extension['mainwp'] ) && $extension['mainwp'] ) {
 					?>
 					<td><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? esc_html__( 'Actived', 'mainwp' ) : esc_html__( 'Deactivated', 'mainwp' ); ?></td>
-					<td class="right aligned"><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? self::get_pass_html() : self::get_warning_html( self::WARNING ); ?></td>
+					<td class="right aligned"><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? self::get_pass_html() : self::get_warning_html( self::WARNING ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 					<?php
 				} else {
 					?>
@@ -1170,7 +1170,7 @@ class MainWP_Server_Information {
 			<td><?php echo esc_html( $name ); ?></td>
 			<td><?php echo esc_html( $check ); ?></td>
 			<td><?php echo esc_html( $result ); ?></td>
-			<td class="right aligned"><?php echo ( $passed ? self::get_pass_html() : self::get_warning_html( self::ERROR ) ); ?></td>
+			<td class="right aligned"><?php echo ( $passed ? self::get_pass_html() : self::get_warning_html( self::ERROR ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 		</tr>
 		<?php
 		return true;
@@ -1201,13 +1201,13 @@ class MainWP_Server_Information {
 			<td><?php echo esc_html( $compare ); ?><?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? $version['version'] : $version ) ) . ' ' . $extraText; ?></td>
 			<td><?php echo( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
 			<?php if ( 'filesize' === $whatType ) { ?>
-				<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
+				<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			<?php } elseif ( 'get_curl_ssl_version' === $getter ) { ?>
-				<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
+				<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			<?php } elseif ( ( 'get_max_input_time' === $getter || 'get_max_execution_time' === $getter ) && -1 == $currentVersion ) { ?>
 				<td class="right aligned"><?php echo self::get_pass_html(); ?></td>
 			<?php } else { ?>
-				<td class="right aligned"><?php echo ( version_compare( $currentVersion, $version, $compare ) || ( ( null != $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
+				<td class="right aligned"><?php echo ( version_compare( $currentVersion, $version, $compare ) || ( ( null != $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 		<?php } ?>
 		</tr>
 		<?php
@@ -1238,13 +1238,13 @@ class MainWP_Server_Information {
 			<td><?php echo esc_html( $compare ); ?>  <?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? $version['version'] : $version ) ) . ' ' . $extraText; ?></td>
 			<td><?php echo ( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
 			<?php if ( 'filesize' === $whatType ) { ?>
-			<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
+			<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			<?php } elseif ( 'get_curl_ssl_version' === $getter ) { ?>
-			<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
+			<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			<?php } elseif ( 'get_max_input_time' === $getter && -1 == $currentVersion ) { ?>
 			<td class="right aligned"><?php echo self::get_pass_html(); ?></td>
 			<?php } else { ?>
-			<td class="right aligned"><?php echo( version_compare( $currentVersion, $version, $compare ) || ( ( null != $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
+			<td class="right aligned"><?php echo( version_compare( $currentVersion, $version, $compare ) || ( ( null != $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			<?php } ?>
 		</tr>
 		<?php

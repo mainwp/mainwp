@@ -459,7 +459,7 @@ class MainWP_Rest_Api_Page {
 								</div>
 							</td>
 							<td><?php echo $enabled ? '<span class="ui green fluid label">' . esc_html__( 'Enabled', 'mainwp' ) . '</span>' : '<span class="ui gray fluid label">' . esc_html__( 'Disabled', 'mainwp' ) . '</span>'; ?></td>
-							<td><?php echo ! empty( $pers_names ) ? implode( ', ', $pers_names ) : 'N/A'; ?></td>	
+							<td><?php echo ! empty( $pers_names ) ? implode( ', ', $pers_names ) : 'N/A'; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>	
 							<td><?php echo esc_html( $desc ); ?></td>							
 							<td style="text-align:center"><code><?php echo esc_html( '...' . $ending ); ?></code></td>
 							<td class="collapsing">

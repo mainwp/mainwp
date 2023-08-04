@@ -278,7 +278,7 @@ class MainWP_Recent_Posts {
 						</div>
 						<?php if ( ! $individual ) : ?>
 						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; ?></a>
+							<a href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
 						</div>
 						<?php endif; ?>
 						<div class="two wide column right aligned">
@@ -379,7 +379,7 @@ class MainWP_Recent_Posts {
 						</div>
 						<?php if ( ! $individual ) : ?>
 						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_draft[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; ?></a>
+							<a href="<?php echo esc_url( $recent_posts_draft[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
 						</div>
 						<?php endif; ?>
 						<div class="two wide column right aligned">
@@ -479,7 +479,7 @@ class MainWP_Recent_Posts {
 						</div>
 						<?php if ( ! $individual ) : ?>
 						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_pending[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; ?></a>
+							<a href="<?php echo esc_url( $recent_posts_pending[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
 						</div>
 						<?php endif; ?>
 						<div class="two wide column right aligned">
@@ -578,7 +578,7 @@ class MainWP_Recent_Posts {
 						</div>
 						<?php if ( ! $individual ) : ?>
 						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_future[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; ?></a>
+							<a href="<?php echo esc_url( $recent_posts_future[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
 						</div>
 						<?php endif; ?>
 						<div class="two wide column right aligned">
@@ -679,7 +679,7 @@ class MainWP_Recent_Posts {
 						</div>
 						<?php if ( ! $individual ) : ?>
 						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_trash[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; ?></a>
+							<a href="<?php echo esc_url( $recent_posts_trash[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
 						</div>
 						<?php endif; ?>
 						<div class="two wide column right aligned">

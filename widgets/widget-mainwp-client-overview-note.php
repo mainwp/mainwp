@@ -114,9 +114,9 @@ class MainWP_Client_Overview_Note {
 			<div class="ui two columns grid mainwp-widget-footer">
 				<div class="column">
 				<?php if ( '' == $note ) : ?>
-					<a href="javascript:void(0)" class="mainwp-edit-client-note ui button mini fluid green" id="mainwp-notes-<?php echo $client_info['client_id']; ?>" data-tooltip="<?php esc_attr_e( 'Add notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Add Notes', 'mainwp' ); ?></a>
+					<a href="javascript:void(0)" class="mainwp-edit-client-note ui button mini fluid green" id="mainwp-notes-<?php echo esc_attr( $client_info['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Add notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Add Notes', 'mainwp' ); ?></a>
 				<?php else : ?>
-					<a href="javascript:void(0)" class="mainwp-edit-client-note ui mini fluid button green" id="mainwp-notes-<?php echo $client_info['client_id']; ?>" data-tooltip="<?php esc_attr_e( 'Edit notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Edit Notes', 'mainwp' ); ?></a>
+					<a href="javascript:void(0)" class="mainwp-edit-client-note ui mini fluid button green" id="mainwp-notes-<?php echo esc_attr( $client_info['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Edit notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Edit Notes', 'mainwp' ); ?></a>
 				<?php endif; ?>
 				</div>
 				<div class="column"></div>

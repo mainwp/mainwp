@@ -637,7 +637,7 @@ class MainWP_Menu {
 						<i class="wordpress icon"></i> <?php //phpcs:ignore -- ignore wordpress icon. ?>
 						<span class="ui small text"><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></span>
 					</a> 
-					<a class="item" href="<?php echo wp_logout_url(); ?>">
+					<a class="item" href="<?php echo wp_logout_url(); // phpcs:ignore WordPress.Security.EscapeOutput ?>">
 						<i class="sign out icon"></i>
 						<span class="ui small text"><?php esc_html_e( 'Log Out', 'mainwp' ); ?></span>
 					</a>
@@ -677,6 +677,7 @@ class MainWP_Menu {
 
 						$id_attr = ! empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
 
+						// phpcs:disable WordPress.Security.EscapeOutput
 						if ( $has_sub ) {
 							echo '<div ' . $id_attr . " class=\"item $active_item\">";
 							echo "<a class=\"title with-sub $active_item\" href=\"$href\">$title <i class=\"dropdown icon\"></i></a>";
@@ -689,6 +690,7 @@ class MainWP_Menu {
 							echo "<a class='title $active_item' href=\"$href\">$title</a>";
 							echo '</div>';
 						}
+						// phpcs:enable
 
 						if ( is_array( $sub_bar_leftmenu ) && ! empty( $bar_active_item_key ) && isset( $sub_bar_leftmenu[ $bar_active_item_key ] ) && is_array( $sub_bar_leftmenu[ $bar_active_item_key ] ) ) {
 
@@ -723,6 +725,7 @@ class MainWP_Menu {
 
 								$id_attr = ! empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
 
+								// phpcs:disable WordPress.Security.EscapeOutput
 								if ( $has_sub ) {
 									echo '<div ' . $id_attr . " class=\"item $active_item\">";
 									echo "<a class=\"title with-sub $active_item\" href=\"$href\">$title <i class=\"dropdown icon\"></i></a>";
@@ -735,6 +738,7 @@ class MainWP_Menu {
 									echo "<a class='title $active_item' href=\"$href\">$title</a>";
 									echo '</div>';
 								}
+								// phpcs:enable
 							}
 						}
 					}

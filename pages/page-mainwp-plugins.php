@@ -2419,7 +2419,7 @@ class MainWP_Plugins {
 									<td><div style="display:none;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></div></td>
 								<?php endif; ?>
 										<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-								<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . $website->id . '&plugin=' . rawurlencode( $plugin_directory ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
+								<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . rawurlencode( $plugin_directory ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 								<td><?php echo esc_html( $ignoredPlugin ); ?></td>
 								<td class="right aligned"><a href="#" class="ui mini button" onClick="return updatesoverview_plugins_unignore_abandoned_detail( '<?php echo rawurlencode( $ignoredPlugin ); ?>', <?php echo esc_attr( $website->id ); ?> )"> <?php esc_html_e( 'Unignore', 'mainwp' ); ?></a></td>
 							</tr>

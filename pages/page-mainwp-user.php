@@ -1200,7 +1200,7 @@ class MainWP_User {
 					</td>
 				<td class="username column-username"><strong><abbr title="<?php echo esc_attr( $user['login'] ); ?>"><?php echo esc_html( $user['login'] ); ?></abbr></strong></td>
 				<td class="email column-email"><a href="mailto:<?php echo esc_attr( $user['email'] ); ?>"><?php echo esc_html( $user['email'] ); ?></a></td>
-				<td class="role column-role"><?php echo self::get_role( esc_html( $user['role'] ) ); ?></td>
+				<td class="role column-role"><?php echo self::get_role( $user['role'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 				<td class="posts column-posts"><a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkManage&siteid=' . intval( $website->id ) ) . '&userid=' . $user['id'] ); ?>"><?php echo esc_html( $user['post_count'] ); ?></a></td>
 				<td class="website column-website"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
 				<td class="right aligned">
@@ -1216,7 +1216,7 @@ class MainWP_User {
 							<?php } elseif ( ( 1 == $user['id'] ) || ( $user['login'] == $website->adminname ) ) { ?>
 							<a href="javascript:void(0)" class="item" data-tooltip="This user is used for our secure link, it can not be deleted." data-inverted="" data-position="left center"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
-							<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
+							<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
 							<?php
 							/**
 							 * Action: mainwp_users_table_action

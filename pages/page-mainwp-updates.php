@@ -1963,7 +1963,7 @@ class MainWP_Updates {
 						continue;
 					}
 					?>
-					<a class="<?php echo( $slug === $current_tab ? esc_attr( 'active' ) : '' ); ?> item" data-tab="<?php echo esc_html( $slug ); ?>" href="admin.php?page=UpdatesManage&tab=<?php echo esc_html( $slug ); ?>"><?php esc_html_e( $tab['title'] ); ?><div class="ui small <?php echo empty( $tab['total_upgrades'] ) ? esc_attr( 'green' ) : esc_attr( 'red' ); ?> label" timestamp="<?php echo time(); ?>"><?php echo intval( $tab['total_upgrades'] ); ?></div></a>
+					<a class="<?php echo( $slug === $current_tab ? 'active' : '' ); ?> item" data-tab="<?php echo esc_html( $slug ); ?>" href="admin.php?page=UpdatesManage&tab=<?php echo esc_html( $slug ); ?>"><?php echo esc_html( $tab['title'] ); ?><div class="ui small <?php echo empty( $tab['total_upgrades'] ) ? 'green' : 'red'; ?> label" timestamp="<?php echo esc_html( time() ); ?>"><?php echo intval( $tab['total_upgrades'] ); ?></div></a>
 					<?php
 				}
 				?>
@@ -2115,7 +2115,7 @@ class MainWP_Updates {
 						}
 					}
 					?>
-					<tr id="child-site-<?php echo $website->id; ?>" class="child-site mainwp-child-site-<?php echo $website->id; ?>" siteid="<?php echo $website->id; ?>" site-url="<?php echo $website->url; ?>">
+					<tr id="child-site-<?php echo intval( $website->id ); ?>" class="child-site mainwp-child-site-<?php echo intval( $website->id ); ?>" siteid="<?php echo intval( $website->id ); ?>" site-url="<?php echo $website->url; ?>">
 						<td>
 							<?php self::render_site_link_dashboard( $website ); ?>
 						</td>

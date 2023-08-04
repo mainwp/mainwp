@@ -949,40 +949,34 @@ class MainWP_Manage_Sites {
 		// Load the Updates Overview widget.
 		if ( self::$enable_widgets['overview'] ) {
 			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 6 ) );
-			// MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Updates Overview', 'mainwp' ) );
 		}
 
 		// Load the Securtiy Issues widget.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
 			if ( self::$enable_widgets['security_issues'] ) {
 				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), self::$page, array( 1, 1, 2, 2 ) );
-				// MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), self::$page, 'right', esc_html__( 'Security Issues', 'mainwp' ) );
 			}
 		}
 
 		// Load the Client widget.
 		if ( self::$enable_widgets['client_info'] ) {
 			MainWP_UI::add_widget_box( 'client_info', array( MainWP_Client_Info::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 3 ) );
-			// MainWP_UI::add_widget_box( 'client_info', array( MainWP_Client_Info::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Client info', 'mainwp' ) );
 		}
 
 		// Load the Non-MainWP Changes widget.
 		if ( self::$enable_widgets['non_mainwp_changes'] ) {
 			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 3 ) );
-			// MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Non-MainWP Changes', 'mainwp' ) );
 		}
 
 		// Load the Notes widget.
 		if ( self::$enable_widgets['notes'] ) {
 			MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 2 ) );
-			// MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Notes', 'mainwp' ) );
 		}
 
 		// Load the Recent Posts widget.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
 			if ( self::$enable_widgets['recent_posts'] ) {
 				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 3 ) );
-				// MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), self::$page, 'right', esc_html__( 'Recent Posts', 'mainwp' ) );
 			}
 		}
 
@@ -990,24 +984,20 @@ class MainWP_Manage_Sites {
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			if ( self::$enable_widgets['recent_pages'] ) {
 				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 3 ) );
-				// MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), self::$page, 'right', esc_html__( 'Recent Pages', 'mainwp' ) );
 			}
 		}
 
 		// Load the Site Info widget.
 		MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 2 ) );
-		// MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Child site info', 'mainwp' ) );
 
 		// Load the Pluins widget.
 		if ( self::$enable_widgets['plugins'] ) {
 			MainWP_UI::add_widget_box( 'plugins', array( MainWP_Widget_Plugins::get_class_name(), 'render' ), self::$page, array( 1, 1, 3, 3 ) );
-			// MainWP_UI::add_widget_box( 'plugins', array( MainWP_Widget_Plugins::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Plugins', 'mainwp' ) );
 		}
 
 		// Load the Themes widget.
 		if ( self::$enable_widgets['themes'] ) {
 			MainWP_UI::add_widget_box( 'themes', array( MainWP_Widget_Themes::get_class_name(), 'render' ), self::$page, array( 1, 1, 3, 3 ) );
-			// MainWP_UI::add_widget_box( 'themes', array( MainWP_Widget_Themes::get_class_name(), 'render' ), self::$page, 'left', esc_html__( 'Themes', 'mainwp' ) );
 		}
 
 		$i = 0;

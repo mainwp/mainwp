@@ -252,19 +252,18 @@ class MainWP_UI {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
-	// phpcs:ingnore -- complex.
 	public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false ) {
 
-			/**
-			 * Action: mainwp_before_select_sites_list
-			 *
-			 * Fires before the Select Sites list.
-			 *
-			 * @param object $websites Object containing child sites info.
-			 *
-			 * @since 4.1
-			 */
-			do_action( 'mainwp_before_select_sites_list', $websites );
+		/**
+		 * Action: mainwp_before_select_sites_list
+		 *
+		 * Fires before the Select Sites list.
+		 *
+		 * @param object $websites Object containing child sites info.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_before_select_sites_list', $websites );
 		?>
 			<div id="mainwp-select-sites-body">
 				<div class="ui relaxed divided list" id="mainwp-select-sites-list">

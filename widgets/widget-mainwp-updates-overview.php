@@ -462,7 +462,6 @@ class MainWP_Updates_Overview {
 		</div>
 
 		<input type="hidden" name="updatesoverview_limit_updates_all" id="updatesoverview_limit_updates_all" value="<?php echo intval( $limit_updates_all ); ?>">
-			
 			<?php
 			/**
 			 * Action: mainwp_updates_overview_before_total_updates

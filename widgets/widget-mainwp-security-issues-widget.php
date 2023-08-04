@@ -148,7 +148,7 @@ class MainWP_Security_Issues_Widget {
 							 *
 							 * @since 4.1
 							 */
-							echo esc_attr( apply_filters( 'mainwp_security_issues_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
+							echo esc_url( apply_filters( 'mainwp_security_issues_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
 							?>
 							">
 								<?php

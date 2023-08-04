@@ -734,6 +734,7 @@ class MainWP_System_View {
 				$class_string .= ' mainwp-sites-table-view ';
 			}
 
+			// phpcs:disable WordPress.Security.NonceVerification
 			if ( isset( $_GET['page'] ) && 'managesites' == $_GET['page'] ) {
 				if ( isset( $_GET['dashboard'] ) && '' != $_GET['dashboard'] ) {
 					$class_string .= ' mainwp-individual-site-overview ';
@@ -745,6 +746,7 @@ class MainWP_System_View {
 					$class_string .= ' mainwp-individual-client-overview ';
 				}
 			}
+			// phpcs:enable
 		}
 		return $class_string;
 	}

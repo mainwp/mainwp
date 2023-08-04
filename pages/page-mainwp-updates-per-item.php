@@ -166,7 +166,7 @@ class MainWP_Updates_Per_Item {
 
 										$row_columns = array(
 											'title'   => MainWP_Updates::render_site_link_dashboard( $website, false ),
-											'login'   => '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" data-tooltip="' . esc_attr__( 'Jump to the site WP Admin', 'mainwp' ) . '"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>',
+											'login'   => '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ) . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" data-tooltip="' . esc_attr__( 'Jump to the site WP Admin', 'mainwp' ) . '"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>',
 											'version' => '<strong class="mainwp-768-show">' . esc_html__( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $plugin_upgrade['Version'] ),
 											'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong><a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog" target="_blank" class="open-plugin-details-modal">' . esc_html( $plugin_upgrade['update']['new_version'] ) . '</a>',
 											'trusted' => ( in_array( $slug, $trustedPlugins ) ? true : false ),
@@ -174,7 +174,7 @@ class MainWP_Updates_Per_Item {
 											'client'  => ( isset( $website->client_name ) && '' != $website->client_name ) ? $website->client_name : '',
 										);
 										?>
-										<tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . $website->id . '"' : ''; ?>>
+										<tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . intval( $website->id ) . '"' : ''; ?>>
 											<?php
 											$row_columns     = $updates_table_helper->render_columns( $row_columns, $website );
 											$action_rendered = isset( $row_columns['action'] ) ? true : false;
@@ -352,7 +352,7 @@ class MainWP_Updates_Per_Item {
 										$theme_upgrade = $theme_upgrades[ $slug ];
 										$row_columns   = array(
 											'title'   => MainWP_Updates::render_site_link_dashboard( $website, false ),
-											'login'   => '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" data-tooltip="' . esc_attr__( 'Jump to the site WP Admin', 'mainwp' ) . '"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>',
+											'login'   => '<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ) . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" data-tooltip="' . esc_attr__( 'Jump to the site WP Admin', 'mainwp' ) . '"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>',
 											'version' => '<strong class="mainwp-768-show">' . esc_html__( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $theme_upgrade['Version'] ),
 											'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong>' . esc_html( $theme_upgrade['update']['new_version'] ),
 											'trusted' => ( in_array( $slug, $trustedThemes ) ? true : false ),
@@ -633,7 +633,7 @@ class MainWP_Updates_Per_Item {
 								$diff_in_days             = $now->diff( $plugin_last_updated_date )->format( '%a' );
 								$outdate_notice           = sprintf( $str_format, $diff_in_days );
 								?>
-								<tr site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" dismissed="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . $website->id . '"' : ''; ?>>
+								<tr site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" dismissed="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . intval( $website->id ) . '"' : ''; ?>>
 									<td><strong class="mainwp-768-show"><?php esc_html_e( 'Website:', 'mainwp' ); ?></strong> <?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 									</td>
 									<td><strong class="mainwp-768-show"><?php esc_html_e( 'Version:', 'mainwp' ); ?></strong> <?php echo esc_html( $plugin_outdate['Version'] ); ?></td>

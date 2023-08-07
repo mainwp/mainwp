@@ -1979,7 +1979,8 @@ class MainWP_Post {
 
 		$referer = wp_get_referer();
 
-		if ( isset( $_GET['boilerplate'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification
+		if ( isset( $_GET['boilerplate'] ) ) {
 			if ( 'auto-draft' === $post->post_status ) {
 				$note_title = ( 'bulkpost' === $post_type ) ? esc_html__( 'Create New Boilerplate Post', 'mainwp' ) : esc_html__( 'Create New Boilerplate Page', 'mainwp' );
 			} else {
@@ -1996,7 +1997,7 @@ class MainWP_Post {
 		$note_title = apply_filters( 'mainwp_bulkpost_edit_title', $note_title, $post );
 
 		$message = '';
-		if ( isset( $_GET['message'] ) && 1 == $_GET['message'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['message'] ) && 1 == $_GET['message'] ) {
 			if ( 'bulkpost' === $post_type ) {
 				$message = esc_html__( 'Post updated.', 'mainwp' );
 			} else {
@@ -2004,6 +2005,7 @@ class MainWP_Post {
 			}
 		}
 
+		 // phpcs:enable WordPress.Security.NonceVerification
 		?>
 		<div class="ui alt segment" id="mainwp-add-new-bulkpost">
 			<form name="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" id="post" class="ui form">
@@ -2030,9 +2032,10 @@ class MainWP_Post {
 							<div class="ui yellow message"><?php echo esc_html( $message ); ?></div>
 						<?php
 					}
+					// phpcs:disable WordPress.Security.NonceVerification 
 					?>
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_boilerplate_info_notice' ) ) : ?>
-						<?php if ( isset( $_GET['boilerplate'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+						<?php if ( isset( $_GET['boilerplate'] ) ) : ?>
 						<div class="ui message info">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp_boilerplate_info_notice"></i>
 							<div><?php echo esc_html__( 'Boilerplate gives you the ability to create quickly, edit, and remove repetitive pages or posts across your network of child sites. Using the available placeholders (tokens), you can customize these pages for each site.', 'mainwp' ); ?></div>
@@ -2043,7 +2046,7 @@ class MainWP_Post {
 
 
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-create-new-bulkpost-info-message' ) ) : ?>
-						<?php if ( ! isset( $_GET['boilerplate'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+						<?php if ( ! isset( $_GET['boilerplate'] ) ) : ?>
 						<div class="ui message info">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-create-new-bulkpost-info-message"></i>
 							<?php if ( 'bulkpost' === $post_type ) : ?>
@@ -2054,6 +2057,7 @@ class MainWP_Post {
 						</div>
 						<?php endif; ?>
 					<?php endif; ?>
+					<?php // phpcs:enable WordPress.Security.NonceVerification ?>
 
 					<h3 class="header" id="bulkpost-title"><?php echo esc_html( $note_title ); ?></h3>
 
@@ -2505,7 +2509,9 @@ class MainWP_Post {
 			mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
 			return;
 		}
-		$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification
+		$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0;
+		// phpcs:enable WordPress.Security.NonceVerification
 		self::render_addedit( $post_id, 'BulkEdit' );
 	}
 
@@ -2550,7 +2556,8 @@ class MainWP_Post {
 	 * Attatch MainWP help content.
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && ( 'PostBulkManage' === $_GET['page'] || 'PostBulkAdd' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification
+		if ( isset( $_GET['page'] ) && ( 'PostBulkManage' === $_GET['page'] || 'PostBulkAdd' === $_GET['page'] ) ) {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing posts, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
@@ -2577,6 +2584,7 @@ class MainWP_Post {
 			</div>
 			<?php
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 	}
 
 }

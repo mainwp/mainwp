@@ -514,7 +514,6 @@ class MainWP_Install_Bulk {
 
 		// phpcs:enable WordPress.Security.NonceVerification
 
-
 		$output          = new \stdClass();
 		$output->ok      = array();
 		$output->errors  = array();

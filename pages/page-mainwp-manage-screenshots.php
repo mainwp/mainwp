@@ -51,7 +51,6 @@ class MainWP_Manage_Screenshots {
 		$selected_group  = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
 		$selected_client = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
 		$is_not          = isset( $_REQUEST['isnot'] ) && ( 'yes' == $_REQUEST['isnot'] ) ? true : false;
-		
 
 		if ( ! isset( $_REQUEST['g'] ) ) {
 			$selected_status = get_user_option( 'mainwp_screenshots_filter_status', '' );

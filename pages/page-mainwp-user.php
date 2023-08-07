@@ -1319,7 +1319,7 @@ class MainWP_User {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
-		
+
 		// phpcs:disable WordPress.Security.NonceVerification
 		$userId    = isset( $_POST['userId'] ) ? sanitize_text_field( wp_unslash( $_POST['userId'] ) ) : false;
 		$userName  = isset( $_POST['userName'] ) ? sanitize_text_field( wp_unslash( $_POST['userName'] ) ) : '';

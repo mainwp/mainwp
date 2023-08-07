@@ -704,7 +704,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		global $current_user;
 
 		$user_id = $current_user->ID;
-		$slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$slug    = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( $user_id && ! empty( $slug ) ) {
 			$activate_notices = get_user_option( 'mainwp_hide_activate_notices' );
 			if ( ! is_array( $activate_notices ) ) {
@@ -1147,7 +1147,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			die( -1 );
 		}
 
-		
 		$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['websiteid'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 		if ( empty( $website ) ) {
 			die( -1 );
@@ -1219,7 +1218,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_force_destroy_sessions() {
 		$this->secure_request( 'mainwp_force_destroy_sessions' );
-		
+
 		$website_id = ( isset( $_POST['website_id'] ) ? (int) $_POST['website_id'] : 0 ); // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( ! MainWP_DB::instance()->get_website_by_id( $website_id ) ) {

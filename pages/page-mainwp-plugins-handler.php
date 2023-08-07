@@ -321,8 +321,8 @@ class MainWP_Plugins_Handler {
 	 */
 	public static function save_trusted_plugin_note() {
 		// phpcs:disable WordPress.Security.NonceVerification
-		$slug                = isset( $_POST['slug'] ) ? urldecode( wp_unslash( $_POST['slug'] ) ) : '';
-		$note                = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : '';
+		$slug = isset( $_POST['slug'] ) ? urldecode( wp_unslash( $_POST['slug'] ) ) : '';
+		$note = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : '';
 		// phpcs:enable WordPress.Security.NonceVerification
 		$esc_note            = MainWP_Utility::esc_content( $note );
 		$userExtension       = MainWP_DB_Common::instance()->get_user_extension();

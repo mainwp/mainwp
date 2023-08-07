@@ -1911,7 +1911,7 @@ class MainWP_Post {
 									<div class="error inline">
 										<p>
 										<?php
-											printf( esc_html__( 'This meta box, from the %s plugin, is not compatible with the block editor.', 'mainwp' ), "<strong>{". esc_html( $plugin['Name'] ) . "}</strong>" ); // phpcs:ignore WordPress.Security.EscapeOutput
+											printf( esc_html__( 'This meta box, from the %s plugin, is not compatible with the block editor.', 'mainwp' ), '<strong>{' . esc_html( $plugin['Name'] ) . '}</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput
 										?>
 										</p>
 									</div>

@@ -820,10 +820,10 @@ class MainWP_Settings {
 				</select>
 				<div class="ui hidden fitted divider"></div>
 				<div class="ui secondary segment">
-					<?php printf( esc_html__( 'Universal time is %s.' ), '<code>' .  esc_html( date_i18n( $timezone_format, false, true ) ) . '</code>' ); ?>
+					<?php printf( esc_html__( 'Universal time is %s.' ), '<code>' . esc_html( date_i18n( $timezone_format, false, true ) ) . '</code>' ); ?>
 					<div class="ui hidden fitted divider"></div>
 				<?php if ( get_option( 'timezone_string' ) || ! empty( $current_offset ) ) : ?>
-						<?php printf( esc_html__( 'Local time is %s.' ), '<code>' .  esc_html( date_i18n( $timezone_format ) ) . '</code>' ); ?>
+						<?php printf( esc_html__( 'Local time is %s.' ), '<code>' . esc_html( date_i18n( $timezone_format ) ) . '</code>' ); ?>
 						<div class="ui hidden fitted divider"></div>
 				<?php endif; ?>
 				<?php if ( $check_zone_info && $tzstring ) : ?>
@@ -885,7 +885,7 @@ class MainWP_Settings {
 					echo " checked='checked'";
 					$custom = false;
 				}
-				echo ' /> <span class="date-time-text format-i18n">' .  esc_html( date_i18n( $format ) ) . '</span><code>' . esc_html( $format ) . "</code></label><br />\n";
+				echo ' /> <span class="date-time-text format-i18n">' . esc_html( date_i18n( $format ) ) . '</span><code>' . esc_html( $format ) . "</code></label><br />\n";
 			}
 
 				echo '<label><input type="radio" name="date_format" id="date_format_custom_radio" value="\c\u\s\t\o\m"';
@@ -894,7 +894,7 @@ class MainWP_Settings {
 					'<label for="date_format_custom" class="screen-reader-text">' . esc_html__( 'Custom date format:' ) . '</label>' .
 					'<input type="text" name="date_format_custom" id="date_format_custom" value="' . esc_attr( get_option( 'date_format' ) ) . '" class="small-text" />' .
 					'<br />' .
-					'<em><strong>' . esc_html__( 'Preview:' ) . '</strong> <span class="example">' .  esc_html( date_i18n( get_option( 'date_format' ) ) ) . '</span>' .
+					'<em><strong>' . esc_html__( 'Preview:' ) . '</strong> <span class="example">' . esc_html( date_i18n( get_option( 'date_format' ) ) ) . '</span>' .
 					"<span class='spinner'></span>\n" . '</em>';
 			?>
 		</div>

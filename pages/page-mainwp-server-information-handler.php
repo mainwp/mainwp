@@ -768,7 +768,7 @@ class MainWP_Server_Information_Handler {
 	 * Get WP Root Path.
 	 */
 	public static function get_wp_root() {
-		echo ABSPATH; // phpcs:ignore WordPress.Security.EscapeOutput
+		echo esc_html( ABSPATH );
 	}
 
 	/**

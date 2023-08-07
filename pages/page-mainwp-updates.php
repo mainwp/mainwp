@@ -2259,7 +2259,7 @@ class MainWP_Updates {
 	/**
 	 * Gets the HTML selector to continue updates.
 	 *
-	 * @return string HTML selector.
+	 * @return void.
 	 */
 	public static function get_continue_update_selector() {
 		echo esc_attr( self::$continue_selector );

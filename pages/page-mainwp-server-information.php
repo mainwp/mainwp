@@ -1200,7 +1200,7 @@ class MainWP_Server_Information {
 		?>
 		<tr>
 			<td><?php echo esc_html( $config ); ?></td>
-			<td><?php echo esc_html( $compare ); ?><?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html(  $version ) ) ) . ' ' . $extraText; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+			<td><?php echo esc_html( $compare ); ?><?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html( $version ) ) ) . ' ' . $extraText; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			<td><?php echo( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
 			<?php if ( 'filesize' === $whatType ) { ?>
 				<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>

@@ -728,7 +728,7 @@ class MainWP_Post_Page_Handler {
 								echo esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>';
 								$posting_succeed = true;
 							} else {
-								echo $output->errors[ $website->id ]; // phpcs:ignore WordPress.Security.NonceVerification
+								echo $output->errors[ $website->id ]; // phpcs:ignore WordPress.Security.EscapeOutput
 							}
 							?>
 							</div>

@@ -461,7 +461,7 @@ class MainWP_Updates_Per_Item {
 									MainWP_Updates::set_continue_update_html_selector( 'translations_upgrade_all', $slug );
 								}
 								?>
-								<a href="javascript:void(0)" class="mainwp-update-all-button ui mini button green <?php MainWP_Updates::get_continue_update_selector(); ?>" onClick="return updatesoverview_translations_upgrade_all( '<?php echo $slug; ?>', '<?php echo esc_js( rawurlencode( $translationsInfo[ $slug ]['name'] ) ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+								<a href="javascript:void(0)" class="mainwp-update-all-button ui mini button green <?php MainWP_Updates::get_continue_update_selector(); ?>" onClick="return updatesoverview_translations_upgrade_all( '<?php echo esc_js( $slug ); ?>', '<?php echo esc_js( rawurlencode( $translationsInfo[ $slug ]['name'] ) ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 							<?php endif; ?>
 						<?php endif; ?>
 						</td>

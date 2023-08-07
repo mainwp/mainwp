@@ -1796,7 +1796,7 @@ class MainWP_Post {
 		foreach ( $map as $timeunit => $value ) {
 			list( $unit, $curr ) = $value;
 
-			echo '<input type="hidden" id="hidden_' . esc_attr( $timeunit) . '" name="hidden_' . esc_attr( $timeunit ) . '" value="' . esc_attr( $unit ) . '" />' . "\n";
+			echo '<input type="hidden" id="hidden_' . esc_attr( $timeunit ) . '" name="hidden_' . esc_attr( $timeunit ) . '" value="' . esc_attr( $unit ) . '" />' . "\n";
 			$cur_timeunit = 'cur_' . $timeunit;
 			echo '<input type="hidden" id="' . esc_attr( $cur_timeunit ) . '" name="' . esc_attr( $cur_timeunit ) . '" value="' . esc_attr( $curr ) . '" />' . "\n";
 		}

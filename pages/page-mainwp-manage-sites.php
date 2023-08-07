@@ -914,7 +914,9 @@ class MainWP_Manage_Sites {
 		wp_enqueue_script( 'dashboard' );
 		wp_enqueue_script( 'widgets' );
 
-		$dashboard_siteid = isset( $_GET['dashboard'] ) ? intval( $_GET['dashboard'] ) : null; // phpcs:ignore WordPress.Security.EscapeOutput
+		// phpcs:disable WordPress.Security.EscapeOutput
+		$dashboard_siteid = isset( $_GET['dashboard'] ) ? intval( $_GET['dashboard'] ) : null;
+ 		// phpcs:enable WordPress.Security.EscapeOutput
 
 		/**
 		 * Get getmetaboxes

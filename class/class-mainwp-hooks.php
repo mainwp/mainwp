@@ -1430,10 +1430,12 @@ class MainWP_Hooks {
 	 * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::get_post()
 	 */
 	public function hook_posts_bulk_posting() {
-		$post_id = isset( $_POST['post_id'] ) && $_POST['post_id'] ? intval( $_POST['post_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification
+		$post_id = isset( $_POST['post_id'] ) && $_POST['post_id'] ? intval( $_POST['post_id'] ) : false;
 		if ( $post_id ) {
 			MainWP_Post_Page_Handler::posting_posts( $post_id, 'ajax_posting' );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 		die();
 	}
 

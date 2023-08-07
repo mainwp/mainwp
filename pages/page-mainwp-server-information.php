@@ -1167,14 +1167,16 @@ class MainWP_Server_Information {
 	 * @return bool true.
 	 */
 	public static function render_directory_row( $name, $check, $result, $passed ) {
+		 // phpcs:disable WordPress.Security.EscapeOutput
 		?>
 		<tr>
 			<td><?php echo esc_html( $name ); ?></td>
 			<td><?php echo esc_html( $check ); ?></td>
 			<td><?php echo esc_html( $result ); ?></td>
-			<td class="right aligned"><?php echo ( $passed ? self::get_pass_html() : self::get_warning_html( self::ERROR ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+			<td class="right aligned"><?php echo ( $passed ? self::get_pass_html() : self::get_warning_html( self::ERROR ) ); ?></td>
 		</tr>
 		<?php
+		 // phpcs:enable WordPress.Security.EscapeOutput
 		return true;
 	}
 
@@ -1197,22 +1199,24 @@ class MainWP_Server_Information {
 	 */
 	public static function render_row( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) {
 		$currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $getter ) );
+	 	// phpcs:disable WordPress.Security.EscapeOutput
 		?>
 		<tr>
 			<td><?php echo esc_html( $config ); ?></td>
-			<td><?php echo esc_html( $compare ); ?><?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html( $version ) ) ) . ' ' . $extraText; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+			<td><?php echo esc_html( $compare ); ?><?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html( $version ) ) ) . ' ' . $extraText; ?></td>
 			<td><?php echo( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
 			<?php if ( 'filesize' === $whatType ) { ?>
-				<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+				<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } elseif ( 'get_curl_ssl_version' === $getter ) { ?>
-				<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+				<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } elseif ( ( 'get_max_input_time' === $getter || 'get_max_execution_time' === $getter ) && -1 == $currentVersion ) { ?>
-				<td class="right aligned"><?php echo self::get_pass_html(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+				<td class="right aligned"><?php echo self::get_pass_html(); ?></td>
 			<?php } else { ?>
-				<td class="right aligned"><?php echo ( version_compare( $currentVersion, $version, $compare ) || ( ( null != $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+				<td class="right aligned"><?php echo ( version_compare( $currentVersion, $version, $compare ) || ( ( null != $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
 		<?php } ?>
 		</tr>
 		<?php
+		 // phpcs:enable WordPress.Security.EscapeOutput
 	}
 
 	/**
@@ -1234,22 +1238,24 @@ class MainWP_Server_Information {
 	 */
 	public static function render_row_with_description( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) {
 		$currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $getter ) );
+		// phpcs:disable WordPress.Security.EscapeOutput 
 		?>
 		<tr>
 			<td><?php echo esc_html( $config ); ?></td>
-			<td><?php echo esc_html( $compare ); ?>  <?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html( $version ) ) ) . ' ' . $extraText; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-			<td><?php echo ( true === $currentVersion ? 'true' : $currentVersion ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+			<td><?php echo esc_html( $compare ); ?>  <?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html( $version ) ) ) . ' ' . $extraText; ?></td>
+			<td><?php echo ( true === $currentVersion ? 'true' : $currentVersion );?></td>
 			<?php if ( 'filesize' === $whatType ) { ?>
-			<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+			<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } elseif ( 'get_curl_ssl_version' === $getter ) { ?>
-			<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+			<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } elseif ( 'get_max_input_time' === $getter && -1 == $currentVersion ) { ?>
-			<td class="right aligned"><?php echo self::get_pass_html(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+			<td class="right aligned"><?php echo self::get_pass_html(); ?></td>
 			<?php } else { ?>
-			<td class="right aligned"><?php echo( version_compare( $currentVersion, $version, $compare ) || ( ( null != $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+			<td class="right aligned"><?php echo( version_compare( $currentVersion, $version, $compare ) || ( ( null != $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } ?>
 		</tr>
 		<?php
+		 // phpcs:enable WordPress.Security.EscapeOutput 
 	}
 
 	/**
@@ -1408,13 +1414,15 @@ class MainWP_Server_Information {
 			$lines = array_slice( $lines, 0, $count );
 		}
 
+		// phpcs:disable WordPress.Security.EscapeOutput
 		foreach ( $lines as $line ) {
 			$error = esc_html( $line['error'] );
 			$time  = esc_html( $line['time'] );
 			if ( ! empty( $error ) ) {
-				echo "<tr><td>{$time}</td><td>{$error}</td></tr>"; // phpcs:ignore WordPress.Security.EscapeOutput
+				echo "<tr><td>{$time}</td><td>{$error}</td></tr>";
 			}
 		}
+		// phpcs:enable WordPress.Security.EscapeOutput
 	}
 
 	/**
@@ -1751,9 +1759,11 @@ class MainWP_Server_Information {
 	 */
 	public static function display_mainwp_options() {
 		$options = MainWP_Server_Information_Handler::mainwp_options();
+		// phpcs:disable WordPress.Security.EscapeOutput
 		foreach ( $options as $option ) {
-			echo '<tr><td>' . $option['label'] . '</td><td>' . $option['value'] . '</td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput
+			echo '<tr><td>' . $option['label'] . '</td><td>' . $option['value'] . '</td></tr>';
 		}
+		// phpcs:enable WordPress.Security.EscapeOutput
 	}
 
 	/**

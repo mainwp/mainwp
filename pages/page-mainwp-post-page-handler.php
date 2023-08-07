@@ -408,11 +408,13 @@ class MainWP_Post_Page_Handler {
 	 * Ajax Posting posts.
 	 */
 	public static function ajax_posting_posts() {
+		// phpcs:disable WordPress.Security.NonceVerification
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_post_postingbulk' );
-		$post_id = isset( $_POST['post_id'] ) && $_POST['post_id'] ? intval( $_POST['post_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$post_id = isset( $_POST['post_id'] ) && $_POST['post_id'] ? intval( $_POST['post_id'] ) : false;
 		if ( $post_id ) {
 			self::posting_posts( $post_id, 'ajax_posting' );
 		}
+		 // phpcs:enable WordPress.Security.NonceVerification
 		die();
 	}
 
@@ -422,9 +424,11 @@ class MainWP_Post_Page_Handler {
 	 * Ajax Get sites of groups.
 	 */
 	public static function ajax_get_sites_of_groups() {
+		// phpcs:disable WordPress.Security.NonceVerification
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_get_sites_of_groups' );
-		$groups   = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$groups   = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
 		$websites = MainWP_DB::instance()->get_websites_by_group_ids( $groups );
+		 // phpcs:enable WordPress.Security.NonceVerification
 		$site_Ids = array();
 		if ( $websites ) {
 			foreach ( $websites as $website ) {

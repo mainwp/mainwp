@@ -139,8 +139,9 @@ class MainWP_Manage_Sites {
 		self::$page = MainWP_Manage_Sites_View::init_menu();
 		add_action( 'load-' . self::$page, array( self::get_class_name(), 'on_load_page' ) );
 
-		if ( isset( $_REQUEST['dashboard'] ) ) { // phpcs:ignore WordPress.Security.EscapeOutput
-
+		// phpcs:disable WordPress.Security.EscapeOutput
+		if ( isset( $_REQUEST['dashboard'] ) ) {
+ 		// phpcs:enable WordPress.Security.EscapeOutput
 			/**
 			 * Current user global.
 			 *

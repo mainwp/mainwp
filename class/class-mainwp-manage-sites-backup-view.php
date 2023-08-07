@@ -34,7 +34,7 @@ class MainWP_Manage_Sites_Backup_View {
 			$downloadLink = admin_url( '?sig=' . MainWP_System_Utility::get_download_sig( $fullBackup ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $fullBackup ) ) );
 			$output      .= '<div class="ui grid field">';
 			$output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $fullBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $fullBackup ) ) . '</label>';
-			$output      .= '<div class="ten wide column ui toggle checkbox"><a title="' . basename( $fullBackup ) . '" href="' . $downloadLink . '" class="button">Download</a>';
+			$output      .= '<div class="ten wide column ui toggle checkbox"><a title="' . basename( $fullBackup ) . '" href="' . esc_url( $downloadLink ) . '" class="button">Download</a>';
 			$output      .= '<a href="admin.php?page=SiteRestore&websiteid=' . intval( $website->id ) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . basename( $fullBackup ) . '">Restore</a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
 			$output      .= '</div>';
 			$output      .= '</div>';
@@ -42,21 +42,21 @@ class MainWP_Manage_Sites_Backup_View {
 
 		?>
 		<h3 class="ui dividing header"><?php esc_html_e( 'Backup Details', 'mainwp' ); ?></h3>
-		<h3 class="header"><?php echo ( '' === $output ) ? esc_html__( 'No full backup has been taken yet', 'mainwp' ) : esc_html__( 'Last backups from your files', 'mainwp' ); ?></h3>
+		<h3 class="header"><?php echo ( '' === $output ) ? esc_html__( 'No full backup has been taken yet', 'mainwp' ) : esc_html__( 'Last backups from your files', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></h3>
 		<?php
-		echo $output;
+		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput
 
 		$output = '';
 		foreach ( $dbBackups as $key => $dbBackup ) {
 			$downloadLink = admin_url( '?sig=' . MainWP_System_Utility::get_download_sig( $dbBackup ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $dbBackup ) ) );
 			$output      .= '<div class="ui grid field">';
-			$output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $dbBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $dbBackup ) ) . '</label><div class="ten wide column ui toggle checkbox"><a title="' . basename( $dbBackup ) . '" href="' . $downloadLink . '" download class="button">Download</a></div>';
+			$output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $dbBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $dbBackup ) ) . '</label><div class="ten wide column ui toggle checkbox"><a title="' . basename( $dbBackup ) . '" href="' . esc_url( $downloadLink ) . '" download class="button">Download</a></div>';
 			$output      .= '</div>';
 		}
 		?>
 		<h3 class="header"><?php echo ( '' === $output ) ? esc_html__( 'No database only backup has been taken yet', 'mainwp' ) : esc_html__( 'Last backups from your database', 'mainwp' ); ?></h3>
 		<?php
-		echo $output;
+		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput
 	}
 
 	/**
@@ -101,7 +101,7 @@ class MainWP_Manage_Sites_Backup_View {
 
 		<div class="ui modal" id="managesite-backup-status-box" tabindex="0">
 			<div class="header">
-				<?php echo esc_html_e( 'Backup ', 'mainwp' ); ?><?php echo stripslashes( $website->name ); ?>
+				<?php echo esc_html_e( 'Backup ', 'mainwp' ); ?><?php echo esc_html( stripslashes( $website->name ) ); ?>
 			</div>
 			<div class="scrolling content mainwp-modal-content">
 			</div>
@@ -202,7 +202,7 @@ class MainWP_Manage_Sites_Backup_View {
 							<?php
 							if ( $useGlobal ) :
 								?>
-								selected<?php endif; ?>>Global setting (<?php echo $globalArchiveFormatText; ?>)</option>
+								selected<?php endif; ?>>Global setting (<?php echo esc_html( $globalArchiveFormatText ); ?>)</option>
 							<option value="zip"
 							<?php
 							if ( 'zip' === $archiveFormat ) :

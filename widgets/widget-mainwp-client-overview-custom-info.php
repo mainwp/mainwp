@@ -31,7 +31,7 @@ class MainWP_Client_Overview_Custom_Info {
 	 * @return mixed render_site_info()
 	 */
 	public static function render() {
-		$client_id = isset( $_GET['client_id'] ) ? $_GET['client_id'] : 0;
+		$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( empty( $client_id ) ) {
 			return;
 		}
@@ -49,6 +49,7 @@ class MainWP_Client_Overview_Custom_Info {
 		$client_info           = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id, ARRAY_A );
 		$default_client_fields = MainWP_Client_Handler::get_default_client_fields();
 		?>
+		<div class="mainwp-widget-header">
 			<h3 class="ui header handle-drag">
 			<?php
 			/**
@@ -64,8 +65,8 @@ class MainWP_Client_Overview_Custom_Info {
 			?>
 			<div class="sub header"></div>
 			</h3>
-			<div class="ui section hidden divider"></div>
-			<div class="mainwp-widget-client-card">
+		</div>
+			<div class="mainwp-widget-client-card mainwp-scrolly-overflow">
 				<?php
 				/**
 				 * Actoin: mainwp_clients_overview_info_widget_top
@@ -137,7 +138,6 @@ class MainWP_Client_Overview_Custom_Info {
 					?>
 					</tbody>
 				</table>
-				<a href="admin.php?page=ClientAddField" title="" class="ui button basic green"><?php echo esc_html__( 'Add Custom Client Info', 'mainwp' ); ?></a>
 					<?php
 				} else {
 					?>
@@ -164,6 +164,10 @@ class MainWP_Client_Overview_Custom_Info {
 				 */
 				do_action( 'mainwp_clients_overview_info_widget_bottom', $client_info );
 				?>
+			</div>
+			<div class="ui two columns grid mainwp-widget-footer">
+				<div class="column"><a href="admin.php?page=ClientAddField" title="" class="ui button basic green"><?php echo esc_html__( 'Add Custom Client Info', 'mainwp' ); ?></a></div>
+				<div class="column"></div>
 			</div>
 			<?php
 	}

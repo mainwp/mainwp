@@ -320,11 +320,19 @@ class MainWP_Api_Manager_Key {
 	 * @return array Request response.
 	 */
 	public function get_decrypt_master_api_key() {
-		$decryp_api_key   = '';
-		$enscrypt_api_key = get_option( 'mainwp_extensions_master_api_key', false );
-		if ( false !== $enscrypt_api_key ) {
-			$decryp_api_key = ! empty( $enscrypt_api_key ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_api_key ) : '';
+		$decryp_api_key = '';
+
+		// to check old value.
+		$old_enscrypt = get_option( 'mainwp_extensions_master_api_key', false );
+		if ( false !== $old_enscrypt && is_string( $old_enscrypt ) && ! empty( $old_enscrypt ) ) { // to compatible.
+			// old encrypt.
+			$decryp_api_key = ! empty( $old_enscrypt ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $old_enscrypt ) : '';
+			// convert to new encrypt: to compatible.
+			if ( ! empty( $decryp_api_key ) && is_string( $decryp_api_key ) ) {
+				MainWP_Keys_Manager::instance()->update_key_value( 'mainwp_extensions_master_api_key', $decryp_api_key );
+			}
 		}
+		$decryp_api_key = MainWP_Keys_Manager::instance()->get_keys_value( 'mainwp_extensions_master_api_key' );
 		return $decryp_api_key;
 	}
 

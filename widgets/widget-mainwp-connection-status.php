@@ -85,7 +85,6 @@ class MainWP_Connection_Status {
 
 				$hasSyncErrors = ( '' != $website->sync_errors );
 				$isUp          = ! $hasSyncErrors;
-				$md5Connection = ( 1 == $website->nossl );
 
 				if ( $j != $ALL ) {
 					if ( $j == $SYNCERRORS ) {
@@ -100,21 +99,16 @@ class MainWP_Connection_Status {
 					}
 				}
 
-				$output_md5 = '';
-				if ( $md5Connection ) {
-					$output_md5 = '<div>' . esc_html__( 'MD5 Connection' ) . '<br /><a href="https://kb.mainwp.com/docs/md5-connection-issue/" class="ui button mini green basic" target="_blank" data-tooltip="MD5 Connection" data-inverted="">' . esc_html__( 'Read More', 'mainwp' ) . '</a></div>';
-				}
-
 				$lastSyncTime = ! empty( $website->dtsSync ) ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website->dtsSync ) ) : '';
 
 				ob_start();
 
 				if ( $j == $ALL ) {
-					self::render_all_item( $website, $lastSyncTime, $md5Connection, $output_md5, $hasSyncErrors );
+					self::render_all_item( $website, $lastSyncTime, $hasSyncErrors );
 				} elseif ( $j == $UP ) {
-					self::render_up_item( $website, $lastSyncTime, $md5Connection, $output_md5 );
+					self::render_up_item( $website, $lastSyncTime );
 				} else {
-					self::render_down_item( $website, $lastSyncTime, $md5Connection, $output_md5 );
+					self::render_down_item( $website, $lastSyncTime );
 				}
 
 				/**
@@ -146,6 +140,7 @@ class MainWP_Connection_Status {
 		self::render_status( $current_wpid );
 
 		if ( empty( $current_wpid ) ) {
+
 			self::render_multi_status( $count_connected, $count_disconnected );
 		} else {
 			// Get site by ID $current_wpid.
@@ -163,7 +158,7 @@ class MainWP_Connection_Status {
 	 */
 	public static function render_status( $current_wpid ) {
 		?>
-		<div class="ui grid">
+		<div class="ui grid mainwp-widget-header">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
 					<?php
@@ -186,9 +181,9 @@ class MainWP_Connection_Status {
 						<i class="dropdown icon"></i>
 						<div class="menu">
 							<a class="item" data-tab="no-sites" data-value="no-sites" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Hide the child sites list', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Hide Details', 'mainwp' ); ?></a>
-							<a class="item" data-tab="all-sites" data-value="all-sites" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'See all child sites', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'See All Sites', 'mainwp' ); ?></a>
-							<a class="item" data-tab="connected" data-value="connected" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'See all connected child sites', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'See All Connected', 'mainwp' ); ?></a>
-							<a class="item" data-tab="disconnected" data-value="disconnected" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'See all disconnected child sites', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'See All Disconnected', 'mainwp' ); ?></a>
+							<a class="item" data-tab="all-sites" data-value="all-sites" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'See all child sites', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'All Sites', 'mainwp' ); ?></a>
+							<a class="item" data-tab="connected" data-value="connected" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'See all connected child sites', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Connected', 'mainwp' ); ?></a>
+							<a class="item" data-tab="disconnected" data-value="disconnected" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'See all disconnected child sites', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></a>
 						</div>
 				</div>
 			</div>
@@ -213,7 +208,6 @@ class MainWP_Connection_Status {
 
 			<?php } ?>
 		</div>
-		<div class="ui hidden divider"></div>
 		<?php
 		/**
 		 * Action: mainwp_connection_status_widget_top
@@ -257,13 +251,13 @@ class MainWP_Connection_Status {
 				</h2>
 				</div>
 				<div class="column right aligned ui buttons">
-					<a href="<?php echo $site->url; ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Go to Site', 'mainwp' ); ?></a>
-					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( ' Go to WP Admin', 'mainwp' ); ?></a>
-					<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo $site->id; ?>" onClick="updatesoverview_wp_sync( '<?php echo $site->id; ?>' )" data-tooltip="Sync <?php echo stripslashes( $site->name ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( $site->url ); ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Go to Site', 'mainwp' ); ?></a>
+					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site->id; ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( ' Go to WP Admin', 'mainwp' ); ?></a>
+					<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo intval( $site->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $site->id ); ?>' )" data-tooltip="Sync <?php echo esc_attr( stripslashes( $site->name ) ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 				</div>
 			</div>
 		<?php else : ?>
-			<div class="ui two column stackable grid mainwp_wp_sync" site_id="<?php echo $site->id; ?>">
+			<div class="ui two column stackable grid mainwp_wp_sync" site_id="<?php echo intval( $site->id ); ?>">
 				<div class="column left aligned">
 					<h2 class="ui header">
 					<i class="red unlink icon"></i>
@@ -271,8 +265,8 @@ class MainWP_Connection_Status {
 					</h2>
 				</div>
 				<div class="column right aligned ui buttons">
-					<a href="<?php echo $site->url; ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Go to Site', 'mainwp' ); ?></a>
-					<a href="#" class="mainwp-updates-overview-reconnect-site ui mini green basic button" siteid="<?php echo $site->id; ?>" data-tooltip="Reconnect <?php echo stripslashes( $site->name ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( $site->url ); ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Go to Site', 'mainwp' ); ?></a>
+					<a href="#" class="mainwp-updates-overview-reconnect-site ui mini green basic button" siteid="<?php echo intval( $site->id ); ?>" data-tooltip="Reconnect <?php echo esc_attr( stripslashes( $site->name ) ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 				</div>
 			</div>
 			<?php
@@ -296,33 +290,20 @@ class MainWP_Connection_Status {
 	 * @param int $count_disconnected Disconnected Count.
 	 */
 	public static function render_multi_status( $count_connected, $count_disconnected ) {
+		$count_total = $count_connected + $count_disconnected;
 		?>
-		<div class="ui two column stackable grid">
-			<div class="column center aligned">
-				<div class="ui horizontal statistics large">
-					<div class="green statistic">
-						<div class="value">
-							<a href="javascript:void(0);" onclick="jQuery( '#widget-connect-status-dropdown-selector' ).dropdown( 'set selected','connected' );jQuery( '#widget-connect-status-dropdown-selector' ).closest( '.mainwp-widget' ).find( 'div[data-tab=connected]' ).addClass( 'active' );jQuery( '#widget-connect-status-dropdown-selector' ).closest( '.mainwp-widget' ).find( 'div[data-tab=disconnected]' ).removeClass( 'active' );"><?php echo esc_html( $count_connected ); ?></a>
-						</div>
+		<div class="ui two column stackable grid mainwp-widget-header">
+			<div class="ui multiple progress" id="mainwp-site-status-progress" style="width:100%" data-total="<?php echo esc_attr( $count_total ); ?>" data-value="<?php echo esc_attr( $count_connected ) . ',' . esc_attr( $count_disconnected ); ?>">
+				<div class="green bar"><div class="centered progress"></div></div>
+				<div class="red bar"><div class="centered progress"></div></div>
 						<div class="label">
-							<?php esc_html_e( 'Connected', 'mainwp' ); ?>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="column center aligned">
-				<div class="ui horizontal statistics large">
-					<div class="<?php echo ( 0 < $count_disconnected ) ? 'red' : 'green'; ?> statistic">
-						<div class="value">						
-							<a href="javascript:void(0);" onclick="jQuery( '#widget-connect-status-dropdown-selector' ).dropdown( 'set selected','disconnected' );jQuery( '#widget-connect-status-dropdown-selector' ).closest( '.mainwp-widget' ).find( 'div[data-tab=disconnected]' ).addClass( 'active' );jQuery( '#widget-connect-status-dropdown-selector' ).closest( '.mainwp-widget' ).find( 'div[data-tab=connected]' ).removeClass( 'active' );"><?php echo esc_html( $count_disconnected ); ?></a>
-						</div>
-						<div class="label">
-							<?php esc_html_e( 'Disconnected', 'mainwp' ); ?>
-						</div>
-					</div>
+				<a href="javascript:void(0);" onclick="jQuery( '#widget-connect-status-dropdown-selector' ).dropdown( 'set selected','connected' );jQuery( '#widget-connect-status-dropdown-selector' ).closest( '.mainwp-widget' ).find( 'div[data-tab=connected]' ).addClass( 'active' );jQuery( '#widget-connect-status-dropdown-selector' ).closest( '.mainwp-widget' ).find( 'div[data-tab=disconnected]' ).removeClass( 'active' );"><?php echo esc_html( $count_connected ) . ' Connected'; ?></a> - <a href="javascript:void(0);" onclick="jQuery( '#widget-connect-status-dropdown-selector' ).dropdown( 'set selected','disconnected' );jQuery( '#widget-connect-status-dropdown-selector' ).closest( '.mainwp-widget' ).find( 'div[data-tab=disconnected]' ).addClass( 'active' );jQuery( '#widget-connect-status-dropdown-selector' ).closest( '.mainwp-widget' ).find( 'div[data-tab=connected]' ).removeClass( 'active' );"><?php echo esc_html( $count_disconnected ) . ' Disconnected'; ?></a>
 				</div>
 			</div>
 		</div>
+		<script type="text/javascript">
+			jQuery('#mainwp-site-status-progress').progress();
+		</script>
 		<?php
 	}
 
@@ -335,8 +316,7 @@ class MainWP_Connection_Status {
 	 */
 	public static function render_details( $html_all_sites, $html_online_sites, $html_other_sites ) {
 		?>
-		<div class="ui hidden divider"></div>
-
+		<div class="mainwp-scrolly-overflow">
 		<div class="ui tab" data-tab="no-sites"></div>
 
 		<div class="ui tab" data-tab="all-sites">
@@ -351,7 +331,7 @@ class MainWP_Connection_Status {
 			do_action( 'mainwp_connection_status_before_all_sites_list' )
 			?>
 			<div class="ui middle aligned divided selection list">
-				<?php echo $html_all_sites; ?>
+				<?php echo $html_all_sites; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 			</div>
 			<?php
 			/**
@@ -377,7 +357,7 @@ class MainWP_Connection_Status {
 			do_action( 'mainwp_connection_status_before_connected_sites_list' )
 			?>
 			<div class="ui middle aligned divided selection list">
-				<?php echo $html_online_sites; ?>
+				<?php echo $html_online_sites; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 			</div>
 			<?php
 			/**
@@ -403,7 +383,7 @@ class MainWP_Connection_Status {
 			do_action( 'mainwp_connection_status_before_disconnected_sites_list' )
 			?>
 			<div class="ui middle aligned divided selection list">
-				<?php echo $html_other_sites; ?>
+				<?php echo $html_other_sites; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 			</div>
 			<?php
 			/**
@@ -416,6 +396,7 @@ class MainWP_Connection_Status {
 			do_action( 'mainwp_connection_status_after_disconnected_sites_list' )
 			?>
 		</div>
+		</div>
 		<?php
 	}
 
@@ -425,15 +406,14 @@ class MainWP_Connection_Status {
 	 *
 	 * @param mixed $website Website Info.
 	 * @param mixed $lastSyncTime Last time the Child Site was synced to.
-	 * @param mixed $md5Connection md5 Connection.
-	 * @param mixed $output_md5 md5 decoded output.
 	 * @param mixed $hasSyncErrors Collected errors.
 	 */
-	public static function render_all_item( $website, $lastSyncTime, $md5Connection, $output_md5, $hasSyncErrors ) {
+	public static function render_all_item( $website, $lastSyncTime, $hasSyncErrors ) {
 		?>
-		<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
+		<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( $website->name ) ); ?>">
 			<div class="ui grid">
-				<div class="six wide column middle aligned">
+				<div class="twelve wide column middle aligned">
+					<div>
 					<a href="
 					<?php
 					/**
@@ -443,7 +423,7 @@ class MainWP_Connection_Status {
 					 *
 					 * @since 4.1
 					 */
-					echo esc_attr( apply_filters( 'mainwp_connection_status_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
+					echo esc_url( apply_filters( 'mainwp_connection_status_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
 					?>
 					">
 						<?php
@@ -454,33 +434,22 @@ class MainWP_Connection_Status {
 						 *
 						 * @since 4.1
 						 */
-						echo stripslashes( apply_filters( 'mainwp_connection_status_list_item_title', $website->name, $website ) );
+						echo esc_html( stripslashes( apply_filters( 'mainwp_connection_status_list_item_title', $website->name, $website ) ) );
 						?>
 					</a>
 				</div>
-				<div class="one wide column middle aligned">
-					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
+					<span class="ui small text"><?php esc_html_e( 'Last Synced: ', 'mainwp' ); ?> <?php echo esc_html( $lastSyncTime ); ?></span>
 				</div>
-				<div class="one wide column middle aligned">
-					<a href="<?php echo esc_html( $website->url ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><i class="external alternate icon"></i></a>
+				<div class="four wide middle aligned right aligned column reconnect-wrapper">
+				<div class="ui mini icon buttons">
+				<a class="ui button" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted="" data-position="left center"><i class="sign in alternate icon"></i></a>
+				<a class="ui button" href="<?php echo esc_html( $website->url ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted="" data-position="left center"><i class="external alternate icon"></i></a>
+					<?php if ( $hasSyncErrors ) : ?>
+						<a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site ui button green basic" siteid="<?php echo intval( $website->id ); ?>" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted="" data-position="left center"><i class="linkify icon"></i></a>
+					<?php else : ?>
+						<a href="javascript:void(0)" class="ui button green" siteid="<?php echo intval( $website->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $website->id ); ?>' )" data-tooltip="Sync <?php echo esc_html( stripslashes( $website->name ) ); ?> data" data-inverted="" data-position="left center"><i class="sync alternate icon"></i></a>
+					<?php endif; ?>
 				</div>
-				<div class="four wide column middle aligned">
-				<span><?php echo esc_attr( $lastSyncTime ); ?></span>
-				</div>
-				<div class="four wide column middle aligned right aligned reconnect-wrapper">
-			<?php
-			if ( $md5Connection ) {
-				echo $output_md5;
-			} elseif ( $hasSyncErrors ) {
-				?>
-					<a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site ui button mini green basic" siteid="<?php echo intval( $website->id ); ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>." data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
-				<?php
-			} else {
-				?>
-					<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo intval( $website->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $website->id ); ?>' )" data-tooltip="Sync <?php echo stripslashes( $website->name ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
-				<?php
-			}
-			?>
 				</div>
 			</div>
 		</div>
@@ -492,12 +461,10 @@ class MainWP_Connection_Status {
 	 *
 	 * @param object $website       Object containing the child site info.
 	 * @param string $lastSyncTime  Last time the Child Site was synced to.
-	 * @param bool   $md5Connection MD5 connection.
-	 * @param string $output_md5    MD5 decoded output.
 	 */
-	public static function render_up_item( $website, $lastSyncTime, $md5Connection, $output_md5 ) {
+	public static function render_up_item( $website, $lastSyncTime ) {
 		?>
-	<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
+	<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( $website->name ) ); ?>">
 		<div class="ui grid">
 			<div class="six wide column middle aligned">
 					<a href="
@@ -509,7 +476,7 @@ class MainWP_Connection_Status {
 					 *
 					 * @since 4.1
 					 */
-					echo esc_attr( apply_filters( 'mainwp_connection_status_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
+					echo esc_url( apply_filters( 'mainwp_connection_status_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
 					?>
 					">
 						<?php
@@ -520,12 +487,12 @@ class MainWP_Connection_Status {
 						 *
 						 * @since 4.1
 						 */
-						echo stripslashes( apply_filters( 'mainwp_connection_status_list_item_title', $website->name, $website ) );
+						echo esc_html( stripslashes( apply_filters( 'mainwp_connection_status_list_item_title', $website->name, $website ) ) );
 						?>
 					</a>
 			</div>
 			<div class="one wide column middle aligned">
-				<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
+				<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
 			</div>
 			<div class="one wide column middle aligned">
 				<a href="<?php echo esc_html( $website->url ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><i class="external alternate icon"></i></a>
@@ -534,15 +501,7 @@ class MainWP_Connection_Status {
 				<span><?php echo esc_attr( $lastSyncTime ); ?></span>
 			</div>
 			<div class="four wide column middle aligned right aligned">
-		<?php
-		if ( $md5Connection ) {
-			echo $output_md5;
-		} else {
-			?>
-				<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo intval( $website->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $website->id ); ?>' )" data-tooltip="Sync <?php echo stripslashes( $website->name ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
-			<?php
-		}
-		?>
+			<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo intval( $website->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $website->id ); ?>' )" data-tooltip="Sync <?php echo esc_html( stripslashes( $website->name ) ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 			</div>
 		</div>
 	</div>
@@ -554,12 +513,10 @@ class MainWP_Connection_Status {
 	 *
 	 * @param object $website       Object containing the child site info.
 	 * @param string $lastSyncTime  Last time the Child Site was synced to.
-	 * @param bool   $md5Connection MD5 connection.
-	 * @param string $output_md5    MD5 decoded output.
 	 */
-	public static function render_down_item( $website, $lastSyncTime, $md5Connection, $output_md5 ) {
+	public static function render_down_item( $website, $lastSyncTime ) {
 		?>
-		<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
+		<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( $website->name ) ); ?>">
 			<div class="ui grid">
 				<div class="six wide column middle aligned">
 					<a href="
@@ -571,7 +528,7 @@ class MainWP_Connection_Status {
 					 *
 					 * @since 4.1
 					 */
-					echo esc_attr( apply_filters( 'mainwp_connection_status_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
+					echo esc_url( apply_filters( 'mainwp_connection_status_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
 					?>
 					">
 						<?php
@@ -582,12 +539,12 @@ class MainWP_Connection_Status {
 						 *
 						 * @since 4.1
 						 */
-						echo stripslashes( apply_filters( 'mainwp_connection_status_list_item_title', $website->name, $website ) );
+						echo esc_attr( stripslashes( apply_filters( 'mainwp_connection_status_list_item_title', $website->name, $website ) ) );
 						?>
 					</a>
 				</div>
 				<div class="one wide column middle aligned">
-					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
+					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
 				</div>
 				<div class="one wide column middle aligned">
 					<a href="<?php echo esc_html( $website->url ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><i class="external alternate icon"></i></a>
@@ -596,15 +553,7 @@ class MainWP_Connection_Status {
 					<span><?php echo esc_attr( $lastSyncTime ); ?></span>
 				</div>
 				<div class="four wide column middle aligned right aligned reconnect-wrapper">
-				<?php
-				if ( $md5Connection ) {
-					echo $output_md5;
-				} else {
-					?>
-					<a href="#" class="mainwp-updates-overview-reconnect-site" siteid="<?php echo intval( $website->id ); ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
-					<?php
-				}
-				?>
+				<a href="#" class="mainwp-updates-overview-reconnect-site" siteid="<?php echo intval( $website->id ); ?>" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 				</div>
 			</div>
 		</div>

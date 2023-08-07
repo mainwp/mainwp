@@ -108,9 +108,8 @@ class MainWP_Logger {
 	 */
 	public static function instance() {
 		if ( null == self::$instance ) {
-			self::$instance = new MainWP_Logger();
+			self::$instance = new self();
 		}
-
 		return self::$instance;
 	}
 
@@ -269,17 +268,6 @@ class MainWP_Logger {
 		return $this->log( $text, $priority, $log_color, $forced );
 	}
 
-	/**
-	 * Method log_execution_time().
-	 *
-	 * @param string $text Log record text.
-	 *
-	 * Log the execution time value.
-	 */
-	public function log_execution_time( $text = '' ) {
-		$exec_time = self::get_execution_time();
-		self::instance()->log_action( 'execution time (sec) :: ' . ( ! empty( $text ) ? (string) $text . ' :: ' : '' ) . $exec_time, self::EXECUTION_TIME_LOG_PRIORITY );
-	}
 
 	/**
 	 * Method log_update_check().
@@ -287,7 +275,7 @@ class MainWP_Logger {
 	 * @param string $text Log update check.
 	 */
 	public function log_update_check( $text = '' ) {
-		self::instance()->log_action( $text, self::UPDATE_CHECK_LOG_PRIORITY );
+		$this->log_action( $text, self::UPDATE_CHECK_LOG_PRIORITY );
 	}
 
 	/**
@@ -308,7 +296,7 @@ class MainWP_Logger {
 			return $this->log( '[-] [-]  ::' . $action . ':: ' . $message, self::DEBUG );
 		}
 
-		return $this->log( '[' . $website->name . '] [' . MainWP_Utility::get_nice_url( $website->url ) . ']  ::' . $action . ':: ' . $message, self::DEBUG );
+		return $this->log( '[' . $website->name . '] [' . MainWP_Utility::get_nice_url( $website->url ) . ']  ::' . $action . ':: ' . $message, self::DEBUG, 0, false, $website );
 	}
 
 	/**
@@ -353,7 +341,7 @@ class MainWP_Logger {
 			$stackTrace = "\n" . ob_get_clean();
 		}
 		if ( empty( $website ) ) {
-			return $this->log( '[-] [-]  ::' . $action . ':: ' . $message . $stackTrace, self::WARNING );
+			return $this->log( '[-] [-]  :: ' . $action . ' :: ' . $message . $stackTrace, self::WARNING );
 		}
 
 		return $this->log( '[' . $website->name . '] [' . MainWP_Utility::get_nice_url( $website->url ) . ']  ::' . $action . ':: ' . $message . $stackTrace, self::WARNING );
@@ -368,16 +356,17 @@ class MainWP_Logger {
 	 * @param int    $priority Set priority.
 	 * @param int    $log_color Set color.
 	 * @param bool   $forced forced logging.
+	 * @param mixed  $website website object.
 	 *
 	 * @return bool true|false Default is False.
 	 */
-	private function log_to_db( $text, $priority, $log_color = 0, $forced = false ) {
+	private function log_to_db( $text, $priority, $log_color = 0, $forced = false, $website = false ) {
 
 		if ( self::DISABLED === $this->logPriority ) {
 			return;
 		}
 
-		$priority = apply_filters( 'mainwp_log_to_db_priority', $priority );
+		$priority = apply_filters( 'mainwp_log_to_db_priority', $priority, $website );
 
 		$do_log = false;
 
@@ -388,6 +377,8 @@ class MainWP_Logger {
 		} elseif ( $this->logPriority >= $priority ) {
 			$do_log = true;
 		}
+
+		$do_log = apply_filters( 'mainwp_log_do_to_db', $do_log, $website );
 
 		$text = $this->prepare_log_info( $text );
 
@@ -437,19 +428,20 @@ class MainWP_Logger {
 	 * @param int    $priority Set priority.
 	 * @param int    $log_color Set color.
 	 * @param bool   $forced forced logging.
+	 * @param mixed  $website Site object.
 	 *
 	 * @return bool true|false Default is False.
 	 */
-	private function log( $text, $priority,  $log_color = 0, $forced = false ) { // phpcs:ignore -- complex function.
+	private function log( $text, $priority,  $log_color = 0, $forced = false, $website = false ) { // phpcs:ignore -- complex function.
 
 		if ( self::DISABLED == $this->logPriority ) {
 			return;
 		}
 
-		$log_to_db = apply_filters( 'mainwp_logger_to_db', true );
+		$log_to_db = apply_filters( 'mainwp_logger_to_db', true, $website );
 
 		if ( $log_to_db ) {
-			return $this->log_to_db( $text, $priority, $log_color, $forced );
+			return $this->log_to_db( $text, $priority, $log_color, $forced, $website );
 		}
 
 		$text = $this->prepare_log_info( $text );
@@ -572,35 +564,63 @@ class MainWP_Logger {
 	/**
 	 * Method init_execution_time().
 	 *
-	 * @param string $code execution time code.
+	 * @param string $time_index index for timer.
 	 *
 	 * Init execution time start value.
 	 */
-	public function init_execution_time( $code = '' ) {
+	public function init_execution_time( $time_index = '' ) {
 		if ( null === self::$time_start || ! is_array( self::$time_start ) ) {
 			self::$time_start = array( 'start' => microtime( true ) );
-			$this->log_action( 'init execution time :: [code=start]', self::EXECUTION_TIME_LOG_PRIORITY );
-			$code = 'start';
+			$this->log_action( 'execution time :: init :: [start]', self::EXECUTION_TIME_LOG_PRIORITY );
 		}
 
-		if ( ! empty( $code ) && is_string( $code ) && 'start' !== $code ) {
-			self::$time_start[ $code ] = microtime( true );
-			$this->log_action( 'init execution time :: [code=' . $code . ']', self::EXECUTION_TIME_LOG_PRIORITY );
+		if ( ! empty( $time_index ) && is_string( $time_index ) && 'start' !== $time_index ) {
+			self::$time_start[ $time_index ] = microtime( true );
+			$this->log_action( 'execution time :: init :: [' . $time_index . ']', self::EXECUTION_TIME_LOG_PRIORITY );
 		}
 	}
+
+	/**
+	 * Method log_execution_time().
+	 *
+	 * @param string $text Log record text.
+	 *
+	 * Log the execution time value.
+	 */
+	public function log_execution_time( $text = '' ) {
+		$exec_time = $this->get_execution_time();
+		$this->log_action( 'execution time :: ' . ( ! empty( $text ) ? (string) $text : '<empty>' ) . ' :: [time=' . $exec_time . '] (microsec)', self::EXECUTION_TIME_LOG_PRIORITY );
+	}
+
 
 	/**
 	 * Method get_execution_time().
 	 *
 	 * Get the execution time value.
 	 *
+	 * @param string $time_index Index for timer.
+	 *
 	 * @return int execution time.
 	 */
-	private function get_execution_time() {
-		if ( empty( $this->time_start ) ) {
+	private function get_execution_time( $time_index = '' ) {
+
+		if ( empty( self::$time_start ) ) {
 			return 0;
 		}
-		return round( microtime( true ) - $this->time_start, 6 ); // seconds.
+
+		$start = 0;
+		if ( ! empty( $time_index ) ) {
+			$start = is_array( self::$time_start ) && isset( self::$time_start[ $time_index ] ) ? self::$time_start[ $time_index ] : 0;
+		}
+
+		if ( empty( $start ) ) {
+			$start = is_array( self::$time_start ) && isset( self::$time_start['start'] ) ? self::$time_start['start'] : 0;
+		}
+
+		if ( empty( $start ) ) {
+			return 0;
+		}
+		return round( microtime( true ) - $start, 6 ); // seconds.
 	}
 
 	/**
@@ -727,9 +747,9 @@ class MainWP_Logger {
 				$line = str_replace( '[data-end]', $end_wrapper, $line );
 			}
 
-			echo '<div class="item" style="color:' . $currentColor . '"><div class="mainwpactionlogsline">';
+			echo '<div class="item" style="color:' . esc_html( $currentColor ) . '"><div class="mainwpactionlogsline">';
 
-			echo $prefix . ' ' . $line;
+			echo $prefix . ' ' . $line; // phpcs:ignore WordPress.Security.EscapeOutput
 
 			echo '</div></div>';
 		}
@@ -805,11 +825,11 @@ class MainWP_Logger {
 					echo '</div></div>';
 				}
 
-				echo '<div class="item" style="color:' . $currentColor . '"><div class="mainwpactionlogsline">';
+				echo '<div class="item" style="color:' . esc_html( $currentColor ) . '"><div class="mainwpactionlogsline">';
 				$fontOpen = true;
 			}
 
-			echo htmlentities( $line );
+			echo esc_html( htmlentities( $line ) );
 		}
 
 		if ( $fontOpen ) {

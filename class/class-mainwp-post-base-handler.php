@@ -59,18 +59,18 @@ abstract class MainWP_Post_Base_Handler {
 
 		$this->check_security( $action, $query_arg );
 
-		if ( isset( $_POST['dts'] ) ) {
+		if ( isset( $_POST['dts'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$ajaxPosts = get_option( 'mainwp_ajaxposts' );
 			if ( ! is_array( $ajaxPosts ) ) {
 				$ajaxPosts = array();
 			}
 
 			// If already processed, just quit!
-			if ( isset( $ajaxPosts[ $action ] ) && ( $ajaxPosts[ $action ] == $_POST['dts'] ) ) {
+			if ( isset( $ajaxPosts[ $action ] ) && ( $ajaxPosts[ $action ] == $_POST['dts'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 				die( wp_json_encode( array( 'error' => esc_html__( 'Double request!', 'mainwp' ) ) ) );
 			}
 
-			$ajaxPosts[ $action ] = sanitize_text_field( wp_unslash( $_POST['dts'] ) );
+			$ajaxPosts[ $action ] = sanitize_text_field( wp_unslash( $_POST['dts'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 			MainWP_Utility::update_option( 'mainwp_ajaxposts', $ajaxPosts );
 		}
 	}
@@ -93,7 +93,7 @@ abstract class MainWP_Post_Base_Handler {
 		} else {
 			$adminurl = strtolower( admin_url() );
 			$referer  = strtolower( wp_get_referer() );
-			$result   = isset( $_REQUEST[ $query_arg ] ) ? wp_verify_nonce( sanitize_key( $_REQUEST[ $query_arg ] ), $action ) : false;
+			$result   = isset( $_REQUEST[ $query_arg ] ) ? wp_verify_nonce( sanitize_key( $_REQUEST[ $query_arg ] ), $action ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
 			if ( ! $result ) {
 				$secure = false;

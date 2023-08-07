@@ -212,12 +212,60 @@ class MainWP_Server_Information_Handler {
 		if ( ! empty( $conf_loc ) ) {
 			$conf['config'] = $conf_loc;
 		}
+		$errors = array();
+
+		if ( function_exists( 'openssl_pkey_new' ) ) {
 			$res = openssl_pkey_new( $conf );
+			openssl_pkey_export( $res, $privkey, null, $conf );
+
+			$error = '';
+			while ( ( $errorRow = openssl_error_string() ) !== false ) {
+				$error = $errorRow . "\n" . $error;
+			}
+			if ( ! empty( $error ) ) {
+				$errors[] = $error;
+			}
+		}
+
+		return empty( $errors ) ? '' : implode( ' - ', $errors );
+	}
+
+	/**
+	 * To verify openssl working.
+	 *
+	 * @return bool Working status.
+	 */
+	public static function get_openssl_working_status() {
+
+		$ok = false;
+
+		if ( function_exists( 'openssl_verify' ) && function_exists( 'openssl_pkey_new' ) ) {
+
+			$conf = array(
+				'private_key_bits' => 2048,
+			);
+
+			$conf_loc = MainWP_System_Utility::get_openssl_conf();
+			if ( ! empty( $conf_loc ) ) {
+				$conf['config'] = $conf_loc;
+			}
+
+			$res = openssl_pkey_new( $conf );
+
 			@openssl_pkey_export( $res, $privkey, null, $conf ); // phpcs:ignore -- prevent warning.
+			$details = openssl_pkey_get_details( $res );
 
-		$str = openssl_error_string();
+			if ( is_array( $details ) && isset( $details['key'] ) ) {
+				$publicKey = $details['key'];
+				$data      = 'working status';
+				openssl_sign( $data, $signature, $privkey ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+				if ( ! empty( $signature ) ) {
+					$ok = openssl_verify( $data, $signature, $publicKey );
+				}
+			}
+		}
 
-		return ( stristr( $str, 'NCONF_get_string:no value' ) ? '' : $str );
+		return 1 === $ok;
 	}
 
 	/**

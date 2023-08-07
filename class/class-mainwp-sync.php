@@ -124,24 +124,27 @@ class MainWP_Sync {
 
 			$saved_days_number = apply_filters( 'mainwp_site_actions_saved_days_number', 30 );
 
+			$postdata = array(
+				'optimize'                        => ( ( get_option( 'mainwp_optimize', 0 ) == 1 ) ? 1 : 0 ),
+				'cloneSites'                      => ( ! $cloneEnabled ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ) ),
+				'othersData'                      => wp_json_encode( $othersData ),
+				'server'                          => get_admin_url(),
+				'numberdaysOutdatePluginTheme'    => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
+				'primaryBackup'                   => $primaryBackup,
+				'siteId'                          => $pWebsite->id,
+				'child_actions_saved_days_number' => intval( $saved_days_number ),
+				'pingnonce'                       => MainWP_Utility::instance()->create_site_nonce( 'pingnonce', $pWebsite->id ),
+			);
+
 			$information = MainWP_Connect::fetch_url_authed(
 				$pWebsite,
 				'stats',
-				array(
-					'optimize'                        => ( ( get_option( 'mainwp_optimize', 0 ) == 1 ) ? 1 : 0 ),
-					'cloneSites'                      => ( ! $cloneEnabled ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ) ),
-					'othersData'                      => wp_json_encode( $othersData ),
-					'server'                          => get_admin_url(),
-					'numberdaysOutdatePluginTheme'    => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
-					'primaryBackup'                   => $primaryBackup,
-					'siteId'                          => $pWebsite->id,
-					'child_actions_saved_days_number' => intval( $saved_days_number ),
-				),
+				$postdata,
 				true,
 				$pForceFetch
 			);
 			$return      = self::sync_information_array( $pWebsite, $information, '', 1, false, $pAllowDisconnect );
-
+			MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );
 			return $return;
 		} catch ( MainWP_Exception $e ) {
 			$sync_errors  = '';
@@ -155,6 +158,7 @@ class MainWP_Sync {
 				$check_result = 1;
 			}
 
+			MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );
 			return self::sync_information_array( $pWebsite, $information, $sync_errors, $check_result, true, $pAllowDisconnect );
 		}
 	}
@@ -420,11 +424,6 @@ class MainWP_Sync {
 			$done                         = true;
 		}
 
-		if ( isset( $information['nossl'] ) ) {
-			$websiteValues['nossl'] = $information['nossl'];
-			$done                   = true;
-		}
-
 		if ( isset( $information['wpe'] ) ) {
 			$websiteValues['wpe'] = $information['wpe'];
 			$done                 = true;
@@ -574,7 +573,7 @@ class MainWP_Sync {
 	}
 
 	/**
-	 * Method sync_site_icon()
+	 * Method get_wp_icon()
 	 *
 	 * Get site's icon.
 	 *
@@ -594,7 +593,7 @@ class MainWP_Sync {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
-	public static function sync_site_icon( $siteId = null ) {
+	public static function get_wp_icon( $siteId = null ) {
 		if ( MainWP_Utility::ctype_digit( $siteId ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {

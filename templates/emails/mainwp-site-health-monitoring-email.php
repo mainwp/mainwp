@@ -23,7 +23,7 @@ if ( empty( $heading ) ) {
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=<?php bloginfo( 'charset' ); ?>" />
-		<title><?php echo get_bloginfo( 'name', 'display' ); ?></title>
+		<title><?php echo esc_html( get_bloginfo( 'name', 'display' ) ); ?></title>
 	</head>
 	<body marginwidth="0" topmargin="0" marginheight="0" offset="0" style="background-color:#f7f7f7;font-family:'Lato',sans-serif;">
 		<div id="mainwp-email-wrapper" style="padding: 30px 0;">
@@ -65,15 +65,15 @@ if ( empty( $heading ) ) {
 								<td align="left" valign="top" style="padding:30px 30px 0 30px;">
 									<strong><?php esc_html_e( 'Hi there', 'mainwp' ); ?>,</strong>
 									<?php if ( 80 <= $site->health_value ) : ?>
-									<p><?php printf( esc_html__( 'The site health check shows that your site %1$s (%2$s) health is ', 'mainwp' ), $site_name, $site_url ); ?><strong style="color:#7fb100;"><?php esc_html_e( 'Good', 'mainwp' ); ?>.</strong></p>
+									<p><?php printf( esc_html__( 'The site health check shows that your site %1$s (%2$s) health is ', 'mainwp' ), $site_name, $site_url ); // phpcs:ignore WordPress.Security.EscapeOutput ?><strong style="color:#7fb100;"><?php esc_html_e( 'Good', 'mainwp' ); ?>.</strong></p>
 									<?php else : ?>
-									<p><?php printf( esc_html__( 'The site health check shows that your site %1$s (%2$s) health ', 'mainwp' ), $site_name, $site_url ); ?><strong style="color:#f2711c;"><?php esc_html_e( 'Should be improved ', 'mainwp' ); ?></strong><?php esc_html_e( 'as soon as possible to improve its performance and security.', 'mainwp' ); ?></p>
+									<p><?php printf( esc_html__( 'The site health check shows that your site %1$s (%2$s) health ', 'mainwp' ), $site_name, $site_url ); // phpcs:ignore WordPress.Security.EscapeOutput ?><strong style="color:#f2711c;"><?php esc_html_e( 'Should be improved ', 'mainwp' ); ?></strong><?php esc_html_e( 'as soon as possible to improve its performance and security.', 'mainwp' ); ?></p>
 									<?php endif; ?>
 								</td>
 							</tr>
 							<tr>
 								<td align="left" valign="top" style="padding:30px 30px 0 30px;">
-									<strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong><?php echo MainWP\Dashboard\MainWP_Utility::format_timestamp( time() ); ?>
+									<strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong><?php echo MainWP\Dashboard\MainWP_Utility::format_timestamp( time() ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 								</td>
 							</tr>
 								<?php
@@ -86,15 +86,15 @@ if ( empty( $heading ) ) {
 										<td align="left" valign="top" style="padding:30px 30px 0 30px;">
 											<strong><?php esc_html_e( 'Hi there', 'mainwp' ); ?>,</strong>
 											<?php if ( 80 <= $site->health_value ) : ?>
-											<p><?php printf( esc_html__( 'The site health check shows that your site %1$s (%2$s) health is ', 'mainwp' ), $site_name, $site_url ); ?><strong style="color:#7fb100;"><?php esc_html_e( 'Good', 'mainwp' ); ?>.</strong></p>
+											<p><?php printf( esc_html__( 'The site health check shows that your site %1$s (%2$s) health is ', 'mainwp' ), $site_name, $site_url ); // phpcs:ignore WordPress.Security.EscapeOutput ?><strong style="color:#7fb100;"><?php esc_html_e( 'Good', 'mainwp' ); ?>.</strong></p>
 											<?php else : ?>
-											<p><?php printf( esc_html__( 'The site health check shows that your site %1$s (%2$s) health ', 'mainwp' ), $site_name, $site_url ); ?><strong style="color:#f2711c;"><?php esc_html_e( 'Should be improved ', 'mainwp' ); ?></strong><?php esc_html_e( 'as soon as possible to improve its performance and security.', 'mainwp' ); ?></p>
+											<p><?php printf( esc_html__( 'The site health check shows that your site %1$s (%2$s) health ', 'mainwp' ), $site_name, $site_url ); // phpcs:ignore WordPress.Security.EscapeOutput ?><strong style="color:#f2711c;"><?php esc_html_e( 'Should be improved ', 'mainwp' ); ?></strong><?php esc_html_e( 'as soon as possible to improve its performance and security.', 'mainwp' ); ?></p>
 											<?php endif; ?>
 										</td>
 									</tr>
 									<tr>
 										<td align="left" valign="top" style="padding:30px 30px 0 30px;">
-											<strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong><?php echo MainWP\Dashboard\MainWP_Utility::format_timestamp( time() ); ?>
+											<strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong><?php echo MainWP\Dashboard\MainWP_Utility::format_timestamp( time() ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 										</td>
 									</tr>
 									<?php
@@ -103,7 +103,7 @@ if ( empty( $heading ) ) {
 							<?php } ?>
 							<tr>
 								<td align="left" valign="top" style="padding:30px 30px 0 30px;">
-									<a href="<?php echo admin_url( 'admin.php?page=MonitoringSites' ); ?>" style="color:#7fb100;text-decoration:none;"><?php echo esc_html__( 'Click here', 'mainwp' ); ?></a> <?php echo esc_html__( 'to check your site status.', 'mainwp' ); ?>
+									<a href="<?php echo esc_url( admin_url( 'admin.php?page=MonitoringSites' ) ); ?>" style="color:#7fb100;text-decoration:none;"><?php echo esc_html__( 'Click here', 'mainwp' ); ?></a> <?php echo esc_html__( 'to check your site status.', 'mainwp' ); ?>
 								</td>
 							</tr>
 							<!-- End Body -->

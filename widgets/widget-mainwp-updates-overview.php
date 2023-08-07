@@ -68,8 +68,8 @@ class MainWP_Updates_Overview {
 		$request = wp_remote_post( $url, $args );
 
 		if ( is_wp_error( $request ) ) {
-			$url  = isset( $_REQUEST['url'] ) ? esc_url_raw( wp_unslash( $_REQUEST['url'] ) ) : '';
-			$name = isset( $_REQUEST['name'] ) ? wp_unslash( $_REQUEST['name'] ) : '';
+			$url  = isset( $_REQUEST['url'] ) ? esc_url_raw( wp_unslash( $_REQUEST['url'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+			$name = isset( $_REQUEST['name'] ) ? wp_unslash( $_REQUEST['name'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 			$res  = new \WP_Error( 'plugins_api_failed', esc_html__( '<h3>No plugin information found.</h3> This may be a premium plugin and no other details are available from WordPress.', 'mainwp' ) . ' ' . ( '' == $url ? esc_html__( 'Please visit the plugin website for more information.', 'mainwp' ) : esc_html__( 'Please visit the plugin website for more information: ', 'mainwp' ) . '<a href="' . esc_html( rawurldecode( $url ) ) . '" target="_blank">' . esc_html( rawurldecode( $name ) ) . '</a>' ), $request->get_error_message() );
 
 			return $res;
@@ -94,35 +94,6 @@ class MainWP_Updates_Overview {
 	 */
 	public static function render() {
 		self::render_sites();
-	}
-
-	/**
-	 * Method sync_site()
-	 *
-	 * Sync Child Site.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_sync_values()
-	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_website()
-	 */
-	public static function sync_site() {
-		$website = null;
-		$wp_id   = isset( $_POST['wp_id'] ) ? intval( $_POST['wp_id'] ) : false;
-		if ( $wp_id ) {
-			$website = MainWP_DB::instance()->get_website_by_id( $wp_id );
-		}
-
-		if ( null == $website ) {
-			die( wp_json_encode( array( 'error' => esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
-		}
-
-		if ( MainWP_Sync::sync_website( $website ) ) {
-			die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
-		}
-
-		$website = MainWP_DB::instance()->get_website_by_id( $website->id );
-
-		die( wp_json_encode( array( 'error' => esc_html( wp_strip_all_tags( $website->sync_errors ) ) ) ) );
 	}
 
 	/**
@@ -397,8 +368,8 @@ class MainWP_Updates_Overview {
 		$limit_updates_all = apply_filters( 'mainwp_limit_updates_all', 0 );
 		$continue_update   = '';
 		if ( $limit_updates_all > 0 ) {
-			if ( isset( $_GET['continue_update'] ) && '' != $_GET['continue_update'] ) {
-				$continue_update = sanitize_text_field( wp_unslash( $_GET['continue_update'] ) );
+			if ( isset( $_GET['continue_update'] ) && '' != $_GET['continue_update'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+				$continue_update = sanitize_text_field( wp_unslash( $_GET['continue_update'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 			}
 		}
 
@@ -428,6 +399,7 @@ class MainWP_Updates_Overview {
 		$can_total_update = ( $user_can_update_wordpress && $user_can_update_plugins && $user_can_update_themes && $user_can_update_translation ) ? true : false;
 
 		self::render_total_update( $total_upgrades, $lastSyncMsg, $can_total_update, $limit_updates_all );
+		echo '<div class="mainwp-scrolly-overflow">';
 		self::render_wordpress_update( $user_can_update_wordpress, $total_wp_upgrades, $globalView, $current_wpid, $continue_update );
 		self::render_plugins_update( $user_can_update_plugins, $total_plugin_upgrades, $globalView, $current_wpid, $continue_update );
 		self::render_themes_update( $user_can_update_themes, $total_theme_upgrades, $globalView, $current_wpid, $continue_update );
@@ -436,6 +408,7 @@ class MainWP_Updates_Overview {
 		}
 		self::render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid );
 		self::render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid );
+
 		self::render_global_update(
 			$user_can_update_wordpress,
 			$total_wp_upgrades,
@@ -452,6 +425,7 @@ class MainWP_Updates_Overview {
 			$all_translations_updates
 		);
 		self::render_bottom( $websites, $globalView );
+		echo '</div>';
 	}
 
 	/**
@@ -469,7 +443,7 @@ class MainWP_Updates_Overview {
 			$globalView = false;
 		}
 		?>
-		<div class="ui grid">
+		<div class="ui grid mainwp-widget-header">
 			<div class="sixteen wide column">
 				<h3 class="ui header handle-drag">
 					<?php
@@ -482,10 +456,11 @@ class MainWP_Updates_Overview {
 					 */
 					echo esc_html( apply_filters( 'mainwp_updates_overview_widget_title', esc_html__( 'Updates Overview', 'mainwp' ) ) );
 					?>
-					<div class="sub header"><?php echo $lastSyncMsg; ?></div>
+					<div class="sub header"><?php echo $lastSyncMsg; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
 				</h3>
 			</div>
 		</div>
+
 		<input type="hidden" name="updatesoverview_limit_updates_all" id="updatesoverview_limit_updates_all" value="<?php echo intval( $limit_updates_all ); ?>">
 			<?php
 			/**
@@ -501,13 +476,14 @@ class MainWP_Updates_Overview {
 				<div class="eight wide column">
 					<div class="ui large statistic horizontal">
 						<div class="value">
-						<?php echo $total_upgrades; ?>
+						<?php echo intval( $total_upgrades ); ?>
 					</div>
 					<div class="label">
 						<?php esc_html_e( 'Total Updates', 'mainwp' ); ?>
 					</div>
 					</div>
 				</div>
+
 				<div class="eight wide column middle aligned">
 				<?php
 				/**
@@ -517,8 +493,8 @@ class MainWP_Updates_Overview {
 				 *
 				 * @since 4.1
 				 */
-				if ( $can_total_update ) :
-					?>
+				?>
+				<?php if ( $can_total_update ) : ?>
 					<?php if ( ! get_option( 'mainwp_hide_update_everything', false ) ) : ?>
 						<a href="#" <?php echo 0 == $total_upgrades ? 'disabled' : 'onClick="return updatesoverview_global_upgrade_all( \'all\' );"'; ?> class="ui big button fluid green" id="mainwp-update-everything-button" data-tooltip="<?php $globalView ? esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on ALL your websites.', 'mainwp' ) : esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', esc_html__( 'Update Everything', 'mainwp' ) ) ); ?></a>
 			<?php endif; ?>
@@ -534,8 +510,6 @@ class MainWP_Updates_Overview {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_updates_overview_after_total_updates' );
-		?>
-		<?php
 	}
 
 	/**
@@ -590,7 +564,7 @@ class MainWP_Updates_Overview {
 				<div class="column">
 					<div class="ui horizontal statistic">
 					<div class="value">
-						<?php echo $total_wp_upgrades; ?>
+						<?php echo intval( $total_wp_upgrades ); ?>
 					</div>
 					<div class="label">
 					<?php esc_html_e( 'WordPress Updates', 'mainwp' ); ?>
@@ -610,7 +584,7 @@ class MainWP_Updates_Overview {
 					?>
 					<?php if ( 0 < $total_wp_upgrades ) : ?>
 						<?php MainWP_Updates::set_continue_update_html_selector( 'wpcore_global_upgrade_all' ); ?>
-						<a href="<?php echo $detail_wp_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+						<a href="<?php echo esc_url( $detail_wp_up ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 						<?php
 						if ( '' != $wpcore_update_disabled_by ) {
 							?>
@@ -618,10 +592,10 @@ class MainWP_Updates_Overview {
 							<?php
 						} else {
 							?>
-						<a href="#" onClick="return updatesoverview_global_upgrade_all('wp');" class="ui green basic button <?php echo MainWP_Updates::get_continue_update_selector(); ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update WP Core files on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+						<a href="#" onClick="return updatesoverview_global_upgrade_all('wp');" class="ui green basic button <?php echo MainWP_Updates::get_continue_update_selector(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update WP Core files on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 						<?php } ?>
 					<?php else : ?>
-						<a href="<?php echo $detail_wp_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+						<a href="<?php echo esc_url( $detail_wp_up ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 						<a href="#" class="ui disabled green basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php endif; ?>
 				<?php endif; ?>
@@ -666,7 +640,7 @@ class MainWP_Updates_Overview {
 			<div class="column">
 				<div class="ui horizontal statistic">
 						<div class="value">
-							<?php echo $total_plugin_upgrades; ?>
+							<?php echo intval( $total_plugin_upgrades ); ?>
 						</div>
 							<div class="label">
 						<?php esc_html_e( 'Plugin Updates', 'mainwp' ); ?>
@@ -687,13 +661,13 @@ class MainWP_Updates_Overview {
 
 					if ( 0 == $total_plugin_upgrades ) {
 						?>
-							<a href="<?php echo $detail_plugins_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+							<a href="<?php echo esc_url( $detail_plugins_up ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 								<a href="#" class="ui disabled green basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 						<?php
 					} else {
 						?>
-							<a href="<?php echo $detail_plugins_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-							<a href="#" onClick="return updatesoverview_global_upgrade_all('plugin');" class="ui basic green button <?php echo MainWP_Updates::get_continue_update_selector(); ?>" data-tooltip="<?php echo $update_all_tooltip; ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+							<a href="<?php echo esc_url( $detail_plugins_up ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+							<a href="#" onClick="return updatesoverview_global_upgrade_all('plugin');" class="ui basic green button <?php echo MainWP_Updates::get_continue_update_selector(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-tooltip="<?php echo esc_attr( $update_all_tooltip ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 							<?php
 					}
 				};
@@ -739,7 +713,7 @@ class MainWP_Updates_Overview {
 			<div class="column">
 				<div class="ui horizontal statistic">
 					<div class="value">
-						<?php echo $total_theme_upgrades; ?>
+						<?php echo intval( $total_theme_upgrades ); ?>
 					</div>
 					<div class="label">
 						<?php esc_html_e( 'Theme Updates', 'mainwp' ); ?>
@@ -757,13 +731,13 @@ class MainWP_Updates_Overview {
 				}
 				if ( 0 == $total_theme_upgrades ) {
 					?>
-					<a href="<?php echo $detail_themes_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( $detail_themes_up ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 					<a href="#" class="ui disabled green basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php
 				} else {
 					?>
-					<a href="<?php echo $detail_themes_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-					<a href="#" onClick="return updatesoverview_global_upgrade_all('theme');" class="ui basic green button <?php echo MainWP_Updates::get_continue_update_selector(); ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Themes on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( $detail_themes_up ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+					<a href="#" onClick="return updatesoverview_global_upgrade_all('theme');" class="ui basic green button <?php echo MainWP_Updates::get_continue_update_selector(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Themes on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php
 				}
 			};
@@ -808,7 +782,7 @@ class MainWP_Updates_Overview {
 			<div class="column">
 				<div class="ui horizontal statistic">
 					<div class="value">
-						<?php echo $total_translation_upgrades; ?>
+						<?php echo intval( $total_translation_upgrades ); ?>
 					</div>
 					<div class="label">
 						<?php esc_html_e( 'Translation Updates', 'mainwp' ); ?>
@@ -826,13 +800,13 @@ class MainWP_Updates_Overview {
 				}
 				if ( 0 == $total_translation_upgrades ) {
 					?>
-					<a href="<?php echo $detail_trans_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( $detail_trans_up ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 					<a href="#" class="ui disabled green basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php
 				} else {
 					?>
-					<a href="<?php echo $detail_trans_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-					<a href="#" onClick="return updatesoverview_global_upgrade_all('translation');" class="ui basic green button <?php echo MainWP_Updates::get_continue_update_selector(); ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( $detail_trans_up ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+					<a href="#" onClick="return updatesoverview_global_upgrade_all('translation');" class="ui basic green button <?php echo MainWP_Updates::get_continue_update_selector(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php
 				}
 			};
@@ -905,7 +879,7 @@ class MainWP_Updates_Overview {
 						}
 						?>
 					<div class="value">
-					<?php echo $total_plugins_outdate; ?>
+					<?php echo intval( $total_plugins_outdate ); ?>
 					</div>
 					<div class="label">
 					<?php esc_html_e( 'Abandoned Plugins', 'mainwp' ); ?>
@@ -913,7 +887,7 @@ class MainWP_Updates_Overview {
 					</div>
 						</div>
 						<div class="right aligned column">
-							<a href="<?php echo $detail_aban_plugins; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+							<a href="<?php echo esc_url( $detail_aban_plugins ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 						</div>
 			</div>
 		</div>
@@ -941,7 +915,7 @@ class MainWP_Updates_Overview {
 						}
 						?>
 						<div class="value">
-							<?php echo $total_themes_outdate; ?>
+							<?php echo intval( $total_themes_outdate ); ?>
 							</div>
 						<div class="label">
 							<?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?>
@@ -949,7 +923,7 @@ class MainWP_Updates_Overview {
 					</div>
 				</div>
 				<div class="right aligned column">
-					<a href="<?php echo $detail_aban_themes; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( $detail_aban_themes ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 				</div>
 			</div>
 		</div>
@@ -1012,7 +986,7 @@ class MainWP_Updates_Overview {
 				if ( $user_can_update_wordpress && $total_wp_upgrades > 0 ) {
 					foreach ( $all_wp_updates as $item ) {
 						?>
-						<div updated="0" site_id="<?php echo $item['id']; ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" ></div>
+						<div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" ></div>
 						<?php
 					}
 				}
@@ -1024,7 +998,7 @@ class MainWP_Updates_Overview {
 				if ( $user_can_update_plugins && $total_plugin_upgrades > 0 ) {
 					foreach ( $all_plugins_updates as $item ) {
 						?>
-						<div updated="0" site_id="<?php echo $item['id']; ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" plugin_slug="<?php echo esc_attr( $item['plugin_slug'] ); ?>" ></div>
+						<div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" plugin_slug="<?php echo esc_attr( $item['plugin_slug'] ); ?>" ></div>
 							<?php
 					}
 				}
@@ -1036,7 +1010,7 @@ class MainWP_Updates_Overview {
 				if ( $user_can_update_themes && $total_theme_upgrades > 0 ) {
 					foreach ( $all_themes_updates as $item ) {
 						?>
-						<div updated="0" site_id="<?php echo $item['id']; ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" theme_slug="<?php echo esc_attr( $item['theme_slug'] ); ?>" ></div>
+						<div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" theme_slug="<?php echo esc_attr( $item['theme_slug'] ); ?>" ></div>
 							<?php
 					}
 				}
@@ -1050,7 +1024,7 @@ class MainWP_Updates_Overview {
 				if ( $user_can_update_translation && $total_translation_upgrades > 0 ) {
 					foreach ( $all_translations_updates as $item ) {
 						?>
-						<div updated="0" site_id="<?php echo $item['id']; ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" translation_slug="<?php echo esc_attr( $item['translation_slug'] ); ?>" ></div>
+						<div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" translation_slug="<?php echo esc_attr( $item['translation_slug'] ); ?>" ></div>
 						<?php
 					}
 				}
@@ -1134,7 +1108,7 @@ class MainWP_Updates_Overview {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
 	 */
 	public static function check_backups() {
-		if ( empty( $_POST['sites'] ) || ! is_array( $_POST['sites'] ) ) {
+		if ( empty( $_POST['sites'] ) || ! is_array( $_POST['sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			return true;
 		}
 
@@ -1147,8 +1121,8 @@ class MainWP_Updates_Overview {
 		}
 
 		$output = array();
-		if ( isset( $_POST['sites'] ) ) {
-			foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) as $siteId ) {
+		if ( isset( $_POST['sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) as $siteId ) { // phpcs:ignore WordPress.Security.NonceVerification
 				$website = MainWP_DB::instance()->get_website_by_id( $siteId );
 				if ( ( 0 == $website->backup_before_upgrade ) || ( ( 2 == $website->backup_before_upgrade ) && ( 0 == $global_backup_before_upgrade ) ) ) {
 					continue;

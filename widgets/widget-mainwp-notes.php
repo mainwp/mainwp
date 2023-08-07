@@ -47,7 +47,7 @@ class MainWP_Notes {
 		$note     = html_entity_decode( $website->note );
 		$esc_note = MainWP_Utility::esc_content( $note );
 		?>
-
+		<div class="mainwp-widget-header">
 		<h3 class="ui header handle-drag">
 			<?php
 			/**
@@ -63,9 +63,9 @@ class MainWP_Notes {
 			?>
 			<div class="sub header"><?php esc_html_e( 'Child site notes', 'mainwp' ); ?></div>
 		</h3>
+		</div>
 
-		<div class="ui section hidden divider"></div>
-
+		<div class="mainwp-scrolly-overflow">
 			<?php
 			/**
 			 * Action: mainwp_notes_widget_top
@@ -92,15 +92,13 @@ class MainWP_Notes {
 				?>
 				<div class="content">
 				<?php
-				echo wp_unslash( $esc_note );
+				echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput
 				?>
 				</div>
-				<div class="ui section hidden divider"></div>
-				<a href="javascript:void(0)" class="ui button green mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>"><?php esc_html_e( 'Edit Notes', 'mainwp' ); ?></a>
 				<?php
 			}
 			?>
-		<span style="display: none" id="mainwp-notes-<?php echo intval( $current_wpid ); ?>-note"><?php echo wp_unslash( $esc_note ); ?></span>
+		<span style="display: none" id="mainwp-notes-<?php echo intval( $current_wpid ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 		<?php
 		/**
 		 * Action: mainwp_notes_widget_bottom
@@ -112,8 +110,20 @@ class MainWP_Notes {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_notes_widget_bottom', $website );
+		?>
+			</div>
+			<?php if ( '' != $website->note ) : ?>
+			<div class="ui two columns grid mainwp-widget-footer">
+				<div class="column">
+					<a href="javascript:void(0)" class="ui button mini fluid green mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>"><?php esc_html_e( 'Edit Notes', 'mainwp' ); ?></a>
+				</div>
+				<div class="column">
 
-		MainWP_UI::render_modal_edit_notes();
+				</div>
+			</div>
+			<?php endif; ?>
+			<?php
+			MainWP_UI::render_modal_edit_notes();
 	}
 
 }

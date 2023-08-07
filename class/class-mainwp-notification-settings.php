@@ -153,10 +153,10 @@ class MainWP_Notification_Settings {
 						?>
 						<tr>
 							<td><?php echo ( ! $options['disable'] ) ? '<span data-tooltip="Enabled." data-position="right center" data-inverted=""><i class="circular green check inverted icon"></i></span>' : '<span data-tooltip="Disabled." data-position="right center" data-inverted=""><i class="circular x icon inverted disabled"></i></span>'; ?></td>
-							<td><a href="admin.php?page=SettingsEmail&edit-email=<?php echo rawurlencode( $type ); ?>" data-tooltip="<?php esc_attr_e( 'Click to configure the email.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php echo esc_html( $name ); ?></a></td>
+							<td><a href="admin.php?page=SettingsEmail&edit-email=<?php echo esc_html( rawurlencode( $type ) ); ?>" data-tooltip="<?php esc_attr_e( 'Click to configure the email.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php echo esc_html( $name ); ?></a></td>
 							<td><?php echo esc_html( $email_description ); ?></td>
 							<td><?php echo esc_html( $options['recipients'] ); ?></td>
-							<td style="text-align:right"><a href="admin.php?page=SettingsEmail&edit-email=<?php echo rawurlencode( $type ); ?>" data-tooltip="<?php esc_attr_e( 'Click to configure the email.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="ui green mini button"><?php esc_html_e( 'Manage', 'mainwp' ); ?></a></td>
+							<td style="text-align:right"><a href="admin.php?page=SettingsEmail&edit-email=<?php echo esc_html( rawurlencode( $type ) ); ?>" data-tooltip="<?php esc_attr_e( 'Click to configure the email.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="ui green mini button"><?php esc_html_e( 'Manage', 'mainwp' ); ?></a></td>
 						</tr>
 					<?php endforeach; ?>
 				</tbody>
@@ -244,7 +244,7 @@ class MainWP_Notification_Settings {
 			<?php self::render_update_template_message( $updated_templ ); ?>
 			<div class="ui form">
 				<form method="POST" action="admin.php?page=SettingsEmail">
-					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'SettingsEmail' ); ?>" />
+					<input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'SettingsEmail' ) ); ?>" />
 					<input type="hidden" name="mainwp_setting_emails_type" value="<?php echo esc_html( $type ); ?>" />						
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-email-tokens-info-message' ) ) : ?>
 						<div class="ui info message">
@@ -252,8 +252,8 @@ class MainWP_Notification_Settings {
 							<?php echo sprintf( esc_html__( '%1$sBoilerplate%2$s and %3$sReports%4$s extensions tokens are supported in the email settings and templates if Extensions are in use.', 'mainwp' ), '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">', '</a>', '<a href="https://mainwp.com/extension/pro-reports/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
-					<h3 class="ui header"><?php echo $title; ?></h3>
-					<div class="sub header"><?php echo $email_description; ?></h3></div>
+					<h3 class="ui header"><?php echo esc_html( $title ); ?></h3>
+					<div class="sub header"><?php echo esc_html( $email_description ); ?></h3></div>
 					<div class="ui divider"></div>
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Enable', 'mainwp' ); ?></label>
@@ -300,9 +300,9 @@ class MainWP_Notification_Settings {
 						 */
 						$copy_message = apply_filters( 'mainwp_notification_template_copy_message', $copy_message, $templ, $type, $overrided );
 						if ( empty( $copy_message ) ) {
-							$copy_message = $overrided ? esc_html__( 'This template has been overridden and can be found in:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>' : esc_html__( 'To override and edit this email template copy:', 'mainwp' ) . ' <code>mainwp/templates/' . $templ . '</code> ' . esc_html__( 'to the folder:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>';
+							$copy_message = $overrided ? esc_html__( 'This template has been overridden and can be found in:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . esc_html( $templ ) . '</code>' : esc_html__( 'To override and edit this email template copy:', 'mainwp' ) . ' <code>mainwp/templates/' . esc_html( $templ ) . '</code> ' . esc_html__( 'to the folder:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . esc_html( $templ ) . '</code>';
 						}
-						echo $copy_message;
+						echo $copy_message; // phpcs:ignore WordPress.Security.EscapeOutput
 						?>
 						</div>		
 					</div>
@@ -310,9 +310,9 @@ class MainWP_Notification_Settings {
 						<label class="six wide column middle aligned"></label>
 						<div class="ui ten wide column" data-tooltip="<?php esc_attr_e( 'Manage the email HTML template.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<?php if ( $overrided ) : ?>
-							<a href="<?php echo wp_nonce_url( 'admin.php?page=SettingsEmail&edit-email=' . $type, 'delete-email-template' ); ?>" onclick="mainwp_confirm('<?php echo esc_js( 'Are you sure you want to delete this template file?', 'mainwp' ); ?>', function(){ window.location = jQuery('a#email-delete-template').attr('href');}); return false;" id="email-delete-template" class="ui button"><?php esc_html_e( 'Return to Default Template', 'mainwp' ); ?></a>
+							<a href="<?php echo esc_url( wp_nonce_url( 'admin.php?page=SettingsEmail&edit-email=' . $type, 'delete-email-template' ) ); ?>" onclick="mainwp_confirm('<?php echo esc_js( 'Are you sure you want to delete this template file?', 'mainwp' ); ?>', function(){ window.location = jQuery('a#email-delete-template').attr('href');}); return false;" id="email-delete-template" class="ui button"><?php esc_html_e( 'Return to Default Template', 'mainwp' ); ?></a>
 						<?php else : ?>
-							<a href="<?php echo wp_nonce_url( 'admin.php?page=SettingsEmail&edit-email=' . $type, 'copy-email-template' ); ?>" class="ui button"><?php esc_html_e( 'Copy file to uploads', 'mainwp' ); ?></a>
+							<a href="<?php echo esc_url( wp_nonce_url( 'admin.php?page=SettingsEmail&edit-email=' . $type, 'copy-email-template' ) ); ?>" class="ui button"><?php esc_html_e( 'Copy file to uploads', 'mainwp' ); ?></a>
 						<?php endif; ?>
 						<?php if ( $overrided ) : ?>
 							<a href="javascript:void(0)" class="ui button" onclick="mainwp_view_template('<?php echo esc_js( $type ); ?>', true ); return false;"><?php esc_html_e( 'Edit Template', 'mainwp' ); ?></a>

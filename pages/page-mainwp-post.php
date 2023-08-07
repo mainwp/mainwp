@@ -328,9 +328,9 @@ class MainWP_Post {
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
 					<?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=PostBulkManage' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Posts', 'mainwp' ); ?></a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkManage' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Posts', 'mainwp' ); ?></a>
 						<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkAdd' ) ) { ?>
-							<a href="<?php echo admin_url( 'admin.php?page=PostBulkAdd' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkAdd' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
 						<?php } ?>
 					<?php } ?>
 					<?php
@@ -341,7 +341,7 @@ class MainWP_Post {
 									continue;
 								}
 								?>
-								<a href="<?php echo admin_url( 'admin.php?page=Post' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
+								<a href="<?php echo esc_url( admin_url( 'admin.php?page=Post' . $subPage['slug'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
 								<?php
 							}
 						}
@@ -371,7 +371,7 @@ class MainWP_Post {
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => esc_html__( 'Posts', 'mainwp' ),
-				'parent_key' => 'mainwp_tab',
+				'parent_key' => 'managesites',
 				'slug'       => 'PostBulkManage',
 				'href'       => 'admin.php?page=PostBulkManage',
 				'icon'       => '<i class="file alternate icon"></i>',
@@ -974,7 +974,7 @@ class MainWP_Post {
 		if ( $cached ) {
 			?>
 			<script type="text/javascript">
-			var responsive = <?php echo $table_features['responsive']; ?>;
+			var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
 			if( jQuery( window ).width() > 1140 ) {
 				responsive = false;
 			}
@@ -983,13 +983,13 @@ class MainWP_Post {
 					jQuery("#mainwp-posts-table").DataTable().destroy(); // to fix re-init database issue.
 					$manage_posts_table = jQuery('#mainwp-posts-table').DataTable( {
 						"responsive" : responsive,
-						"searching" : <?php echo $table_features['searching']; ?>,
-						"colReorder" : <?php echo $table_features['colReorder']; ?>,
-						"stateSave":  <?php echo $table_features['stateSave']; ?>,
-						"paging": <?php echo $table_features['paging']; ?>,
-						"info": <?php echo $table_features['info']; ?>,
-						"order": <?php echo $table_features['order']; ?>,
-						"scrollX" : <?php echo $table_features['scrollX']; ?>,
+						"searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
+						"colReorder" : <?php echo esc_html( $table_features['colReorder'] ); ?>,
+						"stateSave":  <?php echo esc_html( $table_features['stateSave'] ); ?>,
+						"paging": <?php echo esc_html( $table_features['paging'] ); ?>,
+						"info": <?php echo esc_html( $table_features['info'] ); ?>,
+						"order": <?php echo esc_html( $table_features['order'] ); ?>,
+						"scrollX" : <?php echo esc_html( $table_features['scrollX'] ); ?>,
 						"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
 						"columnDefs": [ {
 							"targets": 'no-sort',
@@ -1061,19 +1061,7 @@ class MainWP_Post {
 	 */
 	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all', $table_content = false, $clients = '' ) { // phpcs:ignore -- complex function.
 
-		$data_fields = array(
-			'id',
-			'url',
-			'name',
-			'adminname',
-			'nossl',
-			'privkey',
-			'nosslkey',
-			'http_user',
-			'http_pass',
-			'ssl_version',
-			'sync_errors',
-		);
+		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
 		$dbwebsites = array();
 		if ( '' !== $sites ) {
@@ -1303,7 +1291,7 @@ class MainWP_Post {
 						<strong>
 							<abbr title="<?php echo esc_attr( $post['title'] ); ?>">
 							<?php if ( 'trash' !== $post['status'] ) { ?>
-									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" target="_blank">
+									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank">
 										<?php echo esc_html( $post['title'] ); ?>
 									</a>
 								<?php
@@ -1328,7 +1316,7 @@ class MainWP_Post {
 					<?php if ( is_plugin_active( 'mainwp-comments-extension/mainwp-comments-extension.php' ) ) : ?>
 						<td class="comments column-comments">
 							<div class="post-com-count-wrapper">
-								<a href="<?php echo admin_url( 'admin.php?page=CommentBulkManage&siteid=' . intval( $website->id ) . '&postid=' . $post['id'] ); ?>" title="0 pending" class="post-com-count"><span class="comment-count"><abbr title="<?php echo esc_attr( $post['comment_count'] ); ?>"><?php echo esc_html( $post['comment_count'] ); ?></abbr></span></a>
+								<a href="<?php echo esc_url( admin_url( 'admin.php?page=CommentBulkManage&siteid=' . intval( $website->id ) ) . '&postid=' . $post['id'] ); ?>" title="0 pending" class="post-com-count"><span class="comment-count"><abbr title="<?php echo esc_attr( $post['comment_count'] ); ?>"><?php echo esc_html( $post['comment_count'] ); ?></abbr></span></a>
 							</div>
 						</td>
 					<?php endif; ?>
@@ -1392,7 +1380,7 @@ class MainWP_Post {
 									<?php do_action( 'mainwp_manage_posts_action_item', $post, $child_to_dash_array ); ?>															
 									<a class="item post_submitdelete" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 								<?php endif; ?>
-									<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
+									<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
 									<?php
 									/**
 									 * Action: mainwp_posts_table_action
@@ -2016,7 +2004,7 @@ class MainWP_Post {
 
 		?>
 		<div class="ui alt segment" id="mainwp-add-new-bulkpost">
-			<form name="post" action="<?php echo admin_url( 'admin-post.php' ); ?>" method="post" id="post" class="ui form">
+			<form name="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" id="post" class="ui form">
 				<?php wp_nonce_field( $nonce_action ); ?>
 				<input type="hidden" id="user-id" name="user_ID" value="<?php echo (int) $user_ID; ?>" />
 				<input type="hidden" id="hiddenaction" name="action" value="<?php echo esc_attr( $form_action ); ?>" />
@@ -2227,7 +2215,7 @@ class MainWP_Post {
 						);
 						MainWP_UI_Select_Sites::select_sites_box( $sel_params );
 						?>
-						<input type="hidden" name="select_sites_nonce" id="select_sites_nonce" value="<?php echo wp_create_nonce( 'select_sites_' . $post->ID ); ?>" />
+						<input type="hidden" name="select_sites_nonce" id="select_sites_nonce" value="<?php echo esc_attr( wp_create_nonce( 'select_sites_' . $post->ID ) ); ?>" />
 					</div>
 					</div>
 					<div class="ui fitted divider"></div>

@@ -106,7 +106,7 @@ class MainWP_Manage_Groups {
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => esc_html__( 'Tags', 'mainwp' ),
-				'parent_key' => 'mainwp_tab',
+				'parent_key' => 'managesites',
 				'slug'       => 'ManageGroups',
 				'href'       => 'admin.php?page=ManageGroups',
 				'icon'       => '<i class="tags icon"></i>',
@@ -250,22 +250,22 @@ class MainWP_Manage_Groups {
 						<input type="checkbox" name="sites" class="mainwp-site-checkbox" value="<?php echo esc_attr( $website->id ); ?>" id="<?php echo 'site-' . esc_attr( $website->id ); ?>" >
 			</div>
 				</td>
-				<td><a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Go to the site overview.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php echo $website->name; ?></a></td>
+				<td><a href="admin.php?page=managesites&dashboard=<?php echo intval( $website->id ); ?>" data-tooltip="<?php esc_attr_e( 'Go to the site overview.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php echo esc_html( stripslashes( $website->name ) ); ?></a></td>
 				<td>
-					<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
+					<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin . ', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
 				</td>
-				<td><a href="<?php echo $website->url; ?>" target="_blank"><?php echo $website->url; ?></a></td>
-				<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . $website->client_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
+				<td><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
+				<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
 				<td>
-					<span class="mainwp-preview-item" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'Click to see the site homepage screenshot.', 'mainwp' ); ?>" preview-site-url="<?php echo $website->url; ?>" ><i class="camera icon"></i></span>
+					<span class="mainwp-preview-item" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'Click to see the site homepage screenshot . ', 'mainwp' ); ?>" preview-site-url="<?php echo esc_url( $website->url ); ?>" ><i class="camera icon"></i></span>
 				</td>
 				<td>
 				<?php if ( '' == $website->note ) : ?>
-					<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Click to add a note.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
+					<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>" data-tooltip="<?php esc_attr_e( 'Click to add a note . ', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
 				<?php else : ?>
-					<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo $website->id; ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+					<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
 				<?php endif; ?>
-					<span style="display: none" id="mainwp-notes-<?php echo $website->id; ?>-note"><?php echo wp_unslash( $esc_note ); ?></span>
+					<span style="display: none" id="mainwp-notes-<?php echo intval( $website->id ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 				</td>
 			</tr>
 			<?php
@@ -303,14 +303,14 @@ class MainWP_Manage_Groups {
 		?>
 		<div id="mainwp-manage-groups" class="ui segment">
 			<div id="mainwp-message-zone" style="display: none;">
-				<div class="ui message green"><?php esc_html_e( 'Selection saved successfully.', 'mainwp' ); ?></div>
+				<div class="ui message green"><?php esc_html_e( 'Selection saved successfully . ', 'mainwp' ); ?></div>
 			</div>
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_groups_info' ) ) { ?>
 			<div class="ui message info">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp_groups_info"></i>
-					<div><?php esc_html_e( 'In case you are managing a large number of WordPress sites, it could be useful for you to mark them with different tags. Later, you will be able to make Site Selection by a tag that will speed up your work and makes it much easier.', 'mainwp' ); ?></div>
+					<div><?php esc_html_e( 'In case you are managing a large number of WordPress sites, it could be useful for you to mark them with different tags . Later, you will be able to make Site Selection by a tag that will speed up your work and makes it much easier.', 'mainwp' ); ?></div>
 					<div><?php esc_html_e( 'One child site can be assigned to multiple Tags at the same time.', 'mainwp' ); ?></div>
-					<div><?php echo sprintf( esc_html__( 'For more information check the %1$sKnowledge Base%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( esc_html__( 'for more information check the %1$sKnowledge Base %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">', '</a>' ); ?></div>
 			</div>
 			<?php } ?>
 			<?php
@@ -345,27 +345,30 @@ class MainWP_Manage_Groups {
 				}
 				jQuery( document ).ready( function() {
 
-					jQuery( '#mainwp-manage-groups-sites-table' ).dataTable( {
-						"searching" : true,
-						"responsive" : responsive,
-						"colReorder" : true,
-						"stateSave":  true,
-						"paging": false,
-						"info": true,
-						"order": [],
-						"scrollX" : false,
-						"columnDefs": [ {
-							"targets": 'no-sort',
-							"orderable": false
-						} ],
-						"preDrawCallback": function( settings ) {
-							jQuery( '#mainwp-manage-groups-sites-table .ui.checkbox' ).checkbox();
-						}
-					} );
-				} );
-				</script>
-			</div>
-			<?php MainWP_UI::render_modal_edit_notes(); ?>
+					jQuery( '// mainwp-manage-groups-sites-table' ).dataTable( {
+																						'searching' : true,
+																						'responsive' : responsive,
+																						'colReorder' : true,
+																						'stateSave':  true,
+																						'paging': false,
+																						'info': true,
+																						'order': array(),
+																						'scrollX' : false,
+																						'columnDefs': array(
+																							{
+																							'targets' : 'no-sort',
+																							'orderable': false
+																							},
+																						),
+																						'preDrawCallback': function( settings ) {
+																							jQuery( '#mainwp-manage-groups-sites-table .ui.checkbox' ) . checkbox();
+																						}
+		} );
+	} );
+				< / script >
+			< / div >
+			< ? php MainWP_UI::render_modal_edit_notes();
+	?>
 			<div class="ui mini modal" id="mainwp-create-group-modal">
 				<div class="header"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></div>
 				<div class="content">
@@ -488,7 +491,7 @@ class MainWP_Manage_Groups {
 		?>
 		<div class="ui fluid <?php echo 1 == $sidebarPosition ? 'right' : ''; ?> pointing vertical menu sticky" id="mainwp-groups-menu" style="margin-top:52px">
 			<h4 class="item ui header"><?php esc_html_e( 'Tags', 'mainwp' ); ?></h4>
-			<?php echo self::get_group_list_content(); ?>
+		<?php echo self::get_group_list_content(); ?>
 			<div class="item">
 				<div class="ui two columns stackable grid">
 					<div class="left aligned column">
@@ -524,7 +527,7 @@ class MainWP_Manage_Groups {
 				</tr>
 			</thead>
 			<tbody>
-				<?php echo self::get_website_list_content(); ?>
+			<?php echo self::get_website_list_content(); ?>
 			</tbody>
 			<tfoot>
 				<tr>
@@ -785,20 +788,20 @@ class MainWP_Manage_Groups {
 			<p><?php esc_html_e( 'If you need help with managing tags, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
 				<div class="item"><a href="" target="_blank">Manage Tags</a></div>
-				<?php
-				/**
-				 * Action: mainwp_tags_help_item
-				 *
-				 * Fires at the bottom of the help articles list in the Help sidebar on the Users page.
-				 *
-				 * Suggested HTML markup:
-				 *
-				 * <div class="item"><a href="Your custom URL">Your custom text</a></div>
-				 *
-				 * @since 4.1
-				 */
-				do_action( 'mainwp_tags_help_item' );
-				?>
+			<?php
+			/**
+			 * Action: mainwp_tags_help_item
+			 *
+			 * Fires at the bottom of the help articles list in the Help sidebar on the Users page.
+			 *
+			 * Suggested HTML markup:
+			 *
+			 * <div class="item"><a href="Your custom URL">Your custom text</a></div>
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_tags_help_item' );
+			?>
 			</div>
 			<?php
 		}

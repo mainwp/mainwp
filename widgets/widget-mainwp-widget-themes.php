@@ -91,7 +91,7 @@ class MainWP_Widget_Themes {
 		$inactive_themes = MainWP_Utility::sortmulti( $inactive_themes, 'name', 'asc' );
 
 		?>
-		<div class="ui grid">
+		<div class="ui grid mainwp-widget-header">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
 					<?php
@@ -108,7 +108,7 @@ class MainWP_Widget_Themes {
 				</h3>
 			</div>
 			<div class="four wide column right aligned">
-				<div class="ui dropdown right mainwp-dropdown-tab">
+				<div class="ui dropdown right pointing mainwp-dropdown-tab">
 					<div class="text"><?php esc_html_e( 'Active', 'mainwp' ); ?></div>
 					<i class="dropdown icon"></i>
 					<div class="menu">
@@ -118,7 +118,7 @@ class MainWP_Widget_Themes {
 				</div>
 			</div>
 		</div>
-		<div class="ui section hidden divider"></div>
+		<div class="mainwp-scrolly-overflow">
 		<?php
 		/**
 		 * Action: mainwp_themes_widget_top
@@ -156,10 +156,10 @@ class MainWP_Widget_Themes {
 						<input class="themeSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $actived_themes[ $i ]['slug'] ) ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
 						<div class="right floated content themesAction">
-							<a href="#" disabled class="button ui mini grey basic" data-position="top right" data-tooltip="<?php esc_attr_e( 'Active theme cannot be deactivated. If you need to activate another theme, go to the list of inactive themes and activate the wanted theme.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
+								<a href="#" disabled class="button ui mini grey basic" data-position="left center" data-tooltip="<?php esc_attr_e( 'Active theme cannot be deactivated.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
 						</div>
 						<div class="middle aligned content">
-							<?php echo MainWP_System_Utility::get_theme_icon( $slug ); ?>&nbsp;&nbsp;&nbsp;&nbsp;
+							<?php echo MainWP_System_Utility::get_theme_icon( $slug ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;
 							<?php echo esc_html( $actived_themes[ $i ]['name'] . ' ' . $actived_themes[ $i ]['version'] ); ?>
 						</div>
 						<div class="mainwp-row-actions-working">
@@ -209,17 +209,17 @@ class MainWP_Widget_Themes {
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
 						<div class="right floated content themesAction">
 							<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
-								<a href="#" class="mainwp-theme-activate ui mini green button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Activate the ', 'mainwp' ) . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . esc_attr_e( ' theme on the child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
+									<a href="#" class="mainwp-theme-activate ui mini green button" data-position="left center" data-tooltip="<?php esc_attr_e( 'Activate the ', 'mainwp' ) . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . esc_attr_e( ' theme on the child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
 							<?php } ?>
 							<?php
 							if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) ) {
 								$parent_str = sprintf( esc_html__( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $inactive_themes[ $i ]['child_theme'] ) ? $inactive_themes[ $i ]['child_theme'] : '' );
 								?>
-								<a href="#" class="<?php echo $is_parent ? '' : 'mainwp-theme-delete'; ?> ui mini basic button" data-position="top right" data-tooltip="<?php echo ! $is_parent ? esc_attr__( 'Delete the ', 'mainwp' ) . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . esc_attr__( ' theme from the child site.', 'mainwp' ) : $parent_str; ?>" <?php echo $is_parent ? 'disabled onclick="javascript:void(0)"' : ''; ?> data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+									<a href="#" class="<?php echo $is_parent ? '' : 'mainwp-theme-delete'; ?> ui mini basic button" data-position="left center" data-tooltip="<?php echo ! $is_parent ? esc_attr__( 'Delete the ', 'mainwp' ) . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . esc_attr__( ' theme from the child site.', 'mainwp' ) : $parent_str; // phpcs:ignore WordPress.Security.EscapeOutput ?>" <?php echo $is_parent ? 'disabled onclick="javascript:void(0)"' : ''; ?> data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
 						</div>
 						<div class="middle aligned content">
-							<?php echo MainWP_System_Utility::get_theme_icon( $slug ); ?>&nbsp;&nbsp;&nbsp;&nbsp;
+							<?php echo MainWP_System_Utility::get_theme_icon( $slug ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;
 							<?php echo esc_html( $inactive_themes[ $i ]['name'] . ' ' . $inactive_themes[ $i ]['version'] ); ?>
 						</div>
 						<div class="mainwp-row-actions-working">
@@ -241,6 +241,7 @@ class MainWP_Widget_Themes {
 			 */
 			do_action( 'mainwp_after_inactive_themes_list', $website, $inactive_themes );
 			?>
+		</div>
 		</div>
 		<?php
 		/**
@@ -293,8 +294,8 @@ class MainWP_Widget_Themes {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action( $action ) {
-		$theme     = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : '';
-		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
+		$theme     = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( empty( $theme ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Theme or site ID not found. Please, reload the page and try again.', 'mainwp' ) ) ) );

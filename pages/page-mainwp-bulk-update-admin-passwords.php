@@ -92,19 +92,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				$errors[] = esc_html__( 'Please enter the password.', 'mainwp' );
 			}
 
-			$data_fields = array(
-				'id',
-				'url',
-				'name',
-				'adminname',
-				'nossl',
-				'privkey',
-				'nosslkey',
-				'http_user',
-				'http_pass',
-				'ssl_version',
-				'sync_errors',
-			);
+			$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
 			if ( count( $errors ) == 0 ) {
 				$show_form = false;
@@ -214,7 +202,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				<div class="ui relaxed divided list">
 					<?php foreach ( $dbwebsites as $website ) : ?>
 						<div class="item">
-							<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
 							<span class="right floated content">
 								<?php echo( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? '<i class="green check icon"></i>' : '<i class="red times icon"></i> ' . $output->errors[ $website->id ] ); ?>
 							</span>
@@ -264,7 +252,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 		<div class="ui alt segment" id="mainwp-bulk-update-admin-passwords">
 				<form action="" method="post" name="createuser" id="createuser">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-				<input type="hidden" name="security" value="<?php echo wp_create_nonce( 'mainwp_updateadminpassword' ); ?>"/>
+				<input type="hidden" name="security" value="<?php echo esc_attr( wp_create_nonce( 'mainwp_updateadminpassword' ) ); ?>"/>
 				<div class="mainwp-main-content" >
 					<div class="ui em hidden divider"></div>
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-admin-pass-info-message' ) ) : ?>
@@ -296,8 +284,8 @@ class MainWP_Bulk_Update_Admin_Passwords {
 							<tbody>
 								<?php while ( $websites && $website = MainWP_DB::fetch_object( $websites ) ) : ?>
 									<tr>
-									<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
-									<td><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>"><i class="sign in icon"></i></a></td>
+									<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></td>
+									<td><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a></td>
 									<td><?php echo esc_html( $website->adminname ); ?></td>
 									<td><?php echo esc_html( $website->admin_nicename ); ?></td>
 									<td><?php echo esc_html( $website->admin_useremail ); ?></td>
@@ -343,17 +331,17 @@ class MainWP_Bulk_Update_Admin_Passwords {
 						$table_features = apply_filters( 'mainwp_admin_users_table_fatures', $table_features );
 						?>
 						<script type="text/javascript">
-						var responsive = <?php echo $table_features['responsive']; ?>;
+						var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
 						if( jQuery( window ).width() > 1140 ) {
 							responsive = false;
 						}
 						jQuery( document ).ready( function () {
 							jQuery( '#mainwp-admin-users-table' ).DataTable( {
-								"searching" : <?php echo $table_features['searching']; ?>,
-								"paging" : <?php echo $table_features['paging']; ?>,
-								"info" : <?php echo $table_features['info']; ?>,
-								"colReorder" : <?php echo $table_features['colReorder']; ?>,
-								"stateSave":  <?php echo $table_features['stateSave']; ?>,
+								"searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
+								"paging" : <?php echo esc_html( $table_features['paging'] ); ?>,
+								"info" : <?php echo esc_html( $table_features['info'] ); ?>,
+								"colReorder" : <?php echo esc_html( $table_features['colReorder'] ); ?>,
+								"stateSave":  <?php echo esc_html( $table_features['stateSave'] ); ?>,
 								"order": [],
 								"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
 								"responsive": responsive,

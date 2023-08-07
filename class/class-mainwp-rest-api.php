@@ -530,29 +530,108 @@ class Rest_Api {
 				$consumer_secret_key = $existed_key['cs'];
 				$enabled             = isset( $existed_key['enabled'] ) && ! empty( $existed_key['enabled'] ) ? true : false;
 				if ( $enabled && wp_check_password( $consumer_secret, $consumer_secret_key ) ) {
-					if ( ! defined( 'MAINWP_REST_API' ) ) {
-						define( 'MAINWP_REST_API', true );
+					try {
+						if ( $this->mainwp_permission_check_request( $request, $existed_key ) ) {
+							if ( ! defined( 'MAINWP_REST_API' ) ) {
+								define( 'MAINWP_REST_API', true );
+							}
+							return true;
+						}
+					} catch ( \Exception $ex ) {
+						$err = $ex->getMessage();
+						return new \WP_Error(
+							'rest_method_not_allowed',
+							is_string( $err ) ? $err : esc_html__( 'Sorry, you are not allowed to do the method.', 'mainwp' ),
+							array( 'status' => 401 )
+						);
 					}
-					return true;
 				}
 			}
 		}
 		return false;
 	}
 
+	/**
+	 * Method mainwp_permission_check_request()
+	 *
+	 * Check request permissions.
+	 *
+	 * @param array $request The request made in the API call which includes all parameters.
+	 * @param array $item API Keys using.
+	 *
+	 * @return bool Whether the api permissions are valid.
+	 * @throws \Exception Request permissions check.
+	 */
+	public function mainwp_permission_check_request( $request, $item ) {
+
+		$init_pers = '';
+		if ( isset( $item['perms'] ) ) {
+			$init_pers = $item['perms'];
+		} else {
+			$init_pers = 'r,w,d'; // to compatible.
+		}
+
+		$item_pers = is_string( $init_pers ) ? explode( ',', $init_pers ) : array();
+
+		$perms_map = array(
+			'r' => array(
+				'GET',
+			),
+			'w' => array(
+				'POST',
+				'PUT',
+				'PATCH',
+			),
+			'd' => array(
+				'DELETE',
+			),
+		);
+
+		$allow_methods = array();
+
+		if ( in_array( 'r', $item_pers ) ) {
+			$allow_methods = $perms_map['r'];
+		}
+		if ( in_array( 'w', $item_pers ) ) {
+			$allow_methods = array_merge( $allow_methods, $perms_map['w'] );
+		}
+		if ( in_array( 'd', $item_pers ) ) {
+			$allow_methods = array_merge( $allow_methods, $perms_map['d'] );
+		}
+
+		$methods_map = array(
+			'GET'    => esc_html__( 'Read', 'mainwp' ),
+			'DELETE' => esc_html__( 'Delete', 'mainwp' ),
+			'POST'   => esc_html__( 'Write', 'mainwp' ),
+			'PUT'    => esc_html__( 'Write', 'mainwp' ),
+			'PATCH'  => esc_html__( 'Write', 'mainwp' ),
+		);
+
+		$method = $request->get_method();
+
+		if ( empty( $allow_methods ) || ! in_array( $method, $allow_methods ) ) {
+			throw new \Exception( sprintf( esc_html__( 'Sorry, you are not allowed to do the %s method.', 'mainwp' ), ( isset( $methods_map[ $method ] ) ? $methods_map[ $method ] : '' ) ) );
+		}
+
+		return true;
+	}
 
 	/**
 	 * Method rest_api_validate()
 	 *
 	 * Hook validate the request.
 	 *
-	 * @param bool  $false input filter value.
+	 * @param bool  $false input filter value, it should always be FALSE.
 	 * @param array $request The request made in the API call which includes all parameters.
 	 *
 	 * @return bool Whether the api credentials are valid.
 	 */
 	public function rest_api_validate( $false, $request ) {
-		return $this->mainwp_validate_request( $request );
+		$valid = $this->mainwp_validate_request( $request );
+		if ( true === $valid ) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -643,8 +722,12 @@ class Rest_Api {
 	public function mainwp_rest_api_all_sites_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
 
+		if ( true === $valid ) {
 			$params = array(
 				'selectgroups' => ( isset( $request['selectgroups'] ) && true == $request['selectgroups'] ) ? true : false,
 			);
@@ -691,7 +774,12 @@ class Rest_Api {
 	public function mainwp_rest_api_all_sites_count_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get data.
 			$websites = MainWP_DB::instance()->get_websites_for_current_user();
@@ -725,7 +813,12 @@ class Rest_Api {
 	public function mainwp_rest_api_connected_sites_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get data.
 			$data = MainWP_DB::instance()->get_connected_websites();
@@ -755,7 +848,12 @@ class Rest_Api {
 	public function mainwp_rest_api_connected_sites_count_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get data.
 			$websites = MainWP_DB::instance()->get_connected_websites();
@@ -789,7 +887,12 @@ class Rest_Api {
 	public function mainwp_rest_api_disconnected_sites_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get data.
 			$data = MainWP_DB::instance()->get_disconnected_websites();
@@ -819,7 +922,12 @@ class Rest_Api {
 	public function mainwp_rest_api_disconnected_sites_count_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get data.
 			$websites = MainWP_DB::instance()->get_disconnected_websites();
@@ -853,7 +961,12 @@ class Rest_Api {
 	public function mainwp_rest_api_sync_sites_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			$data = array();
 
@@ -895,7 +1008,12 @@ class Rest_Api {
 	public function mainwp_rest_api_check_sites_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			$data = array();
 
@@ -935,7 +1053,12 @@ class Rest_Api {
 	public function mainwp_rest_api_disconnect_sites_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 			while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -971,7 +1094,12 @@ class Rest_Api {
 	 */
 	public function mainwp_rest_api_http_status_callback( $request ) {
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 			$data     = array();
 			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 			while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -1002,7 +1130,12 @@ class Rest_Api {
 	public function mainwp_rest_api_health_score_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 			$data                 = array();
 			$params['extra_view'] = array( 'health_site_status' );
 			$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -1043,7 +1176,12 @@ class Rest_Api {
 	public function mainwp_rest_api_security_issues_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 			$data                 = array();
 			$params['extra_view'] = array( 'health_site_status' );
 			$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -1076,7 +1214,12 @@ class Rest_Api {
 	public function mainwp_rest_api_sites_available_updates_count_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 			$data     = MainWP_Common_Handler::instance()->sites_available_updates_count();
 			$response = new \WP_REST_Response( $data );
 		} else {
@@ -1101,7 +1244,12 @@ class Rest_Api {
 	public function mainwp_rest_api_get_sites_by_url_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			$params = array(
 				'full_data'    => true,
@@ -1153,7 +1301,12 @@ class Rest_Api {
 	public function mainwp_rest_api_get_sites_by_client_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			$params = array(
 				'full_data'    => true,
@@ -1206,7 +1359,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -1223,10 +1381,6 @@ class Rest_Api {
 
 					if ( ! empty( $data ) && property_exists( $data, 'privkey' ) ) {
 						unset( $data->privkey );
-					}
-
-					if ( ! empty( $data ) && property_exists( $data, 'nosslkey' ) ) {
-						unset( $data->nosslkey );
 					}
 
 					if ( ! empty( $data ) && property_exists( $data, 'adminname' ) ) {
@@ -1281,7 +1435,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_info_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -1328,7 +1487,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_installed_plugins_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -1374,7 +1538,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_installed_plugins_count_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -1423,7 +1592,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_active_plugins_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -1470,7 +1644,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_active_plugins_count_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -1520,7 +1699,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_inactive_plugins_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -1567,7 +1751,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_inactive_plugins_count_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -1617,7 +1806,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_installed_themes_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -1663,7 +1857,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_installed_themes_count_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -1712,7 +1911,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_active_themes_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -1759,7 +1963,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_inactive_themes_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -1806,7 +2015,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_inactive_themes_count_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -1856,7 +2070,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_available_updates_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -1913,7 +2132,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_available_updates_count_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -1977,7 +2201,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_abandoned_plugins_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -2024,7 +2253,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_abandoned_plugins_count_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -2075,7 +2309,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_abandoned_themes_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -2122,7 +2361,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_abandoned_themes_count_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -2173,7 +2417,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_http_status_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -2219,7 +2468,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_health_score_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// parameters.
 			if ( null != $request['site_id'] ) {
@@ -2275,7 +2529,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_security_issues_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -2321,7 +2580,12 @@ class Rest_Api {
 	public function mainwp_rest_api_add_site_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get data.
 			$fields = $request->get_json_params();
@@ -2353,7 +2617,12 @@ class Rest_Api {
 	public function mainwp_rest_api_edit_site_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -2399,7 +2668,12 @@ class Rest_Api {
 	public function mainwp_rest_api_sync_site_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 			// get parameters.
 			if ( null != $request['site_id'] ) {
 
@@ -2444,7 +2718,12 @@ class Rest_Api {
 	public function mainwp_rest_api_reconnect_site_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			if ( null != $request['site_id'] ) {
 
@@ -2490,7 +2769,12 @@ class Rest_Api {
 	public function mainwp_rest_api_disconnect_site_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			if ( null != $request['site_id'] ) {
 
@@ -2536,7 +2820,12 @@ class Rest_Api {
 	public function mainwp_rest_api_remove_site_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -2580,7 +2869,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_update_wordpress_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -2629,7 +2923,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_update_plugins_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -2687,7 +2986,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_update_themes_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -2745,7 +3049,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_update_translations_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -2803,7 +3112,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_update_item_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 
@@ -2858,7 +3172,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_manage_plugin_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 
@@ -2924,7 +3243,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_manage_theme_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 
@@ -2990,7 +3314,12 @@ class Rest_Api {
 	public function mainwp_rest_api_check_site_http_status_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -3036,7 +3365,12 @@ class Rest_Api {
 	public function mainwp_rest_api_non_mainwp_changes_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -3096,7 +3430,12 @@ class Rest_Api {
 	public function mainwp_rest_api_non_mainwp_changes_count_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -3164,7 +3503,12 @@ class Rest_Api {
 	public function mainwp_rest_api_available_updates_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			$all_updates = array();
 
@@ -3215,7 +3559,12 @@ class Rest_Api {
 	public function mainwp_rest_api_ignored_plugins_updates_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 
@@ -3247,7 +3596,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_ignored_plugins_updates_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -3293,7 +3647,12 @@ class Rest_Api {
 	public function mainwp_rest_api_ignored_themes_updates_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 
@@ -3325,7 +3684,12 @@ class Rest_Api {
 	public function mainwp_rest_api_site_ignored_themes_updates_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['site_id'] ) {
@@ -3371,7 +3735,12 @@ class Rest_Api {
 	public function mainwp_rest_api_ignore_updates_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['type'] && null != $request['slug'] && null != $request['name'] ) {
@@ -3411,8 +3780,12 @@ class Rest_Api {
 	public function mainwp_rest_api_ignore_update_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
 
+		if ( true === $valid ) {
 			// get parameters.
 			if ( null != $request['type'] && null != $request['slug'] && null != $request['name'] && null != $request['site_id'] ) {
 
@@ -3452,7 +3825,12 @@ class Rest_Api {
 	public function mainwp_rest_api_unignore_updates_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['type'] && null != $request['slug'] ) {
@@ -3491,7 +3869,12 @@ class Rest_Api {
 	public function mainwp_rest_api_unignore_update_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get parameters.
 			if ( null != $request['type'] && null != $request['slug'] && null != $request['site_id'] ) {
@@ -3531,7 +3914,12 @@ class Rest_Api {
 	public function mainwp_rest_api_add_client_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get data.
 			$fields = $request->get_json_params();
@@ -3540,7 +3928,7 @@ class Rest_Api {
 				$data     = MainWP_Client_Handler::rest_api_add_client( $fields );
 				$response = new \WP_REST_Response( $data );
 				$response->set_status( 200 );
-			} catch ( Exception $e ) {
+			} catch ( \Exception $e ) {
 				$response = $this->mainwp_invalid_data_error( $e->getMessage() );
 			}
 		} else {
@@ -3566,7 +3954,12 @@ class Rest_Api {
 	public function mainwp_rest_api_edit_client_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			// get data.
 			$fields = $request->get_json_params();
@@ -3575,7 +3968,7 @@ class Rest_Api {
 				$data     = MainWP_Client_Handler::rest_api_add_client( $fields, true );
 				$response = new \WP_REST_Response( $data );
 				$response->set_status( 200 );
-			} catch ( Exception $e ) {
+			} catch ( \Exception $e ) {
 				$response = $this->mainwp_invalid_data_error( $e->getMessage() );
 			}
 		} else {
@@ -3600,7 +3993,12 @@ class Rest_Api {
 	public function mainwp_rest_api_remove_client_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 			$client_id = isset( $request['client_id'] ) ? intval( $request['client_id'] ) : 0;
 			if ( ! empty( $client_id ) ) {
 				MainWP_DB_Client::instance()->delete_client( $client_id );
@@ -3631,7 +4029,12 @@ class Rest_Api {
 	public function mainwp_rest_api_all_clients_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			$params = array(
 				'client'        => isset( $request['client'] ) ? $request['client'] : '',
@@ -3672,7 +4075,12 @@ class Rest_Api {
 	public function mainwp_rest_api_all_tags_callback( $request ) {
 
 		// first validate the request.
-		if ( $this->mainwp_validate_request( $request ) ) {
+		$valid = $this->mainwp_validate_request( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( true === $valid ) {
 
 			$data = array();
 

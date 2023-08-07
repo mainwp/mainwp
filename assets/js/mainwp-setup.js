@@ -1,6 +1,6 @@
 jQuery( document ).ready( function () {
 
-  jQuery( '#mainwp-qsw-verify-mainwp-child-active' ).change( function () {
+  jQuery( '#mainwp-qsw-verify-mainwp-child-active' ).on('change', function () {
     if ( jQuery( this ).is( ':checked' ) ) {
       jQuery( '#mainwp-qsw-connect-site-form' ).fadeIn( 500 );
     } else {
@@ -105,7 +105,7 @@ mainwp_setup_managesites_add = function () {
 
     jQuery.post( ajaxurl, data, function ( res_things ) {
       response = res_things.response;
-      response = jQuery.trim( response );
+      response = response.trim();
 
       var url = jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val() + '://' + jQuery( '#mainwp_managesites_add_wpurl' ).val().trim();
       if ( url.substr( -1 ) != '/' ) {
@@ -162,7 +162,7 @@ mainwp_setup_managesites_add = function () {
             response = res_things.response;
           }
 
-          response = jQuery.trim( response );
+          response = response.trim();
 
           jQuery( '#mainwp-message-zone' ).hide();
           jQuery( '#mainwp-info-zone' ).hide();
@@ -193,13 +193,13 @@ mainwp_setup_managesites_add = function () {
             } );
           }
 
-          jQuery( '#mainwp_managesites_add' ).removeAttr( 'disabled' );
+          jQuery( '#mainwp_managesites_add' ).prop("disabled", false);
         }, 'json' );
       }
       if ( errors.length > 0 ) {
         jQuery( '#mainwp-message-zone' ).removeClass( 'green yellow green' );
         jQuery( '#mainwp-message-zone' ).hide();
-        jQuery( '#mainwp_managesites_add' ).removeAttr( 'disabled' );
+        jQuery( '#mainwp_managesites_add' ).prop("disabled", false);
         jQuery( '#mainwp-message-zone' ).html( errors.join( '<br />' ) ).addClass( 'red' ).show();
       }
     }, 'json' );

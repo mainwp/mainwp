@@ -65,6 +65,10 @@ class MainWP_DB extends MainWP_DB_Base {
 	 */
 	public function get_option_view( $fields = array(), $default = true ) {
 
+		if ( ! is_array( $fields ) ) {
+			$fields = array();
+		}
+
 		$view = '(SELECT intwp.id AS wpid ';
 
 		if ( empty( $fields ) || $default ) {
@@ -74,6 +78,14 @@ class MainWP_DB extends MainWP_DB_Base {
 					(SELECT phpversion.value FROM ' . $this->table_name( 'wp_options' ) . ' phpversion WHERE  phpversion.wpid = intwp.id AND phpversion.name = "phpversion" LIMIT 1) AS phpversion,
 					(SELECT added_timestamp.value FROM ' . $this->table_name( 'wp_options' ) . ' added_timestamp WHERE  added_timestamp.wpid = intwp.id AND added_timestamp.name = "added_timestamp" LIMIT 1) AS added_timestamp,
 					(SELECT wp_upgrades.value FROM ' . $this->table_name( 'wp_options' ) . ' wp_upgrades WHERE  wp_upgrades.wpid = intwp.id AND wp_upgrades.name = "wp_upgrades" LIMIT 1) AS wp_upgrades ';
+		}
+
+		if ( ! in_array( 'signature_algo', $fields ) ) {
+			$fields[] = 'signature_algo';
+		}
+
+		if ( ! in_array( 'verify_method', $fields ) ) {
+			$fields[] = 'verify_method';
 		}
 
 		if ( is_array( $fields ) ) {
@@ -1079,8 +1091,7 @@ class MainWP_DB extends MainWP_DB_Base {
 				if ( 'nogroups' === $e ) {
 					return true;
 				}
-				$e = intval( $e );
-				return ( 0 < $e ) ? true : false;
+				return ( is_numeric( $e ) && 0 < $e ) ? true : false;
 			}
 		);
 
@@ -1652,8 +1663,6 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param string $admin Child site administrator username.
 	 * @param string $pubkey OpenSSL public key.
 	 * @param string $privkey OpenSSL private key.
-	 * @param mixed  $nossl SSL suppoted connection.
-	 * @param mixed  $nosslkey SSL not supported connection key.
 	 * @param array  $groupids Group IDs.
 	 * @param array  $groupnames Group names.
 	 * @param int    $verifyCertificate Whether or not to verify SSL Certificate.
@@ -1675,8 +1684,6 @@ class MainWP_DB extends MainWP_DB_Base {
 		$admin,
 		$pubkey,
 		$privkey,
-		$nossl,
-		$nosslkey,
 		$groupids,
 		$groupnames,
 		$verifyCertificate = 1,
@@ -1687,7 +1694,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		$wpe = 0,
 		$isStaging = 0 ) {
 
-		if ( MainWP_Utility::ctype_digit( $userid ) && ( 0 == $nossl || 1 == $nossl ) ) {
+		if ( MainWP_Utility::ctype_digit( $userid ) ) {
 			if ( '/' != substr( $url, - 1 ) ) {
 				$url .= '/';
 			}
@@ -1698,8 +1705,6 @@ class MainWP_DB extends MainWP_DB_Base {
 				'url'                   => $this->escape( $url ),
 				'pubkey'                => $this->escape( $pubkey ),
 				'privkey'               => $this->escape( $privkey ),
-				'nossl'                 => $nossl,
-				'nosslkey'              => ( null == $nosslkey ? '' : $this->escape( $nosslkey ) ),
 				'siteurl'               => '',
 				'ga_id'                 => '',
 				'gas_id'                => 0,

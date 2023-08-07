@@ -291,7 +291,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 *
 	 * @return void.
 	 */
-	public function reports_check_updates_861( $tokens, $sites_tokens_values ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public function reports_check_updates_861( $tokens, $sites_tokens_values ) { // phpcs:ignore -- complexex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$default_client_fields  = MainWP_Client_Handler::get_default_client_fields();
 		$default_contact_fields = MainWP_Client_Handler::get_default_contact_fields();
@@ -650,7 +650,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 *
 	 * @return mixed $result results.
 	 */
-	public function get_wp_client_by( $by = 'client_id', $value = null, $obj = OBJECT, $params = array() ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public function get_wp_client_by( $by = 'client_id', $value = null, $obj = OBJECT, $params = array() ) { // phpcs:ignore -- complexex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$with_selected_sites = isset( $params['with_selected_sites'] ) && $params['with_selected_sites'] ? true : false;
 		$with_tags           = isset( $params['with_tags'] ) && $params['with_tags'] ? true : false;

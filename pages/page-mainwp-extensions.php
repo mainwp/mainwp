@@ -269,10 +269,10 @@ class MainWP_Extensions {
 					'parent_key' => 'mainwp_tab',
 					'slug'       => 'Extensions',
 					'href'       => 'admin.php?page=Extensions',
-					'icon'       => '<i class="plug icon"></i>',
+					'icon'       => '<i class="puzzle piece icon"></i>',
 					'id'         => 'menu-item-extensions',
 				),
-				1
+				0
 			);
 
 			$init_sub_subleftmenu = array(
@@ -335,9 +335,9 @@ class MainWP_Extensions {
 			$menu_name = MainWP_Extensions_Handler::polish_ext_name( $extension );
 
 			if ( isset( $extension['direct_page'] ) ) {
-				$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['direct_page'] ) . '" class="mainwp-submenu">' . $menu_name . '</a>';
+				$html .= '<a href="' . esc_url( admin_url( 'admin.php?page=' . $extension['direct_page'] ) ) . '" class="mainwp-submenu">' . $menu_name . '</a>';
 			} else {
-				$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['page'] ) . '" class="mainwp-submenu">' . $menu_name . '</a>';
+				$html .= '<a href="' . esc_url( admin_url( 'admin.php?page=' . $extension['page'] ) ) . '" class="mainwp-submenu">' . $menu_name . '</a>';
 			}
 		}
 		if ( empty( $html ) ) {

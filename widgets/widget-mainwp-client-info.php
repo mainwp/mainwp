@@ -146,11 +146,11 @@ class MainWP_Client_Info {
 
 									if ( '' == $client_info['note'] ) :
 										?>
-										<a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo $client_info['client_id']; ?>" data-tooltip="<?php esc_attr_e( 'Edit client notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
+										<a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Edit client notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
 									<?php else : ?>
-										<a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo $client_info['client_id']; ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+										<a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
 									<?php endif; ?>
-									<span style="display: none" id="mainwp-notes-<?php echo $client_info['client_id']; ?>-note"><?php echo wp_unslash( $esc_note ); ?></span>
+									<span style="display: none" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 									<?php
 								} else {
 									echo esc_html( $val );

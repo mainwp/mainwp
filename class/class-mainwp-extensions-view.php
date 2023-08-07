@@ -52,12 +52,13 @@ class MainWP_Extensions_View {
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
 	 */
 	public static function render_header( $shownPage = '' ) {
-		if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) {
+		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		if ( ! empty( $page ) && 'Extensions' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$params = array(
 				'title' => esc_html__( 'Extensions', 'mainwp' ),
 			);
 		} else {
-			$extension_name_raw = sanitize_text_field( wp_unslash( $_GET['page'] ) );
+			$extension_name_raw = $page;
 			$extension_name     = str_replace( array( '-' ), ' ', $extension_name_raw );
 			$extension_name     = MainWP_Extensions_Handler::polish_string_name( $extension_name );
 			$extension_name     = apply_filters( 'mainwp_extensions_page_top_header', $extension_name, $extension_name_raw );
@@ -107,7 +108,6 @@ class MainWP_Extensions_View {
 	 *
 	 * Render the extensions page.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::added_on_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
@@ -144,7 +144,7 @@ class MainWP_Extensions_View {
 					<div class="ui segment" id="mainwp-extensions-search-no-results" style="display:none">
 						<div class="ui info message"><?php esc_html_e( 'Your search returned no results. The extension may need to be installed or does not exist.' ); ?></div>
 					</div>
-				<div class="ui five stackable cards" id="mainwp-extensions-list">
+				<div class="ui four stackable cards" id="mainwp-extensions-list">
 					<?php if ( isset( $extensions ) && is_array( $extensions ) ) : ?>
 							<?php foreach ( $extensions as $extension ) : ?>
 									<?php
@@ -442,7 +442,7 @@ class MainWP_Extensions_View {
 			$new = '<span class="ui floating green mini label">NEW!</span>';
 		}
 		?>
-			<div class="ui card extension <?php echo ( $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension' ); ?> extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" <?php echo $queue_status; ?> license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
+			<div class="ui card extension <?php echo ( $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension' ); ?> extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" <?php echo esc_html( $queue_status ); ?> license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
 		<?php
 		/**
 		 * Action: mainwp_extension_card_top
@@ -468,25 +468,25 @@ class MainWP_Extensions_View {
 					</div>
 
 					<div class="meta">
-				<?php echo '<i class="code branch icon"></i>' . $extension['version']; ?> <?php echo ( isset( $extension['DocumentationURI'] ) && ! empty( $extension['DocumentationURI'] ) ) ? ' - <a href="' . str_replace( array( 'http:', 'https:' ), '', $extension['DocumentationURI'] ) . '" target="_blank">' . esc_html__( 'Documentation', 'mainwp' ) . '</a>' : ''; ?>
+				<?php echo '<i class="code branch icon"></i>' . esc_html( $extension['version'] ); ?> <?php echo ( isset( $extension['DocumentationURI'] ) && ! empty( $extension['DocumentationURI'] ) ) ? ' - <a href="' . esc_url( str_replace( array( 'http:', 'https:' ), '', $extension['DocumentationURI'] ) ) . '" target="_blank">' . esc_html__( 'Documentation', 'mainwp' ) . '</a>' : ''; ?>
 					</div>
 		<?php if ( isset( $extension_update->response[ $extension['slug'] ] ) ) : ?>
-						<a href="<?php echo admin_url( 'plugins.php' ); ?>" class="ui red ribbon label"><?php esc_html_e( 'Update available', 'mainwp' ); ?></a>
+						<a href="<?php echo esc_url( admin_url( 'plugins.php' ) ); ?>" class="ui red ribbon label"><?php esc_html_e( 'Update available', 'mainwp' ); ?></a>
 					<?php endif; ?>
 					<div class="description">
-		<?php echo preg_replace( '/\<cite\>.*\<\/cite\>/', '', $extension['description'] ); ?>
+		<?php echo esc_html( preg_replace( '/\<cite\>.*\<\/cite\>/', '', $extension['description'] ) ); ?>
 					</div>
 				</div>
-				<?php echo $new; ?>
+				<?php echo $new; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 		<div class="extra content">
 					<div class="ui mini fluid stackable buttons">
 						<a class="ui basic button extension-the-plugin-action" plugin-action="<?php echo $disabled ? 'active' : 'disable'; ?>"><?php echo $disabled ? '<i class="toggle on icon"></i> ' . esc_html__( 'Enable', 'mainwp' ) : '<i class="toggle off icon"></i> ' . esc_html__( 'Disable', 'mainwp' ); ?></a>
-						<a class="ui extension-privacy-info-link icon basic button" base-slug="<?php echo esc_attr( $item_slug ); ?>" data-tooltip="<?php echo esc_html__( 'Click to see more about extension privacy.', 'mainwp' ); ?>" data-position="top left" data-inverted=""><?php echo $privacy_class; ?> <?php echo esc_html__( 'Privacy', 'mainwp' ); ?></a>
+						<a class="ui extension-privacy-info-link icon basic button" base-slug="<?php echo esc_attr( $item_slug ); ?>" data-tooltip="<?php echo esc_html__( 'Click to see more about extension privacy.', 'mainwp' ); ?>" data-position="top left" data-inverted=""><?php echo $privacy_class; ?> <?php echo esc_html__( 'Privacy', 'mainwp' ); ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
 						<?php if ( $disabled ) : ?>
 						<a class="ui basic button extension-the-plugin-action" plugin-action="remove"><i class="trash icon"></i> <?php echo esc_html__( 'Delete', 'mainwp' ); ?></a>
 						<?php endif; ?>
 				<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
-						<a class="ui activate-api-status mainwp-manage-extension-license icon basic button" data-tooltip="<?php echo ( $active ? esc_html__( 'Extension API license is activated properly. Click here to Deactivate it if needed.', 'mainwp' ) : esc_html__( 'Extension API license is not activated. Click here to activate it.', 'mainwp' ) ); ?>" api-actived="<?php echo $active ? '1' : '0'; ?>" data-position="top left" data-inverted=""><?php echo $license_class; ?> <?php echo esc_html__( 'License', 'mainwp' ); ?></a>
+						<a class="ui activate-api-status mainwp-manage-extension-license icon basic button" data-tooltip="<?php echo ( $active ? esc_html__( 'Extension API license is activated properly. Click here to Deactivate it if needed.', 'mainwp' ) : esc_html__( 'Extension API license is not activated. Click here to activate it.', 'mainwp' ) ); ?>" api-actived="<?php echo $active ? '1' : '0'; ?>" data-position="top left" data-inverted=""><?php echo $license_class; ?> <?php echo esc_html__( 'License', 'mainwp' ); ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
 				<?php endif; ?>
 		</div>
 		</div>
@@ -565,6 +565,7 @@ class MainWP_Extensions_View {
 	 * @param string $mainwp_api_key MainWP.com api key.
 	 */
 	public static function render_side_box( $mainwp_api_key ) {
+
 		?>
 		<div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
 			<div class="title active">
@@ -671,7 +672,7 @@ class MainWP_Extensions_View {
 				'integration_owner_3'    => 'Zoho Corporation Pvt. Ltd.',
 				'integration_owner_pp_3' => 'https://www.zoho.com/privacy.html',
 			),
-			'mainwp-api-backups-extension' =>
+			'mainwp-api-backups-extension'           =>
 			array(
 				'type'                   => 'pro',
 				'slug'                   => 'mainwp-api-backups-extension',
@@ -814,7 +815,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-cache-control-extension' =>
+			'mainwp-cache-control-extension'         =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-cache-control-extension',
@@ -941,7 +942,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-database-updater-extension' =>
+			'mainwp-database-updater-extension'      =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-database-updater-extension',
@@ -1032,7 +1033,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'Google LLC',
 				'integration_owner_pp' => 'https://policies.google.com/privacy',
 			),
-			'mainwp-jetpack-protect-extension' =>
+			'mainwp-jetpack-protect-extension'       =>
 			array(
 				'type'                 => 'free',
 				'slug'                 => 'mainwp-jetpack-protect-extension',
@@ -1051,7 +1052,7 @@ class MainWP_Extensions_View {
 				'integration_owner_pp' => 'https://automattic.com/privacy/',
 				'release_date'         => 1677020400,
 			),
-			'mainwp-jetpack-scan-extension' =>
+			'mainwp-jetpack-scan-extension'          =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-jetpack-scan-extension',
@@ -1250,7 +1251,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'Liquid Web, LLC',
 				'integration_owner_pp' => 'https://www.liquidweb.com/about-us/policies/privacy-policy/',
 			),
-			'mainwp-ssl-monitor-extension' =>
+			'mainwp-ssl-monitor-extension'           =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-ssl-monitor-extension',
@@ -1305,7 +1306,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'termageddon-for-mainwp' =>
+			'termageddon-for-mainwp'                 =>
 			array(
 				'type'                 => 'free',
 				'slug'                 => 'termageddon-for-mainwp',

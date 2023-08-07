@@ -336,16 +336,26 @@ class MainWP_Connect {
 				$data = array_merge( $data, $params );
 			}
 
-			$data = apply_filters( 'mainwp_get_post_data_authed', $data, $website, $what, $params );
+			$alg          = false;
+			$sign_success = null;
 
-			if ( ( 0 == $website->nossl ) && function_exists( 'openssl_verify' ) ) {
-				$data['nossl'] = 0;
-				openssl_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-			} else {
-				$data['nossl'] = 1;
-				$signature     = md5( $what . $data['nonce'] . $website->nosslkey );
+			$data = apply_filters( 'mainwp_get_post_data_authed', $data, $website, $what, $params );
+			if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
+				$sign_success      = MainWP_Connect_Lib::connect_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+				$data['verifylib'] = 1;
+			} elseif ( function_exists( 'openssl_verify' ) ) {
+				$alg          = MainWP_System_Utility::get_connect_sign_algorithm( $website );
+				$sign_success = self::connect_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+				if ( false !== $alg ) {
+					$data['sign_algo'] = $alg;
+				}
 			}
-			$data['mainwpsignature'] = base64_encode( $signature ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+
+			if ( null !== $sign_success && empty( $sign_success ) ) {
+				MainWP_Logger::instance()->warning_for_website( $website, 'CONNECT SIGN', 'FAILED :: [algorithm=' . $alg . ']', false );
+			}
+
+			$data['mainwpsignature'] = ! empty( $signature ) ? base64_encode( $signature ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
 			/** This filter is documented in ../widgets/widget-mainwp-recent-posts.php */
 			$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 );
@@ -406,24 +416,40 @@ class MainWP_Connect {
 	public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false ) {
 		$params = array();
 		if ( $website && '' != $paramValue ) {
-			$nonce = wp_rand( 0, 9999 );
-			if ( ( 0 == $website->nossl ) && function_exists( 'openssl_verify' ) ) {
-				$nossl = 0;
-				openssl_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-			} else {
-				$nossl     = 1;
-				$signature = md5( $paramValue . $nonce . $website->nosslkey );
+
+			$sign_success = null;
+			$alg          = false;
+			$use_seclib   = false;
+			$nonce        = wp_rand( 0, 9999 );
+			if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
+				$sign_success = MainWP_Connect_Lib::connect_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+				$use_seclib   = true;
+			} elseif ( function_exists( 'openssl_verify' ) ) {
+				$alg          = MainWP_System_Utility::get_connect_sign_algorithm( $website );
+				$sign_success = self::connect_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ), $alg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			}
-			$signature = base64_encode( $signature ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+
+			$signature = ! empty( $signature ) ? base64_encode( $signature ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+
+			if ( null !== $sign_success && empty( $sign_success ) ) {
+				MainWP_Logger::instance()->warning_for_website( $website, 'CONNECT SIGN', 'FAILED :: [seclib=' . intval( $use_seclib ) . '] :: [algorithm=' . $alg . ']', false );
+			}
 
 			$params = array(
 				'login_required'  => 1,
 				'user'            => rawurlencode( $website->adminname ),
 				'mainwpsignature' => rawurlencode( $signature ),
 				'nonce'           => $nonce,
-				'nossl'           => $nossl,
 				$paramName        => rawurlencode( $paramValue ),
 			);
+
+			if ( false !== $alg ) {
+				$params['sign_algo'] = $alg;
+			}
+
+			if ( ! empty( $use_seclib ) ) {
+				$params['verifylib'] = 1;
+			}
 
 			/**
 			 * Current user global.
@@ -456,6 +482,26 @@ class MainWP_Connect {
 		}
 
 		return rtrim( $url, '&' );
+	}
+
+	/**
+	 * Method connect_sign()
+	 *
+	 * Sign connect.
+	 *
+	 * @param string $data Data sign.
+	 * @param string $signature signature.
+	 * @param string $privkey Private key.
+	 * @param mixed  $algorithm signature algorithm.
+	 *
+	 * @return bool Success or not.
+	 */
+	public static function connect_sign( $data, &$signature, $privkey, $algorithm ) {
+		if ( false === $algorithm ) {
+			return openssl_sign( $data, $signature, $privkey ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+		} else {
+			return openssl_sign( $data, $signature, $privkey, $algorithm ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+		}
 	}
 
 	/**

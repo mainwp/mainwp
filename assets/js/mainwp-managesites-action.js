@@ -221,7 +221,7 @@ mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
     bulkManageSitesFinished++;
     rowObj.html('<td colspan="999"></td>');
 
-    response = jQuery.trim(response);
+    response = response.trim();
     var msg = '', error = '';
     if (response.substr(0, 5) == 'ERROR') {
       if (response.length == 5) {

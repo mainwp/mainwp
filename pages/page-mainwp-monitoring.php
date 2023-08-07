@@ -149,7 +149,7 @@ class MainWP_Monitoring {
 			<div class="scrolling content ui form">
 				<form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MonitoringSitesScrOptions' ); ?>" />
+					<input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'MonitoringSitesScrOptions' ) ); ?>" />
 					<div class="ui grid field">
 						<label class="six wide column"><?php esc_html_e( 'Default items per page value', 'mainwp' ); ?></label>
 						<div class="ten wide column">

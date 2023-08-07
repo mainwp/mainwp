@@ -107,7 +107,7 @@ jQuery( document ).ready( function () {
 mainwp_edit_users_box_init = function () {
 
     jQuery( 'form#update_user_profile select#role option[value="donotupdate"]' ).prop( 'selected', true );
-    jQuery( 'form#update_user_profile select#role' ).removeAttr( 'disabled' );
+    jQuery( 'form#update_user_profile select#role' ).prop("disabled", false);
     jQuery( 'form#update_user_profile input#first_name' ).val( '' );
     jQuery( 'form#update_user_profile input#last_name' ).val( '' );
     jQuery( 'form#update_user_profile input#nickname' ).val( '' );
@@ -155,7 +155,7 @@ mainwpuser_postAction = function ( elem, what ) {
             if ( disabled_change_role ) {
                 jQuery( 'form#update_user_profile select#role' ).attr( 'disabled', 'disabled' );
             } else {
-                jQuery( 'form#update_user_profile select#role' ).removeAttr( 'disabled' );
+                jQuery( 'form#update_user_profile select#role' ).prop("disabled", false);
             }
 
             jQuery( 'form#update_user_profile input#first_name' ).val( response.user_data.first_name );
@@ -164,7 +164,7 @@ mainwpuser_postAction = function ( elem, what ) {
             jQuery( 'form#update_user_profile input#email' ).val( response.user_data.user_email );
             jQuery( 'form#update_user_profile input#url' ).val( response.user_data.user_url );
             jQuery( 'form#update_user_profile select#display_name' ).empty();
-            jQuery( 'form#update_user_profile select#display_name' ).removeAttr( 'disabled' );
+            jQuery( 'form#update_user_profile select#display_name' ).prop("disabled", false);
             if ( response.user_data.public_display ) {
                 jQuery.each( response.user_data.public_display, function ( index, value ) {
                     var o = new Option( value );
@@ -191,9 +191,9 @@ mainwpuser_postAction = function ( elem, what ) {
         if ( userCountReceived == userCountSent ) {
             userCountReceived = 0;
             userCountSent = 0;
-            jQuery( '#mainwp-do-users-bulk-actions' ).removeAttr( 'disabled' );
+            jQuery( '#mainwp-do-users-bulk-actions' ).prop("disabled", false);
 
-            jQuery( '#mainwp_btn_update_user' ).removeAttr( 'disabled' );
+            jQuery( '#mainwp_btn_update_user' ).prop("disabled", false);
             jQuery( '#mainwp_users_updating' ).hide();
 
 
@@ -271,7 +271,7 @@ mainwp_fetch_users = function () {
   jQuery( '#mainwp-loading-users-row' ).show();
 
   jQuery.post( ajaxurl, data, function ( response ) {
-    response = jQuery.trim( response );
+    response = response.trim();
     jQuery( '#mainwp-loading-users-row' ).hide();
     jQuery( '#mainwp_users_loading_info' ).hide();
     jQuery( '#mainwp_users_main' ).show();
@@ -326,7 +326,7 @@ jQuery( document ).ready( function () {
             jQuery( '#import_user_import_logging .log' ).append( _( 'Paused import by user.' ) + "\n" );
             jQuery( '#import_user_btn_import' ).val( __( 'Continue' ) );
             jQuery( '#MainWPBulkUploadUserLoading' ).hide();
-            jQuery( '#import_user_btn_save_csv' ).removeAttr( 'disabled' ); //Enable
+            jQuery( '#import_user_btn_save_csv' ).prop("disabled", false); //Enable
         } else
         {
             import_user_stop_by_user = false;
@@ -510,7 +510,7 @@ mainwp_import_users_finished = function() {
 	jQuery( '#MainWPBulkUploadUserLoading' ).hide();
 	jQuery( '#import_user_import_logging .log' ).append( '\n' + __( 'Number of users to import: %1 Created users: %2 Failed: %3', import_user_total_import, import_user_count_created_users, import_user_count_create_fails ) + '\n' );
 	if ( import_user_count_create_fails > 0 ) {
-		jQuery( '#import_user_btn_save_csv' ).removeAttr( "disabled" ); //Enable
+		jQuery( '#import_user_btn_save_csv' ).prop("disabled", false); //Enable
 	}
 	jQuery( '#import_user_import_logging' ).scrollTop( jQuery( '#import_user_import_logging .log' ).height() );
 }

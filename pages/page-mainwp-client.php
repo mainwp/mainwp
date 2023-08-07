@@ -192,13 +192,13 @@ class MainWP_Client {
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
 					<?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_clients' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=ManageClients' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Clients', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageClients' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Clients', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ClientAddNew' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=ClientAddNew' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add Client', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ClientAddNew' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add Client', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ClientAddField' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=ClientAddField' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Client Properties', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ClientAddField' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Client Properties', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
@@ -207,7 +207,7 @@ class MainWP_Client {
 								continue;
 							}
 							?>
-							<a href="<?php echo admin_url( 'admin.php?page=ClientAdd' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=ClientAdd' . $subPage['slug'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
 							<?php
 						}
 					}
@@ -235,10 +235,10 @@ class MainWP_Client {
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'ManageClients',
 				'href'       => 'admin.php?page=ManageClients',
-				'icon'       => '<i class="client icon"></i>',
+				'icon'       => '<i class="users icon"></i>',
 				'desc'       => 'Manage clients on your child sites',
 			),
-			1
+			0
 		);
 
 		$init_sub_subleftmenu = array(
@@ -288,7 +288,7 @@ class MainWP_Client {
 	 */
 	public static function render_header( $shownPage = '' ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-		$client_id = isset( $_GET['client_id'] ) ? sanitize_text_field( wp_unslash( $_GET['client_id'] ) ) : 0;
+		$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 
 		$params = array(
 			'title' => esc_html__( 'Clients', 'mainwp' ),
@@ -591,7 +591,7 @@ class MainWP_Client {
 			<div class="scrolling content ui form">
 				<form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'ManageClientsScrOptions' ); ?>" />
+					<input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'ManageClientsScrOptions' ) ); ?>" />
 					<div class="ui grid field">
 						<label class="six wide column"><?php esc_html_e( 'Default items per page value', 'mainwp' ); ?></label>
 						<div class="ten wide column">
@@ -773,7 +773,7 @@ class MainWP_Client {
 		$table_features = apply_filters( 'mainwp_clients_table_fatures', $table_features );
 		?>
 		<script type="text/javascript">
-		var responsive = <?php echo $table_features['responsive']; ?>;
+		var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
 		if( jQuery( window ).width() > 1140 ) {
 			responsive = false;
 		}
@@ -782,13 +782,13 @@ class MainWP_Client {
 				jQuery( "#mainwp-clients-table" ).DataTable().destroy(); // to fix re-init database issue.
 				jQuery( "#mainwp-clients-table" ).DataTable( {
 					"responsive" : responsive,
-					"searching" : <?php echo $table_features['searching']; ?>,
-					"colReorder" : <?php echo $table_features['colReorder']; ?>,
-					"stateSave":  <?php echo $table_features['stateSave']; ?>,
-					"paging": <?php echo $table_features['paging']; ?>,
-					"info": <?php echo $table_features['info']; ?>,
-					"order": <?php echo $table_features['order']; ?>,
-					"scrollX" : <?php echo $table_features['scrollX']; ?>,
+					"searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
+					"colReorder" : <?php echo esc_html( $table_features['colReorder'] ); ?>,
+					"stateSave":  <?php echo esc_html( $table_features['stateSave'] ); ?>,
+					"paging": <?php echo esc_html( $table_features['paging'] ); ?>,
+					"info": <?php echo esc_html( $table_features['info'] ); ?>,
+					"order": <?php echo esc_html( $table_features['order'] ); ?>,
+					"scrollX" : <?php echo esc_html( $table_features['scrollX'] ); ?>,
 					"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
 					"columnDefs": [ {
 						"targets": 'no-sort',
@@ -867,7 +867,7 @@ class MainWP_Client {
 				</td>
 				<td class="clientname column-clientname"><strong><abbr title="<?php echo esc_attr( $client['login'] ); ?>"><?php echo esc_html( $client['login'] ); ?></abbr></strong></td>
 				<td class="email column-email"><a href="mailto:<?php echo esc_attr( $client['email'] ); ?>"><?php echo esc_html( $client['email'] ); ?></a></td>
-				<td class="posts column-posts"><a href="<?php echo admin_url( 'admin.php?page=PostBulkManage&siteid=' . intval( $website->id ) . '&clientid=' . $client['id'] ); ?>"><?php echo esc_html( $client['post_count'] ); ?></a></td>
+				<td class="posts column-posts"><a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkManage&siteid=' . intval( $website->id ) ) . '&clientid=' . $client['id'] ); ?>"><?php echo esc_html( $client['post_count'] ); ?></a></td>
 				<td class="website column-website"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
 				<td class="right aligned">
 					<input class="clientId" type="hidden" name="id" value="<?php echo esc_attr( $client['id'] ); ?>" />
@@ -882,7 +882,7 @@ class MainWP_Client {
 							<?php } elseif ( ( 1 == $client['id'] ) || ( $client['login'] == $website->adminname ) ) { ?>
 							<a href="javascript:void(0)" class="item" data-tooltip="This client is used for our secure link, it can not be deleted." data-inverted="" data-position="left center"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
-							<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
+							<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
 							<?php
 							/**
 							 * Action: mainwp_clients_table_action
@@ -938,13 +938,13 @@ class MainWP_Client {
 		?>
 		<div class="ui alt segment" id="mainwp-add-clients">
 			<form action="" method="post" enctype="multipart/form-data" name="createclient_form" id="createclient_form" class="add:clients: validate">
-				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+				<?php wp_nonce_field( 'mainwp - admin - nonce' ); ?>
 				<div class="mainwp-main-content">
 					<div class="ui hidden divider"></div>
-					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-client-info-message' ) ) : ?>
+					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp - add - client - info - message' ) ) : ?>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-client-info-message"></i>
-						<?php echo sprintf( esc_html__( 'Use the provided form to create a new client on your child site.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-client/" target="_blank">', '</a>' ); ?>
+						<?php echo sprintf( esc_html__( 'use the provided form to create a new client on your child site(). for additional help, please check this %1$shelp documentation %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-client/" target="_blank">', '</a>' ); ?>
 					</div>
 				<?php endif; ?>
 					<div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
@@ -955,6 +955,7 @@ class MainWP_Client {
 					</div>
 				</div>
 				<div class="mainwp-side-content mainwp-no-padding">
+
 					<?php if ( $client_id ) : ?>
 					<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 						<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Tokens Info', 'mainwp' ); ?></div>
@@ -977,14 +978,16 @@ class MainWP_Client {
 					</script>
 					<div class="ui fitted divider"></div>
 					<?php endif; ?>
+
 					<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 						<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 						<div class="content active">
 							<?php
 							$sel_params = array(
-								'selected_sites'     => $selected_sites,
-								'show_group'         => false,
-								'add_edit_client_id' => $client_id,
+								'selected_sites'       => $selected_sites,
+								'show_group'           => false,
+								'add_edit_client_id'   => $client_id,
+								'enable_offline_sites' => $client_id ? true : false,
 							);
 
 							MainWP_UI_Select_Sites::select_sites_box( $sel_params );
@@ -1019,7 +1022,7 @@ class MainWP_Client {
 		$fields = MainWP_DB_Client::instance()->get_client_fields();
 		?>
 		<div class="ui info message" <?php echo ! MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-clients-manage-fields' ) ? 'style="display: none"' : ''; ?>>
-			<?php esc_html_e( 'Create and manage custom Client fields.', 'mainwp' ); ?>
+		<?php esc_html_e( 'Create and manage custom Client fields.', 'mainwp' ); ?>
 			<i class="ui close icon mainwp-notice-dismiss" notice-id="mainwp-clients-manage-fields"></i>
 		</div>
 		<div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
@@ -1032,15 +1035,15 @@ class MainWP_Client {
 				</tr>
 			</thead>
 			<tbody>
-				<?php if ( is_array( $fields ) && count( $fields ) > 0 ) : ?>
-					<?php foreach ( $fields as $field ) : ?>
-						<?php
-						if ( ! $field ) {
-							continue;}
-						?>
+			<?php if ( is_array( $fields ) && count( $fields ) > 0 ) : ?>
+				<?php foreach ( $fields as $field ) : ?>
+					<?php
+					if ( ! $field ) {
+						continue;}
+					?>
 						<tr class="mainwp-field" field-id="<?php echo intval( $field->field_id ); ?>">
-							<td class="field-name">[<?php echo stripslashes( $field->field_name ); ?>]</td>
-							<td class="field-description"><?php echo stripslashes( $field->field_desc ); ?></td>
+							<td class="field-name">[<?php echo esc_html( stripslashes( $field->field_name ) ); ?>]</td>
+							<td class="field-description"><?php echo esc_html( stripslashes( $field->field_desc ) ); ?></td>
 							<td>
 								<div class="ui left pointing dropdown icon mini basic green button">
 									<i class="ellipsis horizontal icon"></i>
@@ -1079,18 +1082,18 @@ class MainWP_Client {
 		</script>
 		</div>
 
-		<?php
-		self::render_add_field_modal();
-		self::render_footer( 'AddField' );
+			<?php
+			self::render_add_field_modal();
+			self::render_footer( 'AddField' );
 	}
 
-	/**
-	 * Method render_add_field_modal()
-	 *
-	 * Render add custom field modal.
-	 *
-	 * @param int $client_id The client id.
-	 */
+		/**
+		 * Method render_add_field_modal()
+		 *
+		 * Render add custom field modal.
+		 *
+		 * @param int $client_id The client id.
+		 */
 	public static function render_add_field_modal( $client_id = 0 ) {
 		?>
 		<div class="ui modal" id="mainwp-clients-custom-field-modal">
@@ -1112,18 +1115,18 @@ class MainWP_Client {
 			</div>
 			<input type="hidden" value="0" name="field-id">
 		</div>
-		<?php
+			<?php
 	}
 
-	/**
-	 * Method add_client()
-	 *
-	 * Bulk client addition $_POST Handler.
-	 */
+		/**
+		 * Method add_client()
+		 *
+		 * Bulk client addition $_POST Handler.
+		 */
 	public static function add_client() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 
-		$selected_sites = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
-		$client_fields  = isset( $_POST['client_fields'] ) ? wp_unslash( $_POST['client_fields'] ) : array();
+			$selected_sites = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification
+			$client_fields  = isset( $_POST['client_fields'] ) ? wp_unslash( $_POST['client_fields'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( ! is_array( $client_fields ) ) {
 			$client_fields = array();
@@ -1134,7 +1137,7 @@ class MainWP_Client {
 			return;
 		}
 
-		$add_new = true;
+			$add_new = true;
 
 			$dirs     = MainWP_System_Utility::get_mainwp_dir( 'client-images', true );
 			$base_dir = $dirs[0];
@@ -1149,9 +1152,9 @@ class MainWP_Client {
 			}
 		}
 
-		$client_to_add['primary_contact_id'] = isset( $client_fields['default_field']['primary_contact_id'] ) ? intval( $client_fields['default_field']['primary_contact_id'] ) : 0;
+			$client_to_add['primary_contact_id'] = isset( $client_fields['default_field']['primary_contact_id'] ) ? intval( $client_fields['default_field']['primary_contact_id'] ) : 0;
 
-		$client_id = isset( $client_fields['client_id'] ) ? intval( $client_fields['client_id'] ) : 0;
+			$client_id = isset( $client_fields['client_id'] ) ? intval( $client_fields['client_id'] ) : 0;
 
 		if ( $client_id ) {
 			$client_to_add['client_id'] = $client_id; // update client.
@@ -1183,8 +1186,8 @@ class MainWP_Client {
 			}
 		}
 
-			$client_image = 'NOTCHANGE';
-		if ( isset( $_POST['mainwp_client_delete_image']['client_field'] ) && $client_id == $_POST['mainwp_client_delete_image']['client_field'] ) {
+		$client_image = 'NOTCHANGE';
+		if ( isset( $_POST['mainwp_client_delete_image']['client_field'] ) && $client_id == $_POST['mainwp_client_delete_image']['client_field'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$client_image = '';
 		}
 
@@ -1212,8 +1215,8 @@ class MainWP_Client {
 			MainWP_DB_Client::instance()->update_client( $update );
 		}
 
-		$is_first_contact       = true;
-		$auto_assign_contact_id = 0;
+			$is_first_contact       = true;
+			$auto_assign_contact_id = 0;
 
 		if ( $client_id && isset( $client_fields['contacts_field'] ) ) {
 
@@ -1253,7 +1256,7 @@ class MainWP_Client {
 
 				if ( $updated ) {
 					$contact_image = 'NOTCHANGE';
-					if ( isset( $_POST['mainwp_client_delete_image']['contacts_field'][ $contact_id ] ) && $contact_id == $_POST['mainwp_client_delete_image']['contacts_field'][ $contact_id ] ) {
+					if ( isset( $_POST['mainwp_client_delete_image']['contacts_field'][ $contact_id ] ) && $contact_id == $_POST['mainwp_client_delete_image']['contacts_field'][ $contact_id ] ) { // phpcs:ignore WordPress.Security.NonceVerification
 						$contact_image = '';
 					}
 
@@ -1271,7 +1274,7 @@ class MainWP_Client {
 						if ( $old_file != $contact_image && ! empty( $old_file ) ) {
 							$delete_old_file = $base_dir . '/' . $old_file;
 							if ( file_exists( $delete_old_file ) ) {
-									unlink( $delete_old_file );
+								unlink( $delete_old_file );
 							}
 						}
 						$update = array(
@@ -1354,19 +1357,19 @@ class MainWP_Client {
 			MainWP_DB_Client::instance()->update_client( $update );
 		}
 
-		echo wp_json_encode(
-			array(
-				'success'   => 'yes',
-				'client_id' => $client_id,
-			)
-		);
+			echo wp_json_encode(
+				array(
+					'success'   => 'yes',
+					'client_id' => $client_id,
+				)
+			);
 	}
 
-	/**
-	 * Method render_add_client_modal().
-	 *
-	 * Renders add client Modal window.
-	 */
+		/**
+		 * Method render_add_client_modal().
+		 *
+		 * Renders add client Modal window.
+		 */
 	public static function render_add_client_modal() {
 		?>
 			<div id="mainwp-creating-new-client-modal" class="ui modal">
@@ -1374,9 +1377,9 @@ class MainWP_Client {
 				<div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
 				<div class="scrolling content mainwp-modal-content">				
 					<form action="" method="post" enctype="multipart/form-data" name="createclient_form" id="createclient_form" class="add:clients: validate">
-					<?php
-						self::render_add_client_content();
-					?>
+				<?php
+					self::render_add_client_content();
+				?>
 					</form>
 				</div>
 				<div class="actions">
@@ -1393,24 +1396,24 @@ class MainWP_Client {
 					return false;
 				});
 			</script>
-		<?php
+			<?php
 	}
 
-	/**
-	 * Method render_add_client_content().
-	 *
-	 * Renders add client content window.
-	 *
-	 * @param mixed $edit_client The client data.
-	 */
+		/**
+		 * Method render_add_client_content().
+		 *
+		 * Renders add client content window.
+		 *
+		 * @param mixed $edit_client The client data.
+		 */
 	public static function render_add_client_content( $edit_client = false ) { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 
-		$client_id = $edit_client ? $edit_client->client_id : 0;
+			$client_id = $edit_client ? $edit_client->client_id : 0;
 
-		$default_client_fields = MainWP_Client_Handler::get_default_client_fields();
-		$custom_fields         = MainWP_DB_Client::instance()->get_client_fields( true, $client_id, true );
+			$default_client_fields = MainWP_Client_Handler::get_default_client_fields();
+			$custom_fields         = MainWP_DB_Client::instance()->get_client_fields( true, $client_id, true );
 
-		$client_image = $edit_client ? $edit_client->image : '';
+			$client_image = $edit_client ? $edit_client->image : '';
 
 		?>
 		<h3 class="ui dividing header">
@@ -1423,12 +1426,12 @@ class MainWP_Client {
 			<?php endif; ?>
 		</h3>
 		<div class="ui form">
-		<?php
+			<?php
 
-		foreach ( $default_client_fields as $field_name => $field ) {
-			$db_field = isset( $field['db_field'] ) ? $field['db_field'] : '';
-			$val      = $edit_client && '' != $db_field && property_exists( $edit_client, $db_field ) ? $edit_client->{$db_field} : '';
-			?>
+			foreach ( $default_client_fields as $field_name => $field ) {
+				$db_field = isset( $field['db_field'] ) ? $field['db_field'] : '';
+				$val      = $edit_client && '' != $db_field && property_exists( $edit_client, $db_field ) ? $edit_client->{$db_field} : '';
+				?>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php echo esc_html( $field['title'] ); ?></label>
 					<div class="ui six wide column">
@@ -1446,11 +1449,11 @@ class MainWP_Client {
 								<option value="0" <?php echo ( '0' === $val ? 'selected' : '' ); ?>><?php esc_html_e( 'Active', 'mainwp' ); ?></option>
 								<option value="1" <?php echo ( '1' === $val ? 'selected' : '' ); ?>><?php esc_html_e( 'Suspended', 'mainwp' ); ?></option>
 							</select>
-							<?php
+						<?php
 					} else {
 						?>
 							<input type="text" value="<?php echo esc_html( $val ); ?>" class="regular-text" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"/>
-							<?php
+						<?php
 					}
 					?>
 						</div>											
@@ -1463,17 +1466,17 @@ class MainWP_Client {
 					</div>	
 					<?php endif; ?>
 				</div>
-				<?php
+					<?php
 
-				if ( 'client.name' == $field_name ) {
-					?>
+					if ( 'client.name' == $field_name ) {
+						?>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Client photo', 'mainwp' ); ?></label>
 							<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Upload a client photo.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<input type="file" name="mainwp_client_image_uploader[client_field]" accept="image/*" data-inverted="" data-tooltip="<?php esc_attr_e( "Image must be 500KB maximum. It will be cropped to 310px wide and 70px tall. For best results  us an image of this site. Allowed formats: jpeg, gif and png. Note that animated gifs aren't going to be preserved.", 'mainwp' ); ?>" />
 							</div>
 						</div>
-					<?php if ( ! empty( $client_image ) ) : ?>
+						<?php if ( ! empty( $client_image ) ) : ?>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"></label>
 							<div class="six wide column">
@@ -1485,14 +1488,14 @@ class MainWP_Client {
 							</div>
 						</div>
 					<?php endif; ?>
-					<?php
-				}
-		}
+						<?php
+					}
+			}
 
-		$client_contacts = array();
-		if ( $client_id ) {
-			$client_contacts = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'client_id', $client_id );
-			?>
+			$client_contacts = array();
+			if ( $client_id ) {
+				$client_contacts = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'client_id', $client_id );
+				?>
 			<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php echo esc_html_e( 'Client primary contact', 'mainwp' ); ?></label>
 					<div class="ui six wide column">
@@ -1516,26 +1519,26 @@ class MainWP_Client {
 					</div>	
 				</div>
 				<div class="ui section hidden divider"></div>
-			<?php
-		}
+				<?php
+			}
 
-		$primary_contact_id = 0;
+			$primary_contact_id = 0;
 
-		if ( $edit_client && $edit_client->primary_contact_id ) {
-			$primary_contact_id = $edit_client->primary_contact_id;
-		}
+			if ( $edit_client && $edit_client->primary_contact_id ) {
+				$primary_contact_id = $edit_client->primary_contact_id;
+			}
 
-		if ( is_array( $custom_fields ) && count( $custom_fields ) > 0 ) {
-			$compatible_tokens = MainWP_Client_Handler::get_compatible_tokens();
-			foreach ( $custom_fields as $field ) {
-				if ( isset( $default_client_fields[ $field->field_name ] ) ) {
-					continue;
-				}
-				// do not show these tokens.
-				if ( isset( $compatible_tokens[ $field->field_name ] ) ) {
-					continue;
-				}
-				?>
+			if ( is_array( $custom_fields ) && count( $custom_fields ) > 0 ) {
+				$compatible_tokens = MainWP_Client_Handler::get_compatible_tokens();
+				foreach ( $custom_fields as $field ) {
+					if ( isset( $default_client_fields[ $field->field_name ] ) ) {
+						continue;
+					}
+					// do not show these tokens.
+					if ( isset( $compatible_tokens[ $field->field_name ] ) ) {
+						continue;
+					}
+					?>
 					<div class="ui grid field mainwp-field"  field-id="<?php echo intval( $field->field_id ); ?>">
 						<label class="six wide column middle aligned field-description"><?php echo esc_html( $field->field_desc ); ?></label>
 						<div class="ui six wide column">
@@ -1557,19 +1560,19 @@ class MainWP_Client {
 						</div>	
 					</div>
 					<?php
-			}
-		}
-
-		$temp = self::get_add_contact_temp();
-
-		if ( $client_id ) {
-			if ( $client_contacts ) {
-				foreach ( $client_contacts as $client_contact ) {
-					self::get_add_contact_temp( $client_contact, true );
 				}
 			}
-		}
-		?>
+
+			$temp = self::get_add_contact_temp();
+
+			if ( $client_id ) {
+				if ( $client_contacts ) {
+					foreach ( $client_contacts as $client_contact ) {
+						self::get_add_contact_temp( $client_contact, true );
+					}
+				}
+			}
+			?>
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Create a new contact for this client', 'mainwp' ); ?></label>
 			<div class="ui six wide column">
@@ -1581,17 +1584,17 @@ class MainWP_Client {
 		<div class="ui section hidden divider after-add-contact-field"></div>
 		</div>
 		<input type="hidden" name="client_fields[client_id]" value="<?php echo intval( $client_id ); ?>">
-		<?php
+			<?php
 	}
 
-	/**
-	 * Method get_add_contact_temp().
-	 *
-	 * Get add contact template.
-	 *
-	 * @param mixed $edit_contact The contact data to edit.
-	 * @param bool  $echo Echo template or not.
-	 */
+		/**
+		 * Method get_add_contact_temp().
+		 *
+		 * Get add contact template.
+		 *
+		 * @param mixed $edit_contact The contact data to edit.
+		 * @param bool  $echo Echo template or not.
+		 */
 	public static function get_add_contact_temp( $edit_contact = false, $echo = false ) {
 
 		$input_name    = 'new_contacts_field';
@@ -1606,7 +1609,7 @@ class MainWP_Client {
 		ob_start();
 		?>
 		<h3 class="ui dividing header top-contact-fields">
-			<?php if ( $edit_contact ) : ?>
+		<?php if ( $edit_contact ) : ?>
 				<?php echo esc_html__( 'Edit Contact', 'mainwp' ); ?>
 				<div class="sub header"><?php esc_html_e( 'Edit contact person information.', 'mainwp' ); ?></div>
 			<?php else : ?>
@@ -1614,16 +1617,16 @@ class MainWP_Client {
 				<div class="sub header"><?php esc_html_e( 'Enter contact person information.', 'mainwp' ); ?></div>
 			<?php endif; ?>
 		</h3>
-						<?php
+					<?php
 
-						$contact_fields = MainWP_Client_Handler::get_default_contact_fields();
+					$contact_fields = MainWP_Client_Handler::get_default_contact_fields();
 
-						foreach ( $contact_fields as $field_name => $field ) {
-							$db_field   = isset( $field['db_field'] ) ? $field['db_field'] : '';
-							$val        = $edit_contact && '' != $db_field && property_exists( $edit_contact, $db_field ) ? $edit_contact->{$db_field} : '';
-							$contact_id = $edit_contact && property_exists( $edit_contact, 'contact_id' ) ? $edit_contact->contact_id : '';
+					foreach ( $contact_fields as $field_name => $field ) {
+						$db_field   = isset( $field['db_field'] ) ? $field['db_field'] : '';
+						$val        = $edit_contact && '' != $db_field && property_exists( $edit_contact, $db_field ) ? $edit_contact->{$db_field} : '';
+						$contact_id = $edit_contact && property_exists( $edit_contact, 'contact_id' ) ? $edit_contact->contact_id : '';
 
-							?>
+						?>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php echo esc_html( $field['title'] ); ?></label>
 					<div class="ui six wide column">
@@ -1663,41 +1666,41 @@ class MainWP_Client {
 									<?php
 		endif;
 							}
-						}
+					}
 
-						?>
+					?>
 			<div class="ui grid field">
 				<label class="six wide column middle aligned"><?php esc_html_e( 'Remove contact', 'mainwp' ); ?></label>
 				<div class="ui six wide column">
 					<div class="ui left labeled input">
 					<a href="javascript:void(0);" contact-id="<?php echo intval( $contact_id ); ?>" class="ui basic button mainwp-client-remove-contact"><?php esc_html_e( 'Remove contact', 'mainwp' ); ?></a>
 					</div>
-							<?php
-							if ( $edit_contact ) {
-								?>
+						<?php
+						if ( $edit_contact ) {
+							?>
 						<input type="hidden" value="<?php echo intval( $edit_contact->contact_id ); ?>" name="client_fields[contacts_field][contact_id][]"/>
 								<?php
-							}
-							?>
+						}
+						?>
 				</div>
 			</div>
 									<div class="ui section hidden divider bottom-contact-fields"></div>
 
-		<?php
-		$html = ob_get_clean();
+			<?php
+			$html = ob_get_clean();
 
-		if ( $echo ) {
-			echo $html; //phpcs:ignore -- validated content.
-		}
+			if ( $echo ) {
+				echo $html; //phpcs:ignore -- validated content.
+			}
 
-		return $html;
+			return $html;
 	}
 
-	/**
-	 * Method save_client_field().
-	 *
-	 * Save custom fields.
-	 */
+		/**
+		 * Method save_client_field().
+		 *
+		 * Save custom fields.
+		 */
 	public static function save_client_field() {
 
 		$return = array(
@@ -1706,11 +1709,13 @@ class MainWP_Client {
 			'message' => '',
 		);
 
+		// phpcs:disable WordPress.Security.NonceVerification
 		$client_id  = isset( $_POST['client_id'] ) ? intval( $_POST['client_id'] ) : 0; // 0 is global client's field.
 		$field_id   = isset( $_POST['field_id'] ) ? intval( $_POST['field_id'] ) : 0;
 		$field_desc = sanitize_text_field( $_POST['field_desc'] );
 		$field_name = sanitize_text_field( $_POST['field_name'] );
 		$field_name = trim( $field_name, '[]' );
+		// phpcs:enable
 
 		// update general or individual client field.
 		if ( $field_id ) {
@@ -1761,17 +1766,17 @@ class MainWP_Client {
 		exit;
 	}
 
-	/**
-	 * Method save_note()
-	 *
-	 * Save Client Note.
-	 */
+		/**
+		 * Method save_note()
+		 *
+		 * Save Client Note.
+		 */
 	public static function save_note() {
-		if ( isset( $_POST['clientid'] ) && $_POST['clientid'] ) {
-			$note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : '';
+		if ( isset( $_POST['clientid'] ) && $_POST['clientid'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 			$esc_note = MainWP_Utility::esc_content( $note );
 			$update   = array(
-				'client_id' => $_POST['clientid'],
+				'client_id' => $_POST['clientid'], // phpcs:ignore WordPress.Security.NonceVerification
 				'note'      => $esc_note,
 			);
 			MainWP_DB_Client::instance()->update_client( $update );
@@ -1780,9 +1785,9 @@ class MainWP_Client {
 		die( wp_json_encode( array( 'undefined_error' => true ) ) );
 	}
 
-	/**
-	 * Hooks the section help content to the Help Sidebar element.
-	 */
+		/**
+		 * Hooks the section help content to the Help Sidebar element.
+		 */
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( 'ManageClients' === $_GET['page'] || 'ClientAddNew' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) {
 			?>
@@ -1804,7 +1809,7 @@ class MainWP_Client {
 				do_action( 'mainwp_clients_help_item' );
 				?>
 			</div>
-			<?php
+				<?php
 		}
 	}
 

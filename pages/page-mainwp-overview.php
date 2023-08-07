@@ -168,9 +168,9 @@ class MainWP_Overview {
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'mainwp_tab',
 				'href'       => 'admin.php?page=mainwp_tab',
-				'icon'       => '<i class="tachometer alternate icon"></i>',
+				'icon'       => '<i class="th large icon"></i>',
 			),
-			1
+			0
 		);
 	}
 
@@ -240,45 +240,45 @@ class MainWP_Overview {
 
 		// Load the Updates Overview widget.
 		if ( self::$enable_widgets['overview'] ) {
-			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), $page, 'left', esc_html__( 'Updates Overview', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), $page, array( 1, 1, 2, 6 ) );
+		}
+
+		// Load the Security Issues widget.
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
+			if ( self::$enable_widgets['security_issues'] ) {
+				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), $page, array( 1, 1, 2, 2 ) );
+			}
+		}
+
+		// Load the Clients widget.
+		if ( self::$enable_widgets['clients'] ) {
+			MainWP_UI::add_widget_box( 'clients', array( MainWP_Clients::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
+		}
+
+		// Load the Connection Status widget.
+		if ( ! MainWP_System_Utility::get_current_wpid() ) {
+			if ( self::$enable_widgets['connection_status'] ) {
+				MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, array( 1, 1, 2, 4 ) );
+			}
+		}
+
+		// Load the Non-MainWP Changes widget.
+		if ( self::$enable_widgets['non_mainwp_changes'] ) {
+			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
 		}
 
 		// Load the Recent Posts widget.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
 			if ( self::$enable_widgets['recent_posts'] ) {
-				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, 'right', esc_html__( 'Recent Posts', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( 1, 1, 3, 3 ) );
 			}
 		}
 
 		// Load the Recent Pages widget.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			if ( self::$enable_widgets['recent_pages'] ) {
-				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, 'right', esc_html__( 'Recent Pages', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( 1, 1, 3, 3 ) );
 			}
-		}
-
-		// Load the Connection Status widget.
-		if ( ! MainWP_System_Utility::get_current_wpid() ) {
-			if ( self::$enable_widgets['connection_status'] ) {
-				MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, 'left', esc_html__( 'Connection Status', 'mainwp' ) );
-			}
-		}
-
-		// Load the Security Issues widget.
-		if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
-			if ( self::$enable_widgets['security_issues'] ) {
-				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), $page, 'left', esc_html__( 'Security Issues', 'mainwp' ) );
-			}
-		}
-
-		// Load the Non-MainWP Changes widget.
-		if ( self::$enable_widgets['non_mainwp_changes'] ) {
-			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, 'left', esc_html__( 'Non-MainWP Changes', 'mainwp' ) );
-		}
-
-		// Load the Clients widget.
-		if ( self::$enable_widgets['clients'] ) {
-			MainWP_UI::add_widget_box( 'clients', array( MainWP_Clients::get_class_name(), 'render' ), $page, 'left', esc_html__( 'Clients', 'mainwp' ) );
 		}
 
 		$i = 1;
@@ -295,7 +295,11 @@ class MainWP_Overview {
 			$id = 'advanced-' . $id;
 
 			if ( $enabled ) {
-				MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, 'right', $metaBox['metabox_title'] );
+				if ( 'google-widget' === $metaBox['id'] || 'matomo' === $metaBox['id'] ) {
+					MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( 1, 1, 2, 7 ) );
+				} else {
+					MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( 1, 1, 2, 3 ) );
+				}
 			}
 		}
 	}
@@ -347,9 +351,6 @@ class MainWP_Overview {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
 	 * @uses \MainWP\Dashboard\MainWP_UI::do_widget_boxes()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
 	 */
@@ -363,38 +364,10 @@ class MainWP_Overview {
 		$screen = get_current_screen();
 		?>
 
-		<div id="mainwp-dashboard-info-box">
-			<?php
-			if ( empty( $current_wp_id ) && MainWP_Twitter::enabled_twitter_messages() ) {
-				$filter = array(
-					'upgrade_everything',
-					'upgrade_all_wp_core',
-					'upgrade_all_plugins',
-					'upgrade_all_themes',
-				);
-				foreach ( $filter as $what ) {
-					$twitters = MainWP_Twitter::get_twitter_notice( $what );
 
-					if ( is_array( $twitters ) ) {
-						foreach ( $twitters as $timeid => $twit_mess ) {
-							if ( ! empty( $twit_mess ) ) {
-								$sendText = MainWP_Twitter::get_twit_to_send( $what, $timeid );
-								if ( ! empty( $sendText ) ) {
-									?>
-									<div class="mainwp-tips ui info message twitter" style="margin:0">
-										<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo esc_attr( $what ); ?>"twit-id="<?php echo esc_attr( $timeid ); ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
-									</div>
-									<?php
-								}
-							}
-						}
-					}
-				}
-				?>
-			<?php } ?>
-		</div>
 
 		<div class="mainwp-primary-content-wrap">
+			<div id="mainwp-dashboard-info-box"></div>
 			<?php
 			if ( ! empty( $current_wp_id ) ) {
 				if ( ! empty( $website->sync_errors ) ) {
@@ -425,79 +398,9 @@ class MainWP_Overview {
 			 */
 			do_action( 'mainwp_before_overview_widgets' );
 
-			$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
-
-			$cls_grid = 'two';
-			if ( 3 == $overviewColumns ) {
-				$cls_grid = 'three';
-			}
 			?>
-			<div class="ui <?php echo $cls_grid; ?> column tablet stackable grid mainwp-grid-wrapper">
-		<div class="column grid-item" id="mainwp-grid-left" widget-context="left">
-						<?php
-						/**
-						 * Action: mainwp_overview_before_left_column
-						 *
-						 * Fires at the top of the left column on the Overview page.
-						 *
-						 * @since 4.1
-						 */
-						do_action( 'mainwp_overview_before_left_column' );
-						MainWP_UI::do_widget_boxes( $screen->id, 'left' );
-						/**
-						 * Action: mainwp_overview_after_left_column
-						 *
-						 * Fires at the bottom of the left column on the Overview page.
-						 *
-						 * @since 4.1
-						 */
-						do_action( 'mainwp_overview_after_left_column' );
-						?>
-		</div>
-		<?php if ( 3 == $overviewColumns ) : ?>
-		<div class="column grid-item" id="mainwp-grid-middle" widget-context="middle">
-						<?php
-						/**
-						 * Action: mainwp_overview_before_middle_column
-						 *
-						 * Fires at the top of the middle column on the Overview page.
-						 *
-						 * @since 4.1
-						 */
-						do_action( 'mainwp_overview_before_middle_column' );
-						MainWP_UI::do_widget_boxes( $screen->id, 'middle' );
-						/**
-						 * Action: mainwp_overview_after_middle_column
-						 *
-						 * Fires at the bottom of the middle column on the Overview page.
-						 *
-						 * @since 4.1
-						 */
-						do_action( 'mainwp_overview_after_middle_column' );
-						?>
-		</div>
-		<?php endif; ?>
-		<div class="column grid-item" id="mainwp-grid-right" widget-context="right">
-						<?php
-						/**
-						 * Action: mainwp_overview_before_right_column
-						 *
-						 * Fires at the top of the right column on the Overview page.
-						 *
-						 * @since 4.1
-						 */
-						do_action( 'mainwp_overview_before_right_column' );
-						MainWP_UI::do_widget_boxes( $screen->id, 'right' );
-						/**
-						 * Action: mainwp_overview_after_right_column
-						 *
-						 * Fires at the bottom of the right column on the Overview page.
-						 *
-						 * @since 4.1
-						 */
-						do_action( 'mainwp_overview_after_right_column' );
-						?>
-		</div>
+			<div id="mainwp-grid-wrapper" class="gridster">
+				<?php MainWP_UI::do_widget_boxes( $screen->id ); ?>
 			</div>
 			<?php
 			/**
@@ -510,44 +413,7 @@ class MainWP_Overview {
 			do_action( 'mainwp_after_overview_widgets' );
 			?>
 	<script type="text/javascript">
-		var page_sortablewidgets = '<?php echo esc_js( MainWP_System_Utility::get_page_id( $screen->id ) ); ?>';
 		jQuery( document ).ready( function( $ ) {
-
-			var $mainwp_drake = dragula( [document.getElementById( 'mainwp-grid-left' ),
-			<?php
-			if ( 3 == $overviewColumns ) {
-				?>
-				document.getElementById( 'mainwp-grid-middle' ), <?php }; ?> document.getElementById( 'mainwp-grid-right' )], {
-				moves: function ( el, container, handle ) {
-					return handle.classList.contains( 'handle-drag' );
-				}
-			} );
-
-			$mainwp_drake.on( 'drop', function ( el, target, source, sibling ) {
-				var conts = $mainwp_drake.containers;
-				var order = new Array();
-				for ( var i = 0; i < conts.length; i++ ) {
-					var context = jQuery( conts[i] ).attr( 'widget-context' );
-					if ( undefined === context || '' == context )
-						continue;
-					var searchEles = conts[i].children;
-					for( var idx = 0; idx < searchEles.length; idx++ ) {
-						var itemElem = searchEles[idx];
-						var wid = $( itemElem ).attr( 'id' );
-						wid = wid.replace( "widget-", "" );
-						order.push( context + ":" + wid );
-					}
-				}
-
-				var postVars = {
-					action:'mainwp_widgets_order',
-					page: page_sortablewidgets
-				};
-				postVars['order'] = order.join( ',' );
-				jQuery.post( ajaxurl, mainwp_secure_data( postVars ), function ( res ) {
-				} );
-
-			} );
 			jQuery( '.mainwp-widget .mainwp-dropdown-tab .item' ).tab();
 			mainwp_get_icon_start();
 		} );

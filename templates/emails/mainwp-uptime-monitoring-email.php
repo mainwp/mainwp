@@ -24,7 +24,7 @@ if ( empty( $heading ) ) {
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=<?php bloginfo( 'charset' ); ?>" />
-		<title><?php echo get_bloginfo( 'name', 'display' ); ?></title>
+		<title><?php echo esc_html( get_bloginfo( 'name', 'display' ) ); ?></title>
 	</head>
 	<body marginwidth="0" topmargin="0" marginheight="0" offset="0" style="background-color:#f7f7f7;font-family:'Lato',sans-serif;">
 		<div id="mainwp-email-wrapper" style="padding: 30px 0;">
@@ -71,14 +71,14 @@ if ( empty( $heading ) ) {
 								<td align="left" valign="top" style="padding:30px 30px 0 30px;">
 									<strong><?php esc_html_e( 'Hi there', 'mainwp' ); ?>,</strong>
 									<p><?php esc_html_e( 'Based on the HTTP response from your monitor, it appears that your child site is DOWN.', 'mainwp' ); ?></p>
-									<p><strong><?php esc_html_e( 'Monitor', 'mainwp' ); ?>:</strong> <?php echo $site_name; ?></p>
-									<p><strong><?php esc_html_e( 'Site URL', 'mainwp' ); ?>:</strong> <a href="<?php echo $site_url; ?>" target="_blank"><?php echo $site_url; ?></a></p>
-									<p><strong><?php esc_html_e( 'Status Code', 'mainwp' ); ?>:</strong> <?php echo $code; ?></p>
+									<p><strong><?php esc_html_e( 'Monitor', 'mainwp' ); ?>:</strong> <?php echo esc_html( $site_name ); ?></p>
+									<p><strong><?php esc_html_e( 'Site URL', 'mainwp' ); ?>:</strong> <a href="<?php echo esc_url( $site_url ); ?>" target="_blank"><?php echo esc_html( $site_url ); ?></a></p>
+									<p><strong><?php esc_html_e( 'Status Code', 'mainwp' ); ?>:</strong> <?php echo esc_html( $code ); ?></p>
 								</td>
 							</tr>
 							<tr>
 								<td align="left" valign="top" style="padding:30px 30px 0 30px;">
-									<strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong><?php echo MainWP\Dashboard\MainWP_Utility::format_timestamp( $site->offline_checks_last ); ?>
+									<strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong><?php echo MainWP\Dashboard\MainWP_Utility::format_timestamp( $site->offline_checks_last ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 								</td>
 							</tr>
 								<?php
@@ -96,21 +96,21 @@ if ( empty( $heading ) ) {
 											<td align="left" valign="top" style="padding:30px 30px 0 30px;">
 												<strong><?php esc_html_e( 'Hi there', 'mainwp' ); ?>,</strong>
 												<p><?php esc_html_e( 'Based on the HTTP response from your monitor, it appears that your child site is DOWN.', 'mainwp' ); ?></p>
-												<p><strong><?php esc_html_e( 'Monitor', 'mainwp' ); ?>:</strong> <?php echo $site_name; ?></p>
-												<p><strong><?php esc_html_e( 'Site URL', 'mainwp' ); ?>:</strong> <a href="<?php echo $site_url; ?>" target="_blank"><?php echo $site_url; ?></a></p>
-												<p><strong><?php esc_html_e( 'Status Code', 'mainwp' ); ?>:</strong> <?php echo $code; ?></p>
+												<p><strong><?php esc_html_e( 'Monitor', 'mainwp' ); ?>:</strong> <?php echo esc_html( $site_name ); ?></p>
+												<p><strong><?php esc_html_e( 'Site URL', 'mainwp' ); ?>:</strong> <a href="<?php echo esc_url( $site_url ); ?>" target="_blank"><?php echo esc_html( $site_url ); ?></a></p>
+												<p><strong><?php esc_html_e( 'Status Code', 'mainwp' ); ?>:</strong> <?php echo esc_html( $code ); ?></p>
 											</td>
 										</tr>
 										<tr>
 											<td align="left" valign="top" style="padding:30px 30px 0 30px;">
-												<strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong><?php echo MainWP\Dashboard\MainWP_Utility::format_timestamp( $site->offline_checks_last ); ?>
+												<strong><?php esc_html_e( 'Event timestamp: ', 'mainwp' ); ?></strong><?php echo MainWP\Dashboard\MainWP_Utility::format_timestamp( $site->offline_checks_last ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 											</td>
 										</tr>
 								<?php } ?>
 							<?php } ?>
 							<tr>
 								<td align="left" valign="top" style="padding:30px 30px 0 30px;">
-									<a href="<?php echo admin_url( 'admin.php?page=MonitoringSites' ); ?>" style="color:#7fb100;text-decoration:none;"><?php echo esc_html__( 'Click here', 'mainwp' ); ?></a> <?php echo esc_html__( 'to check your site status.', 'mainwp' ); ?>
+									<a href="<?php echo esc_url( admin_url( 'admin.php?page=MonitoringSites' ) ); ?>" style="color:#7fb100;text-decoration:none;"><?php echo esc_html__( 'Click here', 'mainwp' ); ?></a> <?php echo esc_html__( 'to check your site status.', 'mainwp' ); ?>
 								</td>
 							</tr>
 							<!-- End Body -->

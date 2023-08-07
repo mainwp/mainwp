@@ -156,7 +156,7 @@ class MainWP_Updates {
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => esc_html__( 'Updates', 'mainwp' ),
-				'parent_key' => 'mainwp_tab',
+				'parent_key' => 'managesites',
 				'slug'       => 'UpdatesManage',
 				'href'       => 'admin.php?page=UpdatesManage',
 				'icon'       => '<i class="sync icon"></i>',
@@ -322,7 +322,7 @@ class MainWP_Updates {
 	 * @return string Dashboard link.
 	 */
 	public static function render_site_link_dashboard( $website, $echo = true ) {
-		$lnk = '<a href="' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) . '"  data-inverted="" data-tooltip="' . esc_html__( 'Visit this dashboard.', 'mainwp' ) . '">' . stripslashes( $website->name ) . '</a>';
+		$lnk = '<a href="' . esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ) . '"  data-inverted="" data-tooltip="' . esc_html__( 'Visit this dashboard.', 'mainwp' ) . '">' . stripslashes( $website->name ) . '</a>';
 		if ( $echo ) {
 			echo $lnk;
 		} else {
@@ -775,8 +775,6 @@ class MainWP_Updates {
 		}
 
 		self::render_header( 'UpdatesManage' );
-
-		self::render_twitter_notice();
 
 		self::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view );
 
@@ -1791,8 +1789,8 @@ class MainWP_Updates {
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
 				jQuery( '#mainwp-manage-updates .ui.accordion' ).accordion( {
-					"exclusive": <?php echo $table_features['exclusive']; ?>,
-					"duration": <?php echo $table_features['duration']; ?>,
+					"exclusive": <?php echo esc_html( $table_features['exclusive'] ); ?>,
+					"duration": <?php echo esc_html( $table_features['duration'] ); ?>,
 					onOpen: function(){
 						//mainwp_datatable_init_and_fix_recalc('table.mainwp-manage-updates-item-table');
 					}
@@ -1965,7 +1963,7 @@ class MainWP_Updates {
 						continue;
 					}
 					?>
-					<a class="<?php echo( $slug === $current_tab ? 'active' : '' ); ?> item" data-tab="<?php echo esc_html( $slug ); ?>" href="admin.php?page=UpdatesManage&tab=<?php echo esc_html( $slug ); ?>"><?php esc_html_e( $tab['title'] ); ?><div class="ui small <?php echo empty( $tab['total_upgrades'] ) ? 'green' : 'red'; ?> label" timestamp="<?php echo time(); ?>"><?php echo intval( $tab['total_upgrades'] ); ?></div></a>
+					<a class="<?php echo( $slug === $current_tab ? 'active' : '' ); ?> item" data-tab="<?php echo esc_html( $slug ); ?>" href="admin.php?page=UpdatesManage&tab=<?php echo esc_html( $slug ); ?>"><?php echo esc_html( $tab['title'] ); ?><div class="ui small <?php echo empty( $tab['total_upgrades'] ) ? 'green' : 'red'; ?> label" timestamp="<?php echo esc_html( time() ); ?>"><?php echo intval( $tab['total_upgrades'] ); ?></div></a>
 					<?php
 				}
 				?>
@@ -2048,40 +2046,6 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Renders the twitter bragger message.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Twitter
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
-	 */
-	public static function render_twitter_notice() {
-
-		if ( MainWP_Twitter::enabled_twitter_messages() ) {
-			$filter = array(
-				'upgrade_all_plugins',
-				'upgrade_all_themes',
-				'upgrade_all_wp_core',
-			);
-			foreach ( $filter as $what ) {
-				$twitters = MainWP_Twitter::get_twitter_notice( $what );
-				if ( is_array( $twitters ) ) {
-					foreach ( $twitters as $timeid => $twit_mess ) {
-						if ( ! empty( $twit_mess ) ) {
-							$sendText = MainWP_Twitter::get_twit_to_send( $what, $timeid );
-							if ( ! empty( $sendText ) ) {
-								?>
-								<div class="mainwp-tips ui info message twitter" style="margin:0"><i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo $what; ?>" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?></div>
-								<?php
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	/**
 	 * Renders the HTTP Check html content.
 	 *
 	 * @param object $websites Child Sites.
@@ -2145,13 +2109,13 @@ class MainWP_Updates {
 
 					if ( ! empty( $restorePageSlug ) ) {
 						if ( $enable_legacy_backup ) {
-							$restoreSlug = $restorePageSlug . '&backupid=' . $website->id;
+							$restoreSlug = $restorePageSlug . '&backupid=' . intval( $website->id );
 						} elseif ( self::activated_primary_backup_plugin( $mainwp_primaryBackup, $website ) ) {
-							$restoreSlug = $restorePageSlug . '&id=' . $website->id;
+							$restoreSlug = $restorePageSlug . '&id=' . intval( $website->id );
 						}
 					}
 					?>
-					<tr id="child-site-<?php echo $website->id; ?>" class="child-site mainwp-child-site-<?php echo $website->id; ?>" siteid="<?php echo $website->id; ?>" site-url="<?php echo $website->url; ?>">
+					<tr id="child-site-<?php echo intval( $website->id ); ?>" class="child-site mainwp-child-site-<?php echo intval( $website->id ); ?>" siteid="<?php echo intval( $website->id ); ?>" site-url="<?php echo esc_url( $website->url ); ?>">
 						<td>
 							<?php self::render_site_link_dashboard( $website ); ?>
 						</td>
@@ -2159,12 +2123,12 @@ class MainWP_Updates {
 							<label class="ui red label http-code"><?php echo 'HTTP ' . $website->http_response_code; ?></label>
 						</td>
 						<td class="right aligned">
-							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&_opennonce=<?php echo wp_create_nonce( 'mainwp-admin-nonce' ); ?>" class="ui mini button" target="_blank"><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></a>
-							<a href="javascript:void(0)" onclick="return updatesoverview_recheck_http( this, <?php echo esc_attr( $website->id ); ?> )" class="ui basic mini green button"><?php esc_html_e( 'Recheck', 'mainwp' ); ?></a>
+							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" class="ui mini button" target="_blank"><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></a>
+							<a href="javascript:void(0)" onclick="return updatesoverview_recheck_http( this, <?php echo intval( $website->id ); ?> )" class="ui basic mini green button"><?php esc_html_e( 'Recheck', 'mainwp' ); ?></a>
 							<?php if ( ! empty( $website->sync_errors ) ) { ?>
 							<a href="#" class="mainwp_site_reconnect ui green mini button"><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 							<?php } ?>
-							<a href="javascript:void(0)" onClick="return updatesoverview_ignore_http_response( this, <?php echo esc_attr( $website->id ); ?> )" class="ui basic mini button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?></a>
+							<a href="javascript:void(0)" onClick="return updatesoverview_ignore_http_response( this, <?php echo intval( $website->id ); ?> )" class="ui basic mini button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?></a>
 					<?php if ( ! empty( $restoreSlug ) ) { ?>
 							<a href="<?php echo $restoreSlug; ?>" class="ui green mini basic button"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
 						<?php } ?>
@@ -2210,17 +2174,17 @@ class MainWP_Updates {
 			$table_features = apply_filters( 'mainwp_updates_http_responses_datatable_features', $table_features );
 			?>
 			<script>
-			var responsive = <?php echo $table_features['responsive']; ?>;
+			var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
 			if( jQuery( window ).width() > 1140 ) {
 				responsive = false;
 			}
 			jQuery( document ).ready( function() {
 				jQuery( '#mainwp-http-response-issues-table' ).DataTable( {
 						"responsive": responsive,
-						"searching": <?php echo $table_features['searching']; ?>,
-						"paging" : <?php echo $table_features['paging']; ?>,
-						"stateSave": <?php echo $table_features['stateSave']; ?>,
-						"info" : <?php echo $table_features['info']; ?>,
+						"searching": <?php echo esc_html( $table_features['searching'] ); ?>,
+						"paging" : <?php echo esc_html( $table_features['paging'] ); ?>,
+						"stateSave": <?php echo esc_html( $table_features['stateSave'] ); ?>,
+						"info" : <?php echo esc_html( $table_features['info'] ); ?>,
 						"columnDefs" : [ { "orderable": false, "targets": "no-sort" } ],
 						"language" : { "emptyTable": "No HTTP issues detected." }
 				} );
@@ -2354,7 +2318,7 @@ class MainWP_Updates {
 			<div class="scrolling content ui form">
 				<form method="POST" action="" id="manage-updates-screen-options-form" name="manage-updates-screen-options-form">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdatesScrOptions' ); ?>" />
+					<input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'UpdatesScrOptions' ) ); ?>" />
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Plugin advanced automatic updates', 'mainwp' ); ?></label>
 						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic plugins updates.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">

@@ -8,7 +8,7 @@
  * Author URI: https://mainwp.com
  * Plugin URI: https://mainwp.com/
  * Text Domain: mainwp
- * Version:  4.4.3.4
+ * Version:  4.5-beta3
  *
  * @package MainWP/Dashboard
  *
@@ -93,7 +93,7 @@ require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'compatible.
 
 // Detect if secupress_scanner is running.
 $mainwp_is_secupress_scanning = false;
-if ( ! empty( $_GET ) && isset( $_GET['test'] ) && isset( $_GET['action'] ) && 'secupress_scanner' === $_GET['action'] ) {
+if ( ! empty( $_GET ) && isset( $_GET['test'] ) && isset( $_GET['action'] ) && 'secupress_scanner' === $_GET['action'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$mainwp_is_secupress_scanning = true;
 }
 

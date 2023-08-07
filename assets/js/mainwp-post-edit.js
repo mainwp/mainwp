@@ -177,7 +177,7 @@ jQuery(document).ready(function ($) {
 			var aa = attemptedDate.getFullYear(), mm = attemptedDate.getMonth() + 1, jj = attemptedDate.getDate(), mn = attemptedDate.getMinutes(), hh = attemptedDate.getHours();
 			mm = ('0' + mm).slice(-2); // to format 01,02,03, ... 11,12
 			$('#aa').val(aa);
-			$('#mm').val(mm).change(); // selector element
+			$('#mm').val(mm).trigger("change"); // selector element
 			$('#jj').val(jj);
 			$('#hh').val(hh);
 			$('#mn').val(mn);
@@ -188,7 +188,7 @@ jQuery(document).ready(function ($) {
 			var aa = attemptedDate.getFullYear(), mm = attemptedDate.getMonth() + 1, jj = attemptedDate.getDate(), mn = attemptedDate.getMinutes(), hh = attemptedDate.getHours();
 			mm = ('0' + mm).slice(-2); // to format 01,02,03, ... 11,12
 			$('#aa').val(aa);
-			$('#mm').val(mm).change(); // selector element
+			$('#mm').val(mm).trigger("change"); // selector element
 			$('#jj').val(jj);
 			$('#hh').val(hh);
 			$('#mn').val(mn);
@@ -209,14 +209,14 @@ jQuery(document).ready(function ($) {
 
 		// [shift] + [tab] on first tab cycles back to last tab.
 		if (target.hasClass('wp-tab-first') && e.shiftKey) {
-			$(this).find('.wp-tab-last').focus();
+			$(this).find('.wp-tab-last').trigger('focus');
 			e.preventDefault();
 			// [tab] on last tab cycles back to first tab.
 		} else if (target.hasClass('wp-tab-last') && !e.shiftKey) {
-			$(this).find('.wp-tab-first').focus();
+			$(this).find('.wp-tab-first').trigger('focus');
 			e.preventDefault();
 		}
-	}).filter(':visible').find('.wp-tab-first').focus();
+	}).filter(':visible').find('.wp-tab-first').trigger('focus');
 
 	// This code is meant to allow tabbing from Title to Post content.
 	$('#title').on('keydown.editor-focus', function (event) {
@@ -228,7 +228,7 @@ jQuery(document).ready(function ($) {
 			if (editor && !editor.isHidden()) {
 				editor.focus();
 			} else if ($textarea.length) {
-				$textarea.focus();
+				$textarea.trigger('focus');
 			} else {
 				return;
 			}
@@ -292,7 +292,7 @@ jQuery(document).ready(function ($) {
 
 				height = parseInt($('#content_ifr').css('height'), 10) + toolbarHeight - 28;
 			} else {
-				$textarea.focus();
+				$textarea.trigger('focus');
 				height = parseInt($textarea.css('height'), 10);
 			}
 

@@ -524,7 +524,6 @@ class MainWP_System_Utility {
 
 		$tags        = '';
 		$tags_labels = '';
-		$tag_style   = '';
 
 		if ( isset( $item['wpgroups'] ) && ! empty( $item['wpgroups'] ) ) {
 
@@ -541,20 +540,22 @@ class MainWP_System_Utility {
 
 			if ( is_array( $tags ) ) {
 				foreach ( $tags as $idx => $tag ) {
-					$tag       = trim( $tag );
-					$tagx      = MainWP_DB_Common::instance()->get_group_by_name( $tag );
-					$tag_style = 'style="background-color:' . esc_html( $tagx->color ) . '"';
-					if ( '' != $tagx->color ) {
+					$tag  = trim( $tag );
+					$tagx = MainWP_DB_Common::instance()->get_group_by_name( $tag );
+
+					if ( is_object( $tagx ) && '' != $tagx->color ) {
 						$tag_a_style = 'style="color:#fff!important;opacity:1;"';
+						$tag_style   = 'style="background-color:' . esc_html( $tagx->color ) . '"';
 					} else {
 						$tag_a_style = '';
+						$tag_style   = '';
 					}
 
 					if ( isset( $tags_ids[ $idx ] ) && ! empty( $tags_ids[ $idx ] ) ) {
 						$tag_id       = $tags_ids[ $idx ];
-						$tags_labels .= '<span ' . $tag_style . ' class="ui tag mini label"><a ' . $tag_a_style . ' href="' . $href . $tag_id . '">' . $tag . '</a></span>';
+						$tags_labels .= '<span ' . $tag_style . ' class="ui tag mini label"><a ' . $tag_a_style . ' href="' . esc_url( $href . $tag_id ) . '">' . esc_html( $tag ) . '</a></span>';
 					} else {
-						$tags_labels .= '<span ' . $tag_style . ' class="ui tag mini label">' . $tag . '</span>';
+						$tags_labels .= '<span ' . $tag_style . ' class="ui tag mini label">' . esc_html( $tag ) . '</span>';
 					}
 				}
 			}
@@ -1198,7 +1199,7 @@ class MainWP_System_Utility {
 	 * @param int    $max_width max image width.
 	 * @param int    $max_height max image height.
 	 */
-	public static function handle_upload_image( $sub_folder, $file_uploader, $file_index, $file_subindex = false, $max_width = 300, $max_height = 300 ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function handle_upload_image( $sub_folder, $file_uploader, $file_index, $file_subindex = false, $max_width = 300, $max_height = 300 ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$dirs     = self::get_mainwp_dir( $sub_folder, true );
 		$base_dir = $dirs[0];
@@ -1334,6 +1335,118 @@ class MainWP_System_Utility {
 			$wphost = '';
 		}
 		return empty( $wphost ) ? '' : $wphost;
+	}
+
+
+	/**
+	 * Method get_connect_sign_algorithm().
+	 *
+	 * Get supported sign algorithms.
+	 *
+	 * @param mixed $website The Website object.
+	 *
+	 * @return mixed $alg Algorithm connect.
+	 */
+	public static function get_connect_sign_algorithm( $website ) {
+		$alg = is_object( $website ) && property_exists( $website, 'signature_algo' ) && ! empty( $website->signature_algo ) ? $website->signature_algo : false;
+
+		// to fix.
+		if ( is_numeric( $alg ) ) {
+			$alg = intval( $alg );
+		}
+
+		if ( ! empty( $alg ) ) {
+			if ( 9999 === $alg ) {
+				$alg = get_option( 'mainwp_connect_signature_algo' );
+				// to fix.
+				if ( is_numeric( $alg ) ) {
+					$alg = intval( $alg );
+				}
+			}
+		}
+
+		if ( ! self::is_valid_supported_sign_alg( $alg ) ) {
+			$alg = false;
+		}
+
+		$alg = apply_filters( 'mainwp_connect_sign_algo', $alg, $website );
+
+		return $alg;
+	}
+
+	/**
+	 * Method is_valid_supported_sign_alg()
+	 *
+	 * Check if is supported sign algorithms.
+	 *
+	 * @param int $alg The Sign Algo value.
+	 */
+	public static function is_valid_supported_sign_alg( $alg ) {
+		$valid = false;
+		if ( defined( 'OPENSSL_ALGO_SHA1' ) && OPENSSL_ALGO_SHA1 == $alg ) {
+			$valid = true;
+		} elseif ( defined( 'OPENSSL_ALGO_SHA224' ) && OPENSSL_ALGO_SHA224 == $alg ) {
+			$valid = true;
+		} elseif ( defined( 'OPENSSL_ALGO_SHA256' ) && OPENSSL_ALGO_SHA256 == $alg ) {
+			$valid = true;
+		} elseif ( defined( 'OPENSSL_ALGO_SHA384' ) && OPENSSL_ALGO_SHA384 == $alg ) {
+			$valid = true;
+		} elseif ( defined( 'OPENSSL_ALGO_SHA512' ) && OPENSSL_ALGO_SHA512 == $alg ) {
+			$valid = true;
+		}
+		return $valid;
+	}
+
+	/**
+	 * Method get_signature_alg()
+	 *
+	 * Get custom signature algorithms.
+	 */
+	public static function get_open_ssl_sign_algos() {
+		$values = array();
+
+		if ( defined( 'OPENSSL_ALGO_SHA1' ) ) {
+			$values[ OPENSSL_ALGO_SHA1 ] = 'OPENSSL_ALGO_SHA1';
+		}
+		if ( defined( 'OPENSSL_ALGO_SHA224' ) ) {
+			$values[ OPENSSL_ALGO_SHA224 ] = 'OPENSSL_ALGO_SHA224';
+		}
+
+		if ( defined( 'OPENSSL_ALGO_SHA256' ) ) {
+			$values[ OPENSSL_ALGO_SHA256 ] = 'OPENSSL_ALGO_SHA256 ' . esc_html__( '(Default)', 'mainwp' );
+		}
+
+		if ( defined( 'OPENSSL_ALGO_SHA384' ) ) {
+			$values[ OPENSSL_ALGO_SHA384 ] = 'OPENSSL_ALGO_SHA384';
+		}
+
+		if ( defined( 'OPENSSL_ALGO_SHA512' ) ) {
+			$values[ OPENSSL_ALGO_SHA512 ] = 'OPENSSL_ALGO_SHA512';
+		}
+
+		return $values;
+	}
+
+	/**
+	 * Method get_default_map_site_fields()
+	 *
+	 * Get default map site fields.
+	 */
+	public static function get_default_map_site_fields() {
+		$data_fields = array(
+			'id',
+			'url',
+			'name',
+			'adminname',
+			'privkey',
+			'http_user',
+			'http_pass',
+			'ssl_version',
+			'sync_errors',
+			'signature_algo',
+			'verify_method',
+		);
+		return $data_fields;
 	}
 
 }

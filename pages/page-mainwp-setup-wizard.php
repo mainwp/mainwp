@@ -199,7 +199,7 @@ class MainWP_Setup_Wizard {
 				<?php wp_print_scripts( 'fomantic' ); ?>
 				<?php do_action( 'admin_print_styles' ); ?>
 				<script type="text/javascript"> var ajaxurl = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';</script>
-				<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo wp_create_nonce( 'mainwp_ajax' ); ?>", mainwp_js_nonce = "<?php echo wp_create_nonce( 'mainwp_nonce' ); ?>";</script>
+				<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_ajax' ) ); ?>", mainwp_js_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_nonce' ) ); ?>";</script>
 			</head>
 			<body class="mainwp-ui <?php echo ! empty( $selected_theme ) ? 'mainwp-custom-theme' : ''; ?> mainwp-ui-setup">
 				<div class="ui hidden divider"></div>
@@ -495,7 +495,7 @@ class MainWP_Setup_Wizard {
 			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="ui big green right floated button"><?php esc_html_e( 'Continue', 'mainwp' ); ?></a>
 			<a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
 			<?php wp_nonce_field( 'mwp-setup' ); ?>
-			<input type="hidden" id="nonce_secure_data" mainwp_addwp="<?php echo wp_create_nonce( 'mainwp_addwp' ); ?>" mainwp_checkwp="<?php echo wp_create_nonce( 'mainwp_checkwp' ); ?>" />
+			<input type="hidden" id="nonce_secure_data" mainwp_addwp="<?php echo esc_js( wp_create_nonce( 'mainwp_addwp' ) ); ?>" mainwp_checkwp="<?php echo esc_attr( wp_create_nonce( 'mainwp_checkwp' ) ); ?>" />
 		</form>
 		<?php
 	}

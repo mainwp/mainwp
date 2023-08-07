@@ -42,6 +42,7 @@ class MainWP_Clients {
 	 */
 	private static function render_clients( $clients ) {
 		?>
+		<div class="mainwp-widget-header">
 			<h3 class="ui header handle-drag">
 				<?php
 				/**
@@ -55,8 +56,8 @@ class MainWP_Clients {
 				?>
 				<div class="sub header"><?php esc_html_e( 'Clients information', 'mainwp' ); ?></div>
 			</h3>
-			<div class="ui section hidden divider"></div>
-			<div class="mainwp-clients-widget">
+		</div>
+		<div id="mainwp-clients-widget"  class="mainwp-scrolly-overflow">
 				<?php
 				/**
 				 * Actoin: mainwp_clients_widget_top
@@ -91,10 +92,10 @@ class MainWP_Clients {
 							<td class="left aligned middle aligned">
 							<span><a href="admin.php?page=ManageClients&client_id=<?php echo intval( $client['client_id'] ); ?>"><?php echo esc_html( $client['name'] ); ?></a></span><br/>
 							<?php if ( isset( $client['client_email'] ) && '' != $client['client_email'] ) : ?>
-								<span class="ui small text"><a href="mailto:<?php echo $client['client_email']; ?>"><i class="envelope icon"></i> <?php echo esc_html( $client['client_email'] ); ?></a></span><br/>
+								<span class="ui small text"><a href="mailto:<?php echo esc_attr( $client['client_email'] ); ?>"><i class="envelope icon"></i> <?php echo esc_html( $client['client_email'] ); ?></a></span><br/>
 							<?php endif; ?>
 							<?php if ( isset( $client['client_phone'] ) && '' != $client['client_phone'] ) : ?>
-								<span class="ui small text"><a href="tel:<?php echo $client['client_phone']; ?>"><i class="phone alternate icon"></i> <?php echo esc_html( $client['client_phone'] ); ?></a></span>
+								<span class="ui small text"><a href="tel:<?php echo esc_attr( $client['client_phone'] ); ?>"><i class="phone alternate icon"></i> <?php echo esc_html( $client['client_phone'] ); ?></a></span>
 							<?php endif; ?>
 							</td>
 							<td class="left aligned middle aligned">
@@ -106,10 +107,10 @@ class MainWP_Clients {
 										?>
 									<span><?php echo esc_html( $contact->contact_name ); ?> <?php echo ( isset( $contact->contact_role ) && '' != $contact->contact_role ) ? ' - ' . esc_html( $contact->contact_role ) : ''; ?></span><br/>
 										<?php if ( isset( $contact->contact_email ) && '' != $contact->contact_email ) : ?>
-										<span class="ui small text"><a href="mailto:<?php echo $contact->contact_email; ?>"><i class="envelope icon"></i> <?php echo esc_html( $contact->contact_email ); ?></a></span><br/>
+										<span class="ui small text"><a href="mailto:<?php echo esc_attr( $contact->contact_email ); ?>"><i class="envelope icon"></i> <?php echo esc_html( $contact->contact_email ); ?></a></span><br/>
 									<?php endif; ?>
 										<?php if ( isset( $contact->contact_phone ) && '' != $contact->contact_phone ) : ?>
-										<span class="ui small text"><a href="tel:<?php echo $contact->contact_phone; ?>"><i class="phone alternate icon"></i> <?php echo esc_html( $contact->contact_phone ); ?></a></span>
+										<span class="ui small text"><a href="tel:<?php echo esc_attr( $contact->contact_phone ); ?>"><i class="phone alternate icon"></i> <?php echo esc_html( $contact->contact_phone ); ?></a></span>
 									<?php endif; ?>
 										<?php
 									}
@@ -132,13 +133,12 @@ class MainWP_Clients {
 					<?php endforeach; ?>
 					</tbody>
 				</table>
-				<div class="ui hidden divider"></div>
-				<div class="ui two columns grid">
+				<div class="ui two columns grid mainwp-widget-footer">
 					<div class="left aligned column">
-						<a href="admin.php?page=ManageClients" class="ui button green"><?php esc_html_e( 'Manage Clients', 'mainwp' ); ?></a>
+						<a href="admin.php?page=ManageClients" class="ui button mini fluid green"><?php esc_html_e( 'Manage Clients', 'mainwp' ); ?></a>
 					</div>
 					<div class="right aligned column">
-						<a href="admin.php?page=ClientAddNew" class="ui button basic green"><?php esc_html_e( 'Create New Client', 'mainwp' ); ?></a>
+						<a href="admin.php?page=ClientAddNew" class="ui button basic mini fluid green"><?php esc_html_e( 'New Client', 'mainwp' ); ?></a>
 					</div>
 				</div>
 				<script type="text/javascript">

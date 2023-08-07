@@ -133,7 +133,7 @@ function stick_element_reset() {
     scroll_element();
 }
 jQuery(document).ready(function () {
-    jQuery(window).scroll(scroll_element).resize(stick_element_reset);
+    jQuery(window).trigger('scroll', scroll_element).trigger('resize', stick_element_reset);
     stick_element_init();
 });
 
@@ -162,7 +162,7 @@ mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, updateTy
                     if (extraValue === extra) {
                         confirmed_callback();
                     } else {
-                        jQuery('#mainwp-confirm-input').val('').focus().transition('shake');
+                        jQuery('#mainwp-confirm-input').val('').trigger('focus').transition('shake');
                         return false;
                     }
                 }
@@ -256,7 +256,7 @@ mainwp_ss_select = function (me, val) {
     var tab = parent.find('#select_sites_tab').val();
     if (tab == 'site') {
         parent.find('#mainwp-select-sites-list .item:not(.no-select) INPUT:enabled:checkbox').each(function () {
-            jQuery(this).attr('checked', val).change();
+            jQuery(this).attr('checked', val).trigger("change");
             if (val) {
                 jQuery(this).closest('.item.checkbox').checkbox('set checked');
             }
@@ -266,7 +266,7 @@ mainwp_ss_select = function (me, val) {
         });
     } else if (tab == 'staging') {
         parent.find('#mainwp-select-staging-sites-list .item:not(.no-select) INPUT:enabled:checkbox').each(function () {
-            jQuery(this).attr('checked', val).change();
+            jQuery(this).attr('checked', val).trigger("change");
             if (val) {
                 jQuery(this).closest('.item.checkbox').checkbox('set checked');
             }
@@ -276,7 +276,7 @@ mainwp_ss_select = function (me, val) {
         });
     } else if (tab == 'client') {
         parent.find('#mainwp-select-clients-list .item:not(.no-select) INPUT:enabled:checkbox').each(function () {
-            jQuery(this).attr('checked', val).change();
+            jQuery(this).attr('checked', val).trigger("change");
             if (val) {
                 jQuery(this).closest('.item.checkbox').checkbox('set checked');
             }
@@ -287,7 +287,7 @@ mainwp_ss_select = function (me, val) {
 
     } else { //group
         parent.find('#mainwp-select-groups-list .item:not(.no-select) INPUT:enabled:checkbox').each(function () {
-            jQuery(this).attr('checked', val).change();
+            jQuery(this).attr('checked', val).trigger("change");
             if (val) {
                 jQuery(this).closest('.item.checkbox').checkbox('set checked');
             }
@@ -391,7 +391,7 @@ mainwp_newpost_updateCategories = function () {
 
         jQuery.post(ajaxurl, data, function (pSelectedCategories) {
             return function (response) {
-                response = jQuery.trim(response);
+                response = response.trim();
                 catsSelection.dropdown('remove selected');
                 catsSelection.find('.sitecategory').remove();
                 catsSelection.append(response);

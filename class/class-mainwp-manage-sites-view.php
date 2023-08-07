@@ -47,17 +47,17 @@ class MainWP_Manage_Sites_View {
 			<div class="wp-submenu sub-open" style="">
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
-					<a href="<?php echo admin_url( 'admin.php?page=managesites' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Sites', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Sites', 'mainwp' ); ?></a>
 					<?php if ( mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) { ?>
 						<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'managesites_add_new' ) ) { ?>
-							<a href="<?php echo admin_url( 'admin.php?page=managesites&do=new' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
 						<?php } ?>
 						<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'managesites_import' ) ) { ?>
-							<a href="<?php echo admin_url( 'admin.php?page=managesites&do=bulknew' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Import Sites', 'mainwp' ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=bulknew' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Import Sites', 'mainwp' ); ?></a>
 						<?php } ?>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MonitoringSites' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=MonitoringSites' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Monitoring', 'mainwp' ); ?></a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=MonitoringSites' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Monitoring', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php
 					if ( isset( $subPages ) && is_array( $subPages ) ) {
@@ -67,7 +67,7 @@ class MainWP_Manage_Sites_View {
 									continue;
 								}
 								?>
-								<a href="<?php echo admin_url( 'admin.php?page=ManageSites' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
+								<a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageSites' . $subPage['slug'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
 								<?php
 							}
 						}
@@ -100,7 +100,7 @@ class MainWP_Manage_Sites_View {
 				'href'       => 'admin.php?page=managesites',
 				'icon'       => '<i class="globe icon"></i>',
 			),
-			1
+			0
 		);
 
 		$items_menu = array(
@@ -172,6 +172,7 @@ class MainWP_Manage_Sites_View {
 		}
 
 		$site_id = 0;
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) {
 			$site_id = intval( $_GET['id'] );
 		} elseif ( isset( $_GET['backupid'] ) && ! empty( $_GET['backupid'] ) ) {
@@ -187,6 +188,7 @@ class MainWP_Manage_Sites_View {
 		} elseif ( isset( $_GET['cacheControlId'] ) && ! empty( $_GET['cacheControlId'] ) ) {
 			$site_id = intval( $_GET['cacheControlId'] );
 		}
+		// phpcs:enable
 
 		$managesites_pages = array(
 			'ManageSites'     => array(
@@ -213,7 +215,7 @@ class MainWP_Manage_Sites_View {
 
 		$total_info    = MainWP_Manage_Sites_Update_View::get_total_info( $site_id );
 		$total_updates = $total_info['total_upgrades'];
-		$after_title   = '<div class="ui small ' . ( 0 == $total_updates ? 'green' : 'red' ) . ' label" timestamp="' . time() . '">' . $total_updates . '</div>';
+		$after_title   = '<div class="ui small ' . ( 0 == $total_updates ? 'green' : 'red' ) . ' label" timestamp="' . time() . '">' . intval( $total_updates ) . '</div>';
 
 		$site_pages = array(
 			'ManageSitesDashboard'     => array(
@@ -376,7 +378,7 @@ class MainWP_Manage_Sites_View {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::starts_with()
 	 */
-	public static function render_import_sites() {
+	public static function render_import_sites() { // phpcs:ignore -- complex.
 		?>
 		<div id="mainwp-importing-sites" class="ui active inverted dimmer" style="display:none">
 			<div class="ui medium text loader"><?php esc_html_e( 'Importing', 'mainwp' ); ?></div>
@@ -454,7 +456,7 @@ class MainWP_Manage_Sites_View {
 						}
 						$encoded = wp_json_encode( $import_data );
 						?>
-						<input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo ( $row + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( $encoded ); ?>" original="<?php echo esc_attr( $originalLine ); ?>" />
+						<input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo ( esc_attr( $row + 1 ) ); ?>" value="" encoded-data="<?php echo esc_attr( $encoded ); ?>" original="<?php echo esc_attr( $originalLine ); ?>" />
 						<?php
 						$row++;
 					}
@@ -565,7 +567,7 @@ class MainWP_Manage_Sites_View {
 				$html .= '</div>';
 				$html .= '</div>';
 
-				echo $html;
+				echo $html; // phpcs:ignore WordPress.Security.EscapeOutput
 			}
 		}
 	}
@@ -624,7 +626,7 @@ class MainWP_Manage_Sites_View {
 					<div class="right aligned middle aligned column">
 						<div class="inline field">
 							<div class="ui selection fluid dropdown">
-								<div class="text"><?php echo $active_text; ?></div>
+								<div class="text"><?php echo esc_html( $active_text ); ?></div>
 								<i class="dropdown icon"></i>
 								<div class="menu">
 									<div class="<?php echo 'WordPress' === $active_tab ? 'active' : ''; ?> item" data-tab="wordpress" data-value="wordpress"><?php esc_html_e( 'WordPress Updates', 'mainwp' ); ?></div>
@@ -674,7 +676,7 @@ class MainWP_Manage_Sites_View {
 			<?php endif; ?>
 			<?php
 			// Render security check issues.
-			$websiteid = isset( $_GET['scanid'] ) ? intval( $_GET['scanid'] ) : null;
+			$websiteid = isset( $_GET['scanid'] ) ? intval( $_GET['scanid'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification
 			$website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( empty( $website ) ) {
 				return;
@@ -763,7 +765,7 @@ class MainWP_Manage_Sites_View {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::starts_with()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
 	 */
-	public static function render_edit_site( $websiteid, $updated ) {
+	public static function render_edit_site( $websiteid, $updated ) { // phpcs:ignore -- complex.
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
 			mainwp_do_not_have_permissions( esc_html__( 'edit sites', 'mainwp' ) );
 			return;
@@ -780,6 +782,10 @@ class MainWP_Manage_Sites_View {
 
 		$groups = MainWP_DB_Common::instance()->get_groups_for_current_user();
 
+		if ( ! is_array( $groups ) ) {
+			$groups = array();
+		}
+
 		$website_url = MainWP_Utility::remove_http_www_prefix( $website->url, true );
 
 		?>
@@ -787,7 +793,7 @@ class MainWP_Manage_Sites_View {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-edit-site-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-edit-site-info-message"></i>
-					<?php echo sprintf( esc_html__( 'Edit the %1$s (%2$s) child site settings.  For additional help, please check this %3$shelp documentation%4$s.', 'mainwp' ), $website->name, '<a href="' . $website->url . '" target="_blank">' . $website->url . '</a>', '<a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( esc_html__( 'Edit the %1$s (%2$s) child site settings.  For additional help, please check this %3$shelp documentation%4$s.', 'mainwp' ), esc_html( stripslashes( $website->name ) ), '<a href="' . esc_url( $website->url ) . '" target="_blank">' . esc_url( $website->url ) . '</a>', '<a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">', '</a>' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -799,7 +805,7 @@ class MainWP_Manage_Sites_View {
 			<?php endif; ?>
 			<form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data" class="ui form">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-				<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdateWebsite' . $website->id ); ?>" />
+				<input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'UpdateWebsite' . $website->id ) ); ?>" />
 				<h3 class="ui dividing header"><?php esc_html_e( 'General Settings', 'mainwp' ); ?></h3>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Site URL', 'mainwp' ); ?></label>
@@ -853,8 +859,10 @@ class MainWP_Manage_Sites_View {
 				<?php
 				$groupsSite  = MainWP_DB_Common::instance()->get_groups_by_website_id( $website->id );
 				$init_groups = '';
-				foreach ( $groups as $group ) {
-					$init_groups .= ( isset( $groupsSite[ $group->id ] ) && $groupsSite[ $group->id ] ) ? ',' . $group->id : '';
+				if ( is_array( $groupsSite ) ) {
+					foreach ( $groupsSite as $gpsSite ) {
+						$init_groups .= ( isset( $groups[ $gpsSite->id ] ) && $groups[ $gpsSite->id ] ) ? ',' . $gpsSite->id : '';
+					}
 				}
 				$init_groups = ltrim( $init_groups, ',' );
 				?>
@@ -867,7 +875,7 @@ class MainWP_Manage_Sites_View {
 							<div class="default text"><?php echo ( '' === $init_groups ) ? esc_html__( 'No Tags added yet.', 'mainwp' ) : ''; ?></div>
 							<div class="menu">
 								<?php foreach ( $groups as $group ) { ?>
-									<div class="item" data-value="<?php echo $group->id; ?>"><?php echo esc_html( $group->name ); ?></div>
+									<div class="item" data-value="<?php echo intval( $group->id ); ?>"><?php echo esc_html( $group->name ); ?></div>
 								<?php } ?>
 							</div>
 						</div>
@@ -1035,6 +1043,49 @@ class MainWP_Manage_Sites_View {
 						</select>
 					</div>
 				</div> 
+				<?php
+				if ( empty( $website->verify_method ) ) {
+					$verify_conn_method = 3;
+				} else {
+					$verify_conn_method = (int) $website->verify_method;
+				}
+				?>
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Verify connection method', 'mainwp' ); ?></label>
+					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select Verify connection method. If you are not sure, select "Default".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<select class="ui dropdown"id="mainwp_managesites_edit_verify_connection_method" name="mainwp_managesites_edit_verify_connection_method">
+							<option <?php echo ( 1 === $verify_conn_method ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'OpenSSL (default)', 'mainwp' ); ?></option>
+							<option <?php echo ( 2 === $verify_conn_method ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'PHPSECLIB (fallback)', 'mainwp' ); ?></option>
+							<option <?php echo ( 3 === $verify_conn_method ) ? 'selected' : ''; ?> value="3"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+						</select>
+					</div>
+				</div>
+				<?php
+				$sign_note = MainWP_Connect_Lib::get_connection_algo_settings_note();
+				$sign_algs = MainWP_System_Utility::get_open_ssl_sign_algos();
+				if ( empty( $website->signature_algo ) ) {
+					$site_sign_algo = 9999;
+				} else {
+					$site_sign_algo = (int) $website->signature_algo;
+				}
+				?>
+				<div class="ui grid field mainwp-hide-elemenent-sign-algo" <?php echo ( 2 === $verify_conn_method ) ? 'style="display:none;"' : ''; ?> >
+					<label class="six wide column middle aligned"><?php esc_html_e( 'OpenSSL signature algorithm', 'mainwp' ); ?></label>
+					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select OpenSSL signature algorithm. If you are not sure, select "Default".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<select class="ui dropdown" id="mainwp_managesites_edit_openssl_alg" name="mainwp_managesites_edit_openssl_alg">
+							<?php
+							foreach ( $sign_algs as $val => $text ) {
+								?>
+								<option <?php echo ( $val === $site_sign_algo ) ? 'selected' : ''; ?> value="<?php echo esc_attr( $val ); ?>"><?php echo esc_html( $text ); ?></option>
+								<?php
+							}
+							?>
+							<option <?php echo ( 9999 === $site_sign_algo ) ? 'selected' : ''; ?> value="9999"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+						</select>
+						<div class="ui yellow message mainwp-hide-elemenent-sign-algo-note" <?php echo ( 1 === $site_sign_algo ) ? '' : 'style="display:none;"'; ?>><?php echo esc_html( $sign_note ); ?></div>
+					</div>
+				</div>
+
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Force IPv4 (optional)', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Do you want to force IPv4 for this child site?', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -1175,8 +1226,8 @@ class MainWP_Manage_Sites_View {
 		?>
 		<div class="ui segment">
 		<?php MainWP_Notification_Settings::render_update_template_message( $updated_templ ); ?>		
-		<form method="POST" action="admin.php?page=managesites&emailsettingsid=<?php echo $siteid; ?>" class="ui form">
-			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdateWebsiteEmailSettings' . $siteid ); ?>" />
+		<form method="POST" action="admin.php?page=managesites&emailsettingsid=<?php echo intval( $siteid ); ?>" class="ui form">
+			<input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'UpdateWebsiteEmailSettings' . $siteid ) ); ?>" />
 			<input type="hidden" name="mainwp_managesites_setting_emails_type" value="<?php echo esc_html( $type ); ?>" />				
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-email-tokens-info-message' ) ) : ?>
 				<div class="ui info message">
@@ -1184,8 +1235,8 @@ class MainWP_Manage_Sites_View {
 					<?php echo ( '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">Boilerplate</a> and <a href="https://mainwp.com/extension/pro-reports/" target="_blank">Reports</a> extensions tokens are supported in the email settings and templates if Extensions are in use.' ); ?>
 				</div>
 			<?php endif; ?>
-			<h3 class="ui header"><?php echo $title; ?></h3>
-			<div class="sub header"><?php echo $email_description; ?></h3></div>
+			<h3 class="ui header"><?php echo esc_html( $title ); ?></h3>
+			<div class="sub header"><?php echo esc_html( $email_description ); ?></h3></div>
 			<div class="ui divider"></div>
 			<div class="ui grid field">
 				<label class="six wide column middle aligned"><?php esc_html_e( 'Enable', 'mainwp' ); ?></label>
@@ -1217,7 +1268,7 @@ class MainWP_Manage_Sites_View {
 				<?php
 				$templ     = MainWP_Notification_Template::get_template_name_by_notification_type( $type );
 				$overrided = MainWP_Notification_Template::instance()->is_overrided_template( $type );
-				echo $overrided ? esc_html__( 'This template has been overridden and can be found in:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>' : esc_html__( 'To override and edit this email template copy:', 'mainwp' ) . ' <code>mainwp/templates/' . $templ . '</code> ' . esc_html__( 'to the folder:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>';
+				echo $overrided ? esc_html__( 'This template has been overridden and can be found in:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . esc_html( $templ ) . '</code>' : esc_html__( 'To override and edit this email template copy:', 'mainwp' ) . ' <code>mainwp/templates/' . esc_html( $templ ) . '</code> ' . esc_html__( 'to the folder:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . esc_html( $templ ) . '</code>';
 				?>
 				</div>		
 			</div>	
@@ -1225,9 +1276,9 @@ class MainWP_Manage_Sites_View {
 				<label class="six wide column middle aligned"></label>
 				<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Manage the email HTML template.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 					<?php if ( $overrided ) : ?>
-						<a href="<?php echo wp_nonce_url( 'admin.php?page=managesites&emailsettingsid=' . $siteid . '&edit-email=' . $type, 'delete-email-template' ); ?>" onclick="mainwp_confirm('<?php echo esc_js( 'Are you sure you want to delete this template file?', 'mainwp' ); ?>', function(){ window.location = jQuery('a#email-delete-template').attr('href');}); return false;" id="email-delete-template" class="ui button"><?php esc_html_e( 'Return to Default Template', 'mainwp' ); ?></a>
+						<a href="<?php echo esc_url( wp_nonce_url( 'admin.php?page=managesites&emailsettingsid=' . intval( $siteid ) . '&edit-email=' . esc_attr( $type ), 'delete-email-template' ) ); ?>" onclick="mainwp_confirm('<?php echo esc_js( 'Are you sure you want to delete this template file?', 'mainwp' ); ?>', function(){ window.location = jQuery('a#email-delete-template').attr('href');}); return false;" id="email-delete-template" class="ui button"><?php esc_html_e( 'Return to Default Template', 'mainwp' ); ?></a>
 					<?php else : ?>
-					<a href="<?php echo wp_nonce_url( 'admin.php?page=managesites&emailsettingsid=' . $siteid . '&edit-email=' . $type, 'copy-email-template' ); ?>" class="ui button"><?php esc_html_e( 'Copy file to uploads', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( wp_nonce_url( 'admin.php?page=managesites&emailsettingsid=' . intval( $siteid ) . '&edit-email=' . esc_attr( $type ), 'copy-email-template' ) ); ?>" class="ui button"><?php esc_html_e( 'Copy file to uploads', 'mainwp' ); ?></a>
 					<?php endif; ?>
 					<?php if ( $overrided ) : ?>
 						<a href="javascript:void(0)" class="ui button" onclick="mainwp_view_template('<?php echo esc_js( $type ); ?>'); return false;"><?php esc_html_e( 'Edit Template', 'mainwp' ); ?></a>
@@ -1237,7 +1288,7 @@ class MainWP_Manage_Sites_View {
 				</div>		
 			</div>	
 			<div class="ui divider"></div>
-			<a href="admin.php?page=managesites&emailsettingsid=<?php echo $siteid; ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
+			<a href="admin.php?page=managesites&emailsettingsid=<?php echo intval( $siteid ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
 			<input type="submit" name="submit" id="submit" class="ui button green big" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 			</form>
 		</div>
@@ -1286,7 +1337,7 @@ class MainWP_Manage_Sites_View {
 				<div class="header"><?php esc_html_e( 'Edit Email Template', 'mainwp' ); ?></div>
 					<div class="scrolling header">
 					<form method="POST" id="email-template-form" action="<?php echo esc_html( $localion ); ?>" class="ui form">		
-						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'save-email-template' ); ?>" />
+						<input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'save-email-template' ) ); ?>" />
 						<div class="template <?php echo esc_attr( $type ); ?>">		
 							<?php if ( file_exists( $custom_file ) ) : ?>
 								<div class="editor">
@@ -1386,10 +1437,10 @@ class MainWP_Manage_Sites_View {
 						?>
 						<tr>
 							<td><?php echo ( ! $options['disable'] ) ? '<span data-tooltip="Enabled." data-position="right center" data-inverted=""><i class="circular green check inverted icon"></i></span>' : '<span data-tooltip="Disabled." data-position="right center" data-inverted=""><i class="circular x icon inverted disabled"></i></span>'; ?></td>
-							<td><a href="admin.php?page=managesites&emailsettingsid=<?php echo intval( $website->id ); ?>&edit-email=<?php echo rawurlencode( $type ); ?>" data-tooltip="<?php esc_html_e( 'Click to configure the email settings.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php echo esc_html( $name ); ?></a></td>
+							<td><a href="admin.php?page=managesites&emailsettingsid=<?php echo intval( $website->id ); ?>&edit-email=<?php echo esc_html( rawurlencode( $type ) ); ?>" data-tooltip="<?php esc_html_e( 'Click to configure the email settings.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php echo esc_html( $name ); ?></a></td>
 							<td><?php echo esc_html( $email_description ); ?></td>
 							<td><?php echo esc_html( $options['recipients'] ); ?></td>
-							<td style="text-align:right"><a href="admin.php?page=managesites&emailsettingsid=<?php echo intval( $website->id ); ?>&edit-email=<?php echo rawurlencode( $type ); ?>" data-tooltip="<?php esc_html_e( 'Click to configure the email settings.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="ui green mini button"><?php esc_html_e( 'Manage', 'mainwp' ); ?></a></td>
+							<td style="text-align:right"><a href="admin.php?page=managesites&emailsettingsid=<?php echo intval( $website->id ); ?>&edit-email=<?php echo esc_html( rawurlencode( $type ) ); ?>" data-tooltip="<?php esc_html_e( 'Click to configure the email settings.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="ui green mini button"><?php esc_html_e( 'Manage', 'mainwp' ); ?></a></td>
 						</tr>
 					<?php endforeach; ?>
 				</tbody>
@@ -1461,7 +1512,16 @@ class MainWP_Manage_Sites_View {
 					return true;
 				}
 
-				if ( function_exists( 'openssl_pkey_new' ) ) {
+				if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
+					$details = MainWP_Connect_Lib::instance()->create_connect_keys();
+					if ( is_array( $details ) ) {
+						$pubkey  = $details['pub'];
+						$privkey = $details['priv'];
+					} else {
+						$privkey = '-1';
+						$pubkey  = '-1';
+					}
+				} elseif ( function_exists( 'openssl_pkey_new' ) ) {
 					$conf     = array( 'private_key_bits' => 2048 );
 					$conf_loc = MainWP_System_Utility::get_openssl_conf();
 					if ( ! empty( $conf_loc ) ) {
@@ -1469,8 +1529,8 @@ class MainWP_Manage_Sites_View {
 					}
 					$res = openssl_pkey_new( $conf );
 					@openssl_pkey_export( $res, $privkey, null, $conf ); // phpcs:ignore -- prevent warning.
-					$pubkey = openssl_pkey_get_details( $res );
-					$pubkey = $pubkey['key'];
+					$details = openssl_pkey_get_details( $res );
+					$pubkey  = $details['key'];
 				} else {
 					$privkey = '-1';
 					$pubkey  = '-1';
@@ -1503,8 +1563,6 @@ class MainWP_Manage_Sites_View {
 							array(
 								'pubkey'   => base64_encode( $pubkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
 								'privkey'  => base64_encode( $privkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
-								'nossl'    => $information['nossl'],
-								'nosslkey' => ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : '' ),
 								'uniqueId' => ( isset( $information['uniqueId'] ) ? $information['uniqueId'] : '' ),
 							)
 						);
@@ -1518,7 +1576,7 @@ class MainWP_Manage_Sites_View {
 				if ( 'HTTPERROR' === $e->getMessage() ) {
 					throw new \Exception( 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' ) );
 				} elseif ( 'NOMAINWP' === $e->getMessage() ) {
-					$error = sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank>', '</a>' );
+					$error = sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank>', '</a>' ); // phpcs:ignore WordPress.Security.EscapeOutput
 					throw new \Exception( $error );
 				}
 			}
@@ -1540,7 +1598,7 @@ class MainWP_Manage_Sites_View {
 	 * @return self add_wp_site()
 	 */
 	public static function add_site( $website = false, &$output = array() ) {
-
+		// phpcs:disable WordPress.Security.NonceVerification
 		$params['url']               = isset( $_POST['managesites_add_wpurl'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpurl'] ) ) : '';
 		$params['name']              = isset( $_POST['managesites_add_wpname'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpname'] ) ) : '';
 		$params['wpadmin']           = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : '';
@@ -1557,6 +1615,7 @@ class MainWP_Manage_Sites_View {
 		if ( isset( $_POST['qsw_page'] ) ) {
 			$params['qsw_page'] = sanitize_text_field( wp_unslash( $_POST['qsw_page'] ) );
 		}
+		// phpcs:enable
 
 		return self::add_wp_site( $website, $params, $output );
 	}
@@ -1591,7 +1650,16 @@ class MainWP_Manage_Sites_View {
 			$error = esc_html__( 'The site is already connected to your MainWP Dashboard', 'mainwp' );
 		} else {
 			try {
-				if ( function_exists( 'openssl_pkey_new' ) ) {
+				if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
+					$details = MainWP_Connect_Lib::instance()->create_connect_keys();
+					if ( is_array( $details ) ) {
+						$pubkey  = $details['pub'];
+						$privkey = $details['priv'];
+					} else {
+						$privkey = '-1';
+						$pubkey  = '-1';
+					}
+				} elseif ( function_exists( 'openssl_pkey_new' ) ) {
 					$conf     = array( 'private_key_bits' => 2048 );
 					$conf_loc = MainWP_System_Utility::get_openssl_conf();
 					if ( ! empty( $conf_loc ) ) {
@@ -1692,7 +1760,7 @@ class MainWP_Manage_Sites_View {
 						 */
 						global $current_user;
 
-						$id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : null ), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
+						$id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
 
 						if ( $id && isset( $params['clientid'] ) ) {
 							MainWP_DB::instance()->update_website_values( $id, array( 'client_id' => intval( $params['clientid'] ) ) );

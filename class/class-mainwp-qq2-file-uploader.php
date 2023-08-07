@@ -62,9 +62,9 @@ class MainWP_QQ2_File_Uploader {
 		*/
 		$this->sizeLimit = apply_filters( 'mainwp_file_uploader_size_limit', $sizeLimit );
 
-		if ( isset( $_GET['qqfile'] ) ) {
+		if ( isset( $_GET['qqfile'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$this->file = new MainWP_QQ2_Uploaded_File_Xhr();
-		} elseif ( isset( $_FILES['qqfile'] ) ) {
+		} elseif ( isset( $_FILES['qqfile'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$this->file = new MainWP_QQ2_Uploaded_File_Form();
 		} else {
 			$this->file = false;

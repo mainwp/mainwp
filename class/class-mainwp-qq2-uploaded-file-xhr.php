@@ -92,7 +92,7 @@ class MainWP_QQ2_Uploaded_File_Xhr {
 
 	/** Get the File Name. */
 	public function get_name() {
-		return isset( $_GET['qqfile'] ) ? sanitize_text_field( wp_unslash( $_GET['qqfile'] ) ) : '';
+		return isset( $_GET['qqfile'] ) ? sanitize_text_field( wp_unslash( $_GET['qqfile'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 	}
 
 	/**

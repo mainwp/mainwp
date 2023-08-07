@@ -119,7 +119,7 @@ class MainWP_Widget_Plugins {
 		$inactive_plugins = MainWP_Utility::sortmulti( $inactive_plugins, 'name', 'asc' );
 
 		?>
-	<div class="ui grid">
+		<div class="ui grid mainwp-widget-header">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
 					<?php
@@ -138,7 +138,7 @@ class MainWP_Widget_Plugins {
 				</h3>
 			</div>
 			<div class="four wide column right aligned">
-				<div class="ui dropdown right mainwp-dropdown-tab">
+				<div class="ui dropdown right pointing mainwp-dropdown-tab">
 					<div class="text"><?php esc_html_e( 'Active', 'mainwp' ); ?></div>
 					<i class="dropdown icon"></i>
 					<div class="menu">
@@ -148,7 +148,7 @@ class MainWP_Widget_Plugins {
 				</div>
 			</div>
 		</div>
-		<div class="ui section hidden divider"></div>
+		<div class="mainwp-scrolly-overflow">
 		<?php
 		/**
 		 * Action: mainwp_plugins_widget_top
@@ -188,12 +188,12 @@ class MainWP_Widget_Plugins {
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
 						<div class="right floated pluginsAction">
 							<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-								<a href="#" class="mainwp-plugin-deactivate ui mini button green" data-position="top right" data-tooltip="<?php esc_attr_e( 'Deactivate the ', 'mainwp' ) . esc_html( $actived_plugins[ $i ]['name'] ) . esc_attr_e( ' plugin on the child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
+									<a href="#" class="mainwp-plugin-deactivate ui mini button green" data-position="left center" data-tooltip="<?php esc_attr_e( 'Deactivate the ', 'mainwp' ) . esc_html( $actived_plugins[ $i ]['name'] ) . esc_attr_e( ' plugin on the child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
 							<?php } ?>
 						</div>
 						<div class="middle aligned content">
-							<?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?>&nbsp;&nbsp;&nbsp;&nbsp;
-							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . dirname( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ); ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $actived_plugins[ $i ]['name'] ); ?>">
+							<?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;
+							<a href="<?php echo esc_url( admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_html( dirname( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ) ) ); ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $actived_plugins[ $i ]['name'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?>">
 								<?php echo esc_html( $actived_plugins[ $i ]['name'] . ' ' . $actived_plugins[ $i ]['version'] ); ?>
 							</a>
 							</div>
@@ -243,15 +243,15 @@ class MainWP_Widget_Plugins {
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
 						<div class="right floated content pluginsAction">
 							<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-								<a href="#" class="mainwp-plugin-activate ui mini green button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Activate the ', 'mainwp' ) . wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ) . esc_attr_e( ' plugin on the child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
+									<a href="#" class="mainwp-plugin-activate ui mini green button" data-position="left center" data-tooltip="<?php esc_attr_e( 'Activate the ', 'mainwp' ) . wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ) . esc_attr_e( ' plugin on the child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
 							<?php } ?>
 							<?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) ) { ?>
-								<a href="#" class="mainwp-plugin-delete ui mini basic button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete the ', 'mainwp' ) . wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ) . esc_attr_e( ' plugin from the child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+									<a href="#" class="mainwp-plugin-delete ui mini basic button" data-position="left center" data-tooltip="<?php esc_attr_e( 'Delete the ', 'mainwp' ) . wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ) . esc_attr_e( ' plugin from the child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
 						</div>
 						<div class="middle aligned content">
-							<?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?>&nbsp;&nbsp;&nbsp;&nbsp;
-							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . dirname( $inactive_plugins[ $i ]['slug'] ); ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ); ?>">
+							<?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;
+							<a href="<?php echo esc_url( admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_html( dirname( $inactive_plugins[ $i ]['slug'] ) ) ); ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?>">
 								<?php echo esc_html( $inactive_plugins[ $i ]['name'] . ' ' . $inactive_plugins[ $i ]['version'] ); ?>
 							</a>
 						</div>
@@ -274,6 +274,7 @@ class MainWP_Widget_Plugins {
 			 */
 			do_action( 'mainwp_after_inactive_plugins_list', $website, $inactive_plugins );
 			?>
+		</div>
 		</div>
 		<?php
 		/**
@@ -336,9 +337,9 @@ class MainWP_Widget_Plugins {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action( $action ) {
-		$plugin    = isset( $_POST['plugin'] ) ? wp_unslash( $_POST['plugin'] ) : '';
+		$plugin    = isset( $_POST['plugin'] ) ? wp_unslash( $_POST['plugin'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		$plugin    = urldecode( $plugin );
-		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( empty( $plugin ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Plugin or site ID not found. Please, reload the page and try again.', 'mainwp' ) ) ) );

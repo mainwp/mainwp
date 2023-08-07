@@ -277,11 +277,6 @@ class MainWP_Post_Page_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::update_twitter_info()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
-	 * @uses \MainWP\Dashboard\MainWP_Twitter
 	 * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
@@ -562,19 +557,7 @@ class MainWP_Post_Page_Handler {
 				}
 			}
 
-			$data_fields = array(
-				'id',
-				'url',
-				'name',
-				'adminname',
-				'nossl',
-				'privkey',
-				'nosslkey',
-				'http_user',
-				'http_pass',
-				'ssl_version',
-				'sync_errors',
-			);
+			$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
 			$dbwebsites = array();
 
@@ -623,7 +606,7 @@ class MainWP_Post_Page_Handler {
 				<?php
 				foreach ( $dbwebsites as $website ) {
 					?>
-					<div class="item site-bulk-posting" site-id="<?php echo intval( $website->id ); ?>" status="queue"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+					<div class="item site-bulk-posting" site-id="<?php echo intval( $website->id ); ?>" status="queue"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
 					<div class="right floated content progress"><i class="clock outline icon"></i></div>
 					</div>
 			<?php } ?>
@@ -734,7 +717,7 @@ class MainWP_Post_Page_Handler {
 						<?php
 						foreach ( $dbwebsites as $website ) {
 							?>
-							<div class="item"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+							<div class="item"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
 							: 
 							<?php
 							if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
@@ -788,11 +771,11 @@ class MainWP_Post_Page_Handler {
 					if ( 'posting' == $what ) {
 						?>
 						<div class="item">
-							<a href="<?php echo admin_url( 'admin.php?page=PostBulkEdit&post_id=' . $id ); ?>"><?php esc_html_e( 'Edit Post', 'mainwp' ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkEdit&post_id=' . $id ) ); ?>"><?php esc_html_e( 'Edit Post', 'mainwp' ); ?></a>
 						</div>
 						<?php
 					} elseif ( $last_ajax_posting ) {
-						$edit_link = '<div class="item"><a href="' . admin_url( 'admin.php?page=PostBulkEdit&post_id=' . $id ) . '">' . esc_html__( 'Edit Post', 'mainwp' ) . '</a></div>';
+						$edit_link = '<div class="item"><a href="' . esc_url( admin_url( 'admin.php?page=PostBulkEdit&post_id=' . $id ) ) . '">' . esc_html__( 'Edit Post', 'mainwp' ) . '</a></div>';
 					}
 				}
 
@@ -805,35 +788,6 @@ class MainWP_Post_Page_Handler {
 							)
 						)
 					);
-				}
-			}
-
-			if ( MainWP_Twitter::enabled_twitter_messages() ) {
-				if ( 'posting' == $what ) {
-					$countRealItems = 0;
-					foreach ( $dbwebsites as $website ) {
-						if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
-							$countRealItems++;
-						}
-					}
-					if ( ! empty( $countRealItems ) ) {
-						$seconds = ( time() - $startTime );
-						MainWP_Twitter::update_twitter_info( 'new_post', $countRealItems, $seconds, $countRealItems, $startTime, 1 );
-					}
-
-					$twitters = MainWP_Twitter::get_twitter_notice( 'new_post' );
-					if ( is_array( $twitters ) ) {
-						foreach ( $twitters as $timeid => $twit_mess ) {
-							if ( ! empty( $twit_mess ) ) {
-								$sendText = MainWP_Twitter::get_twit_to_send( 'new_post', $timeid );
-								?>
-							<div class="mainwp-tips ui info message twitter" style="margin:0">
-								<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="new_post" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
-							</div>
-								<?php
-							}
-						}
-					}
 				}
 			}
 		}

@@ -1,5 +1,5 @@
 jQuery( document ).ready( function() {
-	jQuery( '.hamburger' ).click( function(e) {
+	jQuery( '.hamburger' ).on('click', function(e) {
 		$menu = jQuery( this ).parent();
 		if( !jQuery( this ).hasClass( 'active' ) ) {
 			jQuery( this ).addClass( 'active' );

@@ -21,7 +21,7 @@ if ( empty( $heading ) ) {
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=<?php bloginfo( 'charset' ); ?>" />
-		<title><?php echo get_bloginfo( 'name', 'display' ); ?></title>
+		<title><?php echo esc_html( get_bloginfo( 'name', 'display' ) ); ?></title>
 	</head>
 	<body marginwidth="0" topmargin="0" marginheight="0" offset="0" style="background-color:#f7f7f7;font-family:'Lato',sans-serif;">
 		<div id="mainwp-email-wrapper" style="padding: 30px 0;">
@@ -79,7 +79,7 @@ if ( empty( $heading ) ) {
 							</tr>
 							<tr>
 								<td align="left" valign="top" style="padding:30px 30px 0 30px;">
-									<a href="<?php echo admin_url( 'admin.php?page=MonitoringSites' ); ?>" style="color:#7fb100;text-decoration:none;"><?php echo esc_html__( 'Click here', 'mainwp' ); ?></a> <?php echo esc_html__( 'to check your site status.', 'mainwp' ); ?>
+									<a href="<?php echo esc_url( admin_url( 'admin.php?page=MonitoringSites' ) ); ?>" style="color:#7fb100;text-decoration:none;"><?php echo esc_html__( 'Click here', 'mainwp' ); ?></a> <?php echo esc_html__( 'to check your site status.', 'mainwp' ); ?>
 								</td>
 							</tr>
 							<!-- End Body -->

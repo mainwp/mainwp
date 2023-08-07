@@ -31,7 +31,7 @@ class MainWP_Client_Overview_Note {
 	 * @return mixed render_site_info()
 	 */
 	public static function render() {
-		$client_id = isset( $_GET['client_id'] ) ? $_GET['client_id'] : 0;
+		$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( empty( $client_id ) ) {
 			return;
 		}
@@ -58,6 +58,7 @@ class MainWP_Client_Overview_Note {
 		}
 
 		?>
+		<div class="mainwp-widget-header">
 			<h3 class="ui header handle-drag">
 			<?php
 			/**
@@ -73,8 +74,8 @@ class MainWP_Client_Overview_Note {
 			?>
 				<div class="sub header"><?php echo esc_html__( 'Client notes.', 'mainwp' ); ?></div>
 			</h3>
-			<div class="ui hidden divider"></div>
-			<div class="mainwp-widget-client-card">
+		</div>
+			<div class="mainwp-widget-client-card mainwp-scrolly-overflow">
 				<?php
 				/**
 				 * Actoin: mainwp_clients_overview_note_widget_top
@@ -89,19 +90,12 @@ class MainWP_Client_Overview_Note {
 				?>
 				<?php
 				if ( $client_info ) {
-					echo $esc_note;
+					echo $esc_note; // phpcs:ignore WordPress.Security.EscapeOutput
 				}
 				?>
-				<div class="ui hidden divider"></div>
-				<div class="ui hidden divider"></div>
 
-				<?php if ( '' == $note ) : ?>
-					<a href="javascript:void(0)" class="mainwp-edit-client-note ui button green" id="mainwp-notes-<?php echo $client_info['client_id']; ?>" data-tooltip="<?php esc_attr_e( 'Add notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Add Notes', 'mainwp' ); ?></a>
-				<?php else : ?>
-					<a href="javascript:void(0)" class="mainwp-edit-client-note ui button green" id="mainwp-notes-<?php echo $client_info['client_id']; ?>" data-tooltip="<?php esc_attr_e( 'Edit notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Edit Notes', 'mainwp' ); ?></a>
-				<?php endif; ?>
 
-				<div style="display:none" id="mainwp-notes-<?php echo $client_info['client_id']; ?>-note"><?php echo wp_unslash( $esc_note ); ?></div>
+				<div style="display:none" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
 
 				<?php
 
@@ -116,6 +110,16 @@ class MainWP_Client_Overview_Note {
 				 */
 				do_action( 'mainwp_clients_overview_note_widget_bottom', $client_info );
 				?>
+			</div>
+			<div class="ui two columns grid mainwp-widget-footer">
+				<div class="column">
+				<?php if ( '' == $note ) : ?>
+					<a href="javascript:void(0)" class="mainwp-edit-client-note ui button mini fluid green" id="mainwp-notes-<?php echo esc_attr( $client_info['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Add notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Add Notes', 'mainwp' ); ?></a>
+				<?php else : ?>
+					<a href="javascript:void(0)" class="mainwp-edit-client-note ui mini fluid button green" id="mainwp-notes-<?php echo esc_attr( $client_info['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Edit notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Edit Notes', 'mainwp' ); ?></a>
+				<?php endif; ?>
+				</div>
+				<div class="column"></div>
 			</div>
 			<?php
 			MainWP_UI::render_modal_edit_notes();

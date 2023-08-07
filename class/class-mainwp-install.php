@@ -25,7 +25,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '8.983';
+	protected $mainwp_db_version = '8.984';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -102,8 +102,6 @@ class MainWP_Install extends MainWP_DB_Base {
   url text NOT NULL,
   pubkey text NOT NULL,
   privkey text NOT NULL,
-  nossl tinyint(1) NOT NULL,
-  nosslkey text NOT NULL,
   siteurl text NOT NULL,
   ga_id text NOT NULL,
   gas_id int(11) NOT NULL,
@@ -400,6 +398,18 @@ class MainWP_Install extends MainWP_DB_Base {
 		}
 
 		$this->post_update_81( $currentVersion );
+
+		if ( version_compare( $currentVersion, '8.984', '<' ) ) {
+			$sslColumns = array(
+				'nossl',
+				'nosslkey',
+			);
+			foreach ( $sslColumns as $col ) {
+				$suppress = $this->wpdb->suppress_errors();
+				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $col );
+				$this->wpdb->suppress_errors( $suppress );
+			}
+		}
 
 		// delete old columns.
 		if ( version_compare( $currentVersion, '8.17', '<' ) ) {

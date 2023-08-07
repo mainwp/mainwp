@@ -48,8 +48,8 @@ class MainWP_Install_Bulk {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
 	 */
 	public static function admin_init() {
-		if ( isset( $_REQUEST['mainwp_do'] ) ) {
-			if ( isset( $_REQUEST['qq_nonce'] ) && 'MainWP_Install_Bulk-uploadfile' == $_REQUEST['mainwp_do'] ) {
+		if ( isset( $_REQUEST['mainwp_do'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			if ( isset( $_REQUEST['qq_nonce'] ) && 'MainWP_Install_Bulk-uploadfile' == $_REQUEST['mainwp_do'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 				do_action( 'mainwp_secure_request', 'qq_nonce', 'qq_nonce' );
 				$allowedExtensions = array( 'zip' ); // Only zip allowed.
 				// max file size in bytes.
@@ -60,7 +60,7 @@ class MainWP_Install_Bulk {
 
 				$result = $uploader->handle_upload( $path, true );
 				// to pass data through iframe you will need to encode all html tags.
-				die( htmlspecialchars( wp_json_encode( $result ), ENT_NOQUOTES ) );
+				die( htmlspecialchars( wp_json_encode( $result ), ENT_NOQUOTES ) ); // phpcs:ignore WordPress.Security.EscapeOutput
 			}
 		}
 	}
@@ -84,11 +84,11 @@ class MainWP_Install_Bulk {
 				<i class="file archive outline icon"></i>
 				<div class="content">
 					<?php esc_html_e( 'Upload .zip File', 'mainwp' ); ?>
-					<div class="sub header"><?php esc_html_e( 'If you have', 'mainwp' ); ?> <?php echo strtolower( $title ); ?> <?php esc_html_e( 'in a .zip format, you may install it by uploading it here.', 'mainwp' ); ?></div>
+					<div class="sub header"><?php esc_html_e( 'If you have', 'mainwp' ); ?> <?php echo esc_html( strtolower( $title ) ); ?> <?php esc_html_e( 'in a .zip format, you may install it by uploading it here.', 'mainwp' ); ?></div>
 				</div>
 			</h2>
 			<div class="ui divider"></div>
-				<div id="mainwp-file-uploader" class="<?php echo $cls; ?>" >
+				<div id="mainwp-file-uploader" class="<?php echo esc_attr( $cls ); ?>" >
 					<noscript>
 					<div class="ui message red"><?php esc_html_e( 'Please enable JavaScript to use file uploader.', 'mainwp' ); ?></div>
 					</noscript>
@@ -145,7 +145,7 @@ class MainWP_Install_Bulk {
 	 */
 	public static function prepare_install() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
-
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_POST['url'] ) ) {
 
 			$what = 'theme';
@@ -249,7 +249,7 @@ class MainWP_Install_Bulk {
 				}
 			}
 		}
-
+		// phpcs:enable WordPress.Security.NonceVerification
 		wp_send_json( $output );
 	}
 
@@ -292,6 +292,7 @@ class MainWP_Install_Bulk {
 	public static function perform_install() {
 		MainWP_Utility::end_session();
 
+		// phpcs:disable WordPress.Security.NonceVerification
 		// Fetch info.
 		$post_data = array(
 			'type' => isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '',
@@ -330,7 +331,7 @@ class MainWP_Install_Bulk {
 		$output->errors   = array();
 		$output->results  = array();
 		$websites         = array( MainWP_DB::instance()->get_website_by_id( $site_id ) );
-
+		// phpcs:enable WordPress.Security.NonceVerification
 		/**
 		* Action: mainwp_before_plugin_theme_install
 		*
@@ -390,7 +391,7 @@ class MainWP_Install_Bulk {
 			'name',
 			'sync_errors',
 		);
-
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_POST['selected_by'] ) && 'site' == $_POST['selected_by'] ) {
 			$selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
 			// Get sites.
@@ -463,6 +464,7 @@ class MainWP_Install_Bulk {
 			$output['urls'][] = MainWP_System_Utility::get_download_url( 'bulk', $file );
 		}
 		$output['urls'] = implode( '||', $output['urls'] );
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		/**
 		 * Prepare upload
@@ -487,6 +489,7 @@ class MainWP_Install_Bulk {
 	 */
 	public static function perform_upload() {
 		MainWP_Utility::end_session();
+		// phpcs:disable WordPress.Security.NonceVerification
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		// Fetch info.
 		$post_data = array(
@@ -508,6 +511,8 @@ class MainWP_Install_Bulk {
 		$urls             = isset( $_POST['urls'] ) ? esc_url_raw( wp_unslash( $_POST['urls'] ) ) : '';
 		$post_data['url'] = wp_json_encode( explode( '||', $urls ) );
 		$site_id          = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : 0;
+
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		$output          = new \stdClass();
 		$output->ok      = array();

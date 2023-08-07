@@ -348,7 +348,7 @@ class MainWP_Extensions {
 			<div class="wp-submenu sub-open" style="">
 				<div class="mainwp_boxout mainwp-submenu-wide">
 					<div class="mainwp_boxoutin"></div>
-					<?php echo $html; ?>
+					<?php echo $html; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 				</div>
 			</div>
 		</div>
@@ -373,7 +373,7 @@ class MainWP_Extensions {
 
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
 
-		$api_key = isset( $_POST['api_key'] ) ? trim( $_POST['api_key'] ) : false;
+		$api_key = isset( $_POST['api_key'] ) ? trim( $_POST['api_key'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
 		$all_available_extensions_compatible_api_response = array();
 		$all_free_pro_exts                                = array();
@@ -793,7 +793,7 @@ class MainWP_Extensions {
 	 * Create the MainWP Help Document List for the help component in the sidebar.
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) {
+		if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Extensions, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">

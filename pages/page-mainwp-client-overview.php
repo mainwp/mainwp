@@ -175,8 +175,8 @@ class MainWP_Client_Overview {
 		}
 
 		$client_contacts = array();
-		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) {
-			$client_contacts = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'client_id', $_GET['client_id'], ARRAY_A );
+		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$client_contacts = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'client_id', $_GET['client_id'], ARRAY_A ); // phpcs:ignore WordPress.Security.NonceVerification
 		}
 
 		if ( is_array( $client_contacts ) ) {
@@ -370,7 +370,7 @@ class MainWP_Client_Overview {
 				<form method="POST" action="" name="mainwp_clients_overview_screen_options_form" id="mainwp-clients-overview-screen-options-form">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					<input type="hidden" name="wp_scr_options_nonce" value="<?php echo esc_attr( wp_create_nonce( 'MainWPClientsScrOptions' ) ); ?>" />
-					<?php echo self::render_screen_options( false ); ?>
+					<?php self::render_screen_options( false ); ?>
 					<?php
 					/**
 					 * Action: mainwp_clients_overview_screen_options_bottom
@@ -420,8 +420,8 @@ class MainWP_Client_Overview {
 			'non_mainwp_changes' => esc_html__( 'Non-MainWP Changes', 'mainwp' ),
 		);
 
-		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) {
-			$client_contacts = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'client_id', $_GET['client_id'], ARRAY_A );
+		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$client_contacts = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'client_id', $_GET['client_id'], ARRAY_A ); // phpcs:ignore WordPress.Security.NonceVerification
 			if ( $client_contacts ) {
 				foreach ( $client_contacts as $contact ) {
 					$default_widgets[ 'contact_' . $contact['contact_id'] ] = esc_html( $contact['contact_name'] );
@@ -459,7 +459,7 @@ class MainWP_Client_Overview {
 		do_action( 'mainwp_screen_options_modal_top' );
 		$which_settings = 'overview_settings';
 		?>
-		<?php if ( isset( $_GET['page'] ) ) : ?>
+		<?php if ( isset( $_GET['page'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
 			<?php
 			$overviewColumns = get_option( 'mainwp_number_clients_overview_columns', 2 );
 			if ( 2 != $overviewColumns && 3 != $overviewColumns ) {
@@ -480,7 +480,7 @@ class MainWP_Client_Overview {
 					?>
 					<li>
 						<div class="ui checkbox">
-							<input type="checkbox" id="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" name="mainwp_show_widgets[]" <?php echo $_selected; ?> value="<?php echo esc_attr( $name ); ?>">
+							<input type="checkbox" id="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" name="mainwp_show_widgets[]" <?php echo esc_html( $_selected ); ?> value="<?php echo esc_attr( $name ); ?>">
 							<label for="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" ><?php echo esc_html( $title ); ?></label>
 						</div>
 						<input type="hidden" name="mainwp_widgets_name[]" value="<?php echo esc_attr( $name ); ?>">
@@ -512,7 +512,7 @@ class MainWP_Client_Overview {
 	 * @return void
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] ) {
+		if ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Dashboard, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">

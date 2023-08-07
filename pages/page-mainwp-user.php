@@ -211,7 +211,7 @@ class MainWP_User {
 	 * Render screen options modal bottom.
 	 */
 	public static function hook_screen_options_modal_bottom() {
-		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
+		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( 'UserBulkManage' == $page ) {
 
 			$show_columns = get_user_option( 'mainwp_manageusers_show_columns' );
@@ -1118,7 +1118,7 @@ class MainWP_User {
 			array(
 				'count'   => $output->users,
 				'keyword' => $search,
-				'status'  => ( isset( $_POST['role'] ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : 'administrator' ),
+				'status'  => ( isset( $_POST['role'] ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : 'administrator' ), // phpcs:ignore WordPress.Security.NonceVerification
 				'sites'   => '' !== $sites ? $sites : '',
 				'groups'  => '' !== $groups ? $groups : '',
 				'clients' => ( '' !== $clients ) ? $clients : '',
@@ -1141,7 +1141,7 @@ class MainWP_User {
 	public static function render_cache_not_found() {
 		ob_start();
 		$newOutput = ob_get_clean();
-		echo $newOutput;
+		echo $newOutput; // phpcs:ignore WordPress.Security.EscapeOutput
 		MainWP_Cache::add_body( 'Users', $newOutput );
 	}
 
@@ -1239,7 +1239,7 @@ class MainWP_User {
 			</tr>
 			<?php
 			$newOutput = ob_get_clean();
-			echo $newOutput;
+			echo $newOutput; // phpcs:ignore WordPress.Security.EscapeOutput
 			MainWP_Cache::add_body( 'Users', $newOutput );
 			$return ++;
 		}
@@ -1319,6 +1319,8 @@ class MainWP_User {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
+
+		// phpcs:disable WordPress.Security.NonceVerification
 		$userId    = isset( $_POST['userId'] ) ? sanitize_text_field( wp_unslash( $_POST['userId'] ) ) : false;
 		$userName  = isset( $_POST['userName'] ) ? sanitize_text_field( wp_unslash( $_POST['userName'] ) ) : '';
 		$websiteId = isset( $_POST['websiteId'] ) ? sanitize_text_field( wp_unslash( $_POST['websiteId'] ) ) : false;
@@ -1364,6 +1366,7 @@ class MainWP_User {
 				$extra['pass2'] = $pass;
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		$optimize = ( 1 == get_option( 'mainwp_optimize' ) ) ? 1 : 0;
 
@@ -1440,6 +1443,7 @@ class MainWP_User {
 		 */
 		$pass_complexity = apply_filters( 'mainwp_new_user_password_complexity', '24' );
 		self::render_header( 'Add' );
+		// phpcs:disable WordPress.Security.NonceVerification
 		?>
 		<div class="ui alt segment" id="mainwp-add-users">
 			<?php
@@ -1666,8 +1670,9 @@ class MainWP_User {
 			do_action( 'mainwp_after_new_user_form' );
 			?>
 		</div>
-
 		<?php
+		// phpcs:enable WordPress.Security.NonceVerification
+
 		self::render_footer( 'Add' );
 	}
 
@@ -1686,7 +1691,7 @@ class MainWP_User {
 		<div id="MainWP_Bulk_AddUser">
 			<form action="" method="post" name="createuser" id="createuser" class="add:users: validate" enctype="multipart/form-data">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-				<?php echo self::render_import_users(); ?>
+				<?php self::render_import_users(); ?>
 			</form>
 		</div>
 		<?php
@@ -1739,7 +1744,7 @@ class MainWP_User {
 						</div>
 						<div class="ui divider"></div>
 					<input type="button" name="createuser" id="bulk_import_createuser" class="ui big green button" value="<?php esc_attr_e( 'Import Users', 'mainwp' ); ?>" />
-				<a href="<?php echo MAINWP_PLUGIN_URL . 'assets/csv/sample_users.csv'; ?>" class="ui big green basic right floated button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
+				<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample_users.csv' ); ?>" class="ui big green basic right floated button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
 					</form>
 				</div>
 			<?php
@@ -1774,6 +1779,7 @@ class MainWP_User {
 		$errors      = array();
 		$errorFields = array();
 
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_POST['select_by'] ) ) {
 			$selected_sites   = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
 			$selected_groups  = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
@@ -1924,6 +1930,7 @@ class MainWP_User {
 		} else {
 			echo wp_json_encode( array( $errorFields, $errors ) );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 	}
 
 	/**
@@ -1961,13 +1968,13 @@ class MainWP_User {
 	 */
 	public static function render_bulk_upload() {
 		self::render_header( 'Import' );
-
+		// phpcs:disable WordPress.Security.NonceVerification
 		$errors = array();
 		if ( isset( $_FILES['import_user_file_bulkupload']['error'] ) && UPLOAD_ERR_OK == $_FILES['import_user_file_bulkupload']['error'] ) {
 			if ( isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) {
 				$tmp_path     = isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) : '';
 				$wpFileSystem = MainWP_System_Utility::get_wp_file_system();
-
+				// phpcs:enable WordPress.Security.NonceVerification
 				/**
 				 * WordPress files system object.
 				 *
@@ -2112,6 +2119,7 @@ class MainWP_User {
 	 */
 	public static function do_import() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 
+		// phpcs:disable WordPress.Security.NonceVerification
 		$selected_sites  = ( isset( $_POST['select_sites'] ) && is_array( $_POST['select_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_sites'] ) ) : array();
 		$selected_groups = ( isset( $_POST['select_groups'] ) && is_array( $_POST['select_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_groups'] ) ) : array();
 
@@ -2245,8 +2253,8 @@ class MainWP_User {
 
 			$ret['failed_logging'] = esc_html( $user_login . ',' . $email . ',' . $first_name . ',' . $last_name . ',' . $url . ',' . $pass1 . ',' . $send_password . ',' . $role . ',' . $error_sites . ',' );
 		}
-
 		$ret['line_number'] = isset( $_POST['line_number'] ) ? intval( $_POST['line_number'] ) : 0;
+		// phpcs:enable WordPress.Security.NonceVerification
 		die( wp_json_encode( $ret ) );
 	}
 
@@ -2254,7 +2262,7 @@ class MainWP_User {
 	 * Hooks the section help content to the Help Sidebar element.
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && ( 'UserBulkManage' === $_GET['page'] || 'UserBulkAdd' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) {
+		if ( isset( $_GET['page'] ) && ( 'UserBulkManage' === $_GET['page'] || 'UserBulkAdd' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			?>
 			<p><?php esc_html_e( 'If you need help with managing users, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">

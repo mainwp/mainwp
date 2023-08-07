@@ -157,7 +157,7 @@ class MainWP_Post {
 	 * @return void self::on_load_bulkpost( $post_id ).
 	 */
 	public static function on_load_add_edit() {
-		if ( isset( $_GET['page'] ) && 'PostBulkAdd' === $_GET['page'] ) {
+		if ( isset( $_GET['page'] ) && 'PostBulkAdd' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 
 			/**
 			 * MainWP default post to edit.
@@ -170,7 +170,7 @@ class MainWP_Post {
 			$_mainwp_default_post_to_edit = get_default_post_to_edit( $post_type, true );
 			$post_id                      = $_mainwp_default_post_to_edit ? $_mainwp_default_post_to_edit->ID : 0;
 		} else {
-			$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0;
+			$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		}
 
 		if ( ! $post_id ) {
@@ -298,7 +298,7 @@ class MainWP_Post {
 	 * Render screen options modal bottom.
 	 */
 	public static function hook_screen_options_modal_bottom() {
-		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
+		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( 'PostBulkManage' == $page ) {
 
 			$show_columns = get_user_option( 'mainwp_manageposts_show_columns' );
@@ -740,11 +740,13 @@ class MainWP_Post {
 
 		<?php
 
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_REQUEST['siteid'] ) && isset( $_REQUEST['postid'] ) ) {
 			echo '<script>jQuery(document).ready(function() { mainwp_show_post(  ' . intval( $_REQUEST['siteid'] ) . ', ' . intval( $_REQUEST['postid'] ) . ', undefined ) } );</script>';
 		} elseif ( isset( $_REQUEST['siteid'] ) && isset( $_REQUEST['userid'] ) ) {
 			echo '<script>jQuery(document).ready(function() { mainwp_show_post( ' . intval( $_REQUEST['siteid'] ) . ', undefined, ' . intval( $_REQUEST['userid'] ) . ' ) } );</script>';
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		// to fix issue js code display.
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Post' );
@@ -848,7 +850,7 @@ class MainWP_Post {
 			<?php endif; ?>
 			<div class="field">
 				<label><?php esc_html_e( 'Max posts to return', 'mainwp' ); ?></label>
-				<input type="text" name="mainwp_maximumPosts"  id="mainwp_maximumPosts" value="<?php echo( ( false === get_option( 'mainwp_maximumPosts' ) ) ? 50 : get_option( 'mainwp_maximumPosts' ) ); ?>"/>
+				<input type="text" name="mainwp_maximumPosts"  id="mainwp_maximumPosts" value="<?php echo( ( false === get_option( 'mainwp_maximumPosts' ) ) ? 50 : esc_attr( get_option( 'mainwp_maximumPosts' ) ) ); ?>"/>
 			</div>
 		</div>
 		<?php
@@ -1163,7 +1165,7 @@ class MainWP_Post {
 				),
 				$output
 			);
-			echo $output->table_rows;
+			echo $output->table_rows; // phpcs:ignore WordPress.Security.EscapeOutput
 		}
 
 		if ( ! $table_content ) {
@@ -1291,7 +1293,7 @@ class MainWP_Post {
 						<strong>
 							<abbr title="<?php echo esc_attr( $post['title'] ); ?>">
 							<?php if ( 'trash' !== $post['status'] ) { ?>
-									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank">
+									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank">
 										<?php echo esc_html( $post['title'] ); ?>
 									</a>
 								<?php
@@ -1323,7 +1325,7 @@ class MainWP_Post {
 
 					<td class="date column-date" data-order="<?php echo esc_attr( $raw_dts ); ?>"><abbr raw_value="<?php echo esc_attr( $raw_dts ); ?>" title="<?php echo esc_attr( $post['dts'] ); ?>"><?php echo esc_html( $post['dts'] ); ?></abbr></td>
 
-					<td class="status column-status <?php echo 'trash' == $post['status'] ? 'post-trash' : ''; ?>"><?php echo self::get_status( $post['status'] ); ?></td>
+					<td class="status column-status <?php echo 'trash' == $post['status'] ? 'post-trash' : ''; ?>"><?php echo esc_html( self::get_status( $post['status'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 
 					<?php
 					if ( MainWP_Utility::enabled_wp_seo() ) :
@@ -1339,10 +1341,10 @@ class MainWP_Post {
 							$readability_score = MainWP_Utility::esc_content( $seo_data['readability_score'], 'mixed' );
 						}
 						?>
-						<td class="column-seo-links" ><abbr raw_value="<?php echo null !== $count_seo_links ? $count_seo_links : -1; ?>" title=""><?php echo null !== $count_seo_links ? $count_seo_links : ''; ?></abbr></td>
-						<td class="column-seo-linked"><abbr raw_value="<?php echo null !== $count_seo_linked ? $count_seo_linked : -1; ?>" title=""><?php echo null !== $count_seo_linked ? $count_seo_linked : ''; ?></abbr></td>
-						<td class="column-seo-score"><abbr raw_value="<?php echo $seo_score ? 1 : 0; ?>" title=""><?php echo $seo_score; ?></abbr></td>
-						<td class="column-seo-readability"><abbr raw_value="<?php echo $readability_score ? 1 : 0; ?>" title=""><?php echo $readability_score; ?></abbr></td>
+						<td class="column-seo-links" ><abbr raw_value="<?php echo null !== $count_seo_links ? $count_seo_links : -1; ?>" title=""><?php echo null !== $count_seo_links ? $count_seo_links : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?></abbr></td>
+						<td class="column-seo-linked"><abbr raw_value="<?php echo null !== $count_seo_linked ? $count_seo_linked : -1; ?>" title=""><?php echo null !== $count_seo_linked ? $count_seo_linked : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?></abbr></td>
+						<td class="column-seo-score"><abbr raw_value="<?php echo $seo_score ? 1 : 0; ?>" title=""><?php echo $seo_score; // phpcs:ignore WordPress.Security.EscapeOutput ?></abbr></td>
+						<td class="column-seo-readability"><abbr raw_value="<?php echo $readability_score ? 1 : 0; ?>" title=""><?php echo $readability_score; // phpcs:ignore WordPress.Security.EscapeOutput ?></abbr></td>
 					<?php endif; ?>
 
 					<td class="website column-website"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
@@ -1532,7 +1534,7 @@ class MainWP_Post {
 
 		<div class="two column row" id="mainwp-metaform-row">
 			<div class="column">
-				<label for="<?php echo $meta_key_input_id; ?>"><?php esc_html_e( 'Name', 'mainwp' ); ?></label>
+				<label for="<?php echo esc_attr( $meta_key_input_id ); ?>"><?php esc_html_e( 'Name', 'mainwp' ); ?></label>
 				<?php if ( $keys ) { ?>
 					<select id="metakeyselect" name="metakeyselect">
 						<option value="#NONE#"><?php esc_html_e( '&mdash; Select &mdash;', 'mainwp' ); ?></option>
@@ -1593,7 +1595,7 @@ class MainWP_Post {
 			$count = 0;
 			if ( $metadata ) {
 				foreach ( $metadata as $entry ) {
-					echo self::list_meta_row( $entry, $count );
+					echo self::list_meta_row( $entry, $count ); // phpcs:ignore WordPress.Security.EscapeOutput
 				}
 			}
 
@@ -1706,7 +1708,7 @@ class MainWP_Post {
 	 */
 	public static function post_thumbnail_meta_box( $pos ) {
 		$thumbnail_id = get_post_meta( $pos->ID, '_thumbnail_id', true );
-		echo self::wp_post_thumbnail_html( $thumbnail_id, $pos->ID );
+		echo self::wp_post_thumbnail_html( $thumbnail_id, $pos->ID ); // phpcs:ignore WordPress.Security.EscapeOutput
 	}
 
 	/**
@@ -1774,9 +1776,9 @@ class MainWP_Post {
 		$minute = '<label><span class="screen-reader-text">' . esc_html__( 'Minute', 'mainwp' ) . '</span><input type="text" ' . ( $multi ? '' : 'id="mn" ' ) . 'name="mn" value="' . $mn . '" size="2" maxlength="2"' . $tab_index_attribute . ' autocomplete="off" /></label>';
 
 		echo '<div class="timestamp-wrap">';
-		printf( esc_html__( '%1$s %2$s, %3$s @ %4$s:%5$s', 'mainwp' ), $month, $day, $year, $hour, $minute );
+		printf( esc_html__( '%1$s %2$s, %3$s @ %4$s:%5$s', 'mainwp' ), $month, $day, $year, $hour, $minute ); // phpcs:ignore WordPress.Security.EscapeOutput
 
-		echo '</div><input type="hidden" id="ss" name="ss" value="' . $ss . '" />';
+		echo '</div><input type="hidden" id="ss" name="ss" value="' . esc_attr( $ss ) . '" />';
 
 		if ( $multi ) {
 			return;
@@ -1794,9 +1796,9 @@ class MainWP_Post {
 		foreach ( $map as $timeunit => $value ) {
 			list( $unit, $curr ) = $value;
 
-			echo '<input type="hidden" id="hidden_' . $timeunit . '" name="hidden_' . $timeunit . '" value="' . $unit . '" />' . "\n";
+			echo '<input type="hidden" id="hidden_' . esc_attr( $timeunit ) . '" name="hidden_' . esc_attr( $timeunit ) . '" value="' . esc_attr( $unit ) . '" />' . "\n";
 			$cur_timeunit = 'cur_' . $timeunit;
-			echo '<input type="hidden" id="' . $cur_timeunit . '" name="' . $cur_timeunit . '" value="' . $curr . '" />' . "\n";
+			echo '<input type="hidden" id="' . esc_attr( $cur_timeunit ) . '" name="' . esc_attr( $cur_timeunit ) . '" value="' . esc_attr( $curr ) . '" />' . "\n";
 		}
 	}
 
@@ -1885,7 +1887,7 @@ class MainWP_Post {
 						}
 
 						$i++;
-						echo '<div id="' . $box['id'] . '" class="postbox" >' . "\n";
+						echo '<div id="' . esc_attr( $box['id'] ) . '" class="postbox" >' . "\n";
 						if ( 'dashboard_browser_nag' !== $box['id'] ) {
 							$widget_title = $box['title'];
 
@@ -1895,21 +1897,21 @@ class MainWP_Post {
 							}
 
 							echo '<button type="button" class="handlediv" aria-expanded="true">';
-							echo '<span class="screen-reader-text">' . sprintf( esc_html__( 'Toggle panel: %s', 'mainwp' ), $widget_title ) . '</span>';
+							echo '<span class="screen-reader-text">' . sprintf( esc_html__( 'Toggle panel: %s', 'mainwp' ), esc_html( $widget_title ) ) . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput
 							echo '<span class="toggle-indicator" aria-hidden="true"></span>';
 							echo '</button>';
 						}
-						echo "<h2 class='hndle'><span>{$box['title']}</span></h2>\n";
+						echo "<h2 class='hndle'><span>{" . esc_html( $box['title'] ) . "}</span></h2>\n";
 						echo '<div class="inside">' . "\n";
 
-						if ( defined( 'WP_DEBUG' ) && WP_DEBUG && ! $block_compatible && 'edit' === $screen->parent_base && ! $screen->is_block_editor() && ! isset( $_GET['meta-box-loader'] ) ) {
+						if ( defined( 'WP_DEBUG' ) && WP_DEBUG && ! $block_compatible && 'edit' === $screen->parent_base && ! $screen->is_block_editor() && ! isset( $_GET['meta-box-loader'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 							$plugin = _get_plugin_from_callback( $box['callback'] );
 							if ( $plugin ) {
 								?>
 									<div class="error inline">
 										<p>
 										<?php
-											printf( esc_html__( 'This meta box, from the %s plugin, is not compatible with the block editor.', 'mainwp' ), "<strong>{$plugin['Name']}</strong>" );
+											printf( esc_html__( 'This meta box, from the %s plugin, is not compatible with the block editor.', 'mainwp' ), '<strong>{' . esc_html( $plugin['Name'] ) . '}</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput
 										?>
 										</p>
 									</div>
@@ -1977,6 +1979,7 @@ class MainWP_Post {
 
 		$referer = wp_get_referer();
 
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_GET['boilerplate'] ) ) {
 			if ( 'auto-draft' === $post->post_status ) {
 				$note_title = ( 'bulkpost' === $post_type ) ? esc_html__( 'Create New Boilerplate Post', 'mainwp' ) : esc_html__( 'Create New Boilerplate Page', 'mainwp' );
@@ -2002,6 +2005,7 @@ class MainWP_Post {
 			}
 		}
 
+		 // phpcs:enable WordPress.Security.NonceVerification
 		?>
 		<div class="ui alt segment" id="mainwp-add-new-bulkpost">
 			<form name="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" id="post" class="ui form">
@@ -2017,7 +2021,7 @@ class MainWP_Post {
 				if ( 'draft' !== get_post_status( $post ) ) {
 					wp_original_referer_field( true, 'previous' );
 				}
-				echo $form_extra;
+				echo $form_extra; // phpcs:ignore WordPress.Security.EscapeOutput
 				?>
 				<div class="mainwp-main-content">
 					<?php do_action( 'mainwp_top_bulkpost_edit_content', $post ); ?>
@@ -2028,6 +2032,7 @@ class MainWP_Post {
 							<div class="ui yellow message"><?php echo esc_html( $message ); ?></div>
 						<?php
 					}
+					// phpcs:disable WordPress.Security.NonceVerification 
 					?>
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_boilerplate_info_notice' ) ) : ?>
 						<?php if ( isset( $_GET['boilerplate'] ) ) : ?>
@@ -2052,6 +2057,7 @@ class MainWP_Post {
 						</div>
 						<?php endif; ?>
 					<?php endif; ?>
+					<?php // phpcs:enable WordPress.Security.NonceVerification ?>
 
 					<h3 class="header" id="bulkpost-title"><?php echo esc_html( $note_title ); ?></h3>
 
@@ -2108,9 +2114,9 @@ class MainWP_Post {
 								echo '<span id="last-edit">';
 								$last_user = get_userdata( get_post_meta( $post_ID, '_edit_last', true ) );
 								if ( $last_user ) {
-									printf( esc_html__( 'Last edited by %1$s on %2$s at %3$s', 'mainwp' ), esc_html( $last_user->display_name ), mysql2date( esc_html__( 'F j, Y' ), $post->post_modified ), mysql2date( esc_html__( 'g:i a' ), $post->post_modified ) );
+									printf( esc_html__( 'Last edited by %1$s on %2$s at %3$s', 'mainwp' ), esc_html( $last_user->display_name ), mysql2date( esc_html__( 'F j, Y' ), $post->post_modified ), mysql2date( esc_html__( 'g:i a' ), $post->post_modified ) ); // phpcs:ignore WordPress.Security.EscapeOutput
 								} else {
-									printf( esc_html__( 'Last edited on %1$s at %2$s', 'mainwp' ), mysql2date( esc_html__( 'F j, Y' ), $post->post_modified ), mysql2date( esc_html__( 'g:i a' ), $post->post_modified ) );
+									printf( esc_html__( 'Last edited on %1$s at %2$s', 'mainwp' ), mysql2date( esc_html__( 'F j, Y' ), $post->post_modified ), mysql2date( esc_html__( 'g:i a' ), $post->post_modified ) ); // phpcs:ignore WordPress.Security.EscapeOutput
 								}
 								echo '</span>';
 							}
@@ -2329,7 +2335,7 @@ class MainWP_Post {
 				?>
 				<script type="text/javascript">
 					jQuery( document ).ready( function () {
-						jQuery( '#categorychecklist' ).dropdown( 'set selected', [<?php echo $init_cats; ?>] );
+						jQuery( '#categorychecklist' ).dropdown( 'set selected', [<?php echo esc_attr( $init_cats ); ?>] );
 					} );
 				</script>
 			</div>
@@ -2503,7 +2509,9 @@ class MainWP_Post {
 			mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
 			return;
 		}
+		// phpcs:disable WordPress.Security.NonceVerification
 		$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0;
+		// phpcs:enable WordPress.Security.NonceVerification
 		self::render_addedit( $post_id, 'BulkEdit' );
 	}
 
@@ -2548,6 +2556,7 @@ class MainWP_Post {
 	 * Attatch MainWP help content.
 	 */
 	public static function mainwp_help_content() {
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_GET['page'] ) && ( 'PostBulkManage' === $_GET['page'] || 'PostBulkAdd' === $_GET['page'] ) ) {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing posts, please review following help documents', 'mainwp' ); ?></p>
@@ -2575,6 +2584,7 @@ class MainWP_Post {
 			</div>
 			<?php
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 	}
 
 }

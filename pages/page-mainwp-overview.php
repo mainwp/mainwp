@@ -373,7 +373,7 @@ class MainWP_Overview {
 				if ( ! empty( $website->sync_errors ) ) {
 					?>
 					<div class="ui red message">
-						<p><?php echo '<strong>' . $website->name . '</strong>' . esc_html__( ' is Disconnected. Click the Reconnect button to establish the connection again.', 'mainwp' ); ?></p>
+						<p><?php echo '<strong>' . esc_html( stripslashes( $website->name ) ) . '</strong>' . esc_html__( ' is Disconnected. Click the Reconnect button to establish the connection again.', 'mainwp' ); ?></p>
 					</div>
 					<?php
 				}
@@ -431,7 +431,7 @@ class MainWP_Overview {
 	 * @return void
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] ) {
+		if ( isset( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Dashboard, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">

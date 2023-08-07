@@ -215,6 +215,7 @@ class MainWP_Rest_Api_Page {
 	 * Handle rest api settings
 	 */
 	public function handle_rest_api_add_new() {
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_POST['submit'] ) && isset( $_GET['page'] ) && 'AddApiKeys' === $_GET['page'] ) {
 			if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) {
 				$all_keys = self::check_rest_api_updates();
@@ -243,6 +244,7 @@ class MainWP_Rest_Api_Page {
 				exit();
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 	}
 
 	/**
@@ -296,7 +298,7 @@ class MainWP_Rest_Api_Page {
 	public function ajax_rest_api_remove_keys() {
 		MainWP_Post_Handler::instance()->check_security( 'mainwp_rest_api_remove_keys' );
 		$ret         = array( 'success' => false );
-		$cons_key_id = isset( $_POST['keyId'] ) ? urldecode( $_POST['keyId'] ) : false;
+		$cons_key_id = isset( $_POST['keyId'] ) ? urldecode( $_POST['keyId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( ! empty( $cons_key_id ) ) {
 			$save     = false;
@@ -349,10 +351,10 @@ class MainWP_Rest_Api_Page {
 		}
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'AddApiKeys' ) ) {
-			if ( isset( $_GET['editkey'] ) ) {
+			if ( isset( $_GET['editkey'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 				$renderItems[] = array(
 					'title'  => esc_html__( 'Edit API Keys', 'mainwp' ),
-					'href'   => 'admin.php?page=AddApiKeys&editkey=' . esc_url( $_GET['editkey'] ),
+					'href'   => 'admin.php?page=AddApiKeys&editkey=' . esc_url( $_GET['editkey'] ), // phpcs:ignore WordPress.Security.NonceVerification
 					'active' => ( 'Edit' == $shownPage ) ? true : false,
 				);
 			}
@@ -461,7 +463,7 @@ class MainWP_Rest_Api_Page {
 							<td><?php echo $enabled ? '<span class="ui green fluid label">' . esc_html__( 'Enabled', 'mainwp' ) . '</span>' : '<span class="ui gray fluid label">' . esc_html__( 'Disabled', 'mainwp' ) . '</span>'; ?></td>
 							<td><?php echo ! empty( $pers_names ) ? implode( ', ', $pers_names ) : 'N/A'; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>	
 							<td><?php echo esc_html( $desc ); ?></td>							
-							<td style="text-align:center"><code><?php echo esc_html( '...' . $ending ); ?></code></td>
+							<td style="text-align:center"><code><?php echo esc_html( '...' . $ending ); // phpcs:ignore WordPress.Security.EscapeOutput ?></code></td>
 							<td class="collapsing">
 								<a class="ui green basic mini button" href="admin.php?page=AddApiKeys&editkey=<?php echo esc_html( $endcoded_ck ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 								<a class="ui mini button" href="javascript:void(0)" onclick="mainwp_restapi_remove_key_confirm(jQuery(this).closest('tr').find('.check-column INPUT:checkbox'));" ><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
@@ -570,8 +572,8 @@ class MainWP_Rest_Api_Page {
 	 */
 	public static function show_messages() {
 		$msg = '';
-		if ( isset( $_GET['message'] ) ) {
-			if ( 'saved' === $_GET['message'] || 'created' === $_GET['message'] ) {
+		if ( isset( $_GET['message'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			if ( 'saved' === $_GET['message'] || 'created' === $_GET['message'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 				$msg = esc_html__( 'API Key have been saved successfully!', 'mainwp' );
 			}
 		}
@@ -590,7 +592,7 @@ class MainWP_Rest_Api_Page {
 			return;
 		}
 
-		$edit_key  = isset( $_GET['editkey'] ) && ! empty( $_GET['editkey'] ) ? urldecode( $_GET['editkey'] ) : false;
+		$edit_key  = isset( $_GET['editkey'] ) && ! empty( $_GET['editkey'] ) ? urldecode( $_GET['editkey'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 		$edit_item = array();
 		if ( false !== $edit_key ) {
 			$all_keys = get_option( 'mainwp_rest_api_keys', false );

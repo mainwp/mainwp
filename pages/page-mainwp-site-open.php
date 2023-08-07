@@ -43,6 +43,7 @@ class MainWP_Site_Open {
 
 			return;
 		}
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_GET['websiteid'] ) ) {
 			exit();
 		}
@@ -64,6 +65,7 @@ class MainWP_Site_Open {
 		} else {
 			self::open_site( $website, $location, ( isset( $_GET['newWindow'] ) ? sanitize_text_field( wp_unslash( $_GET['newWindow'] ) ) : null ) );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 	}
 
 	/**
@@ -81,7 +83,7 @@ class MainWP_Site_Open {
 			<div class="ui active inverted dimmer">
 				<div class="ui massive text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
 			</div>
-			<form method="POST" action="<?php echo MainWP_Connect::get_get_data_authed( $website, ( null == $location || '' === $location ) ? 'index.php' : $location ); ?>" id="redirectForm">
+			<form method="POST" action="<?php echo MainWP_Connect::get_get_data_authed( $website, ( null == $location || '' === $location ) ? 'index.php' : $location ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" id="redirectForm">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			</form>
 		</div>
@@ -98,6 +100,7 @@ class MainWP_Site_Open {
 
 		self::verify_open_nonce();
 
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! isset( $_GET['websiteid'] ) ) {
 			exit();
 		}
@@ -115,6 +118,7 @@ class MainWP_Site_Open {
 		}
 
 		$site = isset( $_GET['size'] ) ? esc_html( wp_unslash( $_GET['size'] ) ) : '';
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		self::open_site_restore( $website, $file, $site );
 	}

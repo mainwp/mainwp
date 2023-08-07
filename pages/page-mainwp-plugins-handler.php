@@ -88,6 +88,7 @@ class MainWP_Plugins_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function ignore_updates() {
+		// phpcs:disable WordPress.Security.NonceVerification
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
 		if ( empty( $websiteId ) ) {
@@ -102,6 +103,7 @@ class MainWP_Plugins_Handler {
 
 		$plugins = isset( $_POST['plugins'] ) ? wp_unslash( $_POST['plugins'] ) : false;
 		$names   = isset( $_POST['names'] ) ? wp_unslash( $_POST['names'] ) : array();
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		$decodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
 
@@ -158,6 +160,7 @@ class MainWP_Plugins_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action( $pAction ) {
+		// phpcs:disable WordPress.Security.NonceVerification
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
 		if ( empty( $websiteId ) ) {
@@ -217,6 +220,8 @@ class MainWP_Plugins_Handler {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
 		}
 
+		// phpcs:enable WordPress.Security.NonceVerification
+
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Unexpected error. Please try again.', 'mainwp' ) ) ) );
 		}
@@ -236,8 +241,10 @@ class MainWP_Plugins_Handler {
 		if ( ! is_array( $trustedPlugins ) ) {
 			$trustedPlugins = array();
 		}
+		// phpcs:disable WordPress.Security.NonceVerification
 		$action = isset( $_POST['do'] ) ? sanitize_text_field( wp_unslash( $_POST['do'] ) ) : '';
 		$slugs  = isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ? wp_unslash( $_POST['slugs'] ) : '';
+		// phpcs:enable WordPress.Security.NonceVerification
 		if ( ! is_array( $slugs ) ) {
 			return;
 		}
@@ -313,8 +320,10 @@ class MainWP_Plugins_Handler {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function save_trusted_plugin_note() {
-		$slug                = isset( $_POST['slug'] ) ? urldecode( wp_unslash( $_POST['slug'] ) ) : '';
-		$note                = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : '';
+		// phpcs:disable WordPress.Security.NonceVerification
+		$slug = isset( $_POST['slug'] ) ? urldecode( wp_unslash( $_POST['slug'] ) ) : '';
+		$note = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : '';
+		// phpcs:enable WordPress.Security.NonceVerification
 		$esc_note            = MainWP_Utility::esc_content( $note );
 		$userExtension       = MainWP_DB_Common::instance()->get_user_extension();
 		$trustedPluginsNotes = json_decode( $userExtension->trusted_plugins_notes, true );

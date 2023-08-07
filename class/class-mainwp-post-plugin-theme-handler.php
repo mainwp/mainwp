@@ -665,7 +665,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
 		$id   = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
 		$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 		wp_send_json( array( 'result' => MainWP_Updates_Handler::ignore_plugin_theme( $type, $slug, $name, $id ) ) );
 	}
 
@@ -688,7 +688,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
 		$id   = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : 0; // string|int.
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_abandoned_plugin_theme( $type, $slug, $id ) ) ) ); // ok.
 	}
 
@@ -709,7 +709,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_abandoned_plugins_themes( $type, $slug ) ) ) );
 	}
 
@@ -731,7 +731,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
 		$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
 		$id   = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::dismiss_plugin_theme( $type, $slug, $name, $id ) ) ) );
 	}
 
@@ -757,7 +757,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
 		$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::dismiss_plugins_themes( $type, $slug, $name ) ) ) );
 	}
@@ -779,7 +779,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
 		$id   = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : '';
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugin_theme( $type, $slug, $id ) ) ) );
 	}
 
@@ -805,7 +805,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
 		$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::ignore_plugins_themes( $type, $slug, $name ) ) ) );
 	}
 
@@ -823,7 +823,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		}
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugins_themes( $type, $slug ) ) ) );
 	}
 

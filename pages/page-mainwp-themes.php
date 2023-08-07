@@ -391,7 +391,7 @@ class MainWP_Themes {
 								<div id="mainwp-themes-bulk-actions-wapper">
 								<?php
 								if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
-									echo $cachedResult['bulk_actions'];
+									echo $cachedResult['bulk_actions']; // phpcs:ignore WordPress.Security.EscapeOutput
 								} else {
 									MainWP_UI::render_empty_bulk_actions();
 								}
@@ -440,7 +440,7 @@ class MainWP_Themes {
 					<div id="mainwp-themes-main-content" <?php echo ( null != $cachedSearch ) ? 'style="display: block;"' : ''; ?> >
 						<div id="mainwp-themes-content">
 						<?php if ( is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) : ?>
-								<?php echo $cachedResult['result']; ?>
+								<?php echo $cachedResult['result']; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 						<?php else : ?>
 							<div class="ui padded segment">
 								<div class="ui hidden divider"></div>
@@ -881,7 +881,7 @@ class MainWP_Themes {
 
 			if ( 0 < count( $output->errors ) ) {
 				foreach ( $output->errors as $siteid => $error ) {
-					echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . '<br/>';
+					echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . '<br/>'; // phpcs:ignore WordPress.Security.EscapeOutput
 				}
 				echo '<div class="ui hidden divider"></div>';
 			}
@@ -1172,9 +1172,9 @@ class MainWP_Themes {
 								</div>
 								<?php endif; ?>
 								</div>
-								<div class="three wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $site_id; ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo $site_id; ?>"><?php echo esc_html( $site_name ); ?></a></div>
+								<div class="three wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $site_id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $site_id ); ?>"><?php echo esc_html( $site_name ); ?></a></div>
 								<div class="one wide middle aligned column"></div>
-								<div class="one wide center aligned middle aligned column"><?php echo $theme_status; ?></div>
+								<div class="one wide center aligned middle aligned column"><?php echo $theme_status; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
 								<div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
 								<div class="one wide center aligned middle aligned column"></div>
 								<div class="two wide center aligned middle aligned column current-version">
@@ -1383,7 +1383,7 @@ class MainWP_Themes {
 						<div class="ui two column row">
 							<div class="column">
 								<div class="ui fluid search focus">
-									<div class="ui icon fluid input hide-if-upload" id="mainwp-search-themes-input-container" skeyword="<?php echo isset( $_GET['s'] ) ? esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : ''; ?>"></div>
+									<div class="ui icon fluid input hide-if-upload" id="mainwp-search-themes-input-container" skeyword="<?php echo isset( $_GET['s'] ) ? esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification ?>"></div>
 									<div class="results"></div>
 								</div>
 								<?php
@@ -1447,7 +1447,7 @@ class MainWP_Themes {
 					<?php
 					$selected_sites = array();
 
-					if ( isset( $_GET['selected_sites'] ) ) {
+					if ( isset( $_GET['selected_sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 						$selected_sites = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification -- sanitize ok.
 						$selected_sites = array_map( 'intval', $selected_sites );
 						$selected_sites = array_filter( $selected_sites );
@@ -1654,7 +1654,7 @@ class MainWP_Themes {
 							</div>
 						</div>
 					</div>
-					<?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] ) : ?>
+					<?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
 						<div class="ui message green"><?php esc_html_e( 'Settings have been saved.', 'mainwp' ); ?></div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -1717,7 +1717,7 @@ class MainWP_Themes {
 							</div>
 							<div class="field">
 								<div class="ui input fluid">
-									<input type="text" placeholder="<?php esc_attr_e( 'Theme name', 'mainwp' ); ?>" id="mainwp_au_theme_keyword" class="text" value="<?php echo ( null !== $cachedThemesSearch ) ? $cachedThemesSearch['keyword'] : ''; ?>">
+									<input type="text" placeholder="<?php esc_attr_e( 'Theme name', 'mainwp' ); ?>" id="mainwp_au_theme_keyword" class="text" value="<?php echo ( null !== $cachedThemesSearch ) ? esc_attr( $cachedThemesSearch['keyword'] ) : ''; ?>">
 								</div>
 							</div>
 						</div>
@@ -1765,9 +1765,11 @@ class MainWP_Themes {
 		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
 		if ( null == $output ) {
+			// phpcs:disable WordPress.Security.NonceVerification
 			$keyword             = isset( $_POST['keyword'] ) && ! empty( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : null;
 			$search_status       = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : 'all';
 			$search_theme_status = isset( $_POST['theme_status'] ) ? sanitize_text_field( wp_unslash( $_POST['theme_status'] ) ) : 'all';
+			// phpcs:enable WordPress.Security.NonceVerification
 
 			$output         = new \stdClass();
 			$output->errors = array();
@@ -1824,7 +1826,7 @@ class MainWP_Themes {
 
 				if ( 0 < count( $output->errors ) ) {
 					foreach ( $output->errors as $siteid => $error ) {
-						echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>';
+						echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>'; // phpcs:ignore WordPress.Security.EscapeOutput
 					}
 					echo '<div class="ui hidden divider"></div>';
 				}
@@ -2474,7 +2476,7 @@ class MainWP_Themes {
 	 * Hooks the section help content to the Help Sidebar element.
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && ( 'ThemesManage' === $_GET['page'] || 'ThemesInstall' === $_GET['page'] || 'ThemesAutoUpdate' === $_GET['page'] || 'ThemesIgnore' === $_GET['page'] || 'ThemesIgnoredAbandoned' === $_GET['page'] ) ) {
+		if ( isset( $_GET['page'] ) && ( 'ThemesManage' === $_GET['page'] || 'ThemesInstall' === $_GET['page'] || 'ThemesAutoUpdate' === $_GET['page'] || 'ThemesIgnore' === $_GET['page'] || 'ThemesIgnoredAbandoned' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			?>
 			<p><?php esc_html_e( 'If you need help with managing themes, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">

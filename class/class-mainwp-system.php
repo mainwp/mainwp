@@ -739,6 +739,7 @@ class MainWP_System {
 
 		$load_gridster = false;
 
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_GET['page'] ) && ( 'mainwp_tab' === $_GET['page'] || ( 'managesites' === $_GET['page'] && isset( $_GET['dashboard'] ) ) ) ) {
 			$load_gridster = true;
 		} elseif ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) ) {
@@ -746,6 +747,7 @@ class MainWP_System {
 		} elseif ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'ManageSites' ) ) { // individual page.
 			$load_gridster = true;
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		if ( $load_gridster ) {
 			wp_enqueue_script( 'gridster', MAINWP_PLUGIN_URL . 'assets/js/gridster/jquery.gridster.min.js', array(), $this->current_version, true );

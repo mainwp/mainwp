@@ -46,6 +46,7 @@ class MainWP_Manage_Screenshots {
 	 * Render manage sites table top.
 	 */
 	public function render_manage_sites_table_top() {
+		// phpcs:disable WordPress.Security.NonceVerification
 		$selected_status = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
 		$selected_group  = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
 		$selected_client = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
@@ -57,6 +58,7 @@ class MainWP_Manage_Screenshots {
 			$selected_client = get_user_option( 'mainwp_screenshots_filter_client', '' );
 			$is_not          = get_user_option( 'mainwp_screenshots_filter_is_not', '' );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		?>
 		<div class="ui grid">
@@ -81,7 +83,7 @@ class MainWP_Manage_Screenshots {
 								$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
 								foreach ( $groups as $group ) {
 									?>
-									<div class="item" data-value="<?php echo $group->id; ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
+									<div class="item" data-value="<?php echo intval( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
 									<?php
 								}
 								?>
@@ -111,7 +113,7 @@ class MainWP_Manage_Screenshots {
 								$clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
 								foreach ( $clients as $client ) {
 									?>
-									<div class="item" data-value="<?php echo $client->client_id; ?>"><?php echo esc_html( stripslashes( $client->name ) ); ?></div>
+									<div class="item" data-value="<?php echo intval( $client->client_id ); ?>"><?php echo esc_html( stripslashes( $client->name ) ); ?></div>
 									<?php
 								}
 								?>
@@ -221,7 +223,7 @@ class MainWP_Manage_Screenshots {
 		?>
 		<div id="mainwp-sites-previews">
 			<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
-				<div class="ui <?php echo $cards_per_row; ?> cards" >
+				<div class="ui <?php echo esc_attr( $cards_per_row ); ?> cards" >
 					<?php
 					while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 						$hasSyncErrors = ( '' !== $website->sync_errors );
@@ -366,8 +368,8 @@ class MainWP_Manage_Screenshots {
 							<div class="image" data-tooltip="<?php echo esc_attr( $status_tooltip ); ?>" data-position="top center" data-inverted="">
 							<img data-src="//s0.wordpress.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=900">
 						</div>
-							<div class="ui <?php echo $status_color; ?> corner label">
-								<i class="<?php echo $status_icon; ?> icon"></i>
+							<div class="ui <?php echo esc_attr( $status_color ); ?> corner label">
+								<i class="<?php echo esc_attr( $status_icon ); ?> icon"></i>
 							</div>
 						<div class="content">
 								<h5 class="ui small header">
@@ -382,22 +384,22 @@ class MainWP_Manage_Screenshots {
 						</div>
 							<?php if ( isset( $website->client_id ) && '0' != $website->client_id ) : ?>
 							<div class="extra content">
-								<small data-tooltip="<?php esc_attr_e( 'See client details', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="user icon"></i> <a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" class="ui small"><?php echo $website->client_name; ?></a></small>
+								<small data-tooltip="<?php esc_attr_e( 'See client details', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="user icon"></i> <a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" class="ui small"><?php echo esc_html( stripslashes( $website->client_name ) ); ?></a></small>
 							</div>
 							<?php endif; ?>
 							<div class="extra content">
 								<div class="ui mini fluid buttons">
 									<a  data-tooltip="<?php esc_attr_e( 'Available updates.', 'mainwp' ); ?>" data-position="top left" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>" class="ui icon button"><i class="redo <?php esc_attr_e( $a_color ); ?> alternate icon"></i> <?php echo intval( $total_updates ); ?></a>
-									<a  data-tooltip="<?php esc_attr_e( 'Available plugins updates.', 'mainwp' ); ?>" data-position="top center" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=plugins-updates" class="ui icon button"><i class="plug <?php esc_attr_e( $p_color ); ?> icon"></i> <?php echo intval( $total_plugin_upgrades ); ?></a>
-									<a  data-tooltip="<?php esc_attr_e( 'Available themes updates.', 'mainwp' ); ?>" data-position="top center" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=themes-updates" class="ui icon button"><i class="brush <?php esc_attr_e( $t_color ); ?> icon"></i> <?php echo intval( $total_theme_upgrades ); ?></a>
-									<a  data-tooltip="<?php esc_attr_e( 'WordPress core updates.', 'mainwp' ); ?>" data-position="top right" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=wordpress-updates" class="ui icon button"><i class="WordPress <?php esc_attr_e( $w_color ); ?> icon"></i> <?php echo intval( $total_wp_upgrades ); ?></a>
+									<a  data-tooltip="<?php esc_attr_e( 'Available plugins updates.', 'mainwp' ); ?>" data-position="top center" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=plugins-updates" class="ui icon button"><i class="plug <?php echo esc_attr( $p_color ); ?> icon"></i> <?php echo intval( $total_plugin_upgrades ); ?></a>
+									<a  data-tooltip="<?php esc_attr_e( 'Available themes updates.', 'mainwp' ); ?>" data-position="top center" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=themes-updates" class="ui icon button"><i class="brush <?php echo esc_attr( $t_color ); ?> icon"></i> <?php echo intval( $total_theme_upgrades ); ?></a>
+									<a  data-tooltip="<?php esc_attr_e( 'WordPress core updates.', 'mainwp' ); ?>" data-position="top right" data-inverted="" href="admin.php?page=managesites&updateid=<?php echo intval( $website->id ); ?>&tab=wordpress-updates" class="ui icon button"><i class="WordPress <?php echo esc_attr( $w_color ); ?> icon"></i> <?php echo intval( $total_wp_upgrades ); ?></a>
 						</div>
 						</div>
 						<div class="extra content">
 							<?php if ( $hasSyncErrors ) : ?>
 								<a class="ui mini green basic icon button fluid mainwp_site_card_reconnect" site-id="<?php echo intval( $website->id ); ?>" href="#"><i class="sync alternate icon"></i> <?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 							<?php else : ?>
-							<div data-tooltip="<?php esc_html_e( 'Last Sync: ', 'mainwp' ); ?> <?php echo 0 != $website->dtsSync ? MainWP_Utility::format_timestamp( MainWP_Utility::format_timestamp( $website->dtsSync ) ) : ''; ?>" data-inverted="" data-position="bottom center">
+							<div data-tooltip="<?php esc_html_e( 'Last Sync: ', 'mainwp' ); ?> <?php echo 0 != $website->dtsSync ? esc_html( MainWP_Utility::format_timestamp( MainWP_Utility::format_timestamp( $website->dtsSync ) ) ) : ''; ?>" data-inverted="" data-position="bottom center">
 								<a href="javascript:void(0)" class="ui mini green icon button fluid mainwp-sync-this-site" site-id="<?php echo intval( $website->id ); ?>"><i class="sync alternate icon"></i> <?php esc_html_e( 'Sync Site ', 'mainwp' ); ?></a>
 							</div>
 							<?php endif; ?>
@@ -538,6 +540,7 @@ class MainWP_Manage_Screenshots {
 		$perPage = 9999;
 		$start   = 0;
 
+		// phpcs:disable WordPress.Security.NonceVerification
 		$get_saved_state = ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] ) && ! isset( $_REQUEST['client'] );
 		$get_all         = ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && empty( $_REQUEST['g'] ) && empty( $_REQUEST['client'] ) ? true : false;
 		$is_not          = ( isset( $_REQUEST['isnot'] ) && 'yes' == $_REQUEST['isnot'] ) ? true : false;
@@ -631,6 +634,7 @@ class MainWP_Manage_Screenshots {
 				}
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		$params = array(
 			'selectgroups' => true,

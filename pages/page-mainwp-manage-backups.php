@@ -507,7 +507,7 @@ class MainWP_Manage_Backups {
 		foreach ( $columns as $column_name => $title ) {
 			if ( method_exists( $this, 'column_' . $column_name ) ) {
 				echo '<td>';
-				echo call_user_func( array( $this, 'column_' . $column_name ), $item );
+				echo call_user_func( array( $this, 'column_' . $column_name ), $item ); // phpcs:ignore WordPress.Security.EscapeOutput
 				echo '</td>';
 			} else {
 				echo '<td></td>';
@@ -770,7 +770,7 @@ class MainWP_Manage_Backups {
 	 */
 	public static function render_schedule_backup() {
 		$backupTask   = null;
-		$backupTaskId = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false;
+		$backupTaskId = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( ! empty( $backupTaskId ) ) {
 			if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_backup_tasks' ) ) {

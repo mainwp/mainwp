@@ -154,7 +154,7 @@ class MainWP_Client {
 	 */
 	public static function on_load_page() {
 
-		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) {
+		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			MainWP_Client_Overview::instance()->on_load_page( self::$page );
 			return;
 		}
@@ -287,7 +287,7 @@ class MainWP_Client {
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
 	public static function render_header( $shownPage = '' ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-
+		// phpcs:disable WordPress.Security.NonceVerification
 		$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 
 		$params = array(
@@ -360,7 +360,7 @@ class MainWP_Client {
 				$renderItems[]  = $item;
 			}
 		}
-
+		// phpcs:enable WordPress.Security.NonceVerification
 		MainWP_UI::render_page_navigation( $renderItems );
 	}
 
@@ -382,8 +382,8 @@ class MainWP_Client {
 	 */
 	public static function render_manage_clients() {
 
-		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) {
-			MainWP_Client_Overview::instance()->on_show_page( $_GET['client_id'] );
+		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			MainWP_Client_Overview::instance()->on_show_page( $_GET['client_id'] ); // phpcs:ignore WordPress.Security.NonceVerification
 			return;
 		}
 
@@ -625,7 +625,7 @@ class MainWP_Client {
 											}
 											?>
 											id="mainwp_show_column_<?php echo esc_attr( $name ); ?>" name="mainwp_show_column_<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $name ); ?>">
-											<label for="mainwp_show_column_<?php echo esc_attr( $name ); ?>" ><?php echo $title; ?></label>
+											<label for="mainwp_show_column_<?php echo esc_attr( $name ); ?>" ><?php echo $title; // phpcs:ignore WordPress.Security.EscapeOutput ?></label>
 											<input type="hidden" value="<?php echo esc_attr( $name ); ?>" name="show_columns_name[]" />
 										</div>
 									</li>
@@ -836,7 +836,7 @@ class MainWP_Client {
 			<tr><td colspan="999"><?php esc_html_e( 'Please use the search options to find wanted clients.', 'mainwp' ); ?></td></tr>
 		<?php
 		$newOutput = ob_get_clean();
-		echo $newOutput;
+		echo $newOutput; // phpcs:ignore WordPress.Security.EscapeOutput
 	}
 
 	/**
@@ -905,7 +905,7 @@ class MainWP_Client {
 			</tr>
 			<?php
 			$newOutput = ob_get_clean();
-			echo $newOutput;
+			echo $newOutput; // phpcs:ignore WordPress.Security.EscapeOutput
 			$return ++;
 		}
 
@@ -921,9 +921,9 @@ class MainWP_Client {
 		$selected_sites = array();
 		$edit_client    = false;
 
-		if ( isset( $_GET['client_id'] ) ) {
+		if ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$show         = 'Edit';
-			$client_id    = sanitize_text_field( wp_unslash( $_GET['client_id'] ) );
+			$client_id    = sanitize_text_field( wp_unslash( $_GET['client_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 			$edit_client  = $client_id ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) : false;
 			$client_sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id );
 
@@ -1480,7 +1480,7 @@ class MainWP_Client {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"></label>
 							<div class="six wide column">
-								<img class="ui tiny circular image" src="<?php echo MainWP_Client_Handler::get_client_image_url( $client_image ); ?>" /><br/>
+								<img class="ui tiny circular image" src="<?php echo esc_url( MainWP_Client_Handler::get_client_image_url( $client_image ) ); ?>" /><br/>
 								<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, delete client image.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
 									<input type="checkbox" value="<?php echo intval( $client_id ); ?>" id="mainwp_client_delete_image[client_field]" name="mainwp_client_delete_image[client_field]" />
 									<label for="mainwp_client_delete_image[client_field][]"><?php esc_html_e( 'Delete photo', 'mainwp' ); ?></label>
@@ -1508,7 +1508,7 @@ class MainWP_Client {
 								<div class="item" data-value="0"><?php esc_attr_e( 'Select primary contact', 'mainwp' ); ?></div>
 								<?php if ( $client_contacts ) : ?>
 									<?php foreach ( $client_contacts as $contact ) { ?>
-										<div class="item" data-value="<?php echo $contact->contact_id; ?>"><?php echo $contact->contact_name; ?></div>
+										<div class="item" data-value="<?php echo intval( $contact->contact_id ); ?>"><?php echo esc_html( stripslashes( $contact->contact_name ) ); ?></div>
 									<?php } ?>
 									<?php endif; ?>
 								</div>
@@ -1552,7 +1552,7 @@ class MainWP_Client {
 								<i class="ellipsis horizontal icon"></i>
 								<div class="menu">
 									<a class="item" id="mainwp-clients-edit-custom-field" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-									<a class="item" client-id="<?php echo $client_id; ?>" id="mainwp-clients-delete-individual-field" href="#"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+									<a class="item" client-id="<?php echo intval( $client_id ); ?>" id="mainwp-clients-delete-individual-field" href="#"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 								</div>
 							</div>
 							<?php } ?>
@@ -1655,7 +1655,7 @@ class MainWP_Client {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"></label>
 							<div class="six wide column">
-								<img class="ui tiny circular image" src="<?php echo MainWP_Client_Handler::get_client_image_url( $contact_image ); ?>" /><br/>
+								<img class="ui tiny circular image" src="<?php echo esc_url( MainWP_Client_Handler::get_client_image_url( $contact_image ) ); ?>" /><br/>
 								<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, delete contact image.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
 									<input type="checkbox" value="<?php echo intval( $contact_id ); ?>" id="mainwp_client_delete_image[contacts_field][<?php echo intval( $contact_id ); ?>]" name="mainwp_client_delete_image[contacts_field][<?php echo intval( $contact_id ); ?>]" />
 									<label for="mainwp_client_delete_image[contacts_field][<?php echo intval( $contact_id ); ?>]"><?php esc_html_e( 'Delete photo', 'mainwp' ); ?></label>
@@ -1789,7 +1789,7 @@ class MainWP_Client {
 		 * Hooks the section help content to the Help Sidebar element.
 		 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && ( 'ManageClients' === $_GET['page'] || 'ClientAddNew' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) {
+		if ( isset( $_GET['page'] ) && ( 'ManageClients' === $_GET['page'] || 'ClientAddNew' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			?>
 			<p><?php esc_html_e( 'If you need help with managing clients, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">

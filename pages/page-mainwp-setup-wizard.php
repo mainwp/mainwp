@@ -65,7 +65,7 @@ class MainWP_Setup_Wizard {
 	 * Initiate Quick Setup Wizard page.
 	 */
 	public function admin_init() {
-		if ( empty( $_GET['page'] ) || 'mainwp-setup' !== $_GET['page'] ) {
+		if ( empty( $_GET['page'] ) || 'mainwp-setup' !== $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			return;
 		}
 		$this->steps = array(
@@ -96,7 +96,7 @@ class MainWP_Setup_Wizard {
 			),
 		);
 
-		$this->step = isset( $_GET['step'] ) ? sanitize_key( $_GET['step'] ) : current( array_keys( $this->steps ) );
+		$this->step = isset( $_GET['step'] ) ? sanitize_key( $_GET['step'] ) : current( array_keys( $this->steps ) ); // phpcs:ignore WordPress.Security.NonceVerification
 
 		wp_enqueue_script( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.js', array( 'jquery' ), MAINWP_VERSION, false );
 		wp_localize_script( 'mainwp-setup', 'mainwpSetupLocalize', array( 'nonce' => wp_create_nonce( 'MainWPSetup' ) ) );
@@ -125,7 +125,7 @@ class MainWP_Setup_Wizard {
 			}
 		}
 
-		if ( ! empty( $_POST['save_step'] ) && isset( $this->steps[ $this->step ]['handler'] ) ) {
+		if ( ! empty( $_POST['save_step'] ) && isset( $this->steps[ $this->step ]['handler'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			call_user_func( $this->steps[ $this->step ]['handler'] );
 		}
 
@@ -384,7 +384,7 @@ class MainWP_Setup_Wizard {
 	 */
 	public function mwp_setup_introduction_save() {
 		check_admin_referer( 'mwp-setup' );
-		$enabled_tours = ! isset( $_POST['mainwp-guided-tours-option'] ) ? 0 : 1;
+		$enabled_tours = ! isset( $_POST['mainwp-guided-tours-option'] ) ? 0 : 1; // phpcs:ignore WordPress.Security.NonceVerification
 		MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enabled_tours );
 		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
@@ -400,8 +400,8 @@ class MainWP_Setup_Wizard {
 	 */
 	public function mwp_setup_system_requirements_save() {
 		check_admin_referer( 'mwp-setup' );
-		if ( isset( $_POST['mwp_setup_openssl_lib_location'] ) ) {
-			MainWP_Utility::update_option( 'mainwp_opensslLibLocation', isset( $_POST['mwp_setup_openssl_lib_location'] ) ? sanitize_text_field( wp_unslash( $_POST['mwp_setup_openssl_lib_location'] ) ) : '' );
+		if ( isset( $_POST['mwp_setup_openssl_lib_location'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			MainWP_Utility::update_option( 'mainwp_opensslLibLocation', isset( $_POST['mwp_setup_openssl_lib_location'] ) ? sanitize_text_field( wp_unslash( $_POST['mwp_setup_openssl_lib_location'] ) ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification
 		}
 		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
@@ -581,12 +581,14 @@ class MainWP_Setup_Wizard {
 	 */
 	public function mwp_setup_monitoring_save() {
 		check_admin_referer( 'mwp-setup' );
+		// phpcs:disable WordPress.Security.NonceVerification
 		MainWP_Utility::update_option( 'mainwp_disableSitesChecking', ( ! isset( $_POST['mainwp_setup_disableSitesChecking'] ) ? 1 : 0 ) );
 		$val = isset( $_POST['mainwp_setup_frequency_sitesChecking'] ) ? intval( $_POST['mainwp_setup_frequency_sitesChecking'] ) : 1440;
 		MainWP_Utility::update_option( 'mainwp_frequencySitesChecking', $val );
 		MainWP_Utility::update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_setup_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
 		$val = isset( $_POST['mainwp_setup_site_healthThreshold'] ) ? intval( $_POST['mainwp_setup_site_healthThreshold'] ) : 80;
 		MainWP_Utility::update_option( 'mainwp_sitehealthThreshold', $val );
+		// phpcs:enable WordPress.Security.NonceVerification
 		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
 	}

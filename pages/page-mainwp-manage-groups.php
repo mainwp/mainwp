@@ -215,12 +215,12 @@ class MainWP_Manage_Groups {
 	 */
 	private static function create_group_item( $group ) {
 		?>
-		<a class="item" id="<?php echo $group->id; ?>" style="border-left: 4px solid <?php echo '' == $group->color ? '#fff' : $group->color; ?>">
-			<div class="ui small label"><?php echo property_exists( $group, 'nrsites' ) ? $group->nrsites : 0; ?></div>
-			<input type="hidden" value="<?php echo esc_html( $group->name ); ?>" id="mainwp-hidden-group-name">
+		<a class="item" id="<?php echo intval( $group->id ); ?>" style="border-left: 4px solid <?php echo '' == $group->color ? '#fff' : esc_attr( $group->color ); ?>">
+			<div class="ui small label"><?php echo property_exists( $group, 'nrsites' ) ? intval( $group->nrsites ) : 0; ?></div>
+			<input type="hidden" value="<?php echo esc_html( stripslashes( $group->name ) ); ?>" id="mainwp-hidden-group-name">
 			<input type="hidden" value="<?php echo esc_html( $group->color ); ?>" id="mainwp-hidden-group-color">
-			<input type="hidden" value="<?php echo $group->id; ?>" id="mainwp-hidden-group-id">
-			<?php echo $group->name; ?>
+			<input type="hidden" value="<?php echo intval( $group->id ); ?>" id="mainwp-hidden-group-id">
+			<?php echo esc_html( stripslashes( $group->name ) ); ?>
 		</a>
 		<?php
 	}
@@ -326,16 +326,16 @@ class MainWP_Manage_Groups {
 			<div class="ui stackable grid">
 				<div class="<?php echo 1 == $sidebarPosition ? 'twelve' : 'four'; ?> wide column">
 					<?php if ( 1 == $sidebarPosition ) : ?>
-						<?php echo self::render_groups_sites_table_element(); ?>
+						<?php self::render_groups_sites_table_element(); ?>
 					<?php else : ?>
-						<?php echo self::render_groups_menu_element(); ?>
+						<?php self::render_groups_menu_element(); ?>
 					<?php endif; ?>
 				</div>
 				<div class="<?php echo 1 == $sidebarPosition ? 'four' : 'twelve'; ?> wide column">
 					<?php if ( 1 == $sidebarPosition ) : ?>
-						<?php echo self::render_groups_menu_element(); ?>
+						<?php self::render_groups_menu_element(); ?>
 					<?php else : ?>
-						<?php echo self::render_groups_sites_table_element(); ?>
+						<?php self::render_groups_sites_table_element(); ?>
 					<?php endif; ?>
 				</div>
 				<script type="text/javascript">
@@ -491,7 +491,7 @@ class MainWP_Manage_Groups {
 		?>
 		<div class="ui fluid <?php echo 1 == $sidebarPosition ? 'right' : ''; ?> pointing vertical menu sticky" id="mainwp-groups-menu" style="margin-top:52px">
 			<h4 class="item ui header"><?php esc_html_e( 'Tags', 'mainwp' ); ?></h4>
-		<?php echo self::get_group_list_content(); ?>
+		<?php self::get_group_list_content(); ?>
 			<div class="item">
 				<div class="ui two columns stackable grid">
 					<div class="left aligned column">
@@ -527,7 +527,7 @@ class MainWP_Manage_Groups {
 				</tr>
 			</thead>
 			<tbody>
-			<?php echo self::get_website_list_content(); ?>
+			<?php self::get_website_list_content(); ?>
 			</tbody>
 			<tfoot>
 				<tr>
@@ -552,6 +552,7 @@ class MainWP_Manage_Groups {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_group()
 	 */
 	public static function rename_group() {
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_POST['groupId'] ) ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( intval( $_POST['groupId'] ) );
 			if ( ! empty( $group ) ) {
@@ -572,6 +573,7 @@ class MainWP_Manage_Groups {
 				die( wp_json_encode( array( 'result' => $group->name ) ) );
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 	}
 
 	/**
@@ -583,7 +585,7 @@ class MainWP_Manage_Groups {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::remove_group()
 	 */
 	public static function delete_group() {
-		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;
+		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( $groupid ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
 			if ( ! empty( $group ) ) {
@@ -654,8 +656,8 @@ class MainWP_Manage_Groups {
 		 */
 		global $current_user;
 
-		if ( isset( $_POST['newName'] ) ) {
-			$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( sanitize_text_field( wp_unslash( $_POST['newName'] ) ) ), sanitize_text_field( wp_unslash( $_POST['newColor'] ) ) );
+		if ( isset( $_POST['newName'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( sanitize_text_field( wp_unslash( $_POST['newName'] ) ) ), sanitize_text_field( wp_unslash( $_POST['newColor'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
 
 			/**
 			 * New Group Added
@@ -729,7 +731,7 @@ class MainWP_Manage_Groups {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_group_id()
 	 */
 	public static function get_sites() {
-		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;
+		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( $groupid ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
 			if ( ! empty( $group ) ) {
@@ -759,6 +761,7 @@ class MainWP_Manage_Groups {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function update_group() {
+ 		// phpcs:disable WordPress.Security.NonceVerification
 		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;
 		if ( $groupid ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
@@ -775,6 +778,7 @@ class MainWP_Manage_Groups {
 				die( wp_json_encode( array( 'result' => true ) ) );
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		die( wp_json_encode( array( 'result' => false ) ) );
 	}
@@ -783,7 +787,7 @@ class MainWP_Manage_Groups {
 	 * Hooks the section help content to the Help Sidebar element.
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) {
+		if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			?>
 			<p><?php esc_html_e( 'If you need help with managing tags, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">

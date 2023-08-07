@@ -183,7 +183,7 @@ class MainWP_Monitoring {
 											}
 											?>
 											id="mainwp_show_column_<?php echo esc_attr( $name ); ?>" name="mainwp_show_column_<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $name ); ?>">
-											<label for="mainwp_show_column_<?php echo esc_attr( $name ); ?>" ><?php echo $title; ?></label>
+											<label for="mainwp_show_column_<?php echo esc_attr( $name ); ?>" ><?php echo $title; // phpcs:ignore WordPress.Security.EscapeOutput ?></label>
 											<input type="hidden" value="<?php echo esc_attr( $name ); ?>" name="show_columns_name[]" />
 										</div>
 									</li>

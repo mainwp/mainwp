@@ -322,7 +322,7 @@ class MainWP_Client_Overview_Sites {
 				$class = "class='" . join( ' ', $class ) . "'";
 			}
 
-			echo "<$tag $id $class $attr>$column_display_name</$tag>";
+			echo "<$tag $id $class $attr>$column_display_name</$tag>"; // phpcs:ignore WordPress.Security.EscapeOutput
 		}
 	}
 

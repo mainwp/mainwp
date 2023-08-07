@@ -424,7 +424,7 @@ class MainWP_Manage_Sites_List_Table {
 		$selected_group  = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
 		$selected_client = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
 		$is_not          = isset( $_REQUEST['isnot'] ) && ( 'yes' == $_REQUEST['isnot'] ) ? true : false;
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		if ( empty( $selected_status ) && empty( $selected_group ) && empty( $selected_client ) ) {
 			$selected_status = get_user_option( 'mainwp_managesites_filter_status' );
@@ -720,7 +720,7 @@ class MainWP_Manage_Sites_List_Table {
 				$client_ids = sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ); // may be multi groups.
 			}
 		}
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		$where = null;
 
@@ -1584,11 +1584,11 @@ class MainWP_Manage_Sites_List_Table {
 							<?php } elseif ( 'theme_update' === $column_name ) { ?>
 								<span data-tooltip="<?php esc_attr_e( 'Number of available themes updates. Click to see details.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><a class="ui mini compact basic button <?php echo esc_attr( $t_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>&tab=themes-updates"><?php echo intval( $total_theme_upgrades ); ?></a></span>
 							<?php } elseif ( 'last_sync' === $column_name ) { ?>
-								<span data-tooltip="<?php esc_attr_e( 'Last sync time.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php echo 0 != $website['dtsSync'] ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['dtsSync'] ) ) : ''; ?></span>
+								<span data-tooltip="<?php esc_attr_e( 'Last sync time.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php echo 0 != $website['dtsSync'] ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['dtsSync'] ) ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 							<?php } elseif ( 'last_post' === $column_name ) { ?>
 								<span data-tooltip="<?php esc_attr_e( 'Last published post time.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php echo 0 != $website['last_post_gmt'] ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['last_post_gmt'] ) ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 							<?php } elseif ( 'site_health' === $column_name ) { ?>
-								<a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo base64_encode( 'site-health.php' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php echo esc_html__( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"><span class="ui <?php echo esc_attr( $h_color ); ?> empty circular label"></span></a> <span data-tooltip="<?php esc_attr_e( 'Detected site health score.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php echo esc_html( $h_text ); ?></span>
+								<a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo esc_attr( base64_encode( 'site-health.php' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php echo esc_html__( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"><span class="ui <?php echo esc_attr( $h_color ); ?> empty circular label"></span></a> <span data-tooltip="<?php esc_attr_e( 'Detected site health score.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php echo esc_html( $h_text ); ?></span>
 								<?php
 							} elseif ( 'status_code' === $column_name ) {
 								if ( $website['http_response_code'] ) {
@@ -1650,7 +1650,7 @@ class MainWP_Manage_Sites_List_Table {
 									</div>
 										<?php
 								} elseif ( method_exists( $this, 'column_' . $column_name ) ) {
-									echo call_user_func( array( $this, 'column_' . $column_name ), $website );
+									echo call_user_func( array( $this, 'column_' . $column_name ), $website ); // phpcs:ignore WordPress.Security.EscapeOutput
 								} else {
 									echo $this->column_default( $website, $column_name ); // phpcs:ignore WordPress.Security.EscapeOutput
 								}
@@ -1977,7 +1977,7 @@ class MainWP_Manage_Sites_List_Table {
 			<?php } elseif ( 'last_post' === $column_name ) { ?>
 				<td class="collapsing mainwp-last-post-cell"><span data-tooltip="<?php esc_attr_e( 'Last published post time.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php echo 0 != $website['last_post_gmt'] ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['last_post_gmt'] ) ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?></span></td>
 			<?php } elseif ( 'site_health' === $column_name ) { ?>
-				<td class="collapsing mainwp-site-health-cell"><a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo base64_encode( 'site-health.php' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_attr( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php echo esc_html__( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"><span class="ui <?php echo esc_attr( $h_color ); ?> empty circular label"></span></a> <span data-tooltip="<?php esc_attr_e( 'Detected site health score.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php echo esc_html( $h_text ); ?></span></td>
+				<td class="collapsing mainwp-site-health-cell"><a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo esc_attr( base64_encode( 'site-health.php' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_attr( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php echo esc_html__( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"><span class="ui <?php echo esc_attr( $h_color ); ?> empty circular label"></span></a> <span data-tooltip="<?php esc_attr_e( 'Detected site health score.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php echo esc_html( $h_text ); ?></span></td>
 			<?php } elseif ( 'status_code' === $column_name ) { ?>
 				<td class="collapsing mainwp-status-code-cell" data-order="<?php echo esc_html( $website['http_response_code'] ); ?>">
 					<?php

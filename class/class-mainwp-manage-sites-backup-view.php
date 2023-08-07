@@ -28,7 +28,7 @@ class MainWP_Manage_Sites_Backup_View {
 	public static function show_backups( &$website, $fullBackups, $dbBackups ) {
 		$mwpDir = MainWP_System_Utility::get_mainwp_dir();
 		$mwpDir = $mwpDir[0];
-
+		// phpcs:disable WordPress.Security.EscapeOutput
 		$output = '';
 		foreach ( $fullBackups as $key => $fullBackup ) {
 			$downloadLink = admin_url( '?sig=' . MainWP_System_Utility::get_download_sig( $fullBackup ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $fullBackup ) ) );
@@ -44,7 +44,7 @@ class MainWP_Manage_Sites_Backup_View {
 		<h3 class="ui dividing header"><?php esc_html_e( 'Backup Details', 'mainwp' ); ?></h3>
 		<h3 class="header"><?php echo ( '' === $output ) ? esc_html__( 'No full backup has been taken yet', 'mainwp' ) : esc_html__( 'Last backups from your files', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></h3>
 		<?php
-		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput
+		echo $output;
 
 		$output = '';
 		foreach ( $dbBackups as $key => $dbBackup ) {
@@ -56,7 +56,8 @@ class MainWP_Manage_Sites_Backup_View {
 		?>
 		<h3 class="header"><?php echo ( '' === $output ? esc_html__( 'No database only backup has been taken yet', 'mainwp' ) : esc_html__( 'Last backups from your database', 'mainwp' ) ); ?></h3>
 		<?php
-		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput
+		echo $output;
+		// phpcs:enable WordPress.Security.EscapeOutput
 	}
 
 	/**

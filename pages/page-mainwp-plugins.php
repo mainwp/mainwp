@@ -906,13 +906,14 @@ class MainWP_Plugins {
 			$post_data['not_criteria'] = $not_criteria ? true : false;
 
 			MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( MainWP_Plugins_Handler::get_class_name(), 'plugins_search_handler' ), $output );
-
+			// phpcs:disable WordPress.Security.EscapeOutput
 			if ( 0 < count( $output->errors ) ) {
 				foreach ( $output->errors as $siteid => $error ) {
 					echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ': ' . $error . ' <br/>';
 				}
 				echo '<div class="ui hidden divider"></div>';
 			}
+			// phpcs:enable WordPress.Security.EscapeOutput
 
 			if ( count( $output->errors ) == count( $dbwebsites ) ) {
 				return;
@@ -2470,7 +2471,8 @@ class MainWP_Plugins {
 	 * Hooks the section help content to the Help Sidebar element.
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && ( 'PluginsManage' === $_GET['page'] || 'PluginsInstall' === $_GET['page'] || 'PluginsAutoUpdate' === $_GET['page'] || 'PluginsIgnore' === $_GET['page'] || 'PluginsIgnoredAbandoned' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification
+		if ( isset( $_GET['page'] ) && ( 'PluginsManage' === $_GET['page'] || 'PluginsInstall' === $_GET['page'] || 'PluginsAutoUpdate' === $_GET['page'] || 'PluginsIgnore' === $_GET['page'] || 'PluginsIgnoredAbandoned' === $_GET['page'] ) ) {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing plugins, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
@@ -2499,6 +2501,7 @@ class MainWP_Plugins {
 			</div>
 			<?php
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 	}
 
 }

@@ -54,7 +54,7 @@ class MainWP_Manage_Sites_Backup_View {
 			$output      .= '</div>';
 		}
 		?>
-		<h3 class="header"><?php echo ( '' === $output ) ? esc_html__( 'No database only backup has been taken yet', 'mainwp' ) : esc_html__( 'Last backups from your database', 'mainwp' ); ?></h3>
+		<h3 class="header"><?php echo ( '' === $output ? esc_html__( 'No database only backup has been taken yet', 'mainwp' ) : esc_html__( 'Last backups from your database', 'mainwp' ) ); ?></h3>
 		<?php
 		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput
 	}

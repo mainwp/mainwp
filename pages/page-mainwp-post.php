@@ -1309,7 +1309,7 @@ class MainWP_Post {
 
 					<td class="categories column-categories"><?php echo esc_html( $post['categories'] ); ?></td>
 
-					<td class="tags"><?php echo( '' === $post['tags'] ? 'No Tags' : esc_html( $post['tags'] ) ); ?></td>
+					<td class="tags"><?php echo ( '' === $post['tags'] ? 'No Tags' : esc_html( $post['tags'] ) ); ?></td>
 
 					<?php if ( is_plugin_active( 'mainwp-custom-post-types/mainwp-custom-post-types.php' ) ) : ?>
 						<td class="post-type column-post-type"><?php echo esc_html( $post['post_type'] ); ?></td>
@@ -1904,7 +1904,8 @@ class MainWP_Post {
 						echo "<h2 class='hndle'><span>{" . esc_html( $box['title'] ) . "}</span></h2>\n";
 						echo '<div class="inside">' . "\n";
 
-						if ( defined( 'WP_DEBUG' ) && WP_DEBUG && ! $block_compatible && 'edit' === $screen->parent_base && ! $screen->is_block_editor() && ! isset( $_GET['meta-box-loader'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+						 // phpcs:disable WordPress.Security.NonceVerification
+						if ( defined( 'WP_DEBUG' ) && WP_DEBUG && ! $block_compatible && 'edit' === $screen->parent_base && ! $screen->is_block_editor() && ! isset( $_GET['meta-box-loader'] ) ) {
 							$plugin = _get_plugin_from_callback( $box['callback'] );
 							if ( $plugin ) {
 								?>
@@ -1918,7 +1919,7 @@ class MainWP_Post {
 								<?php
 							}
 						}
-
+						 // phpcs:enable WordPress.Security.NonceVerification
 						call_user_func( $box['callback'], $object, $box );
 						echo "</div>\n";
 						echo "</div>\n";

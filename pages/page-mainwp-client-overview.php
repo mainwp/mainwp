@@ -320,7 +320,6 @@ class MainWP_Client_Overview {
 			<div id="mainwp-grid-wrapper" class="gridster">
 				<?php MainWP_UI::do_widget_boxes( $screen->id ); ?>
 		</div>
-		
 			<?php
 			/**
 			 * Action: 'mainwp_after_overview_widgets'

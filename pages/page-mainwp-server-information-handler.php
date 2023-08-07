@@ -632,7 +632,7 @@ class MainWP_Server_Information_Handler {
 	 * Gets server accepted character set.
 	 */
 	public static function get_server_accept_charset() {
-		echo ( ! isset( $_SERVER['HTTP_ACCEPT_CHARSET'] ) || ( '' == $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) ? esc_html_e( 'N/A', 'mainwp' ) : esc_html( sanitize_text_field( wp_unslash( $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) );
+		echo ( ! isset( $_SERVER['HTTP_ACCEPT_CHARSET'] ) || ( '' == $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) ? esc_html__( 'N/A', 'mainwp' ) : esc_html( sanitize_text_field( wp_unslash( $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) );
 	}
 
 	/**

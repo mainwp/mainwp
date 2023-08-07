@@ -252,7 +252,7 @@ class MainWP_Connection_Status {
 				</div>
 				<div class="column right aligned ui buttons">
 					<a href="<?php echo esc_url( $site->url ); ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Go to Site', 'mainwp' ); ?></a>
-					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site->id; ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( ' Go to WP Admin', 'mainwp' ); ?></a>
+					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $site->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( ' Go to WP Admin', 'mainwp' ); ?></a>
 					<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo intval( $site->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $site->id ); ?>' )" data-tooltip="Sync <?php echo esc_attr( stripslashes( $site->name ) ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 				</div>
 			</div>

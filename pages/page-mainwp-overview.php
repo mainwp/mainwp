@@ -397,7 +397,6 @@ class MainWP_Overview {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_before_overview_widgets' );
-
 			?>
 			<div id="mainwp-grid-wrapper" class="gridster">
 				<?php MainWP_UI::do_widget_boxes( $screen->id ); ?>

@@ -653,8 +653,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function ajax_guided_tours_option_update() {
 		$this->secure_request( 'mainwp_guided_tours_option_update' );
-		// phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification
 		$enable = isset( $_POST['enable'] ) ? intval( $_POST['enable'] ) : 0;
+		// phpcs:enable WordPress.Security.NonceVerification
 		MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enable );
 		die( 'ok' );
 	}
@@ -672,8 +673,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_leftmenu_filter_group() {
 		$this->secure_request( 'mainwp_leftmenu_filter_group' );
 
-		// phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification
 		$gid = isset( $_POST['group_id'] ) ? intval( $_POST['group_id'] ) : false;
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		if ( ! empty( $gid ) ) {
 			$ids      = '';
@@ -911,9 +913,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_clients_delete_client() {
 		$this->check_security( 'mainwp_clients_delete_client' );
 		$ret = array( 'success' => false );
-		// phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification
 		$client_id = isset( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0;
-
+		// phpcs:enable WordPress.Security.NonceVerification
 		if ( $client_id ) {
 			MainWP_DB_Client::instance()->delete_client( $client_id );
 			$ret['success'] = 'SUCCESS';
@@ -946,12 +948,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_clients_delete_general_field() {
 		$this->check_security( 'mainwp_clients_delete_general_field' );
 		$ret = array( 'success' => false );
-		// phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification
 		$field_id  = intval( $_POST['field_id'] );
 		$client_id = 0; // 0 general fields.
 		if ( MainWP_DB_Client::instance()->delete_client_field_by( 'field_id', $field_id, $client_id ) ) {
 			$ret['success'] = true;
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 		echo wp_json_encode( $ret );
 		exit;
 	}
@@ -1014,7 +1017,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_clients_suspend_client() {
 		$this->secure_request( 'mainwp_clients_suspend_client' );
-		// phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification
 		$clientid  = isset( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0;
 		$suspended = isset( $_POST['suspend_status'] ) && $_POST['suspend_status'] ? 1 : 0;
 		// phpcs:enable WordPress.Security.NonceVerification

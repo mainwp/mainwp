@@ -139,9 +139,9 @@ class MainWP_Manage_Sites {
 		self::$page = MainWP_Manage_Sites_View::init_menu();
 		add_action( 'load-' . self::$page, array( self::get_class_name(), 'on_load_page' ) );
 
-		// phpcs:disable WordPress.Security.EscapeOutput
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_REQUEST['dashboard'] ) ) {
- 		// phpcs:enable WordPress.Security.EscapeOutput
+ 		// phpcs:enable WordPress.Security.NonceVerification
 			/**
 			 * Current user global.
 			 *
@@ -915,9 +915,9 @@ class MainWP_Manage_Sites {
 		wp_enqueue_script( 'dashboard' );
 		wp_enqueue_script( 'widgets' );
 
-		// phpcs:disable WordPress.Security.EscapeOutput
+		// phpcs:disable WordPress.Security.NonceVerification
 		$dashboard_siteid = isset( $_GET['dashboard'] ) ? intval( $_GET['dashboard'] ) : null;
- 		// phpcs:enable WordPress.Security.EscapeOutput
+ 		// phpcs:enable WordPress.Security.NonceVerification
 
 		/**
 		 * Get getmetaboxes
@@ -1064,8 +1064,9 @@ class MainWP_Manage_Sites {
 
 		MainWP_System_Utility::set_current_wpid( $website->id );
 
+		// phpcs:disable WordPress.Security.EscapeOutput
 		$edit       = false;
-		$email_type = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : false; // phpcs:ignore WordPress.Security.EscapeOutput
+		$email_type = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : false;
 
 		if ( ! empty( $email_type ) ) {
 			$notification_emails = MainWP_Notification_Settings::get_notification_types();
@@ -1073,6 +1074,7 @@ class MainWP_Manage_Sites {
 				$edit = true;
 			}
 		}
+		// phpcs:enable WordPress.Security.EscapeOutput
 
 		self::render_header( 'ManageSitesEmailSettings' );
 		if ( $edit ) {

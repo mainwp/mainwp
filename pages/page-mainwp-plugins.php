@@ -906,13 +906,14 @@ class MainWP_Plugins {
 			$post_data['not_criteria'] = $not_criteria ? true : false;
 
 			MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( MainWP_Plugins_Handler::get_class_name(), 'plugins_search_handler' ), $output );
-
+			// phpcs:disable WordPress.Security.EscapeOutput
 			if ( 0 < count( $output->errors ) ) {
 				foreach ( $output->errors as $siteid => $error ) {
 					echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ': ' . $error . ' <br/>';
 				}
 				echo '<div class="ui hidden divider"></div>';
 			}
+			// phpcs:enable WordPress.Security.EscapeOutput
 
 			if ( count( $output->errors ) == count( $dbwebsites ) ) {
 				return;
@@ -1160,6 +1161,7 @@ class MainWP_Plugins {
 
 			$details_link    = self_admin_url( 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $first_siteid ) . '&plugin=' . rawurlencode( $plugin_directory ) . '&section=changelog' );
 			$lastest_version = '';
+			// phpcs:disable WordPress.Security.EscapeOutput 
 			?>
 			<div class="ui accordion mainwp-manage-plugin-accordion mainwp-manage-plugin-item main-child-checkbox"  id="<?php echo esc_html( $item_id ); ?>">
 				<div class="title master-checkbox">
@@ -1168,7 +1170,7 @@ class MainWP_Plugins {
 						<div class="one wide center aligned middle aligned column">
 							<div class="ui checkbox <?php echo 'mainwp-child' == $plugin_directory ? 'disabled' : ''; ?> master"><input type="checkbox" <?php echo 'mainwp-child' == $plugin_directory ? 'disabled="disabled"' : ''; ?>><label></label></div>
 						</div>
-						<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+						<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></div>
 						<div class="five wide middle aligned column"><a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>" target="_blank" ><strong><?php echo esc_html( $plugin_title ); ?></strong></a></div>
 						<div class="two wide center aligned middle aligned column"></div>
 						<div class="two wide center aligned middle aligned column lastest-version-info"></div>
@@ -1178,6 +1180,7 @@ class MainWP_Plugins {
 				</div>
 				<div class="content child-checkbox">
 					<?php
+					// phpcs:enable WordPress.Security.EscapeOutput 
 					foreach ( $pluginSites as $site_id => $slugVersions ) :
 						$site_url  = $sites[ $site_id ]['websiteurl'];
 						$site_name = $sites[ $site_id ]['websitename'];
@@ -1761,10 +1764,10 @@ class MainWP_Plugins {
 					$post_data['filter'] = false;
 				}
 				MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( MainWP_Plugins_Handler::get_class_name(), 'plugins_search_handler' ), $output );
-
+				// phpcs:disable WordPress.Security.EscapeOutput
 				if ( 0 < count( $output->errors ) ) {
 					foreach ( $output->errors as $siteid => $error ) {
-						echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>'; // phpcs:ignore WordPress.Security.EscapeOutput
+						echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>';
 
 					}
 					echo '<div class="ui hidden divider"></div>';
@@ -1779,6 +1782,7 @@ class MainWP_Plugins {
 						return;
 					}
 				}
+				// phpcs:enable WordPress.Security.EscapeOutput
 			}
 
 			$_SESSION['MainWP_PluginsActive']       = $output;
@@ -1895,9 +1899,10 @@ class MainWP_Plugins {
 
 					$plugin_directory = dirname( $slug );
 					?>
+					<?php // phpcs:disable WordPress.Security.EscapeOutput ?>
 					<tr plugin-slug="<?php echo esc_attr( rawurlencode( $slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $name ) ); ?>">
 						<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo esc_attr( rawurlencode( $slug ) ); ?>"></span></td>
-						<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+						<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
 						<td><a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $wpid ) . '&plugin=' . rawurlencode( dirname( $slug ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $name ); ?></a></td>
 						<td><?php echo ( 1 == $plugin['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); //phpcs:ignore -- escaped. ?></td>
 						<td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
@@ -1912,6 +1917,7 @@ class MainWP_Plugins {
 							<span style="display: none" class="esc-content-note"><?php echo $esc_note; //phpcs:ignore -- escaped. ?></span>
 						</td>
 					</tr>
+					<?php // phpcs:enable WordPress.Security.EscapeOutput ?>
 				<?php endforeach; ?>
 			</tbody>
 			<tfoot>
@@ -2081,10 +2087,11 @@ class MainWP_Plugins {
 				</thead>
 				<tbody id="globally-ignored-plugins-list">
 					<?php if ( $ignoredPlugins ) : ?>
+						<?php // phpcs:disable WordPress.Security.EscapeOutput ?>
 						<?php foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) : ?>
 							<?php $plugin_directory = dirname( $ignoredPlugin ); ?>
 							<tr plugin-slug="<?php echo esc_attr( rawurlencode( $ignoredPlugin ) ); ?>">
-								<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+								<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
 								<td><a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&plugin=' . esc_html( rawurlencode( dirname( $ignoredPlugin ) ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 								<td><?php echo esc_html( $ignoredPlugin ); ?></td>
 								<td class="right aligned">
@@ -2094,6 +2101,7 @@ class MainWP_Plugins {
 								</td>
 							</tr>
 						<?php endforeach; ?>
+						<?php // phpcs:enable WordPress.Security.EscapeOutput ?>
 					<?php endif; ?>
 				</tbody>
 				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2169,7 +2177,7 @@ class MainWP_Plugins {
 							continue;
 						}
 						$first = true;
-
+						 // phpcs:disable WordPress.Security.EscapeOutput 
 						foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) {
 							$plugin_directory = MainWP_Utility::get_dir_slug( rawurldecode( $ignoredPlugin ) );
 							?>
@@ -2180,7 +2188,7 @@ class MainWP_Plugins {
 							<?php else : ?>
 								<td><div style="display:none;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></div></td>
 							<?php endif; ?>
-								<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+								<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
 							<td><a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_html( rawurlencode( $plugin_directory ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 							<td><?php echo esc_html( rawurldecode( $ignoredPlugin ) ); ?></td>
 							<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2189,6 +2197,7 @@ class MainWP_Plugins {
 						</tr>
 							<?php
 						}
+						// phpcs:enable WordPress.Security.EscapeOutput 
 					}
 
 					MainWP_DB::free_result( $websites );
@@ -2321,11 +2330,12 @@ class MainWP_Plugins {
 			<tbody id="ignored-abandoned-plugins-list">
 				<?php if ( $ignoredPlugins ) : ?>
 					<?php
+					// phpcs:disable WordPress.Security.EscapeOutput 
 					foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) :
 						$plugin_directory = MainWP_Utility::get_dir_slug( rawurldecode( $ignoredPlugin ) );
 						?>
 						<tr plugin-slug="<?php echo esc_attr( rawurlencode( $ignoredPlugin ) ); ?>">
-							<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+							<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
 							<td><a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&plugin=' . esc_html( rawurlencode( $plugin_directory ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 							<td><?php echo esc_html( $ignoredPlugin ); ?></td>
 							<td class="right aligned">
@@ -2335,6 +2345,7 @@ class MainWP_Plugins {
 							</td>
 						</tr>
 					<?php endforeach; ?>
+					<?php // phpcs:enable WordPress.Security.EscapeOutput ?>
 				<?php endif; ?>
 			</tbody>
 			<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2408,6 +2419,7 @@ class MainWP_Plugins {
 							continue;
 						}
 						$first = true;
+						// phpcs:disable WordPress.Security.EscapeOutput 
 						foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) {
 							$plugin_directory = MainWP_Utility::get_dir_slug( rawurldecode( $ignoredPlugin ) );
 							?>
@@ -2420,13 +2432,14 @@ class MainWP_Plugins {
 								<?php else : ?>
 									<td><div style="display:none;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></div></td>
 								<?php endif; ?>
-										<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+										<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
 								<td><a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_html( rawurlencode( $plugin_directory ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 								<td><?php echo esc_html( $ignoredPlugin ); ?></td>
 								<td class="right aligned"><a href="#" class="ui mini button" onClick="return updatesoverview_plugins_unignore_abandoned_detail( '<?php echo esc_html( rawurlencode( $ignoredPlugin ) ); ?>', <?php echo intval( $website->id ); ?> )"> <?php esc_html_e( 'Unignore', 'mainwp' ); ?></a></td>
 							</tr>
 							<?php
 						}
+						// phpcs:enable WordPress.Security.EscapeOutput 
 					}
 					MainWP_DB::free_result( $websites );
 					?>
@@ -2470,7 +2483,8 @@ class MainWP_Plugins {
 	 * Hooks the section help content to the Help Sidebar element.
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && ( 'PluginsManage' === $_GET['page'] || 'PluginsInstall' === $_GET['page'] || 'PluginsAutoUpdate' === $_GET['page'] || 'PluginsIgnore' === $_GET['page'] || 'PluginsIgnoredAbandoned' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification
+		if ( isset( $_GET['page'] ) && ( 'PluginsManage' === $_GET['page'] || 'PluginsInstall' === $_GET['page'] || 'PluginsAutoUpdate' === $_GET['page'] || 'PluginsIgnore' === $_GET['page'] || 'PluginsIgnoredAbandoned' === $_GET['page'] ) ) {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing plugins, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
@@ -2499,6 +2513,7 @@ class MainWP_Plugins {
 			</div>
 			<?php
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 	}
 
 }

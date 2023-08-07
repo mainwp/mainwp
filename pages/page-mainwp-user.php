@@ -696,7 +696,7 @@ class MainWP_User {
 									<select name="role" id="role">
 									<?php
 									foreach ( $editable_roles as $role_id => $role_name ) {
-										echo '<option value="' . $role_id . '" ' . ( 'donotupdate' === $role_id ? 'selected="selected"' : '' ) . '>' . $role_name . '</option>';
+										echo '<option value="' . esc_attr( $role_id ) . '" ' . ( 'donotupdate' === $role_id ? 'selected="selected"' : '' ) . '>' . esc_html( $role_name ) . '</option>';
 									}
 									?>
 									</select>
@@ -1940,6 +1940,7 @@ class MainWP_User {
 	 * @param mixed $output Modal window content.
 	 */
 	public static function render_bulk_add_modal( $dbwebsites, $output ) {
+		// phpcs:disable WordPress.Security.EscapeOutput
 		?>
 		<div id="mainwp-creating-new-user-modal" class="ui modal">
 				<div class="header"><?php esc_html_e( 'New User', 'mainwp' ); ?></div>
@@ -1958,6 +1959,7 @@ class MainWP_User {
 				</div>
 			</div>
 		<?php
+		// phpcs:enable WordPress.Security.EscapeOutput
 	}
 
 	/**
@@ -1987,10 +1989,12 @@ class MainWP_User {
 
 				if ( is_array( $lines ) && 0 < count( $lines ) ) {
 					$i = 0;
+					// phpcs:disable WordPress.Security.NonceVerification
 					if ( ! empty( $_POST['import_user_chk_header_first'] ) ) {
 						$header_line = trim( $lines[0] ) . "\n";
 						unset( $lines[0] );
 					}
+					// phpcs:enable WordPress.Security.NonceVerification
 
 					foreach ( $lines as $originalLine ) {
 
@@ -2020,7 +2024,7 @@ class MainWP_User {
 						);
 						$encoded     = wp_json_encode( $import_data );
 						?>
-						<input type="hidden" id="user_import_csv_line_<?php echo ( $i + 1 ); ?>" original-line="<?php echo esc_html( $line ); ?>" encoded-data="<?php echo esc_html( $encoded ); ?>" />
+						<input type="hidden" id="user_import_csv_line_<?php echo intval( $i + 1 ); ?>" original-line="<?php echo esc_html( $line ); ?>" encoded-data="<?php echo esc_html( $encoded ); ?>" />
 						<?php
 						$i++;
 					}
@@ -2096,8 +2100,8 @@ class MainWP_User {
 				<div class="ui error message"><?php echo esc_html( $error ); ?></div>
 				<?php } ?>
 
-			<a href="<?php echo get_admin_url(); ?>admin.php?page=UserBulkAdd" class="ui button"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
-			<a href="<?php echo get_admin_url(); ?>admin.php?page=mainwp_tab" class="ui button"><?php esc_html_e( 'Return to Overview', 'mainwp' ); ?></a>
+			<a href="<?php echo esc_url( get_admin_url() ); ?>admin.php?page=UserBulkAdd" class="ui button"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
+			<a href="<?php echo esc_url( get_admin_url() ); ?>admin.php?page=mainwp_tab" class="ui button"><?php esc_html_e( 'Return to Overview', 'mainwp' ); ?></a>
 			<?php
 		}
 

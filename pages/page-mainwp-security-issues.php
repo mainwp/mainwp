@@ -36,7 +36,7 @@ class MainWP_Security_Issues {
 	public static function render( $website = null ) {
 
 		if ( empty( $website ) ) {
-			$id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false;
+			$id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 			if ( ! $id ) {
 				return;
 			}
@@ -322,7 +322,7 @@ class MainWP_Security_Issues {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function fetch_security_issues() {
-		$id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false;
+		$id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( ! $id ) {
 			return '';
 		}
@@ -364,7 +364,7 @@ class MainWP_Security_Issues {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function fix_security_issue() {
-		$id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false;
+		$id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( ! $id ) {
 			return '';
 		}
@@ -408,7 +408,7 @@ class MainWP_Security_Issues {
 		 */
 		$skip_features = apply_filters( 'mainwp_security_post_data', false, $skip_features, $website );
 
-		$feature   = isset( $_REQUEST['feature'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['feature'] ) ) : '';
+		$feature   = isset( $_REQUEST['feature'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['feature'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		$post_data = array( 'feature' => $feature );
 		if ( ! empty( $skip_features ) && is_array( $skip_features ) ) {
 			$post_data['skip_features'] = $skip_features;
@@ -449,7 +449,7 @@ class MainWP_Security_Issues {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function unfix_security_issue() {
-		$id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false;
+		$id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( ! $id ) {
 			return '';
 		}
@@ -463,7 +463,7 @@ class MainWP_Security_Issues {
 			return '';
 		}
 
-		$feature = isset( $_REQUEST['feature'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['feature'] ) ) : '';
+		$feature = isset( $_REQUEST['feature'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['feature'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 
 		$information = MainWP_Connect::fetch_url_authed( $website, 'securityUnFix', array( 'feature' => $feature ) );
 		if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {

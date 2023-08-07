@@ -798,7 +798,7 @@ class MainWP_Updates_Per_Group {
 														<div class="ui child checkbox">
 																<input type="checkbox" name="">
 															</div>
-															<?php echo $translation_name; ?>
+															<?php echo esc_html( $translation_name ); ?>
 															<input type="hidden" id="wp_upgraded_translation_<?php echo esc_attr( $website->id ); ?>_group_<?php echo esc_attr( $group_id ); ?>_<?php echo esc_attr( $translation_slug ); ?>" value="0"/>
 														</td>
 														<td>

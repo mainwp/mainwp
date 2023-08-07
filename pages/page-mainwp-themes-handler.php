@@ -69,7 +69,7 @@ class MainWP_Themes_Handler {
 	 * Activate the selected theme.
 	 */
 	public static function activate_theme() {
-		$theme = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : '';
+		$theme = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		self::action( 'activate', $theme );
 		die( 'SUCCESS' );
 	}
@@ -78,7 +78,7 @@ class MainWP_Themes_Handler {
 	 * Delete the selected theme.
 	 */
 	public static function delete_themes() {
-		$themes = isset( $_POST['themes'] ) ? wp_unslash( $_POST['themes'] ) : '';
+		$themes = isset( $_POST['themes'] ) ? wp_unslash( $_POST['themes'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		self::action( 'delete', implode( '||', $themes ) );
 		die( 'SUCCESS' );
 	}
@@ -97,7 +97,7 @@ class MainWP_Themes_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action( $pAction, $theme ) {
-		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( empty( $websiteId ) ) {
 			die( 'FAIL' );
@@ -173,6 +173,7 @@ class MainWP_Themes_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function ignore_updates() {
+		// phpcs:disable WordPress.Security.NonceVerification
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
 		if ( empty( $websiteId ) ) {
@@ -186,6 +187,7 @@ class MainWP_Themes_Handler {
 
 		$themes = isset( $_POST['themes'] ) ? wp_unslash( $_POST['themes'] ) : array();
 		$names  = isset( $_POST['names'] ) ? wp_unslash( $_POST['names'] ) : array();
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		$decodedIgnoredThemes = json_decode( $website->ignored_themes, true );
 		if ( ! is_array( $decodedIgnoredThemes ) ) {
@@ -237,8 +239,10 @@ class MainWP_Themes_Handler {
 		if ( ! is_array( $trustedThemes ) ) {
 			$trustedThemes = array();
 		}
+		// phpcs:disable WordPress.Security.NonceVerification
 		$action = isset( $_POST['do'] ) ? sanitize_text_field( wp_unslash( $_POST['do'] ) ) : '';
 		$slugs  = isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ? wp_unslash( $_POST['slugs'] ) : false;
+		// phpcs:enable WordPress.Security.NonceVerification
 		if ( ! is_array( $slugs ) ) {
 			return;
 		}
@@ -265,8 +269,10 @@ class MainWP_Themes_Handler {
 
 	/** This Method Saves a Trusted theme note. */
 	public static function save_trusted_theme_note() {
+		// phpcs:disable WordPress.Security.NonceVerification
 		$slug               = isset( $_POST['slug'] ) ? urldecode( sanitize_text_field( wp_unslash( $_POST['slug'] ) ) ) : '';
 		$note               = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : '';
+		// phpcs:enable WordPress.Security.NonceVerification
 		$esc_note           = MainWP_Utility::esc_content( $note );
 		$userExtension      = MainWP_DB_Common::instance()->get_user_extension();
 		$trustedThemesNotes = json_decode( $userExtension->trusted_themes_notes, true );

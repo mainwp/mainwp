@@ -82,7 +82,7 @@ class MainWP_Settings {
 	/** Run the export_sites method that exports the Child Sites .csv file */
 	public static function admin_init() {
 		self::export_sites();
-		if ( isset( $_GET['clearActivationData'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'clear_activation_data' ) ) {
+		if ( isset( $_GET['clearActivationData'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'clear_activation_data' ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			delete_option( 'mainwp_extensions_api_username' );
 			delete_option( 'mainwp_extensions_api_password' );
 			delete_option( 'mainwp_extensions_api_save_login' );
@@ -540,7 +540,7 @@ class MainWP_Settings {
 					<?php echo sprintf( esc_html__( 'Manage MainWP general settings.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
-				<?php if ( isset( $_GET['message'] ) && 'saved' == $_GET['message'] ) : ?>
+				<?php if ( isset( $_GET['message'] ) && 'saved' == $_GET['message'] ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
 					<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 				<?php endif; ?>
 				<div class="ui form">
@@ -623,7 +623,7 @@ class MainWP_Settings {
 								</select>
 							</div>
 						</div>
-						<?php echo MainWP_UI::render_screen_options(); ?>
+						<?php MainWP_UI::render_screen_options(); ?>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Show favicons', 'mainwp' ); ?></label>
 							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will download and show child sites favicons.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
@@ -725,7 +725,7 @@ class MainWP_Settings {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Ignored HTTP response statuses', 'mainwp' ); ?></label>
 							<div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'Select response codes that you want your MainWP Dashboard to ignore.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-								<div class="ui multiple selection dropdown" init-value="<?php echo ( get_option( 'mainwp_ignore_HTTP_response_status', '' ) ); ?>">
+								<div class="ui multiple selection dropdown" init-value="<?php echo esc_attr( ( get_option( 'mainwp_ignore_HTTP_response_status', '' ) ) ); ?>">
 									<input name="mainwp_ignore_http_response_status" type="hidden">
 									<i class="dropdown icon"></i>
 									<div class="default text"></div>
@@ -733,7 +733,7 @@ class MainWP_Settings {
 										<?php
 										foreach ( $http_error_codes as $error_code => $label ) {
 											?>
-											<div class="item" data-value="<?php echo $error_code; ?>"><?php echo $error_code . ' (' . $label . ')'; ?></div>
+											<div class="item" data-value="<?php echo esc_attr( $error_code ); ?>"><?php echo esc_html( $error_code . ' (' . $label . ')' ); ?></div>
 											<?php
 										}
 										?>
@@ -759,7 +759,7 @@ class MainWP_Settings {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Abandoned plugins/themes tolerance', 'mainwp' ); ?></label>
 							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set how many days without an update before plugin or theme will be considered as abandoned.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo ( ( false === get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ) ? 365 : get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
+								<input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo ( ( false === get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ) ? 365 : intval( get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ) ); ?>"/>
 							</div>
 						</div>
 						<?php MainWP_Monitoring_View::render_settings(); ?>					
@@ -816,14 +816,14 @@ class MainWP_Settings {
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Timezone', 'mainwp' ); ?></label>			
 			<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Choose either a city in the same timezone as you or a %s (Coordinated Universal Time) time offset.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 				<select id="timezone_string" class="ui dropdown" name="timezone_string" aria-describedby="timezone-description">
-				<?php echo wp_timezone_choice( $tzstring, get_user_locale() ); ?>
+				<?php echo wp_timezone_choice( $tzstring, get_user_locale() ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 				</select>
 				<div class="ui hidden fitted divider"></div>
 				<div class="ui secondary segment">
-					<?php printf( esc_html__( 'Universal time is %s.' ), '<code>' . date_i18n( $timezone_format, false, true ) . '</code>' ); ?>
+					<?php printf( esc_html__( 'Universal time is %s.' ), '<code>' .  esc_html( date_i18n( $timezone_format, false, true ) ) . '</code>' ); ?>
 					<div class="ui hidden fitted divider"></div>
 				<?php if ( get_option( 'timezone_string' ) || ! empty( $current_offset ) ) : ?>
-						<?php printf( esc_html__( 'Local time is %s.' ), '<code>' . date_i18n( $timezone_format ) . '</code>' ); ?>
+						<?php printf( esc_html__( 'Local time is %s.' ), '<code>' .  esc_html( date_i18n( $timezone_format ) ) . '</code>' ); ?>
 						<div class="ui hidden fitted divider"></div>
 				<?php endif; ?>
 				<?php if ( $check_zone_info && $tzstring ) : ?>
@@ -845,7 +845,7 @@ class MainWP_Settings {
 							if ( ! empty( $transitions[1] ) ) {
 								echo ' ';
 								$message = $transitions[1]['isdst'] ? esc_html__( 'Daylight saving time begins on: %s.', 'mainwp' ) : esc_html__( 'Standard time begins on: %s.', 'mainwp' );
-								printf( $message, '<code>' . wp_date( esc_html__( 'F j, Y' ) . ' ' . esc_html__( 'g:i a' ), $transitions[1]['ts'] ) . '</code>' );
+								printf( $message, '<code>' . wp_date( esc_html__( 'F j, Y' ) . ' ' . esc_html__( 'g:i a' ), esc_html( $transitions[1]['ts'] ) ) . '</code>' ); // phpcs:ignore WordPress.Security.EscapeOutput
 							} else {
 								esc_html_e( 'This timezone does not observe daylight saving time.', 'mainwp' );
 							}
@@ -885,7 +885,7 @@ class MainWP_Settings {
 					echo " checked='checked'";
 					$custom = false;
 				}
-				echo ' /> <span class="date-time-text format-i18n">' . date_i18n( $format ) . '</span><code>' . esc_html( $format ) . "</code></label><br />\n";
+				echo ' /> <span class="date-time-text format-i18n">' .  esc_html( date_i18n( $format ) ) . '</span><code>' . esc_html( $format ) . "</code></label><br />\n";
 			}
 
 				echo '<label><input type="radio" name="date_format" id="date_format_custom_radio" value="\c\u\s\t\o\m"';
@@ -894,7 +894,7 @@ class MainWP_Settings {
 					'<label for="date_format_custom" class="screen-reader-text">' . esc_html__( 'Custom date format:' ) . '</label>' .
 					'<input type="text" name="date_format_custom" id="date_format_custom" value="' . esc_attr( get_option( 'date_format' ) ) . '" class="small-text" />' .
 					'<br />' .
-					'<em><strong>' . esc_html__( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'date_format' ) ) . '</span>' .
+					'<em><strong>' . esc_html__( 'Preview:' ) . '</strong> <span class="example">' .  esc_html( date_i18n( get_option( 'date_format' ) ) ) . '</span>' .
 					"<span class='spinner'></span>\n" . '</em>';
 			?>
 		</div>
@@ -921,7 +921,7 @@ class MainWP_Settings {
 				echo " checked='checked'";
 				$custom = false;
 			}
-			echo ' /> <span class="date-time-text format-i18n">' . date_i18n( $format ) . '</span><code>' . esc_html( $format ) . "</code></label><br />\n";
+			echo ' /> <span class="date-time-text format-i18n">' . esc_html( date_i18n( $format ) ) . '</span><code>' . esc_html( $format ) . "</code></label><br />\n";
 		}
 			echo '<label><input type="radio" name="time_format" id="time_format_custom_radio" value="\c\u\s\t\o\m"';
 			checked( $custom );
@@ -929,7 +929,7 @@ class MainWP_Settings {
 				'<label for="time_format_custom" class="screen-reader-text">' . esc_html__( 'Custom time format:' ) . '</label>' .
 				'<input type="text" name="time_format_custom" id="time_format_custom" value="' . esc_attr( get_option( 'time_format' ) ) . '" class="small-text" />' .
 				'<br />' .
-			'<em><strong>' . esc_html__( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'time_format' ) ) . '</span>' .
+			'<em><strong>' . esc_html__( 'Preview:' ) . '</strong> <span class="example">' . esc_html( date_i18n( get_option( 'time_format' ) ) ) . '</span>' .
 			"<span class='spinner'></span>\n" . '</em>';
 		?>
 		</div>
@@ -1162,14 +1162,14 @@ class MainWP_Settings {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous requests (Default: 4)', 'mainwp' ); ?></label>
 							<div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_maximumRequests" id="mainwp_maximumRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumRequests' ) ) ? 4 : get_option( 'mainwp_maximumRequests' ) ); ?>"/>
+								<input type="text" name="mainwp_maximumRequests" id="mainwp_maximumRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumRequests' ) ) ? 4 : esc_attr( get_option( 'mainwp_maximumRequests' ) ) ); ?>"/>
 							</div>
 						</div>
 
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Minimum delay between requests (Default: 200)', 'mainwp' ); ?></label>
 							<div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_minimumDelay" id="mainwp_minimumDelay" value="<?php echo ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) ); ?>"/>
+								<input type="text" name="mainwp_minimumDelay" id="mainwp_minimumDelay" value="<?php echo ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : esc_attr( get_option( 'mainwp_minimumDelay' ) ) ); ?>"/>
 							</div>
 						</div>
 
@@ -1178,14 +1178,14 @@ class MainWP_Settings {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous requests per IP (Default: 1)', 'mainwp' ); ?></label>
 							<div class="ten wide column ui input"  data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_maximumIPRequests" id="mainwp_maximumIPRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumIPRequests' ) ) ? 1 : get_option( 'mainwp_maximumIPRequests' ) ); ?>"/>
+								<input type="text" name="mainwp_maximumIPRequests" id="mainwp_maximumIPRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumIPRequests' ) ) ? 1 : esc_attr( get_option( 'mainwp_maximumIPRequests' ) ) ); ?>"/>
 							</div>
 						</div>
 
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Minimum delay between requests to the same IP (Default: 1000)', 'mainwp' ); ?></label>
 							<div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_minimumIPDelay" id="mainwp_minimumIPDelay" value="<?php echo ( ( false === get_option( 'mainwp_minimumIPDelay' ) ) ? 1000 : get_option( 'mainwp_minimumIPDelay' ) ); ?>"/>
+								<input type="text" name="mainwp_minimumIPDelay" id="mainwp_minimumIPDelay" value="<?php echo ( ( false === get_option( 'mainwp_minimumIPDelay' ) ) ? 1000 : esc_attr( get_option( 'mainwp_minimumIPDelay' ) ) ); ?>"/>
 							</div>
 						</div>
 
@@ -1194,14 +1194,14 @@ class MainWP_Settings {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous sync requests (Default: 8)', 'mainwp' ); ?></label>
 							<div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control how many sites your MainWP Dashboard should sync at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_maximumSyncRequests" id="mainwp_maximumSyncRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumSyncRequests' ) ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ) ); ?>"/>
+								<input type="text" name="mainwp_maximumSyncRequests" id="mainwp_maximumSyncRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumSyncRequests' ) ) ? 8 : esc_attr( get_option( 'mainwp_maximumSyncRequests' ) ) ); ?>"/>
 							</div>
 						</div>
 
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous install and update requests (Default: 3)', 'mainwp' ); ?></label>
 							<div class="ten wide column ui input"  data-tooltip="<?php esc_attr_e( 'This option allows you to control how many update and install requests your MainWP Dashboard should process at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/>
+								<input type="text" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ) ? 3 : esc_attr( get_option( 'mainwp_maximumInstallUpdateRequests' ) ) ); ?>"/>
 							</div>
 						</div>
 
@@ -1449,7 +1449,7 @@ class MainWP_Settings {
 						if ( $custom_theme == $file_name ) {
 							$_select = 'selected';
 						}
-						echo '<option value="' . esc_attr( $file_name ) . '" ' . $_select . '>' . esc_html( $theme ) . '</option>';
+						echo '<option value="' . esc_attr( $file_name ) . '" ' . esc_attr( $_select ) . '>' . esc_html( $theme ) . '</option>';
 					}
 					?>
 				</select>
@@ -1584,7 +1584,7 @@ class MainWP_Settings {
 
 			header( 'Content-Type: text/csv; charset=utf-8' );
 			header( 'Content-Disposition: attachment; filename=export-sites.csv' );
-			echo $csv;
+			echo $csv; // phpcs:ignore WordPress.Security.EscapeOutput
 			exit();
 		}
 	}
@@ -1601,7 +1601,7 @@ class MainWP_Settings {
 	public static function render_email_settings() {
 		$notification_emails = MainWP_Notification_Settings::get_notification_types();
 		self::render_header( 'Emails' );
-		$edit_email = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : '';
+		$edit_email = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( ! empty( $edit_email ) && isset( $notification_emails[ $edit_email ] ) ) {
 			$updated_templ = MainWP_Notification_Template::instance()->handle_template_file_action();
 			MainWP_Notification_Settings::instance()->render_edit_settings( $edit_email, $updated_templ );
@@ -1616,7 +1616,7 @@ class MainWP_Settings {
 	 * Hook the section help content to the Help Sidebar element
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && ( 'Settings' == $_GET['page'] || 'SettingsAdvanced' == $_GET['page'] || 'MainWPTools' == $_GET['page'] ) ) {
+		if ( isset( $_GET['page'] ) && ( 'Settings' == $_GET['page'] || 'SettingsAdvanced' == $_GET['page'] || 'MainWPTools' == $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Dashboard settings, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">

@@ -1329,7 +1329,7 @@ class MainWP_Hooks {
 			$slugs     = isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ? wp_unslash( $_POST['slugs'] ) : array();
 			$error     = '';
 			$erCode    = '';
-			// phpcs:enable
+			// phpcs:enable WordPress.Security.NonceVerification
 
 			if ( 'plugin' === $type && ! mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) ) {
 				$error = mainwp_do_not_have_permissions( esc_html__( 'update plugins', 'mainwp' ), false );

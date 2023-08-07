@@ -843,7 +843,7 @@ class MainWP_Menu {
 				 *
 				 * @since 4.1.4
 				 */
-				echo apply_filters( 'mainwp_menu_logo_href', admin_url( 'admin.php?page=mainwp_tab' ) );
+				echo esc_url( apply_filters( 'mainwp_menu_logo_href', admin_url( 'admin.php?page=mainwp_tab' ) ) );
 				?>
 				">
 				<img src="
@@ -855,7 +855,7 @@ class MainWP_Menu {
 				 *
 				 * @since 4.1
 				 */
-				echo apply_filters( 'mainwp_menu_logo_src', MAINWP_PLUGIN_URL . 'assets/images/logo.png' );
+				echo esc_url( apply_filters( 'mainwp_menu_logo_src', MAINWP_PLUGIN_URL . 'assets/images/logo.png' ) );
 				?>
 				" alt="
 				<?php
@@ -866,7 +866,7 @@ class MainWP_Menu {
 				 *
 				 * @since 4.1
 				 */
-				echo apply_filters( 'mainwp_menu_logo_alt', 'MainWP' );
+				echo apply_filters( 'mainwp_menu_logo_alt', 'MainWP' ); // phpcs:ignore WordPress.Security.EscapeOutput
 				?>
 				" id="mainwp-navigation-icon"/>
 				</a>

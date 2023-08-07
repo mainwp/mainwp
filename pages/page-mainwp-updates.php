@@ -324,7 +324,7 @@ class MainWP_Updates {
 	public static function render_site_link_dashboard( $website, $echo = true ) {
 		$lnk = '<a href="' . esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ) . '"  data-inverted="" data-tooltip="' . esc_html__( 'Visit this dashboard.', 'mainwp' ) . '">' . stripslashes( $website->name ) . '</a>';
 		if ( $echo ) {
-			echo $lnk;
+			echo $lnk; // phpcs:ignore WordPress.Security.EscapeOutput
 		} else {
 			return $lnk;
 		}
@@ -751,7 +751,7 @@ class MainWP_Updates {
 		 * @since 4.0
 		 */
 		$limit_updates_all = apply_filters( 'mainwp_limit_updates_all', 0 );
-
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( 0 < $limit_updates_all ) {
 			if ( isset( $_GET['continue_update'] ) && '' !== $_GET['continue_update'] ) {
 				self::$continue_update = sanitize_text_field( wp_unslash( $_GET['continue_update'] ) );
@@ -773,7 +773,7 @@ class MainWP_Updates {
 		} else {
 			$current_tab = 'plugins-updates';
 		}
-
+		// phpcs:enable WordPress.Security.NonceVerification
 		self::render_header( 'UpdatesManage' );
 
 		self::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view );
@@ -2017,7 +2017,7 @@ class MainWP_Updates {
 						 *
 						 * @since Unknown
 						 */
-						echo apply_filters( 'mainwp_widgetupdates_actions_top', '' );
+						echo apply_filters( 'mainwp_widgetupdates_actions_top', '' ); // phpcs:ignore WordPress.Security.EscapeOutput
 						if ( 'abandoned-plugins' === $current_tab ) {
 							?>
 							<a href="#" onClick="updatesoverview_bulk_check_abandoned('plugin'); return false;" class="ui green mini basic button" data-tooltip="<?php esc_html_e( 'Check for Abandoned Plugins.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Check for Abandoned Plugins', 'mainwp' ); ?></a>
@@ -2120,7 +2120,7 @@ class MainWP_Updates {
 							<?php self::render_site_link_dashboard( $website ); ?>
 						</td>
 						<td id="wp_http_response_code_<?php echo esc_attr( $website->id ); ?>">
-							<label class="ui red label http-code"><?php echo 'HTTP ' . $website->http_response_code; ?></label>
+							<label class="ui red label http-code"><?php echo 'HTTP ' . esc_html( $website->http_response_code ); ?></label>
 						</td>
 						<td class="right aligned">
 							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" class="ui mini button" target="_blank"><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></a>
@@ -2130,7 +2130,7 @@ class MainWP_Updates {
 							<?php } ?>
 							<a href="javascript:void(0)" onClick="return updatesoverview_ignore_http_response( this, <?php echo intval( $website->id ); ?> )" class="ui basic mini button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?></a>
 					<?php if ( ! empty( $restoreSlug ) ) { ?>
-							<a href="<?php echo $restoreSlug; ?>" class="ui green mini basic button"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
+							<a href="<?php echo esc_url( $restoreSlug ); ?>" class="ui green mini basic button"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
 						<?php } ?>
 						</td>
 					</tr>
@@ -2262,7 +2262,7 @@ class MainWP_Updates {
 	 * @return string HTML selector.
 	 */
 	public static function get_continue_update_selector() {
-		return self::$continue_selector;
+		echo esc_attr( self::$continue_selector );
 	}
 
 	/**
@@ -2401,7 +2401,7 @@ class MainWP_Updates {
 	 * MainWP Help Box content. Hook the section help content to the Help Sidebar element.
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && 'UpdatesManage' === $_GET['page'] ) {
+		if ( isset( $_GET['page'] ) && 'UpdatesManage' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			?>
 			<p><?php esc_html_e( 'If you need help with managing updates, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">

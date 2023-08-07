@@ -139,7 +139,7 @@ class MainWP_Manage_Sites {
 		self::$page = MainWP_Manage_Sites_View::init_menu();
 		add_action( 'load-' . self::$page, array( self::get_class_name(), 'on_load_page' ) );
 
-		if ( isset( $_REQUEST['dashboard'] ) ) {
+		if ( isset( $_REQUEST['dashboard'] ) ) { // phpcs:ignore WordPress.Security.EscapeOutput
 
 			/**
 			 * Current user global.
@@ -226,6 +226,7 @@ class MainWP_Manage_Sites {
 	 */
 	public static function on_load_page() {
 
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_REQUEST['dashboard'] ) ) {
 			self::on_load_page_dashboard();
 			return;
@@ -238,9 +239,10 @@ class MainWP_Manage_Sites {
 			if ( 'new' === $_REQUEST['do'] ) {
 				return;
 			}
-		} elseif ( isset( $_GET['id'] ) || isset( $_GET['scanid'] ) || isset( $_GET['backupid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) ) {
+		} elseif ( isset( $_GET['id'] ) || isset( $_GET['scanid'] ) || isset( $_GET['backupid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			return;
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		$sitesViewMode = MainWP_Utility::get_siteview_mode();
 
@@ -273,8 +275,8 @@ class MainWP_Manage_Sites {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::set_current_wpid()
 	 */
 	public static function on_load_subpages() {
-		if ( ! empty( $_GET['id'] ) ) {
-			MainWP_System_Utility::set_current_wpid( intval( $_GET['id'] ) );
+		if ( ! empty( $_GET['id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			MainWP_System_Utility::set_current_wpid( intval( $_GET['id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 		}
 	}
 
@@ -439,7 +441,7 @@ class MainWP_Manage_Sites {
 
 											?>
 											id="mainwp_show_column_<?php echo esc_attr( $name ); ?>" name="mainwp_show_column_<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $name ); ?>">
-											<label for="mainwp_show_column_<?php echo esc_attr( $name ); ?>" ><?php echo $title; ?></label>
+											<label for="mainwp_show_column_<?php echo esc_attr( $name ); ?>" ><?php echo $title; // phpcs:ignore WordPress.Security.EscapeOutput ?></label>
 											<input type="hidden" value="<?php echo esc_attr( $name ); ?>" name="show_columns_name[]" />
 										</div>
 									</li>
@@ -690,7 +692,7 @@ class MainWP_Manage_Sites {
 							<div class="default text"></div>
 							<div class="menu">
 								<?php foreach ( $groups as $group ) { ?>
-									<div class="item" data-value="<?php echo $group->id; ?>"><?php echo $group->name; ?></div>
+									<div class="item" data-value="<?php echo intval( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
 								<?php } ?>
 							</div>
 						</div>
@@ -708,7 +710,7 @@ class MainWP_Manage_Sites {
 							<div class="menu">								
 								<div class="item" data-value="0"><?php esc_attr_e( 'Select client', 'mainwp' ); ?></div>
 								<?php foreach ( $clients as $client ) { ?>
-									<div class="item" data-value="<?php echo $client->client_id; ?>"><?php echo $client->name; ?></div>
+									<div class="item" data-value="<?php echo intval( $client->client_id ); ?>"><?php echo esc_html( $client->name ); ?></div>
 								<?php } ?>
 							</div>
 						</div>
@@ -880,7 +882,7 @@ class MainWP_Manage_Sites {
 						</div>
 						<div class="ui divider"></div>
 						<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_bulkadd" class="ui big green button" value="<?php esc_attr_e( 'Import Sites', 'mainwp' ); ?>"/>
-						<a href="<?php echo MAINWP_PLUGIN_URL . 'assets/csv/sample.csv'; ?>" class="ui big green basic right floated button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
+						<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample.csv' ); ?>" class="ui big green basic right floated button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
 					</form>
 				</div>
 				<?php
@@ -912,7 +914,7 @@ class MainWP_Manage_Sites {
 		wp_enqueue_script( 'dashboard' );
 		wp_enqueue_script( 'widgets' );
 
-		$dashboard_siteid = isset( $_GET['dashboard'] ) ? intval( $_GET['dashboard'] ) : null;
+		$dashboard_siteid = isset( $_GET['dashboard'] ) ? intval( $_GET['dashboard'] ) : null; // phpcs:ignore WordPress.Security.EscapeOutput
 
 		/**
 		 * Get getmetaboxes
@@ -1060,7 +1062,7 @@ class MainWP_Manage_Sites {
 		MainWP_System_Utility::set_current_wpid( $website->id );
 
 		$edit       = false;
-		$email_type = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : false;
+		$email_type = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : false; // phpcs:ignore WordPress.Security.EscapeOutput
 
 		if ( ! empty( $email_type ) ) {
 			$notification_emails = MainWP_Notification_Settings::get_notification_types();
@@ -1241,6 +1243,7 @@ class MainWP_Manage_Sites {
 		 */
 		global $current_user;
 
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_REQUEST['do'] ) ) {
 			if ( 'new' === $_REQUEST['do'] ) {
 				self::render_new_site();
@@ -1317,6 +1320,7 @@ class MainWP_Manage_Sites {
 				return;
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		$sitesViewMode = MainWP_Utility::get_siteview_mode();
 		if ( 'grid' == $sitesViewMode ) {
@@ -1342,8 +1346,9 @@ class MainWP_Manage_Sites {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::valid_input_emails()
 	 */
 	private static function update_site_emails_settings_handle( $website ) {
+		// phpcs:disable WordPress.Security.NonceVerification
 		$updated = false;
-		if ( isset( $_POST['submit'] ) && isset( $_GET['emailsettingsid'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsiteEmailSettings' . sanitize_text_field( wp_unslash( $_GET['emailsettingsid'] ) ) ) ) {
+		if ( isset( $_POST['submit'] ) && isset( $_GET['emailsettingsid'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsiteEmailSettings' . sanitize_text_field( wp_unslash( $_GET['emailsettingsid'] ) ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$settings_emails = MainWP_DB::instance()->get_website_option( $website, 'settings_notification_emails', '' );
 			$settings_emails = json_decode( $settings_emails, true );
 			if ( ! is_array( $settings_emails ) ) {
@@ -1351,8 +1356,8 @@ class MainWP_Manage_Sites {
 			}
 
 			$notification_emails = MainWP_Notification_Settings::get_notification_types();
-			$type                = isset( $_POST['mainwp_managesites_setting_emails_type'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_setting_emails_type'] ) ) : '';
-			$edit_settingEmails  = isset( $_POST['mainwp_managesites_edit_settingEmails'][ $type ] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_managesites_edit_settingEmails'][ $type ] ) ) : array();
+			$type                = isset( $_POST['mainwp_managesites_setting_emails_type'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_setting_emails_type'] ) ) : '';  // phpcs:ignore WordPress.Security.NonceVerification
+			$edit_settingEmails  = isset( $_POST['mainwp_managesites_edit_settingEmails'][ $type ] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_managesites_edit_settingEmails'][ $type ] ) ) : array();  // phpcs:ignore WordPress.Security.NonceVerification
 
 			if ( isset( $notification_emails[ $type ] ) && ! empty( $edit_settingEmails ) ) {
 				$update_settings               = $edit_settingEmails;
@@ -1383,6 +1388,7 @@ class MainWP_Manage_Sites {
 
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 		return $updated;
 	}
 
@@ -1410,6 +1416,7 @@ class MainWP_Manage_Sites {
 		 */
 		global $current_user;
 
+		// phpcs:disable WordPress.Security.NonceVerification
 		$updated = false;
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && isset( $_REQUEST['id'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsite' . sanitize_key( $_REQUEST['id'] ) ) ) {
 			if ( mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
@@ -1519,6 +1526,7 @@ class MainWP_Manage_Sites {
 				$updated = true;
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 		return $updated;
 	}
 
@@ -1550,8 +1558,8 @@ class MainWP_Manage_Sites {
 	 * @param object $website The website object.
 	 */
 	public static function on_edit_site( $website ) {
-		if ( isset( $_POST['submit'] ) && isset( $_REQUEST['id'] ) && isset( $_POST['wp_nonce'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsite' . sanitize_key( $_REQUEST['id'] ) ) ) {
-			if ( isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ) {
+		if ( isset( $_POST['submit'] ) && isset( $_REQUEST['id'] ) && isset( $_POST['wp_nonce'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsite' . sanitize_key( $_REQUEST['id'] ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			if ( isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 				?>
 				<script type="text/javascript">
 					jQuery( document ).ready( function () {
@@ -1565,8 +1573,8 @@ class MainWP_Manage_Sites {
 
 	/** Hook the section help content to the Help Sidebar element. */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && 'managesites' === $_GET['page'] ) {
-			if ( isset( $_GET['do'] ) && 'new' === $_GET['do'] ) {
+		if ( isset( $_GET['page'] ) && 'managesites' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+			if ( isset( $_GET['do'] ) && 'new' === $_GET['do'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 				?>
 				<p><?php esc_html_e( 'If you need help connecting your websites, please review following help documents', 'mainwp' ); ?></p>
 				<div class="ui relaxed bulleted list">
@@ -1577,7 +1585,7 @@ class MainWP_Manage_Sites {
 					<div class="item"><a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">Import Sites</a></div>
 				</div>
 				<?php
-			} elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] ) {
+			} elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 				?>
 				<p><?php esc_html_e( 'If you need help connecting your websites, please review following help documents', 'mainwp' ); ?></p>
 				<div class="ui relaxed bulleted list">

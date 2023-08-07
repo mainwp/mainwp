@@ -642,7 +642,7 @@ class MainWP_Manage_Sites_View {
 						</div>
 					</div>
 					<div class="middle aligned column">
-						<?php echo apply_filters( 'mainwp_widgetupdates_actions_top', '' ); ?>
+						<?php echo apply_filters( 'mainwp_widgetupdates_actions_top', '' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 					</div>
 					<div class="middle aligned column"></div>
 					<div class="middle aligned column"></div>
@@ -1102,7 +1102,7 @@ class MainWP_Manage_Sites_View {
 					<label class="six wide column middle aligned"><?php esc_html_e( 'HTTP Username (optional)', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP username here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<div class="ui left labeled input">
-							<input type="text" id="mainwp_managesites_edit_http_user" name="mainwp_managesites_edit_http_user" value="<?php echo ( empty( $website->http_user ) ? '' : $website->http_user ); ?>" autocomplete="new-http-user" />
+							<input type="text" id="mainwp_managesites_edit_http_user" name="mainwp_managesites_edit_http_user" value="<?php echo ( empty( $website->http_user ) ? '' : esc_attr( $website->http_user ) ); ?>" autocomplete="new-http-user" />
 						</div>
 					</div>
 				</div>
@@ -1110,7 +1110,7 @@ class MainWP_Manage_Sites_View {
 					<label class="six wide column middle aligned"><?php esc_html_e( 'HTTP Password (optional)', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP password here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<div class="ui left labeled input">
-							<input type="password" id="mainwp_managesites_edit_http_pass" name="mainwp_managesites_edit_http_pass" value="<?php echo ( empty( $website->http_pass ) ? '' : $website->http_pass ); ?>" autocomplete="new-password" />
+							<input type="password" id="mainwp_managesites_edit_http_pass" name="mainwp_managesites_edit_http_pass" value="<?php echo ( empty( $website->http_pass ) ? '' : esc_attr( $website->http_pass ) ); ?>" autocomplete="new-password" />
 						</div>
 					</div>
 				</div>

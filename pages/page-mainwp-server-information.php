@@ -370,7 +370,7 @@ class MainWP_Server_Information {
 	 * Renders Server Information action bar element.
 	 */
 	public static function render_actions_bar() {
-		if ( isset( $_GET['page'] ) && 'ServerInformation' === $_GET['page'] ) :
+		if ( isset( $_GET['page'] ) && 'ServerInformation' === $_GET['page'] ) : // phpcs:ignore WordPress.Security.NonceVerification
 			?>
 		<div class="mainwp-actions-bar">
 			<div class="ui two column grid">
@@ -465,7 +465,7 @@ class MainWP_Server_Information {
 					</tr>
 				</thead>
 				<tbody>
-				<?php echo self::render_wordpress_check_tbody(); ?>
+				<?php self::render_wordpress_check_tbody(); ?>
 			</tbody>
 		</table>
 
@@ -479,7 +479,7 @@ class MainWP_Server_Information {
 				</tr>
 			</thead>
 			<tbody>
-				<?php echo self::render_php_check_tbody(); ?>
+				<?php self::render_php_check_tbody(); ?>
 			</tbody>
 		</table>
 
@@ -493,7 +493,7 @@ class MainWP_Server_Information {
 				</tr>
 			</thead>
 			<tbody>
-				<?php echo self::render_mysql_check_tbody(); ?>
+				<?php self::render_mysql_check_tbody(); ?>
 			</tbody>
 		</table>
 
@@ -505,7 +505,7 @@ class MainWP_Server_Information {
 				</tr>
 			</thead>
 			<tbody>
-				<?php echo self::render_server_check_tbody(); ?>
+				<?php self::render_server_check_tbody(); ?>
 			</tbody>
 		</table>
 
@@ -517,7 +517,7 @@ class MainWP_Server_Information {
 					</tr>
 			</thead>
 			<tbody>
-				<?php echo self::render_dashboard_check_tbody(); ?>
+				<?php self::render_dashboard_check_tbody(); ?>
 			</tbody>
 		</table>
 
@@ -531,7 +531,7 @@ class MainWP_Server_Information {
 					</tr>
 			</thead>
 			<tbody>
-				<?php echo self::render_extensions_license_check_tbody(); ?>
+				<?php self::render_extensions_license_check_tbody(); ?>
 			</tbody>
 		</table>
 
@@ -544,7 +544,7 @@ class MainWP_Server_Information {
 						</tr>
 			</thead>
 			<tbody>
-				<?php echo self::render_plugins_check_tbody(); ?>
+				<?php self::render_plugins_check_tbody(); ?>
 			</tbody>
 		</table>
 
@@ -588,17 +588,17 @@ class MainWP_Server_Information {
 	 * @return void
 	 */
 	public static function render_wordpress_check_tbody() {
-					self::render_row( 'WordPress Version', '>=', '3.6', 'get_wordpress_version', '', '', null, null, self::ERROR );
-					self::render_row( 'WordPress Memory Limit', '>=', '64M', 'get_wordpress_memory_limit', '', '', null );
-					self::render_row( 'MultiSite Disabled', '=', true, 'check_if_multisite', '', '', null );
+		self::render_row( 'WordPress Version', '>=', '3.6', 'get_wordpress_version', '', '', null, null, self::ERROR );
+		self::render_row( 'WordPress Memory Limit', '>=', '64M', 'get_wordpress_memory_limit', '', '', null );
+		self::render_row( 'MultiSite Disabled', '=', true, 'check_if_multisite', '', '', null );
 		?>
-					<tr>
-						<td><?php esc_html_e( 'FileSystem Method', 'mainwp' ); ?></td>
-						<td><?php echo esc_html( '= direct' ); ?></td>
-						<td><?php echo MainWP_Server_Information_Handler::get_file_system_method(); ?></td>
-			<td class="right aligned"><?php echo self::get_file_system_method_check(); ?></td>
-					</tr>
-					<?php
+		<tr>
+			<td><?php esc_html_e( 'FileSystem Method', 'mainwp' ); ?></td>
+			<td><?php echo esc_html( '= direct' ); ?></td>
+			<td><?php echo MainWP_Server_Information_Handler::get_file_system_method(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+			<td class="right aligned"><?php echo self::get_file_system_method_check(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+		</tr>
+		<?php
 	}
 
 	/**
@@ -705,7 +705,7 @@ class MainWP_Server_Information {
 					<tr>
 			<td><?php esc_html_e( 'MySQL Client Encoding', 'mainwp' ); ?></td>
 			<td><?php esc_html_e( 'N/A', 'mainwp' ); ?></td>
-			<td><?php echo defined( 'DB_CHARSET' ) ? DB_CHARSET : ''; ?></td>
+			<td><?php echo defined( 'DB_CHARSET' ) ? esc_html( DB_CHARSET ) : ''; ?></td>
 			<td></td>
 					</tr>
 		<?php
@@ -718,99 +718,99 @@ class MainWP_Server_Information {
 	 */
 	public static function render_server_check_tbody() {
 		?>
-					<tr class="mwp-not-generate-row">
+		<tr class="mwp-not-generate-row">
 			<td><?php esc_html_e( 'WordPress Root Directory', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_wp_root(); ?></td>
-					</tr>
-					<tr class="mwp-not-generate-row">
+		</tr>
+		<tr class="mwp-not-generate-row">
 			<td><?php esc_html_e( 'Server Name', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_server_name(); ?></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'Server Software', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_server_software(); ?></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'Operating System', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_os(); ?></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'Architecture', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_architecture(); ?></td>
-					</tr>
-					<tr class="mwp-not-generate-row">
+		</tr>
+		<tr class="mwp-not-generate-row">
 			<td><?php esc_html_e( 'Server IP', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_server_ip(); ?></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'Server Protocol', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_server_protocol(); ?></td>
-					</tr>
-					<tr class="mwp-not-generate-row">
+		</tr>
+		<tr class="mwp-not-generate-row">
 			<td><?php esc_html_e( 'HTTP Host', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_http_host(); ?></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'HTTPS', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_https(); ?></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'Server self connect', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::server_self_connect(); ?></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'User Agent', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_user_agent(); ?></td>
-					</tr>
-					<tr class="mwp-not-generate-row">
+		</tr>
+		<tr class="mwp-not-generate-row">
 			<td><?php esc_html_e( 'Server Port', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_server_port(); ?></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'Gateway Interface', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_server_gateway_interface(); ?></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'Memory Usage', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::memory_usage(); ?></td>
-					</tr>
-					<tr class="mwp-not-generate-row">
+		</tr>
+		<tr class="mwp-not-generate-row">
 			<td><?php esc_html_e( 'Complete URL', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_complete_url(); ?></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'Request Time', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_server_request_time(); ?></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'Accept Content', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_server_http_accept(); ?></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'Accept-Charset Content', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_server_accept_charset(); ?></td>
-					</tr>
-					<tr class="mwp-not-generate-row">
+		</tr>
+		<tr class="mwp-not-generate-row">
 			<td><?php esc_html_e( 'Currently Executing Script Pathname', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_script_file_name(); ?></td>
-					</tr>
-					<tr class="mwp-not-generate-row">
+		</tr>
+		<tr class="mwp-not-generate-row">
 			<td><?php esc_html_e( 'Current Page URI', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_current_page_uri(); ?></td>
-					</tr>
-					<tr class="mwp-not-generate-row">
+		</tr>
+		<tr class="mwp-not-generate-row">
 			<td><?php esc_html_e( 'Remote Address', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_remote_address(); ?></td>
-					</tr>
-					<tr class="mwp-not-generate-row">
+		</tr>
+		<tr class="mwp-not-generate-row">
 			<td><?php esc_html_e( 'Remote Host', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_remote_host(); ?></td>
-					</tr>
-					<tr class="mwp-not-generate-row">
+		</tr>
+		<tr class="mwp-not-generate-row">
 			<td><?php esc_html_e( 'Remote Port', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_remote_port(); ?></td>
-					</tr>
-					<?php
+		</tr>
+		<?php
 	}
 
 	/**
@@ -822,7 +822,7 @@ class MainWP_Server_Information {
 		?>
 		<tr>
 			<td><?php esc_html_e( 'MainWP Dashboard Version', 'mainwp' ); ?></td>
-			<td><?php echo 'Latest: ' . MainWP_Server_Information_Handler::get_mainwp_version(); ?> | <?php echo 'Detected: ' . MainWP_Server_Information_Handler::get_current_version(); ?> <?php echo self::get_mainwp_version_check(); ?></td>
+			<td><?php echo 'Latest: ' . MainWP_Server_Information_Handler::get_mainwp_version(); ?> | <?php echo 'Detected: ' . MainWP_Server_Information_Handler::get_current_version(); ?> <?php echo self::get_mainwp_version_check(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 		</tr>
 		<?php
 		self::check_directory_mainwp_directory();
@@ -1044,6 +1044,7 @@ class MainWP_Server_Information {
 						$last_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( get_option( $hook[0] ) ) );
 					}
 
+					// phpcs:disable WordPress.Security.EscapeOutput
 					?>
 					<tr>
 						<td><?php echo $cron_job; ?></td>
@@ -1053,6 +1054,7 @@ class MainWP_Server_Information {
 						<td><?php echo ! empty( $next_run ) ? esc_html( $next_run ) : ''; ?></td>
 					</tr>
 					<?php
+					// phpcs:enable WordPress.Security.EscapeOutput
 				}
 				/**
 				 * Action: mainwp_cron_jobs_list
@@ -1198,14 +1200,14 @@ class MainWP_Server_Information {
 		?>
 		<tr>
 			<td><?php echo esc_html( $config ); ?></td>
-			<td><?php echo esc_html( $compare ); ?><?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? $version['version'] : $version ) ) . ' ' . $extraText; ?></td>
+			<td><?php echo esc_html( $compare ); ?><?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html(  $version ) ) ) . ' ' . $extraText; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			<td><?php echo( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
 			<?php if ( 'filesize' === $whatType ) { ?>
 				<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			<?php } elseif ( 'get_curl_ssl_version' === $getter ) { ?>
 				<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			<?php } elseif ( ( 'get_max_input_time' === $getter || 'get_max_execution_time' === $getter ) && -1 == $currentVersion ) { ?>
-				<td class="right aligned"><?php echo self::get_pass_html(); ?></td>
+				<td class="right aligned"><?php echo self::get_pass_html(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			<?php } else { ?>
 				<td class="right aligned"><?php echo ( version_compare( $currentVersion, $version, $compare ) || ( ( null != $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 		<?php } ?>
@@ -1235,14 +1237,14 @@ class MainWP_Server_Information {
 		?>
 		<tr>
 			<td><?php echo esc_html( $config ); ?></td>
-			<td><?php echo esc_html( $compare ); ?>  <?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? $version['version'] : $version ) ) . ' ' . $extraText; ?></td>
-			<td><?php echo ( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
+			<td><?php echo esc_html( $compare ); ?>  <?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html( $version ) ) ) . ' ' . $extraText; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+			<td><?php echo ( true === $currentVersion ? 'true' : $currentVersion ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			<?php if ( 'filesize' === $whatType ) { ?>
 			<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			<?php } elseif ( 'get_curl_ssl_version' === $getter ) { ?>
 			<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			<?php } elseif ( 'get_max_input_time' === $getter && -1 == $currentVersion ) { ?>
-			<td class="right aligned"><?php echo self::get_pass_html(); ?></td>
+			<td class="right aligned"><?php echo self::get_pass_html(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			<?php } else { ?>
 			<td class="right aligned"><?php echo( version_compare( $currentVersion, $version, $compare ) || ( ( null != $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			<?php } ?>
@@ -1410,7 +1412,7 @@ class MainWP_Server_Information {
 			$error = esc_html( $line['error'] );
 			$time  = esc_html( $line['time'] );
 			if ( ! empty( $error ) ) {
-				echo "<tr><td>{$time}</td><td>{$error}</td></tr>";
+				echo "<tr><td>{$time}</td><td>{$error}</td></tr>"; // phpcs:ignore WordPress.Security.EscapeOutput
 			}
 		}
 	}
@@ -1489,8 +1491,8 @@ class MainWP_Server_Information {
 	public static function render_action_logs() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		self::render_header( 'ActionLogs' );
 
-		if ( isset( $_REQUEST['actionlogs_status'] ) ) {
-			$act_log  = isset( $_REQUEST['actionlogs_status'] ) ? $_REQUEST['actionlogs_status'] : MainWP_Logger::DISABLED;
+		if ( isset( $_REQUEST['actionlogs_status'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$act_log  = isset( $_REQUEST['actionlogs_status'] ) ? $_REQUEST['actionlogs_status'] : MainWP_Logger::DISABLED; // phpcs:ignore WordPress.Security.NonceVerification
 			$spec_log = 0;
 			if ( is_string( $act_log ) && false !== strpos( $act_log, 'specific_' ) ) {
 				$act_log  = str_replace( 'specific_', '', $act_log );
@@ -1510,7 +1512,7 @@ class MainWP_Server_Information {
 			MainWP_Utility::update_option( 'mainwp_actionlogs', $act_log );
 		}
 
-		if ( isset( $_REQUEST['actionlogs_clear'] ) ) {
+		if ( isset( $_REQUEST['actionlogs_clear'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$log_to_db = apply_filters( 'mainwp_logger_to_db', true );
 			if ( $log_to_db ) {
 				MainWP_Logger::instance()->clear_log_db();
@@ -1533,6 +1535,7 @@ class MainWP_Server_Information {
 				<div class="column">
 				<form method="POST" action="">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+					<?php // phpcs:disable WordPress.Security.EscapeOutput ?>
 						<select name="actionlogs_status" class="ui mini dropdown">
 						<option value="<?php echo MainWP_Logger::DISABLED; ?>" <?php echo ( MainWP_Logger::DISABLED == $enabled ? 'selected' : '' ); ?>>
 							<?php esc_html_e( 'Disabled', 'mainwp' ); ?>
@@ -1547,6 +1550,7 @@ class MainWP_Server_Information {
 							<?php esc_html_e( 'Debug', 'mainwp' ); ?>
 						</option>
 						<?php
+						// phpcs:enable WordPress.Security.EscapeOutput
 						if ( is_array( $specific_logs ) && ! empty( $specific_logs ) ) {
 							foreach ( $specific_logs as $spec_log => $spec_title ) {
 								?>
@@ -1658,7 +1662,7 @@ class MainWP_Server_Information {
 						</div>
 					</div>
 					<div class="ui divider"></div>
-					<a href="<?php echo get_site_url() . '/wp-content/plugins/mainwp/privacy-policy.txt'; ?>" class="ui green basic button" target="_blank"><?php echo esc_html__( 'Download MainWP Dashboard Privacy Policy', 'mainwp' ); ?></a> <a href="<?php echo get_site_url() . '/wp-content/plugins/mainwp/mainwp-child-privacy-policy.txt'; ?>" class="ui green basic button" target="_blank"><?php echo esc_html__( 'Download MainWP Child Privacy Policy', 'mainwp' ); ?></a>
+					<a href="<?php echo esc_url( get_site_url() ) . '/wp-content/plugins/mainwp/privacy-policy.txt'; ?>" class="ui green basic button" target="_blank"><?php echo esc_html__( 'Download MainWP Dashboard Privacy Policy', 'mainwp' ); ?></a> <a href="<?php echo esc_url( get_site_url() ) . '/wp-content/plugins/mainwp/mainwp-child-privacy-policy.txt'; ?>" class="ui green basic button" target="_blank"><?php echo esc_html__( 'Download MainWP Child Privacy Policy', 'mainwp' ); ?></a>
 		</div>
 
 		<?php
@@ -1731,7 +1735,7 @@ class MainWP_Server_Information {
 			sort( $arr );
 			$_count = count( $arr );
 			for ( $i = 0; $i < $_count; $i ++ ) {
-				echo $arr[ $i ] . ', ';
+				echo esc_html( $arr[ $i ] ) . ', ';
 			}
 		} else {
 			esc_html_e( 'No functions disabled.', 'mainwp' );
@@ -1748,7 +1752,7 @@ class MainWP_Server_Information {
 	public static function display_mainwp_options() {
 		$options = MainWP_Server_Information_Handler::mainwp_options();
 		foreach ( $options as $option ) {
-			echo '<tr><td>' . $option['label'] . '</td><td>' . $option['value'] . '</td></tr>';
+			echo '<tr><td>' . $option['label'] . '</td><td>' . $option['value'] . '</td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput
 		}
 	}
 

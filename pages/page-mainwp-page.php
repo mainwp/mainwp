@@ -136,7 +136,7 @@ class MainWP_Page {
 	 */
 	public static function on_load_add_edit() {
 
-		if ( isset( $_GET['page'] ) && 'PageBulkAdd' == $_GET['page'] ) {
+		if ( isset( $_GET['page'] ) && 'PageBulkAdd' == $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 
 			/**
 			 * MainWP default post to edit.
@@ -149,7 +149,7 @@ class MainWP_Page {
 			$_mainwp_default_post_to_edit = get_default_post_to_edit( $post_type, true );
 			$post_id                      = $_mainwp_default_post_to_edit ? $_mainwp_default_post_to_edit->ID : 0;
 		} else {
-			$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0;
+			$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		}
 
 		if ( ! $post_id ) {
@@ -305,7 +305,7 @@ class MainWP_Page {
 		global $current_screen;
 
 		?>
-		<script type="text/javascript"> pagenow = '<?php echo strtolower( $current_screen->id ); ?>';</script>
+		<script type="text/javascript"> pagenow = '<?php echo esc_js( strtolower( $current_screen->id ) ); ?>';</script>
 		<?php
 	}
 
@@ -335,7 +335,7 @@ class MainWP_Page {
 	 * Render screen options modal bottom.
 	 */
 	public static function hook_screen_options_modal_bottom() {
-		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
+		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( 'PageBulkManage' == $page ) {
 
 			$show_columns = get_user_option( 'mainwp_managepages_show_columns' );
@@ -725,7 +725,7 @@ class MainWP_Page {
 			</div>
 			<div class="field">
 				<label><?php esc_html_e( 'Max pages to return', 'mainwp' ); ?></label>
-				<input type="text" name="mainwp_maximumPages"  id="mainwp_maximumPages" value="<?php echo( ( false === get_option( 'mainwp_maximumPages' ) ) ? 50 : get_option( 'mainwp_maximumPages' ) ); ?>"/>
+				<input type="text" name="mainwp_maximumPages"  id="mainwp_maximumPages" value="<?php echo( ( false === get_option( 'mainwp_maximumPages' ) ) ? 50 : esc_attr( get_option( 'mainwp_maximumPages' ) ) ); ?>"/>
 			</div>
 		</div>
 		<?php
@@ -1113,7 +1113,7 @@ class MainWP_Page {
 						<strong>
 							<abbr title="<?php echo esc_html( $page['title'] ); ?>">
 								<?php if ( 'trash' != $page['status'] ) { ?>
-									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $page['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" title="Edit '<?php echo esc_html( $page['title'] ); ?>'?"><?php echo esc_html( $page['title'] ); ?></a>
+									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?post=' . $page['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" title="Edit '<?php echo esc_html( $page['title'] ); ?>'?"><?php echo esc_html( $page['title'] ); ?></a>
 								<?php } else { ?>
 									<?php echo esc_html( $page['title'] ); ?>
 								<?php } ?>
@@ -1134,7 +1134,7 @@ class MainWP_Page {
 					<td class="date" data-order="<?php echo esc_attr( $raw_dts ); ?>">
 						<abbr raw_value="<?php echo esc_attr( $raw_dts ); ?>" title="<?php echo esc_attr( $page['dts'] ); ?>"><?php echo esc_html( $page['dts'] ); ?></abbr>
 					</td>
-					<td class="status column-status <?php echo 'trash' == $page['status'] ? 'post-trash' : ''; ?>"><?php echo self::get_status( $page['status'] ); ?>
+					<td class="status column-status <?php echo 'trash' == $page['status'] ? 'post-trash' : ''; ?>"><?php echo esc_html( self::get_status( $page['status'] ) ); ?>
 					</td>
 					<?php
 					if ( MainWP_Utility::enabled_wp_seo() ) {
@@ -1150,10 +1150,10 @@ class MainWP_Page {
 							$readability_score = MainWP_Utility::esc_content( $seo_data['readability_score'], 'mixed' );
 						}
 						?>
-						<td class="column-seo-links"><abbr raw_value="<?php echo null !== $count_seo_links ? $count_seo_links : -1; ?>" title=""><?php echo null !== $count_seo_links ? $count_seo_links : ''; ?></abbr></td>
-						<td class="column-seo-linked"><abbr raw_value="<?php echo null !== $count_seo_linked ? $count_seo_linked : -1; ?>" title=""><?php echo null !== $count_seo_linked ? $count_seo_linked : ''; ?></abbr></td>
-						<td class="column-seo-score"><abbr raw_value="<?php echo $seo_score ? 1 : 0; ?>" title=""><?php echo $seo_score; ?></abbr></td>
-						<td class="column-seo-readability"><abbr raw_value="<?php echo $readability_score ? 1 : 0; ?>" title=""><?php echo $readability_score; ?></abbr></td>
+						<td class="column-seo-links"><abbr raw_value="<?php echo null !== $count_seo_links ? $count_seo_links : -1; ?>" title=""><?php echo null !== $count_seo_links ? $count_seo_links : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?></abbr></td>
+						<td class="column-seo-linked"><abbr raw_value="<?php echo null !== $count_seo_linked ? $count_seo_linked : -1; ?>" title=""><?php echo null !== $count_seo_linked ? $count_seo_linked : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?></abbr></td>
+						<td class="column-seo-score"><abbr raw_value="<?php echo $seo_score ? 1 : 0; ?>" title=""><?php echo $seo_score; // phpcs:ignore WordPress.Security.EscapeOutput ?></abbr></td>
+						<td class="column-seo-readability"><abbr raw_value="<?php echo $readability_score ? 1 : 0; ?>" title=""><?php echo $readability_score; // phpcs:ignore WordPress.Security.EscapeOutput ?></abbr></td>
 						<?php
 					};
 					?>
@@ -1206,7 +1206,7 @@ class MainWP_Page {
 				</tr>
 				<?php
 				$newOutput = ob_get_clean();
-				echo $newOutput;
+				echo $newOutput; // phpcs:ignore WordPress.Security.EscapeOutput
 				MainWP_Cache::add_body( 'Page', $newOutput );
 				$output->pages++;
 			}
@@ -1315,7 +1315,7 @@ class MainWP_Page {
 			return;
 		}
 
-		$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0;
+		$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		self::render_addedit( $post_id, 'BulkEdit' );
 	}
 
@@ -1356,7 +1356,7 @@ class MainWP_Page {
 	 */
 	public static function posting() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		$succes_message = '';
-		$post_id        = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
+		$post_id        = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		$edit_id        = 0;
 		if ( $post_id ) {
 			$edit_id = get_post_meta( $post_id, '_mainwp_edit_post_id', true );
@@ -1613,7 +1613,7 @@ class MainWP_Page {
 							<div class="ui relaxed list">
 								<?php foreach ( $dbwebsites as $website ) { ?>
 									<div class="item"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
-										: <?php echo ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '"  class="mainwp-may-hide-referrer" target="_blank">View Page</a>' : 'ERROR: ' . $output->errors[ $website->id ] ); ?>
+										: <?php echo ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '"  class="mainwp-may-hide-referrer" target="_blank">View Page</a>' : 'ERROR: ' . $output->errors[ $website->id ] ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 									</div>
 								<?php } ?>
 							</div>
@@ -1676,7 +1676,7 @@ class MainWP_Page {
 	 * @return void Help section html.
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && ( 'PageBulkManage' == $_GET['page'] || 'PageBulkAdd' == $_GET['page'] ) ) {
+		if ( isset( $_GET['page'] ) && ( 'PageBulkManage' == $_GET['page'] || 'PageBulkAdd' == $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			?>
 			<p><?php esc_html_e( 'If you need help with managing pages, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">

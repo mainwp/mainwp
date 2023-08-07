@@ -36,12 +36,14 @@ class MainWP_Post_Page_Handler {
 	public static function add_meta( $post_ID ) {
 		$post_ID = (int) $post_ID;
 
+		// phpcs:disable WordPress.Security.NonceVerification
 		$metakeyselect = isset( $_POST['metakeyselect'] ) ? sanitize_text_field( wp_unslash( $_POST['metakeyselect'] ) ) : '';
 		$metakeyinput  = isset( $_POST['metakeyinput'] ) ? sanitize_text_field( wp_unslash( $_POST['metakeyinput'] ) ) : '';
 		$metavalue     = isset( $_POST['metavalue'] ) ? sanitize_text_field( wp_unslash( $_POST['metavalue'] ) ) : '';
 		if ( is_string( $metavalue ) ) {
 			$metavalue = trim( $metavalue );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		if ( ( ( '#NONE#' !== $metakeyselect ) && ! empty( $metakeyselect ) ) || ! empty( $metakeyinput ) ) {
 			if ( '#NONE#' !== $metakeyselect ) {
@@ -163,6 +165,7 @@ class MainWP_Post_Page_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public static function get_categories() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+		// phpcs:disable WordPress.Security.NonceVerification
 		$websites = array();
 		if ( isset( $_REQUEST['sites'] ) && ( '' !== $_REQUEST['sites'] ) ) {
 			$siteIds          = explode( ',', wp_unslash( urldecode( $_REQUEST['sites'] ) ) ); // do not sanitize encoded values.
@@ -244,6 +247,7 @@ class MainWP_Post_Page_Handler {
 			}
 		}
 		die();
+		// phpcs:enable WordPress.Security.NonceVerification
 	}
 
 	/**
@@ -252,7 +256,7 @@ class MainWP_Post_Page_Handler {
 	 * Create bulk posts on sites.
 	 */
 	public static function posting_bulk() {
-		$p_id               = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false;
+		$p_id               = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 		$posting_bulk_sites = apply_filters( 'mainwp_posts_posting_bulk_sites', false );
 		?>
 		<input type="hidden" name="bulk_posting_id" id="bulk_posting_id" value="<?php echo intval( $p_id ); ?>"/>						
@@ -405,7 +409,7 @@ class MainWP_Post_Page_Handler {
 	 */
 	public static function ajax_posting_posts() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_post_postingbulk' );
-		$post_id = isset( $_POST['post_id'] ) && $_POST['post_id'] ? intval( $_POST['post_id'] ) : false;
+		$post_id = isset( $_POST['post_id'] ) && $_POST['post_id'] ? intval( $_POST['post_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( $post_id ) {
 			self::posting_posts( $post_id, 'ajax_posting' );
 		}
@@ -419,7 +423,7 @@ class MainWP_Post_Page_Handler {
 	 */
 	public static function ajax_get_sites_of_groups() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_get_sites_of_groups' );
-		$groups   = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
+		$groups   = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		$websites = MainWP_DB::instance()->get_websites_by_group_ids( $groups );
 		$site_Ids = array();
 		if ( $websites ) {
@@ -470,7 +474,7 @@ class MainWP_Post_Page_Handler {
 				$selected_clients = get_post_meta( $id, '_selected_clients', true );
 				$selected_by      = apply_filters( 'mainwp_posting_post_selected_by', $selected_by, $id );
 			} elseif ( 'ajax_posting' == $what ) {
-				$site_id = $_POST['site_id'] ? $_POST['site_id'] : 0;
+				$site_id = $_POST['site_id'] ? $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
 				if ( $site_id ) {
 					$selected_sites = array( $site_id );
 				}
@@ -724,7 +728,7 @@ class MainWP_Post_Page_Handler {
 								echo esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>';
 								$posting_succeed = true;
 							} else {
-								echo $output->errors[ $website->id ];
+								echo $output->errors[ $website->id ]; // phpcs:ignore WordPress.Security.NonceVerification
 							}
 							?>
 							</div>
@@ -751,10 +755,11 @@ class MainWP_Post_Page_Handler {
 
 				$last_ajax_posting = false;
 				if ( 'ajax_posting' == $what ) {
+					// phpcs:disable WordPress.Security.NonceVerification
 					$total           = isset( $_POST['total'] ) ? intval( $_POST['total'] ) : 0;
 					$count           = isset( $_POST['count'] ) ? intval( $_POST['count'] ) : 0;
 					$delete_bulkpost = isset( $_POST['delete_bulkpost'] ) && ! empty( $_POST['delete_bulkpost'] ) ? true : false;
-
+					// phpcs:enable WordPress.Security.NonceVerification
 					if ( $delete_bulkpost ) {
 						$last_ajax_posting = true;
 					}
@@ -805,11 +810,12 @@ class MainWP_Post_Page_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function get_post() {
+		// phpcs:disable WordPress.Security.NonceVerification
 		$postId        = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
 		$postType      = isset( $_POST['postType'] ) ? sanitize_text_field( wp_unslash( $_POST['postType'] ) ) : '';
 		$websiteId     = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 		$replaceadvImg = isset( $_POST['replace_advance_img'] ) && ! empty( $_POST['replace_advance_img'] ) ? true : true;
-
+		// phpcs:enable WordPress.Security.NonceVerification
 		if ( empty( $postId ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => 'Post ID or site ID not found. Please, reload the page and try again.' ) ) );
 		}
@@ -1221,10 +1227,12 @@ class MainWP_Post_Page_Handler {
 	 */
 	public static function add_sticky_handle( $post_id ) {
 		$_post = get_post( $post_id );
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( 'bulkpost' === $_post->post_type && isset( $_POST['sticky'] ) ) {
 			update_post_meta( $post_id, '_sticky', base64_encode( sanitize_text_field( wp_unslash( $_POST['sticky'] ) ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			return base64_encode( sanitize_text_field( wp_unslash( $_POST['sticky'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 		return $post_id;
 	}
 
@@ -1240,9 +1248,11 @@ class MainWP_Post_Page_Handler {
 	 */
 	public static function add_status_handle( $post_id ) {
 		$_post = get_post( $post_id );
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ( 'bulkpage' == $_post->post_type || 'bulkpost' == $_post->post_type ) && isset( $_POST['mainwp_edit_post_status'] ) ) {
 			update_post_meta( $post_id, '_edit_post_status', sanitize_text_field( wp_unslash( $_POST['mainwp_edit_post_status'] ) ) );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 		return $post_id;
 	}
 

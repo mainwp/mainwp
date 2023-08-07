@@ -1309,7 +1309,7 @@ class MainWP_Post {
 
 					<td class="categories column-categories"><?php echo esc_html( $post['categories'] ); ?></td>
 
-					<td class="tags"><?php echo ( '' === $post['tags'] ? 'No Tags' : esc_html( $post['tags'] ) ); ?></td>
+					<td class="tags"><?php echo esc_html( '' === $post['tags'] ? 'No Tags' : $post['tags'] ); ?></td>
 
 					<?php if ( is_plugin_active( 'mainwp-custom-post-types/mainwp-custom-post-types.php' ) ) : ?>
 						<td class="post-type column-post-type"><?php echo esc_html( $post['post_type'] ); ?></td>

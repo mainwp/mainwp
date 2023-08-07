@@ -1064,7 +1064,7 @@ class MainWP_Manage_Sites {
 
 		MainWP_System_Utility::set_current_wpid( $website->id );
 
-		// phpcs:disable WordPress.Security.EscapeOutput
+		// phpcs:disable WordPress.Security.NonceVerification
 		$edit       = false;
 		$email_type = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : false;
 
@@ -1074,7 +1074,7 @@ class MainWP_Manage_Sites {
 				$edit = true;
 			}
 		}
-		// phpcs:enable WordPress.Security.EscapeOutput
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		self::render_header( 'ManageSitesEmailSettings' );
 		if ( $edit ) {

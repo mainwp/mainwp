@@ -322,6 +322,34 @@ class MainWP_System_View {
 		self::check_rating_notice( $current_options );
 
 		self::render_wp_mail_warning();
+
+		self::render_browser_extensions_notice();
+	}
+
+	/**
+	 * Renders Browsers extensions notice.
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
+	 */
+	public static function render_browser_extensions_notice() {
+		if ( MainWP_DB::instance()->get_websites_count() > 4 ) {
+			if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_browser_extensions_notice' ) ) {
+				?>
+				<div class="ui info message" style="margin-bottom: 0; border-radius: 0;">
+					<h3><?php esc_html_e( 'Track Updates and Non-MainWP Changes from Your Browser!', 'mainwp' ); ?></h3>
+					<div><?php esc_html_e( 'The MainWP Browser Extension helps you easily track available updates across all your connected Child Sites, including changes to your plugins and themes status made outside your MainWP Dashboard.', 'mainwp' ); ?></div>
+					<div><?php esc_html_e( 'The extension quickly connects to your MainWP Dashboard via MainWP REST API, eliminating the need to log in to your MainWP Dashboard repeatedly to check available updates and non-MainWP changes.', 'mainwp' ); ?></div>
+					<br/>
+					<div>
+						<a href="https://chrome.google.com/webstore/detail/mainwp-browser-extension/kjlehednpnfgplekjminjpocdechbnge" target="_blank" class="ui green tiny button"><i class="chrome icon"></i> <?php echo esc_html__( 'Get Chrome Extension', 'mainwp' ); ?></a>
+						<a href="https://addons.mozilla.org/en-US/firefox/addon/mainwp-browser-extension/" target="_blank" class="ui green tiny button"><i class="firefox icon"></i> <?php echo esc_html__( 'Get Firefox Extension', 'mainwp' ); ?></a>
+						<a href="https://mainwp.com/mainwp-browser-extension/" target="_blank" class="ui tiny button"><?php echo esc_html__( 'Read More', 'mainwp' ); ?></a>
+					</div>
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp_browser_extensions_notice"></i>
+				</div>
+				<?php
+			}
+		}
 	}
 
 	/**

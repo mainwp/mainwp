@@ -25,6 +25,13 @@ class MainWP_Client_Overview_Sites {
 	public $items;
 
 	/**
+	 * Public variable to hold Total Items information.
+	 *
+	 * @var array
+	 */
+	public $total_items;
+
+	/**
 	 * Protected variable to hold columns headers
 	 *
 	 * @var array

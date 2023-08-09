@@ -676,7 +676,3 @@ mainwp_guidedtours_onchange = function (me) {
         window.location.href = location.href;
     });
 }
-
-
-
-

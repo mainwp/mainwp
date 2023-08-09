@@ -53,14 +53,13 @@
     padding: 10px;
 }
 
-.mainwp-ui .button {
+.mainwp-ui .ui.button {
     height: auto !important;
     margin: 0 !important;
-
     overflow: hidden;
     white-space: nowrap;
-
     text-overflow: ellipsis;
+    vertical-align: bottom !important;
 }
 
 .mainwp-ui .ui.styled.accordion {
@@ -114,10 +113,6 @@
     padding: 10px;
     background: #fff;
     border-bottom: 1px solid #dadada;
-}
-
-#mainwp-top-header .mainwp-page-title {
-    margin-top: 8px;
 }
 
 #mainwp-top-header .ui.menu {

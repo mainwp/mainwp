@@ -1473,8 +1473,10 @@ class MainWP_Client {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Client photo', 'mainwp' ); ?></label>
 							<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Upload a client photo.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+								<div class="ui file fluid input">
 								<input type="file" name="mainwp_client_image_uploader[client_field]" accept="image/*" data-inverted="" data-tooltip="<?php esc_attr_e( "Image must be 500KB maximum. It will be cropped to 310px wide and 70px tall. For best results  us an image of this site. Allowed formats: jpeg, gif and png. Note that animated gifs aren't going to be preserved.", 'mainwp' ); ?>" />
 							</div>
+						</div>
 						</div>
 						<?php if ( ! empty( $client_image ) ) : ?>
 						<div class="ui grid field">
@@ -1647,7 +1649,9 @@ class MainWP_Client {
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Contact photo', 'mainwp' ); ?></label>
 						<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Upload a client photo.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<div class="ui file fluid  input">
 							<input type="file" name="mainwp_client_image_uploader[<?php echo esc_html( $input_name ); ?>][]" accept="image/*" data-inverted="" data-tooltip="<?php esc_attr_e( "Image must be 500KB maximum. It will be cropped to 310px wide and 70px tall. For best results  us an image of this site. Allowed formats: jpeg, gif and png. Note that animated gifs aren't going to be preserved.", 'mainwp' ); ?>" />
+							</div>
 						</div>
 					</div>
 

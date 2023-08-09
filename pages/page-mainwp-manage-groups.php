@@ -344,31 +344,27 @@ class MainWP_Manage_Groups {
 					responsive = false;
 				}
 				jQuery( document ).ready( function() {
-
-					jQuery( '// mainwp-manage-groups-sites-table' ).dataTable( {
+					jQuery( '#mainwp-manage-groups-sites-table' ).dataTable( {
 																						'searching' : true,
 																						'responsive' : responsive,
 																						'colReorder' : true,
 																						'stateSave':  true,
 																						'paging': false,
 																						'info': true,
-																						'order': array(),
+						'order': '[ [ 1, "asc" ] ]',
 																						'scrollX' : false,
-																						'columnDefs': array(
-																							{
-																							'targets' : 'no-sort',
-																							'orderable': false
-																							},
-																						),
+						'columnDefs': [ {
+							"targets": 'no-sort',
+							"orderable": false
+						} ],
 																						'preDrawCallback': function( settings ) {
-																							jQuery( '#mainwp-manage-groups-sites-table .ui.checkbox' ) . checkbox();
+							jQuery( '#mainwp-manage-groups-sites-table .ui.checkbox' ).checkbox();
 																						}
 		} );
 	} );
-				< / script >
-			< / div >
-			< ? php MainWP_UI::render_modal_edit_notes();
-	?>
+				</script>
+			</div>
+			<?php MainWP_UI::render_modal_edit_notes(); ?>
 			<div class="ui mini modal" id="mainwp-create-group-modal">
 				<div class="header"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></div>
 				<div class="content">

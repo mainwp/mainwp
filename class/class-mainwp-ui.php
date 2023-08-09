@@ -882,24 +882,15 @@ class MainWP_UI {
 			 * @since 4.0
 			 */
 			do_action( 'mainwp_before_header', $websites );
-
-			$algo = get_option( 'mainwp_connect_signature_algo', false );
-			if ( false == $algo ) {
-				$algo = defined( 'OPENSSL_ALGO_SHA256' ) ? 7 : 1;
-			} else {
-				$algo = intval( $algo );
-			}
-			$sign_algs = MainWP_System_Utility::get_open_ssl_sign_algos();
 			?>
 			<div id="mainwp-top-header" class="">
-				<div class="ui grid">
-
-					<div class="five wide middle aligned column">
-						<h4 class="mainwp-page-title" style="margin-bottom:0px;margin-top:0px;"><?php echo $left; // phpcs:ignore WordPress.Security.EscapeOutput ?></h4>
-						<span class="ui mini label">BETA INFO: Signature Algorithm - <?php echo esc_html( $sign_algs[ $algo ] ); ?></span>
+				<div class="ui middle aligned grid">
+					<div class="five wide column">
+						<h4 class="mainwp-page-title">
+							<?php echo $left; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+						</h4>
 					</div>
-
-					<div class="two wide column middle aligned right aligned">
+					<div class="two wide right aligned column">
 						<?php if ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
 						<select class="ui mini selection fluid dropdown" id="mainwp-jump-to-site-overview-dropdown">
 							<?php $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() ); ?>
@@ -1204,7 +1195,7 @@ class MainWP_UI {
 				?>
 				<a href="#" class="mainwp-updates-overview-reconnect-site ui green button" siteid="<?php echo intval( $website->id ); ?>" data-position="bottom right" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></a>
 			<?php else : ?>
-				<button class="ui button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?>" id="mainwp-sync-sites" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>">
+				<a class="ui button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?>" id="mainwp-sync-sites" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>">
 					<i class="sync icon mainwp-sync-button-icon"></i>
 					<span class="mainwp-sync-button-text">
 					<?php
@@ -1218,12 +1209,12 @@ class MainWP_UI {
 					echo esc_html( apply_filters( 'mainwp_site_sync_button_text', esc_html__( 'Sync Site', 'mainwp' ) ) );
 					?>
 					</span>
-				</button>
+				</a>
 				<?php
 			endif;
 		else :
 			?>
-			<button class="ui button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?> " id="mainwp-sync-sites" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>">
+			<a class="ui button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?> " id="mainwp-sync-sites" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>">
 				<i class="sync icon mainwp-sync-button-icon"></i>
 				<span class="mainwp-sync-button-text">
 			<?php
@@ -1237,7 +1228,7 @@ class MainWP_UI {
 			echo esc_html( apply_filters( 'mainwp_main_sync_button_text', esc_html__( 'Sync Dashboard with Sites', 'mainwp' ) ) );
 			?>
 				</span>
-		</button>
+			</a>
 			<?php
 		endif;
 		?>
@@ -1270,6 +1261,7 @@ class MainWP_UI {
 				</div>
 			</div>
 		</div>		
+
 		<?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) || isset( $_GET['cacheControlId'] ) ) : ?>
 			<?php if ( isset( $_GET['dashboard'] ) ) : ?>
 				<?php $website_id = intval( $_GET['dashboard'] ); ?>

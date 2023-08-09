@@ -190,6 +190,11 @@
   color: #ffffff !important;
 }
 
+.mainwp-ui.mainwp-custom-theme .ui.multiple.selection.dropdown a.label,
+.mainwp-ui.mainwp-custom-theme .ui.multiple.selection.dropdown .icon {
+  color: var( --font-color ) !important;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.label:not(.tag, .transition) .icon {
   color: #ffffff !important;
 }

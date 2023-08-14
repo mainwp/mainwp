@@ -1283,7 +1283,7 @@ class MainWP_Utility {
 		return false;
 	}
 
-	
+
 	/**
 	 * Find for multi keywords.
 	 *

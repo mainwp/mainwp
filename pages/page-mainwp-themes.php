@@ -694,17 +694,17 @@ class MainWP_Themes {
 	public static function render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients = '' ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Themes' );
 
-		$output                      = new \stdClass();
-		$output->errors              = array();
-		$output->themes              = array();
+		$output                   = new \stdClass();
+		$output->errors           = array();
+		$output->themes           = array();
 		$output->themes_installed = array();
-		$output->status              = $status;
+		$output->status           = $status;
 
 		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 		$data_fields[] = 'themes';
 
 		if ( 1 == get_option( 'mainwp_optimize' ) ) {
-			
+
 			$keyword   = trim( $keyword );
 			$multi_kws = explode( ',', $keyword );
 			$multi_kws = array_filter( array_map( 'trim', $multi_kws ) );
@@ -743,17 +743,16 @@ class MainWP_Themes {
 							$_count_installed++;
 						}
 						if ( 0 === $_count_installed ) {
-							if( 'not_installed' === $status ){
+							if ( 'not_installed' === $status ) {
 								for ( $i = 0; $i < $_count; $i ++ ) {
-									$theme = $allThemes[ $i ];
-									$theme['websiteid']   = $website->id;
-									$theme['websiteurl']  = $website->url;
-									$theme['websitename'] = $website->name;
+									$theme                      = $allThemes[ $i ];
+									$theme['websiteid']         = $website->id;
+									$theme['websiteurl']        = $website->url;
+									$theme['websitename']       = $website->name;
 									$output->themes_installed[] = $theme;
 								}
 							}
 						}
-
 					}
 				}
 			}
@@ -796,12 +795,12 @@ class MainWP_Themes {
 								$_count_installed++;
 							}
 							if ( 0 === $_count_installed ) {
-								if( 'not_installed' === $status ){
+								if ( 'not_installed' === $status ) {
 									for ( $i = 0; $i < $_count; $i ++ ) {
-										$theme = $allThemes[ $i ];
-										$theme['websiteid']   = $website->id;
-										$theme['websiteurl']  = $website->url;
-										$theme['websitename'] = $website->name;
+										$theme                      = $allThemes[ $i ];
+										$theme['websiteid']         = $website->id;
+										$theme['websiteurl']        = $website->url;
+										$theme['websitename']       = $website->name;
 										$output->themes_installed[] = $theme;
 									}
 								}
@@ -854,12 +853,12 @@ class MainWP_Themes {
 							$_count_installed++;
 						}
 						if ( 0 === $_count_installed ) {
-							if( 'not_installed' === $status ){
+							if ( 'not_installed' === $status ) {
 								for ( $i = 0; $i < $_count; $i ++ ) {
-									$theme = $allThemes[ $i ];
-									$theme['websiteid']   = $website->id;
-									$theme['websiteurl']  = $website->url;
-									$theme['websitename'] = $website->name;
+									$theme                      = $allThemes[ $i ];
+									$theme['websiteid']         = $website->id;
+									$theme['websiteurl']        = $website->url;
+									$theme['websitename']       = $website->name;
 									$output->themes_installed[] = $theme;
 								}
 							}
@@ -935,7 +934,7 @@ class MainWP_Themes {
 				$post_data['filter'] = false;
 			}
 
-			if( 'not_installed' === $status ){
+			if ( 'not_installed' === $status ) {
 				$post_data['not_installed'] = true;
 			}
 
@@ -978,7 +977,7 @@ class MainWP_Themes {
 				<?php
 			} else {
 				$themes_list = $output->themes_installed;
-				$view_mode = MAINWP_VIEW_PER_SITE;			
+				$view_mode   = MAINWP_VIEW_PER_SITE;
 			}
 		} elseif ( 0 == count( $output->themes ) ) {
 			?>
@@ -987,7 +986,7 @@ class MainWP_Themes {
 		} else {
 			$themes_list = $output->themes;
 		}
-		
+
 		$sites             = array();
 		$siteThemes        = array();
 		$themes            = array();
@@ -995,7 +994,7 @@ class MainWP_Themes {
 		$themesRealVersion = array();
 		$themesSlug        = array();
 
-		if( ! empty( $themes_list )){
+		if ( ! empty( $themes_list ) ) {
 
 			foreach ( $themes_list as $theme ) {
 				$slug_ver            = esc_html( $theme['name'] . '_' . $theme['version'] );
@@ -1031,9 +1030,9 @@ class MainWP_Themes {
 			}
 			MainWP_UI::render_modal_upload_icon();
 		}
-		
+
 		$newOutput = ob_get_clean();
-		$result = array(
+		$result    = array(
 			'result'       => $newOutput,
 			'bulk_actions' => $bulkActions,
 		);
@@ -2113,11 +2112,11 @@ class MainWP_Themes {
 			$search_theme_status = isset( $_POST['theme_status'] ) ? sanitize_text_field( wp_unslash( $_POST['theme_status'] ) ) : 'all';
 			// phpcs:enable WordPress.Security.NonceVerification
 
-			$output                      = new \stdClass();
-			$output->errors              = array();
-			$output->themes              = array();
+			$output                   = new \stdClass();
+			$output->errors           = array();
+			$output->themes           = array();
 			$output->themes_installed = array();
-			$output->status              = $search_theme_status;
+			$output->status           = $search_theme_status;
 
 			if ( 1 == get_option( 'mainwp_optimize' ) ) {
 				$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );

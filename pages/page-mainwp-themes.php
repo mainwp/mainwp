@@ -379,7 +379,7 @@ class MainWP_Themes {
 
 		$cachedResult = MainWP_Cache::get_cached_result( 'Themes' );
 
-		if ( isset( $_POST['select_mainwp_options_plugintheme_view'] ) ) {
+		if ( isset( $_POST['select_mainwp_options_plugintheme_view'] ) && check_admin_referer( 'mainwp-admin-nonce' ) ) {
 			if ( is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) {
 				unset( $cachedResult['result'] ); // clear cached results.
 			}

@@ -559,7 +559,7 @@ class MainWP_System_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::handle_settings_post()
 	 * @uses \MainWP\Dashboard\MainWP_Settings::handle_settings_post()
 	 */
-	public function handle_settings_post() {
+	public function handle_settings_post() { // phpcs:ignore -- complex method.
 
 		if ( isset( $_GET['page'] ) && ( isset( $_POST['wp_nonce'] ) || isset( $_POST['wp_scr_options_nonce'] ) ) ) {
 			$this->include_pluggable();

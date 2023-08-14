@@ -399,7 +399,7 @@ class MainWP_Plugins {
 		}
 		$cachedResult = MainWP_Cache::get_cached_result( 'Plugins' );
 
-		if ( isset( $_POST['select_mainwp_options_plugintheme_view'] ) ) {
+		if ( isset( $_POST['select_mainwp_options_plugintheme_view'] ) && check_admin_referer( 'mainwp-admin-nonce' ) ) {
 			if ( is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) {
 				unset( $cachedResult['result'] ); // clear cached results.
 			}
@@ -1366,7 +1366,7 @@ class MainWP_Plugins {
 									><label></label>
 								</div>
 								</div>
-								<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></div>
+								<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
 								<div class="three wide middle aligned column"><a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>" target="_blank" ><strong><?php echo esc_html( $plugin_title ); ?></strong></a></div>
 								<div class="one wide center aligned middle aligned column"><?php echo $plugin_status; //phpcs:ignore -- escaped. ?></div>
 								<div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
@@ -1578,7 +1578,7 @@ class MainWP_Plugins {
 						<div class="one wide center aligned middle aligned column">
 							<div class="ui checkbox <?php echo 'mainwp-child' == $plugin_directory ? 'disabled' : ''; ?> master"><input type="checkbox" <?php echo 'mainwp-child' == $plugin_directory ? 'disabled="disabled"' : ''; ?>><label></label></div>
 						</div>
-						<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></div>
+						<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
 						<div class="five wide middle aligned column"><a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>" target="_blank" ><strong><?php echo esc_html( $plugin_title ); ?></strong></a></div>
 						<div class="two wide center aligned middle aligned column"></div>
 						<div class="two wide center aligned middle aligned column lastest-version-info"></div>

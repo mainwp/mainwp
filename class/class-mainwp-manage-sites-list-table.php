@@ -748,11 +748,6 @@ class MainWP_Manage_Sites_List_Table {
 						$where = 'wp.id NOT IN (' . implode( ',', $available_update_ids ) . ') ';
 					}
 				}
-			} elseif ( 'nosslenabled' === $site_status ) {
-				$where = 'wp.nossl = 1';
-				if ( $is_not ) {
-					$where = 'wp.nossl = 0';
-				}
 			} elseif ( 'sitehealthnotgood' === $site_status ) {
 				$where = ' wp_sync.health_status = 1 ';
 				if ( $is_not ) {
@@ -1034,7 +1029,7 @@ class MainWP_Manage_Sites_List_Table {
 								"colReorder" : <?php echo esc_js( $table_features['colReorder'] ); ?>,
 								"stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
 								"stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
-								"order" : <?php echo esc_js( $table_features['order'] ); ?>,
+								"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
 								<?php if ( isset( $table_features['fixedColumns'] ) && '' != $table_features['fixedColumns'] ) : ?>
 								"fixedColumns" : <?php echo esc_js( $table_features['fixedColumns'] ); ?>,
 								<?php endif; ?>
@@ -1120,7 +1115,7 @@ class MainWP_Manage_Sites_List_Table {
 							"scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
 							"stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
 							"stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
-							"order" : <?php echo esc_js( $table_features['order'] ); ?>,
+							"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
 							"fixedColumns" : <?php echo ! empty( $table_features['fixedColumns'] ) ? esc_js( $table_features['fixedColumns'] ) : '""'; ?>,
 							"lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All"] ],
 							serverSide: true,
@@ -1375,11 +1370,10 @@ class MainWP_Manage_Sites_List_Table {
 			foreach ( $this->items as $website ) {
 				$rw_classes    = $this->get_groups_classes( $website );
 				$hasSyncErrors = ( '' !== $website['sync_errors'] );
-				$md5Connection = ( ! $hasSyncErrors && ( 1 == $website['nossl'] ) );
 				$suspendedSite = ( '0' !== $website['suspended'] );
 
 				$rw_classes = trim( $rw_classes );
-				$rw_classes = 'child-site mainwp-child-site-' . intval( $website['id'] ) . ' ' . ( $hasSyncErrors ? 'error' : '' ) . ' ' . ( $md5Connection ? 'warning' : '' ) . ' ' . ( $suspendedSite ? 'suspended' : '' ) . ' ' . $rw_classes;
+				$rw_classes = 'child-site mainwp-child-site-' . intval( $website['id'] ) . ' ' . ( $hasSyncErrors ? 'error' : '' ) . ' ' . ( $suspendedSite ? 'suspended' : '' ) . ' ' . $rw_classes;
 
 				$info_item = array(
 					'rowClass'  => esc_html( $rw_classes ),

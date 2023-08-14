@@ -400,6 +400,11 @@
 
 }
 
+.mainwp-ui table.dataTable tbody tr > .dtfc-fixed-left,
+.mainwp-ui table.dataTable tbody tr > .dtfc-fixed-right {
+    background-color: var( --grey-light ) !important;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.table:not( .day, .hour, .minute ) > thead > tr > th,
 .mainwp-ui.mainwp-custom-theme .ui.table:not( .day, .hour, .minute ) > tfoot > tr > th,
 .mainwp-ui.mainwp-custom-theme .ui.table:not( .day, .hour, .minute ) > tbody > tr > td,

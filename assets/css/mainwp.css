@@ -53,7 +53,7 @@
     padding: 10px;
 }
 
-.mainwp-ui .ui.button {
+.mainwp-ui .ui.button:not(.dropdown) {
     height: auto !important;
     margin: 0 !important;
     overflow: hidden;
@@ -440,13 +440,13 @@
   background-color: rgba(0, 0, 0, 0.6);
 }
 
-.mainwp-ui table.dataTable tbody tr > .dtfc-fixed-left,
-.mainwp-ui table.dataTable tbody tr > .dtfc-fixed-right {
-    background-color: rgba(0, 0, 0, 0.01);
-}
-
 .mainwp-ui table ul.dtr-details {
   width: 100% !important;
+}
+
+.mainwp-ui table.dataTable tbody tr > .dtfc-fixed-left,
+.mainwp-ui table.dataTable tbody tr > .dtfc-fixed-right {
+    background-color: #fff;
 }
 
 /* Manage Sites Table */

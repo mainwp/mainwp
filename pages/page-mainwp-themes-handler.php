@@ -41,14 +41,17 @@ class MainWP_Themes_Handler {
 	 */
 	public static function themes_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
-			$result = $results[1];
-			$themes = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			$result      = $results[1];
+			$result_data = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			unset( $results );
-			if ( isset( $themes['error'] ) ) {
-				$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( $themes['error'], $website->url ) );
-
+			if ( isset( $result_data['error'] ) ) {
+				$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( $result_data['error'], $website->url ) );
 				return;
 			}
+
+			$themes = isset( $result_data['data'] ) && is_array( $result_data['data'] ) ? $result_data['data'] : array();
+
+			$not_found = true;
 			foreach ( $themes as $theme ) {
 				if ( ! isset( $theme['name'] ) ) {
 					continue;
@@ -58,7 +61,24 @@ class MainWP_Themes_Handler {
 				$theme['websitename'] = $website->name;
 
 				$output->themes[] = $theme;
+				$not_found        = false;
 			}
+
+			if ( 'not_installed' === $output->status ) {
+				if ( $not_found ) {
+					$installed = isset( $result_data['installed_themes'] ) && is_array( $result_data['installed_themes'] ) ? $result_data['installed_themes'] : array();
+					foreach ( $installed as $theme ) {
+						if ( ! isset( $theme['name'] ) ) {
+							continue;
+						}
+						$theme['websiteid']         = $website->id;
+						$theme['websiteurl']        = $website->url;
+						$theme['websitename']       = $website->name;
+						$output->themes_installed[] = $theme;
+					}
+				}
+			}
+
 			unset( $themes );
 		} else {
 			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );

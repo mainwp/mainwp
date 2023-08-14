@@ -1227,22 +1227,6 @@ class MainWP_Utility {
 	}
 
 	/**
-	 * Method hook_create_ping_nonce()
-	 *
-	 * Create action nonce for site.
-	 *
-	 * @param bool  $false Boolean value, it should always be FALSE.
-	 * @param mixed $siteid Site ID.
-	 *
-	 * @return string Custom nonce.
-	 */
-	public static function hook_create_ping_nonce( $false, $siteid = false ) {
-		$action = 'pingnonce';
-		return self::create_site_nonce( $action, $siteid );
-	}
-
-
-	/**
 	 * Method hook_verify_ping_nonce()
 	 *
 	 * Verify nonce without session and user id.
@@ -1295,6 +1279,27 @@ class MainWP_Utility {
 		$expected = substr( wp_hash( 'site|' . $siteid . '|' . $action, 'nonce' ), - 12, 10 );
 		if ( hash_equals( $expected, $nonce ) ) {
 			return 1;
+		}
+		return false;
+	}
+
+	
+	/**
+	 * Find for multi keywords.
+	 *
+	 * @param string $name_str string find on.
+	 * @param array  $words Array string input.
+	 * @return bool True|False.
+	 */
+	public static function multi_find_keywords( $name_str, $words = array() ) {
+		if ( ! is_array( $words ) ) {
+			return false;
+		}
+		foreach ( $words as $word ) {
+			if ( stristr( $name_str, $word ) ) {
+				return true;
+
+			}
 		}
 		return false;
 	}

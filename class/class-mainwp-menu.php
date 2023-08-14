@@ -758,26 +758,44 @@ class MainWP_Menu {
 				?>
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {
-				jQuery( '#mainwp-collapse-second-level-navigation' ).on( 'click', function() {
-					if ( jQuery( this ).hasClass( 'collapsed' ) ) {
-						jQuery( '#mainwp-second-level-navigation' ).show();
-						jQuery( '.mainwp-content-wrap' ).css( "margin-left", "272px" );
-						jQuery( '#mainwp-main-navigation-container' ).css( "width", "272px" );
-						jQuery( this ).find( '.icon' ).removeClass( 'right' );
-						jQuery( this ).find( '.icon' ).addClass( 'left' );
-						jQuery( this ).find( '.text' ).html( 'Hide Menu' );
-						jQuery( this ).removeClass( 'collapsed' );
-					} else {
-						jQuery( '#mainwp-second-level-navigation' ).hide();
-						jQuery( '.mainwp-content-wrap' ).css( "margin-left", "72px" );
-						jQuery( '#mainwp-main-navigation-container' ).css( "width", "72px" );
-						jQuery( this ).find( '.icon' ).removeClass( 'left' );
-						jQuery( this ).find( '.icon' ).addClass( 'right' );
-						jQuery( this ).find( '.text' ).html( 'Show Menu' );
-						jQuery( this ).addClass( 'collapsed' );
+
+					mainwp_left_bar_showhide_init = function(){
+						if(jQuery('body').hasClass('toplevel_page_mainwp_tab')){
+							return; // hide always.
+						}
+						var lbar = jQuery( '#mainwp-collapse-second-level-navigation' );
+						var show = ( 0 != mainwp_ui_state_load( 'showmenu' ) ) ? true : false;
+						mainwp_left_bar_showhide( lbar, show);
 					}
-					return false;
-				} );
+					mainwp_left_bar_showhide = function( lbar, show ){
+						if ( show ) {
+							jQuery( '#mainwp-second-level-navigation' ).show();
+							jQuery( '.mainwp-content-wrap' ).css( "margin-left", "272px" );
+							jQuery( '#mainwp-main-navigation-container' ).css( "width", "272px" );
+							jQuery( lbar ).find( '.icon' ).removeClass( 'right' );
+							jQuery( lbar ).find( '.icon' ).addClass( 'left' );
+							jQuery( lbar ).find( '.text' ).html( 'Hide Menu' );
+							jQuery( lbar ).removeClass( 'collapsed' );
+							mainwp_ui_state_save( 'showmenu', 1 );
+						} else {
+							jQuery( '#mainwp-second-level-navigation' ).hide();
+							jQuery( '.mainwp-content-wrap' ).css( "margin-left", "72px" );
+							jQuery( '#mainwp-main-navigation-container' ).css( "width", "72px" );
+							jQuery( lbar ).find( '.icon' ).removeClass( 'left' );
+							jQuery( lbar ).find( '.icon' ).addClass( 'right' );
+							jQuery( lbar ).find( '.text' ).html( 'Show Menu' );
+							jQuery( lbar ).addClass( 'collapsed' );
+							mainwp_ui_state_save( 'showmenu', 0 );
+						}
+					}
+
+					jQuery( '#mainwp-collapse-second-level-navigation' ).on( 'click', function() {
+						var show = jQuery( this ).hasClass( 'collapsed' ) ? true : false;
+						mainwp_left_bar_showhide( this, show);
+						return false;
+					} );
+					mainwp_left_bar_showhide_init();
+
 					// click on menu with-sub icon.
 					jQuery( '#mainwp-main-navigation-container #mainwp-main-menu a.title.with-sub .icon' ).on( "click", function ( event ) {
 						var pr = jQuery( this ).closest( '.item' );

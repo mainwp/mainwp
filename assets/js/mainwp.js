@@ -3702,7 +3702,7 @@ jQuery(document).ready(function () {
   });
 });
 
-jQuery(document).ready(function () {
+jQuery(function () {
   if (jQuery('body.mainwp-ui').length > 0) {
     jQuery('.mainwp-ui-page .ui.dropdown:not(.not-auto-init)').dropdown();
     jQuery('.mainwp-ui-page .ui.checkbox:not(.not-auto-init)').checkbox();

@@ -40,13 +40,17 @@ class MainWP_Plugins_Handler {
 	 */
 	public static function plugins_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
-			$result  = $results[1];
-			$plugins = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			$result      = $results[1];
+			$result_data = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			unset( $results );
-			if ( isset( $plugins['error'] ) ) {
-				$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( $plugins['error'], $website->url ) );
+			if ( isset( $result_data['error'] ) ) {
+				$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( $result_data['error'], $website->url ) );
 				return;
 			}
+
+			$plugins = isset( $result_data['data'] ) && is_array( $result_data['data'] ) ? $result_data['data'] : array();
+
+			$not_found = true;
 
 			foreach ( $plugins as $plugin ) {
 				if ( ! isset( $plugin['name'] ) ) {
@@ -57,6 +61,22 @@ class MainWP_Plugins_Handler {
 				$plugin['websitename'] = $website->name;
 
 				$output->plugins[] = $plugin;
+				$not_found         = false;
+			}
+
+			if ( 'not_installed' === $output->status ) {
+				if ( $not_found ) {
+					$installed = isset( $result_data['installed_plugins'] ) && is_array( $result_data['installed_plugins'] ) ? $result_data['installed_plugins'] : array();
+					foreach ( $installed as $plugin ) {
+						if ( ! isset( $plugin['name'] ) ) {
+							continue;
+						}
+						$plugin['websiteid']         = $website->id;
+						$plugin['websiteurl']        = $website->url;
+						$plugin['websitename']       = $website->name;
+						$output->plugins_installed[] = $plugin;
+					}
+				}
 			}
 
 			unset( $plugins );

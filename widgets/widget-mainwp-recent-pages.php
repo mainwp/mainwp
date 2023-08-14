@@ -279,7 +279,7 @@ class MainWP_Recent_Pages {
 						</div>
 						<?php endif; ?>
 						<div class="two wide column right aligned">
-							<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
+							<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
 							<i class="ellipsis horizontal icon"></i>
 								<div class="menu">
 									<a class="item mainwp-post-unpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
@@ -384,7 +384,7 @@ class MainWP_Recent_Pages {
 							</div>
 							<?php endif; ?>
 							<div class="two wide column right aligned">
-								<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
+								<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
 									<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
 										<a class="item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
@@ -487,7 +487,7 @@ class MainWP_Recent_Pages {
 							</div>
 							<?php endif; ?>
 							<div class="two wide column right aligned">
-								<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
+								<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
 									<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
 										<a class="item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
@@ -590,7 +590,7 @@ class MainWP_Recent_Pages {
 					</div>
 					<?php endif; ?>
 					<div class="two wide column right aligned">
-						<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
+						<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
 							<i class="ellipsis horizontal icon"></i>
 							<div class="menu">
 								<a class="item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
@@ -698,7 +698,7 @@ class MainWP_Recent_Pages {
 						</div>
 					<?php endif; ?>
 						<div class="two wide column right aligned">
-							<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
+							<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 								<div class="menu">
 									<a href="#" class="item mainwp-post-restore"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>

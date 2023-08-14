@@ -579,6 +579,19 @@ class MainWP_System_Handler {
 			}
 		}
 
+		if ( isset( $_POST['select_mainwp_options_plugintheme_view'] ) ) {
+			$this->include_pluggable();
+			if ( check_admin_referer( 'mainwp-admin-nonce' ) ) {
+				$view_per = ( empty( $_POST['select_mainwp_options_plugintheme_view'] ) ? MAINWP_VIEW_PER_PLUGIN_THEME : intval( $_POST['select_mainwp_options_plugintheme_view'] ) );
+				$which    = sanitize_text_field( wp_unslash( $_POST['whichview'] ) );
+				if ( 'plugin' === $which ) {
+					MainWP_Utility::update_user_option( 'mainwp_manage_plugin_view', $view_per );
+				} else {
+					MainWP_Utility::update_user_option( 'mainwp_manage_theme_view', $view_per );
+				}
+			}
+		}
+
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) ) {
 			$this->include_pluggable();
 			if ( wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {

@@ -458,7 +458,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 						"colReorder" : <?php echo esc_js( $table_features['colReorder'] ); ?>,
 						"stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
 						"stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
-						"order" : <?php echo esc_js( $table_features['order'] ); ?>,
+						"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
 						"scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
 						"columnDefs": [
 							{

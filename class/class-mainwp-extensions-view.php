@@ -411,7 +411,7 @@ class MainWP_Extensions_View {
 
 		$queue_status = '';
 		if ( ! $disabled && isset( $extension['apiManager'] ) && $extension['apiManager'] ) {
-			$queue_status = 'status="queue"';
+			$queue_status = 'queue';
 		}
 
 		$all_available_extensions = self::get_available_extensions( 'all' );
@@ -442,7 +442,7 @@ class MainWP_Extensions_View {
 			$new = '<span class="ui floating green mini label">NEW!</span>';
 		}
 		?>
-			<div class="ui card extension <?php echo ( $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension' ); ?> extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" <?php echo esc_html( $queue_status ); ?> license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
+			<div class="ui card extension <?php echo ( $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension' ); ?> extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" status="<?php echo esc_attr( $queue_status ); ?>" license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
 		<?php
 		/**
 		 * Action: mainwp_extension_card_top
@@ -996,6 +996,24 @@ class MainWP_Extensions_View {
 				'integration_url'      => '',
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
+			),
+			'mainwp-fathom-extension'                =>
+			array(
+				'type'                 => 'pro',
+				'slug'                 => 'mainwp-fathom-extension',
+				'title'                => 'MainWP Fathom Extension',
+				'desc'                 => 'MainWP Fathom Extension is an extension for the MainWP plugin that enables you to monitor detailed statistics about your child sites traffic. It integrates seamlessly with your Fathom account.',
+				'link'                 => 'https://mainwp.com/extension/fathom/',
+				'img'                  => $folder_url . 'fathom.png',
+				'product_id'           => 'MainWP Fathom Extension',
+				'product_item_id'      => 0,
+				'catalog_id'           => '1274704',
+				'group'                => array( 'visitor' ),
+				'privacy'              => 1,
+				'integration'          => 'Fathom Analytics API',
+				'integration_url'      => 'https://usefathom.com/',
+				'integration_owner'    => 'Conva Ventures Inc.',
+				'integration_owner_pp' => 'https://usefathom.com/privacy',
 			),
 			'mainwp-file-uploader-extension'         =>
 			array(
@@ -1599,6 +1617,10 @@ class MainWP_Extensions_View {
 				'integration_owner_pp' => 'https://wpvivid.com/privacy-policy',
 			),
 		);
+
+		if ( time() < strtotime( '2023-08-23 00:00:00' ) ) {
+			unset( $all_exts['mainwp-fathom-extension'] );
+		}
 
 		$list = array();
 

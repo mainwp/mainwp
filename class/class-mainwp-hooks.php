@@ -194,8 +194,6 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_encrypt_key_value', array( &$this, 'hook_encrypt_key_value' ), 10, 4 );
 		add_filter( 'mainwp_decrypt_key_value', array( &$this, 'hook_decrypt_key_value' ), 10, 3 );
 		add_action( 'mainwp_delete_key_file', array( &$this, 'hook_delete_key_file' ), 10, 1 );
-
-		add_filter( 'mainwp_create_ping_nonce', array( MainWP_Utility::class, 'hook_create_ping_nonce' ), 10, 2 );
 		add_filter( 'mainwp_verify_ping_nonce', array( MainWP_Utility::class, 'hook_verify_ping_nonce' ), 10, 3 );
 	}
 

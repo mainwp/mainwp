@@ -82,6 +82,28 @@
 
 }
 
+@media screen and ( max-width: 1000px ) {
+
+	.mainwp-ui #mainwp-grid-wrapper {
+		padding: 10px !important;
+	}
+
+	.mainwp-ui .mainwp-widget {
+		margin-bottom: 10px !important;
+	}
+
+	.mainwp-ui .mainwp-widget .mainwp-scrolly-overflow {
+		height: 100% !important;
+		padding: 0px !important;
+		overflow-y: visible !important;
+		overflow-x: visible !important;
+	}
+
+	.mainwp-ui .mainwp-widget .mainwp-widget-footer {
+		position: relative !important;
+	}
+}
+
 @media screen and ( max-width: 767px ) {
 
 	.mainwp-768-hide {
@@ -96,7 +118,6 @@
 		width: 100% !important;
 		text-align: center !important;
 	}
-
 
 	.ui.table:not(.unstackable) > tbody > tr > td:not(.rowspanned).mainwp-768-half-width-cell {
 		width: 50% !important;

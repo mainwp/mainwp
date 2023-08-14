@@ -283,6 +283,11 @@ body.mainwp-ui.mainwp-custom-theme,
   border-color: var(--border-color);
 }
 
+.mainwp-ui table.dataTable tbody tr > .dtfc-fixed-left,
+.mainwp-ui table.dataTable tbody tr > .dtfc-fixed-right {
+    background-color: var( --table-background-color ) !important;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.definition.table > tbody > tr > td:first-child:not(.ignored) {
   color: var(--font-color);
 }

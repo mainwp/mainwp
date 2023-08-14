@@ -498,6 +498,19 @@ mainwp_accordion_init_collapse = function () {
     });
 };
 
+mainwp_ui_state_save = function (ident, val) {
+    if (typeof (Storage) !== 'undefined') {
+        localStorage.setItem('mainwp-dashboard[' + ident + ']', val);
+    }
+};
+
+mainwp_ui_state_load = function (ident) {
+    if (typeof (Storage) !== 'undefined') {
+        return localStorage.getItem('mainwp-dashboard[' + ident + ']');
+    }
+    return 1; // show if Storage undefined.
+};
+
 jQuery(document).on('keyup', '#mainwp-screenshots-sites-filter', function () {
     var filter = jQuery(this).val().toLowerCase();
     var parent = jQuery(this).closest('.mainwp_select_sites_wrapper');

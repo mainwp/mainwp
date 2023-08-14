@@ -306,28 +306,36 @@ class MainWP_Keys_Manager {
 	 * @return string Decrypt value.
 	 */
 	private function decrypt_with_key( $encodedValue, $key ) {
-		// Decode the base64 encoded value.
-		$encryptedValue = base64_decode( $encodedValue ); //phpcs:ignore
+		if ( empty( $encodedValue ) ) {
+			return '';
+		}
+		try {
+			// Decode the base64 encoded value.
+			$encryptedValue = base64_decode( $encodedValue ); //phpcs:ignore
 
-		// Extract the IV, ciphertext, and tag.
-		$iv         = substr( $encryptedValue, 0, 16 );
-		$ciphertext = substr( $encryptedValue, 16, -16 );
-		$tag        = substr( $encryptedValue, -16 );
+			// Extract the IV, ciphertext, and tag.
+			$iv         = substr( $encryptedValue, 0, 16 );
+			$ciphertext = substr( $encryptedValue, 16, -16 );
+			$tag        = substr( $encryptedValue, -16 );
 
-		// Create AES instance.
-		$aes = new AES( 'gcm' ); // MODE_GCM.
-		$aes->setKey( $key );
+			// Create AES instance.
+			$aes = new AES( 'gcm' ); // MODE_GCM.
+			$aes->setKey( $key );
 
-		$aes->setNonce( $iv );  // Nonces are only used in GCM mode.
-		$aes->setAAD( 'authentication_data' );
+			$aes->setNonce( $iv );  // Nonces are only used in GCM mode.
+			$aes->setAAD( 'authentication_data' );
 
-		// Set the authentication tag.
-		$aes->setTag( $tag );
+			// Set the authentication tag.
+			$aes->setTag( $tag );
 
-		// Decrypt the value.
-		$keypass = $aes->decrypt( $ciphertext );
+			// Decrypt the value.
+			$keypass = $aes->decrypt( $ciphertext );
 
-		return $keypass;
+			return $keypass;
+		} catch ( \Exception $ex ) {
+			// error.
+		}
+		return '';
 	}
 
 	/**

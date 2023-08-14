@@ -81,7 +81,7 @@ jQuery(document).ready(function () {
 /**
  * MainWP_Plugins.page
  */
-jQuery(document).ready(function () {
+jQuery( document ).on( 'ready', function () {
     jQuery(document).on('click', '#mainwp-show-plugins', function () {
         mainwp_fetch_plugins();
     });
@@ -137,8 +137,9 @@ jQuery(document).ready(function () {
     jQuery(document).on('click', '#mainwp-do-plugins-bulk-actions', function () {
         var action = jQuery("#mainwp-bulk-actions").dropdown("get value");
         console.log(action);
-        if (action == '')
+        if (action == '') {
             return false;
+        }
 
         jQuery(this).attr('disabled', 'true');
         jQuery('#mainwp_bulk_action_loading').show();
@@ -359,14 +360,11 @@ mainwp_fetch_plugins = function () {
         }
     }
 
-    var _status;
 
-    var statuses = jQuery("#mainwp_plugins_search_by_status").dropdown("get value");
+    var _status = jQuery("#mainwp_plugins_search_by_status").dropdown("get value");
 
-    if (statuses == null)
+    if (_status == null){
         errors.push(__('Please select at least one plugin status.'));
-    else {
-        _status = statuses.join(',');
     }
 
     if (errors.length > 0) {
@@ -652,13 +650,10 @@ mainwp_fetch_themes = function () {
         }
     }
 
-    var _status = '';
-    var statuses = jQuery("#mainwp_themes_search_by_status").dropdown("get value");
-    if (statuses == null) {
+    var _status = jQuery("#mainwp_themes_search_by_status").dropdown("get value");
+    if (_status == null) {
         errors.push(__('Please select at least one theme status.'));
-    } else {
-        _status = statuses.join(',');
-    }
+    } 
 
     if (errors.length > 0) {
         jQuery('#mainwp-message-zone').html(errors.join('<br />'));

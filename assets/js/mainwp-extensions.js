@@ -424,7 +424,7 @@ function mainwp_extensions_grabkeys(retring) {
             statusEl.removeClass('yellow');
             statusEl.removeClass('green');
             statusEl.show();
-            statusEl.html('<i class="notched circle loading icon"></i> ' + __('Validating. Please wait...'));
+            statusEl.html('<i class="notched circle loading icon"></i> ' + __('Validating. Please wait...')).show();
         }
 
         jQuery.post(ajaxurl, data, function (response) {

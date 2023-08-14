@@ -215,7 +215,7 @@ class MainWP_Client_Overview_Sites {
 							"colReorder" : <?php echo esc_js( $table_features['colReorder'] ); ?>,
 							"stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
 							"stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
-							"order" : <?php echo esc_js( $table_features['order'] ); ?>,
+							"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
 							"lengthMenu" : [ [<?php echo intval( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All" ] ],
 							"columnDefs": [ 
 								{ 
@@ -621,7 +621,7 @@ class MainWP_Client_Overview_Sites {
 			} elseif ( 'site_actions' === $column_name ) {
 				?>
 					<td class="collapsing">
-						<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999;">
+						<div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999;">
 							<i class="ellipsis horizontal icon"></i>
 							<div class="menu" siteid="<?php echo intval( $website['id'] ); ?>">
 					<?php if ( '' !== $website['sync_errors'] ) : ?>

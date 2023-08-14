@@ -1366,7 +1366,9 @@ class MainWP_Plugins {
 									><label></label>
 								</div>
 								</div>
-								<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+								<?php // phpcs:disable WordPress.Security.EscapeOutput ?>
+								<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></div>
+								<?php // phpcs:enable WordPress.Security.EscapeOutput ?>
 								<div class="three wide middle aligned column"><a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>" target="_blank" ><strong><?php echo esc_html( $plugin_title ); ?></strong></a></div>
 								<div class="one wide center aligned middle aligned column"><?php echo $plugin_status; //phpcs:ignore -- escaped. ?></div>
 								<div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>

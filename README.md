@@ -1,5 +1,5 @@
 
-<p align="center"><a href="https://mainwp.com"><img src="https://mainwp.com/images/mainwp-logo.png" alt="MainWP"></a></p>
+<p align="center"><a href="https://mainwp.com"><img src="https://mainwp.com/other/htdocs/images/mainwp-logo.png" alt="MainWP"></a></p>
 
 <p align="center">
  <a href="https://packagist.org/packages/mainwp/mainwp"><img src="https://poser.pugx.org/mainwp/mainwp/license" alt="license"></a> 

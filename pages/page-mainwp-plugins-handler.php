@@ -323,7 +323,7 @@ class MainWP_Plugins_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
 	 */
 	public static function check_auto_update_plugin( $slug ) {
-		if ( 1 != get_option( 'mainwp_automaticDailyUpdate' ) ) {
+		if ( 1 != get_option( 'mainwp_pluginAutomaticDailyUpdate' ) ) {
 			return false;
 		}
 			$userExtension  = MainWP_DB_Common::instance()->get_user_extension();

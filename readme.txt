@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.3
 Requires PHP: 7.4
-Stable tag: 4.5
+Stable tag: 4.5.0.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -298,6 +298,11 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 10. Manage Clients Screen
 
 == Changelog ==
+
+= 4.5.0.1 - 8-17-2023 =
+* Fixed: An issue with showing the wrong Non-MainWP Changes in the Client Overview page widget
+* Fixed: An issue with dismissing the notice after Turning On auto-updates for the MainWP Child plugin
+* Updated: Selection logic for the OpenSSL signature verification algorithm 
 
 = 4.5 - 8-15-2023 =
 * Fixed: Multiple jQuery deprecation notices

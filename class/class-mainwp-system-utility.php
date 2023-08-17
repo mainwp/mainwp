@@ -1365,8 +1365,16 @@ class MainWP_System_Utility {
 			}
 		}
 
-		if ( empty( $alg ) && defined( 'OPENSSL_ALGO_SHA256' ) ) {
-			$alg = OPENSSL_ALGO_SHA256;
+		if ( empty( $alg ) ) {
+			$site_info = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
+			$site_info = ( '' != $site_info ) ? json_decode( $site_info, true ) : array();
+			if ( is_array( $site_info ) && ! empty( $site_info['child_version'] ) ) {
+				if ( version_compare( $site_info['child_version'], '4.5', '>=' ) ) {
+					if ( defined( 'OPENSSL_ALGO_SHA256' ) ) {
+						$alg = OPENSSL_ALGO_SHA256;
+					}
+				}
+			}
 		}
 
 		if ( ! self::is_valid_supported_sign_alg( $alg ) ) {

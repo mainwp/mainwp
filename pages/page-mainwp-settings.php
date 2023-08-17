@@ -1242,6 +1242,7 @@ class MainWP_Settings {
 						$general_sign_alg = get_option( 'mainwp_connect_signature_algo', false );
 						if ( false == $general_sign_alg ) {
 							$general_sign_alg = defined( 'OPENSSL_ALGO_SHA256' ) ? OPENSSL_ALGO_SHA256 : 1;
+							MainWP_Utility::update_option( 'mainwp_connect_signature_algo', $general_sign_alg );
 						} else {
 							$general_sign_alg = intval( $general_sign_alg );
 						}

@@ -33,12 +33,14 @@ class MainWP_Site_Actions {
 	public static function render() {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
 		$website      = null;
+		$actions_info = array();
 		if ( $current_wpid ) {
-			$params  = array(
+			$params       = array(
 				'wpid'        => $current_wpid,
 				'where_extra' => ' AND dismiss = 0 ',
 			);
-			$website = MainWP_DB::instance()->get_website_by_id( $current_wpid );
+			$website      = MainWP_DB::instance()->get_website_by_id( $current_wpid );
+			$actions_info = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
 		} elseif ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 			$websites  = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id );
@@ -48,21 +50,23 @@ class MainWP_Site_Actions {
 				$site_ids[] = $website->id;
 			}
 
-			$limit  = apply_filters( 'mainwp_widget_site_actions_limit_number', 10000 );
-			$params = array(
-				'limit'       => $limit,
-				'where_extra' => ' AND dismiss = 0 ',
-				'wpid'        => $site_ids,
-			);
+			if ( ! empty( $site_ids ) ) {
+				$limit        = apply_filters( 'mainwp_widget_site_actions_limit_number', 10000 );
+				$params       = array(
+					'limit'       => $limit,
+					'where_extra' => ' AND dismiss = 0 ',
+					'wpid'        => $site_ids,
+				);
+				$actions_info = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
+			}
 		} else {
-			$limit  = apply_filters( 'mainwp_widget_site_actions_limit_number', 10000 );
-			$params = array(
+			$limit        = apply_filters( 'mainwp_widget_site_actions_limit_number', 10000 );
+			$params       = array(
 				'limit'       => $limit,
 				'where_extra' => ' AND dismiss = 0 ',
 			);
+			$actions_info = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
 		}
-		$actions_info = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
-
 		self::render_info( $actions_info, $website );
 	}
 

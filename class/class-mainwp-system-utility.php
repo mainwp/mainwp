@@ -1365,6 +1365,10 @@ class MainWP_System_Utility {
 			}
 		}
 
+		if ( empty( $alg ) && defined( 'OPENSSL_ALGO_SHA256' ) ) {
+			$alg = OPENSSL_ALGO_SHA256;
+		}
+
 		if ( ! self::is_valid_supported_sign_alg( $alg ) ) {
 			$alg = false;
 		}

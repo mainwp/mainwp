@@ -192,7 +192,6 @@ class MainWP_Client_Info {
 					</tbody>
 				</table>
 				<?php } ?>
-				
 				<?php
 				/**
 				 * Action: mainwp_clients_info_widget_bottom
@@ -206,7 +205,6 @@ class MainWP_Client_Info {
 				do_action( 'mainwp_clients_info_widget_bottom', $website );
 				?>
 			</div>
-	
 			<div class="ui stackable two columns grid mainwp-widget-footer">
 				<div class="middle aligned column">
 					<?php if ( $client_info ) { ?>
@@ -217,9 +215,6 @@ class MainWP_Client_Info {
 					<a href="admin.php?page=ClientAddNew" title="" class="ui mini fluid button green"><?php echo esc_html__( 'Add New Client', 'mainwp' ); ?></a>
 				</div>
 			</div>
-
 			<?php
 	}
-
 }
-

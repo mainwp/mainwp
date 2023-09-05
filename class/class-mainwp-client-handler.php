@@ -141,17 +141,17 @@ class MainWP_Client_Handler {
 	public static function get_mini_default_client_fields() {
 
 		return array(
-			'client.name'              => array(
+			'client.name' => array(
 				'title'    => esc_html__( 'Client Name (Required)', 'mainwp' ),
 				'desc'     => esc_html__( 'Displays the Client name', 'mainwp' ),
 				'db_field' => 'name',
 			),
-			'client.email'             => array(
+			'client.email' => array(
 				'title'    => esc_html__( 'Client email', 'mainwp' ),
 				'desc'     => esc_html__( 'Displays the client email', 'mainwp' ),
 				'db_field' => 'client_email',
 			),
-			'client.phone'             => array(
+			'client.phone' => array(
 				'title'    => esc_html__( 'Client phone', 'mainwp' ),
 				'desc'     => esc_html__( 'Displays the client phone', 'mainwp' ),
 				'db_field' => 'client_phone',

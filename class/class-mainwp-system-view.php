@@ -331,7 +331,7 @@ class MainWP_System_View {
 	 *
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
 	 */
-	public static function render_browser_extensions_notice() {			
+	public static function render_browser_extensions_notice() {
 		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 		if ( MainWP_DB::instance()->get_websites_count() > 4 && ! $is_demo ) {
 			if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_browser_extensions_notice' ) ) {
@@ -498,15 +498,15 @@ class MainWP_System_View {
 	/** Renders MainWP Dashboard & Child Plugin auto update Alert. */
 	public static function render_notice_trust_update() {
 		$is_demo = MainWP_Demo_Handle::is_demo_mode();
-		if ( ! $is_demo  ) {
-		?>
+		if ( ! $is_demo ) {
+			?>
 		<div class="ui blue message" style="margin-bottom: 0; border-radius: 0;">
 			<?php esc_html_e( 'Do you want MainWP Child to be updated automatically on your websites? This is highly recommended!', 'mainwp' ); ?> 
 			<div class="ui hidden divider"></div>
 			<a id="mainwp_btn_autoupdate_and_trust" class="ui mini green button" href="#"><?php esc_html_e( 'Update MainWP Child Plugin Automatically', 'mainwp' ); ?></a>	
 			<i class="close icon mainwp-events-notice-dismiss" notice="trust_child"></i>
 		</div>
-		<?php
+			<?php
 		}
 	}
 
@@ -895,7 +895,7 @@ class MainWP_System_View {
 	 * Render comfirm modal box.
 	 */
 	public static function render_comfirm_modal() {
-	?>
+		?>
 		<div class="ui tiny modal" id="mainwp-modal-confirm">
 			<div class="header"><?php esc_html_e( 'Confirmation', 'mainwp' ); ?></div>
 			<div class="content">
@@ -920,7 +920,7 @@ class MainWP_System_View {
 				</div>
 			</div>
 		</div>
-	<?php
+		<?php
 	}
 
 	/**

@@ -325,7 +325,6 @@ class MainWP_Demo_Handle {
 				}
 			}
 		}
-
 	}
 
 	/**

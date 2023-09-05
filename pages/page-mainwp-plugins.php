@@ -728,7 +728,7 @@ class MainWP_Plugins {
 		$output->plugins           = array();
 		$output->plugins_installed = array();
 		$output->status            = $status;
-		$error_results           = '';
+		$error_results             = '';
 
 		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 		$data_fields[] = 'plugins';
@@ -999,12 +999,12 @@ class MainWP_Plugins {
 
 		ob_start();
 
-		if( ! empty( $error_results ) ) {
+		if ( ! empty( $error_results ) ) {
 			?>
 			<div class="ui message yellow"><?php echo $error_results; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
 			<?php
 		}
-		
+
 		if ( 'not_installed' === $status ) {
 			if ( empty( $output->plugins_installed ) ) {
 				?>
@@ -1357,7 +1357,7 @@ class MainWP_Plugins {
 							$plugin_directory = MainWP_Utility::get_dir_slug( $plugin_slug );
 							$details_link     = self_admin_url( 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $site_id ) . '&plugin=' . rawurlencode( $plugin_directory ) . '&section=changelog' );
 							?>
-		 				<div class="ui very compact stackable grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( $plugin_title ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
+						 <div class="ui very compact stackable grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( $plugin_title ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
 							<div class="one wide center aligned middle aligned column"></div>
 
 								<div class="one wide center aligned middle aligned column">
@@ -1943,7 +1943,7 @@ class MainWP_Plugins {
 		$allow_install = apply_filters( 'file_mod_allowed', true, 'mainwp_install_plugin' );
 		if ( $allow_install ) {
 			$is_demo = MainWP_Demo_Handle::is_demo_mode();
-			if( $is_demo ){
+			if ( $is_demo ) {
 				MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" disabled="disabled" class="ui green big fluid button disabled" value="' . esc_html__( 'Complete Installation', 'mainwp' ) . '">' );
 			} else {
 				?>

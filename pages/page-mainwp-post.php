@@ -712,7 +712,7 @@ class MainWP_Post {
 					 */
 					do_action( 'mainwp_manage_posts_before_submit_button' );
 					$is_demo = MainWP_Demo_Handle::is_demo_mode();
-					if( $is_demo ){
+					if ( $is_demo ) {
 						MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" disabled="disabled" class="ui green big fluid button disabled" value="' . esc_attr__( 'Show Posts', 'mainwp' ) . '" />' );
 					} else {
 						?>
@@ -2257,9 +2257,11 @@ class MainWP_Post {
 					$is_demo = MainWP_Demo_Handle::is_demo_mode();
 					?>
 					<div class="mainwp-search-submit" id="bulkpost-publishing-action">
-						<?php if( $is_demo ){ 
+						<?php
+						if ( $is_demo ) {
 							MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="submit" disabled="disabled" class="ui big green fluid button disabled" value="' . esc_attr__( 'Publish', 'mainwp' ) . '" />' );
-							} else { ?>
+						} else {
+							?>
 							<input type="submit" name="publish" id="publish" class="ui big green fluid button" value="<?php esc_attr_e( 'Publish', 'mainwp' ); ?>">
 						<?php } ?>
 					</div>

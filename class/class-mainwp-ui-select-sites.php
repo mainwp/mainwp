@@ -105,19 +105,19 @@ class MainWP_UI_Select_Sites {
 		 */
 		do_action( 'mainwp_before_seclect_sites' );
 		$params = array(
-			'type'                     => $type,
-			'show_group'               => $show_group,
-			'show_select_all'          => $show_select_all,
+			'type'                       => $type,
+			'show_group'                 => $show_group,
+			'show_select_all'            => $show_select_all,
 			'show_select_all_disconnect' => $show_selectall_disc,
 			'show_create_tag'            => $show_new_tag,
-			'selected_sites'           => $selected_sites,
-			'selected_groups'          => $selected_groups,
-			'enable_offline_sites'     => $enableOfflineSites,
-			'post_id'                  => $postId,
-			'show_client'              => $show_client,
-			'enable_suspended_clients' => $enableSuspendedClients,
-			'selected_clients'         => $selected_clients,
-			'add_edit_client_id'       => $add_edit_client_id,
+			'selected_sites'             => $selected_sites,
+			'selected_groups'            => $selected_groups,
+			'enable_offline_sites'       => $enableOfflineSites,
+			'post_id'                    => $postId,
+			'show_client'                => $show_client,
+			'enable_suspended_clients'   => $enableSuspendedClients,
+			'selected_clients'           => $selected_clients,
+			'add_edit_client_id'         => $add_edit_client_id,
 		);
 		?>
 		<div id="mainwp-select-sites" class="mainwp_select_sites_wrapper">

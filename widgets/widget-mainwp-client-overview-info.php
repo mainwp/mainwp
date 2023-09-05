@@ -45,11 +45,11 @@ class MainWP_Client_Overview_Info {
 	 * @param object $client_id Client ID.
 	 */
 	public static function render_client_overview( $client_id ) {  // phpcs:ignore -- complex function.
-		$params      = array(
+		$params        = array(
 			'with_selected_sites' => true,
 			'with_tags'           => true,
 		);
-		$client_info = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id, ARRAY_A, $params );
+		$client_info   = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id, ARRAY_A, $params );
 		$client_status = '';
 		if ( 0 === intval( $client_info['suspended'] ) ) {
 			$client_status = '<span class="ui green label">' . esc_html__( 'Active', 'mainwp' ) . '</span>';

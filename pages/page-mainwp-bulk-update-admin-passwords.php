@@ -284,7 +284,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 							<tbody>
 								<?php
 								while ( $websites && $website = MainWP_DB::fetch_object( $websites ) ) :
-									$adminname     = $website->adminname;
+									$adminname = $website->adminname;
 									?>
 									<tr>
 									<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></td>

@@ -384,7 +384,7 @@ class MainWP_Manage_Sites {
 			$show_cols = array();
 		}
 
-		$is_demo  = MainWP_Demo_Handle::is_demo_mode();
+		$is_demo      = MainWP_Demo_Handle::is_demo_mode();
 		$siteViewMode = MainWP_Utility::get_siteview_mode();
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
@@ -475,9 +475,11 @@ class MainWP_Manage_Sites {
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Disconnect all child sites', 'mainwp' ); ?></label>
 						<div class="ten wide column" id="mainwp-disconnect-sites-tool" data-tooltip="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
-							<?php if ( $is_demo ) { 
+							<?php
+							if ( $is_demo ) {
 								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="#" disabled="disabled" class="ui button green basic disabled">' . esc_html__( 'Disconnect Websites.', 'mainwp' ) . '</a>' );
-								} else { ?>
+							} else {
+								?>
 								<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo esc_html( wp_create_nonce( 'disconnect_sites' ) ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Websites.', 'mainwp' ); ?></a>
 							<?php } ?>
 						</div>

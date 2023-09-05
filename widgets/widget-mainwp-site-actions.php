@@ -217,9 +217,11 @@ class MainWP_Site_Actions {
 		<div class="mainwp-widget-footer">
 			<div class="ui two columns stackable grid">
 				<div class="middle aligned column">
-					<?php if( $is_demo ) { 
+					<?php
+					if ( $is_demo ) {
 						MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui button mini fluid green disabled" disabled="disabled">' . esc_html__( 'Clear All Non-MainWP Changes', 'mainwp' ) . '</a>' );
-					} else { ?>
+					} else {
+						?>
 						<a href="javascript:void(0)" id="mainwp-delete-all-nonmainwp-actions-button" class="ui button mini fluid green"><?php esc_html_e( 'Clear All Non-MainWP Changes', 'mainwp' ); ?></a>
 					<?php } ?>
 				</div>

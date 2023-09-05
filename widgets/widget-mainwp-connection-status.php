@@ -449,7 +449,7 @@ class MainWP_Connection_Status {
 				<div class="four wide middle aligned column reconnect-wrapper">
 				<div class="ui mini icon fluid buttons">
 				<?php if ( $is_demo ) : ?>
-					<a class="ui button" href="<?php echo esc_html( $website->url ) . 'wp-admin.html' ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
+					<a class="ui button" href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
 				<?php else : ?>
 				<a class="ui button" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted="" data-position="left center"><i class="sign in alternate icon"></i></a>
 				<?php endif; ?>
@@ -473,7 +473,7 @@ class MainWP_Connection_Status {
 	 * @param string $lastSyncTime  Last time the Child Site was synced to.
 	 */
 	public static function render_up_item( $website, $lastSyncTime ) {
-	$is_demo = MainWP_Demo_Handle::is_demo_mode();
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 		?>
 	<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( $website->name ) ); ?>">
 		<div class="ui stackable grid">
@@ -504,7 +504,7 @@ class MainWP_Connection_Status {
 			</div>
 			<div class="one wide column middle aligned">
 				<?php if ( $is_demo ) : ?>
-					<a class="ui button" href="<?php echo esc_html( $website->url ) . 'wp-admin.html' ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
+					<a class="ui button" href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
 				<?php else : ?>
 				<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
 				<?php endif; ?>
@@ -561,7 +561,7 @@ class MainWP_Connection_Status {
 				</div>
 				<div class="one wide column middle aligned">
 					<?php if ( $is_demo ) : ?>
-						<a class="ui button" href="<?php echo esc_html( $website->url ) . 'wp-admin.html' ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
+						<a class="ui button" href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
 					<?php else : ?>
 					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
 					<?php endif; ?>

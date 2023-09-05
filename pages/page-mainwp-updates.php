@@ -2023,17 +2023,17 @@ class MainWP_Updates {
 							if ( $is_demo ) {
 								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini basic button disabled" disabled="disabled">' . esc_html__( 'Check for Abandoned Plugins', 'mainwp' ) . '</a>' );
 							} else {
-							?>
+								?>
 							<a href="#" onClick="updatesoverview_bulk_check_abandoned('plugin'); return false;" class="ui green mini basic button" data-tooltip="<?php esc_html_e( 'Check for Abandoned Plugins.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Check for Abandoned Plugins', 'mainwp' ); ?></a>
-							<?php
+								<?php
 							}
 						} elseif ( 'abandoned-themes' === $current_tab ) {
 							if ( $is_demo ) {
 								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini basic button disabled" disabled="disabled">' . esc_html__( 'Check for Abandoned Themes', 'mainwp' ) . '</a>' );
 							} else {
-							?>
+								?>
 							<a href="#" onClick="updatesoverview_bulk_check_abandoned('theme'); return false;" class="ui green mini basic button" data-tooltip="<?php esc_html_e( 'Check for Abandoned Themes.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Check for Abandoned Themes', 'mainwp' ); ?></a>
-							<?php
+								<?php
 							}
 						}
 						?>

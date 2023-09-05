@@ -626,12 +626,12 @@ class MainWP_Page {
 					 */
 					do_action( 'mainwp_manage_pages_before_submit_button' );
 					$is_demo = MainWP_Demo_Handle::is_demo_mode();
-					if( $is_demo ){
+					if ( $is_demo ) {
 						MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" class="ui green big fluid button disabled" disabled="disabled" value="' . esc_attr__( 'Show Pages', 'mainwp' ) . '"/>' );
-					} else {			
-					?>
+					} else {
+						?>
 						<input type="button" name="mainwp_show_pages" id="mainwp_show_pages" class="ui green big fluid button" value="<?php esc_attr_e( 'Show Pages', 'mainwp' ); ?>"/>
-					<?php
+						<?php
 					}
 					/**
 					 * Action: mainwp_manage_pages_after_submit_button

@@ -468,7 +468,7 @@ class MainWP_Setup_Wizard {
 		exit;
 	}
 
-	
+
 
 	/**
 	 * Method mwp_setup_connect_first_site_already()
@@ -507,7 +507,7 @@ class MainWP_Setup_Wizard {
 		<?php
 	}
 
-	
+
 	/**
 	 * Method mwp_setup_connect_first_site()
 	 *
@@ -616,7 +616,7 @@ class MainWP_Setup_Wizard {
 	 * Render Add first Client Step form.
 	 */
 	public function mwp_setup_add_client() {
-		$count = MainWP_DB::instance()->get_websites_count( null, true );
+		$count         = MainWP_DB::instance()->get_websites_count( null, true );
 		$count_clients = MainWP_DB_Client::instance()->count_total_clients();
 		if ( ! empty( $count_clients ) ) {
 			?>

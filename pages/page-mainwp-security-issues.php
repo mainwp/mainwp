@@ -299,7 +299,8 @@ class MainWP_Security_Issues {
 
 		</tbody>
 		<?php
-		$is_demo  = MainWP_Demo_Handle::is_demo_mode(); ?>
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
+		?>
 			<tfoot class="full-width">
 				<tr>
 				<th colspan="3">

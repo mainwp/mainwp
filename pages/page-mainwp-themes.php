@@ -699,7 +699,7 @@ class MainWP_Themes {
 		$output->themes           = array();
 		$output->themes_installed = array();
 		$output->status           = $status;
-		$error_results           = '';
+		$error_results            = '';
 
 		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 		$data_fields[] = 'themes';
@@ -966,7 +966,7 @@ class MainWP_Themes {
 		$bulkActions = self::render_bulk_actions( $status );
 		ob_start();
 
-		if( ! empty( $error_results ) ) {
+		if ( ! empty( $error_results ) ) {
 			?>
 			<div class="ui message yellow"><?php echo $error_results; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
 			<?php
@@ -1211,7 +1211,7 @@ class MainWP_Themes {
 							$item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
 
 							?>
-			 			<div class="ui very compact stackable grid mainwp-manage-theme-item-website <?php echo esc_html( $active_status_class ); ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" >
+						 <div class="ui very compact stackable grid mainwp-manage-theme-item-website <?php echo esc_html( $active_status_class ); ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" >
 							
 							<div class="one wide center aligned middle aligned column"></div>
 								<div class="one wide center aligned middle aligned column">
@@ -1840,7 +1840,7 @@ class MainWP_Themes {
 				$allow_install = apply_filters( 'file_mod_allowed', true, 'mainwp_install_theme' );
 				if ( $allow_install ) {
 					$is_demo = MainWP_Demo_Handle::is_demo_mode();
-					if( $is_demo ){
+					if ( $is_demo ) {
 						MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" disabled="disabled" class="ui green big fluid button disabled" value="' . esc_attr__( 'Complete Installation', 'mainwp' ) . '" />' );
 					} else {
 						?>

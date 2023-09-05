@@ -1016,7 +1016,6 @@ class MainWP_DB_Client extends MainWP_DB {
 	 *
 	 * Count total of Clients.
 	 *
-	 *
 	 * @return int Total number.
 	 */
 	public function count_total_clients() {

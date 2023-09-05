@@ -793,9 +793,11 @@ class MainWP_User {
 				<div id="mainwp_update_password_error" style="display: none"></div>
 				<span id="mainwp_users_updating"><i class="ui active inline loader tiny"></i></span>
 				<div class="ui cancel button"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></div>
-				<?php if( $is_demo ) { 
+				<?php
+				if ( $is_demo ) {
 					MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" class="ui green button disabled" disabled="disabled" value="' . esc_attr__( 'Update', 'mainwp' ) . '">' );
-				} else { ?>
+				} else {
+					?>
 					<input type="button" class="ui green button" id="mainwp_btn_update_user" value="<?php esc_attr_e( 'Update', 'mainwp' ); ?>">
 				<?php } ?>
 			</div>
@@ -976,7 +978,7 @@ class MainWP_User {
 			if ( '' != $sites ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$website          = MainWP_DB::instance()->get_website_by_id( $v );
+						$website = MainWP_DB::instance()->get_website_by_id( $v );
 						if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
 							$dbwebsites[ $website->id ] = $website;
 						}
@@ -1016,8 +1018,8 @@ class MainWP_User {
 
 			if ( $dbwebsites ) {
 				foreach ( $dbwebsites as $website ) {
-					$allUsers      = json_decode( $website->users, true );
-					$allUsersCount = count( $allUsers );
+					$allUsers         = json_decode( $website->users, true );
+					$allUsersCount    = count( $allUsers );
 					$search_user_role = array();
 					if ( $check_users_role ) {
 						for ( $i = 0; $i < $allUsersCount; $i ++ ) {
@@ -1188,7 +1190,7 @@ class MainWP_User {
 	 * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
 	 */
 	protected static function users_search_handler_renderer( $users, $website ) {
-		$return = 0;
+		$return  = 0;
 		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 
 		foreach ( $users as $user ) {
@@ -1650,7 +1652,7 @@ class MainWP_User {
 						do_action( 'mainwp_add_new_user_before_submit_button' );
 
 						$is_demo = MainWP_Demo_Handle::is_demo_mode();
-						if( $is_demo ){
+						if ( $is_demo ) {
 							MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" class="ui green big button disabled" disabled="disabled" value="' . esc_attr__( 'Add New User', 'mainwp' ) . '"/>' );
 						} else {
 							?>
@@ -1765,11 +1767,13 @@ class MainWP_User {
 							</div>
 						</div>
 						<div class="ui divider"></div>
-						<?php if( $is_demo ) { 
+						<?php
+						if ( $is_demo ) {
 								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" class="ui big green button disabled" disabled="disabled" value="' . esc_attr__( 'Import Users', 'mainwp' ) . '"/>' );
-							} else { ?>
+						} else {
+							?>
 								<input type="button" name="createuser" id="bulk_import_createuser" class="ui big green button" value="<?php esc_attr_e( 'Import Users', 'mainwp' ); ?>" />
-							<?php }?>	
+							<?php } ?>	
 							<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample_users.csv' ); ?>" class="ui big green basic right floated button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
 					</form>
 				</div>

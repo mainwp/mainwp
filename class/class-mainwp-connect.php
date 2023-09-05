@@ -342,8 +342,8 @@ class MainWP_Connect {
 
 			$data = apply_filters( 'mainwp_get_post_data_authed', $data, $website, $what, $params );
 			if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
-				$sign_success      = MainWP_Connect_Lib::connect_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-				$use_seclib        = true;
+				$sign_success = MainWP_Connect_Lib::connect_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+				$use_seclib   = true;
 			} elseif ( function_exists( 'openssl_verify' ) ) {
 				$alg          = MainWP_System_Utility::get_connect_sign_algorithm( $website );
 				$sign_success = self::connect_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
@@ -1115,10 +1115,10 @@ class MainWP_Connect {
 		if ( 'renew' === $what ) {
 			$postdata = self::get_renew_post_data_authed( $website, $what, $params );
 		} else {
-		$postdata              = self::get_post_data_authed( $website, $what, $params );
+			$postdata = self::get_post_data_authed( $website, $what, $params );
 
 		}
-		$others['function']    = $what;
+		$others['function'] = $what;
 
 		$information = array();
 

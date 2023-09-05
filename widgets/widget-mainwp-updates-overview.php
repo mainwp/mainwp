@@ -764,7 +764,7 @@ class MainWP_Updates_Overview {
 					<?php
 					if ( $is_demo ) {
 						MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui basic green button disabled" disabled="disabled">' . esc_html__( 'Update All', 'mainwp' ) . '</a>' );
-					} else { 
+					} else {
 						?>
 						<a href="#" onClick="return updatesoverview_global_upgrade_all('theme');" class="ui basic green button <?php MainWP_Updates::get_continue_update_selector(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Themes on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 						<?php
@@ -837,7 +837,8 @@ class MainWP_Updates_Overview {
 				} else {
 					?>
 					<a href="<?php echo esc_url( $detail_trans_up ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-					<?php if( $is_demo ) {
+					<?php
+					if ( $is_demo ) {
 						MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui basic green button disabled" disabled="disabled">' . esc_html__( 'Update All', 'mainwp' ) . '</a>' );
 					} else {
 						?>

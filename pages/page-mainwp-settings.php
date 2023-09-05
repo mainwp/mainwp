@@ -1358,9 +1358,11 @@ class MainWP_Settings {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Force your MainWP Dashboard to establish a new connection', 'mainwp' ); ?></label>
 							<div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'Force your MainWP Dashboard to reconnect with your child sites. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-							<?php if( $is_demo ) { 
+							<?php
+							if ( $is_demo ) {
 								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" disabled="disabled" class="ui green basic button disabled" value="' . esc_attr__( 'Re-establish Connections', 'mainwp' ) . '" />' );
-								} else { ?>
+							} else {
+								?>
 								<input type="button" name="" id="force-destroy-sessions-button"  data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Forces your dashboard to reconnect with your child sites. This feature will log out any currently logged in users on the Child sites and require them to re-log in. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>" class="ui green basic button" value="<?php esc_attr_e( 'Re-establish Connections', 'mainwp' ); ?>" />
 							<?php } ?>	
 							</div>
@@ -1368,9 +1370,11 @@ class MainWP_Settings {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Force your MainWP Dashbaord to set new pair of OpenSSL Keys', 'mainwp' ); ?></label>
 							<div class="ten wide column" id="mainwp-renew-connections-tool" data-content="<?php esc_attr_e( 'This will function renew connection and reconnect site right away.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
-							<?php if( $is_demo ) { 	
-									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui button green basic disabled">'. esc_html__( 'Reset OpenSSL Key Pair', 'mainwp' ) . '</a>' );
-								} else { ?>
+							<?php
+							if ( $is_demo ) {
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui button green basic disabled">' . esc_html__( 'Reset OpenSSL Key Pair', 'mainwp' ) . '</a>' );
+							} else {
+								?>
 									<a href="javascript:void(0)" onclick="mainwp_tool_renew_connections_show(); return false;" class="ui button green basic"><?php esc_html_e( 'Reset OpenSSL Key Pair', 'mainwp' ); ?></a>
 								<?php } ?>	
 							</div>
@@ -1392,9 +1396,11 @@ class MainWP_Settings {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Disconnect all child sites', 'mainwp' ); ?></label>
 						<div class="ten wide column" id="mainwp-disconnect-sites-tool" data-content="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active and which makes your sites vulnerable. Use only if you attend to reconnect site to the same or a different dashboard right away.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
-						<?php if( $is_demo ) { 
+						<?php
+						if ( $is_demo ) {
 								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="#" class="ui button green basic disabled" disabled="disabled">' . esc_html__( 'Disconnect Sites', 'mainwp' ) . '</a>' );
-							} else { ?>
+						} else {
+							?>
 							<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'disconnect_sites' ) ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Sites', 'mainwp' ); ?></a>
 						<?php } ?>
 					</div>

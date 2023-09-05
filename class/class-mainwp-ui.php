@@ -293,7 +293,7 @@ class MainWP_UI {
 
 								$site_client_editing = ( $add_edit_client_id && $website->client_id && $add_edit_client_id == $website->client_id ) ? true : false;
 
-								$selected = false;
+								$selected     = false;
 								$disconnected = false;
 								if ( ( '' == $website->sync_errors || $enableOfflineSites ) && ( ! MainWP_System_Utility::is_suspended_site( $website ) || $site_client_editing ) && $enable_site ) {
 									$selected = ( 'all' === $selected_websites || in_array( $website->id, $selected_websites ) );
@@ -306,7 +306,7 @@ class MainWP_UI {
 										}
 									}
 
-									if( '' != $website->sync_errors ){
+									if ( '' != $website->sync_errors ) {
 										$disconnected = true;
 										$count_disc++;
 									}
@@ -1244,9 +1244,11 @@ class MainWP_UI {
 					</span>
 				</a>
 				<?php
-			endif; ?>
-	<?php else : 
+			endif;
 			?>
+			<?php
+	else :
+		?>
 			<a class="ui button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?> " id="mainwp-sync-sites" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>">
 				<i class="sync icon mainwp-sync-button-icon"></i>
 				<span class="mainwp-sync-button-text">
@@ -1264,7 +1266,7 @@ class MainWP_UI {
 			</a>
 			<?php
 		endif;
-		?>
+	?>
 
 		<div class="ui <?php echo ( 0 == $sites_count ? 'green' : '' ); ?> buttons" id="mainwp-add-new-buttons">
 			<a class="ui icon button" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Add a new Website to your MainWP Dashboard', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><i class="plus icon"></i></a>

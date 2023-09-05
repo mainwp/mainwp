@@ -686,7 +686,7 @@ class MainWP_Manage_Sites_Update_View {
 	 */
 	public static function render_language_updates( $website, $active_tab ) {
 		$user_can_update_translation = mainwp_current_user_have_right( 'dashboard', 'update_translations' );
-		$is_demo = MainWP_Demo_Handle::is_demo_mode();
+		$is_demo                     = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div class="ui <?php echo 'trans' === $active_tab ? 'active' : ''; ?> tab" data-tab="translations">
 			<table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-translations-table">

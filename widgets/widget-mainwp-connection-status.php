@@ -321,8 +321,6 @@ class MainWP_Connection_Status {
 	public static function render_details( $html_all_sites, $html_online_sites, $html_other_sites ) {
 		?>
 		<div class="mainwp-scrolly-overflow">
-		
-
 		<div class="ui tab" data-tab="all-sites">
 			<?php
 			/**

@@ -1363,9 +1363,11 @@ class MainWP_Client {
 			MainWP_DB_Client::instance()->update_client( $update );
 		}
 
-		if ( isset( $_POST['is_first_client'] ) && ! empty( $_POST['is_first_client'] ) ) { //phpcs:ignore ordPress.Security.NonceVerification -- ok.
+		// phpcs:disable WordPress.Security.NonceVerification
+		if ( isset( $_POST['is_first_client'] ) && ! empty( $_POST['is_first_client'] ) ) {
 			delete_transient( 'mainwp_transient_just_connected_site_id' );
 		}
+		//phpcs:enable
 
 		echo wp_json_encode(
 			array(

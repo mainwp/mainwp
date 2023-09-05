@@ -1405,7 +1405,6 @@ class MainWP_Settings {
 						<?php } ?>
 					</div>
 						</div>
-					
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Delete extensions API Activation data', 'mainwp' ); ?></label>
 							<div class="ten wide column" id="mainwp-clear-activation-data" data-content="<?php esc_attr_e( 'Delete extensions API activation data. This will not affect extensions settings, it just removes API activation data.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">

@@ -16,7 +16,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Themes {
 
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+	//phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
 	/**
 	 * Get Class Name
@@ -1057,7 +1057,7 @@ class MainWP_Themes {
 	 * @param array  $themesNameSites Installed theme version.
 	 * @param string $themesRealVersion Current theme version.
 	 */
-	public static function render_manage_per_site_table( $sites, $themesName = array(), $siteThemes = array(), $themesSlug = array(), $themesNameSites = array(), $themesRealVersion = array() ) {
+	public static function render_manage_per_site_table( $sites, $themesName = array(), $siteThemes = array(), $themesSlug = array(), $themesNameSites = array(), $themesRealVersion = array() ) { //phpcs:ignore -- complex method.
 		$userExtension        = MainWP_DB_Common::instance()->get_user_extension();
 		$decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
 		$trustedThemes        = json_decode( $userExtension->trusted_themes, true );
@@ -1212,7 +1212,7 @@ class MainWP_Themes {
 							$item_id = strtolower( $item_id );
 							$item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
 							?>
-							 <div class="ui very compact stackable grid mainwp-manage-theme-item-website <?php echo esc_html( $active_status_class ); ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" >
+							<div class="ui very compact stackable grid mainwp-manage-theme-item-website <?php echo esc_html( $active_status_class ); ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" >
 							<div class="one wide center aligned middle aligned column"></div>
 								<div class="one wide center aligned middle aligned column">
 
@@ -1325,7 +1325,7 @@ class MainWP_Themes {
 	 * @param array  $themesNameSites Installed theme version.
 	 * @param string $themesRealVersion Current theme version.
 	 */
-	public static function render_manage_table( $sites, $themesName, $siteThemes, $themesSlug, $themesNameSites, $themesRealVersion ) {
+	public static function render_manage_table( $sites, $themesName, $siteThemes, $themesSlug, $themesNameSites, $themesRealVersion ) { //phpcs:ignore -- complex method.
 
 		$userExtension        = MainWP_DB_Common::instance()->get_user_extension();
 		$decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
@@ -1503,7 +1503,7 @@ class MainWP_Themes {
 								$item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
 
 								?>
-						<div class="ui very compact stackable grid mainwp-manage-theme-item-website <?php echo esc_html( $active_status_class ); ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" >
+							<div class="ui very compact stackable grid mainwp-manage-theme-item-website <?php echo esc_html( $active_status_class ); ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" >
 							<div class="one wide center aligned middle aligned column"></div>
 								<div class="one wide center aligned middle aligned column">
 

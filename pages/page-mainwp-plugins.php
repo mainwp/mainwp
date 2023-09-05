@@ -1200,7 +1200,7 @@ class MainWP_Plugins {
 	 * @param array $pluginsNameSites Plugin names with Sites array.
 	 * @param array $pluginsRealVersion Latest plugin release version.
 	 */
-	public static function render_manage_per_site_table( $sites, $pluginsSlug = array(), $sitePlugins = array(), $pluginsMainWP = array(), $muPlugins = array(), $pluginsName = array(), $pluginsNameSites = array(), $pluginsRealVersion = array() ) {
+	public static function render_manage_per_site_table( $sites, $pluginsSlug = array(), $sitePlugins = array(), $pluginsMainWP = array(), $muPlugins = array(), $pluginsName = array(), $pluginsNameSites = array(), $pluginsRealVersion = array() ) { //phpcs:ignore -- complex method.
 
 		$userExtension         = MainWP_DB_Common::instance()->get_user_extension();
 		$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
@@ -1359,7 +1359,7 @@ class MainWP_Plugins {
 							$plugin_directory = MainWP_Utility::get_dir_slug( $plugin_slug );
 							$details_link     = self_admin_url( 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $site_id ) . '&plugin=' . rawurlencode( $plugin_directory ) . '&section=changelog' );
 							?>
-							 <div class="ui very compact stackable grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( $plugin_title ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
+							<div class="ui very compact stackable grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( $plugin_title ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
 							<div class="one wide center aligned middle aligned column"></div>
 								<div class="one wide center aligned middle aligned column">
 									<div class="ui checkbox child <?php echo 'mainwp-child' == $plugin_directory ? 'disabled' : ''; ?>">
@@ -1478,7 +1478,7 @@ class MainWP_Plugins {
 	 * @param array $pluginsNameSites Plugin names with Sites array.
 	 * @param array $pluginsRealVersion Latest plugin release version.
 	 */
-	public static function render_manage_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion ) {
+	public static function render_manage_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion ) { //phpcs:ignore -- complex method.
 
 		$userExtension         = MainWP_DB_Common::instance()->get_user_extension();
 		$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );

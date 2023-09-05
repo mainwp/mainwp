@@ -88,6 +88,22 @@ class MainWP_DB_Base {
 		return ( null == $tablePrefix ? $this->table_prefix : $tablePrefix ) . $suffix;
 	}
 
+
+	/**
+	 * Method get_table_name()
+	 *
+	 * Create entire table name.
+	 *
+	 * @param mixed $suffix Table suffix.
+	 * @param null  $tablePrefix Table prefix.
+	 *
+	 * @return string Table name.
+	 */
+	public function get_table_name( $suffix, $tablePrefix = null ) {
+		return $this->table_name( $suffix);
+	}
+
+
 	/**
 	 * Method get_my_sql_version()
 	 *

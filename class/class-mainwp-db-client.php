@@ -82,6 +82,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	client_twitter varchar(255) NOT NULL default '',
 	client_instagram varchar(255) NOT NULL default '',
 	client_linkedin varchar(255) NOT NULL default '',
+	created int(11) NOT NULL DEFAULT 0,
 	`suspended` tinyint(1) NOT NULL DEFAULT 0,
 	primary_contact_id int(11) NOT NULL default 0";
 
@@ -1001,7 +1002,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 *
 	 * @param int $client_id Client id.
 	 *
-	 * @return bool true|false.
+	 * @return int Number of sites.
 	 */
 	public function get_number_sites_of_client( $client_id ) {
 		if ( empty( $client_id ) ) {
@@ -1009,6 +1010,19 @@ class MainWP_DB_Client extends MainWP_DB {
 		}
 		return $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COUNT(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp WHERE wp.client_id =%d', $client_id ) );
 	}
+
+	/**
+	 * Method count_total_clients.
+	 *
+	 * Count total of Clients.
+	 *
+	 *
+	 * @return int Total number.
+	 */
+	public function count_total_clients() {
+		return $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COUNT(client_id) FROM ' . $this->table_name( 'wp_clients' ) ) );
+	}
+
 
 	/**
 	 * Method add_client_field.

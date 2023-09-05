@@ -239,7 +239,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_bulk_form( $websites ) {
-
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 		/**
 		 * Filter: mainwp_update_admin_password_complexity
 		 *
@@ -282,11 +282,14 @@ class MainWP_Bulk_Update_Admin_Passwords {
 								</tr>
 							</thead>
 							<tbody>
-								<?php while ( $websites && $website = MainWP_DB::fetch_object( $websites ) ) : ?>
+								<?php
+								while ( $websites && $website = MainWP_DB::fetch_object( $websites ) ) :
+									$adminname     = $website->adminname;
+									?>
 									<tr>
 									<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></td>
 									<td><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a></td>
-									<td><?php echo esc_html( $website->adminname ); ?></td>
+									<td><?php echo esc_html( $adminname ); ?></td>
 									<td><?php echo esc_html( $website->admin_nicename ); ?></td>
 									<td><?php echo esc_html( $website->admin_useremail ); ?></td>
 								</tr>
@@ -413,7 +416,9 @@ class MainWP_Bulk_Update_Admin_Passwords {
 										<input type="text" id="password" name="password" autocomplete="off" value="<?php echo esc_attr( wp_generate_password( $pass_complexity ) ); ?>">
 									</div>
 									<br />
-									<button class="ui basic green fluid button wp-generate-pw"><?php esc_html_e( 'Generate New Password', 'mainwp' ); ?></button>
+								
+										<button class="ui basic green fluid button wp-generate-pw"><?php esc_html_e( 'Generate New Password', 'mainwp' ); ?></button>
+							
 								</div>
 							</div>
 							<?php
@@ -439,9 +444,13 @@ class MainWP_Bulk_Update_Admin_Passwords {
 							 * @since 4.1
 							 */
 							do_action( 'mainwp_admin_pass_before_submit_button' );
-							?>
-							<input type="submit" name="bulk_updateadminpassword" id="bulk_updateadminpassword" class="ui big green fluid button" value="<?php esc_attr_e( 'Update Password', 'mainwp' ); ?> "/>
-							<?php
+							if ( $is_demo ) {
+								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="submit" disabled="disabled" class="ui big green fluid button" value="' . esc_attr__( 'Update Password', 'mainwp' ) . '"/>' );
+							} else {
+								?>
+								<input type="submit" name="bulk_updateadminpassword" id="bulk_updateadminpassword" class="ui big green fluid button" value="<?php esc_attr_e( 'Update Password', 'mainwp' ); ?> "/>
+								<?php
+							}
 							/**
 							 * Action: mainwp_admin_pass_after_submit_button
 							 *

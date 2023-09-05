@@ -977,7 +977,7 @@ class MainWP_Menu {
 					<div class="item">
 						<div class="title"><a href="admin.php?page=ManageClients" class="with-sub"><?php esc_html_e( 'Clients', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
 						<div class="content menu">
-							<a class="item" href="admin.php?page=ManageClients"><?php esc_html_e( 'Manage Clients', 'mainwp' ); ?></a>
+							<a class="item" href="admin.php?page=ManageClients"><?php esc_html_e( 'Clients', 'mainwp' ); ?></a>
 							<a class="item" href="admin.php?page=ClientAddNew"><?php esc_html_e( 'Add Client', 'mainwp' ); ?></a>
 							<a class="item" href="admin.php?page=ClientAddField"><?php esc_html_e( 'Client Fields', 'mainwp' ); ?></a>
 						</div>

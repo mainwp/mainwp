@@ -80,8 +80,7 @@ class MainWP_Client_Info {
 			?>
 				<div class="sub header"><?php esc_html_e( 'Client Information', 'mainwp' ); ?></div>
 			</h3>
-			<div class="ui section hidden divider"></div>
-			<div class="mainwp-widget-site-info">
+			<div class="mainwp-widget-site-info mainwp-scrolly-overflow">
 				<?php
 				/**
 				 * Actoin: mainwp_clients_info_widget_top
@@ -193,16 +192,7 @@ class MainWP_Client_Info {
 					</tbody>
 				</table>
 				<?php } ?>
-				<div class="ui stackable grid">
-					<div class="eight wide column">
-						<?php if ( $client_info ) { ?>
-						<a href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_info['client_id'] ); ?>" title="" class="ui button green basic"><?php echo esc_html__( 'Edit Client', 'mainwp' ); ?></a>
-						<?php } ?>
-					</div>
-					<div class="eight wide column right aligned">
-						<a href="admin.php?page=ClientAddNew" title="" class="ui button green"><?php echo esc_html__( 'Add New Client', 'mainwp' ); ?></a>
-					</div>
-				</div>
+				
 				<?php
 				/**
 				 * Action: mainwp_clients_info_widget_bottom
@@ -216,6 +206,18 @@ class MainWP_Client_Info {
 				do_action( 'mainwp_clients_info_widget_bottom', $website );
 				?>
 			</div>
+	
+			<div class="ui stackable two columns grid mainwp-widget-footer">
+				<div class="middle aligned column">
+					<?php if ( $client_info ) { ?>
+					<a href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_info['client_id'] ); ?>" title="" class="ui mini fluid button green basic"><?php echo esc_html__( 'Edit Client', 'mainwp' ); ?></a>
+					<?php } ?>
+				</div>
+				<div class="middle aligned column">
+					<a href="admin.php?page=ClientAddNew" title="" class="ui mini fluid button green"><?php echo esc_html__( 'Add New Client', 'mainwp' ); ?></a>
+				</div>
+			</div>
+
 			<?php
 	}
 

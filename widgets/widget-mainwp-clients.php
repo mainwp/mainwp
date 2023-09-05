@@ -10,7 +10,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP_Site_Actions
+ * Class MainWP_Clients
  *
  * Displays the Site Actions.
  */
@@ -121,7 +121,7 @@ class MainWP_Clients {
 								?>
 							</td>
 							<td>
-								<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
+								<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
 										<a class="item" href="admin.php?page=ManageClients&client_id=<?php echo intval( $client['client_id'] ); ?>"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
@@ -133,9 +133,9 @@ class MainWP_Clients {
 					<?php endforeach; ?>
 					</tbody>
 				</table>
-				<div class="ui two columns grid mainwp-widget-footer">
+				<div class="ui two columns stackable grid mainwp-widget-footer">
 					<div class="left aligned column">
-						<a href="admin.php?page=ManageClients" class="ui button mini fluid green"><?php esc_html_e( 'Manage Clients', 'mainwp' ); ?></a>
+						<a href="admin.php?page=ManageClients" class="ui button mini fluid green"><?php esc_html_e( 'Clients', 'mainwp' ); ?></a>
 					</div>
 					<div class="right aligned column">
 						<a href="admin.php?page=ClientAddNew" class="ui button basic mini fluid green"><?php esc_html_e( 'New Client', 'mainwp' ); ?></a>

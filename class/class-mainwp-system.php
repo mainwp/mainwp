@@ -27,7 +27,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.5.0.1';
+	public static $version = '4.5.1';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -149,6 +149,12 @@ class MainWP_System {
 			 * @source https://code-reference.mainwp.com/classes/MainWP.Dashboard.MainWP_System.html
 			 */
 			define( 'MAINWP_VERSION', $this->current_version );
+		}
+
+		if ( get_option( 'mainwp_setting_demo_mode_enabled' ) ) {
+			if ( ! defined( 'MAINWP_DEMO_MODE' ) ) {
+				define( 'MAINWP_DEMO_MODE', true );
+			}
 		}
 
 		$ssl_api_verifyhost = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;
@@ -325,6 +331,7 @@ class MainWP_System {
 				'mainwp_logger_check_daily',
 				'mainwp_site_actions_notification_enable',
 				'mainwp_update_check_version',
+				'mainwp_setting_demo_mode_enabled',
 			);
 
 			$query = "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in (";
@@ -719,6 +726,7 @@ class MainWP_System {
 			'maximumSyncRequests'              => ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ),
 			'maximumInstallUpdateRequests'     => ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ),
 			'_wpnonce'                         => wp_create_nonce( 'mainwp-admin-nonce' ),
+			'demoMode'                         => MainWP_Demo_Handle::is_demo_mode() ? 1 : 0,
 		);
 		wp_localize_script( 'mainwp', 'mainwpParams', $mainwpParams );
 

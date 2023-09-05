@@ -408,7 +408,7 @@ class MainWP_Rest_Api_Page {
 		<div id="mainwp-rest-api-keys" class="ui segment">
 			<div class="ui message" id="mainwp-message-zone-apikeys" style="display:none;"></div>
 			<?php self::show_messages(); ?>
-			<table id="mainwp-rest-api-keys-table" class="ui unstackable table single line">
+			<table id="mainwp-rest-api-keys-table" class="ui unstackable table">
 				<thead>
 					<tr>
 						<th  class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
@@ -463,7 +463,7 @@ class MainWP_Rest_Api_Page {
 							<td><?php echo $enabled ? '<span class="ui green fluid label">' . esc_html__( 'Enabled', 'mainwp' ) . '</span>' : '<span class="ui gray fluid label">' . esc_html__( 'Disabled', 'mainwp' ) . '</span>'; ?></td>
 							<td><?php echo ! empty( $pers_names ) ? implode( ', ', $pers_names ) : 'N/A'; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>	
 							<td><?php echo esc_html( $desc ); ?></td>							
-							<td style="text-align:center"><code><?php echo esc_html( '...' . $ending ); // phpcs:ignore WordPress.Security.EscapeOutput ?></code></td>
+							<td><code><?php echo esc_html( '...' . $ending ); // phpcs:ignore WordPress.Security.EscapeOutput ?></code></td>
 							<td class="collapsing">
 								<a class="ui green basic mini button" href="admin.php?page=AddApiKeys&editkey=<?php echo esc_html( $endcoded_ck ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 								<a class="ui mini button" href="javascript:void(0)" onclick="mainwp_restapi_remove_key_confirm(jQuery(this).closest('tr').find('.check-column INPUT:checkbox'));" ><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
@@ -475,7 +475,11 @@ class MainWP_Rest_Api_Page {
 				</tbody>
 			</table>
 		</div>
-		<script type="text/javascript">	
+		<script type="text/javascript">
+			var responsive = true;
+			if( jQuery( window ).width() > 1140 ) {
+				responsive = false;
+			}
 			jQuery( document ).ready( function( $ ) {
 				try {
 					jQuery( '#mainwp-rest-api-keys-table' ).DataTable( {
@@ -486,6 +490,7 @@ class MainWP_Rest_Api_Page {
 							"targets": 'no-sort',
 							"orderable": false
 						} ],
+						"responsive": responsive,
 						"preDrawCallback": function() {
 							jQuery( '#mainwp-rest-api-keys-table .ui.dropdown' ).dropdown();
 							jQuery('#mainwp-rest-api-keys-table .ui.checkbox').checkbox();

@@ -298,12 +298,16 @@ class MainWP_Security_Issues {
 				</tr>
 
 		</tbody>
+		<?php
+		$is_demo  = MainWP_Demo_Handle::is_demo_mode(); ?>
 			<tfoot class="full-width">
 				<tr>
-					<th colspan="3">
-						<input type="button" id="securityIssues_fixAll" class="ui green button right floated" value="<?php esc_html_e( 'Fix All', 'mainwp' ); ?>"/>
-						<input type="button" id="securityIssues_refresh" class="ui green basic button" value="<?php esc_html_e( 'Refresh', 'mainwp' ); ?>"/>
-						<input type="hidden" id="securityIssueSite" value="<?php echo intval( $website->id ); ?>"/>
+				<th colspan="3">
+					<?php if ( ! $is_demo ) : ?>
+							<input type="button" id="securityIssues_fixAll" class="ui green button right floated" value="<?php esc_html_e( 'Fix All', 'mainwp' ); ?>"/>
+							<input type="button" id="securityIssues_refresh" class="ui green basic button" value="<?php esc_html_e( 'Refresh', 'mainwp' ); ?>"/>
+							<input type="hidden" id="securityIssueSite" value="<?php echo intval( $website->id ); ?>"/>
+					<?php endif; ?>
 					</th>
 				</tr>
 			</tfoot>

@@ -448,7 +448,6 @@ mainwp_fetch_posts = function (postId, userId, start_sites) {
                 }
                 i++;
             });
-            console.log(selected_sites);
         }
     }
     var _status = '';

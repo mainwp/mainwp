@@ -411,7 +411,7 @@ class MainWP_Plugins {
 		<div id="mainwp-manage-plugins" class="ui alt segment">
 			<div class="mainwp-main-content">
 				<div class="ui mini form mainwp-actions-bar">
-					<div class="ui grid">
+					<div class="ui stackable grid">
 						<div class="ui three column row">
 							<div class="column" >
 								<div id="mainwp-plugins-bulk-actions-wapper">
@@ -728,11 +728,12 @@ class MainWP_Plugins {
 		$output->plugins           = array();
 		$output->plugins_installed = array();
 		$output->status            = $status;
+		$error_results           = '';
 
 		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 		$data_fields[] = 'plugins';
 
-		if ( 1 == get_option( 'mainwp_optimize' ) ) {
+		if ( 1 == get_option( 'mainwp_optimize' ) || MainWP_Demo_Handle::is_demo_mode() ) {
 
 			$multi_kws = explode( ',', $keyword );
 			$multi_kws = array_filter( array_map( 'trim', $multi_kws ) );
@@ -972,15 +973,10 @@ class MainWP_Plugins {
 			// phpcs:disable WordPress.Security.EscapeOutput
 			if ( 0 < count( $output->errors ) ) {
 				foreach ( $output->errors as $siteid => $error ) {
-					echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ': ' . $error . ' <br/>';
+					$error_results .= MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ': ' . $error . ' <br/>';
 				}
-				echo '<div class="ui hidden divider"></div>';
 			}
 			// phpcs:enable WordPress.Security.EscapeOutput
-
-			if ( count( $output->errors ) == count( $dbwebsites ) ) {
-				return;
-			}
 		}
 
 		MainWP_Cache::add_context(
@@ -1003,6 +999,12 @@ class MainWP_Plugins {
 
 		ob_start();
 
+		if( ! empty( $error_results ) ) {
+			?>
+			<div class="ui message yellow"><?php echo $error_results; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+			<?php
+		}
+		
 		if ( 'not_installed' === $status ) {
 			if ( empty( $output->plugins_installed ) ) {
 				?>
@@ -1201,6 +1203,7 @@ class MainWP_Plugins {
 		$userExtension         = MainWP_DB_Common::instance()->get_user_extension();
 		$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
 		$trustedPlugins        = json_decode( $userExtension->trusted_plugins, true );
+		$is_demo               = MainWP_Demo_Handle::is_demo_mode();
 
 		if ( ! is_array( $trustedPlugins ) ) {
 			$trustedPlugins = array();
@@ -1259,7 +1262,7 @@ class MainWP_Plugins {
 		do_action( 'mainwp_before_plugins_table' );
 		?>
 		<div class="ui secondary segment main-master-checkbox">
-			<div class="ui grid">
+			<div class="ui stackable grid">
 				<div class="one wide center aligned middle aligned column">
 					<span class="trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></span>
 				</div>
@@ -1289,7 +1292,7 @@ class MainWP_Plugins {
 			?>
 			<div class="ui accordion mainwp-manage-plugin-accordion mainwp-manage-plugin-item main-child-checkbox"  id="<?php echo esc_html( $item_id ); ?>">
 				<div class="title master-checkbox">
-					<div class="ui grid">
+					<div class="ui stackable grid">
 						<div class="one wide center aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
 						<div class="one wide center aligned middle aligned column">
 							<div class="ui checkbox master">	
@@ -1354,7 +1357,7 @@ class MainWP_Plugins {
 							$plugin_directory = MainWP_Utility::get_dir_slug( $plugin_slug );
 							$details_link     = self_admin_url( 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $site_id ) . '&plugin=' . rawurlencode( $plugin_directory ) . '&section=changelog' );
 							?>
-						<div class="ui compact grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( $plugin_title ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
+		 				<div class="ui very compact stackable grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( $plugin_title ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
 							<div class="one wide center aligned middle aligned column"></div>
 
 								<div class="one wide center aligned middle aligned column">
@@ -1381,22 +1384,22 @@ class MainWP_Plugins {
 								</div>
 								<div class="two wide right aligned middle aligned column update-column" updated="0">
 								<?php if ( ! empty( $upgradeInfo ) && MainWP_Updates::user_can_update_plugins() ) : ?>
-									<a href="javascript:void(0)" class="ui mini green basic button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted="" onClick="return manage_plugins_upgrade( '<?php echo esc_js( rawurlencode( $plugin_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+									<a href="javascript:void(0)" class="ui mini green basic button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted="" onClick="return manage_plugins_upgrade( '<?php echo esc_js( rawurlencode( $plugin_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 								<?php endif; ?>
 								</div>
 							<div class="two wide center aligned middle aligned column column-actions">
 								<?php if ( ! $child_plugin ) : ?>
 									<?php if ( $actived ) { ?>	
 										<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-											<a href="#" class="mainwp-manage-plugin-deactivate ui mini fluid button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
+											<a href="#" class="mainwp-manage-plugin-deactivate ui mini fluid button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php esc_attr_e( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
 									<?php } ?>
 								<?php } else { ?>
 										<div class="ui mini fluid buttons">
 										<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-													<a href="#" class="mainwp-manage-plugin-activate ui green button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Activate ', 'mainwp' ) . esc_html( wp_strip_all_tags( $plugin_title ) ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
+													<a href="#" class="mainwp-manage-plugin-activate ui green button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php esc_attr_e( 'Activate ', 'mainwp' ) . esc_html( wp_strip_all_tags( $plugin_title ) ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
 									<?php } ?>
 										<?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) ) { ?>
-													<a href="#" class="mainwp-manage-plugin-delete ui button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr_e( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+													<a href="#" class="mainwp-manage-plugin-delete ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr_e( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 									<?php } ?>
 										</div>
 								<?php } ?>
@@ -1479,6 +1482,7 @@ class MainWP_Plugins {
 		$userExtension         = MainWP_DB_Common::instance()->get_user_extension();
 		$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
 		$trustedPlugins        = json_decode( $userExtension->trusted_plugins, true );
+		$is_demo               = MainWP_Demo_Handle::is_demo_mode();
 
 		if ( ! is_array( $trustedPlugins ) ) {
 			$trustedPlugins = array();
@@ -1537,7 +1541,7 @@ class MainWP_Plugins {
 		do_action( 'mainwp_before_plugins_table' );
 		?>
 		<div class="ui secondary segment main-master-checkbox">
-			<div class="ui grid">
+			<div class="ui stackable grid">
 				<div class="one wide center aligned middle aligned column">
 					<span class="trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></span>
 				</div>
@@ -1648,8 +1652,8 @@ class MainWP_Plugins {
 								$item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
 
 								?>
-							<div class="ui grid compact mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $pluginsName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
-								<div class="one wide center aligned middle aligned column"></div>
+						<div class="ui stackable grid very compact mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $pluginsName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
+							<div class="one wide center aligned middle aligned column"></div>
 								<div class="one wide center aligned middle aligned column">
 										<?php if ( $child_plugin ) { ?>	
 											<div class="ui disabled checkbox"><input type="checkbox" disabled="disabled"><label></label></div>
@@ -1678,22 +1682,22 @@ class MainWP_Plugins {
 									</div>
 									<div class="two wide right aligned middle aligned column update-column" updated="0">
 									<?php if ( ! empty( $upgradeInfo ) && MainWP_Updates::user_can_update_plugins() ) : ?>
-										<a href="javascript:void(0)" class="ui mini green basic button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted="" onClick="return manage_plugins_upgrade( '<?php echo esc_js( rawurlencode( $plugin_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+										<a href="javascript:void(0)" class="ui mini green basic button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update ', 'mainwp' ) . esc_html( $plugin_title ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted="" onClick="return manage_plugins_upgrade( '<?php echo esc_js( rawurlencode( $plugin_slug ) ); ?>', <?php echo esc_attr( $site_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 									<?php endif; ?>
 									</div>
 								<div class="two wide center aligned middle aligned column column-actions">
 									<?php if ( ! $child_plugin ) : ?>
 										<?php if ( $actived ) { ?>	
 											<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-												<a href="#" class="mainwp-manage-plugin-deactivate ui mini fluid button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
+												<a href="#" class="mainwp-manage-plugin-deactivate ui mini fluid button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php esc_attr_e( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
 										<?php } ?>
 									<?php } else { ?>
 											<div class="ui mini fluid buttons">
 											<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-														<a href="#" class="mainwp-manage-plugin-activate ui green button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Activate ', 'mainwp' ) . esc_html( wp_strip_all_tags( $plugin_title ) ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
+														<a href="#" class="mainwp-manage-plugin-activate ui green button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php esc_attr_e( 'Activate ', 'mainwp' ) . esc_html( wp_strip_all_tags( $plugin_title ) ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
 										<?php } ?>
 											<?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) ) { ?>
-														<a href="#" class="mainwp-manage-plugin-delete ui button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr_e( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+														<a href="#" class="mainwp-manage-plugin-delete ui button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete ', 'mainwp' ) . ' ' . esc_html( wp_strip_all_tags( $plugin_title ) ) . ' ' . esc_attr_e( 'plugin from this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 										<?php } ?>
 											</div>
 									<?php } ?>
@@ -1798,7 +1802,7 @@ class MainWP_Plugins {
 	<div class="ui alt segment" id="mainwp-install-plugins">
 		<div class="mainwp-main-content">
 			<div class="mainwp-actions-bar">
-				<div class="ui grid">
+				<div class="ui stackable grid">
 					<div class="ui two column row">
 						<div class="column">
 							<div id="mainwp-search-plugins-form" class="ui fluid search focus">
@@ -1938,9 +1942,14 @@ class MainWP_Plugins {
 		 */
 		$allow_install = apply_filters( 'file_mod_allowed', true, 'mainwp_install_plugin' );
 		if ( $allow_install ) {
-			?>
-			<input type="button" value="<?php esc_attr_e( 'Complete Installation', 'mainwp' ); ?>" class="ui green big fluid button" id="mainwp_plugin_bulk_install_btn" bulk-action="install" name="bulk-install">
-			<?php
+			$is_demo = MainWP_Demo_Handle::is_demo_mode();
+			if( $is_demo ){
+				MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" disabled="disabled" class="ui green big fluid button disabled" value="' . esc_html__( 'Complete Installation', 'mainwp' ) . '">' );
+			} else {
+				?>
+				<input type="button" value="<?php esc_attr_e( 'Complete Installation', 'mainwp' ); ?>" class="ui green big fluid button" id="mainwp_plugin_bulk_install_btn" bulk-action="install" name="bulk-install">
+				<?php
+			}
 		}
 		?>
 			<?php do_action( 'mainwp_manage_plugins_before_submit_button' ); ?>
@@ -2127,7 +2136,7 @@ class MainWP_Plugins {
 			$output->plugins           = array();
 			$output->plugins_installed = array(); // to fix.
 
-			if ( 1 == get_option( 'mainwp_optimize' ) ) {
+			if ( 1 == get_option( 'mainwp_optimize' ) || MainWP_Demo_Handle::is_demo_mode() ) {
 				$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$allPlugins = json_decode( $website->plugins, true );

@@ -303,10 +303,9 @@ class MainWP_Client_Overview {
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'client-widgets' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="client-widgets"></i>
-					<?php echo sprintf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon or go to the %2$sMainWP Settings%3$s page and select options from "Show widgets"', 'mainwp' ), '<i class="cog icon"></i>', '<a href="admin.php?page=Settings">', '</a>' ); ?>
+					<?php echo sprintf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
 				</div>
 			<?php endif; ?>
-
 			<?php
 			/**
 			 * Action: mainwp_before_overview_widgets

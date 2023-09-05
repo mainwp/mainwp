@@ -142,7 +142,7 @@ class MainWP_System_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::hook_fetch_urls_authed()
 	 */
 	public function filter_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
-		return MainWP_Extensions_Handler::hook_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output, $is_external_hook = true );
+		return MainWP_Extensions_Handler::hook_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output );
 	}
 
 	/**
@@ -745,7 +745,7 @@ class MainWP_System_Handler {
 					$found_update   = false;
 					$empty_sections = false;
 					foreach ( $plugin_upgrades as $plugin_slug => $info ) {
-						if ( false !== strpos( $plugin_slug, $arg->slug . '/' ) && isset( $info['update'] ) ) {
+						if ( false !== strpos( $plugin_slug, $arg->slug ) && isset( $info['update'] ) ) {
 							$found_update = true;
 							if ( isset( $info['update']['slug'] ) && $arg->slug == $info['update']['slug'] && isset( $info['update']['new_version'] ) && ! empty( $info['update']['new_version'] ) && isset( $info['update']['sections'] ) && ! empty( $info['update']['sections'] ) ) {
 								$info_update = (object) $info['update'];

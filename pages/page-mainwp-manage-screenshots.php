@@ -61,7 +61,7 @@ class MainWP_Manage_Screenshots {
 		// phpcs:enable WordPress.Security.NonceVerification
 
 		?>
-		<div class="ui grid">
+		<div class="ui stackable grid">
 			<div class="row ui mini form" id="mainwp-sites-filters-row">
 				<div class="sixteen wide left aligned middle aligned column">
 				<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
@@ -124,13 +124,11 @@ class MainWP_Manage_Screenshots {
 				</div>
 				</div>
 			<div class="row ui mini form">
-				<div class="five wide middle aligned column">
+				<div class="eight wide middle aligned column">
 					<input type="text" id="mainwp-screenshots-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>">
 				</div>
-				<div class="ten wide right aligned middle aligned column">
 
-				</div>
-				<div class="one wide right aligned middle aligned column">
+				<div class="eight wide right aligned middle aligned column">
 					<?php MainWP_Manage_Sites_List_Table::render_page_navigation_left_items(); ?>
 				</div>
 			</div>
@@ -452,9 +450,8 @@ class MainWP_Manage_Screenshots {
 	 * Render Page Settings Modal.
 	 */
 	public static function render_screen_options() {
-
 		$siteViewMode = MainWP_Utility::get_siteview_mode();
-
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
 			<div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
@@ -483,7 +480,11 @@ class MainWP_Manage_Screenshots {
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Disconnect all child sites', 'mainwp' ); ?></label>
 						<div class="ten wide column" id="mainwp-disconnect-sites-tool" data-tooltip="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
-							<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo esc_html( wp_create_nonce( 'disconnect_sites' ) ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Websites', 'mainwp' ); ?></a>
+							<?php if( $is_demo ){ 
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="#" disabled="disabled" class="ui button green basic disabled">' . esc_html__( 'Disconnect Websites.', 'mainwp' ) . '</a>' );
+									} else { ?>
+								<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo esc_html( wp_create_nonce( 'disconnect_sites' ) ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;"  class="ui button green basic"><?php esc_html_e( 'Disconnect Websites.', 'mainwp' ); ?></a>
+							<?php } ?>
 						</div>
 					</div>
 					<div class="ui hidden divider"></div>

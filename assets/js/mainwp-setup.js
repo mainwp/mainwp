@@ -1,10 +1,23 @@
-jQuery( document ).ready( function () {
-
+jQuery(function () {
   jQuery( '#mainwp-qsw-verify-mainwp-child-active' ).on('change', function () {
     if ( jQuery( this ).is( ':checked' ) ) {
       jQuery( '#mainwp-qsw-connect-site-form' ).fadeIn( 500 );
+      jQuery( '#mainwp_managesites_add' ).show();
+      jQuery( '#mainwp_addsite_continue_button' ).hide();
     } else {
       jQuery( '#mainwp-qsw-connect-site-form' ).fadeOut( 500 );
+      jQuery( '#mainwp_managesites_add' ).hide();
+      jQuery( '#mainwp_addsite_continue_button' ).show();
+    }
+  } );
+
+  jQuery( '#mainwp_qsw_client_name_field' ).on('keyup', function () {
+    if ( jQuery( this ).val() ) {
+      jQuery( '#bulk_add_createclient' ).show();
+      jQuery( '#mainwp_qsw_add_client_continue_button' ).hide();
+    } else {
+      jQuery( '#bulk_add_createclient' ).hide();
+      jQuery( '#mainwp_qsw_add_client_continue_button' ).show();
     }
   } );
 
@@ -14,6 +27,7 @@ jQuery( document ).ready( function () {
   } );
 
   jQuery( '.ui.checkbox:not(.not-auto-init)' ).checkbox();
+  jQuery('.ui.dropdown:not(.not-auto-init)').dropdown();
 
   jQuery( '.mainwp-checkbox-showhide-elements' ).on( 'click', function () {
     var hiel = jQuery( this ).attr( 'hide-parent' );
@@ -174,7 +188,6 @@ mainwp_setup_managesites_add = function () {
             //Message the WP was added
             jQuery( '#mainwp-message-zone' ).removeClass( 'green yellow green' );
             jQuery( '#mainwp-message-zone' ).html( response ).addClass( 'green' ).show();
-            jQuery( '#mainwp-info-zone' ).html( 'You can also add more sites now or <a href="admin.php?page=mainwp-setup&step=monitoring" class="ui blue mini button">Continue with Quick Setup Wizard</a>' ).show();
 
             //Reset fields
             jQuery( '#mainwp_managesites_add_wpname' ).val( '' );
@@ -191,6 +204,10 @@ mainwp_setup_managesites_add = function () {
             jQuery( ".mainwp_addition_fields_addsite input" ).each( function() {
               jQuery( this ).val('');
             } );
+            
+            setTimeout(function () {
+              window.location.href = 'admin.php?page=mainwp-setup&step=connect_first_site';
+            }, 1000);
           }
 
           jQuery( '#mainwp_managesites_add' ).prop("disabled", false);

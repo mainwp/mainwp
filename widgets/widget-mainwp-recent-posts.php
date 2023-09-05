@@ -227,6 +227,7 @@ class MainWP_Recent_Posts {
 	public static function render_published_posts( $allPosts, $recent_number, $individual ) {
 		$recent_posts_published = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'publish' );
 		$recent_posts_published = MainWP_Utility::sortmulti( $recent_posts_published, 'dts', 'desc' );
+		$is_demo                = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div class="recent_posts_published ui tab active" data-tab="published">
 			<?php
@@ -282,13 +283,13 @@ class MainWP_Recent_Posts {
 						</div>
 						<?php endif; ?>
 						<div class="two wide column right aligned">
-							<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
+							<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
-										<a class="item mainwp-post-unpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $recent_posts_published[ $i ]['website']->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?action=editpost&post=' . $recent_posts_published[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-										<a class="item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
-										<a class="item" href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ) . ( '/' != substr( $recent_posts_published[ $i ]['website']->url, - 1 ) ? '/' : '' ) . '?p=' . esc_attr( $recent_posts_published[ $i ]['id'] ); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
+										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-unpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
+										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $recent_posts_published[ $i ]['website']->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?action=editpost&post=' . $recent_posts_published[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
+										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ) . ( '/' != substr( $recent_posts_published[ $i ]['website']->url, - 1 ) ? '/' : '' ) . '?p=' . esc_attr( $recent_posts_published[ $i ]['id'] ); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
 									</div>
 							</div>
 						</div>
@@ -327,9 +328,9 @@ class MainWP_Recent_Posts {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public static function render_draft_posts( $allPosts, $recent_number, $individual ) {
-
 		$recent_posts_draft = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'draft' );
 		$recent_posts_draft = MainWP_Utility::sortmulti( $recent_posts_draft, 'dts', 'desc' );
+		$is_demo            = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div class="recent_posts_draft ui tab" data-tab="draft">
 			<?php
@@ -383,12 +384,12 @@ class MainWP_Recent_Posts {
 						</div>
 						<?php endif; ?>
 						<div class="two wide column right aligned">
-							<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
+							<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
-										<a class="item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_draft[ $i ]['website']->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?action=editpost&post=' . $recent_posts_draft[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-										<a class="item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
+										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
+										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_draft[ $i ]['website']->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?action=editpost&post=' . $recent_posts_draft[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 									</div>
 							</div>
 						</div>
@@ -429,7 +430,7 @@ class MainWP_Recent_Posts {
 	public static function render_pending_posts( $allPosts, $recent_number, $individual ) {
 		$recent_posts_pending = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'pending' );
 		$recent_posts_pending = MainWP_Utility::sortmulti( $recent_posts_pending, 'dts', 'desc' );
-
+		$is_demo              = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div class="recent_posts_pending ui bottom attached tab" data-tab="pending">
 				<?php
@@ -483,12 +484,12 @@ class MainWP_Recent_Posts {
 						</div>
 						<?php endif; ?>
 						<div class="two wide column right aligned">
-							<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
+							<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
-										<a class="item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_pending[ $i ]['website']->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?action=editpost&post=' . $recent_posts_pending[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-										<a class="item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
+										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
+										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_pending[ $i ]['website']->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?action=editpost&post=' . $recent_posts_pending[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 									</div>
 							</div>
 						</div>
@@ -529,6 +530,7 @@ class MainWP_Recent_Posts {
 	public static function render_future_posts( $allPosts, $recent_number, $individual ) {
 		$recent_posts_future = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'future' );
 		$recent_posts_future = MainWP_Utility::sortmulti( $recent_posts_future, 'dts', 'desc' );
+		$is_demo             = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div class="recent_posts_future ui tab" data-tab="future">
 		<?php
@@ -582,13 +584,13 @@ class MainWP_Recent_Posts {
 						</div>
 						<?php endif; ?>
 						<div class="two wide column right aligned">
-							<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
+							<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
-										<a class="item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_future[ $i ]['website']->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?action=editpost&post=' . $recent_posts_future[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-										<a class="item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_future[ $i ]['website']->id ); ?>&newWindow=yes&openUrl=yes&location=<?php echo esc_attr( base64_encode( ' ? p = ' . $recent_posts_future[ $i ]['id'] . ' & preview = true' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp - admin - nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Preview', 'mainwp' ); ?></a>
+										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
+										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_future[ $i ]['website']->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?action=editpost&post=' . $recent_posts_future[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
+										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_future[ $i ]['website']->id ); ?>&openUrl=yes&location=<?php echo esc_attr( base64_encode( '?p=' . $recent_posts_future[ $i ]['id'] . '&preview=true' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Preview', 'mainwp' ); ?></a>
 									</div>
 							</div>
 						</div>
@@ -629,7 +631,7 @@ class MainWP_Recent_Posts {
 	public static function render_trash_posts( $allPosts, $recent_number, $individual ) {
 		$recent_posts_trash = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'trash' );
 		$recent_posts_trash = MainWP_Utility::sortmulti( $recent_posts_trash, 'dts', 'desc' );
-
+		$is_demo            = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div class="recent_posts_trash ui tab" data-tab="trash">
 		<?php
@@ -684,11 +686,11 @@ class MainWP_Recent_Posts {
 					</div>
 					<?php endif; ?>
 					<div class="two wide column right aligned">
-						<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
+						<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
 							<i class="ellipsis horizontal icon"></i>
 								<div class="menu">
-									<a href="#" class="item mainwp-post-restore"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
-									<a href="#" class="item mainwp-post-delete"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>
+									<a href="#" class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-restore" ><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
+									<a href="#" class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-delete"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>
 								</div>
 						</div>
 					</div>

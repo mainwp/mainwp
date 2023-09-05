@@ -39,6 +39,9 @@ class MainWP_Plugins_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
 	 */
 	public static function plugins_search_handler( $data, $website, &$output ) {
+		if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
+			return;
+		}
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result      = $results[1];
 			$result_data = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.

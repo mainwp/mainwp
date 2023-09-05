@@ -367,6 +367,7 @@ class MainWP_Overview {
 
 
 		<div class="mainwp-primary-content-wrap">
+			<div class="ui segment" style="padding-top:0px;padding-bottom:0px;margin-bottom:0px;">
 			<div id="mainwp-dashboard-info-box"></div>
 			<?php
 			if ( ! empty( $current_wp_id ) ) {
@@ -380,14 +381,13 @@ class MainWP_Overview {
 			}
 			?>
 	<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
-
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>
-					<?php echo sprintf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon or go to the %2$sMainWP Settings%3$s page and select options from "Show widgets"', 'mainwp' ), '<i class="cog icon"></i>', '<a href="admin.php?page=Settings">', '</a>' ); ?>
+						<?php echo sprintf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
 				</div>
 			<?php endif; ?>
-
+			</div>
 			<?php
 			/**
 			 * Action: mainwp_before_overview_widgets

@@ -841,8 +841,7 @@ class MainWP_Hooks {
 					MainWP_Post::get_class_name(),
 					'hook_posts_search_handler',
 				),
-				$output,
-				$is_external_hook = true
+				$output
 			);
 		}
 		return $output;

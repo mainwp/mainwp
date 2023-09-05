@@ -1300,11 +1300,11 @@ class MainWP_Settings {
 
 			return;
 		}
-
 		self::render_header( 'MainWPTools' );
-
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div id="mainwp-tools-settings" class="ui segment">
+			<div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-tools-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-tools-info-message"></i>
@@ -1357,7 +1357,23 @@ class MainWP_Settings {
 						</div>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Force your MainWP Dashboard to establish a new connection', 'mainwp' ); ?></label>
-							<div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'Force your MainWP Dashboard to reconnect with your child sites. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><input type="button" name="" id="force-destroy-sessions-button" class="ui green basic button" value="<?php esc_attr_e( 'Re-establish Connections', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Forces your dashboard to reconnect with your child sites. This feature will log out any currently logged in users on the Child sites and require them to re-log in. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>" data-inverted=""/></div>
+							<div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'Force your MainWP Dashboard to reconnect with your child sites. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<?php if( $is_demo ) { 
+								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" disabled="disabled" class="ui green basic button disabled" value="' . esc_attr__( 'Re-establish Connections', 'mainwp' ) . '" />' );
+								} else { ?>
+								<input type="button" name="" id="force-destroy-sessions-button"  data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Forces your dashboard to reconnect with your child sites. This feature will log out any currently logged in users on the Child sites and require them to re-log in. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>" class="ui green basic button" value="<?php esc_attr_e( 'Re-establish Connections', 'mainwp' ); ?>" />
+							<?php } ?>	
+							</div>
+						</div>
+						<div class="ui grid field">
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Force your MainWP Dashbaord to set new pair of OpenSSL Keys', 'mainwp' ); ?></label>
+							<div class="ten wide column" id="mainwp-renew-connections-tool" data-content="<?php esc_attr_e( 'This will function renew connection and reconnect site right away.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+							<?php if( $is_demo ) { 	
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui button green basic disabled">'. esc_html__( 'Reset OpenSSL Key Pair', 'mainwp' ) . '</a>' );
+								} else { ?>
+									<a href="javascript:void(0)" onclick="mainwp_tool_renew_connections_show(); return false;" class="ui button green basic"><?php esc_html_e( 'Reset OpenSSL Key Pair', 'mainwp' ); ?></a>
+								<?php } ?>	
+							</div>
 						</div>
 						<?php if ( $show_qsw ) { ?> 
 						<div class="ui grid field">
@@ -1376,9 +1392,14 @@ class MainWP_Settings {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Disconnect all child sites', 'mainwp' ); ?></label>
 						<div class="ten wide column" id="mainwp-disconnect-sites-tool" data-content="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active and which makes your sites vulnerable. Use only if you attend to reconnect site to the same or a different dashboard right away.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
-						<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'disconnect_sites' ) ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Websites', 'mainwp' ); ?></a>
+						<?php if( $is_demo ) { 
+								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="#" class="ui button green basic disabled" disabled="disabled">' . esc_html__( 'Disconnect Sites', 'mainwp' ) . '</a>' );
+							} else { ?>
+							<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'disconnect_sites' ) ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Sites', 'mainwp' ); ?></a>
+						<?php } ?>
 					</div>
 						</div>
+					
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Delete extensions API Activation data', 'mainwp' ); ?></label>
 							<div class="ten wide column" id="mainwp-clear-activation-data" data-content="<?php esc_attr_e( 'Delete extensions API activation data. This will not affect extensions settings, it just removes API activation data.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
@@ -1390,6 +1411,20 @@ class MainWP_Settings {
 						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to restore all info messages in your MainWP Dashboard and Extensions.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 							<input type="submit" name="mainwp_restore_info_messages" id="mainwp_restore_info_messages" class="ui button" value="<?php esc_attr_e( 'Restore Info Messages', 'mainwp' ); ?>"/>
 						</div>
+					</div>
+					<?php
+					$enabled_demo = MainWP_Demo_Handle::is_demo_mode();
+					$is_new       = MainWP_Demo_Handle::get_instance()->is_new_instance();
+					?>
+					<div class="ui grid field">
+							<label class="six wide column middle aligned"><?php echo esc_html__( 'Demo mode', 'mainwp' ); ?></label>
+							<div class="ten wide column">
+								<?php if ( ! $enabled_demo ) { ?>
+							<span data-tooltip="<?php esc_attr_e( 'Demo Mode can not be enbled on MainWP Dashboards that already have sites connected.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><button class="ui green button mainwp-import-demo-data-button" <?php echo ( ! $is_new ? 'disabled="disabled"' : '' ); ?>><?php esc_html_e( 'Import Demo Content', 'mainwp' ); ?></button></span>
+								<?php } else { ?>
+							<span data-tooltip="<?php esc_attr_e( 'Click this button to delete the Demo content from your MainWP Dashboard and disable the Demo mode.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><button class="ui green button mainwp-remove-demo-data-button"><?php esc_html_e( 'Delete Demo Content', 'mainwp' ); ?></button></span>
+								<?php } ?>
+							</div>
 					</div>
 					<?php
 						/**
@@ -1412,6 +1447,7 @@ class MainWP_Settings {
 			</script>
 		<?php
 		self::render_footer( 'MainWPTools' );
+		MainWP_Connect_Helper::render_renew_connections_modal();
 	}
 
 	/**

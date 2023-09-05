@@ -170,7 +170,7 @@ class MainWP_UI {
 		}
 		?>
 		<script type="text/javascript">
-		jQuery( document ).ready( function () {
+		jQuery( function () {
 			jQuery('#mainwp-select-sites-header .ui.menu .item').tab( {'onVisible': function() { mainwp_sites_selection_onvisible_callback( this ); } } );
 		} );
 		</script>
@@ -246,13 +246,14 @@ class MainWP_UI {
 	 * @param mixed  $edit_site_id Child Site ID to edit.
 	 * @param bool   $show_select_all    Whether or not to show select all, Default: true.
 	 * @param mixed  $add_edit_client_id Show enable sites for client. Default: false, 0: add new client, 0 <: edit client.
+	 * @param bool   $show_select_all_disc    Whether or not to show select all disconnect sites, Default: false.
 	 *
 	 * @return void Render Select Sites html.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
-	public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false ) { // phpcs:ignore
+	public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false, $show_select_all_disc = false ) { // phpcs:ignore
 		/**
 		 * Action: mainwp_before_select_sites_list
 		 *
@@ -263,6 +264,7 @@ class MainWP_UI {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_before_select_sites_list', $websites );
+		$count_disc = 0;
 		?>
 			<div id="mainwp-select-sites-body">
 				<div class="ui relaxed divided list" id="mainwp-select-sites-list">
@@ -292,6 +294,7 @@ class MainWP_UI {
 								$site_client_editing = ( $add_edit_client_id && $website->client_id && $add_edit_client_id == $website->client_id ) ? true : false;
 
 								$selected = false;
+								$disconnected = false;
 								if ( ( '' == $website->sync_errors || $enableOfflineSites ) && ( ! MainWP_System_Utility::is_suspended_site( $website ) || $site_client_editing ) && $enable_site ) {
 									$selected = ( 'all' === $selected_websites || in_array( $website->id, $selected_websites ) );
 									$disabled = '';
@@ -302,8 +305,13 @@ class MainWP_UI {
 											$disabled = 'disabled="disabled"';
 										}
 									}
+
+									if( '' != $website->sync_errors ){
+										$disconnected = true;
+										$count_disc++;
+									}
 									?>
-									<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui <?php echo esc_html( $type ); ?> item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
+									<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui <?php echo esc_html( $type ); ?> item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?> <?php echo esc_html( $disconnected ? 'warning' : '' ); ?>">
 										<input <?php echo esc_html( $disabled ); ?> type="<?php echo esc_html( $type ); ?>" name="<?php echo ( 'radio' === $type ? 'selected_sites' : 'selected_sites[]' ); ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
 										<label for="selected_sites_<?php echo intval( $website->id ); ?>">
 											<?php echo esc_html( stripslashes( $website->name ) ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
@@ -325,7 +333,7 @@ class MainWP_UI {
 					endif;
 						?>
 				</div>
-			</div>
+			</div>				
 			<?php
 			/**
 			 * Action: mainwp_after_select_sites_list
@@ -871,6 +879,32 @@ class MainWP_UI {
 		<?php } ?>
 
 		<div class="mainwp-content-wrap <?php echo empty( $sidebarPosition ) ? 'mainwp-sidebar-left' : ''; ?>" menu-overflow="<?php echo intval( $fix_menu_overflow ); ?>">
+			<?php if ( MainWP_Demo_Handle::is_demo_mode() ) : ?>
+				<div class="ui segment" style="background-color:#1c1d1b!important;margin-bottom:0px;">
+					<div class="ui inverted accordion" id="mainwp_demo_mode_accordion" style="background-color:#1c1d1b;">
+						<div class="title">
+							<i class="dropdown icon"></i>
+							<strong style="color:#fff;font-size:16px;"><?php esc_html_e( 'You are in Demo Mode. Click here for more info or to disable it', 'mainwp' ); ?></strong>
+						</div>
+						<div class="content">
+							<br/>
+					<div class="ui stackable grid">
+								<div class="eleven wide middle aligned column">
+									<p style="color:#fff;font-size:16px;"><?php esc_html_e( 'Once you are ready to get started with MainWP, click the Disable Demo Mode & Remove Demo Content button to remove the demo content and start adding your own. ', 'mainwp' ); ?></p>
+									<p style="color:#fff;font-size:16px;"><strong><?php esc_html_e( 'The demo content serves as placeholder data to give you a feel for the MainWP Dashboard. Please note that because no real websites are connected in this demo, some functionality will be restricted. Features that require a connection to actual websites will be disabled for the duration of the demo.', 'mainwp' ); ?></strong></p>
+						</div>
+								<div class="five wide middle aligned column">
+									<div data-tooltip="<?php esc_attr_e( 'Delete the Demo content from your MainWP Dashboard and disable the Demo mode.', 'mainwp' ); ?>" data-inverted="" data-position="left center"><button class="ui big fluid button mainwp-remove-demo-data-button"><?php esc_html_e( 'Disable Demo Mode & Remove Demo Content', 'mainwp' ); ?></button></div>
+						</div>
+					</div>
+							<br/>
+				</div>
+					</div>
+				</div>
+				<script type="text/javascript">
+					jQuery( '#mainwp_demo_mode_accordion' ).accordion();
+				</script>
+			<?php endif; ?>
 			<?php
 			/**
 			 * Action: mainwp_before_header
@@ -1190,12 +1224,11 @@ class MainWP_UI {
 			}
 
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
-
 			if ( $id && $website && '' != $website->sync_errors ) :
 				?>
 				<a href="#" class="mainwp-updates-overview-reconnect-site ui green button" siteid="<?php echo intval( $website->id ); ?>" data-position="bottom right" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></a>
 			<?php else : ?>
-				<a class="ui button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?>" id="mainwp-sync-sites" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>">
+				<a class="ui button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?>" id="mainwp-sync-sites" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?> data-inverted="" data-position="bottom right">
 					<i class="sync icon mainwp-sync-button-icon"></i>
 					<span class="mainwp-sync-button-text">
 					<?php
@@ -1211,8 +1244,8 @@ class MainWP_UI {
 					</span>
 				</a>
 				<?php
-			endif;
-		else :
+			endif; ?>
+	<?php else : 
 			?>
 			<a class="ui button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?> " id="mainwp-sync-sites" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>">
 				<i class="sync icon mainwp-sync-button-icon"></i>
@@ -1276,7 +1309,7 @@ class MainWP_UI {
 			<?php else : ?>
 				<?php $website_id = intval( $_GET['id'] ); ?>
 			<?php endif; ?>
-			<a id="mainwp-go-wp-admin-button" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website_id ); ?>&_opennonce=<?php echo esc_attr( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><i class="sign in icon"></i></a>
+			<a id="mainwp-go-wp-admin-button" href="<?php MainWP_Site_Open::get_open_site_url( $website_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><i class="sign in icon"></i></a>
 			<a id="mainwp-remove-site-button" href="#" site-id="<?php echo intval( $website_id ); ?>" data-tooltip="<?php esc_attr_e( 'Remove the site from your MainWP Dashboard.', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="mainwp-remove-site-button ui red basic icon button" target="_blank"><i class="times icon"></i></a>
 		<?php endif; ?>
 		<?php if ( ( 'mainwp_tab' === $page ) || isset( $_GET['dashboard'] ) || in_array( $page, $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
@@ -1545,7 +1578,7 @@ class MainWP_UI {
 		?>
 		<script type="text/javascript">
 			var is_mobile = false;
-			if( jQuery( window ).width() < 1000 ) {
+			if( jQuery( window ).width() < 1367 ) {
 				is_mobile = true;
 			}
 			if ( ! is_mobile ) {
@@ -2065,5 +2098,4 @@ class MainWP_UI {
 	</div>
 		<?php
 	}
-
 }

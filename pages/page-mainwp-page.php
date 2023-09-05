@@ -625,9 +625,14 @@ class MainWP_Page {
 					 * @since 4.1
 					 */
 					do_action( 'mainwp_manage_pages_before_submit_button' );
+					$is_demo = MainWP_Demo_Handle::is_demo_mode();
+					if( $is_demo ){
+						MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" class="ui green big fluid button disabled" disabled="disabled" value="' . esc_attr__( 'Show Pages', 'mainwp' ) . '"/>' );
+					} else {			
 					?>
-					<input type="button" name="mainwp_show_pages" id="mainwp_show_pages" class="ui green big fluid button" value="<?php esc_attr_e( 'Show Pages', 'mainwp' ); ?>"/>
+						<input type="button" name="mainwp_show_pages" id="mainwp_show_pages" class="ui green big fluid button" value="<?php esc_attr_e( 'Show Pages', 'mainwp' ); ?>"/>
 					<?php
+					}
 					/**
 					 * Action: mainwp_manage_pages_after_submit_button
 					 *
@@ -1070,6 +1075,9 @@ class MainWP_Page {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function pages_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex function.
+		if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
+			return;
+		}
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result = $results[1];
 			$pages  = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.

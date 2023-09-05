@@ -55,6 +55,12 @@ class MainWP_Sync {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::end_session()
 	 */
 	public static function sync_site( &$pWebsite = null, $pForceFetch = false, $pAllowDisconnect = true, $clear_session = true ) { // phpcs:ignore -- complexity method.
+
+		// to support demo data.
+		if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $pWebsite ) ) {
+			return MainWP_Demo_Handle::get_instance()->handle_action_demo( $pWebsite, 'sync_site' );
+		}
+
 		if ( null == $pWebsite ) {
 			return false;
 		}

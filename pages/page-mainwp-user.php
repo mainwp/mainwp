@@ -786,11 +786,18 @@ class MainWP_User {
 					</div>
 				</div>
 			</form>
+			<?php
+			$is_demo = MainWP_Demo_Handle::is_demo_mode();
+			?>
 			<div class="actions">
 				<div id="mainwp_update_password_error" style="display: none"></div>
 				<span id="mainwp_users_updating"><i class="ui active inline loader tiny"></i></span>
 				<div class="ui cancel button"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></div>
-				<input type="button" class="ui green button" id="mainwp_btn_update_user" value="<?php esc_attr_e( 'Update', 'mainwp' ); ?>">
+				<?php if( $is_demo ) { 
+					MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" class="ui green button disabled" disabled="disabled" value="' . esc_attr__( 'Update', 'mainwp' ) . '">' );
+				} else { ?>
+					<input type="button" class="ui green button" id="mainwp_btn_update_user" value="<?php esc_attr_e( 'Update', 'mainwp' ); ?>">
+				<?php } ?>
 			</div>
 		</div>
 		<?php
@@ -954,7 +961,7 @@ class MainWP_User {
 		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 		$data_fields[] = 'users';
 
-		if ( 1 == get_option( 'mainwp_optimize' ) ) {
+		if ( 1 == get_option( 'mainwp_optimize' ) || MainWP_Demo_Handle::is_demo_mode() ) {
 
 			$check_users_role = false;
 
@@ -969,7 +976,6 @@ class MainWP_User {
 			if ( '' != $sites ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$search_user_role = array();
 						$website          = MainWP_DB::instance()->get_website_by_id( $v );
 						if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
 							$dbwebsites[ $website->id ] = $website;
@@ -1012,6 +1018,7 @@ class MainWP_User {
 				foreach ( $dbwebsites as $website ) {
 					$allUsers      = json_decode( $website->users, true );
 					$allUsersCount = count( $allUsers );
+					$search_user_role = array();
 					if ( $check_users_role ) {
 						for ( $i = 0; $i < $allUsersCount; $i ++ ) {
 							$user = $allUsers[ $i ];
@@ -1182,6 +1189,7 @@ class MainWP_User {
 	 */
 	protected static function users_search_handler_renderer( $users, $website ) {
 		$return = 0;
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 
 		foreach ( $users as $user ) {
 			if ( ! is_array( $user ) ) {
@@ -1216,7 +1224,11 @@ class MainWP_User {
 							<?php } elseif ( ( 1 == $user['id'] ) || ( $user['login'] == $website->adminname ) ) { ?>
 							<a href="javascript:void(0)" class="item" data-tooltip="This user is used for our secure link, it can not be deleted." data-inverted="" data-position="left center"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
+							<?php if ( ! $is_demo ) : ?>
 							<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
+							<?php else : ?>
+								<a class="item" href="<?php echo $website->url . 'wp-admin.html'; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
+							<?php endif; ?>
 							<?php
 							/**
 							 * Action: mainwp_users_table_action
@@ -1259,6 +1271,9 @@ class MainWP_User {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
 	 */
 	public static function users_search_handler( $data, $website, &$output ) {
+		if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
+			return;
+		}
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
 			$users  = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
@@ -1633,9 +1648,15 @@ class MainWP_User {
 						 * @since 4.1
 						 */
 						do_action( 'mainwp_add_new_user_before_submit_button' );
-						?>
-						<input type="button" name="createuser" id="bulk_add_createuser" class="ui big green fluid button" value="<?php esc_attr_e( 'Add New User', 'mainwp' ); ?> "/>
-						<?php
+
+						$is_demo = MainWP_Demo_Handle::is_demo_mode();
+						if( $is_demo ){
+							MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" class="ui green big button disabled" disabled="disabled" value="' . esc_attr__( 'Add New User', 'mainwp' ) . '"/>' );
+						} else {
+							?>
+							<input type="button" name="createuser" id="bulk_add_createuser" class="ui big green fluid button" value="<?php esc_attr_e( 'Add New User', 'mainwp' ); ?> "/>
+							<?php
+						}
 						/**
 						 * Action: mainwp_add_new_user_after_submit_button
 						 *
@@ -1723,8 +1744,9 @@ class MainWP_User {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_before_import_users' );
+			$is_demo = MainWP_Demo_Handle::is_demo_mode();
 			?>
-				<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
+			<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
 			<div class="ui form">
 					<form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form">
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -1743,8 +1765,12 @@ class MainWP_User {
 							</div>
 						</div>
 						<div class="ui divider"></div>
-					<input type="button" name="createuser" id="bulk_import_createuser" class="ui big green button" value="<?php esc_attr_e( 'Import Users', 'mainwp' ); ?>" />
-				<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample_users.csv' ); ?>" class="ui big green basic right floated button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
+						<?php if( $is_demo ) { 
+								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" class="ui big green button disabled" disabled="disabled" value="' . esc_attr__( 'Import Users', 'mainwp' ) . '"/>' );
+							} else { ?>
+								<input type="button" name="createuser" id="bulk_import_createuser" class="ui big green button" value="<?php esc_attr_e( 'Import Users', 'mainwp' ); ?>" />
+							<?php }?>	
+							<a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample_users.csv' ); ?>" class="ui big green basic right floated button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
 					</form>
 				</div>
 			<?php

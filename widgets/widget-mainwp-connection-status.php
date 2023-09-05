@@ -180,10 +180,10 @@ class MainWP_Connection_Status {
 						<div class="text"><?php esc_html_e( 'All Sites', 'mainwp' ); ?></div>
 						<i class="dropdown icon"></i>
 						<div class="menu">
-							<a class="item" data-tab="no-sites" data-value="no-sites" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Hide the child sites list', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Hide Details', 'mainwp' ); ?></a>
 							<a class="item" data-tab="all-sites" data-value="all-sites" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'See all child sites', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'All Sites', 'mainwp' ); ?></a>
 							<a class="item" data-tab="connected" data-value="connected" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'See all connected child sites', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Connected', 'mainwp' ); ?></a>
 							<a class="item" data-tab="disconnected" data-value="disconnected" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'See all disconnected child sites', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></a>
+						<a class="item" data-tab="no-sites" data-value="no-sites" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Hide the child sites list', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Hide Details', 'mainwp' ); ?></a>
 						</div>
 				</div>
 			</div>
@@ -238,8 +238,8 @@ class MainWP_Connection_Status {
 		do_action( 'mainwp_connection_status_widget_single_top', $site );
 		if ( $count_connected > 0 ) :
 			?>
-			<div class="ui two column stackable grid">
-				<div class="column left aligned">
+			<div class="ui grid stackable">
+				<div class="fourteen wide column">
 					<h2 class="ui header">
 					<?php if ( '1' === $site->suspended ) { ?>
 						<i class="pause yellow circle icon"></i>
@@ -250,25 +250,29 @@ class MainWP_Connection_Status {
 					<?php } ?>	
 				</h2>
 				</div>
-				<div class="column right aligned ui buttons">
+				<div class="column two wide center aligned">
+					<div class="ui mini icon buttons">
 					<a href="<?php echo esc_url( $site->url ); ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Go to Site', 'mainwp' ); ?></a>
 					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $site->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( ' Go to WP Admin', 'mainwp' ); ?></a>
 					<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo intval( $site->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $site->id ); ?>' )" data-tooltip="Sync <?php echo esc_attr( stripslashes( $site->name ) ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 				</div>
 			</div>
+		</div>
 		<?php else : ?>
-			<div class="ui two column stackable grid mainwp_wp_sync" site_id="<?php echo intval( $site->id ); ?>">
-				<div class="column left aligned">
+			<div class="ui grid stackable mainwp_wp_sync" site_id="<?php echo intval( $site->id ); ?>">
+				<div class="fourteen wide column">
 					<h2 class="ui header">
 					<i class="red unlink icon"></i>
 					<div class="content"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></div>
 					</h2>
 				</div>
-				<div class="column right aligned ui buttons">
+				<div class="column two wide center aligned ">
+					<div class="ui mini icon buttons">
 					<a href="<?php echo esc_url( $site->url ); ?>" class="ui mini button" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Go to Site', 'mainwp' ); ?></a>
 					<a href="#" class="mainwp-updates-overview-reconnect-site ui mini green basic button" siteid="<?php echo intval( $site->id ); ?>" data-tooltip="Reconnect <?php echo esc_attr( stripslashes( $site->name ) ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 				</div>
 			</div>
+		</div>
 			<?php
 		endif;
 		/**
@@ -317,7 +321,7 @@ class MainWP_Connection_Status {
 	public static function render_details( $html_all_sites, $html_online_sites, $html_other_sites ) {
 		?>
 		<div class="mainwp-scrolly-overflow">
-		<div class="ui tab" data-tab="no-sites"></div>
+		
 
 		<div class="ui tab" data-tab="all-sites">
 			<?php
@@ -396,6 +400,7 @@ class MainWP_Connection_Status {
 			do_action( 'mainwp_connection_status_after_disconnected_sites_list' )
 			?>
 		</div>
+		<div class="ui tab" data-tab="no-sites"></div>
 		</div>
 		<?php
 	}
@@ -409,9 +414,10 @@ class MainWP_Connection_Status {
 	 * @param mixed $hasSyncErrors Collected errors.
 	 */
 	public static function render_all_item( $website, $lastSyncTime, $hasSyncErrors ) {
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( $website->name ) ); ?>">
-			<div class="ui grid">
+			<div class="ui stackable grid">
 				<div class="twelve wide column middle aligned">
 					<div>
 					<a href="
@@ -440,9 +446,13 @@ class MainWP_Connection_Status {
 				</div>
 					<span class="ui small text"><?php esc_html_e( 'Last Synced: ', 'mainwp' ); ?> <?php echo esc_html( $lastSyncTime ); ?></span>
 				</div>
-				<div class="four wide middle aligned right aligned column reconnect-wrapper">
-				<div class="ui mini icon buttons">
+				<div class="four wide middle aligned column reconnect-wrapper">
+				<div class="ui mini icon fluid buttons">
+				<?php if ( $is_demo ) : ?>
+					<a class="ui button" href="<?php echo esc_html( $website->url ) . 'wp-admin.html' ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
+				<?php else : ?>
 				<a class="ui button" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted="" data-position="left center"><i class="sign in alternate icon"></i></a>
+				<?php endif; ?>
 				<a class="ui button" href="<?php echo esc_html( $website->url ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted="" data-position="left center"><i class="external alternate icon"></i></a>
 					<?php if ( $hasSyncErrors ) : ?>
 						<a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site ui button green basic" siteid="<?php echo intval( $website->id ); ?>" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted="" data-position="left center"><i class="linkify icon"></i></a>
@@ -463,9 +473,10 @@ class MainWP_Connection_Status {
 	 * @param string $lastSyncTime  Last time the Child Site was synced to.
 	 */
 	public static function render_up_item( $website, $lastSyncTime ) {
+	$is_demo = MainWP_Demo_Handle::is_demo_mode();
 		?>
 	<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( $website->name ) ); ?>">
-		<div class="ui grid">
+		<div class="ui stackable grid">
 			<div class="six wide column middle aligned">
 					<a href="
 					<?php
@@ -492,7 +503,11 @@ class MainWP_Connection_Status {
 					</a>
 			</div>
 			<div class="one wide column middle aligned">
+				<?php if ( $is_demo ) : ?>
+					<a class="ui button" href="<?php echo esc_html( $website->url ) . 'wp-admin.html' ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
+				<?php else : ?>
 				<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
+				<?php endif; ?>
 			</div>
 			<div class="one wide column middle aligned">
 				<a href="<?php echo esc_html( $website->url ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><i class="external alternate icon"></i></a>
@@ -500,7 +515,7 @@ class MainWP_Connection_Status {
 			<div class="four wide column middle aligned">
 				<span><?php echo esc_attr( $lastSyncTime ); ?></span>
 			</div>
-			<div class="four wide column middle aligned right aligned">
+			<div class="four wide column middle aligned">
 			<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo intval( $website->id ); ?>" onClick="updatesoverview_wp_sync( '<?php echo intval( $website->id ); ?>' )" data-tooltip="Sync <?php echo esc_html( stripslashes( $website->name ) ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 			</div>
 		</div>
@@ -515,9 +530,10 @@ class MainWP_Connection_Status {
 	 * @param string $lastSyncTime  Last time the Child Site was synced to.
 	 */
 	public static function render_down_item( $website, $lastSyncTime ) {
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( $website->name ) ); ?>">
-			<div class="ui grid">
+			<div class="ui stackable grid">
 				<div class="six wide column middle aligned">
 					<a href="
 					<?php
@@ -544,7 +560,11 @@ class MainWP_Connection_Status {
 					</a>
 				</div>
 				<div class="one wide column middle aligned">
+					<?php if ( $is_demo ) : ?>
+						<a class="ui button" href="<?php echo esc_html( $website->url ) . 'wp-admin.html' ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
+					<?php else : ?>
 					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
+					<?php endif; ?>
 				</div>
 				<div class="one wide column middle aligned">
 					<a href="<?php echo esc_html( $website->url ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><i class="external alternate icon"></i></a>
@@ -552,7 +572,7 @@ class MainWP_Connection_Status {
 				<div class="four wide column middle aligned">
 					<span><?php echo esc_attr( $lastSyncTime ); ?></span>
 				</div>
-				<div class="four wide column middle aligned right aligned reconnect-wrapper">
+				<div class="four wide column middle aligned reconnect-wrapper">
 				<a href="#" class="mainwp-updates-overview-reconnect-site" siteid="<?php echo intval( $website->id ); ?>" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 				</div>
 			</div>

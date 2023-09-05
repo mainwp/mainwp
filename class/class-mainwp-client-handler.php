@@ -124,6 +124,38 @@ class MainWP_Client_Handler {
 				'desc'     => esc_html__( 'Displays the client suspended state', 'mainwp' ),
 				'db_field' => 'suspended',
 			),
+			'client.created'           => array(
+				'title'    => esc_html__( 'Added on', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client added on', 'mainwp' ),
+				'tooltip'  => esc_html__( 'Set the date your client was added to your MainWP Dashboard.', 'mainwp' ),
+				'db_field' => 'created',
+			),
+		);
+	}
+
+	/**
+	 * Get default client fields.
+	 *
+	 * Get default client fields.
+	 */
+	public static function get_mini_default_client_fields() {
+
+		return array(
+			'client.name'              => array(
+				'title'    => esc_html__( 'Client Name (Required)', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the Client name', 'mainwp' ),
+				'db_field' => 'name',
+			),
+			'client.email'             => array(
+				'title'    => esc_html__( 'Client email', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client email', 'mainwp' ),
+				'db_field' => 'client_email',
+			),
+			'client.phone'             => array(
+				'title'    => esc_html__( 'Client phone', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client phone', 'mainwp' ),
+				'db_field' => 'client_phone',
+			),
 		);
 	}
 
@@ -174,6 +206,31 @@ class MainWP_Client_Handler {
 				'title'    => esc_html__( 'Contact LinkedIn', 'mainwp' ),
 				'desc'     => esc_html__( 'Displays the contact LinkedIn', 'mainwp' ),
 				'db_field' => 'linkedin',
+			),
+		);
+	}
+
+	/**
+	 * Get default contact fields.
+	 *
+	 * Get default contact fields.
+	 */
+	public static function get_mini_default_contact_fields() {
+		return array(
+			'client.contact.name' => array(
+				'title'    => esc_html__( 'Contact name (Required)', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the client contact name', 'mainwp' ),
+				'db_field' => 'contact_name',
+			),
+			'contact.role'        => array(
+				'title'    => esc_html__( 'Contact role', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the contact role', 'mainwp' ),
+				'db_field' => 'contact_role',
+			),
+			'contact.email'       => array(
+				'title'    => esc_html__( 'Contact email (Required)', 'mainwp' ),
+				'desc'     => esc_html__( 'Displays the contact email', 'mainwp' ),
+				'db_field' => 'contact_email',
 			),
 		);
 	}
@@ -284,6 +341,10 @@ class MainWP_Client_Handler {
 
 			if ( isset( $data['client_linkedin'] ) ) {
 				$params['client_linkedin'] = sanitize_text_field( wp_unslash( $data['client_linkedin'] ) );
+			}
+
+			if ( isset( $data['created'] ) && is_numeric( $data['created'] ) ) {
+				$params['created'] = intval( $data['created'] );
 			}
 
 			try {
@@ -476,11 +537,15 @@ class MainWP_Client_Handler {
 	public static function get_client_image_url( $image_path ) {
 		$full_url = '';
 		if ( ! empty( $image_path ) ) {
-			$dirs = MainWP_System_Utility::get_mainwp_dir( 'client-images', true );
-			if ( file_exists( $dirs[0] . $image_path ) ) {
-				$full_url = $dirs[1] . $image_path;
+			if ( false !== stripos( $image_path, 'assets/images/demo/clients/' ) || false !== stripos( $image_path, 'assets/images/demo/contacts/' ) ) {
+				$full_url = MAINWP_PLUGIN_URL . $image_path;
 			} else {
-				$full_url = '';
+				$dirs = MainWP_System_Utility::get_mainwp_dir( 'client-images', true );
+				if ( file_exists( $dirs[0] . $image_path ) ) {
+					$full_url = $dirs[1] . $image_path;
+				} else {
+					$full_url = '';
+				}
 			}
 		}
 		return $full_url;

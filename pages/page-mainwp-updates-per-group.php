@@ -45,6 +45,7 @@ class MainWP_Updates_Per_Group {
 	 * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
 	 */
 	public static function render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 		?>
 			<table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-wordpress-updates-groups-table"> <!-- Per Group table -->
 				<thead>
@@ -64,10 +65,15 @@ class MainWP_Updates_Per_Group {
 							if ( MainWP_Updates::user_can_update_wp() ) {
 								if ( 0 < $total_wp_upgrades ) {
 									MainWP_Updates::set_continue_update_html_selector( 'wpcore_global_upgrade_all' );
-									?>
-									<a class="ui green mini basic button" onclick="event.stopPropagation(); return updatesoverview_wordpress_global_upgrade_all( false, true );" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update Selected Sites', 'mainwp' ); ?></a>
-									<a class="mainwp-update-all-button ui green mini button" onclick="return updatesoverview_wordpress_global_upgrade_all();" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update All Tags', 'mainwp' ); ?></a>
-									<?php
+									if ( $is_demo ) {
+										MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini basic button disabled" disabled="disabled">' . esc_html__( 'Update Selected Sites', 'mainwp' ) . '</a>' );
+										MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled" disabled="disabled">' . esc_html__( 'Update All Tags', 'mainwp' ) . '</a>' );
+									} else {
+										?>
+										<a class="ui green mini basic button" onclick="event.stopPropagation(); return updatesoverview_wordpress_global_upgrade_all( false, true );" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update Selected Sites', 'mainwp' ); ?></a>
+										<a class="mainwp-update-all-button ui green mini button" onclick="return updatesoverview_wordpress_global_upgrade_all();" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update All Tags', 'mainwp' ); ?></a>
+										<?php
+									}
 								}
 							}
 							?>
@@ -90,10 +96,16 @@ class MainWP_Updates_Per_Group {
 							</td>
 							<td sort-value="0"><span total-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" data-inverted="" data-tooltip="<?php echo esc_attr( esc_html__( 'Click to see available updates', 'mainwp' ) ); ?>"></span></td>
 							<td class="right aligned">
-								<?php if ( MainWP_Updates::user_can_update_wp() ) : ?>
-									<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update all sites in the tag', 'mainwp' ); ?>" data-inverted="" data-position="left center" btn-all-uid2="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-selected-button ui basic green button" onClick="event.stopPropagation(); return updatesoverview_wordpress_global_upgrade_all( <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
-								<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update all sites in the tag', 'mainwp' ); ?>" data-inverted="" data-position="left center" btn-all-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-all-button ui green button" onClick="return updatesoverview_wordpress_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-
+								<?php
+								if ( MainWP_Updates::user_can_update_wp() ) :
+									if ( $is_demo ) {
+										MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui basic green button disabled" disabled="disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>' );
+										MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green button disabled" disabled="disabled">' . esc_html__( 'Update All', 'mainwp' ) . '</a>' );
+									} else {
+										?>
+										<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update all sites in the tag', 'mainwp' ); ?>" data-inverted="" data-position="left center" btn-all-uid2="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-selected-button ui basic green button" onClick="event.stopPropagation(); return updatesoverview_wordpress_global_upgrade_all( <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
+										<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update all sites in the tag', 'mainwp' ); ?>" data-inverted="" data-position="left center" btn-all-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-all-button ui green button" onClick="return updatesoverview_wordpress_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+									<?php }; ?>
 								<?php endif; ?>
 							</td>
 						</tr>
@@ -112,6 +124,9 @@ class MainWP_Updates_Per_Group {
 									<tbody id="update_wrapper_wp_upgrades_group_<?php echo esc_attr( $group_id ); ?>">
 										<?php foreach ( $site_ids as $site_id ) : ?>
 											<?php
+											if ( ! isset( $site_offset_for_groups[ $site_id ] ) ) {
+												continue;
+											}
 											$seek = $site_offset_for_groups[ $site_id ];
 											MainWP_DB::data_seek( $websites, $seek );
 											$website = MainWP_DB::fetch_object( $websites );
@@ -157,9 +172,13 @@ class MainWP_Updates_Per_Group {
 																<span data-tooltip="<?php echo esc_html( $wpcore_update_disabled_by ); ?>" data-inverted="" data-position="left center"><a href="javascript:void(0)" class="ui green button mini disabled"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a></span>
 																<?php
 															} else {
-																?>
+																if ( $is_demo ) {
+																	MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green button mini disabled" disabled="disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
+																} else {
+																	?>
 																<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . $website->name; ?>" data-inverted="" data-position="left center" class="mainwp-update-now-button ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 															<?php }; ?>
+														<?php }; ?>
 														<?php endif; ?>
 													<?php endif; ?>
 												</td>
@@ -215,6 +234,7 @@ class MainWP_Updates_Per_Group {
 	 */
 	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
 		$updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view );
+		$is_demo              = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-plugins-updates-groups-table">
 			<thead>
@@ -235,10 +255,15 @@ class MainWP_Updates_Per_Group {
 						if ( MainWP_Updates::user_can_update_plugins() ) {
 							MainWP_Updates::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
 							if ( 0 < $total_plugin_upgrades ) {
-								?>
-							<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all( false, true );" class="mainwp-update-selected-button ui mini green basic button" data-tooltip="<?php esc_html_e( 'Update Selected Plugins.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Plugins' ); ?></a>
-							<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all();" class="mainwp-update-all-button ui mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Plugins' ); ?></a>
-								<?php
+								if ( $is_demo ) {
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui mini green basic button disabled">' . esc_html__( 'Update Selected Plugins', 'mainwp' ) . '</a>' );
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui mini green button disabled">' . esc_html__( 'Update Selected Plugins', 'mainwp' ) . '</a>' );
+								} else {
+									?>
+									<a href="javascript:void(0)" data-tooltip="<?php esc_html_e( 'Update Selected Plugins.', 'mainwp' ); ?> onClick="return updatesoverview_plugins_global_upgrade_all( false, true );" class="mainwp-update-selected-button ui mini green basic button" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Plugins' ); ?></a>
+									<a href="javascript:void(0)" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?> onClick="return updatesoverview_plugins_global_upgrade_all();" class="mainwp-update-all-button ui mini green button" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Plugins' ); ?></a>
+									<?php
+								}
 							}
 						}
 						?>
@@ -264,10 +289,16 @@ class MainWP_Updates_Per_Group {
 						</td>
 						<td total-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
 						<td>
-						<?php if ( MainWP_Updates::user_can_update_plugins() ) { ?>
-							<a href="javascript:void(0)" none-btn-all-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-selected-button ui green basic mini button" onClick="event.stopPropagation(); return updatesoverview_plugins_global_upgrade_all( <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
-							<a href="javascript:void(0)" btn-all-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-all-button ui green mini button" onClick="return updatesoverview_plugins_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-
+						<?php
+						if ( MainWP_Updates::user_can_update_plugins() ) {
+							if ( $is_demo ) {
+								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui mini green basic button disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>' );
+								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui mini green button disabled">' . esc_html__( 'Update All', 'mainwp' ) . '</a>' );
+							} else {
+								?>
+								<a href="javascript:void(0)" none-btn-all-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-selected-button ui green basic mini button"  onClick="event.stopPropagation(); return updatesoverview_plugins_global_upgrade_all( <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
+								<a href="javascript:void(0)" btn-all-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-all-button ui green mini button" onClick="return updatesoverview_plugins_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+							<?php } ?>
 						<?php } ?>
 						</td>
 					</tr>
@@ -286,6 +317,9 @@ class MainWP_Updates_Per_Group {
 								<tbody  id="update_wrapper_plugin_upgrades_group_<?php echo esc_attr( $group_id ); ?>" >
 									<?php	foreach ( $site_ids as $site_id ) : ?>
 										<?php
+										if ( ! isset( $site_offset_for_groups[ $site_id ] ) ) {
+											continue;
+										}
 										$seek = $site_offset_for_groups[ $site_id ];
 										MainWP_DB::data_seek( $websites, $seek );
 
@@ -343,10 +377,16 @@ class MainWP_Updates_Per_Group {
 											<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
 											<td>
 												<?php if ( MainWP_Updates::user_can_update_plugins() ) : ?>
-													<?php if ( 0 < count( $plugin_upgrades ) ) : ?>
+													<?php
+													if ( 0 < count( $plugin_upgrades ) ) :
+														if ( $is_demo ) {
+															MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green basic mini button disabled" disabled="disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>' );
+															MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled" disabled="disabled">' . esc_html__( 'Update All', 'mainwp' ) . '</a>' );
+														} else {
+															?>
 														<a href="javascript:void(0)" class="mainwp-update-selected-button ui green basic mini button" onClick="event.stopPropagation(); return updatesoverview_group_upgrade_plugin_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
 														<a href="javascript:void(0)" class="mainwp-update-all-button ui green mini button" onClick="return updatesoverview_group_upgrade_plugin_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-
+														<?php }; ?>
 													<?php endif; ?>
 												<?php endif; ?>
 											</td>
@@ -382,9 +422,17 @@ class MainWP_Updates_Per_Group {
 																<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 																<a href="javascript:void(0)" class="mainwp-ignore-update-button ui mini button" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_js( rawurlencode( $plugin_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 															<?php endif; ?>
-																<?php if ( MainWP_Updates::user_can_update_plugins() ) : ?>
-																<a href="javascript:void(0)" class="mainwp-update-now-button ui mini green button" onClick="return updatesoverview_plugins_upgrade( '<?php echo esc_js( $plugin_name ); ?>', <?php echo intval( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-															<?php endif; ?>
+																<?php
+																if ( MainWP_Updates::user_can_update_plugins() ) :
+																	if ( $is_demo ) {
+																		MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green button disabled" disabled="disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
+																	} else {
+																		?>
+																		<a href="javascript:void(0)" class="mainwp-update-now-button ui mini green button" onClick="return updatesoverview_plugins_upgrade( '<?php echo esc_js( $plugin_name ); ?>', <?php echo intval( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+																		<?php
+																	}
+																endif;
+																?>
 															</td>
 															<?php endif; ?>
 														</tr>
@@ -455,6 +503,7 @@ class MainWP_Updates_Per_Group {
 	 */
 	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
 		$updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view, 'theme' );
+		$is_demo              = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-themes-updates-groups-table">
 			<thead>
@@ -473,10 +522,15 @@ class MainWP_Updates_Per_Group {
 						if ( MainWP_Updates::user_can_update_themes() ) {
 							MainWP_Updates::set_continue_update_html_selector( 'themes_global_upgrade_all' );
 							if ( 0 < $total_theme_upgrades ) {
-								?>
-							<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all( false, true );" class="mainwp-update-selected-button ui mini basic green button" data-tooltip="<?php esc_html_e( 'Update selected sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Themes' ); ?></a>
-							<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="mainwp-update-all-button ui mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Themes' ); ?></a>
-								<?php
+								if ( $is_demo ) {
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini basic green button disabled" disabled="disabled">' . esc_html__( 'Update Selected Themes', 'mainwp' ) . '</a>' );
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green button disabled" disabled="disabled">' . esc_html__( 'Update All Themes', 'mainwp' ) . '</a>' );
+								} else {
+									?>
+									<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all( false, true );" class="mainwp-update-selected-button ui mini basic green button" data-tooltip="<?php esc_html_e( 'Update selected sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Themes' ); ?></a>
+									<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="mainwp-update-all-button ui mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Themes' ); ?></a>
+									<?php
+								}
 							}
 						}
 						?>
@@ -502,10 +556,16 @@ class MainWP_Updates_Per_Group {
 						</td>
 						<td total-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
 						<td>
-						<?php if ( MainWP_Updates::user_can_update_themes() ) { ?>
-							<a href="javascript:void(0)" btn-all-uid2="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-selected-button ui green basic mini button" onClick="return updatesoverview_themes_global_upgrade_all( <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
-						<a href="javascript:void(0)" btn-all-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-all-button ui green mini button" onClick="return updatesoverview_themes_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-
+						<?php
+						if ( MainWP_Updates::user_can_update_themes() ) {
+							if ( $is_demo ) {
+								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green basic mini button disabled" disabled="disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>' );
+								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled" disabled="disabled">' . esc_html__( 'Update All', 'mainwp' ) . '</a>' );
+							} else {
+								?>
+								<a href="javascript:void(0)" btn-all-uid2="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-selected-button ui green basic mini button" onClick="return updatesoverview_themes_global_upgrade_all( <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
+								<a href="javascript:void(0)" btn-all-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" class="mainwp-update-all-button ui green mini button" onClick="return updatesoverview_themes_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+							<?php } ?>
 						<?php } ?>
 						</td>
 					</tr>
@@ -524,6 +584,9 @@ class MainWP_Updates_Per_Group {
 								<tbody class="accordion" id="update_wrapper_theme_upgrades_group_<?php echo esc_attr( $group_id ); ?>">
 									<?php	foreach ( $site_ids as $site_id ) : ?>
 										<?php
+										if ( ! isset( $site_offset_for_groups[ $site_id ] ) ) {
+											continue;
+										}
 										$seek = $site_offset_for_groups[ $site_id ];
 										MainWP_DB::data_seek( $websites, $seek );
 
@@ -582,9 +645,13 @@ class MainWP_Updates_Per_Group {
 											<td class="right aligned">
 												<?php if ( MainWP_Updates::user_can_update_themes() ) : ?>
 													<?php if ( 0 < count( $theme_upgrades ) ) : ?>
+														<?php if ( $is_demo ) : ?>
+															<?php MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini basic button disabled" disabled="disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>' ); ?>
+															<?php MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled" disabled="disabled">' . esc_html__( 'Update All', 'mainwp' ) . '</a>' ); ?>
+														<?php else : ?>
 														<a href="javascript:void(0)" class="mainwp-update-selected-button ui green basic mini button" onClick="event.stopPropagation(); return updatesoverview_group_upgrade_theme_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
 														<a href="javascript:void(0)" class="mainwp-update-all-button ui green mini button" onClick="return updatesoverview_group_upgrade_theme_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-
+														<?php endif; ?>
 													<?php endif; ?>
 												<?php endif; ?>
 											</td>
@@ -620,8 +687,14 @@ class MainWP_Updates_Per_Group {
 																<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 																<a href="javascript:void(0)" class="mainwp-ignore-update-button ui mini button" onClick="return updatesoverview_themes_ignore_detail( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 															<?php endif; ?>
-																<?php if ( MainWP_Updates::user_can_update_themes() ) : ?>
-																<a href="javascript:void(0)" class="mainwp-update-now-button ui mini green button" onClick="return updatesoverview_themes_upgrade( '<?php echo esc_js( $theme_name ); ?>', <?php echo intval( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+																<?php
+																if ( MainWP_Updates::user_can_update_themes() ) :
+																	if ( $is_demo ) {
+																		MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green button disabled" disabled="disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
+																	} else {
+																		?>
+																		<a href="javascript:void(0)" class="mainwp-update-now-button ui mini green button" onClick="return updatesoverview_themes_upgrade( '<?php echo esc_js( $theme_name ); ?>', <?php echo intval( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+																<?php }; ?>
 															<?php endif; ?>
 															</td>
 															<?php endif; ?>
@@ -684,7 +757,7 @@ class MainWP_Updates_Per_Group {
 	 * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
 	 */
 	public static function render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) {
-
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-translations-groups-table">
 			<thead>
@@ -746,6 +819,9 @@ class MainWP_Updates_Per_Group {
 								<tbody class="accordion" id="update_wrapper_translation_upgrades_group_<?php echo esc_attr( $group_id ); ?>" row-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>">
 								<?php foreach ( $site_ids as $site_id ) : ?>
 									<?php
+									if ( ! isset( $site_offset_for_groups[ $site_id ] ) ) {
+										continue;
+									}
 									$seek = $site_offset_for_groups[ $site_id ];
 									MainWP_DB::data_seek( $websites, $seek );
 									$website                          = MainWP_DB::fetch_object( $websites );
@@ -769,10 +845,16 @@ class MainWP_Updates_Per_Group {
 										<td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
 										<td>
 										<?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
-											<?php if ( 0 < count( $translation_upgrades ) ) : ?>
-												<a href="javascript:void(0)" class="mainwp-update-selected-button ui green basic mini button" onClick="event.stopPropagation(); return updatesoverview_group_upgrade_translation_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
-												<a href="javascript:void(0)" class="mainwp-update-all-button ui green mini button" onClick="return updatesoverview_group_upgrade_translation_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-
+											<?php
+											if ( 0 < count( $translation_upgrades ) ) :
+												if ( $is_demo ) {
+													MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green basic mini button disabled" disabled="disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>' );
+													MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled" disabled="disabled">' . esc_html__( 'Update All', 'mainwp' ) . '</a>' );
+												} else {
+													?>
+													<a href="javascript:void(0)" class="mainwp-update-selected-button ui green basic mini button" onClick="event.stopPropagation(); return updatesoverview_group_upgrade_translation_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
+													<a href="javascript:void(0)" class="mainwp-update-all-button ui green mini button" onClick="return updatesoverview_group_upgrade_translation_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+											<?php }; ?>
 											<?php endif; ?>
 										<?php endif; ?>
 										</td>
@@ -805,9 +887,15 @@ class MainWP_Updates_Per_Group {
 															<strong class="mainwp-768-show"><?php esc_html_e( 'Varsion:', 'mainwp' ); ?></strong> <?php echo esc_html( $translation_upgrade['version'] ); ?>
 														</td>
 														<td>
-														<?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
-															<a href="javascript:void(0)" class="mainwp-update-now-button ui green mini button" onClick="return updatesoverview_group_upgrade_translation( <?php echo esc_attr( $website->id ); ?>, '<?php echo esc_js( $translation_slug ); ?>', <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-														<?php endif; ?>
+														<?php
+														if ( MainWP_Updates::user_can_update_trans() ) :
+															if ( $is_demo ) {
+																MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled" disabled="disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
+															} else {
+																?>
+																<a href="javascript:void(0)" class="mainwp-update-now-button ui green mini button" onClick="return updatesoverview_group_upgrade_translation( <?php echo esc_attr( $website->id ); ?>, '<?php echo esc_js( $translation_slug ); ?>', <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+															<?php }; ?>
+															<?php endif; ?>
 														</td>
 													</tr>
 												<?php endforeach; ?>
@@ -895,6 +983,9 @@ class MainWP_Updates_Per_Group {
 							<tbody class="accordion">
 							<?php foreach ( $site_ids as $site_id ) : ?>
 								<?php
+								if ( ! isset( $site_offset_for_groups[ $site_id ] ) ) {
+									continue;
+								}
 								$seek = $site_offset_for_groups[ $site_id ];
 								MainWP_DB::data_seek( $websites, $seek );
 
@@ -1053,6 +1144,9 @@ class MainWP_Updates_Per_Group {
 							<tbody class="accordion">
 							<?php foreach ( $site_ids as $site_id ) : ?>
 								<?php
+								if ( ! isset( $site_offset_for_groups[ $site_id ] ) ) {
+									continue;
+								}
 								$seek = $site_offset_for_groups[ $site_id ];
 								MainWP_DB::data_seek( $websites, $seek );
 

@@ -95,8 +95,8 @@
  border-radius: 0px 10px 10px 0px !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.button:not( .green, .basic, .disabled, .red, .blue ),
-.mainwp-ui.mainwp-custom-theme .ui.basic.button:not( .green, .disabled, .red, .blue ) {
+.mainwp-ui.mainwp-custom-theme .ui.button:not( .green, .basic, .disabled, .red, .blue, .black ),
+.mainwp-ui.mainwp-custom-theme .ui.basic.button:not( .green, .disabled, .red, .blue, .black ) {
   background-color: var( --grey-light-alt ) !important;
   border: none !important;
   box-shadow: none !important;
@@ -106,6 +106,7 @@
 
 .mainwp-ui.mainwp-custom-theme .ui.black.button {
   background: var( --grey-dark-alt ) !important;
+  color: var( --grey-light ) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.black.button .icon {

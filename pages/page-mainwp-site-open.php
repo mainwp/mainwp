@@ -78,12 +78,17 @@ class MainWP_Site_Open {
 	 * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
 	 */
 	public static function open_site( $website, $location, $pNewWindow = null ) {
+		if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
+			$action = $website->url . 'wp-admin.html';
+		} else {
+			$action = MainWP_Connect::get_get_data_authed( $website, ( null == $location || '' === $location ) ? 'index.php' : $location );
+		}
 		?>
 		<div class="ui segment" style="padding: 25rem">
 			<div class="ui active inverted dimmer">
 				<div class="ui massive text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
 			</div>
-			<form method="POST" action="<?php echo MainWP_Connect::get_get_data_authed( $website, ( null == $location || '' === $location ) ? 'index.php' : $location ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" id="redirectForm">
+			<form method="POST" action="<?php echo $action; // phpcs:ignore WordPress.Security.EscapeOutput ?>" id="redirectForm">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			</form>
 		</div>
@@ -204,4 +209,44 @@ class MainWP_Site_Open {
 		<?php
 	}
 
+
+	/**
+	 * Method get_open_site_url()
+	 *
+	 * Render render open site url.
+	 *
+	 * @param mixed $website Website ID.
+	 * @param mixed $location open location.
+	 *
+	 * @return mixed Render modal window for themes selection.
+	 */
+	public static function get_open_site_url( $website, $location = '', $echo = true ) {
+
+		$site_id = 0;
+
+		if ( is_numeric( $website ) ) {
+			$site_id = $website;
+		} elseif ( is_object( $website ) ) {
+			$site_id = $website->id;
+		} else {
+			return '';
+		}
+
+		$open_url = '';
+
+		if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $site_id ) ) {
+			$open_url = MainWP_Demo_Handle::get_instance()->get_open_site_demo_url( $site_id );
+		} else {
+			$open_url = 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site_id . '&_opennonce=' . esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) );
+			if ( ! empty( $location ) ) {
+				$open_url .= '&location=' . $location;
+			}
+		}
+
+		if ( $echo ) {
+			echo $open_url; //phpcs:ignore WordPress.Security.EscapeOutput
+		}
+
+		return $open_url;
+	}
 }

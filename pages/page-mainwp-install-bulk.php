@@ -313,6 +313,16 @@ class MainWP_Install_Bulk {
 		 */
 		self::addition_post_data( $post_data );
 
+		$site_id = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : 0;
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+		// to support demo data.
+		if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
+			return MainWP_Demo_Handle::get_instance()->handle_action_demo( $website, 'perform_install', $post_data );
+		}
+
+		$websites = array( $website );
+
 		/**
 		 * Perform insatallation additional data
 		 *
@@ -325,12 +335,12 @@ class MainWP_Install_Bulk {
 		$post_data = apply_filters( 'mainwp_perform_install_data', $post_data );
 
 		$post_data['url'] = isset( $_POST['url'] ) ? wp_json_encode( wp_unslash( $_POST['url'] ) ) : '';
-		$site_id          = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : 0;
-		$output           = new \stdClass();
-		$output->ok       = array();
-		$output->errors   = array();
-		$output->results  = array();
-		$websites         = array( MainWP_DB::instance()->get_website_by_id( $site_id ) );
+
+		$output          = new \stdClass();
+		$output->ok      = array();
+		$output->errors  = array();
+		$output->results = array();
+
 		// phpcs:enable WordPress.Security.NonceVerification
 		/**
 		* Action: mainwp_before_plugin_theme_install
@@ -511,14 +521,20 @@ class MainWP_Install_Bulk {
 		$urls             = isset( $_POST['urls'] ) ? esc_url_raw( wp_unslash( $_POST['urls'] ) ) : '';
 		$post_data['url'] = wp_json_encode( explode( '||', $urls ) );
 		$site_id          = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : 0;
+		$website          = MainWP_DB::instance()->get_website_by_id( $site_id );
 
 		// phpcs:enable WordPress.Security.NonceVerification
+
+		// to support demo data.
+		if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
+			return MainWP_Demo_Handle::get_instance()->handle_action_demo( $website, 'perform_upload', $post_data );
+		}
 
 		$output          = new \stdClass();
 		$output->ok      = array();
 		$output->errors  = array();
 		$output->results = array();
-		$websites        = array( MainWP_DB::instance()->get_website_by_id( $site_id ) );
+		$websites        = array( $website );
 
 		/**
 		* Action: mainwp_before_plugin_theme_install
@@ -604,6 +620,9 @@ class MainWP_Install_Bulk {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
 	 */
 	public static function install_plugin_theme_handler( $data, $website, &$output, $post_data = array() ) {
+		if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
+			return;
+		}
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 
 			$result = $results[1];

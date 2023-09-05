@@ -331,8 +331,9 @@ class MainWP_System_View {
 	 *
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
 	 */
-	public static function render_browser_extensions_notice() {
-		if ( MainWP_DB::instance()->get_websites_count() > 4 ) {
+	public static function render_browser_extensions_notice() {			
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
+		if ( MainWP_DB::instance()->get_websites_count() > 4 && ! $is_demo ) {
 			if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_browser_extensions_notice' ) ) {
 				?>
 				<div class="ui info message" style="margin-bottom: 0; border-radius: 0;">
@@ -374,12 +375,12 @@ class MainWP_System_View {
 	 */
 	public static function render_notice_version() {
 		$phpver = phpversion();
-		if ( version_compare( $phpver, '5.5', '<' ) ) {
+		if ( version_compare( $phpver, '7.0', '<' ) ) {
 			if ( MainWP_Utility::show_mainwp_message( 'notice', 'phpver_5_5' ) ) {
 				?>
 				<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
 					<i class="exclamation circle icon"></i>
-					<?php printf( esc_html__( 'Your server is currently running PHP version %1$s. In the next few months your MainWP Dashboard will require PHP 5.6 as a minimum. Please upgrade your server to at least 5.6 but we recommend PHP 7 or newer. You can find a template email to send your host %2$shere%3$s.', 'mainwp' ), esc_html( $phpver ), '<a href="https://wordpress.org/about/requirements/" target="_blank">', '</a>' ); ?>
+					<?php printf( esc_html__( 'Your server is currently running PHP version %1$s. In the next few months your MainWP Dashboard will require PHP 7.4 as a minimum. Please upgrade your server to at least 7.4 but we recommend PHP 8 or newer. You can find a template email to send your host %2$shere%3$s.', 'mainwp' ), esc_html( $phpver ), '<a href="https://wordpress.org/about/requirements/" target="_blank">', '</a>' ); ?>
 					<i class="close icon mainwp-notice-dismiss" notice-id="phpver_5_5"></i>
 				</div>
 				<?php
@@ -496,15 +497,17 @@ class MainWP_System_View {
 
 	/** Renders MainWP Dashboard & Child Plugin auto update Alert. */
 	public static function render_notice_trust_update() {
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
+		if ( ! $is_demo  ) {
 		?>
-		<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
-			<i class="info circle icon"></i>
-			<div class="content">
-				<?php esc_html_e( 'You have not set your MainWP Child plugins for auto updates, this is highly recommended!', 'mainwp' ); ?> <a id="mainwp_btn_autoupdate_and_trust" class="ui mini yellow button" href="#"><?php esc_html_e( 'Turn On', 'mainwp' ); ?></a>
-			</div>
+		<div class="ui blue message" style="margin-bottom: 0; border-radius: 0;">
+			<?php esc_html_e( 'Do you want MainWP Child to be updated automatically on your websites? This is highly recommended!', 'mainwp' ); ?> 
+			<div class="ui hidden divider"></div>
+			<a id="mainwp_btn_autoupdate_and_trust" class="ui mini green button" href="#"><?php esc_html_e( 'Update MainWP Child Plugin Automatically', 'mainwp' ); ?></a>	
 			<i class="close icon mainwp-events-notice-dismiss" notice="trust_child"></i>
 		</div>
 		<?php
+		}
 	}
 
 	/** Renders MainWP 30 day review request. */
@@ -872,13 +875,33 @@ class MainWP_System_View {
 				<div class="mainwp-modal-close ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 			</div>
 		</div>
-		<input type="hidden" id="sync_selected_site_ids" value="" />
+		<input type="hidden" id="sync_selected_site_ids" value="" />		
+		<div class="ui tiny modal" id="mainwp-modal-confirm-select">
+			<div class="header"><?php esc_html_e( 'Confirmation', 'mainwp' ); ?></div>
+			<div class="content">
+				<div class="content-massage"></div>
+			</div>
+			<div class="actions">
+				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+			</div>
+		</div>
+		<?php
+		self::render_comfirm_modal();
+	}
+
+	/**
+	 * Method render_comfirm_modal()
+	 *
+	 * Render comfirm modal box.
+	 */
+	public static function render_comfirm_modal() {
+	?>
 		<div class="ui tiny modal" id="mainwp-modal-confirm">
 			<div class="header"><?php esc_html_e( 'Confirmation', 'mainwp' ); ?></div>
 			<div class="content">
 				<div class="content-massage"></div>
 				<div class="ui mini yellow message hidden update-confirm-notice" ><?php printf( esc_html__( 'To disable update confirmations, go to the %1$sSettings%2$s page and disable the "Disable update confirmations" option', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
-				<div class="ui form hidden" id="mainwp-confirm-form">
+				<div class="ui form hidden" id="mainwp-confirm-form" style="display:none;">
 					<div class="ui divider"></div>
 					<div class="field">
 						<label></label>
@@ -897,16 +920,7 @@ class MainWP_System_View {
 				</div>
 			</div>
 		</div>
-		<div class="ui tiny modal" id="mainwp-modal-confirm-select">
-			<div class="header"><?php esc_html_e( 'Confirmation', 'mainwp' ); ?></div>
-			<div class="content">
-				<div class="content-massage"></div>
-			</div>
-			<div class="actions">
-				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
-			</div>
-		</div>
-		<?php
+	<?php
 	}
 
 	/**

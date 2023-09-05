@@ -510,7 +510,7 @@ class MainWP_Manage_Groups {
 	 */
 	public static function render_groups_sites_table_element() {
 		?>
-		<table class="ui table unstackable selection mainwp-with-preview-table" id="mainwp-manage-groups-sites-table">
+		<table class="ui very compact table mainwp-with-preview-table" id="mainwp-manage-groups-sites-table">
 			<thead>
 				<tr>
 					<th class="no-sort collapsing"><div class="ui checkbox" data-tooltip="<?php esc_attr_e( 'Click to select all sites.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><input type="checkbox" name="example"></div></th>

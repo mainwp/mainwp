@@ -46,6 +46,9 @@ class MainWP_Bulk_Add {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
 	 */
 	public static function posting_bulk_handler( $data, $website, &$output ) {
+		if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
+			return;
+		}
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result      = $results[1];
 			$information = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.

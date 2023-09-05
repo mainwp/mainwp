@@ -711,9 +711,14 @@ class MainWP_Post {
 					 * @since 4.1
 					 */
 					do_action( 'mainwp_manage_posts_before_submit_button' );
-					?>
-					<input type="button" name="mainwp_show_posts" id="mainwp_show_posts" class="ui green big fluid button" value="<?php esc_attr_e( 'Show Posts', 'mainwp' ); ?>"/>
-					<?php
+					$is_demo = MainWP_Demo_Handle::is_demo_mode();
+					if( $is_demo ){
+						MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" disabled="disabled" class="ui green big fluid button disabled" value="' . esc_attr__( 'Show Posts', 'mainwp' ) . '" />' );
+					} else {
+						?>
+						<input type="button" name="mainwp_show_posts" id="mainwp_show_posts" class="ui green big fluid button" value="<?php esc_attr_e( 'Show Posts', 'mainwp' ); ?>"/>
+						<?php
+					}
 					/**
 					 * Action: mainwp_manage_posts_after_submit_button
 					 *
@@ -1229,6 +1234,9 @@ class MainWP_Post {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function posts_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex method.
+		if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
+			return;
+		}
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
 			$posts  = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
@@ -2246,9 +2254,14 @@ class MainWP_Post {
 					 * @since 4.0
 					 */
 					do_action( 'mainwp_edit_posts_before_submit_button', $post, $post_type );
+					$is_demo = MainWP_Demo_Handle::is_demo_mode();
 					?>
 					<div class="mainwp-search-submit" id="bulkpost-publishing-action">
-						<input type="submit" name="publish" id="publish" class="ui big green fluid button" value="<?php esc_attr_e( 'Publish', 'mainwp' ); ?>">
+						<?php if( $is_demo ){ 
+							MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="submit" disabled="disabled" class="ui big green fluid button disabled" value="' . esc_attr__( 'Publish', 'mainwp' ) . '" />' );
+							} else { ?>
+							<input type="submit" name="publish" id="publish" class="ui big green fluid button" value="<?php esc_attr_e( 'Publish', 'mainwp' ); ?>">
+						<?php } ?>
 					</div>
 					<?php
 					/**

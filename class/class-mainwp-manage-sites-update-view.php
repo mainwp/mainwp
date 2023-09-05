@@ -312,6 +312,7 @@ class MainWP_Manage_Sites_Update_View {
 	 */
 	public static function render_wpcore_updates( $website, $active_tab ) {
 		$user_can_update_wp = mainwp_current_user_have_right( 'dashboard', 'update_wordpress' );
+		$is_demo            = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div class="ui <?php echo 'WordPress' === $active_tab ? 'active' : ''; ?> tab" data-tab="wordpress">
 			<table class="ui tablet stackable table" id="mainwp-wordpress-updates-table mainwp-manage-updates-table">
@@ -354,8 +355,14 @@ class MainWP_Manage_Sites_Update_View {
 											<span data-tooltip="<?php echo esc_html( $wpcore_update_disabled_by ); ?>" data-inverted="" data-position="left center"><a href="javascript:void(0)" class="ui green button mini disabled"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a></span>
 											<?php
 										} else {
+											if ( $is_demo ) {
+												MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green button mini disabled" disabled="disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
+											} else {
+												?>
+												<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . esc_attr( $website->name ); ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo intval( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+												<?php
+											}
 											?>
-											<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . esc_attr( $website->name ); ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo intval( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 											<input type="hidden" id="wp-updated-<?php echo intval( $website->id ); ?>" value="<?php echo ( 0 < count( $wp_upgrades ) ? '0' : '1' ); ?>" />
 											<?php
 										}
@@ -467,8 +474,15 @@ class MainWP_Manage_Sites_Update_View {
 								<?php if ( $user_can_ignore_unignore ) : ?>
 									<a href="javascript:void(0)" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_js( rawurlencode( $plugin_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 								<?php endif; ?>
-								<?php if ( $user_can_update_plugins ) : ?>
+								<?php
+								if ( $user_can_update_plugins ) :
+									$is_demo = MainWP_Demo_Handle::is_demo_mode();
+									if ( $is_demo ) {
+										MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button"  disabled="disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
+									} else {
+										?>
 									<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_plugin( <?php echo intval( $website->id ); ?>, '<?php echo esc_js( $plugin_name ); ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+									<?php } ?>
 								<?php endif; ?>
 							</td>
 							<?php endif; ?>
@@ -503,7 +517,12 @@ class MainWP_Manage_Sites_Update_View {
 	public static function hook_table_update_plugins_header_content( $column_display_name, $column_key, $top, $tbl_helper ) {
 		if ( $top ) {
 			if ( 'action' == $column_key ) {
-				$selected_act         = '<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all( false, true );" class="ui mini green basic button" data-tooltip="' . esc_html__( 'Update Selected Plugins.', 'mainwp' ) . '" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>';
+				if ( MainWP_Demo_Handle::is_demo_mode() ) {
+					$demo_tip     = MainWP_Demo_Handle::get_instance()->get_demo_tooltip();
+					$selected_act = '<span data-tooltip="' . esc_html( $demo_tip ) . '" data-inverted="" data-position="top right"><a href="javascript:void(0)" class="ui mini green basic button disabled" >' . esc_html__( 'Update Selected' ) . '</a></span>';
+				} else {
+					$selected_act = '<a href="javascript:void(0)" data-tooltip="' . esc_html__( 'Update Selected Plugins.', 'mainwp' ) . '" onClick="return updatesoverview_plugins_global_upgrade_all( false, true );" class="ui mini green basic button" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>';
+				}
 				$column_display_name .= $selected_act;
 			} elseif ( 'title' == $column_key ) {
 				$column_display_name = '<div class="ui master checkbox "><input type="checkbox" name=""><label>' . $column_display_name . '</label></div>';
@@ -524,8 +543,13 @@ class MainWP_Manage_Sites_Update_View {
 	 */
 	public static function hook_table_update_themes_header_content( $column_display_name, $column_key, $top, $tbl_helper ) {
 		if ( $top ) {
+			$is_demo = MainWP_Demo_Handle::is_demo_mode();
 			if ( 'action' == $column_key ) {
-				$selected_act         = '<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all( false, true );" class="ui mini green basic button" data-tooltip="' . esc_html__( 'Update Selected Themes.', 'mainwp' ) . '" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>';
+				if ( $is_demo ) {
+					$selected_act = MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green basic button disabled" disabled="disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>', false );
+				} else {
+					$selected_act = '<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all( false, true );" class="ui mini green basic button" data-tooltip="' . esc_html__( 'Update Selected Themes.', 'mainwp' ) . '" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>';
+				}
 				$column_display_name .= $selected_act;
 			} elseif ( 'title' == $column_key ) {
 				$column_display_name = '<div class="ui master checkbox "><input type="checkbox" name=""><label>' . $column_display_name . '</label></div>';
@@ -552,6 +576,8 @@ class MainWP_Manage_Sites_Update_View {
 		if ( ! is_array( $trustedThemes ) ) {
 			$trustedThemes = array();
 		}
+
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 
 		$user_can_update_themes   = mainwp_current_user_have_right( 'dashboard', 'update_themes' );
 		$user_can_ignore_unignore = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
@@ -624,8 +650,14 @@ class MainWP_Manage_Sites_Update_View {
 									<?php if ( $user_can_ignore_unignore ) : ?>
 										<a href="javascript:void(0)" onClick="return updatesoverview_themes_ignore_detail( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_upgrade['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 									<?php endif; ?>
-									<?php if ( $user_can_update_themes ) : ?>
+									<?php
+									if ( $user_can_update_themes ) :
+										if ( $is_demo ) {
+											MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled" disabled="disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
+										} else {
+											?>
 										<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_theme( <?php echo intval( $website->id ); ?>, '<?php echo esc_js( $theme_name ); ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+									<?php }; ?>
 									<?php endif; ?>
 								</td>
 								<?php endif; ?>
@@ -654,6 +686,7 @@ class MainWP_Manage_Sites_Update_View {
 	 */
 	public static function render_language_updates( $website, $active_tab ) {
 		$user_can_update_translation = mainwp_current_user_have_right( 'dashboard', 'update_translations' );
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div class="ui <?php echo 'trans' === $active_tab ? 'active' : ''; ?> tab" data-tab="translations">
 			<table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-translations-table">
@@ -680,8 +713,14 @@ class MainWP_Manage_Sites_Update_View {
 							<?php echo esc_html( $translation_upgrade['version'] ); ?>
 						</td>
 						<td>
-							<?php if ( $user_can_update_translation ) { ?>
+							<?php
+							if ( $user_can_update_translation ) {
+								if ( $is_demo ) {
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled" disabled="disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
+								} else {
+									?>
 								<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_translation( <?php echo intval( $website->id ); ?>, '<?php echo esc_js( $translation_slug ); ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+								<?php } ?>
 							<?php } ?>
 						</td>
 					</tr>

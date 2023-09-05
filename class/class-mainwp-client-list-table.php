@@ -116,6 +116,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 			'city'             => array( 'city', false ),
 			'zip'              => array( 'zip', false ),
 			'state'            => array( 'state', false ),
+			'created'          => array( 'created', false ),
 			'country'          => array( 'country', false ),
 		);
 		return $sortable_columns;
@@ -147,6 +148,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 			'zip'              => esc_html__( 'Zip', 'mainwp' ),
 			'state'            => esc_html__( 'State', 'mainwp' ),
 			'country'          => esc_html__( 'Country', 'mainwp' ),
+			'created'          => esc_html__( 'Added on', 'mainwp' ),
 			'notes'            => esc_html__( 'Notes', 'mainwp' ),
 		);
 	}
@@ -678,8 +680,18 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 				<td class="collapsing"><?php echo MainWP_System_Utility::get_site_tags( $item, true ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 				<?php
 			} elseif ( 'suspended' === $column_name ) {
+				$client_status = '';
+				if ( 0 === intval( $item['suspended'] ) ) {
+					$client_status = '<span class="ui green mini fluid center aligned label">' . esc_html__( 'Active', 'mainwp' ) . '</span>';
+				} elseif ( 1 === intval( $item['suspended'] ) ) {
+					$client_status = '<span class="ui yellow mini fluid center aligned label">' . esc_html__( 'Suspended', 'mainwp' ) . '</span>';
+				} elseif ( 2 === intval( $item['suspended'] ) ) {
+					$client_status = '<span class="ui blue mini fluid center aligned label">' . esc_html__( 'Lead', 'mainwp' ) . '</span>';
+				} elseif ( 3 === intval( $item['suspended'] ) ) {
+					$client_status = '<span class="ui red mini fluid center aligned label">' . esc_html__( 'Lost', 'mainwp' ) . '</span>';
+				}
 				?>
-				<td class="collapsing"><?php echo ( 1 === intval( $item['suspended'] ) ) ? '<span class="ui red mini label">' . esc_html__( 'Suspended', 'mainwp' ) . '</span>' : '<span class="ui green mini label">' . esc_html__( 'Active', 'mainwp' ) . '</span>'; ?></td>
+				<td class="collapsing"><?php echo $client_status; ?></td>
 				<?php
 			} elseif ( 'websites' === $column_name ) {
 				$selected_sites = isset( $item['selected_sites'] ) ? trim( $item['selected_sites'] ) : '';
@@ -708,6 +720,10 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 				<span style="display: none" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 				<?php
 				echo '</td>';
+			} elseif ( 'created' === $column_name ) {
+				?>
+				<td class="collapsing" sort-value="<?php echo intval( $item['created'] ); ?>"><?php echo esc_html( 0 !== intval( $item['created'] ) ? MainWP_Utility::format_date( $item['created'] ) : 'N/A' ); ?></td>
+				<?php
 			} elseif ( method_exists( $this, 'column_' . $column_name ) ) {
 				echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
 				echo call_user_func( array( $this, 'column_' . $column_name ), $item ); // phpcs:ignore WordPress.Security.EscapeOutput

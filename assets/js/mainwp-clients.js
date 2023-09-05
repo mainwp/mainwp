@@ -57,9 +57,12 @@ jQuery(document).ready(function () {
       jQuery('.after-add-contact-field').before('<input type="hidden" value="' + jQuery(this).attr('contact-id') + '" name="client_fields[delele_contacts][]">'); // to delete contact when submit the client.
     }
 
-    var parent = jQuery(this).closest('.ui.grid.field');
+    var parent = jQuery(this).closest('.remove-contact-field-parent');
+    var limit = 0;
     while (!parent.prev().hasClass('top-contact-fields')) {
+      limit++;
       parent.prev().remove(); // prev contact field.
+      if (limit > 50) break;
     }
     if (parent.prev().hasClass('top-contact-fields')) {
       parent.prev().remove();
@@ -195,11 +198,11 @@ manageclients_bulk_init = function () {
 
 
 jQuery(document).on('click', '#bulk_add_createclient', function () {
-  var fromModal = jQuery(this).attr('modal-page') == "yes" ? true : false;
-  mainwp_createclient(fromModal);
+  var currPage = jQuery(this).attr('current-page');
+  mainwp_createclient(currPage);
 });
 
-mainwp_createclient = function (fromModal) {
+mainwp_createclient = function (currPage) {
   if (jQuery('input[name="client_fields[default_field][client.name]"]').val() == '') {
     feedback('mainwp-message-zone-client', __('Client name field is required! Please enter a Client name.'), 'yellow');
     return;
@@ -247,6 +250,12 @@ mainwp_createclient = function (fromModal) {
     });
   }
 
+  var is_first_client = false;
+  if (jQuery("input[name=selected_first_site]").length > 0) {
+    selected_sites.push(jQuery("input[name=selected_first_site]").val());
+    is_first_client = true;
+  }
+
   jQuery('#mainwp-message-zone-client').removeClass('red green yellow');
   var msg = __('Creating the client. Please wait...');
   if (jQuery('input[name="client_fields[client_id]"]').val() != 0) {
@@ -261,6 +270,7 @@ mainwp_createclient = function (fromModal) {
   formdata.append("action", 'mainwp_clients_add_client');
   formdata.append("select_by", jQuery('#select_by').val());
   formdata.append("selected_sites[]", selected_sites);
+  formdata.append("is_first_client", is_first_client);
   formdata.append("security", security_nonces['mainwp_clients_add_client']);
 
   jQuery.ajax({
@@ -271,10 +281,12 @@ mainwp_createclient = function (fromModal) {
       jQuery('#mainwp-message-zone-client').hide();
       jQuery('#bulk_add_createclient').prop("disabled", false);
       if (response && response.success) {
-        if (fromModal) {
-          window.location.href = location.href;
-        } else {
+        if ('add-new' == currPage) {
           window.location.href = "admin.php?page=ManageClients";
+        } else if ('qsw-add' == currPage) {
+          window.location.href = 'admin.php?page=mainwp-setup&step=monitoring&message=1';
+        } else {
+          window.location.href = location.href;
         }
       } else if (response && response.error) {
         feedback('mainwp-message-zone-client', response.error, 'red');

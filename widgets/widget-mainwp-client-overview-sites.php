@@ -134,13 +134,11 @@ class MainWP_Client_Overview_Sites {
 				?>
 				<?php
 				if ( $client_info ) {
-
 					$this->prepare_items( $client_id );
-
 					?>
-					<table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table">
-								<thead>
-									<tr><?php $this->print_column_headers( true ); ?></tr>
+					<table id="mainwp-manage-sites-table" style="width:100%" class="ui unstackable table mainwp-with-preview-table">
+						<thead>
+								<tr><?php $this->print_column_headers( true ); ?></tr>
 								</thead>
 								<tbody id="mainwp-manage-sites-body-table">
 									<?php $this->display_rows_or_placeholder(); ?>
@@ -205,9 +203,14 @@ class MainWP_Client_Overview_Sites {
 
 			<script type="text/javascript">
 				jQuery( document ).ready( function( $ ) {
+					var responsive = true;
+					if( jQuery( window ).width() > 1140 ) {
+						responsive = false;
+					}
 					try {	
 						$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
 							"searching" : <?php echo esc_js( $table_features['searching'] ); ?>,
+							"responsive": responsive,
 							"paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
 							"pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
 							"info" : <?php echo esc_js( $table_features['info'] ); ?>,
@@ -610,7 +613,7 @@ class MainWP_Client_Overview_Sites {
 				<?php if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
 					<i class="sign in icon"></i>
 				<?php else : ?>
-					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website['id'] ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>" data-position="right center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
+					<a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>" data-position="right center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
 				<?php endif; ?>
 				</td>
 				<?php

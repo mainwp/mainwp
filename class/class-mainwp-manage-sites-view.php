@@ -831,11 +831,14 @@ class MainWP_Manage_Sites_View {
 						<input type="button" name="mainwp_managesites_edit_test" id="mainwp_managesites_edit_test" class="ui button basic green" value="<?php esc_attr_e( 'Test Connection', 'mainwp' ); ?>"/>
 					</div>
 				</div>
+				<?php
+				$adminname = $website->adminname;
+				?>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Administrator username', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the website Administrator username.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<div class="ui left labeled input">
-							<input type="text" id="mainwp_managesites_edit_siteadmin" name="mainwp_managesites_edit_siteadmin" value="<?php echo esc_attr( $website->adminname ); ?>" />
+							<input type="text" id="mainwp_managesites_edit_siteadmin" name="mainwp_managesites_edit_siteadmin" value="<?php echo esc_attr( $adminname ); ?>" />
 						</div>
 					</div>
 				</div>
@@ -1492,6 +1495,7 @@ class MainWP_Manage_Sites_View {
 	 * Reconnect child site.
 	 *
 	 * @param object $website The website object.
+	 * @param bool   $sync_first True try to sync before reconnect.
 	 *
 	 * @return boolean true|false.
 	 * @throws \Exception Exception on errors.
@@ -1505,10 +1509,10 @@ class MainWP_Manage_Sites_View {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
-	public static function m_reconnect_site( $website ) {
+	public static function m_reconnect_site( $website, $sync_first = true ) {
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 			try {
-				if ( MainWP_Sync::sync_site( $website, true ) ) {
+				if ( $sync_first && MainWP_Sync::sync_site( $website, true ) ) {
 					return true;
 				}
 
@@ -1772,7 +1776,8 @@ class MainWP_Manage_Sites_View {
 						}
 
 						if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
-							$message = sprintf( esc_html__( '%1$sCongratulations you have connected %2$s.%3$s You can add new sites at anytime from the Add New Site page.', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>' );
+							set_transient( 'mainwp_transient_just_connected_site_id', $id, HOUR_IN_SECONDS );
+							$message = sprintf( esc_html__( '%1$sCongratulations you have connected %2$s.%3$s After finishing the Quick Setup Wizard, you can add additional sites from the Add New Sites page.', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>' );
 						} else {
 							$message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>' );
 						}

@@ -194,6 +194,9 @@ class MainWP_Manage_Sites {
 
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
+				if ( ! isset( $subPage['slug'] ) && ! isset( $subPage['title'] ) ) {
+					continue;
+				}
 				if ( MainWP_Menu::is_disable_menu_item( 2, 'ManageSites' . $subPage['slug'] ) ) {
 					continue;
 				}
@@ -381,6 +384,7 @@ class MainWP_Manage_Sites {
 			$show_cols = array();
 		}
 
+		$is_demo  = MainWP_Demo_Handle::is_demo_mode();
 		$siteViewMode = MainWP_Utility::get_siteview_mode();
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
@@ -471,7 +475,11 @@ class MainWP_Manage_Sites {
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Disconnect all child sites', 'mainwp' ); ?></label>
 						<div class="ten wide column" id="mainwp-disconnect-sites-tool" data-tooltip="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
-							<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo esc_html( wp_create_nonce( 'disconnect_sites' ) ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Websites', 'mainwp' ); ?></a>
+							<?php if ( $is_demo ) { 
+								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="#" disabled="disabled" class="ui button green basic disabled">' . esc_html__( 'Disconnect Websites.', 'mainwp' ) . '</a>' );
+								} else { ?>
+								<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo esc_html( wp_create_nonce( 'disconnect_sites' ) ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Websites.', 'mainwp' ); ?></a>
+							<?php } ?>
 						</div>
 					</div>
 					<div class="ui hidden divider"></div>
@@ -865,6 +873,10 @@ class MainWP_Manage_Sites {
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
+					<h3 class="ui dividing header">
+						<?php esc_html_e( 'Import Sites', 'mainwp' ); ?>
+						<div class="sub header"><?php esc_html_e( 'Import multiple websites to your MainWP Dashboard.', 'mainwp' ); ?></div>
+					</h3>
 					<form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<div class="ui grid field">

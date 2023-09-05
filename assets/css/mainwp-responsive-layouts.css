@@ -23,6 +23,10 @@
 	.mainwp-manage-updates-table tfoot tr th:last-child {
 		text-align: right !important;
 	}
+
+	.mainwp-manage-updates-table tbody tr td.dataTables_empty {
+		text-align: center !important;
+	}
 }
 
 @media only screen and ( min-width: 992px ) and ( max-width: 1449px ) {
@@ -82,14 +86,14 @@
 
 }
 
-@media screen and ( max-width: 1000px ) {
+@media screen and ( max-width: 1366px ) {
 
 	.mainwp-ui #mainwp-grid-wrapper {
-		padding: 10px !important;
+		padding: 1rem !important;
 	}
 
 	.mainwp-ui .mainwp-widget {
-		margin-bottom: 10px !important;
+		margin-bottom: 1rem !important;
 	}
 
 	.mainwp-ui .mainwp-widget .mainwp-scrolly-overflow {
@@ -105,6 +109,15 @@
 }
 
 @media screen and ( max-width: 767px ) {
+
+	.mainwp-ui .ui.five.cards > .card {
+		width: 100%;
+	}
+
+	.mainwp-ui .ui.stackable.pagination.menu {
+		width: 100%;
+		margin-bottom: 2em;
+	}
 
 	.mainwp-768-hide {
 		display: none !important;
@@ -230,6 +243,11 @@
 		margin-bottom: 10px !important;
 	}
 
+	.mainwp-ui .ui.buttons .ui.button,
+	.mainwp-ui .ui.buttons .ui.button {
+		width: auto !important;
+	}
+	
 	.mainwp-ui .ui.grid.field .column {
 		width: 100% !important;
 		display: block !important;

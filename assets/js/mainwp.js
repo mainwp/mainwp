@@ -856,7 +856,7 @@ mainwp_managesites_check_abandoned_int = function (siteid, which) {
 /**
  * MainWP UI.
  */
-jQuery(document).ready(function () {
+jQuery(function () {
   jQuery('#reset-overview-settings').on('click', function () {
     mainwp_confirm(__('Are you sure.'), function () {
       var which_set = jQuery('input[name=reset_overview_which_settings]').val();
@@ -1340,7 +1340,7 @@ jQuery(document).ready(function ($) {
 function mainwp_showhide_elements(attEl, valHi) {
   if (valHi) {
     jQuery('[hide-element=' + attEl + ']').fadeOut(300);
-    } else {
+  } else {
     jQuery('[hide-element=' + attEl + ']').fadeIn(200);
   }
 }
@@ -2746,7 +2746,7 @@ jQuery(document).ready(function ($) {
       if (findNext.length > 0) {
         openwpp_site = '&wpplugin=' + jQuery(findNext).attr('open-wpplugin-siteid');
       }
-    }    
+    }
     $('#mainwp-plugin-details-modal').modal({
       onHide: function () {
       },
@@ -3020,11 +3020,11 @@ getErrorMessageInfo = function (repError, outputType) {
 
   if (msg == '') {
     msg = getErrorMessage(repError);
-    
+
     if (repError.message == 'NOMAINWP' || repError == 'NOMAINWP') {
-        msg = __('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the MainWP Community for help.');
+      msg = __('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the MainWP Community for help.');
     }
-    
+
     if (msg != '') {
       msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + msg + '"><i class="red times icon"></i></span>';
     }
@@ -3193,7 +3193,7 @@ serverinfo_prepare_download_info = function (communi) {
     if (communi) {
       report = '```' + "\n" + report + "\n" + '```';
     }
-    jQuery("#download-server-information textarea").val(report).trigger( "select" );
+    jQuery("#download-server-information textarea").val(report).trigger("select");
   } catch (e) {
     console.log('Error:');
   }
@@ -3696,11 +3696,197 @@ jQuery(document).on('change', '#mainwp_archiveFormat', function () {
 
 
 // MainWP Tools
-jQuery(document).ready(function () {
+jQuery(function () {
   jQuery(document).on('click', '#force-destroy-sessions-button', function () {
     mainwp_force_destroy_sessions();
   });
+
+  jQuery(document).on('click', '.mainwp-import-demo-data-button', function () {
+    var confirmation = "Are you sure you want to import demo content into your MainWP Dashboard?";
+    mainwp_confirm(confirmation, function () {
+      feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + __('Importing. Please wait...', 'mainwp'), '');
+      var data = mainwp_secure_data({
+        action: 'mainwp_import_demo_data',
+      });
+
+      jQuery.post(ajaxurl, data, function (response) {
+        var error = false;
+        if (response.count != undefined) {
+          feedback('mainwp-message-zone', __('The demo content has been imported into your MainWP Dashboard.', 'mainwp'), 'green');
+        } else {
+          error = true;
+          feedback('mainwp-message-zone', __('Undefined error. Please try again.', 'mainwp'), 'green');
+        }
+        if (error == false) {
+          setTimeout(function () {
+            window.location = 'admin.php?page=mainwp_tab';
+          }, 3000);
+        }
+      }, 'json');
+    });
+    return false;
+  });
+
+  jQuery(document).on('click', '.mainwp-remove-demo-data-button', function () {
+
+    var confirmation = "Are you sure you want to delete demo content from your MainWP Dashboard?";
+    mainwp_confirm(confirmation, function () {
+
+      feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + __('Deleting. Please wait...', 'mainwp'), '');
+
+      var data = mainwp_secure_data({
+        action: 'mainwp_delete_demo_data',
+      });
+
+      jQuery.post(ajaxurl, data, function (response) {
+
+        var error = false;
+
+        if (response.success != undefined) {
+          feedback('mainwp-message-zone', __('The demo content has been deleted from your MainWP Dashboard.', 'mainwp'), 'green');
+        } else {
+          error = true;
+          feedback('mainwp-message-zone', __('Undefined error. Please try again.', 'mainwp'), 'green');
+        }
+
+        if (error == false) {
+          setTimeout(function () {
+            window.location = 'admin.php?page=mainwp-setup';
+          }, 3000);
+        }
+
+      }, 'json');
+    });
+    return false;
+  });
+
+
 });
+
+
+mainwp_tool_renew_connections_show = function () {
+  jQuery('#mainwp-tool-renew-connect-modal').modal({
+    allowMultiple: true,
+    closable: false,
+    onHide: function () {
+      location.href = 'admin.php?page=MainWPTools';
+    },
+    onShow: function () {
+      if (jQuery('#mainwp-tool-renew-connect-modal .mainwp_selected_sites_item.item.warning').length == 0) {
+        jQuery('#mainwp-tool-renew-connect-modal .mainwp-ss-select-disconnected').hide();
+        jQuery('#mainwp-tool-renew-connect-modal .mainwp-ss-deselect-disconnected').hide();
+      }
+    }
+  }).modal('show');
+};
+
+mainwp_tool_prepare_renew_connections = function (objBtn) {
+
+  var errors = [];
+  var selected_sites = [];
+
+  jQuery('#mainwp-message-zone-modal').removeClass('yellow ').hide();
+
+  jQuery("input[name='selected_sites[]']:checked").each(function () {
+    selected_sites.push(jQuery(this).val());
+  });
+  if (selected_sites.length == 0) {
+    errors.push(__('Please select at least one website to start.'));
+  }
+
+  if (errors.length > 0) {
+    jQuery('#mainwp-message-zone-modal').html(errors.join('<br />'));
+    jQuery('#mainwp-message-zone-modal').addClass('yellow ').show();
+    return;
+  } else {
+    jQuery('#mainwp-message-zone-modal').html("");
+    jQuery('#mainwp-message-zone-modal').removeClass('yellow ').hide();
+  }
+
+  var confirmation = __("This process will create a new OpenSSL Key Pair on your MainWP Dashboard and Set the new Public Key to your Child site(s). Are you sure you want to proceed?");
+
+  mainwp_confirm(confirmation, function () {
+    jQuery(objBtn).attr('disabled', true);
+
+    jQuery('#mainwp-tool-renew-connect-modal .mainwp-select-sites-wrapper').hide();
+
+    var statusEl = jQuery('#mainwp-message-zone-modal');
+    statusEl.html('<i class="notched circle loading icon"></i> ' + __('Please wait...'));
+    statusEl.show();
+
+    var data = mainwp_secure_data({
+      action: 'mainwp_prepare_renew_connections',
+      'sites[]': selected_sites,
+    });
+
+    jQuery.post(ajaxurl, data, function (response) {
+      var undefError = false;
+      if (response) {
+        if (response.result != '') {
+          jQuery('#mainwp-tool-renew-connect-modal').find('#mainwp-renew-connections-list').html(response.result);
+          bulkInstallTotal = jQuery('#mainwp-renew-connections-list .item').length;
+          jQuery('#mainwp-tool-renew-connect-modal .mainwp-modal-progress').show();
+          jQuery('#mainwp-tool-renew-connect-modal .mainwp-modal-progress').progress({ value: 0, total: bulkInstallTotal });
+          mainwp_tool_renew_connections_start_next();
+          statusEl.hide();
+        } else if (response.error) {
+          statusEl.addClass('red');
+          statusEl.html(response.error).fadeIn();
+        } else {
+          undefError = true;
+        }
+      } else {
+        undefError = true;
+      }
+
+      if (undefError) {
+        statusEl.addClass('red');
+        statusEl.html(__('Undefined error occurred. Please try again.')).fadeIn();
+      }
+    }, 'json');
+  }, false, false, true);
+}
+
+connection_renew_status = function (siteId, newStatus) {
+  jQuery('#mainwp-renew-connections-list .renew-site-status[siteid="' + siteId + '"]').html(newStatus);
+};
+
+mainwp_tool_renew_connections_start_next = function () {
+  while ((siteToReNew = jQuery('#mainwp-renew-connections-list .item[status="queue"]:first')) && (siteToReNew.length > 0) && (bulkInstallCurrentThreads < bulkInstallMaxThreads)) {
+    mainwp_tool_renew_connections_start_specific(siteToReNew);
+  }
+}
+
+mainwp_tool_renew_connections_start_specific = function (siteItem) {
+
+  bulkInstallCurrentThreads++;
+
+  siteItem.attr('status', 'progress');
+  var siteId = siteItem.find('.renew-site-status').attr('siteid');
+
+  var data = mainwp_secure_data({
+    action: 'mainwp_renew_connections',
+    siteid: siteId
+  });
+
+  connection_renew_status(siteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Processing...', 'mainwp') + '"><i class="sync alternate loading icon"></i></span>');
+  jQuery.post(ajaxurl, data, function (response) {
+    if (response.error) {
+      connection_renew_status(siteId, '<span data-inverted="" data-position="left center" data-tooltip="' + response.error + '"><i class="times red icon"></i></span>');
+    } else if (response.result == 'success') {
+      connection_renew_status(siteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Renew connnection process completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>', true);
+    } else {
+      connection_renew_status(siteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Undefined error.') + '"><i class="times red icon"></i></span>');
+
+    }
+    bulkInstallCurrentThreads--;
+    bulkInstallDone++;
+    jQuery('#mainwp-tool-renew-connect-modal .mainwp-modal-progress').progress('set progress', bulkInstallDone);
+    jQuery('#mainwp-tool-renew-connect-modal .mainwp-modal-progress').find('.label').html(bulkInstallDone + '/' + bulkInstallTotal + ' ' + __('Processed'));
+    mainwp_tool_renew_connections_start_next();
+  }, 'json');
+}
+
 
 jQuery(function () {
   if (jQuery('body.mainwp-ui').length > 0) {
@@ -3743,7 +3929,7 @@ jQuery(document).on('click', '.mainwp-response-copy-button', function () {
   var data = jQuery(modal).find('.content.content-response').text();
   var $temp_txtarea = jQuery('<textarea style="opacity:0">');
   jQuery('body').append($temp_txtarea);
-  $temp_txtarea.val(data).trigger( "select" );
+  $temp_txtarea.val(data).trigger("select");
   try {
     var successful = document.execCommand('copy');
     var msg = successful ? 'successful' : 'unsuccessful';

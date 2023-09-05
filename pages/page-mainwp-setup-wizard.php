@@ -69,6 +69,11 @@ class MainWP_Setup_Wizard {
 			return;
 		}
 		$this->steps = array(
+			'welcome'            => array(
+				'name'    => esc_html__( 'Welcome', 'mainwp' ),
+				'view'    => array( $this, 'mwp_setup_welcome' ),
+				'handler' => '',
+			),
 			'introduction'       => array(
 				'name'    => esc_html__( 'Introduction', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_introduction' ),
@@ -82,6 +87,11 @@ class MainWP_Setup_Wizard {
 			'connect_first_site' => array(
 				'name'    => esc_html__( 'Connect', 'mainwp' ),
 				'view'    => array( $this, 'mwp_setup_connect_first_site' ),
+				'handler' => array( $this, 'mwp_setup_connect_first_site_save' ),
+			),
+			'add_client'         => array(
+				'name'    => esc_html__( 'Add Client', 'mainwp' ),
+				'view'    => array( $this, 'mwp_setup_add_client' ),
 				'handler' => '',
 			),
 			'monitoring'         => array(
@@ -101,7 +111,9 @@ class MainWP_Setup_Wizard {
 		wp_enqueue_script( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.js', array( 'jquery' ), MAINWP_VERSION, false );
 		wp_localize_script( 'mainwp-setup', 'mainwpSetupLocalize', array( 'nonce' => wp_create_nonce( 'MainWPSetup' ) ) );
 		wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', array( 'jquery' ), MAINWP_VERSION, true );
+		wp_enqueue_script( 'mainwp-clients', MAINWP_PLUGIN_URL . 'assets/js/mainwp-clients.js', array(), MAINWP_VERSION, true );
 		wp_enqueue_script( 'mainwp-setup', MAINWP_PLUGIN_URL . 'assets/js/mainwp-setup.js', array( 'jquery', 'fomantic-ui' ), MAINWP_VERSION, true );
+		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'assets/js/mainwp-ui.js', array(), MAINWP_VERSION, true );
 		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'assets/css/mainwp.css', array(), MAINWP_VERSION );
 		wp_enqueue_style( 'mainwp-fonts', MAINWP_PLUGIN_URL . 'assets/css/mainwp-fonts.css', array(), MAINWP_VERSION );
 		wp_enqueue_style( 'fomantic', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.css', array(), MAINWP_VERSION );
@@ -157,10 +169,10 @@ class MainWP_Setup_Wizard {
 	 */
 	public function get_next_step_link( $step = '' ) {
 		if ( ! empty( $step ) && isset( $step, $this->steps ) ) {
-			return esc_url_raw( remove_query_arg( 'noregister', add_query_arg( 'step', $step ) ) );
+			return esc_url_raw( remove_query_arg( array( 'noregister', 'message' ), add_query_arg( 'step', $step ) ) );
 		}
 		$keys = array_keys( $this->steps );
-		return esc_url_raw( remove_query_arg( 'noregister', add_query_arg( 'step', $keys[ array_search( $this->step, array_keys( $this->steps ) ) + 1 ] ) ) );
+		return esc_url_raw( remove_query_arg( array( 'noregister', 'message' ), add_query_arg( 'step', $keys[ array_search( $this->step, array_keys( $this->steps ) ) + 1 ] ) ) );
 	}
 
 	/**
@@ -174,10 +186,10 @@ class MainWP_Setup_Wizard {
 	 */
 	public function get_back_step_link( $step = '' ) {
 		if ( ! empty( $step ) && isset( $step, $this->steps ) ) {
-			return esc_url_raw( remove_query_arg( 'noregister', add_query_arg( 'step', $step ) ) );
+			return esc_url_raw( remove_query_arg( array( 'noregister', 'message' ), add_query_arg( 'step', $step ) ) );
 		}
 		$keys = array_keys( $this->steps );
-		return esc_url_raw( remove_query_arg( 'noregister', add_query_arg( 'step', $keys[ array_search( $this->step, array_keys( $this->steps ) ) - 1 ] ) ) );
+		return esc_url_raw( remove_query_arg( array( 'noregister', 'message' ), add_query_arg( 'step', $keys[ array_search( $this->step, array_keys( $this->steps ) ) - 1 ] ) ) );
 	}
 
 	/**
@@ -195,8 +207,10 @@ class MainWP_Setup_Wizard {
 				<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 				<title><?php esc_html_e( 'MainWP &rsaquo; Setup Wizard', 'mainwp' ); ?></title>
 				<?php wp_print_scripts( 'mainwp' ); ?>
+				<?php wp_print_scripts( 'mainwp-clients' ); ?>
 				<?php wp_print_scripts( 'mainwp-setup' ); ?>
 				<?php wp_print_scripts( 'fomantic' ); ?>
+				<?php wp_print_scripts( 'mainwp-ui' ); ?>
 				<?php do_action( 'admin_print_styles' ); ?>
 				<script type="text/javascript"> var ajaxurl = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';</script>
 				<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_ajax' ) ); ?>", mainwp_js_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_nonce' ) ); ?>";</script>
@@ -242,6 +256,10 @@ class MainWP_Setup_Wizard {
 				if ( isset( $step['hidden'] ) && $step['hidden'] ) {
 					continue;
 				}
+
+				if ( 'welcome' === $step_key ) {
+					continue;
+				}
 				?>
 				<div class="step
 				<?php
@@ -273,24 +291,53 @@ class MainWP_Setup_Wizard {
 	}
 
 	/**
+	 * Method mwp_setup_welcome()
+	 *
+	 * Renders the Welcome screen of the Quick Start Wizard
+	 */
+	public function mwp_setup_welcome() {
+		$this->mwp_setup_ready_actions();
+		$is_new       = MainWP_Demo_Handle::get_instance()->is_new_instance();
+		$enabled_demo = apply_filters( 'mainwp_demo_mode_enabled', false );
+		?>
+		<h1 class="ui header"><?php esc_html_e( 'Welcome to your MainWP Dashboard!', 'mainwp' ); ?></h1>
+		<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
+		<div class="ui hidden divider"></div>
+		<h3><?php esc_html_e( 'Are you ready to get started adding your sites?', 'mainwp' ); ?></h3>
+		<a class="ui big green basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp-setup&step=introduction' ) ); ?>"><?php esc_html_e( 'Start the MainWP Quick Setup Wizard', 'mainwp' ); ?></a>
+		<div class="ui hidden divider"></div>
+		<h3><?php esc_html_e( 'Would you like to see Demo content first? ', 'mainwp' ); ?></h3>
+		<p><?php esc_attr_e( 'Explore MainWP\'s full capabilities using our pre-loaded demo content.', 'mainwp' ); ?></p>
+		<p><?php esc_attr_e( 'It\'s the perfect way to experience the benefits and ease of use MainWP provides without connecting to any of your own sites.', 'mainwp' ); ?></p>
+		<p><?php esc_html_e( 'The demo content serves as placeholder data to give you a feel for the MainWP Dashboard. Please note that because no real websites are connected in this demo, some functionality will be restricted. Features that require a connection to actual websites will be disabled for the duration of the demo.', 'mainwp' ); ?></p>
+		<p><?php esc_attr_e( 'Click this button to import the Demo content to your MainWP Dashboard and enable the Demo mode.', 'mainwp' ); ?></p>
+		<p><span><button class="ui big green button mainwp-import-demo-data-button" page-import="qsw-import" <?php echo ( ! $is_new || $enabled_demo ? 'disabled="disabled"' : '' ); ?>><?php esc_html_e( 'Enable Demo Mode With Guided Tours', 'mainwp' ); ?></button></span></p>
+		<div class="ui blue message">
+			<?php echo sprintf( esc_html__( 'Guided tours feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
+		</div>
+		
+		<?php
+		MainWP_System_View::render_comfirm_modal();
+	}
+
+	/**
 	 * Method mwp_setup_introduction()
 	 *
-	 * First start message after activation.
+	 * Renders the Introduction screen of the Quick Start Wizard
 	 */
 	public function mwp_setup_introduction() {
-		$this->mwp_setup_ready_actions();
 		?>
+		<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
 		<h1 class="ui header"><?php esc_html_e( 'MainWP Quick Setup Wizard', 'mainwp' ); ?></h1>
 		<p><?php esc_html_e( 'Thank you for choosing MainWP for managing your WordPress sites. This quick setup wizard will help you configure the basic settings. It\'s completely optional and shouldn\'t take longer than five minutes.', 'mainwp' ); ?></p>
 		<div class="ui hidden divider"></div>
 		<a href="https://kb.mainwp.com/docs/quick-setup-wizard-video/" target="_blank" class="ui big icon green button"><i class="youtube icon"></i> <?php esc_html_e( 'Walkthrough', 'mainwp' ); ?></a>
 		<div class="ui hidden divider"></div>
-		<p><?php esc_html_e( 'If you don\'t want to go through the setup wizard, you can skip and proceed to your MainWP Dashboard by clicking the "Not right now" button. If you change your mind, you can come back later by starting the Setup Wizard from the MainWP > Settings > MainWP Tools page! ', 'mainwp' ); ?></p>
-		<div class="ui hidden divider"></div>
+		<p><?php esc_html_e( 'If you don\'t want to go through the setup wizard, you can skip and proceed to your MainWP Dashboard by clicking the "Not right now" button. If you change your mind, you can come back later by starting the Setup Wizard from the MainWP > Settings > MainWP Tools page!', 'mainwp' ); ?></p>
 		<div class="ui hidden divider"></div>
 		<form method="post" class="ui form">
-			<div class="ui green segment">
-				<h2><?php esc_html_e( 'MainWP Guided Tours', 'mainwp' ); ?> <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></h2>
+			
+			<h1><?php esc_html_e( 'MainWP Guided Tours', 'mainwp' ); ?> <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></h1>
 				<?php esc_html_e( 'MainWP guided tours are designed to provide information about all essential features on each MainWP Dashboard page.', 'mainwp' ); ?>
 				<div class="ui blue message">
 					<?php echo sprintf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
@@ -301,13 +348,12 @@ class MainWP_Setup_Wizard {
 					<label><?php esc_html_e( 'Do you want to enable MainWP Guided Tours?', 'mainwp' ); ?></label>
 					<div class="ui hidden divider"></div>
 					<div class="ui toggle checkbox">
-						<input type="checkbox" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" <?php echo ( ( 1 == get_option( 'mainwp_enable_guided_tours', 0 ) ) ? 'checked="true"' : '' ); ?>>
+						<input type="checkbox" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" checked="true">
 						<label for="mainwp-guided-tours-option"><?php esc_html_e( 'Select to enable the MainWP Guided Tours.', 'mainwp' ); ?><span class="ui left pointing green label"><?php esc_html_e( 'Highly recommended if new to MainWP!', 'mainwp' ); ?></span></label>
 					</div>
 				</div>
 			</div>
-			</div>
-			<div class="ui hidden divider"></div>
+			
 			<div class="ui hidden divider"></div>
 			<p><?php esc_html_e( 'To go back to the WordPress Admin section, click the "Back to WP Admin" button.', 'mainwp' ); ?></p>
 			<div class="ui hidden divider"></div>
@@ -317,8 +363,9 @@ class MainWP_Setup_Wizard {
 			<a href="<?php echo esc_url( admin_url( 'index.php' ) ); ?>" class="ui big button"><?php esc_html_e( 'Back to WP Admin', 'mainwp' ); ?></a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>" class="ui big button"><?php esc_html_e( 'Not Right Now', 'mainwp' ); ?></a>
 			<?php wp_nonce_field( 'mwp-setup' ); ?>
-		</form>
+		</form>		
 		<?php
+		MainWP_System_View::render_comfirm_modal();
 	}
 
 
@@ -390,6 +437,20 @@ class MainWP_Setup_Wizard {
 		exit;
 	}
 
+	/**
+	 * Method mwp_setup_connect_first_site_save()
+	 *
+	 * Installation Step after connect first site.
+	 */
+	public function mwp_setup_connect_first_site_save() {
+		check_admin_referer( 'mwp-setup' );
+		if ( isset( $_POST['mainwp-qsw-confirm-add-new-client'] ) && ! empty( $_POST['mainwp-qsw-confirm-add-new-client'] ) ) {
+			wp_safe_redirect( $this->get_next_step_link() );
+		} else {
+			wp_safe_redirect( $this->get_next_step_link( 'monitoring' ) );
+		}
+		exit;
+	}
 
 	/**
 	 * Method mwp_setup_system_requirements_save()
@@ -407,15 +468,62 @@ class MainWP_Setup_Wizard {
 		exit;
 	}
 
+	
+
+	/**
+	 * Method mwp_setup_connect_first_site_already()
+	 *
+	 * Render Added first Child Site Step form.
+	 */
+	public function mwp_setup_connect_first_site_already() {
+		$count_clients = MainWP_DB_Client::instance()->count_total_clients();
+		?>
+		<h1 class="ui header"><?php esc_html_e( 'Congratulations!', 'mainwp' ); ?></h1>
+		<p><?php esc_html_e( 'You have successfully connected your first site to your MainWP Dashboard!', 'mainwp' ); ?></p>
+		
+		<div class="ui form">
+			<form method="post" class="ui form">
+				<?php if ( empty( $count_clients ) ) : ?>
+					<div class="field">
+						<label><?php esc_html_e( 'Do you want to create a client for your first child site?', 'mainwp' ); ?></label>
+						<div class="ui hidden divider"></div>
+						<div class="ui toggle checkbox">
+						<input type="checkbox" name="mainwp-qsw-confirm-add-new-client" id="mainwp-qsw-confirm-add-new-client" checked="true"/>
+							<label><?php esc_html_e( 'Select to create a New Client', 'mainwp' ); ?></label>
+					</div>
+				</div>
+				<?php endif; ?>
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+				<div class="ui clearing hidden divider"></div>
+				<div class="ui hidden divider"></div>
+				<div class="ui hidden divider"></div>
+				<input type="submit" class="ui big green right floated button" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
+				<a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
+				<?php wp_nonce_field( 'mwp-setup' ); ?>
+				<input type="hidden" id="nonce_secure_data" mainwp_addwp="<?php echo esc_js( wp_create_nonce( 'mainwp_addwp' ) ); ?>" mainwp_checkwp="<?php echo esc_attr( wp_create_nonce( 'mainwp_checkwp' ) ); ?>" />
+			</form>
+		</div>	
+		
+		<?php
+	}
+
+	
 	/**
 	 * Method mwp_setup_connect_first_site()
 	 *
 	 * Render Install first Child Site Step form.
 	 */
 	public function mwp_setup_connect_first_site() {
+		$count = MainWP_DB::instance()->get_websites_count( null, true );
+		if ( 1 <= $count ) {
+			$this->mwp_setup_connect_first_site_already();
+			return;
+		}
 		?>
 		<h1><?php esc_html_e( 'Connect Your First Child Site', 'mainwp' ); ?></h1>
+		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-qsw-add-site-message' ) ) : ?>
 			<div class="ui info message">
+				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-qsw-add-site-message"></i>
 				<?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard.  ', 'mainwp' ); ?>
 			<?php esc_html_e( 'To install the MainWP Child plugin, please follow these steps:', 'mainwp' ); ?>
 			<ol>
@@ -426,78 +534,221 @@ class MainWP_Setup_Wizard {
 				<li><?php printf( esc_html__( '%1$sActivate%2$s the plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
 			</ol>
 		</div>
-		<div class="ui form">
-			<div class="field">
-			<div class="ui hidden divider"></div>
-				<label><?php esc_html_e( 'Is MainWP Child plugin installed and activated on the WordPress site that you want to connect?', 'mainwp' ); ?></label>
-			<div class="ui hidden divider"></div>
-				<div class="ui toggle checkbox">
-					<input type="checkbox" name="mainwp-qsw-verify-mainwp-child-active" id="mainwp-qsw-verify-mainwp-child-active">
-					<label for="mainwp-qsw-verify-mainwp-child-active"><?php esc_html_e( 'Select to confirm that the MainWP Child plugin is active.', 'mainwp' ); ?></label>
-				</div>
-			</div>
-		</div>
-		<form method="post" class="ui form">
-			<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-			<div id="mainwp-qsw-connect-site-form" style="display:none">
-			<div class="ui hidden divider"></div>
-			<div class="ui hidden divider"></div>
-			<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
-			<div class="ui red message" id="mainwp-error-zone" style="display:none"></div>
-			<div class="ui green message" id="mainwp-success-zone" style="display:none"></div>
-			<div class="ui info message" id="mainwp-info-zone" style="display:none"></div>
-			<div class="ui hidden divider"></div>
-				<div class="ui secondary segment">
-					<div class="ui hidden divider"></div>
-					<div class="ui hidden divider"></div>
-					<div class="ui horizontal divider"><?php esc_html_e( 'Required Fields', 'mainwp' ); ?></div>
-					<div class="ui hidden divider"></div>
-					<div class="ui hidden divider"></div>
-			<div class="field">
-				<label><?php esc_html_e( 'What is the site URL? ', 'mainwp' ); ?></label>
-						<div class="ui left action input">
-							<select class="ui compact selection dropdown" id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol" style="width:120px;padding:0px;">
-							<option value="https">https://</option>
-							<option value="http">http://</option>
-						</select>
-						<input type="text" id="mainwp_managesites_add_wpurl" name="mainwp_managesites_add_wpurl" value="" placeholder="yoursite.com" />
+		<?php endif; ?>
+			<div class="ui form">
+				<div class="field">
+				<div class="ui hidden divider"></div>
+					<label><?php esc_html_e( 'Is MainWP Child plugin installed and activated on the WordPress site that you want to connect?', 'mainwp' ); ?></label>
+				<div class="ui hidden divider"></div>
+					<div class="ui toggle checkbox">
+						<input type="checkbox" name="mainwp-qsw-verify-mainwp-child-active" id="mainwp-qsw-verify-mainwp-child-active">
+						<label for="mainwp-qsw-verify-mainwp-child-active"><?php esc_html_e( 'Select to confirm that the MainWP Child plugin is active.', 'mainwp' ); ?></label>
 					</div>
 				</div>
-			<div class="field">
-						<label><?php esc_html_e( 'What is your administrator username on that site? ', 'mainwp' ); ?></label>
-				<input type="text" id="mainwp_managesites_add_wpadmin" name="mainwp_managesites_add_wpadmin" value="" />
 			</div>
-			<div class="field">
-						<label><?php esc_html_e( 'Add site title. If left blank URL is used.', 'mainwp' ); ?></label>
-				<input type="text" id="mainwp_managesites_add_wpname" name="mainwp_managesites_add_wpname" value="" />
-			</div>
-			<div class="ui hidden divider"></div>
-			<a href="#" id="mainwp-toggle-optional-settings"><i class="ui eye icon"></i> <?php esc_html_e( 'Advanced options', 'mainwp' ); ?></a>
-			<div class="ui hidden divider"></div>
-			<div id="mainwp-qsw-optional-settings-form" style="display:none">
-			<div class="ui hidden divider"></div>
-				<div class="ui horizontal divider"><?php esc_html_e( 'Advanced Options (optional)', 'mainwp' ); ?></div>
-			<div class="ui hidden divider"></div>
-			<div class="ui hidden divider"></div>
-			<div class="field">
-						<label><?php esc_html_e( 'Did you generate unique security ID on the site? If yes, copy it here, if not, leave this field blank. ', 'mainwp' ); ?></label>
-				<input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
-			</div>
-			</div>
-			<div class="ui hidden divider"></div>
-			<div class="ui divider"></div>
-			<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green big" value="<?php esc_attr_e( 'Connect Site', 'mainwp' ); ?>" />
+			<form method="post" class="ui form">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+				<div id="mainwp-qsw-connect-site-form" style="display:none">
+				<div class="ui hidden divider"></div>
+				<div class="ui hidden divider"></div>
+				<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
+				<div class="ui red message" id="mainwp-error-zone" style="display:none"></div>
+				<div class="ui green message" id="mainwp-success-zone" style="display:none"></div>
+				<div class="ui info message" id="mainwp-info-zone" style="display:none"></div>
+				<div class="ui hidden divider"></div>
+					<div class="ui secondary segment">
+						<div class="ui hidden divider"></div>
+						<div class="ui hidden divider"></div>
+						<div class="ui horizontal divider"><?php esc_html_e( 'Required Fields', 'mainwp' ); ?></div>
+						<div class="ui hidden divider"></div>
+						<div class="ui hidden divider"></div>
+						<div class="field">
+							<label><?php esc_html_e( 'What is the site URL? ', 'mainwp' ); ?></label>
+									<div class="ui left action input">
+										<select class="ui compact selection dropdown" id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol" style="width:120px;padding:0px;">
+										<option value="https">https://</option>
+										<option value="http">http://</option>
+									</select>
+									<input type="text" id="mainwp_managesites_add_wpurl" name="mainwp_managesites_add_wpurl" value="" placeholder="yoursite.com" />
+								</div>
+							</div>
+						<div class="field">
+									<label><?php esc_html_e( 'What is your administrator username on that site? ', 'mainwp' ); ?></label>
+							<input type="text" id="mainwp_managesites_add_wpadmin" name="mainwp_managesites_add_wpadmin" value="" />
+						</div>
+						<div class="field">
+									<label><?php esc_html_e( 'Add site title. If left blank URL is used.', 'mainwp' ); ?></label>
+							<input type="text" id="mainwp_managesites_add_wpname" name="mainwp_managesites_add_wpname" value="" />
+						</div>
+						<div class="ui hidden divider"></div>
+						<a href="#" id="mainwp-toggle-optional-settings"><i class="ui eye icon"></i> <?php esc_html_e( 'Advanced options', 'mainwp' ); ?></a>
+						<div class="ui hidden divider"></div>
+						<div id="mainwp-qsw-optional-settings-form" style="display:none">
+						<div class="ui hidden divider"></div>
+							<div class="ui horizontal divider"><?php esc_html_e( 'Advanced Options (optional)', 'mainwp' ); ?></div>
+						<div class="ui hidden divider"></div>
+						<div class="ui hidden divider"></div>
+						<div class="field">
+									<label><?php esc_html_e( 'Did you generate unique security ID on the site? If yes, copy it here, if not, leave this field blank. ', 'mainwp' ); ?></label>
+							<input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
+						</div>
+						</div>
+						
+						
+					</div>
 				</div>
-			</div>
 			<div class="ui clearing hidden divider"></div>
 			<div class="ui hidden divider"></div>
 			<div class="ui hidden divider"></div>
-			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="ui big green right floated button"><?php esc_html_e( 'Continue', 'mainwp' ); ?></a>
+			<input type="button" style="display:none" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green big right floated" value="<?php esc_attr_e( 'Connect Site', 'mainwp' ); ?>" />
+			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" id="mainwp_addsite_continue_button" class="ui big green right floated button"><?php esc_html_e( 'Continue', 'mainwp' ); ?></a>
 			<a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
 			<?php wp_nonce_field( 'mwp-setup' ); ?>
+			
 			<input type="hidden" id="nonce_secure_data" mainwp_addwp="<?php echo esc_js( wp_create_nonce( 'mainwp_addwp' ) ); ?>" mainwp_checkwp="<?php echo esc_attr( wp_create_nonce( 'mainwp_checkwp' ) ); ?>" />
 		</form>
 		<?php
+	}
+
+	/**
+	 * Method mwp_setup_add_client()
+	 *
+	 * Render Add first Client Step form.
+	 */
+	public function mwp_setup_add_client() {
+		$count = MainWP_DB::instance()->get_websites_count( null, true );
+		$count_clients = MainWP_DB_Client::instance()->count_total_clients();
+		if ( ! empty( $count_clients ) ) {
+			?>
+			<h1 class="ui header"><?php esc_html_e( 'Congratulations!', 'mainwp' ); ?></h1>
+			<p><?php esc_html_e( 'You have successfully created your first Client.', 'mainwp' ); ?></p>
+			<?php
+		} else {
+			$first_site_id = get_transient( 'mainwp_transient_just_connected_site_id' );
+			?>
+			<h1><?php esc_html_e( 'Create a Client', 'mainwp' ); ?></h1>
+			<div class="ui secondary segment">
+					<form action="" method="post" enctype="multipart/form-data" name="createclient_form" id="createclient_form" class="add:clients: validate">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+						<div class="">
+							<div class="ui hidden divider"></div>
+							<div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
+							<div id="mainwp-add-new-client-form" >						
+							<?php $this->render_add_client_content( false, true ); ?>
+							</div>
+							
+						</div>
+						<input type="hidden" name="selected_first_site" value="<?php echo intval( $first_site_id ); ?>">
+					</form>
+				<div class="ui clearing hidden divider"></div>
+			</div>
+			<?php
+		}
+		?>
+		<div class="ui hidden divider"></div>
+		<div class="ui hidden divider"></div>
+		<input type="button" style="display:none" name="createclient" current-page="qsw-add" id="bulk_add_createclient" class="ui big green right floated button" value="<?php echo esc_attr__( 'Add Client', 'mainwp' ); ?> "/>
+		<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" id="mainwp_qsw_add_client_continue_button" class="ui big green right floated button"><?php esc_html_e( 'Continue', 'mainwp' ); ?></a>
+		<a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>	
+		<?php
+	}
+
+
+	/**
+	 * Method render_add_client_content().
+	 *
+	 * Renders add client content window.
+	 *
+	 * @param mixed $edit_client The client data.
+	 */
+	public function render_add_client_content() {
+		$edit_client           = false;
+		$client_id             = 0;
+		$client_image          = '';
+		$default_client_fields = MainWP_Client_Handler::get_mini_default_client_fields();
+		?>
+		<div class="ui form">
+			<?php
+			foreach ( $default_client_fields as $field_name => $field ) {
+				$db_field = isset( $field['db_field'] ) ? $field['db_field'] : '';
+				$val      = $edit_client && '' != $db_field && property_exists( $edit_client, $db_field ) ? $edit_client->{$db_field} : '';
+				$tip      = isset( $field['tooltip'] ) ? $field['tooltip'] : '';
+				?>
+				<div class="field">
+					<label <?php echo '' != $tip ? 'data-tooltip="' . esc_attr( $tip ) . '" data-inverted="" data-position="top left"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>><?php echo esc_html( $field['title'] ); ?></label>
+					<input type="text" value="<?php echo esc_html( $val ); ?>" id="mainwp_qsw_client_name_field" class="regular-text" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"/>
+				</div>
+					<?php
+
+					if ( 'client.name' == $field_name ) {
+						?>
+						<div class="field">
+							<label><?php esc_html_e( 'Client photo', 'mainwp' ); ?></label>
+							<div data-tooltip="<?php esc_attr_e( 'Upload a client photo.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+								<div class="ui file input">
+								<input type="file" name="mainwp_client_image_uploader[client_field]" accept="image/*" data-inverted="" data-tooltip="<?php esc_attr_e( "Image must be 500KB maximum. It will be cropped to 310px wide and 70px tall. For best results  us an image of this site. Allowed formats: jpeg, gif and png. Note that animated gifs aren't going to be preserved.", 'mainwp' ); ?>" />
+							</div>
+						</div>
+						</div>
+						<?php
+					}
+			}
+			$primary_contact_id = 0;
+			$temp               = $this->get_add_contact_temp( false );
+			?>
+			<div class="field">
+			<a href="javascript:void(0);" class="mainwp-client-add-contact" add-contact-temp="<?php echo esc_attr( $temp ); ?>"><i class="ui eye icon"></i><?php esc_html_e( 'Add Additional Contact', 'mainwp' ); ?></a>
+			</div>
+		<div class="ui section hidden divider after-add-contact-field"></div>
+		</div>
+		<input type="hidden" name="client_fields[client_id]" value="<?php echo intval( $client_id ); ?>">
+		<?php
+	}
+
+
+	/**
+	 * Method get_add_contact_temp().
+	 *
+	 * Get add contact template.
+	 *
+	 * @param bool $echo Echo template or not.
+	 */
+	public function get_add_contact_temp( $echo = false ) {
+
+		$input_name    = 'new_contacts_field';
+		$contact_id    = 0;
+		$contact_image = '';
+
+		ob_start();
+		?>
+			<div class="ui hidden divider top-contact-fields"></div> <?php // must have class: top-contact-fields. ?>
+			<div class="ui horizontal divider"><?php esc_html_e( 'Add Contact', 'mainwp' ); ?></div>
+			<div class="ui hidden divider"></div>
+			<div class="ui hidden divider"></div>
+			<?php
+			$contact_fields = MainWP_Client_Handler::get_mini_default_contact_fields();
+			foreach ( $contact_fields as $field_name => $field ) {
+				$db_field   = isset( $field['db_field'] ) ? $field['db_field'] : '';
+				$val        = '';
+				$contact_id = '';
+				?>
+				<div class="field">
+					<label><?php echo esc_html( $field['title'] ); ?></label>
+					<input type="text" value="<?php echo esc_html( $val ); ?>" class="regular-text" name="client_fields[<?php echo esc_html( $input_name ); ?>][<?php echo esc_attr( $field_name ); ?>][]"/>
+				</div>
+				<?php
+			}
+			?>
+			<div class="field remove-contact-field-parent">
+				<a href="javascript:void(0);" contact-id="<?php echo intval( $contact_id ); ?>" class="mainwp-client-remove-contact"><i class="ui eye icon"></i><?php esc_html_e( 'Remove contact', 'mainwp' ); ?></a>
+			</div>
+			<div class="ui section hidden divider bottom-contact-fields"></div>
+			<?php
+			$html = ob_get_clean();
+			if ( $echo ) {
+				echo $html; //phpcs:ignore -- validated content.
+			}
+			return $html;
 	}
 
 	/**
@@ -562,7 +813,6 @@ class MainWP_Setup_Wizard {
 					</select>
 				</div>
 			</div>
-
 			<input type="submit" class="ui big green right floated button" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
 			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="ui big button"><?php esc_html_e( 'Skip', 'mainwp' ); ?></a>
 			<a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>				

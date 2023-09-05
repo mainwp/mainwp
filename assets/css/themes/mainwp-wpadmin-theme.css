@@ -490,10 +490,10 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme .ui.button:not(.disabled),
 .mainwp-ui.mainwp-custom-theme .ui.button:not(.red) {
   background-color: #f6f7f7;
-  border: 1px solid var(--border-color);
   color: var( --font-color );
-  box-shadow: none;
-  -webkit-box-shadow: none;
+  -webkit-box-shadow: inset 0px 0px 0px 1px var(--border-color);
+  -moz-box-shadow: inset 0px 0px 0px 1px var(--border-color);
+  box-shadow: inset 0px 0px 0px 1px var(--border-color);
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.button.disabled {
@@ -516,10 +516,10 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme .ui.button.green.basic {
   background-color: rgba( 255,255,255,0 ) !important;
-  border: 1px solid var(--accent-color);
   color: var(--accent-color) !important;
-  box-shadow: none;
-  -webkit-box-shadow: none;
+  -webkit-box-shadow: inset 0px 0px 0px 1px var(--accent-color);
+  -moz-box-shadow: inset 0px 0px 0px 1px var(--accent-color);
+  box-shadow: inset 0px 0px 0px 1px var(--accent-color);
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.button.red {

@@ -292,103 +292,109 @@
 
 /* Widgets */
 
-.mainwp-widget.ui.segment.gs-w {
-    position: absolute;
-}
 
 .mainwp-widget {
     border: 1px solid #dadada !important;
     margin: none !important;
 }
 
-.mainwp-widget-header {
+
+
+@media only screen and ( min-width: 1370px ) {
+
+    .mainwp-widget.ui.segment.gs-w {
+        position: absolute;
+    }
+    
+    .mainwp-widget-header {
     margin-bottom: 20px !important;
-}
+    }
 
-.mainwp-widget .handle-drag {
+    .mainwp-widget .handle-drag {
     cursor: move !important;
-}
+    }
 
-.mainwp-scrolly-overflow {
+    .mainwp-scrolly-overflow {
     overflow-y: auto;
     overflow-x: hidden;
     padding: 0 10px 0 0;
     margin-bottom: 20px;
-}
+    }
 
-.mainwp-widget-footer {
+    .mainwp-widget-footer {
     position: absolute;
     bottom: 1rem;
     width: 100%;
-}
+    }
 
-#widget-recent_posts .mainwp-scrolly-overflow,
-#widget-recent_pages .mainwp-scrolly-overflow {
+    #widget-recent_posts .mainwp-scrolly-overflow,
+    #widget-recent_pages .mainwp-scrolly-overflow {
     height: calc(100% - 125px);
-}
+    }
 
-#widget-connection_status .mainwp-scrolly-overflow {
+    #widget-connection_status .mainwp-scrolly-overflow {
     height: calc(100% - 135px);
-}
+    }
 
-#widget-security_issues .mainwp-scrolly-overflow {
-    height: calc(100% - 70px);
-}
-#widget-non_mainwp_changes .mainwp-scrolly-overflow {
+    #widget-security_issues .mainwp-scrolly-overflow {
+    height: calc(100% - 100px);
+    }
+    #widget-non_mainwp_changes .mainwp-scrolly-overflow {
     height: calc(100% - 100px) !important;
-}
-#widget-clients .mainwp-scrolly-overflow {
+    }
+    #widget-clients .mainwp-scrolly-overflow {
     height: calc(100% - 100px) !important;
-}
+    }
 
-#widget-overview .mainwp-scrolly-overflow {
+    #widget-overview .mainwp-scrolly-overflow {
     height: calc(100% - 150px) !important;
-}
+    }
 
-#widget-client_info .mainwp-scrolly-overflow {
+    #widget-client_info .mainwp-scrolly-overflow {
     height: calc(100% - 100px) !important;
-}
+    }
 
-#widget-child_site_info .mainwp-scrolly-overflow {
+    #widget-child_site_info .mainwp-scrolly-overflow {
     height: calc(100% - 60px) !important;
-}
+    }
 
-#widget-notes .mainwp-scrolly-overflow {
+    #widget-notes .mainwp-scrolly-overflow {
     height: calc(100% - 100px) !important;
-}
+    }
 
-#widget-plugins .mainwp-scrolly-overflow {
+    #widget-plugins .mainwp-scrolly-overflow {
     height: calc(100% - 70px) !important;
-}
+    }
 
-#widget-themes .mainwp-scrolly-overflow {
+    #widget-themes .mainwp-scrolly-overflow {
     height: calc(100% - 70px) !important;
-}
+    }
 
-#widget-overview .mainwp-scrolly-overflow {
+    #widget-overview .mainwp-scrolly-overflow {
     height: calc(100% - 100px) !important;
-}
+    }
 
-#widget-fields_info .mainwp-scrolly-overflow {
+    #widget-fields_info .mainwp-scrolly-overflow {
     height: calc(100% - 100px) !important;
-}
+    }
 
-#widget-websites .mainwp-scrolly-overflow {
+    #widget-websites .mainwp-scrolly-overflow {
     height: calc(100% - 70px) !important;
-}
+    }
 
-[id^="widget-contact_"] .mainwp-scrolly-overflow {
+    [id^="widget-contact_"] .mainwp-scrolly-overflow {
     height: calc(100% - 70px) !important;
-}
+    }
 
-#widget-note .mainwp-scrolly-overflow {
+    #widget-note .mainwp-scrolly-overflow {
     height: calc(100% - 100px) !important;
-}
+    }
 
-#widget-advanced-matomo .mainwp-scrolly-overflow {
+    #widget-advanced-matomo .mainwp-scrolly-overflow {
     height: calc(100% - 70px) !important;
-}
+    }
 
+}
 .mainwp-ui .mainwp-widget .ui.form .ui.input,
 .mainwp-ui .mainwp-widget .ui.pagination.menu,
 .mainwp-ui .mainwp-widget .ui.dropdown { font-size: 0.78571429em; }
@@ -417,6 +423,10 @@
 #mainwp-select-sites-select-all-actions .item {
     cursor: pointer;
 }
+.mainwp-modal-content #mainwp-select-sites-select-all-actions{
+    margin-left: auto;
+    margin-right: auto;
+} 
 
 #mainwp-select-sites-list .item label .url {
     display: none;
@@ -1302,4 +1312,8 @@ th .sort.icon,
 .mainwp-ui #wpbody-content .notice.notice-error,
 .mainwp-ui #wpbody-content .notice.notice-warrning {
     margin-left: 190px !important;
+}
+
+.mainwp_selected_sites_item.item.warning label{
+    color: red;
 }

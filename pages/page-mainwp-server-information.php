@@ -849,7 +849,7 @@ class MainWP_Server_Information {
 				<?php
 				if ( isset( $extension['mainwp'] ) && $extension['mainwp'] ) {
 					?>
-					<td><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? esc_html__( 'Actived', 'mainwp' ) : esc_html__( 'Deactivated', 'mainwp' ); ?></td>
+					<td><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); ?></td>
 					<td class="right aligned"><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? self::get_pass_html() : self::get_warning_html( self::WARNING ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 					<?php
 				} else {
@@ -978,25 +978,33 @@ class MainWP_Server_Information {
 
 		self::render_header( 'ServerInformationCron' );
 
+		$local_timestamp = MainWP_Utility::get_timestamp();
+
+		$freq = get_option( 'mainwp_frequencyDailyUpdate' );
+		if ( $freq <= 0 ) {
+			$freq = 1;
+		}
+		$auto_update_text = self::get_schedule_auto_update_label( $freq );
+
 		$cron_jobs = array(
-			'Check for available updates' => array( 'mainwp_updatescheck_start_last_timestamp', 'mainwp_cronupdatescheck_action', esc_html__( 'Once every minute', 'mainwp' ) ),
-			'Check for new statistics'    => array( 'mainwp_cron_last_stats', 'mainwp_cronstats_action', esc_html__( 'Once hourly', 'mainwp' ) ),
-			'Ping childs sites'           => array( 'mainwp_cron_last_ping', 'mainwp_cronpingchilds_action', esc_html__( 'Once daily', 'mainwp' ) ),
+			'Check for available updates' => array( 'mainwp_updatescheck_start_last_timestamp', 'mainwp_cronupdatescheck_action', $auto_update_text ),
+			'Check for new statistics'    => array( 'mainwp_cron_last_stats', 'mainwp_cronstats_action', esc_html__( 'Once hourly', 'mainwp' ), 'hourly' ),
+			'Ping childs sites'           => array( 'mainwp_cron_last_ping', 'mainwp_cronpingchilds_action', esc_html__( 'Once daily', 'mainwp' ), 'daily' ),
 		);
 
 		$disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking', 1 );
 		if ( ! $disableSitesMonitoring ) {
-			$cron_jobs['Child site uptime monitoring'] = array( 'mainwp_cron_checksites_last_timestamp', 'mainwp_croncheckstatus_action', esc_html__( 'Once every minute', 'mainwp' ) );
+			$cron_jobs['Child site uptime monitoring'] = array( 'mainwp_cron_checksites_last_timestamp', 'mainwp_croncheckstatus_action', esc_html__( 'Once every minute', 'mainwp' ), 'minutely' );
 		}
 
 		$disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring', 1 );  // disabled by default.
 		if ( ! $disableHealthChecking ) {
-			$cron_jobs['Site Health monitoring'] = array( 'mainwp_cron_checksiteshealth_last_timestamp', 'mainwp_cronsitehealthcheck_action', esc_html__( 'Once hourly', 'mainwp' ) );
+			$cron_jobs['Site Health monitoring'] = array( 'mainwp_cron_checksiteshealth_last_timestamp', 'mainwp_cronsitehealthcheck_action', esc_html__( 'Once hourly', 'mainwp' ), 'hourly' );
 		}
 
 		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-			$cron_jobs['Start backups (Legacy)']    = array( 'mainwp_cron_last_backups', 'mainwp_cronbackups_action', esc_html__( 'Once hourly', 'mainwp' ) );
-			$cron_jobs['Continue backups (Legacy)'] = array( 'mainwp_cron_last_backups_continue', 'mainwp_cronbackups_continue_action', esc_html__( 'Once every five minutes', 'mainwp' ) );
+			$cron_jobs['Start backups (Legacy)']    = array( 'mainwp_cron_last_backups', 'mainwp_cronbackups_action', esc_html__( 'Once hourly', 'mainwp' ), 'hourly' );
+			$cron_jobs['Continue backups (Legacy)'] = array( 'mainwp_cron_last_backups_continue', 'mainwp_cronbackups_continue_action', esc_html__( 'Once every five minutes', 'mainwp' ), '5minutely' );
 		}
 
 		/**
@@ -1027,6 +1035,8 @@ class MainWP_Server_Information {
 			</thead>
 			<tbody>
 				<?php
+				$useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( get_option( 'mainwp_wp_cron' ) == 1 );
+
 				foreach ( $cron_jobs as $cron_job => $hook ) {
 
 					$next_run = wp_next_scheduled( $hook[1] );
@@ -1034,14 +1044,31 @@ class MainWP_Server_Information {
 						$next_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $next_run ) );
 					}
 
+					$is_auto_update_job = false;
+					$lasttime_run       = 0;
 					if ( 'mainwp_updatescheck_start_last_timestamp' == $hook[0] ) {
-						$update_time = MainWP_Settings::get_websites_automatic_update_time();
-						$last_run    = $update_time['last'];
-						$next_run    = $update_time['next'];
+						$update_time        = MainWP_Settings::get_websites_automatic_update_time();
+						$last_run           = $update_time['last'];
+						$next_run           = $update_time['next'];
+						$is_auto_update_job = true;
 					} elseif ( false == get_option( $hook[0] ) ) {
 						$last_run = esc_html__( 'Never', 'mainwp' );
 					} else {
-						$last_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( get_option( $hook[0] ) ) );
+						$lasttime_run = get_option( $hook[0] );
+						if ( $lasttime_run ) {
+							$last_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $lasttime_run ) );
+						} else {
+							$last_run = esc_html__( 'Never', 'mainwp' );
+						}
+					}
+
+					if ( ! $useWPCron && ! $is_auto_update_job && isset( $hook[3] ) ) {
+						$nexttime_run = self::get_schedule_next_time_to_show( $hook[3], $lasttime_run );
+						if ( $nexttime_run < $local_timestamp + 3 * MINUTE_IN_SECONDS ) {
+							$next_run = esc_html__( 'Any minute', 'mainwp' );
+						} else {
+							$next_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $nexttime_run ) );
+						}
 					}
 
 					// phpcs:disable WordPress.Security.EscapeOutput
@@ -1110,6 +1137,86 @@ class MainWP_Server_Information {
 		do_action( 'mainwp_after_cron_jobs_table' );
 
 		self::render_footer( 'ServerInformationCron' );
+	}
+
+	/**
+	 * Get frequency auto update to show.
+	 *
+	 * @param int $freq frequency of auto update.
+	 *
+	 * @return string label of frequency.
+	 */
+	public static function get_schedule_auto_update_label( $freq ) {
+		$freq = intval( $freq );
+		$text = '';
+		switch ( $freq ) {
+			case 1:
+				$text = esc_html__( 'Once per day', 'mainwp' );
+				break;
+			case 2:
+				$text = esc_html__( 'Twice per day', 'mainwp' );
+				break;
+			case 3:
+				$text = esc_html__( 'Three times per day', 'mainwp' );
+				break;
+			case 4:
+				$text = esc_html__( 'Four times per day', 'mainwp' );
+				break;
+			case 5:
+				$text = esc_html__( 'Five times per day', 'mainwp' );
+				break;
+			case 6:
+				$text = esc_html__( 'Six times per day', 'mainwp' );
+				break;
+			case 7:
+				$text = esc_html__( 'Seven times per day', 'mainwp' );
+				break;
+			case 8:
+				$text = esc_html__( 'Eight times per day', 'mainwp' );
+				break;
+			case 9:
+				$text = esc_html__( 'Nine times per day', 'mainwp' );
+				break;
+			case 10:
+				$text = esc_html__( 'Ten times per day', 'mainwp' );
+				break;
+			case 11:
+				$text = esc_html__( 'Eleven times per day', 'mainwp' );
+				break;
+			case 12:
+				$text = esc_html__( 'Twelve times per day', 'mainwp' );
+				break;
+		}
+		return $text;
+	}
+
+	/**
+	 * Get next time of schedule job to show.
+	 *
+	 * @param string $job_freq frequency of schedule job.
+	 * @param int    $lasttime_run Lasttime to run.
+	 *
+	 * @return int next run time of schedule job.
+	 */
+	public static function get_schedule_next_time_to_show( $job_freq, $lasttime_run = 0 ) {
+		$current_time = time();
+		switch ( $job_freq ) {
+			case 'daily':
+				$next_time = $lasttime_run ? $lasttime_run + DAY_IN_SECONDS : $current_time;
+				break;
+			case 'hourly':
+				$next_time = $lasttime_run ? $lasttime_run + HOUR_IN_SECONDS : $current_time;
+				break;
+			case '5minutely':
+				$next_time = $lasttime_run ? $lasttime_run + 5 * MINUTE_IN_SECONDS : $current_time;
+				break;
+		}
+
+		if ( $next_time < $current_time ) { // to fix next time in past.
+			$next_time = $current_time;
+		}
+
+		return $next_time;
 	}
 
 	/**

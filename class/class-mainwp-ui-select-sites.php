@@ -53,6 +53,8 @@ class MainWP_UI_Select_Sites {
 		$type                   = isset( $params['type'] ) ? $params['type'] : 'checkbox';
 		$show_group             = isset( $params['show_group'] ) ? $params['show_group'] : true;
 		$show_select_all        = isset( $params['show_select_all'] ) ? $params['show_select_all'] : true;
+		$show_selectall_disc    = isset( $params['show_select_all_disconnect'] ) ? $params['show_select_all_disconnect'] : false;
+		$show_new_tag           = isset( $params['show_create_tag'] ) ? $params['show_create_tag'] : true;
 		$class                  = isset( $params['class'] ) ? $params['class'] : '';
 		$style                  = isset( $params['style'] ) ? $params['style'] : '';
 		$selected_sites         = isset( $params['selected_sites'] ) ? $params['selected_sites'] : array();
@@ -106,6 +108,8 @@ class MainWP_UI_Select_Sites {
 			'type'                     => $type,
 			'show_group'               => $show_group,
 			'show_select_all'          => $show_select_all,
+			'show_select_all_disconnect' => $show_selectall_disc,
+			'show_create_tag'            => $show_new_tag,
 			'selected_sites'           => $selected_sites,
 			'selected_groups'          => $selected_groups,
 			'enable_offline_sites'     => $enableOfflineSites,
@@ -156,6 +160,8 @@ class MainWP_UI_Select_Sites {
 		$type                   = isset( $params['type'] ) ? $params['type'] : 'checkbox';
 		$show_group             = isset( $params['show_group'] ) ? $params['show_group'] : true;
 		$show_select_all        = isset( $params['show_select_all'] ) ? $params['show_select_all'] : true;
+		$show_selectall_disc    = isset( $params['show_select_all_disconnect'] ) ? $params['show_select_all_disconnect'] : false;
+		$show_new_tag           = isset( $params['show_create_tag'] ) ? $params['show_create_tag'] : true;
 		$selected_sites         = isset( $params['selected_sites'] ) ? $params['selected_sites'] : array();
 		$selected_groups        = isset( $params['selected_groups'] ) ? $params['selected_groups'] : array();
 		$enableOfflineSites     = isset( $params['enable_offline_sites'] ) ? $params['enable_offline_sites'] : false;
@@ -200,15 +206,27 @@ class MainWP_UI_Select_Sites {
 
 		MainWP_UI::render_select_sites_header( $tab_id, $staging_enabled, $selectedby, $show_group, $show_client );
 
-		if ( $show_select_all ) :
+		$select_all_disconnected = '';
+
+		if ( $show_selectall_disc ) {
+			$select_all_disconnected  = '<div onClick="return mainwp_ss_select_disconnected( this, true )" class="mainwp-ss-select-disconnected"><i class="square outline icon"></i> ' . esc_attr__( 'Select All Disconnected', 'mainwp' ) . '</div>';
+			$select_all_disconnected .= '<div onClick="return mainwp_ss_select_disconnected( this, false )" class="mainwp-ss-deselect-disconnected" style="display:none;padding-top:0;"><i class="check square outline icon"></i> ' . esc_attr__( 'Deselect All Disconnected', 'mainwp' ) . '</div>';
+		}
+
+		if ( $show_select_all || $show_selectall_disc || $show_new_tag ) :
 			?>
 			<div id="mainwp-select-sites-select-all-actions" class="ui two columns grid">
 				<div class="ui middle aligned column">
+				<?php if ( $show_select_all ) : ?>	
 				<div onClick="return mainwp_ss_select( this, true )" class="mainwp-ss-select"><i class="square outline icon"></i> <?php esc_attr_e( 'Select All', 'mainwp' ); ?></div>
 				<div onClick="return mainwp_ss_select( this, false )" class="mainwp-ss-deselect" style="display:none;padding-top:0;"><i class="check square outline icon"></i> <?php esc_attr_e( 'Deselect All', 'mainwp' ); ?></div>
+				<?php endif; ?>
+				<?php echo $select_all_disconnected; //phpcs:ignore WordPress.Security.EscapeOutput ?>
 			</div>
 				<div class="ui right aligned middle aligned column">
+					<?php if ( $show_new_tag ) { ?>
 					<a class="ui mini basic icon button" href="javascript:void(0)" id="mainwp-create-new-tag-button" data-tooltip="<?php esc_attr_e( 'Create a tag with selected sites.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="tag icon"></i></a>
+					<?php } ?>
 				</div>
 			</div>
 			<div class="ui hidden divider"></div>
@@ -217,7 +235,7 @@ class MainWP_UI_Select_Sites {
 		?>
 		<div class="ui tab <?php echo 'site' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-sites-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-sites">
 		<?php
-			MainWP_UI::render_select_sites( $websites, $type, $selected_sites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id );
+			MainWP_UI::render_select_sites( $websites, $type, $selected_sites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id, $show_selectall_disc );
 		?>
 		</div>
 		<?php if ( $staging_enabled ) { ?>

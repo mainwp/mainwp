@@ -50,11 +50,21 @@ class MainWP_Client_Overview_Info {
 			'with_tags'           => true,
 		);
 		$client_info = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id, ARRAY_A, $params );
-
+		$client_status = '';
+		if ( 0 === intval( $client_info['suspended'] ) ) {
+			$client_status = '<span class="ui green label">' . esc_html__( 'Active', 'mainwp' ) . '</span>';
+		} elseif ( 1 === intval( $client_info['suspended'] ) ) {
+			$client_status = '<span class="ui yellow label">' . esc_html__( 'Suspended', 'mainwp' ) . '</span>';
+		} elseif ( 2 === intval( $client_info['suspended'] ) ) {
+			$client_status = '<span class="ui blue label">' . esc_html__( 'Lead', 'mainwp' ) . '</span>';
+		} elseif ( 3 === intval( $client_info['suspended'] ) ) {
+			$client_status = '<span class="ui red label">' . esc_html__( 'Lost', 'mainwp' ) . '</span>';
+		}
 		?>
 		<div class="mainwp-widget-header">
 			<h3 class="ui header handle-drag">
-				<?php echo esc_html( $client_info['name'] ); ?>
+				<?php echo esc_html( $client_info['name'] ); ?> <?php echo $client_status; ?>
+				<div class="ui hidden divider"></div>
 				<div class="sub header">
 					<?php echo MainWP_System_Utility::get_site_tags( $client_info, true ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 				</div>
@@ -125,14 +135,13 @@ class MainWP_Client_Overview_Info {
 									<div class="content"><a href="<?php echo esc_url( $client_info['client_linkedin'] ); ?>" target="_blank"><?php echo esc_html( $client_info['client_linkedin'] ); ?></a></div>
 								</div>
 								<?php endif; ?>
-
 								<?php if ( ( isset( $client_info['address_1'] ) && '' != $client_info['address_1'] ) || ( isset( $client_info['address_2'] ) && '' != $client_info['address_2'] ) || ( isset( $client_info['city'] ) && '' != $client_info['city'] ) || ( isset( $client_info['state'] ) && '' != $client_info['state'] ) || ( isset( $client_info['zip'] ) && '' != $client_info['zip'] ) || ( isset( $client_info['country'] ) && '' != $client_info['country'] ) ) : ?>
 								<div class="item">
 								<i class="map marker grey icon"></i>
-										<div class="content">
-											<?php if ( isset( $client_info['address_1'] ) && '' != $client_info['address_1'] ) : ?>
-												<?php echo esc_html( $client_info['address_1'] ); ?>
-											<?php endif; ?>
+									<div class="content">
+										<?php if ( isset( $client_info['address_1'] ) && '' != $client_info['address_1'] ) : ?>
+											<?php echo esc_html( $client_info['address_1'] ); ?>
+										<?php endif; ?>
 									<?php if ( isset( $client_info['address_2'] ) && '' != $client_info['address_2'] ) : ?>
 												<?php echo esc_html( $client_info['address_2'] ); ?>
 											<?php endif; ?>
@@ -147,15 +156,20 @@ class MainWP_Client_Overview_Info {
 											<?php endif; ?>
 											<?php if ( isset( $client_info['country'] ) && '' != $client_info['country'] ) : ?>
 												<?php echo esc_html( $client_info['country'] ); ?>
-								<?php endif; ?>
+								<?php endif; ?>								
 								</div>
+								</div>
+								<?php endif; ?>
+								
+								<?php if ( isset( $client_info['created'] ) && 0 != $client_info['created'] ) : ?>
+								<div class="item">
+									<i class="calendar icon"></i>
+									<div class="content"><?php echo esc_html( MainWP_Utility::format_date( $client_info['created'] ) ); ?></div>
 								</div>
 								<?php endif; ?>
 						</div>
 					</div>
 				</div>
-
-
 					<script type="text/javascript">
 							jQuery( document ).ready( function ($) {
 								new ClipboardJS('.copy-to-clipboard');
@@ -175,7 +189,7 @@ class MainWP_Client_Overview_Info {
 				do_action( 'mainwp_clients_overview_overview_widget_bottom', $client_info );
 				?>
 			</div>
-		<div class="mainwp-widget-footer ui four columns grid">
+		<div class="mainwp-widget-footer ui four columns stackable grid">
 			<div class="column"><a href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_id ); ?>" title="" class="ui button mini fluid green"><?php echo esc_html__( 'Edit Client', 'mainwp' ); ?></a></div>
 			<div class="column"><a class="ui green basic mini fluid button" href="admin.php?page=managesites&client=<?php echo intval( $client_id ); ?>"><?php esc_html_e( 'Manage Sites', 'mainwp' ); ?></a></div>
 			<div class="column">
@@ -183,7 +197,10 @@ class MainWP_Client_Overview_Info {
 					<a class="ui green basic mini fluid button" href="admin.php?page=Extensions-Mainwp-Pro-Reports-Extension&tab=report&action=newreport&selected_sites=<?php echo esc_html( $selected_sites ); ?>"><?php esc_html_e( 'Create Report', 'mainwp' ); ?></a>
 				<?php } ?>
 			</div>
-			<div class="column"><a href="javascript:void(0);" suspend-status="<?php echo intval( $client_info['suspended'] ); ?>" title="" class="ui mini fluid button client-suspend-unsuspend-sites"><?php echo 0 == $client_info['suspended'] ? esc_html__( 'Suspend Sites', 'mainwp' ) : esc_html__( 'Unsuspend Sites', 'mainwp' ); ?></a></div>
+			<div class="column">
+				<?php if ( 0 == intval( $client_info['suspended'] ) || 1 == intval( $client_info['suspended'] ) ) : ?>
+					<a href="javascript:void(0);" suspend-status="<?php echo intval( $client_info['suspended'] ); ?>" title="" class="ui mini fluid button client-suspend-unsuspend-sites"><?php echo 0 == $client_info['suspended'] ? esc_html__( 'Suspend Sites', 'mainwp' ) : esc_html__( 'Unsuspend Sites', 'mainwp' ); ?></a></div>
+				<?php endif; ?>
 		</div>
 			<?php
 	}

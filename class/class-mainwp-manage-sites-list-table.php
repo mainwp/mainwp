@@ -434,7 +434,7 @@ class MainWP_Manage_Sites_List_Table {
 		}
 
 		?>
-		<div class="ui grid">
+		<div class="ui stackable grid">
 
 			<div class="row ui mini form" id="mainwp-sites-filters-row">
 				<div class="sixteen wide left aligned middle aligned column">
@@ -500,7 +500,7 @@ class MainWP_Manage_Sites_List_Table {
 
 
 			<div class="row ui mini form">
-				<div class="five wide middle aligned column">
+			<div class="eight wide middle aligned column">
 					<div id="mainwp-sites-bulk-actions-menu" class="ui selection dropdown">
 							<div class="default text"><?php esc_html_e( 'Bulk actions', 'mainwp' ); ?></div>
 							<i class="dropdown icon"></i>
@@ -512,16 +512,11 @@ class MainWP_Manage_Sites_List_Table {
 						</div>
 						<button class="ui tiny basic button" id="mainwp-do-sites-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
 					</div>
-					<div class="ten wide right aligned middle aligned column">
 
-					</div>
-					<div class="one wide right aligned middle aligned column">
+			<div class="eight wide right aligned middle aligned column">
 						<?php self::render_page_navigation_left_items(); ?>
 					</div>
 					</div>
-
-
-
 
 			</div>
 		<?php
@@ -1544,7 +1539,7 @@ class MainWP_Manage_Sites_List_Table {
 								<?php if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
 									<i class="sign in icon"></i>
 								<?php else : ?>
-									<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website['id'] ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="right center"  data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
+									<a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="right center"  data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
 								<?php endif; ?>
 								<?php
 							} elseif ( 'client_name' === $column_name ) {
@@ -1927,7 +1922,7 @@ class MainWP_Manage_Sites_List_Table {
 				<?php if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
 					<i class="sign in icon"></i>
 				<?php else : ?>
-					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website['id'] ); ?>&_opennonce=<?php echo esc_attr( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>" data-position="right center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
+					<a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>" data-position="right center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
 				<?php endif; ?>
 				</td>
 				<?php

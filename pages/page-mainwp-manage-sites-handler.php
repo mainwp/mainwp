@@ -311,11 +311,14 @@ class MainWP_Manage_Sites_Handler {
 		$information = false;
 
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+
+			$is_demo_wp = MainWP_Demo_Handle::get_instance()->is_demo_website( $website );
+
 			/**
 			 * Deactive child plugin on live site only,
 			 * DO NOT deactive child on staging site, it will deactive child plugin of source site.
 			 */
-			if ( ! $website->is_staging ) {
+			if ( ! $website->is_staging && ! $is_demo_wp ) {
 				try {
 					$information = MainWP_Connect::fetch_url_authed( $website, 'deactivate' );
 				} catch ( MainWP_Exception $e ) {

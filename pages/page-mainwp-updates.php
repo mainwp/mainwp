@@ -1992,6 +1992,7 @@ class MainWP_Updates {
 		do_action( 'mainwp_updates_before_actions_bar' );
 
 		if ( ! $hide_show_updates_per ) {
+			$is_demo = MainWP_Demo_Handle::is_demo_mode();
 			?>
 		<div class="mainwp-sub-header">
 			<div class="ui grid">
@@ -2019,13 +2020,21 @@ class MainWP_Updates {
 						 */
 						echo apply_filters( 'mainwp_widgetupdates_actions_top', '' ); // phpcs:ignore WordPress.Security.EscapeOutput
 						if ( 'abandoned-plugins' === $current_tab ) {
+							if ( $is_demo ) {
+								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini basic button disabled" disabled="disabled">' . esc_html__( 'Check for Abandoned Plugins', 'mainwp' ) . '</a>' );
+							} else {
 							?>
 							<a href="#" onClick="updatesoverview_bulk_check_abandoned('plugin'); return false;" class="ui green mini basic button" data-tooltip="<?php esc_html_e( 'Check for Abandoned Plugins.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Check for Abandoned Plugins', 'mainwp' ); ?></a>
 							<?php
+							}
 						} elseif ( 'abandoned-themes' === $current_tab ) {
+							if ( $is_demo ) {
+								MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini basic button disabled" disabled="disabled">' . esc_html__( 'Check for Abandoned Themes', 'mainwp' ) . '</a>' );
+							} else {
 							?>
 							<a href="#" onClick="updatesoverview_bulk_check_abandoned('theme'); return false;" class="ui green mini basic button" data-tooltip="<?php esc_html_e( 'Check for Abandoned Themes.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Check for Abandoned Themes', 'mainwp' ); ?></a>
 							<?php
+							}
 						}
 						?>
 					</div>

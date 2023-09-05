@@ -465,6 +465,11 @@ body.mainwp-ui.mainwp-custom-theme,
   -webkit-box-shadow: none !important;
 }
 
+.mainwp-ui.mainwp-custom-theme button.mainwp-remove-demo-data-button {
+  background-color: #1c1d1b !important;
+  color: var(--font-button-color) !important;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.button.green:not(.basic),
 .mainwp-ui.mainwp-custom-theme .ui.button.green:not(.disabled),
 .mainwp-ui.mainwp-custom-theme .ui.button.green:not(.red) {

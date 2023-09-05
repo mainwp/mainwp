@@ -81,7 +81,8 @@
 .mainwp-ui #mainwp-manage-posts,
 .mainwp-ui #mainwp-manage-pages,
 .mainwp-ui #mainwp-theme-auto-updates,
-.mainwp-ui #mainwp-manage-users { padding: 0 !important; }
+.mainwp-ui #mainwp-manage-users,
+.mainwp-ui #mainwp-add-clients { padding: 0 !important; }
 
 .mainwp-ui #mainwp-add-new-bulkpost { padding: 0 !important; }
 .mainwp-ui #mainwp-add-new-bulkpost .mainwp-main-content { padding-left: 1em !important; }
@@ -94,7 +95,8 @@
 .mainwp-ui #mainwp-install-themes .mainwp-main-content,
 .mainwp-ui #mainwp-plugin-auto-updates .mainwp-main-content,
 .mainwp-ui #mainwp-theme-auto-updates .mainwp-main-content,
-.mainwp-ui #mainwp-manage-users .mainwp-main-content { padding-right: 0 !important; }
+.mainwp-ui #mainwp-manage-users .mainwp-main-content,
+.mainwp-ui #mainwp-add-clients .mainwp-main-content{ padding-right: 0 !important; }
 
 .mainwp-ui .mainwp-sidebar-left .mainwp-posts .mainwp-main-content,
 .mainwp-ui .mainwp-sidebar-left #mainwp-manage-pages .mainwp-main-content,
@@ -104,7 +106,8 @@
 .mainwp-ui .mainwp-sidebar-left #mainwp-install-themes .mainwp-main-content,
 .mainwp-ui .mainwp-sidebar-left #mainwp-plugin-auto-updates .mainwp-main-content,
 .mainwp-ui .mainwp-sidebar-left #mainwp-theme-auto-updates .mainwp-main-content,
-.mainwp-ui .mainwp-sidebar-left #mainwp-manage-users .mainwp-main-content { padding-left: 0 !important; }
+.mainwp-ui .mainwp-sidebar-left #mainwp-manage-users .mainwp-main-content,
+.mainwp-ui .mainwp-sidebar-left #mainwp-add-clients .mainwp-main-content { padding-left: 0 !important; }
 
 .mainwp-ui #mainwp-groups-table tr.active { background: #f9fafb !important; }
 

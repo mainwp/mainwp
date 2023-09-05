@@ -120,9 +120,9 @@ class MainWP_Site_Actions {
 						<tr>
 							<th><?php esc_html_e( 'Change', 'mainwp' ); ?></th>
 							<?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
-						<th class="collapsing center aligned"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
+						<th class="collapsing"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
 							<?php endif; ?>
-						<th class="collapsing center aligned"><?php esc_html_e( 'User', 'mainwp' ); ?></th>
+						<th class="collapsing"><?php esc_html_e( 'User', 'mainwp' ); ?></th>
 						<th class="collapsing no-sort"></th>
 						</tr>
 					</thead>
@@ -164,10 +164,10 @@ class MainWP_Site_Actions {
 								<span class="ui small text"><?php echo esc_html( MainWP_Utility::format_timestamp( $data->created ) ); ?></span>
 							</td>
 							<?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
-								<td class="collapsing center aligned"><a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $data->wpid ); ?>"><?php echo esc_html( $data->name ); ?></a></td>
-							<?php endif; ?>
-							<td class="collapsing center aligned"><?php echo esc_html( $data->action_user ); ?></td>
-							<td class="collapsing center aligned">
+								<td class="collapsing"><a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $data->wpid ); ?>"><?php echo esc_html( $data->name ); ?></a></td>
+								<?php endif; ?>
+							<td class="collapsing"><?php echo esc_html( $data->action_user ); ?></td>
+							<td class="collapsing">
 								<a href="javascript:void(0)" class="mainwp-action-dismiss ui mini icon button" action-id="<?php echo intval( $data->action_id ); ?>" data-tooltip="<?php esc_attr_e( 'Dismiss the notice.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="times icon"></i></a>
 							</td>
 						</tr>
@@ -211,11 +211,17 @@ class MainWP_Site_Actions {
 				</h2>
 			<?php endif; ?>
 		</div>
-
+		<?php
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
+		?>
 		<div class="mainwp-widget-footer">
-			<div class="ui two columns grid">
+			<div class="ui two columns stackable grid">
 				<div class="middle aligned column">
-					<a href="javascript:void(0)" id="mainwp-delete-all-nonmainwp-actions-button" class="ui button mini fluid green"><?php esc_html_e( 'Clear All Non-MainWP Changes', 'mainwp' ); ?></a>
+					<?php if( $is_demo ) { 
+						MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui button mini fluid green disabled" disabled="disabled">' . esc_html__( 'Clear All Non-MainWP Changes', 'mainwp' ) . '</a>' );
+					} else { ?>
+						<a href="javascript:void(0)" id="mainwp-delete-all-nonmainwp-actions-button" class="ui button mini fluid green"><?php esc_html_e( 'Clear All Non-MainWP Changes', 'mainwp' ); ?></a>
+					<?php } ?>
 				</div>
 				<div class="middle aligned column"></div>
 			</div>

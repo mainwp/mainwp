@@ -63,7 +63,7 @@ class MainWP_Client_Overview_Info {
 		?>
 		<div class="mainwp-widget-header">
 			<h3 class="ui header handle-drag">
-				<?php echo esc_html( $client_info['name'] ); ?> <?php echo $client_status; ?>
+				<?php echo esc_html( $client_info['name'] ); ?> <?php echo $client_status; //phpcs:ignore -- ok. ?>
 				<div class="ui hidden divider"></div>
 				<div class="sub header">
 					<?php echo MainWP_System_Utility::get_site_tags( $client_info, true ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
@@ -160,7 +160,6 @@ class MainWP_Client_Overview_Info {
 								</div>
 								</div>
 								<?php endif; ?>
-								
 								<?php if ( isset( $client_info['created'] ) && 0 != $client_info['created'] ) : ?>
 								<div class="item">
 									<i class="calendar icon"></i>
@@ -202,7 +201,6 @@ class MainWP_Client_Overview_Info {
 					<a href="javascript:void(0);" suspend-status="<?php echo intval( $client_info['suspended'] ); ?>" title="" class="ui mini fluid button client-suspend-unsuspend-sites"><?php echo 0 == $client_info['suspended'] ? esc_html__( 'Suspend Sites', 'mainwp' ) : esc_html__( 'Unsuspend Sites', 'mainwp' ); ?></a></div>
 				<?php endif; ?>
 		</div>
-			<?php
+		<?php
 	}
-
 }

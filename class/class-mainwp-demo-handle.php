@@ -69,7 +69,7 @@ class MainWP_Demo_Handle {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::starts_with()
 	 */
-	public function import_data_demo() {
+	public function import_data_demo() { //phpcs:ignore -- complex method.
 
 		$errors = array();
 
@@ -386,14 +386,21 @@ class MainWP_Demo_Handle {
 	 */
 	public function is_new_instance() {
 		global $wpdb;
-		$count = $wpdb->get_var( 'SELECT count(id) FROM ' . MainWP_DB::instance()->get_table_name( 'wp' ) );
+		$count = $wpdb->get_var( 'SELECT count(id) FROM ' . MainWP_DB::instance()->get_table_name( 'wp' ) ); //phpcs:ignore WordPress.DB.PreparedSQL -- ok.
 		if ( $count ) {
 			return false;
 		}
-		$count = $wpdb->get_var( 'SELECT count(client_id) FROM ' . MainWP_DB::instance()->get_table_name( 'wp_clients' ) );
+		$count = $wpdb->get_var( 'SELECT count(client_id) FROM ' . MainWP_DB::instance()->get_table_name( 'wp_clients' ) ); //phpcs:ignore WordPress.DB.PreparedSQL -- ok.
 		if ( $count ) {
 			return false;
 		}
+
+		$extensions_disabled = MainWP_Extensions_Handler::get_extensions_disabled();
+		$extensions          = MainWP_Extensions_Handler::get_extensions();
+		if ( 0 < count( $extensions ) && $extensions != $extensions_disabled ) {
+			return false;
+		}
+
 		return true;
 	}
 
@@ -479,8 +486,6 @@ class MainWP_Demo_Handle {
 	 * Method get_demo_notice()
 	 *
 	 * Get demo message to notice.
-	 *
-	 * @param string message string.
 	 */
 	public function get_demo_tooltip() {
 		return __( 'This function does not work in the demo mode!', 'mainwp' );
@@ -490,8 +495,6 @@ class MainWP_Demo_Handle {
 	 * Method get_demo_notice()
 	 *
 	 * Get demo message to notice.
-	 *
-	 * @param string message string.
 	 */
 	public function get_demo_notice() {
 		return '[Demo Website]';
@@ -518,7 +521,7 @@ class MainWP_Demo_Handle {
 			MainWP_DB::instance()->update_website_sync_values( $pWebsite->id, $update_dm );
 			return true;
 		} elseif ( 'perform_install' === $what || 'perform_upload' === $what ) {
-			wp_die( wp_send_json( $output ) );
+			wp_die( wp_send_json( $output ) ); //phpcs:ignore WordPress.Security.EscapeOutput
 		}
 		return $output;
 	}

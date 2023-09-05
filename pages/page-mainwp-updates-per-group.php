@@ -756,7 +756,7 @@ class MainWP_Updates_Per_Group {
 	 * @uses \MainWP\Dashboard\MainWP_Updates::user_can_update_trans()
 	 * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
 	 */
-	public static function render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) {
+	public static function render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) { //phpcs:ignore -- complex method.
 		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-translations-groups-table">

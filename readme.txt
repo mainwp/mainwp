@@ -299,6 +299,27 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 4.5.1 - 9-5-2023 =
+* Fixed: An issue with displaying cron job schedules
+* Fixed: A problem with displaying changelogs for specific Premium plugins
+* Fixed: Problem with inaccurate search 
+* Fixed: Problem with loading icons on the Site Security page
+* Added: The Demo Mode feature
+* Added: The Import Demo Content button to the Tools page
+* Added: The Import Demo Content button to the Quick Setup Wizard
+* Added: Add Client step in the Quick Setup Wizard
+* Added: New Client status `Lost`
+* Added: New Client status `Lead`
+* Added: Tracking timestamp when the Client is created
+* Added: Option to set a date when the Client is created
+* Added: The Reset OpenSSL Key Pair feature
+* Added: Page title on the Import Sites page
+* Added: `stackable` class to multiple Grid elements
+* Updated: Multiple improvements for responsive styles
+* Updated: The Quick Setup Wizard welcome page
+* Updated: The Connect step in the Quick Setup Wizard so only one site can be connected during the process
+* Updated: Renamed the Create New Contact button to Add Additional Contact on the Client Add and Edit page.
+
 = 4.5.0.1 - 8-17-2023 =
 * Fixed: An issue with showing the wrong Non-MainWP Changes in the Client Overview page widget
 * Fixed: An issue with dismissing the notice after Turning On auto-updates for the MainWP Child plugin

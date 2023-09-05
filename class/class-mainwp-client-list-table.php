@@ -691,7 +691,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 					$client_status = '<span class="ui red mini fluid center aligned label">' . esc_html__( 'Lost', 'mainwp' ) . '</span>';
 				}
 				?>
-				<td class="collapsing"><?php echo $client_status; ?></td>
+				<td class="collapsing"><?php echo $client_status; //phpcs:ignore -- ok. ?></td>
 				<?php
 			} elseif ( 'websites' === $column_name ) {
 				$selected_sites = isset( $item['selected_sites'] ) ? trim( $item['selected_sites'] ) : '';

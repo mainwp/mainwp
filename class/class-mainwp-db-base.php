@@ -100,9 +100,8 @@ class MainWP_DB_Base {
 	 * @return string Table name.
 	 */
 	public function get_table_name( $suffix, $tablePrefix = null ) {
-		return $this->table_name( $suffix);
+		return $this->table_name( $suffix );
 	}
-
 
 	/**
 	 * Method get_my_sql_version()

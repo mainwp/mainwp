@@ -1000,9 +1000,11 @@ class MainWP_Plugins {
 		ob_start();
 
 		if ( ! empty( $error_results ) ) {
+			// phpcs:disable WordPress.Security.EscapeOutput
 			?>
-			<div class="ui message yellow"><?php echo $error_results; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+			<div class="ui message yellow"><?php echo $error_results; ?></div>
 			<?php
+			// phpcs:enable 
 		}
 
 		if ( 'not_installed' === $status ) {
@@ -1357,9 +1359,8 @@ class MainWP_Plugins {
 							$plugin_directory = MainWP_Utility::get_dir_slug( $plugin_slug );
 							$details_link     = self_admin_url( 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $site_id ) . '&plugin=' . rawurlencode( $plugin_directory ) . '&section=changelog' );
 							?>
-						 <div class="ui very compact stackable grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( $plugin_title ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
+							 <div class="ui very compact stackable grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( $plugin_title ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
 							<div class="one wide center aligned middle aligned column"></div>
-
 								<div class="one wide center aligned middle aligned column">
 									<div class="ui checkbox child <?php echo 'mainwp-child' == $plugin_directory ? 'disabled' : ''; ?>">
 									<input type="checkbox" 

@@ -416,9 +416,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 										<input type="text" id="password" name="password" autocomplete="off" value="<?php echo esc_attr( wp_generate_password( $pass_complexity ) ); ?>">
 									</div>
 									<br />
-								
-										<button class="ui basic green fluid button wp-generate-pw"><?php esc_html_e( 'Generate New Password', 'mainwp' ); ?></button>
-							
+									<button class="ui basic green fluid button wp-generate-pw"><?php esc_html_e( 'Generate New Password', 'mainwp' ); ?></button>
 								</div>
 							</div>
 							<?php

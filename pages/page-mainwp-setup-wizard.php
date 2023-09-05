@@ -315,7 +315,6 @@ class MainWP_Setup_Wizard {
 		<div class="ui blue message">
 			<?php echo sprintf( esc_html__( 'Guided tours feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
 		</div>
-		
 		<?php
 		MainWP_System_View::render_comfirm_modal();
 	}
@@ -336,7 +335,6 @@ class MainWP_Setup_Wizard {
 		<p><?php esc_html_e( 'If you don\'t want to go through the setup wizard, you can skip and proceed to your MainWP Dashboard by clicking the "Not right now" button. If you change your mind, you can come back later by starting the Setup Wizard from the MainWP > Settings > MainWP Tools page!', 'mainwp' ); ?></p>
 		<div class="ui hidden divider"></div>
 		<form method="post" class="ui form">
-			
 			<h1><?php esc_html_e( 'MainWP Guided Tours', 'mainwp' ); ?> <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></h1>
 				<?php esc_html_e( 'MainWP guided tours are designed to provide information about all essential features on each MainWP Dashboard page.', 'mainwp' ); ?>
 				<div class="ui blue message">
@@ -353,7 +351,6 @@ class MainWP_Setup_Wizard {
 					</div>
 				</div>
 			</div>
-			
 			<div class="ui hidden divider"></div>
 			<p><?php esc_html_e( 'To go back to the WordPress Admin section, click the "Back to WP Admin" button.', 'mainwp' ); ?></p>
 			<div class="ui hidden divider"></div>
@@ -480,7 +477,6 @@ class MainWP_Setup_Wizard {
 		?>
 		<h1 class="ui header"><?php esc_html_e( 'Congratulations!', 'mainwp' ); ?></h1>
 		<p><?php esc_html_e( 'You have successfully connected your first site to your MainWP Dashboard!', 'mainwp' ); ?></p>
-		
 		<div class="ui form">
 			<form method="post" class="ui form">
 				<?php if ( empty( $count_clients ) ) : ?>
@@ -503,7 +499,6 @@ class MainWP_Setup_Wizard {
 				<input type="hidden" id="nonce_secure_data" mainwp_addwp="<?php echo esc_js( wp_create_nonce( 'mainwp_addwp' ) ); ?>" mainwp_checkwp="<?php echo esc_attr( wp_create_nonce( 'mainwp_checkwp' ) ); ?>" />
 			</form>
 		</div>	
-		
 		<?php
 	}
 
@@ -589,12 +584,10 @@ class MainWP_Setup_Wizard {
 						<div class="ui hidden divider"></div>
 						<div class="ui hidden divider"></div>
 						<div class="field">
-									<label><?php esc_html_e( 'Did you generate unique security ID on the site? If yes, copy it here, if not, leave this field blank. ', 'mainwp' ); ?></label>
+							<label><?php esc_html_e( 'Did you generate unique security ID on the site? If yes, copy it here, if not, leave this field blank. ', 'mainwp' ); ?></label>
 							<input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
 						</div>
 						</div>
-						
-						
 					</div>
 				</div>
 			<div class="ui clearing hidden divider"></div>
@@ -604,7 +597,6 @@ class MainWP_Setup_Wizard {
 			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" id="mainwp_addsite_continue_button" class="ui big green right floated button"><?php esc_html_e( 'Continue', 'mainwp' ); ?></a>
 			<a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
 			<?php wp_nonce_field( 'mwp-setup' ); ?>
-			
 			<input type="hidden" id="nonce_secure_data" mainwp_addwp="<?php echo esc_js( wp_create_nonce( 'mainwp_addwp' ) ); ?>" mainwp_checkwp="<?php echo esc_attr( wp_create_nonce( 'mainwp_checkwp' ) ); ?>" />
 		</form>
 		<?php
@@ -636,7 +628,6 @@ class MainWP_Setup_Wizard {
 							<div id="mainwp-add-new-client-form" >						
 							<?php $this->render_add_client_content( false, true ); ?>
 							</div>
-							
 						</div>
 						<input type="hidden" name="selected_first_site" value="<?php echo intval( $first_site_id ); ?>">
 					</form>
@@ -658,8 +649,6 @@ class MainWP_Setup_Wizard {
 	 * Method render_add_client_content().
 	 *
 	 * Renders add client content window.
-	 *
-	 * @param mixed $edit_client The client data.
 	 */
 	public function render_add_client_content() {
 		$edit_client           = false;

@@ -303,17 +303,14 @@ body.mainwp-ui.mainwp-custom-theme,
   color: var(--font-color);
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.table tr.hoverli,
 .mainwp-ui.mainwp-custom-theme .ui.table tr.hoverli {
   background-color: var(--background-color-4) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.table tr.active,
 .mainwp-ui.mainwp-custom-theme .ui.table tr.active {
   background-color: var(--background-color-4) !important;
 }
 
-.mainwp-ui.mainwp-custom-theme .ui.table tr.active td,
 .mainwp-ui.mainwp-custom-theme .ui.table tr.active td {
   color: var(--font-color) !important;
 }

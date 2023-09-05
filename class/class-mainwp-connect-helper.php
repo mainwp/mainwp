@@ -82,7 +82,6 @@ class MainWP_Connect_Helper {
 							</div>
 					</div>
 				</div>
-				
 			</div>
 			<div class="actions mainwp-modal-actions">
 				<button class="ui green left floated button" onclick="mainwp_tool_prepare_renew_connections(this); return false;"><?php esc_html_e( 'Reset OpenSSL Key Pair', 'mainwp' ); ?></button>
@@ -97,7 +96,7 @@ class MainWP_Connect_Helper {
 	 */
 	public function ajax_prepare_renew_connections() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_prepare_renew_connections' );
-		$sites = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
+		$sites = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification
 
 		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
@@ -143,7 +142,7 @@ class MainWP_Connect_Helper {
 
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_renew_connections' );
 
-		$site_id = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : 0;
+		$site_id = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : 0; //phpcs:ignore WordPress.Security.NonceVerification
 		$website = false;
 
 		if ( ! empty( $site_id ) ) {
@@ -179,13 +178,13 @@ class MainWP_Connect_Helper {
 			}
 
 			if ( is_array( $data ) && isset( $data['error'] ) ) {
-				wp_send_json( array( 'error' => esc_html( strip_tags( $data['error'] ) ) ) );
+				wp_send_json( array( 'error' => esc_html( wp_strip_all_tags( $data['error'] ) ) ) );
 			} else {
 				wp_send_json( array( 'error' => esc_html__( 'Try to disconnect site failed. Please try again.', 'mainwp' ) ) );
 			}
 		} catch ( MainWP_Exception $e ) {
 			$error = MainWP_Error_Helper::get_error_message( $e );
-			wp_send_json( array( 'error' => esc_html( strip_tags( $error ) ) ) );
+			wp_send_json( array( 'error' => esc_html( wp_strip_all_tags( $error ) ) ) );
 		}
 		wp_send_json( array( 'error' => esc_html__( 'Undefined error. Please try again.', 'mainwp' ) ) );
 	}

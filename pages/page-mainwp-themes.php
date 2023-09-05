@@ -967,9 +967,11 @@ class MainWP_Themes {
 		ob_start();
 
 		if ( ! empty( $error_results ) ) {
+			// phpcs:disable WordPress.Security.EscapeOutput
 			?>
-			<div class="ui message yellow"><?php echo $error_results; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+			<div class="ui message yellow"><?php echo $error_results; ?></div>
 			<?php
+			//phpcs:enable
 		}
 
 		if ( 'not_installed' === $status ) {
@@ -1209,10 +1211,8 @@ class MainWP_Themes {
 							$item_id = $slug_ver . '_' . $site_id;
 							$item_id = strtolower( $item_id );
 							$item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
-
 							?>
-						 <div class="ui very compact stackable grid mainwp-manage-theme-item-website <?php echo esc_html( $active_status_class ); ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" >
-							
+						 	<div class="ui very compact stackable grid mainwp-manage-theme-item-website <?php echo esc_html( $active_status_class ); ?>"  updated="0" site-id="<?php echo intval( $site_id ); ?>" theme-slug="<?php echo esc_attr( $theme_slug ); ?>" theme-name="<?php echo esc_html( wp_strip_all_tags( $themesName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>"  id="<?php echo esc_html( $item_id ); ?>" not-delete="<?php echo $not_delete ? 1 : 0; ?>" >
 							<div class="one wide center aligned middle aligned column"></div>
 								<div class="one wide center aligned middle aligned column">
 

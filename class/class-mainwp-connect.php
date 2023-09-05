@@ -16,7 +16,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Connect {
 
-	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
+	// phpcs:disable WordPress.DB.RestrictedFunctions, Generic.Metrics.CyclomaticComplexity, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
 
 	/**
 	 * Method get_class_name()
@@ -320,7 +320,7 @@ class MainWP_Connect {
 	 *
 	 * @return mixed null|http_build_query()
 	 */
-	public static function get_post_data_authed( &$website, $what, $params = null ) {
+	public static function get_post_data_authed( &$website, $what, $params = null ) {  //phpcs:ignore -- complex method.
 		if ( $website && '' != $what ) {
 			$data             = array();
 			$data['user']     = $website->adminname;
@@ -442,11 +442,11 @@ class MainWP_Connect {
 				$use_seclib   = true;
 			} elseif ( function_exists( 'openssl_verify' ) ) {
 				$alg          = MainWP_System_Utility::get_connect_sign_algorithm( $website );
-				$sign_success = self::connect_sign( $compat_what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg );
+				$sign_success = self::connect_sign( $compat_what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for keys encoding.
 				if ( empty( $sign_success ) ) { // error from openssl, openssl_sign().
 					$alg = defined( 'OPENSSL_ALGO_SHA1' ) ? OPENSSL_ALGO_SHA1 : false; // to set default SHA1, to disconnect.
 					MainWP_Logger::instance()->debug_for_website( $website, 'get_renew_post_data_authed', '[' . $website->url . '] :: [openssl_sign:failed] :: Set sign_algo=SHA1' );
-					$sign_success = self::connect_sign( $compat_what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg );
+					$sign_success = self::connect_sign( $compat_what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for keys encoding.
 				}
 
 				if ( false !== $alg ) {
@@ -488,7 +488,7 @@ class MainWP_Connect {
 	 *
 	 * @return string $url
 	 */
-	public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false ) {
+	public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false ) { //phpcs:ignore -- complex method.
 		$params = array();
 		if ( $website && '' != $paramValue ) {
 

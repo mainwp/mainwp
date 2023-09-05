@@ -217,6 +217,7 @@ class MainWP_Site_Open {
 	 *
 	 * @param mixed $website Website ID.
 	 * @param mixed $location open location.
+	 * @param bool $echo Echo or not.
 	 *
 	 * @return mixed Render modal window for themes selection.
 	 */

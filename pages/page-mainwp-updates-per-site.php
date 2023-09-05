@@ -38,7 +38,7 @@ class MainWP_Updates_Per_Site {
 	 * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
 	 * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
 	 */
-	public static function render_wpcore_updates( $websites, $total_wp_upgrades ) {
+	public static function render_wpcore_updates( $websites, $total_wp_upgrades ) { //phpcs:ignore -- complex method.
 		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-wordpress-updates-table">

@@ -1363,7 +1363,7 @@ class MainWP_Client {
 			MainWP_DB_Client::instance()->update_client( $update );
 		}
 
-		if ( isset( $_POST['is_first_client'] ) && ! empty( $_POST['is_first_client'] ) ) {
+		if ( isset( $_POST['is_first_client'] ) && ! empty( $_POST['is_first_client'] ) ) { //phpcs:ignore ordPress.Security.NonceVerification -- ok.
 			delete_transient( 'mainwp_transient_just_connected_site_id' );
 		}
 
@@ -1606,7 +1606,6 @@ class MainWP_Client {
 		<div class="ui section hidden divider after-add-contact-field"></div>
 		</div>
 		<input type="hidden" name="client_fields[client_id]" value="<?php echo intval( $client_id ); ?>">
-		
 		<script type="text/javascript">
 				jQuery( document ).ready( function () {
 					// to fix issue not loaded calendar js library

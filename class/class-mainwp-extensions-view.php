@@ -128,10 +128,21 @@ class MainWP_Extensions_View {
 
 		$extensions       = MainWP_Extensions_Handler::get_extensions();
 		$extension_update = get_site_transient( 'update_plugins' );
+		$is_demo          = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div id="mainwp-manage-extensions" class="ui alt segment">
 			<div class="mainwp-main-content">
-		<?php self::render_incompatible_notice(); ?>
+		<?php
+		self::render_incompatible_notice();
+		if ( $is_demo ) {
+			?>
+			<div class="ui yellow message">
+				<?php esc_html_e( 'Extensions are disabled in the Demo Mode.', 'mainwp' ); ?>
+				<i class="close icon"></i>
+			</div>
+			<?php
+		}
+		?>
 		<?php if ( 0 == count( $extensions ) && empty( $extensions_disabled ) ) : ?>
 				<?php self::render_intro_notice(); ?>
 				<?php else : ?>
@@ -441,6 +452,9 @@ class MainWP_Extensions_View {
 		if ( isset( $extensions_data['release_date'] ) && ( time() - $extensions_data['release_date'] < MONTH_IN_SECONDS ) ) {
 			$new = '<span class="ui floating green mini label">NEW!</span>';
 		}
+
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
+
 		?>
 			<div class="ui card extension <?php echo ( $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension' ); ?> extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" status="<?php echo esc_attr( $queue_status ); ?>" license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
 		<?php
@@ -478,16 +492,20 @@ class MainWP_Extensions_View {
 					</div>
 				</div>
 				<?php echo $new; // phpcs:ignore WordPress.Security.EscapeOutput ?>
-		<div class="extra content">
+			<div class="extra content">
 					<div class="ui mini fluid stackable buttons">
+					<?php
+					if ( ! $is_demo ) {
+						?>
 						<a class="ui basic button extension-the-plugin-action" plugin-action="<?php echo $disabled ? 'active' : 'disable'; ?>"><?php echo $disabled ? '<i class="toggle on icon"></i> ' . esc_html__( 'Enable', 'mainwp' ) : '<i class="toggle off icon"></i> ' . esc_html__( 'Disable', 'mainwp' ); ?></a>
 						<a class="ui extension-privacy-info-link icon basic button" base-slug="<?php echo esc_attr( $item_slug ); ?>" data-tooltip="<?php echo esc_html__( 'Click to see more about extension privacy.', 'mainwp' ); ?>" data-position="top left" data-inverted=""><?php echo $privacy_class; ?> <?php echo esc_html__( 'Privacy', 'mainwp' ); ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
 						<?php if ( $disabled ) : ?>
 						<a class="ui basic button extension-the-plugin-action" plugin-action="remove"><i class="trash icon"></i> <?php echo esc_html__( 'Delete', 'mainwp' ); ?></a>
 						<?php endif; ?>
-				<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
-						<a class="ui activate-api-status mainwp-manage-extension-license icon basic button" data-tooltip="<?php echo ( $active ? esc_html__( 'Extension API license is activated properly. Click here to Deactivate it if needed.', 'mainwp' ) : esc_html__( 'Extension API license is not activated. Click here to activate it.', 'mainwp' ) ); ?>" api-actived="<?php echo $active ? '1' : '0'; ?>" data-position="top left" data-inverted=""><?php echo $license_class; ?> <?php echo esc_html__( 'License', 'mainwp' ); ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
-				<?php endif; ?>
+						<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
+							<a class="ui activate-api-status mainwp-manage-extension-license icon basic button" data-tooltip="<?php echo ( $active ? esc_html__( 'Extension API license is activated properly. Click here to Deactivate it if needed.', 'mainwp' ) : esc_html__( 'Extension API license is not activated. Click here to activate it.', 'mainwp' ) ); ?>" api-actived="<?php echo $active ? '1' : '0'; ?>" data-position="top left" data-inverted=""><?php echo $license_class; ?> <?php echo esc_html__( 'License', 'mainwp' ); ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
+					<?php endif; ?>
+				<?php } ?>
 		</div>
 		</div>
 
@@ -545,13 +563,22 @@ class MainWP_Extensions_View {
 	 * Render Purchase Notice.
 	 */
 	public static function render_purchase_notice() {
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div id="mainwp-get-purchased-extensions-modal" class="ui first coupled large modal">
 			<div class="header"><?php esc_html_e( 'Install purchased extensions', 'mainwp' ); ?></div>
 			<div class="scrolling content"></div>
 			<div class="actions">
 				<div class="ui two columns stackable grid">
-					<div class="left aligned column"><input type="button" class="ui green button" id="mainwp-extensions-installnow" value="<?php esc_attr_e( 'Install Selected Extensions', 'mainwp' ); ?>"></div>
+					<div class="left aligned column">
+					<?php
+					if ( $is_demo ) {
+						MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" id="mainwp-extensions-installnow-disabled" class="ui green button disabled" disabled="disabled" value="' . esc_attr__( 'Install Selected Extensions', 'mainwp' ) . '">' );
+					} else {
+						?>
+						<input type="button" class="ui green button" id="mainwp-extensions-installnow" value="<?php esc_attr_e( 'Install Selected Extensions', 'mainwp' ); ?>">
+					<?php } ?>
+					</div>
 					<div class="right aligned column"><div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div></div>
 				</div>
 			</div>
@@ -565,7 +592,7 @@ class MainWP_Extensions_View {
 	 * @param string $mainwp_api_key MainWP.com api key.
 	 */
 	public static function render_side_box( $mainwp_api_key ) {
-
+		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
 			<div class="title active">
@@ -600,8 +627,14 @@ class MainWP_Extensions_View {
 		<div class="ui divider"></div>
 		<input type="button" class="ui fluid basic green button" id="mainwp-extensions-bulkinstall" value="<?php esc_attr_e( 'Install Extensions', 'mainwp' ); ?>">
 		<br/>
+		<?php
+		if ( $is_demo ) {
+			MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" id="mainwp-extensions-grabkeys-disabled" class="ui fluid green button disabled" disabled="disabled" value="' . esc_attr__( 'Activate Extensions', 'mainwp' ) . '">' );
+		} else {
+			?>
 		<input type="button" class="ui fluid green button" id="mainwp-extensions-grabkeys" value="<?php esc_attr_e( 'Activate Extensions', 'mainwp' ); ?>">
-			</div>
+		<?php } ?>	
+	</div>
 		</div>
 			<?php
 	}

@@ -1113,7 +1113,7 @@ class MainWP_System_Cron_Jobs {
 
 			/**  Auto updates part. */
 			if ( 1 == $plugin_automaticDailyUpdate ) {
-				MainWP_Logger::instance()->log_update_check( 'CRON :: auto update plugins [' . print_r( $pluginsToUpdateNow, true ) . ']' );
+				MainWP_Logger::instance()->log_update_check( 'CRON :: auto update plugins [' . print_r( $pluginsToUpdateNow, true ) . ']' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions -- debug.
 				foreach ( $pluginsToUpdateNow as $websiteId => $slugs ) {
 					if ( ( null != $sitesCheckCompleted ) && ( false == $sitesCheckCompleted[ $websiteId ] ) ) {
 						continue;

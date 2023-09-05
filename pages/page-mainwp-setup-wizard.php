@@ -306,8 +306,8 @@ class MainWP_Setup_Wizard {
 		<h3><?php esc_html_e( 'Are you ready to get started adding your sites?', 'mainwp' ); ?></h3>
 		<a class="ui big green basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp-setup&step=introduction' ) ); ?>"><?php esc_html_e( 'Start the MainWP Quick Setup Wizard', 'mainwp' ); ?></a>
 		<div class="ui hidden divider"></div>
-		<h3><?php esc_html_e( 'Would you like to see Demo content first? ', 'mainwp' ); ?></h3>
-		<p><?php esc_attr_e( 'Explore MainWP\'s full capabilities using our pre-loaded demo content.', 'mainwp' ); ?></p>
+		<h3><?php esc_html_e( 'Would you like to see Demo content first? ', 'mainwp' ); ?> - <?php echo sprintf( esc_html( '%sWhat is this?%s', 'mainwp' ), '<a href="https://www.youtube.com/watch?v=fCHT47AKt7s" target="_blank">', '</a>' ); ?></h3>
+		<p><?php esc_attr_e( 'Explore MainWP\'s capabilities using our pre-loaded demo content.', 'mainwp' ); ?></p>
 		<p><?php esc_attr_e( 'It\'s the perfect way to experience the benefits and ease of use MainWP provides without connecting to any of your own sites.', 'mainwp' ); ?></p>
 		<p><?php esc_html_e( 'The demo content serves as placeholder data to give you a feel for the MainWP Dashboard. Please note that because no real websites are connected in this demo, some functionality will be restricted. Features that require a connection to actual websites will be disabled for the duration of the demo.', 'mainwp' ); ?></p>
 		<p><?php esc_attr_e( 'Click this button to import the Demo content to your MainWP Dashboard and enable the Demo mode.', 'mainwp' ); ?></p>

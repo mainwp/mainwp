@@ -198,8 +198,8 @@ class MainWP_Updates_Per_Site {
 									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui mini green button disabled">' . esc_html__( 'Update All Sites', 'mainwp' ) . '</a>' );
 								} else {
 									?>
-								<a href="javascript:void(0)" data-tooltip="<?php esc_html_e( 'Update Selected Plugins.', 'mainwp' ); ?> onClick="return updatesoverview_plugins_global_upgrade_all( false, true );" class="mainwp-update-selected-button ui mini green basic button" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Plugins' ); ?></a>
-								<a href="javascript:void(0)" data-tooltip="<?php esc_html_e( 'Update all plugins.', 'mainwp' ); ?> onClick="return updatesoverview_plugins_global_upgrade_all();" class="mainwp-update-all-button ui mini green button" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites' ); ?></a>
+								<a href="javascript:void(0)" data-tooltip="<?php esc_html_e( 'Update Selected Plugins.', 'mainwp' ); ?>" onClick="return updatesoverview_plugins_global_upgrade_all( false, true );" class="mainwp-update-selected-button ui mini green basic button" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Plugins' ); ?></a>
+								<a href="javascript:void(0)" data-tooltip="<?php esc_html_e( 'Update all plugins.', 'mainwp' ); ?>" onClick="return updatesoverview_plugins_global_upgrade_all();" class="mainwp-update-all-button ui mini green button" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites' ); ?></a>
 									<?php
 								}
 							}

@@ -163,8 +163,14 @@
 /* Menu */
 
 #mainwp-main-navigation-container {
+    display: flex;
+    flex-direction: row;
+
     background-color: #3E3F3D;
+    
     width: 272px;
+    max-width: 272px;
+
     position: fixed;
     left: 0;
     top: 0;
@@ -172,32 +178,33 @@
     z-index: 1 !important;
 }
 
-#mainwp-first-level-navigation {
-    background-color: #1c1d1b;
-    width: 72px;
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-}
-
 #mainwp-main-navigation-container .active.item:last-child {
     border-radius: 0px !important;
 }
-
-#mainwp-first-level-navigation-menu {
-    background: none !important;
-    max-width: 100%;
-    border-radius: 0px;
+#mainwp-main-navigation-container .ui.accordion.menu .item a {
+    line-height: 1.3em;
 }
 
-#mainwp-first-level-navigation-menu .item.active {
-    background: #3E3F3D;
+
+#mainwp-first-level-navigation {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    background-color: #1c1d1b;
+    width: 72px;
+    max-width: 72px;
+    
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
-#mainwp-first-level-navigation-menu .item.active .icon,
-#mainwp-first-level-navigation-menu .item.active .text {
-    color: #7fb100;
+#mainwp-first-level-navigation-logo {
+
+}
+
+#mainwp-first-level-navigation-version-label {
+
 }
 
 #mainwp-version-label {
@@ -208,39 +215,54 @@
     z-index: 9999 !important;
 }
 
-#mainwp-navigation-icon {
-    padding: 10px;
-    max-width: 100%;
+#mainwp-first-level-navigation-menu {
+    flex-grow: 1;
+    border-radius: 0px;
+    min-height: 420px;
 }
-
-#mainwp-main-navigation-container .ui.accordion.menu .item a {
-    line-height: 1.3em;
+#mainwp-first-level-navigation-menu .item.active {
+    background: #3E3F3D;
+}
+#mainwp-first-level-navigation-menu .item.active .icon,
+#mainwp-first-level-navigation-menu .item.active .text {
+    color: #7fb100;
 }
 
 #mainwp-first-level-wpitems-menu {
     background: none !important;
-    max-width: 100%;
     border-radius: 0px;
-    position: absolute;
-    bottom: 0;
-    left: 0;
 }
+
 
 #mainwp-second-level-navigation {
     background-color: #3E3F3D;
     width: 200px;
-    position: fixed;
-    left: 72px;
-    top: 0;
-    bottom: 0;
-    overflow-y: auto !important;
+    box-shadow: 20px 0px 20px -18px rgba(0,0,0,0.15) inset;
+    -webkit-box-shadow: 20px 0px 20px -18px rgba(0,0,0,0.15) inset;
+    -moz-box-shadow: 20px 0px 20px -18px rgba(0,0,0,0.15) inset;
 }
+
+#mainwp-main-menu {
+    width: 100%;
+    background: #1c1d1b !important;
+}
+
+
 
 #mainwp-second-level-navigation .ui.inverted.menu {
     background-color: #3E3F3D;
+    box-shadow: 20px 0px 20px -18px rgba(0,0,0,0.15) inset;
+    -webkit-box-shadow: 20px 0px 20px -18px rgba(0,0,0,0.15) inset;
+    -moz-box-shadow: 20px 0px 20px -18px rgba(0,0,0,0.15) inset;
 }
 
-#mainwp-second-level-navigation .ui.inverted.menu .item,
+#mainwp-second-level-navigation .ui.inverted.menu .item {
+    color: #ffffff !important;
+    box-shadow: 20px 0px 20px -18px rgba(0,0,0,0.15) inset;
+    -webkit-box-shadow: 20px 0px 20px -18px rgba(0,0,0,0.15) inset;
+    -moz-box-shadow: 20px 0px 20px -18px rgba(0,0,0,0.15) inset;
+}
+
 #mainwp-second-level-navigation .ui.inverted.menu .item .icon {
     color: #ffffff !important;
 }
@@ -250,8 +272,25 @@
     color: #7fb100 !important;
 }
 
+
+
+
+#mainwp-navigation-icon {
+    padding: 10px;
+    max-width: 100%;
+}
+
+.mainwp-main-mobile-navigation-container {
+    background-color: #1c1d1b;
+    display: none;
+}
+
+.mainwp-main-mobile-navigation-container .item.active {
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
 .mainwp-ui #mainwp-main-navigation-container.hoverli {
-    background-color: #3E3F3D !important;
+    background-color: #1c1d1b !important;
 }
 
 .mainwp-ui.toplevel_page_mainwp_tab #mainwp-main-navigation-container {
@@ -261,24 +300,6 @@
 .mainwp-ui.toplevel_page_mainwp_tab #mainwp-collapse-second-level-navigation,
 .mainwp-ui.toplevel_page_mainwp_tab #mainwp-second-level-navigation {
     display: none;
-}
-
-.mainwp-sub-submenu {
-    margin: 0 !important;
-    border-radius: 0 !important;
-}
-
-.mainwp-main-mobile-navigation-container {
-    background-color: #3E3F3D;
-    display: none;
-}
-
-.mainwp-main-mobile-navigation-container .item.active {
-    background: rgba(255, 255, 255, 0.08) !important;
-}
-
-#mainwp-main-menu {
-    width: 100%;
 }
 
 #mainwp-main-menu .icon {
@@ -401,6 +422,12 @@
 .mainwp-search-options,
 .mainwp-search-submit {
     padding: 10px;
+}
+
+#mainwp-select-sites-header .ui.menu {
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin: 1rem -1rem 0 -1rem;
 }
 
 /* Select Sites */

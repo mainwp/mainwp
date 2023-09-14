@@ -18,7 +18,7 @@ By @betoayesa.
 
 
 /* Mobile */
-@media only screen and (max-width: 767px) {
+@media only screen and (max-width: 1100px) {
   [class*="mobile hidden"],
   [class*="tablet only"]:not(.mobile),
   [class*="computer only"]:not(.mobile),

@@ -188,7 +188,7 @@ class MainWP_Client_Overview_Info {
 				do_action( 'mainwp_clients_overview_overview_widget_bottom', $client_info );
 				?>
 			</div>
-		<div class="mainwp-widget-footer ui four columns stackable grid">
+		<div class="mainwp-widget-footer ui four columns stackable grid" client-id="<?php echo intval( $client_id ); ?>">
 			<div class="column"><a href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_id ); ?>" title="" class="ui button mini fluid green"><?php echo esc_html__( 'Edit Client', 'mainwp' ); ?></a></div>
 			<div class="column"><a class="ui green basic mini fluid button" href="admin.php?page=managesites&client=<?php echo intval( $client_id ); ?>"><?php esc_html_e( 'Manage Sites', 'mainwp' ); ?></a></div>
 			<div class="column">

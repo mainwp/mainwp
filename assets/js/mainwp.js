@@ -3703,6 +3703,7 @@ jQuery(function () {
 
   jQuery(document).on('click', '.mainwp-import-demo-data-button', function () {
     var confirmation = "Are you sure you want to import demo content into your MainWP Dashboard?";
+    var msg_import = (jQuery(this).attr('page-import') == 'qsw-import') ? '&message=qsw-import' : '';
     mainwp_confirm(confirmation, function () {
       feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + __('Importing. Please wait...', 'mainwp'), '');
       var data = mainwp_secure_data({
@@ -3719,7 +3720,7 @@ jQuery(function () {
         }
         if (error == false) {
           setTimeout(function () {
-            window.location = 'admin.php?page=mainwp_tab';
+            window.location = 'admin.php?page=mainwp_tab' + msg_import;
           }, 3000);
         }
       }, 'json');

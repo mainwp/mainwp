@@ -108,6 +108,28 @@
 	}
 }
 
+@media screen and ( max-width: 1140px ) {
+	.mainwp-content-wrap {
+		width: 100%;
+		margin: 0 !important;
+	}
+	/*--- Menu ---*/
+
+	#mainwp-main-navigation-container {
+		display: none !important;
+	}
+
+	.mainwp-main-mobile-navigation-container {
+		display: block;
+		padding: 10px;
+		vertical-align: middle;
+	}
+
+	#mainwp-main-menu.ui.menu {
+		min-height: 0;
+	}
+}
+
 @media screen and ( max-width: 767px ) {
 
 	.mainwp-ui .ui.five.cards > .card {
@@ -158,20 +180,6 @@
 		padding: 0 !important;
 	}
 
-	/*--- Menu ---*/
-
-	#mainwp-main-navigation-container {
-		display: none !important;
-	}
-
-	.mainwp-main-mobile-navigation-container {
-		display: block;
-	}
-
-	.mainwp-main-mobile-navigation-container .hamburger {
-		top: 23px !important;
-	}
-
 	/*--- General ---*/
 
 	.mainwp-ui table.dataTable thead th .ui.checkbox {
@@ -187,10 +195,7 @@
 		width: 100% !important;
 	}
 
-	.mainwp-content-wrap {
-		width: 100%;
-		margin: 0 !important;
-	}
+	
 
 	.mainwp-main-content {
 		width: 100%;

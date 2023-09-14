@@ -28,7 +28,7 @@ jQuery(document).ready(function () {
 
   jQuery(document).on('click', '.client-suspend-unsuspend-sites', function () {
     var new_status = jQuery(this).attr('suspend-status') == '0' ? 1 : 0;
-    var clientid = jQuery(this).closest('.mainwp-widget-client-card').attr('client-id');
+    var clientid = jQuery(this).closest('.mainwp-widget-footer').attr('client-id');
     var bt = this;
 
     var data = mainwp_secure_data({

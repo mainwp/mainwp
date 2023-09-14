@@ -705,25 +705,29 @@ class MainWP_System_Handler {
 		return $false;
 	}
 
-
 	/**
-	 * Method plugins_api_wp_plugin_info()
+	 * Method plugins_api_wp_plugins_api_result()
 	 *
-	 * Get plugins api information.
+	 * Hook after get plugins api information.
 	 *
-	 * @param mixed $false Return value.
+	 * @param mixed $res api information value.
 	 * @param mixed $action Action being performed.
 	 * @param mixed $arg Action arguments. Should be the plugin slug.
 	 *
-	 * @return mixed $info|$false
+	 * @return mixed $res
 	 */
-	public function plugins_api_wp_plugin_info( $false, $action, $arg ) {
+	public function plugins_api_wp_plugins_api_result( $res, $action, $args ) {
+
 		if ( 'plugin_information' !== $action ) {
-			return $false;
+			return $res;
+		}
+
+		if ( is_object( $res ) && property_exists( $res, 'slug' ) && property_exists( $res, 'sections' ) ) {
+			$res;
 		}
 
 		if ( ! isset( $_GET['wpplugin'] ) || ! is_numeric( $_GET['wpplugin'] ) || empty( $_GET['wpplugin'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			return $false;
+			return $res;
 		}
 
 		if ( is_array( $arg ) ) {
@@ -731,7 +735,7 @@ class MainWP_System_Handler {
 		}
 
 		if ( ! isset( $arg->slug ) || ( '' === $arg->slug ) ) {
-			return $false;
+			return $res;
 		}
 
 		$site_id = intval( $_GET['wpplugin'] ); // phpcs:ignore WordPress.Security.NonceVerification
@@ -748,7 +752,8 @@ class MainWP_System_Handler {
 						if ( false !== strpos( $plugin_slug, $arg->slug ) && isset( $info['update'] ) ) {
 							$found_update = true;
 							if ( isset( $info['update']['slug'] ) && $arg->slug == $info['update']['slug'] && isset( $info['update']['new_version'] ) && ! empty( $info['update']['new_version'] ) && isset( $info['update']['sections'] ) && ! empty( $info['update']['sections'] ) ) {
-								$info_update = (object) $info['update'];
+								$info_update           = (object) $info['update'];
+								$info_update->external = false;
 								return $info_update;
 							}
 							$empty_sections = true;
@@ -767,7 +772,8 @@ class MainWP_System_Handler {
 								)
 							);
 							if ( is_array( $info ) && isset( $info['update'] ) && ! empty( $info['update']['sections'] ) ) {
-								$info_update = (object) $info['update'];
+								$info_update           = (object) $info['update'];
+								$info_update->external = true;
 								return $info_update;
 							}
 						} catch ( \Exception $e ) {
@@ -778,9 +784,8 @@ class MainWP_System_Handler {
 			}
 		}
 
-		return $false;
+		return $res;
 	}
-
 
 	/**
 	 * Method check_update_custom()

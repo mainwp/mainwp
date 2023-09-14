@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 6.3.1
 Requires PHP: 7.4
-Stable tag: 4.5.1.1
+Stable tag: 4.5.1.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -44,6 +44,7 @@ MainWP is the **perfect solution for**
 💰 Free Forever
 🏅 White Label
 ♾️ Connect Unlimited Websites
+▶️ Demo Mode with sample data to try MainWP firsthand
 🌐 Track Updates via Browser with MainWP Browser Extension
 🧑‍💻 Manage all Sites, Users, Plugins, Themes, Updates
 👥 Full Client Management
@@ -69,7 +70,7 @@ With MainWP, you can **easily manage & control settings** for several plugins/se
 🔒 Termageddon, Wordfence, Jetpack Protect & Scan, Sucuri, iThemes Security, Virusdie, Activity Log, Security Ninja
 🚀 WP Rocket, WP Compress, Google Lighthouse Stats
 ✅ Atarim, WooCommerce, Database Updater
-📈 Yoast, SEOPress, Google Analytics (GA4), Matomo Stats
+📈 Yoast, SEOPress, Google Analytics (GA4), Matomo Stats, Fathom Analytics
 🌐 Uptime Robot, NodePing, Site24x7, Better Uptime
 
 And [a lot more](https://mainwp.com/free-vs-pro/)…
@@ -298,6 +299,15 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 10. Manage Clients Screen
 
 == Changelog ==
+
+= 4.5.1.2 - 9-14-2023 =
+* Fixed: An issue with menu items overlapping on smaller screens
+* Fixed: Overflow issue in the Select Sites element tabular menu
+* Fixed: Missing plugin wp.org link in plugin info modal
+* Fixed: Suspend Sites button not working in the Cilent Overview widget
+* Added: Usetiful trigger for the Demo Mode tour
+* Added: Missing menu items in the mobile menu element
+* Updated: Breakpoint for displaying the Mobile menu element to 1100px
 
 = 4.5.1.1 - 9-6-2023 =
 * Fixed: Bug with triggering Plugin updates in bulk from the Plugins Updates page

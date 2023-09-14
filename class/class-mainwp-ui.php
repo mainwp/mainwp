@@ -957,6 +957,14 @@ class MainWP_UI {
 				</script>
 			<?php endif; ?>
 
+			<?php if ( isset( $_GET['message'] ) && 'qsw-import' == $_GET['message'] ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+				<script type="text/javascript">
+					jQuery( document ).ready( function() {
+						window.USETIFUL.tour.start( parseInt( 40279 ) );
+					} );
+				</script>
+			<?php endif; ?>
+
 			<script type="text/javascript">
 			jQuery( document ).ready( function () {
 

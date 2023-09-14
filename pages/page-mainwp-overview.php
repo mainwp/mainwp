@@ -267,17 +267,17 @@ class MainWP_Overview {
 			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
 		}
 
-		// Load the Recent Posts widget.
-		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
-			if ( self::$enable_widgets['recent_posts'] ) {
-				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( 1, 1, 3, 3 ) );
-			}
-		}
-
 		// Load the Recent Pages widget.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			if ( self::$enable_widgets['recent_pages'] ) {
 				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( 1, 1, 3, 3 ) );
+			}
+		}
+
+		// Load the Recent Posts widget.
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
+			if ( self::$enable_widgets['recent_posts'] ) {
+				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( 1, 1, 3, 3 ) );
 			}
 		}
 

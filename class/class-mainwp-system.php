@@ -27,7 +27,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.5.1.1';
+	public static $version = '4.5.1.2';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -178,7 +178,7 @@ class MainWP_System {
 		add_filter( 'site_transient_update_plugins', array( $systemHandler, 'check_update_custom' ) );
 		add_filter( 'pre_set_site_transient_update_plugins', array( $systemHandler, 'pre_check_update_custom' ) );
 		add_filter( 'plugins_api', array( $systemHandler, 'plugins_api_extension_info' ), 10, 3 );
-		add_filter( 'plugins_api', array( $systemHandler, 'plugins_api_wp_plugin_info' ), 10, 3 );
+		add_filter( 'plugins_api_result', array( $systemHandler, 'plugins_api_wp_plugins_api_result' ), 10, 3 );
 
 		$this->metaboxes = new MainWP_Meta_Boxes();
 

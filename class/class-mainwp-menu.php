@@ -501,6 +501,7 @@ class MainWP_Menu {
 		?>
 		<div id="mainwp-main-navigation-container">
 			<div id="mainwp-first-level-navigation">
+				<div id="mainwp-first-level-navigation-logo">
 				<a href="
 				<?php
 				/**
@@ -537,7 +538,10 @@ class MainWP_Menu {
 				?>
 					" id="mainwp-navigation-icon" />
 				</a>
+				</div>
+				<div id="mainwp-first-level-navigation-version-label">
 				<span id="mainwp-version-label" class="ui mini green fluid centered label"><?php echo esc_html( $version ); ?></span>
+				</div>
 				<div id="mainwp-first-level-navigation-menu" class="ui vertical labeled inverted icon tiny menu">
 				<?php
 
@@ -849,6 +853,7 @@ class MainWP_Menu {
 	 * Renders the mobile menu.
 	 */
 	public static function render_mobile_menu() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
 		?>
 		<div class="mainwp-main-mobile-navigation-container">
 			<div id="mainwp-logo">
@@ -918,6 +923,9 @@ class MainWP_Menu {
 								</div>
 								<div class="item accordion">
 									<div class="title"><a class="" href="admin.php?page=ManageGroups"><?php esc_html_e( 'Tags', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
+								<div class="content menu">
+									<a class="item" href="admin.php?page=ManageGroups"><?php esc_html_e( 'Manage Tags', 'mainwp' ); ?></a>
+								</div>
 								</div>
 								<div class="item accordion">
 									<div class="title"><a href="admin.php?page=UpdatesManage"><?php esc_html_e( 'Updates', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
@@ -925,6 +933,9 @@ class MainWP_Menu {
 										<a class="item" href="admin.php?page=UpdatesManage&tab=plugins-updates"><?php esc_html_e( 'Plugins Updates', 'mainwp' ); ?></a>
 										<a class="item" href="admin.php?page=UpdatesManage&tab=themes-updates"><?php esc_html_e( 'Themes Updates', 'mainwp' ); ?></a>
 										<a class="item" href="admin.php?page=UpdatesManage&tab=wordpress-updates"><?php esc_html_e( 'WordPress Updates', 'mainwp' ); ?></a>
+									<?php if ( $mainwp_show_language_updates ) : ?>
+										<a class="item" href="admin.php?page=UpdatesManage&tab=translations-updates"><?php esc_html_e( 'Translation Plugins', 'mainwp' ); ?></a>
+									<?php endif; ?>
 										<a class="item" href="admin.php?page=UpdatesManage&tab=abandoned-plugins"><?php esc_html_e( 'Abandoned Plugins', 'mainwp' ); ?></a>
 										<a class="item" href="admin.php?page=UpdatesManage&tab=abandoned-themes"><?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?></a>
 									</div>
@@ -991,6 +1002,9 @@ class MainWP_Menu {
 					</div>
 					<div class="item">
 						<div class="title"><a href="admin.php?page=Extensions" class=""><?php esc_html_e( 'Extensions', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
+						<div class="content menu">
+							<a class="item" href="admin.php?page=Extensions"><?php esc_html_e( 'Manage Extensions', 'mainwp' ); ?></a>
+						</div>
 					</div>
 					<div class="item">
 						<div class="title"><a href="admin.php?page=Settings" class="with-sub"><?php esc_html_e( 'Settings', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>

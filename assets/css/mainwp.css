@@ -427,7 +427,7 @@
 #mainwp-select-sites-header .ui.menu {
     overflow-x: auto;
     overflow-y: hidden;
-    margin: 1rem -1rem 0 -1rem;
+    margin: 1rem -1rem 0;
 }
 
 /* Select Sites */

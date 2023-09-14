@@ -716,7 +716,7 @@ class MainWP_System_Handler {
 	 *
 	 * @return mixed $res
 	 */
-	public function plugins_api_wp_plugins_api_result( $res, $action, $args ) {
+	public function plugins_api_wp_plugins_api_result( $res, $action, $arg ) {
 
 		if ( 'plugin_information' !== $action ) {
 			return $res;

@@ -269,9 +269,6 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['wp_updates'] ) && null != $information['wp_updates'] ) {
-			$current_upgrades = MainWP_DB::instance()->get_website_option( $pWebsite, 'wp_upgrades' );
-			$current_upgrades = ( '' != $current_upgrades ) ? json_decode( $current_upgrades, true ) : array();
-
 			MainWP_DB::instance()->update_website_option(
 				$pWebsite,
 				'wp_upgrades',
@@ -279,7 +276,6 @@ class MainWP_Sync {
 					array(
 						'current'         => $information['wpversion'],
 						'new'             => $information['wp_updates'],
-						'check_timestamp' => isset( $current_upgrades['check_timestamp'] ) ? $current_upgrades['check_timestamp'] : time(),
 					)
 				)
 			);
@@ -289,15 +285,9 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['plugin_updates'] ) ) {
-			$current_upgrades = ( '' != $pWebsite->plugin_upgrades ) ? json_decode( $pWebsite->plugin_upgrades, true ) : array();
 			$update_values    = array();
 			if ( is_array( $information['plugin_updates'] ) ) {
 				foreach ( $information['plugin_updates'] as $file => $update ) {
-					if ( isset( $current_upgrades[ $file ] ) && isset( $current_upgrades[ $file ]['check_timestamp'] ) ) {
-						$update['check_timestamp'] = $current_upgrades[ $file ]['check_timestamp'];
-					} else {
-						$update['check_timestamp'] = time();
-					}
 					$update_values[ $file ] = $update;
 				}
 			}
@@ -306,15 +296,9 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['theme_updates'] ) ) {
-			$current_upgrades = ( '' != $pWebsite->theme_upgrades ) ? json_decode( $pWebsite->theme_upgrades, true ) : array();
 			$update_values    = array();
 			if ( is_array( $information['theme_updates'] ) ) {
 				foreach ( $information['theme_updates'] as $file => $update ) {
-					if ( isset( $current_upgrades[ $file ] ) && isset( $current_upgrades[ $file ]['check_timestamp'] ) ) {
-						$update['check_timestamp'] = $current_upgrades[ $file ]['check_timestamp'];
-					} else {
-						$update['check_timestamp'] = time();
-					}
 					$update_values[ $file ] = $update;
 				}
 			}
@@ -547,7 +531,8 @@ class MainWP_Sync {
 				MainWP_Logger::instance()->warning_for_website( $pWebsite, 'SYNC ERROR', '[Undefined error]' );
 				$error = true;
 				if ( $pAllowDisconnect ) {
-					$websiteSyncValues['sync_errors'] = esc_html__( 'Undefined error! Please, reinstall the MainWP Child plugin on the child site.', 'mainwp' );
+					$sync_errors                      = esc_html__( 'Undefined error! Please, reinstall the MainWP Child plugin on the child site.', 'mainwp' );
+					$websiteSyncValues['sync_errors'] = $sync_errors;
 				}
 			}
 		}
@@ -574,7 +559,7 @@ class MainWP_Sync {
 			 */
 			do_action( 'mainwp_site_synced', $pWebsite, $information );
 		}
-
+		
 		return ( ! $error );
 	}
 

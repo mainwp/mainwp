@@ -559,7 +559,14 @@ class MainWP_Manage_Groups {
 
 				$name = self::check_group_name( $name, $group->id );
 
-				$color = isset( $_POST['newColor'] ) ? sanitize_text_field( wp_unslash( $_POST['newColor'] ) ) : '';
+				if ( isset( $_POST['newColor'] ) && ! empty( $_POST['newColor'] ) ) {
+					$color = sanitize_hex_color( wp_unslash( $_POST['newColor'] ) );
+					if ( empty( $color ) ) {
+						$color = $group->color;
+					}
+				} else {
+					$color = '';
+				}
 
 				// update group.
 				$nr = MainWP_DB_Common::instance()->update_group( $group->id, $name, $color );
@@ -653,7 +660,7 @@ class MainWP_Manage_Groups {
 		global $current_user;
 
 		if ( isset( $_POST['newName'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( sanitize_text_field( wp_unslash( $_POST['newName'] ) ) ), sanitize_text_field( wp_unslash( $_POST['newColor'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
+			$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( sanitize_text_field( wp_unslash( $_POST['newName'] ) ) ), sanitize_hex_color( wp_unslash( $_POST['newColor'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
 
 			/**
 			 * New Group Added

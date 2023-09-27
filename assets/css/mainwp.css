@@ -15,7 +15,7 @@
 
 .mainwp-side-content {
     height: 100%;
-    width: 300px;
+    width: 299.5px;
     float: right;
     border-left: 1px solid #dadada;
     border-bottom: 1px solid #dadada;
@@ -567,6 +567,14 @@ table#mainwp-manage-sites-table .error a {
 
 
 /* Manage Extensions */
+
+#mainwp-manage-extensions.ui.segment {
+    padding: 0px;
+}
+
+#mainwp-manage-extensions .mainwp-main-content {
+    padding: 1em;
+}
 
 .mainwp-disabled-extension .header,
 .mainwp-disabled-extension .content:not(.extra) {

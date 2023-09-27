@@ -27,7 +27,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.5.1.2';
+	public static $version = '4.5.1.3';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -713,7 +713,7 @@ class MainWP_System {
 		$enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
 		$primaryBackup             = get_option( 'mainwp_primaryBackup' );
 		$disable_backup_checking   = true; // removed option.
-
+		
 		$mainwpParams = array(
 			'image_url'                        => MAINWP_PLUGIN_URL . 'assets/images/',
 			'backup_before_upgrade'            => ( get_option( 'mainwp_backup_before_upgrade' ) == 1 ),

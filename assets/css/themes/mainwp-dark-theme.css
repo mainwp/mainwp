@@ -655,10 +655,10 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme .ui.button.green.basic {
   background-color: var(--background-color-1);
-  border: 1px solid var(--accent-color);
   color: var(--accent-color);
-  box-shadow: none;
-  -webkit-box-shadow: none;
+  -webkit-box-shadow: inset 0px 0px 0px 1px var(--accent-color);
+  -moz-box-shadow: inset 0px 0px 0px 1px var(--accent-color);
+  box-shadow: inset 0px 0px 0px 1px var(--accent-color);
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.button.red {

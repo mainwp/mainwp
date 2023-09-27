@@ -1509,7 +1509,7 @@ class MainWP_Manage_Sites_View {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
-	public static function m_reconnect_site( $website, $sync_first = true ) {
+	public static function m_reconnect_site( $website, $sync_first = true ) { //phpcs:ignore -- complex method.
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 			try {
 				if ( $sync_first ) {

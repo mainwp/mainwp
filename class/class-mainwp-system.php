@@ -713,7 +713,7 @@ class MainWP_System {
 		$enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
 		$primaryBackup             = get_option( 'mainwp_primaryBackup' );
 		$disable_backup_checking   = true; // removed option.
-		
+
 		$mainwpParams = array(
 			'image_url'                        => MAINWP_PLUGIN_URL . 'assets/images/',
 			'backup_before_upgrade'            => ( get_option( 'mainwp_backup_before_upgrade' ) == 1 ),

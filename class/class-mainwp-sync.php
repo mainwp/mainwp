@@ -285,7 +285,7 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['plugin_updates'] ) ) {
-			$update_values    = array();
+			$update_values = array();
 			if ( is_array( $information['plugin_updates'] ) ) {
 				foreach ( $information['plugin_updates'] as $file => $update ) {
 					$update_values[ $file ] = $update;
@@ -296,7 +296,7 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['theme_updates'] ) ) {
-			$update_values    = array();
+			$update_values = array();
 			if ( is_array( $information['theme_updates'] ) ) {
 				foreach ( $information['theme_updates'] as $file => $update ) {
 					$update_values[ $file ] = $update;
@@ -559,7 +559,7 @@ class MainWP_Sync {
 			 */
 			do_action( 'mainwp_site_synced', $pWebsite, $information );
 		}
-		
+
 		return ( ! $error );
 	}
 

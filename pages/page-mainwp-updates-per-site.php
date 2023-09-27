@@ -59,11 +59,11 @@ class MainWP_Updates_Per_Site {
 							if ( 0 < $total_wp_upgrades ) {
 								MainWP_Updates::set_continue_update_html_selector( 'wpcore_global_upgrade_all' );
 								if ( $is_demo ) {
-									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini basic button disabled" disabled="disabled">' . esc_html__( 'Update Selected Sites', 'mainwp' ) . '</a>' );
-									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled" disabled="disabled">' . esc_html__( 'Update All Sites', 'mainwp' ) . '</a>' );
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini basic button disabled mainwp-update-selected-button" disabled="disabled">' . esc_html__( 'Update Selected Sites', 'mainwp' ) . '</a>' );
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled mainwp-update-all-button" disabled="disabled">' . esc_html__( 'Update All Sites', 'mainwp' ) . '</a>' );
 								} else {
 									?>
-									<a class="mainwp-update-all-button ui green mini basic button" onclick="event.stopPropagation(); return updatesoverview_wordpress_global_upgrade_all( false, true );" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on selected child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update Selected Sites', 'mainwp' ); ?></a>
+									<a class="mainwp-update-selected-button ui green mini basic button" onclick="event.stopPropagation(); return updatesoverview_wordpress_global_upgrade_all( false, true );" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on selected child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update Selected Sites', 'mainwp' ); ?></a>
 									<a class="mainwp-update-all-button ui green mini button" onclick="return updatesoverview_wordpress_global_upgrade_all();" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
 									<?php
 								}
@@ -194,8 +194,8 @@ class MainWP_Updates_Per_Site {
 							MainWP_Updates::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
 							if ( 0 < $total_plugin_upgrades ) {
 								if ( $is_demo ) {
-									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui mini green basic button disabled">' . esc_html__( 'Update Selected Plugins', 'mainwp' ) . '</a>' );
-									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui mini green button disabled">' . esc_html__( 'Update All Sites', 'mainwp' ) . '</a>' );
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui mini green basic button disabled mainwp-update-selected-button">' . esc_html__( 'Update Selected Plugins', 'mainwp' ) . '</a>' );
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui mini green button disabled mainwp-update-all-button">' . esc_html__( 'Update All Sites', 'mainwp' ) . '</a>' );
 								} else {
 									?>
 								<a href="javascript:void(0)" data-tooltip="<?php esc_html_e( 'Update Selected Plugins.', 'mainwp' ); ?>" onClick="return updatesoverview_plugins_global_upgrade_all( false, true );" class="mainwp-update-selected-button ui mini green basic button" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Plugins' ); ?></a>
@@ -269,7 +269,7 @@ class MainWP_Updates_Per_Site {
 							<?php
 							if ( 0 < count( $plugin_upgrades ) ) :
 								if ( $is_demo ) {
-									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui mini green basic button disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>' );
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui mini green basic button disabled mainwp-update-selected-button">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>' );
 									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui mini green button disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
 								} else {
 									?>
@@ -394,8 +394,8 @@ class MainWP_Updates_Per_Site {
 							MainWP_Updates::set_continue_update_html_selector( 'themes_global_upgrade_all' );
 							if ( 0 < $total_theme_upgrades ) {
 								if ( $is_demo ) {
-									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green basic button disabled" disabled="disabled">' . esc_html__( 'Update Selected Sites', 'mainwp' ) . '</a>' );
-									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green button disabled" disabled="disabled">' . esc_html__( 'Update All Sites', 'mainwp' ) . '</a>' );
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green basic button disabled mainwp-update-selected-button" disabled="disabled">' . esc_html__( 'Update Selected Sites', 'mainwp' ) . '</a>' );
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green button disabled mainwp-update-all-button" disabled="disabled">' . esc_html__( 'Update All Sites', 'mainwp' ) . '</a>' );
 								} else {
 									?>
 									<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all( false, true );" class="mainwp-update-selected-button ui mini green basic button" data-tooltip="<?php esc_html_e( 'Update all themes.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Sites' ); ?></a>
@@ -465,7 +465,7 @@ class MainWP_Updates_Per_Site {
 							<?php
 							if ( 0 < count( $theme_upgrades ) ) :
 								if ( $is_demo ) {
-									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green basic button disabled" disabled="disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>' );
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green basic button disabled mainwp-update-selected-button" disabled="disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>' );
 									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green button disabled" disabled="disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
 								} else {
 									?>
@@ -580,7 +580,7 @@ class MainWP_Updates_Per_Site {
 						<?php MainWP_UI::render_show_all_updates_button(); ?>
 						<?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
 							<?php if ( 0 < $total_translation_upgrades ) : ?>
-								<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all( false, true );" class="ui button mini basic green" data-tooltip="<?php esc_html_e( 'Update all translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Sites', 'mainwp' ); ?></a>
+								<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all( false, true );" class="mainwp-update-selected-button ui button mini basic green" data-tooltip="<?php esc_html_e( 'Update selected translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Sites', 'mainwp' ); ?></a>
 								<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all();" class="mainwp-update-all-button ui button mini green" data-tooltip="<?php esc_html_e( 'Update all translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
 							<?php endif; ?>
 						<?php endif; ?>
@@ -612,8 +612,8 @@ class MainWP_Updates_Per_Site {
 							<?php
 							if ( 0 < count( $translation_upgrades ) ) :
 								if ( $is_demo ) {
-									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green basic button disabled" disabled="disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>' );
-									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green button disabled" disabled="disabled">' . esc_html__( 'Update All', 'mainwp' ) . '</a>' );
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green basic button disabled mainwp-update-selected-button" disabled="disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>' );
+									MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green button disabled mainwp-update-all-button" disabled="disabled">' . esc_html__( 'Update All', 'mainwp' ) . '</a>' );
 								} else {
 									?>
 									<a href="javascript:void(0)" class="mainwp-update-selected-button ui mini green basic button" onClick="return updatesoverview_upgrade_translation_all( <?php echo esc_attr( $website->id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>

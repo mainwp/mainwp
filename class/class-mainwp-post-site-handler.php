@@ -120,8 +120,12 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	public function ajax_group_sites_add() {
 		$this->secure_request( 'mainwp_group_sites_add' );
 		// phpcs:disable WordPress.Security.NonceVerification
-		$newName        = sanitize_text_field( wp_unslash( $_POST['newName'] ) );
-		$newColor       = sanitize_text_field( wp_unslash( $_POST['newColor'] ) );
+		$newName   = sanitize_text_field( wp_unslash( $_POST['newName'] ) );
+		$tmp_color = wp_unslash( $_POST['newColor'] );
+		$newColor  = sanitize_hex_color( $tmp_color );
+		if ( empty( $newColor ) && ! empty( $tmp_color ) ) {
+			$newColor = '#cce2ff'; // default.
+		}
 		$selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'intval', wp_unslash( $_POST['selected_sites'] ) ) : array();
 		$selected_sites = array_filter( $selected_sites );
 		// phpcs:enable

@@ -324,7 +324,34 @@ class MainWP_System_View {
 		self::render_wp_mail_warning();
 
 		self::render_browser_extensions_notice();
+
+		self::mainwp_tmpfile_check();
 	}
+
+	/**
+	 * Method mainwp_tmpfile_check()
+	 *
+	 * Checks if the `tmpfile()` PHP function is disabled.
+	 */
+	public static function mainwp_tmpfile_check() {
+		$disabled_functions = ini_get( 'disable_functions' );
+		if ( '' !== $disabled_functions ) {
+			$disabled_functions_array = explode( ',', $disabled_functions );
+			if ( in_array( 'tmpfile', $disabled_functions_array ) ) {
+				if ( MainWP_Utility::show_mainwp_message( 'notice', 'tmpfile_notice' ) ) {
+					?>
+					<div class="ui red message" style="margin-bottom: 0; border-radius: 0;">
+						<i class="close icon mainwp-notice-dismiss" notice-id="tmpfile_notice"></i>
+						<div><?php esc_html_e( 'tmpfile() function is currently disabled on your server.', 'mainwp' ); ?></div>
+						<div><?php esc_html_e( 'This function is essential for creating temporary files, and its unavailability may affect certain functionalities of your MainWP Dashboard.', 'mainwp' ); ?></div>
+						<div><?php esc_html_e( 'If you are unsure how to enable it, please contact your host support and have them do it for you.', 'mainwp' ); ?></div>
+					</div>
+					<?php
+				}
+			}
+		}
+	}
+
 
 	/**
 	 * Renders Browsers extensions notice.

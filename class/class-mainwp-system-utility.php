@@ -1355,9 +1355,14 @@ class MainWP_System_Utility {
 			$alg = intval( $alg );
 		}
 
+		$default_alg = false;
+		if ( defined( 'OPENSSL_ALGO_SHA256' ) ) {
+			$default_alg = OPENSSL_ALGO_SHA256;
+		}
+
 		if ( ! empty( $alg ) ) {
 			if ( 9999 === $alg ) {
-				$alg = get_option( 'mainwp_connect_signature_algo' );
+				$alg = get_option( 'mainwp_connect_signature_algo', $default_alg );
 				// to fix.
 				if ( is_numeric( $alg ) ) {
 					$alg = intval( $alg );
@@ -1370,9 +1375,7 @@ class MainWP_System_Utility {
 			$site_info = ( '' != $site_info ) ? json_decode( $site_info, true ) : array();
 			if ( is_array( $site_info ) && ! empty( $site_info['child_version'] ) ) {
 				if ( version_compare( $site_info['child_version'], '4.5', '>=' ) ) {
-					if ( defined( 'OPENSSL_ALGO_SHA256' ) ) {
-						$alg = OPENSSL_ALGO_SHA256;
-					}
+					$alg = $default_alg;
 				}
 			}
 		}

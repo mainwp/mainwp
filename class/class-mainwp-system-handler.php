@@ -723,7 +723,7 @@ class MainWP_System_Handler {
 		}
 
 		if ( is_object( $res ) && property_exists( $res, 'slug' ) && property_exists( $res, 'sections' ) ) {
-			$res;
+			return $res;
 		}
 
 		if ( ! isset( $_GET['wpplugin'] ) || ! is_numeric( $_GET['wpplugin'] ) || empty( $_GET['wpplugin'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification

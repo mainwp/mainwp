@@ -1509,11 +1509,33 @@ class MainWP_Manage_Sites_View {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
-	public static function m_reconnect_site( $website, $sync_first = true ) {
+	public static function m_reconnect_site( $website, $sync_first = true ) { //phpcs:ignore -- complex method.
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 			try {
-				if ( $sync_first && MainWP_Sync::sync_site( $website, true ) ) {
-					return true;
+				if ( $sync_first ) {
+					$success = MainWP_Sync::sync_site( $website, true );
+					if ( ! $success ) {
+						// to compatible.
+						$alg = is_object( $website ) && property_exists( $website, 'signature_algo' ) && ! empty( $website->signature_algo ) ? $website->signature_algo : false;
+						if ( empty( $alg ) && is_object( $website ) ) {
+							MainWP_DB::instance()->update_website_option( $website, 'signature_algo', 9999 ); // use global.
+							$website = MainWP_DB::instance()->get_website_by_id( $website->id );
+							$success = MainWP_Sync::sync_site( $website, true );
+						}
+					}
+
+					if ( $success ) {
+						/**
+						 * Fires immediately after reconnect website.
+						 *
+						 * @since 4.5.1.1
+						 *
+						 * @param object   $website  website data.
+						 */
+						do_action( 'mainwp_site_reconnected', $website );
+
+						return true;
+					}
 				}
 
 				if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
@@ -1773,6 +1795,7 @@ class MainWP_Manage_Sites_View {
 						if ( $id ) {
 							$obj_site = (object) array( 'id' => $id );
 							MainWP_DB::instance()->update_website_option( $obj_site, 'added_timestamp', time() );
+							MainWP_DB::instance()->update_website_option( $obj_site, 'signature_algo', 9999 ); // use global.
 						}
 
 						if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {

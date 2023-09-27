@@ -1585,10 +1585,11 @@ class MainWP_UI {
 
 			}
 		}
+		$breakpoint = apply_filters( 'mainwp_flexible_widgets_breakpoint', 1367 );
 		?>
 		<script type="text/javascript">
 			var is_mobile = false;
-			if( jQuery( window ).width() < 1367 ) {
+			if( jQuery( window ).width() < <?php echo intval( $breakpoint ); ?> ) {
 				is_mobile = true;
 			}
 			if ( ! is_mobile ) {

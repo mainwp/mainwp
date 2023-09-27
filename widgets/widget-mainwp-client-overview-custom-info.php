@@ -61,7 +61,7 @@ class MainWP_Client_Overview_Custom_Info {
 			 *
 			 * @since 4.1
 			 */
-			echo esc_html( apply_filters( 'mainwp_clients_overview_info_widget_title', esc_html__( 'Addition Client Info', 'mainwp' ), $client_info ) );
+			echo esc_html( apply_filters( 'mainwp_clients_overview_info_widget_title', esc_html__( 'Additional Client Info', 'mainwp' ), $client_info ) );
 			?>
 			<div class="sub header"></div>
 			</h3>

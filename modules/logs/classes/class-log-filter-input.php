@@ -1,11 +1,11 @@
 <?php
-
 /**
  * Processes form input.
  *
  * @package MainWP/Dashboard
  */
- namespace MainWP\Dashboard\Module\Log;
+
+namespace MainWP\Dashboard\Module\Log;
 
 /**
  * Class - Log_Filter_Input

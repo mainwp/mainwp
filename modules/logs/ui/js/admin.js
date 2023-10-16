@@ -30,7 +30,7 @@ jQuery(document).ready(function ($) {
         }
     }
 
-    jQuery('#logs_delete_records_button').on('click', function () {
+    $('#logs_delete_records_button').on('click', function () {
         jQuery('#mainwp-message-zone').html("").hide();
         jQuery('#mainwp-message-zone').removeClass('red yellow green');
 

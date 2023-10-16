@@ -5,6 +5,7 @@
  * @package MainWP\Dashboard
  * @version 4.5.1
  */
+
 namespace MainWP\Dashboard\Module\Log;
 
 use \MainWP\Dashboard\MainWP_Utility;
@@ -62,7 +63,7 @@ class Connector_Posts extends Log_Connector {
 	/**
 	 * Register log data.
 	 */
-	public function register() {
+	public function register() { //phpcs:ignore -- overrided.
 		parent::register();
 	}
 
@@ -72,7 +73,6 @@ class Connector_Posts extends Log_Connector {
 	 * @return array Context label translations
 	 */
 	public function get_context_labels() {
-		/** @global object $wp_post_types  The global array that stores the post type objects. */
 		global $wp_post_types;
 		$post_types = wp_filter_object_list( $wp_post_types, array(), null, 'label' );
 		add_action( 'registered_post_type', array( $this, 'registered_post_type' ), 10, 2 );
@@ -84,8 +84,8 @@ class Connector_Posts extends Log_Connector {
 	 *
 	 * @action registered_post_type
 	 *
-	 * @param string $post_type Post type slug
-	 * @param array  $args      Arguments used to register the post type
+	 * @param string $post_type Post type slug.
+	 * @param array  $args      Arguments used to register the post type.
 	 */
 	public function registered_post_type( $post_type, $args ) {
 		unset( $args );

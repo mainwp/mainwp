@@ -5,6 +5,7 @@
  * @package MainWP\Dashboard
  * @version 4.5.1
  */
+
 namespace MainWP\Dashboard\Module\Log;
 
 defined( 'ABSPATH' ) || exit;
@@ -66,7 +67,7 @@ class Connector_Compact extends Log_Connector {
 		 *
 		 * @action mainwp_compact_action
 		 *
-		 * @param string $pAction post action.
+		 * @param string $action post action.
 		 * @param int    $year compact year.
 		 * @param array  $data data array.
 		 * @param array  $start_time data array.

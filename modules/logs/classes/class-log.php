@@ -7,22 +7,27 @@
  * @package MainWP/Dashboard
  */
 
- namespace MainWP\Dashboard\Module\Log;
+namespace MainWP\Dashboard\Module\Log;
 
- /**
-  * Class Logs
-  */
+/**
+ * Class Logs
+ */
 class Log {
 
-
-	/** @var manager Hold Log_Manager class */
+	/**
+	 * Log_Manager
+	 *
+	 * @var manager Hold Log_Manager class
+	 * */
 	public $manager;
 
-	/** @var string Hold Current visitors IP Address. */
+	/**
+	 * Hold Current visitors IP Address.
+	 *
+	 * @var string Hold Current visitors IP Address.
+	 * */
 	private $ip_address;
 
-	/** @var int Previous Log record ID, used for chaining same-session records. */
-	private $prev_record;
 
 	/**
 	 * Log constructor.
@@ -42,14 +47,13 @@ class Log {
 	 * @param Connector $connector         Connector responsible for logging the event.
 	 * @param string    $message           sprintf-ready error message string.
 	 * @param array     $args              sprintf (and extra) arguments to use.
-	 * @param int       $site_id  Target site id
+	 * @param int       $site_id  Target site id.
 	 * @param string    $context           Context of the event.
 	 * @param string    $action            Action of the event.
 	 * @param int|null  $state action status: null - N/A, 0 - failed, 1 - success.
 	 * @param int       $user_id           User responsible for the event.
 	 *
 	 * @return bool|WP_Error True if updated, otherwise false|WP_Error
-	 * @throws \Exception
 	 */
 	public function log( $connector, $message, $args, $site_id, $context, $action, $state = null, $user_id = null ) {
 
@@ -140,7 +144,7 @@ class Log {
 		$result = $this->manager->db->insert( $recordarr );
 
 		// This is helpful in development environments.
-		// error_log( $this->debug_backtrace( $recordarr ) );
+		// error_log( $this->debug_backtrace( $recordarr ) ); //phpcs:ignore -- development.
 
 		return $result;
 	}

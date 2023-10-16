@@ -5,11 +5,11 @@
  * @package MainWP/Dashboard
  */
 
- namespace MainWP\Dashboard\Module\Log;
+namespace MainWP\Dashboard\Module\Log;
 
- /**
-  * Interface - Log_DB_Driver
-  */
+/**
+ * Interface - Log_DB_Driver
+ */
 interface Log_DB_Driver {
 	/**
 	 * Insert a record

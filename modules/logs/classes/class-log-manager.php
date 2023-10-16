@@ -18,13 +18,23 @@ use \MainWP\Dashboard\MainWP_Execution_Helper;
  */
 class Log_Manager {
 
-	/** @const string Plugin version number. */
+	/**
+	 * Version
+	 *
+	 * @const string Plugin version number.
+	 * */
 	const VERSION = '5.0.0';
 
-	/** @var \MainWP\Dashboard\Module\Log\Log_Admin Admin class. */
+	/**
+	 * Log_Admin
+	 *
+	 * @var \MainWP\Dashboard\Module\Log\Log_Admin Admin class.
+	 * */
 	public $admin;
 
 	/**
+	 * MainWP_Execution_Helper
+	 *
 	 * @var \MainWP\Dashboard\MainWP_Execution_Helper class.
 	 * */
 	public $executor;
@@ -36,19 +46,39 @@ class Log_Manager {
 	 */
 	public $settings;
 
-	/** @var \MainWP\Dashboard\Module\Log\Log_Connectors Connectors class. */
+	/**
+	 * Log_Connectors
+	 *
+	 * @var \MainWP\Dashboard\Module\Log\Log_Connectors Connectors class.
+	 * */
 	public $connectors;
 
-	/** @var \MainWP\Dashboard\Module\Log\Log_DB DB Class. */
+	/**
+	 * Log_DB
+	 *
+	 * @var \MainWP\Dashboard\Module\Log\Log_DB DB Class.
+	 * */
 	public $db;
 
-	/** @var \MainWP\Dashboard\Module\Log\Log Log Class. */
+	/**
+	 * Log
+	 *
+	 * @var \MainWP\Dashboard\Module\Log\Log Log Class.
+	 * */
 	public $log;
 
-	/** @var \MainWP\Dashboard\Module\Log\Log_Install Install class. */
+	/**
+	 * Log_Install class.
+	 *
+	 * @var \MainWP\Dashboard\Module\Log\Log_Install Install class.
+	 * */
 	public $install;
 
-	/** @var array URLs and Paths used by the plugin. */
+	/**
+	 * Locations.
+	 *
+	 * @var array URLs and Paths used by the plugin.
+	 */
 	public $locations = array();
 
 	/**
@@ -74,8 +104,6 @@ class Log_Manager {
 	 * Plugin constructor.
 	 *
 	 * Run each time the class is called.
-	 *
-	 * @throws \Exception
 	 */
 	public function __construct() {
 
@@ -97,7 +125,7 @@ class Log_Manager {
 		$this->executor = MainWP_Execution_Helper::instance();
 		$this->settings = new Log_Settings( $this );
 
-		// Load logger class
+		// Load logger class.
 		$this->log = new Log( $this );
 
 		// Load settings and connectors after widgets_init and before the default init priority.
@@ -117,7 +145,7 @@ class Log_Manager {
 	/**
 	 * Autoloader for classes.
 	 *
-	 * @param string $class
+	 * @param string $class class name.
 	 */
 	public function autoload( $class ) {
 
@@ -181,7 +209,7 @@ class Log_Manager {
 	 * @uses \MainWP\Dashboard\Module\Log\Log_DB_Driver_WPDB
 	 */
 	public function plugins_loaded() {
-		// Load DB helper interface/class
+		// Load DB helper interface/class.
 		$driver_class = apply_filters( 'mainwp_module_log_db_driver', '\MainWP\Dashboard\Module\Log\Log_DB_Driver_WPDB' );
 
 		if ( class_exists( $driver_class ) ) {

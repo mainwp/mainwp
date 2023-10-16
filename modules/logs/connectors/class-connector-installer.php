@@ -5,6 +5,7 @@
  * @package MainWP\Dashboard
  * @version 4.5.1
  */
+
 namespace MainWP\Dashboard\Module\Log;
 
 defined( 'ABSPATH' ) || exit;
@@ -16,10 +17,18 @@ defined( 'ABSPATH' ) || exit;
  */
 class Connector_Installer extends Log_Connector {
 
-	/** @var string Connector slug. */
+	/**
+	 * Connector name.
+	 *
+	 * @var string Connector slug.
+	 * */
 	public $name = 'installer';
 
-	/** @var array Actions registered for this connector. */
+	/**
+	 * Actions names.
+	 *
+	 * @var array Actions registered for this connector.
+	 * */
 	public $actions = array(
 		'mainwp_install_update_actions',
 		'mainwp_install_plugin_action', // call child function: plugin_action.
@@ -70,7 +79,7 @@ class Connector_Installer extends Log_Connector {
 	 *
 	 * @uses \MainWP\Dashboard\Module\Log\Log_Connector::register()
 	 */
-	public function register() {
+	public function register() { //phpcs:ignore -- overrided.
 		parent::register();
 	}
 

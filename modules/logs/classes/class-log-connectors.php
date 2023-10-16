@@ -6,6 +6,7 @@
  *
  * @package MainWP/Dashboard
  */
+
 namespace MainWP\Dashboard\Module\Log;
 
 /**
@@ -63,7 +64,7 @@ class Log_Connectors {
 	 *
 	 * @uses \MainWP\Dashboard\Module\Log\Log_Connector
 	 */
-	public function load_connectors() {
+	public function load_connectors() { //phpcs:ignore -- complex method.
 		$connectors = $this->manager->get_internal_connectors();
 
 		$enabled_logging = ! empty( $this->manager->settings->options['enabled'] ) ? true : false;
@@ -113,7 +114,7 @@ class Log_Connectors {
 			$this->term_labels['logs_connector'][ $connector->name ] = $connector->get_label();
 		}
 
-		// Get excluded connectors
+		// Get excluded connectors.
 		$excluded_connectors = array();
 
 		foreach ( $this->connectors as $connector ) {
@@ -135,7 +136,7 @@ class Log_Connectors {
 				continue;
 			}
 
-			// Store connector label
+			// Store connector label.
 			if ( ! in_array( $connector->name, $this->term_labels['logs_connector'], true ) ) {
 				$this->term_labels['logs_connector'][ $connector->name ] = $connector->get_label();
 			}
@@ -158,10 +159,10 @@ class Log_Connectors {
 
 			$connector->register();
 
-			// Link context labels to their connector
+			// Link context labels to their connector.
 			$this->contexts[ $connector->name ] = $connector->get_context_labels();
 
-			// Add new terms to our label lookup array
+			// Add new terms to our label lookup array.
 			$this->term_labels['logs_action']  = array_merge(
 				$this->term_labels['logs_action'],
 				$connector->get_action_labels()

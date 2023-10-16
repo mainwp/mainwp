@@ -5,6 +5,7 @@
  * @package MainWP\Dashboard
  * @version 4.5.1
  */
+
 namespace MainWP\Dashboard\Module\Log;
 
 defined( 'ABSPATH' ) || exit;
@@ -16,7 +17,11 @@ defined( 'ABSPATH' ) || exit;
  */
 class Connector_Client extends Log_Connector {
 
-	/** @var string Connector slug. */
+	/**
+	 * Connector name.
+	 *
+	 * @var string Connector slug.
+	 * */
 	public $name = 'client';
 
 
@@ -71,7 +76,7 @@ class Connector_Client extends Log_Connector {
 	/**
 	 * Register log data.
 	 */
-	public function register() {
+	public function register() { //phpcs:ignore -- overrided.
 		parent::register();
 	}
 

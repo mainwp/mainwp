@@ -109,12 +109,12 @@ class Log_Admin {
 	public function render_list_table() {
 		$this->list_table = new Log_List_Table( $this->manager );
 		/** This action is documented in ../pages/page-mainwp-manage-sites.php */
-		do_action( 'mainwp-pageheader-settings', 'DashboardInsights' );
+		do_action( 'mainwp_pageheader_settings', 'DashboardInsights' );
 		?>
 		<div id="mainwp-manage-sites-content" class="ui segment">
 			<div class="ui form">
 				<h3 class="ui dividing header"><?php esc_html_e( 'Dashboard Insights', 'mainwp' ); ?></h3>
-				<h4 class="ui header"><?php echo sprintf( esc_html__( 'Total logs size: %1$s (MB)', 'mainwp' ), $this->get_db_size() ); ?></h4>
+				<h4 class="ui header"><?php echo sprintf( esc_html__( 'Total logs size: %1$s (MB)', 'mainwp' ), esc_html( $this->get_db_size() ) ); ?></h4>
 				<div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
 				<form method="post" class="mainwp-table-container">
 					<?php
@@ -126,7 +126,7 @@ class Log_Admin {
 		</div>		
 		<?php
 		/** This action is documented in ../pages/page-mainwp-manage-sites.php */
-		do_action( 'mainwp-pagefooter-settings', 'DashboardInsights' );
+		do_action( 'mainwp_pagefooter_settings', 'DashboardInsights' );
 	}
 
 	/**
@@ -187,8 +187,8 @@ class Log_Admin {
 	public function ajax_delete_records() {
 		MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_delete_records' );
 
-		$start_date = isset( $_POST['startdate'] ) ? sanitize_text_field( wp_unslash( $_POST['startdate'] ) ) : '';
-		$end_date   = isset( $_POST['enddate'] ) ? sanitize_text_field( wp_unslash( $_POST['enddate'] ) ) : '';
+		$start_date = isset( $_POST['startdate'] ) ? sanitize_text_field( wp_unslash( $_POST['startdate'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$end_date   = isset( $_POST['enddate'] ) ? sanitize_text_field( wp_unslash( $_POST['enddate'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 
 		$start_time = ! empty( $start_date ) ? strtotime( $start_date . ' 00:00:00' ) : '';
 		$end_time   = ! empty( $end_date ) ? strtotime( $end_date . ' 23:59:59' ) : '';
@@ -209,7 +209,7 @@ class Log_Admin {
 	public function ajax_compact_records() {
 		MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_compact_records' );
 
-		$year = isset( $_POST['year'] ) ? intval( $_POST['year'] ) : 0;
+		$year = isset( $_POST['year'] ) ? intval( $_POST['year'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( $year < 2022 ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Invalid selected year. Please try again.' ) ) ) );

@@ -4,6 +4,7 @@
  *
  * @package MainWP/Dashboard
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -36,7 +37,7 @@ class MainWP_Actions_Handler {
 	}
 
 	/**
-	 * @action mainwp_post_action.
+	 * Action mainwp_post_action.
 	 *
 	 * @param object    $website  website data.
 	 * @param string    $pAction post action.
@@ -57,7 +58,7 @@ class MainWP_Actions_Handler {
 	}
 
 	/**
-	 * @action mainwp_install_actions.
+	 * Action mainwp_install_actions.
 	 *
 	 * @param array  $websites  websites.
 	 * @param string $pAction install action.

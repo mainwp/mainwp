@@ -5,6 +5,7 @@
  * @package MainWP\Dashboard\Module\Log
  * @version 4.5.1
  */
+
 namespace MainWP\Dashboard\Module\Log;
 
 use \MainWP\Dashboard\MainWP_Includes;

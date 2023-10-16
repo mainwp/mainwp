@@ -7,9 +7,7 @@
  * @package     MainWP/Dashboard
  */
 
-
- // to compatible.
-if ( ! defined( 'FILTER_SANITIZE_STRING_COMPATIBLE' ) ) {
+if ( ! defined( 'FILTER_SANITIZE_STRING_COMPATIBLE' ) ) {  // to compatible.
 	define( 'FILTER_SANITIZE_STRING_COMPATIBLE', 513 );
 }
 
@@ -80,10 +78,10 @@ if ( ! function_exists( 'mainwp_get_actions_handler_instance' ) ) {
 }
 
 if ( ! function_exists( 'mainwp_send_json_output' ) ) {
-	/*
-	 Handle send json output.
+	/**
+	 * Handle send json output.
 	 *
-	 * @param array  $output Array output.
+	 * @param array $output Array output.
 	 */
 	function mainwp_send_json_output( $output ) {
 		if ( is_array( $output ) ) {

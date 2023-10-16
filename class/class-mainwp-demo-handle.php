@@ -67,7 +67,7 @@ class MainWP_Demo_Handle {
 	 * Handle init data mode.
 	 */
 	public function init_data_demo() {
-		if ( isset( $_GET['enable_demo_mode'] ) && 'yes' === $_GET['enable_demo_mode'] ) {
+		if ( isset( $_GET['enable_demo_mode'] ) && 'yes' === $_GET['enable_demo_mode'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$this->import_data_demo();
 			MainWP_Utility::update_option( 'mainwp_enable_guided_tours', 1 );
 			?>
@@ -77,7 +77,6 @@ class MainWP_Demo_Handle {
 						location.href = 'admin.php?page=mainwp_tab&message=enable-demo-mode';
 					}, 100);
 				});
-				
 			</script>
 			<?php
 		}

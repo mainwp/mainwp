@@ -1,21 +1,21 @@
 <?php
- /**
-  *
-  * This file handles all interactions with the Log DB.
-  *
-  * @package MainWP/Dashboard
-  */
+/**
+ *
+ * This file handles all interactions with the Log DB.
+ *
+ * @package MainWP/Dashboard
+ */
 
- namespace MainWP\Dashboard\Module\Log;
+namespace MainWP\Dashboard\Module\Log;
 
- use MainWP\Dashboard\MainWP_Install;
- use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_Install;
+use MainWP\Dashboard\MainWP_Utility;
 
- /**
-  * Class Log_Install
-  *
-  * @package MainWP\Dashboard
-  */
+/**
+ * Class Log_Install
+ *
+ * @package MainWP\Dashboard
+ */
 class Log_Install extends MainWP_Install {
 
 	/**
@@ -59,7 +59,7 @@ class Log_Install extends MainWP_Install {
 	/**
 	 * Class constructor
 	 */
-	public function __construct() {
+	public function __construct() { // phpcs:ignore -- overrided.
 		parent::__construct();
 	}
 
@@ -148,6 +148,8 @@ class Log_Install extends MainWP_Install {
 
 	/**
 	 * Method handle update db tables and data.
+	 *
+	 * @param string $currentVersion current version.
 	 */
 	public function update_check_modify( $currentVersion ) {
 

@@ -26,6 +26,8 @@ class Log_Settings {
 
 	/**
 	 * Holds settings values.
+	 *
+	 * @var options
 	 */
 	public $options;
 
@@ -85,7 +87,7 @@ class Log_Settings {
 	 */
 	public function render_settings_page() {
 		/** This action is documented in ../pages/page-mainwp-manage-sites.php */
-		do_action( 'mainwp-pageheader-settings', 'Insights' );
+		do_action( 'mainwp_pageheader_settings', 'Insights' );
 		$enabled = ! empty( $this->options['enabled'] ) ? true : false;
 
 		$enabled_auto_purge = isset( $this->options['auto_purge'] ) && ! empty( $this->options['auto_purge'] ) ? true : false;
@@ -118,9 +120,7 @@ class Log_Settings {
 								<input type="number" name="mainwp_module_log_records_ttl" id="mainwp_module_log_records_ttl" class="small-text" placeholder="" min="1" max="999" step="1" value="<?php echo isset( $this->options['records_ttl'] ) ? intval( $this->options['records_ttl'] ) : 100; ?>">
 							</div>
 						</div>
-						
 						<h3 class="ui dividing header <?php echo esc_attr( $hide_field_class ); ?>"><?php esc_html_e( 'Dashboard Insights Tools', 'mainwp' ); ?></h3>					
-
 						<div class="ui grid field <?php echo esc_attr( $hide_field_class ); ?>">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Delete records', 'mainwp' ); ?></label>
 							<div class="ten wide column ui">
@@ -167,7 +167,6 @@ class Log_Settings {
 										<?php } ?>
 									</div>
 								</div>
-								
 								<input type="button" id="logs_compact_records_button" class="ui button" value="<?php esc_html_e( 'Compact', 'mainwp' ); ?>">
 							</div>
 						</div>
@@ -180,7 +179,7 @@ class Log_Settings {
 
 		<?php
 		/** This action is documented in ../pages/page-mainwp-manage-sites.php */
-		do_action( 'mainwp-pagefooter-settings', 'Insights' );
+		do_action( 'mainwp_pagefooter_settings', 'Insights' );
 	}
 
 }

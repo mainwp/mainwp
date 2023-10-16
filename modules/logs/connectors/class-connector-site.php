@@ -5,6 +5,7 @@
  * @package MainWP\Dashboard
  * @version 4.5.1
  */
+
 namespace MainWP\Dashboard\Module\Log;
 
 defined( 'ABSPATH' ) || exit;
@@ -15,11 +16,15 @@ defined( 'ABSPATH' ) || exit;
 class Connector_Site extends Log_Connector {
 
 	/**
+	 * Connector name.
+	 *
 	 * @var string Connector slug.
 	 */
 	public $name = 'site';
 
 	/**
+	 * Connector name.
+	 *
 	 * @var array Actions registered for this connector.
 	 **/
 	public $actions = array(
@@ -73,7 +78,7 @@ class Connector_Site extends Log_Connector {
 	/**
 	 * Register log data.
 	 */
-	public function register() {
+	public function register() { //phpcs:ignore -- overrided.
 		parent::register();
 	}
 
@@ -116,7 +121,7 @@ class Connector_Site extends Log_Connector {
 	 *
 	 * @param object $website Website object data.
 	 * @param array  $information Sync array data.
-	 * @param bool   $act_success Sync success or failed.
+	 * @param bool   $success Sync success or failed.
 	 * @param string $sync_error Sync error data (options).
 	 * @param array  $post_data addition post data (options).
 	 *
@@ -186,7 +191,7 @@ class Connector_Site extends Log_Connector {
 				'mainwp'
 			),
 			array(
-				'item'      => esc_html( 'Deleted', 'mainwp' ),
+				'item'      => esc_html__( 'Deleted', 'mainwp' ),
 				'site_name' => $website->name,
 				'siteurl'   => $website->url,
 			),
@@ -337,7 +342,7 @@ class Connector_Site extends Log_Connector {
 	 *
 	 * @action mainwp_site_tag_action.
 	 *
-	 * @param object $group tag object data.
+	 * @param object $tag tag object data.
 	 * @param string $action tag action.
 	 * @param array  $data other data array (option).
 	 *

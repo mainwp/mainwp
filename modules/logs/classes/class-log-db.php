@@ -32,11 +32,12 @@ class Log_DB extends MainWP_DB {
 	 */
 	protected $found_records_count = 0;
 
-
 	/**
 	 * Constructor.
 	 *
 	 * Run each time the class is called.
+	 *
+	 * @param array $driver  db driver.
 	 */
 	public function __construct( $driver ) {
 		parent::__construct();
@@ -108,16 +109,16 @@ class Log_DB extends MainWP_DB {
 		}
 
 		$record_defaults = array(
-			'site_id'        => null,
-			'user_id'        => null,
-			'created'        => null,
-			'item'           => null,
-			'connector'      => null,
-			'context'        => null,
-			'action'         => null,
-			'state'          => null,
-			'duration'       => null,
-			'meta'           => array(),
+			'site_id'   => null,
+			'user_id'   => null,
+			'created'   => null,
+			'item'      => null,
+			'connector' => null,
+			'context'   => null,
+			'action'    => null,
+			'state'     => null,
+			'duration'  => null,
+			'meta'      => array(),
 		);
 
 		// Records can have only these fields.
@@ -289,7 +290,7 @@ class Log_DB extends MainWP_DB {
 			FROM {$wpdb->mainwp_tbl_logs} AS `logs`
 			LEFT JOIN {$wpdb->mainwp_tbl_logs_meta} AS `meta`
 			ON `meta`.`meta_log_id` = `logs`.`log_id`
-			WHERE `logs`.`connector` != 'compact' " . $where
+			WHERE `logs`.`connector` != 'compact' " . $where // phpcs:ignore -- escaped.
 		);
 	}
 

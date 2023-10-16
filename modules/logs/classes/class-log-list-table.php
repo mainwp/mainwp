@@ -70,7 +70,7 @@ class Log_List_Table {
 	 *
 	 * @param array  $item         Record data.
 	 * @param string $column_name  Column name.
-	 * @return void
+	 * @return string $out Output.
 	 */
 	public function column_default( $item, $column_name ) {
 		$out = '';
@@ -133,7 +133,6 @@ class Log_List_Table {
 
 		if ( empty( $out ) ) {
 			return '';
-			return;
 		}
 
 		if ( ! $escaped ) {
@@ -155,7 +154,7 @@ class Log_List_Table {
 	/**
 	 * Returns the label for a status.
 	 *
-	 * @param object $item record item.
+	 * @param object $record record item.
 	 *
 	 * @return string
 	 */
@@ -405,7 +404,6 @@ class Log_List_Table {
 		$pagelength_title = implode( ',', array_values( $pages_length ) );
 
 		?>
-	
 		<table id="mainwp-module-log-records-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table">
 			<thead>
 				<tr><?php $this->print_column_headers( true ); ?></tr>

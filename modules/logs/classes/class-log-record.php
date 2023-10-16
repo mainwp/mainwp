@@ -84,14 +84,14 @@ class Log_Record {
 	public $action;
 
 	/**
-	 * duration
+	 * Duration
 	 *
 	 * @var int
 	 */
 	public $duration;
 
 	/**
-	 * state
+	 * State
 	 *
 	 * @var int
 	 */
@@ -109,7 +109,7 @@ class Log_Record {
 	 *
 	 * @param object $item  Record data object.
 	 */
-	public function __construct( $item ) {
+	public function __construct( $item ) { //phpcs:ignore -- complex method.
 		$this->log_id    = isset( $item->log_id ) ? $item->log_id : null;
 		$this->created   = isset( $item->created ) ? $item->created : null;
 		$this->site_id   = isset( $item->site_id ) ? $item->site_id : null;

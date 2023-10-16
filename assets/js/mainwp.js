@@ -2316,7 +2316,7 @@ bulkInstallDone = 0;
  *
  * @return void
  */
-mainwp_install_bulk = function (type, slug, name, version) {
+mainwp_install_bulk = function (type, slug) {
   var data = mainwp_secure_data({
     action: 'mainwp_preparebulkinstallplugintheme',
     type: type,

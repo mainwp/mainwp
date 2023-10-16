@@ -7,13 +7,13 @@
  * @package MainWP/Dashboard
  */
 
- namespace MainWP\Dashboard\Module\Log;
+namespace MainWP\Dashboard\Module\Log;
 
- use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_DB;
 
- /**
-  * Class Log_DB_Driver_WPDB
-  */
+/**
+ * Class Log_DB_Driver_WPDB
+ */
 class Log_DB_Driver_WPDB implements Log_DB_Driver {
 	/**
 	 * Holds Query class
@@ -69,7 +69,7 @@ class Log_DB_Driver_WPDB implements Log_DB_Driver {
 			unset( $data['meta'] );
 		}
 
-		$result = $wpdb->insert( $this->table, $data );
+		$result = $wpdb->insert( $this->table, $data ); //phpcs:ignore -- ok.
 		if ( ! $result ) {
 			return false;
 		}
@@ -100,12 +100,12 @@ class Log_DB_Driver_WPDB implements Log_DB_Driver {
 	public function insert_meta( $record_id, $key, $val ) {
 		global $wpdb;
 
-		$result = $wpdb->insert(
+		$result = $wpdb->insert( //phpcs:ignore -- ok.
 			$this->table_meta,
 			array(
 				'meta_log_id' => $record_id,
-				'meta_key'    => $key,
-				'meta_value'  => $val,
+				'meta_key'    => $key, //phpcs:ignore -- ok.
+				'meta_value'  => $val, //phpcs:ignore -- ok.
 			)
 		);
 
@@ -136,7 +136,7 @@ class Log_DB_Driver_WPDB implements Log_DB_Driver {
 	 */
 	public function get_column_values( $column ) {
 		global $wpdb;
-		return (array) $wpdb->get_results(
+		return (array) $wpdb->get_results( //phpcs:ignore -- ok.
 			"SELECT DISTINCT $column FROM $wpdb->mainwp_tbl_logs", // @codingStandardsIgnoreLine can't prepare column name
 			'ARRAY_A'
 		);

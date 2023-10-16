@@ -5,9 +5,9 @@
  * @package MainWP/Dashboard
  */
 
- namespace MainWP\Dashboard\Module\Log;
+namespace MainWP\Dashboard\Module\Log;
 
- use \MainWP\Dashboard\MainWP_DB;
+use \MainWP\Dashboard\MainWP_DB;
 
 /**
  * Class - Log_Query
@@ -90,8 +90,6 @@ class Log_Query {
 		$selects[] = 'meta_view.*';
 		$select    = implode( ', ', $selects );
 
-		// $join = " LEFT JOIN $wpdb->mainwp_tbl_logs_meta as lgmeta ON lg.log_id = lgmeta.meta_log_id ";
-
 		$join = ' LEFT JOIN ' . $this->get_log_meta_view() . ' meta_view ON lg.log_id = meta_view.view_log_id ';
 
 		/**
@@ -144,7 +142,7 @@ class Log_Query {
 		 * QUERY THE DATABASE FOR RESULTS
 		 */
 		$result = array(
-			'items' => $wpdb->get_results( $query ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			'items' => $wpdb->get_results( $query ), // phpcs:ignore -- ok.
 			'count' => absint( $wpdb->get_var( $count_query ) ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		);
 

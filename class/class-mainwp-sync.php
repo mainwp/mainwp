@@ -210,6 +210,8 @@ class MainWP_Sync {
 			'version'     => 0,
 		);
 
+		$_error = $sync_errors;
+
 		$done = false;
 
 		$current_siteid = 0;
@@ -517,11 +519,12 @@ class MainWP_Sync {
 				MainWP_Logger::instance()->warning_for_website( $pWebsite, 'SYNC ERROR', '[' . esc_html( $information['error'] ) . ']' );
 				$error                            = true;
 				$done                             = true;
-				$websiteSyncValues['sync_errors'] = esc_html__( 'ERROR: ', 'mainwp' ) . esc_html( $information['error'] );
+				$_error                           = esc_html__( 'ERROR: ', 'mainwp' ) . esc_html( $information['error'] );
+				$websiteSyncValues['sync_errors'] = $_error;
 			} elseif ( ! empty( $sync_errors ) ) {
 				MainWP_Logger::instance()->warning_for_website( $pWebsite, 'SYNC ERROR', '[' . $sync_errors . ']' );
-
-				$error = true;
+				$_error = $sync_errors;
+				$error  = true;
 				if ( ! $pAllowDisconnect ) {
 					$sync_errors = '';
 				}
@@ -533,11 +536,14 @@ class MainWP_Sync {
 				if ( $pAllowDisconnect ) {
 					$sync_errors                      = esc_html__( 'Undefined error! Please, reinstall the MainWP Child plugin on the child site.', 'mainwp' );
 					$websiteSyncValues['sync_errors'] = $sync_errors;
+					$_error                           = $sync_errors;
 				}
 			}
 		}
 
+		$act_success = false;
 		if ( $done ) {
+			$act_success                  = true;
 			$websiteSyncValues['dtsSync'] = time();
 		}
 		MainWP_DB::instance()->update_website_sync_values( $pWebsite->id, $websiteSyncValues );
@@ -559,6 +565,23 @@ class MainWP_Sync {
 			 */
 			do_action( 'mainwp_site_synced', $pWebsite, $information );
 		}
+
+		$post_data = array();
+
+		/**
+		 * Action: mainwp_site_sync
+		 *
+		 * Fires upon successful site synchronization.
+		 *
+		 * @param object $pWebsite    Object containing child site info.
+		 * @param array  $information Array containing information returned from child site.
+		 * @param bool  $act_success action success or failed.
+		 *  @param string  $_error Sync error message if existed.
+		 * @param array  $post_data Addition post data.
+		 *
+		 * @since 3.4
+		 */
+		do_action( 'mainwp_site_sync', $pWebsite, $information, $act_success, $_error, $post_data );
 
 		return ( ! $error );
 	}

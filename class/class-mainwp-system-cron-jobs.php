@@ -69,7 +69,7 @@ class MainWP_System_Cron_Jobs {
 		add_action( 'mainwp_cronsitehealthcheck_action', array( $this, 'cron_check_websites_health' ) );
 
 		// phpcs:ignore -- required for dashboard's minutely scheduled jobs.
-		add_filter( 'cron_schedules', array( $this, 'get_cron_schedules' ) );
+		add_filter( 'cron_schedules', array( $this, 'get_cron_schedules' ), 9 );
 
 		$this->init_cron();
 	}
@@ -543,7 +543,7 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		MainWP_Logger::instance()->info( 'CRON :: updates check found' . count( $checkupdate_websites ) . ' websites' );
-		MainWP_Logger::instance()->log_update_check( 'CRON :: updates check found ' . count( $checkupdate_websites ) . ' websites' );
+		MainWP_Logger::instance()->log_update_check( 'CRON :: updates check found [' . count( $checkupdate_websites ) . ' websites] :: going to check [' . count( $websites ) . ' websites]' );
 
 		$userid = null;
 		foreach ( $websites as $website ) {

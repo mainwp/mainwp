@@ -7,6 +7,9 @@
 
 namespace MainWP\Dashboard;
 
+use \MainWP\Dashboard\Module\Log\Log_Install;
+use \MainWP\Dashboard\Module\Log\Log_Manager;
+
 // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
 const MAINWP_VIEW_PER_SITE         = 1;
@@ -115,11 +118,19 @@ class MainWP_System {
 	 */
 	public function __construct( $mainwp_plugin_file ) {
 		self::$instance = $this;
-		MainWP_Logger::instance()->init_execution_time();
+
+		MainWP_Execution_Helper::instance()->init_exec_time();
+
+		new MainWP_Includes();
 
 		MainWP_Keys_Manager::auto_load_files();
 
 		$this->load_all_options();
+
+		if ( MainWP_Includes::is_enable_log_module() && class_exists( '\MainWP\Dashboard\Module\Log\Log_Manager' ) ) {
+			Log_Manager::instance();
+		}
+
 		$this->update_install();
 		$this->plugin_slug = plugin_basename( $mainwp_plugin_file );
 
@@ -325,13 +336,14 @@ class MainWP_System {
 				'mainwp_check_http_response',
 				'mainwp_extmenu',
 				'mainwp_opensslLibLocation',
-				'mwp_setup_opensslLibLocation',
 				'mainwp_notice_wp_mail_failed',
 				'mainwp_show_language_updates',
 				'mainwp_logger_check_daily',
 				'mainwp_site_actions_notification_enable',
 				'mainwp_update_check_version',
 				'mainwp_setting_demo_mode_enabled',
+				'mainwp_log_wait_lasttime',
+				'mainwp_updatescheck_start_last_schedule_timestamp',
 			);
 
 			$query = "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in (";

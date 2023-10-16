@@ -126,9 +126,11 @@ abstract class MainWP_Post_Base_Handler {
 	 *
 	 * @param string $action Action to perform.
 	 * @param string $callback Callback to perform.
+	 * @param int    $priority priority aciton.
+	 * @param int    $accepted number args.
 	 */
-	public function add_action( $action, $callback ) {
-		add_action( 'wp_ajax_' . $action, $callback );
+	public function add_action( $action, $callback, $priority = 10, $accepted = 2 ) {
+		add_action( 'wp_ajax_' . $action, $callback, $priority, $accepted );
 		$this->add_action_nonce( $action ); // to fix conflict with Post S M T P plugin.
 	}
 

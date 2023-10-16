@@ -334,6 +334,9 @@ class MainWP_System_View {
 	 * Checks if the `tmpfile()` PHP function is disabled.
 	 */
 	public static function mainwp_tmpfile_check() {
+		if ( MainWP_Demo_Handle::is_instawp_site() ) {
+			return;
+		}
 		$disabled_functions = ini_get( 'disable_functions' );
 		if ( '' !== $disabled_functions ) {
 			$disabled_functions_array = explode( ',', $disabled_functions );

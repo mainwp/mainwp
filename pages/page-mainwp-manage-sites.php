@@ -1484,10 +1484,14 @@ class MainWP_Manage_Sites {
 				MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $site_name, $site_admin, $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifycertificate, $archiveFormat, $uniqueId, $http_user, $http_pass, $ssl_version, $disableChecking, $checkInterval, $disableHealthChecking, $healthThreshold );
 
 				$new_client_id = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
-				$update        = array(
-					'client_id' => $new_client_id,
-				);
-				MainWP_DB::instance()->update_website_values( $website->id, $update );
+
+				if ( $website->client_id != $new_client_id ) {
+
+					$update = array(
+						'client_id' => $new_client_id,
+					);
+					MainWP_DB::instance()->update_website_values( $website->id, $update );
+				}
 
 				/**
 				 * Update site
@@ -1510,12 +1514,14 @@ class MainWP_Manage_Sites {
 					$forceuseipv4 = 0;
 				}
 
-				$newValues = array(
+				$old_suspended = (int) $website->suspended;
+				$suspended     = isset( $_POST['mainwp_suspended_site'] ) ? 1 : 0;
+				$newValues     = array(
 					'automatic_update'      => ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : 1 ),
 					'backup_before_upgrade' => $backup_before_upgrade,
 					'force_use_ipv4'        => $forceuseipv4,
 					'loadFilesBeforeZip'    => isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 1 : 0,
-					'suspended'             => isset( $_POST['mainwp_suspended_site'] ) ? 1 : 0,
+					'suspended'             => $suspended,
 				);
 
 				if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
@@ -1542,6 +1548,29 @@ class MainWP_Manage_Sites {
 				$use_lib = isset( $_POST['mainwp_managesites_edit_verify_connection_method'] ) ? intval( $_POST['mainwp_managesites_edit_verify_connection_method'] ) : 0;
 				MainWP_DB::instance()->update_website_option( $website, 'verify_method', $use_lib );
 
+				/**
+				 * Update site
+				 *
+				 * Fires after updating a website settings.
+				 *
+				 * @param int $website Child site Ọbject.
+				 *
+				 * @since 3.4
+				 */
+				do_action( 'mainwp_site_updated', $website, $_POST );
+
+				if ( $old_suspended !== $suspended ) { // changed suspended.
+					/**
+					 * Site suspended changed.
+					 *
+					 * Fires after suspended a website changed.
+					 *
+					 * @param int $website->id Child site ID.
+					 *
+					 * @since 4.5.1.1
+					 */
+					do_action( 'mainwp_site_suspended', $website, $suspended );
+				}
 				$updated = true;
 			}
 		}

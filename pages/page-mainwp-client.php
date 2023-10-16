@@ -1157,7 +1157,13 @@ class MainWP_Client {
 
 		$client_id = isset( $client_fields['client_id'] ) ? intval( $client_fields['client_id'] ) : 0;
 
+		$new_suspended = $client_to_add['suspended'];
+		$old_suspended = $new_suspended;
+
 		if ( $client_id ) {
+			$current_client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id );
+			$old_suspended  = $current_client->suspended;
+
 			$client_to_add['client_id'] = $client_id; // update client.
 			if ( isset( $client_to_add['created'] ) && ! empty( $client_to_add['created'] ) ) {
 				$client_to_add['created'] = strtotime( $client_to_add['created'] );
@@ -1176,9 +1182,35 @@ class MainWP_Client {
 
 		if ( $client_id ) {
 			MainWP_DB_Client::instance()->update_selected_sites_for_client( $client_id, $selected_sites );
-		} elseif ( $inserted ) {
+		} elseif ( is_object( $inserted ) ) {
 			MainWP_DB_Client::instance()->update_selected_sites_for_client( $inserted->client_id, $selected_sites );
 			$client_id = $inserted->client_id;
+		}
+
+		if ( is_object( $inserted ) ) {
+			/**
+			 * Add client
+			 *
+			 * Fires after add a client.
+			 *
+			 * @param object $inserted client data.
+			 * @param bool $add_new true add new, false updated.
+			 *
+			 * @since 4.5.1.1
+			 */
+			do_action( 'mainwp_client_updated', $inserted, $add_new );
+
+			if ( ! $add_new && $new_suspended != $old_suspended ) {
+				/**
+				 * Fires immediately after update client suspend/unsuspend.
+				 *
+				 * @since 4.5.1.1
+				 *
+				 * @param object $client  client data.
+				 * @param bool $new_suspended true|false.
+				 */
+				do_action( 'mainwp_client_suspend', $inserted, $new_suspended );
+			}
 		}
 
 		if ( $client_id && isset( $client_fields['custom_fields'] ) && is_array( $client_fields['custom_fields'] ) ) {

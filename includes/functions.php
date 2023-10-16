@@ -7,6 +7,10 @@
  * @package     MainWP/Dashboard
  */
 
+if ( ! defined( 'FILTER_SANITIZE_STRING_COMPATIBLE' ) ) {  // to compatible.
+	define( 'FILTER_SANITIZE_STRING_COMPATIBLE', 513 );
+}
+
 if ( ! function_exists( 'mainwpdir' ) ) {
 
 	/**
@@ -58,5 +62,31 @@ if ( ! function_exists( 'mainwp_current_user_can' ) ) {
 			return MainWP\Dashboard\mainwp_current_user_have_right( $cap_type, $cap );
 		}
 		return true;
+	}
+}
+
+if ( ! function_exists( 'mainwp_get_actions_handler_instance' ) ) {
+
+	/**
+	 * Function to get mainwp actions handler instance.
+	 *
+	 * @return bool true|false
+	 */
+	function mainwp_get_actions_handler_instance() {
+		return \MainWP\Dashboard\MainWP_Actions_Handler::instance();
+	}
+}
+
+if ( ! function_exists( 'mainwp_send_json_output' ) ) {
+	/**
+	 * Handle send json output.
+	 *
+	 * @param array $output Array output.
+	 */
+	function mainwp_send_json_output( $output ) {
+		if ( is_array( $output ) ) {
+			$output['execute_time'] = \MainWP\Dashboard\MainWP_Execution_Helper::instance()->get_exec_time();
+		}
+		wp_send_json( $output );
 	}
 }

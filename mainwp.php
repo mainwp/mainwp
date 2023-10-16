@@ -46,6 +46,13 @@ if ( ! defined( 'MAINWP_PLUGIN_URL' ) ) {
 	define( 'MAINWP_PLUGIN_URL', plugin_dir_url( MAINWP_PLUGIN_FILE ) );
 }
 
+/**
+ * Define enable Log Module.
+ */
+if ( ! defined( 'MAINWP_MODULE_LOG_ENABLED' ) ) {
+	define( 'MAINWP_MODULE_LOG_ENABLED', true );
+}
+
 // Version information from WordPress.
 require_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'version.php';
 
@@ -90,6 +97,7 @@ spl_autoload_register( 'mainwp_autoload' );
 
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'functions.php';
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'compatible.php';
+require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'class-mainwp-includes.php';
 
 // Detect if secupress_scanner is running.
 $mainwp_is_secupress_scanning = false;

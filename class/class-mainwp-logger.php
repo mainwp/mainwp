@@ -18,8 +18,9 @@ class MainWP_Logger {
 
 	// phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write logging file.
 
-	const UPDATE_CHECK_LOG_PRIORITY   = 10;
-	const EXECUTION_TIME_LOG_PRIORITY = 15;
+	const UPDATE_CHECK_LOG_PRIORITY    = 10;
+	const EXECUTION_TIME_LOG_PRIORITY  = 15;
+	const LOGS_AUTO_PURGE_LOG_PRIORITY = 16;
 
 
 	const DISABLED = - 1;
@@ -165,7 +166,6 @@ class MainWP_Logger {
 				$enabled = self::DISABLED;
 			}
 		}
-
 		return $enabled;
 	}
 
@@ -589,7 +589,7 @@ class MainWP_Logger {
 	 */
 	public function log_execution_time( $text = '' ) {
 		$exec_time = $this->get_execution_time();
-		$this->log_action( 'execution time :: ' . ( ! empty( $text ) ? (string) $text : '<empty>' ) . ' :: [time=' . $exec_time . '] (microsec)', self::EXECUTION_TIME_LOG_PRIORITY );
+		$this->log_action( 'execution time :: ' . ( ! empty( $text ) ? (string) $text : '<empty>' ) . ' :: [time=' . round( $exec_time, 4 ) . '](seconds)', self::EXECUTION_TIME_LOG_PRIORITY );
 	}
 
 
@@ -620,7 +620,7 @@ class MainWP_Logger {
 		if ( empty( $start ) ) {
 			return 0;
 		}
-		return round( microtime( true ) - $start, 6 ); // seconds.
+		return microtime( true ) - $start; // seconds.
 	}
 
 	/**
@@ -670,9 +670,8 @@ class MainWP_Logger {
 	 * @param int $days number of days to keep logs.
 	 */
 	public function check_log_daily( $days = false ) {
-
-		$enabled = $this->get_log_status();
-		if ( ! $enabled ) {
+		$status = (int) $this->get_log_status();
+		if ( 0 >= $status ) {
 			return;
 		}
 
@@ -682,6 +681,13 @@ class MainWP_Logger {
 			$num_days = apply_filters( 'mainwp_logger_keep_days', 7 );
 			MainWP_DB_Common::instance()->delete_action_log( $num_days );
 			MainWP_Utility::update_option( 'mainwp_logger_check_daily', $today_m_y );
+
+			$enabled_time = get_option( 'mainwp_actionlogs_enabled_timestamp', false );
+			if ( false === $enabled_time ) {
+				MainWP_Utility::update_option( 'mainwp_actionlogs_enabled_timestamp', time() );
+			} elseif ( $enabled_time + $num_days * DAY_IN_SECONDS < time() ) {
+				MainWP_Utility::update_option( 'mainwp_actionlogs', self::DISABLED );
+			}
 		}
 	}
 

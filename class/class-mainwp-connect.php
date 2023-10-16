@@ -1110,8 +1110,6 @@ class MainWP_Connect {
 			do_action( 'mainwp_website_before_updated', $website, $type, $list );
 		}
 
-		$params['json_result'] = true;
-
 		if ( 'renew' === $what ) {
 			$postdata = self::get_renew_post_data_authed( $website, $what, $params );
 		} else {
@@ -1124,6 +1122,18 @@ class MainWP_Connect {
 
 		if ( ! $request_update ) {
 			$information = self::fetch_url( $website, $website->url, $postdata, $checkConstraints, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others );
+			/**
+			 * Fires immediately after fetch url action.
+			 *
+			 * @param object $website  website.
+			 * @param array $information information result data.
+			 * @param string $what action.
+			 * @param array $params params input array.
+			 * @param array $others others input array.
+			 *
+			 * @since 4.5.1.1
+			 */
+			do_action( 'mainwp_fetch_url_authed', $website, $information, $what, $params, $others );
 		} else {
 			$slug                    = $params['list'];
 			$information['upgrades'] = array( $slug => 1 );
@@ -1190,10 +1200,6 @@ class MainWP_Connect {
 
 		if ( empty( $params ) ) {
 			$params = array();
-		}
-
-		if ( is_array( $params ) ) {
-			$params['json_result'] = true;
 		}
 
 		$postdata = self::get_post_data_not_authed( $url, $admin, $what, $params );

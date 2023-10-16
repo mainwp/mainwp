@@ -1511,6 +1511,8 @@ class MainWP_Manage_Sites_View {
 	 */
 	public static function m_reconnect_site( $website, $sync_first = true ) { //phpcs:ignore -- complex method.
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+			$success = false;
+			$_error  = '';
 			try {
 				if ( $sync_first ) {
 					$success = MainWP_Sync::sync_site( $website, true );
@@ -1523,88 +1525,92 @@ class MainWP_Manage_Sites_View {
 							$success = MainWP_Sync::sync_site( $website, true );
 						}
 					}
-
-					if ( $success ) {
-						/**
-						 * Fires immediately after reconnect website.
-						 *
-						 * @since 4.5.1.1
-						 *
-						 * @param object   $website  website data.
-						 */
-						do_action( 'mainwp_site_reconnected', $website );
-
-						return true;
-					}
 				}
 
-				if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
-					$details = MainWP_Connect_Lib::instance()->create_connect_keys();
-					if ( is_array( $details ) ) {
-						$pubkey  = $details['pub'];
-						$privkey = $details['priv'];
+				if ( ! $success ) {
+					if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
+						$details = MainWP_Connect_Lib::instance()->create_connect_keys();
+						if ( is_array( $details ) ) {
+							$pubkey  = $details['pub'];
+							$privkey = $details['priv'];
+						} else {
+							$privkey = '-1';
+							$pubkey  = '-1';
+						}
+					} elseif ( function_exists( 'openssl_pkey_new' ) ) {
+						$conf     = array( 'private_key_bits' => 2048 );
+						$conf_loc = MainWP_System_Utility::get_openssl_conf();
+						if ( ! empty( $conf_loc ) ) {
+							$conf['config'] = $conf_loc;
+						}
+						$res = openssl_pkey_new( $conf );
+						@openssl_pkey_export( $res, $privkey, null, $conf ); // phpcs:ignore -- prevent warning.
+						$details = openssl_pkey_get_details( $res );
+						$pubkey  = $details['key'];
 					} else {
 						$privkey = '-1';
 						$pubkey  = '-1';
 					}
-				} elseif ( function_exists( 'openssl_pkey_new' ) ) {
-					$conf     = array( 'private_key_bits' => 2048 );
-					$conf_loc = MainWP_System_Utility::get_openssl_conf();
-					if ( ! empty( $conf_loc ) ) {
-						$conf['config'] = $conf_loc;
-					}
-					$res = openssl_pkey_new( $conf );
-					@openssl_pkey_export( $res, $privkey, null, $conf ); // phpcs:ignore -- prevent warning.
-					$details = openssl_pkey_get_details( $res );
-					$pubkey  = $details['key'];
-				} else {
-					$privkey = '-1';
-					$pubkey  = '-1';
-				}
 
-				$information = MainWP_Connect::fetch_url_not_authed(
-					$website->url,
-					$website->adminname,
-					'register',
-					array(
-						'pubkey'   => $pubkey,
-						'server'   => get_admin_url(),
-						'uniqueId' => $website->uniqueId,
-					),
-					true,
-					$website->verify_certificate,
-					$website->http_user,
-					$website->http_pass,
-					$website->ssl_version
-				);
+					$information = MainWP_Connect::fetch_url_not_authed(
+						$website->url,
+						$website->adminname,
+						'register',
+						array(
+							'pubkey'   => $pubkey,
+							'server'   => get_admin_url(),
+							'uniqueId' => $website->uniqueId,
+						),
+						true,
+						$website->verify_certificate,
+						$website->http_user,
+						$website->http_pass,
+						$website->ssl_version
+					);
 
-				if ( isset( $information['error'] ) && '' !== $information['error'] ) {
-					$err = urldecode( $information['error'] );
-					$err = MainWP_Utility::esc_content( $err );
-					throw new \Exception( $err );
-				} else {
-					if ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
-						MainWP_DB::instance()->update_website_values(
-							$website->id,
-							array(
-								'pubkey'   => base64_encode( $pubkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
-								'privkey'  => base64_encode( $privkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
-								'uniqueId' => ( isset( $information['uniqueId'] ) ? $information['uniqueId'] : '' ),
-							)
-						);
-						MainWP_Sync::sync_information_array( $website, $information );
-						return true;
+					if ( isset( $information['error'] ) && '' !== $information['error'] ) {
+						$err    = urldecode( $information['error'] );
+						$_error = MainWP_Utility::esc_content( $err );
 					} else {
-						throw new \Exception( esc_html__( 'Undefined error!', 'mainwp' ) );
+						if ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
+							MainWP_DB::instance()->update_website_values(
+								$website->id,
+								array(
+									'pubkey'   => base64_encode( $pubkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
+									'privkey'  => base64_encode( $privkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
+									'uniqueId' => ( isset( $information['uniqueId'] ) ? $information['uniqueId'] : '' ),
+								)
+							);
+							MainWP_Sync::sync_information_array( $website, $information );
+							$success = true;
+						} else {
+							$_error = esc_html__( 'Undefined error!', 'mainwp' );
+						}
 					}
 				}
 			} catch ( MainWP_Exception $e ) {
 				if ( 'HTTPERROR' === $e->getMessage() ) {
-					throw new \Exception( 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' ) );
+					$_error = 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
 				} elseif ( 'NOMAINWP' === $e->getMessage() ) {
-					$error = sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank>', '</a>' ); // phpcs:ignore WordPress.Security.EscapeOutput
-					throw new \Exception( $error );
+					$_error = sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank>', '</a>' ); // phpcs:ignore WordPress.Security.EscapeOutput
 				}
+			}
+
+			/**
+			 * Fires immediately after reconnect website.
+			 *
+			 * @since 4.5.1.1
+			 *
+			 * @param object   $website  website data.
+			 */
+			do_action( 'mainwp_site_reconnected', $website, $success, $_error );
+
+			if ( $success ) {
+				return true;
+			}
+
+			if ( ! empty( $_error ) ) {
+				throw new \Exception( $_error );
 			}
 		} else {
 			throw new \Exception( esc_html__( 'This operation is not allowed!', 'mainwp' ) );
@@ -1806,6 +1812,16 @@ class MainWP_Manage_Sites_View {
 						}
 
 						$website = MainWP_DB::instance()->get_website_by_id( $id );
+
+						/**
+						 * Fires immediately after a new website is added.
+						 *
+						 * @since 4.5.1.1
+						 *
+						 * @param object   $website  website data.
+						 * @param array $information The array of information data .
+						 */
+						do_action( 'mainwp_site_added', $website, $information );
 
 						/**
 						 * New site added

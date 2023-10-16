@@ -884,21 +884,31 @@ class MainWP_UI {
 					<div class="ui inverted accordion" id="mainwp_demo_mode_accordion" style="background-color:#1c1d1b;">
 						<div class="title">
 							<i class="dropdown icon"></i>
+							<?php if ( ! MainWP_Demo_Handle::is_instawp_site() ) { ?>
 							<strong style="color:#fff;font-size:16px;"><?php esc_html_e( 'You are in Demo Mode. Click here for more info or to disable it', 'mainwp' ); ?></strong>
+							<?php } else { ?>
+							<strong style="color:#fff;font-size:16px;"><?php esc_html_e( 'You are in Demo Mode. Click here for more info', 'mainwp' ); ?></strong>
+							<?php } ?>
 						</div>
 						<div class="content">
-							<br/>
-					<div class="ui stackable grid">
-								<div class="eleven wide middle aligned column">
-									<p style="color:#fff;font-size:16px;"><?php esc_html_e( 'Once you are ready to get started with MainWP, click the Disable Demo Mode & Remove Demo Content button to remove the demo content and start adding your own. ', 'mainwp' ); ?></p>
-									<p style="color:#fff;font-size:16px;"><strong><?php esc_html_e( 'The demo content serves as placeholder data to give you a feel for the MainWP Dashboard. Please note that because no real websites are connected in this demo, some functionality will be restricted. Features that require a connection to actual websites will be disabled for the duration of the demo.', 'mainwp' ); ?></strong></p>
+						<br/>
+						<div class="ui stackable grid">
+							<div class="eleven wide middle aligned column">
+								<?php if ( ! MainWP_Demo_Handle::is_instawp_site() ) { ?>
+								<p style="color:#fff;font-size:16px;"><?php esc_html_e( 'Once you are ready to get started with MainWP, click the Disable Demo Mode & Remove Demo Content button to remove the demo content and start adding your own. ', 'mainwp' ); ?></p>
+								<?php } ?>
+								<p style="color:#fff;font-size:16px;"><strong><?php esc_html_e( 'The demo content serves as placeholder data to give you a feel for the MainWP Dashboard. Please note that because no real websites are connected in this demo, some functionality will be restricted. Features that require a connection to actual websites will be disabled for the duration of the demo.', 'mainwp' ); ?></strong></p>
+							</div>
+							<div class="five wide middle aligned column">
+								<?php if ( ! MainWP_Demo_Handle::is_instawp_site() ) { ?>
+								<div data-tooltip="<?php esc_attr_e( 'Delete the Demo content from your MainWP Dashboard and disable the Demo mode.', 'mainwp' ); ?>" data-inverted="" data-position="left center"><button class="ui big fluid button mainwp-remove-demo-data-button"><?php esc_html_e( 'Disable Demo Mode & Remove Demo Content', 'mainwp' ); ?></button></div>
+								<?php } else { ?>
+								<div data-tooltip="<?php esc_attr_e( 'Get started with MainWP.', 'mainwp' ); ?>" data-inverted="" data-position="left center"><a class="ui big fluid button" target="_blank" href="https://mainwp.com/install-mainwp/?utm_source=instawp-demo&utm_medium=banner&utm_campaign=download_black_banner&utm_id=instawp"><?php esc_html_e( 'Download MainWP', 'mainwp' ); ?></a></div>
+								<?php } ?>
+							</div>
 						</div>
-								<div class="five wide middle aligned column">
-									<div data-tooltip="<?php esc_attr_e( 'Delete the Demo content from your MainWP Dashboard and disable the Demo mode.', 'mainwp' ); ?>" data-inverted="" data-position="left center"><button class="ui big fluid button mainwp-remove-demo-data-button"><?php esc_html_e( 'Disable Demo Mode & Remove Demo Content', 'mainwp' ); ?></button></div>
-						</div>
+						<br/>
 					</div>
-							<br/>
-				</div>
 					</div>
 				</div>
 				<script type="text/javascript">
@@ -957,10 +967,24 @@ class MainWP_UI {
 				</script>
 			<?php endif; ?>
 
-			<?php if ( isset( $_GET['message'] ) && 'qsw-import' == $_GET['message'] ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+			<?php if ( isset( $_GET['message'] ) && ( 'qsw-import' == $_GET['message'] || 'enable-demo-mode' == $_GET['message'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
 				<script type="text/javascript">
-					jQuery( document ).ready( function() {
-						window.USETIFUL.tour.start( parseInt( 40279 ) );
+					var _count_retry = 0;
+					_try_start_usetiful_tour = function(){
+						setTimeout( function () {
+							try{						
+								window.USETIFUL.tour.start( parseInt( 40279 ) );
+							} catch(e){
+								if(_count_retry < 10 ){
+									_count_retry++;
+									console.log( 'retry:' + _count_retry);
+									_try_start_usetiful_tour();
+								}
+							}
+						}, 1000 );
+					}
+					jQuery( document ).ready( function () {
+						_try_start_usetiful_tour();
 					} );
 				</script>
 			<?php endif; ?>
@@ -1406,17 +1430,22 @@ class MainWP_UI {
 							continue;
 						}
 
-						$active = '';
+						$class = '';
 						if ( isset( $item['active'] ) && $item['active'] ) {
-							$active = 'active';
+							$class = 'active';
 						}
+
+						if ( isset( $item['class'] ) ) {
+							$class = $class . ' ' . $item['class'];
+						}
+
 						$style = '';
 						if ( isset( $item['style'] ) ) {
 							$style = $item['style'];
 						}
 
 						?>
-						<a class="<?php echo esc_attr( $active ); ?> item" style="<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $item['href'] ); ?>">
+						<a class="<?php echo esc_attr( $class ); ?> item" style="<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $item['href'] ); ?>">
 							<?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 						</a>
 						<?php

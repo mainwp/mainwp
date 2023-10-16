@@ -362,10 +362,9 @@ class MainWP_Overview {
 			$website = $websites[0];
 		}
 		$screen = get_current_screen();
+
+		MainWP_Demo_Handle::get_instance()->init_data_demo();
 		?>
-
-
-
 		<div class="mainwp-primary-content-wrap">
 			<div class="ui segment" style="padding-top:0px;padding-bottom:0px;margin-bottom:0px;">
 			<div id="mainwp-dashboard-info-box"></div>

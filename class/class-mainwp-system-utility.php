@@ -760,11 +760,8 @@ class MainWP_System_Utility {
 			return MAINWP_CRYPT_RSA_OPENSSL_CONFIG;
 		}
 
-		$setup_conf_loc            = '';
-		$setup_conf_loc_compatible = get_option( 'mwp_setup_opensslLibLocation' );
-		if ( MainWP_Settings::is_local_window_config() && ! empty( $setup_conf_loc_compatible ) ) { // to compatible.
-			$setup_conf_loc = $setup_conf_loc_compatible;
-		} elseif ( get_option( 'mainwp_opensslLibLocation' ) != '' ) {
+		$setup_conf_loc = '';
+		if ( get_option( 'mainwp_opensslLibLocation' ) != '' ) {
 			$setup_conf_loc = get_option( 'mainwp_opensslLibLocation' );
 		}
 		return $setup_conf_loc;

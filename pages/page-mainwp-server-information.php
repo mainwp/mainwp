@@ -654,37 +654,37 @@ class MainWP_Server_Information {
 			<td><?php esc_html_e( 'N/A', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_php_allow_url_fopen(); ?></td>
 			<td></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'PHP Exif Support', 'mainwp' ); ?></td>
 			<td><?php esc_html_e( 'N/A', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_php_exif(); ?></td>
 			<td></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'PHP IPTC Support', 'mainwp' ); ?></td>
 			<td><?php esc_html_e( 'N/A', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_php_iptc(); ?></td>
 			<td></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'PHP XML Support', 'mainwp' ); ?></td>
 			<td><?php esc_html_e( 'N/A', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_php_xml(); ?></td>
 			<td></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'PHP Disabled Functions', 'mainwp' ); ?></td>
 			<td><?php esc_html_e( 'N/A', 'mainwp' ); ?></td>
 			<td><?php self::php_disabled_functions(); ?></td>
 			<td></td>
-					</tr>
-					<tr>
+		</tr>
+		<tr>
 			<td><?php esc_html_e( 'PHP Loaded Extensions', 'mainwp' ); ?></td>
 			<td><?php esc_html_e( 'N/A', 'mainwp' ); ?></td>
 			<td><?php MainWP_Server_Information_Handler::get_loaded_php_extensions(); ?></td>
 			<td></td>
-					</tr>
+		</tr>
 		<?php
 	}
 
@@ -1625,6 +1625,7 @@ class MainWP_Server_Information {
 			}
 
 			MainWP_Utility::update_option( 'mainwp_actionlogs', $act_log );
+			MainWP_Utility::update_option( 'mainwp_actionlogs_enabled_timestamp', time() );
 		}
 
 		if ( isset( $_REQUEST['actionlogs_clear'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
@@ -1638,8 +1639,9 @@ class MainWP_Server_Information {
 
 		$enabled          = MainWP_Logger::instance()->get_log_status();
 		$specific_default = array(
-			MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY   => esc_html__( 'Update Checking', 'mainwp' ),
-			MainWP_Logger::EXECUTION_TIME_LOG_PRIORITY => esc_html__( 'Execution time', 'mainwp' ),
+			MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY    => esc_html__( 'Update Checking', 'mainwp' ),
+			MainWP_Logger::EXECUTION_TIME_LOG_PRIORITY  => esc_html__( 'Execution time', 'mainwp' ),
+			MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY => esc_html__( 'Logs Auto Purge', 'mainwp' ),
 		);
 		$specific_logs    = apply_filters( 'mainwp_specific_action_logs', $specific_default ); // deprecated since 4.3.1, use 'mainwp_log_specific_actions' instead.
 		$specific_logs    = apply_filters( 'mainwp_log_specific_actions', $specific_logs );

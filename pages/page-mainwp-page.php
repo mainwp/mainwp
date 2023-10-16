@@ -136,6 +136,8 @@ class MainWP_Page {
 	 */
 	public static function on_load_add_edit() {
 
+		global $_mainwp_menu_active_slugs;
+
 		if ( isset( $_GET['page'] ) && 'PageBulkAdd' == $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 
 			/**
@@ -149,7 +151,8 @@ class MainWP_Page {
 			$_mainwp_default_post_to_edit = get_default_post_to_edit( $post_type, true );
 			$post_id                      = $_mainwp_default_post_to_edit ? $_mainwp_default_post_to_edit->ID : 0;
 		} else {
-			$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+			$post_id                                   = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+			$_mainwp_menu_active_slugs['PageBulkEdit'] = 'PageBulkManage'; // to fix hidden second menu level.
 		}
 
 		if ( ! $post_id ) {

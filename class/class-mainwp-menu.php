@@ -545,7 +545,7 @@ class MainWP_Menu {
 				<div id="mainwp-first-level-navigation-menu" class="ui vertical labeled inverted icon tiny menu">
 				<?php
 
-					$bar_item_actived_key = '';
+				$bar_item_actived_key = '';
 				if ( is_array( $_mainwp_menu_active_slugs ) && isset( $_mainwp_menu_active_slugs[ $plugin_page ] ) ) {
 					$menu_item_actived_key = $_mainwp_menu_active_slugs[ $plugin_page ];
 					if ( isset( $_mainwp_menu_active_slugs['leftbar'] ) && is_array( $_mainwp_menu_active_slugs['leftbar'] ) && isset( $_mainwp_menu_active_slugs['leftbar'][ $menu_item_actived_key ] ) ) {
@@ -553,7 +553,7 @@ class MainWP_Menu {
 					}
 				}
 
-					$bar_item_active = null;
+				$bar_item_active = null;
 
 				if ( is_array( $bar_leftmenu ) && ! empty( $bar_leftmenu ) ) {
 					foreach ( $bar_leftmenu as $item ) {

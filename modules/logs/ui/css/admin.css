@@ -1,0 +1,13 @@
+/* Logs style */
+.mainwp-logs-menu {
+    display: none !important;
+}
+
+.mainwp_page_SettingsDashboardInsights .mainwp-logs-menu {
+    display: inline !important;
+}
+
+#mainwp-module-log-settings-wrapper .log-settings-hidden-field,
+#mainwp-second-level-navigation #SettingsDashboardInsights {
+    display: none !important;
+}

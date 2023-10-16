@@ -250,7 +250,7 @@ class MainWP_Install_Bulk {
 			}
 		}
 		// phpcs:enable WordPress.Security.NonceVerification
-		wp_send_json( $output );
+		mainwp_send_json_output( $output );
 	}
 
 
@@ -294,8 +294,9 @@ class MainWP_Install_Bulk {
 
 		// phpcs:disable WordPress.Security.NonceVerification
 		// Fetch info.
+		$type      = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$post_data = array(
-			'type' => isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '',
+			'type' => $type,
 		);
 		if ( isset( $_POST['activatePlugin'] ) && 'true' == $_POST['activatePlugin'] ) {
 			$post_data['activatePlugin'] = 'yes';
@@ -336,10 +337,11 @@ class MainWP_Install_Bulk {
 
 		$post_data['url'] = isset( $_POST['url'] ) ? wp_json_encode( wp_unslash( $_POST['url'] ) ) : '';
 
-		$output          = new \stdClass();
-		$output->ok      = array();
-		$output->errors  = array();
-		$output->results = array();
+		$output             = new \stdClass();
+		$output->ok         = array();
+		$output->errors     = array();
+		$output->results    = array();
+		$output->other_data = array();
 
 		// phpcs:enable WordPress.Security.NonceVerification
 		/**
@@ -363,6 +365,10 @@ class MainWP_Install_Bulk {
 			null,
 			array( 'upgrade' => true )
 		);
+
+		$output_obj = $output;
+
+		mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $websites, 'install', $output_obj, $type, $post_data );
 
 		/**
 		* Action: mainwp_after_plugin_theme_install
@@ -530,11 +536,12 @@ class MainWP_Install_Bulk {
 			return MainWP_Demo_Handle::get_instance()->handle_action_demo( $website, 'perform_upload', $post_data );
 		}
 
-		$output          = new \stdClass();
-		$output->ok      = array();
-		$output->errors  = array();
-		$output->results = array();
-		$websites        = array( $website );
+		$output             = new \stdClass();
+		$output->ok         = array();
+		$output->errors     = array();
+		$output->results    = array();
+		$output->other_data = array();
+		$websites           = array( $website );
 
 		/**
 		* Action: mainwp_before_plugin_theme_install
@@ -557,6 +564,8 @@ class MainWP_Install_Bulk {
 			null,
 			array( 'upgrade' => true )
 		);
+		$output_obj = $output;
+		mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $websites, 'install', $output_obj, $type, $post_data, true );
 
 		/**
 		* Action: mainwp_after_plugin_theme_install
@@ -626,9 +635,13 @@ class MainWP_Install_Bulk {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 
 			$result = $results[1];
-
 			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			$information = MainWP_System_Utility::get_child_response( base64_decode( $result ) );
+			if ( is_array( $information ) ) {
+				if ( isset( $information['other_data']['install_items'] ) ) {
+					$output->other_data[ $website->id ] = $information['other_data']; // content: install_items themes/plugins.
+				}
+			}
 
 			if ( isset( $information['installation'] ) && 'SUCCESS' == $information['installation'] ) {
 				$output->ok[ $website->id ]      = array( $website->name );

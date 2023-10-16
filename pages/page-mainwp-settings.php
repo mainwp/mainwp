@@ -77,7 +77,7 @@ class MainWP_Settings {
 		add_action( 'mainwp-pagefooter-settings', array( self::get_class_name(), 'render_footer' ) ); // deprecated, use mainwp_pagefooter_settings.
 
 		add_action( 'mainwp_pagefooter_settings', array( self::get_class_name(), 'render_footer' ) );
-		
+
 		add_action( 'admin_init', array( self::get_class_name(), 'admin_init' ) );
 
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );

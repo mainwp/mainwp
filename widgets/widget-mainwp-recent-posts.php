@@ -833,8 +833,10 @@ class MainWP_Recent_Posts {
 					'id'     => $postId,
 				)
 			);
+
 		} catch ( MainWP_Exception $e ) {
-			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
+			$information = array( 'error' => MainWP_Error_Helper::get_error_message( $e ) );
+
 		}
 
 		/**
@@ -845,55 +847,12 @@ class MainWP_Recent_Posts {
 		*/
 		do_action( 'mainwp_after_post_action', $information, $type, $pAction, $postId, $website );
 
-		if ( ! isset( $information['status'] ) || ( 'SUCCESS' != $information['status'] ) ) {
+		mainwp_get_actions_handler_instance()->do_action_mainwp_post_action( $website, $pAction, $information, $postId, $type );
+
+		if ( is_array( $information ) && isset( $information['error'] ) ) {
+			die( wp_json_encode( $information ) );
+		} elseif ( ! isset( $information['status'] ) || ( 'SUCCESS' != $information['status'] ) ) {
 			die( wp_json_encode( array( 'error' => 'Unexpected error!' ) ) );
 		}
 	}
-
-	/**
-	 * Method action_update()
-	 *
-	 * Update Post Action.
-	 *
-	 * @param mixed $pAction Post Action.
-	 *
-	 * @throws \Exception Error message.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_Exception
-	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
-	 */
-	public static function action_update( $pAction ) {
-		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
-		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
-		$post_data = isset( $_POST['post_data'] ) ? wp_unslash( $_POST['post_data'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification
-
-		if ( empty( $postId ) || empty( $websiteId ) ) {
-			die( 'FAIL' );
-		}
-
-		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
-		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
-			die( 'FAIL' );
-		}
-
-		try {
-			$information = MainWP_Connect::fetch_url_authed(
-				$website,
-				'post_action',
-				array(
-					'action'    => $pAction,
-					'id'        => $postId,
-					'post_data' => $post_data,
-				)
-			);
-		} catch ( MainWP_Exception $e ) {
-			die( 'FAIL' );
-		}
-		if ( ! isset( $information['status'] ) || ( 'SUCCESS' != $information['status'] ) ) {
-			die( 'FAIL' );
-		}
-	}
-
 }

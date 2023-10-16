@@ -195,6 +195,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_decrypt_key_value', array( &$this, 'hook_decrypt_key_value' ), 10, 3 );
 		add_action( 'mainwp_delete_key_file', array( &$this, 'hook_delete_key_file' ), 10, 1 );
 		add_filter( 'mainwp_verify_ping_nonce', array( MainWP_Utility::class, 'hook_verify_ping_nonce' ), 10, 3 );
+		add_action( 'mainwp_fetch_url_authed', array( MainWP_Actions_Handler::instance(), 'hook_mainwp_fetch_url_authed' ), 10, 5 );
 	}
 
 	/**
@@ -242,7 +243,7 @@ class MainWP_Hooks {
 	 * MainWP log action.
 	 *
 	 * @param string $text Debug text.
-	 * @param int    $priority priority.
+	 * @param int    $priority priority: -1 disabled, 0 - log, 1 - warning, 2 - info, 3 - debug.
 	 * @param int    $log_color Set color: 0 - LOG, 1 - WARNING, 2 - INFO, 3- DEBUG.
 	 * @param bool   $forced forced logging.
 	 *
@@ -1523,9 +1524,11 @@ class MainWP_Hooks {
 	 *
 	 * @param string $action action name.
 	 * @param string $callback callback function.
+	 * @param int    $priority priority action.
+	 * @param int    $accepted number args.
 	 */
-	public function hook_ajax_add_action( $action, $callback ) {
-		MainWP_Post_Handler::instance()->add_action( $action, $callback );
+	public function hook_ajax_add_action( $action, $callback, $priority = 10, $accepted = 2 ) {
+		MainWP_Post_Handler::instance()->add_action( $action, $callback, $priority, $accepted );
 	}
 
 	/**

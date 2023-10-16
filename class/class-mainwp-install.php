@@ -25,7 +25,14 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '8.985';
+	protected $mainwp_db_version = '9.0.0.4';
+
+	/**
+	 * Protected variable to hold the database option name.
+	 *
+	 * @var string DB version info.
+	 */
+	protected $option_db_key = 'mainwp_db_version';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -65,7 +72,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 */
 	public function install() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		// get_site_option is multisite aware!
-		$currentVersion = get_site_option( 'mainwp_db_version' );
+		$currentVersion = get_site_option( $this->option_db_key );
 
 		if ( empty( $currentVersion ) ) {
 			update_option( 'mainwp_run_quick_setup', 'yes' );
@@ -375,10 +382,19 @@ class MainWP_Install extends MainWP_DB_Base {
 		$this->post_update();
 
 		if ( ! is_multisite() ) {
-			MainWP_Utility::update_option( 'mainwp_db_version', $this->mainwp_db_version );
+			MainWP_Utility::update_option( $this->option_db_key, $this->mainwp_db_version );
 		} else {
-			update_site_option( 'mainwp_db_version', $this->mainwp_db_version );
+			update_site_option( $this->option_db_key, $this->mainwp_db_version );
 		}
+	}
+
+	/**
+	 * Returns the database version.
+	 *
+	 * @return string
+	 */
+	public function get_db_version() {
+		return get_site_option( $this->option_db_key );
 	}
 
 	/**
@@ -391,11 +407,13 @@ class MainWP_Install extends MainWP_DB_Base {
 	public function post_update() {
 
 		// get_site_option is multisite aware!
-		$currentVersion = get_site_option( 'mainwp_db_version' );
+		$currentVersion = get_site_option( $this->option_db_key );
 
 		if ( false == $currentVersion ) {
 			return;
 		}
+
+		$suppress = $this->wpdb->suppress_errors();
 
 		$this->post_update_81( $currentVersion );
 
@@ -405,9 +423,7 @@ class MainWP_Install extends MainWP_DB_Base {
 				'nosslkey',
 			);
 			foreach ( $sslColumns as $col ) {
-				$suppress = $this->wpdb->suppress_errors();
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $col );
-				$this->wpdb->suppress_errors( $suppress );
 			}
 		}
 
@@ -424,16 +440,12 @@ class MainWP_Install extends MainWP_DB_Base {
 			);
 
 			foreach ( $rankColumns as $rankColumn ) {
-				$suppress = $this->wpdb->suppress_errors();
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $rankColumn );
-				$this->wpdb->suppress_errors( $suppress );
 			}
 
 			$syncColumns = array( 'uptodate' );
 			foreach ( $syncColumns as $column ) {
-				$suppress = $this->wpdb->suppress_errors();
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_sync' ) . ' DROP COLUMN ' . $column );
-				$this->wpdb->suppress_errors( $suppress );
 			}
 		}
 
@@ -441,15 +453,11 @@ class MainWP_Install extends MainWP_DB_Base {
 		if ( version_compare( $currentVersion, '8.35', '<' ) ) {
 			$delColumns = array( 'offline_checks' );
 			foreach ( $delColumns as $column ) {
-				$suppress = $this->wpdb->suppress_errors();
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $column );
-				$this->wpdb->suppress_errors( $suppress );
 			}
 			$delColumns = array( 'heatMap' );
 			foreach ( $delColumns as $column ) {
-				$suppress = $this->wpdb->suppress_errors();
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'users' ) . ' DROP COLUMN ' . $column );
-				$this->wpdb->suppress_errors( $suppress );
 			}
 		}
 
@@ -462,9 +470,7 @@ class MainWP_Install extends MainWP_DB_Base {
 		if ( version_compare( $currentVersion, '8.42', '<' ) ) {
 			$delColumns = array( 'offlineChecksOnlineNotification' );
 			foreach ( $delColumns as $column ) {
-				$suppress = $this->wpdb->suppress_errors();
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'users' ) . ' DROP COLUMN ' . $column );
-				$this->wpdb->suppress_errors( $suppress );
 			}
 		}
 
@@ -475,6 +481,7 @@ class MainWP_Install extends MainWP_DB_Base {
 			$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_sync' ) . ' ADD sync_id int NOT NULL AUTO_INCREMENT PRIMARY KEY' );
 		}
 
+		$this->wpdb->suppress_errors( $suppress );
 		MainWP_DB_Client::instance()->check_to_updates_reports_data_861( $currentVersion );
 	}
 
@@ -487,7 +494,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 */
 	public function pre_update_tables() {
 		// get_site_option is multisite aware!
-		$currentVersion = get_site_option( 'mainwp_db_version' );
+		$currentVersion = get_site_option( $this->option_db_key );
 
 		if ( false == $currentVersion ) {
 			return;

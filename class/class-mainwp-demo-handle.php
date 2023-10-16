@@ -62,6 +62,38 @@ class MainWP_Demo_Handle {
 	}
 
 	/**
+	 * Method init_data_demo()
+	 *
+	 * Handle init data mode.
+	 */
+	public function init_data_demo() {
+		if ( isset( $_GET['enable_demo_mode'] ) && 'yes' === $_GET['enable_demo_mode'] ) {
+			$this->import_data_demo();
+			MainWP_Utility::update_option( 'mainwp_enable_guided_tours', 1 );
+			?>
+			<script type="text/javascript">
+				jQuery( document ).ready( function( $ ) {
+					setTimeout(function () {
+						location.href = 'admin.php?page=mainwp_tab&message=enable-demo-mode';
+					}, 100);
+				});
+				
+			</script>
+			<?php
+		}
+	}
+
+	/**
+	 *
+	 * Handle detect if it's instawp site.
+	 */
+	public static function is_instawp_site() {
+		$urlparts = wp_parse_url( home_url() );
+		$domain   = $urlparts['host'];
+		return false !== stripos( $domain, 'instawp.xyz' );
+	}
+
+	/**
 	 * Method import_data_demo()
 	 *
 	 * Handle import data demo.

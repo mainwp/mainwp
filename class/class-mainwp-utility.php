@@ -1303,4 +1303,20 @@ class MainWP_Utility {
 		}
 		return false;
 	}
+
+	/**
+	 * Merge values from right array to left array.
+	 *
+	 * @param  array $left_array left array.
+	 * @param  array $right_array right array.
+	 *
+	 * @return array $result result array.
+	 */
+	public static function right_array_merge( $left_array, $right_array ) {
+		if ( ! is_array( $left_array ) || ! is_array( $right_array ) ) {
+			return array();
+		}
+		$result = array_intersect_key( $right_array, $left_array );
+		return array_merge( $left_array, $result );
+	}
 }

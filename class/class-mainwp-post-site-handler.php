@@ -120,7 +120,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	public function ajax_group_sites_add() {
 		$this->secure_request( 'mainwp_group_sites_add' );
 		// phpcs:disable WordPress.Security.NonceVerification
-		$newName   = sanitize_text_field( wp_unslash( $_POST['newName'] ) );
+		$newName        = sanitize_text_field( wp_unslash( $_POST['newName'] ) );
 		$tmp_color = wp_unslash( $_POST['newColor'] );
 		$newColor  = sanitize_hex_color( $tmp_color );
 		if ( empty( $newColor ) && ! empty( $tmp_color ) ) {
@@ -400,12 +400,25 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	public function manage_suspend_site() {
 		$this->secure_request( 'mainwp_manage_sites_suspend_site' );
 		$siteId    = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification
+		$suspended = isset( $_POST['suspended'] ) && '1' === $_POST['suspended'] ? 1 : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		$newValues = array(
-			'suspended' => isset( $_POST['suspended'] ) && '1' === $_POST['suspended'] ? 1 : 0, // phpcs:ignore WordPress.Security.NonceVerification
+			'suspended' => $suspended,
 		);
 
 		if ( $siteId ) {
-			MainWP_DB::instance()->update_website_values( $siteId, $newValues );
+			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
+			if ( $website && $website->suspended != $suspended ) {
+				MainWP_DB::instance()->update_website_values( $siteId, $newValues );
+				/**
+				 * Fires immediately after website suspended/unsuspend.
+				 *
+				 * @since 4.5.1.1
+				 *
+				 * @param object $website  website data.
+				 * @param int $suspended The new suspended value.
+				 */
+				do_action( 'mainwp_site_suspended', $website, $suspended );
+			}
 			wp_send_json( array( 'result' => 'success' ) );
 		} else {
 			wp_send_json( array( 'error' => 'Error: site id empty' ) );

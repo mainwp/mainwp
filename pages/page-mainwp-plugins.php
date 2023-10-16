@@ -1498,18 +1498,15 @@ class MainWP_Plugins {
 			if ( $website ) {
 				if ( ! $website->is_ignorePluginUpdates ) {
 					$plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
+					if ( ! is_array( $plugin_upgrades ) ) {
+						$plugin_upgrades = array();
+					}
 					$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
 					$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
-
 					if ( is_array( $decodedPremiumUpgrades ) ) {
 						foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 							$premiumUpgrade['premium'] = true;
-
 							if ( 'plugin' === $premiumUpgrade['type'] ) {
-								if ( ! is_array( $plugin_upgrades ) ) {
-									$plugin_upgrades = array();
-								}
-
 								$premiumUpgrade = array_filter( $premiumUpgrade );
 
 								if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {

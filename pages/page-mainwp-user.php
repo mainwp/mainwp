@@ -1408,6 +1408,17 @@ class MainWP_User {
 					'optimize'  => $optimize,
 				)
 			);
+
+			if ( is_array( $information ) && isset( $information['status'] ) && ( 'SUCCESS' === $information['status'] ) ) {
+				$data = isset( $information['other_data']['users_data'] ) ? $information['other_data']['users_data'] : array();  // user actions data.
+	
+				/**
+				 * Fires immediately after user action.
+				 *
+				 * @since 4.5.1.1
+				 */
+				do_action( 'mainwp_user_action', $website, $pAction, $data, $extra, $optimize );
+			}
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
 		}

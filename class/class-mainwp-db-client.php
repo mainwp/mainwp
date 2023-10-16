@@ -93,7 +93,7 @@ class MainWP_DB_Client extends MainWP_DB {
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
-		$tbl = 'CREATE TABLE `' . $this->table_name( 'wp_clients_fields' ) . '` (
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_clients_fields' ) . ' (
 	field_id int(11) NOT NULL auto_increment,
 	field_name varchar(191) NOT NULL DEFAULT "",
 	field_desc varchar(255) NOT NULL DEFAULT "",
@@ -108,7 +108,7 @@ class MainWP_DB_Client extends MainWP_DB {
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
-		$tbl = 'CREATE TABLE `' . $this->table_name( 'wp_clients_field_values' ) . '` (
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_clients_field_values' ) . ' (
 	value_id int(11) NOT NULL auto_increment,
 	field_id int(11) NOT NULL,
 	field_value longtext NOT NULL DEFAULT "",
@@ -117,25 +117,25 @@ class MainWP_DB_Client extends MainWP_DB {
 
 		if ( '' == $currentVersion || version_compare( $currentVersion, '8.61', '<=' ) ) {
 			$tbl .= ',
-		PRIMARY KEY  (`value_id`)  ';
+		PRIMARY KEY  (`value_id`) ';
 		}
 
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
-		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_clients_contacts' ) . " (
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_clients_contacts' ) . ' (
 	contact_id int(11) NOT NULL auto_increment,
 	contact_client_id int(11) NOT NULL,
 	contact_email varchar(191) NOT NULL,
-	contact_image varchar(255) NOT NULL default '',
+	contact_image varchar(255) NOT NULL default "",
 	contact_name varchar(255) NOT NULL,
-	contact_phone varchar(100) NOT NULL default '',
-	contact_role varchar(255) NOT NULL default '',
-	facebook varchar(255) NOT NULL default '',
-	twitter varchar(255) NOT NULL default '',
-	instagram varchar(255) NOT NULL default '',
-	linkedin varchar(255) NOT NULL default '',
-	UNIQUE KEY contact_email(contact_email)";
+	contact_phone varchar(100) NOT NULL default "",
+	contact_role varchar(255) NOT NULL default "",
+	facebook varchar(255) NOT NULL default "",
+	twitter varchar(255) NOT NULL default "",
+	instagram varchar(255) NOT NULL default "",
+	linkedin varchar(255) NOT NULL default "",
+	UNIQUE KEY contact_email(contact_email)';
 
 		if ( '' == $currentVersion || version_compare( $currentVersion, '8.69', '<=' ) ) {
 			$tbl .= ',
@@ -951,6 +951,18 @@ class MainWP_DB_Client extends MainWP_DB {
 			}
 
 			$this->delete_client_contacts_by_client_id( $client_id );
+
+			/**
+			 * Delete client
+			 *
+			 * Fires after delete a client.
+			 *
+			 * @param object $current client deleted.
+			 *
+			 * @since 4.5.1.1
+			 */
+			do_action( 'mainwp_client_deleted', $current );
+
 			return true;
 		}
 		return false;

@@ -1037,6 +1037,18 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 		MainWP_DB_Client::instance()->update_client( $params );
 
+		$client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $clientid );
+
+		/**
+		 * Fires immediately after update client suspend/unsuspend.
+		 *
+		 * @since 4.5.1.1
+		 *
+		 * @param object $client  client data.
+		 * @param bool $suspended true|false.
+		 */
+		do_action( 'mainwp_client_suspend', $client, $suspended );
+
 		MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $clientid, $suspended );
 
 		wp_die( 'success' );

@@ -1601,7 +1601,7 @@ class MainWP_Manage_Sites_List_Table {
 									<?php endif; ?>
 										<span style="display: none" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 							<?php } elseif ( 'phpversion' === $column_name ) { ?>
-								<span data-tooltip="<?php esc_attr_e( 'Detected PHP version.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php echo esc_html( substr( $website['phpversion'], 0, 6 ) ); ?></span>
+								<span data-tooltip="<?php esc_attr_e( 'Detected PHP version.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php echo ! empty( $website['phpversion'] ) ? esc_html( substr( $website['phpversion'], 0, 6 ) ) : ''; ?></span>
 							<?php } elseif ( 'added_datetime' === $column_name ) { ?>
 								<span data-tooltip="<?php esc_attr_e( 'Date the site was connected to the MainWP Dashboard.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php echo ! empty( $website['added_timestamp'] ) ? MainWP_Utility::format_date( MainWP_Utility::get_timestamp( $website['added_timestamp'] ) ) : 'N/A'; ?></span> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
 								<?php } elseif ( 'site_actions' === $column_name ) { ?>

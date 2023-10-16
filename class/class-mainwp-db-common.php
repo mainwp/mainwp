@@ -480,7 +480,20 @@ class MainWP_DB_Common extends MainWP_DB {
 				)
 			)
 			) {
-				return $this->wpdb->insert_id;
+
+				$groupId = $this->wpdb->insert_id;
+
+				$group = $this->get_group_by_id( $groupId );
+
+				/**
+				 * Fires after a new sites tag has been created.
+				 *
+				 * @param object $group group created.
+				 * @param string group action.
+				 */
+				do_action( 'mainwp_site_tag_action', $group, 'created' );
+
+				return $groupId;
 			}
 		}
 

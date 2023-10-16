@@ -53,6 +53,31 @@ class MainWP_Bulk_Add {
 			$result      = $results[1];
 			$information = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
+			if ( is_array( $information ) && isset( $information['other_data']['new_post_data'] ) ) { // created/updated post/page.
+				do_action( 'mainwp_post_created', $website, 'newpost', $information['other_data']['new_post_data'] );
+			}
+
+			if ( is_array( $information ) && isset( $information['other_data']['new_user_data'] ) ) { // created user.
+				$data = $information['other_data']['new_user_data'];
+				/**
+				 * Fires immediately after new user action.
+				 *
+				 * @since 4.5.1.1
+				 */
+				do_action( 'mainwp_user_action', $website, 'created', $data );
+			}
+
+			if ( is_array( $information ) && isset( $information['other_data']['update_admin_password'] ) ) { // created user.
+				$data = $information['other_data']['update_admin_password'];
+				/**
+				 * Fires immediately after update admin password action.
+				 *
+				 * @since 4.5.1.1
+				 */
+				do_action( 'mainwp_user_action', $website, 'newadminpassword', $data );
+			}
+
+
 			if ( isset( $information['added'] ) ) {
 				$output->ok[ $website->id ] = '1';
 				if ( isset( $information['link'] ) ) {

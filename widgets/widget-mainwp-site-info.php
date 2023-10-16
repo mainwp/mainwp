@@ -65,15 +65,18 @@ class MainWP_Site_Info {
 		}
 
 		$child_site_info = array(
-			'wpversion'     => esc_html__( 'WordPress Version', 'mainwp' ),
-			'debug_mode'    => esc_html__( 'Debug Mode', 'mainwp' ),
-			'phpversion'    => esc_html__( 'PHP Version', 'mainwp' ),
-			'child_version' => esc_html__( 'MainWP Child Version', 'mainwp' ),
-			'memory_limit'  => esc_html__( 'PHP Memory Limit', 'mainwp' ),
-			'mysql_version' => esc_html__( 'MySQL Version', 'mainwp' ),
-			'ip'            => esc_html__( 'Server IP', 'mainwp' ),
-			'group'         => esc_html__( 'Tags', 'mainwp' ),
-			'last_status'   => esc_html__( 'Last Check Status', 'mainwp' ),
+			'wpversion'             => esc_html__( 'WordPress Version', 'mainwp' ),
+			'debug_mode'            => esc_html__( 'Debug Mode', 'mainwp' ),
+			'phpversion'            => esc_html__( 'PHP Version', 'mainwp' ),
+			'child_version'         => esc_html__( 'MainWP Child Version', 'mainwp' ),
+			'memory_limit'          => esc_html__( 'PHP Memory Limit', 'mainwp' ),
+			'mysql_version'         => esc_html__( 'MySQL Version', 'mainwp' ),
+			'child_curl_version'    => esc_html__( 'cURL version', 'mainwp' ),
+			'child_openssl_version' => esc_html__( 'OpenSSL version', 'mainwp' ),
+			'ip'                    => esc_html__( 'Server IP', 'mainwp' ),
+			'group'                 => esc_html__( 'Tags', 'mainwp' ),
+			'last_status'           => esc_html__( 'Last Check Status', 'mainwp' ),
+
 		);
 
 		/**

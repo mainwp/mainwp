@@ -839,6 +839,7 @@ class MainWP_Post_Page_Handler {
 					'post_type' => $postType,
 				)
 			);
+
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
 		}
@@ -943,7 +944,7 @@ class MainWP_Post_Page_Handler {
 
 					$linkToReplaceWith = dirname( $localUrl );
 					if ( '' !== $hrefLink ) {
-						$server     = get_option( 'mainwp_child_server' );
+						$server     = $website->url;
 						$serverHost = wp_parse_url( $server, PHP_URL_HOST );
 						if ( ! empty( $serverHost ) && false !== strpos( $hrefLink, $serverHost ) ) {
 							$serverHref               = 'href="' . $serverHost;

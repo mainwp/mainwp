@@ -369,7 +369,11 @@ class MainWP_Settings {
 				$item['title']  = $subPage['title'];
 				$item['href']   = 'admin.php?page=Settings' . $subPage['slug'];
 				$item['active'] = ( $subPage['slug'] == $shownPage ) ? true : false;
-				$renderItems[]  = $item;
+
+				if ( isset( $subPage['class'] ) ) {
+					$item['class'] = $subPage['class'];
+				}
+				$renderItems[] = $item;
 			}
 		}
 
@@ -529,8 +533,6 @@ class MainWP_Settings {
 			return;
 		}
 
-		$updatescheck_today_count = get_option( 'mainwp_updatescheck_today_count' );
-
 		self::render_header( '' );
 		?>
 		<div id="mainwp-general-settings" class="ui segment">
@@ -680,7 +682,7 @@ class MainWP_Settings {
 								</select>
 								<div class="ui hidden divider"></div>
 								<div class="ui label"><?php esc_html_e( 'Last run: ', 'mainwp' ); ?><?php echo esc_html( $lastAutomaticUpdate ); ?></div>
-								<div class="ui label" updatescheck-today-count="<?php echo intval( $updatescheck_today_count ); ?>"><?php esc_html_e( 'Next run: ', 'mainwp' ); ?><?php echo esc_html( $nextAutomaticUpdate ); ?></div>
+								<div class="ui label"><?php esc_html_e( 'Next run: ', 'mainwp' ); ?><?php echo esc_html( $nextAutomaticUpdate ); ?></div>
 							</div>
 						</div>
 						<div class="ui grid field">
@@ -1042,22 +1044,6 @@ class MainWP_Settings {
 	}
 
 	/**
-	 * Check MainWP Installation Hosting Type & System Type.
-	 *
-	 * To compatible.
-	 *
-	 * @return boolean true|false
-	 */
-	public static function is_local_window_config() {
-		$setup_hosting_type = get_option( 'mwp_setup_installationHostingType' );
-		$setup_system_type  = get_option( 'mwp_setup_installationSystemType' );
-		if ( 2 == $setup_hosting_type && 3 == $setup_system_type ) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
 	 * Render Advanced Options Subpage.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
@@ -1095,12 +1081,6 @@ class MainWP_Settings {
 			if ( isset( $_POST['mainwp_openssl_lib_location'] ) ) {
 				$openssl_loc = ! empty( $_POST['mainwp_openssl_lib_location'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_openssl_lib_location'] ) ) : '';
 				MainWP_Utility::update_option( 'mainwp_opensslLibLocation', $openssl_loc );
-				$setup_conf_loc = get_option( 'mwp_setup_opensslLibLocation' );
-				if ( ! empty( $setup_conf_loc ) ) {
-					delete_option( 'mwp_setup_opensslLibLocation' );  // delete old version settings.
-					delete_option( 'mwp_setup_installationHostingType' );
-					delete_option( 'mwp_setup_installationSystemType' );
-				}
 			}
 
 			/**
@@ -1420,7 +1400,8 @@ class MainWP_Settings {
 					<?php
 					$enabled_demo = MainWP_Demo_Handle::is_demo_mode();
 					$is_new       = MainWP_Demo_Handle::get_instance()->is_new_instance();
-					?>
+					if ( ! MainWP_Demo_Handle::is_instawp_site() ) {
+						?>
 					<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php echo esc_html__( 'Demo mode', 'mainwp' ); ?></label>
 							<div class="ten wide column">
@@ -1431,7 +1412,8 @@ class MainWP_Settings {
 								<?php } ?>
 							</div>
 					</div>
-					<?php
+						<?php
+					}
 						/**
 						 * Action: mainwp_tools_form_bottom
 						 *

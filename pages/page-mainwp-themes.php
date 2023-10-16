@@ -1891,7 +1891,7 @@ class MainWP_Themes {
 				<div class="extra content mainwp-theme-lnks">
 					<a href="#" id="mainwp-{{data.slug}}-preview" class="ui mini button mainwp-theme-preview"><?php esc_html_e( 'Preview', 'mainwp' ); ?></a>
 					<div class="ui radio checkbox right floated">
-						<input name="install-theme" type="radio" id="install-theme-{{data.slug}}" title="Install {{data.name}}">
+						<input name="install-theme" type="radio" id="install-theme-{{data.slug}}" title="Install {{data.name}}" theme-name="{{data.name}}" theme-version="{{data.version}}">
 						<label for="install-theme-{{data.slug}}"><?php esc_html_e( 'Install Theme', 'mainwp' ); ?></label>
 					</div>
 				</div>

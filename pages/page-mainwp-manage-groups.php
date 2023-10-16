@@ -552,7 +552,8 @@ class MainWP_Manage_Groups {
 		if ( isset( $_POST['groupId'] ) ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( intval( $_POST['groupId'] ) );
 			if ( ! empty( $group ) ) {
-				$name = isset( $_POST['newName'] ) ? sanitize_text_field( wp_unslash( $_POST['newName'] ) ) : '';
+				$old_name = $group->name;
+				$name     = isset( $_POST['newName'] ) ? sanitize_text_field( wp_unslash( $_POST['newName'] ) ) : '';
 				if ( '' == $name ) {
 					$name = $group->name;
 				}
@@ -573,6 +574,20 @@ class MainWP_Manage_Groups {
 
 				// Reload group.
 				$group = MainWP_DB_Common::instance()->get_group_by_id( $group->id );
+
+				$data = array(
+					'old_name' => $old_name,
+				);
+
+				/**
+				 * Fires after a new sites tag has been created.
+				 *
+				 * @param object $group tag created.
+				 * @param string tag action.
+				 * @param array other data array.
+				 */
+				do_action( 'mainwp_site_tag_action', $group, 'updated', $data );
+
 				die( wp_json_encode( array( 'result' => $group->name ) ) );
 			}
 		}
@@ -594,6 +609,14 @@ class MainWP_Manage_Groups {
 			if ( ! empty( $group ) ) {
 				// Remove from DB.
 				$nr = MainWP_DB_Common::instance()->remove_group( $group->id );
+
+				/**
+				 * Fires after a tag has been deleted.
+				 *
+				 * @param object $group group created.
+				 * @param string group action.
+				 */
+				do_action( 'mainwp_site_tag_action', $group, 'deleted' );
 
 				if ( $nr > 0 ) {
 					die( 'OK' );

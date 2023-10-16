@@ -104,6 +104,35 @@ class MainWP_Updates_Handler {
 
 			$information = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
 
+			// logging feature.
+			$error   = '';
+			$success = false;
+
+			if ( is_array( $information ) ) {
+				if ( isset( $information['upgrade'] ) && ( 'SUCCESS' === $information['upgrade'] ) ) {
+					$success = true;
+				} elseif ( isset( $information['upgrade'] ) ) {
+					$errorMsg = '';
+					if ( 'LOCALIZATION' === $information['upgrade'] ) {
+						$error = esc_html__( 'No update found for the set locale.', 'mainwp' );
+					} elseif ( 'NORESPONSE' === $information['upgrade'] ) {
+						$error = esc_html__( 'No response from the child site server.', 'mainwp' );
+					}
+				} elseif ( isset( $information['error'] ) ) {
+					$error = esc_html( $information['error'] );
+				} else {
+					$error = esc_html__( 'Invalid response from child site.', 'mainwp' );
+				}
+			}
+
+			$output_array = array(
+				'old_version' => isset( $information['old_version'] ) ? $information['old_version'] : '',
+				'version'     => isset( $information['version'] ) ? $information['version'] : '',
+				'success'     => $success ? 1 : 0,
+				'error'       => $error,
+			);
+			mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $output_array, 'core' );
+
 			/**
 			* Action: mainwp_after_wp_update
 			*
@@ -113,7 +142,7 @@ class MainWP_Updates_Handler {
 			*/
 			do_action( 'mainwp_after_wp_update', $information, $website );
 
-				return $information;
+			return $information;
 		}
 		return false;
 	}
@@ -663,20 +692,34 @@ class MainWP_Updates_Handler {
 			}
 			$result = self::update_plugin_theme_translation( $website, $type, $list );
 			if ( is_array( $result ) ) {
-				$undefined = true;
 
-				$tmp = array();
+				$return_results = array();
+
+				// logging feature.
+				$_type = '';
+				if ( 'plugin' === $type || 'theme' === $type ) {
+					$_type = $type;
+				} elseif ( 'translation' === $type ) {
+					$_type = 'trans';
+				}
+
+				if ( ! empty( $_type ) && isset( $result['other_data'] ) ) { // ok.
+					$output_array = $result['other_data']; // updated_data: plugins,themes,trans.
+					mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $output_array, $_type );
+				}
+
+				$undefined = true;
 
 				if ( isset( $result['upgrades_error'] ) ) {
 					foreach ( $result['upgrades_error'] as $k => $v ) {
-						$tmp['result_error'][ rawurlencode( $k ) ] = esc_html( $v );
+						$return_results['result_error'][ rawurlencode( $k ) ] = esc_html( $v );
 					}
 				}
 
 				if ( isset( $result['upgrades'] ) ) {
 					if ( isset( $result['upgrades'] ) ) {
 						foreach ( $result['upgrades'] as $k => $v ) {
-							$tmp['result'][ rawurlencode( $k ) ] = $v;
+							$return_results['result'][ rawurlencode( $k ) ] = $v;
 						}
 					}
 
@@ -685,7 +728,7 @@ class MainWP_Updates_Handler {
 							$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
 							if ( is_array( $plugin_upgrades ) ) {
 								$updated = false;
-								foreach ( $tmp['result'] as $k => $v ) {
+								foreach ( $return_results['result'] as $k => $v ) {
 									$k = rawurldecode( $k );
 									if ( isset( $plugin_upgrades[ $k ] ) ) {
 										unset( $plugin_upgrades[ $k ] ); // updated.
@@ -698,12 +741,12 @@ class MainWP_Updates_Handler {
 							}
 						}
 
-						if ( isset( $tmp['result'] ) && is_array( $tmp['result'] ) && ! empty( $tmp['result'] ) ) {
+						if ( isset( $return_results['result'] ) && is_array( $return_results['result'] ) && ! empty( $return_results['result'] ) ) {
 							$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
 							$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 							if ( is_array( $decodedPremiumUpgrades ) && ! empty( $decodedPremiumUpgrades ) ) {
 								$updated = false;
-								foreach ( $tmp['result'] as $k => $v ) {
+								foreach ( $return_results['result'] as $k => $v ) {
 									$k = rawurldecode( $k );
 									if ( isset( $decodedPremiumUpgrades[ $k ] ) ) {
 										unset( $decodedPremiumUpgrades[ $k ] ); // updated.
@@ -716,7 +759,7 @@ class MainWP_Updates_Handler {
 							}
 						}
 					}
-					return $tmp;
+					return $return_results;
 				} elseif ( isset( $result['error'] ) ) {
 					throw new MainWP_Exception( 'WPERROR', esc_html( $result['error'] ) );
 				} elseif ( isset( $result['notices'] ) ) {

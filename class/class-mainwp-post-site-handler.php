@@ -120,7 +120,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	public function ajax_group_sites_add() {
 		$this->secure_request( 'mainwp_group_sites_add' );
 		// phpcs:disable WordPress.Security.NonceVerification
-		$newName        = sanitize_text_field( wp_unslash( $_POST['newName'] ) );
+		$newName   = sanitize_text_field( wp_unslash( $_POST['newName'] ) );
 		$tmp_color = wp_unslash( $_POST['newColor'] );
 		$newColor  = sanitize_hex_color( $tmp_color );
 		if ( empty( $newColor ) && ! empty( $tmp_color ) ) {

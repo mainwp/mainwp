@@ -361,7 +361,6 @@ class MainWP_Manage_Sites_Handler {
 			 */
 			! $is_demo_wp && do_action( 'mainwp_delete_site', $website );
 
-
 			/**
 			 * Fires immediately after a new website is deleted.
 			 *
@@ -370,7 +369,7 @@ class MainWP_Manage_Sites_Handler {
 			 * @param object   $website  website data.
 			 */
 			! $is_demo_wp && do_action( 'mainwp_site_deleted', $website );
-			
+
 		}
 
 		return $information;

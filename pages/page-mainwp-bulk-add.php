@@ -77,7 +77,6 @@ class MainWP_Bulk_Add {
 				do_action( 'mainwp_user_action', $website, 'newadminpassword', $data );
 			}
 
-
 			if ( isset( $information['added'] ) ) {
 				$output->ok[ $website->id ] = '1';
 				if ( isset( $information['link'] ) ) {

@@ -6,6 +6,7 @@
  * @version 4.5.1
  */
 namespace MainWP\Dashboard\Module\Log;
+
 use \MainWP\Dashboard\MainWP_Includes;
 
 defined( 'ABSPATH' ) || exit;
@@ -30,7 +31,7 @@ class MainWP_Module_Log {
 			Log_Install::instance()->install();
 		}
 	}
-	
+
 	/**
 	 * Load files.
 	 */

@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @package MainWP\Dashboard.
  */
-class Log_Author{
+class Log_Author {
 
 	/**
 	 * Holds User ID.

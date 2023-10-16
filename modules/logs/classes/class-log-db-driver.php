@@ -8,8 +8,8 @@
  namespace MainWP\Dashboard\Module\Log;
 
  /**
- * Interface - Log_DB_Driver
- */
+  * Interface - Log_DB_Driver
+  */
 interface Log_DB_Driver {
 	/**
 	 * Insert a record
@@ -46,7 +46,7 @@ interface Log_DB_Driver {
 	 */
 	public function get_table_names();
 
-	
+
 
 	/**
 	 * Purge storage.

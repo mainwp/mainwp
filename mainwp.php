@@ -48,7 +48,6 @@ if ( ! defined( 'MAINWP_PLUGIN_URL' ) ) {
 
 /**
  * Define enable Log Module.
- *
  */
 if ( ! defined( 'MAINWP_MODULE_LOG_ENABLED' ) ) {
 	define( 'MAINWP_MODULE_LOG_ENABLED', true );

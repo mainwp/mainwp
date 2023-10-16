@@ -110,7 +110,7 @@ class Connector_User extends Log_Connector {
 			);
 
 			if ( 'created' === $pAction ) {
-				$action  = 'created';
+				$action = 'created';
 			} elseif ( 'delete' === $pAction ) {
 				$action = 'delete';
 			} elseif ( 'changeRole' === $pAction ) {

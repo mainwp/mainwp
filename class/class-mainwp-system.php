@@ -122,9 +122,9 @@ class MainWP_System {
 		MainWP_Execution_Helper::instance()->init_exec_time();
 
 		new MainWP_Includes();
-		
+
 		MainWP_Keys_Manager::auto_load_files();
-		
+
 		$this->load_all_options();
 
 		if ( MainWP_Includes::is_enable_log_module() && class_exists( '\MainWP\Dashboard\Module\Log\Log_Manager' ) ) {

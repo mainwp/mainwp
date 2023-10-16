@@ -110,20 +110,20 @@ class Log_Record {
 	 * @param object $item  Record data object.
 	 */
 	public function __construct( $item ) {
-		$this->log_id         = isset( $item->log_id ) ? $item->log_id : null;
-		$this->created        = isset( $item->created ) ? $item->created : null;
-		$this->site_id        = isset( $item->site_id ) ? $item->site_id : null;
-		$this->name           = isset( $item->name ) ? $item->name : null;
-		$this->url            = isset( $item->url ) ? $item->url : null;
-		$this->user_id        = isset( $item->user_id ) ? $item->user_id : null;
-		$this->user_meta      = isset( $item->meta['user_meta'] ) ? $item->meta['user_meta'] : null;
-		$this->item           = isset( $item->item ) ? $item->item : null;
-		$this->connector      = isset( $item->connector ) ? $item->connector : null;
-		$this->context        = isset( $item->context ) ? $item->context : null;
-		$this->action         = isset( $item->action ) ? $item->action : null;
-		$this->state          = isset( $item->state ) ? $item->state : null;
-		$this->duration       = isset( $item->duration ) ? $item->duration : null;
-		$this->meta           = isset( $item->meta ) ? $item->meta : null;
+		$this->log_id    = isset( $item->log_id ) ? $item->log_id : null;
+		$this->created   = isset( $item->created ) ? $item->created : null;
+		$this->site_id   = isset( $item->site_id ) ? $item->site_id : null;
+		$this->name      = isset( $item->name ) ? $item->name : null;
+		$this->url       = isset( $item->url ) ? $item->url : null;
+		$this->user_id   = isset( $item->user_id ) ? $item->user_id : null;
+		$this->user_meta = isset( $item->meta['user_meta'] ) ? $item->meta['user_meta'] : null;
+		$this->item      = isset( $item->item ) ? $item->item : null;
+		$this->connector = isset( $item->connector ) ? $item->connector : null;
+		$this->context   = isset( $item->context ) ? $item->context : null;
+		$this->action    = isset( $item->action ) ? $item->action : null;
+		$this->state     = isset( $item->state ) ? $item->state : null;
+		$this->duration  = isset( $item->duration ) ? $item->duration : null;
+		$this->meta      = isset( $item->meta ) ? $item->meta : null;
 
 		if ( isset( $this->meta['user_meta'] ) ) {
 			unset( $this->meta['user_meta'] );

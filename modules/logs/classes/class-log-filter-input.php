@@ -2,7 +2,7 @@
 
 /**
  * Processes form input.
- * 
+ *
  * @package MainWP/Dashboard
  */
  namespace MainWP\Dashboard\Module\Log;

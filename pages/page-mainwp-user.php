@@ -1411,7 +1411,7 @@ class MainWP_User {
 
 			if ( is_array( $information ) && isset( $information['status'] ) && ( 'SUCCESS' === $information['status'] ) ) {
 				$data = isset( $information['other_data']['users_data'] ) ? $information['other_data']['users_data'] : array();  // user actions data.
-	
+
 				/**
 				 * Fires immediately after user action.
 				 *

@@ -101,14 +101,14 @@ abstract class Log_Connector {
 		if ( ! $data ) {
 			return false;
 		} else {
-			$connector      = $data['connector'];
-			$message        = $data['message'];
-			$args           = $data['args'];
-			$site_id        = $data['site_id'];
-			$context        = $data['context'];
-			$action         = $data['action'];
-			$user_id        = $data['user_id'];
-			$state          = $data['state'];
+			$connector = $data['connector'];
+			$message   = $data['message'];
+			$args      = $data['args'];
+			$site_id   = $data['site_id'];
+			$context   = $data['context'];
+			$action    = $data['action'];
+			$user_id   = $data['user_id'];
+			$state     = $data['state'];
 		}
 		$created_timestamp = null;
 		return call_user_func_array( array( Log_Manager::instance()->log, 'log' ), compact( 'connector', 'message', 'args', 'site_id', 'context', 'action', 'state', 'user_id' ) );

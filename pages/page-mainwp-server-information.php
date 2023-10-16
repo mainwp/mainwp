@@ -245,7 +245,7 @@ class MainWP_Server_Information {
 		global $_mainwp_menu_active_slugs;
 
 		$_mainwp_menu_active_slugs['ActionLogs'] = 'ServerInformation';
-		
+
 		$init_sub_subleftmenu = array(
 			array(
 				'title'      => esc_html__( 'Server', 'mainwp' ),

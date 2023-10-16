@@ -211,7 +211,7 @@ class MainWP_Sync {
 		);
 
 		$_error = $sync_errors;
-		
+
 		$done = false;
 
 		$current_siteid = 0;
@@ -287,7 +287,7 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['plugin_updates'] ) ) {
-			$update_values    = array();
+			$update_values = array();
 			if ( is_array( $information['plugin_updates'] ) ) {
 				foreach ( $information['plugin_updates'] as $file => $update ) {
 					$update_values[ $file ] = $update;
@@ -298,7 +298,7 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['theme_updates'] ) ) {
-			$update_values    = array();
+			$update_values = array();
 			if ( is_array( $information['theme_updates'] ) ) {
 				foreach ( $information['theme_updates'] as $file => $update ) {
 					$update_values[ $file ] = $update;
@@ -519,12 +519,12 @@ class MainWP_Sync {
 				MainWP_Logger::instance()->warning_for_website( $pWebsite, 'SYNC ERROR', '[' . esc_html( $information['error'] ) . ']' );
 				$error                            = true;
 				$done                             = true;
-				$_error = esc_html__( 'ERROR: ', 'mainwp' ) . esc_html( $information['error'] );
+				$_error                           = esc_html__( 'ERROR: ', 'mainwp' ) . esc_html( $information['error'] );
 				$websiteSyncValues['sync_errors'] = $_error;
 			} elseif ( ! empty( $sync_errors ) ) {
 				MainWP_Logger::instance()->warning_for_website( $pWebsite, 'SYNC ERROR', '[' . $sync_errors . ']' );
 				$_error = $sync_errors;
-				$error = true;
+				$error  = true;
 				if ( ! $pAllowDisconnect ) {
 					$sync_errors = '';
 				}
@@ -536,14 +536,14 @@ class MainWP_Sync {
 				if ( $pAllowDisconnect ) {
 					$sync_errors                      = esc_html__( 'Undefined error! Please, reinstall the MainWP Child plugin on the child site.', 'mainwp' );
 					$websiteSyncValues['sync_errors'] = $sync_errors;
-					$_error = $sync_errors;
+					$_error                           = $sync_errors;
 				}
 			}
 		}
 
 		$act_success = false;
 		if ( $done ) {
-			$act_success = true;
+			$act_success                  = true;
 			$websiteSyncValues['dtsSync'] = time();
 		}
 		MainWP_DB::instance()->update_website_sync_values( $pWebsite->id, $websiteSyncValues );

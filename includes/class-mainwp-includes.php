@@ -29,7 +29,7 @@ class MainWP_Includes {
 		$this->includes();
 	}
 
-	
+
 	/**
 	 * Check if enable log module.
 	 */

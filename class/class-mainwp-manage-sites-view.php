@@ -1732,7 +1732,6 @@ class MainWP_Manage_Sites_View {
 					$output
 				);
 
-				
 				$fetch_data = isset( $output['fetch_data'] ) ? $output['fetch_data'] : '';
 
 				if ( isset( $information['error'] ) && '' !== $information['error'] ) {

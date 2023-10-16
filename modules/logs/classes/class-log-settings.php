@@ -104,7 +104,7 @@ class Log_Settings {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable insights logging', 'mainwp' ); ?></label>
 							<div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will enable logging.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-								<input type="checkbox" name="mainwp_module_log_enabled" id="mainwp_module_log_enabled" <?php echo ( $enabled ? 'checked="true"' : '' ); ?> /><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
+								<input type="checkbox" name="mainwp_module_log_enabled" id="mainwp_module_log_enabled" <?php echo ( $enabled ? 'checked="true"' : '' ); ?> /><label><?php esc_html_e( 'Default: Enabled', 'mainwp' ); ?></label>
 							</div>
 						</div>
 						<?php $hide_field_class = 'log-settings-hidden-field'; ?>

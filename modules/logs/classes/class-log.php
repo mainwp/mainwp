@@ -91,7 +91,7 @@ class Log {
 			$user_meta['system_user_name'] = (string) $user_info['name'];
 		}
 
-		$dura = isset( $args['duration'] ) ? intval( $args['duration'] ) : $this->manager->executor->get_exec_time();
+		$dura = isset( $args['duration'] ) ? floatval( $args['duration'] ) : $this->manager->executor->get_exec_time();
 
 		if ( isset( $args['duration'] ) ) {
 			unset( $args['duration'] );
@@ -128,7 +128,7 @@ class Log {
 			'context'   => (string) $context,
 			'action'    => (string) $action,
 			'duration'  => $dura,
-			'created'   => strtotime( current_time( 'Y-m-d H:i:s' ) ),
+			'created'   => time(),
 			'state'     => $state,
 			'meta'      => (array) $logs_meta,
 		);

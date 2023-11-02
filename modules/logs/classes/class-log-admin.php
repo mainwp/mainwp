@@ -275,7 +275,7 @@ class Log_Admin {
 
 		global $wpdb;
 
-		$end_time   = strtotime( current_time( 'Y-m-d' ) . ' 00:00:00' );
+		$end_time   = time();
 		$start_time = $end_time - $days * DAY_IN_SECONDS;
 
 		$this->manager->db->create_compact_and_erase_records( $start_time, $end_time );

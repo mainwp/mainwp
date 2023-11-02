@@ -404,6 +404,12 @@ class MainWP_Rest_Api_Page {
 		}
 		self::render_header();
 		self::render_table_top();
+		if ( ! self::check_rest_api_enabled() ) {
+			?>
+			<div class="ui message yellow"><?php echo sprintf( esc_html__( 'It seems the WordPress REST API is currently disabled on your site. MainWP REST API requires the WordPress REST API to function properly. Please enable it to ensure smooth operation. Need help? %sClick here for a guide%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/wordpress-rest-api-does-not-respond/" target="_blank">', '</a>' ); ?></div>
+			<?php
+		}
+
 		?>
 		<div id="mainwp-rest-api-keys" class="ui segment">
 			<div class="ui message" id="mainwp-message-zone-apikeys" style="display:none;"></div>
@@ -817,4 +823,56 @@ class MainWP_Rest_Api_Page {
 		<?php
 		self::render_footer( 'Edit' );
 	}
+
+	/**
+	 * Method check_rest_api_enabled().
+	 *
+	 * @param bool $check_logged_in check for logged in user or not.
+	 *
+	 * @return bool check result.
+	 */
+	public static function check_rest_api_enabled( $check_logged_in = false ) {
+		$cookies = array();
+		if ( $check_logged_in ) {
+			if ( is_user_logged_in() && defined( 'LOGGED_IN_COOKIE' ) ) {
+				$cookies      = array();
+				$auth_cookies = wp_parse_auth_cookie( $_COOKIE[ LOGGED_IN_COOKIE ], 'logged_in' ); // phpcs:ignore -- ok.
+				if ( is_array( $auth_cookies ) ) {
+					foreach ( $auth_cookies as $name => $value ) {
+						$cookies[] = new \WP_Http_Cookie(
+							array(
+								'name'  => $name,
+								'value' => $value,
+							)
+						);
+					}
+				}
+			}
+		}
+
+		$args = array(
+			'method'  => 'GET',
+			'timeout' => 45,
+			'headers' => array(
+				'content-type' => 'application/json',
+			),
+		);
+
+		if ( $check_logged_in && ! empty( $cookies ) ) {
+			$args['cookies'] = $cookies;
+		}
+
+		$site_url = get_option( 'siteurl' );
+		$response = wp_remote_post( $site_url . '/wp-json', $args );
+		$body     = wp_remote_retrieve_body( $response );
+		$data     = is_string( $body ) ? json_decode( $body, true ) : false;
+
+		if ( is_array( $data ) & isset( $data['routes'] ) && ! empty( $data['routes'] ) ) {
+			return true;
+		} elseif ( ! $check_logged_in ) {
+			return self::check_rest_api_enabled( true );
+		}
+		return false;
+	}
+
 }

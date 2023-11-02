@@ -4,7 +4,7 @@ Tags: Manage Multiple Sites, Maintenance, Client, Admin, Update, Monitoring, Das
 Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
-Requires at least: 5.4
+Requires at least: 6.2
 Tested up to: 6.3.2
 Requires PHP: 7.4
 Stable tag: 4.5.2
@@ -20,6 +20,8 @@ The [MainWP WordPress Manager](https://mainwp.com) Dashboard plugin allows you t
 🎉 Over 600k WordPress sites are being managed by 20k active dashboards.
 
 And, MainWP is the only WordPress sites management plugin with **over 2000** ⭐⭐⭐⭐⭐ reviews on wp.org. Additionally, [here's](https://mainwp.com/love/) what our users have to say about MainWP.
+
+[Try the Live Demo](https://mainwp.com/live-demo/)
 
 == How is MainWP different from ManageWP and other SaaS WordPress Management plugins? ==
 
@@ -305,6 +307,8 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Added: cURL Version info in the Site Info widget
 * Added: OpenSSL Version info in the Site Info widget
 
+[See Video Changelog](https://www.youtube.com/watch?v=6rA2Ub0xYxU)
+
 = 4.5.1.3 - 9-27-2023 =
 * Fixed: An issue with processing MainWP cron events
 * Fixed: An issue with reconnecting disconnected sites
@@ -316,6 +320,8 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: Default page length in the Non-MainWP Changes widget
 * Updated: Tag options fields sanitation
 * Tweaked: Basic button border replaced with inset shadow in the dark theme
+
+[See Video Changelog](https://www.youtube.com/watch?v=WVpwmcUe1y4)
 
 = 4.5.1.2 - 9-14-2023 =
 * Fixed: An issue with menu items overlapping on smaller screens

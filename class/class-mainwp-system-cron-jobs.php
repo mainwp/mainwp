@@ -588,6 +588,7 @@ class MainWP_System_Cron_Jobs {
 			if ( $updatecheck_running ) {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_is_running', '' );
 				$updatecheck_running = false;
+				do_action( 'mainwp_synced_all_sites' );
 			}
 
 			update_option( 'mainwp_last_synced_all_sites', time() );

@@ -306,6 +306,8 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Added: A verification check for the WordPress REST API to ensure it is not inadvertently disabled, maintaining necessary functionality.
 * Added: The `mainwp_synced_all_sites` action hook within the update check process.
 
+[See Video Changelog](https://www.youtube.com/watch?v=TA2YSualmkQ)
+
 = 4.5.2 - 10-16-2023 =
 * Added: Dashboard Insights logging
 * Added: cURL Version info in the Site Info widget

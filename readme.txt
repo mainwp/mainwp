@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.3.2
 Requires PHP: 7.4
-Stable tag: 4.5.2
+Stable tag: 4.5.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -301,6 +301,10 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 10. Manage Clients Screen
 
 == Changelog ==
+
+= 4.5.3 - 11-6-2023 =
+* Added: A verification check for the WordPress REST API to ensure it is not inadvertently disabled, maintaining necessary functionality.
+* Added: The `mainwp_synced_all_sites` action hook within the update check process.
 
 = 4.5.2 - 10-16-2023 =
 * Added: Dashboard Insights logging

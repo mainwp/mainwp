@@ -953,28 +953,47 @@ class MainWP_System_Utility {
 			return false;
 		}
 
-		$info = self::get_plugin_theme_info(
-			$type,
-			array(
-				'slug'    => $slug,
-				'fields'  => $fields,
-				'timeout' => 60,
-			)
-		);
-
-		$option_name = 'plugins_icons';
-
 		$icon = '';
-		if ( 'plugin' === $type ) {
-			if ( is_object( $info ) && property_exists( $info, 'icons' ) && isset( $info->icons['1x'] ) ) {
-				$icon = $info->icons['1x'];
+		if ( 'theme' === $type ) {
+			// with $fields empty to get screenshot_url of theme.
+			$info = self::get_plugin_theme_info(
+				$type,
+				array(
+					'slug'    => $slug,
+					'timeout' => 60,
+				)
+			);
+			if ( is_object( $info ) && ! empty( $info->screenshot_url ) ) {
+				$icon = $info->screenshot_url;
 			}
-		} else {
-			if ( is_object( $info ) && property_exists( $info, 'screenshots' ) && isset( $info->screenshots[0] ) ) {
-				$icon = $info->screenshots[0];
-			}
-			$option_name = 'themes_icons';
 		}
+
+		// if get screenshot_url of theme success.
+		if ( ! empty( $icon ) ) {
+			$option_name = 'themes_icons';
+		} else {
+			$info        = self::get_plugin_theme_info(
+				$type,
+				array(
+					'slug'    => $slug,
+					'fields'  => $fields,
+					'timeout' => 60,
+				)
+			);
+			$option_name = 'plugins_icons';
+			$icon        = '';
+			if ( 'plugin' === $type ) {
+				if ( is_object( $info ) && property_exists( $info, 'icons' ) && isset( $info->icons['1x'] ) ) {
+					$icon = $info->icons['1x'];
+				}
+			} else {
+				if ( is_object( $info ) && property_exists( $info, 'screenshots' ) && isset( $info->screenshots[0] ) ) {
+					$icon = $info->screenshots[0];
+				}
+				$option_name = 'themes_icons';
+			}
+		}
+
 		$fetched_icon = '';
 		if ( '' !== $icon ) {
 			$fetched_icon = rawurlencode( $icon );
@@ -1166,7 +1185,10 @@ class MainWP_System_Utility {
 				}
 			}
 
-			if ( time() > ( intval( $cached_icons[ $slug ]['lasttime_cached'] ) + $cached_days * DAY_IN_SECONDS ) ) { // expired.
+			$forced_exprided = 1700238511;
+			$lasttime_cached = isset( $cached_icons[ $slug ]['lasttime_cached'] ) ? intval( $cached_icons[ $slug ]['lasttime_cached'] ) : 0;
+			
+			if ( time() > ( $lasttime_cached + $cached_days * DAY_IN_SECONDS ) || $lasttime_cached < $forced_exprided  ) { // expired.
 				if ( ! empty( $scr ) ) {
 					$icon = '<img style="display:inline-block" class="ui mini circular image ' . ( $is_custom_icon ? $cls_uploadable : $cls_expired ) . '" ' . $attr_slug . 'src="' . esc_attr( $scr ) . '"/>'; // to update expired icon.
 				} else {

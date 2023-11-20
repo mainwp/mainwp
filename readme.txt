@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 6.3.2
+Tested up to: 6.4.1
 Requires PHP: 7.4
-Stable tag: 4.5.3
+Stable tag: 4.5.3.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -301,6 +301,13 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 10. Manage Clients Screen
 
 == Changelog ==
+
+= 4.5.3.1 - 11-20-2023 =
+* Fixed: Rendering inconsistency for Theme icons when the Screenshot image utilizes JPG format.
+* Updated: The required WordPress version information displayed on the Info > Server page to ensure accuracy and current standards.
+* Updated: The minimum PHP Memory Limit to 256MB displayed on the Info > Server page, aligning with optimal performance requirements.
+
+[See Video Changelog](https://www.youtube.com/watch?v=xrAXXLyvI_E)
 
 = 4.5.3 - 11-6-2023 =
 * Added: A verification check for the WordPress REST API to ensure it is not inadvertently disabled, maintaining necessary functionality.

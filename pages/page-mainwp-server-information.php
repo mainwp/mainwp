@@ -588,7 +588,7 @@ class MainWP_Server_Information {
 	 * @return void
 	 */
 	public static function render_wordpress_check_tbody() {
-		self::render_row( 'WordPress Version', '>=', '3.6', 'get_wordpress_version', '', '', null, null, self::ERROR );
+		self::render_row( 'WordPress Version', '>=', '6.2', 'get_wordpress_version', '', '', null, null, self::ERROR );
 		self::render_row( 'WordPress Memory Limit', '>=', '64M', 'get_wordpress_memory_limit', '', '', null );
 		self::render_row( 'MultiSite Disabled', '=', true, 'check_if_multisite', '', '', null );
 		?>
@@ -611,7 +611,7 @@ class MainWP_Server_Information {
 		self::render_row( 'PHP Safe Mode Disabled', '=', true, 'get_php_safe_mode', '', '', null );
 		self::render_row( 'PHP Max Execution Time', '>=', '30', 'get_max_execution_time', 'seconds', '=', '0' );
 		self::render_row( 'PHP Max Input Time', '>=', '30', 'get_max_input_time', 'seconds', '=', '0' );
-		self::render_row( 'PHP Memory Limit', '>=', '128M', 'get_php_memory_limit', '', '', null, 'filesize' );
+		self::render_row( 'PHP Memory Limit', '>=', '256M', 'get_php_memory_limit', '', '', null, 'filesize' );
 		self::render_row( 'PCRE Backtracking Limit', '>=', '10000', 'get_output_buffer_size', '', '', null );
 		self::render_row( 'PHP Upload Max Filesize', '>=', '2M', 'get_upload_max_filesize', '', '', null, 'filesize' );
 		self::render_row( 'PHP Post Max Size', '>=', '2M', 'get_post_max_size', '', '', null, 'filesize' );
@@ -912,7 +912,7 @@ class MainWP_Server_Information {
 			</thead>
 			<tbody>
 				<?php
-				self::render_row_with_description( esc_html__( 'PHP Version', 'mainwp' ), '>=', '7.0', 'get_php_version', '', '', null );
+				self::render_row_with_description( esc_html__( 'PHP Version', 'mainwp' ), '>=', '7.4', 'get_php_version', '', '', null );
 				self::render_row_with_description( esc_html__( 'SSL Extension Enabled', 'mainwp' ), '=', true, 'get_ssl_support', '', '', null );
 				self::render_row_with_description( esc_html__( 'cURL Extension Enabled', 'mainwp' ), '=', true, 'get_curl_support', '', '', null );
 				$openssl_version = 'OpenSSL/1.1.0';

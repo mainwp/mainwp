@@ -1187,8 +1187,8 @@ class MainWP_System_Utility {
 
 			$forced_exprided = 1700238511;
 			$lasttime_cached = isset( $cached_icons[ $slug ]['lasttime_cached'] ) ? intval( $cached_icons[ $slug ]['lasttime_cached'] ) : 0;
-			
-			if ( time() > ( $lasttime_cached + $cached_days * DAY_IN_SECONDS ) || $lasttime_cached < $forced_exprided  ) { // expired.
+
+			if ( time() > ( $lasttime_cached + $cached_days * DAY_IN_SECONDS ) || $lasttime_cached < $forced_exprided ) { // expired.
 				if ( ! empty( $scr ) ) {
 					$icon = '<img style="display:inline-block" class="ui mini circular image ' . ( $is_custom_icon ? $cls_uploadable : $cls_expired ) . '" ' . $attr_slug . 'src="' . esc_attr( $scr ) . '"/>'; // to update expired icon.
 				} else {

@@ -28,6 +28,8 @@
                 
 		<!-- Disable Strict comparison in array check. Not applicable in the mojority of cases. -->               
 		<exclude name="WordPress.PHP.StrictInArray"/>
+		
+		<exclude name="Generic.Commenting.Todo.CommentFound"/>
 	</rule>
-	
+
 </ruleset>

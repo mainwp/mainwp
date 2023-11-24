@@ -141,7 +141,7 @@ class MainWP_Client_Handler {
 	public static function get_mini_default_client_fields() {
 
 		return array(
-			'client.name' => array(
+			'client.name'  => array(
 				'title'    => esc_html__( 'Client Name (Required)', 'mainwp' ),
 				'desc'     => esc_html__( 'Displays the Client name', 'mainwp' ),
 				'db_field' => 'name',

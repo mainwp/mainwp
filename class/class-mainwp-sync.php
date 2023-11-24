@@ -276,8 +276,8 @@ class MainWP_Sync {
 				'wp_upgrades',
 				wp_json_encode(
 					array(
-						'current'         => $information['wpversion'],
-						'new'             => $information['wp_updates'],
+						'current' => $information['wpversion'],
+						'new'     => $information['wp_updates'],
 					)
 				)
 			);

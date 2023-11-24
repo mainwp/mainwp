@@ -406,7 +406,7 @@ class MainWP_Rest_Api_Page {
 		self::render_table_top();
 		if ( ! self::check_rest_api_enabled() ) {
 			?>
-			<div class="ui message yellow"><?php echo sprintf( esc_html__( 'It seems the WordPress REST API is currently disabled on your site. MainWP REST API requires the WordPress REST API to function properly. Please enable it to ensure smooth operation. Need help? %sClick here for a guide%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/wordpress-rest-api-does-not-respond/" target="_blank">', '</a>' ); ?></div>
+			<div class="ui message yellow"><?php echo sprintf( esc_html__( 'It seems the WordPress REST API is currently disabled on your site. MainWP REST API requires the WordPress REST API to function properly. Please enable it to ensure smooth operation. Need help? %1$sClick here for a guide%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/wordpress-rest-api-does-not-respond/" target="_blank">', '</a>' ); ?></div>
 			<?php
 		}
 

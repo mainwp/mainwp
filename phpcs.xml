@@ -5,6 +5,12 @@
     <!-- Check all PHP files in directory tree by default. -->
     <file>.</file>
 	
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/bin/*</exclude-pattern>
+	<exclude-pattern>*/.github/*</exclude-pattern>
+	<exclude-pattern>*/tests/*</exclude-pattern>
+	<exclude-pattern>libs/</exclude-pattern>
+
     <arg value="sp" />
 	<arg name="extensions" value="php" />
 	<arg name="basepath" value="." />
@@ -15,11 +21,13 @@
 
 	<!-- Rules -->
 	<rule ref="WordPress" />
+		<exclude name="WordPress.NamingConventions.ValidVariableName"/>
+		<exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition"/>
+		<!-- Disable Strict comparison check. Not applicable in the mojority of cases. -->
+		<exclude name="WordPress.PHP.StrictComparisons"/>
+                
+		<!-- Disable Strict comparison in array check. Not applicable in the mojority of cases. -->               
+		<exclude name="WordPress.PHP.StrictInArray"/>
+	</rule>
 	
-	<exclude-pattern>*/vendor/*</exclude-pattern>
-	<exclude-pattern>*/bin/*</exclude-pattern>
-	<exclude-pattern>*/.github/*</exclude-pattern>
-	<exclude-pattern>*/tests/*</exclude-pattern>
-	<exclude-pattern>libs/</exclude-pattern>
-
 </ruleset>

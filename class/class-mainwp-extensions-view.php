@@ -518,13 +518,11 @@ class MainWP_Extensions_View {
 				<?php if ( $active ) : ?>
 					<div class="extra content" id="mainwp-extensions-api-form" style="display: none;">
 						<div class="ui form">
-							
 							<div class="field">
 								<div class="ui input fluid">
 									<input type="text" class="extension-api-key" placeholder="<?php esc_attr_e( 'API license key', 'mainwp' ); ?>" value="<?php echo esc_attr( $extension['api_key'] ); ?>"/>
 								</div>
 							</div>
-							
 							<div class="field">
 								<div class="ui checkbox">
 									<input type="checkbox" id="extension-deactivate-cb" class="mainwp-extensions-deactivate-chkbox" <?php echo 'on' === $extension['deactivate_checkbox'] ? 'checked' : ''; ?>>

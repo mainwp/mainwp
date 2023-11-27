@@ -91,21 +91,10 @@ abstract class MainWP_Post_Base_Handler {
 		if ( - 1 === $action ) {
 			$secure = false;
 		} else {
-			$adminurl = strtolower( admin_url() );
-			$referer  = strtolower( wp_get_referer() );
 			$result   = isset( $_REQUEST[ $query_arg ] ) ? wp_verify_nonce( sanitize_key( $_REQUEST[ $query_arg ] ), $action ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
 			if ( ! $result ) {
 				$secure = false;
-			}
-
-			$is_admin_referer          = ( 0 === strpos( $referer, $adminurl ) ) ? true : false;
-			$admin_referer_is_accepted = apply_filters( 'mainwp_secure_check_admin_referer_is_accepted', true );
-
-			if ( ! $secure ) {
-				if ( $is_admin_referer & $admin_referer_is_accepted ) {
-					$secure = true;
-				}
 			}
 		}
 

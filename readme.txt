@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.4.1
 Requires PHP: 7.4
-Stable tag: 4.5.3.1
+Stable tag: 4.5.3.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -301,6 +301,19 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 10. Manage Clients Screen
 
 == Changelog ==
+
+= 4.5.3.2 - 11-27-2023 =
+* Fixed: An issue where the SEOPress for MainWP extension was incorrectly marked as not installed in the Install Extensions modal.
+* Fixed: The sorting mechanism in the Error Log table to ensure accurate row ordering.
+* Added: An "All" option to the Error Log table length menu for comprehensive viewing.
+* Added: A feature to preserve the Error Log table's user-configured settings for a consistent user experience.
+* Added: A "Client" selection option in the "Add New" dropdown of the header element, enhancing user navigation.
+* Added: A ribbon label indicator on the extension card to signal when an extension's license is not activated, providing clearer license status visibility.
+* Tweaked: The extension card element by removing the redundant license key input field, simplifying the user interface.
+* Tweaked: The unnecessary "Activate License" button in the extension card element to reduce interface clutter.
+* Tweaked: The license management button icon in the extension card element's button group for a more intuitive user experience.
+* Security: Improved request validation in AJAX requests.
+* Security: Enhanced security in the sync logic by ensuring proper sanitization of certain parameters.
 
 = 4.5.3.1 - 11-20-2023 =
 * Fixed: Rendering inconsistency for Theme icons when the Screenshot image utilizes JPG format.

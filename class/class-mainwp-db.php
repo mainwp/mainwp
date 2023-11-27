@@ -1329,6 +1329,15 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 
 		if ( is_array( $allowed_sites ) && 0 < count( $allowed_sites ) ) {
+
+			// valid group ids.
+			$allowed_sites = array_filter(
+				$allowed_sites,
+				function( $e ) {
+					return is_numeric( $e ) ? true : false;
+				}
+			);
+
 			$_where .= ' AND ' . $site_table_alias . '.id IN (' . implode( ',', $allowed_sites ) . ') ';
 		} else {
 			$_where .= ' AND 0 ';
@@ -1393,6 +1402,15 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 
 		if ( is_array( $allowed_groups ) && 0 < count( $allowed_groups ) ) {
+
+			// valid group ids.
+			$allowed_groups = array_filter(
+				$allowed_groups,
+				function( $e ) {
+					return is_numeric( $e ) ? true : false;
+				}
+			);
+
 			return ' AND ' . $group_table_alias . '.id IN (' . implode( ',', $allowed_groups ) . ') ' . $_where;
 		} else {
 			return ' AND 0 ';
@@ -1507,7 +1525,15 @@ class MainWP_DB extends MainWP_DB_Base {
 			$userId = $current_user->ID;
 		}
 
-		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid WHERE wpgroup.groupid IN (' . implode( ',', $ids ) . ') ' . ( null != $userId ? ' AND wp.userid = ' . $userId : '' ), OBJECT );
+		// valid group ids.
+		$group_ids = array_filter(
+			$ids,
+			function( $e ) {
+				return is_numeric( $e ) ? true : false;
+			}
+		);
+
+		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid WHERE wpgroup.groupid IN (' . implode( ',', $group_ids ) . ') ' . ( null != $userId ? ' AND wp.userid = ' . $userId : '' ), OBJECT );
 	}
 
 	/**

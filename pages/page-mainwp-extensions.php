@@ -493,7 +493,7 @@ class MainWP_Extensions {
 				$new = '<span class="ui mini green label">NEW!</span>';
 			}
 
-			if ( 'MainWP WordPress SEO Extension' == $product_id || 'wp-seopress-mainwp' == $product_id ) {
+			if ( 'MainWP WordPress SEO Extension' == $product_id || 'seopress-for-mainwp' == $product_id ) {
 				$notice = ' <i class="info circle small icon"></i>';
 			}
 

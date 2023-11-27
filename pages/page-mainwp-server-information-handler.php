@@ -844,7 +844,7 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function mainwp_options() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreaciated.
 		$mainwp_options = array(
-			'mainwp_number_of_child_sites'           => esc_html__( 'Number of child sites', 'mainwp' ),
+			'mainwp_number_of_child_sites'           => esc_html__( 'Number of connected sites', 'mainwp' ),
 			'mainwp_wp_cron'                         => esc_html__( 'Use WP Cron', 'mainwp' ),
 			'mainwp_optimize'                        => esc_html__( 'Optimize for shared hosting or big networks', 'mainwp' ),
 			'mainwp_automaticDailyUpdate'            => esc_html__( 'WP Core advanced automatic updates enabled', 'mainwp' ),

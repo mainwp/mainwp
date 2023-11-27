@@ -440,9 +440,9 @@ class MainWP_Extensions_View {
 		}
 
 		if ( $active ) :
-			$license_class = '<i class="green check icon"></i>';
+			$license_class = '<i class="green cog icon"></i>';
 		else :
-			$license_class = '<i class="red times icon"></i>';
+			$license_class = '<i class="red cog icon"></i>';
 		endif;
 
 		$item_slug = MainWP_Utility::get_dir_slug( $extension['slug'] );
@@ -456,7 +456,7 @@ class MainWP_Extensions_View {
 		$is_demo = MainWP_Demo_Handle::is_demo_mode();
 
 		?>
-			<div class="ui card extension <?php echo ( $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension' ); ?> extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" status="<?php echo esc_attr( $queue_status ); ?>" license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
+		<div class="ui card extension <?php echo ( $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension' ); ?> extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" status="<?php echo esc_attr( $queue_status ); ?>" license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
 		<?php
 		/**
 		 * Action: mainwp_extension_card_top
@@ -483,54 +483,59 @@ class MainWP_Extensions_View {
 
 					<div class="meta">
 				<?php echo '<i class="code branch icon"></i>' . esc_html( $extension['version'] ); ?> <?php echo ( isset( $extension['DocumentationURI'] ) && ! empty( $extension['DocumentationURI'] ) ) ? ' - <a href="' . esc_url( str_replace( array( 'http:', 'https:' ), '', $extension['DocumentationURI'] ) ) . '" target="_blank">' . esc_html__( 'Documentation', 'mainwp' ) . '</a>' : ''; ?>
-					</div>
-		<?php if ( isset( $extension_update->response[ $extension['slug'] ] ) ) : ?>
-						<a href="<?php echo esc_url( admin_url( 'plugins.php' ) ); ?>" class="ui red ribbon label"><?php esc_html_e( 'Update available', 'mainwp' ); ?></a>
-					<?php endif; ?>
-					<div class="description">
-		<?php echo esc_html( preg_replace( '/\<cite\>.*\<\/cite\>/', '', $extension['description'] ) ); ?>
-					</div>
 				</div>
-				<?php echo $new; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+				<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
+					<?php if ( ! $active && ! $disabled ) : ?>
+						<span class="ui red ribbon label"><?php esc_html_e( 'License not activated', 'mainwp' ); ?></span>
+					<?php endif; ?>
+				<?php endif; ?>
+				<?php if ( isset( $extension_update->response[ $extension['slug'] ] ) ) : ?>
+					<a href="<?php echo esc_url( admin_url( 'plugins.php' ) ); ?>" class="ui yellow ribbon label"><?php esc_html_e( 'Update available', 'mainwp' ); ?></a>
+				<?php endif; ?>
+				<div class="description">
+					<?php echo esc_html( preg_replace( '/\<cite\>.*\<\/cite\>/', '', $extension['description'] ) ); ?>
+				</div>
+			</div>
+			<?php echo $new; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 			<div class="extra content">
-					<div class="ui mini fluid stackable buttons">
-						<a class="ui basic button extension-the-plugin-action" plugin-action="<?php echo $disabled ? 'active' : 'disable'; ?>"><?php echo $disabled ? '<i class="toggle on icon"></i> ' . esc_html__( 'Enable', 'mainwp' ) : '<i class="toggle off icon"></i> ' . esc_html__( 'Disable', 'mainwp' ); ?></a>
-						<a class="ui extension-privacy-info-link icon basic button" base-slug="<?php echo esc_attr( $item_slug ); ?>" data-tooltip="<?php echo esc_html__( 'Click to see more about extension privacy.', 'mainwp' ); ?>" data-position="top left" data-inverted=""><?php echo $privacy_class; ?> <?php echo esc_html__( 'Privacy', 'mainwp' ); ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
-						<?php if ( $disabled ) : ?>
-						<a class="ui basic button extension-the-plugin-action" plugin-action="remove"><i class="trash icon"></i> <?php echo esc_html__( 'Delete', 'mainwp' ); ?></a>
-						<?php endif; ?>
-						<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
-							<a class="ui activate-api-status mainwp-manage-extension-license icon basic button" data-tooltip="<?php echo ( $active ? esc_html__( 'Extension API license is activated properly. Click here to Deactivate it if needed.', 'mainwp' ) : esc_html__( 'Extension API license is not activated. Click here to activate it.', 'mainwp' ) ); ?>" api-actived="<?php echo $active ? '1' : '0'; ?>" data-position="top left" data-inverted=""><?php echo $license_class; ?> <?php echo esc_html__( 'License', 'mainwp' ); ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
+				<div class="ui mini fluid stackable buttons">
+					<a class="ui basic button extension-the-plugin-action" plugin-action="<?php echo $disabled ? 'active' : 'disable'; ?>"><?php echo $disabled ? '<i class="toggle on icon"></i> ' . esc_html__( 'Enable', 'mainwp' ) : '<i class="toggle off icon"></i> ' . esc_html__( 'Disable', 'mainwp' ); ?></a>
+					<a class="ui extension-privacy-info-link icon basic button" base-slug="<?php echo esc_attr( $item_slug ); ?>" data-tooltip="<?php echo esc_html__( 'Click to see more about extension privacy.', 'mainwp' ); ?>" data-position="top left" data-inverted=""><?php echo $privacy_class; ?> <?php echo esc_html__( 'Privacy', 'mainwp' ); ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
+					<?php if ( $disabled ) : ?>
+					<a class="ui basic button extension-the-plugin-action" plugin-action="remove"><i class="trash icon"></i> <?php echo esc_html__( 'Delete', 'mainwp' ); ?></a>
 					<?php endif; ?>
-
-		</div>
-		</div>
-
-		<div class="extra content action-feedback" style="display:none;">
-			<div class="ui mini message"></div>
-		</div>
-
-		<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
-				<div class="extra content" id="mainwp-extensions-api-form" style="display: none;">
-					<div class="ui form">
-						<div class="field">
-							<div class="ui input fluid">
-								<input type="text" class="extension-api-key" placeholder="<?php esc_attr_e( 'API license key', 'mainwp' ); ?>" value="<?php echo esc_attr( $extension['api_key'] ); ?>"/>
-							</div>
-						</div>
-						<?php if ( $active ) : ?>
-						<div class="field">
-							<div class="ui checkbox">
-								<input type="checkbox" id="extension-deactivate-cb" class="mainwp-extensions-deactivate-chkbox" <?php echo 'on' === $extension['deactivate_checkbox'] ? 'checked' : ''; ?>>
-								<label for="extension-deactivate-cb"><?php esc_html_e( 'Deactivate License Key', 'mainwp' ); ?></label>
-							</div>
-						</div>
-						<input type="button" class="ui basic red fluid button mainwp-extensions-deactivate" value="<?php esc_html_e( 'Deactivate License', 'mainwp' ); ?>">
-						<?php else : ?>
-						<input type="button" class="ui basic green fluid button mainwp-extensions-activate" value="<?php esc_attr_e( 'Activate License', 'mainwp' ); ?>">
-						<?php endif; ?>
-					</div>
+					<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
+					<a class="ui activate-api-status mainwp-manage-extension-license icon basic button" data-tooltip="<?php echo ( $active ? esc_html__( 'Extension API license is activated properly. Click here to Deactivate it if needed.', 'mainwp' ) : esc_html__( 'Extension API license is not activated. Click here to activate it.', 'mainwp' ) ); ?>" api-actived="<?php echo $active ? '1' : '0'; ?>" data-position="top left" data-inverted=""><?php echo $license_class; ?> <?php echo esc_html__( 'License', 'mainwp' ); ?></a> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
+					<?php endif; ?>
 				</div>
+			</div>
+
+			<div class="extra content action-feedback" style="display:none;">
+				<div class="ui mini message"></div>
+			</div>
+
+			<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
+				<?php if ( $active ) : ?>
+					<div class="extra content" id="mainwp-extensions-api-form" style="display: none;">
+						<div class="ui form">
+							
+							<div class="field">
+								<div class="ui input fluid">
+									<input type="text" class="extension-api-key" placeholder="<?php esc_attr_e( 'API license key', 'mainwp' ); ?>" value="<?php echo esc_attr( $extension['api_key'] ); ?>"/>
+								</div>
+							</div>
+							
+							<div class="field">
+								<div class="ui checkbox">
+									<input type="checkbox" id="extension-deactivate-cb" class="mainwp-extensions-deactivate-chkbox" <?php echo 'on' === $extension['deactivate_checkbox'] ? 'checked' : ''; ?>>
+									<label for="extension-deactivate-cb"><?php esc_html_e( 'Deactivate License Key', 'mainwp' ); ?></label>
+								</div>
+							</div>
+							<input type="button" class="ui basic red fluid button mainwp-extensions-deactivate" value="<?php esc_html_e( 'Deactivate License', 'mainwp' ); ?>">
+
+						</div>
+					</div>
+				<?php endif; ?>
 
 			<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
 				<div class="extra content api-feedback" style="display:none;">
@@ -1616,7 +1621,7 @@ class MainWP_Extensions_View {
 			),
 			'seopress-for-mainwp'                    => array(
 				'type'                 => 'org',
-				'product_id'           => 'wp-seopress-mainwp',
+				'product_id'           => 'seopress-for-mainwp',
 				'slug'                 => 'seopress-for-mainwp/wp-seopress-mainwp.php',
 				'title'                => 'SEOPress for MainWP',
 				'link'                 => 'https://wordpress.org/plugins/seopress-for-mainwp/',
@@ -1643,10 +1648,6 @@ class MainWP_Extensions_View {
 				'integration_owner_pp' => 'https://wpvivid.com/privacy-policy',
 			),
 		);
-
-		if ( time() < strtotime( '2023-08-23 00:00:00' ) ) {
-			unset( $all_exts['mainwp-fathom-extension'] );
-		}
 
 		$list = array();
 

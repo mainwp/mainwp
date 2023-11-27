@@ -511,10 +511,10 @@ class MainWP_Server_Information {
 
 		<table id="mainwp-system-report-dashboard-table" class="ui unstackable table mainwp-system-report-table mainwp-system-info-table">
 			<thead>
-					<tr>
+				<tr>
 					<th><?php esc_html_e( 'MainWP Dashboard Settings', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Detected Value', 'mainwp' ); ?></th>
-					</tr>
+				</tr>
 			</thead>
 			<tbody>
 				<?php self::render_dashboard_check_tbody(); ?>
@@ -822,7 +822,7 @@ class MainWP_Server_Information {
 		?>
 		<tr>
 			<td><?php esc_html_e( 'MainWP Dashboard Version', 'mainwp' ); ?></td>
-			<td><?php echo 'Latest: ' . MainWP_Server_Information_Handler::get_mainwp_version(); ?> | <?php echo 'Detected: ' . MainWP_Server_Information_Handler::get_current_version(); ?> <?php echo self::get_mainwp_version_check(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+			<td><?php echo 'Latest: ' . MainWP_Server_Information_Handler::get_mainwp_version(); ?> <br/> <?php echo 'Detected: ' . MainWP_Server_Information_Handler::get_current_version(); ?> <?php echo self::get_mainwp_version_check(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 		</tr>
 		<?php
 		self::check_directory_mainwp_directory();
@@ -1436,6 +1436,10 @@ class MainWP_Server_Information {
 		jQuery( document ).ready( function() {
 			jQuery( '#mainwp-error-log-table' ).DataTable( {
 				"responsive": responsive,
+				"ordering": false,
+				"stateSave": true,
+				"stateDuration": 0,
+				"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
 			} );
 		} );
 		</script>
@@ -1462,6 +1466,7 @@ class MainWP_Server_Information {
 	 * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_class_name()
 	 */
 	public static function render_error_log() {
+		$tbody      = '';
 		$log_errors = ini_get( 'log_errors' );
 		if ( ! $log_errors ) {
 			echo '<tr><td colspan="2">' . esc_html__( 'Error logging disabled.', 'mainwp' );
@@ -1486,7 +1491,7 @@ class MainWP_Server_Information {
 		 *
 		 * @since Unknown
 		 */
-		$count = apply_filters( 'error_log_mainwp_lines', 50 );
+		$count = apply_filters( 'error_log_mainwp_lines', 100 );
 		$lines = array();
 
 		foreach ( $logs as $log ) {
@@ -1517,7 +1522,8 @@ class MainWP_Server_Information {
 		}
 
 		if ( 1 < count( $lines ) ) {
-			uasort( $lines, array( MainWP_Server_Information_Handler::get_class_name(), 'time_compare' ) );
+			// phpcs:ignore -- ok.
+			//uasort( $lines, array( MainWP_Server_Information_Handler::get_class_name(), 'time_compare' ) );
 			$lines = array_slice( $lines, 0, $count );
 		}
 
@@ -1526,7 +1532,7 @@ class MainWP_Server_Information {
 			$error = esc_html( $line['error'] );
 			$time  = esc_html( $line['time'] );
 			if ( ! empty( $error ) ) {
-				echo "<tr><td>{$time}</td><td>{$error}</td></tr>";
+				echo '<tr><td>' . $time . '</td><td>' . $error . '</td></tr>';
 			}
 		}
 		// phpcs:enable WordPress.Security.EscapeOutput

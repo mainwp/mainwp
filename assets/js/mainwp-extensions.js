@@ -256,7 +256,7 @@ function mainwp_extensions_activate(pObj, retring) {
             if (response.result == 'SUCCESS') {
                 loadingEl.find('.message').addClass('green');
                 loadingEl.find('.message').html(__('License activated. '));
-                statusEl.html('<i class="green check icon"></i>');
+                statusEl.html('<i class="green check icon"></i> License');
                 success = true;
             } else if (response.error) {
                 loadingEl.find('.message').addClass('red');
@@ -311,7 +311,7 @@ jQuery(document).on('click', '.mainwp-extensions-deactivate', function () {
             if (response.result == 'SUCCESS') {
                 loadingEl.find('.message').addClass('green');
                 loadingEl.find('.message').html(__('License deactivated.'));
-                statusEl.html('<i class="green check icon"></i>');
+                statusEl.html('<i class="green check icon"></i> License');
                 success = true;
             } else if (response.error) {
                 loadingEl.find('.message').addClass('red');
@@ -518,7 +518,7 @@ extensions_activate_next = function (pObj, bulkAct) {
                 countSuccessActivation++;
                 loadingEl.find('.message').addClass('green');
                 loadingEl.find('.message').html(__('License activated.'));
-                statusEl.html('<i class="green check icon"></i>');
+                statusEl.html('<i class="green check icon"></i> License');
                 apiEl.find('.mainwp-extensions-deactivate-chkbox').attr('checked', false);
                 if (!bulkAct) {
                     setTimeout(function () {

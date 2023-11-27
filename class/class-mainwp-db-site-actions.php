@@ -152,7 +152,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 				}
 			}
 
-			$update_data['object_id'] = strval( $index );
+			$update_data['object_id'] = $this->escape( $index );
 			$update_data['wpid']      = $site_id;
 
 			$this->add_site_action( $update_data );
@@ -175,7 +175,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 			return false;
 		}
 
-		$object_id = isset( $data['object_id'] ) ? strval( $data['object_id'] ) : '';
+		$object_id = isset( $data['object_id'] ) ? $this->escape( $data['object_id'] ) : '';
 		$wpid      = isset( $data['wpid'] ) ? intval( $data['wpid'] ) : 0;
 
 		if ( empty( $object_id ) || empty( $wpid ) ) {
@@ -289,7 +289,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 
 		$action_id    = isset( $params['action_id'] ) ? intval( $params['action_id'] ) : 0;
 		$site_id      = isset( $params['wpid'] ) ? $params['wpid'] : 0;
-		$object_id    = isset( $params['object_id'] ) ? strval( $params['object_id'] ) : '';
+		$object_id    = isset( $params['object_id'] ) ? $this->escape( $params['object_id'] ) : '';
 		$where_extra  = isset( $params['where_extra'] ) ? $params['where_extra'] : '';
 		$check_access = isset( $params['check_access'] ) ? $params['check_access'] : true;
 

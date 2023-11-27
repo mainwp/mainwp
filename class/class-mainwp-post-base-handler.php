@@ -91,7 +91,7 @@ abstract class MainWP_Post_Base_Handler {
 		if ( - 1 === $action ) {
 			$secure = false;
 		} else {
-			$result   = isset( $_REQUEST[ $query_arg ] ) ? wp_verify_nonce( sanitize_key( $_REQUEST[ $query_arg ] ), $action ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+			$result = isset( $_REQUEST[ $query_arg ] ) ? wp_verify_nonce( sanitize_key( $_REQUEST[ $query_arg ] ), $action ) : false; // phpcs:ignore WordPress.Security.NonceVerification
 
 			if ( ! $result ) {
 				$secure = false;

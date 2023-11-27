@@ -537,7 +537,7 @@ class MainWP_Extensions_View {
 					</div>
 				<?php endif; ?>
 
-			<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
+				<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
 				<div class="extra content api-feedback" style="display:none;">
 					<div class="ui mini message"></div>
 				</div>

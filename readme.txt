@@ -315,6 +315,8 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Security: Improved request validation in AJAX requests.
 * Security: Enhanced security in the sync logic by ensuring proper sanitization of certain parameters.
 
+[See Video Changelog](https://www.youtube.com/watch?v=VAVUqvrkgLA)
+
 = 4.5.3.1 - 11-20-2023 =
 * Fixed: Rendering inconsistency for Theme icons when the Screenshot image utilizes JPG format.
 * Updated: The required WordPress version information displayed on the Info > Server page to ensure accuracy and current standards.

@@ -392,15 +392,16 @@ class MainWP_Notification_Template {
 			$code  = $template_code;
 
 			$is_writable = MainWP_System_Utility::is_writable( $file );
-
+			// phpcs:ignore WordPress.WP.AlternativeFunctions
 			if ( $is_writable ) {
-				$f = fopen( $file, 'w+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+				$f = fopen( $file, 'w+' ); 
 				if ( false !== $f ) {
-					fwrite( $f, $code ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
-					fclose( $f ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+					fwrite( $f, $code );
+					fclose( $f );
 					$saved = true;
 				}
 			}
+			//phpcs:enable
 
 			if ( $saved ) {
 				return true;

@@ -1357,7 +1357,6 @@ class MainWP_Manage_Sites_View {
 								<?php
 							} elseif ( file_exists( $template_file ) ) {
 								?>
-														
 								<div class="editor">
 									<textarea class="code" readonly="readonly" disabled="disabled" cols="25" rows="20"><?php echo esc_html( file_get_contents( $template_file ) );  // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- required to achieven desired results. Pull requests are welcome. ?></textarea>
 								</div>

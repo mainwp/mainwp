@@ -1732,7 +1732,7 @@ class MainWP_Post {
 	 *
 	 * @return string Hidden time stamps html.
 	 */
-	public static function touch_time( $post, $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) {
+	public static function touch_time( $post, $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) { //phpcs:ignore -- complex method.
 
 		/**
 		 * WordPress Locale.
@@ -1953,7 +1953,7 @@ class MainWP_Post {
 	 * @uses \MainWP\Dashboard\MainWP_Meta_Boxes::add_tags()
 	 * @uses \MainWP\Dashboard\MainWP_UI
 	 */
-	public static function render_bulkpost( $post_id, $input_type ) {
+	public static function render_bulkpost( $post_id, $input_type ) { //phpcs:ignore -- complex method.
 		$post = get_post( $post_id );
 
 		if ( $post ) {

@@ -488,7 +488,6 @@ class MainWP_Extensions_View {
 
 					<div class="meta">
 				<?php echo '<i class="code branch icon"></i>' . esc_html( $extension['version'] ); ?> <?php echo ( isset( $extension['DocumentationURI'] ) && ! empty( $extension['DocumentationURI'] ) ) ? ' - <a href="' . esc_url( str_replace( array( 'http:', 'https:' ), '', $extension['DocumentationURI'] ) ) . '" target="_blank">' . esc_html__( 'Documentation', 'mainwp' ) . '</a>' : ''; ?>
-					
 				</div>
 				<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
 					<?php if ( ! $active && ! $disabled ) { ?>
@@ -524,13 +523,11 @@ class MainWP_Extensions_View {
 				<?php if ( $active ) { ?>
 					<div class="extra content" id="mainwp-extensions-api-form" style="display: none;">
 						<div class="ui form">
-							
 							<div class="field">
 								<div class="ui input fluid">
 									<input type="text" class="extension-api-key" placeholder="<?php esc_attr_e( 'API license key', 'mainwp' ); ?>" value="<?php echo esc_attr( $extension['api_key'] ); ?>"/>
 								</div>
 							</div>
-							
 							<div class="field">
 								<div class="ui checkbox">
 									<input type="checkbox" id="extension-deactivate-cb" class="mainwp-extensions-deactivate-chkbox" <?php echo 'on' === $extension['deactivate_checkbox'] ? 'checked' : ''; ?>>

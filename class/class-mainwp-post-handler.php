@@ -186,7 +186,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$sites   = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
 		$clients = isset( $_POST['clients'] ) && is_array( $_POST['clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['clients'] ) ) : '';
 		$search  = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		MainWP_User::render_table( false, $role, $groups, $sites, $search, $clients );
 		die();
 	}
@@ -219,7 +219,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$userId             = isset( $_POST['userId'] ) ? sanitize_text_field( wp_unslash( $_POST['userId'] ) ) : '';
 		$search_on          = isset( $_POST['search_on'] ) ? sanitize_text_field( wp_unslash( $_POST['search_on'] ) ) : '';
 		$table_content_only = isset( $_POST['table_content'] ) && wp_unslash( $_POST['table_content'] ) ? true : false;
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		MainWP_Cache::init_session();
 		if ( $table_content_only ) {
@@ -254,7 +254,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$sites     = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
 		$clients   = isset( $_POST['clients'] ) && is_array( $_POST['clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['clients'] ) ) : '';
 		$search_on = isset( $_POST['search_on'] ) ? sanitize_text_field( wp_unslash( $_POST['search_on'] ) ) : '';
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		MainWP_Cache::init_session();
 		MainWP_Page::render_table( false, $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on, $clients );
 		die();
@@ -524,7 +524,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 				update_user_option( $user_id, 'mainwp_notice_saved_status', $status );
 			}
 		}
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		die( 1 );
 	}
 
@@ -560,7 +560,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 		$status = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
 		$value  = isset( $_POST['value'] ) ? sanitize_text_field( wp_unslash( $_POST['value'] ) ) : '';
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( ! empty( $status ) ) {
 			if ( empty( $value ) ) {
@@ -625,7 +625,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			}
 			die( 'ok' );
 		}
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		die( -1 );
 	}
 
@@ -660,7 +660,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_guided_tours_option_update' );
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$enable = isset( $_POST['enable'] ) ? intval( $_POST['enable'] ) : 0;
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enable );
 		die( 'ok' );
 	}
@@ -680,7 +680,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$gid = isset( $_POST['group_id'] ) ? intval( $_POST['group_id'] ) : false;
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( ! empty( $gid ) ) {
 			$ids      = '';
@@ -721,7 +721,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			$activate_notices[ $slug ] = time();
 			update_user_option( $user_id, 'mainwp_hide_activate_notices', $activate_notices );
 		}
-		 // phpcs:enable
+		 // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		die( 1 );
 	}
 
@@ -823,7 +823,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_disconnect_site' );
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$siteid = isset( $_POST['wp_id'] ) ? intval( $_POST['wp_id'] ) : 0;
-		 // phpcs:enable
+		 // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( empty( $siteid ) ) {
 			die( wp_json_encode( array( 'error' => 'Error: site id empty' ) ) );
@@ -920,7 +920,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$ret = array( 'success' => false );
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$client_id = isset( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0;
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( $client_id ) {
 			MainWP_DB_Client::instance()->delete_client( $client_id );
 			$ret['success'] = 'SUCCESS';
@@ -959,7 +959,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		if ( MainWP_DB_Client::instance()->delete_client_field_by( 'field_id', $field_id, $client_id ) ) {
 			$ret['success'] = true;
 		}
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		echo wp_json_encode( $ret );
 		exit;
 	}
@@ -976,7 +976,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$field_id  = isset( $_POST['field_id'] ) ? intval( $_POST['field_id'] ) : 0;
 		$client_id = isset( $_POST['client_id'] ) ? intval( $_POST['client_id'] ) : 0;  // $client_id > 0, individual token.
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( $client_id ) {
 			if ( MainWP_DB_Client::instance()->delete_client_field_by( 'field_id', $field_id, $client_id ) ) {
 				$ret['success'] = true;
@@ -1025,7 +1025,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$clientid  = isset( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0;
 		$suspended = isset( $_POST['suspend_status'] ) && ! empty( $_POST['suspend_status'] ) ? 1 : 0;
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( empty( $clientid ) ) {
 			wp_die( 'Error - empty client id!' );
@@ -1105,7 +1105,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			}
 			update_option( 'mainwp_showhide_events_notice', $current_options );
 		}
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		die( 'ok' );
 	}
 
@@ -1125,7 +1125,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			update_option( 'mainwp_opts_showhide_sections', $opts );
 			die( 'ok' );
 		}
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		die( 'failed' );
 	}
 
@@ -1150,7 +1150,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			}
 			update_option( 'mainwp_opts_saving_status', $current_options );
 		}
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		die( 'ok' );
 	}
 
@@ -1174,7 +1174,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		if ( empty( $website ) ) {
 			die( -1 );
 		}
-		 // phpcs:enable
+		 // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		$result       = MainWP_Monitoring_Handler::handle_check_website( $website );
 		$http_code    = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
@@ -1201,7 +1201,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->check_security( 'mainwp_ignore_http_response' );
 		 // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$siteid = isset( $_POST['websiteid'] ) ? intval( $_POST['websiteid'] ) : false;
-		 // phpcs:enable
+		 // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( empty( $siteid ) ) {
 			die( -1 );
 		}
@@ -1246,7 +1246,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 		 // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$website_id = ( isset( $_POST['website_id'] ) ? (int) $_POST['website_id'] : 0 );
-		 // phpcs:enable
+		 // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! MainWP_DB::instance()->get_website_by_id( $website_id ) ) {
 			die( wp_json_encode( array( 'error' => array( 'message' => esc_html__( 'This website does not exist.', 'mainwp' ) ) ) ) );
 		}
@@ -1279,7 +1279,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
- 		// phpcs:enable
+ 		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( empty( $slug ) ) {
 			wp_die( 'failed' );
@@ -1324,7 +1324,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		}
 
 		$output = isset( $_FILES['mainwp_upload_icon_uploader'] ) ? MainWP_System_Utility::handle_upload_image( $sub_folder, $_FILES['mainwp_upload_icon_uploader'], 0 ) : null;
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		$uploaded_icon = 'NOTCHANGE';
 		if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
@@ -1346,7 +1346,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_select_custom_theme' );
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$theme = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : '';
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( empty( $theme ) ) {
 			wp_die( 'failed' );
 		}
@@ -1368,7 +1368,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_site_actions_dismiss' );
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$action_id = isset( $_POST['action_id'] ) ? intval( $_POST['action_id'] ) : 0;
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( empty( $action_id ) ) {
 			wp_die( 'failed' );
@@ -1390,7 +1390,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		if ( empty( $siteid ) ) {
 			wp_die( wp_json_encode( array( 'error' => 'Empty site ID' ) ) );
 		}
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$website = MainWP_DB::instance()->get_website_by_id( $siteid );
 		$success = false;
 		$error   = '';

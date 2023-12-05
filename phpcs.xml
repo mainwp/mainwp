@@ -44,12 +44,6 @@
 		<exclude name="Generic.CodeAnalysis.EmptyStatement.DetectedCatch" />
 	</rule>
 
-	<rule ref="Generic.Metrics.CyclomaticComplexity">
-		<properties>
-			<property name="complexity" value="200"/>
-			<property name="absoluteComplexity" value="250"/>
-		</properties>
-	</rule>
 	
 	<rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
 		<exclude-pattern>/cron/backups_continue\.php$</exclude-pattern>

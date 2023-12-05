@@ -392,9 +392,9 @@ class MainWP_Notification_Template {
 			$code  = $template_code;
 
 			$is_writable = MainWP_System_Utility::is_writable( $file );
-			// phpcs:ignore WordPress.WP.AlternativeFunctions
+			// phpcs:disable WordPress.WP.AlternativeFunctions
 			if ( $is_writable ) {
-				$f = fopen( $file, 'w+' ); 
+				$f = fopen( $file, 'w+' );
 				if ( false !== $f ) {
 					fwrite( $f, $code );
 					fclose( $f );

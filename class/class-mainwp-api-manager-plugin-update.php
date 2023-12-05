@@ -182,7 +182,7 @@ class MainWP_Api_Manager_Plugin_Update {
 			$params
 		);
 
-		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
+		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) !== 200 ) {
 			return false;
 		}
 
@@ -212,7 +212,6 @@ class MainWP_Api_Manager_Plugin_Update {
 
 		return false;
 	}
-
 }
 
 // End of class.

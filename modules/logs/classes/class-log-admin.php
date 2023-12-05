@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 use DateTime;
 use DateTimeZone;
 use DateInterval;
-use \WP_CLI;
+use WP_CLI;
 
 /**
  * Class - Log_Admin
@@ -114,7 +114,7 @@ class Log_Admin {
 		<div id="mainwp-manage-sites-content" class="ui segment">
 			<div class="ui form">
 				<h3 class="ui dividing header"><?php esc_html_e( 'Dashboard Insights', 'mainwp' ); ?></h3>
-				<h4 class="ui header"><?php echo sprintf( esc_html__( 'Total logs size: %1$s (MB)', 'mainwp' ), esc_html( $this->get_db_size() ) ); ?></h4>
+				<h4 class="ui header"><?php printf( esc_html__( 'Total logs size: %1$s (MB)', 'mainwp' ), esc_html( $this->get_db_size() ) ); ?></h4>
 				<div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
 				<form method="post" class="mainwp-table-container">
 					<?php
@@ -187,8 +187,8 @@ class Log_Admin {
 	public function ajax_delete_records() {
 		MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_delete_records' );
 
-		$start_date = isset( $_POST['startdate'] ) ? sanitize_text_field( wp_unslash( $_POST['startdate'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
-		$end_date   = isset( $_POST['enddate'] ) ? sanitize_text_field( wp_unslash( $_POST['enddate'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$start_date = isset( $_POST['startdate'] ) ? sanitize_text_field( wp_unslash( $_POST['startdate'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$end_date   = isset( $_POST['enddate'] ) ? sanitize_text_field( wp_unslash( $_POST['enddate'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		$start_time = ! empty( $start_date ) ? strtotime( $start_date . ' 00:00:00' ) : '';
 		$end_time   = ! empty( $end_date ) ? strtotime( $end_date . ' 23:59:59' ) : '';
@@ -209,7 +209,7 @@ class Log_Admin {
 	public function ajax_compact_records() {
 		MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_compact_records' );
 
-		$year = isset( $_POST['year'] ) ? intval( $_POST['year'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		$year = isset( $_POST['year'] ) ? intval( $_POST['year'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( $year < 2022 ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Invalid selected year. Please try again.' ) ) ) );
@@ -307,11 +307,10 @@ class Log_Admin {
 			$wpdb->mainwp_tbl_logs_meta
 		);
 
-		$dbsize_mb = $wpdb->get_var( $sql ); // phpcs:ignore unprepared SQL.
+		$dbsize_mb = $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery -- prepared SQL.
 
 		set_transient( 'mainwp_module_log_transient_db_logs_size', $dbsize_mb, 15 * MINUTE_IN_SECONDS );
 
 		return $dbsize_mb;
 	}
-
 }

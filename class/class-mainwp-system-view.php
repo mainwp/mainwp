@@ -32,7 +32,7 @@ class MainWP_System_View {
 	public static function get_mainwp_translations() {
 
 		/**
-		 * Method mainwpAddTranslation()
+		 * Method mainwp_add_translation()
 		 *
 		 * Grab info needed to build array and strip chartacters "/[^A-Za-z0-9_]/".
 		 *
@@ -40,7 +40,7 @@ class MainWP_System_View {
 		 * @param mixed $pKey Key for each array enty.
 		 * @param mixed $pText Text for each array entry.
 		 */
-		function mainwpAddTranslation( &$pArray, $pKey, $pText ) {
+		function mainwp_add_translation( &$pArray, $pKey, $pText ) {
 			if ( ! is_array( $pArray ) ) {
 				$pArray = array();
 			}
@@ -52,174 +52,174 @@ class MainWP_System_View {
 		}
 
 		$mainwpTranslations = array();
-		mainwpAddTranslation( $mainwpTranslations, 'Update settings.', esc_html__( 'Update settings.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Settings have been updated.', esc_html__( 'Settings have been updated.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'An error occured.', esc_html__( 'An error occured.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Testing login.', esc_html__( 'Testing login.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Your login is valid.', esc_html__( 'Your login is valid.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Your login is invalid.', esc_html__( 'Your login is invalid.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'An error occured, please contact us.', esc_html__( 'An error occured, please contact us.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'more', esc_html__( 'more', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'less', esc_html__( 'less', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'An error occured: ', esc_html__( 'An error occured: ', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'No data available. Connect your sites using the Settings submenu.', esc_html__( 'No data available. Connect your sites using the Settings submenu.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Undefined error.', esc_html__( 'Undefined error.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'PENDING', esc_html__( 'PENDING', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'UPDATING', esc_html__( 'UPDATING', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'UPGRADING', esc_html__( 'UPGRADING', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'FAILED', esc_html__( 'FAILED', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'DONE', esc_html__( 'DONE', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'SYNCING', esc_html__( 'SYNCING', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'DISCONNECTED', esc_html__( 'DISCONNECTED', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'TIMEOUT', esc_html__( 'TIMEOUT', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Ignored', esc_html__( 'Ignored', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'No ignored %1s', esc_html__( 'No ignored %1s', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'No ignored %1 conflicts', esc_html__( 'No ignored %1 conflicts', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'No ignored plugins', esc_html__( 'No ignored plugins', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'No ignored themes', esc_html__( 'No ignored themes', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Upgrading..', esc_html__( 'Upgrading..', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Update successful', esc_html__( 'Update successful', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Update failed', esc_html__( 'Update failed', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Show All', esc_html__( 'Show All', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Show', esc_html__( 'Show', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Hide All', esc_html__( 'Hide All', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Hide', esc_html__( 'Hide', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Testing ...', esc_html__( 'Testing ...', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Test Settings', esc_html__( 'Test Settings', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Received wrong response from the server.', esc_html__( 'Received wrong response from the server.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Untitled', esc_html__( 'Untitled', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Are you sure you want to remove this destination. This could make some of the backup tasks invalid.', esc_html__( 'Are you sure you want to remove this destination. This could make some of the backup tasks invalid.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Starting backup task.', esc_html__( 'Starting backup task.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Cancel', esc_html__( 'Cancel', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Backup task complete', esc_html__( 'Backup task complete', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'with errors', esc_html__( 'with errors', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Close', esc_html__( 'Close', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Creating backupfile.', esc_html__( 'Creating backupfile.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Backupfile created successfully.', esc_html__( 'Backupfile created successfully.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Download from child site completed.', esc_html__( 'Download from child site completed.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Uploading to remote destinations..', esc_html__( 'Uploading to remote destinations..', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Backup complete.', esc_html__( 'Backup complete.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Upload to %1 (%2) failed:', esc_html__( 'Upload to %1 (%2) failed:', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Upload to %1 (%2) succesful', esc_html__( 'Upload to %1 (%2) succesful', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or tags to add a backup task.', esc_html__( 'Please select websites or tags to add a backup task.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Adding the task to MainWP', esc_html__( 'Adding the task to MainWP', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or tags.', esc_html__( 'Please select websites or tags.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Are you sure you want to delete this backup task?', esc_html__( 'Are you sure you want to delete this backup task?', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Removing the task..', esc_html__( 'Removing the task..', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'The task has been removed', esc_html__( 'The task has been removed', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'An unspecified error occured', esc_html__( 'An unspecified error occured', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Connection test failed.', esc_html__( 'Connection test failed.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Error message:', esc_html__( 'Error message:', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Received HTTP-code:', esc_html__( 'Received HTTP-code:', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Connection test successful.', esc_html__( 'Connection test successful.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Invalid response from the server, please try again.', esc_html__( 'Invalid response from the server, please try again.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please enter csv file for upload.', esc_html__( 'Please enter csv file for upload.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please enter a name for the website', esc_html__( 'Please enter a name for the website', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please enter a valid URL for your site', esc_html__( 'Please enter a valid URL for your site', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please enter a username for the administrator', esc_html__( 'Please enter a username for the administrator', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Adding the site to MainWP', esc_html__( 'Adding the site to MainWP', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. Click <a href="%1" target="_blank">here</a> to install <a href="%2" target="_blank">MainWP</a> plugin (do not forget to activate it after installation).', esc_html__( 'No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. Click <a href="%1" target="_blank">here</a> to install <a href="%2" target="_blank">MainWP</a> plugin (do not forget to activate it after installation).', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Testing the connection', esc_html__( 'Testing the connection', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Are you sure you want to delete this site?', esc_html__( 'Are you sure you want to delete this site?', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Removing and deactivating the MainWP Child plugin..', esc_html__( 'Removing and deactivating the MainWP Child plugin..', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'The site has been removed and the MainWP Child plugin has been disabled.', esc_html__( 'The site has been removed and the MainWP Child plugin has been disabled.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'The requested site has not been found', esc_html__( 'The requested site has not been found', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'The site has been removed but the MainWP Child plugin could not be disabled', esc_html__( 'The site has been removed but the MainWP Child plugin could not be disabled', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Paused import by user.', esc_html__( 'Paused import by user.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Continue', esc_html__( 'Continue', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Continue import.', esc_html__( 'Continue import.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Pause', esc_html__( 'Pause', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Finished', esc_html__( 'Finished', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please enter the Site name.', esc_html__( 'Please enter the Site name.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please enter the Site url.', esc_html__( 'Please enter the Site url.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please enter Admin name of the site.', esc_html__( 'Please enter Admin name of the site.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Number of sites to Import: %1 Created sites: %2 Failed: %3', esc_html__( 'Number of sites to Import: %1 Created sites: %2 Failed: %3', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'HTTP error - website does not exist', esc_html__( 'HTTP error - website does not exist', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'No selected Categories', esc_html__( 'No selected Categories', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or tags to add a user.', esc_html__( 'Please select websites or tags to add a user.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Number of Users to Import: %1 Created users: %2 Failed: %3', esc_html__( 'Number of Users to Import: %1 Created users: %2 Failed: %3', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please enter the username.', esc_html__( 'Please enter the username.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please enter the email.', esc_html__( 'Please enter the email.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please enter the password.', esc_html__( 'Please enter the password.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please select a valid role.', esc_html__( 'Please select a valid role.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Loading previous page..', esc_html__( 'Loading previous page..', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Loading next page..', esc_html__( 'Loading next page..', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Searching the WordPress repository..', esc_html__( 'Searching the WordPress repository..', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or tags on the right side to install files.', esc_html__( 'Please select websites or tags on the right side to install files.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Queued', esc_html__( 'Queued', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'In progress', esc_html__( 'In progress', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Preparing %1 installation.', esc_html__( 'Preparing %1 installation.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Installation successful', esc_html__( 'Installation successful', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Installation failed', esc_html__( 'Installation failed', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please select websites or tags to install files.', esc_html__( 'Please select websites or tags to install files.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Creating the backupfile on the child installation, this might take a while depending on the size. Please be patient.', esc_html__( 'Creating the backupfile on the child installation, this might take a while depending on the size. Please be patient.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Backupfile on child site created successfully.', esc_html__( 'Backupfile on child site created successfully.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Downloading the file.', esc_html__( 'Downloading the file.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Download from child completed.', esc_html__( 'Download from child completed.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please wait while we are saving your note', esc_html__( 'Please wait while we are saving your note', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Note saved.', esc_html__( 'Note saved.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'An error occured while saving your message.', esc_html__( 'An error occured while saving your message.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please search and select users for update password.', esc_html__( 'Please search and select users for update password.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'All', esc_html__( 'All', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Any', esc_html__( 'Any', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'HTTP error', esc_html__( 'HTTP error', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Error on your child WordPress', esc_html__( 'Error on your child WordPress', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue, Please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', esc_html__( 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue, Please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Remove', esc_html__( 'Remove', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please reconnect to Dropbox', esc_html__( 'Please reconnect to Dropbox', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please wait', esc_html__( 'Please wait', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Upgrading all', esc_html__( 'Upgrading all', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Upgrading %1', esc_html__( 'Upgrading %1', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Updating your plan...', esc_html__( 'Updating your plan...', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Updated your plan', esc_html__( 'Updated your plan', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Update settings.', esc_html__( 'Update settings.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Settings have been updated.', esc_html__( 'Settings have been updated.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'An error occured.', esc_html__( 'An error occured.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Testing login.', esc_html__( 'Testing login.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Your login is valid.', esc_html__( 'Your login is valid.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Your login is invalid.', esc_html__( 'Your login is invalid.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'An error occured, please contact us.', esc_html__( 'An error occured, please contact us.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'more', esc_html__( 'more', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'less', esc_html__( 'less', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'An error occured: ', esc_html__( 'An error occured: ', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'No data available. Connect your sites using the Settings submenu.', esc_html__( 'No data available. Connect your sites using the Settings submenu.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Undefined error.', esc_html__( 'Undefined error.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'PENDING', esc_html__( 'PENDING', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'UPDATING', esc_html__( 'UPDATING', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'UPGRADING', esc_html__( 'UPGRADING', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'FAILED', esc_html__( 'FAILED', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'DONE', esc_html__( 'DONE', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'SYNCING', esc_html__( 'SYNCING', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'DISCONNECTED', esc_html__( 'DISCONNECTED', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'TIMEOUT', esc_html__( 'TIMEOUT', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Ignored', esc_html__( 'Ignored', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'No ignored %1s', esc_html__( 'No ignored %1s', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'No ignored %1 conflicts', esc_html__( 'No ignored %1 conflicts', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'No ignored plugins', esc_html__( 'No ignored plugins', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'No ignored themes', esc_html__( 'No ignored themes', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Upgrading..', esc_html__( 'Upgrading..', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Update successful', esc_html__( 'Update successful', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Update failed', esc_html__( 'Update failed', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Show All', esc_html__( 'Show All', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Show', esc_html__( 'Show', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Hide All', esc_html__( 'Hide All', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Hide', esc_html__( 'Hide', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Testing ...', esc_html__( 'Testing ...', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Test Settings', esc_html__( 'Test Settings', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Received wrong response from the server.', esc_html__( 'Received wrong response from the server.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Untitled', esc_html__( 'Untitled', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Are you sure you want to remove this destination. This could make some of the backup tasks invalid.', esc_html__( 'Are you sure you want to remove this destination. This could make some of the backup tasks invalid.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Starting backup task.', esc_html__( 'Starting backup task.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Cancel', esc_html__( 'Cancel', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Backup task complete', esc_html__( 'Backup task complete', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'with errors', esc_html__( 'with errors', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Close', esc_html__( 'Close', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Creating backupfile.', esc_html__( 'Creating backupfile.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Backupfile created successfully.', esc_html__( 'Backupfile created successfully.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Download from child site completed.', esc_html__( 'Download from child site completed.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Uploading to remote destinations..', esc_html__( 'Uploading to remote destinations..', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Backup complete.', esc_html__( 'Backup complete.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Upload to %1 (%2) failed:', esc_html__( 'Upload to %1 (%2) failed:', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Upload to %1 (%2) succesful', esc_html__( 'Upload to %1 (%2) succesful', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please select websites or tags to add a backup task.', esc_html__( 'Please select websites or tags to add a backup task.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Adding the task to MainWP', esc_html__( 'Adding the task to MainWP', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please select websites or tags.', esc_html__( 'Please select websites or tags.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Are you sure you want to delete this backup task?', esc_html__( 'Are you sure you want to delete this backup task?', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Removing the task..', esc_html__( 'Removing the task..', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'The task has been removed', esc_html__( 'The task has been removed', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'An unspecified error occured', esc_html__( 'An unspecified error occured', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Connection test failed.', esc_html__( 'Connection test failed.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Error message:', esc_html__( 'Error message:', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Received HTTP-code:', esc_html__( 'Received HTTP-code:', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Connection test successful.', esc_html__( 'Connection test successful.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Invalid response from the server, please try again.', esc_html__( 'Invalid response from the server, please try again.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please enter csv file for upload.', esc_html__( 'Please enter csv file for upload.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please enter a name for the website', esc_html__( 'Please enter a name for the website', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please enter a valid URL for your site', esc_html__( 'Please enter a valid URL for your site', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please enter a username for the administrator', esc_html__( 'Please enter a username for the administrator', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Adding the site to MainWP', esc_html__( 'Adding the site to MainWP', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. Click <a href="%1" target="_blank">here</a> to install <a href="%2" target="_blank">MainWP</a> plugin (do not forget to activate it after installation).', esc_html__( 'No MainWP Child plugin detected, first install and activate the plugin and add your site to MainWP afterwards. Click <a href="%1" target="_blank">here</a> to install <a href="%2" target="_blank">MainWP</a> plugin (do not forget to activate it after installation).', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Testing the connection', esc_html__( 'Testing the connection', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Are you sure you want to delete this site?', esc_html__( 'Are you sure you want to delete this site?', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Removing and deactivating the MainWP Child plugin..', esc_html__( 'Removing and deactivating the MainWP Child plugin..', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'The site has been removed and the MainWP Child plugin has been disabled.', esc_html__( 'The site has been removed and the MainWP Child plugin has been disabled.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'The requested site has not been found', esc_html__( 'The requested site has not been found', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'The site has been removed but the MainWP Child plugin could not be disabled', esc_html__( 'The site has been removed but the MainWP Child plugin could not be disabled', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Paused import by user.', esc_html__( 'Paused import by user.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Continue', esc_html__( 'Continue', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Continue import.', esc_html__( 'Continue import.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Pause', esc_html__( 'Pause', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Finished', esc_html__( 'Finished', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please enter the Site name.', esc_html__( 'Please enter the Site name.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please enter the Site url.', esc_html__( 'Please enter the Site url.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please enter Admin name of the site.', esc_html__( 'Please enter Admin name of the site.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Number of sites to Import: %1 Created sites: %2 Failed: %3', esc_html__( 'Number of sites to Import: %1 Created sites: %2 Failed: %3', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'HTTP error - website does not exist', esc_html__( 'HTTP error - website does not exist', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'No selected Categories', esc_html__( 'No selected Categories', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please select websites or tags to add a user.', esc_html__( 'Please select websites or tags to add a user.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Number of Users to Import: %1 Created users: %2 Failed: %3', esc_html__( 'Number of Users to Import: %1 Created users: %2 Failed: %3', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please enter the username.', esc_html__( 'Please enter the username.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please enter the email.', esc_html__( 'Please enter the email.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please enter the password.', esc_html__( 'Please enter the password.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please select a valid role.', esc_html__( 'Please select a valid role.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Loading previous page..', esc_html__( 'Loading previous page..', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Loading next page..', esc_html__( 'Loading next page..', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Searching the WordPress repository..', esc_html__( 'Searching the WordPress repository..', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please select websites or tags on the right side to install files.', esc_html__( 'Please select websites or tags on the right side to install files.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Queued', esc_html__( 'Queued', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'In progress', esc_html__( 'In progress', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Preparing %1 installation.', esc_html__( 'Preparing %1 installation.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Installation successful', esc_html__( 'Installation successful', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Installation failed', esc_html__( 'Installation failed', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please select websites or tags to install files.', esc_html__( 'Please select websites or tags to install files.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Creating the backupfile on the child installation, this might take a while depending on the size. Please be patient.', esc_html__( 'Creating the backupfile on the child installation, this might take a while depending on the size. Please be patient.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Backupfile on child site created successfully.', esc_html__( 'Backupfile on child site created successfully.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Downloading the file.', esc_html__( 'Downloading the file.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Download from child completed.', esc_html__( 'Download from child completed.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please wait while we are saving your note', esc_html__( 'Please wait while we are saving your note', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Note saved.', esc_html__( 'Note saved.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'An error occured while saving your message.', esc_html__( 'An error occured while saving your message.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please search and select users for update password.', esc_html__( 'Please search and select users for update password.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'All', esc_html__( 'All', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Any', esc_html__( 'Any', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'HTTP error', esc_html__( 'HTTP error', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Error on your child WordPress', esc_html__( 'Error on your child WordPress', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue, Please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', esc_html__( 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue, Please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Remove', esc_html__( 'Remove', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please reconnect to Dropbox', esc_html__( 'Please reconnect to Dropbox', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please wait', esc_html__( 'Please wait', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Upgrading all', esc_html__( 'Upgrading all', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Upgrading %1', esc_html__( 'Upgrading %1', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Updating your plan...', esc_html__( 'Updating your plan...', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Updated your plan', esc_html__( 'Updated your plan', 'mainwp' ) );
 		$mainwp_backup_before_upgrade_days = get_option( 'mainwp_backup_before_upgrade_days' );
 		if ( empty( $mainwp_backup_before_upgrade_days ) || ! ctype_digit( $mainwp_backup_before_upgrade_days ) ) {
 			$mainwp_backup_before_upgrade_days = 7;
 		}
-		mainwpAddTranslation( $mainwpTranslations, 'A full backup has not been taken in the last days for the following sites:', str_replace( '%1', '' . $mainwp_backup_before_upgrade_days, esc_html__( 'A full backup has not been taken in the last %1 days for the following sites:', 'mainwp' ) ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Starting required backup(s).', esc_html__( 'Starting required backup(s).', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Required backup(s) complete', esc_html__( 'Required backup(s) complete', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Continue update anyway', esc_html__( 'Continue update anyway', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Continue update', esc_html__( 'Continue update', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Pause', esc_html__( 'Pause', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Resume', esc_html__( 'Resume', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Checking if a backup is required for the selected updates...', esc_html__( 'Checking if a backup is required for the selected updates...', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Full backup required', esc_html__( 'Full backup required', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Checking backup settings', esc_html__( 'Checking backup settings', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Hide Shortcuts', esc_html__( 'Hide Shortcuts', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Show Shortcuts', esc_html__( 'Show Shortcuts', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Are you sure?', esc_html__( 'Are you sure?', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Bulk reconnect finished.', esc_html__( 'Bulk reconnect finished.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Note Saved', esc_html__( 'Note Saved', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'An error occured while saving your message', esc_html__( 'An error occured while saving your message', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Download from child site completed.', esc_html__( 'Download from child site completed.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please wait while we are saving your note', esc_html__( 'Please wait while we are saving your note', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Installation Successful', esc_html__( 'Installation Successful', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Upload to %1 (%2) successful.', esc_html__( 'Upload to %1 (%2) successful.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Upload to %1 (%2) failed:', esc_html__( 'Upload to %1 (%2) failed:', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Updating Themes', esc_html__( 'Updating Themes', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Updating Plugins', esc_html__( 'Updating Plugins', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Updating WordPress', esc_html__( 'Updating WordPress', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'updated', esc_html__( 'updated', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Updating', esc_html__( 'Updating', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please enter a valid name for your backup task', esc_html__( 'Please enter a valid name for your backup task', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'The backup task was added successfully', esc_html__( 'The backup task was added successfully', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Bulk test connection finished', esc_html__( 'Bulk test connection finished', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', esc_html__( 'To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Refreshing the page for Step 3 "Grab API Keys" in 5 seconds... if refresh fails please %1click here%2.', esc_html__( 'Refreshing the page for Step 3 "Grab API Keys" in 5 seconds... if refresh fails please %1click here%2.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'No ignored abandoned plugins', esc_html__( 'No ignored abandoned plugins', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please upload plugins to install.', esc_html__( 'Please upload plugins to install.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Please upload themes to install.', esc_html__( 'Please upload themes to install.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Did you know with the %1 you can control the settings of this plugin directly from your MainWP Dashboard?', esc_html__( 'Did you know with the %1 you can control the settings of this plugin directly from your MainWP Dashboard?', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Did you know with the %1 you can control the settings of these plugins directly from your MainWP Dashboard?', esc_html__( 'Did you know with the %1 you can control the settings of these plugins directly from your MainWP Dashboard?', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Did you know with the %1 you can control the settings of this theme directly from your MainWP Dashboard?', esc_html__( 'Did you know with the %1 you can control the settings of this theme directly from your MainWP Dashboard?', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Did you know with the %1 you can control the settings of these themes directly from your MainWP Dashboard?', esc_html__( 'Did you know with the %1 you can control the settings of these themes directly from your MainWP Dashboard?', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', esc_html__( 'Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Would you like to use the Bulk Settings Manager with these plugin? Check out the %1Documentation%2.', esc_html__( 'Would you like to use the Bulk Settings Manager with these plugin? Check out the %1Documentation%2.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', esc_html__( 'Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'Would you like to use the Bulk Settings Manager with these themes? Check out the %1Documentation%2.', esc_html__( 'Would you like to use the Bulk Settings Manager with these themes? Check out the %1Documentation%2.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'is_activated_parent', esc_html__( '%1 could not be deleted. This theme is parent theme for the currently active theme.', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'is_activated_theme', esc_html__( '%1 could not be deleted. This theme is active theme.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'A full backup has not been taken in the last days for the following sites:', str_replace( '%1', '' . $mainwp_backup_before_upgrade_days, esc_html__( 'A full backup has not been taken in the last %1 days for the following sites:', 'mainwp' ) ) );
+		mainwp_add_translation( $mainwpTranslations, 'Starting required backup(s).', esc_html__( 'Starting required backup(s).', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Required backup(s) complete', esc_html__( 'Required backup(s) complete', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Continue update anyway', esc_html__( 'Continue update anyway', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Continue update', esc_html__( 'Continue update', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Pause', esc_html__( 'Pause', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Resume', esc_html__( 'Resume', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Checking if a backup is required for the selected updates...', esc_html__( 'Checking if a backup is required for the selected updates...', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Full backup required', esc_html__( 'Full backup required', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Checking backup settings', esc_html__( 'Checking backup settings', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Hide Shortcuts', esc_html__( 'Hide Shortcuts', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Show Shortcuts', esc_html__( 'Show Shortcuts', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Are you sure?', esc_html__( 'Are you sure?', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Bulk reconnect finished.', esc_html__( 'Bulk reconnect finished.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Note Saved', esc_html__( 'Note Saved', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'An error occured while saving your message', esc_html__( 'An error occured while saving your message', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Download from child site completed.', esc_html__( 'Download from child site completed.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please wait while we are saving your note', esc_html__( 'Please wait while we are saving your note', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Installation Successful', esc_html__( 'Installation Successful', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Upload to %1 (%2) successful.', esc_html__( 'Upload to %1 (%2) successful.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Upload to %1 (%2) failed:', esc_html__( 'Upload to %1 (%2) failed:', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Updating Themes', esc_html__( 'Updating Themes', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Updating Plugins', esc_html__( 'Updating Plugins', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Updating WordPress', esc_html__( 'Updating WordPress', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'updated', esc_html__( 'updated', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Updating', esc_html__( 'Updating', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please enter a valid name for your backup task', esc_html__( 'Please enter a valid name for your backup task', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'The backup task was added successfully', esc_html__( 'The backup task was added successfully', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Bulk test connection finished', esc_html__( 'Bulk test connection finished', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', esc_html__( 'To find out more about what your HTTP status code means please %1click here%2 to locate your number (%3)', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Refreshing the page for Step 3 "Grab API Keys" in 5 seconds... if refresh fails please %1click here%2.', esc_html__( 'Refreshing the page for Step 3 "Grab API Keys" in 5 seconds... if refresh fails please %1click here%2.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'No ignored abandoned plugins', esc_html__( 'No ignored abandoned plugins', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please upload plugins to install.', esc_html__( 'Please upload plugins to install.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Please upload themes to install.', esc_html__( 'Please upload themes to install.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Did you know with the %1 you can control the settings of this plugin directly from your MainWP Dashboard?', esc_html__( 'Did you know with the %1 you can control the settings of this plugin directly from your MainWP Dashboard?', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Did you know with the %1 you can control the settings of these plugins directly from your MainWP Dashboard?', esc_html__( 'Did you know with the %1 you can control the settings of these plugins directly from your MainWP Dashboard?', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Did you know with the %1 you can control the settings of this theme directly from your MainWP Dashboard?', esc_html__( 'Did you know with the %1 you can control the settings of this theme directly from your MainWP Dashboard?', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Did you know with the %1 you can control the settings of these themes directly from your MainWP Dashboard?', esc_html__( 'Did you know with the %1 you can control the settings of these themes directly from your MainWP Dashboard?', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', esc_html__( 'Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Would you like to use the Bulk Settings Manager with these plugin? Check out the %1Documentation%2.', esc_html__( 'Would you like to use the Bulk Settings Manager with these plugin? Check out the %1Documentation%2.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', esc_html__( 'Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'Would you like to use the Bulk Settings Manager with these themes? Check out the %1Documentation%2.', esc_html__( 'Would you like to use the Bulk Settings Manager with these themes? Check out the %1Documentation%2.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'is_activated_parent', esc_html__( '%1 could not be deleted. This theme is parent theme for the currently active theme.', 'mainwp' ) );
+		mainwp_add_translation( $mainwpTranslations, 'is_activated_theme', esc_html__( '%1 could not be deleted. This theme is active theme.', 'mainwp' ) );
 
 		return $mainwpTranslations;
 	}
@@ -228,14 +228,12 @@ class MainWP_System_View {
 	 * Check if MainWP Extensions are Activated or not.
 	 *
 	 * @param mixed $plugin_slug Plugin Slug.
-	 * @param mixed $plugin_data Plugin Data.
-	 * @param mixed $status Status of plugin activation.
 	 *
 	 * @return string Activation warning message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_indexed_extensions_infor()
 	 */
-	public static function after_extensions_plugin_row( $plugin_slug, $plugin_data, $status ) {
+	public static function after_extensions_plugin_row( $plugin_slug ) {
 		$extensions = MainWP_Extensions_Handler::get_indexed_extensions_infor();
 		if ( ! isset( $extensions[ $plugin_slug ] ) ) {
 			return;
@@ -245,7 +243,7 @@ class MainWP_System_View {
 			return;
 		}
 
-		if ( isset( $extensions[ $plugin_slug ]['activated_key'] ) && 'Activated' == $extensions[ $plugin_slug ]['activated_key'] ) {
+		if ( isset( $extensions[ $plugin_slug ]['activated_key'] ) && 'Activated' === $extensions[ $plugin_slug ]['activated_key'] ) {
 			return;
 		}
 
@@ -388,7 +386,7 @@ class MainWP_System_View {
 	 */
 	public static function render_wp_mail_warning() {
 		$mail_failed = get_option( 'mainwp_notice_wp_mail_failed' );
-		if ( 'yes' == $mail_failed ) {
+		if ( 'yes' === $mail_failed ) {
 			?>
 			<div class="ui yellow message" style="margin-bottom: 0; border-radius: 0;">
 				<?php echo esc_html__( 'wp_mail() error detected! It is more than likely that your MainWP Dashboard will fail to send any email. Please check for possible plugin conflicts with your Dashboard or contact your host support to determine why the wp_mail() function fails.', 'mainwp' ); ?>
@@ -424,7 +422,7 @@ class MainWP_System_View {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
 	 */
 	public static function render_trours_notice() {
-		if ( 0 == get_option( 'mainwp_enable_guided_tours', 0 ) ) {
+		if ( 0 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ) {
 			if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_guided_tours_notice' ) ) {
 				?>
 				<div class="ui info message" style="margin-bottom: 0; border-radius: 0;">
@@ -434,7 +432,7 @@ class MainWP_System_View {
 				<div class="field">
 				<div class="ui hidden divider"></div>
 					<div class="ui toggle checkbox">
-						<input type="checkbox" name="mainwp-select-guided-tours-option" onchange="mainwp_guidedtours_onchange(this);" id="mainwp-select-guided-tours-option" <?php echo ( ( 1 == get_option( 'mainwp_enable_guided_tours', 0 ) ) ? 'checked="true"' : '' ); ?>>
+						<input type="checkbox" name="mainwp-select-guided-tours-option" onchange="mainwp_guidedtours_onchange(this);" id="mainwp-select-guided-tours-option" <?php echo ( ( 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ) ? 'checked="true"' : '' ); ?>>
 						<label for="mainwp-select-guided-tours-option"><?php esc_html_e( 'Select to enable the MainWP Guided Tours.', 'mainwp' ); ?></label>
 						</div>
 				</div>
@@ -453,12 +451,12 @@ class MainWP_System_View {
 	 */
 	public static function render_notice_config_warning() {
 		if ( MainWP_Server_Information_Handler::is_openssl_config_warning() ) {
-			if ( isset( $_GET['page'] ) && 'SettingsAdvanced' != $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+			if ( isset( $_GET['page'] ) && 'SettingsAdvanced' !== $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				if ( MainWP_Utility::show_mainwp_message( 'notice', 'ssl_warn' ) ) {
 					?>
 					<div class="ui yellow message" style="margin-bottom: 0; border-radius: 0;">
 						<button class="ui mini button yellow close icon mainwp-notice-dismiss" style="top:30%;margin-right:10px !important" notice-id="ssl_warn"><?php echo esc_html__( 'Error Fixed', 'mainwp' ); ?></button>
-						<div><?php echo sprintf( esc_html__( 'MainWP has detected that the&nbsp;%1$sOpenSSL.cnf%2$s&nbsp;file is not configured properly.  It is required to configure this so you can start connecting your child sites.  Please,&nbsp;%3$sclick here to configure it!%4$s', 'mainwp' ), '<strong>', '</strong>', '<a href="admin.php?page=SettingsAdvanced">', '</a>' ); ?></div>
+						<div><?php printf( esc_html__( 'MainWP has detected that the&nbsp;%1$sOpenSSL.cnf%2$s&nbsp;file is not configured properly.  It is required to configure this so you can start connecting your child sites.  Please,&nbsp;%3$sclick here to configure it!%4$s', 'mainwp' ), '<strong>', '</strong>', '<a href="admin.php?page=SettingsAdvanced">', '</a>' ); ?></div>
 						<div><?php echo esc_html__( 'If your MainWP Dashboard has no issues with connecting child sites, you can dismiss this warning by clicking the Error Fixed button.', 'mainwp' ); ?></div>
 				</div>
 					<?php
@@ -490,7 +488,7 @@ class MainWP_System_View {
 		$display_request2 = false;
 
 		if ( isset( $current_options['request_reviews1'] ) ) {
-			if ( 'forever' == $current_options['request_reviews1'] ) {
+			if ( 'forever' === $current_options['request_reviews1'] ) {
 				$display_request1 = false;
 			} else {
 				$days             = intval( $current_options['request_reviews1'] );
@@ -504,7 +502,7 @@ class MainWP_System_View {
 		}
 
 		if ( isset( $current_options['request_reviews2'] ) ) {
-			if ( 'forever' == $current_options['request_reviews2'] ) {
+			if ( 'forever' === $current_options['request_reviews2'] ) {
 				$display_request2 = false;
 			} else {
 				$days             = intval( $current_options['request_reviews2'] );
@@ -718,7 +716,7 @@ class MainWP_System_View {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
 	 */
 	public static function mainwp_warning_notice() {
-		if ( get_option( 'mainwp_installation_warning_hide_the_notice' ) == 'yes' ) {
+		if ( 'yes' === get_option( 'mainwp_installation_warning_hide_the_notice' ) ) {
 			return;
 		}
 		if ( MainWP_DB::instance()->get_websites_count() > 0 ) {
@@ -744,7 +742,7 @@ class MainWP_System_View {
 		?>
 		<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_ajax' ) ); ?>", mainwp_js_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_nonce' ) ); ?>";</script>
 		<?php
-		if ( MainWP_System::is_mainwp_pages() || ( isset( $_GET['page'] ) && 'mainwp-setup' == $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( MainWP_System::is_mainwp_pages() || ( isset( $_GET['page'] ) && 'mainwp-setup' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			if ( get_option( 'mainwp_enable_guided_tours', 0 ) ) {
 				self::mainwp_usetiful_tours();
 			}
@@ -789,21 +787,21 @@ class MainWP_System_View {
 			}
 
 			$siteViewMode = MainWP_Utility::get_siteview_mode();
-			if ( 'grid' == $siteViewMode ) {
+			if ( 'grid' === $siteViewMode ) {
 				$class_string .= ' mainwp-sites-grid-view ';
 			} else {
 				$class_string .= ' mainwp-sites-table-view ';
 			}
 
-			// phpcs:disable WordPress.Security.NonceVerification
-			if ( isset( $_GET['page'] ) && 'managesites' == $_GET['page'] ) {
-				if ( isset( $_GET['dashboard'] ) && '' != $_GET['dashboard'] ) {
+			// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			if ( isset( $_GET['page'] ) && 'managesites' === $_GET['page'] ) {
+				if ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) {
 					$class_string .= ' mainwp-individual-site-overview ';
 				}
 			}
 
-			if ( isset( $_GET['page'] ) && 'ManageClients' == $_GET['page'] ) {
-				if ( isset( $_GET['client_id'] ) && '' != $_GET['client_id'] ) {
+			if ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] ) {
+				if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) {
 					$class_string .= ' mainwp-individual-client-overview ';
 				}
 			}
@@ -828,17 +826,17 @@ class MainWP_System_View {
 		$cntr = 0;
 		if ( is_array( $websites ) ) {
 			$count = count( $websites );
-			for ( $i = 0; $i < $count; $i ++ ) {
+			for ( $i = 0; $i < $count; $i++ ) {
 				$website = $websites[ $i ];
-				if ( '' == $website->sync_errors ) {
-					$cntr ++;
+				if ( empty( $website->sync_errors ) ) {
+					++$cntr;
 					echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="' . intval( $website->id ) . '" />';
 				}
 			}
 		} elseif ( false !== $websites ) {
 			while ( $website = MainWP_DB::fetch_object( $websites ) ) {
-				if ( '' == $website->sync_errors ) {
-					$cntr ++;
+				if ( empty( $website->sync_errors ) ) {
+					++$cntr;
 					echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="' . intval( $website->id ) . '" />';
 				}
 			}
@@ -864,10 +862,10 @@ class MainWP_System_View {
 					<?php
 					if ( is_array( $websites ) ) {
 						$count = count( $websites );
-						for ( $i = 0; $i < $count; $i ++ ) {
+						for ( $i = 0; $i < $count; $i++ ) {
 							$site_name   = $website->name;
 							$website     = $websites[ $i ];
-							$is_sync_err = ( '' != $website->sync_errors ) ? true : false;
+							$is_sync_err = ( '' !== $website->sync_errors ) ? true : false;
 							?>
 							<div class="item <?php echo $is_sync_err ? 'disconnected-site' : ''; ?>">
 								<div class="right floated content">
@@ -884,7 +882,7 @@ class MainWP_System_View {
 						MainWP_DB::data_seek( $websites, 0 );
 						while ( $website = MainWP_DB::fetch_object( $websites ) ) {
 							$site_name   = $website->name;
-							$is_sync_err = ( '' != $website->sync_errors ) ? true : false;
+							$is_sync_err = ( '' !== $website->sync_errors ) ? true : false;
 							?>
 							<div class="item <?php echo $is_sync_err ? 'disconnected-site' : ''; ?>">
 								<div class="right floated content">
@@ -1021,7 +1019,7 @@ class MainWP_System_View {
 
 		$plugins_to_checks = self::get_plugins_install_check();
 
-		$page = sanitize_text_field( wp_unslash( $_GET['page'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		$plugin_check = MainWP_Utility::get_sub_array_having( $plugins_to_checks, 'page', $page );
 
@@ -1034,7 +1032,7 @@ class MainWP_System_View {
 		}
 
 		// if is not overview extension page return.
-		if ( isset( $_GET['tab'] ) && 'overview' !== $_GET['tab'] && 'dashboard' !== $_GET['tab'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['tab'] ) && 'overview' !== $_GET['tab'] && 'dashboard' !== $_GET['tab'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			return;
 		}
 
@@ -1063,11 +1061,11 @@ class MainWP_System_View {
 
 		while ( $websites && $website = MainWP_DB::fetch_object( $websites ) ) {
 			$site_name = $website->name;
-			if ( '' != $website->sync_errors ) {
+			if ( '' !== $website->sync_errors ) {
 				continue;
 			}
 			$not_found = true;
-			if ( '' != $website->plugins ) {
+			if ( '' !== $website->plugins ) {
 				$plugins = json_decode( $website->plugins, 1 );
 				if ( is_array( $plugins ) && count( $plugins ) > 0 ) {
 					foreach ( $plugins as $plugin ) {

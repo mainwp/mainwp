@@ -9,7 +9,7 @@
 
 namespace MainWP\Dashboard\Module\Log;
 
-use \MainWP\Dashboard\MainWP_Execution_Helper;
+use MainWP\Dashboard\MainWP_Execution_Helper;
 
 /**
  * Class Log_Manager
@@ -145,11 +145,11 @@ class Log_Manager {
 	/**
 	 * Autoloader for classes.
 	 *
-	 * @param string $class class name.
+	 * @param string $class_name class name.
 	 */
-	public function autoload( $class ) {
+	public function autoload( $class_name ) {
 
-		if ( ! preg_match( '/^(?P<namespace>.+)\\\\(?P<autoload>[^\\\\]+)$/', $class, $matches ) ) {
+		if ( ! preg_match( '/^(?P<namespace>.+)\\\\(?P<autoload>[^\\\\]+)$/', $class_name, $matches ) ) {
 			return;
 		}
 
@@ -210,7 +210,7 @@ class Log_Manager {
 	 */
 	public function plugins_loaded() {
 		// Load DB helper interface/class.
-		$driver_class = apply_filters( 'mainwp_module_log_db_driver', '\MainWP\Dashboard\Module\Log\Log_DB_Driver_WPDB' );
+		$driver_class = '\MainWP\Dashboard\Module\Log\Log_DB_Driver_WPDB';
 
 		if ( class_exists( $driver_class ) ) {
 			$driver   = new $driver_class();

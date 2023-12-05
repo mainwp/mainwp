@@ -31,7 +31,7 @@ class MainWP_Client_Overview_Custom_Info {
 	 * @return mixed render_site_info()
 	 */
 	public static function render() {
-		$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( empty( $client_id ) ) {
 			return;
 		}
@@ -171,5 +171,4 @@ class MainWP_Client_Overview_Custom_Info {
 			</div>
 			<?php
 	}
-
 }

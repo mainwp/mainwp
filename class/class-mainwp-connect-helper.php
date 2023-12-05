@@ -35,7 +35,7 @@ class MainWP_Connect_Helper {
 	 * @return MainWP_Connect_Helper
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -96,7 +96,7 @@ class MainWP_Connect_Helper {
 	 */
 	public function ajax_prepare_renew_connections() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_prepare_renew_connections' );
-		$sites = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification
+		$sites = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
@@ -118,7 +118,7 @@ class MainWP_Connect_Helper {
 		ob_start();
 		foreach ( $dbwebsites as $site ) {
 			$site_name   = $site->name;
-			$is_sync_err = ( '' != $site->sync_errors ) ? true : false;
+			$is_sync_err = ( '' !== $site->sync_errors ) ? true : false;
 			?>
 			<div class="item <?php echo $is_sync_err ? 'disconnected-site' : ''; ?>" status="queue">
 				<div class="right floated content">
@@ -142,7 +142,7 @@ class MainWP_Connect_Helper {
 
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_renew_connections' );
 
-		$site_id = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : 0; //phpcs:ignore WordPress.Security.NonceVerification
+		$site_id = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : 0; //phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$website = false;
 
 		if ( ! empty( $site_id ) ) {
@@ -159,7 +159,7 @@ class MainWP_Connect_Helper {
 
 		try {
 			// if disconnected, try to reconnect.
-			if ( '' != $website->sync_error ) {
+			if ( '' !== $website->sync_errors ) {
 				// try reconnect, if failed.
 				MainWP_Sync::sync_site( $website, true );
 			}

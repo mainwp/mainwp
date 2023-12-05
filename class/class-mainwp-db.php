@@ -46,7 +46,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @return MainWP_DB
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 
@@ -59,11 +59,11 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * Get wp_options database table view.
 	 *
 	 * @param array $fields Extra option fields.
-	 * @param bool  $default Whether or not to get default option fields.
+	 * @param bool  $default_value Whether or not to get default option fields.
 	 *
 	 * @return array wp_options view.
 	 */
-	public function get_option_view( $fields = array(), $default = true ) {
+	public function get_option_view( $fields = array(), $default_value = true ) {
 
 		if ( ! is_array( $fields ) ) {
 			$fields = array();
@@ -71,7 +71,7 @@ class MainWP_DB extends MainWP_DB_Base {
 
 		$view = '(SELECT intwp.id AS wpid ';
 
-		if ( empty( $fields ) || $default ) {
+		if ( empty( $fields ) || $default_value ) {
 			$view .= ',(SELECT recent_comments.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_comments WHERE  recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments" LIMIT 1) AS recent_comments,
 					(SELECT recent_posts.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_posts WHERE  recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts" LIMIT 1) AS recent_posts,
 					(SELECT recent_pages.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_pages WHERE  recent_pages.wpid = intwp.id AND recent_pages.name = "recent_pages" LIMIT 1) AS recent_pages,
@@ -192,7 +192,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_websites_count( $userId = null, $all_access = false ) {
-		if ( ( null == $userId ) && MainWP_System::instance()->is_multi_user() ) {
+		if ( ( null === $userId ) && MainWP_System::instance()->is_multi_user() ) {
 
 			/**
 			 * Current user global.
@@ -203,7 +203,7 @@ class MainWP_DB extends MainWP_DB_Base {
 
 			$userId = $current_user->ID;
 		}
-		$where = ( null == $userId ? '' : ' wp.userid = ' . $userId );
+		$where = ( null === $userId ? '' : ' wp.userid = ' . $userId );
 		if ( ! $all_access ) {
 			$where .= $this->get_sql_where_allow_access_sites( 'wp' );
 		}
@@ -217,11 +217,11 @@ class MainWP_DB extends MainWP_DB_Base {
 	 *
 	 * @param array $website Child Site array.
 	 * @param mixed $option  Child Site wp_options table name.
-	 * @param mixed $default  default value.
+	 * @param mixed $default_value  default value.
 	 *
 	 * @return string|null Database query result (as string), or null on failure.
 	 */
-	public function get_website_option( $website, $option, $default = null ) {
+	public function get_website_option( $website, $option, $default_value = null ) {
 
 		if ( is_array( $website ) ) {
 			if ( isset( $website[ $option ] ) ) {
@@ -241,8 +241,8 @@ class MainWP_DB extends MainWP_DB_Base {
 
 		$var = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT value FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', $site_id ) );
 
-		if ( null === $var && null !== $default ) {
-			$var = $default;
+		if ( null === $var && null !== $default_value ) {
+			$var = $default_value;
 		}
 		return $var;
 	}
@@ -637,7 +637,8 @@ class MainWP_DB extends MainWP_DB_Base {
 		$for_manager = false,
 		$extra_view = array( 'favi_icon' ),
 		$is_staging = 'no',
-		$params = array() ) {
+		$params = array()
+	) {
 
 		$where = '';
 		if ( MainWP_System::instance()->is_multi_user() ) {
@@ -668,9 +669,9 @@ class MainWP_DB extends MainWP_DB_Base {
 		$connected_sql = '';
 		if ( is_array( $params ) ) {
 			if ( isset( $params['connected'] ) ) {
-				if ( 'yes' == $params['connected'] ) {
+				if ( 'yes' === $params['connected'] ) {
 					$connected_sql = ' AND wp_sync.sync_errors = "" ';
-				} elseif ( 'no' == $params['connected'] ) {
+				} elseif ( 'no' === $params['connected'] ) {
 					$connected_sql = '  AND wp_sync.sync_errors <> "" ';
 				}
 			}
@@ -925,7 +926,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			$urls = explode( ';', $params['urls'] );
 			foreach ( $urls as $url ) {
 				$url = str_replace( array( 'https://www.', 'http://www.', 'https://', 'http://', 'www.' ), array( '', '', '', '', '' ), $url );
-				if ( '/' != substr( $url, - 1 ) ) {
+				if ( '/' !== substr( $url, - 1 ) ) {
 					$url .= '/';
 				}
 				$urlsWhere .= '"' . $this->escape( $url ) . '", ';
@@ -1018,21 +1019,21 @@ class MainWP_DB extends MainWP_DB_Base {
 
 			if ( $full_data ) {
 				$sum_upgrades = 0;
-				if ( '' != $obj_data->plugin_upgrades ) {
+				if ( '' !== $obj_data->plugin_upgrades ) {
 					$plugin_upgrades = json_decode( $obj_data->plugin_upgrades, true );
 					if ( is_array( $plugin_upgrades ) ) {
 						$sum_upgrades += count( $plugin_upgrades );
 					}
 				}
 
-				if ( '' != $obj_data->theme_upgrades ) {
+				if ( '' !== $obj_data->theme_upgrades ) {
 					$theme_upgrades = json_decode( $obj_data->theme_upgrades, true );
 					if ( is_array( $theme_upgrades ) ) {
 						$sum_upgrades += count( $theme_upgrades );
 					}
 				}
 
-				if ( '' != $obj_data->wp_upgrades ) {
+				if ( '' !== $obj_data->wp_upgrades ) {
 					$wp_upgrades = json_decode( $obj_data->wp_upgrades, true );
 					if ( is_array( $wp_upgrades ) ) {
 						$sum_upgrades += count( $wp_upgrades );
@@ -1041,7 +1042,7 @@ class MainWP_DB extends MainWP_DB_Base {
 				$obj_data->sum_of_upgrades = $sum_upgrades;
 			}
 
-			if ( 'array' == $format ) {
+			if ( 'array' === $format ) {
 				$dbwebsites[] = $obj_data;
 			} else {
 				$dbwebsites[ $website->id ] = $obj_data;
@@ -1074,7 +1075,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		$extraWhere   = isset( $params['extra_where'] ) ? $params['extra_where'] : null;
 		$for_manager  = isset( $params['for_manager'] ) && $params['for_manager'] ? true : false;
 		$extra_view   = isset( $params['extra_view'] ) ? $params['extra_view'] : array( 'favi_icon' );
-		$is_staging   = isset( $params['is_staging'] ) && 'yes' == $params['is_staging'] ? 'yes' : 'no';
+		$is_staging   = isset( $params['is_staging'] ) && 'yes' === $params['is_staging'] ? 'yes' : 'no';
 		$is_count     = isset( $params['count_only'] ) && $params['count_only'] ? true : false;
 		$group_ids    = isset( $params['group_id'] ) && ! empty( $params['group_id'] ) ? $params['group_id'] : array();
 		$client_ids   = isset( $params['client_id'] ) && ! empty( $params['client_id'] ) ? $params['client_id'] : array();
@@ -1087,7 +1088,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		// valid group ids.
 		$group_ids = array_filter(
 			$group_ids,
-			function( $e ) {
+			function ( $e ) {
 				if ( 'nogroups' === $e ) {
 					return true;
 				}
@@ -1102,7 +1103,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		// valid group ids.
 		$client_ids = array_filter(
 			$client_ids,
-			function( $e ) {
+			function ( $e ) {
 				if ( 'noclients' === $e ) {
 					return true;
 				}
@@ -1114,7 +1115,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			$staging_group = get_option( 'mainwp_stagingsites_group_id' );
 			if ( $staging_group ) {
 				if ( in_array( $staging_group, $group_ids ) ) {
-					if ( 0 == count( $group_ids ) ) {
+					if ( 0 === count( $group_ids ) ) {
 						$is_staging = 'yes';
 					} else {
 						$is_staging = 'nocheckstaging';
@@ -1166,8 +1167,8 @@ class MainWP_DB extends MainWP_DB_Base {
 			$join_group = ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
 			$group_ids  = array_filter(
 				$group_ids,
-				function( $e ) {
-					return 'nogroups' != $e;
+				function ( $e ) {
+					return 'nogroups' !== $e;
 				}
 			);
 			if ( 0 < count( $group_ids ) ) {
@@ -1180,12 +1181,10 @@ class MainWP_DB extends MainWP_DB_Base {
 				} else {
 					$where_group = ' AND ( wpgroup.groupid IS NULL OR wpgroup.groupid IN (' . $groups . ') ) ';
 				}
-			} else {
-				if ( $is_not ) {
+			} elseif ( $is_not ) {
 					$where_group = ' AND wpgroup.groupid IS NOT NULL ';
-				} else {
-					$where_group = ' AND wpgroup.groupid IS NULL ';
-				}
+			} else {
+				$where_group = ' AND wpgroup.groupid IS NULL ';
 			}
 		} elseif ( $group_ids && 0 < count( $group_ids ) ) {
 			$groups = implode( ',', $group_ids );
@@ -1208,8 +1207,8 @@ class MainWP_DB extends MainWP_DB_Base {
 			$join_client = ' LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id ';
 			$client_ids  = array_filter(
 				$client_ids,
-				function( $e ) {
-					return 'noclients' != $e;
+				function ( $e ) {
+					return 'noclients' !== $e;
 				}
 			);
 			if ( 0 < count( $client_ids ) ) {
@@ -1219,12 +1218,10 @@ class MainWP_DB extends MainWP_DB_Base {
 				} else {
 					$where_client = ' AND wpclient.client_id IN (' . $clients . ') ';
 				}
-			} else {
-				if ( $is_not ) {
+			} elseif ( $is_not ) {
 					$where_client = ' AND wpclient.client_id IS NOT NULL ';
-				} else {
-					$where_client = ' AND wpclient.client_id IS NULL ';
-				}
+			} else {
+				$where_client = ' AND wpclient.client_id IS NULL ';
 			}
 		} elseif ( $client_ids && 0 < count( $client_ids ) ) {
 			$clients = implode( ',', $client_ids );
@@ -1329,16 +1326,14 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 
 		if ( is_array( $allowed_sites ) && 0 < count( $allowed_sites ) ) {
-
 			// valid group ids.
 			$allowed_sites = array_filter(
 				$allowed_sites,
-				function( $e ) {
+				function ( $e ) {
 					return is_numeric( $e ) ? true : false;
 				}
 			);
-
-			$_where .= ' AND ' . $site_table_alias . '.id IN (' . implode( ',', $allowed_sites ) . ') ';
+			$_where       .= ' AND ' . $site_table_alias . '.id IN (' . implode( ',', $allowed_sites ) . ') ';
 		} else {
 			$_where .= ' AND 0 ';
 		}
@@ -1406,7 +1401,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			// valid group ids.
 			$allowed_groups = array_filter(
 				$allowed_groups,
-				function( $e ) {
+				function ( $e ) {
 					return is_numeric( $e ) ? true : false;
 				}
 			);
@@ -1483,7 +1478,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_websites_by_ids( $ids, $userId = null ) {
-		if ( ( null == $userId ) && MainWP_System::instance()->is_multi_user() ) {
+		if ( ( null === $userId ) && MainWP_System::instance()->is_multi_user() ) {
 
 			/**
 			 * Current user global.
@@ -1494,9 +1489,18 @@ class MainWP_DB extends MainWP_DB_Base {
 
 			$userId = $current_user->ID;
 		}
+
+		// valid group ids.
+		$ids = array_filter(
+			$ids,
+			function ( $e ) {
+				return ( is_numeric( $e ) && 0 < $e ) ? true : false;
+			}
+		);
+
 		$where = $this->get_sql_where_allow_access_sites();
 
-		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE id IN (' . implode( ',', $ids ) . ')' . ( null != $userId ? ' AND userid = ' . $userId : '' ) . $where, OBJECT );
+		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE id IN (' . implode( ',', $ids ) . ')' . ( null !== $userId ? ' AND userid = ' . intval( $userId ) : '' ) . $where, OBJECT );
 	}
 
 	/**
@@ -1513,7 +1517,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		if ( empty( $ids ) ) {
 			return array();
 		}
-		if ( ( null == $userId ) && MainWP_System::instance()->is_multi_user() ) {
+		if ( ( null === $userId ) && MainWP_System::instance()->is_multi_user() ) {
 
 			/**
 			 * Current user global.
@@ -1528,12 +1532,12 @@ class MainWP_DB extends MainWP_DB_Base {
 		// valid group ids.
 		$group_ids = array_filter(
 			$ids,
-			function( $e ) {
+			function ( $e ) {
 				return is_numeric( $e ) ? true : false;
 			}
 		);
 
-		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid WHERE wpgroup.groupid IN (' . implode( ',', $group_ids ) . ') ' . ( null != $userId ? ' AND wp.userid = ' . $userId : '' ), OBJECT );
+		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid WHERE wpgroup.groupid IN (' . implode( ',', $group_ids ) . ') ' . ( null !== $userId ? ' AND wp.userid = ' . intval( $userId ) : '' ), OBJECT );
 	}
 
 	/**
@@ -1569,13 +1573,14 @@ class MainWP_DB extends MainWP_DB_Base {
 		$offset = false,
 		$rowcount = false,
 		$where = null,
-		$search_site = null ) {
+		$search_site = null
+	) {
 
 		$is_staging = 'no';
 		if ( $selectgroups ) {
 			$staging_group = get_option( 'mainwp_stagingsites_group_id' );
 			if ( $staging_group ) {
-				if ( $id == $staging_group ) {
+				if ( $id === $staging_group ) {
 					$is_staging = 'yes';
 				}
 			}
@@ -1598,7 +1603,7 @@ class MainWP_DB extends MainWP_DB_Base {
                  JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
                  JOIN ' . $this->get_option_view( array( 'site_info' ), true ) . ' wp_optionview ON wp.id = wp_optionview.wpid
                  WHERE wpgroup.groupid = ' . $id . ' ' .
-				( null == $where ? '' : ' AND ' . $where ) . $where_allowed . $where_search . '
+				( empty( $where ) ? '' : ' AND ' . $where ) . $where_allowed . $where_search . '
                  GROUP BY wp.id, wp_sync.sync_id
                  ORDER BY ' . $orderBy;
 			} else {
@@ -1607,7 +1612,7 @@ class MainWP_DB extends MainWP_DB_Base {
                         JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
 						JOIN ' . $this->get_option_view( array( 'site_info' ), false ) . ' wp_optionview ON wp.id = wp_optionview.wpid
                         WHERE wpgroup.groupid = ' . $id . ' ' . $where_allowed . $where_search .
-				( null == $where ? '' : ' AND ' . $where ) . ' ORDER BY ' . $orderBy;
+				( empty( $where ) ? '' : ' AND ' . $where ) . ' ORDER BY ' . $orderBy;
 			}
 			if ( ( false !== $offset ) && ( false !== $rowcount ) ) {
 				$qry .= ' LIMIT ' . $offset . ', ' . $rowcount;
@@ -1644,7 +1649,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_sql_websites_by_group_name( $groupname, $userid = null ) {
-		if ( ( null == $userid ) && MainWP_System::instance()->is_multi_user() ) {
+		if ( ( null === $userid ) && MainWP_System::instance()->is_multi_user() ) {
 
 			/**
 			 * Current user global.
@@ -1662,8 +1667,8 @@ class MainWP_DB extends MainWP_DB_Base {
                 JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
                 JOIN ' . $this->get_option_view() . ' wp_optionview ON wp.id = wp_optionview.wpid
                 WHERE g.name="' . $this->escape( $groupname ) . '"';
-		if ( null != $userid ) {
-			$sql .= ' AND g.userid = "' . $userid . '"';
+		if ( null !== $userid ) {
+			$sql .= ' AND g.userid = "' . intval( $userid ) . '"';
 		}
 
 		return $sql;
@@ -1718,10 +1723,11 @@ class MainWP_DB extends MainWP_DB_Base {
 		$http_pass = null,
 		$sslVersion = 0,
 		$wpe = 0,
-		$isStaging = 0 ) {
+		$isStaging = 0
+	) {
 
 		if ( MainWP_Utility::ctype_digit( $userid ) ) {
-			if ( '/' != substr( $url, - 1 ) ) {
+			if ( '/' !== substr( $url, - 1 ) ) {
 				$url .= '/';
 			}
 			$values = array(
@@ -1921,7 +1927,8 @@ class MainWP_DB extends MainWP_DB_Base {
 		$checkInterval = 1440,
 		$disableHealthChecking = 1,
 		$healthThreshold = 80,
-		$wpe = 0 ) {
+		$wpe = 0
+	) {
 
 		if ( MainWP_Utility::ctype_digit( $websiteid ) && MainWP_Utility::ctype_digit( $userid ) ) {
 			$website = self::instance()->get_website_by_id( $websiteid );
@@ -2069,7 +2076,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @return object|null Database query result or null on failure.
 	 */
 	public function get_websites_by_url( $url ) {
-		if ( '/' != substr( $url, - 1 ) ) {
+		if ( '/' !== substr( $url, - 1 ) ) {
 			$url .= '/';
 		}
 		$results = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE url = %s ', $this->escape( $url ) ), OBJECT );

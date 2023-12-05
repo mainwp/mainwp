@@ -54,7 +54,7 @@ class MainWP_Updates_Table_Helper {
 	 */
 	public function __construct( $view_per, $type = 'plugin', $others = array() ) {
 		$this->type        = $type;
-		$this->view_per    = $view_per;
+		$this->view_per    = (int) $view_per;
 		$this->show_select = is_array( $others ) && isset( $others['show_select'] ) && $others['show_select'] ? true : false;
 	}
 
@@ -67,9 +67,9 @@ class MainWP_Updates_Table_Helper {
 	 */
 	public function get_columns() {
 
-		$title = ( MAINWP_VIEW_PER_PLUGIN_THEME == $this->view_per || MAINWP_VIEW_PER_GROUP == $this->view_per ) ? esc_html__( 'Website', 'mainwp' ) : '';
-		if ( MAINWP_VIEW_PER_SITE == $this->view_per ) {
-			$title = ( 'plugin' == $this->type ) ? esc_html__( 'Plugin', 'mainwp' ) : esc_html__( 'Theme', 'mainwp' );
+		$title = ( MAINWP_VIEW_PER_PLUGIN_THEME === $this->view_per || MAINWP_VIEW_PER_GROUP === $this->view_per ) ? esc_html__( 'Website', 'mainwp' ) : '';
+		if ( MAINWP_VIEW_PER_SITE === $this->view_per ) {
+			$title = ( 'plugin' === $this->type ) ? esc_html__( 'Plugin', 'mainwp' ) : esc_html__( 'Theme', 'mainwp' );
 		}
 
 		$columns = array(
@@ -83,11 +83,11 @@ class MainWP_Updates_Table_Helper {
 			'action'  => '',
 		);
 
-		if ( MAINWP_VIEW_PER_PLUGIN_THEME != $this->view_per ) {
+		if ( MAINWP_VIEW_PER_PLUGIN_THEME !== $this->view_per ) {
 			unset( $columns['login'] );
 			unset( $columns['client'] );
 		}
-		if ( MAINWP_VIEW_PER_PLUGIN_THEME == $this->view_per ) {
+		if ( MAINWP_VIEW_PER_PLUGIN_THEME === $this->view_per ) {
 			unset( $columns['trusted'] );
 		}
 		return $columns;
@@ -184,12 +184,12 @@ class MainWP_Updates_Table_Helper {
 	public function column_default( $value, $column_name ) {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
 		$class        = '';
-		if ( 'version' == $column_name || 'latest' == $column_name ) {
+		if ( 'version' === $column_name || 'latest' === $column_name ) {
 			$class = 'mainwp-768-half-width-cell';
 		}
 
 		$column_content = '';
-		if ( 'title' == $column_name && ( empty( $current_wpid ) || $this->show_select ) ) {
+		if ( 'title' === $column_name && ( empty( $current_wpid ) || $this->show_select ) ) {
 			$column_content .= '<div class="ui child checkbox">
 			<input type="checkbox" name="">
 		  </div>';
@@ -223,5 +223,4 @@ class MainWP_Updates_Table_Helper {
 		}
 		return $row_columns;
 	}
-
 }

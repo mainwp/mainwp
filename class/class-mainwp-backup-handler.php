@@ -37,7 +37,7 @@ class MainWP_Backup_Handler {
 	 * @gobal object $wp_filesystem WordPress filesystem instance.
 	 *
 	 * @return mixed $backup_result
-	 * @throws MainWP_Exception
+	 * @throws MainWP_Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses \MainWP\Dashboard\MainWP_Connect::download_to_file()
@@ -92,7 +92,7 @@ class MainWP_Backup_Handler {
 		$subfolder = MainWP_Utility::remove_preslash_spaces( $subfolder );
 		$subfolder = MainWP_Utility::normalize_filename( $subfolder );
 
-		if ( ! MainWP_System::instance()->is_single_user() && ( $userid != $website->userid ) ) {
+		if ( ! MainWP_System::instance()->is_single_user() && ( $userid !== $website->userid ) ) {
 			throw new MainWP_Exception( 'Undefined error.' );
 		}
 
@@ -136,10 +136,10 @@ class MainWP_Backup_Handler {
 			$file .= $ext;
 		}
 
-		if ( 'zip' == $pTask->archiveFormat ) {
-			$loadFilesBeforeZip = $pTask->loadFilesBeforeZip;
-		} elseif ( '' == $pTask->archiveFormat || 'site' == $pTask->archiveFormat ) {
-			$loadFilesBeforeZip = $website->loadFilesBeforeZip;
+		if ( 'zip' === $pTask->archiveFormat ) {
+			$loadFilesBeforeZip = (int) $pTask->loadFilesBeforeZip;
+		} elseif ( '' === $pTask->archiveFormat || 'site' === $pTask->archiveFormat ) {
+			$loadFilesBeforeZip = (int) $website->loadFilesBeforeZip;
 		} else {
 			$loadFilesBeforeZip = 1;
 		}
@@ -151,11 +151,11 @@ class MainWP_Backup_Handler {
 			$loadFilesBeforeZip = ( 2 === $loadFilesBeforeZip );
 		}
 
-		if ( ( 'zip' == $pTask->archiveFormat ) && ( 1 == $pTask->maximumFileDescriptorsOverride ) ) {
-			$maximumFileDescriptorsAuto = ( 1 == $pTask->maximumFileDescriptorsAuto );
+		if ( ( 'zip' === $pTask->archiveFormat ) && ( 1 === (int) $pTask->maximumFileDescriptorsOverride ) ) {
+			$maximumFileDescriptorsAuto = ( 1 === (int) $pTask->maximumFileDescriptorsAuto );
 			$maximumFileDescriptors     = $pTask->maximumFileDescriptors;
-		} elseif ( ( '' == $pTask->archiveFormat || 'site' == $pTask->archiveFormat ) && ( 1 == $website->maximumFileDescriptorsOverride ) ) {
-			$maximumFileDescriptorsAuto = ( 1 == $website->maximumFileDescriptorsAuto );
+		} elseif ( ( '' === $pTask->archiveFormat || 'site' === $pTask->archiveFormat ) && ( 1 === (int) $website->maximumFileDescriptorsOverride ) ) {
+			$maximumFileDescriptorsAuto = ( 1 === (int) $website->maximumFileDescriptorsAuto );
 			$maximumFileDescriptors     = $website->maximumFileDescriptors;
 		} else {
 			$maximumFileDescriptorsAuto = get_option( 'mainwp_maximumFileDescriptorsAuto' );
@@ -293,7 +293,7 @@ class MainWP_Backup_Handler {
 					if ( ! is_array( $error ) ) {
 						throw new MainWP_Exception( 'Backup failed.' );
 					} else {
-						throw new MainWP_Exception( $error['message'], $error['extra'] );
+						throw new MainWP_Exception( $error['message'], $error['extra'] ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 					}
 				} elseif ( 'busy' === $temp['status'] ) {
 					return false;
@@ -310,12 +310,10 @@ class MainWP_Backup_Handler {
 
 					$backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
 				}
-			} else {
-				if ( 5 > $backupTaskProgress->attempts ) {
+			} elseif ( 5 > $backupTaskProgress->attempts ) {
 					$backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts ++ ) );
-				} else {
-					throw new MainWP_Exception( 'Backup failed after 5 retries.' );
-				}
+			} else {
+				throw new MainWP_Exception( 'Backup failed after 5 retries.' );
 			}
 		}
 
@@ -379,7 +377,7 @@ class MainWP_Backup_Handler {
 
 				$cnt = 0;
 				foreach ( $dbBackups as $key => $dbBackup ) {
-					$cnt ++;
+					++$cnt;
 					if ( $cnt >= $maxBackups ) {
 						$wp_filesystem->delete( $dbBackup );
 					}
@@ -387,7 +385,7 @@ class MainWP_Backup_Handler {
 
 				$cnt = 0;
 				foreach ( $fullBackups as $key => $fullBackup ) {
-					$cnt ++;
+					++$cnt;
 					if ( $cnt >= $maxBackups ) {
 						$wp_filesystem->delete( $fullBackup );
 					}
@@ -406,10 +404,10 @@ class MainWP_Backup_Handler {
 			if ( $information['db'] ) {
 				$what            = 'db';
 				$regexBackupFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
-				if ( '' == $backupTaskProgress->downloadedDB ) {
+				if ( '' === $backupTaskProgress->downloadedDB ) {
 					$localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time;
 
-					if ( null != $pFilename ) {
+					if ( null !== $pFilename ) {
 						$filename        = str_replace(
 							array(
 								'%sitename%',
@@ -439,7 +437,7 @@ class MainWP_Backup_Handler {
 					$localBackupFile = $backupTaskProgress->downloadedDB;
 				}
 
-				if ( 0 == $backupTaskProgress->downloadedDBComplete ) {
+				if ( 0 === $backupTaskProgress->downloadedDBComplete ) {
 					MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $information['db'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
 					$backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
 				}
@@ -449,10 +447,10 @@ class MainWP_Backup_Handler {
 				$realExt         = self::get_real_extension( $information['full'] );
 				$what            = 'full';
 				$regexBackupFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
-				if ( '' == $backupTaskProgress->downloadedFULL ) {
+				if ( '' === $backupTaskProgress->downloadedFULL ) {
 					$localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . $realExt;
 
-					if ( null != $pFilename ) {
+					if ( null !== $pFilename ) {
 						$filename        = str_replace(
 							array(
 								'%sitename%',
@@ -481,7 +479,7 @@ class MainWP_Backup_Handler {
 					$localBackupFile = $backupTaskProgress->downloadedFULL;
 				}
 
-				if ( 0 == $backupTaskProgress->downloadedFULLComplete ) {
+				if ( 0 === $backupTaskProgress->downloadedFULLComplete ) {
 					if ( file_exists( $localBackupFile ) ) {
 						$time = filemtime( $localBackupFile );
 
@@ -536,7 +534,7 @@ class MainWP_Backup_Handler {
 	 * @param mixed $pFile   Backup File.
 	 *
 	 * @return bool true|false
-	 * @throws MainWP_Exception
+	 * @throws MainWP_Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
@@ -590,7 +588,7 @@ class MainWP_Backup_Handler {
 
 		$cnt = 0;
 		foreach ( $dbBackups as $key => $dbBackup ) {
-			$cnt ++;
+			++$cnt;
 			if ( $cnt >= $maxBackups ) {
 				$wp_filesystem->delete( $dbBackup );
 			}
@@ -598,7 +596,7 @@ class MainWP_Backup_Handler {
 
 		$cnt = 0;
 		foreach ( $fullBackups as $key => $fullBackup ) {
-			$cnt ++;
+			++$cnt;
 			if ( $cnt >= $maxBackups ) {
 				$wp_filesystem->delete( $fullBackup );
 			}
@@ -620,11 +618,11 @@ class MainWP_Backup_Handler {
 	}
 
 	/**
-	 * Method backup_delete_file()
+	 * Method backup_delete_file().
 	 *
 	 * Delete backup file.
 	 *
-	 * @param mixed $pSiteId Child Site ID
+	 * @param mixed $pSiteId Child Site ID.
 	 * @param mixed $pFile File to delete.
 	 *
 	 * @return bool true
@@ -648,7 +646,7 @@ class MainWP_Backup_Handler {
 	 * @param mixed $pid       Backup pid.
 	 * @param mixed $type      full|db Type of backup.
 	 * @param mixed $subfolder Sub folder for backup.
-	 * @param mixed $pFilename Backups filename
+	 * @param mixed $pFilename Backups filename.
 	 *
 	 * @return array $status, $result.
 	 * @throws \Exception Error message.
@@ -715,7 +713,7 @@ class MainWP_Backup_Handler {
 				$localRegexFile  = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
 			}
 
-			if ( null != $pFilename ) {
+			if ( null !== $pFilename ) {
 				$filename        = str_replace(
 					array(
 						'%sitename%',
@@ -766,7 +764,7 @@ class MainWP_Backup_Handler {
 	 * @param mixed  $excludebackup                   Exclude backup files.
 	 * @param mixed  $excludecache                    Exclude cache files.
 	 * @param mixed  $excludenonwp                    Exclude no WP Files.
-	 * @param mixed  $excludezip                      Exclude Zip files
+	 * @param mixed  $excludezip                      Exclude Zip files.
 	 * @param null   $pFilename                       Name of backup file.
 	 * @param string $pFileNameUID                    File name unique ID.
 	 * @param bool   $pArchiveFormat                  Archive format.
@@ -778,7 +776,7 @@ class MainWP_Backup_Handler {
 	 * @param bool   $append                          Append to backup.
 	 *
 	 * @return mixed $backup_result
-	 * @throws MainWP_Exception
+	 * @throws MainWP_Exception Error message.
 	 *
 	 * @uses  \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses  \MainWP\Dashboard\MainWP_Exception
@@ -812,13 +810,14 @@ class MainWP_Backup_Handler {
 		$pMaximumFileDescriptors = false,
 		$pLoadFilesBeforeZip = false,
 		$pid = false,
-		$append = false ) {
+		$append = false
+	) {
 
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return false;
 		}
 
-		if ( '' == trim( $pFilename ) ) {
+		if ( '' === trim( $pFilename ) ) {
 			$pFilename = null;
 		}
 
@@ -853,15 +852,15 @@ class MainWP_Backup_Handler {
 		);
 
 		if ( false === $pMaximumFileDescriptorsOverride ) {
-			if ( 1 == $website->maximumFileDescriptorsOverride ) {
-				$maximumFileDescriptorsAuto = ( 1 == $website->maximumFileDescriptorsAuto );
+			if ( 1 === (int) $website->maximumFileDescriptorsOverride ) {
+				$maximumFileDescriptorsAuto = ( 1 === (int) $website->maximumFileDescriptorsAuto );
 				$maximumFileDescriptors     = $website->maximumFileDescriptors;
 			} else {
 				$maximumFileDescriptorsAuto = get_option( 'mainwp_maximumFileDescriptorsAuto' );
 				$maximumFileDescriptors     = get_option( 'mainwp_maximumFileDescriptors' );
 				$maximumFileDescriptors     = ( false === $maximumFileDescriptors ? 150 : $maximumFileDescriptors );
 			}
-		} elseif ( ( 'global' !== $pArchiveFormat ) && ( 1 === $pMaximumFileDescriptorsOverride ) ) {
+		} elseif ( ( 'global' !== $pArchiveFormat ) && ( 1 === (int) $pMaximumFileDescriptorsOverride ) ) {
 			$maximumFileDescriptorsAuto = ( 1 === $pMaximumFileDescriptorsAuto );
 			$maximumFileDescriptors     = $pMaximumFileDescriptors;
 		} else {
@@ -940,7 +939,7 @@ class MainWP_Backup_Handler {
 		do_action( 'mainwp_managesite_backup', $website, array( 'type' => $pType ), $information );
 
 		if ( isset( $information['error'] ) ) {
-			throw new MainWP_Exception( esc_html( $information['error'] ) );
+			throw new MainWP_Exception( esc_html( $information['error'] ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		} elseif ( 'db' === $pType && ! $information['db'] ) {
 			throw new MainWP_Exception( 'Database backup failed.' );
 		} elseif ( 'full' === $pType && ! $information['full'] ) {
@@ -972,7 +971,7 @@ class MainWP_Backup_Handler {
 				$localRegexFile  = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
 			}
 
-			if ( null != $pFilename ) {
+			if ( null !== $pFilename ) {
 				$filename        = str_replace(
 					array(
 						'%sitename%',
@@ -1056,8 +1055,8 @@ class MainWP_Backup_Handler {
 	 *
 	 * Get extension of current Archive.
 	 *
-	 * @param bool        $website true|false
-	 * @param bool|string $task true|false|global|site
+	 * @param bool        $website true|false.
+	 * @param bool|string $task true|false|global|site.
 	 *
 	 * @return mixed $archiveFormat Format of Archive.
 	 *
@@ -1065,11 +1064,11 @@ class MainWP_Backup_Handler {
 	 */
 	public static function get_current_archive_extension( $website = false, $task = false ) {
 		$useSite = true;
-		if ( false != $task ) {
+		if ( false !== $task ) {
 			if ( 'global' === $task->archiveFormat ) {
 				$useGlobal = true;
 				$useSite   = false;
-			} elseif ( '' == $task->archiveFormat || 'site' == $task->archiveFormat ) {
+			} elseif ( '' === $task->archiveFormat || 'site' === $task->archiveFormat ) {
 				$useGlobal = false;
 				$useSite   = true;
 			} else {
@@ -1198,10 +1197,9 @@ class MainWP_Backup_Handler {
 		$dir = MainWP_System_Utility::get_mainwp_specific_dir();
 
 		if ( stristr( $pFile, $dir ) && file_exists( $pFile ) ) {
-			return @filesize( $pFile );
+			return filesize( $pFile );
 		}
 
 		return 0;
 	}
-
 }

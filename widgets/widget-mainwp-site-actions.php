@@ -41,8 +41,8 @@ class MainWP_Site_Actions {
 			);
 			$website      = MainWP_DB::instance()->get_website_by_id( $current_wpid );
 			$actions_info = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
-		} elseif ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		} elseif ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$websites  = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id );
 			$site_ids  = array();
 
@@ -119,7 +119,7 @@ class MainWP_Site_Actions {
 					<thead>
 						<tr>
 							<th><?php esc_html_e( 'Change', 'mainwp' ); ?></th>
-							<?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+							<?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
 						<th class="collapsing"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
 							<?php endif; ?>
 						<th class="collapsing"><?php esc_html_e( 'User', 'mainwp' ); ?></th>
@@ -148,22 +148,22 @@ class MainWP_Site_Actions {
 						$meta_data = json_decode( $data->meta_data );
 
 						$action_class = '';
-						if ( 'activated' == $data->action ) {
+						if ( 'activated' === $data->action ) {
 							$action_class = 'green';
-						} elseif ( 'deactivated' == $data->action ) {
+						} elseif ( 'deactivated' === $data->action ) {
 							$action_class = 'red';
-						} elseif ( 'installed' == $data->action ) {
+						} elseif ( 'installed' === $data->action ) {
 							$action_class = 'blue';
 						}
 
 						?>
 						<tr>
 							<td data-order="<?php echo esc_attr( $data->created ); ?>">
-								<strong><?php echo isset( $meta_data->name ) && '' != $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?></strong> <?php echo 'WordPress' != $data->context ? esc_html( ucfirst( rtrim( $data->context, 's' ) ) ) : 'WordPress'; ?><br/>
+								<strong><?php echo isset( $meta_data->name ) && '' !== $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?></strong> <?php echo 'wordpress' !== $data->context ? esc_html( ucfirst( rtrim( $data->context, 's' ) ) ) : 'WordPress'; //phpcs:ignore -- text. ?><br/>
 								<div><strong><span class="ui medium <?php echo esc_attr( $action_class ); ?> text"><?php echo esc_html( ucfirst( $data->action ) ); ?></span></strong></div>
 								<span class="ui small text"><?php echo esc_html( MainWP_Utility::format_timestamp( $data->created ) ); ?></span>
 							</td>
-							<?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+							<?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
 								<td class="collapsing"><a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $data->wpid ); ?>"><?php echo esc_html( $data->name ); ?></a></td>
 								<?php endif; ?>
 							<td class="collapsing"><?php echo esc_html( $data->action_user ); ?></td>
@@ -240,5 +240,4 @@ class MainWP_Site_Actions {
 		 */
 		do_action( 'mainwp_non_mainwp_changes_widget_bottom', $website );
 	}
-
 }

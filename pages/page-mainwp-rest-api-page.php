@@ -215,7 +215,7 @@ class MainWP_Rest_Api_Page {
 	 * Handle rest api settings
 	 */
 	public function handle_rest_api_add_new() {
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( isset( $_POST['submit'] ) && isset( $_GET['page'] ) && 'AddApiKeys' === $_GET['page'] ) {
 			if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) {
 				$all_keys = self::check_rest_api_updates();
@@ -224,9 +224,9 @@ class MainWP_Rest_Api_Page {
 					$all_keys = array();
 				}
 
-				$consumer_key    = sanitize_text_field( wp_unslash( $_POST['mainwp_consumer_key'] ) );
-				$consumer_secret = sanitize_text_field( wp_unslash( $_POST['mainwp_consumer_secret'] ) );
-				$desc            = sanitize_text_field( wp_unslash( $_POST['mainwp_rest_add_api_key_desc'] ) );
+				$consumer_key    = isset( $_POST['mainwp_consumer_key'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_consumer_key'] ) ) : '';
+				$consumer_secret = isset( $_POST['mainwp_consumer_secret'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_consumer_secret'] ) ) : '';
+				$desc            = isset( $_POST['mainwp_rest_add_api_key_desc'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_rest_add_api_key_desc'] ) ) : '';
 				$enabled         = ! empty( $_POST['mainwp_enable_rest_api'] ) ? 1 : 0;
 				$pers            = ! empty( $_POST['mainwp_rest_api_key_edit_pers'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_rest_api_key_edit_pers'] ) ) : '';
 
@@ -244,7 +244,7 @@ class MainWP_Rest_Api_Page {
 				exit();
 			}
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 	}
 
 	/**
@@ -298,7 +298,7 @@ class MainWP_Rest_Api_Page {
 	public function ajax_rest_api_remove_keys() {
 		MainWP_Post_Handler::instance()->check_security( 'mainwp_rest_api_remove_keys' );
 		$ret         = array( 'success' => false );
-		$cons_key_id = isset( $_POST['keyId'] ) ? urldecode( $_POST['keyId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$cons_key_id = isset( $_POST['keyId'] ) ? urldecode( wp_unslash( $_POST['keyId'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( ! empty( $cons_key_id ) ) {
 			$save     = false;
@@ -346,22 +346,22 @@ class MainWP_Rest_Api_Page {
 			$renderItems[] = array(
 				'title'  => esc_html__( 'Manage API Keys', 'mainwp' ),
 				'href'   => 'admin.php?page=RESTAPI',
-				'active' => ( '' == $shownPage ) ? true : false,
+				'active' => ( '' === $shownPage ) ? true : false,
 			);
 		}
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'AddApiKeys' ) ) {
-			if ( isset( $_GET['editkey'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			if ( isset( $_GET['editkey'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				$renderItems[] = array(
 					'title'  => esc_html__( 'Edit API Keys', 'mainwp' ),
-					'href'   => 'admin.php?page=AddApiKeys&editkey=' . esc_url( $_GET['editkey'] ), // phpcs:ignore WordPress.Security.NonceVerification
-					'active' => ( 'Edit' == $shownPage ) ? true : false,
+					'href'   => 'admin.php?page=AddApiKeys&editkey=' . esc_url( wp_unslash( $_GET['editkey'] ) ), // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+					'active' => ( 'Edit' === $shownPage ) ? true : false,
 				);
 			}
 			$renderItems[] = array(
 				'title'  => esc_html__( 'Add API Keys', 'mainwp' ),
 				'href'   => 'admin.php?page=AddApiKeys',
-				'active' => ( 'Settings' == $shownPage ) ? true : false,
+				'active' => ( 'Settings' === $shownPage ) ? true : false,
 			);
 		}
 
@@ -373,7 +373,7 @@ class MainWP_Rest_Api_Page {
 				$item           = array();
 				$item['title']  = $subPage['title'];
 				$item['href']   = 'admin.php?page=RESTAPI' . $subPage['slug'];
-				$item['active'] = ( $subPage['slug'] == $shownPage ) ? true : false;
+				$item['active'] = ( $subPage['slug'] === $shownPage ) ? true : false;
 				$renderItems[]  = $item;
 			}
 		}
@@ -383,10 +383,8 @@ class MainWP_Rest_Api_Page {
 
 	/**
 	 * Close the HTML container.
-	 *
-	 * @param string $shownPage The page slug shown at this moment.
 	 */
-	public static function render_footer( $shownPage = '' ) {
+	public static function render_footer() {
 		echo '</div>';
 	}
 
@@ -406,7 +404,7 @@ class MainWP_Rest_Api_Page {
 		self::render_table_top();
 		if ( ! self::check_rest_api_enabled() ) {
 			?>
-			<div class="ui message yellow"><?php echo sprintf( esc_html__( 'It seems the WordPress REST API is currently disabled on your site. MainWP REST API requires the WordPress REST API to function properly. Please enable it to ensure smooth operation. Need help? %sClick here for a guide%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/wordpress-rest-api-does-not-respond/" target="_blank">', '</a>' ); ?></div>
+			<div class="ui message yellow"><?php printf( esc_html__( 'It seems the WordPress REST API is currently disabled on your site. MainWP REST API requires the WordPress REST API to function properly. Please enable it to ensure smooth operation. Need help? %sClick here for a guide%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/wordpress-rest-api-does-not-respond/" target="_blank">', '</a>' ); ?></div>
 			<?php
 		}
 
@@ -570,7 +568,7 @@ class MainWP_Rest_Api_Page {
 				delete_option( 'mainwp_rest_api_consumer_secret' );
 				delete_option( 'mainwp_enable_rest_api' );
 			}
-		};
+		}
 		// end.
 		return $all_keys;
 	}
@@ -583,8 +581,8 @@ class MainWP_Rest_Api_Page {
 	 */
 	public static function show_messages() {
 		$msg = '';
-		if ( isset( $_GET['message'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			if ( 'saved' === $_GET['message'] || 'created' === $_GET['message'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['message'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			if ( 'saved' === $_GET['message'] || 'created' === $_GET['message'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				$msg = esc_html__( 'API Key have been saved successfully!', 'mainwp' );
 			}
 		}
@@ -603,7 +601,7 @@ class MainWP_Rest_Api_Page {
 			return;
 		}
 
-		$edit_key  = isset( $_GET['editkey'] ) && ! empty( $_GET['editkey'] ) ? urldecode( $_GET['editkey'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$edit_key  = isset( $_GET['editkey'] ) && ! empty( $_GET['editkey'] ) ? urldecode( wp_unslash( $_GET['editkey'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$edit_item = array();
 		if ( false !== $edit_key ) {
 			$all_keys = get_option( 'mainwp_rest_api_keys', false );
@@ -630,7 +628,7 @@ class MainWP_Rest_Api_Page {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-rest-api-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-rest-api-info-message"></i>
-					<?php echo sprintf( esc_html__( 'Enable the MainWP REST API functionality and generate API credentials.  Check this %1$shelp document%2$s to see all available endpoints.', 'mainwp' ), '<a href="https://mainwp.dev/rest-api/" target="_blank">', '</a>' ); ?>
+					<?php printf( esc_html__( 'Enable the MainWP REST API functionality and generate API credentials.  Check this %1$shelp document%2$s to see all available endpoints.', 'mainwp' ), '<a href="https://mainwp.dev/rest-api/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 				<?php self::show_messages(); ?>
@@ -874,5 +872,4 @@ class MainWP_Rest_Api_Page {
 		}
 		return false;
 	}
-
 }

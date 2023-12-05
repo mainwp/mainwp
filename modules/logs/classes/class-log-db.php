@@ -9,7 +9,7 @@
 
 namespace MainWP\Dashboard\Module\Log;
 
-use \MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_DB;
 
 /**
  * Class Log_DB
@@ -126,7 +126,7 @@ class Log_DB extends MainWP_DB {
 
 		// Sanitize all record values.
 		return array_map(
-			function( $value ) {
+			function ( $value ) {
 				if ( ! is_array( $value ) ) {
 					return wp_strip_all_tags( $value );
 				}
@@ -285,7 +285,7 @@ class Log_DB extends MainWP_DB {
 
 		$where = $wpdb->prepare( ' AND `logs`.`created` >= %d AND `logs`.`created` <= %d', $start_time, $end_time );
 
-		return $wpdb->query(
+		return $wpdb->query( //phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			"DELETE `logs`, `meta`
 			FROM {$wpdb->mainwp_tbl_logs} AS `logs`
 			LEFT JOIN {$wpdb->mainwp_tbl_logs_meta} AS `meta`
@@ -293,5 +293,4 @@ class Log_DB extends MainWP_DB {
 			WHERE `logs`.`connector` != 'compact' " . $where // phpcs:ignore -- escaped.
 		);
 	}
-
 }

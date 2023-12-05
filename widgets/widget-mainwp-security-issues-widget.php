@@ -136,7 +136,7 @@ class MainWP_Security_Issues_Widget {
 				}
 
 				?>
-				<div class="item" <?php echo $count_security_issues > 0 && '' != $count_security_issues ? 'status="queue"' : ''; ?> siteid="<?php echo intval( $website->id ); ?>">
+				<div class="item" <?php echo '' !== $count_security_issues && $count_security_issues > 0 ? 'status="queue"' : ''; ?> siteid="<?php echo intval( $website->id ); ?>">
 				<div class="ui grid stackable">
 					<div class="eight wide middle aligned column">
 					<a href="
@@ -164,9 +164,9 @@ class MainWP_Security_Issues_Widget {
 					</a>
 				</div>
 				<div class="five wide middle aligned column">
-					<?php if ( 0 == $count_security_issues ) : ?>
+					<?php if ( 0 === $count_security_issues ) : ?>
 						<span class="ui green small empty circular label"></span> <span class="ui small text"><?php esc_html_e( 'No issues detected', 'mainwp' ); ?></span>
-					<?php elseif ( '' == $count_security_issues ) : ?>
+					<?php elseif ( '' === $count_security_issues ) : ?>
 						<span class="ui grey small empty circular label"></span> <span class="ui small text"><?php esc_html_e( 'No data available', 'mainwp' ); ?></span>
 					<?php else : ?>
 						<span class="ui red small empty circular label"></span> <span class="ui small text"><?php echo esc_html( $count_security_issues ); ?> <?php echo esc_html( _n( 'issue detected', 'issues detected', $count_security_issues, 'mainwp' ) ); ?></span>
@@ -193,7 +193,7 @@ class MainWP_Security_Issues_Widget {
 						<div class="three wide middle aligned column">
 							<div class="ui mini icon fluid buttons">
 								<a href="admin.php?page=managesites&scanid=<?php echo esc_attr( $website->id ); ?>" class="ui button basic" data-tooltip="<?php esc_attr_e( 'Click here to see details.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="info icon"></i></a>
-							<?php if ( 0 == $count_security_issues ) { ?>
+							<?php if ( empty( $count_security_issues ) ) { ?>
 								<a href="javascript:void(0)" class="<?php echo $is_demo ? 'disabled' : ''; ?> unfix-all-site-security-issues ui button basic green" data-position="left center" data-tooltip="<?php esc_attr_e( 'Click here to unfix all security issues on the child site.', 'mainwp' ); ?>" data-inverted=""><i class="undo alternate icon"></i></a>
 					<?php } else { ?>
 							<a href="javascript:void(0)" class="<?php echo $is_demo ? 'disabled' : ''; ?> fix-all-site-security-issues ui button green" data-position="left center" data-tooltip="<?php esc_attr_e( 'Click here to fix all security issues on the child site.', 'mainwp' ); ?>" data-inverted=""><i class="wrench icon"></i></a>
@@ -227,5 +227,4 @@ class MainWP_Security_Issues_Widget {
 		 */
 		do_action( 'mainwp_security_issues_widget_bottom' );
 	}
-
 }

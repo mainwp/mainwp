@@ -51,7 +51,7 @@ class Rest_Api {
 	 * @return self::$instance
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -610,7 +610,7 @@ class Rest_Api {
 		$method = $request->get_method();
 
 		if ( empty( $allow_methods ) || ! in_array( $method, $allow_methods ) ) {
-			throw new \Exception( sprintf( esc_html__( 'Sorry, you are not allowed to do the %s method.', 'mainwp' ), ( isset( $methods_map[ $method ] ) ? $methods_map[ $method ] : '' ) ) );
+			throw new \Exception( sprintf( esc_html__( 'Sorry, you are not allowed to do the %s method.', 'mainwp' ), ( isset( $methods_map[ $method ] ) ? $methods_map[ $method ] : '' ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 
 		return true;
@@ -621,12 +621,12 @@ class Rest_Api {
 	 *
 	 * Hook validate the request.
 	 *
-	 * @param bool  $false input filter value, it should always be FALSE.
+	 * @param bool  $input_value input filter value, it should always be FALSE.
 	 * @param array $request The request made in the API call which includes all parameters.
 	 *
 	 * @return bool Whether the api credentials are valid.
 	 */
-	public function rest_api_validate( $false, $request ) {
+	public function rest_api_validate( $input_value, $request ) {
 		$valid = $this->mainwp_validate_request( $request );
 		if ( true === $valid ) {
 			return true;
@@ -729,7 +729,7 @@ class Rest_Api {
 
 		if ( true === $valid ) {
 			$params = array(
-				'selectgroups' => ( isset( $request['selectgroups'] ) && true == $request['selectgroups'] ) ? true : false,
+				'selectgroups' => ( isset( $request['selectgroups'] ) && ! empty( $request['selectgroups'] ) ) ? true : false,
 			);
 
 			$format              = isset( $request['format'] ) ? $request['format'] : '';
@@ -741,7 +741,7 @@ class Rest_Api {
 
 			$result = $data;
 
-			if ( 'array' == $format ) {
+			if ( 'array' === $format ) {
 				if ( is_array( $data ) ) {
 					$result = array(
 						'data' => $data,
@@ -1144,7 +1144,7 @@ class Rest_Api {
 				$hstatus       = MainWP_Utility::get_site_health( $health_status );
 				$hval          = $hstatus['val'];
 				$critical      = $hstatus['critical'];
-				if ( 80 <= $hval && 0 == $critical ) {
+				if ( 80 <= $hval && empty( $critical ) ) {
 					$health_score = 'Good';
 				} else {
 					$health_score = 'Should be improved';
@@ -1253,7 +1253,7 @@ class Rest_Api {
 
 			$params = array(
 				'full_data'    => true,
-				'selectgroups' => ( isset( $request['selectgroups'] ) && true == $request['selectgroups'] ) ? true : false,
+				'selectgroups' => ( isset( $request['selectgroups'] ) && ! empty( $request['selectgroups'] ) ) ? true : false,
 			);
 
 			$format           = isset( $request['format'] ) ? $request['format'] : '';
@@ -1268,7 +1268,7 @@ class Rest_Api {
 
 			$result = $data;
 
-			if ( 'array' == $format ) {
+			if ( 'array' === $format ) {
 				if ( is_array( $data ) ) {
 					$result = array(
 						'data' => $data,
@@ -1325,7 +1325,7 @@ class Rest_Api {
 
 			$result = $data;
 
-			if ( 'array' == $format ) {
+			if ( 'array' === $format ) {
 				if ( is_array( $data ) ) {
 					$result = array(
 						'data' => $data,
@@ -1367,7 +1367,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -1443,7 +1443,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -1452,7 +1452,7 @@ class Rest_Api {
 					// get data.
 					$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 					$data    = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
-					$data    = ( '' != $data ) ? json_decode( $data, true ) : array();
+					$data    = ! empty( $data ) ? json_decode( $data, true ) : array();
 
 					$response = new \WP_REST_Response( $data );
 					$response->set_status( 200 );
@@ -1495,7 +1495,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -1546,7 +1546,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -1600,7 +1600,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -1652,7 +1652,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -1707,7 +1707,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -1759,7 +1759,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -1814,7 +1814,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -1865,7 +1865,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -1919,7 +1919,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -1971,7 +1971,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2023,7 +2023,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2078,7 +2078,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2087,7 +2087,7 @@ class Rest_Api {
 					// get data.
 					$website     = MainWP_DB::instance()->get_website_by_id( $site_id );
 					$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-					$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+					$wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
 					$plugin_upgrades      = json_decode( $website->plugin_upgrades, true );
 					$theme_upgrades       = json_decode( $website->theme_upgrades, true );
@@ -2140,7 +2140,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2152,7 +2152,7 @@ class Rest_Api {
 					$themes       = json_decode( $website->theme_upgrades, true );
 					$translations = json_decode( $website->translation_upgrades, true );
 					$wp           = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-					$wp           = ( '' != $wp ) ? json_decode( $wp, true ) : array();
+					$wp           = ! empty( $wp ) ? json_decode( $wp, true ) : array();
 
 					if ( count( $wp ) > 0 ) {
 						$wp = 1;
@@ -2209,7 +2209,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2218,7 +2218,7 @@ class Rest_Api {
 					// get data.
 					$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 					$data    = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
-					$data    = ( '' != $data ) ? json_decode( $data, true ) : array();
+					$data    = ! empty( $data ) ? json_decode( $data, true ) : array();
 
 					$response = new \WP_REST_Response( $data );
 					$response->set_status( 200 );
@@ -2261,7 +2261,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2270,7 +2270,7 @@ class Rest_Api {
 					// get data.
 					$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 					$plugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
-					$plugins = ( '' != $plugins ) ? json_decode( $plugins, true ) : array();
+					$plugins = ! empty( $plugins ) ? json_decode( $plugins, true ) : array();
 
 					$data = array(
 						'count' => count( $plugins ),
@@ -2317,7 +2317,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2326,7 +2326,7 @@ class Rest_Api {
 					// get data.
 					$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 					$data    = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
-					$data    = ( '' != $data ) ? json_decode( $data, true ) : array();
+					$data    = ! empty( $data ) ? json_decode( $data, true ) : array();
 
 					$response = new \WP_REST_Response( $data );
 					$response->set_status( 200 );
@@ -2369,7 +2369,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2378,7 +2378,7 @@ class Rest_Api {
 					// get data.
 					$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 					$themes  = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
-					$themes  = ( '' != $themes ) ? json_decode( $themes, true ) : array();
+					$themes  = ! empty( $themes ) ? json_decode( $themes, true ) : array();
 
 					$data = array(
 						'count' => count( $themes ),
@@ -2425,7 +2425,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2476,7 +2476,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2488,7 +2488,7 @@ class Rest_Api {
 					$hstatus       = MainWP_Utility::get_site_health( $health_status );
 					$hval          = $hstatus['val'];
 					$critical      = $hstatus['critical'];
-					if ( 80 <= $hval && 0 == $critical ) {
+					if ( 80 <= $hval && empty( $critical ) ) {
 						$health_score = 'Good';
 					} else {
 						$health_score = 'Should be improved';
@@ -2537,7 +2537,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2625,7 +2625,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2675,7 +2675,7 @@ class Rest_Api {
 
 		if ( true === $valid ) {
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2725,7 +2725,7 @@ class Rest_Api {
 
 		if ( true === $valid ) {
 
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2776,7 +2776,7 @@ class Rest_Api {
 
 		if ( true === $valid ) {
 
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2828,7 +2828,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2877,7 +2877,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2931,7 +2931,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -2994,7 +2994,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -3057,7 +3057,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -3121,7 +3121,7 @@ class Rest_Api {
 
 			// get parameters.
 
-			if ( null != $request['site_id'] && null != $request['type'] && null != $request['slug'] ) {
+			if ( isset( $request['site_id'] ) && isset( $request['type'] ) && isset( $request['slug'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -3181,9 +3181,9 @@ class Rest_Api {
 
 			// get parameters.
 
-			if ( null != $request['site_id'] && null != $request['plugin'] && null != $request['action'] ) {
+			if ( isset( $request['site_id'] ) && isset( $request['plugin'] ) && isset( $request['action'] ) ) {
 
-				if ( 'activate' == $request['action'] || 'deactivate' == $request['action'] || 'delete' == $request['action'] ) {
+				if ( 'activate' === $request['action'] || 'deactivate' === $request['action'] || 'delete' === $request['action'] ) {
 
 					if ( is_numeric( $request['site_id'] ) ) {
 
@@ -3252,9 +3252,9 @@ class Rest_Api {
 
 			// get parameters.
 
-			if ( null != $request['site_id'] && null != $request['theme'] && null != $request['action'] ) {
+			if ( ! empty( $request['site_id'] ) && ! empty( $request['theme'] ) && ! empty( $request['action'] ) ) {
 
-				if ( 'activate' == $request['action'] || 'deactivate' == $request['action'] || 'delete' == $request['action'] ) {
+				if ( 'activate' === $request['action'] || 'deactivate' === $request['action'] || 'delete' === $request['action'] ) {
 
 					if ( is_numeric( $request['site_id'] ) ) {
 
@@ -3322,7 +3322,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -3373,7 +3373,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -3389,7 +3389,7 @@ class Rest_Api {
 					$response = new \WP_REST_Response( $data );
 					$response->set_status( 200 );
 
-				} elseif ( 'all' == $request['site_id'] ) {
+				} elseif ( 'all' === $request['site_id'] ) {
 					$limit  = apply_filters( 'mainwp_widget_site_actions_limit_number', 10000 );
 					$params = array(
 						'limit'       => $limit,
@@ -3438,7 +3438,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -3458,7 +3458,7 @@ class Rest_Api {
 					$response = new \WP_REST_Response( $data_count );
 					$response->set_status( 200 );
 
-				} elseif ( 'all' == $request['site_id'] ) {
+				} elseif ( 'all' === $request['site_id'] ) {
 					$limit  = apply_filters( 'mainwp_widget_site_actions_limit_number', 10000 );
 					$params = array(
 						'limit'       => $limit,
@@ -3516,7 +3516,7 @@ class Rest_Api {
 
 			while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 				$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-				$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+				$wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
 				$plugin_upgrades             = json_decode( $website->plugin_upgrades, true );
 				$theme_upgrades              = json_decode( $website->theme_upgrades, true );
@@ -3604,7 +3604,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -3692,7 +3692,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['site_id'] ) {
+			if ( isset( $request['site_id'] ) ) {
 
 				if ( is_numeric( $request['site_id'] ) ) {
 
@@ -3743,7 +3743,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['type'] && null != $request['slug'] && null != $request['name'] ) {
+			if ( isset( $request['type'] ) && isset( $request['slug'] ) && isset( $request['name'] ) ) {
 
 				$type = $request['type'];
 				$slug = $request['slug'];
@@ -3787,7 +3787,7 @@ class Rest_Api {
 
 		if ( true === $valid ) {
 			// get parameters.
-			if ( null != $request['type'] && null != $request['slug'] && null != $request['name'] && null != $request['site_id'] ) {
+			if ( isset( $request['type'] ) && isset( $request['slug'] ) && isset( $request['name'] ) && isset( $request['site_id'] ) ) {
 
 				$site_id = $request['site_id'];
 				$type    = $request['type'];
@@ -3833,7 +3833,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['type'] && null != $request['slug'] ) {
+			if ( isset( $request['type'] ) && isset( $request['slug'] ) ) {
 
 				$type = $request['type'];
 				$slug = $request['slug'];
@@ -3877,7 +3877,7 @@ class Rest_Api {
 		if ( true === $valid ) {
 
 			// get parameters.
-			if ( null != $request['type'] && null != $request['slug'] && null != $request['site_id'] ) {
+			if ( isset( $request['type'] ) && isset( $request['slug'] ) && isset( $request['site_id'] ) ) {
 
 				$site_id = $request['site_id'];
 				$type    = $request['type'];
@@ -4092,11 +4092,11 @@ class Rest_Api {
 			if ( $groups ) {
 				foreach ( $groups as $group ) {
 					if ( ! empty( $tag_id ) ) {
-						if ( $group->id == $tag_id ) {
+						if ( $group->id === $tag_id ) {
 							$data[ $group->id ] = $group->name;
 						}
 					} elseif ( ! empty( $tag_name ) ) {
-						if ( $group->name == $tag_name ) {
+						if ( $group->name === $tag_name ) {
 							$data[ $group->id ] = $group->name;
 						}
 					} else {
@@ -4119,7 +4119,5 @@ class Rest_Api {
 
 		return $response;
 	}
-
-
 }
 // End of class.

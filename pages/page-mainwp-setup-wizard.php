@@ -65,7 +65,7 @@ class MainWP_Setup_Wizard {
 	 * Initiate Quick Setup Wizard page.
 	 */
 	public function admin_init() {
-		if ( empty( $_GET['page'] ) || 'mainwp-setup' !== $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( empty( $_GET['page'] ) || 'mainwp-setup' !== $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			return;
 		}
 		$this->steps = array(
@@ -106,7 +106,7 @@ class MainWP_Setup_Wizard {
 			),
 		);
 
-		$this->step = isset( $_GET['step'] ) ? sanitize_key( $_GET['step'] ) : current( array_keys( $this->steps ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		$this->step = isset( $_GET['step'] ) ? sanitize_key( $_GET['step'] ) : current( array_keys( $this->steps ) ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		wp_enqueue_script( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.js', array( 'jquery' ), MAINWP_VERSION, false );
 		wp_localize_script( 'mainwp-setup', 'mainwpSetupLocalize', array( 'nonce' => wp_create_nonce( 'MainWPSetup' ) ) );
@@ -122,13 +122,13 @@ class MainWP_Setup_Wizard {
 		// load custom MainWP theme.
 		$selected_theme = MainWP_Settings::get_instance()->get_selected_theme();
 		if ( ! empty( $selected_theme ) ) {
-			if ( 'dark' == $selected_theme ) {
+			if ( 'dark' === $selected_theme ) {
 				wp_enqueue_style( 'mainwp-custom-dashboard-extension-dark-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-dark-theme.css', array(), MAINWP_VERSION );
-			} elseif ( 'wpadmin' == $selected_theme ) {
+			} elseif ( 'wpadmin' === $selected_theme ) {
 				wp_enqueue_style( 'mainwp-custom-dashboard-extension-wp-admin-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-wpadmin-theme.css', array(), MAINWP_VERSION );
-			} elseif ( 'minimalistic' == $selected_theme ) {
+			} elseif ( 'minimalistic' === $selected_theme ) {
 				wp_enqueue_style( 'mainwp-custom-dashboard-extension-minimalistic-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-minimalistic-theme.css', array(), MAINWP_VERSION );
-			} elseif ( 'default' == $selected_theme ) {
+			} elseif ( 'default' === $selected_theme ) {
 				wp_enqueue_style( 'mainwp-custom-dashboard-extension-default-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-default-theme.css', array(), MAINWP_VERSION );
 			} else {
 				$dirs             = MainWP_Settings::get_instance()->get_custom_theme_folder();
@@ -137,7 +137,7 @@ class MainWP_Setup_Wizard {
 			}
 		}
 
-		if ( ! empty( $_POST['save_step'] ) && isset( $this->steps[ $this->step ]['handler'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( ! empty( $_POST['save_step'] ) && isset( $this->steps[ $this->step ]['handler'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			call_user_func( $this->steps[ $this->step ]['handler'] );
 		}
 
@@ -251,7 +251,7 @@ class MainWP_Setup_Wizard {
 		$ouput_steps = $this->steps;
 		?>
 		<div id="mainwp-quick-setup-wizard-steps" class="ui ordered fluid steps" style="">
-			<?php foreach ( $ouput_steps as $step_key => $step ) : ?>
+			<?php foreach ( $ouput_steps as $step_key => $step ) { ?>
 				<?php
 				if ( isset( $step['hidden'] ) && $step['hidden'] ) {
 					continue;
@@ -263,7 +263,7 @@ class MainWP_Setup_Wizard {
 				?>
 				<div class="step
 				<?php
-				if ( $step_key == $this->step ) {
+				if ( $step_key === $this->step ) {
 					echo 'active';
 				} elseif ( array_search( $this->step, array_keys( $this->steps ) ) > array_search( $step_key, array_keys( $this->steps ) ) ) {
 					echo 'completed'; }
@@ -273,7 +273,7 @@ class MainWP_Setup_Wizard {
 						<div class="title"><?php echo esc_html( $step['name'] ); ?></div>
 					</div>
 				</div>
-			<?php endforeach; ?>
+			<?php } ?>
 		</div>
 		<?php
 	}
@@ -306,14 +306,14 @@ class MainWP_Setup_Wizard {
 		<h3><?php esc_html_e( 'Are you ready to get started adding your sites?', 'mainwp' ); ?></h3>
 		<a class="ui big green basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp-setup&step=introduction' ) ); ?>"><?php esc_html_e( 'Start the MainWP Quick Setup Wizard', 'mainwp' ); ?></a>
 		<div class="ui hidden divider"></div>
-		<h3><?php esc_html_e( 'Would you like to see Demo content first? ', 'mainwp' ); ?> - <?php echo sprintf( esc_html__( '%sWhat is this?%s', 'mainwp' ), '<a href="https://www.youtube.com/watch?v=fCHT47AKt7s" target="_blank">', '</a>' ); ?></h3>
+		<h3><?php esc_html_e( 'Would you like to see Demo content first? ', 'mainwp' ); ?> - <?php printf( esc_html__( '%sWhat is this?%s', 'mainwp' ), '<a href="https://www.youtube.com/watch?v=fCHT47AKt7s" target="_blank">', '</a>' ); ?></h3>
 		<p><?php esc_attr_e( 'Explore MainWP\'s capabilities using our pre-loaded demo content.', 'mainwp' ); ?></p>
 		<p><?php esc_attr_e( 'It\'s the perfect way to experience the benefits and ease of use MainWP provides without connecting to any of your own sites.', 'mainwp' ); ?></p>
 		<p><?php esc_html_e( 'The demo content serves as placeholder data to give you a feel for the MainWP Dashboard. Please note that because no real websites are connected in this demo, some functionality will be restricted. Features that require a connection to actual websites will be disabled for the duration of the demo.', 'mainwp' ); ?></p>
 		<p><?php esc_attr_e( 'Click this button to import the Demo content to your MainWP Dashboard and enable the Demo mode.', 'mainwp' ); ?></p>
 		<p><span><button class="ui big green button mainwp-import-demo-data-button" page-import="qsw-import" <?php echo ( ! $is_new || $enabled_demo ? 'disabled="disabled"' : '' ); ?>><?php esc_html_e( 'Enable Demo Mode With Guided Tours', 'mainwp' ); ?></button></span></p>
 		<div class="ui blue message">
-			<?php echo sprintf( esc_html__( 'Guided tours feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
+			<?php printf( esc_html__( 'Guided tours feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
 		</div>
 		<?php
 		MainWP_System_View::render_comfirm_modal();
@@ -338,7 +338,7 @@ class MainWP_Setup_Wizard {
 			<h1><?php esc_html_e( 'MainWP Guided Tours', 'mainwp' ); ?> <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span></h1>
 				<?php esc_html_e( 'MainWP guided tours are designed to provide information about all essential features on each MainWP Dashboard page.', 'mainwp' ); ?>
 				<div class="ui blue message">
-					<?php echo sprintf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
+					<?php printf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
 				</div>
 				<div class="ui form">
 				<div class="field">
@@ -391,7 +391,7 @@ class MainWP_Setup_Wizard {
 					<div class="ui fluid input">
 						<input type="text" name="mwp_setup_openssl_lib_location" value="<?php echo esc_attr( $openssl_loc ); ?>">
 					</div>
-							<div><em><?php esc_html_e( 'Due to bug with PHP on some servers, enter the openssl.cnf file location so MainWP Dashboard can connect to your child sites. If your openssl.cnf file is saved to a different path from what is entered above please enter your exact path. ', 'mainwp' ); ?><?php echo sprintf( esc_html__( '%1$sClick here%2$s to see how to find the OpenSSL.cnf file.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a>' ); ?></em></div>
+							<div><em><?php esc_html_e( 'Due to bug with PHP on some servers, enter the openssl.cnf file location so MainWP Dashboard can connect to your child sites. If your openssl.cnf file is saved to a different path from what is entered above please enter your exact path. ', 'mainwp' ); ?><?php printf( esc_html__( '%1$sClick here%2$s to see how to find the OpenSSL.cnf file.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a>' ); ?></em></div>
 						</div>
 				</div>
 			</div>
@@ -408,7 +408,9 @@ class MainWP_Setup_Wizard {
 			if ( $show_ssl ) {
 				?>
 				<input type="submit" class="ui big green right floated button" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
-			<?php } else { ?>
+				<?php
+			} else {
+				?>
 				<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="ui big green right floated button"><?php esc_html_e( 'Continue', 'mainwp' ); ?></a>
 			<?php } ?>
 			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="ui big button"><?php esc_html_e( 'Skip', 'mainwp' ); ?></a>
@@ -428,7 +430,7 @@ class MainWP_Setup_Wizard {
 	 */
 	public function mwp_setup_introduction_save() {
 		check_admin_referer( 'mwp-setup' );
-		$enabled_tours = ! isset( $_POST['mainwp-guided-tours-option'] ) ? 0 : 1; // phpcs:ignore WordPress.Security.NonceVerification
+		$enabled_tours = ! isset( $_POST['mainwp-guided-tours-option'] ) ? 0 : 1; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enabled_tours );
 		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
@@ -458,8 +460,8 @@ class MainWP_Setup_Wizard {
 	 */
 	public function mwp_setup_system_requirements_save() {
 		check_admin_referer( 'mwp-setup' );
-		if ( isset( $_POST['mwp_setup_openssl_lib_location'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			MainWP_Utility::update_option( 'mainwp_opensslLibLocation', isset( $_POST['mwp_setup_openssl_lib_location'] ) ? sanitize_text_field( wp_unslash( $_POST['mwp_setup_openssl_lib_location'] ) ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_POST['mwp_setup_openssl_lib_location'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			MainWP_Utility::update_option( 'mainwp_opensslLibLocation', isset( $_POST['mwp_setup_openssl_lib_location'] ) ? sanitize_text_field( wp_unslash( $_POST['mwp_setup_openssl_lib_location'] ) ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		}
 		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
@@ -479,7 +481,7 @@ class MainWP_Setup_Wizard {
 		<p><?php esc_html_e( 'You have successfully connected your first site to your MainWP Dashboard!', 'mainwp' ); ?></p>
 		<div class="ui form">
 			<form method="post" class="ui form">
-				<?php if ( empty( $count_clients ) ) : ?>
+				<?php if ( empty( $count_clients ) ) { ?>
 					<div class="field">
 						<label><?php esc_html_e( 'Do you want to create a client for your first child site?', 'mainwp' ); ?></label>
 						<div class="ui hidden divider"></div>
@@ -488,7 +490,7 @@ class MainWP_Setup_Wizard {
 							<label><?php esc_html_e( 'Select to create a New Client', 'mainwp' ); ?></label>
 					</div>
 				</div>
-				<?php endif; ?>
+				<?php } ?>
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<div class="ui clearing hidden divider"></div>
 				<div class="ui hidden divider"></div>
@@ -516,7 +518,7 @@ class MainWP_Setup_Wizard {
 		}
 		?>
 		<h1><?php esc_html_e( 'Connect Your First Child Site', 'mainwp' ); ?></h1>
-		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-qsw-add-site-message' ) ) : ?>
+		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-qsw-add-site-message' ) ) { ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-qsw-add-site-message"></i>
 				<?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard.  ', 'mainwp' ); ?>
@@ -529,7 +531,7 @@ class MainWP_Setup_Wizard {
 				<li><?php printf( esc_html__( '%1$sActivate%2$s the plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
 			</ol>
 		</div>
-		<?php endif; ?>
+		<?php } ?>
 			<div class="ui form">
 				<div class="field">
 				<div class="ui hidden divider"></div>
@@ -660,16 +662,16 @@ class MainWP_Setup_Wizard {
 			<?php
 			foreach ( $default_client_fields as $field_name => $field ) {
 				$db_field = isset( $field['db_field'] ) ? $field['db_field'] : '';
-				$val      = $edit_client && '' != $db_field && property_exists( $edit_client, $db_field ) ? $edit_client->{$db_field} : '';
+				$val      = $edit_client && '' !== $db_field && property_exists( $edit_client, $db_field ) ? $edit_client->{$db_field} : '';
 				$tip      = isset( $field['tooltip'] ) ? $field['tooltip'] : '';
 				?>
 				<div class="field">
-					<label <?php echo '' != $tip ? 'data-tooltip="' . esc_attr( $tip ) . '" data-inverted="" data-position="top left"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>><?php echo esc_html( $field['title'] ); ?></label>
+					<label <?php echo '' !== $tip ? 'data-tooltip="' . esc_attr( $tip ) . '" data-inverted="" data-position="top left"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>><?php echo esc_html( $field['title'] ); ?></label>
 					<input type="text" value="<?php echo esc_html( $val ); ?>" id="mainwp_qsw_client_name_field" class="regular-text" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"/>
 				</div>
 					<?php
 
-					if ( 'client.name' == $field_name ) {
+					if ( 'client.name' === $field_name ) {
 						?>
 						<div class="field">
 							<label><?php esc_html_e( 'Client photo', 'mainwp' ); ?></label>
@@ -700,9 +702,9 @@ class MainWP_Setup_Wizard {
 	 *
 	 * Get add contact template.
 	 *
-	 * @param bool $echo Echo template or not.
+	 * @param bool $echo_out Echo template or not.
 	 */
-	public function get_add_contact_temp( $echo = false ) {
+	public function get_add_contact_temp( $echo_out = false ) {
 
 		$input_name    = 'new_contacts_field';
 		$contact_id    = 0;
@@ -734,7 +736,7 @@ class MainWP_Setup_Wizard {
 			<div class="ui section hidden divider bottom-contact-fields"></div>
 			<?php
 			$html = ob_get_clean();
-			if ( $echo ) {
+			if ( $echo_out ) {
 				echo $html; //phpcs:ignore -- validated content.
 			}
 			return $html;
@@ -748,7 +750,7 @@ class MainWP_Setup_Wizard {
 	public function mwp_setup_monitoring() {
 
 		$disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking', 1 );
-		$frequencySitesChecking = get_option( 'mainwp_frequencySitesChecking', 60 );
+		$frequencySitesChecking = (int) get_option( 'mainwp_frequencySitesChecking', 60 );
 
 		$disableSitesHealthMonitoring = get_option( 'mainwp_disableSitesHealthMonitoring', 1 );
 		$sitehealthThreshold          = get_option( 'mainwp_sitehealthThreshold', 80 ); // "Should be improved" threshold.
@@ -760,10 +762,10 @@ class MainWP_Setup_Wizard {
 		<form method="post" class="ui form">
 			<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			<div class="ui grid field">
-				<div class="ui info message"><?php echo sprintf( esc_html__( 'Excessive checking can cause server resource issues.  For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a>' ); ?></div>
+				<div class="ui info message"><?php printf( esc_html__( 'Excessive checking can cause server resource issues.  For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a>' ); ?></div>
 				<label class="six wide column middle aligned"><?php esc_html_e( 'Enable basic uptime monitoring', 'mainwp' ); ?></label>
 				<div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring">
-					<input type="checkbox" name="mainwp_setup_disableSitesChecking" id="mainwp_setup_disableSitesChecking" <?php echo ( 1 == $disableSitesMonitoring ? '' : 'checked="true"' ); ?>/>
+					<input type="checkbox" name="mainwp_setup_disableSitesChecking" id="mainwp_setup_disableSitesChecking" <?php echo ( 1 === $disableSitesMonitoring ? '' : 'checked="true"' ); ?>/>
 					<label class=""></label>
 				</div>
 			</div>
@@ -772,14 +774,14 @@ class MainWP_Setup_Wizard {
 				<label class="six wide column middle aligned"><?php esc_html_e( 'Check interval', 'mainwp' ); ?></label>
 				<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Select preferred checking interval.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
 					<select name="mainwp_setup_frequency_sitesChecking" id="mainwp_setup_frequency_sitesChecking" class="ui dropdown">
-						<option value="5" <?php echo ( 5 == $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 5 minutes', 'mainwp' ); ?></option>
-						<option value="10" <?php echo ( 10 == $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 10 minutes', 'mainwp' ); ?></option>
-						<option value="30" <?php echo ( 30 == $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 30 minutes', 'mainwp' ); ?></option>
-						<option value="60" <?php echo ( 60 == $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every hour', 'mainwp' ); ?></option>
-						<option value="180" <?php echo ( 180 == $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 3 hours', 'mainwp' ); ?></option>
-						<option value="360" <?php echo ( 360 == $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 6 hours', 'mainwp' ); ?></option>
-						<option value="720" <?php echo ( 720 == $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Twice a day', 'mainwp' ); ?></option>
-						<option value="1440" <?php echo ( 1440 == $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Once a day', 'mainwp' ); ?></option>
+						<option value="5" <?php echo ( 5 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 5 minutes', 'mainwp' ); ?></option>
+						<option value="10" <?php echo ( 10 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 10 minutes', 'mainwp' ); ?></option>
+						<option value="30" <?php echo ( 30 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 30 minutes', 'mainwp' ); ?></option>
+						<option value="60" <?php echo ( 60 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every hour', 'mainwp' ); ?></option>
+						<option value="180" <?php echo ( 180 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 3 hours', 'mainwp' ); ?></option>
+						<option value="360" <?php echo ( 360 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 6 hours', 'mainwp' ); ?></option>
+						<option value="720" <?php echo ( 720 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Twice a day', 'mainwp' ); ?></option>
+						<option value="1440" <?php echo ( 1440 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Once a day', 'mainwp' ); ?></option>
 					</select>
 				</div>
 			</div>
@@ -789,7 +791,7 @@ class MainWP_Setup_Wizard {
 			<div class="ui grid field">
 				<label class="six wide column middle aligned"><?php esc_html_e( 'Enable Site Health monitoring', 'mainwp' ); ?></label>
 				<div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="health-monitoring">
-					<input type="checkbox" name="mainwp_setup_disable_sitesHealthMonitoring" id="mainwp_setup_disable_sitesHealthMonitoring" <?php echo ( 1 == $disableSitesHealthMonitoring ? '' : 'checked="true"' ); ?>/>
+					<input type="checkbox" name="mainwp_setup_disable_sitesHealthMonitoring" id="mainwp_setup_disable_sitesHealthMonitoring" <?php echo ( 1 === $disableSitesHealthMonitoring ? '' : 'checked="true"' ); ?>/>
 				</div>
 			</div>
 
@@ -797,8 +799,8 @@ class MainWP_Setup_Wizard {
 				<label class="six wide column middle aligned"><?php esc_html_e( 'Site health threshold', 'mainwp' ); ?></label>
 				<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set preferred site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
 					<select name="mainwp_setup_site_healthThreshold" id="mainwp_setup_site_healthThreshold" class="ui dropdown">
-						<option value="80" <?php echo ( ( 80 == $sitehealthThreshold || 0 == $sitehealthThreshold ) ? 'selected' : '' ); ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
-						<option value="100" <?php echo ( 100 == $sitehealthThreshold ? 'selected' : '' ); ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
+						<option value="80" <?php echo ( ( 80 === $sitehealthThreshold || 0 === $sitehealthThreshold ) ? 'selected' : '' ); ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
+						<option value="100" <?php echo ( 100 === $sitehealthThreshold ? 'selected' : '' ); ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
 					</select>
 				</div>
 			</div>
@@ -820,14 +822,14 @@ class MainWP_Setup_Wizard {
 	 */
 	public function mwp_setup_monitoring_save() {
 		check_admin_referer( 'mwp-setup' );
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		MainWP_Utility::update_option( 'mainwp_disableSitesChecking', ( ! isset( $_POST['mainwp_setup_disableSitesChecking'] ) ? 1 : 0 ) );
 		$val = isset( $_POST['mainwp_setup_frequency_sitesChecking'] ) ? intval( $_POST['mainwp_setup_frequency_sitesChecking'] ) : 1440;
 		MainWP_Utility::update_option( 'mainwp_frequencySitesChecking', $val );
 		MainWP_Utility::update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_setup_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
 		$val = isset( $_POST['mainwp_setup_site_healthThreshold'] ) ? intval( $_POST['mainwp_setup_site_healthThreshold'] ) : 80;
 		MainWP_Utility::update_option( 'mainwp_sitehealthThreshold', $val );
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
 	}
@@ -882,5 +884,4 @@ class MainWP_Setup_Wizard {
 	  })(window, document, 'https://www.usetiful.com/dist/usetiful.js');</script>
 		";
 	}
-
 }

@@ -55,28 +55,22 @@ class MainWP_Client {
 	 */
 	public static function init() {
 		/**
-		 * This hook allows you to render the client page header via the 'mainwp-pageheader-client' action.
+		 * This hook allows you to render the client page header via the 'mainwp_pageheader_client' action.
 		 *
-		 * @link http://codex.mainwp.com/#mainwp-pageheader-client
-		 *
-		 * This hook is normally used in the same context of 'mainwp-getsubpages-client'
-		 * @link http://codex.mainwp.com/#mainwp-getsubpages-client
+		 * This hook is normally used in the same context of 'mainwp_pageheader_client'
 		 *
 		 * @see \MainWP_client::render_header
 		 */
-		add_action( 'mainwp-pageheader-client', array( self::get_class_name(), 'R' ) );
+		add_action( 'mainwp_pageheader_client', array( self::get_class_name(), 'render_header' ) );
 
 		/**
-		 * This hook allows you to render the client page footer via the 'mainwp-pagefooter-client' action.
+		 * This hook allows you to render the client page footer via the 'mainwp_pagefooter_client' action.
 		 *
-		 * @link http://codex.mainwp.com/#mainwp-pagefooter-client
-		 *
-		 * This hook is normally used in the same context of 'mainwp-getsubpages-client'
-		 * @link http://codex.mainwp.com/#mainwp-getsubpages-client
+		 * This hook is normally used in the same context of 'mainwp_pagefooter_client'
 		 *
 		 * @see \MainWP_client::render_footer
 		 */
-		add_action( 'mainwp-pagefooter-client', array( self::get_class_name(), 'render_footer' ) );
+		add_action( 'mainwp_pagefooter_client', array( self::get_class_name(), 'render_footer' ) );
 
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
@@ -135,10 +129,10 @@ class MainWP_Client {
 
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
-				if ( MainWP_Menu::is_disable_menu_item( 3, 'ClientAdd' . $subPage['slug'] ) ) {
+				if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageClients' . $subPage['slug'] ) ) {
 					continue;
 				}
-				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . esc_html( $subPage['title'] ) . '</div>', 'read', 'ClientAdd' . $subPage['slug'], $subPage['callback'] );
+				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . esc_html( $subPage['title'] ) . '</div>', 'read', 'ManageClients' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
 
@@ -154,7 +148,7 @@ class MainWP_Client {
 	 */
 	public static function on_load_page() {
 
-		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			MainWP_Client_Overview::instance()->on_load_page( self::$page );
 			return;
 		}
@@ -203,11 +197,11 @@ class MainWP_Client {
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
-							if ( MainWP_Menu::is_disable_menu_item( 3, 'ClientAdd' . $subPage['slug'] ) ) {
+							if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageClients' . $subPage['slug'] ) ) {
 								continue;
 							}
 							?>
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=ClientAdd' . $subPage['slug'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageClients' . $subPage['slug'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
 							<?php
 						}
 					}
@@ -222,13 +216,12 @@ class MainWP_Client {
 	 * Initiates Clients menu.
 	 *
 	 * @param array $subPages Sub pages array.
-	 * @param int   $level What level to display on.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
-	public static function init_left_menu( $subPages = array(), $level = 2 ) {
+	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => esc_html__( 'Clients', 'mainwp' ),
@@ -265,7 +258,7 @@ class MainWP_Client {
 			),
 		);
 
-		MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'ManageClients', 'ClientAdd' );
+		MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'ManageClients', 'ManageClients' );
 
 		foreach ( $init_sub_subleftmenu as $item ) {
 			if ( MainWP_Menu::is_disable_menu_item( 3, $item['slug'] ) ) {
@@ -287,17 +280,17 @@ class MainWP_Client {
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
 	public static function render_header( $shownPage = '' ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-		// phpcs:disable WordPress.Security.NonceVerification
-		$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		$params = array(
 			'title' => esc_html__( 'Clients', 'mainwp' ),
-			'which' => 'overview' == $shownPage ? 'page_clients_overview' : '',
+			'which' => 'overview' === $shownPage ? 'page_clients_overview' : '',
 		);
 
 		$client = false;
 		if ( $client_id ) {
-			$client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $_GET['client_id'] );
+			$client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id );
 			if ( $client ) {
 				$params['title'] = $client->name;
 			}
@@ -315,20 +308,17 @@ class MainWP_Client {
 			);
 		}
 
-		if ( 'overview' === $shownPage || 'Edit' === $shownPage ) {
+		if ( $client_id ) {
 			$renderItems[] = array(
 				'title'  => $client ? $client->name : esc_html__( 'Overview', 'mainwp' ),
-				'href'   => 'admin.php?page=ManageClients&client_id=' . $_GET['client_id'],
+				'href'   => 'admin.php?page=ManageClients&client_id=' . $client_id,
 				'active' => ( 'overview' === $shownPage ),
 			);
-
-			if ( isset( $_GET['client_id'] ) ) {
-				$renderItems[] = array(
-					'title'  => $client ? esc_html__( 'Edit', 'mainwp' ) . ' ' . $client->name : esc_html__( 'Edit Client', 'mainwp' ),
-					'href'   => 'admin.php?page=ClientAddNew&client_id=' . $_GET['client_id'],
-					'active' => ( 'Edit' === $shownPage ) ? true : false,
-				);
-			}
+			$renderItems[] = array(
+				'title'  => $client ? esc_html__( 'Edit', 'mainwp' ) . ' ' . $client->name : esc_html__( 'Edit Client', 'mainwp' ),
+				'href'   => 'admin.php?page=ClientAddNew&client_id=' . $client_id,
+				'active' => ( 'Edit' === $shownPage ) ? true : false,
+			);
 		}
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ClientAddNew' ) ) {
@@ -349,18 +339,23 @@ class MainWP_Client {
 
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
-				if ( MainWP_Menu::is_disable_menu_item( 3, 'ClientAdd' . $subPage['slug'] ) ) {
+				if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageClients' . $subPage['slug'] ) ) {
 					continue;
 				}
 
+				if ( ! empty( $subPage['individual_settings'] ) && empty( $client_id ) ) {
+					continue;
+				}
+
+				$client_param   = $client_id ? '&client_id=' . $client_id : '';
 				$item           = array();
 				$item['title']  = $subPage['title'];
-				$item['href']   = 'admin.php?page=ClientAdd' . $subPage['slug'];
-				$item['active'] = ( $subPage['slug'] == $shownPage ) ? true : false;
+				$item['href']   = 'admin.php?page=ManageClients' . $subPage['slug'] . $client_param;
+				$item['active'] = ( $subPage['slug'] === $shownPage ) ? true : false;
 				$renderItems[]  = $item;
 			}
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 		MainWP_UI::render_page_navigation( $renderItems );
 	}
 
@@ -368,10 +363,8 @@ class MainWP_Client {
 	 * Method render_footer()
 	 *
 	 * Render Clients page footer. Closes the page container.
-	 *
-	 * @param string $shownPage The page slug shown at this moment.
 	 */
-	public static function render_footer( $shownPage = '' ) {
+	public static function render_footer() {
 		echo '</div>';
 	}
 
@@ -382,8 +375,8 @@ class MainWP_Client {
 	 */
 	public static function render_manage_clients() {
 
-		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			MainWP_Client_Overview::instance()->on_show_page( $_GET['client_id'] ); // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			MainWP_Client_Overview::instance()->on_show_page( intval( $_GET['client_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return;
 		}
 
@@ -616,10 +609,10 @@ class MainWP_Client {
 									}
 									?>
 									<li>
-										<div class="ui checkbox <?php echo ( 'site_preview' == $name ) ? 'site_preview not-auto-init' : ''; ?>">
+										<div class="ui checkbox <?php echo ( 'site_preview' === $name ) ? 'site_preview not-auto-init' : ''; ?>">
 											<input type="checkbox"
 											<?php
-											$show_col = ! isset( $show_cols[ $name ] ) || ( 1 == $show_cols[ $name ] );
+											$show_col = ! isset( $show_cols[ $name ] ) || ( 1 === (int) $show_cols[ $name ] );
 											if ( $show_col ) {
 												echo 'checked="checked"';
 											}
@@ -819,7 +812,7 @@ class MainWP_Client {
 	 */
 	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 
-		if ( 0 == $output->clients ) {
+		if ( empty( $output->clients ) ) {
 			self::render_not_found();
 			return;
 		} else {
@@ -877,9 +870,9 @@ class MainWP_Client {
 						<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 						<div class="menu">
 							<a class="item client_getedit" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-							<?php if ( ( 1 != $client['id'] ) && ( $client['login'] != $website->adminname ) ) { ?>
+							<?php if ( ( 1 !== (int) $client['id'] ) && ( $client['login'] !== $website->adminname ) ) { ?>
 							<a class="item client_submitdelete" href="#"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
-							<?php } elseif ( ( 1 == $client['id'] ) || ( $client['login'] == $website->adminname ) ) { ?>
+							<?php } elseif ( ( 1 === (int) $client['id'] ) || ( $client['login'] === $website->adminname ) ) { ?>
 							<a href="javascript:void(0)" class="item" data-tooltip="This client is used for our secure link, it can not be deleted." data-inverted="" data-position="left center"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
 							<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
@@ -906,7 +899,7 @@ class MainWP_Client {
 			<?php
 			$newOutput = ob_get_clean();
 			echo $newOutput; // phpcs:ignore WordPress.Security.EscapeOutput
-			$return ++;
+			++$return;
 		}
 
 		return $return;
@@ -921,9 +914,9 @@ class MainWP_Client {
 		$selected_sites = array();
 		$edit_client    = false;
 
-		if ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
 			$show         = 'Edit';
-			$client_id    = sanitize_text_field( wp_unslash( $_GET['client_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+			$client_id    = intval( $_GET['client_id'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
 			$edit_client  = $client_id ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) : false;
 			$client_sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id );
 
@@ -944,7 +937,7 @@ class MainWP_Client {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-client-info-message' ) ) : ?>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-client-info-message"></i>
-						<?php echo sprintf( esc_html__( 'use the provided form to create a new client on your child site(). for additional help, please check this %1$shelp documentation %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-client/" target="_blank">', '</a>' ); ?>
+						<?php printf( esc_html__( 'use the provided form to create a new client on your child site(). for additional help, please check this %1$shelp documentation %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-client/" target="_blank">', '</a>' ); ?>
 					</div>
 				<?php endif; ?>
 					<div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
@@ -1126,14 +1119,14 @@ class MainWP_Client {
 	 */
 	public static function add_client() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 
-		$selected_sites = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification
-		$client_fields  = isset( $_POST['client_fields'] ) ? wp_unslash( $_POST['client_fields'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification
+		$selected_sites = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array(); //phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$client_fields  = isset( $_POST['client_fields'] ) ? wp_unslash( $_POST['client_fields'] ) : array(); //phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( ! is_array( $client_fields ) ) {
 			$client_fields = array();
 		}
 
-		if ( ! isset( $client_fields['default_field']['client.name'] ) || '' == $client_fields['default_field']['client.name'] ) {
+		if ( ! isset( $client_fields['default_field']['client.name'] ) || empty( $client_fields['default_field']['client.name'] ) ) {
 			echo wp_json_encode( array( 'error' => esc_html__( 'Client name are empty. Please try again.', 'mainwp' ) ) );
 			return;
 		}
@@ -1200,7 +1193,7 @@ class MainWP_Client {
 			 */
 			do_action( 'mainwp_client_updated', $inserted, $add_new );
 
-			if ( ! $add_new && $new_suspended != $old_suspended ) {
+			if ( ! $add_new && $new_suspended != $old_suspended ) { //phpcs:ignore -- to valid.
 				/**
 				 * Fires immediately after update client suspend/unsuspend.
 				 *
@@ -1225,12 +1218,12 @@ class MainWP_Client {
 		}
 
 		$client_image = 'NOTCHANGE';
-		if ( isset( $_POST['mainwp_client_delete_image']['client_field'] ) && $client_id == $_POST['mainwp_client_delete_image']['client_field'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_POST['mainwp_client_delete_image']['client_field'] ) && $client_id === (int) $_POST['mainwp_client_delete_image']['client_field'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$client_image = '';
 		}
 
-		if ( UPLOAD_ERR_OK == $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) {
-			$output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'client_field' );
+		if ( isset( $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'client_field' ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
 				$client_image = $output['filename'];
 			}
@@ -1240,10 +1233,10 @@ class MainWP_Client {
 			$client_data = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id );
 
 			$old_file = $client_data->image;
-			if ( $old_file != $client_image && ! empty( $old_file ) ) {
+			if ( $old_file !== $client_image && ! empty( $old_file ) ) {
 				$delete_old_file = $base_dir . '/' . $old_file;
 				if ( file_exists( $delete_old_file ) ) {
-					unlink( $delete_old_file );
+					wp_delete_file( $delete_old_file );
 				}
 			}
 			$update = array(
@@ -1294,12 +1287,12 @@ class MainWP_Client {
 
 				if ( $updated ) {
 					$contact_image = 'NOTCHANGE';
-					if ( isset( $_POST['mainwp_client_delete_image']['contacts_field'][ $contact_id ] ) && $contact_id == $_POST['mainwp_client_delete_image']['contacts_field'][ $contact_id ] ) { // phpcs:ignore WordPress.Security.NonceVerification
+					if ( isset( $_POST['mainwp_client_delete_image']['contacts_field'][ $contact_id ] ) && $contact_id === (int) $_POST['mainwp_client_delete_image']['contacts_field'][ $contact_id ] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 						$contact_image = '';
 					}
 
-					if ( UPLOAD_ERR_OK == $_FILES['mainwp_client_image_uploader']['error']['contacts_field'][ $indx ] ) {
-						$output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'contacts_field', $indx );
+					if ( isset( $_FILES['mainwp_client_image_uploader']['error']['contacts_field'][ $indx ] ) && UPLOAD_ERR_OK === $_FILES['mainwp_client_image_uploader']['error']['contacts_field'][ $indx ] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+						$output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'contacts_field', $indx ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 						if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
 							$contact_image = $output['filename'];
 						}
@@ -1309,10 +1302,10 @@ class MainWP_Client {
 						$contact_data = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', $contact_id );
 
 						$old_file = $contact_data->contact_image;
-						if ( $old_file != $contact_image && ! empty( $old_file ) ) {
+						if ( $old_file !== $contact_image && ! empty( $old_file ) ) {
 							$delete_old_file = $base_dir . '/' . $old_file;
 							if ( file_exists( $delete_old_file ) ) {
-								unlink( $delete_old_file );
+								wp_delete_file( $delete_old_file );
 							}
 						}
 						$update = array(
@@ -1357,8 +1350,8 @@ class MainWP_Client {
 					$contact_id    = $inserted->contact_id;
 					$contact_image = '';
 
-					if ( UPLOAD_ERR_OK == $_FILES['mainwp_client_image_uploader']['error']['new_contacts_field'][ $indx ] ) {
-						$output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'new_contacts_field', $indx );
+					if ( isset( $_FILES['mainwp_client_image_uploader']['error']['new_contacts_field'][ $indx ] ) && UPLOAD_ERR_OK === $_FILES['mainwp_client_image_uploader']['error']['new_contacts_field'][ $indx ] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+						$output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'new_contacts_field', $indx ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 						if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
 							$contact_image = $output['filename'];
 						}
@@ -1395,7 +1388,7 @@ class MainWP_Client {
 			MainWP_DB_Client::instance()->update_client( $update );
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( isset( $_POST['is_first_client'] ) && ! empty( $_POST['is_first_client'] ) ) {
 			delete_transient( 'mainwp_transient_just_connected_site_id' );
 		}
@@ -1471,21 +1464,21 @@ class MainWP_Client {
 
 			foreach ( $default_client_fields as $field_name => $field ) {
 				$db_field = isset( $field['db_field'] ) ? $field['db_field'] : '';
-				$val      = $edit_client && '' != $db_field && property_exists( $edit_client, $db_field ) ? $edit_client->{$db_field} : '';
+				$val      = $edit_client && '' !== $db_field && property_exists( $edit_client, $db_field ) ? $edit_client->{$db_field} : '';
 				$tip      = isset( $field['tooltip'] ) ? $field['tooltip'] : '';
 				?>
 				<div class="ui grid field">
-					<label class="six wide column middle aligned" <?php echo '' != $tip ? 'data-tooltip="' . esc_attr( $tip ) . '" data-inverted="" data-position="top left"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>><?php echo esc_html( $field['title'] ); ?></label>
+					<label class="six wide column middle aligned" <?php echo ! empty( $tip ) ? 'data-tooltip="' . esc_attr( $tip ) . '" data-inverted="" data-position="top left"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>><?php echo esc_html( $field['title'] ); ?></label>
 					<div class="ui six wide column">
 						<div class="ui left labeled input">
 					<?php
-					if ( 'client.note' == $field_name ) {
+					if ( 'client.note' === $field_name ) {
 						?>
 							<div class="editor">
 								<textarea class="code" cols="80" rows="10" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"><?php echo esc_html( $val ); ?></textarea>
 							</div>
 							<?php
-					} elseif ( 'client.suspended' == $field_name ) {
+					} elseif ( 'client.suspended' === $field_name ) {
 						?>
 							<select name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" id="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" class="ui dropdown">
 								<option value="0" <?php echo ( '0' === $val ? 'selected' : '' ); ?>><?php esc_html_e( 'Active', 'mainwp' ); ?></option>
@@ -1494,7 +1487,7 @@ class MainWP_Client {
 								<option value="3" <?php echo ( '3' === $val ? 'selected' : '' ); ?>><?php esc_html_e( 'Lost', 'mainwp' ); ?></option>
 							</select>
 						<?php
-					} elseif ( $client_id && 'client.created' == $field_name ) {
+					} elseif ( $client_id && 'client.created' === $field_name ) {
 						$created = empty( $val ) ? time() : $val;
 						?>
 						<div class="ui calendar mainwp_datepicker" >
@@ -1522,7 +1515,7 @@ class MainWP_Client {
 				</div>
 					<?php
 
-					if ( 'client.name' == $field_name ) {
+					if ( 'client.name' === $field_name ) {
 						?>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Client photo', 'mainwp' ); ?></label>
@@ -1682,9 +1675,9 @@ class MainWP_Client {
 	 * Get add contact template.
 	 *
 	 * @param mixed $edit_contact The contact data to edit.
-	 * @param bool  $echo Echo template or not.
+	 * @param bool  $echo_out Echo template or not.
 	 */
-	public static function get_add_contact_temp( $edit_contact = false, $echo = false ) {
+	public static function get_add_contact_temp( $edit_contact = false, $echo_out = false ) {
 
 		$input_name    = 'new_contacts_field';
 		$contact_id    = 0;
@@ -1710,7 +1703,7 @@ class MainWP_Client {
 			$contact_fields = MainWP_Client_Handler::get_default_contact_fields();
 			foreach ( $contact_fields as $field_name => $field ) {
 					$db_field   = isset( $field['db_field'] ) ? $field['db_field'] : '';
-					$val        = $edit_contact && '' != $db_field && property_exists( $edit_contact, $db_field ) ? $edit_contact->{$db_field} : '';
+					$val        = $edit_contact && '' !== $db_field && property_exists( $edit_contact, $db_field ) ? $edit_contact->{$db_field} : '';
 					$contact_id = $edit_contact && property_exists( $edit_contact, 'contact_id' ) ? $edit_contact->contact_id : '';
 				?>
 				<div class="ui grid field">
@@ -1776,7 +1769,7 @@ class MainWP_Client {
 			<?php
 			$html = ob_get_clean();
 
-			if ( $echo ) {
+			if ( $echo_out ) {
 				echo $html; //phpcs:ignore -- validated content.
 			}
 
@@ -1796,23 +1789,23 @@ class MainWP_Client {
 			'message' => '',
 		);
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$client_id  = isset( $_POST['client_id'] ) ? intval( $_POST['client_id'] ) : 0; // 0 is global client's field.
 		$field_id   = isset( $_POST['field_id'] ) ? intval( $_POST['field_id'] ) : 0;
-		$field_desc = sanitize_text_field( $_POST['field_desc'] );
-		$field_name = sanitize_text_field( $_POST['field_name'] );
+		$field_desc = isset( $_POST['field_desc'] ) ? sanitize_text_field( wp_unslash( $_POST['field_desc'] ) ) : '';
+		$field_name = isset( $_POST['field_name'] ) ? sanitize_text_field( wp_unslash( $_POST['field_name'] ) ) : '';
 		$field_name = trim( $field_name, '[]' );
 		// phpcs:enable
 
 		// update general or individual client field.
 		if ( $field_id ) {
 			$current = MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field_id );
-			if ( $current && $current->field_name == $field_name && $current->field_desc == $field_desc ) {
+			if ( $current && $current->field_name === $field_name && $current->field_desc === $field_desc ) {
 				$return['success'] = true;
 				$return['message'] = esc_html__( 'Field has been saved without changes.', 'mainwp' );
 			} else {
 				$current = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $field_name, $client_id ); // check if other field with the same name existed.
-				if ( $current && $current->field_id != $field_id ) {
+				if ( $current && $current->field_id !== $field_id ) {
 					$return['error'] = esc_html__( 'Field already exists, try different field name.', 'mainwp' );
 				} else {
 					// update general or individual field name.
@@ -1859,11 +1852,11 @@ class MainWP_Client {
 		 * Save Client Note.
 		 */
 	public static function save_note() {
-		if ( isset( $_POST['clientid'] ) && $_POST['clientid'] ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_POST['clientid'] ) && ! empty( $_POST['clientid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$esc_note = MainWP_Utility::esc_content( $note );
 			$update   = array(
-				'client_id' => $_POST['clientid'], // phpcs:ignore WordPress.Security.NonceVerification
+				'client_id' => intval( $_POST['clientid'] ), // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				'note'      => $esc_note,
 			);
 			MainWP_DB_Client::instance()->update_client( $update );
@@ -1876,7 +1869,7 @@ class MainWP_Client {
 		 * Hooks the section help content to the Help Sidebar element.
 		 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && ( 'ManageClients' === $_GET['page'] || 'ClientAddNew' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['page'] ) && ( 'ManageClients' === $_GET['page'] || 'ClientAddNew' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			?>
 			<p><?php esc_html_e( 'If you need help with managing clients, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
@@ -1899,5 +1892,4 @@ class MainWP_Client {
 				<?php
 		}
 	}
-
 }

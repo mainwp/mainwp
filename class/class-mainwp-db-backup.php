@@ -18,6 +18,8 @@ class MainWP_DB_Backup extends MainWP_DB {
 	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
 
 	/**
+	 * Instance variable class.
+	 *
 	 * @static
 	 * @var (self|null) $instance Instance of MainWP_DB_Backup or null.
 	 */
@@ -32,7 +34,7 @@ class MainWP_DB_Backup extends MainWP_DB {
 	 * @return MainWP_DB
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -66,7 +68,7 @@ class MainWP_DB_Backup extends MainWP_DB {
 	 * @param mixed $wp_id Child Site ID.
 	 * @param mixed $values Values to update.
 	 *
-	 * @return void get_backup_task_progres()
+	 * @return mixed get_backup_task_progres().
 	 */
 	public function update_backup_task_progress( $task_id, $wp_id, $values ) {
 		$this->wpdb->update(
@@ -148,10 +150,10 @@ class MainWP_DB_Backup extends MainWP_DB {
 		$progresses = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_backup_progress' ) . ' WHERE wp_id = %d AND dtsFetched > %d ', $wp_id, time() - ( 30 * 60 ) ) );
 		if ( is_array( $progresses ) ) {
 			foreach ( $progresses as $progress ) {
-				if ( ( 0 == $progress->downloadedDBComplete ) && ( 0 == $progress->downloadedFULLComplete ) ) {
+				if ( empty( $progress->downloadedDBComplete ) && empty( $progress->downloadedFULLComplete ) ) {
 					$task = $this->get_backup_task_by_id( $progress->task_id );
 					if ( $task ) {
-						if ( ( 'full' == $task->type ) && ! $task->paused ) {
+						if ( ( 'full' === $task->type ) && ! $task->paused ) {
 							return true;
 						}
 					}
@@ -224,7 +226,7 @@ class MainWP_DB_Backup extends MainWP_DB {
 	 * @return (object|null) Database query result for backup tasks for current user or null on failer.
 	 */
 	public function get_backup_tasks( $userid = null, $orderBy = null ) {
-		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE ' . ( null == $userid ? '' : 'userid= ' . $userid . ' AND ' ) . ' template = 0 ' . ( null != $orderBy ? 'ORDER BY ' . $orderBy : '' ), OBJECT );
+		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE ' . ( null === $userid ? '' : 'userid= ' . $userid . ' AND ' ) . ' template = 0 ' . ( null !== $orderBy ? 'ORDER BY ' . $orderBy : '' ), OBJECT );
 	}
 
 	/**
@@ -276,7 +278,8 @@ class MainWP_DB_Backup extends MainWP_DB {
 		$maximumFileDescriptorsOverride,
 		$maximumFileDescriptorsAuto,
 		$maximumFileDescriptors,
-		$loadFilesBeforeZip ) {
+		$loadFilesBeforeZip
+	) {
 
 		// to fix null value.
 		if ( empty( $exclude ) ) {
@@ -370,7 +373,8 @@ class MainWP_DB_Backup extends MainWP_DB {
 		$maximumFileDescriptorsOverride,
 		$maximumFileDescriptorsAuto,
 		$maximumFileDescriptors,
-		$loadFilesBeforeZip ) {
+		$loadFilesBeforeZip
+	) {
 
 		if ( MainWP_Utility::ctype_digit( $userid ) && MainWP_Utility::ctype_digit( $id ) ) {
 			return $this->wpdb->update(
@@ -574,5 +578,4 @@ class MainWP_DB_Backup extends MainWP_DB {
 	public function get_backup_tasks_todo_monthly() {
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE paused = 0 AND schedule="monthly" AND ' . time() . ' - last_run >= ' . ( 60 * 60 * 24 * 30 ), OBJECT );
 	}
-
 }

@@ -31,7 +31,7 @@ class MainWP_Client_Overview_Note {
 	 * @return mixed render_site_info()
 	 */
 	public static function render() {
-		$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( empty( $client_id ) ) {
 			return;
 		}
@@ -113,7 +113,7 @@ class MainWP_Client_Overview_Note {
 			</div>
 			<div class="ui two columns grid mainwp-widget-footer">
 				<div class="column">
-				<?php if ( '' == $note ) : ?>
+				<?php if ( empty( $note ) ) : ?>
 					<a href="javascript:void(0)" class="mainwp-edit-client-note ui button mini fluid green" id="mainwp-notes-<?php echo esc_attr( $client_info['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Add notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Add Notes', 'mainwp' ); ?></a>
 				<?php else : ?>
 					<a href="javascript:void(0)" class="mainwp-edit-client-note ui mini fluid button green" id="mainwp-notes-<?php echo esc_attr( $client_info['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Edit notes.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php esc_attr_e( 'Edit Notes', 'mainwp' ); ?></a>
@@ -124,5 +124,4 @@ class MainWP_Client_Overview_Note {
 			<?php
 			MainWP_UI::render_modal_edit_notes();
 	}
-
 }

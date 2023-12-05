@@ -36,7 +36,7 @@ class MainWP_QQ2_Uploaded_File_Xhr {
 		$realSize = stream_copy_to_stream( $input, $temp );
 		fclose( $input );
 
-		if ( $realSize != $this->get_size() ) {
+		if ( $realSize != $this->get_size() ) { //phpcs:ignore -- to valid.
 			return false;
 		}
 
@@ -92,7 +92,7 @@ class MainWP_QQ2_Uploaded_File_Xhr {
 
 	/** Get the File Name. */
 	public function get_name() {
-		return isset( $_GET['qqfile'] ) ? sanitize_text_field( wp_unslash( $_GET['qqfile'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		return isset( $_GET['qqfile'] ) ? sanitize_text_field( wp_unslash( $_GET['qqfile'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 	}
 
 	/**

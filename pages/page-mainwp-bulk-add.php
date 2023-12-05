@@ -92,7 +92,7 @@ class MainWP_Bulk_Add {
 			}
 		} else {
 			MainWP_Logger::instance()->debug_for_website( $website, 'posting_bulk_handler', '[' . $website->url . '] Result was: [data-start]' . $data . '[data-end]' );
-			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
+			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 	}
 }

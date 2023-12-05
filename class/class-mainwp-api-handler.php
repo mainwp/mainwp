@@ -61,9 +61,9 @@ class MainWP_API_Handler {
 
 		foreach ( $check_exts as $ext_name => $ext ) {
 			$bulk_checks[ $ext_name ] = $ext;
-			$i++;
-			$count++;
-			if ( $count == $max_check || $i == $total_check ) {
+			++$i;
+			++$count;
+			if ( $count === $max_check || $i === $total_check ) {
 				$results = MainWP_Api_Manager_Plugin_Update::instance()->bulk_update_check( $bulk_checks ); // bulk check response array of info.
 				if ( is_array( $results ) && 0 < count( $results ) ) {
 					foreach ( $results as $slug => $response ) {
@@ -106,7 +106,7 @@ class MainWP_API_Handler {
 		$extensions = MainWP_Extensions_Handler::get_extensions();
 		$rslt       = null;
 		foreach ( $extensions as $ext ) {
-			if ( isset( $ext['api'] ) && ( $pSlug == $ext['api'] ) && isset( $ext['apiManager'] ) && ! empty( $ext['apiManager'] ) ) {
+			if ( isset( $ext['api'] ) && ( $pSlug === $ext['api'] ) && isset( $ext['apiManager'] ) && ! empty( $ext['apiManager'] ) ) {
 				$args                     = array();
 				$args['plugin_name']      = $ext['api'];
 				$args['version']          = $ext['version'];
@@ -147,7 +147,7 @@ class MainWP_API_Handler {
 		$extensions = MainWP_Extensions_Handler::get_extensions();
 		$rslt       = null;
 		foreach ( $extensions as $ext ) {
-			if ( isset( $ext['api'] ) && $pSlug == $ext['api'] && isset( $ext['apiManager'] ) && ! empty( $ext['apiManager'] ) ) {
+			if ( isset( $ext['api'] ) && $pSlug === $ext['api'] && isset( $ext['apiManager'] ) && ! empty( $ext['apiManager'] ) ) {
 				$args                     = array();
 				$args['plugin_name']      = $ext['api'];
 				$args['version']          = $ext['version'];
@@ -161,5 +161,4 @@ class MainWP_API_Handler {
 		}
 		return $rslt;
 	}
-
 }

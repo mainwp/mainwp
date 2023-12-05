@@ -30,7 +30,7 @@ class MainWP_Actions_Handler {
 	 * @return MainWP_Actions_Handler
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -121,7 +121,7 @@ class MainWP_Actions_Handler {
 			}
 		} elseif ( 'theme_action' === $action ) {
 			$theme_act = isset( $params['action'] ) ? $params['action'] : '';
-			if ( 'activate' == $theme_act && isset( $information['other_data']['theme_deactivate_data'] ) ) {
+			if ( 'activate' === $theme_act && isset( $information['other_data']['theme_deactivate_data'] ) ) {
 				do_action( 'mainwp_install_theme_action', $website, 'deactivate', $params, $information['other_data']['theme_deactivate_data'], $others );
 			}
 			if ( in_array( $theme_act, array( 'activate', 'delete' ) ) && isset( $information['other_data']['theme_action_data'] ) ) {

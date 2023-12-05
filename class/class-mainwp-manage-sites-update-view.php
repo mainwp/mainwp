@@ -67,7 +67,7 @@ class MainWP_Manage_Sites_Update_View {
 
 		$active_tab  = 'plugins';
 		$active_text = esc_html__( 'Plugins Updates', 'mainwp' );
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( isset( $_GET['tab'] ) ) {
 			if ( 'wordpress-updates' === $_GET['tab'] ) {
 				$active_tab  = 'WordPress';
@@ -93,8 +93,8 @@ class MainWP_Manage_Sites_Update_View {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-updates-site-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-site-message"></i>
-					<div><?php echo sprintf( esc_html__( 'Manage available updates for the child site. From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-wordpress-core/" target="_blank">', '</a>' ); ?></div>
-					<div><?php echo sprintf( esc_html__( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-wordpress-core-update/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">', '</a>' ); ?></div>
+					<div><?php printf( esc_html__( 'Manage available updates for the child site. From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-wordpress-core/" target="_blank">', '</a>' ); ?></div>
+					<div><?php printf( esc_html__( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-wordpress-core-update/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">', '</a>' ); ?></div>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -160,7 +160,7 @@ class MainWP_Manage_Sites_Update_View {
 		}
 
 		$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-		$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+		$wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
 		if ( $website->is_ignoreCoreUpdates ) {
 			$wp_upgrades = array();
@@ -179,7 +179,7 @@ class MainWP_Manage_Sites_Update_View {
 		}
 
 		$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-		$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+		$decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 
 		if ( is_array( $decodedPremiumUpgrades ) ) {
 			foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
@@ -216,7 +216,7 @@ class MainWP_Manage_Sites_Update_View {
 			$theme_upgrades = array();
 		}
 		$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-		$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+		$decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 
 		if ( is_array( $decodedPremiumUpgrades ) ) {
 			foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
@@ -251,14 +251,14 @@ class MainWP_Manage_Sites_Update_View {
 		$return['total_trans'] = count( $translation_upgrades );
 
 		$plugins_outdate = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
-		$plugins_outdate = ( '' != $plugins_outdate ) ? json_decode( $plugins_outdate, true ) : array();
+		$plugins_outdate = ! empty( $plugins_outdate ) ? json_decode( $plugins_outdate, true ) : array();
 
 		if ( ! is_array( $plugins_outdate ) ) {
 			$plugins_outdate = array();
 		}
 		if ( 0 < count( $plugins_outdate ) ) {
 			$pluginsOutdateDismissed = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
-			$pluginsOutdateDismissed = ( '' != $pluginsOutdateDismissed ) ? json_decode( $pluginsOutdateDismissed, true ) : array();
+			$pluginsOutdateDismissed = ! empty( $pluginsOutdateDismissed ) ? json_decode( $pluginsOutdateDismissed, true ) : array();
 
 			if ( is_array( $pluginsOutdateDismissed ) ) {
 				$plugins_outdate = array_diff_key( $plugins_outdate, $pluginsOutdateDismissed );
@@ -272,7 +272,7 @@ class MainWP_Manage_Sites_Update_View {
 		$return['total_aband_plugins'] = count( $plugins_outdate );
 
 		$themes_outdate = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
-		$themes_outdate = ( '' != $themes_outdate ) ? json_decode( $themes_outdate, true ) : array();
+		$themes_outdate = ! empty( $themes_outdate ) ? json_decode( $themes_outdate, true ) : array();
 
 		if ( ! is_array( $themes_outdate ) ) {
 			$themes_outdate = array();
@@ -280,7 +280,7 @@ class MainWP_Manage_Sites_Update_View {
 
 		if ( 0 < count( $themes_outdate ) ) {
 			$themesOutdateDismissed = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
-			$themesOutdateDismissed = ( '' != $themesOutdateDismissed ) ? json_decode( $themesOutdateDismissed, true ) : array();
+			$themesOutdateDismissed = ! empty( $themesOutdateDismissed ) ? json_decode( $themesOutdateDismissed, true ) : array();
 
 			if ( is_array( $themesOutdateDismissed ) ) {
 				$themes_outdate = array_diff_key( $themes_outdate, $themesOutdateDismissed );
@@ -327,7 +327,7 @@ class MainWP_Manage_Sites_Update_View {
 					<?php if ( ! $website->is_ignoreCoreUpdates ) : ?>
 						<?php
 							$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-							$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+							$wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
 							$wpcore_update_disabled_by = '';
 						if ( 0 < count( $wp_upgrades ) ) {
@@ -335,7 +335,7 @@ class MainWP_Manage_Sites_Update_View {
 						}
 						?>
 						<?php if ( ( 0 !== count( $wp_upgrades ) ) && ! ( '' !== $website->sync_errors ) ) : ?>
-						<tr class="mainwp-wordpress-update" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) && '' == $wpcore_update_disabled_by ) ? '0' : '1'; ?>">
+						<tr class="mainwp-wordpress-update" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) && empty( $wpcore_update_disabled_by ) ) ? '0' : '1'; ?>">
 							<td>								
 								<?php if ( 0 < count( $wp_upgrades ) ) : ?>
 									<?php echo esc_html( $wp_upgrades['current'] ); ?>
@@ -350,7 +350,7 @@ class MainWP_Manage_Sites_Update_View {
 								<?php if ( $user_can_update_wp ) : ?>
 									<?php
 									if ( 0 < count( $wp_upgrades ) ) :
-										if ( '' != $wpcore_update_disabled_by ) {
+										if ( '' !== $wpcore_update_disabled_by ) {
 											?>
 											<span data-tooltip="<?php echo esc_html( $wpcore_update_disabled_by ); ?>" data-inverted="" data-position="left center"><a href="javascript:void(0)" class="ui green button mini disabled"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a></span>
 											<?php
@@ -416,7 +416,7 @@ class MainWP_Manage_Sites_Update_View {
 					$plugin_upgrades = array();
 				}
 				$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-				$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+				$decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 				if ( is_array( $decodedPremiumUpgrades ) ) {
 					foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 						$premiumUpgrade['premium'] = true;
@@ -512,11 +512,10 @@ class MainWP_Manage_Sites_Update_View {
 	 * @param string $column_display_name column display name.
 	 * @param mixed  $column_key column key.
 	 * @param bool   $top Top or bottom header.
-	 * @param mixed  $tbl_helper Table updates helper object.
 	 */
-	public static function hook_table_update_plugins_header_content( $column_display_name, $column_key, $top, $tbl_helper ) {
+	public static function hook_table_update_plugins_header_content( $column_display_name, $column_key, $top ) {
 		if ( $top ) {
-			if ( 'action' == $column_key ) {
+			if ( 'action' === $column_key ) {
 				if ( MainWP_Demo_Handle::is_demo_mode() ) {
 					$demo_tip     = MainWP_Demo_Handle::get_instance()->get_demo_tooltip();
 					$selected_act = '<span data-tooltip="' . esc_html( $demo_tip ) . '" data-inverted="" data-position="top right"><a href="javascript:void(0)" class="ui mini green basic button disabled" >' . esc_html__( 'Update Selected' ) . '</a></span>';
@@ -524,7 +523,7 @@ class MainWP_Manage_Sites_Update_View {
 					$selected_act = '<a href="javascript:void(0)" data-tooltip="' . esc_html__( 'Update Selected Plugins.', 'mainwp' ) . '" onClick="return updatesoverview_plugins_global_upgrade_all( false, true );" class="ui mini green basic button" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>';
 				}
 				$column_display_name .= $selected_act;
-			} elseif ( 'title' == $column_key ) {
+			} elseif ( 'title' === $column_key ) {
 				$column_display_name = '<div class="ui master checkbox "><input type="checkbox" name=""><label>' . $column_display_name . '</label></div>';
 			}
 		}
@@ -539,19 +538,18 @@ class MainWP_Manage_Sites_Update_View {
 	 * @param string $column_display_name column display name.
 	 * @param mixed  $column_key column key.
 	 * @param bool   $top Top or bottom header.
-	 * @param mixed  $tbl_helper Table updates helper object.
 	 */
-	public static function hook_table_update_themes_header_content( $column_display_name, $column_key, $top, $tbl_helper ) {
+	public static function hook_table_update_themes_header_content( $column_display_name, $column_key, $top ) {
 		if ( $top ) {
 			$is_demo = MainWP_Demo_Handle::is_demo_mode();
-			if ( 'action' == $column_key ) {
+			if ( 'action' === $column_key ) {
 				if ( $is_demo ) {
 					$selected_act = MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green basic button disabled" disabled="disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>', false );
 				} else {
 					$selected_act = '<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all( false, true );" class="ui mini green basic button" data-tooltip="' . esc_html__( 'Update Selected Themes.', 'mainwp' ) . '" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>';
 				}
 				$column_display_name .= $selected_act;
-			} elseif ( 'title' == $column_key ) {
+			} elseif ( 'title' === $column_key ) {
 				$column_display_name = '<div class="ui master checkbox "><input type="checkbox" name=""><label>' . $column_display_name . '</label></div>';
 			}
 		}
@@ -592,7 +590,7 @@ class MainWP_Manage_Sites_Update_View {
 				}
 
 				$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-				$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+				$decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 
 				if ( is_array( $decodedPremiumUpgrades ) ) {
 					foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
@@ -657,7 +655,7 @@ class MainWP_Manage_Sites_Update_View {
 										} else {
 											?>
 										<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_theme( <?php echo intval( $website->id ); ?>, '<?php echo esc_js( $theme_name ); ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-									<?php }; ?>
+									<?php } ?>
 									<?php endif; ?>
 								</td>
 								<?php endif; ?>
@@ -754,13 +752,13 @@ class MainWP_Manage_Sites_Update_View {
 		$user_can_ignore_unignore = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
 
 		$plugins_outdate = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
-		$plugins_outdate = ( '' != $plugins_outdate ) ? json_decode( $plugins_outdate, true ) : array();
+		$plugins_outdate = ! empty( $plugins_outdate ) ? json_decode( $plugins_outdate, true ) : array();
 
 		if ( ! is_array( $plugins_outdate ) ) {
 			$plugins_outdate = array();
 		}
 		$pluginsOutdateDismissed = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
-		$pluginsOutdateDismissed = ( '' != $pluginsOutdateDismissed ) ? json_decode( $pluginsOutdateDismissed, true ) : array();
+		$pluginsOutdateDismissed = ! empty( $pluginsOutdateDismissed ) ? json_decode( $pluginsOutdateDismissed, true ) : array();
 
 		if ( is_array( $pluginsOutdateDismissed ) ) {
 			$plugins_outdate = array_diff_key( $plugins_outdate, $pluginsOutdateDismissed );
@@ -843,7 +841,7 @@ class MainWP_Manage_Sites_Update_View {
 		$user_can_ignore_unignore = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
 
 		$themes_outdate = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
-		$themes_outdate = ( '' != $themes_outdate ) ? json_decode( $themes_outdate, true ) : array();
+		$themes_outdate = ! empty( $themes_outdate ) ? json_decode( $themes_outdate, true ) : array();
 
 		if ( ! is_array( $themes_outdate ) ) {
 			$themes_outdate = array();
@@ -851,7 +849,7 @@ class MainWP_Manage_Sites_Update_View {
 
 		if ( 0 < count( $themes_outdate ) ) {
 			$themesOutdateDismissed = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
-			$themesOutdateDismissed = ( '' != $themesOutdateDismissed ) ? json_decode( $themesOutdateDismissed, true ) : array();
+			$themesOutdateDismissed = ! empty( $themesOutdateDismissed ) ? json_decode( $themesOutdateDismissed, true ) : array();
 
 			if ( is_array( $themesOutdateDismissed ) ) {
 				$themes_outdate = array_diff_key( $themes_outdate, $themesOutdateDismissed );

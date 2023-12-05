@@ -138,7 +138,7 @@ class MainWP_Page {
 
 		global $_mainwp_menu_active_slugs;
 
-		if ( isset( $_GET['page'] ) && 'PageBulkAdd' == $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['page'] ) && 'PageBulkAdd' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 			/**
 			 * MainWP default post to edit.
@@ -151,7 +151,7 @@ class MainWP_Page {
 			$_mainwp_default_post_to_edit = get_default_post_to_edit( $post_type, true );
 			$post_id                      = $_mainwp_default_post_to_edit ? $_mainwp_default_post_to_edit->ID : 0;
 		} else {
-			$post_id                                   = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+			$post_id                                   = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$_mainwp_menu_active_slugs['PageBulkEdit'] = 'PageBulkManage'; // to fix hidden second menu level.
 		}
 
@@ -184,7 +184,7 @@ class MainWP_Page {
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
-							if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && true != $subPage['menu_hidden'] ) ) {
+							if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && true !== $subPage['menu_hidden'] ) ) {
 								if ( MainWP_Menu::is_disable_menu_item( 3, 'Page' . $subPage['slug'] ) ) {
 									continue;
 								}
@@ -323,7 +323,7 @@ class MainWP_Page {
 	 * @return string $hidden Hidden columns.
 	 */
 	public static function get_hidden_columns( $hidden, $screen ) {
-		if ( $screen && 'mainwp_page_PageBulkManage' == $screen->id ) {
+		if ( $screen && 'mainwp_page_PageBulkManage' === $screen->id ) {
 			$hidden = get_user_option( 'manage' . strtolower( $screen->id ) . 'columnshidden' );
 		}
 		if ( ! is_array( $hidden ) ) {
@@ -338,8 +338,8 @@ class MainWP_Page {
 	 * Render screen options modal bottom.
 	 */
 	public static function hook_screen_options_modal_bottom() {
-		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
-		if ( 'PageBulkManage' == $page ) {
+		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( 'PageBulkManage' === $page ) {
 
 			$show_columns = get_user_option( 'mainwp_managepages_show_columns' );
 
@@ -378,9 +378,9 @@ class MainWP_Page {
 			$renderItems[] = array(
 				'title'  => esc_html__( 'Manage Pages', 'mainwp' ),
 				'href'   => 'admin.php?page=PageBulkManage',
-				'active' => ( 'BulkManage' == $shownPage ) ? true : false,
+				'active' => ( 'BulkManage' === $shownPage ) ? true : false,
 			);
-			if ( 'BulkEdit' == $shownPage ) {
+			if ( 'BulkEdit' === $shownPage ) {
 				$renderItems[] = array(
 					'title'  => esc_html__( 'Edit Page', 'mainwp' ),
 					'href'   => 'admin.php?page=PageBulkEdit&post_id=' . esc_attr( $post_id ),
@@ -392,7 +392,7 @@ class MainWP_Page {
 				$renderItems[] = array(
 					'title'  => esc_html__( 'Add New', 'mainwp' ),
 					'href'   => 'admin.php?page=PageBulkAdd',
-					'active' => ( 'BulkAdd' == $shownPage ) ? true : false,
+					'active' => ( 'BulkAdd' === $shownPage ) ? true : false,
 				);
 			}
 		}
@@ -403,7 +403,7 @@ class MainWP_Page {
 					continue;
 				}
 
-				if ( isset( $subPage['tab_link_hidden'] ) && true == $subPage['tab_link_hidden'] ) {
+				if ( isset( $subPage['tab_link_hidden'] ) && true === $subPage['tab_link_hidden'] ) {
 					$tab_link = '#';
 				} else {
 					$tab_link = 'admin.php?page=Page' . $subPage['slug'];
@@ -411,7 +411,7 @@ class MainWP_Page {
 				$item           = array();
 				$item['title']  = $subPage['title'];
 				$item['href']   = $tab_link;
-				$item['active'] = ( $subPage['slug'] == $shownPage ) ? true : false;
+				$item['active'] = ( $subPage['slug'] === $shownPage ) ? true : false;
 				$renderItems[]  = $item;
 			}
 		}
@@ -423,10 +423,8 @@ class MainWP_Page {
 	 * Method render_footer()
 	 *
 	 * Render page footer.
-	 *
-	 * @param string $shownPage Current page.
 	 */
-	public static function render_footer( $shownPage ) {
+	public static function render_footer() {
 		echo '</div>';
 	}
 
@@ -449,7 +447,7 @@ class MainWP_Page {
 		$selected_groups  = array();
 		$selected_clients = array();
 
-		if ( null != $cachedSearch ) {
+		if ( null !== $cachedSearch ) {
 			if ( is_array( $cachedSearch['sites'] ) ) {
 				$selected_sites = $cachedSearch['sites'];
 			} elseif ( is_array( $cachedSearch['groups'] ) ) {
@@ -519,7 +517,7 @@ class MainWP_Page {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-pages-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-pages-info-message"></i>
-							<?php echo sprintf( esc_html__( 'Manage existing pages on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">', '</a>' ); ?>
+							<?php printf( esc_html__( 'Manage existing pages on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<?php self::render_table( true ); ?>
@@ -681,21 +679,21 @@ class MainWP_Page {
 		<div class="ui mini form">
 			<div class="field">
 				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_page_search_by_keyword" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>" />
+					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_page_search_by_keyword" class="text" value="<?php echo ( null !== $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>" />
 				</div>
 			</div>
 			<div class="field">
 				<?php
 				$searchon = 'all';
-				if ( null != $cachedSearch ) {
+				if ( null !== $cachedSearch ) {
 					$searchon = $cachedSearch['search_on'];
 				}
 				?>
 				<select class="ui dropdown fluid" id="mainwp_page_search_on">
 					<option value=""><?php esc_html_e( 'Search in...', 'mainwp' ); ?></option>
-					<option value="title" <?php echo 'title' == $searchon ? 'selected' : ''; ?>><?php esc_html_e( 'Title', 'mainwp' ); ?></option>
-					<option value="content" <?php echo 'content' == $searchon ? 'selected' : ''; ?>><?php esc_html_e( 'Body', 'mainwp' ); ?></option>
-					<option value="all" <?php echo 'all' == $searchon ? 'selected' : ''; ?>><?php esc_html_e( 'Title and Body', 'mainwp' ); ?></option>
+					<option value="title" <?php echo 'title' === $searchon ? 'selected' : ''; ?>><?php esc_html_e( 'Title', 'mainwp' ); ?></option>
+					<option value="content" <?php echo 'content' === $searchon ? 'selected' : ''; ?>><?php esc_html_e( 'Body', 'mainwp' ); ?></option>
+					<option value="all" <?php echo 'all' === $searchon ? 'selected' : ''; ?>><?php esc_html_e( 'Title and Body', 'mainwp' ); ?></option>
 				</select>
 			</div>
 			<div class="field">
@@ -707,7 +705,7 @@ class MainWP_Page {
 								<i class="calendar icon"></i>
 								<input type="text" placeholder="Date" autocomplete="off" id="mainwp_page_search_by_dtsstart" value="
 									<?php
-									if ( null != $cachedSearch ) {
+									if ( null !== $cachedSearch ) {
 										echo esc_attr( $cachedSearch['dtsstart'] );
 									}
 									?>
@@ -721,7 +719,7 @@ class MainWP_Page {
 								<i class="calendar icon"></i>
 								<input type="text" placeholder="Date" autocomplete="off" id="mainwp_page_search_by_dtsstop" value="
 								<?php
-								if ( null != $cachedSearch ) {
+								if ( null !== $cachedSearch ) {
 									echo esc_attr( $cachedSearch['dtsstop'] );
 								}
 								?>
@@ -946,22 +944,22 @@ class MainWP_Page {
 		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
 		$dbwebsites = array();
-		if ( '' != $sites ) {
+		if ( ! empty( $sites ) ) {
 			foreach ( $sites as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$website = MainWP_DB::instance()->get_website_by_id( $v );
-					if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+					if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
 						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
 					}
 				}
 			}
 		}
-		if ( '' != $groups ) {
+		if ( ! empty( $groups ) ) {
 			foreach ( $groups as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 					while ( $websites && ( $website   = MainWP_DB::fetch_object( $websites ) ) ) {
-						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+						if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 							continue;
 						}
 						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
@@ -980,7 +978,7 @@ class MainWP_Page {
 			);
 
 			foreach ( $websites as $website ) {
-				if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+				if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 					continue;
 				}
 				$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
@@ -1027,13 +1025,13 @@ class MainWP_Page {
 				'dtsstart'  => $dtsstart,
 				'dtsstop'   => $dtsstop,
 				'status'    => $status,
-				'sites'     => ( '' != $sites ) ? $sites : '',
-				'groups'    => ( '' != $groups ) ? $groups : '',
+				'sites'     => ( ! empty( $sites ) ) ? $sites : '',
+				'groups'    => ( ! empty( $groups ) ) ? $groups : '',
 				'search_on' => $search_on,
 			)
 		);
 
-		if ( 0 == $output->pages ) {
+		if ( empty( $output->pages ) ) {
 			MainWP_Cache::add_body( 'Page', '' );
 			return;
 		}
@@ -1050,7 +1048,7 @@ class MainWP_Page {
 	 * @return string Page status.
 	 */
 	private static function get_status( $status ) {
-		if ( 'publish' == $status ) {
+		if ( 'publish' === $status ) {
 			return 'Published';
 		}
 		return esc_html( ucfirst( $status ) );
@@ -1100,7 +1098,7 @@ class MainWP_Page {
 					}
 				}
 
-				if ( ! isset( $page['title'] ) || ( '' == $page['title'] ) ) {
+				if ( ! isset( $page['title'] ) || ( '' === $page['title'] ) ) {
 					$page['title'] = '(No Title)';
 				}
 				ob_start();
@@ -1123,7 +1121,7 @@ class MainWP_Page {
 					<td class="page-title  column-title">
 						<strong>
 							<abbr title="<?php echo esc_html( $page['title'] ); ?>">
-								<?php if ( 'trash' != $page['status'] ) { ?>
+								<?php if ( 'trash' !== $page['status'] ) { ?>
 									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?post=' . $page['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" title="Edit '<?php echo esc_html( $page['title'] ); ?>'?"><?php echo esc_html( $page['title'] ); ?></a>
 								<?php } else { ?>
 									<?php echo esc_html( $page['title'] ); ?>
@@ -1145,7 +1143,7 @@ class MainWP_Page {
 					<td class="date" data-order="<?php echo esc_attr( $raw_dts ); ?>">
 						<abbr raw_value="<?php echo esc_attr( $raw_dts ); ?>" title="<?php echo esc_attr( $page['dts'] ); ?>"><?php echo esc_html( $page['dts'] ); ?></abbr>
 					</td>
-					<td class="status column-status <?php echo 'trash' == $page['status'] ? 'post-trash' : ''; ?>"><?php echo esc_html( self::get_status( $page['status'] ) ); ?>
+					<td class="status column-status <?php echo 'trash' === $page['status'] ? 'post-trash' : ''; ?>"><?php echo esc_html( self::get_status( $page['status'] ) ); ?>
 					</td>
 					<?php
 					if ( MainWP_Utility::enabled_wp_seo() ) {
@@ -1166,31 +1164,31 @@ class MainWP_Page {
 						<td class="column-seo-score"><abbr raw_value="<?php echo $seo_score ? 1 : 0; ?>" title=""><?php echo $seo_score; // phpcs:ignore WordPress.Security.EscapeOutput ?></abbr></td>
 						<td class="column-seo-readability"><abbr raw_value="<?php echo $readability_score ? 1 : 0; ?>" title=""><?php echo $readability_score; // phpcs:ignore WordPress.Security.EscapeOutput ?></abbr></td>
 						<?php
-					};
+					}
 					?>
 					<td class="website">
 						<a href="<?php echo esc_html( $website->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( $website->url ); ?></a>
 					</td>
 					<td class="right aligned">
 						<input class="pageId" type="hidden" name="id" value="<?php echo intval( $page['id'] ); ?>"/>
-						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'trash' == $page['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' == $page['status'] || 'draft' == $page['status'] ) ? 'publish|' : ''; ?>" />
+						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'trash' === $page['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' === $page['status'] || 'draft' === $page['status'] ) ? 'publish|' : ''; ?>" />
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
 
 						<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
 							<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 							<div class="menu">
-								<?php if ( 'future' == $page['status'] || 'draft' == $page['status'] ) : ?>
+								<?php if ( 'future' === $page['status'] || 'draft' === $page['status'] ) : ?>
 									<a class="item page_submitpublish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
 								<?php endif; ?>
-								<?php if ( 'trash' != $page['status'] ) : ?>
+								<?php if ( 'trash' !== $page['status'] ) : ?>
 									<a class="item page_getedit" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 									<?php do_action( 'mainwp_manage_pages_action_item', $page ); ?>
 									<a class="item page_submitdelete" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 									<?php endif; ?>
-								<?php if ( 'publish' == $page['status'] ) { ?>
-									<a class="item" href="<?php echo esc_html( $website->url ) . ( '/' != substr( $website->url, -1 ) ? '/' : '' ) . '?p=' . intval( $page['id'] ); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
+								<?php if ( 'publish' === $page['status'] ) { ?>
+									<a class="item" href="<?php echo esc_html( $website->url ) . ( '/' !== substr( $website->url, -1 ) ? '/' : '' ) . '?p=' . intval( $page['id'] ); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
 								<?php } ?>								
-								<?php if ( 'trash' == $page['status'] ) { ?>
+								<?php if ( 'trash' === $page['status'] ) { ?>
 									<a class="item page_submitrestore" href="#"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
 									<a class="item page_submitdelete_perm" href="#"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>
 								<?php } ?>
@@ -1219,11 +1217,11 @@ class MainWP_Page {
 				$newOutput = ob_get_clean();
 				echo $newOutput; // phpcs:ignore WordPress.Security.EscapeOutput
 				MainWP_Cache::add_body( 'Page', $newOutput );
-				$output->pages++;
+				++$output->pages;
 			}
 			unset( $pages );
 		} else {
-			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
+			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 	}
 
@@ -1326,7 +1324,7 @@ class MainWP_Page {
 			return;
 		}
 
-		$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		self::render_addedit( $post_id, 'BulkEdit' );
 	}
 
@@ -1367,7 +1365,7 @@ class MainWP_Page {
 	 */
 	public static function posting() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		$succes_message = '';
-		$post_id        = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		$post_id        = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$edit_id        = 0;
 		if ( $post_id ) {
 			$edit_id = get_post_meta( $post_id, '_mainwp_edit_post_id', true );
@@ -1397,7 +1395,7 @@ class MainWP_Page {
 
 			$skip_post = false;
 			if ( $post_id ) {
-				if ( 'yes' == get_post_meta( $post_id, '_mainwp_skip_posting', true ) ) {
+				if ( 'yes' === get_post_meta( $post_id, '_mainwp_skip_posting', true ) ) {
 					$skip_post = true;
 					wp_delete_post( $post_id, true );
 				}
@@ -1424,7 +1422,7 @@ class MainWP_Page {
 
 						// to fix.
 						$post_status = $_post->post_status;
-						if ( 'publish' == $post_status ) {
+						if ( 'publish' === $post_status ) {
 							$post_status = get_post_meta( $id, '_edit_post_status', true );
 						}
 
@@ -1454,7 +1452,7 @@ class MainWP_Page {
 							'mainwp_post_id' => $_post->ID,
 						);
 
-						if ( null != $featured_image_id ) {
+						if ( ! empty( $featured_image_id ) ) {
 							$img                 = wp_get_attachment_image_src( $featured_image_id, 'full' );
 							$post_featured_image = $img[0];
 							$attachment          = get_post( $featured_image_id );
@@ -1487,16 +1485,16 @@ class MainWP_Page {
 						}
 
 						$dbwebsites = array();
-						if ( 'site' == $selected_by ) {
+						if ( 'site' === $selected_by ) {
 							foreach ( $selected_sites as $k ) {
 								if ( MainWP_Utility::ctype_digit( $k ) ) {
 									$website = MainWP_DB::instance()->get_website_by_id( $k );
-									if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+									if ( '' === $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
 										$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
 									}
 								}
 							}
-						} elseif ( 'client' == $selected_by ) {
+						} elseif ( 'client' === $selected_by ) {
 							if ( is_array( $selected_clients ) ) {
 								$websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
 									$selected_clients,
@@ -1506,19 +1504,19 @@ class MainWP_Page {
 								);
 								if ( $websites ) {
 									foreach ( $websites as $website ) {
-										if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+										if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 											continue;
 										}
 										$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
 									}
 								}
 							}
-						} elseif ( 'group' == $selected_by ) {
+						} elseif ( 'group' === $selected_by ) {
 							foreach ( $selected_groups as $k ) {
 								if ( MainWP_Utility::ctype_digit( $k ) ) {
 									$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
 									while ( $websites && ( $website   = MainWP_DB::fetch_object( $websites ) ) ) {
-										if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+										if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 											continue;
 										}
 										$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
@@ -1571,7 +1569,7 @@ class MainWP_Page {
 						}
 
 						foreach ( $dbwebsites as $website ) {
-							if ( isset( $output->ok[ $website->id ] ) && ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
+							if ( isset( $output->ok[ $website->id ] ) && ( 1 === (int) $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
 								$links = isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null;
 
 								do_action_deprecated( 'mainwp-post-posting-page', array( $website, $output->added_id[ $website->id ], $links ), '4.0.7.2', 'mainwp_post_posting_page' ); // @deprecated Use 'mainwp_post_posting_page' instead.
@@ -1619,12 +1617,12 @@ class MainWP_Page {
 						$after_posting = apply_filters_deprecated( 'mainwp-after-posting-bulkpage-result', array( false, $_post, $dbwebsites, $output ), '4.0.7.2', 'mainwp_after_posting_bulkpage_result' );  // @deprecated Use 'mainwp_after_posting_bulkpage_result' instead.
 						$after_posting = apply_filters( 'mainwp_after_posting_bulkpage_result', $after_posting, $_post, $dbwebsites, $output );
 
-						if ( false == $after_posting ) {
+						if ( false === $after_posting ) {
 							?>
 							<div class="ui relaxed list">
 								<?php foreach ( $dbwebsites as $website ) { ?>
 									<div class="item"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
-										: <?php echo ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '"  class="mainwp-may-hide-referrer" target="_blank">View Page</a>' : 'ERROR: ' . $output->errors[ $website->id ] ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+										: <?php echo ( isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ? esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '"  class="mainwp-may-hide-referrer" target="_blank">View Page</a>' : 'ERROR: ' . $output->errors[ $website->id ] ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 									</div>
 								<?php } ?>
 							</div>
@@ -1641,9 +1639,9 @@ class MainWP_Page {
 						$countSites     = 0;
 						$countRealItems = 0;
 						foreach ( $dbwebsites as $website ) {
-							if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
-								$countSites++;
-								$countRealItems++;
+							if ( isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ) {
+								++$countSites;
+								++$countRealItems;
 							}
 						}
 					}
@@ -1687,7 +1685,7 @@ class MainWP_Page {
 	 * @return void Help section html.
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && ( 'PageBulkManage' == $_GET['page'] || 'PageBulkAdd' == $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['page'] ) && ( 'PageBulkManage' === $_GET['page'] || 'PageBulkAdd' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			?>
 			<p><?php esc_html_e( 'If you need help with managing pages, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
@@ -1715,5 +1713,4 @@ class MainWP_Page {
 			<?php
 		}
 	}
-
 }

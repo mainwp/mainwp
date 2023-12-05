@@ -147,13 +147,13 @@ class Connector_Client extends Log_Connector {
 
 		$action = 'unsuspend';
 
-		if ( 0 == $status ) {
+		if ( 0 === $status ) {
 			$action = 'unsuspend';
-		} elseif ( 1 == $status ) {
+		} elseif ( 1 === $status ) {
 			$action = 'suspend'; // actived.
-		} elseif ( 2 == $status ) {
+		} elseif ( 2 === $status ) {
 			$action = 'lead';
-		} elseif ( 3 == $status ) {
+		} elseif ( 3 === $status ) {
 			$action = 'lost';
 		}
 
@@ -174,5 +174,4 @@ class Connector_Client extends Log_Connector {
 			$state
 		);
 	}
-
 }

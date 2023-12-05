@@ -52,7 +52,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 * @return MainWP_DB
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 
@@ -77,10 +77,8 @@ class MainWP_Install extends MainWP_DB_Base {
 		if ( empty( $currentVersion ) ) {
 			update_option( 'mainwp_run_quick_setup', 'yes' );
 			MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 0 );
-		} else {
-			if ( false === get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+		} elseif ( false === get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 				MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 1 );
-			}
 		}
 
 		if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.8', '<' ) ) {
@@ -88,11 +86,11 @@ class MainWP_Install extends MainWP_DB_Base {
 		}
 
 		$rslt = self::instance()->query( "SHOW TABLES LIKE '" . $this->table_name( 'wp' ) . "'" );
-		if ( 0 == self::num_rows( $rslt ) ) {
+		if ( 0 === self::num_rows( $rslt ) ) {
 			$currentVersion = false;
 		}
 
-		if ( $currentVersion == $this->mainwp_db_version ) {
+		if ( $currentVersion === $this->mainwp_db_version ) {
 			return;
 		}
 
@@ -157,7 +155,7 @@ class MainWP_Install extends MainWP_DB_Base {
   client_id int(11) NOT NULL DEFAULT 0,
   `suspended` tinyint(1) NOT NULL DEFAULT 0,
   KEY idx_userid (userid)";
-		if ( '' == $currentVersion ) {
+		if ( empty( $currentVersion ) ) {
 			$tbl .= ',
   PRIMARY KEY  (id)  ';
 		}
@@ -183,7 +181,7 @@ class MainWP_Install extends MainWP_DB_Base {
   health_site_noticed tinyint(1) NOT NULL DEFAULT 1,
   KEY idx_wpid (wpid)";
 
-		if ( '' == $currentVersion ) {
+		if ( empty( $currentVersion ) ) {
 			$tbl .= ',
 	PRIMARY KEY  (sync_id)';
 		}
@@ -199,7 +197,7 @@ class MainWP_Install extends MainWP_DB_Base {
   value longtext NOT NULL DEFAULT '',
   KEY idx_wpid (wpid)";
 
-		if ( '' == $currentVersion ) {
+		if ( empty( $currentVersion ) ) {
 			$tbl .= ',
 	PRIMARY KEY  (opt_id)';
 		}
@@ -212,7 +210,7 @@ class MainWP_Install extends MainWP_DB_Base {
   archiveFormat text NOT NULL,
   KEY idx_wpid (wpid)';
 
-		if ( '' == $currentVersion ) {
+		if ( empty( $currentVersion ) ) {
 			$tbl .= ',
 	PRIMARY KEY  (set_id)';
 		}
@@ -232,7 +230,7 @@ class MainWP_Install extends MainWP_DB_Base {
   pluginDir text NOT NULL DEFAULT '',
   dismissed_plugins longtext NOT NULL DEFAULT '',
   dismissed_themes longtext NOT NULL DEFAULT ''";
-		if ( '' == $currentVersion ) {
+		if ( empty( $currentVersion ) ) {
 			$tbl .= ',
   PRIMARY KEY  (userid)  ';
 		}
@@ -246,7 +244,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	status tinyint(1) NOT NULL DEFAULT 0,
 	event_timestamp int(11) NOT NULL,
 	duration int(11) NOT NULL DEFAULT 0';
-		if ( '' == $currentVersion || version_compare( $currentVersion, '8.31', '<=' ) ) {
+		if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.31', '<=' ) ) {
 			$tbl .= ',
 			PRIMARY KEY  (statusid)  ';
 		}
@@ -258,7 +256,7 @@ class MainWP_Install extends MainWP_DB_Base {
   userid int(11) NOT NULL,
   name text NOT NULL,
   color varchar(32) NOT NULL DEFAULT ""';
-		if ( '' == $currentVersion ) {
+		if ( empty( $currentVersion ) ) {
 			$tbl .= ',
   PRIMARY KEY  (id)  ';
 		}
@@ -271,7 +269,7 @@ class MainWP_Install extends MainWP_DB_Base {
   groupid int(11) NOT NULL,
   KEY idx_wpid (wpid),
   KEY idx_groupid (groupid)';
-		if ( '' == $currentVersion || version_compare( $currentVersion, '8.57', '<=' ) ) {
+		if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.57', '<=' ) ) {
 			$tbl .= ',
   PRIMARY KEY  (wp_group_id)  ';
 		}
@@ -292,7 +290,7 @@ class MainWP_Install extends MainWP_DB_Base {
   last_error text NOT NULL DEFAULT '',
   pid int(11) NOT NULL DEFAULT 0,
   KEY idx_task_id (task_id)";
-		if ( '' == $currentVersion || version_compare( $currentVersion, '8.53', '<=' ) ) {
+		if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.53', '<=' ) ) {
 			$tbl .= ',
 			UNIQUE (task_id)';
 		}
@@ -328,7 +326,7 @@ class MainWP_Install extends MainWP_DB_Base {
   maximumFileDescriptorsOverride tinyint(1) NOT NULL DEFAULT 0,
   maximumFileDescriptorsAuto tinyint(1) NOT NULL DEFAULT 1,
   maximumFileDescriptors int(11) NOT NULL DEFAULT 150';
-		if ( '' == $currentVersion ) {
+		if ( empty( $currentVersion ) ) {
 			$tbl .= ',
   PRIMARY KEY  (id)  ';
 		}
@@ -342,7 +340,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	log_color tinyint(1) DEFAULT 0,	
 	log_user varchar(128) NOT NULL DEFAULT '',
 	log_timestamp int(11) NOT NULL DEFAULT 0";
-		if ( '' == $currentVersion || version_compare( $currentVersion, '8.50', '<=' ) ) {
+		if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.50', '<=' ) ) {
 			$tbl .= ',
 	PRIMARY KEY  (id)  ';
 		}
@@ -356,7 +354,7 @@ class MainWP_Install extends MainWP_DB_Base {
   subnet text NOT NULL DEFAULT '',
   micro_timestamp_stop DECIMAL( 12, 2 ) NOT NULL DEFAULT  0,
   micro_timestamp_start DECIMAL( 12, 2 ) NOT NULL DEFAULT  0";
-		if ( '' == $currentVersion || version_compare( $currentVersion, '5.7', '<=' ) ) {
+		if ( empty( $currentVersion ) || version_compare( $currentVersion, '5.7', '<=' ) ) {
 			$tbl .= ',
   PRIMARY KEY  (id)  ';
 		}
@@ -409,7 +407,7 @@ class MainWP_Install extends MainWP_DB_Base {
 		// get_site_option is multisite aware!
 		$currentVersion = get_site_option( $this->option_db_key );
 
-		if ( false == $currentVersion ) {
+		if ( false === $currentVersion ) {
 			return;
 		}
 
@@ -496,7 +494,7 @@ class MainWP_Install extends MainWP_DB_Base {
 		// get_site_option is multisite aware!
 		$currentVersion = get_site_option( $this->option_db_key );
 
-		if ( false == $currentVersion ) {
+		if ( false === $currentVersion ) {
 			return;
 		}
 

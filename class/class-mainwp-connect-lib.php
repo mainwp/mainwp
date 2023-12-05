@@ -37,7 +37,7 @@ class MainWP_Connect_Lib {
 	 * @return Instance class.
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -138,5 +138,4 @@ class MainWP_Connect_Lib {
 	public static function get_connection_algo_settings_note() {
 		return esc_html__( 'Due to security reasons, switching back to OPENSSL_ALGO_SHA1 breaks the connection to your child site(s). It is required to deactivate & reactivate the MainWP Child plugin on child sites before you can reconnect them. Use OPENSSL_ALGO_SHA1 only if necessary.', 'mainwp' );
 	}
-
 }

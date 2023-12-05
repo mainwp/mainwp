@@ -82,7 +82,7 @@ if ( ! function_exists( 'mainwp_autoload' ) ) {
 		);
 
 		foreach ( $autoload_types as $type => $prefix ) {
-			$autoload_dir  = \trailingslashit( dirname( __FILE__ ) . DIRECTORY_SEPARATOR . $type );
+			$autoload_dir  = \trailingslashit( __DIR__ . DIRECTORY_SEPARATOR . $type );
 			$autoload_path = sprintf( '%s%s-%s.php', $autoload_dir, $prefix, strtolower( str_replace( '_', '-', $class_name ) ) );
 
 			if ( file_exists( $autoload_path ) ) {
@@ -101,7 +101,7 @@ require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'class-mainw
 
 // Detect if secupress_scanner is running.
 $mainwp_is_secupress_scanning = false;
-if ( ! empty( $_GET ) && isset( $_GET['test'] ) && isset( $_GET['action'] ) && 'secupress_scanner' === $_GET['action'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+if ( ! empty( $_GET ) && isset( $_GET['test'] ) && isset( $_GET['action'] ) && 'secupress_scanner' === $_GET['action'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized.Recommended
 	$mainwp_is_secupress_scanning = true;
 }
 

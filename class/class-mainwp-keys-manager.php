@@ -41,7 +41,7 @@ class MainWP_Keys_Manager {
 	 * @return Instance class.
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		self::auto_load_files(); // to fix.
@@ -74,16 +74,16 @@ class MainWP_Keys_Manager {
 	 * Get decrypt value.
 	 *
 	 * @param string $name Name of key.
-	 * @param mixed  $default Default value.
+	 * @param mixed  $default_value Default value.
 	 *
 	 * @return string Decrypt value.
 	 */
-	public function get_keys_value( $name, $default = false ) {
+	public function get_keys_value( $name, $default_value = false ) {
 		$opt = get_option( $name );
 		if ( ! empty( $opt ) && is_array( $opt ) && ! empty( $opt['file_key'] ) ) {
-			return $this->decrypt_keys_data( $opt, $default );
+			return $this->decrypt_keys_data( $opt, $default_value );
 		}
-		return $default;
+		return $default_value;
 	}
 
 	/**
@@ -157,17 +157,17 @@ class MainWP_Keys_Manager {
 	 *
 	 * @param mixed $encodedValue Encoded The value to decrypt.
 	 * @param mixed $key_file The value key.
-	 * @param mixed $default The default value.
+	 * @param mixed $default_value The default value.
 	 *
 	 * @return string Decrypt value.
 	 */
-	private function get_decrypt_values( $encodedValue, $key_file, $default = '' ) {
+	private function get_decrypt_values( $encodedValue, $key_file, $default_value = '' ) {
 		// find the key file, and get saved key.
 		$key = $this->get_key_val( $key_file );
 		if ( ! empty( $key ) ) {
 			return $this->decrypt_value( $encodedValue, $key );
 		}
-		return $default;
+		return $default_value;
 	}
 
 	/**
@@ -493,14 +493,14 @@ class MainWP_Keys_Manager {
 	 * Get decrypt value.
 	 *
 	 * @param string $encrypted Name of key.
-	 * @param mixed  $default Default value.
+	 * @param mixed  $default_value Default value.
 	 *
 	 * @return string Decrypt value.
 	 */
-	public function decrypt_keys_data( $encrypted, $default = false ) {
+	public function decrypt_keys_data( $encrypted, $default_value = false ) {
 		if ( is_array( $encrypted ) && ! empty( $encrypted['file_key'] ) && ! empty( $encrypted['encrypted_val'] ) ) {
 			try {
-				return $this->get_decrypt_values( $encrypted['encrypted_val'], $encrypted['file_key'], $default );
+				return $this->get_decrypt_values( $encrypted['encrypted_val'], $encrypted['file_key'], $default_value );
 			} catch ( \Exception $ex ) {
 				$err = $ex->getMessage();
 				if ( is_string( $err ) ) {
@@ -509,6 +509,6 @@ class MainWP_Keys_Manager {
 				return false;
 			}
 		}
-		return $default;
+		return $default_value;
 	}
 }

@@ -27,7 +27,7 @@ if ( ! class_exists( 'MainWP_DB' ) ) {
 		 * @return MainWP_DB
 		 */
 		public static function instance() {
-			if ( null == self::$instance ) {
+			if ( null === self::$instance ) {
 				self::$instance = new self();
 			}
 			return self::$instance;

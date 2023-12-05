@@ -8,7 +8,7 @@
 
 namespace MainWP\Dashboard\Module\Log;
 
-use \MainWP\Dashboard\MainWP_Includes;
+use MainWP\Dashboard\MainWP_Includes;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -22,6 +22,7 @@ class MainWP_Module_Log {
 	public function __construct() {
 		$this->includes();
 		add_action( 'plugins_loaded', array( $this, 'plugins_loaded' ) );
+		add_action( 'mainwp_system_init', array( $this, 'hook_mainwp_system_init' ) );
 	}
 
 	/**
@@ -46,6 +47,15 @@ class MainWP_Module_Log {
 			if ( file_exists( $dir . 'modules/logs/classes/class-log-manager.php' ) ) {
 				require_once $dir . 'modules/logs/classes/class-log-manager.php';
 			}
+		}
+	}
+
+	/**
+	 * Handle mainwp system init.
+	 */
+	public function hook_mainwp_system_init() {
+		if ( MainWP_Includes::is_enable_log_module() && class_exists( '\MainWP\Dashboard\Module\Log\Log_Manager' ) ) {
+			Log_Manager::instance();
 		}
 	}
 }

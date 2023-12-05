@@ -293,11 +293,9 @@ class MainWP_Updates {
 	/**
 	 * Sets the MainWP Update page page title and pass it off to method MainWP_UI::render_top_header().
 	 *
-	 * @param string $shownPage The page slug shown at this moment.
-	 *
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
 	 */
-	public static function render_header( $shownPage = '' ) {
+	public static function render_header() {
 
 		$params = array(
 			'title' => esc_html__( 'Available Updates', 'mainwp' ),
@@ -317,13 +315,13 @@ class MainWP_Updates {
 	 * Generates individual site overview page link.
 	 *
 	 * @param object $website The site object.
-	 * @param bool   $echo Either echo or not.
+	 * @param bool   $echo_out Either echo or not.
 	 *
 	 * @return string Dashboard link.
 	 */
-	public static function render_site_link_dashboard( $website, $echo = true ) {
+	public static function render_site_link_dashboard( $website, $echo_out = true ) {
 		$lnk = '<a href="' . esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ) . '"  data-inverted="" data-tooltip="' . esc_html__( 'Visit this dashboard.', 'mainwp' ) . '">' . stripslashes( $website->name ) . '</a>';
-		if ( $echo ) {
+		if ( $echo_out ) {
 			echo $lnk; // phpcs:ignore WordPress.Security.EscapeOutput
 		} else {
 			return $lnk;
@@ -404,14 +402,14 @@ class MainWP_Updates {
 	public static function render() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$websites      = self::get_sites();
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
-		$site_view     = $userExtension->site_view;
+		$site_view     = (int) $userExtension->site_view;
 
 		$site_offset_for_groups = array();
 		$all_groups             = array();
 		$sites_in_groups        = array();
 		$all_groups_sites       = array();
 
-		if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+		if ( MAINWP_VIEW_PER_GROUP === $site_view ) {
 			$groups = MainWP_DB_Common::instance()->get_groups_for_current_user();
 			foreach ( $groups as $group ) {
 				$all_groups[ $group->id ] = $group->name;
@@ -433,7 +431,7 @@ class MainWP_Updates {
 			MainWP_DB::data_seek( $websites, 0 );
 			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 				$site_offset_for_groups[ $website->id ] = $pos;
-				$pos++;
+				++$pos;
 				if ( ! isset( $sites_in_groups[ $website->id ] ) ) {
 					$sites_not_in_groups[] = $website->id;
 				}
@@ -471,14 +469,14 @@ class MainWP_Updates {
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 
 			$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-			$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+			$wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
 			if ( $website->is_ignoreCoreUpdates ) {
 				$wp_upgrades = array();
 			}
 
 			if ( is_array( $wp_upgrades ) && 0 < count( $wp_upgrades ) ) {
-				$total_wp_upgrades ++;
+				++$total_wp_upgrades;
 			}
 
 			$translation_upgrades = json_decode( $website->translation_upgrades, true );
@@ -494,7 +492,7 @@ class MainWP_Updates {
 			}
 
 			$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-			$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+			$decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 
 			if ( is_array( $decodedPremiumUpgrades ) ) {
 				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
@@ -556,7 +554,7 @@ class MainWP_Updates {
 
 			$themesIgnoredAbandoned_perSites = array();
 			$ignoredAbandoned_themes         = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
-			$ignoredAbandoned_themes         = ( '' != $ignoredAbandoned_themes ) ? json_decode( $ignoredAbandoned_themes, true ) : array();
+			$ignoredAbandoned_themes         = ! empty( $ignoredAbandoned_themes ) ? json_decode( $ignoredAbandoned_themes, true ) : array();
 
 			if ( is_array( $ignoredAbandoned_themes ) ) {
 				$ignoredAbandoned_themes         = array_filter( $ignoredAbandoned_themes );
@@ -564,13 +562,13 @@ class MainWP_Updates {
 			}
 
 			$ignoredAbandoned_plugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
-			$ignoredAbandoned_plugins = ( '' != $ignoredAbandoned_plugins ) ? json_decode( $ignoredAbandoned_plugins, true ) : array();
+			$ignoredAbandoned_plugins = ! empty( $ignoredAbandoned_plugins ) ? json_decode( $ignoredAbandoned_plugins, true ) : array();
 
 			$plugins_outdate = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
-			$plugins_outdate = ( '' != $plugins_outdate ) ? json_decode( $plugins_outdate, true ) : array();
+			$plugins_outdate = ! empty( $plugins_outdate ) ? json_decode( $plugins_outdate, true ) : array();
 
 			$themes_outdate = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
-			$themes_outdate = ( '' != $themes_outdate ) ? json_decode( $themes_outdate, true ) : array();
+			$themes_outdate = ! empty( $themes_outdate ) ? json_decode( $themes_outdate, true ) : array();
 
 			if ( is_array( $plugins_outdate ) ) {
 				if ( is_array( $ignoredAbandoned_plugins ) ) {
@@ -596,7 +594,7 @@ class MainWP_Updates {
 				$total_themes_outdate += count( $themes_outdate );
 			}
 
-			if ( MAINWP_VIEW_PER_PLUGIN_THEME == $site_view ) {
+			if ( MAINWP_VIEW_PER_PLUGIN_THEME === $site_view ) {
 				if ( is_array( $translation_upgrades ) ) {
 					foreach ( $translation_upgrades as $translation_upgrade ) {
 						$slug = esc_html( $translation_upgrade['slug'] );
@@ -606,7 +604,7 @@ class MainWP_Updates {
 								'cnt'  => 1,
 							);
 						} else {
-							$allTranslations[ $slug ]['cnt'] ++;
+							++$allTranslations[ $slug ]['cnt'];
 						}
 
 						$translationsInfo[ $slug ] = array(
@@ -625,7 +623,7 @@ class MainWP_Updates {
 								'cnt'  => 1,
 							);
 						} else {
-							$allPlugins[ $slug ]['cnt'] ++;
+							++$allPlugins[ $slug ]['cnt'];
 						}
 
 						$pluginsInfo[ $slug ] = array(
@@ -645,7 +643,7 @@ class MainWP_Updates {
 								'cnt'  => 1,
 							);
 						} else {
-							$allThemes[ $slug ]['cnt'] ++;
+							++$allThemes[ $slug ]['cnt'];
 						}
 
 						$themesInfo[ $slug ] = array(
@@ -665,7 +663,7 @@ class MainWP_Updates {
 								'uri'  => esc_html( $plugin_outdate['PluginURI'] ),
 							);
 						} else {
-							$allPluginsOutdate[ $slug ]['cnt'] ++;
+							++$allPluginsOutdate[ $slug ]['cnt'];
 						}
 					}
 				}
@@ -679,14 +677,14 @@ class MainWP_Updates {
 								'cnt'  => 1,
 							);
 						} else {
-							$allThemesOutdate[ $slug ]['cnt'] ++;
+							++$allThemesOutdate[ $slug ]['cnt'];
 						}
 					}
 				}
 			}
 
-			if ( '' != $website->sync_errors ) {
-				$total_sync_errors ++;
+			if ( '' !== $website->sync_errors ) {
+				++$total_sync_errors;
 			}
 		}
 
@@ -751,7 +749,7 @@ class MainWP_Updates {
 		 * @since 4.0
 		 */
 		$limit_updates_all = apply_filters( 'mainwp_limit_updates_all', 0 );
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( 0 < $limit_updates_all ) {
 			if ( isset( $_GET['continue_update'] ) && '' !== $_GET['continue_update'] ) {
 				self::$continue_update = sanitize_text_field( wp_unslash( $_GET['continue_update'] ) );
@@ -773,20 +771,20 @@ class MainWP_Updates {
 		} else {
 			$current_tab = 'plugins-updates';
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 		self::render_header( 'UpdatesManage' );
 
 		self::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view );
 
 		?>
 		<div class="ui segment" id="mainwp-manage-updates">
-			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-updates-message' ) ) : ?>
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-updates-message' ) ) { ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-message"></i>
-					<div><?php echo sprintf( esc_html__( 'Manage available updates for all your child sites.  From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-wordpress-core/" target="_blank">', '</a>' ); ?></div>
-					<div><?php echo sprintf( esc_html__( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-wordpress-core-update/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">', '</a>' ); ?></div>
+					<div><?php printf( esc_html__( 'Manage available updates for all your child sites.  From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-wordpress-core/" target="_blank">', '</a>' ); ?></div>
+					<div><?php printf( esc_html__( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-wordpress-core-update/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">', '</a>' ); ?></div>
 				</div>
-			<?php endif; ?>
+			<?php } ?>
 		<?php
 
 		$hooks_tabs = apply_filters( 'mainwp_pages_updates_render_tabs', false, $current_tab );
@@ -862,7 +860,7 @@ class MainWP_Updates {
 				 * @since 4.1
 				 */
 				do_action( 'mainwp_updates_before_wp_updates', $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups );
-				if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+				if ( MAINWP_VIEW_PER_GROUP === $site_view ) {
 					/**
 					 * Action: mainwp_updates_pergroup_before_wp_updates
 					 *
@@ -923,7 +921,7 @@ class MainWP_Updates {
 					 * @since 4.1
 					 */
 					do_action( 'mainwp_updates_persite_after_wp_updates', $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups );
-				};
+				}
 				/**
 				 * Action: mainwp_updates_after_wp_updates
 				 *
@@ -985,7 +983,7 @@ class MainWP_Updates {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_updates_before_plugin_updates', $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups );
-		if ( MAINWP_VIEW_PER_SITE == $site_view ) {
+		if ( MAINWP_VIEW_PER_SITE === $site_view ) {
 			/**
 			 * Action: mainwp_updates_persite_before_plugin_updates
 			 *
@@ -1021,7 +1019,7 @@ class MainWP_Updates {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_updates_persite_after_plugin_updates', $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups );
-		} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+		} elseif ( MAINWP_VIEW_PER_GROUP === $site_view ) {
 			/**
 			 * Action: mainwp_updates_pergroup_before_plugin_updates
 			 *
@@ -1158,7 +1156,7 @@ class MainWP_Updates {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_updates_before_theme_updates', $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups );
-		if ( MAINWP_VIEW_PER_SITE == $site_view ) {
+		if ( MAINWP_VIEW_PER_SITE === $site_view ) {
 			/**
 			 * Action: mainwp_updates_persite_before_theme_updates
 			 *
@@ -1194,7 +1192,7 @@ class MainWP_Updates {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_updates_persite_after_theme_updates', $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups );
-		} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+		} elseif ( MAINWP_VIEW_PER_GROUP === $site_view ) {
 			/**
 			 * Action: mainwp_updates_pergroup_before_theme_updates
 			 *
@@ -1308,7 +1306,7 @@ class MainWP_Updates {
 	 * @uses \MainWP\Dashboard\MainWP_Updates_Per_Site::render_trans_update()
 	 */
 	public static function render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups, $site_view ) {
-		if ( 1 == $mainwp_show_language_updates ) {
+		if ( 1 === $mainwp_show_language_updates ) {
 			?>
 		<div class="ui active tab" data-tab="translations-updates">
 			<?php
@@ -1329,7 +1327,7 @@ class MainWP_Updates {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_updates_before_translation_updates', $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups );
-			if ( MAINWP_VIEW_PER_SITE == $site_view ) {
+			if ( MAINWP_VIEW_PER_SITE === $site_view ) {
 				/**
 				 * Action: mainwp_updates_persite_before_translation_updates
 				 *
@@ -1365,7 +1363,7 @@ class MainWP_Updates {
 				 * @since 4.1
 				 */
 				do_action( 'mainwp_updates_persite_after_translation_updates', $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups );
-			} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+			} elseif ( MAINWP_VIEW_PER_GROUP === $site_view ) {
 				/**
 				 * Action: mainwp_updates_pergroup_before_translation_updates
 				 *
@@ -1495,7 +1493,7 @@ class MainWP_Updates {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_updates_before_abandoned_plugins', $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups );
-		if ( MAINWP_VIEW_PER_SITE == $site_view ) {
+		if ( MAINWP_VIEW_PER_SITE === $site_view ) {
 			/**
 			 * Action: mainwp_updates_persite_before_abandoned_plugins
 			 *
@@ -1527,7 +1525,7 @@ class MainWP_Updates {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_updates_persite_after_abandoned_plugins', $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups );
-		} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+		} elseif ( MAINWP_VIEW_PER_GROUP === $site_view ) {
 			/**
 			 * Action: mainwp_updates_pergroup_before_abandoned_plugins
 			 *
@@ -1591,7 +1589,7 @@ class MainWP_Updates {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_updates_perplugin_after_abandoned_plugins', $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups );
-		};
+		}
 		/**
 		 * Action: mainwp_updates_after_abandoned_plugins
 		 *
@@ -1646,7 +1644,7 @@ class MainWP_Updates {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_updates_before_abandoned_themes', $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups );
-		if ( MAINWP_VIEW_PER_SITE == $site_view ) {
+		if ( MAINWP_VIEW_PER_SITE === $site_view ) {
 			/**
 			 * Action: mainwp_updates_persite_before_abandoned_themes
 			 *
@@ -1678,7 +1676,7 @@ class MainWP_Updates {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_updates_persite_after_abandoned_themes', $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups );
-		} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+		} elseif ( MAINWP_VIEW_PER_GROUP === $site_view ) {
 			/**
 			 * Action: mainwp_updates_pergroup_before_abandoned_themes
 			 *
@@ -1742,7 +1740,7 @@ class MainWP_Updates {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_updates_pertheme_after_abandoned_themes', $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups );
-		};
+		}
 		/**
 		 * Action: mainwp_updates_after_abandoned_themes
 		 *
@@ -1837,7 +1835,7 @@ class MainWP_Updates {
 		</script>
 		<?php
 
-		if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+		if ( MAINWP_VIEW_PER_GROUP === $site_view ) {
 			?>
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {
@@ -2002,9 +2000,9 @@ class MainWP_Updates {
 							<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 							<div class="inline field">
 								<select class="ui dropdown" onchange="mainwp_siteview_onchange(this)" id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
-									<option value="1" class="item" <?php echo MAINWP_VIEW_PER_SITE == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Site', 'mainwp' ); ?></option>
-									<option value="0" class="item" <?php echo MAINWP_VIEW_PER_PLUGIN_THEME == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Item', 'mainwp' ); ?></option>
-									<option value="2" class="item" <?php echo MAINWP_VIEW_PER_GROUP == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Tag', 'mainwp' ); ?></option>
+									<option value="1" class="item" <?php echo MAINWP_VIEW_PER_SITE === $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Site', 'mainwp' ); ?></option>
+									<option value="0" class="item" <?php echo MAINWP_VIEW_PER_PLUGIN_THEME === $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Item', 'mainwp' ); ?></option>
+									<option value="2" class="item" <?php echo MAINWP_VIEW_PER_GROUP === $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Tag', 'mainwp' ); ?></option>
 								</select>
 							</div>
 						</form>
@@ -2110,7 +2108,7 @@ class MainWP_Updates {
 				<?php
 				MainWP_DB::data_seek( $websites, 0 );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-					if ( 1 == $website->offline_check_result || '-1' == $website->http_response_code ) {
+					if ( 1 === (int) $website->offline_check_result || '-1' === $website->http_response_code ) {
 						continue;
 					}
 
@@ -2234,7 +2232,7 @@ class MainWP_Updates {
 		$installed = false;
 
 		foreach ( $plugins as $plugin ) {
-			if ( ( is_string( $slug ) && strtolower( $plugin['slug'] ) == $slug ) || ( is_array( $slug ) && in_array( $plugin['slug'], $slug ) ) ) {
+			if ( ( is_string( $slug ) && strtolower( $plugin['slug'] ) === $slug ) || ( is_array( $slug ) && in_array( $plugin['slug'], $slug ) ) ) {
 				if ( $plugin['active'] ) {
 					$installed = true;
 				}
@@ -2255,10 +2253,10 @@ class MainWP_Updates {
 
 		$check_slug = true;
 		if ( ! empty( $slug ) ) {
-			$check_slug = ( $slug == self::$continue_update_slug ) ? true : false;
+			$check_slug = ( $slug === self::$continue_update_slug ) ? true : false;
 		}
 
-		if ( $check_slug && $current_update == self::$continue_update ) {
+		if ( $check_slug && $current_update === self::$continue_update ) {
 			self::$continue_selector = 'updatesoverview_continue_update_me';
 		} else {
 			self::$continue_selector = '';
@@ -2316,11 +2314,11 @@ class MainWP_Updates {
 	public static function render_screen_options_modal() { // phpcs:ignore -- complex method.
 
 		$snAutomaticDailyUpdate       = get_option( 'mainwp_automaticDailyUpdate' );
-		$snPluginAutomaticDailyUpdate = get_option( 'mainwp_pluginAutomaticDailyUpdate' );
-		$snThemeAutomaticDailyUpdate  = get_option( 'mainwp_themeAutomaticDailyUpdate' );
+		$snPluginAutomaticDailyUpdate = (int) get_option( 'mainwp_pluginAutomaticDailyUpdate' );
+		$snThemeAutomaticDailyUpdate  = (int) get_option( 'mainwp_themeAutomaticDailyUpdate' );
 		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
 		$disableUpdateConfirmations   = get_option( 'mainwp_disable_update_confirmations', 0 );
-		$delay_autoupdate             = get_option( 'mainwp_delay_autoupdate', 1 );
+		$delay_autoupdate             = (int) get_option( 'mainwp_delay_autoupdate', 1 );
 		?>
 		<div class="ui modal" id="mainwp-manage-updates-screen-options-modal">
 			<div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
@@ -2332,8 +2330,8 @@ class MainWP_Updates {
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Plugin advanced automatic updates', 'mainwp' ); ?></label>
 						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic plugins updates.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
 							<select name="mainwp_pluginAutomaticDailyUpdate" id="mainwp_pluginAutomaticDailyUpdate" class="ui dropdown">
-								<option value="1" <?php echo ( 1 == $snPluginAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
-								<option value="0" <?php echo ( ( false !== $snPluginAutomaticDailyUpdate && 0 == $snPluginAutomaticDailyUpdate ) || 2 == $snPluginAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
+								<option value="1" <?php echo ( 1 === $snPluginAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
+								<option value="0" <?php echo ( ( false !== $snPluginAutomaticDailyUpdate && empty( $snPluginAutomaticDailyUpdate ) ) || 2 === $snPluginAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
 							</select>
 						</div>
 					</div>
@@ -2341,8 +2339,8 @@ class MainWP_Updates {
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Theme advanced automatic updates', 'mainwp' ); ?></label>
 						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic themes updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 							<select name="mainwp_themeAutomaticDailyUpdate" id="mainwp_themeAutomaticDailyUpdate" class="ui dropdown">
-								<option value="1" <?php echo ( 1 == $snThemeAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
-								<option value="0" <?php echo ( ( false !== $snThemeAutomaticDailyUpdate && 0 == $snThemeAutomaticDailyUpdate ) || 2 == $snThemeAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
+								<option value="1" <?php echo ( 1 === $snThemeAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
+								<option value="0" <?php echo ( ( false !== $snThemeAutomaticDailyUpdate && 0 === $snThemeAutomaticDailyUpdate ) || 2 === $snThemeAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
 							</select>
 						</div>
 					</div>
@@ -2350,8 +2348,8 @@ class MainWP_Updates {
 						<label class="six wide column middle aligned"><?php esc_html_e( 'WP Core advanced automatic updates', 'mainwp' ); ?></label>
 						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic WordPress core updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 							<select name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" class="ui dropdown">
-								<option value="1" <?php echo ( 1 == $snAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
-								<option value="0" <?php echo ( ( false !== $snAutomaticDailyUpdate && 0 == $snAutomaticDailyUpdate ) || 2 == $snAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
+								<option value="1" <?php echo ( 1 === $snAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
+								<option value="0" <?php echo ( ( false !== $snAutomaticDailyUpdate && 0 === $snAutomaticDailyUpdate ) || 2 === $snAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
 							</select>
 						</div>
 					</div>
@@ -2359,32 +2357,32 @@ class MainWP_Updates {
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Advanced automatic updates delay', 'mainwp' ); ?></label>
 						<div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'Set the number of days to delay automatic updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 							<select name="mainwp_delay_autoupdate" id="mainwp_delay_autoupdate" class="ui dropdown">
-								<option value="0" <?php echo ( 0 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Delay off', 'mainwp' ); ?></option>
-								<option value="1" <?php echo ( 1 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '1 day', 'mainwp' ); ?></option>
-								<option value="2" <?php echo ( 2 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '2 days', 'mainwp' ); ?></option>
-								<option value="3" <?php echo ( 3 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '3 days', 'mainwp' ); ?></option>
-								<option value="4" <?php echo ( 4 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '4 days', 'mainwp' ); ?></option>
-								<option value="5" <?php echo ( 5 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '5 days', 'mainwp' ); ?></option>
-								<option value="6" <?php echo ( 6 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '6 days', 'mainwp' ); ?></option>
-								<option value="7" <?php echo ( 7 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '7 days', 'mainwp' ); ?></option>
-								<option value="14" <?php echo ( 14 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '14 days', 'mainwp' ); ?></option>
-								<option value="30" <?php echo ( 30 == $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '30 days', 'mainwp' ); ?></option>
+								<option value="0" <?php echo ( 0 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Delay off', 'mainwp' ); ?></option>
+								<option value="1" <?php echo ( 1 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '1 day', 'mainwp' ); ?></option>
+								<option value="2" <?php echo ( 2 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '2 days', 'mainwp' ); ?></option>
+								<option value="3" <?php echo ( 3 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '3 days', 'mainwp' ); ?></option>
+								<option value="4" <?php echo ( 4 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '4 days', 'mainwp' ); ?></option>
+								<option value="5" <?php echo ( 5 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '5 days', 'mainwp' ); ?></option>
+								<option value="6" <?php echo ( 6 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '6 days', 'mainwp' ); ?></option>
+								<option value="7" <?php echo ( 7 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '7 days', 'mainwp' ); ?></option>
+								<option value="14" <?php echo ( 14 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '14 days', 'mainwp' ); ?></option>
+								<option value="30" <?php echo ( 30 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '30 days', 'mainwp' ); ?></option>
 							</select>
 						</div>
 					</div>
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Show WordPress language updates', 'mainwp' ); ?></label>
 						<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to manage Translation updates', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-							<input type="checkbox" name="mainwp_show_language_updates" id="mainwp_show_language_updates" <?php echo ( 1 == $mainwp_show_language_updates ? 'checked="true"' : '' ); ?>/>
+							<input type="checkbox" name="mainwp_show_language_updates" id="mainwp_show_language_updates" <?php echo ( 1 === $mainwp_show_language_updates ? 'checked="true"' : '' ); ?>/>
 						</div>
 					</div>
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Update confirmations', 'mainwp' ); ?></label>
 						<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Choose if you want to disable the popup confirmations when performing updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 							<select name="mainwp_disable_update_confirmations" id="mainwp_disable_update_confirmations" class="ui dropdown">
-								<option value="0" <?php echo ( 0 == $disableUpdateConfirmations ? 'selected' : '' ); ?>><?php esc_html_e( 'Enable', 'mainwp' ); ?></option>
-								<option value="2" <?php echo ( 2 == $disableUpdateConfirmations ? 'selected' : '' ); ?>><?php esc_html_e( 'Disable', 'mainwp' ); ?></option>
-								<option value="1" <?php echo ( 1 == $disableUpdateConfirmations ? 'selected' : '' ); ?>><?php esc_html_e( 'Disable for single updates', 'mainwp' ); ?></option>
+								<option value="0" <?php echo ( 0 === $disableUpdateConfirmations ? 'selected' : '' ); ?>><?php esc_html_e( 'Enable', 'mainwp' ); ?></option>
+								<option value="2" <?php echo ( 2 === $disableUpdateConfirmations ? 'selected' : '' ); ?>><?php esc_html_e( 'Disable', 'mainwp' ); ?></option>
+								<option value="1" <?php echo ( 1 === $disableUpdateConfirmations ? 'selected' : '' ); ?>><?php esc_html_e( 'Disable for single updates', 'mainwp' ); ?></option>
 							</select>
 						</div>
 					</div>
@@ -2410,7 +2408,7 @@ class MainWP_Updates {
 	 * MainWP Help Box content. Hook the section help content to the Help Sidebar element.
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && 'UpdatesManage' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['page'] ) && 'UpdatesManage' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			?>
 			<p><?php esc_html_e( 'If you need help with managing updates, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
@@ -2441,5 +2439,4 @@ class MainWP_Updates {
 			<?php
 		}
 	}
-
 }

@@ -326,7 +326,7 @@ class MainWP_Extensions {
 		}
 		$html = '';
 		foreach ( $exts as $extension ) {
-			if ( defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) && ( MWP_TEAMCONTROL_PLUGIN_SLUG == $extension['slug'] ) && ! mainwp_current_user_have_right( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) {
+			if ( defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) && ( MWP_TEAMCONTROL_PLUGIN_SLUG === $extension['slug'] ) && ! mainwp_current_user_have_right( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) {
 				continue;
 			}
 			if ( MainWP_Extensions_Handler::added_on_menu( $extension['slug'] ) ) {
@@ -373,7 +373,7 @@ class MainWP_Extensions {
 
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
 
-		$api_key = isset( $_POST['api_key'] ) ? trim( $_POST['api_key'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$api_key = isset( $_POST['api_key'] ) ? trim( wp_unslash( $_POST['api_key'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		$all_available_extensions_compatible_api_response = array();
 		$all_free_pro_exts                                = array();
@@ -442,7 +442,7 @@ class MainWP_Extensions {
 				}
 			} else {
 				$apisslverify = get_option( 'mainwp_api_sslVerifyCertificate' );
-				if ( 1 == $apisslverify ) {
+				if ( 1 === $apisslverify ) {
 					MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', 0 );
 					$return['retry_action'] = 1;
 				}
@@ -461,12 +461,13 @@ class MainWP_Extensions {
 			$type             = '';
 			$notice           = '';
 			$integration_type = '';
+			$pri              = (int) $ext['privacy'];
 
-			if ( 0 == $ext['privacy'] ) {
+			if ( 0 === $pri ) {
 				$integration_type = 'standalone-extension';
-			} elseif ( 1 == $ext['privacy'] ) {
+			} elseif ( 1 === $pri ) {
 				$integration_type = 'api-extension';
-			} elseif ( 2 == $ext['privacy'] ) {
+			} elseif ( 2 === $pri ) {
 				$integration_type = 'plugin-extension';
 			}
 
@@ -480,11 +481,11 @@ class MainWP_Extensions {
 
 			if ( ! empty( $ext['type'] ) ) {
 				$type = $ext['type'];
-				if ( 'free' == $type ) {
+				if ( 'free' === $type ) {
 					$ext_source_label = '<span class="ui mini green label">FREE</span>';
-				} elseif ( 'pro' == $type ) {
+				} elseif ( 'pro' === $type ) {
 					$ext_source_label = '<span class="ui mini blue label">PRO</span>';
-				} elseif ( 'org' == $type ) {
+				} elseif ( 'org' === $type ) {
 					$ext_source_label = '<span class="ui mini grey label">.ORG</span>';
 				}
 			}
@@ -493,7 +494,7 @@ class MainWP_Extensions {
 				$new = '<span class="ui mini green label">NEW!</span>';
 			}
 
-			if ( 'MainWP WordPress SEO Extension' == $product_id || 'seopress-for-mainwp' == $product_id ) {
+			if ( 'MainWP WordPress SEO Extension' === $product_id || 'seopress-for-mainwp' === $product_id ) {
 				$notice = ' <i class="info circle small icon"></i>';
 			}
 
@@ -607,7 +608,7 @@ class MainWP_Extensions {
 
 		$html = '<div class="mainwp-installing-extensions">';
 
-		if ( empty( $installing_exts ) && count( $purchased_data ) == count( $all_free_pro_exts ) ) {
+		if ( empty( $installing_exts ) && count( $purchased_data ) === count( $all_free_pro_exts ) ) {
 			$html .= '<div class="ui message yellow">' . esc_html__( 'All purchased extensions already installed.', 'mainwp' ) . '</div>';
 		} else {
 			if ( isset( $not_purchased_exts ) && ! empty( $not_purchased_exts ) ) {
@@ -642,7 +643,7 @@ class MainWP_Extensions {
 			$html .= '</div>';
 
 			foreach ( $all_groups as $gr_id => $gr_name ) {
-				if ( isset( $grouped_exts[ $gr_id ] ) && 'all' != $gr_id ) {
+				if ( isset( $grouped_exts[ $gr_id ] ) && 'all' !== $gr_id ) {
 					$html .= '<div class="ui tab" data-tab="' . $gr_id . '">';
 					$html .= '<div class="ui hidden divider"></div>';
 					$html .= '<h3>' . $gr_name . '</h3>';
@@ -793,7 +794,7 @@ class MainWP_Extensions {
 	 * Create the MainWP Help Document List for the help component in the sidebar.
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Extensions, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
@@ -808,5 +809,4 @@ class MainWP_Extensions {
 			<?php
 		}
 	}
-
 }

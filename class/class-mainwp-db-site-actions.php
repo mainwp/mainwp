@@ -36,7 +36,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 	 * @return MainWP_DB_Site_Actions
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -76,7 +76,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 	meta_data text NOT NULL DEFAULT "",
 	dismiss tinyint(1) NOT NULL DEFAULT 0,
 	summary varchar(255) NOT NULL default ""';
-		if ( '' == $currentVersion || version_compare( $currentVersion, '8.89', '<=' ) ) {
+		if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.89', '<=' ) ) {
 			$tbl .= ',
 		PRIMARY KEY (action_id)';
 		}
@@ -141,8 +141,8 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 
 			$update_data = array_filter(
 				$update_data,
-				function ( $var ) {
-					return ! empty( $var );
+				function ( $e ) {
+					return ! empty( $e );
 				}
 			);
 
@@ -345,7 +345,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 		$sql .= ' WHERE 1 ' . $where_actions . $where_extra;
 		$sql .= $order_by . $limit;
 
-		if ( OBJECT == $obj ) {
+		if ( OBJECT === $obj ) {
 			$result = $this->wpdb->get_results( $sql, OBJECT );
 		} else {
 			$result = $this->wpdb->get_results( $sql, ARRAY_A );

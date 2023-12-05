@@ -85,7 +85,7 @@ class MainWP_DB_Base {
 	 * @return string Table name.
 	 */
 	protected function table_name( $suffix, $tablePrefix = null ) {
-		return ( null == $tablePrefix ? $this->table_prefix : $tablePrefix ) . $suffix;
+		return ( null === $tablePrefix ? $this->table_prefix : $tablePrefix ) . $suffix;
 	}
 
 
@@ -95,11 +95,10 @@ class MainWP_DB_Base {
 	 * Create entire table name.
 	 *
 	 * @param mixed $suffix Table suffix.
-	 * @param null  $tablePrefix Table prefix.
 	 *
 	 * @return string Table name.
 	 */
-	public function get_table_name( $suffix, $tablePrefix = null ) {
+	public function get_table_name( $suffix ) {
 		return $this->table_name( $suffix );
 	}
 
@@ -124,7 +123,7 @@ class MainWP_DB_Base {
 	 * @return mixed null|Row
 	 */
 	public function get_row_result( $sql ) {
-		if ( null == $sql ) {
+		if ( null === $sql ) {
 			return null;
 		}
 
@@ -141,7 +140,7 @@ class MainWP_DB_Base {
 	 * @return mixed null|get_results()
 	 */
 	public function get_results_result( $sql ) {
-		if ( null == $sql ) {
+		if ( null === $sql ) {
 			return null;
 		}
 
@@ -158,13 +157,13 @@ class MainWP_DB_Base {
 	 * @return mixed false|$result.
 	 */
 	public function query( $sql ) {
-		if ( null == $sql ) {
+		if ( null === $sql ) {
 			return false;
 		}
 
 		$result = self::m_query( $sql, $this->wpdb->dbh );
 
-		if ( ! $result || ( 0 == self::num_rows( $result ) ) ) {
+		if ( ! $result || ( 0 === self::num_rows( $result ) ) ) {
 			return false;
 		}
 
@@ -320,9 +319,9 @@ class MainWP_DB_Base {
 		}
 
 		if ( self::use_mysqli() ) {
-			return \mysqli_fetch_array( $result, ( null == $result_type ? MYSQLI_BOTH : $result_type ) );
+			return \mysqli_fetch_array( $result, ( null === $result_type ? MYSQLI_BOTH : $result_type ) );
 		} else {
-			return \mysql_fetch_array( $result, ( null == $result_type ? MYSQL_BOTH : $result_type ) );
+			return \mysql_fetch_array( $result, ( null === $result_type ? MYSQL_BOTH : $result_type ) );
 		}
 	}
 

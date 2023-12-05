@@ -72,26 +72,26 @@ class MainWP_UI_Select_Sites {
 			$sites_val      = get_post_meta( $postId, '_selected_sites', true );
 			$selected_sites = MainWP_System_Utility::maybe_unserialyze( $sites_val );
 
-			if ( '' == $selected_sites ) {
+			if ( empty( $selected_sites ) ) {
 				$selected_sites = array();
 			}
 
 			$groups_val      = get_post_meta( $postId, '_selected_groups', true );
 			$selected_groups = MainWP_System_Utility::maybe_unserialyze( $groups_val );
 
-			if ( '' == $selected_groups ) {
+			if ( empty( $selected_groups ) ) {
 				$selected_groups = array();
 			}
 
 			$selected_clients = get_post_meta( $postId, '_selected_clients', true );
 
-			if ( '' == $selected_clients ) {
+			if ( empty( $selected_clients ) ) {
 				$selected_clients = array();
 			}
 		}
 
-		if ( empty( $selected_sites ) && isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$selected_sites = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification -- sanitize ok.
+		if ( empty( $selected_sites ) && isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$selected_sites = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize ok.
 			$selected_sites = array_map( 'intval', $selected_sites );
 			$selected_sites = array_filter( $selected_sites );
 		}
@@ -233,13 +233,13 @@ class MainWP_UI_Select_Sites {
 			<?php
 			endif;
 		?>
-		<div class="ui tab <?php echo 'site' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-sites-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-sites">
+		<div class="ui tab <?php echo 'site' === $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-sites-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-sites">
 		<?php
 			MainWP_UI::render_select_sites( $websites, $type, $selected_sites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id, $show_selectall_disc );
 		?>
 		</div>
 		<?php if ( $staging_enabled ) { ?>
-			<div class="ui tab <?php echo 'staging' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-staging-sites-<?php echo esc_attr( $tab_id ); ?>">
+			<div class="ui tab <?php echo 'staging' === $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-staging-sites-<?php echo esc_attr( $tab_id ); ?>">
 				<?php
 					MainWP_UI::render_select_sites_staging( $selected_sites, $edit_site_id, $type );
 				?>
@@ -249,7 +249,7 @@ class MainWP_UI_Select_Sites {
 
 		if ( $show_group ) {
 			?>
-			<div class="ui tab <?php echo 'group' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-groups-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-groups">
+			<div class="ui tab <?php echo 'group' === $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-groups-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-groups">
 			<?php
 				MainWP_UI::render_select_sites_group( $groups, $selected_groups, $type );
 			?>
@@ -266,7 +266,7 @@ class MainWP_UI_Select_Sites {
 				'enable_suspended_clients' => $enableSuspendedClients,
 			);
 			?>
-			<div class="ui tab <?php echo 'client' == $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-clients-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-clients">
+			<div class="ui tab <?php echo 'client' === $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-clients-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-clients">
 			<?php
 			self::render_select_clients( $params );
 			?>
@@ -350,7 +350,7 @@ class MainWP_UI_Select_Sites {
 			$clients = array();
 		}
 
-		if ( ! is_array( $selected_clients ) && ( 'all' != $selected_clients ) ) {
+		if ( ! is_array( $selected_clients ) && ( 'all' !== $selected_clients ) ) {
 			$selected_clients = array();
 		}
 
@@ -378,7 +378,7 @@ class MainWP_UI_Select_Sites {
 						else :
 							foreach ( $clients as $client ) {
 								$selected = false;
-								if ( 0 == $client->suspended || $enableSuspendedClients ) {
+								if ( 0 === (int) $client->suspended || $enableSuspendedClients ) {
 									$selected = ( 'all' === $selected_clients || in_array( $client->client_id, $selected_clients ) );
 									?>
 									<div title="<?php echo esc_html( $client->name ); ?>" class="mainwp_selected_clients_item ui <?php echo esc_html( $type ); ?> item <?php echo ( $selected ? 'selected_clients_item_checked' : '' ); ?>">

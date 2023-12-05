@@ -477,11 +477,11 @@
 
 /* Manage Sites Table */
 
-table#mainwp-manage-sites-table {
+table.mainwp-manage-wpsites-table {
     margin: 0;
 }
 
-table#mainwp-manage-sites-table .error a {
+table.mainwp-manage-wpsites-table .error a {
     text-decoration: none;
 }
 
@@ -1267,8 +1267,8 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
 /* to fix css issue */
 #mainwp-emails-settings-table.dataTable.table td span,
 #mainwp-emails-settings-table.dataTable.table th span,
-#mainwp-manage-sites-table.dataTable.table td span,
-#mainwp-manage-sites-table.dataTable.table th span {
+.mainwp-manage-wpsites-table.dataTable.table td span,
+.mainwp-manage-wpsites-table.dataTable.table th span {
     -webkit-box-sizing: border-box !important;
     box-sizing: border-box !important;
 }

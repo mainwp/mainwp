@@ -17,6 +17,8 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Demo_Handle {
 
+	//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+
 	/**
 	 * Protected static variable to hold the single instance of the class.
 	 *
@@ -67,7 +69,7 @@ class MainWP_Demo_Handle {
 	 * Handle init data mode.
 	 */
 	public function init_data_demo() {
-		if ( isset( $_GET['enable_demo_mode'] ) && 'yes' === $_GET['enable_demo_mode'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['enable_demo_mode'] ) && 'yes' === $_GET['enable_demo_mode'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized.Recommended
 			$this->import_data_demo();
 			MainWP_Utility::update_option( 'mainwp_enable_guided_tours', 1 );
 			?>
@@ -162,7 +164,7 @@ class MainWP_Demo_Handle {
 			foreach ( $wp_data_rows as $row ) {
 				$websiteid = $this->add_demo_website( $row );
 				if ( $websiteid ) {
-					$count_inserted++;
+					++$count_inserted;
 					$client_id = 0;
 					if ( isset( $clients_data_rows[ $index ] ) ) {
 						$client_id = $this->add_demo_client( $clients_data_rows[ $index ], array( $websiteid ) );
@@ -179,7 +181,7 @@ class MainWP_Demo_Handle {
 						$demo_added_ids['clients_ids'][] = $client_id;
 					}
 				}
-				$index++;
+				++$index;
 			}
 			$data['count']    = $index;
 			$data['inserted'] = $count_inserted;
@@ -282,7 +284,7 @@ class MainWP_Demo_Handle {
 
 			$url = $params['url'];
 
-			if ( '/' != substr( $url, - 1 ) ) {
+			if ( '/' !== substr( $url, - 1 ) ) {
 				$url .= '/';
 			}
 
@@ -373,7 +375,7 @@ class MainWP_Demo_Handle {
 			return;
 		}
 		foreach ( $data_rows as $row ) {
-			if ( isset( $row['action_id'] ) && isset( $row['wpid'] ) && $index == $row['wpid'] ) {
+			if ( isset( $row['action_id'] ) && isset( $row['wpid'] ) && (int) $index === (int) $row['wpid'] ) {
 				unset( $row['action_id'] );
 				$row['wpid'] = $websiteid;
 				$wpdb->insert( MainWP_DB::instance()->get_table_name( 'wp_actions' ), $row );
@@ -428,7 +430,7 @@ class MainWP_Demo_Handle {
 
 		$extensions_disabled = MainWP_Extensions_Handler::get_extensions_disabled();
 		$extensions          = MainWP_Extensions_Handler::get_extensions();
-		if ( 0 < count( $extensions ) && $extensions != $extensions_disabled ) {
+		if ( 0 < count( $extensions ) && $extensions !== $extensions_disabled ) {
 			return false;
 		}
 
@@ -490,13 +492,13 @@ class MainWP_Demo_Handle {
 	 * Handle render disable demo buttons.
 	 *
 	 * @param string $content html content.
-	 * @param bool   $echo to echo or return.
+	 * @param bool   $echo_out to echo or return.
 	 *
 	 * @return mixed Button or echo.
 	 */
-	public function render_demo_disable_button( $content, $echo = true ) {
+	public function render_demo_disable_button( $content, $echo_out = true ) {
 		$button = '<div style="display:inline-block;" data-tooltip="' . $this->get_demo_tooltip() . '" data-inverted="" data-variation="mini" data-position="top right">' . $content . '</div>';
-		if ( $echo ) {
+		if ( $echo_out ) {
 			echo $button; //phpcs:ignore WordPress.Security.EscapeOutput 
 		}
 		return $button;
@@ -538,9 +540,8 @@ class MainWP_Demo_Handle {
 	 *
 	 * @param object $pWebsite The demo site.
 	 * @param string $what action.
-	 * @param array  $params action.
 	 */
-	public function handle_action_demo( $pWebsite, $what, $params = array() ) {
+	public function handle_action_demo( $pWebsite, $what ) {
 		$output = array(
 			'error' => $this->get_demo_notice(),
 		);
@@ -565,10 +566,8 @@ class MainWP_Demo_Handle {
 	 * @param mixed  $data action.
 	 * @param object $website The demo site.
 	 * @param mixed  $output output.
-	 * @param string $what action.
-	 * @param mixed  $params params input.
 	 */
-	public function handle_fetch_urls_demo( $data, $website, &$output, $what, $params = array() ) {
+	public function handle_fetch_urls_demo( $data, $website, &$output ) {
 		if ( $this->is_demo_website( $website ) ) {
 			$output->errors[ $website->id ] = $this->get_demo_notice();
 		}

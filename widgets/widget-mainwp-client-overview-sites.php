@@ -71,7 +71,7 @@ class MainWP_Client_Overview_Sites {
 	 * @uses \MainWP\Dashboard\MainWP_Overview
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 
@@ -84,7 +84,7 @@ class MainWP_Client_Overview_Sites {
 	 * @return mixed render_site_info()
 	 */
 	public static function render() {
-		$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( empty( $client_id ) ) {
 			return;
 		}
@@ -136,7 +136,7 @@ class MainWP_Client_Overview_Sites {
 				if ( $client_info ) {
 					$this->prepare_items( $client_id );
 					?>
-					<table id="mainwp-manage-sites-table" style="width:100%" class="ui unstackable table mainwp-with-preview-table">
+					<table id="mainwp-manage-sites-monitor-table" style="width:100%" class="ui unstackable table mainwp-with-preview-table">
 						<thead>
 								<tr><?php $this->print_column_headers( true ); ?></tr>
 								</thead>
@@ -208,7 +208,7 @@ class MainWP_Client_Overview_Sites {
 						responsive = false;
 					}
 					try {	
-						$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
+						$manage_sites_table = jQuery( '#mainwp-manage-sites-monitor-table' ).DataTable( {
 							"searching" : <?php echo esc_js( $table_features['searching'] ); ?>,
 							"responsive": responsive,
 							"paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
@@ -261,7 +261,7 @@ class MainWP_Client_Overview_Sites {
 	 */
 	public function prepare_items( $client_id ) {
 
-		if ( null == $this->userExtension ) {
+		if ( null === $this->userExtension ) {
 			$this->userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		}
 
@@ -297,10 +297,8 @@ class MainWP_Client_Overview_Sites {
 
 	/**
 	 * Echo the column headers.
-	 *
-	 * @param bool $top true|false.
 	 */
-	public function print_column_headers( $top = true ) {
+	public function print_column_headers() {
 
 		list( $columns ) = $this->get_column_info();
 
@@ -488,7 +486,7 @@ class MainWP_Client_Overview_Sites {
 		}
 
 		if ( is_array( $wp_upgrades ) && 0 < count( $wp_upgrades ) ) {
-			$total_wp_upgrades ++;
+			++$total_wp_upgrades;
 		}
 
 		$plugin_upgrades = json_decode( $website['plugin_upgrades'], true );
@@ -603,7 +601,7 @@ class MainWP_Client_Overview_Sites {
 				<?php
 			} elseif ( 'site' === $column_name ) {
 				$cls_site = '';
-				if ( '' != $website['sync_errors'] ) {
+				if ( ! empty( $website['sync_errors'] ) ) {
 					$cls_site = 'site-sync-error';
 				}
 				?>
@@ -698,5 +696,4 @@ class MainWP_Client_Overview_Sites {
 			MainWP_DB::free_result( $this->items );
 		}
 	}
-
 }

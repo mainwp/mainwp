@@ -76,23 +76,23 @@ class MainWP_Connection_Status {
 
 		$disconnect_site_ids = array();
 
-		for ( $j = 0; $j < 3; $j ++ ) {
+		for ( $j = 0; $j < 3; $j++ ) {
 			MainWP_DB::data_seek( $websites, 0 );
 			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( empty( $website ) ) {
 					continue;
 				}
 
-				$hasSyncErrors = ( '' != $website->sync_errors );
+				$hasSyncErrors = ( '' !== $website->sync_errors );
 				$isUp          = ! $hasSyncErrors;
 
-				if ( $j != $ALL ) {
-					if ( $j == $SYNCERRORS ) {
+				if ( $j !== $ALL ) {
+					if ( $j === $SYNCERRORS ) {
 						if ( ! $hasSyncErrors ) {
 							continue;
 						}
 					}
-					if ( $j == $UP ) {
+					if ( $j === $UP ) {
 						if ( ! $isUp ) {
 							continue;
 						}
@@ -103,9 +103,9 @@ class MainWP_Connection_Status {
 
 				ob_start();
 
-				if ( $j == $ALL ) {
+				if ( $j === $ALL ) {
 					self::render_all_item( $website, $lastSyncTime, $hasSyncErrors );
-				} elseif ( $j == $UP ) {
+				} elseif ( $j === $UP ) {
 					self::render_up_item( $website, $lastSyncTime );
 				} else {
 					self::render_down_item( $website, $lastSyncTime );
@@ -122,15 +122,15 @@ class MainWP_Connection_Status {
 
 				$output = ob_get_clean();
 
-				if ( $j == $ALL ) {
+				if ( $j === $ALL ) {
 					$html_all_sites .= $output;
-				} elseif ( $j == $UP ) {
+				} elseif ( $j === $UP ) {
 					$html_online_sites .= $output;
-					$count_connected++;
+					++$count_connected;
 				} elseif ( ! in_array( $website->id, $disconnect_site_ids ) ) {
 					$disconnect_site_ids[] = $website->id;
 					$html_other_sites     .= $output;
-					$count_disconnected++;
+					++$count_disconnected;
 				}
 			}
 		}
@@ -577,5 +577,4 @@ class MainWP_Connection_Status {
 		</div>
 		<?php
 	}
-
 }

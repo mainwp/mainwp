@@ -45,7 +45,7 @@ class MainWP_Updates_Handler {
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
 
 			if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
-				throw new MainWP_Exception( 'ERROR', '<i class="pause circular yellow inverted icon"></i> ' . esc_html__( 'Suspended site.', 'mainwp' ) );
+				throw new MainWP_Exception( 'ERROR', '<i class="pause circular yellow inverted icon"></i> ' . esc_html__( 'Suspended site.', 'mainwp' ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 			}
 
 			$information = self::upgrade_website( $website );
@@ -62,7 +62,7 @@ class MainWP_Updates_Handler {
 					} elseif ( 'NORESPONSE' === $information['upgrade'] ) {
 						$errorMsg = '<i class="red times icon"></i> ' . esc_html__( 'No response from the child site server.', 'mainwp' );
 					}
-					throw new MainWP_Exception( 'WPERROR', $errorMsg );
+					throw new MainWP_Exception( 'WPERROR', $errorMsg ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 				} elseif ( isset( $information['error'] ) ) {
 					throw new MainWP_Exception( 'WPERROR', esc_html( $information['error'] ) );
 				} else {
@@ -90,8 +90,8 @@ class MainWP_Updates_Handler {
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 
 			$wpcore_update_disabled_by = MainWP_System_Utility::disabled_wpcore_update_by( $website );
-			if ( '' != $wpcore_update_disabled_by ) {
-				throw new MainWP_Exception( 'ERROR', $wpcore_update_disabled_by );
+			if ( ! empty( $wpcore_update_disabled_by ) ) {
+				throw new MainWP_Exception( 'ERROR', $wpcore_update_disabled_by ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 			}
 			/**
 			* Action: mainwp_before_wp_update
@@ -502,7 +502,7 @@ class MainWP_Updates_Handler {
 					$slug = urldecode( $slug );
 					if ( 'plugin' === $type ) {
 						$decodedIgnoredPlugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
-						$decodedIgnoredPlugins = ( '' != $decodedIgnoredPlugins ) ? json_decode( $decodedIgnoredPlugins, true ) : array();
+						$decodedIgnoredPlugins = ! empty( $decodedIgnoredPlugins ) ? json_decode( $decodedIgnoredPlugins, true ) : array();
 
 						if ( isset( $decodedIgnoredPlugins[ $slug ] ) ) {
 							unset( $decodedIgnoredPlugins[ $slug ] );
@@ -510,7 +510,7 @@ class MainWP_Updates_Handler {
 						}
 					} elseif ( 'theme' === $type ) {
 						$decodedIgnoredThemes = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
-						$decodedIgnoredThemes = ( '' != $decodedIgnoredThemes ) ? json_decode( $decodedIgnoredThemes, true ) : array();
+						$decodedIgnoredThemes = ! empty( $decodedIgnoredThemes ) ? json_decode( $decodedIgnoredThemes, true ) : array();
 
 						if ( isset( $decodedIgnoredThemes[ $slug ] ) ) {
 							unset( $decodedIgnoredThemes[ $slug ] );
@@ -602,7 +602,7 @@ class MainWP_Updates_Handler {
 				$slug = urldecode( $slug );
 				if ( 'plugin' === $type ) {
 					$decodedDismissedPlugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
-					$decodedDismissedPlugins = ( '' != $decodedDismissedPlugins ) ? json_decode( $decodedDismissedPlugins, true ) : array();
+					$decodedDismissedPlugins = ! empty( $decodedDismissedPlugins ) ? json_decode( $decodedDismissedPlugins, true ) : array();
 
 					if ( ! isset( $decodedDismissedPlugins[ $slug ] ) ) {
 						$decodedDismissedPlugins[ $slug ] = urldecode( $name );
@@ -610,7 +610,7 @@ class MainWP_Updates_Handler {
 					}
 				} elseif ( 'theme' === $type ) {
 					$decodedDismissedThemes = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
-					$decodedDismissedThemes = ( '' != $decodedDismissedThemes ) ? json_decode( $decodedDismissedThemes, true ) : array();
+					$decodedDismissedThemes = ! empty( $decodedDismissedThemes ) ? json_decode( $decodedDismissedThemes, true ) : array();
 
 					if ( ! isset( $decodedDismissedThemes[ $slug ] ) ) {
 						$decodedDismissedThemes[ $slug ] = urldecode( $name );
@@ -674,7 +674,7 @@ class MainWP_Updates_Handler {
 	 *
 	 * @param int    $id   Child site ID.
 	 * @param string $type Plugin or theme.
-	 * @param array  $list List of theme or plugin names seperated by comma.
+	 * @param array  $list_items List of theme or plugin names seperated by comma.
 	 *
 	 * @return array
 	 * @throws MainWP_Exception Error messages.
@@ -684,13 +684,13 @@ class MainWP_Updates_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
-	public static function upgrade_plugin_theme_translation( $id, $type, $list ) { // phpcs:ignore -- complex method.
+	public static function upgrade_plugin_theme_translation( $id, $type, $list_items ) { // phpcs:ignore -- complex method.
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $id, false, array( 'premium_upgrades' ) ); // to fix loading premium_upgrades.
 			if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
 				throw new MainWP_Exception( 'ERROR', esc_html__( 'Suspended site.', 'mainwp' ), 'SUSPENDED_SITE' );
 			}
-			$result = self::update_plugin_theme_translation( $website, $type, $list );
+			$result = self::update_plugin_theme_translation( $website, $type, $list_items );
 			if ( is_array( $result ) ) {
 
 				$return_results = array();
@@ -743,7 +743,7 @@ class MainWP_Updates_Handler {
 
 						if ( isset( $return_results['result'] ) && is_array( $return_results['result'] ) && ! empty( $return_results['result'] ) ) {
 							$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-							$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+							$decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 							if ( is_array( $decodedPremiumUpgrades ) && ! empty( $decodedPremiumUpgrades ) ) {
 								$updated = false;
 								foreach ( $return_results['result'] as $k => $v ) {
@@ -765,7 +765,7 @@ class MainWP_Updates_Handler {
 				} elseif ( isset( $result['notices'] ) ) {
 					$noti = $result['notices'];
 					if ( ! empty( $noti ) && is_string( $noti ) ) {
-						throw new MainWP_Exception( $noti, '', 'MAINWP_NOTICE' );
+						throw new MainWP_Exception( $noti, '', 'MAINWP_NOTICE' );  //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 					}
 				}
 
@@ -784,7 +784,7 @@ class MainWP_Updates_Handler {
 	 *
 	 * @param int    $website Child site object.
 	 * @param string $type    Plugin or theme.
-	 * @param array  $list    List of theme or plugin names seperated by comma.
+	 * @param array  $list_items    List of theme or plugin names seperated by comma.
 	 *
 	 * @return array|false update result or false.
 	 * @throws \Exception Error message.
@@ -792,7 +792,7 @@ class MainWP_Updates_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
-	public static function update_plugin_theme_translation( $website, $type, $list ) {
+	public static function update_plugin_theme_translation( $website, $type, $list_items ) {
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 			/**
 			* Action: mainwp_before_plugin_theme_translation_update
@@ -801,14 +801,14 @@ class MainWP_Updates_Handler {
 			*
 			* @since 4.1
 			*/
-			do_action( 'mainwp_before_plugin_theme_translation_update', $type, $list, $website );
+			do_action( 'mainwp_before_plugin_theme_translation_update', $type, $list_items, $website );
 
 			$information = MainWP_Connect::fetch_url_authed(
 				$website,
 				( 'translation' === $type ? 'upgradetranslation' : 'upgradeplugintheme' ),
 				array(
 					'type' => $type,
-					'list' => urldecode( $list ),
+					'list' => urldecode( $list_items ),
 				),
 				true
 			);
@@ -819,7 +819,7 @@ class MainWP_Updates_Handler {
 			*
 			* @since 4.1
 			*/
-			do_action( 'mainwp_after_plugin_theme_translation_update', $information, $type, $list, $website );
+			do_action( 'mainwp_after_plugin_theme_translation_update', $information, $type, $list_items, $website );
 
 			return $information;
 		}
@@ -855,7 +855,7 @@ class MainWP_Updates_Handler {
 
 			$plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
 			$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-			$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+			$decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 
 			if ( is_array( $decodedPremiumUpgrades ) ) {
 				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
@@ -894,7 +894,7 @@ class MainWP_Updates_Handler {
 
 			$theme_upgrades         = json_decode( $website->theme_upgrades, true );
 			$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-			$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+			$decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 
 			if ( is_array( $decodedPremiumUpgrades ) ) {
 				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
@@ -935,5 +935,4 @@ class MainWP_Updates_Handler {
 
 		return implode( ',', $slugs );
 	}
-
 }

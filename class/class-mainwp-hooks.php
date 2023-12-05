@@ -44,6 +44,7 @@ class MainWP_Hooks {
 		add_action( 'mainwp_renderFooter', array( MainWP_UI::get_class_name(), 'render_footer' ), 10, 0 );
 
 		add_action( 'mainwp_notify_user', array( &$this, 'hook_notify_user' ), 10, 3 );
+		add_filter( 'mainwp_is_mainwp_page', array( MainWP_System::class, 'is_mainwp_pages' ) );
 
 		/**
 		 * The actions has been deprecated.
@@ -163,6 +164,7 @@ class MainWP_Hooks {
 		add_action( 'mainwp_render_modal_upload_icon', array( &$this, 'hook_render_modal_upload_icon' ), 10, 2 );
 		add_action( 'mainwp_render_plugin_details_modal', array( &$this, 'hook_render_plugin_details_modal' ), 10, 2 );
 		add_action( 'mainwp_render_updates', array( &$this, 'hook_render_updates' ), 10, 2 );
+		add_filter( 'mainwp_get_wp_client_by', array( &$this, 'hook_get_wp_client_by' ), 10, 4 );
 
 		/**
 		 * Filter: mainwp_get_tokens_values
@@ -492,7 +494,7 @@ class MainWP_Hooks {
 				}
 			}
 		}
-		return false;
+		return $input;
 	}
 
 
@@ -593,7 +595,7 @@ class MainWP_Hooks {
 	 * @param string $type Input type, radio.
 	 * @param bool   $show_group Whether or not to show group, Default: true.
 	 * @param bool   $show_select_all Whether to show select all.
-	 * @param string $class Default = ''.
+	 * @param string $class_style Default = ''.
 	 * @param string $style Default = ''.
 	 * @param array  $selected_websites Selected Child Sites.
 	 * @param array  $selected_groups Selected Groups.
@@ -601,12 +603,12 @@ class MainWP_Hooks {
 	 * @param array  $selected_clients Selected Clients.
 	 * @param mixed  $post_id post ID.
 	 */
-	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', $selected_websites = array(), $selected_groups = array(), $show_client = false, $selected_clients = array(), $post_id = false ) {
+	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class_style = '', $style = '', $selected_websites = array(), $selected_groups = array(), $show_client = false, $selected_clients = array(), $post_id = false ) {
 		$sel_params = array(
 			'type'             => $type,
 			'show_group'       => $show_group,
 			'show_select_all'  => $show_select_all,
-			'class'            => $class,
+			'class'            => $class_style,
 			'style'            => $style,
 			'selected_sites'   => $selected_websites,
 			'selected_groups'  => $selected_groups,
@@ -675,13 +677,13 @@ class MainWP_Hooks {
 	 *
 	 * Hook to update user extension.
 	 *
-	 * @param bool   $false input filter value.
+	 * @param bool   $input_value input filter value.
 	 * @param string $option_name option name.
 	 * @param mixed  $option_value option value.
 	 *
 	 * @return bool true.
 	 */
-	public function update_user_extension( $false, $option_name, $option_value ) {
+	public function update_user_extension( $input_value, $option_name, $option_value ) {
 		$userExtension                 = MainWP_DB_Common::instance()->get_user_extension();
 		$userExtension->{$option_name} = wp_json_encode( $option_value );
 		MainWP_DB_Common::instance()->update_user_extension( $userExtension );
@@ -816,7 +818,7 @@ class MainWP_Hooks {
 			foreach ( $sites as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$website = MainWP_DB::instance()->get_website_by_id( $v );
-					if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+					if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
 						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
 					}
 				}
@@ -935,12 +937,12 @@ class MainWP_Hooks {
 	 *
 	 * To escape response data.
 	 *
-	 * @param mixed $false     input value.
+	 * @param mixed $input_value     input value.
 	 * @param mixed $result     result data.
 	 *
 	 * @return bool true.
 	 */
-	public function db_free_result( $false, $result ) {
+	public function db_free_result( $input_value, $result ) {
 		MainWP_DB::free_result( $result );
 		return true;
 	}
@@ -950,12 +952,12 @@ class MainWP_Hooks {
 	 *
 	 * To escape response data.
 	 *
-	 * @param mixed $false     input value.
+	 * @param mixed $input_value     input value.
 	 * @param mixed $result     result data.
 	 *
 	 * @return bool true.
 	 */
-	public function db_num_rows( $false, $result ) {
+	public function db_num_rows( $input_value, $result ) {
 		return MainWP_DB::num_rows( $result );
 	}
 
@@ -965,12 +967,12 @@ class MainWP_Hooks {
 	 *
 	 * To escape response data.
 	 *
-	 * @param mixed $false     input value.
+	 * @param mixed $input_value     input value.
 	 * @param array $params     params data.
 	 *
 	 * @return mixed websites.
 	 */
-	public function db_get_websites_for_current_user( $false = false, $params = array() ) {
+	public function db_get_websites_for_current_user( $input_value = false, $params = array() ) {
 		if ( ! is_array( $params ) ) {
 			$params = array();
 		}
@@ -990,22 +992,23 @@ class MainWP_Hooks {
 	 *
 	 * To escape response data.
 	 *
-	 * @param mixed $false     input value.
+	 * @param mixed $input_value     input value.
 	 * @param int   $website_id  Website ID.
 	 * @param bool  $fire_end_session to run the ending session or not.
 	 *
 	 * @return mixed websites.
 	 */
-	public function hook_sync_website( $false, $website_id, $fire_end_session = true ) {
+	public function hook_sync_website( $input_value, $website_id, $fire_end_session = true ) {
 		if ( empty( $website_id ) ) {
-			return $false;
+			return $input_value;
 		}
 		$website = MainWP_DB::instance()->get_website_by_id( $website_id );
 		if ( empty( $website ) ) {
-			return $false;
+			return $input_value;
 		}
 		return MainWP_Sync::sync_website( $website, $fire_end_session );
 	}
+
 
 	/**
 	 * Method hook_db_data_seek()
@@ -1025,12 +1028,12 @@ class MainWP_Hooks {
 	 *
 	 * To query db.
 	 *
-	 * @param mixed  $false    filter input value.
+	 * @param mixed  $input_value    filter input value.
 	 * @param string $sql     result data.
 	 *
 	 * @return bool true.
 	 */
-	public function hook_db_query( $false, $sql ) {
+	public function hook_db_query( $input_value, $sql ) {
 		return MainWP_DB::instance()->query( $sql );
 	}
 
@@ -1039,12 +1042,12 @@ class MainWP_Hooks {
 	 *
 	 * To escape response data.
 	 *
-	 * @param mixed $false     input value.
+	 * @param mixed $input_value     input value.
 	 * @param mixed $result     result data.
 	 *
 	 * @return bool true.
 	 */
-	public function db_fetch_object( $false, $result ) {
+	public function db_fetch_object( $input_value, $result ) {
 		return MainWP_DB::fetch_object( $result );
 	}
 
@@ -1054,12 +1057,12 @@ class MainWP_Hooks {
 	 *
 	 * To escape response data.
 	 *
-	 * @param mixed $false     input value.
+	 * @param mixed $input_value     input value.
 	 * @param mixed $result     result data.
 	 *
 	 * @return bool true.
 	 */
-	public function db_fetch_array( $false, $result ) {
+	public function db_fetch_array( $input_value, $result ) {
 		return MainWP_DB::fetch_array( $result );
 	}
 
@@ -1133,11 +1136,11 @@ class MainWP_Hooks {
 	 *
 	 * Security check to request parameter
 	 *
-	 * @param bool   $false Input value.
+	 * @param bool   $input_value Input value.
 	 * @param string $action Action to perform.
 	 * @param string $query_arg Query argument.
 	 */
-	public function hook_check_security_request( $false, $action = '', $query_arg = '' ) {
+	public function hook_check_security_request( $input_value, $action = '', $query_arg = '' ) {
 		if ( empty( $query_arg ) ) {
 			$query_arg = $action; // to check wp_verify_nonce - sanitize_key( $_REQUEST[ $query_arg ] ) - $action.
 		}
@@ -1149,7 +1152,7 @@ class MainWP_Hooks {
 	 *
 	 * Hook to get MainWP Directory.
 	 *
-	 * @param bool $false False.
+	 * @param bool $input_value False.
 	 * @param null $dir WP files system diectories.
 	 * @param bool $direct_access Return true if Direct access file system. Default: false.
 	 *
@@ -1157,7 +1160,7 @@ class MainWP_Hooks {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 */
-	public function hook_get_mainwp_dir( $false = false, $dir = null, $direct_access = false ) {
+	public function hook_get_mainwp_dir( $input_value = false, $dir = null, $direct_access = false ) {
 		return MainWP_System_Utility::get_mainwp_dir( $dir, $direct_access );
 	}
 
@@ -1292,7 +1295,7 @@ class MainWP_Hooks {
 		}
 
 		try {
-			$id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+			$id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::upgrade_site( $id ) ) ) ); // ok.
 		} catch ( MainWP_Exception $e ) {
 			die(
@@ -1321,13 +1324,13 @@ class MainWP_Hooks {
 	 */
 	public function upgrade_plugin_theme() {
 		try {
-			// phpcs:disable WordPress.Security.NonceVerification
+			// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : null;
 			$type      = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : null;
 			$slugs     = isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ? wp_unslash( $_POST['slugs'] ) : array();
 			$error     = '';
 			$erCode    = '';
-			// phpcs:enable WordPress.Security.NonceVerification
+			// phpcs:enable
 
 			if ( 'plugin' === $type && ! mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) ) {
 				$error = mainwp_do_not_have_permissions( esc_html__( 'update plugins', 'mainwp' ), false );
@@ -1428,12 +1431,12 @@ class MainWP_Hooks {
 	 * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::get_post()
 	 */
 	public function hook_posts_bulk_posting() {
-		// phpcs:disable WordPress.Security.NonceVerification
-		$post_id = isset( $_POST['post_id'] ) && $_POST['post_id'] ? intval( $_POST['post_id'] ) : false;
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$post_id = isset( $_POST['post_id'] ) && ! empty( $_POST['post_id'] ) ? intval( wp_unslash( $_POST['post_id'] ) ) : false;
 		if ( $post_id ) {
 			MainWP_Post_Page_Handler::posting_posts( $post_id, 'ajax_posting' );
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 		die();
 	}
 
@@ -1473,16 +1476,16 @@ class MainWP_Hooks {
 	 *
 	 * Hook get client tokens.
 	 *
-	 * @param mixed $false input filter value.
+	 * @param mixed $input_value input filter value.
 	 * @param int   $websiteid Website ID.
 	 *
 	 * @return mixed $result Result of tokens.
 	 */
-	public function hook_get_website_client_tokens( $false, $websiteid = false ) {
+	public function hook_get_website_client_tokens( $input_value, $websiteid = false ) {
 		$client_tokens = MainWP_Client_Handler::instance()->get_website_client_tokens_data( $websiteid );
 
 		if ( false === $client_tokens ) {
-			return $false;
+			return $input_value;
 		}
 
 		return $client_tokens;
@@ -1493,12 +1496,12 @@ class MainWP_Hooks {
 	 *
 	 * Hook get download sig.
 	 *
-	 * @param string $false Input value.
+	 * @param string $input_value Input value.
 	 * @param string $fullfile Full file path.
 	 *
 	 * @return string
 	 */
-	public function hook_get_download_sig( $false, $fullfile ) {
+	public function hook_get_download_sig( $input_value, $fullfile ) {
 		return MainWP_System_Utility::get_download_sig( $fullfile );
 	}
 
@@ -1573,12 +1576,12 @@ class MainWP_Hooks {
 	 *
 	 * @param mixed       $screen_id Current page ID.
 	 * @param string|null $context right|null. If 3 columns then = 'middle'.
-	 * @param string      $object Empty string.
+	 * @param string      $input_obj Empty string.
 	 *
 	 * @return void Renders widget container box.
 	 */
-	public function hook_do_widget_boxes( $screen_id, $context = null, $object = '' ) {
-		MainWP_UI::do_widget_boxes( $screen_id, $context, $object );
+	public function hook_do_widget_boxes( $screen_id, $context = null, $input_obj = '' ) {
+		MainWP_UI::do_widget_boxes( $screen_id, $context, $input_obj );
 	}
 
 
@@ -1620,12 +1623,28 @@ class MainWP_Hooks {
 	}
 
 	/**
-	 * Method hook_render_plugin_details_modal()
+	 * Method hook_render_updates()
 	 *
-	 * Render modal window plugin details.
+	 * Render modal window updates details.
 	 */
 	public function hook_render_updates() {
 		MainWP_Updates::render();
+	}
+
+	/**
+	 * Method hook_get_wp_client_by()
+	 *
+	 * Handle get wp client by.
+	 *
+	 * @param string $by by.
+	 * @param mixed  $value by value.
+	 * @param mixed  $obj Format data.
+	 * @param bool   $params Others params.
+	 *
+	 * @return mixed $result results.
+	 */
+	public function hook_get_wp_client_by( $by = 'client_id', $value = null, $obj = OBJECT, $params = array() ) {
+		return MainWP_DB_Client::instance()->get_wp_client_by( $by, $value, $obj, $params );
 	}
 
 	/**
@@ -1673,11 +1692,11 @@ class MainWP_Hooks {
 	 *
 	 * @param bool   $boolean Input bool value.
 	 * @param string $action The action to run.
-	 * @param bool   $die The function die or return.
+	 * @param bool   $out_die The function die or return.
 	 *
 	 * @return mixed $return result.
 	 */
-	public function hook_run_dashboard_action( $boolean, $action, $die = false ) {
+	public function hook_run_dashboard_action( $boolean, $action, $out_die = false ) {
 
 		if ( ! isset( $action ) ) {
 			return false;
@@ -1689,7 +1708,7 @@ class MainWP_Hooks {
 			return false;
 		}
 
-		if ( $die ) {
+		if ( $out_die ) {
 			wp_send_json( $return );
 		}
 
@@ -1744,14 +1763,14 @@ class MainWP_Hooks {
 	 *
 	 * Handle get key value.
 	 *
-	 * @param bool   $false Boolean value, it should always be FALSE.
+	 * @param bool   $input_value Boolean value, it should always be FALSE.
 	 * @param string $name Key option name.
-	 * @param mixed  $default default value.
+	 * @param mixed  $default_value default value.
 	 *
 	 * @return array $return Decrypted Key value.
 	 */
-	public function hook_get_key_value( $false, $name, $default = false ) {
-		return MainWP_Keys_Manager::instance()->get_keys_value( $name, $default );
+	public function hook_get_key_value( $input_value, $name, $default_value = false ) {
+		return MainWP_Keys_Manager::instance()->get_keys_value( $name, $default_value );
 	}
 
 	/**
@@ -1759,14 +1778,14 @@ class MainWP_Hooks {
 	 *
 	 * Handle update key value.
 	 *
-	 * @param bool   $false Boolean value, it should always be FALSE.
+	 * @param bool   $input_value Boolean value, it should always be FALSE.
 	 * @param string $name Key option name.
 	 * @param mixed  $value Key value.
 	 * @param string $prefix prefix of key file name.
 	 *
 	 * @return array $return Decrypted Key value.
 	 */
-	public function hook_update_key_value( $false, $name, $value = false, $prefix = 'ext_' ) {
+	public function hook_update_key_value( $input_value, $name, $value = false, $prefix = 'ext_' ) {
 		return MainWP_Keys_Manager::instance()->update_key_value( $name, $value, $prefix );
 	}
 
@@ -1789,14 +1808,14 @@ class MainWP_Hooks {
 	 *
 	 * Handle get key value.
 	 *
-	 * @param bool  $false Boolean value, it should always be FALSE.
+	 * @param bool  $input_value Boolean value, it should always be FALSE.
 	 * @param array $data Encrypted data.
 	 * @param mixed $prefix prefix value.
 	 * @param mixed $key_file Key file value.
 	 *
 	 * @return array $return Decrypted Key value.
 	 */
-	public function hook_encrypt_key_value( $false, $data, $prefix = 'ext_', $key_file = false ) {
+	public function hook_encrypt_key_value( $input_value, $data, $prefix = 'ext_', $key_file = false ) {
 		return MainWP_Keys_Manager::instance()->encrypt_keys_data( $data, $prefix, $key_file );
 	}
 
@@ -1805,14 +1824,14 @@ class MainWP_Hooks {
 	 *
 	 * Handle get key value.
 	 *
-	 * @param bool  $false Boolean value, it should always be FALSE.
+	 * @param bool  $input_value Boolean value, it should always be FALSE.
 	 * @param array $encrypted_data Encrypted data.
-	 * @param mixed $default default value.
+	 * @param mixed $default_value default value.
 	 *
 	 * @return array $return Decrypted Key value.
 	 */
-	public function hook_decrypt_key_value( $false, $encrypted_data, $default = false ) {
-		return MainWP_Keys_Manager::instance()->decrypt_keys_data( $encrypted_data, $default );
+	public function hook_decrypt_key_value( $input_value, $encrypted_data, $default_value = false ) {
+		return MainWP_Keys_Manager::instance()->decrypt_keys_data( $encrypted_data, $default_value );
 	}
 
 

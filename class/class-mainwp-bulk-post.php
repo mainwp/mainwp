@@ -139,7 +139,7 @@ class MainWP_Bulk_Post {
 			return;
 		}
 
-		$pid = MainWP_System::instance()->metaboxes->select_sites_handle( $post_id, 'bulkpost' );
+		$pid = (int) MainWP_System::instance()->metaboxes->select_sites_handle( $post_id, 'bulkpost' );
 		MainWP_System::instance()->metaboxes->add_categories_handle( $post_id, 'bulkpost' );
 		MainWP_System::instance()->metaboxes->add_tags_handle( $post_id, 'bulkpost' );
 		MainWP_System::instance()->metaboxes->add_slug_handle( $post_id, 'bulkpost' );
@@ -157,7 +157,7 @@ class MainWP_Bulk_Post {
 		 */
 		do_action( 'mainwp_save_bulkpost', $post_id );
 
-		if ( $pid == $post_id ) {
+		if ( $pid === $post_id ) {
 			add_filter( 'redirect_post_location', array( $this, 'redirect_edit_bulkpost' ), 10, 2 );
 		} else {
 			/**
@@ -211,7 +211,7 @@ class MainWP_Bulk_Post {
 			return;
 		}
 
-		$pid = MainWP_System::instance()->metaboxes->select_sites_handle( $post_id, 'bulkpage' );
+		$pid = (int) MainWP_System::instance()->metaboxes->select_sites_handle( $post_id, 'bulkpage' );
 		MainWP_System::instance()->metaboxes->add_slug_handle( $post_id, 'bulkpage' );
 		MainWP_Post_Page_Handler::add_status_handle( $post_id );
 
@@ -226,7 +226,7 @@ class MainWP_Bulk_Post {
 		 */
 		do_action( 'mainwp_save_bulkpage', $post_id );
 
-		if ( $pid == $post_id ) {
+		if ( $pid === $post_id ) {
 			add_filter( 'redirect_post_location', array( $this, 'redirect_edit_bulkpage' ), 10, 2 );
 		} else {
 			/**
@@ -374,5 +374,4 @@ class MainWP_Bulk_Post {
 
 		return $messages;
 	}
-
 }

@@ -80,7 +80,7 @@ class MainWP_Monitoring_Handler {
 			return false;
 		}
 
-		$new_code        = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
+		$new_code        = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? (int) $result['httpCode'] : 0;
 		$online_detected = MainWP_Connect::check_ignored_http_code( $new_code );
 		$time            = time();
 		// Computes duration before update website checking values.
@@ -121,12 +121,12 @@ class MainWP_Monitoring_Handler {
 	 * @return int $noticed_value New HTTP status.
 	 */
 	private static function get_http_noticed_status_value( $website, $new_code ) {
-		$old_code      = $website->http_response_code;
+		$old_code      = (int) $website->http_response_code;
 		$noticed_value = $website->http_code_noticed;
-		if ( 200 != $new_code && $old_code != $new_code ) {
+		if ( 200 !== $new_code && (int) $old_code !== $new_code ) {
 			$noticed_value = 0;
-		} elseif ( 200 != $old_code && 200 == $new_code ) {
-			if ( 0 == $noticed_value ) {
+		} elseif ( 200 !== $old_code && 200 === $new_code ) {
+			if ( 0 === $noticed_value ) {
 				$noticed_value = 1;
 			}
 		}
@@ -152,11 +152,11 @@ class MainWP_Monitoring_Handler {
 		$noticed_value = $website->health_site_noticed;
 
 		if ( 80 <= $old_value && 80 > $new_health ) {
-			if ( 1 == $noticed_value ) {
+			if ( 1 === (int) $noticed_value ) {
 				$noticed_value = 0;
 			}
 		} elseif ( 80 > $old_value && 80 <= $new_health ) {
-			if ( 1 == $noticed_value ) {
+			if ( 1 === (int) $noticed_value ) {
 				$noticed_value = 0;
 			}
 		}
@@ -175,7 +175,7 @@ class MainWP_Monitoring_Handler {
 
 		$use_indi_interval  = ( 0 < $website->status_check_interval ) ? true : false;
 		$duration_site_last = 0;
-		if ( 0 != $website->offline_checks_last ) {
+		if ( 0 !== $website->offline_checks_last ) {
 			$duration_site_last = $time - $website->offline_checks_last; // duration equal now (time()) minus last time checked.
 		}
 
@@ -185,13 +185,12 @@ class MainWP_Monitoring_Handler {
 			} else {
 				$duration = $website->status_check_interval * 60; // in seconds.
 			}
-		} else { // use global interval for this site.
-			if ( 0 < $duration_site_last ) {
+		} elseif ( 0 < $duration_site_last ) { // use global interval for this site.
 				$duration = $duration_site_last;
-			} else {
-				$freq_minutes = get_option( 'mainwp_frequencySitesChecking', 60 );
-				$duration     = $freq_minutes * 60; // in seconds.
-			}
+		} else {
+			$freq_minutes = get_option( 'mainwp_frequencySitesChecking', 60 );
+			$duration     = $freq_minutes * 60; // in seconds.
+
 		}
 
 		// to limit duration 24 hours.
@@ -208,7 +207,7 @@ class MainWP_Monitoring_Handler {
 	 * @param int $http_code HTTP code.
 	 */
 	public static function get_site_checking_status( $http_code ) {
-		return ( '' == $http_code ) ? 0 : ( 200 == $http_code ? 1 : 0 );
+		return ( empty( $http_code ) ) ? 0 : ( 200 === (int) $http_code ? 1 : 0 );
 	}
 
 
@@ -220,11 +219,11 @@ class MainWP_Monitoring_Handler {
 	 */
 	public static function ajax_check_status_site() {
 		$website = null;
-		if ( isset( $_POST['wp_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['wp_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_POST['wp_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['wp_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		}
 
-		if ( null == $website ) {
+		if ( null === $website ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 

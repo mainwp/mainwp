@@ -84,7 +84,7 @@ class MainWP_Widget_Plugins {
 			$website = MainWP_DB::fetch_object( $websites );
 			if ( $website && '' !== $website->plugins ) {
 				$plugins = json_decode( $website->plugins, 1 );
-				if ( is_array( $plugins ) && 0 != count( $plugins ) ) {
+				if ( is_array( $plugins ) && 0 !== count( $plugins ) ) {
 					foreach ( $plugins as $plugin ) {
 						if ( isset( $plugin['mainwp'] ) && ( 'T' === $plugin['mainwp'] ) ) {
 							continue;
@@ -181,7 +181,7 @@ class MainWP_Widget_Plugins {
 			<div class="ui divided selection list">
 				<?php
 				$_count = count( $actived_plugins );
-				for ( $i = 0; $i < $_count; $i ++ ) {
+				for ( $i = 0; $i < $_count; $i++ ) {
 					$slug             = wp_strip_all_tags( $actived_plugins[ $i ]['slug'] );
 					$plugin_directory = dirname( $slug );
 					?>
@@ -236,7 +236,7 @@ class MainWP_Widget_Plugins {
 			<div class="ui middle aligned divided selection list">
 				<?php
 				$_count = count( $inactive_plugins );
-				for ( $i = 0; $i < $_count; $i ++ ) {
+				for ( $i = 0; $i < $_count; $i++ ) {
 					$slug             = $inactive_plugins[ $i ]['slug'];
 					$plugin_directory = dirname( $slug );
 					?>
@@ -339,9 +339,9 @@ class MainWP_Widget_Plugins {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action( $action ) {
-		$plugin    = isset( $_POST['plugin'] ) ? wp_unslash( $_POST['plugin'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$plugin    = isset( $_POST['plugin'] ) ? wp_unslash( $_POST['plugin'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$plugin    = urldecode( $plugin );
-		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( empty( $plugin ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Plugin or site ID not found. Please, reload the page and try again.', 'mainwp' ) ) ) );
@@ -400,5 +400,4 @@ class MainWP_Widget_Plugins {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Unexpected error occurred. Please try again.', 'mainwp' ) ) ) );
 		}
 	}
-
 }

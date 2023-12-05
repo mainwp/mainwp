@@ -31,7 +31,7 @@ class MainWP_Client_Overview_Info {
 	 * @return mixed render_site_info()
 	 */
 	public static function render() {
-		$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		$client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( empty( $client_id ) ) {
 			return;
 		}
@@ -99,68 +99,68 @@ class MainWP_Client_Overview_Info {
 						</div>
 						<div class="twelve wide middle aligned column">
 							<div class="ui relaxed list">
-								<?php if ( isset( $client_info['client_email'] ) && '' != $client_info['client_email'] ) : ?>
+								<?php if ( isset( $client_info['client_email'] ) && '' !== $client_info['client_email'] ) : ?>
 								<div class="item">
 								<i class="envelope grey icon"></i>
 									<div class="content"><a href="mailto:<?php echo esc_url( $client_info['client_email'] ); ?>" target="_blank"><?php echo esc_html( $client_info['client_email'] ); ?></a> <i data-clipboard-text="<?php echo esc_html( $client_info['client_email'] ); ?>" style="cursor:pointer" class="copy green icon copy-to-clipboard"></i></div>
 								</div>
 								<?php endif; ?>
-								<?php if ( isset( $client_info['client_phone'] ) && '' != $client_info['client_phone'] ) : ?>
+								<?php if ( isset( $client_info['client_phone'] ) && '' !== $client_info['client_phone'] ) : ?>
 								<div class="item">
 									<i class="phone grey rotated icon"></i>
 									<div class="content"><a href="tel:<?php echo esc_url( $client_info['client_phone'] ); ?>" target="_blank"><?php echo esc_html( $client_info['client_phone'] ); ?></a></div>
 								</div>
 								<?php endif; ?>
-								<?php if ( isset( $client_info['client_facebook'] ) && '' != $client_info['client_facebook'] ) : ?>
+								<?php if ( isset( $client_info['client_facebook'] ) && '' !== $client_info['client_facebook'] ) : ?>
 								<div class="item">
 									<i class="facebook grey icon"></i>
 									<div class="content"><a href="<?php echo esc_url( $client_info['client_facebook'] ); ?>" target="_blank"><?php echo esc_html( $client_info['client_facebook'] ); ?></a></div>
 								</div>
 								<?php endif; ?>
-								<?php if ( isset( $client_info['client_twitter'] ) && '' != $client_info['client_twitter'] ) : ?>
+								<?php if ( isset( $client_info['client_twitter'] ) && '' !== $client_info['client_twitter'] ) : ?>
 								<div class="item">
 									<i class="twitter grey icon"></i>
 									<div class="content"><a href="<?php echo esc_url( $client_info['client_twitter'] ); ?>" target="_blank"><?php echo esc_html( $client_info['client_twitter'] ); ?></a></div>
 								</div>
 								<?php endif; ?>
-								<?php if ( isset( $client_info['client_instagram'] ) && '' != $client_info['client_instagram'] ) : ?>
+								<?php if ( isset( $client_info['client_instagram'] ) && '' !== $client_info['client_instagram'] ) : ?>
 								<div class="item">
 									<i class="instagram grey icon"></i>
 									<div class="content"><a href="<?php echo esc_url( $client_info['client_instagram'] ); ?>" target="_blank"><?php echo esc_html( $client_info['client_instagram'] ); ?></a></div>
 								</div>
 								<?php endif; ?>
-								<?php if ( isset( $client_info['client_linkedin'] ) && '' != $client_info['client_linkedin'] ) : ?>
+								<?php if ( isset( $client_info['client_linkedin'] ) && '' !== $client_info['client_linkedin'] ) : ?>
 								<div class="item">
 									<i class="linkedin grey icon"></i>
 									<div class="content"><a href="<?php echo esc_url( $client_info['client_linkedin'] ); ?>" target="_blank"><?php echo esc_html( $client_info['client_linkedin'] ); ?></a></div>
 								</div>
 								<?php endif; ?>
-								<?php if ( ( isset( $client_info['address_1'] ) && '' != $client_info['address_1'] ) || ( isset( $client_info['address_2'] ) && '' != $client_info['address_2'] ) || ( isset( $client_info['city'] ) && '' != $client_info['city'] ) || ( isset( $client_info['state'] ) && '' != $client_info['state'] ) || ( isset( $client_info['zip'] ) && '' != $client_info['zip'] ) || ( isset( $client_info['country'] ) && '' != $client_info['country'] ) ) : ?>
+								<?php if ( ( isset( $client_info['address_1'] ) && '' !== $client_info['address_1'] ) || ( isset( $client_info['address_2'] ) && '' !== $client_info['address_2'] ) || ( isset( $client_info['city'] ) && '' !== $client_info['city'] ) || ( isset( $client_info['state'] ) && '' !== $client_info['state'] ) || ( isset( $client_info['zip'] ) && '' !== $client_info['zip'] ) || ( isset( $client_info['country'] ) && '' !== $client_info['country'] ) ) : ?>
 								<div class="item">
 								<i class="map marker grey icon"></i>
 									<div class="content">
-										<?php if ( isset( $client_info['address_1'] ) && '' != $client_info['address_1'] ) : ?>
+										<?php if ( isset( $client_info['address_1'] ) && '' !== $client_info['address_1'] ) : ?>
 											<?php echo esc_html( $client_info['address_1'] ); ?>
 										<?php endif; ?>
-									<?php if ( isset( $client_info['address_2'] ) && '' != $client_info['address_2'] ) : ?>
+									<?php if ( isset( $client_info['address_2'] ) && '' !== $client_info['address_2'] ) : ?>
 												<?php echo esc_html( $client_info['address_2'] ); ?>
 											<?php endif; ?>
-											<?php if ( isset( $client_info['city'] ) && '' != $client_info['city'] ) : ?>
+											<?php if ( isset( $client_info['city'] ) && '' !== $client_info['city'] ) : ?>
 												<?php echo esc_html( $client_info['city'] ); ?>
 											<?php endif; ?>
-											<?php if ( isset( $client_info['zip'] ) && '' != $client_info['zip'] ) : ?>
+											<?php if ( isset( $client_info['zip'] ) && '' !== $client_info['zip'] ) : ?>
 												<?php echo esc_html( $client_info['zip'] ); ?>
 											<?php endif; ?>
-											<?php if ( isset( $client_info['state'] ) && '' != $client_info['state'] ) : ?>
+											<?php if ( isset( $client_info['state'] ) && '' !== $client_info['state'] ) : ?>
 												<?php echo esc_html( $client_info['state'] ); ?>
 											<?php endif; ?>
-											<?php if ( isset( $client_info['country'] ) && '' != $client_info['country'] ) : ?>
+											<?php if ( isset( $client_info['country'] ) && '' !== $client_info['country'] ) : ?>
 												<?php echo esc_html( $client_info['country'] ); ?>
 								<?php endif; ?>								
 								</div>
 								</div>
 								<?php endif; ?>
-								<?php if ( isset( $client_info['created'] ) && 0 != $client_info['created'] ) : ?>
+								<?php if ( isset( $client_info['created'] ) && ! empty( $client_info['created'] ) ) : ?>
 								<div class="item">
 									<i class="calendar icon"></i>
 									<div class="content"><?php echo esc_html( MainWP_Utility::format_date( $client_info['created'] ) ); ?></div>
@@ -197,9 +197,10 @@ class MainWP_Client_Overview_Info {
 				<?php } ?>
 			</div>
 			<div class="column">
-				<?php if ( 0 == intval( $client_info['suspended'] ) || 1 == intval( $client_info['suspended'] ) ) : ?>
-					<a href="javascript:void(0);" suspend-status="<?php echo intval( $client_info['suspended'] ); ?>" title="" class="ui mini fluid button client-suspend-unsuspend-sites"><?php echo 0 == $client_info['suspended'] ? esc_html__( 'Suspend Sites', 'mainwp' ) : esc_html__( 'Unsuspend Sites', 'mainwp' ); ?></a></div>
+				<?php if ( 0 === intval( $client_info['suspended'] ) || 1 === intval( $client_info['suspended'] ) ) : ?>
+					<a href="javascript:void(0);" suspend-status="<?php echo intval( $client_info['suspended'] ); ?>" title="" class="ui mini fluid button client-suspend-unsuspend-sites"><?php echo empty( $client_info['suspended'] ) ? esc_html__( 'Suspend Sites', 'mainwp' ) : esc_html__( 'Unsuspend Sites', 'mainwp' ); ?></a>
 				<?php endif; ?>
+			</div>
 		</div>
 		<?php
 	}

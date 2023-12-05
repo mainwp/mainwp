@@ -1411,7 +1411,7 @@ jQuery(document).ready(function () {
   });
 
   // Trigger the single site reconnect process
-  jQuery('#mainwp-manage-sites-table').on('click', '.mainwp_site_reconnect', function () {
+  jQuery('.mainwp-manage-wpsites-table').on('click', '.mainwp_site_reconnect', function () {
     mainwp_managesites_reconnect(jQuery(this));
     return false;
   });

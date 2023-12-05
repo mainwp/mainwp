@@ -77,7 +77,6 @@ class MainWP_Deprecated_Hooks {
 		'mainwp-pageheader-post'           => '4.1.5.1',
 		'mainwp-pagefooter-post'           => '4.1.5.1',
 		'mainwp-pageheader-page'           => '4.1.5.1',
-		'mainwp-pagefooter-post'           => '4.1.5.1',
 	);
 
 	/**
@@ -173,5 +172,4 @@ class MainWP_Deprecated_Hooks {
 		}
 		// @codingStandardsIgnoreEnd
 	}
-
 }

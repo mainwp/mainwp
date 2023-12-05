@@ -48,7 +48,7 @@ class MainWP_Common_Functions {
 	 * @return MainWP_DB_Common
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -61,7 +61,7 @@ class MainWP_Common_Functions {
 	 */
 	public function __construct() {
 		self::$instance = $this;
-		if ( null == $this->userExtension ) {
+		if ( null === $this->userExtension ) {
 			$this->userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		}
 	}
@@ -83,7 +83,7 @@ class MainWP_Common_Functions {
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			$hasSyncErrors = ( '' !== $website->sync_errors );
 			$cnt           = 0;
-			if ( 1 == $website->offline_check_result && ! $hasSyncErrors ) {
+			if ( 1 === (int) $website->offline_check_result && ! $hasSyncErrors ) {
 				$total_wp_upgrades     = 0;
 				$total_plugin_upgrades = 0;
 				$total_theme_upgrades  = 0;
@@ -96,7 +96,7 @@ class MainWP_Common_Functions {
 				}
 
 				if ( is_array( $wp_upgrades ) && 0 < count( $wp_upgrades ) ) {
-					$total_wp_upgrades ++;
+					++$total_wp_upgrades;
 				}
 
 				$plugin_upgrades = ! empty( $website->plugin_upgrades ) ? json_decode( $website->plugin_upgrades, true ) : array();
@@ -171,5 +171,4 @@ class MainWP_Common_Functions {
 
 		return $site_ids;
 	}
-
 }

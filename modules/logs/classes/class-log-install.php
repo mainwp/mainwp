@@ -50,7 +50,7 @@ class Log_Install extends MainWP_Install {
 	 * @return instance of class.
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -74,7 +74,7 @@ class Log_Install extends MainWP_Install {
 		$currentVersion = get_site_option( $this->log_db_option_key );
 
 		$rslt = $this->query( "SHOW TABLES LIKE '" . $this->table_name( 'wp_logs' ) . "'" );
-		if ( 0 == self::num_rows( $rslt ) ) {
+		if ( 0 === self::num_rows( $rslt ) ) {
 			$currentVersion = false;
 		}
 
@@ -104,7 +104,7 @@ class Log_Install extends MainWP_Install {
 	KEY action (action),
 	KEY state (state)";
 
-		if ( '' == $currentVersion ) {
+		if ( empty( $currentVersion ) ) {
 			$tbl .= ',
 		PRIMARY KEY (log_id)';
 		}
@@ -119,7 +119,7 @@ class Log_Install extends MainWP_Install {
 	KEY meta_log_id (meta_log_id),
 	KEY meta_key (meta_key(191))';
 
-		if ( '' == $currentVersion ) {
+		if ( empty( $currentVersion ) ) {
 			$tbl .= ',
 		PRIMARY KEY  (`meta_id`)  ';
 		}

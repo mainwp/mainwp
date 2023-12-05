@@ -81,5 +81,4 @@ class MainWP_Exception extends \Exception {
 	public function get_data() {
 		return $this->data;
 	}
-
 }

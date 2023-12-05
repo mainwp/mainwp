@@ -78,7 +78,7 @@ class MainWP_Extensions_Handler {
 		}
 
 		foreach ( $currentExtensions as $extension ) {
-			if ( isset( $extension['api'] ) && ( $extension['api'] == $slug ) ) {
+			if ( isset( $extension['api'] ) && ( $extension['api'] === $slug ) ) {
 				return $extension['slug'];
 			}
 		}
@@ -345,29 +345,26 @@ class MainWP_Extensions_Handler {
 	/**
 	 * HTTP Request Reject Unsafe Urls.
 	 *
-	 * @param bool  $r Results.
-	 * @param mixed $url Upgrade Extension URL.
+	 * @param bool $args args.
 	 *
-	 * @return mixed false|$r.
+	 * @return mixed args.
 	 */
-	public static function http_request_reject_unsafe_urls( $r, $url ) {
-		$r['reject_unsafe_urls'] = false;
+	public static function http_request_reject_unsafe_urls( $args ) {
+		$args['reject_unsafe_urls'] = false;
 
-		return $r;
+		return $args;
 	}
 
 	/**
 	 * No SSL Filter Function.
 	 *
-	 * @param bool  $r Results.
-	 * @param mixed $url Upgrade Extension URL.
+	 * @param bool $args args.
 	 *
-	 * @return mixed false|$r.
+	 * @return mixed args.
 	 */
-	public static function no_ssl_filter_function( $r, $url ) {
-		$r['sslverify'] = false;
-
-		return $r;
+	public static function no_ssl_filter_function( $args ) {
+		$args['sslverify'] = false;
+		return $args;
 	}
 
 	/**
@@ -418,9 +415,9 @@ class MainWP_Extensions_Handler {
 
 		$installer          = new \WP_Upgrader();
 		$ssl_verifyhost     = get_option( 'mainwp_sslVerifyCertificate' );
-		$ssl_api_verifyhost = ( ( false === get_option( 'mainwp_api_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
+		$ssl_api_verifyhost = ( ( false === get_option( 'mainwp_api_sslVerifyCertificate' ) ) || ( 1 === get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
 
-		if ( '0' === $ssl_verifyhost || 0 == $ssl_api_verifyhost ) {
+		if ( empty( $ssl_api_verifyhost ) ) {
 			add_filter( 'http_request_args', array( self::get_class_name(), 'no_ssl_filter_function' ), 99, 2 );
 		}
 
@@ -464,7 +461,7 @@ class MainWP_Extensions_Handler {
 
 				$thePlugin = get_plugin_data( $path . $srcFile );
 
-				if ( null != $thePlugin && '' !== $thePlugin && '' !== $thePlugin['Name'] ) {
+				if ( null !== $thePlugin && '' !== $thePlugin && '' !== $thePlugin['Name'] ) {
 					$the_name    = self::polish_string_name( $thePlugin['Name'] );
 					$output     .= esc_html( $the_name ) . ' ' . esc_html__( 'installed successfully. Do not forget to activate the extension API license.', 'mainwp' );
 					$plugin_slug = $result['destination_name'] . '/' . $srcFile;
@@ -514,7 +511,7 @@ class MainWP_Extensions_Handler {
 		if ( isset( $extensions ) && is_array( $extensions ) ) {
 			foreach ( $extensions as $extension ) {
 				$slug = dirname( $extension['slug'] );
-				if ( $slug == $pAPI ) {
+				if ( $slug === $pAPI ) {
 					return true;
 				}
 			}
@@ -567,10 +564,10 @@ class MainWP_Extensions_Handler {
 	 * @param mixed $pluginFile MainWP Extensoin to verify.
 	 * @param mixed $key Child Site Key.
 	 *
-	 * @return mixed md5( $pluginFile . '-SNNonceAdder' ) == $key
+	 * @return mixed md5( $pluginFile . '-SNNonceAdder' ) === $key
 	 */
 	public static function hook_verify( $pluginFile, $key ) {
-		return ( md5( $pluginFile . '-SNNonceAdder' ) == $key );
+		return ( md5( $pluginFile . '-SNNonceAdder' ) === $key );
 	}
 
 	/**
@@ -685,7 +682,7 @@ class MainWP_Extensions_Handler {
 
 		if ( is_array( $options ) ) {
 			foreach ( $options as $option_name => $value ) {
-				if ( ( true == $value ) && in_array( $option_name, self::$possible_options ) ) {
+				if ( ! empty( $value ) && in_array( $option_name, self::$possible_options ) ) {
 					if ( ! in_array( $option_name, $data_fields ) ) {
 						$data_fields[] = $option_name;
 					}
@@ -831,7 +828,7 @@ class MainWP_Extensions_Handler {
 		$rowcount    = false;
 		$extraWhere  = null;
 
-		if ( isset( $websiteid ) && ( null != $websiteid ) ) {
+		if ( isset( $websiteid ) && ( null !== $websiteid ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
 
 			if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
@@ -1153,7 +1150,7 @@ class MainWP_Extensions_Handler {
 		}
 
 		if ( $clone_site ) {
-			if ( 0 == $clone_site->is_staging ) {
+			if ( empty( $clone_site->is_staging ) ) {
 				return false;
 			}
 

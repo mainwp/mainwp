@@ -53,7 +53,7 @@ class MainWP_Site_Info {
 		$website = MainWP_DB::instance()->get_website_by_id( $current_wpid, true );
 
 		$website_info = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
-		$website_info = ( '' != $website_info ) ? json_decode( $website_info, true ) : array();
+		$website_info = ! empty( $website_info ) ? json_decode( $website_info, true ) : array();
 
 		if ( is_array( $website_info ) ) {
 			$code        = $website->http_response_code;
@@ -144,7 +144,7 @@ class MainWP_Site_Info {
 				<?php
 			} else {
 
-				$website_info['group'] = ( '' == $website->wpgroups ? 'None' : $website->wpgroups );
+				$website_info['group'] = empty( $website->wpgroups ) ? 'None' : $website->wpgroups;
 
 				?>
 			<table class="ui celled striped table">
@@ -165,8 +165,8 @@ class MainWP_Site_Info {
 				foreach ( $child_site_info as $index => $title ) {
 					$val = '';
 					if ( isset( $website_info[ $index ] ) ) {
-						if ( 'debug_mode' == $index ) {
-							$val = 1 == $website_info[ $index ] ? 'Enabled' : 'Disabled';
+						if ( 'debug_mode' === $index ) {
+							$val = ( 1 === (int) $website_info[ $index ] ) ? 'Enabled' : 'Disabled';
 						} else {
 							$val = $website_info[ $index ];
 						}
@@ -207,5 +207,4 @@ class MainWP_Site_Info {
 		</div>
 		<?php
 	}
-
 }

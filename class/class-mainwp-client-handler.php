@@ -34,7 +34,7 @@ class MainWP_Client_Handler {
 	 * @return MainWP_Client_Handler
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -141,7 +141,7 @@ class MainWP_Client_Handler {
 	public static function get_mini_default_client_fields() {
 
 		return array(
-			'client.name' => array(
+			'client.name'  => array(
 				'title'    => esc_html__( 'Client Name (Required)', 'mainwp' ),
 				'desc'     => esc_html__( 'Displays the Client name', 'mainwp' ),
 				'db_field' => 'name',
@@ -515,7 +515,7 @@ class MainWP_Client_Handler {
 		if ( ! empty( $contact_fields ) && is_array( $contact_fields ) ) {
 			foreach ( $contact_fields as $tok_name => $field ) {
 				$db_field = isset( $field['db_field'] ) ? $field['db_field'] : '';
-				$val      = '' != $db_field && property_exists( $client_info, $db_field ) ? $client_info->{$db_field} : false;
+				$val      = '' !== $db_field && property_exists( $client_info, $db_field ) ? $client_info->{$db_field} : false;
 				if ( false !== $val ) {
 					$client_tokens[ $tok_name ] = $val;
 				}
@@ -561,7 +561,7 @@ class MainWP_Client_Handler {
 			$existed_emails = str_replace( '|', '<br/>', $existed_emails );
 			?>
 			<div class="ui yellow message">
-				<?php echo sprintf( esc_html__( 'Existed contact emails.%sPlease try again.', 'mainwp' ), '<br/>' . $existed_emails . '</br>' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+				<?php printf( esc_html__( 'Existed contact emails.%sPlease try again.', 'mainwp' ), '<br/>' . $existed_emails . '</br>' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 			</div>
 			<?php
 		}

@@ -62,9 +62,9 @@ class MainWP_QQ2_File_Uploader {
 		*/
 		$this->sizeLimit = apply_filters( 'mainwp_file_uploader_size_limit', $sizeLimit );
 
-		if ( isset( $_GET['qqfile'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['qqfile'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$this->file = new MainWP_QQ2_Uploaded_File_Xhr();
-		} elseif ( isset( $_FILES['qqfile'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		} elseif ( isset( $_FILES['qqfile'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$this->file = new MainWP_QQ2_Uploaded_File_Form();
 		} else {
 			$this->file = false;
@@ -112,7 +112,7 @@ class MainWP_QQ2_File_Uploader {
 
 		$size = $this->file->get_size();
 
-		if ( 0 == $size ) {
+		if ( empty( $size ) ) {
 			return array( 'error' => 'File is empty!' );
 		}
 

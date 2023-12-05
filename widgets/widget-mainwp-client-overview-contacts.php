@@ -104,37 +104,37 @@ class MainWP_Client_Overview_Contacts {
 								</div>
 								<div class="twelve wide middle aligned column">
 							<div class="ui relaxed list">
-								<?php if ( isset( $contact_info['contact_email'] ) && '' != $contact_info['contact_email'] ) : ?>
+								<?php if ( isset( $contact_info['contact_email'] ) && '' !== $contact_info['contact_email'] ) : ?>
 								<div class="item">
 									<i class="envelope grey icon"></i>
 									<div class="content"><a href="mailto:<?php echo esc_url( $contact_info['contact_email'] ); ?>" target="_blank"><?php echo esc_html( $contact_info['contact_email'] ); ?></a> <i data-clipboard-text="<?php echo esc_html( $contact_info['contact_email'] ); ?>" style="cursor:pointer" class="copy green icon copy-to-clipboard"></i></div>
 											</div>
 								<?php endif; ?>
-								<?php if ( isset( $contact_info['contact_phone'] ) && '' != $contact_info['contact_phone'] ) : ?>
+								<?php if ( isset( $contact_info['contact_phone'] ) && '' !== $contact_info['contact_phone'] ) : ?>
 								<div class="item">
 									<i class="phone grey rotated icon"></i>
 									<div class="content"><a href="tel:<?php echo esc_url( $contact_info['contact_phone'] ); ?>" target="_blank"><?php echo esc_html( $contact_info['contact_phone'] ); ?></a></div>
 											</div>
 								<?php endif; ?>
-								<?php if ( isset( $contact_info['facebook'] ) && '' != $contact_info['facebook'] ) : ?>
+								<?php if ( isset( $contact_info['facebook'] ) && '' !== $contact_info['facebook'] ) : ?>
 											<div class="item">
 												<i class="facebook grey icon"></i>
 									<div class="content"><a href="<?php echo esc_url( $contact_info['facebook'] ); ?>" target="_blank"><?php echo esc_html( $contact_info['facebook'] ); ?></a></div>
 											</div>
 								<?php endif; ?>
-								<?php if ( isset( $contact_info['twitter'] ) && '' != $contact_info['twitter'] ) : ?>
+								<?php if ( isset( $contact_info['twitter'] ) && '' !== $contact_info['twitter'] ) : ?>
 											<div class="item">
 												<i class="twitter grey icon"></i>
 									<div class="content"><a href="<?php echo esc_url( $contact_info['twitter'] ); ?>" target="_blank"><?php echo esc_html( $contact_info['twitter'] ); ?></a></div>
 											</div>
 								<?php endif; ?>
-								<?php if ( isset( $contact_info['instagram'] ) && '' != $contact_info['instagram'] ) : ?>
+								<?php if ( isset( $contact_info['instagram'] ) && '' !== $contact_info['instagram'] ) : ?>
 											<div class="item">
 												<i class="instagram grey icon"></i>
 									<div class="content"><a href="<?php echo esc_url( $contact_info['instagram'] ); ?>" target="_blank"><?php echo esc_html( $contact_info['instagram'] ); ?></a></div>
 											</div>
 								<?php endif; ?>
-								<?php if ( isset( $contact_info['linkedin'] ) && '' != $contact_info['linkedin'] ) : ?>
+								<?php if ( isset( $contact_info['linkedin'] ) && '' !== $contact_info['linkedin'] ) : ?>
 											<div class="item">
 												<i class="linkedin grey icon"></i>
 									<div class="content"><a href="<?php echo esc_url( $contact_info['linkedin'] ); ?>" target="_blank"><?php echo esc_html( $contact_info['linkedin'] ); ?></a></div>
@@ -165,5 +165,4 @@ class MainWP_Client_Overview_Contacts {
 			</div>
 			<?php
 	}
-
 }

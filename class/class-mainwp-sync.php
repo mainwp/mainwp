@@ -61,11 +61,11 @@ class MainWP_Sync {
 			return MainWP_Demo_Handle::get_instance()->handle_action_demo( $pWebsite, 'sync_site' );
 		}
 
-		if ( null == $pWebsite ) {
+		if ( null === $pWebsite ) {
 			return false;
 		}
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension_by_user_id( $pWebsite->userid );
-		if ( null == $userExtension ) {
+		if ( null === $userExtension ) {
 			return false;
 		}
 
@@ -95,7 +95,7 @@ class MainWP_Sync {
 						if ( in_array( $website->id, $disallowedCloneSites ) ) {
 							continue;
 						}
-						if ( $website->id == $pWebsite->id ) {
+						if ( $website->id === $pWebsite->id ) {
 							continue;
 						}
 
@@ -131,7 +131,7 @@ class MainWP_Sync {
 			$saved_days_number = apply_filters( 'mainwp_site_actions_saved_days_number', 30 );
 
 			$postdata = array(
-				'optimize'                        => ( ( get_option( 'mainwp_optimize', 0 ) == 1 ) ? 1 : 0 ),
+				'optimize'                        => 1 === (int) get_option( 'mainwp_optimize', 0 ) ? 1 : 0,
 				'cloneSites'                      => ( ! $cloneEnabled ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ) ),
 				'othersData'                      => wp_json_encode( $othersData ),
 				'server'                          => get_admin_url(),
@@ -156,10 +156,10 @@ class MainWP_Sync {
 			$sync_errors  = '';
 			$check_result = 1;
 
-			if ( $e->getMessage() == 'HTTPERROR' ) {
-				$sync_errors  = esc_html__( 'HTTP error', 'mainwp' ) . ( $e->get_message_extra() != null ? ' - ' . $e->get_message_extra() : '' );
+			if ( $e->getMessage() === 'HTTPERROR' ) {
+				$sync_errors  = esc_html__( 'HTTP error', 'mainwp' ) . ( ! empty( $e->get_message_extra() ) ? ' - ' . $e->get_message_extra() : '' );
 				$check_result = - 1;
-			} elseif ( $e->getMessage() == 'NOMAINWP' ) {
+			} elseif ( $e->getMessage() === 'NOMAINWP' ) {
 				$sync_errors  = sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a>' );
 				$check_result = 1;
 			}
@@ -248,7 +248,7 @@ class MainWP_Sync {
 		}
 
 		$phpversion = '';
-		if ( isset( $information['site_info'] ) && null != $information['site_info'] ) {
+		if ( isset( $information['site_info'] ) && ! empty( $information['site_info'] ) ) {
 			if ( is_array( $information['site_info'] ) && isset( $information['site_info']['phpversion'] ) ) {
 				$phpversion = $information['site_info']['phpversion'];
 			}
@@ -270,14 +270,14 @@ class MainWP_Sync {
 			$done                         = true;
 		}
 
-		if ( isset( $information['wp_updates'] ) && null != $information['wp_updates'] ) {
+		if ( isset( $information['wp_updates'] ) && ! empty( $information['wp_updates'] ) ) {
 			MainWP_DB::instance()->update_website_option(
 				$pWebsite,
 				'wp_upgrades',
 				wp_json_encode(
 					array(
-						'current'         => $information['wpversion'],
-						'new'             => $information['wp_updates'],
+						'current' => $information['wpversion'],
+						'new'     => $information['wp_updates'],
 					)
 				)
 			);
@@ -342,8 +342,8 @@ class MainWP_Sync {
 
 				$tmp_issues           = array_filter(
 					$securityStats,
-					function( $v, $k ) {
-						return 'N' == $v;
+					function ( $v ) {
+						return 'N' === $v;
 					},
 					ARRAY_FILTER_USE_BOTH
 				);
@@ -450,7 +450,7 @@ class MainWP_Sync {
 			$hval          = $hstatus['val'];
 			$critical      = $hstatus['critical'];
 			$health_status = 0;
-			if ( 80 <= $hval && 0 == $critical ) {
+			if ( 80 <= $hval && empty( $critical ) ) {
 				$health_status = 0; // Good.
 			} else {
 				$health_status = 1; // Should be improved'.
@@ -618,7 +618,7 @@ class MainWP_Sync {
 					$error = $e->getMessage();
 				}
 
-				if ( '' != $error ) {
+				if ( ! empty( $error ) ) {
 					return array( 'error' => $error );
 				} elseif ( isset( $information['faviIconUrl'] ) && ! empty( $information['faviIconUrl'] ) ) {
 					MainWP_Logger::instance()->debug( 'Downloading icon :: ' . esc_html( $information['faviIconUrl'] ) );
@@ -663,5 +663,4 @@ class MainWP_Sync {
 		}
 		return array( 'result' => 'NOSITE' );
 	}
-
 }

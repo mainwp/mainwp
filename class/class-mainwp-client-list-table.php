@@ -232,7 +232,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 	public function render_manage_sites_table_top() {
 		$items_bulk = $this->get_bulk_actions();
 
-		$selected_group = isset( $_REQUEST['tags'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['tags'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$selected_group = isset( $_REQUEST['tags'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['tags'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		?>
 		<div class="ui grid">
@@ -310,8 +310,8 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 			'with_tags'           => true,
 		);
 
-		if ( isset( $_GET['tags'] ) && ! empty( $_GET['tags'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$tags = sanitize_text_field( wp_unslash( rawurldecode( $_GET['tags'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['tags'] ) && ! empty( $_GET['tags'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$tags = sanitize_text_field( rawurldecode( wp_unslash( $_GET['tags'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			if ( ! empty( $tags ) ) {
 				if ( false !== strpos( $tags, ',' ) ) {
 					$tags = explode( ',', $tags );
@@ -326,8 +326,19 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 
 		$totalRecords = ( $clients ? count( $clients ) : 0 );
 
+		$clients_ids = array();
+		if ( is_array( $clients ) ) {
+			foreach ( $clients as $item ) {
+				if ( ! empty( $item['client_id'] ) ) {
+					$clients_ids[] = $item['client_id'];
+				}
+			}
+		}
+
 		// for compatible.
 		$optimize = $optimize ? true : false;
+
+		do_action( 'mainwp_clientstable_prepared_items', $clients, $clients_ids );
 
 		$this->items       = $clients;
 		$this->total_items = $totalRecords;
@@ -369,13 +380,13 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-client-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-client-info-message"></i>
-				<?php echo sprintf( esc_html__( 'Manage your clients.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">', '</a>' ); ?>
+				<?php printf( esc_html__( 'Manage your clients.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">', '</a>' ); ?>
 			</div>
 		<?php endif; ?>
 		<?php
 		MainWP_Client_Handler::show_notice_existed_contact_emails();
 		?>
-		<table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table">
+		<table id="mainwp-manage-clients-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table mainwp-manage-wpsites-table">
 			<thead>
 				<tr>
 					<?php $this->print_column_headers( $optimize, true ); ?>
@@ -430,8 +441,8 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 							var val = jQuery( '#mainwp_default_manage_clients_per_page' ).val();
 							var saved = jQuery( '#mainwp_default_manage_clients_per_page' ).attr( 'saved-value' );
 							if ( saved != val ) {
-								jQuery( '#mainwp-manage-sites-table' ).DataTable().page.len( val );
-								jQuery( '#mainwp-manage-sites-table' ).DataTable().state.save();
+								jQuery( '#mainwp-manage-clients-table' ).DataTable().page.len( val );
+								jQuery( '#mainwp-manage-clients-table' ).DataTable().state.save();
 							}
 						}
 					} ).modal( 'show' );
@@ -451,7 +462,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 				}
 
 				try {
-					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
+					$manage_sites_table = jQuery( '#mainwp-manage-clients-table' ).DataTable( {
 						"responsive" : responsive,
 						"searching" : <?php echo esc_js( $table_features['searching'] ); ?>,
 						"paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
@@ -695,7 +706,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 				<?php
 			} elseif ( 'websites' === $column_name ) {
 				$selected_sites = isset( $item['selected_sites'] ) ? trim( $item['selected_sites'] ) : '';
-				$selected_ids   = ( '' != $selected_sites ) ? explode( ',', $selected_sites ) : array();
+				$selected_ids   = ( '' !== $selected_sites ) ? explode( ',', $selected_sites ) : array();
 
 				$count = count( $selected_ids );
 				echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
@@ -711,7 +722,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 
 				$col_class = 'collapsing center aligned';
 				echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
-				if ( '' == $item['note'] ) :
+				if ( empty( $item['note'] ) ) :
 					?>
 					<a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Edit client notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
 				<?php else : ?>
@@ -739,5 +750,4 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 			$compatible = true;
 		}
 	}
-
 }

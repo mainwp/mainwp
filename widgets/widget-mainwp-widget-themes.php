@@ -58,7 +58,7 @@ class MainWP_Widget_Themes {
 			$website = MainWP_DB::fetch_object( $websites );
 			if ( $website && '' !== $website->themes ) {
 				$themes = json_decode( $website->themes, 1 );
-				if ( is_array( $themes ) && 0 != count( $themes ) ) {
+				if ( is_array( $themes ) && 0 !== count( $themes ) ) {
 					foreach ( $themes as $theme ) {
 						$allThemes[] = $theme;
 					}
@@ -151,7 +151,7 @@ class MainWP_Widget_Themes {
 			<div class="ui divided selection list">
 				<?php
 				$_count = count( $actived_themes );
-				for ( $i = 0; $i < $_count; $i ++ ) {
+				for ( $i = 0; $i < $_count; $i++ ) {
 					$slug = $actived_themes[ $i ]['slug'];
 					?>
 					<div class="item">
@@ -201,9 +201,9 @@ class MainWP_Widget_Themes {
 			<div class="ui divided selection list">
 				<?php
 				$_count = count( $inactive_themes );
-				for ( $i = 0; $i < $_count; $i ++ ) {
+				for ( $i = 0; $i < $_count; $i++ ) {
 					$slug      = $inactive_themes[ $i ]['slug'];
-					$is_parent = ( isset( $inactive_themes[ $i ]['parent_active'] ) && 1 == $inactive_themes[ $i ]['parent_active'] ) ? true : false;
+					$is_parent = ( isset( $inactive_themes[ $i ]['parent_active'] ) && 1 === (int) $inactive_themes[ $i ]['parent_active'] ) ? true : false;
 					?>
 					<div class="item">
 						<input class="themeName" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) ); ?>"/>
@@ -296,8 +296,8 @@ class MainWP_Widget_Themes {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action( $action ) {
-		$theme     = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
-		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$theme     = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( empty( $theme ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Theme or site ID not found. Please, reload the page and try again.', 'mainwp' ) ) ) );
@@ -353,5 +353,4 @@ class MainWP_Widget_Themes {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Unexpected error occurred. Please try again.', 'mainwp' ) ) ) );
 		}
 	}
-
 }

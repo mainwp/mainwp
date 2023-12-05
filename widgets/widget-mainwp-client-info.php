@@ -118,7 +118,7 @@ class MainWP_Client_Info {
 					foreach ( $default_client_fields as $field_name => $field ) {
 
 						$db_field = isset( $field['db_field'] ) ? $field['db_field'] : '';
-						$val      = ( '' != $db_field && isset( $client_info[ $db_field ] ) ) ? $client_info[ $db_field ] : '';
+						$val      = ( ! empty( $db_field ) && isset( $client_info[ $db_field ] ) ) ? $client_info[ $db_field ] : '';
 
 						if ( empty( $val ) ) {
 							continue;
@@ -143,7 +143,7 @@ class MainWP_Client_Info {
 									$esc_note   = MainWP_Utility::esc_content( $note );
 									$strip_note = wp_strip_all_tags( $esc_note );
 
-									if ( '' == $client_info['note'] ) :
+									if ( empty( $client_info['note'] ) ) :
 										?>
 										<a href="javascript:void(0)" class="mainwp-edit-client-note" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Edit client notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
 									<?php else : ?>

@@ -57,7 +57,8 @@ class Log_Settings {
 	 * Handle admin_init action.
 	 */
 	public function admin_init() {
-		if ( isset( $_POST['mainwp_module_log_settings_nonce'] ) && wp_verify_nonce( $_POST['mainwp_module_log_settings_nonce'], 'logs_settings_nonce' ) ) {
+		//phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( isset( $_POST['mainwp_module_log_settings_nonce'] ) && wp_verify_nonce( wp_unslash( $_POST['mainwp_module_log_settings_nonce'] ), 'logs_settings_nonce' ) ) {
 			$this->options['enabled']     = isset( $_POST['mainwp_module_log_enabled'] ) && ! empty( $_POST['mainwp_module_log_enabled'] ) ? 1 : 0;
 			$this->options['auto_purge']  = isset( $_POST['mainwp_module_log_enable_auto_purge'] ) && ! empty( $_POST['mainwp_module_log_enable_auto_purge'] ) ? 1 : 0;
 			$this->options['records_ttl'] = isset( $_POST['mainwp_module_log_records_ttl'] ) ? intval( $_POST['mainwp_module_log_records_ttl'] ) : 100;
@@ -181,5 +182,4 @@ class Log_Settings {
 		/** This action is documented in ../pages/page-mainwp-manage-sites.php */
 		do_action( 'mainwp_pagefooter_settings', 'Insights' );
 	}
-
 }

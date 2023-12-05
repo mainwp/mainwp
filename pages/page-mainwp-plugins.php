@@ -356,7 +356,7 @@ class MainWP_Plugins {
 				$item           = array();
 				$item['title']  = $subPage['title'];
 				$item['href']   = 'admin.php?page=Plugins' . $subPage['slug'];
-				$item['active'] = ( $subPage['slug'] == $shownPage ) ? true : false;
+				$item['active'] = ( $subPage['slug'] === $shownPage ) ? true : false;
 				$renderItems[]  = $item;
 			}
 		}
@@ -368,10 +368,8 @@ class MainWP_Plugins {
 	 * Method render_footer()
 	 *
 	 * Render MainWP Plugins Page Footer.
-	 *
-	 * @param string $shownPage The page slug shown at this moment.
 	 */
-	public static function render_footer( $shownPage ) {
+	public static function render_footer() {
 		echo '</div>';
 	}
 
@@ -388,7 +386,7 @@ class MainWP_Plugins {
 		$selected_groups  = array();
 		$selected_clients = array();
 
-		if ( null != $cachedSearch ) {
+		if ( null !== $cachedSearch ) {
 			if ( is_array( $cachedSearch['sites'] ) ) {
 				$selected_sites = $cachedSearch['sites'];
 			} elseif ( is_array( $cachedSearch['groups'] ) ) {
@@ -462,14 +460,14 @@ class MainWP_Plugins {
 							<div><?php echo esc_html__( 'Manage installed plugins on your child sites. Here you can activate, deactivate, and delete installed plugins.', 'mainwp' ); ?></div>
 							<p><?php echo esc_html__( 'To Activate or Delete a specific plugin, you must search only for Inactive plugin on your child sites. If you search for Active or both Active and Inactive, the Activate and Delete actions will be disabled.', 'mainwp' ); ?></p>
 							<p><?php echo esc_html__( 'To Deactivate a specific plugin, you must search only for Active plugins on your child sites. If you search for Inactive or both Active and Inactive, the Deactivate action will be disabled.', 'mainwp' ); ?></p>
-							<p><?php echo sprintf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">', '</a>' ); ?></p>
+							<p><?php printf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">', '</a>' ); ?></p>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
 					<div id="mainwp-loading-plugins-row" class="ui active inverted dimmer" style="display:none">
 						<div class="ui large text loader"><?php esc_html_e( 'Loading Plugins...', 'mainwp' ); ?></div>
 					</div>
-					<div id="mainwp-plugins-main-content" <?php echo ( null != $cachedSearch ) ? 'style="display: block;"' : ''; ?> >
+					<div id="mainwp-plugins-main-content" <?php echo ( null !== $cachedSearch ) ? 'style="display: block;"' : ''; ?> >
 						<div id="mainwp-plugins-content">
 							<?php if ( is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) : ?>
 								<?php echo $cachedResult['result']; // phpcs:ignore WordPress.Security.EscapeOutput ?>
@@ -634,8 +632,8 @@ class MainWP_Plugins {
 		if ( $cachedSearch && isset( $cachedSearch['keyword'] ) ) {
 			$cachedSearch['keyword'] = trim( $cachedSearch['keyword'] );
 		}
-		$disabledNegative = ( null != $cachedSearch ) && ! empty( $cachedSearch['keyword'] ) ? false : true;
-		$checkedNegative  = ! $disabledNegative && ( null != $cachedSearch ) && ! empty( $cachedSearch['not_criteria'] ) ? true : false;
+		$disabledNegative = ( null !== $cachedSearch ) && ! empty( $cachedSearch['keyword'] ) ? false : true;
+		$checkedNegative  = ! $disabledNegative && ( null !== $cachedSearch ) && ! empty( $cachedSearch['not_criteria'] ) ? true : false;
 		?>
 		<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
 			<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
@@ -643,7 +641,7 @@ class MainWP_Plugins {
 				<div class="ui mini form">
 					<div class="field">
 						<div class="ui input fluid">
-							<input type="text" placeholder="<?php esc_attr_e( 'Plugin name', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; //phpcs:ignore -- escaped. ?>" />
+							<input type="text" placeholder="<?php esc_attr_e( 'Plugin name', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value="<?php echo ( null !== $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; //phpcs:ignore -- escaped. ?>" />
 						</div>
 					</div>
 					<div class="ui hidden fitted divider"></div>
@@ -733,28 +731,28 @@ class MainWP_Plugins {
 		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 		$data_fields[] = 'plugins';
 
-		if ( 1 == get_option( 'mainwp_optimize' ) || MainWP_Demo_Handle::is_demo_mode() ) {
+		if ( 1 === (int) get_option( 'mainwp_optimize' ) || MainWP_Demo_Handle::is_demo_mode() ) {
 
 			$multi_kws = explode( ',', $keyword );
 			$multi_kws = array_filter( array_map( 'trim', $multi_kws ) );
 
-			if ( '' != $sites ) {
+			if ( ! empty( $sites ) ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$website          = MainWP_DB::instance()->get_website_by_id( $v );
 						$allPlugins       = json_decode( $website->plugins, true );
 						$_count           = count( $allPlugins );
 						$_count_installed = 0;
-						for ( $i = 0; $i < $_count; $i ++ ) {
+						for ( $i = 0; $i < $_count; $i++ ) {
 							$plugin = $allPlugins[ $i ];
 
 							if ( ( 'active' === $status ) || ( 'inactive' === $status ) ) {
-								if ( ( ( 'active' === $status ) ? 1 : 0 ) != $plugin['active'] ) {
+								if ( ( ( 'active' === $status ) ? 1 : 0 ) !== (int) $plugin['active'] ) {
 										continue;
 								}
 							}
 
-							if ( '' != $keyword ) {
+							if ( ! empty( $keyword ) ) {
 								if ( $not_criteria ) {
 									if ( MainWP_Utility::multi_find_keywords( $plugin['name'], $multi_kws ) ) {
 										continue;
@@ -768,12 +766,12 @@ class MainWP_Plugins {
 							$plugin['websiteurl']  = $website->url;
 							$plugin['websitename'] = $website->name;
 							$output->plugins[]     = $plugin;
-							$_count_installed++;
+							++$_count_installed;
 						}
 
 						if ( 0 === $_count_installed ) {
 							if ( 'not_installed' === $status ) {
-								for ( $i = 0; $i < $_count; $i ++ ) {
+								for ( $i = 0; $i < $_count; $i++ ) {
 									$plugin                      = $allPlugins[ $i ];
 									$plugin['websiteid']         = $website->id;
 									$plugin['websiteurl']        = $website->url;
@@ -791,22 +789,22 @@ class MainWP_Plugins {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 								continue;
 							}
 							$allPlugins       = json_decode( $website->plugins, true );
 							$_count           = count( $allPlugins );
 							$_count_installed = 0;
-							for ( $i = 0; $i < $_count; $i ++ ) {
+							for ( $i = 0; $i < $_count; $i++ ) {
 								$plugin = $allPlugins[ $i ];
 
 								if ( ( 'active' === $status ) || ( 'inactive' === $status ) ) {
-									if ( ( ( 'active' === $status ) ? 1 : 0 ) != $plugin['active'] ) {
+									if ( ( ( 'active' === $status ) ? 1 : 0 ) !== (int) $plugin['active'] ) {
 										continue;
 									}
 								}
 
-								if ( '' != $keyword ) {
+								if ( ! empty( $keyword ) ) {
 									if ( $not_criteria ) {
 										if ( MainWP_Utility::multi_find_keywords( $plugin['name'], $multi_kws ) ) {
 											continue;
@@ -820,12 +818,12 @@ class MainWP_Plugins {
 								$plugin['websiteurl']  = $website->url;
 								$plugin['websitename'] = $website->name;
 								$output->plugins[]     = $plugin;
-								$_count_installed++;
+								++$_count_installed;
 							}
 
 							if ( 0 === $_count_installed ) {
 								if ( 'not_installed' === $status ) {
-									for ( $i = 0; $i < $_count; $i ++ ) {
+									for ( $i = 0; $i < $_count; $i++ ) {
 										$plugin                      = $allPlugins[ $i ];
 										$plugin['websiteid']         = $website->id;
 										$plugin['websiteurl']        = $website->url;
@@ -849,22 +847,22 @@ class MainWP_Plugins {
 				);
 				if ( $websites ) {
 					foreach ( $websites as $website ) {
-						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+						if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 							continue;
 						}
 						$allPlugins       = json_decode( $website->plugins, true );
 						$_count           = count( $allPlugins );
 						$_count_installed = 0;
-						for ( $i = 0; $i < $_count; $i ++ ) {
+						for ( $i = 0; $i < $_count; $i++ ) {
 							$plugin = $allPlugins[ $i ];
 
 							if ( ( 'active' === $status ) || ( 'inactive' === $status ) ) {
-								if ( ( ( 'active' === $status ) ? 1 : 0 ) != $plugin['active'] ) {
+								if ( ( ( 'active' === $status ) ? 1 : 0 ) !== (int) $plugin['active'] ) {
 									continue;
 								}
 							}
 
-							if ( '' != $keyword ) {
+							if ( ! empty( $keyword ) ) {
 								if ( $not_criteria ) {
 									if ( MainWP_Utility::multi_find_keywords( $plugin['name'], $multi_kws ) ) {
 										continue;
@@ -878,11 +876,11 @@ class MainWP_Plugins {
 							$plugin['websiteurl']  = $website->url;
 							$plugin['websitename'] = $website->name;
 							$output->plugins[]     = $plugin;
-							$_count_installed++;
+							++$_count_installed;
 						}
 						if ( 0 === $_count_installed ) {
 							if ( 'not_installed' === $status ) {
-								for ( $i = 0; $i < $_count; $i ++ ) {
+								for ( $i = 0; $i < $_count; $i++ ) {
 									$plugin                      = $allPlugins[ $i ];
 									$plugin['websiteid']         = $website->id;
 									$plugin['websiteurl']        = $website->url;
@@ -902,7 +900,7 @@ class MainWP_Plugins {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$website = MainWP_DB::instance()->get_website_by_id( $v );
 
-						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+						if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 							continue;
 						}
 
@@ -919,7 +917,7 @@ class MainWP_Plugins {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 								continue;
 							}
 							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
@@ -941,7 +939,7 @@ class MainWP_Plugins {
 				);
 				if ( $websites ) {
 					foreach ( $websites as $website ) {
-						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+						if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 							continue;
 						}
 						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
@@ -976,7 +974,7 @@ class MainWP_Plugins {
 					$error_results .= MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ': ' . $error . ' <br/>';
 				}
 			}
-			// phpcs:enable WordPress.Security.EscapeOutput
+			// phpcs:enable
 		}
 
 		MainWP_Cache::add_context(
@@ -1016,7 +1014,7 @@ class MainWP_Plugins {
 				$plugins_list = $output->plugins_installed;
 				$view_mode    = MAINWP_VIEW_PER_SITE;
 			}
-		} elseif ( 0 == count( $output->plugins ) ) {
+		} elseif ( 0 === count( $output->plugins ) ) {
 			?>
 			<div class="ui message yellow"><?php esc_html_e( 'No plugins found.', 'mainwp' ); ?></div>
 			<?php
@@ -1060,7 +1058,7 @@ class MainWP_Plugins {
 
 			ksort( $pluginsNameSites, SORT_STRING );
 
-			if ( MAINWP_VIEW_PER_PLUGIN_THEME == $view_mode ) {
+			if ( MAINWP_VIEW_PER_PLUGIN_THEME === (int) $view_mode ) {
 				self::render_manage_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion );
 			} else {
 				self::render_manage_per_site_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion );
@@ -1176,8 +1174,8 @@ class MainWP_Plugins {
 				<input type="hidden" name="whichview" value="<?php echo esc_attr( $which ); ?>" />
 				<div class="inline field">
 					<select class="ui dropdown" onchange="mainwp_siteview_onchange(this)"  name="select_mainwp_options_plugintheme_view">
-					<option value="0" class="item" <?php echo MAINWP_VIEW_PER_PLUGIN_THEME == $view_mode ? 'selected' : ''; ?>><?php echo esc_html( 'plugin' === $which ? __( 'Show Plugins per Item', 'mainwp' ) : __( 'Show Themes per Item', 'mainwp' ) ); ?></option>
-					<option value="1" class="item" <?php echo MAINWP_VIEW_PER_SITE == $view_mode ? 'selected' : ''; ?>><?php echo esc_html( 'plugin' === $which ? __( 'Show Plugins per Site', 'mainwp' ) : __( 'Show Themes per Site', 'mainwp' ) ); ?></option>
+					<option value="0" class="item" <?php echo MAINWP_VIEW_PER_PLUGIN_THEME === (int) $view_mode ? 'selected' : ''; ?>><?php echo esc_html( 'plugin' === $which ? __( 'Show Plugins per Item', 'mainwp' ) : __( 'Show Themes per Item', 'mainwp' ) ); ?></option>
+					<option value="1" class="item" <?php echo MAINWP_VIEW_PER_SITE === (int) $view_mode ? 'selected' : ''; ?>><?php echo esc_html( 'plugin' === $which ? __( 'Show Plugins per Site', 'mainwp' ) : __( 'Show Themes per Site', 'mainwp' ) ); ?></option>
 					</select>
 				</div>
 			</form>
@@ -1221,7 +1219,7 @@ class MainWP_Plugins {
 				if ( ! $website->is_ignorePluginUpdates ) {
 					$plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
 					$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-					$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+					$decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 
 					if ( is_array( $decodedPremiumUpgrades ) ) {
 						foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
@@ -1312,7 +1310,7 @@ class MainWP_Plugins {
 				</div>
 				<div class="content child-checkbox">
 					<?php
-					// phpcs:enable WordPress.Security.EscapeOutput
+					// phpcs:enable
 					foreach ( $slugVersions as $slug_ver => $plugin ) :
 
 						$plugin_title = wp_strip_all_tags( $pluginsName[ $slug_ver ] );
@@ -1337,18 +1335,18 @@ class MainWP_Plugins {
 							$new_version = $upgradeInfo['update']['new_version'];
 						}
 
-						if ( isset( $sitePlugins[ $site_id ][ $slug_ver ] ) && ( 0 == $sitePlugins[ $site_id ][ $slug_ver ]['active'] || 1 == $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) ) {
+						if ( isset( $sitePlugins[ $site_id ][ $slug_ver ] ) && ( empty( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) || 1 === (int) $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) ) {
 							$actived = true;
-							if ( isset( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) && 1 == $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) {
+							if ( isset( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) && 1 === (int) $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) {
 								$plugin_status = '<span class="ui small green basic label">' . esc_html__( 'Active', 'mainwp' ) . '</span>';
-							} elseif ( isset( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) && 0 == $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) {
+							} elseif ( isset( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) && 0 === (int) $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) {
 								$plugin_status = '<span class="ui small red basic label">' . esc_html__( 'Inactive', 'mainwp' ) . '</span>';
 								$actived       = false;
 							} else {
 								$plugin_status = '';
 							}
 
-							if ( isset( $sitePlugins[ $site_id ][ $slug_ver ] ) && ( 1 == $muPlugins[ $slug_ver ] ) ) {
+							if ( isset( $sitePlugins[ $site_id ][ $slug_ver ] ) && ( 1 === (int) $muPlugins[ $slug_ver ] ) ) {
 								$plugin_mu = true;
 							}
 
@@ -1362,17 +1360,17 @@ class MainWP_Plugins {
 							<div class="ui very compact stackable grid mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( $plugin_title ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
 							<div class="one wide center aligned middle aligned column"></div>
 								<div class="one wide center aligned middle aligned column">
-									<div class="ui checkbox child <?php echo 'mainwp-child' == $plugin_directory ? 'disabled' : ''; ?>">
+									<div class="ui checkbox child <?php echo 'mainwp-child' === $plugin_directory ? 'disabled' : ''; ?>">
 									<input type="checkbox" 
 									<?php
-										echo 'mainwp-child' == $plugin_directory ? 'disabled="disabled"' : 'class="mainwp-selected-plugin-site"';
+										echo 'mainwp-child' === $plugin_directory ? 'disabled="disabled"' : 'class="mainwp-selected-plugin-site"';
 									?>
 									><label></label>
 								</div>
 								</div>
 								<?php // phpcs:disable WordPress.Security.EscapeOutput ?>
 								<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></div>
-								<?php // phpcs:enable WordPress.Security.EscapeOutput ?>
+								<?php // phpcs:enable ?>
 								<div class="three wide middle aligned column"><a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>" target="_blank" ><strong><?php echo esc_html( $plugin_title ); ?></strong></a></div>
 								<div class="one wide center aligned middle aligned column"><?php echo $plugin_status; //phpcs:ignore -- escaped. ?></div>
 								<div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
@@ -1502,7 +1500,7 @@ class MainWP_Plugins {
 						$plugin_upgrades = array();
 					}
 					$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-					$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+					$decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 					if ( is_array( $decodedPremiumUpgrades ) ) {
 						foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 							$premiumUpgrade['premium'] = true;
@@ -1580,7 +1578,7 @@ class MainWP_Plugins {
 					<div class="ui grid">
 						<div class="one wide center aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
 						<div class="one wide center aligned middle aligned column">
-							<div class="ui checkbox <?php echo 'mainwp-child' == $plugin_directory ? 'disabled' : ''; ?> master"><input type="checkbox" <?php echo 'mainwp-child' == $plugin_directory ? 'disabled="disabled"' : ''; ?>><label></label></div>
+							<div class="ui checkbox <?php echo 'mainwp-child' === $plugin_directory ? 'disabled' : ''; ?> master"><input type="checkbox" <?php echo 'mainwp-child' === $plugin_directory ? 'disabled="disabled"' : ''; ?>><label></label></div>
 						</div>
 						<div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
 						<div class="five wide middle aligned column"><a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>" target="_blank" ><strong><?php echo esc_html( $plugin_title ); ?></strong></a></div>
@@ -1592,7 +1590,7 @@ class MainWP_Plugins {
 				</div>
 				<div class="content child-checkbox">
 					<?php
-					// phpcs:enable WordPress.Security.EscapeOutput 
+					// phpcs:enable 
 					foreach ( $pluginSites as $site_id => $slugVersions ) :
 						$site_name = $sites[ $site_id ]['websitename'];
 
@@ -1630,18 +1628,18 @@ class MainWP_Plugins {
 								}
 							}
 
-							if ( isset( $sitePlugins[ $site_id ][ $slug_ver ] ) && ( 0 == $sitePlugins[ $site_id ][ $slug_ver ]['active'] || 1 == $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) ) {
+							if ( isset( $sitePlugins[ $site_id ][ $slug_ver ] ) && ( 0 === (int) $sitePlugins[ $site_id ][ $slug_ver ]['active'] || 1 === (int) $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) ) {
 								$actived = true;
-								if ( isset( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) && 1 == $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) {
+								if ( isset( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) && 1 === (int) $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) {
 									$plugin_status = '<span class="ui small green basic label">' . esc_html__( 'Active', 'mainwp' ) . '</span>';
-								} elseif ( isset( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) && 0 == $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) {
+								} elseif ( isset( $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) && 0 === (int) $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) {
 									$plugin_status = '<span class="ui small red basic label">' . esc_html__( 'Inactive', 'mainwp' ) . '</span>';
 									$actived       = false;
 								} else {
 									$plugin_status = '';
 								}
 
-								if ( isset( $sitePlugins[ $site_id ][ $slug_ver ] ) && ( 1 == $muPlugins[ $slug_ver ] ) ) {
+								if ( isset( $sitePlugins[ $site_id ][ $slug_ver ] ) && ( 1 === (int) $muPlugins[ $slug_ver ] ) ) {
 									$plugin_mu = true;
 								}
 
@@ -1805,7 +1803,7 @@ class MainWP_Plugins {
 						<div class="column">
 							<div id="mainwp-search-plugins-form" class="ui fluid search focus">
 								<div class="ui icon fluid input">
-									<input id="mainwp-search-plugins-form-field" class="fluid prompt" type="text" placeholder="<?php esc_attr_e( 'Search plugins...', 'mainwp' ); ?>" value="<?php echo isset( $_GET['s'] ) ? esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification ?>">
+									<input id="mainwp-search-plugins-form-field" class="fluid prompt" type="text" placeholder="<?php esc_attr_e( 'Search plugins...', 'mainwp' ); ?>" value="<?php echo isset( $_GET['s'] ) ? esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>">
 									<i class="search icon"></i>
 								</div>
 								<div class="results"></div>
@@ -1859,7 +1857,7 @@ class MainWP_Plugins {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-install-plugins-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-install-plugins-info-message"></i>
-					<?php echo sprintf( esc_html__( 'Install plugins on your child sites.  You can install plugins from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-plugins/" target="_blank">', '</a>' ); ?>
+					<?php printf( esc_html__( 'Install plugins on your child sites.  You can install plugins from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-plugins/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
@@ -1881,8 +1879,8 @@ class MainWP_Plugins {
 		<?php
 		$selected_sites = array();
 
-		if ( isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$selected_sites = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification -- sanitize ok.
+		if ( isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$selected_sites = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize ok.
 			$selected_sites = array_map( 'intval', $selected_sites );
 			$selected_sites = array_filter( $selected_sites );
 		}
@@ -1965,11 +1963,8 @@ class MainWP_Plugins {
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_modal_edit_notes()
 	 */
 	public static function render_auto_update() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-		$cachedAUSearch = null;
 
-		if ( isset( $_SESSION['MainWP_PluginsActiveStatus'] ) ) {
-			$cachedAUSearch = $_SESSION['MainWP_PluginsActiveStatus'];
-		}
+		$cachedAUSearch = isset( $_SESSION['MainWP_PluginsActiveStatus'] ) ? $_SESSION['MainWP_PluginsActiveStatus'] : null; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized --- ok.
 
 		self::render_header( 'AutoUpdate' );
 
@@ -2012,7 +2007,7 @@ class MainWP_Plugins {
 						</div>
 					</div>
 
-					<?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+					<?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
 						<div class="ui message green"><?php esc_html_e( 'Settings have been saved.', 'mainwp' ); ?></div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -2020,7 +2015,7 @@ class MainWP_Plugins {
 						<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-disable-auto-updates-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-disable-auto-updates-info-message"></i>
-							<div><?php echo sprintf( esc_html__( 'Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); ?></div>
+							<div><?php printf( esc_html__( 'Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); ?></div>
 						</div>
 						<?php endif; ?>
 						<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-plugins-auto-updates-info-message' ) ) : ?>
@@ -2037,7 +2032,7 @@ class MainWP_Plugins {
 						<div id="mainwp-auto-updates-plugins-table-wrapper">
 						<?php
 						if ( isset( $_SESSION['MainWP_PluginsActive'] ) ) {
-							self::render_all_active_table( $_SESSION['MainWP_PluginsActive'] );
+							self::render_all_active_table( $_SESSION['MainWP_PluginsActive'] ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 						}
 						?>
 					</div>
@@ -2052,9 +2047,9 @@ class MainWP_Plugins {
 					<div class="ui mini form">
 						<div class="field">
 							<select class="ui fluid dropdown" id="mainwp_au_plugin_status">
-								<option value="all" <?php echo ( null != $cachedAUSearch && 'all' === $cachedAUSearch['plugin_status'] ) ? 'selected' : ''; ?>><?php esc_html_e( 'Active and Inactive', 'mainwp' ); ?></option>
-								<option value="active" <?php echo ( null != $cachedAUSearch && 'active' === $cachedAUSearch['plugin_status'] ) ? 'selected' : ''; ?>><?php esc_html_e( 'Active', 'mainwp' ); ?></option>
-								<option value="inactive" <?php echo ( null != $cachedAUSearch && 'inactive' === $cachedAUSearch['plugin_status'] ) ? 'selected' : ''; ?>><?php esc_html_e( 'Inactive', 'mainwp' ); ?></option>
+								<option value="all" <?php echo ( null !== $cachedAUSearch && 'all' === $cachedAUSearch['plugin_status'] ) ? 'selected' : ''; ?>><?php esc_html_e( 'Active and Inactive', 'mainwp' ); ?></option>
+								<option value="active" <?php echo ( null !== $cachedAUSearch && 'active' === $cachedAUSearch['plugin_status'] ) ? 'selected' : ''; ?>><?php esc_html_e( 'Active', 'mainwp' ); ?></option>
+								<option value="inactive" <?php echo ( null !== $cachedAUSearch && 'inactive' === $cachedAUSearch['plugin_status'] ) ? 'selected' : ''; ?>><?php esc_html_e( 'Inactive', 'mainwp' ); ?></option>
 							</select>
 						</div>
 					</div>
@@ -2068,10 +2063,10 @@ class MainWP_Plugins {
 					<div class="ui mini form">
 						<div class="field">
 							<select class="ui fluid dropdown" id="mainwp_au_plugin_trust_status">
-								<option value="all" <?php echo ( null != $cachedAUSearch && 'all' === $cachedAUSearch['status'] ) ? 'selected' : ''; ?>><?php esc_html_e( 'Trusted, Not trusted and Ignored', 'mainwp' ); ?></option>
-								<option value="trust" <?php echo ( null != $cachedAUSearch && 'trust' === $cachedAUSearch['status'] ) ? 'selected' : ''; ?>><?php esc_html_e( 'Trusted', 'mainwp' ); ?></option>
-								<option value="untrust" <?php echo ( null != $cachedAUSearch && 'untrust' === $cachedAUSearch['status'] ) ? 'selected' : ''; ?>><?php esc_html_e( 'Not trusted', 'mainwp' ); ?></option>
-								<option value="ignored" <?php echo ( null != $cachedAUSearch && 'ignored' === $cachedAUSearch['status'] ) ? 'selected' : ''; ?>><?php esc_html_e( 'Ignored', 'mainwp' ); ?></option>
+								<option value="all" <?php echo ( null !== $cachedAUSearch && 'all' === $cachedAUSearch['status'] ) ? 'selected' : ''; ?>><?php esc_html_e( 'Trusted, Not trusted and Ignored', 'mainwp' ); ?></option>
+								<option value="trust" <?php echo ( null !== $cachedAUSearch && 'trust' === $cachedAUSearch['status'] ) ? 'selected' : ''; ?>><?php esc_html_e( 'Trusted', 'mainwp' ); ?></option>
+								<option value="untrust" <?php echo ( null !== $cachedAUSearch && 'untrust' === $cachedAUSearch['status'] ) ? 'selected' : ''; ?>><?php esc_html_e( 'Not trusted', 'mainwp' ); ?></option>
+								<option value="ignored" <?php echo ( null !== $cachedAUSearch && 'ignored' === $cachedAUSearch['status'] ) ? 'selected' : ''; ?>><?php esc_html_e( 'Ignored', 'mainwp' ); ?></option>
 							</select>
 						</div>
 						<div class="field">
@@ -2122,33 +2117,33 @@ class MainWP_Plugins {
 
 		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
-		if ( null == $output ) {
-			// phpcs:disable WordPress.Security.NonceVerification
+		if ( null === $output ) {
+			// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$keyword              = isset( $_POST['keyword'] ) && ! empty( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : null;
 			$search_status        = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : 'all';
 			$search_plugin_status = isset( $_POST['plugin_status'] ) ? sanitize_text_field( wp_unslash( $_POST['plugin_status'] ) ) : 'all';
-			// phpcs:enable WordPress.Security.NonceVerification
+			// phpcs:enable
 
 			$output                    = new \stdClass();
 			$output->errors            = array();
 			$output->plugins           = array();
 			$output->plugins_installed = array(); // to fix.
 
-			if ( 1 == get_option( 'mainwp_optimize' ) || MainWP_Demo_Handle::is_demo_mode() ) {
+			if ( 1 === (int) get_option( 'mainwp_optimize' ) || MainWP_Demo_Handle::is_demo_mode() ) {
 				$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$allPlugins = json_decode( $website->plugins, true );
 					$_count     = count( $allPlugins );
-					for ( $i = 0; $i < $_count; $i ++ ) {
+					for ( $i = 0; $i < $_count; $i++ ) {
 						$plugin = $allPlugins[ $i ];
 						if ( 'all' !== $search_plugin_status ) {
-							if ( 1 == $plugin['active'] && 'active' !== $search_plugin_status ) {
+							if ( 1 === (int) $plugin['active'] && 'active' !== $search_plugin_status ) {
 								continue;
-							} elseif ( 1 != $plugin['active'] && 'inactive' !== $search_plugin_status ) {
+							} elseif ( 1 !== (int) $plugin['active'] && 'inactive' !== $search_plugin_status ) {
 								continue;
 							}
 						}
-						if ( '' != $keyword ) {
+						if ( ! empty( $keyword ) ) {
 							$keyword   = trim( $keyword );
 							$multi_kws = explode( ',', $keyword );
 							$multi_kws = array_filter( array_map( 'trim', $multi_kws ) );
@@ -2166,7 +2161,7 @@ class MainWP_Plugins {
 				$dbwebsites = array();
 				$websites   = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-					if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+					if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 						continue;
 					}
 
@@ -2196,7 +2191,7 @@ class MainWP_Plugins {
 					}
 					echo '<div class="ui hidden divider"></div>';
 
-					if ( count( $output->errors ) == count( $dbwebsites ) ) {
+					if ( count( $output->errors ) === count( $dbwebsites ) ) {
 						$_SESSION['MainWP_PluginsActive']       = $output;
 						$_SESSION['MainWP_PluginsActiveStatus'] = array(
 							'keyword'       => $keyword,
@@ -2206,7 +2201,7 @@ class MainWP_Plugins {
 						return;
 					}
 				}
-				// phpcs:enable WordPress.Security.EscapeOutput
+				// phpcs:enable
 			}
 
 			$_SESSION['MainWP_PluginsActive']       = $output;
@@ -2215,12 +2210,12 @@ class MainWP_Plugins {
 				'status'        => $search_status,
 				'plugin_status' => $search_plugin_status,
 			);
-		} else {
-			if ( isset( $_SESSION['MainWP_PluginsActiveStatus'] ) ) {
-				$keyword              = $_SESSION['MainWP_PluginsActiveStatus']['keyword'];
-				$search_status        = $_SESSION['MainWP_PluginsActiveStatus']['status'];
-				$search_plugin_status = $_SESSION['MainWP_PluginsActiveStatus']['plugin_status'];
-			}
+		} elseif ( isset( $_SESSION['MainWP_PluginsActiveStatus'] ) ) {
+				//phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+				$keyword              = isset( $_SESSION['MainWP_PluginsActiveStatus']['keyword'] ) ? $_SESSION['MainWP_PluginsActiveStatus']['keyword'] : null;
+				$search_status        = isset( $_SESSION['MainWP_PluginsActiveStatus']['status'] ) ? $_SESSION['MainWP_PluginsActiveStatus']['status'] : null;
+				$search_plugin_status = isset( $_SESSION['MainWP_PluginsActiveStatus']['plugin_status'] ) ? $_SESSION['MainWP_PluginsActiveStatus']['plugin_status'] : null;
+				//phpcs:enable
 		}
 
 		if ( 'inactive' !== $search_plugin_status ) {
@@ -2233,7 +2228,7 @@ class MainWP_Plugins {
 			}
 		}
 
-		if ( 0 == count( $output->plugins ) ) {
+		if ( 0 === count( $output->plugins ) ) {
 			?>
 			<div class="ui message yellow"><?php esc_html_e( 'No plugins found.', 'mainwp' ); ?></div>
 			<?php
@@ -2328,7 +2323,7 @@ class MainWP_Plugins {
 						<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo esc_attr( rawurlencode( $slug ) ); ?>"></span></td>
 						<td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
 						<td><a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $wpid ) . '&plugin=' . rawurlencode( dirname( $slug ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $name ); ?></a></td>
-						<td><?php echo ( 1 == $plugin['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); //phpcs:ignore -- escaped. ?></td>
+						<td><?php echo ( 1 === (int) $plugin['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); //phpcs:ignore -- escaped. ?></td>
 						<td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
 						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
 						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span data-tooltip="Ignored plugins will not be automatically updated." data-inverted=""><i class="info red circle icon" ></i></span>' : ''; ?></td>
@@ -2341,7 +2336,7 @@ class MainWP_Plugins {
 							<span style="display: none" class="esc-content-note"><?php echo $esc_note; //phpcs:ignore -- escaped. ?></span>
 						</td>
 					</tr>
-					<?php // phpcs:enable WordPress.Security.EscapeOutput ?>
+					<?php // phpcs:enable ?>
 				<?php endforeach; ?>
 			</tbody>
 			<tfoot>
@@ -2438,10 +2433,10 @@ class MainWP_Plugins {
 
 			$tmpDecodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
 
-			if ( ! is_array( $tmpDecodedIgnoredPlugins ) || 0 == count( $tmpDecodedIgnoredPlugins ) ) {
+			if ( ! is_array( $tmpDecodedIgnoredPlugins ) || 0 === count( $tmpDecodedIgnoredPlugins ) ) {
 				continue;
 			}
-			$cnt ++;
+			++$cnt;
 		}
 
 		self::render_header( 'Ignore' );
@@ -2450,7 +2445,7 @@ class MainWP_Plugins {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-plugins-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-plugins-info-message"></i>
-					<?php echo sprintf( esc_html__( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>' ); ?>
+					<?php printf( esc_html__( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -2525,7 +2520,7 @@ class MainWP_Plugins {
 								</td>
 							</tr>
 						<?php endforeach; ?>
-						<?php // phpcs:enable WordPress.Security.EscapeOutput ?>
+						<?php // phpcs:enable ?>
 					<?php endif; ?>
 				</tbody>
 				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2597,7 +2592,7 @@ class MainWP_Plugins {
 						}
 
 						$decodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
-						if ( ! is_array( $decodedIgnoredPlugins ) || 0 == count( $decodedIgnoredPlugins ) ) {
+						if ( ! is_array( $decodedIgnoredPlugins ) || 0 === count( $decodedIgnoredPlugins ) ) {
 							continue;
 						}
 						$first = true;
@@ -2621,7 +2616,7 @@ class MainWP_Plugins {
 						</tr>
 							<?php
 						}
-						// phpcs:enable WordPress.Security.EscapeOutput 
+						// phpcs:enable 
 					}
 
 					MainWP_DB::free_result( $websites );
@@ -2679,12 +2674,12 @@ class MainWP_Plugins {
 		$cnt                   = 0;
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			$tmpDecodedDismissedPlugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
-			$tmpDecodedDismissedPlugins = ( '' != $tmpDecodedDismissedPlugins ) ? json_decode( $tmpDecodedDismissedPlugins, true ) : array();
+			$tmpDecodedDismissedPlugins = ! empty( $tmpDecodedDismissedPlugins ) ? json_decode( $tmpDecodedDismissedPlugins, true ) : array();
 
-			if ( ! is_array( $tmpDecodedDismissedPlugins ) || 0 == count( $tmpDecodedDismissedPlugins ) ) {
+			if ( ! is_array( $tmpDecodedDismissedPlugins ) || 0 === count( $tmpDecodedDismissedPlugins ) ) {
 				continue;
 			}
-			$cnt ++;
+			++$cnt;
 		}
 
 		self::render_header( 'IgnoreAbandoned' );
@@ -2693,7 +2688,7 @@ class MainWP_Plugins {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-abandoned-plugins-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-abandoned-plugins-info-message"></i>
-					<?php echo sprintf( esc_html__( 'Manage abandoned plugins you have told your MainWP Dashboard to ignore on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-plugins/" target="_blank">', '</a>' ); ?>
+					<?php printf( esc_html__( 'Manage abandoned plugins you have told your MainWP Dashboard to ignore on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-plugins/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -2769,7 +2764,7 @@ class MainWP_Plugins {
 							</td>
 						</tr>
 					<?php endforeach; ?>
-					<?php // phpcs:enable WordPress.Security.EscapeOutput ?>
+					<?php // phpcs:enable ?>
 				<?php endif; ?>
 			</tbody>
 			<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2837,9 +2832,9 @@ class MainWP_Plugins {
 
 					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 						$decodedIgnoredPlugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
-						$decodedIgnoredPlugins = ( '' != $decodedIgnoredPlugins ) ? json_decode( $decodedIgnoredPlugins, true ) : array();
+						$decodedIgnoredPlugins = ! empty( $decodedIgnoredPlugins ) ? json_decode( $decodedIgnoredPlugins, true ) : array();
 
-						if ( ! is_array( $decodedIgnoredPlugins ) || 0 == count( $decodedIgnoredPlugins ) ) {
+						if ( ! is_array( $decodedIgnoredPlugins ) || 0 === count( $decodedIgnoredPlugins ) ) {
 							continue;
 						}
 						$first = true;
@@ -2863,7 +2858,7 @@ class MainWP_Plugins {
 							</tr>
 							<?php
 						}
-						// phpcs:enable WordPress.Security.EscapeOutput 
+						// phpcs:enable 
 					}
 					MainWP_DB::free_result( $websites );
 					?>
@@ -2907,7 +2902,7 @@ class MainWP_Plugins {
 	 * Hooks the section help content to the Help Sidebar element.
 	 */
 	public static function mainwp_help_content() {
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( isset( $_GET['page'] ) && ( 'PluginsManage' === $_GET['page'] || 'PluginsInstall' === $_GET['page'] || 'PluginsAutoUpdate' === $_GET['page'] || 'PluginsIgnore' === $_GET['page'] || 'PluginsIgnoredAbandoned' === $_GET['page'] ) ) {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing plugins, please review following help documents', 'mainwp' ); ?></p>
@@ -2937,7 +2932,6 @@ class MainWP_Plugins {
 			</div>
 			<?php
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 	}
-
 }

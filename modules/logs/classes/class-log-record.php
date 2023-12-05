@@ -129,41 +129,4 @@ class Log_Record {
 			unset( $this->meta['user_meta'] );
 		}
 	}
-
-	/**
-	 * Save record.
-	 *
-	 * @return int|WP_Error
-	 */
-	public function save() {
-		if ( ! $this->validate() ) {
-			return new \WP_Error( 'validation-error', esc_html__( 'Could not validate record data.', 'mainwp' ) );
-		}
-
-		Log_Manager::instance()->db->insert( (array) $this );
-	}
-
-	/**
-	 * Populate "$this" object with provided data.
-	 *
-	 * @param array $raw  Data to be used to populate $this object.
-	 */
-	public function populate( array $raw ) {
-		$keys = get_class_vars( $this );
-		$data = array_intersect_key( $raw, $keys );
-		foreach ( $data as $key => $val ) {
-			$this->{$key} = $val;
-		}
-	}
-
-	/**
-	 * Validates this record
-	 *
-	 * @todo Add actual validation measures.
-	 *
-	 * @return bool
-	 */
-	public function validate() {
-		return true;
-	}
 }

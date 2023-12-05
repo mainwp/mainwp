@@ -245,7 +245,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 			$info    = wp_parse_url( $url );
 
 			$def_not_allow   = array( 21, 22 ); // not allow ports 21, 22.
-			$not_allow_ports = apply_filters( 'mainwp_connect_sites_not_allow_ports', $def_not_allow );
+			$not_allow_ports = apply_filters( 'mainwp_connect_sites_not_allow_ports', $def_not_allow, $url );
 
 			if ( ! is_array( $not_allow_ports ) ) {
 				$not_allow_ports = $def_not_allow;
@@ -263,7 +263,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 
 			if ( strpos( $temp_url, ':' ) ) {
 				$invalid     = true;
-				$allow_ports = apply_filters( 'mainwp_connect_sites_allow_ports', array() );
+				$allow_ports = apply_filters( 'mainwp_connect_sites_allow_ports', array(), $url );
 				if ( ! empty( $allow_ports ) && is_array( $allow_ports ) ) {
 					if ( is_array( $info ) && ! empty( $info['port'] ) && ( in_array( intval( $info['port'] ), $allow_ports, true ) ) ) {
 						$invalid = false;

@@ -1350,6 +1350,10 @@ class MainWP_Plugins {
 								$plugin_mu = true;
 							}
 
+							if ( $plugin_mu ) {
+								$actived = true; // always.
+							}
+
 							$item_id = $slug_ver . '_' . $site_id;
 							$item_id = strtolower( $item_id );
 							$item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
@@ -1389,7 +1393,7 @@ class MainWP_Plugins {
 							<div class="two wide center aligned middle aligned column column-actions">
 								<?php if ( ! $child_plugin ) : ?>
 									<?php if ( $actived ) { ?>	
-										<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
+										<?php if ( ! $plugin_mu && mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
 											<a href="#" class="mainwp-manage-plugin-deactivate ui mini fluid button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php esc_attr_e( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
 									<?php } ?>
 								<?php } else { ?>
@@ -1642,7 +1646,9 @@ class MainWP_Plugins {
 								if ( isset( $sitePlugins[ $site_id ][ $slug_ver ] ) && ( 1 === (int) $muPlugins[ $slug_ver ] ) ) {
 									$plugin_mu = true;
 								}
-
+								if ( $plugin_mu ) {
+									$actived = true; // always.
+								}
 								$item_id = $slug_ver . '_' . $site_id;
 								$item_id = strtolower( $item_id );
 								$item_id = preg_replace( '/[[:space:]]+/', '_', $item_id );
@@ -1684,7 +1690,7 @@ class MainWP_Plugins {
 								<div class="two wide center aligned middle aligned column column-actions">
 									<?php if ( ! $child_plugin ) : ?>
 										<?php if ( $actived ) { ?>	
-											<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
+											<?php if ( ! $plugin_mu && mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
 												<a href="#" class="mainwp-manage-plugin-deactivate ui mini fluid button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php esc_attr_e( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
 										<?php } ?>
 									<?php } else { ?>
@@ -2746,7 +2752,7 @@ class MainWP_Plugins {
 					<th></th>
 				</tr>
 			</thead>
-			<tbody id="ignored-abandoned-plugins-list">
+			<tbody id="ignored-globally-abandoned-plugins-list">
 				<?php if ( $ignoredPlugins ) : ?>
 					<?php
 					// phpcs:disable WordPress.Security.EscapeOutput 

@@ -593,7 +593,7 @@ class MainWP_System_Cron_Jobs {
 			MainWP_Utility::update_option( 'mainwp_updatescheck_last', $today_m_y );
 
 			// send http check notification.
-			if ( 1 === get_option( 'mainwp_check_http_response', 0 ) ) {
+			if ( 1 === (int) get_option( 'mainwp_check_http_response', 0 ) ) {
 				$this->start_notification_http_check( $plain_text );
 			}
 

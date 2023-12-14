@@ -4092,7 +4092,7 @@ class Rest_Api {
 			if ( $groups ) {
 				foreach ( $groups as $group ) {
 					if ( ! empty( $tag_id ) ) {
-						if ( $group->id === $tag_id ) {
+						if ( (int) $group->id === $tag_id ) {
 							$data[ $group->id ] = $group->name;
 						}
 					} elseif ( ! empty( $tag_name ) ) {

@@ -211,6 +211,17 @@ class MainWP_Setup_Wizard {
 				<?php wp_print_scripts( 'mainwp-setup' ); ?>
 				<?php wp_print_scripts( 'fomantic' ); ?>
 				<?php wp_print_scripts( 'mainwp-ui' ); ?>
+				<?php
+				// to fix warning.
+				/**
+				 * Remove the deprecated `print_emoji_styles` handler.
+				 * It avoids breaking style generation with a deprecation message.
+				 */
+				$has_emoji_styles = has_action( 'admin_print_styles', 'print_emoji_styles' );
+				if ( $has_emoji_styles ) {
+					remove_action( 'admin_print_styles', 'print_emoji_styles' );
+				}
+				?>
 				<?php do_action( 'admin_print_styles' ); ?>
 				<script type="text/javascript"> var ajaxurl = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';</script>
 				<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_ajax' ) ); ?>", mainwp_js_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_nonce' ) ); ?>";</script>

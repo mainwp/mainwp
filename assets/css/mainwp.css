@@ -160,6 +160,11 @@
     border-bottom-width: 2px !important;
 }
 
+.ui.labeled.icon.menu.mainwp-sub-submenu {
+    margin:0;
+    border-radius:0;
+}
+
 /* Menu */
 
 #mainwp-main-navigation-container {

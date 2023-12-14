@@ -1306,7 +1306,7 @@ class MainWP_Updates {
 	 * @uses \MainWP\Dashboard\MainWP_Updates_Per_Site::render_trans_update()
 	 */
 	public static function render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups, $site_view ) {
-		if ( 1 === $mainwp_show_language_updates ) {
+		if ( 1 === (int) $mainwp_show_language_updates ) {
 			?>
 		<div class="ui active tab" data-tab="translations-updates">
 			<?php
@@ -2313,11 +2313,11 @@ class MainWP_Updates {
 	 */
 	public static function render_screen_options_modal() { // phpcs:ignore -- complex method.
 
-		$snAutomaticDailyUpdate       = get_option( 'mainwp_automaticDailyUpdate' );
+		$snAutomaticDailyUpdate       = (int) get_option( 'mainwp_automaticDailyUpdate' );
 		$snPluginAutomaticDailyUpdate = (int) get_option( 'mainwp_pluginAutomaticDailyUpdate' );
 		$snThemeAutomaticDailyUpdate  = (int) get_option( 'mainwp_themeAutomaticDailyUpdate' );
-		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
-		$disableUpdateConfirmations   = get_option( 'mainwp_disable_update_confirmations', 0 );
+		$mainwp_show_language_updates = (int) get_option( 'mainwp_show_language_updates', 1 );
+		$disableUpdateConfirmations   = (int) get_option( 'mainwp_disable_update_confirmations', 0 );
 		$delay_autoupdate             = (int) get_option( 'mainwp_delay_autoupdate', 1 );
 		?>
 		<div class="ui modal" id="mainwp-manage-updates-screen-options-modal">

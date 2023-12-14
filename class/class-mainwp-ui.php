@@ -299,7 +299,7 @@ class MainWP_UI {
 									$selected = ( 'all' === $selected_websites || in_array( $website->id, $selected_websites ) );
 									$disabled = '';
 									if ( $edit_site_id ) {
-										if ( $website->id === $edit_site_id ) {
+										if ( (int) $website->id === $edit_site_id ) {
 											$selected = true;
 										} else {
 											$disabled = 'disabled="disabled"';
@@ -1200,7 +1200,7 @@ class MainWP_UI {
 				$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
 				foreach ( $groups as $group ) {
 					?>
-					<option class="item" <?php echo ( $g === $group->id ) ? 'selected' : ''; ?> value="<?php echo esc_attr( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></option>
+					<option class="item" <?php echo ( $g === (int) $group->id ) ? 'selected' : ''; ?> value="<?php echo esc_attr( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></option>
 					<?php
 				}
 				?>
@@ -1211,7 +1211,7 @@ class MainWP_UI {
 				<?php
 				while ( $websites && ( $website   = MainWP_DB::fetch_object( $websites ) ) ) {
 					?>
-					<option value="<?php echo intval( $website->id ); ?>" <?php echo ( $s === $website->id ) ? 'selected' : ''; ?> class="item" ><?php echo esc_html( stripslashes( $website->name ) ); ?></option>
+					<option value="<?php echo intval( $website->id ); ?>" <?php echo ( $s === (int) $website->id ) ? 'selected' : ''; ?> class="item" ><?php echo esc_html( stripslashes( $website->name ) ); ?></option>
 					<?php
 				}
 				?>
@@ -1314,11 +1314,11 @@ class MainWP_UI {
 					?>
 
 		<div class="ui <?php echo ( empty( $sites_count ) ? 'green' : '' ); ?> buttons" id="mainwp-add-new-buttons">
-			<a class="ui icon button" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Add a new Website to your MainWP Dashboard', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><i class="plus icon"></i></a>
-			<a class="ui button" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Add a new Website to your MainWP Dashboard', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
-			<div class="ui floating dropdown icon button"  style="z-index: 999;" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'More options', 'mainwp' ); ?>">
+			<a class="ui icon button" data-inverted="" data-position="right center" data-tooltip="<?php esc_attr_e( 'Add a new Website to your MainWP Dashboard', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><i class="plus icon"></i></a>
+			<a class="ui button" data-inverted="" data-position="right center" data-tooltip="<?php esc_attr_e( 'Add a new Website to your MainWP Dashboard', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
+			<div class="ui floating dropdown icon button"  style="z-index: 999;" data-inverted="" data-position="right center" data-tooltip="<?php esc_attr_e( 'More options', 'mainwp' ); ?>">
 				<i class="dropdown icon"></i>
-				<div class="menu">
+				<div class="ui popup bottom right menu">
 					<a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Add a new Website to your MainWP Dashboard', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php esc_html_e( 'Website', 'mainwp' ); ?></a>
 					<a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Add a new Client to your MainWP Dashboard', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=ClientAddNew' ) ); ?>"><?php esc_html_e( 'Client', 'mainwp' ); ?></a>
 					<a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Add a new Post to your child sites', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkAdd' ) ); ?>"><?php esc_html_e( 'Post', 'mainwp' ); ?></a>
@@ -1933,13 +1933,13 @@ class MainWP_UI {
 				<?php
 	}
 
-			/**
-			 * No Sites Modal
-			 *
-			 * Renders modal window for notification when there are no connected sites.
-			 *
-			 * @return void
-			 */
+	/**
+	 * No Sites Modal
+	 *
+	 * Renders modal window for notification when there are no connected sites.
+	 *
+	 * @return void
+	 */
 	public static function render_modal_no_sites_note() {
 		if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-no-sites-modal-notice' ) ) :
 			?>
@@ -1967,13 +1967,13 @@ class MainWP_UI {
 		</div>
 		<script type="text/javascript">
 		jQuery( '#mainwp-no-sites-modal' ).modal( {
-		blurring: true,
-		inverted: true,
-		closable: false
-	} ).modal( 'show' );
+			blurring: true,
+			inverted: true,
+			closable: false
+		} ).modal( 'show' );
 		</script>
-					<?php
-				endif;
+			<?php
+	endif;
 	}
 
 			/**

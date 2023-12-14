@@ -1366,7 +1366,7 @@ class MainWP_Manage_Sites {
 		$updated = false;
 		if ( isset( $_POST['submit'] ) && isset( $_GET['emailsettingsid'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsiteEmailSettings' . sanitize_text_field( wp_unslash( $_GET['emailsettingsid'] ) ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
 			$settings_emails = MainWP_DB::instance()->get_website_option( $website, 'settings_notification_emails', '' );
-			$settings_emails = json_decode( $settings_emails, true );
+			$settings_emails = ! empty( $settings_emails ) ? json_decode( $settings_emails, true ) : $settings_emails;
 			if ( ! is_array( $settings_emails ) ) {
 				$settings_emails = array();
 			}

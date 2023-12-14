@@ -81,7 +81,7 @@ jQuery(document).ready(function () {
 /**
  * MainWP_Plugins.page
  */
-jQuery( document ).on( 'ready', function () {
+jQuery(document).ready(function () {
     jQuery(document).on('click', '#mainwp-show-plugins', function () {
         mainwp_fetch_plugins();
     });
@@ -363,7 +363,7 @@ mainwp_fetch_plugins = function () {
 
     var _status = jQuery("#mainwp_plugins_search_by_status").dropdown("get value");
 
-    if (_status == null){
+    if (_status == null) {
         errors.push(__('Please select at least one plugin status.'));
     }
 
@@ -653,7 +653,7 @@ mainwp_fetch_themes = function () {
     var _status = jQuery("#mainwp_themes_search_by_status").dropdown("get value");
     if (_status == null) {
         errors.push(__('Please select at least one theme status.'));
-    } 
+    }
 
     if (errors.length > 0) {
         jQuery('#mainwp-message-zone').html(errors.join('<br />'));

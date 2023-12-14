@@ -244,6 +244,7 @@ class MainWP_Connect {
 	 * @return bolean True|False.
 	 */
 	public static function check_ignored_http_code( $value ) {
+		$value = (int) $value;
 		if ( 200 === $value ) {
 			return true;
 		}
@@ -1075,7 +1076,7 @@ class MainWP_Connect {
 			$others['raw_response'] = 'yes';
 		}
 
-		$params['optimize'] = ( ( 1 === get_option( 'mainwp_optimize', 0 ) ) ? 1 : 0 );
+		$params['optimize'] = ( ( 1 === (int) get_option( 'mainwp_optimize', 0 ) ) ? 1 : 0 );
 
 		$updating_website = false;
 		$type             = '';
@@ -1154,7 +1155,7 @@ class MainWP_Connect {
 			 * @since Unknown
 			 */
 			do_action( 'mainwp_website_updated', $website, $type, $list, $information );
-			if ( 1 === get_option( 'mainwp_check_http_response', 0 ) ) {
+			if ( 1 === (int) get_option( 'mainwp_check_http_response', 0 ) ) {
 				MainWP_Monitoring_Handler::handle_check_website( $website );
 			}
 		}
@@ -1521,7 +1522,7 @@ class MainWP_Connect {
 			$data_log = is_array( $postdata ) ? print_r( $postdata, true ) : ( is_string( $postdata ) ? $postdata : '' );  //phpcs:ignore -- good.
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[' . $url . '] postdata [' . $data_log . '] information: [OK]' ); //phpcs:ignore -- ok.
 			return $information;
-		} elseif ( 200 === $http_status && ! empty( $err ) ) {
+		} elseif ( 200 === (int) $http_status && ! empty( $err ) ) {
 			$thr_error = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		} elseif ( $raw_response ) {
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Response: [RAW]' );

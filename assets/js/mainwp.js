@@ -1036,7 +1036,7 @@ dashboard_update_next = function (pAction) {
     isGlobalSync: globalSync
   });
 
-  
+
 
   dashboard_update_next_int(websiteId, data, 0, pAction);
 };
@@ -2486,7 +2486,7 @@ mainwp_install_bulk_start_specific = function (type, url, activatePlugin, overwr
 
       bulkInstallCurrentThreads--;
       bulkInstallDone++;
- 
+
       jQuery('#plugintheme-installation-progress-modal .mainwp-modal-progress').progress('set progress', bulkInstallDone);
       jQuery('#plugintheme-installation-progress-modal .mainwp-modal-progress').find('.label').html(bulkInstallDone + '/' + bulkInstallTotal + ' ' + __('Installed'));
       mainwp_install_bulk_start_next(type, url, activatePlugin, overwrite, slug);
@@ -3637,6 +3637,7 @@ mainwp_force_destroy_sessions = function () {
     mainwp_force_destroy_sessions_websites = jQuery('.dashboard_wp_id').map(function (indx, el) {
       return jQuery(el).val();
     });
+    mainwpPopup('#mainwp-sync-sites-modal').setTitle(__('Re-establish Connection')); // popup displayed.
     mainwpPopup('#mainwp-sync-sites-modal').init({ progressMax: mainwp_force_destroy_sessions_websites.length });
     mainwp_force_destroy_sessions_part_2(0);
   });

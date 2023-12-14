@@ -100,7 +100,7 @@ class Log_Author {
 	 * @return string
 	 */
 	public function get_display_name() {
-		if ( 0 === $this->id ) {
+		if ( empty( $this->id ) ) {
 			if ( isset( $this->meta['system_user_name'] ) ) {
 				return esc_html( $this->meta['system_user_name'] );
 			} elseif ( 'wp_cli' === $this->get_current_agent() ) {
@@ -180,7 +180,7 @@ class Log_Author {
 	 * @return bool
 	 */
 	public function is_deleted() {
-		return ( 0 !== $this->id && 0 === $this->user->ID );
+		return ( 0 !== $this->id && empty( $this->user->ID ) );
 	}
 
 	/**

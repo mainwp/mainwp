@@ -1037,11 +1037,6 @@ class MainWP_Server_Information {
 
 				foreach ( $cron_jobs as $cron_job => $hook ) {
 
-					$next_run = wp_next_scheduled( $hook[1] );
-					if ( ! empty( $next_run ) ) {
-						$next_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $next_run ) );
-					}
-
 					$is_auto_update_job = false;
 					$lasttime_run       = 0;
 					if ( 'mainwp_updatescheck_start_last_timestamp' === $hook[0] ) {
@@ -1060,8 +1055,15 @@ class MainWP_Server_Information {
 						}
 					}
 
-					if ( ! $useWPCron && ! $is_auto_update_job && isset( $hook[3] ) ) {
-						$nexttime_run = self::get_schedule_next_time_to_show( $hook[3], $lasttime_run );
+					if ( $useWPCron && 'mainwp_updatescheck_start_last_timestamp' !== $hook[0] ) {
+						$next_run = wp_next_scheduled( $hook[1] );
+						if ( ! empty( $next_run ) ) {
+							$next_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $next_run ) );
+						}
+					}
+
+					if ( empty( $next_run ) || ( ! $useWPCron && ! $is_auto_update_job && isset( $hook[3] ) ) ) {
+						$nexttime_run = self::get_schedule_next_time_to_show( $hook[3], $lasttime_run, $local_timestamp );
 						if ( $nexttime_run < $local_timestamp + 3 * MINUTE_IN_SECONDS ) {
 							$next_run = esc_html__( 'Any minute', 'mainwp' );
 						} else {
@@ -1193,25 +1195,30 @@ class MainWP_Server_Information {
 	 *
 	 * @param string $job_freq frequency of schedule job.
 	 * @param int    $lasttime_run Lasttime to run.
+	 * @param int    $local_timestamp current local time.
 	 *
 	 * @return int next run time of schedule job.
 	 */
-	public static function get_schedule_next_time_to_show( $job_freq, $lasttime_run = 0 ) {
-		$current_time = time();
+	public static function get_schedule_next_time_to_show( $job_freq, $lasttime_run, $local_timestamp ) {
+		$next_time    = $local_timestamp;
+		$lasttime_run = is_numeric( $lasttime_run ) ? intval( $lasttime_run ) : false;
 		switch ( $job_freq ) {
 			case 'daily':
-				$next_time = $lasttime_run ? $lasttime_run + DAY_IN_SECONDS : $current_time;
+				$next_time = $lasttime_run ? $lasttime_run + DAY_IN_SECONDS : $local_timestamp + DAY_IN_SECONDS;
 				break;
 			case 'hourly':
-				$next_time = $lasttime_run ? $lasttime_run + HOUR_IN_SECONDS : $current_time;
+				$next_time = $lasttime_run ? $lasttime_run + HOUR_IN_SECONDS : $local_timestamp + HOUR_IN_SECONDS;
 				break;
 			case '5minutely':
-				$next_time = $lasttime_run ? $lasttime_run + 5 * MINUTE_IN_SECONDS : $current_time;
+				$next_time = $lasttime_run ? $lasttime_run + 5 * MINUTE_IN_SECONDS : $local_timestamp + 5 * MINUTE_IN_SECONDS;
+				break;
+			case 'minutely':
+				$next_time = $lasttime_run ? $lasttime_run + MINUTE_IN_SECONDS : $local_timestamp + MINUTE_IN_SECONDS;
 				break;
 		}
 
-		if ( $next_time < $current_time ) { // to fix next time in past.
-			$next_time = $current_time;
+		if ( $next_time < $local_timestamp ) { // to fix next time in past.
+			$next_time = $local_timestamp;
 		}
 
 		return $next_time;

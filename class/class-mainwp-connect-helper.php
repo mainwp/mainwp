@@ -163,7 +163,7 @@ class MainWP_Connect_Helper {
 				// try reconnect, if failed.
 				MainWP_Sync::sync_site( $website, true );
 			}
-			$data = MainWP_Connect::fetch_url_authed( $website, 'renew', $params ); // to disconnect,
+			$data = MainWP_Connect::fetch_url_authed( $website, 'renew' ); // to disconnect,
 			// disconnect success.
 			if ( is_array( $data ) && isset( $data['result'] ) && 'success' === $data['result'] ) {
 				// reconnect immediately, to renew.

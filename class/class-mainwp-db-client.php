@@ -515,7 +515,7 @@ class MainWP_DB_Client extends MainWP_DB {
 			}
 
 			if ( $curret_contact && ! empty( $contact_id ) ) {
-				if ( $curret_contact->contact_id !== $contact_id ) { // update contact with existed email => failed.
+				if ( (int) $curret_contact->contact_id !== $contact_id ) { // update contact with existed email => failed.
 					$existed_email = true;
 				}
 			}
@@ -1027,7 +1027,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 * @return int Total number.
 	 */
 	public function count_total_clients() {
-		return $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COUNT(client_id) FROM ' . $this->table_name( 'wp_clients' ) ) );
+		return $this->wpdb->get_var( 'SELECT COUNT(client_id) FROM ' . $this->table_name( 'wp_clients' ) );
 	}
 
 

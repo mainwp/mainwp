@@ -266,10 +266,10 @@ class MainWP_Manage_Sites_View {
 
 		$pagetitle = esc_html__( 'Sites', 'mainwp' );
 
-		if ( 0 !== $site_id ) {
+		if ( ! empty( $site_id ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 			$imgfavi = '';
-			if ( 1 === get_option( 'mainwp_use_favicon', 1 ) ) {
+			if ( 1 === (int) get_option( 'mainwp_use_favicon', 1 ) ) {
 				$favi_url = MainWP_Connect::get_favico_url( $website );
 				if ( false !== $favi_url ) {
 					$imgfavi = '<img src="' . esc_attr( $favi_url ) . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
@@ -586,7 +586,7 @@ class MainWP_Manage_Sites_View {
 		?>
 		<div>
 			<?php
-			if ( -1 === $website->mainwpdir ) {
+			if ( -1 === (int) $website->mainwpdir ) {
 				echo '<div class="ui yellow message"><span class="mainwp_conflict" siteid="' . intval( $website->id ) . '"><strong>Configuration issue detected</strong>: MainWP has no write privileges to the uploads directory. Because of this some of the functionality might not work.</span></div>';
 			}
 
@@ -917,32 +917,32 @@ class MainWP_Manage_Sites_View {
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Suspend Site', 'mainwp' ); ?></label>
 					<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want Suspend this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-						<input type="checkbox" name="mainwp_suspended_site" id="mainwp_suspended_site" <?php echo ( 1 === $website->suspended ? 'checked="true"' : '' ); ?>><label for="mainwp_suspended_site"></label>
+						<input type="checkbox" name="mainwp_suspended_site" id="mainwp_suspended_site" <?php echo ( 1 === (int) $website->suspended ? 'checked="true"' : '' ); ?>><label for="mainwp_suspended_site"></label>
 					</div>
 				</div>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Auto update core', 'mainwp' ); ?></label>
 					<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want MainWP to automatically update WP Core on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-						<input type="checkbox" name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" <?php echo ( 1 === $website->automatic_update ? 'checked="true"' : '' ); ?>><label for="mainwp_automaticDailyUpdate"></label>
+						<input type="checkbox" name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" <?php echo ( 1 === (int) $website->automatic_update ? 'checked="true"' : '' ); ?>><label for="mainwp_automaticDailyUpdate"></label>
 					</div>
 				</div>
 				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Ignore core updates', 'mainwp' ); ?></label>
 						<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore WP Core updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-							<input type="checkbox" name="mainwp_is_ignoreCoreUpdates" id="mainwp_is_ignoreCoreUpdates" <?php echo ( 1 === $website->is_ignoreCoreUpdates ? 'checked="true"' : '' ); ?>><label for="mainwp_is_ignoreCoreUpdates"></label>
+							<input type="checkbox" name="mainwp_is_ignoreCoreUpdates" id="mainwp_is_ignoreCoreUpdates" <?php echo ( 1 === (int) $website->is_ignoreCoreUpdates ? 'checked="true"' : '' ); ?>><label for="mainwp_is_ignoreCoreUpdates"></label>
 						</div>
 					</div>
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Ignore plugin updates', 'mainwp' ); ?></label>
 						<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore plugin updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-							<input type="checkbox" name="mainwp_is_ignorePluginUpdates" id="mainwp_is_ignorePluginUpdates" <?php echo ( 1 === $website->is_ignorePluginUpdates ? 'checked="true"' : '' ); ?>><label for="mainwp_is_ignorePluginUpdates"></label>
+							<input type="checkbox" name="mainwp_is_ignorePluginUpdates" id="mainwp_is_ignorePluginUpdates" <?php echo ( 1 === (int) $website->is_ignorePluginUpdates ? 'checked="true"' : '' ); ?>><label for="mainwp_is_ignorePluginUpdates"></label>
 						</div>
 					</div>
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Ignore theme updates', 'mainwp' ); ?></label>
 						<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore theme updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-							<input type="checkbox" name="mainwp_is_ignoreThemeUpdates" id="mainwp_is_ignoreThemeUpdates" <?php echo ( 1 === $website->is_ignoreThemeUpdates ? 'checked="true"' : '' ); ?>><label for="mainwp_is_ignoreThemeUpdates"></label>
+							<input type="checkbox" name="mainwp_is_ignoreThemeUpdates" id="mainwp_is_ignoreThemeUpdates" <?php echo ( 1 === (int) $website->is_ignoreThemeUpdates ? 'checked="true"' : '' ); ?>><label for="mainwp_is_ignoreThemeUpdates"></label>
 						</div>
 					</div>
 				<?php } ?>
@@ -965,13 +965,13 @@ class MainWP_Manage_Sites_View {
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Enable basic uptime monitoring (optional)', 'mainwp' ); ?></label>					
 					<div class="six wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring" data-tooltip="<?php esc_attr_e( 'Enable if you want to monitoring this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-						<input type="checkbox" name="mainwp_managesites_edit_disableChecking" id="mainwp_managesites_edit_disableChecking" <?php echo ( 0 === $website->disable_status_check ? 'checked="true"' : '' ); ?>><label for="mainwp_managesites_edit_disableChecking"></label>
+						<input type="checkbox" name="mainwp_managesites_edit_disableChecking" id="mainwp_managesites_edit_disableChecking" <?php echo ( 0 === (int) $website->disable_status_check ? 'checked="true"' : '' ); ?>><label for="mainwp_managesites_edit_disableChecking"></label>
 					</div>
 				</div>
 				<?php
 				$check_interval = (int) $website->status_check_interval;
 				?>
-				<div class="ui grid field" <?php echo 1 === $website->disable_status_check ? 'style="display:none"' : ''; ?> hide-element="monitoring">
+				<div class="ui grid field" <?php echo 1 === (int) $website->disable_status_check ? 'style="display:none"' : ''; ?> hide-element="monitoring">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Check interval (optional)', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Check interval (optional)', 'mainwp' ); ?>" data-inverted="" data-position="top left">					
 						<select name="mainwp_managesites_edit_checkInterval" id="mainwp_managesites_edit_checkInterval" class="ui dropdown">
@@ -987,7 +987,7 @@ class MainWP_Manage_Sites_View {
 						</select>
 					</div>
 				</div>				
-				<div class="ui grid field" <?php echo 1 === $website->disable_status_check ? 'style="display:none"' : ''; ?> hide-element="monitoring">
+				<div class="ui grid field" <?php echo 1 === (int) $website->disable_status_check ? 'style="display:none"' : ''; ?> hide-element="monitoring">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Additional notification emails (comma-separated)', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Additional notification emails (comma-separated).', 'mainwp' ); ?>" data-inverted="" data-position="top left">										
 						<div class="ui left labeled input">
@@ -999,13 +999,13 @@ class MainWP_Manage_Sites_View {
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Enable Child Site Health monitoring (optional)', 'mainwp' ); ?></label>					
 					<div class="six wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="health-monitoring" data-tooltip="<?php esc_attr_e( 'Enable if you want to monitoring this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-						<input type="checkbox" name="mainwp_managesites_edit_disableSiteHealthMonitoring" id="mainwp_managesites_edit_disableSiteHealthMonitoring" <?php echo ( 0 === $website->disable_health_check ? 'checked="true"' : '' ); ?>><label for="mainwp_managesites_edit_disableSiteHealthMonitoring"></label>
+						<input type="checkbox" name="mainwp_managesites_edit_disableSiteHealthMonitoring" id="mainwp_managesites_edit_disableSiteHealthMonitoring" <?php echo ( 0 === (int) $website->disable_health_check ? 'checked="true"' : '' ); ?>><label for="mainwp_managesites_edit_disableSiteHealthMonitoring"></label>
 					</div>
 				</div>
 				<?php
 				$healthThreshold = $website->health_threshold;
 				?>
-				<div class="ui grid field" <?php echo 1 === $website->disable_health_check ? 'style="display:none"' : ''; ?> hide-element="health-monitoring">
+				<div class="ui grid field" <?php echo 1 === (int) $website->disable_health_check ? 'style="display:none"' : ''; ?> hide-element="health-monitoring">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Site health threshold (optional)', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="top left">				
 						<select name="mainwp_managesites_edit_healthThreshold" id="mainwp_managesites_edit_healthThreshold" class="ui dropdown">
@@ -1051,9 +1051,9 @@ class MainWP_Manage_Sites_View {
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Verify connection method', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select Verify connection method. If you are not sure, select "Default".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<select class="ui dropdown"id="mainwp_managesites_edit_verify_connection_method" name="mainwp_managesites_edit_verify_connection_method">
-							<option <?php echo ( 1 === $verify_conn_method ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'OpenSSL (default)', 'mainwp' ); ?></option>
-							<option <?php echo ( 2 === $verify_conn_method ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'PHPSECLIB (fallback)', 'mainwp' ); ?></option>
-							<option <?php echo ( 3 === $verify_conn_method ) ? 'selected' : ''; ?> value="3"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+							<option <?php echo ( 1 === (int) $verify_conn_method ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'OpenSSL (default)', 'mainwp' ); ?></option>
+							<option <?php echo ( 2 === (int) $verify_conn_method ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'PHPSECLIB (fallback)', 'mainwp' ); ?></option>
+							<option <?php echo ( 3 === (int) $verify_conn_method ) ? 'selected' : ''; ?> value="3"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
 						</select>
 					</div>
 				</div>
@@ -1087,9 +1087,9 @@ class MainWP_Manage_Sites_View {
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Force IPv4 (optional)', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Do you want to force IPv4 for this child site?', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<select class="ui dropdown" id="mainwp_managesites_edit_forceuseipv4" name="mainwp_managesites_edit_forceuseipv4">
-							<option <?php echo ( 1 === $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'Yes', 'mainwp' ); ?></option>
-							<option <?php echo ( 0 === $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
-							<option <?php echo ( 2 === $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+							<option <?php echo ( 1 === (int) $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'Yes', 'mainwp' ); ?></option>
+							<option <?php echo ( 0 === (int) $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
+							<option <?php echo ( 2 === (int) $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
 						</select>
 					</div>
 				</div>

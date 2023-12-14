@@ -146,7 +146,7 @@ class MainWP_Backup_Handler {
 
 		if ( 1 === $loadFilesBeforeZip ) {
 			$loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
-			$loadFilesBeforeZip = ( 1 === $loadFilesBeforeZip || false === $loadFilesBeforeZip );
+			$loadFilesBeforeZip = ( 1 === (int) $loadFilesBeforeZip || false === $loadFilesBeforeZip );
 		} else {
 			$loadFilesBeforeZip = ( 2 === $loadFilesBeforeZip );
 		}
@@ -437,7 +437,7 @@ class MainWP_Backup_Handler {
 					$localBackupFile = $backupTaskProgress->downloadedDB;
 				}
 
-				if ( 0 === $backupTaskProgress->downloadedDBComplete ) {
+				if ( 0 === (int) $backupTaskProgress->downloadedDBComplete ) {
 					MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $information['db'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
 					$backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
 				}
@@ -479,7 +479,7 @@ class MainWP_Backup_Handler {
 					$localBackupFile = $backupTaskProgress->downloadedFULL;
 				}
 
-				if ( 0 === $backupTaskProgress->downloadedFULLComplete ) {
+				if ( 0 === (int) $backupTaskProgress->downloadedFULLComplete ) {
 					if ( file_exists( $localBackupFile ) ) {
 						$time = filemtime( $localBackupFile );
 

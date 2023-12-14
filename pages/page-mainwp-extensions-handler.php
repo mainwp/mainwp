@@ -415,7 +415,7 @@ class MainWP_Extensions_Handler {
 
 		$installer          = new \WP_Upgrader();
 		$ssl_verifyhost     = get_option( 'mainwp_sslVerifyCertificate' );
-		$ssl_api_verifyhost = ( ( false === get_option( 'mainwp_api_sslVerifyCertificate' ) ) || ( 1 === get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
+		$ssl_api_verifyhost = ( ( false === get_option( 'mainwp_api_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
 
 		if ( empty( $ssl_api_verifyhost ) ) {
 			add_filter( 'http_request_args', array( self::get_class_name(), 'no_ssl_filter_function' ), 99, 2 );

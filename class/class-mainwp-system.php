@@ -27,7 +27,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.5.3.2';
+	public static $version = '4.6-RC1';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -956,7 +956,7 @@ class MainWP_System {
 		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'assets/css/mainwp.css', array(), $this->current_version );
 		wp_enqueue_style( 'mainwp-responsive-layouts', MAINWP_PLUGIN_URL . 'assets/css/mainwp-responsive-layouts.css', array(), $this->current_version );
 
-		if ( isset( $_GET['hideall'] ) && 1 === $_GET['hideall'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( isset( $_GET['hideall'] ) && 1 === (int) $_GET['hideall'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			remove_action( 'admin_footer', 'wp_admin_bar_render', 1000 );
 		}
 
@@ -1081,7 +1081,7 @@ class MainWP_System {
 		<div id="mainwp-response-data-container" resp-data=""></div>
 		<?php
 
-		if ( isset( $_GET['hideall'] ) && 1 === $_GET['hideall'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( isset( $_GET['hideall'] ) && 1 === (int) $_GET['hideall'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			return;
 		}
 		$current_wpid = MainWP_System_Utility::get_current_wpid();

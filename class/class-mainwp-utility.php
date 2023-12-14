@@ -932,7 +932,7 @@ class MainWP_Utility {
 	public static function value_to_string( $var_value ) {
 		if ( is_array( $var_value ) || is_object( $var_value ) ) {
 			//phpcs:ignore -- for debug only
-			return print_r( $vavar_valuer, true );  // @codingStandardsIgnoreLine
+			return print_r( $var_value, true );
 		} elseif ( is_string( $var_value ) ) {
 			return $var_value;
 		}

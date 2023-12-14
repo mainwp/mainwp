@@ -565,7 +565,7 @@ class MainWP_System_Utility {
 	 * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
 	 */
 	public static function can_edit_website( &$website ) {
-		if ( null === $website ) {
+		if ( empty( $website ) ) {
 			return false;
 		}
 

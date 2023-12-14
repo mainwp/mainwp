@@ -2230,7 +2230,7 @@ updatesoverview_plugins_abandoned_unignore_globally_all = function () {
 
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
-            var tableElement = jQuery('#ignored-abandoned-plugins-list');
+            var tableElement = jQuery('#ignored-globally-abandoned-plugins-list');
             tableElement.find('tr').remove();
             jQuery('#mainwp-unignore-globally-all').addClass('disabled');
             tableElement.append('<tr><td colspan="999">' + __('No ignored abandoned plugins.') + '</td></tr>');
@@ -2252,7 +2252,7 @@ updatesoverview_plugins_abandoned_unignore_globally = function (slug) {
 
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
-            var ignoreElement = jQuery('#ignored-abandoned-plugins-list tr[plugin-slug="' + slug + '"]');
+            var ignoreElement = jQuery('#ignored-globally-abandoned-plugins-list tr[plugin-slug="' + slug + '"]');
             var parent = ignoreElement.parent();
             ignoreElement.remove();
             if (parent.children('tr').length == 0) {

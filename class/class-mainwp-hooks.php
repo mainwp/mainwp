@@ -154,7 +154,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_monitoring_sitestable_item', array( $this, 'hook_atarim_manage_sites_default_item' ), 10, 1 );
 		add_filter( 'mainwp_clients_get_website_client_tokens', array( &$this, 'hook_get_website_client_tokens' ), 10, 2 );
 		add_filter( 'mainwp_secure_get_download_sig', array( &$this, 'hook_get_download_sig' ), 10, 2 );
-		add_action( 'mainwp_secure_download', array( &$this, 'hook_secure_download' ), 10, 2 );
+		add_action( 'mainwp_secure_download', array( &$this, 'hook_secure_download' ), 10, 3 );
 		add_action( 'mainwp_ajax_add_action', array( &$this, 'hook_ajax_add_action' ), 10, 2 );
 		add_filter( 'mainwp_get_plugin_icon', array( &$this, 'hook_get_plugin_icon' ), 10, 2 );
 		add_filter( 'mainwp_get_theme_icon', array( &$this, 'hook_get_theme_icon' ), 10, 2 );
@@ -1510,14 +1510,13 @@ class MainWP_Hooks {
 	 *
 	 * Hook get download sig.
 	 *
+	 * @param string $false_value false value.
 	 * @param string $fullfile Full file path.
 	 * @param string $sig sig value.
 	 */
-	public function hook_secure_download( $fullfile, $sig ) {
-		$valid = MainWP_System_Utility::valid_download_sig( $fullfile, $sig );
-		if ( ! $valid ) {
-			wp_die( 'Invalid download.' );
-		}
+	public function hook_secure_download( $false_value, $fullfile, $sig ) {
+		unset( $false_value );
+		return MainWP_System_Utility::valid_download_sig( $fullfile, $sig );
 	}
 
 	/**

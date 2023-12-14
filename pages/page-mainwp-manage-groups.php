@@ -342,22 +342,22 @@ class MainWP_Manage_Groups {
 				}
 				jQuery( document ).ready( function() {
 					jQuery( '#mainwp-manage-groups-sites-table' ).dataTable( {
-																						'searching' : true,
-																						'responsive' : responsive,
-																						'colReorder' : true,
-																						'stateSave':  true,
-																						'paging': false,
-																						'info': true,
-						'order': '[ [ 1, "asc" ] ]',
-																						'scrollX' : false,
+						'searching' : true,
+						'responsive' : responsive,
+						'colReorder' : true,
+						'stateSave':  true,
+						'paging': false,
+						'info': true,
+						'order': [ [ 1, "asc" ] ],
+						'scrollX' : false,
 						'columnDefs': [ {
 							"targets": 'no-sort',
 							"orderable": false
 						} ],
-																						'preDrawCallback': function( settings ) {
+						'preDrawCallback': function( settings ) {
 							jQuery( '#mainwp-manage-groups-sites-table .ui.checkbox' ).checkbox();
-																						}
-		} );
+						}
+				} );
 	} );
 				</script>
 			</div>
@@ -651,7 +651,7 @@ class MainWP_Manage_Groups {
 		}
 
 		$group = MainWP_DB_Common::instance()->get_group_by_name( $groupName );
-		while ( $group && ( ( null === $groupId ) || ( $group->id !== $groupId ) ) ) {
+		while ( $group && ( ( null === $groupId ) || ( (int) $group->id !== (int) $groupId ) ) ) {
 			if ( null === $cnt ) {
 				$cnt = 1;
 			} else {

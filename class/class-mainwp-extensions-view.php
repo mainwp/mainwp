@@ -112,11 +112,11 @@ class MainWP_Extensions_View {
 	 */
 	public static function render() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$mainwp_api_key = false;
-		if ( true === get_option( 'mainwp_extensions_api_save_login' ) ) {
+		if ( get_option( 'mainwp_extensions_api_save_login' ) ) {
 			$mainwp_api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
 		}
 
-		if ( 1 === get_option( 'mainwp_api_sslVerifyCertificate' ) ) {
+		if ( 1 === (int) get_option( 'mainwp_api_sslVerifyCertificate' ) ) {
 			update_option( 'mainwp_api_sslVerifyCertificate', 0 );
 		}
 
@@ -616,7 +616,7 @@ class MainWP_Extensions_View {
 					</div>
 					<div class="field">
 				<div class="ui input fluid">
-					<input type="text" id="mainwp_com_api_key" placeholder="<?php esc_attr_e( '', 'mainwp' ); ?>" value="<?php echo esc_attr( $mainwp_api_key ); ?>"/>
+					<input type="password" id="mainwp_com_api_key" placeholder="<?php esc_attr_e( '', 'mainwp' ); ?>" value="<?php echo esc_attr( $mainwp_api_key ); ?>"/>
 				</div>
 			</div>
 			<div class="field">

@@ -479,11 +479,11 @@ class MainWP_Settings {
 					$_POST['time_format'] = wp_unslash( $_POST['time_format_custom'] );
 				}
 
-				if ( isset( $_POST['gmt_offset'] ) && isset( $_POST['timezone_string'] ) ) {
+				if ( isset( $_POST['timezone_string'] ) ) {
 					// Map UTC+- timezones to gmt_offsets and set timezone_string to empty.
 					if ( ! empty( $_POST['timezone_string'] ) && preg_match( '/^UTC[+-]/', wp_unslash( $_POST['timezone_string'] ) ) ) {
 						$_POST['gmt_offset']      = wp_unslash( $_POST['timezone_string'] );
-						$_POST['gmt_offset']      = preg_replace( '/UTC\+?/', '', wp_unslash( $_POST['gmt_offset'] ) );
+						$_POST['gmt_offset']      = preg_replace( '/UTC\+?/', '', wp_unslash( $_POST['gmt_offset'] ) ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
 						$_POST['timezone_string'] = '';
 					}
 

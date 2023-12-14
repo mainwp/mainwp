@@ -25,6 +25,13 @@ class MainWP_Exception extends \Exception {
 	protected $messageExtra;
 
 	/**
+	 * Protected variable to hold the Error Code.
+	 *
+	 * @var string Error Code.
+	 */
+	protected $errorCode;
+
+	/**
 	 * Protected variable to hold the extra data.
 	 *
 	 * @var array data.

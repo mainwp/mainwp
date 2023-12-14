@@ -145,6 +145,8 @@ class Connector_Client extends Log_Connector {
 			return;
 		}
 
+		$status = intval( $status );
+
 		$action = 'unsuspend';
 
 		if ( 0 === $status ) {

@@ -1805,7 +1805,7 @@ class MainWP_Client {
 				$return['message'] = esc_html__( 'Field has been saved without changes.', 'mainwp' );
 			} else {
 				$current = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $field_name, $client_id ); // check if other field with the same name existed.
-				if ( $current && $current->field_id !== $field_id ) {
+				if ( $current && (int) $current->field_id !== $field_id ) {
 					$return['error'] = esc_html__( 'Field already exists, try different field name.', 'mainwp' );
 				} else {
 					// update general or individual field name.

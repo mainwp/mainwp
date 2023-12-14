@@ -987,7 +987,7 @@ class MainWP_User {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							if ( ! empty( $website->sync_errors ) || MainWP_System_Utility::is_suspended_site( $website ) ) {
 								continue;
 							}
 							$dbwebsites[ $website->id ] = $website;
@@ -997,7 +997,7 @@ class MainWP_User {
 				}
 			}
 
-			if ( '' !== $clients && is_array( $clients ) ) {
+			if ( ! empty( $clients ) && is_array( $clients ) ) {
 				$websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
 					$clients,
 					array(
@@ -1006,7 +1006,7 @@ class MainWP_User {
 				);
 
 				foreach ( $websites as $website ) {
-					if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+					if ( ! empty( $website->sync_errors ) || MainWP_System_Utility::is_suspended_site( $website ) ) {
 						continue;
 					}
 					$dbwebsites[ $website->id ] = $website;
@@ -1338,7 +1338,13 @@ class MainWP_User {
 		$userId    = isset( $_POST['userId'] ) ? sanitize_text_field( wp_unslash( $_POST['userId'] ) ) : false;
 		$userName  = isset( $_POST['userName'] ) ? sanitize_text_field( wp_unslash( $_POST['userName'] ) ) : '';
 		$websiteId = isset( $_POST['websiteId'] ) ? sanitize_text_field( wp_unslash( $_POST['websiteId'] ) ) : false;
-		$pass      = isset( $_POST['update_password'] ) ? utf8_decode( urldecode( wp_unslash( $_POST['update_password'] ) ) ) : '';
+		$pass      = isset( $_POST['update_password'] ) ? rawurldecode( wp_unslash( $_POST['update_password'] ) ) : '';
+
+		if ( function_exists( '\mb_convert_encoding' ) ) {
+			$pass = \mb_convert_encoding( $pass, 'ISO-8859-1', 'UTF-8' );
+		} else {
+			$pass = utf8_decode( $pass ); // to compatible.
+		}
 
 		if ( empty( $userId ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Site ID or user ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );

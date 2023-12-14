@@ -52,7 +52,7 @@ class MainWP_Api_Manager_Password_Management {
 		}
 
 		$password = '';
-		for ( $i = 0; $i < $length; $i ++ ) {
+		for ( $i = 0; $i < $length; $i++ ) {
 			$password .= substr( $chars, wp_rand( 0, strlen( $chars ) - 1 ), 1 );
 		}
 
@@ -127,5 +127,4 @@ class MainWP_Api_Manager_Password_Management {
 
 		return join( '', $stra );
 	}
-
 }

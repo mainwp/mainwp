@@ -39,7 +39,7 @@ class MainWP_Notification_Settings {
 	 * @return mixed self::$instance
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -130,7 +130,7 @@ class MainWP_Notification_Settings {
 			<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 			<?php endif; ?>
 			<div class="ui info message">
-				<?php echo sprintf( esc_html__( 'Email notifications sent from MainWP Dashboard are listed below.  Click on an email to configure it.  For additional help, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/email-settings/">', '</a>' ); ?>
+				<?php printf( esc_html__( 'Email notifications sent from MainWP Dashboard are listed below.  Click on an email to configure it.  For additional help, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/email-settings/">', '</a>' ); ?>
 			</div>
 			<table class="ui unstackable table" id="mainwp-emails-settings-table">
 				<thead>
@@ -249,7 +249,7 @@ class MainWP_Notification_Settings {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-email-tokens-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-message"></i>
-							<?php echo sprintf( esc_html__( '%1$sBoilerplate%2$s and %3$sReports%4$s extensions tokens are supported in the email settings and templates if Extensions are in use.', 'mainwp' ), '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">', '</a>', '<a href="https://mainwp.com/extension/pro-reports/" target="_blank">', '</a>' ); ?>
+							<?php printf( esc_html__( '%1$sBoilerplate%2$s and %3$sReports%4$s extensions tokens are supported in the email settings and templates if Extensions are in use.', 'mainwp' ), '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">', '</a>', '<a href="https://mainwp.com/extension/pro-reports/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<h3 class="ui header"><?php echo esc_html( $title ); ?></h3>
@@ -258,7 +258,7 @@ class MainWP_Notification_Settings {
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Enable', 'mainwp' ); ?></label>
 						<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable this email notification.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-							<input type="checkbox" name="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][disable]" id="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][disable]" <?php echo ( 0 == $options['disable'] ) ? 'checked="true"' : ''; ?>/>
+							<input type="checkbox" name="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][disable]" id="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][disable]" <?php echo ( 0 === (int) $options['disable'] ) ? 'checked="true"' : ''; ?>/>
 						</div>
 					</div>
 					<div class="ui grid field">
@@ -367,13 +367,13 @@ class MainWP_Notification_Settings {
 	 */
 	public static function render_update_template_message( $updated ) {
 		?>
-		<?php if ( 1 == $updated ) : ?>
+		<?php if ( 1 === (int) $updated ) : ?>
 		<div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Custom email template deleted successfully.', 'mainwp' ); ?></div>
 		<?php endif; ?>
-		<?php if ( 2 == $updated ) : ?>
+		<?php if ( 2 === (int) $updated ) : ?>
 		<div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Email template copied successfully.', 'mainwp' ); ?></div>
 		<?php endif; ?>
-		<?php if ( 3 == $updated ) : ?>
+		<?php if ( 3 === (int) $updated ) : ?>
 		<div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Email template updated successfully.', 'mainwp' ); ?></div>
 		<?php endif; ?>	
 		<?php

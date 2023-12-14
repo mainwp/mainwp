@@ -85,7 +85,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		// These are the tabs which are shown on the page.
 		$tabs = array();
 
-		if ( 'search' == $tab ) {
+		if ( 'search' === $tab ) {
 			$tabs['search'] = esc_html__( 'Search Results', 'mainwp' );
 		}
 		$tabs['featured']    = _x( 'Featured', 'Plugin Installer' );
@@ -122,8 +122,8 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 		switch ( $tab ) {
 			case 'search':
-				$type = isset( $_REQUEST['type'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['type'] ) ) : 'term'; // phpcs:ignore WordPress.Security.NonceVerification
-				$term = isset( $_REQUEST['s'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+				$type = isset( $_REQUEST['type'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['type'] ) ) : 'term'; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+				$term = isset( $_REQUEST['s'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 				switch ( $type ) {
 					case 'tag':
@@ -151,7 +151,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 				break;
 
 			case 'favorites':
-				$user = isset( $_GET['user'] ) ? sanitize_text_field( wp_unslash( $_GET['user'] ) ) : get_user_option( 'wporg_favorites' ); // phpcs:ignore WordPress.Security.NonceVerification
+				$user = isset( $_GET['user'] ) ? sanitize_text_field( wp_unslash( $_GET['user'] ) ) : get_user_option( 'wporg_favorites' ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				update_user_meta( get_current_user_id(), 'wporg_favorites', $user );
 				if ( $user ) {
 					$args['user'] = $user;
@@ -245,7 +245,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 			return;
 		}
 
-		if ( 'top' == $which ) {
+		if ( 'top' === $which ) {
 			wp_referer_field();
 			$this->pagination( $which );
 		} else {
@@ -268,14 +268,14 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		}
 
 		$total_items = $this->_pagination_args['total_items'];
-		$total_pages = $this->_pagination_args['total_pages'];
+		$total_pages = (int) $this->_pagination_args['total_pages'];
 
 		$perpage_paging = '<span>' . sprintf( _n( '%s item', '%s items', $total_items ), number_format_i18n( $total_items ) ) . '</span>';
 
-		$current              = $this->get_pagenum();
+		$current              = (int) $this->get_pagenum();
 		$removable_query_args = wp_removable_query_args();
 
-		$current_url = set_url_scheme( 'http://' . ( isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '' ) . ( isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		$current_url = set_url_scheme( 'http://' . ( isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '' ) . ( isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
 
 		$current_url = remove_query_arg( $removable_query_args, $current_url );
 
@@ -286,18 +286,18 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 				$disable_prev = false;
 				$disable_next = false;
 
-		if ( 1 == $current ) {
+		if ( 1 === $current ) {
 			$disable_first = true;
 			$disable_prev  = true;
 		}
-		if ( 2 == $current ) {
+		if ( 2 === $current ) {
 			$disable_first = true;
 		}
-		if ( $current == $total_pages ) {
+		if ( $current === $total_pages ) {
 			$disable_last = true;
 			$disable_next = true;
 		}
-		if ( $current == $total_pages - 1 ) {
+		if ( $current === $total_pages - 1 ) {
 			$disable_last = true;
 		}
 
@@ -380,11 +380,11 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		$a = $plugin_a->$orderby;
 		$b = $plugin_b->$orderby;
 
-		if ( $a == $b ) {
+		if ( $a === $b ) {
 			return 0;
 		}
 
-		if ( 'DESC' == $this->order ) {
+		if ( 'DESC' === $this->order ) {
 			return ( $a < $b ) ? 1 : -1;
 		} else {
 			return ( $a < $b ) ? -1 : 1;
@@ -432,7 +432,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 			}
 
 			// Display the group heading if there is one.
-			if ( isset( $plugin['group'] ) && $plugin['group'] != $group ) {
+			if ( isset( $plugin['group'] ) && $plugin['group'] != $group ) { //phpcs:ignore -- to valid.
 				if ( isset( $this->groups[ $plugin['group'] ] ) ) {
 					$group_name = $this->groups[ $plugin['group'] ];
 					if ( isset( $plugins_group_titles[ $group_name ] ) ) {

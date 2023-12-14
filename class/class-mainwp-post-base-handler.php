@@ -59,18 +59,18 @@ abstract class MainWP_Post_Base_Handler {
 
 		$this->check_security( $action, $query_arg );
 
-		if ( isset( $_POST['dts'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_POST['dts'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$ajaxPosts = get_option( 'mainwp_ajaxposts' );
 			if ( ! is_array( $ajaxPosts ) ) {
 				$ajaxPosts = array();
 			}
 
 			// If already processed, just quit!
-			if ( isset( $ajaxPosts[ $action ] ) && ( $ajaxPosts[ $action ] == $_POST['dts'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			if ( isset( $ajaxPosts[ $action ] ) && ( $ajaxPosts[ $action ] === $_POST['dts'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				die( wp_json_encode( array( 'error' => esc_html__( 'Double request!', 'mainwp' ) ) ) );
 			}
 
-			$ajaxPosts[ $action ] = sanitize_text_field( wp_unslash( $_POST['dts'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+			$ajaxPosts[ $action ] = sanitize_text_field( wp_unslash( $_POST['dts'] ) ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			MainWP_Utility::update_option( 'mainwp_ajaxposts', $ajaxPosts );
 		}
 	}
@@ -82,16 +82,16 @@ abstract class MainWP_Post_Base_Handler {
 	 *
 	 * @param string $action Action to perform.
 	 * @param string $query_arg Query argument.
-	 * @param bool   $die return or exit.
+	 * @param bool   $out_die return or exit.
 	 *
 	 * @return bool true or false
 	 */
-	public function check_security( $action = - 1, $query_arg = 'security', $die = true ) {
+	public function check_security( $action = - 1, $query_arg = 'security', $out_die = true ) {
 		$secure = true;
 		if ( - 1 === $action ) {
 			$secure = false;
 		} else {
-			$result = isset( $_REQUEST[ $query_arg ] ) ? wp_verify_nonce( sanitize_key( $_REQUEST[ $query_arg ] ), $action ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+			$result = isset( $_REQUEST[ $query_arg ] ) ? wp_verify_nonce( sanitize_key( $_REQUEST[ $query_arg ] ), $action ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 			if ( ! $result ) {
 				$secure = false;
@@ -99,7 +99,7 @@ abstract class MainWP_Post_Base_Handler {
 		}
 
 		if ( ! $secure ) {
-			if ( $die ) {
+			if ( $out_die ) {
 				die( wp_json_encode( array( 'error' => esc_html__( 'Insecure request! Please try again. If you keep experiencing the problem, please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', 'mainwp' ) ) ) );
 			} else {
 				return false;
@@ -159,5 +159,4 @@ abstract class MainWP_Post_Base_Handler {
 
 		return self::$security_nonces;
 	}
-
 }

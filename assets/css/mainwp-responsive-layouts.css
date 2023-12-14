@@ -300,12 +300,12 @@
 		display: none;
 	}
 
-	#mainwp-manage-sites-table {
+	.mainwp-manage-wpsites-table {
 		white-space: normal !important;
 	}
 
-	#mainwp-manage-sites-table tbody tr td.mainwp-site-cell,
-	#mainwp-manage-sites-table tbody tr td.mainwp-url-cell {
+	.mainwp-manage-wpsites-table tbody tr td.mainwp-site-cell,
+	.mainwp-manage-wpsites-table tbody tr td.mainwp-url-cell {
 		white-space: nowrap;
 	  overflow: hidden;
 	  text-overflow: ellipsis;

@@ -43,7 +43,7 @@ class MainWP_Site_Open {
 
 			return;
 		}
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! isset( $_GET['websiteid'] ) ) {
 			exit();
 		}
@@ -65,7 +65,7 @@ class MainWP_Site_Open {
 		} else {
 			self::open_site( $website, $location, ( isset( $_GET['newWindow'] ) ? sanitize_text_field( wp_unslash( $_GET['newWindow'] ) ) : null ) );
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 	}
 
 	/**
@@ -73,15 +73,14 @@ class MainWP_Site_Open {
 	 *
 	 * @param mixed $website Website ID.
 	 * @param mixed $location Website Location.
-	 * @param null  $pNewWindow Open in new window.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
 	 */
-	public static function open_site( $website, $location, $pNewWindow = null ) {
+	public static function open_site( $website, $location ) {
 		if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
 			$action = $website->url . 'wp-admin.html';
 		} else {
-			$action = MainWP_Connect::get_get_data_authed( $website, ( null == $location || '' === $location ) ? 'index.php' : $location );
+			$action = MainWP_Connect::get_get_data_authed( $website, ( null === $location || '' === $location ) ? 'index.php' : $location );
 		}
 		?>
 		<div class="ui segment" style="padding: 25rem">
@@ -105,7 +104,7 @@ class MainWP_Site_Open {
 
 		self::verify_open_nonce();
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! isset( $_GET['websiteid'] ) ) {
 			exit();
 		}
@@ -123,7 +122,7 @@ class MainWP_Site_Open {
 		}
 
 		$site = isset( $_GET['size'] ) ? esc_html( wp_unslash( $_GET['size'] ) ) : '';
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 
 		self::open_site_restore( $website, $file, $site );
 	}
@@ -217,11 +216,11 @@ class MainWP_Site_Open {
 	 *
 	 * @param mixed $website Website ID.
 	 * @param mixed $location open location.
-	 * @param bool  $echo Echo or not.
+	 * @param bool  $echo_out Echo or not.
 	 *
 	 * @return mixed Render modal window for themes selection.
 	 */
-	public static function get_open_site_url( $website, $location = '', $echo = true ) {
+	public static function get_open_site_url( $website, $location = '', $echo_out = true ) {
 
 		$site_id = 0;
 
@@ -244,7 +243,7 @@ class MainWP_Site_Open {
 			}
 		}
 
-		if ( $echo ) {
+		if ( $echo_out ) {
 			echo $open_url; //phpcs:ignore WordPress.Security.EscapeOutput
 		}
 

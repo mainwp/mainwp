@@ -139,7 +139,7 @@ abstract class Log_Connector {
 		$diff = array_udiff_assoc(
 			$old_value,
 			$new_value,
-			function( $value1, $value2 ) {
+			function ( $value1, $value2 ) {
 				// Compare potentially complex nested arrays.
 				return wp_json_encode( $value1 ) !== wp_json_encode( $value2 );
 			}
@@ -157,7 +157,7 @@ abstract class Log_Connector {
 		// remove numeric indexes.
 		$result = array_filter(
 			$result,
-			function( $value ) {
+			function ( $value ) {
 				// @codingStandardsIgnoreStart
 				// check if is not valid number (is_int, is_numeric and ctype_digit are not enough)
 				return (string) (int) $value !== (string) $value;
@@ -182,7 +182,7 @@ abstract class Log_Connector {
 				if ( is_array( $old_value[ $key ] ) && is_array( $new_value[ $key ] ) ) {
 					$inner  = array();
 					$parent = $key;
-					$deep--;
+					--$deep;
 					$changed = $this->get_changed_keys( $old_value[ $key ], $new_value[ $key ], $deep );
 					foreach ( $changed as $child => $change ) {
 						$inner[ $parent . '::' . $child ] = $change;
@@ -210,7 +210,7 @@ abstract class Log_Connector {
 
 		// Sanitize all record values.
 		return array_map(
-			function( $value ) {
+			function ( $value ) {
 				if ( ! is_array( $value ) ) {
 					return wp_strip_all_tags( $value );
 				}
@@ -220,5 +220,4 @@ abstract class Log_Connector {
 			$data
 		);
 	}
-
 }

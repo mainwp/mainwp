@@ -96,13 +96,12 @@ class MainWP_Manage_Groups {
 	 * Initiates Tags menu.
 	 *
 	 * @param array $subPages Sub pages array.
-	 * @param int   $level What level to display on.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
-	public static function init_left_menu( $subPages = array(), $level = 2 ) {
+	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => esc_html__( 'Tags', 'mainwp' ),
@@ -171,7 +170,7 @@ class MainWP_Manage_Groups {
 				$item           = array();
 				$item['title']  = $subPage['title'];
 				$item['href']   = 'admin.php?page=ManageGroups' . $subPage['slug'];
-				$item['active'] = ( $subPage['slug'] == $shownPage ) ? true : false;
+				$item['active'] = ( $subPage['slug'] === $shownPage ) ? true : false;
 				$renderItems[]  = $item;
 			}
 		}
@@ -183,10 +182,8 @@ class MainWP_Manage_Groups {
 	 * Method render_footer()
 	 *
 	 * Render Tags page footer. Closes the page container.
-	 *
-	 * @param string $shownPage The page slug shown at this moment.
 	 */
-	public static function render_footer( $shownPage = '' ) {
+	public static function render_footer() {
 		echo '</div>';
 	}
 
@@ -215,7 +212,7 @@ class MainWP_Manage_Groups {
 	 */
 	private static function create_group_item( $group ) {
 		?>
-		<a class="item" id="<?php echo intval( $group->id ); ?>" style="border-left: 4px solid <?php echo '' == $group->color ? '#fff' : esc_attr( $group->color ); ?>">
+		<a class="item" id="<?php echo intval( $group->id ); ?>" style="border-left: 4px solid <?php echo empty( $group->color ) ? '#fff' : esc_attr( $group->color ); ?>">
 			<div class="ui small label"><?php echo property_exists( $group, 'nrsites' ) ? intval( $group->nrsites ) : 0; ?></div>
 			<input type="hidden" value="<?php echo esc_html( stripslashes( $group->name ) ); ?>" id="mainwp-hidden-group-name">
 			<input type="hidden" value="<?php echo esc_html( $group->color ); ?>" id="mainwp-hidden-group-color">
@@ -260,7 +257,7 @@ class MainWP_Manage_Groups {
 					<span class="mainwp-preview-item" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'Click to see the site homepage screenshot . ', 'mainwp' ); ?>" preview-site-url="<?php echo esc_url( $website->url ); ?>" ><i class="camera icon"></i></span>
 				</td>
 				<td>
-				<?php if ( '' == $website->note ) : ?>
+				<?php if ( empty( $website->note ) ) : ?>
 					<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>" data-tooltip="<?php esc_attr_e( 'Click to add a note . ', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
 				<?php else : ?>
 					<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
@@ -310,7 +307,7 @@ class MainWP_Manage_Groups {
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp_groups_info"></i>
 					<div><?php esc_html_e( 'In case you are managing a large number of WordPress sites, it could be useful for you to mark them with different tags . Later, you will be able to make Site Selection by a tag that will speed up your work and makes it much easier.', 'mainwp' ); ?></div>
 					<div><?php esc_html_e( 'One child site can be assigned to multiple Tags at the same time.', 'mainwp' ); ?></div>
-					<div><?php echo sprintf( esc_html__( 'for more information check the %1$sKnowledge Base %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">', '</a>' ); ?></div>
+					<div><?php printf( esc_html__( 'for more information check the %1$sKnowledge Base %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">', '</a>' ); ?></div>
 			</div>
 			<?php } ?>
 			<?php
@@ -324,15 +321,15 @@ class MainWP_Manage_Groups {
 			do_action( 'mainwp_before_groups_table' );
 			?>
 			<div class="ui stackable grid">
-				<div class="<?php echo 1 == $sidebarPosition ? 'twelve' : 'four'; ?> wide column">
-					<?php if ( 1 == $sidebarPosition ) : ?>
+				<div class="<?php echo 1 === (int) $sidebarPosition ? 'twelve' : 'four'; ?> wide column">
+					<?php if ( 1 === (int) $sidebarPosition ) : ?>
 						<?php self::render_groups_sites_table_element(); ?>
 					<?php else : ?>
 						<?php self::render_groups_menu_element(); ?>
 					<?php endif; ?>
 				</div>
-				<div class="<?php echo 1 == $sidebarPosition ? 'four' : 'twelve'; ?> wide column">
-					<?php if ( 1 == $sidebarPosition ) : ?>
+				<div class="<?php echo 1 === (int) $sidebarPosition ? 'four' : 'twelve'; ?> wide column">
+					<?php if ( 1 === (int) $sidebarPosition ) : ?>
 						<?php self::render_groups_menu_element(); ?>
 					<?php else : ?>
 						<?php self::render_groups_sites_table_element(); ?>
@@ -345,22 +342,22 @@ class MainWP_Manage_Groups {
 				}
 				jQuery( document ).ready( function() {
 					jQuery( '#mainwp-manage-groups-sites-table' ).dataTable( {
-																						'searching' : true,
-																						'responsive' : responsive,
-																						'colReorder' : true,
-																						'stateSave':  true,
-																						'paging': false,
-																						'info': true,
-						'order': '[ [ 1, "asc" ] ]',
-																						'scrollX' : false,
+						'searching' : true,
+						'responsive' : responsive,
+						'colReorder' : true,
+						'stateSave':  true,
+						'paging': false,
+						'info': true,
+						'order': [ [ 1, "asc" ] ],
+						'scrollX' : false,
 						'columnDefs': [ {
 							"targets": 'no-sort',
 							"orderable": false
 						} ],
-																						'preDrawCallback': function( settings ) {
+						'preDrawCallback': function( settings ) {
 							jQuery( '#mainwp-manage-groups-sites-table .ui.checkbox' ).checkbox();
-																						}
-		} );
+						}
+				} );
 	} );
 				</script>
 			</div>
@@ -485,7 +482,7 @@ class MainWP_Manage_Groups {
 			$sidebarPosition = 1;
 		}
 		?>
-		<div class="ui fluid <?php echo 1 == $sidebarPosition ? 'right' : ''; ?> pointing vertical menu sticky" id="mainwp-groups-menu" style="margin-top:52px">
+		<div class="ui fluid <?php echo 1 === (int) $sidebarPosition ? 'right' : ''; ?> pointing vertical menu sticky" id="mainwp-groups-menu" style="margin-top:52px">
 			<h4 class="item ui header"><?php esc_html_e( 'Tags', 'mainwp' ); ?></h4>
 		<?php self::get_group_list_content(); ?>
 			<div class="item">
@@ -548,13 +545,13 @@ class MainWP_Manage_Groups {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_group()
 	 */
 	public static function rename_group() {
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( isset( $_POST['groupId'] ) ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( intval( $_POST['groupId'] ) );
 			if ( ! empty( $group ) ) {
 				$old_name = $group->name;
 				$name     = isset( $_POST['newName'] ) ? sanitize_text_field( wp_unslash( $_POST['newName'] ) ) : '';
-				if ( '' == $name ) {
+				if ( empty( $name ) ) {
 					$name = $group->name;
 				}
 
@@ -591,7 +588,7 @@ class MainWP_Manage_Groups {
 				die( wp_json_encode( array( 'result' => $group->name ) ) );
 			}
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		//phpcs:enable
 	}
 
 	/**
@@ -603,7 +600,9 @@ class MainWP_Manage_Groups {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::remove_group()
 	 */
 	public static function delete_group() {
-		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		//phpcs:disable WordPress.Security.NonceVerification.Missing
+		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;
+		//phpcs:enable
 		if ( $groupid ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
 			if ( ! empty( $group ) ) {
@@ -640,7 +639,7 @@ class MainWP_Manage_Groups {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_name()
 	 */
 	public static function check_group_name( $groupName, $groupId = null ) {
-		if ( '' == $groupName ) {
+		if ( empty( $groupName ) ) {
 			$groupName = esc_html__( 'New tag', 'mainwp' );
 		}
 
@@ -652,17 +651,17 @@ class MainWP_Manage_Groups {
 		}
 
 		$group = MainWP_DB_Common::instance()->get_group_by_name( $groupName );
-		while ( $group && ( ( null == $groupId ) || ( $group->id != $groupId ) ) ) {
-			if ( null == $cnt ) {
+		while ( $group && ( ( null === $groupId ) || ( (int) $group->id !== (int) $groupId ) ) ) {
+			if ( null === $cnt ) {
 				$cnt = 1;
 			} else {
-				$cnt ++;
+				++$cnt;
 			}
 
 			$group = MainWP_DB_Common::instance()->get_group_by_name( $groupName . ' (' . $cnt . ')' );
 		}
 
-		return $groupName . ( null == $cnt ? '' : ' (' . $cnt . ')' );
+		return $groupName . ( null === $cnt ? '' : ' (' . $cnt . ')' );
 	}
 
 	/**
@@ -682,8 +681,13 @@ class MainWP_Manage_Groups {
 		 */
 		global $current_user;
 
-		if ( isset( $_POST['newName'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( sanitize_text_field( wp_unslash( $_POST['newName'] ) ) ), sanitize_hex_color( wp_unslash( $_POST['newColor'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		//phpcs:disable WordPress.Security.NonceVerification.Missing
+		$newName  = isset( $_POST['newName'] ) ? sanitize_text_field( wp_unslash( $_POST['newName'] ) ) : '';
+		$newColor = isset( $_POST['newColor'] ) ? sanitize_hex_color( wp_unslash( $_POST['newColor'] ) ) : '';
+		//phpcs:enable
+
+		if ( ! empty( $newName ) ) {
+			$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( $newName ), $newColor );
 
 			/**
 			 * New Group Added
@@ -757,7 +761,10 @@ class MainWP_Manage_Groups {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_group_id()
 	 */
 	public static function get_sites() {
-		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		//phpcs:disable WordPress.Security.NonceVerification.Missing
+		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		//phpcs:enable
+
 		if ( $groupid ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
 			if ( ! empty( $group ) ) {
@@ -787,7 +794,7 @@ class MainWP_Manage_Groups {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function update_group() {
- 		// phpcs:disable WordPress.Security.NonceVerification
+ 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;
 		if ( $groupid ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
@@ -804,7 +811,7 @@ class MainWP_Manage_Groups {
 				die( wp_json_encode( array( 'result' => true ) ) );
 			}
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 
 		die( wp_json_encode( array( 'result' => false ) ) );
 	}
@@ -836,5 +843,4 @@ class MainWP_Manage_Groups {
 			<?php
 		}
 	}
-
 }

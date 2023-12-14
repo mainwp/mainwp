@@ -108,7 +108,7 @@ class MainWP_Logger {
 	 * @uses \MainWP\Dashboard\MainWP_Logger
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -141,8 +141,8 @@ class MainWP_Logger {
 	 * @param mixed $spec_log Specific log.
 	 */
 	public function set_log_priority( $logPriority, $spec_log = 0 ) {
-		$this->logPriority = $logPriority;
-		$this->logSpecific = $spec_log; // 1 - specific log, 0 - not specific log.
+		$this->logPriority = (int) $logPriority;
+		$this->logSpecific = (int) $spec_log; // 1 - specific log, 0 - not specific log.
 	}
 
 	/**
@@ -157,7 +157,7 @@ class MainWP_Logger {
 
 		if ( false === $enabled ) {
 			$sites_count = MainWP_DB::instance()->get_websites_count();
-			if ( 0 == $sites_count ) {
+			if ( empty( $sites_count ) ) {
 				$enabled = self::DEBUG;
 				set_transient( 'mainwp_transient_action_logs', true, 2 * WEEK_IN_SECONDS );
 			} elseif ( get_transient( 'mainwp_transient_action_logs' ) ) {
@@ -194,16 +194,16 @@ class MainWP_Logger {
 	public function get_log_type_info( $type, $logcolor ) {
 		$currentColor = '';
 		$prefix       = '';
-		if ( self::DEBUG == $type || self::DEBUG == $logcolor ) {
+		if ( self::DEBUG === $type || self::DEBUG === $logcolor ) {
 			$currentColor = self::DEBUG_COLOR;
 			$prefix       = '[DEBUG]';
-		} elseif ( self::INFO == $type || self::INFO == $logcolor ) {
+		} elseif ( self::INFO === $type || self::INFO === $logcolor ) {
 			$currentColor = self::INFO_COLOR;
 			$prefix       = '[INFO]';
-		} elseif ( self::WARNING == $type || self::WARNING == $logcolor ) {
+		} elseif ( self::WARNING === $type || self::WARNING === $logcolor ) {
 			$currentColor = self::WARNING_COLOR;
 			$prefix       = '[WARNING]';
-		} elseif ( self::LOG == $type || self::LOG == $logcolor ) {
+		} elseif ( self::LOG === $type || self::LOG === $logcolor ) {
 			$currentColor = self::LOG_COLOR;
 			$prefix       = '[LOG]';
 		}
@@ -366,12 +366,12 @@ class MainWP_Logger {
 			return;
 		}
 
-		$priority = apply_filters( 'mainwp_log_to_db_priority', $priority, $website );
+		$priority = (int) apply_filters( 'mainwp_log_to_db_priority', $priority, $website );
 
 		$do_log = false;
 
-		if ( 1 == $this->logSpecific ) { // 1 - specific log, 0 - not specific log.
-			if ( $this->logPriority == $priority ) { // specific priority number saved setting.
+		if ( 1 === $this->logSpecific ) { // 1 - specific log, 0 - not specific log.
+			if ( $this->logPriority === $priority ) { // specific priority number saved setting.
 				$do_log = true;
 			}
 		} elseif ( $this->logPriority >= $priority ) {
@@ -434,7 +434,7 @@ class MainWP_Logger {
 	 */
 	private function log( $text, $priority,  $log_color = 0, $forced = false, $website = false ) { // phpcs:ignore -- complex function.
 
-		if ( self::DISABLED == $this->logPriority ) {
+		if ( self::DISABLED === $this->logPriority ) {
 			return;
 		}
 
@@ -447,8 +447,8 @@ class MainWP_Logger {
 		$text = $this->prepare_log_info( $text );
 
 		$do_log = false;
-		if ( 1 == $this->logSpecific ) { // 1 - specific log, 0 - not specific log.
-			if ( $this->logPriority == $priority ) { // specific priority number saved setting.
+		if ( 1 === $this->logSpecific ) { // 1 - specific log, 0 - not specific log.
+			if ( $this->logPriority === $priority ) { // specific priority number saved setting.
 				$do_log = true;
 			}
 		} elseif ( $this->logPriority >= $priority ) {
@@ -507,7 +507,7 @@ class MainWP_Logger {
 
 					if ( $newLogHandle ) {
 						fclose( $newLogHandle );
-						unlink( $this->logCurrentFile );
+						wp_delete_file( $this->logCurrentFile );
 						if ( file_exists( $newLogFile ) ) {
 							rename( $newLogFile, $this->logCurrentFile );
 						}
@@ -547,17 +547,17 @@ class MainWP_Logger {
 	 *
 	 * Prepend content to log file.
 	 *
-	 * @param mixed $string Custom string.
+	 * @param mixed $str Custom string.
 	 * @param mixed $filename Filename.
 	 */
-	public function prepend( $string, $filename ) {
+	public function prepend( $str, $filename ) {
 		$context = stream_context_create();
 		$fp      = fopen( $filename, 'r', 1, $context );
-		$tmpname = md5( $string );
-		file_put_contents( $tmpname, $string );
+		$tmpname = md5( $str );
+		file_put_contents( $tmpname, $str );
 		file_put_contents( $tmpname, $fp, FILE_APPEND );
 		fclose( $fp );
-		unlink( $filename );
+		wp_delete_file( $filename );
 		rename( $tmpname, $filename );
 	}
 
@@ -666,10 +666,8 @@ class MainWP_Logger {
 	 * Method check_log_daily()
 	 *
 	 * Daily checks to clear the log file.
-	 *
-	 * @param int $days number of days to keep logs.
 	 */
-	public function check_log_daily( $days = false ) {
+	public function check_log_daily() {
 		$status = (int) $this->get_log_status();
 		if ( 0 >= $status ) {
 			return;
@@ -677,7 +675,7 @@ class MainWP_Logger {
 
 		$today_m_y = date_i18n( 'd/m/Y' ); //phpcs:ignore -- local time.
 		// one time per day.
-		if ( get_option( 'mainwp_logger_check_daily' ) != $today_m_y ) {
+		if ( get_option( 'mainwp_logger_check_daily' ) !== $today_m_y ) {
 			$num_days = apply_filters( 'mainwp_logger_keep_days', 7 );
 			MainWP_DB_Common::instance()->delete_action_log( $num_days );
 			MainWP_Utility::update_option( 'mainwp_logger_check_daily', $today_m_y );
@@ -707,14 +705,12 @@ class MainWP_Logger {
 	 */
 	public function clear_log() {
 		$logFile = $this->get_log_file();
-		if ( ! unlink( $logFile ) ) {
-			$fh = fopen( $logFile, 'w' );
-			if ( false === $fh ) {
-				return;
-			}
-
-			fclose( $fh );
+		wp_delete_file( $logFile );
+		$fh = fopen( $logFile, 'w' );
+		if ( false === $fh ) {
+			return;
 		}
+		fclose( $fh );
 	}
 
 	/**
@@ -826,7 +822,7 @@ class MainWP_Logger {
 
 			$firstLinePassedProcessed = $firstLinePassed;
 
-			if ( $currentColor != $previousColor ) {
+			if ( $currentColor !== $previousColor ) {
 				if ( $fontOpen ) {
 					echo '</div></div>';
 				}
@@ -861,5 +857,4 @@ class MainWP_Logger {
 
 		fclose( $fh );
 	}
-
 }

@@ -462,7 +462,7 @@
 .mainwp-ui.mainwp-custom-theme [data-content]:after,
 .mainwp-ui.mainwp-custom-theme [data-tooltip]:before,
 .mainwp-ui.mainwp-custom-theme [data-tooltip]:after,
-.mainwp-ui.mainwp-custom-theme .ui.popup:not( .calendar ):before {
+.mainwp-ui.mainwp-custom-theme .ui.popup:not( .calendar, .menu ):before {
   background-color: var( --grey-dark-alt );
   border-color: var( --grey-dark );
   box-shadow: none !important;

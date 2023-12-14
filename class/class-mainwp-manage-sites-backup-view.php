@@ -57,7 +57,7 @@ class MainWP_Manage_Sites_Backup_View {
 		<h3 class="header"><?php echo ( '' === $output ? esc_html__( 'No database only backup has been taken yet', 'mainwp' ) : esc_html__( 'Last backups from your database', 'mainwp' ) ); ?></h3>
 		<?php
 		echo $output;
-		// phpcs:enable WordPress.Security.EscapeOutput
+		// phpcs:enable
 	}
 
 	/**
@@ -86,7 +86,7 @@ class MainWP_Manage_Sites_Backup_View {
 		<div id="ajax-information-zone" class="updated" style="display: none;"></div>
 
 		<?php if ( 0 === count( $primaryBackupMethods ) ) { ?>
-			<div class="mainwp-notice mainwp-notice-blue"><?php echo sprintf( esc_html__( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %1$sExtensions Site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
+			<div class="mainwp-notice mainwp-notice-blue"><?php printf( esc_html__( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %1$sExtensions Site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
 			<?php
 		}
 		?>
@@ -285,5 +285,4 @@ class MainWP_Manage_Sites_Backup_View {
 			</form>
 		<?php
 	}
-
 }

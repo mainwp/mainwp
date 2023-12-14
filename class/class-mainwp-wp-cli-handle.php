@@ -39,7 +39,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @return self $instance
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -158,11 +158,11 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 				$requires_site_id = false;
 				$site_id          = 0;
 
-				if ( 'site' == $cli_com && ! isset( $assoc_args['add-site'] ) ) {
+				if ( 'site' === $cli_com && ! isset( $assoc_args['add-site'] ) ) {
 					$requires_site_id = true;
-				} elseif ( 'updates' == $cli_com && ( isset( $assoc_args['site-ignored-plugins-updates'] ) || isset( $assoc_args['site-ignored-themes-updates'] ) || isset( $assoc_args['ignore-update'] ) || isset( $assoc_args['unignore_update'] ) ) ) {
+				} elseif ( 'updates' === $cli_com && ( isset( $assoc_args['site-ignored-plugins-updates'] ) || isset( $assoc_args['site-ignored-themes-updates'] ) || isset( $assoc_args['ignore-update'] ) || isset( $assoc_args['unignore_update'] ) ) ) {
 					$requires_site_id = true;
-				} elseif ( 'updates' == $cli_com && ( isset( $assoc_args['ignored-plugins-updates'] ) || isset( $assoc_args['ignored-themes-updates'] ) ) ) {
+				} elseif ( 'updates' === $cli_com && ( isset( $assoc_args['ignored-plugins-updates'] ) || isset( $assoc_args['ignored-themes-updates'] ) ) ) {
 					$site_id = isset( $args[0] ) ? intval( $args[0] ) : false;
 				}
 
@@ -203,7 +203,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 */
 	public static function get_cli_params( $args, $assoc_args, $what ) {
 		if ( is_string( $what ) ) {
-			if ( 'sites' == $what ) {
+			if ( 'sites' === $what ) {
 				$sites = array();
 				if ( 0 < count( $args ) ) {
 					$args_exploded = explode( ',', $args[0] );
@@ -215,13 +215,13 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 					}
 				}
 				return $sites;
-			} elseif ( 'site_id' == $what ) {
+			} elseif ( 'site_id' === $what ) {
 				$site_id = $args[0];
 				if ( ! is_numeric( trim( $site_id ) ) ) {
 					\WP_CLI::error( 'Child site id should be numeric.' );
 				}
 				return $site_id;
-			} elseif ( 'add-site' == $what ) {
+			} elseif ( 'add-site' === $what ) {
 				$allow_fields = array(
 					'site-url',
 					'name',
@@ -247,7 +247,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 					unset( $data['site-url'] );
 				}
 				return $data;
-			} elseif ( 'edit-site' == $what ) {
+			} elseif ( 'edit-site' === $what ) {
 				$allow_fields    = array(
 					'http_user',
 					'http_pass',
@@ -281,12 +281,10 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		foreach ( $fields as $field ) {
 			if ( isset( $assoc_args[ $field ] ) ) {
 				$data[ $field ] = $assoc_args[ $field ];
-			} else {
-				if ( 'all' === $required_fields ) {
+			} elseif ( 'all' === $required_fields ) {
 					\WP_CLI::error( 'Missing field: ' . $field );
-				} elseif ( is_array( $required_fields ) && ! empty( $required_fields ) && in_array( $field, $required_fields ) ) {
-					\WP_CLI::error( 'Missing field: ' . $field );
-				}
+			} elseif ( is_array( $required_fields ) && ! empty( $required_fields ) && in_array( $field, $required_fields ) ) {
+				\WP_CLI::error( 'Missing field: ' . $field );
 			}
 		}
 		return $data;
@@ -408,7 +406,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 				MainWP_Monitoring_Handler::handle_check_website( $website );
 			} catch ( \Exception $e ) {
 				\WP_CLI::error( '  Check failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
-				$errors++;
+				++$errors;
 			}
 		}
 		MainWP_DB::free_result( $websites );
@@ -443,7 +441,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 				MainWP_Connect::fetch_url_authed( $website, 'disconnect' );
 			} catch ( \Exception $e ) {
 				\WP_CLI::error( '  Disconnect failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
-				$errors++;
+				++$errors;
 			}
 		}
 		MainWP_DB::free_result( $websites );
@@ -497,7 +495,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		);
 
 		$site_info = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
-		$site_info = ( '' != $site_info ) ? json_decode( $site_info, true ) : array();
+		$site_info = ! empty( $site_info ) ? json_decode( $site_info, true ) : array();
 
 		if ( ! is_array( $site_info ) ) {
 			$site_info = array();
@@ -537,7 +535,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 			\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Slug:%n ' ) . $plugin['slug'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Description:%n ' ) . $plugin['description'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Version:%n ' ) . $plugin['version'] );
-			if ( '1' == $plugin['active'] ) {
+			if ( '1' === $plugin['active'] ) {
 				\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Status:%n ' ) . esc_html__( 'Active', 'mainwp' ) );
 			} else {
 				\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Status:%n ' ) . esc_html__( 'Inactive', 'mainwp' ) );
@@ -674,7 +672,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 			\WP_CLI::line( \WP_CLI::colorize( '%gTheme Slug:%n ' ) . $theme['slug'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gTheme Description:%n ' ) . $theme['description'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gTheme Version:%n ' ) . $theme['version'] );
-			if ( '1' == $theme['active'] ) {
+			if ( '1' === $theme['active'] ) {
 				\WP_CLI::line( \WP_CLI::colorize( '%gTheme Status:%n ' ) . esc_html__( 'Active', 'mainwp' ) );
 			} else {
 				\WP_CLI::line( \WP_CLI::colorize( '%gTheme Status:%n ' ) . esc_html__( 'Inactive', 'mainwp' ) );
@@ -782,7 +780,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 */
 	public static function callback_site_site_available_updates( $args = array(), $assoc_args = array(), $website = false ) {
 		$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-		$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+		$wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
 		$plugin_upgrades      = json_decode( $website->plugin_upgrades, true );
 		$theme_upgrades       = json_decode( $website->theme_upgrades, true );
@@ -864,7 +862,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$themes       = json_decode( $website->theme_upgrades, true );
 		$translations = json_decode( $website->translation_upgrades, true );
 		$wp           = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-		$wp           = ( '' != $wp ) ? json_decode( $wp, true ) : array();
+		$wp           = ! empty( $wp ) ? json_decode( $wp, true ) : array();
 
 		if ( count( $wp ) > 0 ) {
 			$wp = 1;
@@ -904,7 +902,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 */
 	public static function callback_site_site_abandoned_plugins( $args = array(), $assoc_args = array(), $website = false ) {
 		$plugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
-		$plugins = ( '' != $plugins ) ? json_decode( $plugins, true ) : array();
+		$plugins = ! empty( $plugins ) ? json_decode( $plugins, true ) : array();
 
 		\WP_CLI::line( '' );
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Abandoned Plugins', 'mainwp' ) . '%n' ) );
@@ -930,7 +928,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 */
 	public static function callback_site_site_abandoned_plugins_count( $args = array(), $assoc_args = array(), $website = false ) {
 		$plugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
-		$plugins = ( '' != $plugins ) ? json_decode( $plugins, true ) : array();
+		$plugins = ! empty( $plugins ) ? json_decode( $plugins, true ) : array();
 
 		\WP_CLI::line( '' );
 		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . ' ' . esc_html__( 'Abandoned plugins: ', 'mainwp' ) . '%n' . count( $plugins ) ) );
@@ -948,7 +946,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 */
 	public static function callback_site_site_abandoned_themes( $args = array(), $assoc_args = array(), $website = false ) {
 		$themes = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
-		$themes = ( '' != $themes ) ? json_decode( $themes, true ) : array();
+		$themes = ! empty( $themes ) ? json_decode( $themes, true ) : array();
 
 		\WP_CLI::line( '' );
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Abandoned Themes', 'mainwp' ) . '%n' ) );
@@ -973,7 +971,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 */
 	public static function callback_site_site_abandoned_themes_count( $args = array(), $assoc_args = array(), $website = false ) {
 		$themes = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
-		$themes = ( '' != $themes ) ? json_decode( $themes, true ) : array();
+		$themes = ! empty( $themes ) ? json_decode( $themes, true ) : array();
 
 		\WP_CLI::line( '' );
 		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . ' ' . esc_html__( 'Abandoned themes: ', 'mainwp' ) . '%n' . count( $themes ) ) );
@@ -1010,7 +1008,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$hstatus       = MainWP_Utility::get_site_health( $health_status );
 		$hval          = $hstatus['val'];
 		$critical      = $hstatus['critical'];
-		if ( 80 <= $hval && 0 == $critical ) {
+		if ( 80 <= $hval && empty( $critical ) ) {
 			$health_score = 'Good';
 		} else {
 			$health_score = 'Should be improved';
@@ -1037,20 +1035,20 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Security Issues', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Directories listing prevented:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['listing'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'WordPress version hidden:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['wp_version'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Really Simple Discovery meta tag removed:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['rsd'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Windows Live Writer meta tag removed:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['wlw'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Database error reporting disabled:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['db_reporting'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'PHP error reporting disabled:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['php_reporting'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Version information removed from URLs:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['versions'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Registered version information removed from URLs:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['registered_versions'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'readme.html removed from WordPress root:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['readme'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Administrator username is not "admin":', 'mainwp' ) . '%n ' ) . ( 'N' == $data['admin'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'WordPress is not up to date:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['wp_uptodate'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'PHP version does not match the WordPress requirement:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['phpversion_matched'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'SSL protocol is not in place:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['sslprotocol'] ? 'NO' : 'YES' ) );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'WP Config debugging is enabled:', 'mainwp' ) . '%n ' ) . ( 'N' == $data['debug_disabled'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Directories listing prevented:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['listing'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'WordPress version hidden:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['wp_version'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Really Simple Discovery meta tag removed:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['rsd'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Windows Live Writer meta tag removed:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['wlw'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Database error reporting disabled:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['db_reporting'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'PHP error reporting disabled:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['php_reporting'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Version information removed from URLs:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['versions'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Registered version information removed from URLs:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['registered_versions'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'readme.html removed from WordPress root:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['readme'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Administrator username is not "admin":', 'mainwp' ) . '%n ' ) . ( 'N' === $data['admin'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'WordPress is not up to date:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['wp_uptodate'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'PHP version does not match the WordPress requirement:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['phpversion_matched'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'SSL protocol is not in place:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['sslprotocol'] ? 'NO' : 'YES' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'WP Config debugging is enabled:', 'mainwp' ) . '%n ' ) . ( 'N' === $data['debug_disabled'] ? 'NO' : 'YES' ) );
 	}
 
 	/**
@@ -1200,7 +1198,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 			\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . esc_html__( ' updated successfully.', 'mainwp' ) . '%n' ) );
 		} catch ( \Exception $e ) {
 			\WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
-			if ( $e->getMesage() == 'WPERROR' ) {
+			if ( $e->getMesage() === 'WPERROR' ) {
 				\WP_CLI::debug( 'Error: ' . MainWP_Utility::value_to_string( $e->get_message_extra(), 1 ) );
 			}
 		}
@@ -1450,7 +1448,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$websites    = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 			$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-			$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+			$wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
 			$plugin_upgrades      = json_decode( $website->plugin_upgrades, true );
 			$theme_upgrades       = json_decode( $website->theme_upgrades, true );
@@ -1764,11 +1762,11 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 					\WP_CLI::success( esc_html__( 'Sync succeeded', 'mainwp' ) );
 				} else {
 					\WP_CLI::warning( esc_html__( 'Sync failed', 'mainwp' ) );
-					$warnings++;
+					++$warnings;
 				}
 			} catch ( \Exception $e ) {
 				\WP_CLI::error( esc_html__( 'Sync failed: ', 'mainwp' ) . MainWP_Error_Helper::get_console_error_message( $e ) );
-				$errors++;
+				++$errors;
 			}
 			\WP_CLI::line( '' );
 		}
@@ -1836,5 +1834,4 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 
 		\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $urlLength + 2 ) . 's+', '', '', '', '' ) );
 	}
-
 }

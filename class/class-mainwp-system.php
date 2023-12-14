@@ -7,9 +7,6 @@
 
 namespace MainWP\Dashboard;
 
-use \MainWP\Dashboard\Module\Log\Log_Install;
-use \MainWP\Dashboard\Module\Log\Log_Manager;
-
 // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
 const MAINWP_VIEW_PER_SITE         = 1;
@@ -30,7 +27,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.5.3.2';
+	public static $version = '4.6-RC1';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -127,12 +124,10 @@ class MainWP_System {
 
 		$this->load_all_options();
 
-		if ( MainWP_Includes::is_enable_log_module() && class_exists( '\MainWP\Dashboard\Module\Log\Log_Manager' ) ) {
-			Log_Manager::instance();
-		}
-
 		$this->update_install();
 		$this->plugin_slug = plugin_basename( $mainwp_plugin_file );
+
+		do_action( 'mainwp_system_init' );
 
 		// includes rest api work.
 		require 'class-mainwp-rest-api.php';
@@ -168,8 +163,8 @@ class MainWP_System {
 			}
 		}
 
-		$ssl_api_verifyhost = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;
-		if ( 0 == $ssl_api_verifyhost ) {
+		$ssl_api_verifyhost = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( 1 === (int) get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
+		if ( empty( $ssl_api_verifyhost ) ) {
 			add_filter(
 				'http_request_args',
 				array(
@@ -264,7 +259,7 @@ class MainWP_System {
 			MainWP_WP_CLI_Command::init();
 		}
 		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
-			if ( isset( $_GET['mainwp_run'] ) && 'test' === $_GET['mainwp_run'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+			if ( isset( $_GET['mainwp_run'] ) && 'test' === $_GET['mainwp_run'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				add_action( 'init', array( MainWP_System_Cron_Jobs::instance(), 'cron_active' ), PHP_INT_MAX );
 			}
 		}
@@ -600,7 +595,7 @@ class MainWP_System {
 	 * @uses \MainWP\Dashboard\MainWP_Setup_Wizard()
 	 */
 	public function parse_init() {
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
 			$mwpDir = MainWP_System_Utility::get_mainwp_dir();
 			$mwpDir = $mwpDir[0];
@@ -728,7 +723,7 @@ class MainWP_System {
 
 		$mainwpParams = array(
 			'image_url'                        => MAINWP_PLUGIN_URL . 'assets/images/',
-			'backup_before_upgrade'            => ( get_option( 'mainwp_backup_before_upgrade' ) == 1 ),
+			'backup_before_upgrade'            => 1 === (int) get_option( 'mainwp_backup_before_upgrade' ),
 			'disable_checkBackupBeforeUpgrade' => $disable_backup_checking,
 			'admin_url'                        => admin_url(),
 			'use_wp_datepicker'                => $use_wp_datepicker ? 1 : 0,
@@ -764,21 +759,20 @@ class MainWP_System {
 			$load_gridster = true;
 		} elseif ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) ) {
 			$load_gridster = true;
-		} elseif ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'ManageSites' ) ) { // individual page.
+		} elseif ( isset( $_GET['page'] ) && 0 === strpos( wp_unslash( $_GET['page'] ), 'ManageSites' ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- individual page.
 			$load_gridster = true;
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
 
 		if ( $load_gridster ) {
 			wp_enqueue_script( 'gridster', MAINWP_PLUGIN_URL . 'assets/js/gridster/jquery.gridster.min.js', array(), $this->current_version, true );
 			wp_enqueue_style( 'gridster', MAINWP_PLUGIN_URL . 'assets/js/gridster/jquery.gridster.min.css', array(), $this->current_version );
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification
-		if ( isset( $_GET['page'] ) && ( 'managesites' === $_GET['page'] || 'MonitoringSites' === $_GET['page'] || 'ManageGroups' === $_GET['page'] ) ) {
+		if ( isset( $_GET['page'] ) && ( 'managesites' === $_GET['page'] || 'MonitoringSites' === $_GET['page'] || 'ManageGroups' === $_GET['page'] ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			wp_enqueue_script( 'preview', MAINWP_PLUGIN_URL . 'assets/js/preview.js', array(), $this->current_version, true );
 			wp_enqueue_style( 'preview', MAINWP_PLUGIN_URL . 'assets/css/preview.css', array(), $this->current_version );
 		}
+		// phpcs:enable
 
 		wp_enqueue_style( 'wp-color-picker' );
 		wp_enqueue_script( 'wp-color-picker' );
@@ -800,7 +794,7 @@ class MainWP_System {
 			return;
 		}
 
-		if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], array( 'mainwp-setup' ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], array( 'mainwp-setup' ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			return;
 		}
 
@@ -819,9 +813,9 @@ class MainWP_System {
 			return;
 		}
 
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		$_pos        = strlen( $request_uri ) - strlen( '/wp-admin/' );
-		if ( ! empty( $request_uri ) && strpos( $request_uri, '/wp-admin/' ) !== false && strpos( $request_uri, '/wp-admin/' ) == $_pos ) {
+		if ( ! empty( $request_uri ) && strpos( $request_uri, '/wp-admin/' ) !== false && strpos( $request_uri, '/wp-admin/' ) === $_pos ) {
 			$referer = wp_get_referer();
 			if ( ! empty( $referer ) && strpos( $referer, 'wp-login.php?redirect_to' ) !== false && strpos( $referer, '&reauth=1' ) !== false ) {
 				if ( mainwp_current_user_have_right( 'dashboard', 'access_global_dashboard' ) ) {
@@ -842,7 +836,7 @@ class MainWP_System {
 	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
 	 */
 	public function init_session() {
-		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! empty( $page ) && in_array(
 			$page,
 			array(
@@ -880,10 +874,8 @@ class MainWP_System {
 	 * Method admin_enqueue_scripts()
 	 *
 	 * Enqueue all Mainwp Admin Scripts.
-	 *
-	 * @param mixed $hook Enqueue hook.
 	 */
-	public function admin_enqueue_scripts( $hook ) {
+	public function admin_enqueue_scripts() {
 
 		$load_cust_scripts = false;
 
@@ -926,7 +918,7 @@ class MainWP_System {
 			wp_enqueue_script( 'mainwp-clipboard', MAINWP_PLUGIN_URL . 'assets/js/clipboard/clipboard.min.js', array( 'jquery' ), $this->current_version, true );
 			wp_enqueue_script( 'mainwp-rest-api', MAINWP_PLUGIN_URL . 'assets/js/mainwp-rest-api.js', array(), $this->current_version, true );
 
-			if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+			if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				wp_enqueue_script( 'mainwp-groups', MAINWP_PLUGIN_URL . 'assets/js/mainwp-groups.js', array(), $this->current_version, true );
 			}
 		}
@@ -946,10 +938,8 @@ class MainWP_System {
 	 * Method admin_enqueue_scripts_fix_conflict()
 	 *
 	 * Enqueue Admin Scripts fix conflict.
-	 *
-	 * @param mixed $hook Enqueue hook.
 	 */
-	public function admin_enqueue_scripts_fix_conflict( $hook ) {
+	public function admin_enqueue_scripts_fix_conflict() {
 		if ( self::is_mainwp_pages() ) {
 			// to fix conflict with the SVG Support plugin.
 			remove_action( 'admin_enqueue_scripts', 'bodhi_svgs_admin_multiselect' );
@@ -960,15 +950,13 @@ class MainWP_System {
 	 * Method admin_enqueue_styles()
 	 *
 	 * Enqueue all Mainwp Admin Styles.
-	 *
-	 * @param mixed $hook Enqueue hook.
 	 */
-	public function admin_enqueue_styles( $hook ) {
+	public function admin_enqueue_styles() {
 
 		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'assets/css/mainwp.css', array(), $this->current_version );
 		wp_enqueue_style( 'mainwp-responsive-layouts', MAINWP_PLUGIN_URL . 'assets/css/mainwp-responsive-layouts.css', array(), $this->current_version );
 
-		if ( isset( $_GET['hideall'] ) && 1 === $_GET['hideall'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['hideall'] ) && 1 === (int) $_GET['hideall'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			remove_action( 'admin_footer', 'wp_admin_bar_render', 1000 );
 		}
 
@@ -1002,13 +990,13 @@ class MainWP_System {
 			// load custom MainWP theme.
 			$selected_theme = MainWP_Settings::get_instance()->get_selected_theme();
 			if ( ! empty( $selected_theme ) ) {
-				if ( 'dark' == $selected_theme ) {
+				if ( 'dark' === $selected_theme ) {
 					wp_enqueue_style( 'mainwp-custom-dashboard-extension-dark-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-dark-theme.css', array(), $this->current_version );
-				} elseif ( 'wpadmin' == $selected_theme ) {
+				} elseif ( 'wpadmin' === $selected_theme ) {
 					wp_enqueue_style( 'mainwp-custom-dashboard-extension-wp-admin-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-wpadmin-theme.css', array(), $this->current_version );
-				} elseif ( 'minimalistic' == $selected_theme ) {
+				} elseif ( 'minimalistic' === $selected_theme ) {
 					wp_enqueue_style( 'mainwp-custom-dashboard-extension-minimalistic-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-minimalistic-theme.css', array(), $this->current_version );
-				} elseif ( 'default' == $selected_theme ) {
+				} elseif ( 'default' === $selected_theme ) {
 					wp_enqueue_style( 'mainwp-custom-dashboard-extension-default-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-default-theme.css', array(), $this->current_version );
 				} else {
 					$dirs             = MainWP_Settings::get_instance()->get_custom_theme_folder();
@@ -1093,7 +1081,7 @@ class MainWP_System {
 		<div id="mainwp-response-data-container" resp-data=""></div>
 		<?php
 
-		if ( isset( $_GET['hideall'] ) && 1 === $_GET['hideall'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['hideall'] ) && 1 === (int) $_GET['hideall'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			return;
 		}
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
@@ -1102,8 +1090,8 @@ class MainWP_System {
 			$websites = array( $website );
 		} else {
 			$is_staging = 'no';
-			if ( isset( $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-				if ( ( 'managesites' == $_GET['page'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['do'] ) && ! isset( $_GET['dashboard'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			if ( isset( $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+				if ( ( 'managesites' === $_GET['page'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['do'] ) && ! isset( $_GET['dashboard'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 					$group_ids = get_user_option( 'mainwp_managesites_filter_group' );
 					if ( ! empty( $group_ids ) ) {
 						$group_ids = explode( ',', $group_ids ); // convert to array.
@@ -1111,10 +1099,10 @@ class MainWP_System {
 					if ( $group_ids ) {
 						$staging_group = get_option( 'mainwp_stagingsites_group_id' );
 					}
-				} elseif ( 'UpdatesManage' == $_GET['page'] || 'mainwp_tab' == $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+				} elseif ( 'UpdatesManage' === $_GET['page'] || 'mainwp_tab' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 					$staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) ? true : false;
 					if ( $staging_enabled ) {
-						$staging_view = get_user_option( 'mainwp_staging_options_updates_view' ) == 'staging' ? true : false;
+						$staging_view = 'staging' === get_user_option( 'mainwp_staging_options_updates_view' ) ? true : false;
 						if ( $staging_view ) {
 							$is_staging = 'yes';
 						}
@@ -1243,5 +1231,4 @@ class MainWP_System {
 	public function get_plugin_slug() {
 		return $this->plugin_slug;
 	}
-
 }

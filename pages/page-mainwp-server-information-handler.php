@@ -39,8 +39,9 @@ class MainWP_Server_Information_Handler {
 	 * @return mixed false|version
 	 */
 	public static function get_mainwp_version() {
-		if ( ( isset( $_SESSION['cachedVersion'] ) ) && ( null !== $_SESSION['cachedVersion'] ) && ( ( $_SESSION['cachedTime'] + ( 60 * 30 ) ) > time() ) ) {
-			return $_SESSION['cachedVersion'];
+
+		if ( isset( $_SESSION['cachedVersion'] ) && isset( $_SESSION['cachedTime'] ) && ( null !== $_SESSION['cachedVersion'] ) && ( ( $_SESSION['cachedTime'] + ( 60 * 30 ) ) > time() ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
+			return $_SESSION['cachedVersion']; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
 		}
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
 		$api = MainWP_System_Utility::get_plugin_theme_info(
@@ -53,8 +54,8 @@ class MainWP_Server_Information_Handler {
 		);
 		if ( is_object( $api ) && isset( $api->version ) ) {
 			$_SESSION['cachedTime']    = time();
-			$_SESSION['cachedVersion'] = $api->version;
-			return $_SESSION['cachedVersion'];
+			$_SESSION['cachedVersion'] = $api->version; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
+			return $_SESSION['cachedVersion']; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
 		}
 		return false;
 	}
@@ -391,12 +392,12 @@ class MainWP_Server_Information_Handler {
 	 *
 	 * Get Host OS.
 	 *
-	 * @param bool $return = false.
+	 * @param bool $return_value = false.
 	 *
 	 * @return mixed PHP_OS.
 	 */
-	public static function get_os( $return = false ) {
-		if ( $return ) {
+	public static function get_os( $return_value = false ) {
+		if ( $return_value ) {
 			return PHP_OS;
 		} else {
 			echo esc_html( PHP_OS );
@@ -474,7 +475,7 @@ class MainWP_Server_Information_Handler {
 		global $wpdb;
 
 		$sql_mode  = '';
-		$mysqlinfo = $wpdb->get_results( "SHOW VARIABLES LIKE 'sql_mode'" );
+		$mysqlinfo = $wpdb->get_results( "SHOW VARIABLES LIKE 'sql_mode'" ); //phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- ok.
 		if ( is_array( $mysqlinfo ) ) {
 			$sql_mode = $mysqlinfo[0]->Value;
 		}
@@ -563,12 +564,12 @@ class MainWP_Server_Information_Handler {
 	 *
 	 * Get server name.
 	 *
-	 * @param bool $return = false.
+	 * @param bool $return_value Return or not.
 	 *
 	 * @return string $_SERVER['SERVER_NAME'].
 	 */
-	public static function get_server_name( $return = false ) {
-		if ( $return ) {
+	public static function get_server_name( $return_value = false ) {
+		if ( $return_value ) {
 			return isset( $_SERVER['SERVER_NAME'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) ) : '';
 		} else {
 			echo isset( $_SERVER['SERVER_NAME'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) ) : '';
@@ -580,12 +581,12 @@ class MainWP_Server_Information_Handler {
 	 *
 	 * Get server software.
 	 *
-	 * @param bool $return = false.
+	 * @param bool $return_value Return or not.
 	 *
 	 * @return string $_SERVER['SERVER_SOFTWARE'].
 	 */
-	public static function get_server_software( $return = false ) {
-		if ( $return ) {
+	public static function get_server_software( $return_value = false ) {
+		if ( $return_value ) {
 			return isset( $_SERVER['SERVER_SOFTWARE'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) ) : '';
 		} else {
 			echo isset( $_SERVER['SERVER_SOFTWARE'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) ) : '';
@@ -597,11 +598,9 @@ class MainWP_Server_Information_Handler {
 	 *
 	 * Check if server software is apache.
 	 *
-	 * @param bool $return = false.
-	 *
 	 * @return bool True|false.
 	 */
-	public static function is_apache_server_software( $return = false ) {
+	public static function is_apache_server_software() {
 		$server = self::get_server_software( true );
 		return ( false !== stripos( $server, 'apache' ) ) ? true : false;
 	}
@@ -633,8 +632,8 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function get_server_accept_charset() {
 		// phpcs:disable WordPress.Security.EscapeOutput
-		echo ( ! isset( $_SERVER['HTTP_ACCEPT_CHARSET'] ) || ( '' == $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) ? esc_html__( 'N/A', 'mainwp' ) : esc_html( sanitize_text_field( wp_unslash( $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) );
-		// phpcs:enable WordPress.Security.EscapeOutput
+		echo ( ! isset( $_SERVER['HTTP_ACCEPT_CHARSET'] ) || empty( $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) ? esc_html__( 'N/A', 'mainwp' ) : esc_html( sanitize_text_field( wp_unslash( $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) );
+		// phpcs:enable
 	}
 
 	/**
@@ -759,7 +758,7 @@ class MainWP_Server_Information_Handler {
 	 * Get current page URI.
 	 */
 	public static function get_current_page_uri() {
-		echo isset( $_SERVER['REQUEST_URI'] ) ? esc_html( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+		echo isset( $_SERVER['REQUEST_URI'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) : '';
 	}
 
 	/**
@@ -779,7 +778,7 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function time_compare( $a, $b ) {
 
-		if ( $a == $b ) {
+		if ( $a === $b ) {
 			return 0;
 		}
 
@@ -796,6 +795,7 @@ class MainWP_Server_Information_Handler {
 	 * @return string Line Count.
 	 */
 	public static function last_lines( $path, $line_count, $block_size = 512 ) {
+		//phpcs:disable WordPress.WP.AlternativeFunctions
 		$lines    = array();
 		$leftover = '';
 		$fh       = fopen( $path, 'r' );
@@ -823,13 +823,14 @@ class MainWP_Server_Information_Handler {
 			$lines      = array_merge( $lines, $new_lines );
 			$leftover   = $split_data[ count( $split_data ) - 1 ];
 			$count      = count( $lines );
-		} while ( $count < $line_count && ftell( $fh ) != 0 );
+		} while ( $count < $line_count && ! empty( ftell( $fh ) ) );
 
-		if ( 0 == ftell( $fh ) ) {
+		if ( empty( ftell( $fh ) ) ) {
 			$lines[] = $leftover;
 		}
 
 		fclose( $fh );
+		//phpcs:enable
 
 		return array_slice( $lines, 0, $line_count );
 	}
@@ -862,8 +863,6 @@ class MainWP_Server_Information_Handler {
 			'mainwp_minimumDelay'                    => esc_html__( 'Minimum delay between requests', 'mainwp' ),
 			'mainwp_maximumIPRequests'               => esc_html__( 'Maximum simultaneous requests per ip', 'mainwp' ),
 			'mainwp_minimumIPDelay'                  => esc_html__( 'Minimum delay between requests to the same ip', 'mainwp' ),
-			'mainwp_maximumSyncRequests'             => esc_html__( 'Maximum simultaneous sync requests', 'mainwp' ),
-			'mainwp_maximumInstallUpdateRequests'    => esc_html__( 'Minimum simultaneous install/update requests', 'mainwp' ),
 			'mainwp_maximumSyncRequests'             => esc_html__( 'Maximum simultaneous sync requests', 'mainwp' ),
 			'mainwp_maximumInstallUpdateRequests'    => esc_html__( 'Maximum simultaneous install and update requests', 'mainwp' ),
 			'mainwp_auto_purge_cache'                => esc_html__( 'Cache control enabled', 'mainwp' ),
@@ -949,7 +948,7 @@ class MainWP_Server_Information_Handler {
 		if ( 0 < count( $primaryBackupMethods ) ) {
 			$chk = false;
 			foreach ( $primaryBackupMethods as $method ) {
-				if ( $primaryBackup == $method['value'] ) {
+				if ( $primaryBackup === $method['value'] ) {
 					$value = $method['title'];
 					$chk   = true;
 					break;
@@ -964,5 +963,4 @@ class MainWP_Server_Information_Handler {
 		}
 		return $options_value;
 	}
-
 }

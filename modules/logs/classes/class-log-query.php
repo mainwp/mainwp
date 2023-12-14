@@ -7,7 +7,7 @@
 
 namespace MainWP\Dashboard\Module\Log;
 
-use \MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_DB;
 
 /**
  * Class - Log_Query
@@ -93,16 +93,6 @@ class Log_Query {
 		$join = ' LEFT JOIN ' . $this->get_log_meta_view() . ' meta_view ON lg.log_id = meta_view.view_log_id ';
 
 		/**
-		 * Filters query WHERE statement as an alternative to filtering
-		 * the $query using the hook below.
-		 *
-		 * @param string $where  WHERE statement.
-		 *
-		 * @return string
-		 */
-		$where = apply_filters( 'mainwp_module_log_db_query_where', $where );
-
-		/**
 		 * BUILD THE FINAL QUERY
 		 */
 		$query = "SELECT {$select}
@@ -112,31 +102,11 @@ class Log_Query {
 		{$orderby}
 		{$limits}";
 
-		/**
-		 * Filter allows the final query to be modified before execution
-		 *
-		 * @param string $query
-		 * @param array  $args
-		 *
-		 * @return string
-		 */
-		$query = apply_filters( 'mainwp_module_log_db_query', $query, $args );
-
 		// Build result count query.
 		$count_query = "SELECT COUNT(*) as found
 		FROM $wpdb->mainwp_tbl_logs as lg
 		{$join}
 		WHERE `lg`.`connector` != 'compact' {$where}";
-
-		/**
-		 * Filter allows the result count query to be modified before execution.
-		 *
-		 * @param string $query
-		 * @param array  $args
-		 *
-		 * @return string
-		 */
-		$count_query = apply_filters( 'mainwp_module_log_db_count_query', $count_query, $args );
 
 		/**
 		 * QUERY THE DATABASE FOR RESULTS
@@ -162,5 +132,4 @@ class Log_Query {
 		$view .= ' FROM ' . $wpdb->mainwp_tbl_logs . ' intlog)';
 		return $view;
 	}
-
 }

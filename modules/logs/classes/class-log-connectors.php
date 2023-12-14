@@ -183,7 +183,4 @@ class Log_Connectors {
 		 */
 		do_action( 'mainwp_module_log_after_connectors_registration', $labels, $this );
 	}
-
-
-
 }

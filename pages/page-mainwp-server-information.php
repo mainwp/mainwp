@@ -359,10 +359,8 @@ class MainWP_Server_Information {
 
 	/**
 	 * Renders Server Information footer.
-	 *
-	 * @param string $shownPage Current page.
 	 */
-	public static function render_footer( $shownPage ) {
+	public static function render_footer() {
 		echo '</div>';
 	}
 
@@ -370,7 +368,7 @@ class MainWP_Server_Information {
 	 * Renders Server Information action bar element.
 	 */
 	public static function render_actions_bar() {
-		if ( isset( $_GET['page'] ) && 'ServerInformation' === $_GET['page'] ) : // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['page'] ) && 'ServerInformation' === $_GET['page'] ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			?>
 		<div class="mainwp-actions-bar">
 			<div class="ui two column grid">
@@ -445,7 +443,7 @@ class MainWP_Server_Information {
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-server-info-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-server-info-info-message"></i>
-				<?php echo sprintf( esc_html__( 'Check your system configuration and make sure your MainWP Dashboard passes all system requirements.  If you need help with resolving specific errors, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/resolving-system-requirement-issues/" target="_blank">', '</a>' ); ?>
+				<?php printf( esc_html__( 'Check your system configuration and make sure your MainWP Dashboard passes all system requirements.  If you need help with resolving specific errors, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/resolving-system-requirement-issues/" target="_blank">', '</a>' ); ?>
 			</div>
 		<?php endif; ?>
 		<?php
@@ -511,10 +509,10 @@ class MainWP_Server_Information {
 
 		<table id="mainwp-system-report-dashboard-table" class="ui unstackable table mainwp-system-report-table mainwp-system-info-table">
 			<thead>
-				<tr>
+					<tr>
 					<th><?php esc_html_e( 'MainWP Dashboard Settings', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Detected Value', 'mainwp' ); ?></th>
-				</tr>
+					</tr>
 			</thead>
 			<tbody>
 				<?php self::render_dashboard_check_tbody(); ?>
@@ -822,7 +820,7 @@ class MainWP_Server_Information {
 		?>
 		<tr>
 			<td><?php esc_html_e( 'MainWP Dashboard Version', 'mainwp' ); ?></td>
-			<td><?php echo 'Latest: ' . MainWP_Server_Information_Handler::get_mainwp_version(); ?> <br/> <?php echo 'Detected: ' . MainWP_Server_Information_Handler::get_current_version(); ?> <?php echo self::get_mainwp_version_check(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+			<td><?php echo 'Latest: ' . MainWP_Server_Information_Handler::get_mainwp_version(); ?> | <?php echo 'Detected: ' . MainWP_Server_Information_Handler::get_current_version(); ?> <?php echo self::get_mainwp_version_check(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 		</tr>
 		<?php
 		self::check_directory_mainwp_directory();
@@ -837,7 +835,7 @@ class MainWP_Server_Information {
 	public static function render_extensions_license_check_tbody() {
 		$extensions       = MainWP_Extensions_Handler::get_extensions();
 		$extensions_slugs = array();
-		if ( 0 == count( $extensions ) ) {
+		if ( 0 === count( $extensions ) ) {
 			echo '<tr><td colspan="4">' . esc_html__( 'No installed extensions', 'mainwp' ) . '</td></tr>';
 		}
 		foreach ( $extensions as $extension ) {
@@ -955,7 +953,7 @@ class MainWP_Server_Information {
 	public static function get_mainwp_version_check() {
 		$current = get_option( 'mainwp_plugin_version' );
 		$latest  = MainWP_Server_Information_Handler::get_mainwp_version();
-		if ( $current == $latest ) {
+		if ( $current === $latest ) {
 			return self::get_pass_html();
 		} else {
 			return self::get_warning_html();
@@ -1020,7 +1018,7 @@ class MainWP_Server_Information {
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-cron-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-cron-info-message"></i>
-				<?php echo sprintf( esc_html__( 'Make sure scheduled actions are working correctly.  If scheduled actions do not run normally, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/scheduled-events-not-occurring/" target="_blank">', '</a>' ); ?>
+				<?php printf( esc_html__( 'Make sure scheduled actions are working correctly.  If scheduled actions do not run normally, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/scheduled-events-not-occurring/" target="_blank">', '</a>' ); ?>
 			</div>
 		<?php endif; ?>
 		<table class="ui single line unstackable table" id="mainwp-cron-jobs-table">
@@ -1035,23 +1033,18 @@ class MainWP_Server_Information {
 			</thead>
 			<tbody>
 				<?php
-				$useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( get_option( 'mainwp_wp_cron' ) == 1 );
+				$useWPCron = ( false === get_option( 'mainwp_wp_cron' ) ) || ( 1 === (int) get_option( 'mainwp_wp_cron' ) );
 
 				foreach ( $cron_jobs as $cron_job => $hook ) {
 
-					$next_run = wp_next_scheduled( $hook[1] );
-					if ( ! empty( $next_run ) ) {
-						$next_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $next_run ) );
-					}
-
 					$is_auto_update_job = false;
 					$lasttime_run       = 0;
-					if ( 'mainwp_updatescheck_start_last_timestamp' == $hook[0] ) {
+					if ( 'mainwp_updatescheck_start_last_timestamp' === $hook[0] ) {
 						$update_time        = MainWP_Settings::get_websites_automatic_update_time();
 						$last_run           = $update_time['last'];
 						$next_run           = $update_time['next'];
 						$is_auto_update_job = true;
-					} elseif ( false == get_option( $hook[0] ) ) {
+					} elseif ( false === get_option( $hook[0] ) ) {
 						$last_run = esc_html__( 'Never', 'mainwp' );
 					} else {
 						$lasttime_run = get_option( $hook[0] );
@@ -1062,8 +1055,15 @@ class MainWP_Server_Information {
 						}
 					}
 
-					if ( ! $useWPCron && ! $is_auto_update_job && isset( $hook[3] ) ) {
-						$nexttime_run = self::get_schedule_next_time_to_show( $hook[3], $lasttime_run );
+					if ( $useWPCron && 'mainwp_updatescheck_start_last_timestamp' !== $hook[0] ) {
+						$next_run = wp_next_scheduled( $hook[1] );
+						if ( ! empty( $next_run ) ) {
+							$next_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $next_run ) );
+						}
+					}
+
+					if ( empty( $next_run ) || ( ! $useWPCron && ! $is_auto_update_job && isset( $hook[3] ) ) ) {
+						$nexttime_run = self::get_schedule_next_time_to_show( $hook[3], $lasttime_run, $local_timestamp );
 						if ( $nexttime_run < $local_timestamp + 3 * MINUTE_IN_SECONDS ) {
 							$next_run = esc_html__( 'Any minute', 'mainwp' );
 						} else {
@@ -1081,7 +1081,7 @@ class MainWP_Server_Information {
 						<td><?php echo ! empty( $next_run ) ? esc_html( $next_run ) : ''; ?></td>
 					</tr>
 					<?php
-					// phpcs:enable WordPress.Security.EscapeOutput
+					// phpcs:enable
 				}
 				/**
 				 * Action: mainwp_cron_jobs_list
@@ -1195,25 +1195,30 @@ class MainWP_Server_Information {
 	 *
 	 * @param string $job_freq frequency of schedule job.
 	 * @param int    $lasttime_run Lasttime to run.
+	 * @param int    $local_timestamp current local time.
 	 *
 	 * @return int next run time of schedule job.
 	 */
-	public static function get_schedule_next_time_to_show( $job_freq, $lasttime_run = 0 ) {
-		$current_time = time();
+	public static function get_schedule_next_time_to_show( $job_freq, $lasttime_run, $local_timestamp ) {
+		$next_time    = $local_timestamp;
+		$lasttime_run = is_numeric( $lasttime_run ) ? intval( $lasttime_run ) : false;
 		switch ( $job_freq ) {
 			case 'daily':
-				$next_time = $lasttime_run ? $lasttime_run + DAY_IN_SECONDS : $current_time;
+				$next_time = $lasttime_run ? $lasttime_run + DAY_IN_SECONDS : $local_timestamp + DAY_IN_SECONDS;
 				break;
 			case 'hourly':
-				$next_time = $lasttime_run ? $lasttime_run + HOUR_IN_SECONDS : $current_time;
+				$next_time = $lasttime_run ? $lasttime_run + HOUR_IN_SECONDS : $local_timestamp + HOUR_IN_SECONDS;
 				break;
 			case '5minutely':
-				$next_time = $lasttime_run ? $lasttime_run + 5 * MINUTE_IN_SECONDS : $current_time;
+				$next_time = $lasttime_run ? $lasttime_run + 5 * MINUTE_IN_SECONDS : $local_timestamp + 5 * MINUTE_IN_SECONDS;
+				break;
+			case 'minutely':
+				$next_time = $lasttime_run ? $lasttime_run + MINUTE_IN_SECONDS : $local_timestamp + MINUTE_IN_SECONDS;
 				break;
 		}
 
-		if ( $next_time < $current_time ) { // to fix next time in past.
-			$next_time = $current_time;
+		if ( $next_time < $local_timestamp ) { // to fix next time in past.
+			$next_time = $local_timestamp;
 		}
 
 		return $next_time;
@@ -1231,34 +1236,18 @@ class MainWP_Server_Information {
 		$dirs = MainWP_System_Utility::get_mainwp_dir();
 		$path = $dirs[0];
 
-		$passed = true;
-		$mess   = 'Writable';
+		$mess = 'Writable';
 
 		if ( ! is_dir( dirname( $path ) ) ) {
-			$mess   = 'Not Found';
-			$passed = false;
+			$mess = 'Not Found';
 		}
 
-		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+		$is_writable = MainWP_System_Utility::is_writable( $path );
 
-		/**
-		 * WordPress files system object.
-		 *
-		 * @global object
-		 */
-		global $wp_filesystem;
-
-		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
-			if ( ! $wp_filesystem->is_writable( $path ) ) {
-				$mess   = 'Not Writable';
-				$passed = false;
-			}
-		} else {
-			if ( ! is_writable( $path ) ) {
-				$mess   = 'Not Writable';
-				$passed = false;
-			}
+		if ( $is_writable ) {
+			$mess = 'Not Writable';
 		}
+
 		$output = '<tr><td>MainWP Upload Directory</td><td>' . $mess . '</td></tr>';
 		return $output;
 	}
@@ -1283,7 +1272,7 @@ class MainWP_Server_Information {
 			<td class="right aligned"><?php echo ( $passed ? self::get_pass_html() : self::get_warning_html( self::ERROR ) ); ?></td>
 		</tr>
 		<?php
-		 // phpcs:enable WordPress.Security.EscapeOutput
+		 // phpcs:enable
 		return true;
 	}
 
@@ -1316,14 +1305,14 @@ class MainWP_Server_Information {
 				<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } elseif ( 'get_curl_ssl_version' === $getter ) { ?>
 				<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
-			<?php } elseif ( ( 'get_max_input_time' === $getter || 'get_max_execution_time' === $getter ) && -1 == $currentVersion ) { ?>
+			<?php } elseif ( ( 'get_max_input_time' === $getter || 'get_max_execution_time' === $getter ) && -1 === (int) $currentVersion ) { ?>
 				<td class="right aligned"><?php echo self::get_pass_html(); ?></td>
 			<?php } else { ?>
-				<td class="right aligned"><?php echo ( version_compare( $currentVersion, $version, $compare ) || ( ( null != $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
+				<td class="right aligned"><?php echo ( version_compare( $currentVersion, $version, $compare ) || ( ! empty( $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
 		<?php } ?>
 		</tr>
 		<?php
-		 // phpcs:enable WordPress.Security.EscapeOutput
+		 // phpcs:enable
 	}
 
 	/**
@@ -1355,14 +1344,14 @@ class MainWP_Server_Information {
 			<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } elseif ( 'get_curl_ssl_version' === $getter ) { ?>
 			<td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
-			<?php } elseif ( 'get_max_input_time' === $getter && -1 == $currentVersion ) { ?>
+			<?php } elseif ( 'get_max_input_time' === $getter && -1 === (int) $currentVersion ) { ?>
 			<td class="right aligned"><?php echo self::get_pass_html(); ?></td>
 			<?php } else { ?>
-			<td class="right aligned"><?php echo( version_compare( $currentVersion, $version, $compare ) || ( ( null != $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
+			<td class="right aligned"><?php echo( version_compare( $currentVersion, $version, $compare ) || ( ! empty( $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } ?>
 		</tr>
 		<?php
-		 // phpcs:enable WordPress.Security.EscapeOutput 
+		 // phpcs:enable 
 	}
 
 	/**
@@ -1535,7 +1524,7 @@ class MainWP_Server_Information {
 				echo '<tr><td>' . $time . '</td><td>' . $error . '</td></tr>';
 			}
 		}
-		// phpcs:enable WordPress.Security.EscapeOutput
+		// phpcs:enable
 	}
 
 	/**
@@ -1567,24 +1556,22 @@ class MainWP_Server_Information {
 				esc_html_e( 'It appears that the show_source() PHP function has been disabled on the servre.', 'mainwp' );
 				echo '<br />';
 				esc_html_e( 'Please, contact your host support and have them enable the show_source() function for the proper functioning of this feature.', 'mainwp' );
-			} else {
-				if ( file_exists( ABSPATH . 'wp-config.php' ) ) {
+			} elseif ( file_exists( ABSPATH . 'wp-config.php' ) ) {
 					show_source( ABSPATH . 'wp-config.php' );
-				} else {
-					$files       = get_included_files();
-					$configFound = false;
-					if ( is_array( $files ) ) {
-						foreach ( $files as $file ) {
-							if ( stristr( $file, 'wp-config.php' ) ) {
-								$configFound = true;
-								show_source( $file );
-								break;
-							}
+			} else {
+				$files       = get_included_files();
+				$configFound = false;
+				if ( is_array( $files ) ) {
+					foreach ( $files as $file ) {
+						if ( stristr( $file, 'wp-config.php' ) ) {
+							$configFound = true;
+							show_source( $file );
+							break;
 						}
 					}
-					if ( ! $configFound ) {
-						esc_html_e( 'wp-config.php not found', 'mainwp' );
-					}
+				}
+				if ( ! $configFound ) {
+					esc_html_e( 'wp-config.php not found', 'mainwp' );
 				}
 			}
 			?>
@@ -1612,8 +1599,8 @@ class MainWP_Server_Information {
 	public static function render_action_logs() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		self::render_header( 'ActionLogs' );
 
-		if ( isset( $_REQUEST['actionlogs_status'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$act_log  = isset( $_REQUEST['actionlogs_status'] ) ? $_REQUEST['actionlogs_status'] : MainWP_Logger::DISABLED; // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_REQUEST['actionlogs_status'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$act_log  = isset( $_REQUEST['actionlogs_status'] ) ? wp_unslash( $_REQUEST['actionlogs_status'] ) : MainWP_Logger::DISABLED; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$spec_log = 0;
 			if ( is_string( $act_log ) && false !== strpos( $act_log, 'specific_' ) ) {
 				$act_log  = str_replace( 'specific_', '', $act_log );
@@ -1626,7 +1613,7 @@ class MainWP_Server_Information {
 
 			MainWP_Logger::instance()->log_action( 'Action logs set to: ' . MainWP_Logger::instance()->get_log_text( $act_log ), ( $spec_log ? $act_log : MainWP_Logger::LOG ), 2, true );
 
-			if ( MainWP_Logger::DISABLED == $act_log ) {
+			if ( MainWP_Logger::DISABLED === $act_log ) {
 				MainWP_Logger::instance()->set_log_priority( $act_log, $spec_log );
 			}
 
@@ -1634,7 +1621,7 @@ class MainWP_Server_Information {
 			MainWP_Utility::update_option( 'mainwp_actionlogs_enabled_timestamp', time() );
 		}
 
-		if ( isset( $_REQUEST['actionlogs_clear'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_REQUEST['actionlogs_clear'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$log_to_db = apply_filters( 'mainwp_logger_to_db', true );
 			if ( $log_to_db ) {
 				MainWP_Logger::instance()->clear_log_db();
@@ -1643,7 +1630,7 @@ class MainWP_Server_Information {
 			}
 		}
 
-		$enabled          = MainWP_Logger::instance()->get_log_status();
+		$enabled          = (int) MainWP_Logger::instance()->get_log_status();
 		$specific_default = array(
 			MainWP_Logger::UPDATE_CHECK_LOG_PRIORITY    => esc_html__( 'Update Checking', 'mainwp' ),
 			MainWP_Logger::EXECUTION_TIME_LOG_PRIORITY  => esc_html__( 'Execution time', 'mainwp' ),
@@ -1660,24 +1647,24 @@ class MainWP_Server_Information {
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					<?php // phpcs:disable WordPress.Security.EscapeOutput ?>
 						<select name="actionlogs_status" class="ui mini dropdown">
-						<option value="<?php echo MainWP_Logger::DISABLED; ?>" <?php echo ( MainWP_Logger::DISABLED == $enabled ? 'selected' : '' ); ?>>
+						<option value="<?php echo MainWP_Logger::DISABLED; ?>" <?php echo ( MainWP_Logger::DISABLED === $enabled ? 'selected' : '' ); ?>>
 							<?php esc_html_e( 'Disabled', 'mainwp' ); ?>
 						</option>
-							<option value="<?php echo MainWP_Logger::INFO; ?>" <?php echo ( MainWP_Logger::INFO == $enabled ? 'selected' : '' ); ?>>
+							<option value="<?php echo MainWP_Logger::INFO; ?>" <?php echo ( MainWP_Logger::INFO === $enabled ? 'selected' : '' ); ?>>
 								<?php esc_html_e( 'Info', 'mainwp' ); ?>
 							</option>
-						<option value="<?php echo MainWP_Logger::WARNING; ?>" <?php echo ( MainWP_Logger::WARNING == $enabled ? 'selected' : '' ); ?>>
+						<option value="<?php echo MainWP_Logger::WARNING; ?>" <?php echo ( MainWP_Logger::WARNING === $enabled ? 'selected' : '' ); ?>>
 							<?php esc_html_e( 'Warning', 'mainwp' ); ?>
 						</option>
-						<option value="<?php echo MainWP_Logger::DEBUG; ?>" <?php echo ( MainWP_Logger::DEBUG == $enabled ? 'selected' : '' ); ?>>
+						<option value="<?php echo MainWP_Logger::DEBUG; ?>" <?php echo ( MainWP_Logger::DEBUG === $enabled ? 'selected' : '' ); ?>>
 							<?php esc_html_e( 'Debug', 'mainwp' ); ?>
 						</option>
 						<?php
-						// phpcs:enable WordPress.Security.EscapeOutput
+						// phpcs:enable
 						if ( is_array( $specific_logs ) && ! empty( $specific_logs ) ) {
 							foreach ( $specific_logs as $spec_log => $spec_title ) {
 								?>
-							<option value="specific_<?php echo intval( $spec_log ); ?>" <?php echo ( $spec_log == $enabled ? 'selected' : '' ); ?>>
+							<option value="specific_<?php echo intval( $spec_log ); ?>" <?php echo ( (int) $spec_log === (int) $enabled ? 'selected' : '' ); ?>>
 								<?php echo esc_html( $spec_title ); ?>
 							</option>
 								<?php
@@ -1701,7 +1688,7 @@ class MainWP_Server_Information {
 					<div><?php echo esc_html__( 'Enable a specific logging system.', 'mainwp' ); ?></div>
 					<p><?php echo esc_html__( 'Each specific log type changes only the type of information logged. It does not change the log view.', 'mainwp' ); ?></p>
 					<p><?php echo esc_html__( 'After disabling the Action Log, logs will still be visible. To remove records, click the Delete Logs button.', 'mainwp' ); ?></p>
-					<p><?php echo sprintf( esc_html__( 'For additional help, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/action-logs/" target="_blank">', '</a>' ); ?></p>
+					<p><?php printf( esc_html__( 'For additional help, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/action-logs/" target="_blank">', '</a>' ); ?></p>
 				</div>
 			<?php endif; ?>
 		<?php
@@ -1857,7 +1844,7 @@ class MainWP_Server_Information {
 			$arr = explode( ',', $disabled_functions );
 			sort( $arr );
 			$_count = count( $arr );
-			for ( $i = 0; $i < $_count; $i ++ ) {
+			for ( $i = 0; $i < $_count; $i++ ) {
 				echo esc_html( $arr[ $i ] ) . ', ';
 			}
 		} else {
@@ -1878,7 +1865,7 @@ class MainWP_Server_Information {
 		foreach ( $options as $option ) {
 			echo '<tr><td>' . $option['label'] . '</td><td>' . $option['value'] . '</td></tr>';
 		}
-		// phpcs:enable WordPress.Security.EscapeOutput
+		// phpcs:enable
 	}
 
 	/**
@@ -1889,7 +1876,7 @@ class MainWP_Server_Information {
 	 * @return string PHP Warning html.
 	 */
 	private static function get_warning_html( $errorType = self::WARNING ) {
-		if ( self::WARNING == $errorType ) {
+		if ( self::WARNING === $errorType ) {
 			return '<i class="large yellow exclamation icon"></i><span style="display:none">' . esc_html__( 'Warning', 'mainwp' ) . '</span>';
 		}
 		return '<i class="large red times icon"></i><span style="display:none">' . esc_html__( 'Fail', 'mainwp' ) . '</span>';
@@ -1903,5 +1890,4 @@ class MainWP_Server_Information {
 	private static function get_pass_html() {
 		return '<i class="large green check icon"></i><span style="display:none">' . esc_html__( 'Pass', 'mainwp' ) . '</span>';
 	}
-
 }

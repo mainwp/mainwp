@@ -79,9 +79,9 @@ class MainWP_Cache {
 	 * @return array $cachedSearch Cached search array.
 	 */
 	public static function get_cached_context( $page ) {
-		$cachedSearch = ( isset( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] ) && is_array( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] ) ? $_SESSION[ 'MainWP' . $page . 'SearchContext' ] : null );
+		$cachedSearch = ( isset( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] ) && is_array( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] ) ? $_SESSION[ 'MainWP' . $page . 'SearchContext' ] : null ); //phpcs:ignore -- ok.
 
-		if ( null != $cachedSearch ) {
+		if ( null !== $cachedSearch ) {
 			if ( ( time() - ( 2 * 60 * 60 ) ) > $cachedSearch['time'] ) {
 				unset( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] );
 				unset( $_SESSION[ 'MainWP' . $page . 'Search' ] );
@@ -89,7 +89,7 @@ class MainWP_Cache {
 				$cachedSearch = null;
 			}
 		}
-		if ( null != $cachedSearch && isset( $cachedSearch['status'] ) ) {
+		if ( null !== $cachedSearch && isset( $cachedSearch['status'] ) ) {
 			$cachedSearch['status'] = explode( ',', $cachedSearch['status'] );
 		}
 
@@ -105,7 +105,7 @@ class MainWP_Cache {
 	 */
 	public static function echo_body( $page ) {
 		if ( isset( $_SESSION[ 'MainWP' . $page . 'Search' ] ) ) {
-			echo $_SESSION[ 'MainWP' . $page . 'Search' ]; // phpcs:ignore WordPress.Security.EscapeOutput
+			echo $_SESSION[ 'MainWP' . $page . 'Search' ]; // phpcs:ignore WordPress.Security.EscapeOutput,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		}
 	}
 
@@ -130,8 +130,7 @@ class MainWP_Cache {
 	 */
 	public static function get_cached_result( $page ) {
 		if ( isset( $_SESSION[ 'MainWP' . $page . 'SearchResult' ] ) ) {
-			return $_SESSION[ 'MainWP' . $page . 'SearchResult' ];
+			return $_SESSION[ 'MainWP' . $page . 'SearchResult' ]; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
 		}
 	}
-
 }

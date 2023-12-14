@@ -36,14 +36,14 @@ class MainWP_Post_Page_Handler {
 	public static function add_meta( $post_ID ) {
 		$post_ID = (int) $post_ID;
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$metakeyselect = isset( $_POST['metakeyselect'] ) ? sanitize_text_field( wp_unslash( $_POST['metakeyselect'] ) ) : '';
 		$metakeyinput  = isset( $_POST['metakeyinput'] ) ? sanitize_text_field( wp_unslash( $_POST['metakeyinput'] ) ) : '';
 		$metavalue     = isset( $_POST['metavalue'] ) ? sanitize_text_field( wp_unslash( $_POST['metavalue'] ) ) : '';
 		if ( is_string( $metavalue ) ) {
 			$metavalue = trim( $metavalue );
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 
 		if ( ( ( '#NONE#' !== $metakeyselect ) && ! empty( $metakeyselect ) ) || ! empty( $metakeyinput ) ) {
 			if ( '#NONE#' !== $metakeyselect ) {
@@ -119,10 +119,10 @@ class MainWP_Post_Page_Handler {
 			wp_die( 0 );
 
 		} else {
-			$mid   = isset( $_POST['meta'] ) ? (int) key( $_POST['meta'] ) : 0;
+			$mid   = isset( $_POST['meta'] ) ? (int) key( wp_unslash( $_POST['meta'] ) ) : 0; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$key   = isset( $_POST['meta'][ $mid ]['key'] ) ? sanitize_text_field( wp_unslash( $_POST['meta'][ $mid ]['key'] ) ) : '';
 			$value = isset( $_POST['meta'][ $mid ]['value'] ) ? sanitize_text_field( wp_unslash( $_POST['meta'][ $mid ]['value'] ) ) : '';
-			if ( '' == trim( $key ) ) {
+			if ( '' === trim( $key ) ) {
 				wp_send_json( array( 'error' => esc_html__( 'Please provide a custom field name.', 'mainwp' ) ) );
 			}
 			$meta = get_metadata_by_mid( 'post', $mid );
@@ -134,7 +134,7 @@ class MainWP_Post_Page_Handler {
 				! current_user_can( 'edit_post_meta', $meta->post_id, $key ) ) {
 				wp_die( -1 );
 			}
-			if ( $meta->meta_value != $value || $meta->meta_key != $key ) {
+			if ( $meta->meta_value !== $value || $meta->meta_key !== $key ) {
 				$u = update_metadata_by_mid( 'post', $mid, $value, $key );
 				if ( ! $u ) {
 					wp_die( 0 );
@@ -143,8 +143,8 @@ class MainWP_Post_Page_Handler {
 
 			$data = MainWP_Post::list_meta_row(
 				array(
-					'meta_key'   => $key,
-					'meta_value' => $value,
+					'meta_key'   => $key, //phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- deprecated, compatible.
+					'meta_value' => $value, //phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- deprecated, compatible.
 					'meta_id'    => $mid,
 				),
 				$c
@@ -165,10 +165,10 @@ class MainWP_Post_Page_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public static function get_categories() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$websites = array();
 		if ( isset( $_REQUEST['sites'] ) && ( '' !== $_REQUEST['sites'] ) ) {
-			$siteIds          = explode( ',', wp_unslash( urldecode( $_REQUEST['sites'] ) ) ); // do not sanitize encoded values.
+			$siteIds          = explode( ',', urldecode( wp_unslash( $_REQUEST['sites'] ) ) ); // do not sanitize encoded values.
 			$siteIdsRequested = array();
 			foreach ( $siteIds as $siteId ) {
 				$siteId = $siteId;
@@ -180,7 +180,7 @@ class MainWP_Post_Page_Handler {
 
 			$websites = MainWP_DB::instance()->get_websites_by_ids( $siteIdsRequested );
 		} elseif ( isset( $_REQUEST['groups'] ) && ( '' !== $_REQUEST['groups'] ) ) {
-			$groupIds          = explode( ',', sanitize_text_field( wp_unslash( urldecode( $_REQUEST['groups'] ) ) ) );  // sanitize ok.
+			$groupIds          = explode( ',', sanitize_text_field( urldecode( wp_unslash( $_REQUEST['groups'] ) ) ) );  // sanitize ok.
 			$groupIdsRequested = array();
 			foreach ( $groupIds as $groupId ) {
 				$groupId = $groupId;
@@ -193,7 +193,7 @@ class MainWP_Post_Page_Handler {
 
 			$websites = MainWP_DB::instance()->get_websites_by_group_ids( $groupIdsRequested );
 		} elseif ( isset( $_REQUEST['clients'] ) && ( '' !== $_REQUEST['clients'] ) ) {
-			$clientIds          = explode( ',', sanitize_text_field( wp_unslash( urldecode( $_REQUEST['clients'] ) ) ) );  // sanitize ok.
+			$clientIds          = explode( ',', sanitize_text_field( urldecode( wp_unslash( $_REQUEST['clients'] ) ) ) );  // sanitize ok.
 			$clientIdsRequested = array();
 			foreach ( $clientIds as $clientId ) {
 
@@ -222,7 +222,7 @@ class MainWP_Post_Page_Handler {
 		$selectedCategories2 = array();
 
 		if ( isset( $_REQUEST['selected_categories'] ) && ( '' !== $_REQUEST['selected_categories'] ) ) {
-			$selectedCategories = explode( ',', sanitize_text_field( wp_unslash( urldecode( $_REQUEST['selected_categories'] ) ) ) );
+			$selectedCategories = explode( ',', sanitize_text_field( urldecode( wp_unslash( $_REQUEST['selected_categories'] ) ) ) );
 		}
 
 		if ( ! is_array( $selectedCategories ) ) {
@@ -247,7 +247,7 @@ class MainWP_Post_Page_Handler {
 			}
 		}
 		die();
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 	}
 
 	/**
@@ -256,7 +256,7 @@ class MainWP_Post_Page_Handler {
 	 * Create bulk posts on sites.
 	 */
 	public static function posting_bulk() {
-		$p_id               = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$p_id               = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$posting_bulk_sites = apply_filters( 'mainwp_posts_posting_bulk_sites', false );
 		?>
 		<input type="hidden" name="bulk_posting_id" id="bulk_posting_id" value="<?php echo intval( $p_id ); ?>"/>						
@@ -408,13 +408,13 @@ class MainWP_Post_Page_Handler {
 	 * Ajax Posting posts.
 	 */
 	public static function ajax_posting_posts() {
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_post_postingbulk' );
-		$post_id = isset( $_POST['post_id'] ) && $_POST['post_id'] ? intval( $_POST['post_id'] ) : false;
+		$post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : false;
 		if ( $post_id ) {
 			self::posting_posts( $post_id, 'ajax_posting' );
 		}
-		 // phpcs:enable WordPress.Security.NonceVerification
+		 // phpcs:enable
 		die();
 	}
 
@@ -424,11 +424,11 @@ class MainWP_Post_Page_Handler {
 	 * Ajax Get sites of groups.
 	 */
 	public static function ajax_get_sites_of_groups() {
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_get_sites_of_groups' );
 		$groups   = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
 		$websites = MainWP_DB::instance()->get_websites_by_group_ids( $groups );
-		 // phpcs:enable WordPress.Security.NonceVerification
+		 // phpcs:enable
 		$site_Ids = array();
 		if ( $websites ) {
 			foreach ( $websites as $website ) {
@@ -469,7 +469,7 @@ class MainWP_Post_Page_Handler {
 			$selected_sites   = array();
 			$selected_clients = array();
 
-			if ( 'posting' == $what || 'preparing' == $what ) {
+			if ( 'posting' === $what || 'preparing' === $what ) {
 				$selected_by      = get_post_meta( $id, '_selected_by', true );
 				$val              = get_post_meta( $id, '_selected_sites', true );
 				$selected_sites   = MainWP_System_Utility::maybe_unserialyze( $val );
@@ -477,8 +477,8 @@ class MainWP_Post_Page_Handler {
 				$selected_groups  = MainWP_System_Utility::maybe_unserialyze( $val );
 				$selected_clients = get_post_meta( $id, '_selected_clients', true );
 				$selected_by      = apply_filters( 'mainwp_posting_post_selected_by', $selected_by, $id );
-			} elseif ( 'ajax_posting' == $what ) {
-				$site_id = $_POST['site_id'] ? $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
+			} elseif ( 'ajax_posting' === $what ) {
+				$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				if ( $site_id ) {
 					$selected_sites = array( $site_id );
 				}
@@ -488,7 +488,7 @@ class MainWP_Post_Page_Handler {
 			$selected_groups  = apply_filters( 'mainwp_posting_selected_groups', $selected_groups, $id );
 			$selected_clients = apply_filters( 'mainwp_posting_selected_clients', $selected_clients, $id );
 
-			if ( 'preparing' != $what ) {
+			if ( 'preparing' !== $what ) {
 				$post_category = base64_decode( get_post_meta( $id, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
 				$post_tags   = base64_decode( get_post_meta( $id, '_tags', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
@@ -523,7 +523,7 @@ class MainWP_Post_Page_Handler {
 
 				// to fix.
 				$post_status = $_post->post_status;
-				if ( 'publish' == $post_status ) {
+				if ( 'publish' === $post_status ) {
 					$post_status = get_post_meta( $id, '_edit_post_status', true );
 				}
 
@@ -552,7 +552,7 @@ class MainWP_Post_Page_Handler {
 					'mainwp_post_id' => $_post->ID,
 				);
 
-				if ( null != $featured_image_id ) {
+				if ( ! empty( $featured_image_id ) ) {
 					$img                 = wp_get_attachment_image_src( $featured_image_id, 'full' );
 					$post_featured_image = $img[0];
 					$attachment          = get_post( $featured_image_id );
@@ -573,7 +573,7 @@ class MainWP_Post_Page_Handler {
 				foreach ( $selected_sites as $k ) {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
 						$website = MainWP_DB::instance()->get_website_by_id( $k );
-						if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+						if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
 							$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
 						}
 					}
@@ -587,7 +587,7 @@ class MainWP_Post_Page_Handler {
 				);
 				if ( $websites ) {
 					foreach ( $websites as $website ) {
-						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+						if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 							continue;
 						}
 						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
@@ -598,7 +598,7 @@ class MainWP_Post_Page_Handler {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
 						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
 						while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 								continue;
 							}
 							$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
@@ -608,7 +608,7 @@ class MainWP_Post_Page_Handler {
 				}
 			}
 
-			if ( 'preparing' == $what ) {
+			if ( 'preparing' === $what ) {
 				?>
 				<div class="ui relaxed list">
 				<?php
@@ -664,7 +664,7 @@ class MainWP_Post_Page_Handler {
 				}
 
 				foreach ( $dbwebsites as $website ) {
-					if ( isset( $output->ok[ $website->id ] ) && ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
+					if ( isset( $output->ok[ $website->id ] ) && ( 1 === (int) $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
 						$links = isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null;
 						do_action_deprecated( 'mainwp-post-posting-post', array( $website, $output->added_id[ $website->id ], $links ), '4.0.7.2', 'mainwp_post_posting_post' ); // @deprecated Use 'mainwp_post_posting_page' instead.
 						do_action_deprecated( 'mainwp-bulkposting-done', array( $_post, $website, $output ), '4.0.7.2', 'mainwp_bulkposting_done' ); // @deprecated Use 'mainwp_bulkposting_done' instead.
@@ -711,7 +711,7 @@ class MainWP_Post_Page_Handler {
 				$newExtensions = apply_filters_deprecated( 'mainwp-after-posting-bulkpost-result', array( false, $_post, $dbwebsites, $output ), '4.0.7.2', 'mainwp_after_posting_bulkpost_result' );
 
 				$after_posting = false;
-				if ( 'posting' == $what ) {
+				if ( 'posting' === $what ) {
 					// supported for bulk posting, not for ajax posting.
 					$after_posting = apply_filters( 'mainwp_after_posting_bulkpost_result', $newExtensions, $_post, $dbwebsites, $output );
 				}
@@ -719,7 +719,7 @@ class MainWP_Post_Page_Handler {
 				$posting_succeed = false;
 
 				if ( false === $after_posting ) {
-					if ( 'posting' == $what ) {
+					if ( 'posting' === $what ) {
 						?>
 					<div class="ui relaxed list">
 						<?php
@@ -728,7 +728,7 @@ class MainWP_Post_Page_Handler {
 							<div class="item"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
 							: 
 							<?php
-							if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
+							if ( isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ) {
 								echo esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>';
 								$posting_succeed = true;
 							} else {
@@ -745,8 +745,8 @@ class MainWP_Post_Page_Handler {
 				}
 
 				$ajax_result = '';
-				if ( 'ajax_posting' == $what ) {
-					if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
+				if ( 'ajax_posting' === $what ) {
+					if ( isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ) {
 						$ajax_result     = esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>';
 						$posting_succeed = true;
 					} else {
@@ -758,26 +758,26 @@ class MainWP_Post_Page_Handler {
 				$do_not_del       = get_post_meta( $id, '_bulkpost_do_not_del', true );
 
 				$last_ajax_posting = false;
-				if ( 'ajax_posting' == $what ) {
-					// phpcs:disable WordPress.Security.NonceVerification
+				if ( 'ajax_posting' === $what ) {
+					// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 					$total           = isset( $_POST['total'] ) ? intval( $_POST['total'] ) : 0;
 					$count           = isset( $_POST['count'] ) ? intval( $_POST['count'] ) : 0;
 					$delete_bulkpost = isset( $_POST['delete_bulkpost'] ) && ! empty( $_POST['delete_bulkpost'] ) ? true : false;
-					// phpcs:enable WordPress.Security.NonceVerification
+					// phpcs:enable
 					if ( $delete_bulkpost ) {
 						$last_ajax_posting = true;
 					}
 				}
 
 				$deleted_bulk_post = false;
-				if ( 'yes' !== $do_not_del && $delete_bulk_post && ( 'posting' == $what || $last_ajax_posting ) ) {
+				if ( 'yes' !== $do_not_del && $delete_bulk_post && ( 'posting' === $what || $last_ajax_posting ) ) {
 					wp_delete_post( $id, true );
 					$deleted_bulk_post = true;
 				}
 
 				$edit_link = '';
 				if ( ! $deleted_bulk_post ) {
-					if ( 'posting' == $what ) {
+					if ( 'posting' === $what ) {
 						?>
 						<div class="item">
 							<a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkEdit&post_id=' . $id ) ); ?>"><?php esc_html_e( 'Edit Post', 'mainwp' ); ?></a>
@@ -788,7 +788,7 @@ class MainWP_Post_Page_Handler {
 					}
 				}
 
-				if ( 'ajax_posting' == $what ) {
+				if ( 'ajax_posting' === $what ) {
 					die(
 						wp_json_encode(
 							array(
@@ -814,12 +814,12 @@ class MainWP_Post_Page_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function get_post() {
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$postId        = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
 		$postType      = isset( $_POST['postType'] ) ? sanitize_text_field( wp_unslash( $_POST['postType'] ) ) : '';
 		$websiteId     = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 		$replaceadvImg = isset( $_POST['replace_advance_img'] ) && ! empty( $_POST['replace_advance_img'] ) ? true : true;
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 		if ( empty( $postId ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => 'Post ID or site ID not found. Please, reload the page and try again.' ) ) );
 		}
@@ -1173,14 +1173,17 @@ class MainWP_Post_Page_Handler {
 		$temporary_file = download_url( $img_url );
 
 		if ( is_wp_error( $temporary_file ) ) {
-			throw new \Exception( 'Error: ' . $temporary_file->get_error_message() );
+			throw new \Exception( 'Error: ' . $temporary_file->get_error_message() );  //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		} else {
 			$upload_dir     = wp_upload_dir();
 			$local_img_path = $upload_dir['path'] . DIRECTORY_SEPARATOR . basename( $img_url );
 			$local_img_url  = $upload_dir['url'] . '/' . basename( $img_url );
 			$moved          = false;
 			if ( MainWP_Utility::check_image_file_name( $local_img_path ) ) {
-				$moved = rename( $temporary_file, $local_img_path );
+				global $wp_filesystem;
+				if ( $wp_filesystem ) {
+					$moved = $wp_filesystem->move( $temporary_file, $local_img_path );
+				}
 			}
 			if ( $moved ) {
 				$wp_filetype = wp_check_filetype( basename( $img_url ), null );
@@ -1232,12 +1235,12 @@ class MainWP_Post_Page_Handler {
 	 */
 	public static function add_sticky_handle( $post_id ) {
 		$_post = get_post( $post_id );
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( 'bulkpost' === $_post->post_type && isset( $_POST['sticky'] ) ) {
 			update_post_meta( $post_id, '_sticky', base64_encode( sanitize_text_field( wp_unslash( $_POST['sticky'] ) ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			return base64_encode( sanitize_text_field( wp_unslash( $_POST['sticky'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 		return $post_id;
 	}
 
@@ -1253,12 +1256,11 @@ class MainWP_Post_Page_Handler {
 	 */
 	public static function add_status_handle( $post_id ) {
 		$_post = get_post( $post_id );
-		// phpcs:disable WordPress.Security.NonceVerification
-		if ( ( 'bulkpage' == $_post->post_type || 'bulkpost' == $_post->post_type ) && isset( $_POST['mainwp_edit_post_status'] ) ) {
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( ( 'bulkpage' === $_post->post_type || 'bulkpost' === $_post->post_type ) && isset( $_POST['mainwp_edit_post_status'] ) ) {
 			update_post_meta( $post_id, '_edit_post_status', sanitize_text_field( wp_unslash( $_POST['mainwp_edit_post_status'] ) ) );
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 		return $post_id;
 	}
-
 }

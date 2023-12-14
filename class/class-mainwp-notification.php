@@ -56,14 +56,13 @@ class MainWP_Notification {
 	 * @param mixed $email_settings Email settings.
 	 * @param array $sites_status Websites http status.
 	 * @param bool  $plain_text Text format.
-	 * @param bool  $general Either general or individual notification.
 	 *
 	 * @return bool False if failed.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
 	 * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_html()
 	 */
-	public static function send_http_check_notification( $email_settings, $sites_status, $plain_text, $general = true ) {
+	public static function send_http_check_notification( $email_settings, $sites_status, $plain_text ) {
 
 		if ( $plain_text ) {
 			$content_type = "Content-Type: text/plain; charset=\"utf-8\"\r\n";
@@ -212,7 +211,7 @@ class MainWP_Notification {
 			$content_type = "Content-Type: text/html; charset=\"utf-8\"\r\n";
 		}
 
-		if ( ! empty( $emails ) && '' != $mail_content ) {
+		if ( ! empty( $emails ) && ! empty( $mail_content ) ) {
 			MainWP_Logger::instance()->debug( 'CRON :: sites status :: send mail ::' );
 			self::send_wp_mail(
 				$emails,
@@ -243,7 +242,7 @@ class MainWP_Notification {
 			$content_type = "Content-Type: text/html; charset=\"utf-8\"\r\n";
 		}
 
-		if ( ! empty( $email ) && '' != $mail_content ) {
+		if ( ! empty( $email ) && ! empty( $mail_content ) ) {
 			MainWP_Logger::instance()->debug( 'CRON :: sites health :: send mail ::' );
 			self::send_wp_mail(
 				$email,
@@ -290,5 +289,4 @@ class MainWP_Notification {
 			)
 		);
 	}
-
 }

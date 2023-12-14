@@ -310,7 +310,7 @@ class MainWP_Menu {
 		$subPages = apply_filters( 'mainwp_subpages_left_menu', $subPages, $initSubpage, $parentKey, $slug );
 
 		foreach ( $subPages as $subPage ) {
-			if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && true != $subPage['menu_hidden'] ) ) {
+			if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && empty( $subPage['menu_hidden'] ) ) ) {
 				$_item = array(
 					'title'      => $subPage['title'],
 					'parent_key' => $parentKey,
@@ -381,7 +381,7 @@ class MainWP_Menu {
 
 		$level = (int) $level;
 
-		if ( 1 != $level && 2 != $level && 0 != $level ) {
+		if ( 1 !== $level && 2 !== $level && 0 !== $level ) {
 			$level = 1;
 		}
 
@@ -571,13 +571,13 @@ class MainWP_Menu {
 
 						if ( empty( $bar_item_actived_key ) ) {
 							if ( isset( $_mainwp_menu_active_slugs[ $plugin_page ] ) ) {
-								if ( $item_key == $_mainwp_menu_active_slugs[ $plugin_page ] ) {
+								if ( $item_key === $_mainwp_menu_active_slugs[ $plugin_page ] ) {
 									$bar_item_actived_key = $item_key;
 								}
 							}
 						}
 
-						if ( ! empty( $bar_item_actived_key ) && $item_key == $bar_item_actived_key ) {
+						if ( ! empty( $bar_item_actived_key ) && $item_key === $bar_item_actived_key ) {
 							$active_item     = 'active';
 							$bar_item_active = $item;
 						}
@@ -671,7 +671,7 @@ class MainWP_Menu {
 						// to fix active menu.
 						if ( ! $set_actived ) {
 							if ( isset( $_mainwp_menu_active_slugs[ $plugin_page ] ) ) {
-								if ( $item_key == $_mainwp_menu_active_slugs[ $plugin_page ] ) {
+								if ( $item_key === $_mainwp_menu_active_slugs[ $plugin_page ] ) {
 									$active_item     = 'active';
 									$set_actived     = true;
 									$bar_item_active = $item;
@@ -720,7 +720,7 @@ class MainWP_Menu {
 								// to fix active menu.
 								if ( ! $set_actived ) {
 									if ( isset( $_mainwp_menu_active_slugs[ $plugin_page ] ) ) {
-										if ( $item_key == $_mainwp_menu_active_slugs[ $plugin_page ] ) {
+										if ( $item_key === $_mainwp_menu_active_slugs[ $plugin_page ] ) {
 											$active_item = 'active';
 											$set_actived = true;
 										}
@@ -1102,7 +1102,7 @@ class MainWP_Menu {
 
 		$submenu_items = $mainwp_sub_leftmenu[ $parent_key ];
 
-		if ( ! is_array( $submenu_items ) || count( $submenu_items ) == 0 ) {
+		if ( ! is_array( $submenu_items ) || 0 === count( $submenu_items ) ) {
 			return;
 		}
 
@@ -1148,7 +1148,7 @@ class MainWP_Menu {
 	 * @param mixed $href The href value.
 	 */
 	public static function is_level2_menu_item_active( $href ) {
-		$current_path = $_SERVER['REQUEST_URI'];
+		$current_path = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		$san_path     = $current_path;
 
 		if ( 0 === stripos( $san_path, '/wp-admin/' ) ) {

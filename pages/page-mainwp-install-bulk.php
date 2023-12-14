@@ -48,8 +48,8 @@ class MainWP_Install_Bulk {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
 	 */
 	public static function admin_init() {
-		if ( isset( $_REQUEST['mainwp_do'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			if ( isset( $_REQUEST['qq_nonce'] ) && 'MainWP_Install_Bulk-uploadfile' == $_REQUEST['mainwp_do'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_REQUEST['mainwp_do'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			if ( isset( $_REQUEST['qq_nonce'] ) && 'MainWP_Install_Bulk-uploadfile' === $_REQUEST['mainwp_do'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				do_action( 'mainwp_secure_request', 'qq_nonce', 'qq_nonce' );
 				$allowedExtensions = array( 'zip' ); // Only zip allowed.
 				// max file size in bytes.
@@ -74,10 +74,10 @@ class MainWP_Install_Bulk {
 	 * @param string $type Plugin|Theme Type of upload.
 	 */
 	public static function render_upload( $type ) {
-		$title             = ( 'plugin' == $type ) ? 'Plugins' : 'Themes';
+		$title             = ( 'plugin' === $type ) ? 'Plugins' : 'Themes';
 		$favorites_enabled = is_plugin_active( 'mainwp-favorites-extension/mainwp-favorites-extension.php' );
 		$cls               = $favorites_enabled ? 'favorites-extension-enabled ' : '';
-		$cls              .= ( 'plugin' == $type ) ? 'qq-upload-plugins' : '';
+		$cls              .= ( 'plugin' === $type ) ? 'qq-upload-plugins' : '';
 		?>
 		<div class="ui secondary center aligned padded segment">
 			<h2 class="ui icon header">
@@ -111,7 +111,7 @@ class MainWP_Install_Bulk {
 							$extraOptions = apply_filters( 'mainwp_uploadbulk_uploader_options', '', $type );
 							$extraOptions = trim( $extraOptions );
 							$extraOptions = trim( trim( $extraOptions, ',' ) );
-							if ( '' != $extraOptions ) {
+							if ( '' !== $extraOptions ) {
 								echo wp_strip_all_tags( $extraOptions ) . ','; // phpcs:ignore WordPress.Security.EscapeOutput
 							}
 							?>
@@ -145,11 +145,11 @@ class MainWP_Install_Bulk {
 	 */
 	public static function prepare_install() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! isset( $_POST['url'] ) ) {
 
 			$what = 'theme';
-			if ( isset( $_POST['type'] ) && 'plugin' == $_POST['type'] ) {
+			if ( isset( $_POST['type'] ) && 'plugin' === $_POST['type'] ) {
 				$what = 'plugin';
 			}
 			$api = MainWP_System_Utility::get_plugin_theme_info(
@@ -184,7 +184,7 @@ class MainWP_Install_Bulk {
 			'sync_errors',
 		);
 
-		if ( isset( $_POST['selected_by'] ) && 'site' == $_POST['selected_by'] ) {
+		if ( isset( $_POST['selected_by'] ) && 'site' === $_POST['selected_by'] ) {
 			$selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
 			// Get sites.
 			foreach ( $selected_sites as $enc_id ) {
@@ -201,7 +201,7 @@ class MainWP_Install_Bulk {
 					);
 				}
 			}
-		} elseif ( isset( $_POST['selected_by'] ) && 'client' == $_POST['selected_by'] ) {
+		} elseif ( isset( $_POST['selected_by'] ) && 'client' === $_POST['selected_by'] ) {
 			$selected_clients = isset( $_POST['selected_clients'] ) && is_array( $_POST['selected_clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_clients'] ) ) : array();
 			$websites         = MainWP_DB_Client::instance()->get_websites_by_client_ids(
 				$selected_clients,
@@ -212,7 +212,7 @@ class MainWP_Install_Bulk {
 			// Get sites.
 			if ( $websites ) {
 				foreach ( $websites as $website ) {
-					if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+					if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 						continue;
 					}
 					$output['sites'][ $website->id ] = MainWP_Utility::map_site(
@@ -233,7 +233,7 @@ class MainWP_Install_Bulk {
 				if ( MainWP_Utility::ctype_digit( $groupid ) ) {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $groupid ) );
 					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+						if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 							continue;
 						}
 						$output['sites'][ $website->id ] = MainWP_Utility::map_site(
@@ -249,7 +249,7 @@ class MainWP_Install_Bulk {
 				}
 			}
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 		mainwp_send_json_output( $output );
 	}
 
@@ -292,16 +292,16 @@ class MainWP_Install_Bulk {
 	public static function perform_install() {
 		MainWP_Utility::end_session();
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		// Fetch info.
 		$type      = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$post_data = array(
 			'type' => $type,
 		);
-		if ( isset( $_POST['activatePlugin'] ) && 'true' == $_POST['activatePlugin'] ) {
+		if ( isset( $_POST['activatePlugin'] ) && 'true' === $_POST['activatePlugin'] ) {
 			$post_data['activatePlugin'] = 'yes';
 		}
-		if ( isset( $_POST['overwrite'] ) && 'true' == $_POST['overwrite'] ) {
+		if ( isset( $_POST['overwrite'] ) && 'true' === $_POST['overwrite'] ) {
 			$post_data['overwrite'] = true;
 		}
 
@@ -319,7 +319,7 @@ class MainWP_Install_Bulk {
 
 		// to support demo data.
 		if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
-			return MainWP_Demo_Handle::get_instance()->handle_action_demo( $website, 'perform_install', $post_data );
+			return MainWP_Demo_Handle::get_instance()->handle_action_demo( $website, 'perform_install' );
 		}
 
 		$websites = array( $website );
@@ -343,7 +343,7 @@ class MainWP_Install_Bulk {
 		$output->results    = array();
 		$output->other_data = array();
 
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 		/**
 		* Action: mainwp_before_plugin_theme_install
 		*
@@ -407,8 +407,8 @@ class MainWP_Install_Bulk {
 			'name',
 			'sync_errors',
 		);
-		// phpcs:disable WordPress.Security.NonceVerification
-		if ( isset( $_POST['selected_by'] ) && 'site' == $_POST['selected_by'] ) {
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( isset( $_POST['selected_by'] ) && 'site' === $_POST['selected_by'] ) {
 			$selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
 			// Get sites.
 			foreach ( $selected_sites as $enc_id ) {
@@ -425,7 +425,7 @@ class MainWP_Install_Bulk {
 					);
 				}
 			}
-		} elseif ( isset( $_POST['selected_by'] ) && 'client' == $_POST['selected_by'] ) {
+		} elseif ( isset( $_POST['selected_by'] ) && 'client' === $_POST['selected_by'] ) {
 			$selected_clients = isset( $_POST['selected_clients'] ) && is_array( $_POST['selected_clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_clients'] ) ) : array();
 			$websites         = MainWP_DB_Client::instance()->get_websites_by_client_ids(
 				$selected_clients,
@@ -436,7 +436,7 @@ class MainWP_Install_Bulk {
 			// Get sites.
 			if ( $websites ) {
 				foreach ( $websites as $website ) {
-					if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+					if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 						continue;
 					}
 					$output['sites'][ $website->id ] = MainWP_Utility::map_site(
@@ -457,7 +457,7 @@ class MainWP_Install_Bulk {
 				if ( MainWP_Utility::ctype_digit( $groupid ) ) {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $groupid ) );
 					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+						if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 							continue;
 						}
 						$output['sites'][ $website->id ] = MainWP_Utility::map_site(
@@ -480,7 +480,7 @@ class MainWP_Install_Bulk {
 			$output['urls'][] = MainWP_System_Utility::get_download_url( 'bulk', $file );
 		}
 		$output['urls'] = implode( '||', $output['urls'] );
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 
 		/**
 		 * Prepare upload
@@ -505,16 +505,16 @@ class MainWP_Install_Bulk {
 	 */
 	public static function perform_upload() {
 		MainWP_Utility::end_session();
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		// Fetch info.
 		$post_data = array(
 			'type' => $type,
 		);
-		if ( isset( $_POST['activatePlugin'] ) && 'true' == $_POST['activatePlugin'] ) {
+		if ( isset( $_POST['activatePlugin'] ) && 'true' === $_POST['activatePlugin'] ) {
 			$post_data['activatePlugin'] = 'yes';
 		}
-		if ( isset( $_POST['overwrite'] ) && 'true' == $_POST['overwrite'] ) {
+		if ( isset( $_POST['overwrite'] ) && 'true' === $_POST['overwrite'] ) {
 			$post_data['overwrite'] = true;
 		}
 
@@ -529,11 +529,11 @@ class MainWP_Install_Bulk {
 		$site_id          = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : 0;
 		$website          = MainWP_DB::instance()->get_website_by_id( $site_id );
 
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 
 		// to support demo data.
 		if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
-			return MainWP_Demo_Handle::get_instance()->handle_action_demo( $website, 'perform_upload', $post_data );
+			return MainWP_Demo_Handle::get_instance()->handle_action_demo( $website, 'perform_upload' );
 		}
 
 		$output             = new \stdClass();
@@ -602,7 +602,7 @@ class MainWP_Install_Bulk {
 			$dh = opendir( $path );
 			if ( $dh ) {
 				while ( false !== ( $file = readdir( $dh ) ) ) {
-					if ( '.' != $file && '..' != $file ) {
+					if ( '.' !== $file && '..' !== $file ) {
 						$wp_filesystem->delete( $path . $file );
 					}
 				}
@@ -643,20 +643,20 @@ class MainWP_Install_Bulk {
 				}
 			}
 
-			if ( isset( $information['installation'] ) && 'SUCCESS' == $information['installation'] ) {
+			if ( isset( $information['installation'] ) && 'SUCCESS' === $information['installation'] ) {
 				$output->ok[ $website->id ]      = array( $website->name );
 				$output->results[ $website->id ] = isset( $information['install_results'] ) ? $information['install_results'] : array();
 			} elseif ( isset( $information['error'] ) ) {
 				$error = esc_html( $information['error'] );
-				if ( isset( $information['error_code'] ) && 'folder_exists' == $information['error_code'] ) {
+				if ( isset( $information['error_code'] ) && 'folder_exists' === $information['error_code'] ) {
 					$error = esc_html__( 'Already installed', 'mainwp' );
 				}
 
-				if ( 'not found' == strtolower( $error ) ) {
+				if ( 'not found' === strtolower( $error ) ) {
 					if ( is_array( $post_data ) && isset( $post_data['type'] ) ) {
-						if ( 'plugin' == $post_data['type'] ) {
+						if ( 'plugin' === $post_data['type'] ) {
 							$error = esc_html__( 'Plugin file not found. Make sure security plugins or server-side security rules are not blocking requests from your child sites.', 'mainwp' );
-						} elseif ( 'theme' == $post_data['type'] ) {
+						} elseif ( 'theme' === $post_data['type'] ) {
 							$error = esc_html__( 'Theme file not found. Make sure security plugins or server-side security rules are not blocking requests from your child sites.', 'mainwp' );
 						}
 					}

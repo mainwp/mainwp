@@ -34,7 +34,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * @return self $instance MainWP_Post_Site_Handler.
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -119,10 +119,9 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function ajax_group_sites_add() {
 		$this->secure_request( 'mainwp_group_sites_add' );
-		// phpcs:disable WordPress.Security.NonceVerification
-		$newName   = sanitize_text_field( wp_unslash( $_POST['newName'] ) );
-		$tmp_color = wp_unslash( $_POST['newColor'] );
-		$newColor  = sanitize_hex_color( $tmp_color );
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$newName  = isset( $_POST['newName'] ) ? sanitize_text_field( wp_unslash( $_POST['newName'] ) ) : '';
+		$newColor = isset( $_POST['newColor'] ) ? sanitize_hex_color( wp_unslash( $_POST['newColor'] ) ) : '';
 		if ( empty( $newColor ) && ! empty( $tmp_color ) ) {
 			$newColor = '#cce2ff'; // default.
 		}
@@ -200,7 +199,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function get_site_icon() {
 		$this->check_security( 'mainwp_get_site_icon', 'security' );
-		$siteId = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification
+		$siteId = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$result = MainWP_Sync::get_wp_icon( $siteId );
 		wp_send_json( $result );
 	}
@@ -212,8 +211,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function check_abandoned() {
 		$this->check_security( 'mainwp_check_abandoned', 'security' );
-		$siteId = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification
-		$which  = sanitize_text_field( wp_unslash( $_POST['which'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		$siteId = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$which  = isset( $_POST['which'] ) ? sanitize_text_field( wp_unslash( $_POST['which'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$result = MainWP_Utility::check_abandoned( $siteId, $which );
 		wp_send_json( $result );
 	}
@@ -237,7 +236,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		$verifyCertificate = 1;
 		$sslVersion        = 0;
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( isset( $_POST['url'] ) ) {
 			$url = sanitize_text_field( wp_unslash( $_POST['url'] ) );
 			$url = urldecode( $url );
@@ -245,14 +244,34 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 			$invalid = false;
 			$info    = wp_parse_url( $url );
 
-			if ( is_array( $info ) && ! empty( $info['port'] ) && ( 21 === intval( $info['port'] ) || 22 === intval( $info['port'] ) ) ) { // port 21, 22.
+			$def_not_allow   = array( 21, 22 ); // not allow ports 21, 22.
+			$not_allow_ports = apply_filters( 'mainwp_connect_sites_not_allow_ports', $def_not_allow, $url );
+
+			if ( ! is_array( $not_allow_ports ) ) {
+				$not_allow_ports = $def_not_allow;
+			}
+
+			if ( is_array( $info ) && ! empty( $info['port'] ) && ( in_array( intval( $info['port'] ), $not_allow_ports, true ) ) ) {
 				$invalid = true;
 			}
 
 			$temp_url = MainWP_Utility::remove_http_prefix( $url, true );
 
-			if ( $invalid || ( false !== strpos( $url, '?=' ) ) || strpos( $temp_url, ':' ) ) {
+			if ( $invalid || false !== strpos( $url, '?=' ) ) {
 				die( wp_json_encode( array( 'error' => esc_html__( 'Invalid URL.', 'mainwp' ) ) ) );
+			}
+
+			if ( strpos( $temp_url, ':' ) ) {
+				$invalid     = true;
+				$allow_ports = apply_filters( 'mainwp_connect_sites_allow_ports', array(), $url );
+				if ( ! empty( $allow_ports ) && is_array( $allow_ports ) ) {
+					if ( is_array( $info ) && ! empty( $info['port'] ) && ( in_array( intval( $info['port'] ), $allow_ports, true ) ) ) {
+						$invalid = false;
+					}
+				}
+				if ( $invalid ) {
+					die( wp_json_encode( array( 'error' => esc_html__( 'Invalid URL.', 'mainwp' ) ) ) );
+				}
 			}
 
 			$verifyCertificate = isset( $_POST['test_verify_cert'] ) ? intval( $_POST['test_verify_cert'] ) : 1;
@@ -266,7 +285,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 			if ( $website ) {
 				$url               = $website->url;
 				$name              = $website->name;
-				$verifyCertificate = $website->verify_certificate;
+				$verifyCertificate = (int) $website->verify_certificate;
 				$forceUseIPv4      = $website->force_use_ipv4;
 				$sslVersion        = $website->ssl_version;
 				$http_user         = $website->http_user;
@@ -277,10 +296,10 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 
 		$ssl_verifyhost = false;
 
-		if ( 1 == $verifyCertificate ) {
+		if ( 1 === $verifyCertificate ) {
 			$ssl_verifyhost = true;
-		} elseif ( 2 == $verifyCertificate ) {
-			if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
+		} elseif ( 2 === $verifyCertificate ) {
+			if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
 				$ssl_verifyhost = true;
 			}
 		}
@@ -288,7 +307,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		$rslt = MainWP_Connect::try_visit( $url, $ssl_verifyhost, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
 
 		if ( isset( $rslt['error'] ) && ( '' !== $rslt['error'] ) && ( 'wp-admin/' !== substr( $url, - 9 ) ) ) {
-			if ( substr( $url, - 1 ) != '/' ) {
+			if ( substr( $url, - 1 ) !== '/' ) {
 				$url .= '/';
 			}
 			$url    .= 'wp-admin/';
@@ -298,7 +317,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 			}
 		}
 
-		if ( null != $name ) {
+		if ( null !== $name ) {
 			$rslt['sitename'] = esc_html( $name );
 		}
 
@@ -360,12 +379,12 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		MainWP_Updates_Overview::dismiss_sync_errors( false );
 
 		$website = null;
-		$wp_id   = isset( $_POST['wp_id'] ) ? intval( $_POST['wp_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$wp_id   = isset( $_POST['wp_id'] ) ? intval( $_POST['wp_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( $wp_id ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $wp_id );
 		}
 
-		if ( null == $website ) {
+		if ( null === $website ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
@@ -399,15 +418,15 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function manage_suspend_site() {
 		$this->secure_request( 'mainwp_manage_sites_suspend_site' );
-		$siteId    = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification
-		$suspended = isset( $_POST['suspended'] ) && '1' === $_POST['suspended'] ? 1 : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		$siteId    = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$suspended = isset( $_POST['suspended'] ) && '1' === $_POST['suspended'] ? 1 : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$newValues = array(
 			'suspended' => $suspended,
 		);
 
 		if ( $siteId ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
-			if ( $website && $website->suspended != $suspended ) {
+			if ( $website && $website->suspended != $suspended ) { //phpcs:ignore -- to valid.
 				MainWP_DB::instance()->update_website_values( $siteId, $newValues );
 				/**
 				 * Fires immediately after website suspended/unsuspend.

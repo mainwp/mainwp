@@ -55,7 +55,7 @@ class MainWP_Notification_Template {
 	 * @return mixed self::$instance
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -266,8 +266,8 @@ class MainWP_Notification_Template {
 		 *
 		 * Filters the template location.
 		 *
-		 * @param $string $template_name Template name.
-		 * @param $string $template_path Template path.
+		 * @param string $template_name Template name.
+		 * @param string $template_path Template path.
 		 *
 		 * @since 4.1
 		 */
@@ -360,7 +360,7 @@ class MainWP_Notification_Template {
 		}
 
 		if ( ! empty( $templ_base_name ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'save-email-template' ) ) {
-			$template_code = isset( $_POST[ 'edit_' . $type . '_code' ] ) ? wp_unslash( $_POST[ 'edit_' . $type . '_code' ] ) : '';
+			$template_code = isset( $_POST[ 'edit_' . $type . '_code' ] ) ? sanitize_text_field( wp_unslash( $_POST[ 'edit_' . $type . '_code' ] ) ) : '';
 			$updated       = $this->save_template( $template_code, $templ_base_name );
 			if ( $updated ) {
 				$updated_templ = 3;
@@ -391,15 +391,17 @@ class MainWP_Notification_Template {
 			$file  = $this->template_custom_path . $template;
 			$code  = $template_code;
 
-			if ( is_writeable( $file ) ) { // phpcs:ignore WordPress.VIP.FileSystemWritesDisallow.file_ops_is_writeable
-				$f = fopen( $file, 'w+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fopen
-
+			$is_writable = MainWP_System_Utility::is_writable( $file );
+			// phpcs:disable WordPress.WP.AlternativeFunctions
+			if ( $is_writable ) {
+				$f = fopen( $file, 'w+' );
 				if ( false !== $f ) {
-					fwrite( $f, $code ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fwrite
-					fclose( $f ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
+					fwrite( $f, $code );
+					fclose( $f );
 					$saved = true;
 				}
 			}
+			//phpcs:enable
 
 			if ( $saved ) {
 				return true;
@@ -407,5 +409,4 @@ class MainWP_Notification_Template {
 		}
 		return false;
 	}
-
 }

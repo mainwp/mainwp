@@ -29,7 +29,7 @@ class MainWP_Meta_Boxes {
 		/**
 		 * Verify this came from the our screen and with proper authorization.
 		 */
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! isset( $_POST['select_sites_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['select_sites_nonce'] ), 'select_sites_' . $post_id ) ) {
 			return $post_id;
 		}
@@ -52,7 +52,7 @@ class MainWP_Meta_Boxes {
 		 * OK, we're authenticated: we need to find and save the data.
 		 */
 		$_post = get_post( $post_id );
-		if ( $_post->post_type == $post_type && isset( $_POST['select_by'] ) ) {
+		if ( $_post->post_type === $post_type && isset( $_POST['select_by'] ) ) {
 			$selected_wp = array();
 			if ( isset( $_POST['selected_sites'] ) ) {
 				if ( is_array( $_POST['selected_sites'] ) ) {
@@ -119,7 +119,7 @@ class MainWP_Meta_Boxes {
 		 * Verify this came from the our screen and with proper authorization.
 		 */
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! isset( $_POST['post_category_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['post_category_nonce'] ), 'post_category_' . $post_id ) ) {
 			return;
 		}
@@ -142,7 +142,7 @@ class MainWP_Meta_Boxes {
 		 * OK, we're authenticated: we need to find and save the data.
 		 */
 		$_post = get_post( $post_id );
-		if ( $_post->post_type == $post_type ) {
+		if ( $_post->post_type === $post_type ) {
 			if ( isset( $_POST['post_category'] ) && is_array( $_POST['post_category'] ) ) {
 				update_post_meta( $post_id, '_categories', base64_encode( implode( ',', wp_unslash( $_POST['post_category'] ) ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 				do_action( 'mainwp_bulkpost_categories_handle', $post_id, wp_unslash( $_POST['post_category'] ) );
@@ -177,8 +177,8 @@ class MainWP_Meta_Boxes {
 	 */
 	public function add_tags_handle( $post_id, $post_type ) {
 		$this->add_extra_handle( 'Tags', '_tags', 'add_tags', $post_id, $post_type );
-		if ( isset( $_POST['add_tags'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			do_action( 'mainwp_bulkpost_tags_handle', $post_id, $post_type, wp_unslash( $_POST['add_tags'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_POST['add_tags'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			do_action( 'mainwp_bulkpost_tags_handle', $post_id, $post_type, wp_strip_all_tags( wp_unslash( $_POST['add_tags'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		}
 	}
 
@@ -241,7 +241,7 @@ class MainWP_Meta_Boxes {
 		/**
 		 * Verify this came from the our screen and with proper authorization.
 		 */
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! isset( $_POST[ $prefix . '_nonce' ] ) || ! wp_verify_nonce( sanitize_key( $_POST[ $prefix . '_nonce' ] ), $prefix . '_' . $post_id ) ) {
 			return $post_id;
 		}
@@ -264,7 +264,7 @@ class MainWP_Meta_Boxes {
 		 * OK, we're authenticated: we need to find and save the data.
 		 */
 		$_post = get_post( $post_id );
-		if ( $_post->post_type == $post_type && isset( $_POST[ $prefix ] ) ) {
+		if ( $_post->post_type === $post_type && isset( $_POST[ $prefix ] ) ) {
 			$value = isset( $_POST[ $prefix ] ) ? base64_encode( wp_unslash( $_POST[ $prefix ] ) ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			update_post_meta( $post_id, $saveto, $value );
 			return $value;
@@ -273,6 +273,5 @@ class MainWP_Meta_Boxes {
 
 		return $post_id;
 	}
-
 }
 ?>

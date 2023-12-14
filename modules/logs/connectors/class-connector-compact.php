@@ -102,5 +102,4 @@ class Connector_Compact extends Log_Connector {
 				$state
 			);
 		}
-
 }

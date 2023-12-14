@@ -36,7 +36,7 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @return MainWP_DB_Common
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -73,16 +73,16 @@ class MainWP_DB_Common extends MainWP_DB {
 			if ( empty( $website ) || '' !== $website->sync_errors ) {
 				continue;
 			}
-			$total_sites++;
+			++$total_sites;
 			if ( 60 * 60 * 24 > time() - $website->dtsSync ) {
-				$synced_sites++;
+				++$synced_sites;
 			}
 			if ( $last_sync < $website->dtsSync ) {
 				$last_sync = $website->dtsSync;
 			}
 		}
 
-		if ( $total_sites == $synced_sites ) {
+		if ( $total_sites === $synced_sites ) {
 			$return['sync_status'] = 'all_synced';
 		} elseif ( 0 === $synced_sites ) {
 			$return['sync_status'] = 'not_synced';
@@ -104,7 +104,7 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_group_by_name( $name, $userid = null ) {
-		if ( ( null == $userid ) && MainWP_System::instance()->is_multi_user() ) {
+		if ( ( null === $userid ) && MainWP_System::instance()->is_multi_user() ) {
 
 			/**
 			 * Current user global.
@@ -115,7 +115,7 @@ class MainWP_DB_Common extends MainWP_DB {
 
 			$userid = $current_user->ID;
 		}
-		$where  = ( null != $userid ) ? ' AND userid=' . $userid : '';
+		$where  = ( null !== $userid ) ? ' AND userid=' . intval( $userid ) : '';
 		$where .= $this->get_sql_where_allow_groups();
 
 		return $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'group' ) . ' WHERE 1 ' . $where . ' AND name= %s', $this->escape( $name ) ) );
@@ -240,7 +240,7 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_groups_and_count( $userid = null, $for_manager = false ) {
-		if ( ( null == $userid ) && MainWP_System::instance()->is_multi_user() ) {
+		if ( ( null === $userid ) && MainWP_System::instance()->is_multi_user() ) {
 
 			/**
 			 * Current user global.
@@ -254,8 +254,8 @@ class MainWP_DB_Common extends MainWP_DB {
 
 		$where = '';
 
-		if ( null != $userid ) {
-			$where = ' AND gr.userid = ' . $userid;
+		if ( ! empty( $userid ) ) {
+			$where = ' AND gr.userid = ' . intval( $userid );
 		}
 
 		if ( ! $for_manager ) {
@@ -278,7 +278,7 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_not_empty_groups( $userid = null, $enableOfflineSites = true ) {
-		if ( ( null == $userid ) && MainWP_System::instance()->is_multi_user() ) {
+		if ( ( null === $userid ) && MainWP_System::instance()->is_multi_user() ) {
 
 			/**
 			 * Current user global.
@@ -293,8 +293,8 @@ class MainWP_DB_Common extends MainWP_DB {
 		$where  = ' WHERE 1 ';
 		$where .= $this->get_sql_where_allow_groups( 'g' );
 
-		if ( null != $userid ) {
-			$where .= ' AND g.userid = ' . $userid;
+		if ( null !== $userid ) {
+			$where .= ' AND g.userid = ' . intval( $userid );
 		}
 		if ( ! $enableOfflineSites ) {
 			$where .= ' AND wp_sync.sync_errors = ""';
@@ -360,13 +360,13 @@ class MainWP_DB_Common extends MainWP_DB {
 	 */
 	public function insert_or_update_request_log( $wpid, $ip, $start, $stop ) {
 		$updateValues = array();
-		if ( null != $ip ) {
+		if ( ! empty( $ip ) ) {
 			$updateValues['ip'] = $ip;
 		}
-		if ( null != $start ) {
+		if ( ! empty( $start ) ) {
 			$updateValues['micro_timestamp_start'] = $start;
 		}
-		if ( null != $stop ) {
+		if ( ! empty( $stop ) ) {
 			$updateValues['micro_timestamp_stop'] = $stop;
 		}
 
@@ -401,7 +401,7 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @return (string|null) Database query result for number of requests or null on failure.
 	 */
 	public function get_nrof_open_requests( $ip = null ) {
-		if ( null == $ip ) {
+		if ( null === $ip ) {
 			return $this->wpdb->get_var( 'select count(id) from ' . $this->table_name( 'request_log' ) . ' where micro_timestamp_stop < micro_timestamp_start' );
 		}
 
@@ -418,7 +418,7 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @return (int|null) Database query result for timestamp of last request sent or null on failure.
 	 */
 	public function get_last_request_timestamp( $ip = null ) {
-		if ( null == $ip ) {
+		if ( null === $ip ) {
 			return $this->wpdb->get_var( 'select micro_timestamp_start from ' . $this->table_name( 'request_log' ) . ' order by micro_timestamp_start desc limit 1' );
 		}
 
@@ -578,7 +578,7 @@ class MainWP_DB_Common extends MainWP_DB {
 		}
 		$user_email = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT user_email FROM ' . $this->table_name( 'users' ) . ' WHERE userid = %d', $theUserId ) );
 
-		if ( null == $user_email || '' == $user_email ) {
+		if ( null === $user_email || empty( $user_email ) ) {
 			$user_email = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT user_email FROM ' . $this->wpdb->prefix . 'users WHERE id = %d', $userid ) );
 		}
 
@@ -633,7 +633,7 @@ class MainWP_DB_Common extends MainWP_DB {
 		}
 
 		$row = $this->wpdb->get_row( 'SELECT * FROM ' . $this->table_name( 'users' ) . ' WHERE userid= ' . $userid, OBJECT );
-		if ( null == $row ) {
+		if ( null === $row ) {
 			$this->create_user_extension( $userid );
 			$row = $this->wpdb->get_row( 'SELECT * FROM ' . $this->table_name( 'users' ) . ' WHERE userid= ' . $userid, OBJECT );
 		}
@@ -687,7 +687,7 @@ class MainWP_DB_Common extends MainWP_DB {
 			$userid = null;
 		}
 
-		if ( null == $userid ) {
+		if ( null === $userid ) {
 			if ( MainWP_System::instance()->is_single_user() ) {
 				$userid = '0';
 			} else {
@@ -703,13 +703,13 @@ class MainWP_DB_Common extends MainWP_DB {
 			}
 		}
 		$row = $this->wpdb->get_row( 'SELECT * FROM ' . $this->table_name( 'users' ) . ' WHERE userid= ' . $userid, OBJECT );
-		if ( null == $row ) {
+		if ( null === $row ) {
 			$this->create_user_extension( $userid );
 		}
 
 		$fields = array();
 		foreach ( $userExtension as $field => $value ) {
-			if ( $value != $row->$field ) {
+			if ( $value != $row->$field ) { //phpcs:ignore -- to valid.
 				$fields[ $field ] = $value;
 			}
 		}
@@ -783,7 +783,7 @@ class MainWP_DB_Common extends MainWP_DB {
 			$sql_set .= ' verify_certificate = "' . $this->escape( $verify ) . '",';
 		}
 
-		if ( isset( $data['protocol'] ) && ( 'http' == $data['protocol'] || 'https' == $data['protocol'] ) ) {
+		if ( isset( $data['protocol'] ) && ( 'http' === $data['protocol'] || 'https' === $data['protocol'] ) ) {
 			$url      = $data['protocol'] . '://' . MainWP_Utility::remove_http_prefix( $website->url, true );
 			$sql_set .= ' url = "' . $this->escape( $url ) . '",';
 		}
@@ -877,6 +877,4 @@ class MainWP_DB_Common extends MainWP_DB {
 			'site'    => $website->url,
 		);
 	}
-
-
 }

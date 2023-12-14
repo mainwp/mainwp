@@ -36,7 +36,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 * @return MainWP_DB_Client
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -86,7 +86,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	`suspended` tinyint(1) NOT NULL DEFAULT 0,
 	primary_contact_id int(11) NOT NULL default 0";
 
-		if ( '' == $currentVersion || version_compare( $currentVersion, '8.61', '<=' ) ) {
+		if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.61', '<=' ) ) {
 			$tbl .= ',
 		PRIMARY KEY (client_id)';
 		}
@@ -100,7 +100,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	client_id int(11) NOT NULL,
 	UNIQUE KEY client_id_field_name (client_id,field_name)';
 
-		if ( '' == $currentVersion || version_compare( $currentVersion, '8.61', '<=' ) ) {
+		if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.61', '<=' ) ) {
 			$tbl .= ',
 		PRIMARY KEY  (`field_id`)  ';
 		}
@@ -115,7 +115,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	value_client_id int(11) NOT NULL,
 	UNIQUE KEY value_client_id_field_id (value_client_id, field_id)';
 
-		if ( '' == $currentVersion || version_compare( $currentVersion, '8.61', '<=' ) ) {
+		if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.61', '<=' ) ) {
 			$tbl .= ',
 		PRIMARY KEY  (`value_id`) ';
 		}
@@ -137,7 +137,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	linkedin varchar(255) NOT NULL default "",
 	UNIQUE KEY contact_email(contact_email)';
 
-		if ( '' == $currentVersion || version_compare( $currentVersion, '8.69', '<=' ) ) {
+		if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.69', '<=' ) ) {
 			$tbl .= ',
 		PRIMARY KEY (contact_id)';
 		}
@@ -198,7 +198,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 */
 	public function insert_client_fields_861( $currentVersion ) {
 
-		if ( '' == $currentVersion || version_compare( $currentVersion, '8.61', '>' ) ) {
+		if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.61', '>' ) ) {
 			return;
 		}
 
@@ -250,7 +250,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 */
 	public function client_reports_check_updates_861( $currentVersion ) {
 
-		if ( '' == $currentVersion || version_compare( $currentVersion, '8.61', '>' ) ) {
+		if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.61', '>' ) ) {
 			return;
 		}
 
@@ -271,7 +271,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 */
 	public function pro_reports_check_updates_861( $currentVersion ) {
 
-		if ( '' == $currentVersion || version_compare( $currentVersion, '8.61', '>' ) ) {
+		if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.61', '>' ) ) {
 			return;
 		}
 
@@ -378,7 +378,7 @@ class MainWP_DB_Client extends MainWP_DB {
 				if ( isset( $default_client_fields[ $tok_name ] ) || isset( $default_contact_fields[ $tok_name ] ) ) {
 					continue;
 				}
-				if ( 'client.site.url' == $tok_name || 'client.site.name' == $tok_name ) { // avoid those tokens.
+				if ( 'client.site.url' === $tok_name || 'client.site.name' === $tok_name ) { // avoid those tokens.
 					continue;
 				}
 				if ( isset( $compatible_tokens[ $tok_name ] ) ) {
@@ -454,23 +454,23 @@ class MainWP_DB_Client extends MainWP_DB {
 	 * Create or update client.
 	 *
 	 * @param array $data Client data.
-	 * @param bool  $throw Throw or return error.
+	 * @param bool  $throw_out Throw or return error.
 	 *
 	 * @throws MainWP_Exception On errors.
 	 *
 	 * @return bool.
 	 */
-	public function update_client( $data, $throw = false ) {
+	public function update_client( $data, $throw_out = false ) {
 		if ( empty( $data ) || ! is_array( $data ) ) {
 			return false;
 		}
 
-		$client_id = isset( $data['client_id'] ) ? $data['client_id'] : 0;
+		$client_id = isset( $data['client_id'] ) ? (int) $data['client_id'] : 0;
 
 		if ( isset( $data['client_email'] ) && ! empty( $data['client_email'] ) ) {
 			$client_existed = $this->get_wp_client_by( 'client_email', $data['client_email'], ARRAY_A );
-			if ( is_array( $client_existed ) && isset( $client_existed['client_id'] ) && ( empty( $client_id ) || $client_id != $client_existed['client_id'] ) ) {
-				if ( $throw ) {
+			if ( is_array( $client_existed ) && isset( $client_existed['client_id'] ) && ( empty( $client_id ) || $client_id !== (int) $client_existed['client_id'] ) ) {
+				if ( $throw_out ) {
 					throw new MainWP_Exception( esc_html__( 'Client email exists. Please try again.', 'mainwp' ) );
 				} else {
 					return false;
@@ -481,10 +481,8 @@ class MainWP_DB_Client extends MainWP_DB {
 		if ( ! empty( $client_id ) ) {
 			$this->wpdb->update( $this->table_name( 'wp_clients' ), $data, array( 'client_id' => intval( $client_id ) ) );
 			return $this->get_wp_client_by( 'client_id', $client_id );
-		} else {
-			if ( $this->wpdb->insert( $this->table_name( 'wp_clients' ), $data ) ) {
+		} elseif ( $this->wpdb->insert( $this->table_name( 'wp_clients' ), $data ) ) {
 				return $this->get_wp_client_by( 'client_id', $this->wpdb->insert_id );
-			}
 		}
 		return false;
 	}
@@ -505,7 +503,7 @@ class MainWP_DB_Client extends MainWP_DB {
 			return false;
 		}
 
-		$contact_id = isset( $data['contact_id'] ) ? $data['contact_id'] : 0;
+		$contact_id = isset( $data['contact_id'] ) ? (int) $data['contact_id'] : 0;
 
 		$contact_email = isset( $data['contact_email'] ) ? $data['contact_email'] : '';
 		if ( ! empty( $contact_email ) ) {
@@ -517,7 +515,7 @@ class MainWP_DB_Client extends MainWP_DB {
 			}
 
 			if ( $curret_contact && ! empty( $contact_id ) ) {
-				if ( $curret_contact->contact_id != $contact_id ) { // update contact with existed email => failed.
+				if ( (int) $curret_contact->contact_id !== $contact_id ) { // update contact with existed email => failed.
 					$existed_email = true;
 				}
 			}
@@ -531,10 +529,8 @@ class MainWP_DB_Client extends MainWP_DB {
 		if ( ! empty( $contact_id ) ) {
 			$this->wpdb->update( $this->table_name( 'wp_clients_contacts' ), $data, array( 'contact_id' => intval( $contact_id ) ) );
 			return $this->get_wp_client_contact_by( 'contact_id', $contact_id );
-		} else {
-			if ( $this->wpdb->insert( $this->table_name( 'wp_clients_contacts' ), $data ) ) {
+		} elseif ( $this->wpdb->insert( $this->table_name( 'wp_clients_contacts' ), $data ) ) {
 				return $this->get_wp_client_contact_by( 'contact_id', $this->wpdb->insert_id );
-			}
 		}
 		return false;
 	}
@@ -558,12 +554,12 @@ class MainWP_DB_Client extends MainWP_DB {
 
 		$sql = '';
 
-		if ( 'client_id' == $by && ! empty( $value ) ) {
+		if ( 'client_id' === $by && ! empty( $value ) ) {
 			$sql = $this->wpdb->prepare( 'SELECT wc.*  FROM ' . $this->table_name( 'wp_clients_contacts' ) . ' wc WHERE wc.contact_client_id=%d ', $value );
 		}
 
 		if ( ! empty( $sql ) ) {
-			if ( OBJECT == $obj ) {
+			if ( OBJECT === $obj ) {
 				$result = $this->wpdb->get_results( $sql, OBJECT );
 			} else {
 				$result = $this->wpdb->get_results( $sql, ARRAY_A );
@@ -571,15 +567,15 @@ class MainWP_DB_Client extends MainWP_DB {
 			return $result;
 		}
 
-		if ( 'contact_id' == $by && is_numeric( $value ) ) {
+		if ( 'contact_id' === $by && is_numeric( $value ) ) {
 			$sql = $this->wpdb->prepare( 'SELECT wc.* FROM ' . $this->table_name( 'wp_clients_contacts' ) . ' wc WHERE wc.contact_id=%d ', $value );
-		} elseif ( 'contact_email' == $by && ! empty( $value ) ) {
+		} elseif ( 'contact_email' === $by && ! empty( $value ) ) {
 			$sql = $this->wpdb->prepare( 'SELECT wc.*  FROM ' . $this->table_name( 'wp_clients_contacts' ) . ' wc WHERE wc.contact_email=%s ', $value );
 		}
 
 		$result = null;
 		if ( ! empty( $sql ) ) {
-			if ( OBJECT == $obj ) {
+			if ( OBJECT === $obj ) {
 				$result = $this->wpdb->get_row( $sql, OBJECT );
 			} else {
 				$result = $this->wpdb->get_row( $sql, ARRAY_A );
@@ -661,7 +657,7 @@ class MainWP_DB_Client extends MainWP_DB {
 		if ( is_array( $group_ids ) ) {
 			$group_ids = array_filter(
 				$group_ids,
-				function( $e ) {
+				function ( $e ) {
 					if ( 'nogroups' === $e ) {
 						return true;
 					}
@@ -691,8 +687,8 @@ class MainWP_DB_Client extends MainWP_DB {
 				$join_group = ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
 				$group_ids  = array_filter(
 					$group_ids,
-					function( $e ) {
-						return 'nogroups' != $e;
+					function ( $e ) {
+						return 'nogroups' !== $e;
 					}
 				);
 				if ( 0 < count( $group_ids ) ) {
@@ -738,7 +734,7 @@ class MainWP_DB_Client extends MainWP_DB {
 
 		$join_contact = ' LEFT JOIN ' . $this->table_name( 'wp_clients_contacts' ) . ' cc ON wc.primary_contact_id = cc.contact_id ';
 
-		if ( 'all' == $by ) {
+		if ( 'all' === $by ) {
 			$sql  = ' SELECT wc.*, cc.* ' . $select_sites . $select_tags;
 			$sql .= ' FROM ' . $this->table_name( 'wp_clients' ) . ' wc ';
 			$sql .= $join_contact;
@@ -747,7 +743,7 @@ class MainWP_DB_Client extends MainWP_DB {
 		}
 
 		if ( ! empty( $sql ) ) {
-			if ( OBJECT == $obj ) {
+			if ( OBJECT === $obj ) {
 				$result = $this->wpdb->get_results( $sql, OBJECT );
 			} else {
 				$result = $this->wpdb->get_results( $sql, ARRAY_A );
@@ -755,15 +751,15 @@ class MainWP_DB_Client extends MainWP_DB {
 			return $result;
 		}
 
-		if ( 'client_id' == $by && is_numeric( $value ) ) {
+		if ( 'client_id' === $by && is_numeric( $value ) ) {
 			$sql = $this->wpdb->prepare( 'SELECT wc.*, cc.* ' . $select_sites . $select_tags . ' FROM ' . $this->table_name( 'wp_clients' ) . ' wc ' . $join_contact . ' WHERE wc.client_id=%d ', $value );
-		} elseif ( 'client_email' == $by && ! empty( $value ) ) {
+		} elseif ( 'client_email' === $by && ! empty( $value ) ) {
 			$sql = $this->wpdb->prepare( 'SELECT wc.*, cc.* ' . $select_sites . $select_tags . ' FROM ' . $this->table_name( 'wp_clients' ) . ' wc ' . $join_contact . ' WHERE wc.client_email=%s ', $value );
 		}
 
 		$result = null;
 		if ( ! empty( $sql ) ) {
-			if ( OBJECT == $obj ) {
+			if ( OBJECT === $obj ) {
 				$result = $this->wpdb->get_row( $sql, OBJECT );
 			} else {
 				$result = $this->wpdb->get_row( $sql, ARRAY_A );
@@ -792,7 +788,7 @@ class MainWP_DB_Client extends MainWP_DB {
 
 		if ( $params && is_array( $params ) ) {
 			$client = isset( $params['client'] ) ? sanitize_text_field( wp_unslash( $params['client'] ) ) : '';
-			if ( '' != $client ) {
+			if ( '' !== $client ) {
 				$clients     = explode( ';', $client );
 				$clientWhere = '';
 				foreach ( $clients as $clt ) {
@@ -906,7 +902,7 @@ class MainWP_DB_Client extends MainWP_DB {
 
 		$site_ids = array_filter(
 			$site_ids,
-			function( $e ) {
+			function ( $e ) {
 				return ( is_numeric( $e ) && 0 < $e ) ? true : false;
 			}
 		);
@@ -993,7 +989,7 @@ class MainWP_DB_Client extends MainWP_DB {
 			// valid client ids.
 			$client_ids = array_filter(
 				$client_ids,
-				function( $e ) {
+				function ( $e ) {
 					return is_numeric( $e ) && ! empty( $e ) ? true : false; // to valid client ids.
 				}
 			);
@@ -1031,7 +1027,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 * @return int Total number.
 	 */
 	public function count_total_clients() {
-		return $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COUNT(client_id) FROM ' . $this->table_name( 'wp_clients' ) ) );
+		return $this->wpdb->get_var( 'SELECT COUNT(client_id) FROM ' . $this->table_name( 'wp_clients' ) );
 	}
 
 
@@ -1093,7 +1089,7 @@ class MainWP_DB_Client extends MainWP_DB {
 		if ( ! empty( $field_id ) ) {
 			$row = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_clients_field_values' ) . ' WHERE field_id = %d AND value_client_id=%d ', $field_id, $client_id ) );
 			if ( $row ) {
-				if ( $row->field_value != $value ) {
+				if ( $row->field_value != $value ) { //phpcs:ignore -- to valid.
 					$this->wpdb->update( $this->table_name( 'wp_clients_field_values' ), array( 'field_value' => $value ), array( 'value_id' => $row->value_id ) );
 				}
 				return true;
@@ -1130,18 +1126,18 @@ class MainWP_DB_Client extends MainWP_DB {
 
 		$sql = '';
 
-		if ( 'client_id' == $by ) {
+		if ( 'client_id' === $by ) {
 			$sql = $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_clients_fields' ) . ' WHERE `client_id`=%d ', $value );
 			return $this->wpdb->get_results( $sql );
 		}
 
-		if ( 'field_name' == $by ) {
+		if ( 'field_name' === $by ) {
 			$value = str_replace( array( '[', ']' ), '', $value );
 		}
 
-		if ( 'field_id' == $by ) {
+		if ( 'field_id' === $by ) {
 			$sql = $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_clients_fields' ) . ' WHERE `field_id`=%d', $value );
-		} elseif ( 'field_name' == $by ) {
+		} elseif ( 'field_name' === $by ) {
 			$sql = $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_clients_fields' ) . ' WHERE `field_name` = %s AND `client_id`=%d ', $value, $client_id );
 		}
 
@@ -1178,7 +1174,7 @@ class MainWP_DB_Client extends MainWP_DB {
 			$where = ' f.client_id = 0';
 		}
 
-		if ( '' == $where ) {
+		if ( '' === $where ) {
 			return false;
 		}
 
@@ -1263,7 +1259,7 @@ class MainWP_DB_Client extends MainWP_DB {
 	 */
 	public function delete_client_field_by( $by = 'field_id', $value = false, $client_id = false ) {
 
-		if ( 'field_id' == $by ) {
+		if ( 'field_id' === $by ) {
 			if ( $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_clients_fields' ) . ' WHERE field_id=%d AND client_id=%d', $value, $client_id ) ) ) { // delete individual or general client field.
 				if ( $client_id > 0 ) { // individual field value.
 					$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_clients_field_values' ) . ' WHERE field_id=%d AND value_client_id=%d', $value, $client_id ) ); // delete individual tokens values, for one client.
@@ -1320,5 +1316,4 @@ class MainWP_DB_Client extends MainWP_DB {
 	public function client_reports_get_site_token_values() {
 		return $this->wpdb->get_results( ' SELECT * FROM ' . $this->table_name( 'client_report_site_token' ) . ' WHERE 1 ' );
 	}
-
 }

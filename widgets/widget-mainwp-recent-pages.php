@@ -54,21 +54,21 @@ class MainWP_Recent_Pages {
 
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
 
-		if ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 			$data_fields[] = 'recent_pages';
 			$individual    = false;
-			$client_id     = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+			$client_id     = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$websites      = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id, array( 'select_data' => $data_fields ) );
 
 			if ( $websites ) {
 				foreach ( $websites as $website ) {
-					if ( '' == $website->recent_pages ) {
+					if ( empty( $website->recent_pages ) ) {
 						continue;
 					}
 
 					$pages = json_decode( $website->recent_pages, 1 );
-					if ( 0 == count( $pages ) ) {
+					if ( 0 === count( $pages ) ) {
 						continue;
 					}
 					foreach ( $pages as $page ) {
@@ -93,12 +93,12 @@ class MainWP_Recent_Pages {
 
 			if ( $websites ) {
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-					if ( '' == $website->recent_pages ) {
+					if ( empty( $website->recent_pages ) ) {
 						continue;
 					}
 
 					$pages = json_decode( $website->recent_pages, 1 );
-					if ( 0 == count( $pages ) ) {
+					if ( 0 === count( $pages ) ) {
 						continue;
 					}
 					foreach ( $pages as $page ) {
@@ -184,7 +184,7 @@ class MainWP_Recent_Pages {
 					 */
 					echo esc_html( apply_filters( 'mainwp_recent_pages_widget_title', esc_html__( 'Recent Pages', 'mainwp' ) ) );
 					?>
-					<?php if ( isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+					<?php if ( isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
 					<div class="sub header"><?php esc_html_e( 'The most recent pages from the Client websites', 'mainwp' ); ?></div>
 					<?php else : ?>
 					<div class="sub header"><?php esc_html_e( 'The most recent pages from your websites', 'mainwp' ); ?></div>
@@ -238,7 +238,7 @@ class MainWP_Recent_Pages {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_recent_pages_before_publised_list', $allPages, $recent_number );
-			if ( count( $recent_pages_published ) == 0 ) :
+			if ( 0 === count( $recent_pages_published ) ) :
 				?>
 			<h2 class="ui icon header">
 				<i class="folder open outline icon"></i>
@@ -250,8 +250,8 @@ class MainWP_Recent_Pages {
 			<div class="ui middle aligned divided selection list">
 			<?php
 			$_count = count( $recent_pages_published );
-			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-				if ( ! isset( $recent_pages_published[ $i ]['title'] ) || ( '' == $recent_pages_published[ $i ]['title'] ) ) {
+			for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
+				if ( ! isset( $recent_pages_published[ $i ]['title'] ) || empty( $recent_pages_published[ $i ]['title'] ) ) {
 					$recent_pages_published[ $i ]['title'] = '(No Title)';
 				}
 				if ( isset( $recent_pages_published[ $i ]['dts'] ) ) {
@@ -283,7 +283,7 @@ class MainWP_Recent_Pages {
 									<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-unpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
 									<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_pages_published[ $i ]['website']->id ); ?>&location=<?php echo esc_html( base64_encode( 'post.php?action=editpost&post=' . esc_attr( $recent_pages_published[ $i ]['id'] ) . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" title="Edit this post" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 									<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-trash" href="#" ><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
-									<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ) . ( substr( $recent_pages_published[ $i ]['website']->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr( $recent_pages_published[ $i ]['id'] ); ?>" target="_blank" class="mainwp-may-hide-referrer" title="View '<?php echo esc_attr( $recent_pages_published[ $i ]['title'] ); ?>'" rel="permalink"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
+									<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ) . ( substr( $recent_pages_published[ $i ]['website']->url, - 1 ) !== '/' ? '/' : '' ) . '?p=' . esc_attr( $recent_pages_published[ $i ]['id'] ); ?>" target="_blank" class="mainwp-may-hide-referrer" title="View '<?php echo esc_attr( $recent_pages_published[ $i ]['title'] ); ?>'" rel="permalink"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
 									<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-viewall" href="admin.php?page=PageBulkManage" ><?php esc_html_e( 'View all', 'mainwp' ); ?></a>
 								</div>
 							</div>
@@ -340,7 +340,7 @@ class MainWP_Recent_Pages {
 				 * @since 4.1
 				 */
 				do_action( 'mainwp_recent_pages_before_draft_list', $allPages, $recent_number );
-				if ( 0 == count( $recent_pages_draft ) ) {
+				if ( 0 === count( $recent_pages_draft ) ) {
 					?>
 					<h2 class="ui icon header">
 						<i class="folder open outline icon"></i>
@@ -354,8 +354,8 @@ class MainWP_Recent_Pages {
 				<div class="ui middle aligned divided selection list">
 				<?php
 				$_count = count( $recent_pages_draft );
-				for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-					if ( ! isset( $recent_pages_draft[ $i ]['title'] ) || ( '' == $recent_pages_draft[ $i ]['title'] ) ) {
+				for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
+					if ( ! isset( $recent_pages_draft[ $i ]['title'] ) || empty( $recent_pages_draft[ $i ]['title'] ) ) {
 						$recent_pages_draft[ $i ]['title'] = '(No Title)';
 					}
 					if ( isset( $recent_pages_draft[ $i ]['dts'] ) ) {
@@ -442,7 +442,7 @@ class MainWP_Recent_Pages {
 				 * @since 4.1
 				 */
 				do_action( 'mainwp_recent_pages_before_pending_list', $allPages, $recent_number );
-				if ( count( $recent_pages_pending ) == 0 ) {
+				if ( 0 === count( $recent_pages_pending ) ) {
 					?>
 					<h2 class="ui icon header">
 						<i class="folder open outline icon"></i>
@@ -456,8 +456,8 @@ class MainWP_Recent_Pages {
 				<div class="ui middle aligned divided selection list">
 				<?php
 				$_count = count( $recent_pages_pending );
-				for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-					if ( ! isset( $recent_pages_pending[ $i ]['title'] ) || ( '' == $recent_pages_pending[ $i ]['title'] ) ) {
+				for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
+					if ( ! isset( $recent_pages_pending[ $i ]['title'] ) || empty( $recent_pages_pending[ $i ]['title'] ) ) {
 						$recent_pages_pending[ $i ]['title'] = '(No Title)';
 					}
 					if ( isset( $recent_pages_pending[ $i ]['dts'] ) ) {
@@ -545,7 +545,7 @@ class MainWP_Recent_Pages {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_recent_pages_before_future_list', $allPages, $recent_number );
-		if ( count( $recent_pages_future ) == 0 ) {
+		if ( 0 === count( $recent_pages_future ) ) {
 			?>
 			<h2 class="ui icon header">
 				<i class="folder open outline icon"></i>
@@ -559,8 +559,8 @@ class MainWP_Recent_Pages {
 		<div class="ui middle aligned divided selection list">
 		<?php
 		$_count = count( $recent_pages_future );
-		for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-			if ( ! isset( $recent_pages_future[ $i ]['title'] ) || ( '' == $recent_pages_future[ $i ]['title'] ) ) {
+		for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
+			if ( ! isset( $recent_pages_future[ $i ]['title'] ) || empty( $recent_pages_future[ $i ]['title'] ) ) {
 				$recent_pages_future[ $i ]['title'] = '(No Title)';
 			}
 			if ( isset( $recent_pages_future[ $i ]['dts'] ) ) {
@@ -649,7 +649,7 @@ class MainWP_Recent_Pages {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_recent_pages_before_trash_list', $allPages, $recent_number );
-		if ( count( $recent_pages_trash ) == 0 ) {
+		if ( 0 === count( $recent_pages_trash ) ) {
 			?>
 				<h2 class="ui icon header">
 					<i class="folder open outline icon"></i>
@@ -663,8 +663,8 @@ class MainWP_Recent_Pages {
 			<div class="ui middle aligned divided selection list">
 		<?php
 		$_count = count( $recent_pages_trash );
-		for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-			if ( ! isset( $recent_pages_trash[ $i ]['title'] ) || ( '' == $recent_pages_trash[ $i ]['title'] ) ) {
+		for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
+			if ( ! isset( $recent_pages_trash[ $i ]['title'] ) || empty( $recent_pages_trash[ $i ]['title'] ) ) {
 				$recent_pages_trash[ $i ]['title'] = '(No Title)';
 			}
 			if ( isset( $recent_pages_trash[ $i ]['dts'] ) ) {
@@ -703,7 +703,7 @@ class MainWP_Recent_Pages {
 					</div>
 					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e( 'Please wait...', 'mainwp' ); ?></div>
 				</div>
-			<?php }; ?>
+			<?php } ?>
 			</div>
 			<?php
 			/**

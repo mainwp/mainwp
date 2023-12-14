@@ -34,7 +34,7 @@ class MainWP_Manage_Sites_Handler {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function check_site() {
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$url = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
 		$url = urldecode( $url );
 
@@ -82,7 +82,7 @@ class MainWP_Manage_Sites_Handler {
 		}
 		$ret['check_me'] = ( isset( $_POST['check_me'] ) ? intval( $_POST['check_me'] ) : null );
 		die( wp_json_encode( $ret ) );
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 	}
 
 	/**
@@ -97,7 +97,7 @@ class MainWP_Manage_Sites_Handler {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public static function reconnect_site() {
-		$siteId = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$siteId = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 
 		try {
 			if ( MainWP_Utility::ctype_digit( $siteId ) ) {
@@ -129,7 +129,7 @@ class MainWP_Manage_Sites_Handler {
 		$output     = array();
 		$fetch_data = null;
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( isset( $_POST['managesites_add_wpurl'] ) && isset( $_POST['managesites_add_wpadmin'] ) ) {
 			// Check if already in DB.
 			$website                                        = MainWP_DB::instance()->get_websites_by_url( sanitize_text_field( wp_unslash( $_POST['managesites_add_wpurl'] ) ) );
@@ -139,7 +139,7 @@ class MainWP_Manage_Sites_Handler {
 		$ret['add_me'] = ( isset( $_POST['add_me'] ) ? intval( $_POST['add_me'] ) : null );
 		if ( '' !== $error ) {
 
-			if ( '' != $fetch_data ) {
+			if ( ! empty( $fetch_data ) ) {
 				$ret['resp_data'] = $fetch_data;
 			}
 
@@ -151,10 +151,10 @@ class MainWP_Manage_Sites_Handler {
 
 		if ( isset( $output['fetch_data'] ) ) {
 			$ret['resp_data'] = $output['fetch_data'];
-		} elseif ( '' != $fetch_data ) {
+		} elseif ( ! empty( $fetch_data ) ) { //phpcs:ignore -- to valid.
 			$ret['resp_data'] = $fetch_data;
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 
 		if ( 1 === MainWP_DB::instance()->get_websites_count() ) {
 			$ret['redirectUrl'] = esc_url( admin_url( 'admin.php?page=managesites' ) );
@@ -213,8 +213,8 @@ class MainWP_Manage_Sites_Handler {
 	 * Apply plugin settings.
 	 */
 	public static function apply_plugin_settings() {
-		$site_id      = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
-		$ext_dir_slug = isset( $_POST['ext_dir_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['ext_dir_slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$site_id      = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$ext_dir_slug = isset( $_POST['ext_dir_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['ext_dir_slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		if ( empty( $site_id ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Invalid site ID. Please try again.', 'mainwp' ) ) ) );
 		}
@@ -241,10 +241,10 @@ class MainWP_Manage_Sites_Handler {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function save_note() {
-		if ( isset( $_POST['websiteid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['websiteid'] ) ); // phpcs:ignore WordPress.Security.NonceVerification 
+		if ( isset( $_POST['websiteid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['websiteid'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing 
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-				$note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+				$note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				$esc_note = MainWP_Utility::esc_content( $note );
 				MainWP_DB_Common::instance()->update_note( $website->id, $esc_note );
 
@@ -262,10 +262,10 @@ class MainWP_Manage_Sites_Handler {
 	 * Try to remove Child Site.
 	 */
 	public static function remove_site() {
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( isset( $_POST['id'] ) ) {
 
-			$result = self::remove_website( $_POST['id'] );
+			$result = self::remove_website( intval( $_POST['id'] ) );
 			$error  = is_array( $result ) && isset( $result['error'] ) ? $result['error'] : '';
 
 			if ( 'NOMAINWP' === $error ) {
@@ -282,7 +282,7 @@ class MainWP_Manage_Sites_Handler {
 				die( wp_json_encode( array( 'undefined_error' => true ) ) );
 			}
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 		die( wp_json_encode( array( 'result' => 'NOSITE' ) ) );
 	}
 
@@ -383,7 +383,7 @@ class MainWP_Manage_Sites_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function update_child_site_value() {
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( isset( $_POST['site_id'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['site_id'] ) );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
@@ -404,8 +404,7 @@ class MainWP_Manage_Sites_Handler {
 				}
 			}
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 		die( wp_json_encode( array( 'error' => 'NO_SIDE_ID' ) ) );
 	}
-
 }

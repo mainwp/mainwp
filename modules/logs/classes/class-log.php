@@ -112,8 +112,8 @@ class Log {
 		// Prevent any meta with null values from being logged.
 		$logs_meta = array_filter(
 			$args,
-			function ( $var ) {
-				return ! is_null( $var );
+			function ( $e ) {
+				return ! is_null( $e );
 			}
 		);
 

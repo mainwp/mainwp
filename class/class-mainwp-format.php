@@ -148,11 +148,11 @@ class MainWP_Format {
 	public static function get_site_updates_items( $what, $sites_ids = false ) {
 
 		$items = array();
-		if ( 'plugin' == $what ) {
+		if ( 'plugin' === $what ) {
 			$items = self::get_update_plugins_items();
-		} elseif ( 'theme' == $what ) {
+		} elseif ( 'theme' === $what ) {
 			$items = self::get_update_themes_items();
-		} elseif ( 'wpcore' == $what ) {
+		} elseif ( 'wpcore' === $what ) {
 			$items = self::get_update_wp_items();
 		}
 
@@ -540,5 +540,4 @@ EOT;
 		$mail_send = apply_filters( 'mainwp_format_email', $mail_send );
 		return $mail_send['header'] . $mail_send['body'] . $mail_send['footer'];
 	}
-
 }

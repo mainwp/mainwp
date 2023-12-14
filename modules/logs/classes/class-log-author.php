@@ -76,7 +76,7 @@ class Log_Author {
 			default:
 				if ( ! empty( $this->user ) && 0 !== $this->user->ID ) {
 					if ( is_null( $this->user->$name ) ) {
-						throw new \Exception( "Unrecognized magic '$name'" );
+						throw new \Exception( "Unrecognized magic '$name'" ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 					}
 					return $this->user->$name;
 				}
@@ -100,27 +100,25 @@ class Log_Author {
 	 * @return string
 	 */
 	public function get_display_name() {
-		if ( 0 === $this->id ) {
+		if ( empty( $this->id ) ) {
 			if ( isset( $this->meta['system_user_name'] ) ) {
 				return esc_html( $this->meta['system_user_name'] );
 			} elseif ( 'wp_cli' === $this->get_current_agent() ) {
 				return 'WP-CLI'; // No translation needed.
 			}
 			return esc_html__( 'N/A', 'mainwp' );
-		} else {
-			if ( $this->is_deleted() ) {
-				if ( ! empty( $this->meta['display_name'] ) ) {
-					return $this->meta['display_name'];
-				} elseif ( ! empty( $this->meta['user_login'] ) ) {
-					return $this->meta['user_login'];
-				} else {
-					return esc_html__( 'N/A', 'mainwp' );
-				}
-			} elseif ( ! empty( $this->user->display_name ) ) {
-				return $this->user->display_name;
+		} elseif ( $this->is_deleted() ) {
+			if ( ! empty( $this->meta['display_name'] ) ) {
+				return $this->meta['display_name'];
+			} elseif ( ! empty( $this->meta['user_login'] ) ) {
+				return $this->meta['user_login'];
 			} else {
-				return $this->user->user_login;
+				return esc_html__( 'N/A', 'mainwp' );
 			}
+		} elseif ( ! empty( $this->user->display_name ) ) {
+			return $this->user->display_name;
+		} else {
+			return $this->user->user_login;
 		}
 	}
 
@@ -134,63 +132,9 @@ class Log_Author {
 
 		if ( ! empty( $this->meta['agent'] ) ) {
 			$agent = $this->meta['agent'];
-		} elseif ( ! empty( $this->meta['is_wp_cli'] ) ) {
-			$agent = 'wp_cli'; // legacy.
 		}
 
 		return $agent;
-	}
-
-	/**
-	 * Return a Gravatar image as an HTML element.
-	 *
-	 * This function will not return an avatar if "Show Avatars" is unchecked in Settings > Discussion.
-	 *
-	 * @param int $size (optional) Size of Gravatar to return (in pixels), max is 512, default is 80.
-	 *
-	 * @return string|bool  An img HTML element, or false if avatars are disabled
-	 */
-	public function get_avatar_img( $size = 80 ) {
-		if ( ! get_option( 'show_avatars' ) ) {
-			return false;
-		}
-
-		if ( 0 === $this->id ) {
-			$url    = Log_Manager::instance()->locations['url'] . 'ui/icons/wp-cli.png';
-			$avatar = sprintf( '<img alt="%1$s" src="%2$s" class="avatar avatar-%3$s photo" height="%3$s" width="%3$s">', esc_attr( $this->get_display_name() ), esc_url( $url ), esc_attr( $size ) );
-		} else {
-			if ( $this->is_deleted() && isset( $this->meta['user_email'] ) ) {
-				$email  = $this->meta['user_email'];
-				$avatar = get_avatar( $email, $size );
-			} else {
-				$avatar = get_avatar( $this->id, $size );
-			}
-		}
-
-		return $avatar;
-	}
-
-	/**
-	 * Return the URL of a Gravatar image.
-	 *
-	 * @param int $size (optional)  Size of Gravatar to return (in pixels), max is 512, default is 80.
-	 *
-	 * @return string|bool  Gravatar image URL, or false on failure
-	 */
-	public function get_avatar_src( $size = 80 ) {
-		$img = $this->get_avatar_img( $size );
-
-		if ( ! $img ) {
-			return false;
-		}
-
-		if ( 1 === preg_match( '/src=([\'"])(.*?)\1/', $img, $matches ) ) {
-			$src = html_entity_decode( $matches[2] );
-		} else {
-			return false;
-		}
-
-		return $src;
 	}
 
 	/**
@@ -215,7 +159,7 @@ class Log_Author {
 			$user_role = $this->meta['user_role_label'];
 		} elseif ( ! empty( $this->user->roles ) ) {
 			$roles = array_map(
-				function( $role ) use ( $wp_roles ) {
+				function ( $role ) use ( $wp_roles ) {
 					return $wp_roles->role_names[ $role ];
 				},
 				$this->user->roles
@@ -236,7 +180,7 @@ class Log_Author {
 	 * @return bool
 	 */
 	public function is_deleted() {
-		return ( 0 !== $this->id && 0 === $this->user->ID );
+		return ( 0 !== $this->id && empty( $this->user->ID ) );
 	}
 
 	/**

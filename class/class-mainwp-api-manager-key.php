@@ -63,7 +63,7 @@ class MainWP_Api_Manager_Key {
 	 * Validate SSL certificate.
 	 */
 	public function __construct() {
-		self::$apisslverify = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;
+		self::$apisslverify = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( 1 === (int) get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
 	}
 
 	/**
@@ -94,7 +94,7 @@ class MainWP_Api_Manager_Key {
 			)
 		);
 
-		if ( is_wp_error( $request ) || 200 != wp_remote_retrieve_response_code( $request ) ) {
+		if ( is_wp_error( $request ) || 200 !== wp_remote_retrieve_response_code( $request ) ) {
 
 			return false;
 		}
@@ -132,7 +132,7 @@ class MainWP_Api_Manager_Key {
 			)
 		);
 
-		if ( is_wp_error( $request ) || 200 != wp_remote_retrieve_response_code( $request ) ) {
+		if ( is_wp_error( $request ) || 200 !== wp_remote_retrieve_response_code( $request ) ) {
 			// Request failed.
 			return false;
 		}
@@ -170,7 +170,7 @@ class MainWP_Api_Manager_Key {
 			)
 		);
 
-		if ( is_wp_error( $request ) || 200 != wp_remote_retrieve_response_code( $request ) ) {
+		if ( is_wp_error( $request ) || 200 !== wp_remote_retrieve_response_code( $request ) ) {
 			// Request failed.
 			return false;
 		}
@@ -221,19 +221,19 @@ class MainWP_Api_Manager_Key {
 		MainWP_Logger::instance()->debug( 'verify_api_key:: RESULT :: ' . MainWP_Utility::value_to_string( $log, true ) );
 
 		if ( is_wp_error( $request ) ) {
-			if ( 1 == self::$apisslverify ) {
+			if ( 1 === (int) self::$apisslverify ) {
 				MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', 0 );
 
 				return array( 'retry_action' => 1 );
 			}
 
-			throw new \Exception( $request->get_error_message() );
+			throw new \Exception( $request->get_error_message() ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 
 		$code = wp_remote_retrieve_response_code( $request );
-		if ( 200 != $code ) {
+		if ( 200 !== $code ) {
 			$error = sprintf( esc_html__( 'Login verification could not be completed. Please contact %1$sMainWP Support%2$s so we can assist.', 'mainwp' ), '<a href="https://managers.mainwp.com/" target="_blank">', '</a>' );
-			throw new \Exception( $error );
+			throw new \Exception( $error ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Escaped.
 		}
 
 		$response = wp_remote_retrieve_body( $request );
@@ -271,7 +271,7 @@ class MainWP_Api_Manager_Key {
 
 		MainWP_Logger::instance()->debug( 'Get purchased softwares: ' . MainWP_Utility::value_to_string( $request ) );
 
-		if ( is_wp_error( $request ) || 200 != wp_remote_retrieve_response_code( $request ) ) {
+		if ( is_wp_error( $request ) || 200 !== wp_remote_retrieve_response_code( $request ) ) {
 			// Request failed.
 			return false;
 		}
@@ -305,7 +305,7 @@ class MainWP_Api_Manager_Key {
 			)
 		);
 
-		if ( is_wp_error( $request ) || 200 != wp_remote_retrieve_response_code( $request ) ) {
+		if ( is_wp_error( $request ) || 200 !== wp_remote_retrieve_response_code( $request ) ) {
 			// Request failed.
 			return false;
 		}
@@ -335,7 +335,6 @@ class MainWP_Api_Manager_Key {
 		$decryp_api_key = MainWP_Keys_Manager::instance()->get_keys_value( 'mainwp_extensions_master_api_key' );
 		return $decryp_api_key;
 	}
-
 }
 
 // Class is instantiated as an object by other classes on-demand.

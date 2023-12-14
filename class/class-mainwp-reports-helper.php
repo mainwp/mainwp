@@ -35,7 +35,7 @@ class MainWP_Reports_Helper {
 	 * @return self $instance
 	 */
 	public static function get_instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -58,10 +58,8 @@ class MainWP_Reports_Helper {
 	 * @param string $group Group tokens.
 	 * @param array  $types Types of tokens.
 	 * @param int    $site_id Site ID.
-	 * @param int    $date_from Date from - option.
-	 * @param int    $date_to Date to - option.
 	 */
-	public function hook_get_reports_group_values( $values, $group, $types, $site_id, $date_from = false, $date_to = false ) {
+	public function hook_get_reports_group_values( $values, $group, $types, $site_id ) {
 		if ( ! is_array( $values ) ) {
 			$values = array();
 		}
@@ -98,21 +96,21 @@ class MainWP_Reports_Helper {
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 
 		$abandoned_plugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' );
-		$abandoned_plugins = ( '' != $abandoned_plugins ) ? json_decode( $abandoned_plugins, true ) : array();
+		$abandoned_plugins = ! empty( $abandoned_plugins ) ? json_decode( $abandoned_plugins, true ) : array();
 
 		if ( ! is_array( $abandoned_plugins ) ) {
 			$abandoned_plugins = array();
 		}
 
 		$abandoned_themes = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' );
-		$abandoned_themes = ( '' != $abandoned_themes ) ? json_decode( $abandoned_themes, true ) : array();
+		$abandoned_themes = ! empty( $abandoned_themes ) ? json_decode( $abandoned_themes, true ) : array();
 
 		if ( ! is_array( $abandoned_themes ) ) {
 			$abandoned_themes = array();
 		}
 
 		$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-		$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+		$wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
 		$plugin_upgrades      = json_decode( $website->plugin_upgrades, true );
 		$theme_upgrades       = json_decode( $website->theme_upgrades, true );

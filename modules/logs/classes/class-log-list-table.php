@@ -106,8 +106,9 @@ class Log_List_Table {
 				break;
 
 			case 'user_id':
-				$user = new Log_Author( (int) $record->user_id, (array) $record->user_meta );
-				$out  = $user->get_display_name();
+				$user    = new Log_Author( (int) $record->user_id, (array) $record->user_meta );
+				$out     = $user->get_display_name() . sprintf( '<br /><small>%s</small>', $user->get_agent_label( $user->get_agent() ) );
+				$escaped = true;
 				break;
 
 			case 'context':
@@ -339,7 +340,7 @@ class Log_List_Table {
 		$req_orderby = '';
 		$req_order   = null;
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( isset( $_REQUEST['order'] ) ) {
 			$columns = isset( $_REQUEST['columns'] ) ? wp_unslash( $_REQUEST['columns'] ) : array();
 			$ord_col = isset( $_REQUEST['order'][0]['column'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['order'][0]['column'] ) ) : '';
@@ -351,16 +352,16 @@ class Log_List_Table {
 
 		// phpcs:enable
 
-		 // phpcs:disable WordPress.Security.NonceVerification
+		 // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$perPage = isset( $_REQUEST['length'] ) ? intval( $_REQUEST['length'] ) : 25;
-		if ( -1 == $perPage ) {
+		if ( -1 === (int) $perPage ) {
 			$perPage = 9999;
 		}
 		$start = isset( $_REQUEST['start'] ) ? intval( $_REQUEST['start'] ) : 0;
 
 		$search = isset( $_REQUEST['search']['value'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['search']['value'] ) ) : '';
 
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 
 		$args = array(
 			'order'   => ( 'asc' === $req_order ) ? 'asc' : 'desc',
@@ -414,7 +415,7 @@ class Log_List_Table {
 		</table>
 		<?php
 		$count = $this->get_total_found_rows();
-		if ( 0 == $count ) {
+		if ( empty( $count ) ) {
 			?>
 		<div id="sites-table-count-empty" style="display: none;">
 			<?php $this->no_items(); ?>
@@ -549,16 +550,14 @@ class Log_List_Table {
 	 * @return int Column Count.
 	 */
 	public function get_column_count() {
-		list ( $columns ) = $this->get_column_info();
+		list( $columns ) = $this->get_column_info();
 		return count( $columns );
 	}
 
 	/**
 	 * Echo the column headers.
-	 *
-	 * @param bool $top true|false.
 	 */
-	public function print_column_headers( $top = true ) {
+	public function print_column_headers() {
 		list( $columns, $sortable, $primary ) = $this->get_column_info();
 
 		$def_columns                 = $this->get_default_columns();
@@ -682,5 +681,4 @@ class Log_List_Table {
 			'rowsInfo'        => $info_rows,
 		);
 	}
-
 }

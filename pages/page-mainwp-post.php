@@ -158,7 +158,7 @@ class MainWP_Post {
 	 */
 	public static function on_load_add_edit() {
 		global $_mainwp_menu_active_slugs;
-		if ( isset( $_GET['page'] ) && 'PostBulkAdd' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['page'] ) && 'PostBulkAdd' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 			/**
 			 * MainWP default post to edit.
@@ -171,7 +171,7 @@ class MainWP_Post {
 			$_mainwp_default_post_to_edit = get_default_post_to_edit( $post_type, true );
 			$post_id                      = $_mainwp_default_post_to_edit ? $_mainwp_default_post_to_edit->ID : 0;
 		} else {
-			$post_id                                   = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+			$post_id                                   = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$_mainwp_menu_active_slugs['PostBulkEdit'] = 'PostBulkManage'; // to fix hidden second menu level.
 		}
 
@@ -285,7 +285,7 @@ class MainWP_Post {
 	 * @return (mixed) $hidden User option value on success, false on failure.
 	 */
 	public static function get_hidden_columns( $hidden, $screen ) {
-		if ( $screen && 'mainwp_page_PostBulkManage' == $screen->id ) {
+		if ( $screen && 'mainwp_page_PostBulkManage' === $screen->id ) {
 			$hidden = get_user_option( 'manage' . strtolower( $screen->id ) . 'columnshidden' );
 		}
 		if ( ! is_array( $hidden ) ) {
@@ -300,8 +300,8 @@ class MainWP_Post {
 	 * Render screen options modal bottom.
 	 */
 	public static function hook_screen_options_modal_bottom() {
-		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
-		if ( 'PostBulkManage' == $page ) {
+		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( 'PostBulkManage' === $page ) {
 
 			$show_columns = get_user_option( 'mainwp_manageposts_show_columns' );
 
@@ -487,7 +487,7 @@ class MainWP_Post {
 				$item           = array();
 				$item['title']  = $subPage['title'];
 				$item['href']   = $tab_link;
-				$item['active'] = ( $subPage['slug'] == $shownPage ) ? true : false;
+				$item['active'] = ( $subPage['slug'] === $shownPage ) ? true : false;
 				$renderItems[]  = $item;
 
 			}
@@ -499,10 +499,8 @@ class MainWP_Post {
 	 * Method render_footer()
 	 *
 	 * Render page footer.
-	 *
-	 * @param string $shownPage Current page slug.
 	 */
-	public static function render_footer( $shownPage ) {
+	public static function render_footer() {
 		echo '</div>';
 	}
 
@@ -527,7 +525,7 @@ class MainWP_Post {
 		$selected_groups  = array();
 		$selected_clients = array();
 
-		if ( null != $cachedSearch ) {
+		if ( null !== $cachedSearch ) {
 			if ( is_array( $cachedSearch['sites'] ) ) {
 				$selected_sites = $cachedSearch['sites'];
 			} elseif ( is_array( $cachedSearch['groups'] ) ) {
@@ -599,7 +597,7 @@ class MainWP_Post {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-posts-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-posts-info-message"></i>
-							<?php echo sprintf( esc_html__( 'Manage existing posts on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">', '</a>' ); ?>
+							<?php printf( esc_html__( 'Manage existing posts on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<?php self::render_table( true ); ?>
@@ -747,13 +745,13 @@ class MainWP_Post {
 
 		<?php
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( isset( $_REQUEST['siteid'] ) && isset( $_REQUEST['postid'] ) ) {
 			echo '<script>jQuery(document).ready(function() { mainwp_show_post(  ' . intval( $_REQUEST['siteid'] ) . ', ' . intval( $_REQUEST['postid'] ) . ', undefined ) } );</script>';
 		} elseif ( isset( $_REQUEST['siteid'] ) && isset( $_REQUEST['userid'] ) ) {
 			echo '<script>jQuery(document).ready(function() { mainwp_show_post( ' . intval( $_REQUEST['siteid'] ) . ', undefined, ' . intval( $_REQUEST['userid'] ) . ' ) } );</script>';
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 
 		// to fix issue js code display.
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Post' );
@@ -793,13 +791,13 @@ class MainWP_Post {
 		<div class="ui mini form">
 			<div class="field">
 				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_post_search_by_keyword" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>"/>
+					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_post_search_by_keyword" class="text" value="<?php echo ( null !== $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>"/>
 				</div>
 			</div>
 			<div class="field">
 				<?php
 				$searchon = 'title';
-				if ( null != $cachedSearch ) {
+				if ( null !== $cachedSearch ) {
 					$searchon = $cachedSearch['search_on'];
 				}
 				?>
@@ -817,7 +815,7 @@ class MainWP_Post {
 						<div class="ui calendar mainwp_datepicker" >
 							<div class="ui input left icon">
 								<i class="calendar icon"></i>
-								<input type="text" autocomplete="off" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstart" value="<?php echo null != $cachedSearch ? esc_attr( $cachedSearch['dtsstart'] ) : ''; ?>"/>
+								<input type="text" autocomplete="off" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstart" value="<?php echo null !== $cachedSearch ? esc_attr( $cachedSearch['dtsstart'] ) : ''; ?>"/>
 							</div>
 						</div>
 					</div>
@@ -825,7 +823,7 @@ class MainWP_Post {
 						<div class="ui calendar mainwp_datepicker" >
 							<div class="ui input left icon">
 								<i class="calendar icon"></i>
-								<input type="text" autocomplete="off" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstop" value="<?php echo null != $cachedSearch ? esc_attr( $cachedSearch['dtsstop'] ) : ''; ?>"/>
+								<input type="text" autocomplete="off" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstop" value="<?php echo null !== $cachedSearch ? esc_attr( $cachedSearch['dtsstop'] ) : ''; ?>"/>
 							</div>
 						</div>
 					</div>
@@ -1077,7 +1075,7 @@ class MainWP_Post {
 			foreach ( $sites as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$website = MainWP_DB::instance()->get_website_by_id( $v );
-					if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+					if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
 						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 							$website,
 							$data_fields
@@ -1091,7 +1089,7 @@ class MainWP_Post {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 					while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+						if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 							continue;
 						}
 						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
@@ -1112,7 +1110,7 @@ class MainWP_Post {
 			);
 
 			foreach ( $websites as $website ) {
-				if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+				if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 					continue;
 				}
 				$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
@@ -1335,7 +1333,7 @@ class MainWP_Post {
 
 					<td class="date column-date" data-order="<?php echo esc_attr( $raw_dts ); ?>"><abbr raw_value="<?php echo esc_attr( $raw_dts ); ?>" title="<?php echo esc_attr( $post['dts'] ); ?>"><?php echo esc_html( $post['dts'] ); ?></abbr></td>
 
-					<td class="status column-status <?php echo 'trash' == $post['status'] ? 'post-trash' : ''; ?>"><?php echo esc_html( self::get_status( $post['status'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+					<td class="status column-status <?php echo 'trash' === $post['status'] ? 'post-trash' : ''; ?>"><?php echo esc_html( self::get_status( $post['status'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 
 					<?php
 					if ( MainWP_Utility::enabled_wp_seo() ) :
@@ -1375,7 +1373,7 @@ class MainWP_Post {
 
 								<?php if ( 'publish' === $post['status'] ) : ?>
 									<a class="item post_submitunpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
-									<a class="item mainwp-may-hide-referrer" href="<?php echo esc_html( $website->url ) . ( substr( $website->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr( $post['id'] ); ?>" target="_blank" ><?php esc_html_e( 'View', 'mainwp' ); ?></a>
+									<a class="item mainwp-may-hide-referrer" href="<?php echo esc_html( $website->url ) . ( substr( $website->url, - 1 ) !== '/' ? '/' : '' ) . '?p=' . esc_attr( $post['id'] ); ?>" target="_blank" ><?php esc_html_e( 'View', 'mainwp' ); ?></a>
 								<?php endif; ?>
 
 								<?php if ( 'trash' === $post['status'] ) : ?>
@@ -1416,7 +1414,7 @@ class MainWP_Post {
 				<?php
 				$newOutput   = ob_get_clean();
 				$table_rows .= $newOutput;
-				$output->posts ++;
+				++$output->posts;
 			}
 			$output->table_rows .= $table_rows;
 			unset( $posts );
@@ -1459,19 +1457,19 @@ class MainWP_Post {
 		}
 
 		$r = '';
-		++ $count;
+		++$count;
 
 		if ( is_serialized( $entry['meta_value'] ) ) {
 			if ( is_serialized_string( $entry['meta_value'] ) ) {
-				$entry['meta_value'] = MainWP_System_Utility::maybe_unserialyze( $entry['meta_value'] );
+				$entry['meta_value'] = MainWP_System_Utility::maybe_unserialyze( $entry['meta_value'] ); //phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- ok.
 			} else {
 				--$count;
 				return '';
 			}
 		}
 
-		$entry['meta_key']   = esc_attr( $entry['meta_key'] );
-		$entry['meta_value'] = esc_textarea( $entry['meta_value'] );
+		$entry['meta_key']   = esc_attr( $entry['meta_key'] ); //phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- ok.
+		$entry['meta_value'] = esc_textarea( $entry['meta_value'] ); //phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- ok.
 		$entry['meta_id']    = (int) $entry['meta_id'];
 
 		$delete_nonce = wp_create_nonce( 'delete-meta_' . $entry['meta_id'] );
@@ -1734,7 +1732,7 @@ class MainWP_Post {
 	 *
 	 * @return string Hidden time stamps html.
 	 */
-	public static function touch_time( $post, $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) {
+	public static function touch_time( $post, $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) { //phpcs:ignore -- complex method.
 
 		/**
 		 * WordPress Locale.
@@ -1746,7 +1744,7 @@ class MainWP_Post {
 		$_post = get_post( $post );
 
 		if ( $for_post ) {
-			$edit = ! ( in_array( $_post->post_status, array( 'draft', 'pending' ) ) && ( ! $_post->post_date_gmt || '0000-00-00 00:00:00' == $post->post_date_gmt ) );
+			$edit = ! ( in_array( $_post->post_status, array( 'draft', 'pending' ) ) && ( ! $_post->post_date_gmt || '0000-00-00 00:00:00' === $post->post_date_gmt ) );
 		}
 
 		$tab_index_attribute = '';
@@ -1819,11 +1817,11 @@ class MainWP_Post {
 	 *
 	 * @param mixed $screen Current page tab.
 	 * @param mixed $context Context.
-	 * @param mixed $object Object.
+	 * @param mixed $input_obj Object.
 	 *
 	 * @return string Metabox html
 	 */
-	public static function do_meta_boxes( $screen, $context, $object ) { // phpcs:ignore -- current complexity required to achieve desired results. Purll Request solutions appreciated.
+	public static function do_meta_boxes( $screen, $context, $input_obj ) { // phpcs:ignore -- current complexity required to achieve desired results. Purll Request solutions appreciated.
 
 		/**
 		 * WordPress Meta Boxes array.
@@ -1870,7 +1868,7 @@ class MainWP_Post {
 			foreach ( array( 'high', 'sorted', 'core', 'default', 'low' ) as $priority ) {
 				if ( isset( $wp_meta_boxes[ $page ][ $context ][ $priority ] ) ) {
 					foreach ( (array) $wp_meta_boxes[ $page ][ $context ][ $priority ] as $box ) {
-						if ( false == $box || ! $box['title'] ) {
+						if ( false === $box || ! $box['title'] ) {
 							continue;
 						}
 
@@ -1896,7 +1894,7 @@ class MainWP_Post {
 							}
 						}
 
-						$i++;
+						++$i;
 						echo '<div id="' . esc_attr( $box['id'] ) . '" class="postbox" >' . "\n";
 						if ( 'dashboard_browser_nag' !== $box['id'] ) {
 							$widget_title = $box['title'];
@@ -1914,7 +1912,7 @@ class MainWP_Post {
 						echo "<h2 class='hndle'><span>{" . esc_html( $box['title'] ) . "}</span></h2>\n";
 						echo '<div class="inside">' . "\n";
 
-						 // phpcs:disable WordPress.Security.NonceVerification
+						 // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 						if ( defined( 'WP_DEBUG' ) && WP_DEBUG && ! $block_compatible && 'edit' === $screen->parent_base && ! $screen->is_block_editor() && ! isset( $_GET['meta-box-loader'] ) ) {
 							$plugin = _get_plugin_from_callback( $box['callback'] );
 							if ( $plugin ) {
@@ -1929,7 +1927,7 @@ class MainWP_Post {
 								<?php
 							}
 						}
-						 // phpcs:enable WordPress.Security.NonceVerification
+						 // phpcs:enable
 						call_user_func( $box['callback'], $object, $box );
 						echo "</div>\n";
 						echo "</div>\n";
@@ -1955,7 +1953,7 @@ class MainWP_Post {
 	 * @uses \MainWP\Dashboard\MainWP_Meta_Boxes::add_tags()
 	 * @uses \MainWP\Dashboard\MainWP_UI
 	 */
-	public static function render_bulkpost( $post_id, $input_type ) {
+	public static function render_bulkpost( $post_id, $input_type ) { //phpcs:ignore -- complex method.
 		$post = get_post( $post_id );
 
 		if ( $post ) {
@@ -1990,25 +1988,23 @@ class MainWP_Post {
 
 		$referer = wp_get_referer();
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( isset( $_GET['boilerplate'] ) ) {
 			if ( 'auto-draft' === $post->post_status ) {
 				$note_title = ( 'bulkpost' === $post_type ) ? esc_html__( 'Create New Boilerplate Post', 'mainwp' ) : esc_html__( 'Create New Boilerplate Page', 'mainwp' );
 			} else {
 				$note_title = ( 'bulkpost' === $post_type ) ? esc_html__( 'Edit Boilerplate Post', 'mainwp' ) : esc_html__( 'Edit Boilerplate Page', 'mainwp' );
 			}
-		} else {
-			if ( 'auto-draft' === $post->post_status ) {
+		} elseif ( 'auto-draft' === $post->post_status ) {
 				$note_title = ( 'bulkpost' === $post_type ) ? esc_html__( 'Create New Bulk Post', 'mainwp' ) : esc_html__( 'Create New Bulk Page', 'mainwp' );
-			} else {
-				$note_title = ( 'bulkpost' === $post_type ) ? esc_html__( 'Edit Bulk Post', 'mainwp' ) : esc_html__( 'Edit Bulk Page', 'mainwp' );
-			}
+		} else {
+			$note_title = ( 'bulkpost' === $post_type ) ? esc_html__( 'Edit Bulk Post', 'mainwp' ) : esc_html__( 'Edit Bulk Page', 'mainwp' );
 		}
 
 		$note_title = apply_filters( 'mainwp_bulkpost_edit_title', $note_title, $post );
 
 		$message = '';
-		if ( isset( $_GET['message'] ) && 1 == $_GET['message'] ) {
+		if ( isset( $_GET['message'] ) && 1 === (int) $_GET['message'] ) {
 			if ( 'bulkpost' === $post_type ) {
 				$message = esc_html__( 'Post updated.', 'mainwp' );
 			} else {
@@ -2016,7 +2012,7 @@ class MainWP_Post {
 			}
 		}
 
-		 // phpcs:enable WordPress.Security.NonceVerification
+		 // phpcs:enable
 		?>
 		<div class="ui alt segment" id="mainwp-add-new-bulkpost">
 			<form name="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" id="post" class="ui form">
@@ -2043,7 +2039,7 @@ class MainWP_Post {
 							<div class="ui yellow message"><?php echo esc_html( $message ); ?></div>
 						<?php
 					}
-					// phpcs:disable WordPress.Security.NonceVerification 
+					// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized 
 					?>
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_boilerplate_info_notice' ) ) : ?>
 						<?php if ( isset( $_GET['boilerplate'] ) ) : ?>
@@ -2061,14 +2057,14 @@ class MainWP_Post {
 						<div class="ui message info">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-create-new-bulkpost-info-message"></i>
 							<?php if ( 'bulkpost' === $post_type ) : ?>
-								<?php echo sprintf( esc_html__( 'Create a new bulk post. Scheduling posts on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-post/" target="_blank">', '</a>' ); ?>
+								<?php printf( esc_html__( 'Create a new bulk post. Scheduling posts on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-post/" target="_blank">', '</a>' ); ?>
 							<?php else : ?>
-								<?php echo sprintf( esc_html__( 'Create a new bulk page. Scheduling pages on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-page/" target="_blank">', '</a>' ); ?>
+								<?php printf( esc_html__( 'Create a new bulk page. Scheduling pages on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-page/" target="_blank">', '</a>' ); ?>
 							<?php endif; ?>
 						</div>
 						<?php endif; ?>
 					<?php endif; ?>
-					<?php // phpcs:enable WordPress.Security.NonceVerification ?>
+					<?php // phpcs:enable ?>
 
 					<h3 class="header" id="bulkpost-title"><?php echo esc_html( $note_title ); ?></h3>
 
@@ -2468,12 +2464,12 @@ class MainWP_Post {
 				<div class="field">
 					<label><?php esc_html_e( 'Publish', 'mainwp' ); ?></label>
 					<select class="ui dropdown" name="post_timestamp" id="post_timestamp">
-						<option value="immediately" <?php echo ( 'future' == $post->post_status ) ? '' : 'selected="selected"'; ?>><?php esc_html_e( 'Immediately', 'mainwp' ); ?></option>
-						<option value="schedule" <?php echo ( 'future' == $post->post_status ) ? 'selected="selected"' : ''; ?>><?php esc_html_e( 'Schedule', 'mainwp' ); ?></option>
+						<option value="immediately" <?php echo ( 'future' === $post->post_status ) ? '' : 'selected="selected"'; ?>><?php esc_html_e( 'Immediately', 'mainwp' ); ?></option>
+						<option value="schedule" <?php echo ( 'future' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php esc_html_e( 'Schedule', 'mainwp' ); ?></option>
 					</select>
 				</div>
 
-				<div class="field" id="post_timestamp_value-field" <?php echo ( 'future' == $post->post_status ) ? '' : 'style="display:none"'; ?>>
+				<div class="field" id="post_timestamp_value-field" <?php echo ( 'future' === $post->post_status ) ? '' : 'style="display:none"'; ?>>
 					<div class="ui calendar mainwp_datepicker" id="schedule_post_datetime" >
 						<div class="ui input left icon">
 							<i class="calendar icon"></i>
@@ -2527,9 +2523,9 @@ class MainWP_Post {
 			mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
 			return;
 		}
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0;
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 		self::render_addedit( $post_id, 'BulkEdit' );
 	}
 
@@ -2574,7 +2570,7 @@ class MainWP_Post {
 	 * Attatch MainWP help content.
 	 */
 	public static function mainwp_help_content() {
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( isset( $_GET['page'] ) && ( 'PostBulkManage' === $_GET['page'] || 'PostBulkAdd' === $_GET['page'] ) ) {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing posts, please review following help documents', 'mainwp' ); ?></p>
@@ -2602,7 +2598,6 @@ class MainWP_Post {
 			</div>
 			<?php
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 	}
-
 }

@@ -234,7 +234,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 			update_option( 'mainwp_last_synced_all_sites', time() );
 		}
 
-		if ( ( count( $sites ) == 0 ) && ( ! isset( $assoc_args['all'] ) ) ) {
+		if ( 0 === count( $sites ) && ( ! isset( $assoc_args['all'] ) ) ) {
 			\WP_CLI::error( 'Please specify one or more child sites, or use --all.' );
 		}
 		MainWP_WP_CLI_Handle::handle_sync_sites( $args, $assoc_args );
@@ -277,7 +277,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 			}
 		}
 
-		if ( count( $sites ) == 0 ) {
+		if ( 0 === count( $sites ) ) {
 			\WP_CLI::error( 'Please specify one or more child sites.' );
 		}
 
@@ -295,11 +295,11 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 					\WP_CLI::success( '  Reconnected successfully' );
 				} else {
 					\WP_CLI::warning( '  Reconnect failed' );
-					$warnings++;
+					++$warnings;
 				}
 			} catch ( \Exception $e ) {
 				\WP_CLI::error( '  Reconnect failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
-				$errors++;
+				++$errors;
 			}
 		}
 		MainWP_DB::free_result( $websites );
@@ -445,12 +445,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 
 				$i = 0;
 				foreach ( $website_to_upgrade['plugins'] as $plugin_to_upgrade ) {
-					if ( 0 == $i ) {
+					if ( 0 === $i ) {
 						\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', $website_to_upgrade['id'], $website_to_upgrade['name'], $plugin_to_upgrade['name'], $plugin_to_upgrade['version'], $plugin_to_upgrade['new_version'] ) );
 					} else {
 						\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', '', '', $plugin_to_upgrade['name'], $plugin_to_upgrade['version'], $plugin_to_upgrade['new_version'] ) );
 					}
-					$i++;
+					++$i;
 				}
 			}
 
@@ -517,12 +517,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 
 				$i = 0;
 				foreach ( $website_item['plugins'] as $plugin_item ) {
-					if ( 0 == $i ) {
+					if ( 0 === $i ) {
 						\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's |', $website_item['id'], $website_item['name'], $plugin_item['name'], $plugin_item['version'] ) );
 					} else {
 						\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's |', '', '', $plugin_item['name'], $plugin_item['version'] ) );
 					}
-					$i++;
+					++$i;
 				}
 			}
 
@@ -563,7 +563,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 						$tmp[] = $key;
 					}
 
-					if ( count( $tmp ) == 0 ) {
+					if ( 0 === count( $tmp ) ) {
 						\WP_CLI::line( 'No available plugin updates for ' . $website->name );
 
 						continue;
@@ -576,7 +576,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 						\WP_CLI::success( 'Updates completed' );
 					} catch ( \Exception $e ) {
 						\WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
-						if ( $e->getMesage() == 'WPERROR' ) {
+						if ( $e->getMesage() === 'WPERROR' ) {
 							\WP_CLI::debug( 'Error: ' . MainWP_Utility::value_to_string( $e->get_message_extra(), 1 ) );
 						}
 					}
@@ -716,12 +716,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 
 				$i = 0;
 				foreach ( $website_to_upgrade['themes'] as $theme_to_upgrade ) {
-					if ( 0 == $i ) {
+					if ( 0 === $i ) {
 						\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', $website_to_upgrade['id'], $website_to_upgrade['name'], $theme_to_upgrade['name'], $theme_to_upgrade['version'], $theme_to_upgrade['new_version'] ) );
 					} else {
 						\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', '', '', $theme_to_upgrade['name'], $theme_to_upgrade['version'], $theme_to_upgrade['new_version'] ) );
 					}
-					$i++;
+					++$i;
 				}
 			}
 
@@ -789,12 +789,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 
 				$i = 0;
 				foreach ( $website_item['themes'] as $theme_item ) {
-					if ( 0 == $i ) {
+					if ( 0 === $i ) {
 						\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $activeLength . 's | %-' . $oldVersionLength . 's |', $website_item['id'], $website_item['name'], $theme_item['name'], $theme_item['active'], $theme_item['version'] ) );
 					} else {
 						\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $activeLength . 's | %-' . $oldVersionLength . 's |', '', '', $theme_item['name'], $theme_item['active'], $theme_item['version'] ) );
 					}
-					$i++;
+					++$i;
 				}
 			}
 
@@ -835,7 +835,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 						$tmp[] = $key;
 					}
 
-					if ( count( $tmp ) == 0 ) {
+					if ( 0 === count( $tmp ) ) {
 						\WP_CLI::line( 'No available theme updates for ' . $website->name );
 
 						continue;
@@ -848,7 +848,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 						\WP_CLI::success( 'Updates completed' );
 					} catch ( \Exception $e ) {
 						\WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
-						if ( $e->getMesage() == 'WPERROR' ) {
+						if ( $e->getMesage() === 'WPERROR' ) {
 							\WP_CLI::debug( 'Error: ' . MainWP_Utility::value_to_string( $e->get_message_extra(), 1 ) );
 						}
 					}
@@ -856,5 +856,4 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 			}
 		}
 	}
-
 }

@@ -174,10 +174,10 @@ class MainWP_Monitoring {
 									}
 									?>
 									<li>
-										<div class="ui checkbox <?php echo ( 'site_preview' == $name ) ? 'site_preview not-auto-init' : ''; ?>">
+										<div class="ui checkbox <?php echo ( 'site_preview' === $name ) ? 'site_preview not-auto-init' : ''; ?>">
 											<input type="checkbox"
 											<?php
-											$show_col = ! isset( $show_cols[ $name ] ) || ( 1 == $show_cols[ $name ] );
+											$show_col = ! isset( $show_cols[ $name ] ) || ( 1 === (int) $show_cols[ $name ] );
 											if ( $show_col ) {
 												echo 'checked="checked"';
 											}
@@ -265,7 +265,7 @@ class MainWP_Monitoring {
 			return;
 		}
 
-		$optimize_for_sites_table = ( 1 == get_option( 'mainwp_optimize' ) );
+		$optimize_for_sites_table = ( 1 === (int) get_option( 'mainwp_optimize' ) );
 
 		if ( ! $optimize_for_sites_table ) {
 			self::$sitesTable->prepare_items( false );
@@ -305,5 +305,4 @@ class MainWP_Monitoring {
 		self::$sitesTable->clear_items();
 		wp_send_json( $output );
 	}
-
 }

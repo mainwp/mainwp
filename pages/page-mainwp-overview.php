@@ -62,7 +62,7 @@ class MainWP_Overview {
 	 * @uses \MainWP\Dashboard\MainWP_Overview
 	 */
 	public static function get() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new MainWP_Overview();
 		}
 
@@ -89,7 +89,7 @@ class MainWP_Overview {
 	 * @return int $columns Number of desired page columns.
 	 */
 	public function on_screen_layout_columns( $columns, $screen ) {
-		if ( $screen == $this->dashBoard ) {
+		if ( $screen === $this->dashBoard ) {
 			$columns[ $this->dashBoard ] = 3;
 		}
 
@@ -215,7 +215,8 @@ class MainWP_Overview {
 		 * @since Unknown
 		 */
 		$extMetaBoxs = MainWP_System_Handler::instance()->apply_filters( 'mainwp-getmetaboxes', array() );
-		$extMetaBoxs = MainWP_System_Handler::instance()->apply_filters( 'mainwp_getmetaboxes', $extMetaBoxs );
+		$extMetaBoxs = MainWP_System_Handler::instance()->apply_filters( 'mainwp_getmetaboxes', $extMetaBoxs ); // hooks to load widgets for general overview dashboard page.
+
 		foreach ( $extMetaBoxs as $box ) {
 			if ( isset( $box['plugin'] ) ) {
 				$name                          = basename( $box['plugin'], '.php' );
@@ -333,7 +334,7 @@ class MainWP_Overview {
 
 		MainWP_UI::render_second_top_header();
 
-		self::render_dashboard_body( array(), $this->dashBoard, $screen_layout_columns );
+		self::render_dashboard_body();
 		?>
 		</div>
 		<?php
@@ -346,16 +347,13 @@ class MainWP_Overview {
 	 * Render the Dashboard Body content.
 	 *
 	 * @param object $websites      Object containing child sites info.
-	 * @param mixed  $dashboard     Dashboard.
-	 * @param int    $screen_layout Screen Layout.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
 	 * @uses \MainWP\Dashboard\MainWP_UI::do_widget_boxes()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
 	 */
-	public static function render_dashboard_body( $websites, $dashboard, $screen_layout ) {
-
+	public static function render_dashboard_body( $websites = array() ) {
 		$current_wp_id = MainWP_System_Utility::get_current_wpid();
 		$website       = null;
 		if ( ! empty( $current_wp_id ) ) {
@@ -383,7 +381,7 @@ class MainWP_Overview {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>
-						<?php echo sprintf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
+						<?php printf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
 				</div>
 			<?php endif; ?>
 			</div>
@@ -429,7 +427,7 @@ class MainWP_Overview {
 	 * @return void
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Dashboard, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
@@ -457,5 +455,4 @@ class MainWP_Overview {
 			<?php
 		}
 	}
-
 }

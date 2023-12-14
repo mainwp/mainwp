@@ -30,12 +30,12 @@ if ( ! function_exists( 'mainwp_do_not_have_permissions' ) ) {
 	 * Detect permission level & display message to end user.
 	 *
 	 * @param string $where User's location.
-	 * @param bool   $echo Defines weather or not to echo error message.
+	 * @param bool   $echo_out Defines weather or not to echo error message.
 	 * @return string|bool $msg|false
 	 */
-	function mainwp_do_not_have_permissions( $where = '', $echo = true ) {
+	function mainwp_do_not_have_permissions( $where = '', $echo_out = true ) {
 		$msg = sprintf( esc_html__( 'You do not have sufficient permissions to access this page (%s).', 'mainwp' ), ucwords( $where ) );
-		if ( $echo ) {
+		if ( $echo_out ) {
 			echo '<div class="mainwp-permission-error"><p>' . esc_html( $msg ) . '</p>If you need access to this page please contact the dashboard administrator.</div>';
 		} else {
 			return $msg;

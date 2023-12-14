@@ -61,7 +61,7 @@ class MainWP_Utility {
 	 * @return MainWP_Utility
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 
@@ -122,10 +122,8 @@ class MainWP_Utility {
 			if ( ! $showHttp ) {
 				$url = substr( $url, 8 );
 			}
-		} else {
-			if ( $showHttp ) {
+		} elseif ( $showHttp ) {
 				$url = 'http://' . $url;
-			}
 		}
 
 		if ( self::ends_with( $url, '/' ) ) {
@@ -170,7 +168,7 @@ class MainWP_Utility {
 	 *
 	 * Sort the given array, Acending, Decending or by Natural Order.
 	 *
-	 * @param mixed $array Array to sort.
+	 * @param mixed $arr Array to sort.
 	 * @param mixed $index Index of array.
 	 * @param mixed $order Acending or Decending order.
 	 * @param bool  $natsort Sort an array using a "natural order" algorithm. Default: false.
@@ -178,11 +176,11 @@ class MainWP_Utility {
 	 *
 	 * @return array $sorted Return the sorted array.
 	 */
-	public static function sortmulti( $array, $index, $order, $natsort = false, $case_sensitive = false ) {
+	public static function sortmulti( $arr, $index, $order, $natsort = false, $case_sensitive = false ) {
 		$sorted = array();
-		if ( is_array( $array ) && 0 < count( $array ) ) {
-			foreach ( array_keys( $array ) as $key ) {
-				$temp[ $key ] = $array[ $key ][ $index ];
+		if ( is_array( $arr ) && 0 < count( $arr ) ) {
+			foreach ( array_keys( $arr ) as $key ) {
+				$temp[ $key ] = $arr[ $key ][ $index ];
 			}
 			if ( ! $natsort ) {
 				if ( 'asc' === $order ) {
@@ -202,9 +200,9 @@ class MainWP_Utility {
 			}
 			foreach ( array_keys( $temp ) as $key ) {
 				if ( is_numeric( $key ) ) {
-					$sorted[] = $array[ $key ];
+					$sorted[] = $arr[ $key ];
 				} else {
-					$sorted[ $key ] = $array[ $key ];
+					$sorted[ $key ] = $arr[ $key ];
 				}
 			}
 
@@ -219,17 +217,18 @@ class MainWP_Utility {
 	 *
 	 * Get sub array.
 	 *
-	 * @param mixed $array Array to traverse.
+	 * @param mixed $arr Array to traverse.
 	 * @param mixed $index Index of array.
 	 * @param mixed $value Array values.
 	 *
 	 * void array $output Sub array.
 	 */
-	public static function get_sub_array_having( $array, $index, $value ) {
+	public static function get_sub_array_having( $arr, $index, $value ) {
 		$output = array();
-		if ( is_array( $array ) && 0 < count( $array ) ) {
-			foreach ( $array as $arrvalue ) {
-				if ( $arrvalue[ $index ] == $value ) {
+		if ( is_array( $arr ) && 0 < count( $arr ) ) {
+			foreach ( $arr as $arrvalue ) {
+				$existed = isset( $arrvalue[ $index ] ) ? $arrvalue[ $index ] : null;
+				if ( $existed === $value ) {
 					$output[] = $arrvalue;
 				}
 			}
@@ -621,7 +620,7 @@ class MainWP_Utility {
 
 			$content = wp_kses( $content, $allowed_html );
 
-		} elseif ( 'mixed' == $type ) {
+		} elseif ( 'mixed' === $type ) {
 
 			$allowed_html = array(
 				'a'      => array(
@@ -889,22 +888,22 @@ class MainWP_Utility {
 	 *
 	 * Sort given array by given flags.
 	 *
-	 * @param mixed  $array Array to sort.
+	 * @param mixed  $arr Array to sort.
 	 * @param mixed  $key Array key.
 	 * @param string $sort_flag Flags to sort by. Default = SORT_STRING.
 	 */
-	public static function array_sort( &$array, $key, $sort_flag = SORT_STRING ) {
+	public static function array_sort( &$arr, $key, $sort_flag = SORT_STRING ) {
 		$sorter = array();
 		$ret    = array();
-		reset( $array );
-		foreach ( $array as $ii => $val ) {
+		reset( $arr );
+		foreach ( $arr as $ii => $val ) {
 			$sorter[ $ii ] = $val[ $key ];
 		}
 		asort( $sorter, $sort_flag );
 		foreach ( $sorter as $ii => $val ) {
-			$ret[ $ii ] = $array[ $ii ];
+			$ret[ $ii ] = $arr[ $ii ];
 		}
-		$array = $ret;
+		$arr = $ret;
 	}
 
 	/**
@@ -926,16 +925,16 @@ class MainWP_Utility {
 	 *
 	 * Value to string.
 	 *
-	 * @param mixed $var Value to convert to string.
+	 * @param mixed $var_value Value to convert to string.
 	 *
 	 * @return string Value that has been converted into a string.
 	 */
-	public static function value_to_string( $var ) {
-		if ( is_array( $var ) || is_object( $var ) ) {
+	public static function value_to_string( $var_value ) {
+		if ( is_array( $var_value ) || is_object( $var_value ) ) {
 			//phpcs:ignore -- for debug only
-			return print_r( $var, true );  // @codingStandardsIgnoreLine
-		} elseif ( is_string( $var ) ) {
-			return $var;
+			return print_r( $var_value, true );
+		} elseif ( is_string( $var_value ) ) {
+			return $var_value;
 		}
 		return '';
 	}
@@ -945,7 +944,7 @@ class MainWP_Utility {
 	 *
 	 * @param mixed $issue_counts Health site issues.
 	 *
-	 * @return array $array Health status value.
+	 * @return array Health status value.
 	 */
 	public static function get_site_health( $issue_counts ) {
 
@@ -960,7 +959,7 @@ class MainWP_Utility {
 		$totalTests  = intval( $issue_counts['good'] ) + intval( $issue_counts['recommended'] ) + intval( $issue_counts['critical'] ) * 1.5;
 		$failedTests = intval( $issue_counts['recommended'] ) * 0.5 + $issue_counts['critical'] * 1.5;
 
-		if ( 0 == $totalTests ) {
+		if ( empty( $totalTests ) ) {
 				$val = 100;
 		} else {
 				$val = 100 - ceil( ( $failedTests / $totalTests ) * 100 );
@@ -1117,7 +1116,7 @@ class MainWP_Utility {
 					$error = $e->getMessage();
 				}
 
-				if ( '' != $error ) {
+				if ( '' !== $error ) {
 					return array( 'error' => $error );
 				} elseif ( isset( $information['success'] ) && ! empty( $information['success'] ) ) {
 					return array( 'result' => 'success' );
@@ -1186,7 +1185,7 @@ class MainWP_Utility {
 					$wp_filesystem->delete( $file_path );
 				}
 			} elseif ( file_exists( $file_path ) ) {
-				unlink( $file_path );
+				wp_delete_file( $file_path );
 			}
 			return true;
 		}
@@ -1231,13 +1230,13 @@ class MainWP_Utility {
 	 *
 	 * Verify nonce without session and user id.
 	 *
-	 * @param bool   $false Boolean value, it should always be FALSE.
+	 * @param bool   $input_value Boolean value, it should always be FALSE.
 	 * @param string $nonce Nonce to verify.
 	 * @param mixed  $siteid Site ID.
 	 *
 	 * @return mixed If verified return 1 or 2, if not return false.
 	 */
-	public static function hook_verify_ping_nonce( $false, $nonce = '', $siteid = false ) {
+	public static function hook_verify_ping_nonce( $input_value, $nonce = '', $siteid = false ) {
 		$action = 'pingnonce';
 		return self::verify_site_nonce( $nonce, $action, $siteid );
 	}

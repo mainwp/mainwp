@@ -211,8 +211,8 @@ class MainWP_User {
 	 * Render screen options modal bottom.
 	 */
 	public static function hook_screen_options_modal_bottom() {
-		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
-		if ( 'UserBulkManage' == $page ) {
+		$page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( 'UserBulkManage' === $page ) {
 
 			$show_columns = get_user_option( 'mainwp_manageusers_show_columns' );
 
@@ -229,13 +229,12 @@ class MainWP_User {
 	 * Initiates Users menu.
 	 *
 	 * @param array $subPages Sub pages array.
-	 * @param int   $level What level to display on.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
-	public static function init_left_menu( $subPages = array(), $level = 2 ) {
+	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => esc_html__( 'Users', 'mainwp' ),
@@ -349,7 +348,7 @@ class MainWP_User {
 				$item           = array();
 				$item['title']  = $subPage['title'];
 				$item['href']   = 'admin.php?page=UserBulk' . $subPage['slug'];
-				$item['active'] = ( $subPage['slug'] == $shownPage ) ? true : false;
+				$item['active'] = ( $subPage['slug'] === $shownPage ) ? true : false;
 				$renderItems[]  = $item;
 			}
 		}
@@ -361,10 +360,8 @@ class MainWP_User {
 	 * Method render_footer()
 	 *
 	 * Render Users page footer. Closes the page container.
-	 *
-	 * @param string $shownPage The page slug shown at this moment.
 	 */
-	public static function render_footer( $shownPage = '' ) {
+	public static function render_footer() {
 		echo '</div>';
 	}
 
@@ -388,7 +385,7 @@ class MainWP_User {
 		$selected_groups  = array();
 		$selected_clients = array();
 
-		if ( null != $cachedSearch ) {
+		if ( null !== $cachedSearch ) {
 			if ( is_array( $cachedSearch['sites'] ) ) {
 				$selected_sites = $cachedSearch['sites'];
 			} elseif ( is_array( $cachedSearch['groups'] ) ) {
@@ -462,7 +459,7 @@ class MainWP_User {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-users-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-users-info-message"></i>
-							<?php echo sprintf( esc_html__( 'Manage existing users on your child sites.  Here you can Delete, Edit or Change Role for existing users.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-users/" target="_blank">', '</a>' ); ?>
+							<?php printf( esc_html__( 'Manage existing users on your child sites.  Here you can Delete, Edit or Change Role for existing users.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-users/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
@@ -640,7 +637,7 @@ class MainWP_User {
 		<div class="ui mini form">
 			<div class="field" data-tooltip="<?php esc_attr_e( 'Enter specific username that you want to search for.', 'mainwp' ); ?>" data-inverted="" data-position="top right">
 				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Username', 'mainwp' ); ?>" id="mainwp_search_users" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>" />
+					<input type="text" placeholder="<?php esc_attr_e( 'Username', 'mainwp' ); ?>" id="mainwp_search_users" class="text" value="<?php echo ( null !== $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>" />
 				</div>
 			</div>
 		</div>
@@ -963,7 +960,7 @@ class MainWP_User {
 		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 		$data_fields[] = 'users';
 
-		if ( 1 == get_option( 'mainwp_optimize' ) || MainWP_Demo_Handle::is_demo_mode() ) {
+		if ( 1 === (int) get_option( 'mainwp_optimize' ) || MainWP_Demo_Handle::is_demo_mode() ) {
 
 			$check_users_role = false;
 
@@ -975,22 +972,22 @@ class MainWP_User {
 			}
 
 			$dbwebsites = array();
-			if ( '' != $sites ) {
+			if ( ! empty( $sites ) ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$website = MainWP_DB::instance()->get_website_by_id( $v );
-						if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+						if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
 							$dbwebsites[ $website->id ] = $website;
 						}
 					}
 				}
 			}
-			if ( '' != $groups ) {
+			if ( ! empty( $groups ) ) {
 				foreach ( $groups as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							if ( ! empty( $website->sync_errors ) || MainWP_System_Utility::is_suspended_site( $website ) ) {
 								continue;
 							}
 							$dbwebsites[ $website->id ] = $website;
@@ -1000,7 +997,7 @@ class MainWP_User {
 				}
 			}
 
-			if ( '' !== $clients && is_array( $clients ) ) {
+			if ( ! empty( $clients ) && is_array( $clients ) ) {
 				$websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
 					$clients,
 					array(
@@ -1009,7 +1006,7 @@ class MainWP_User {
 				);
 
 				foreach ( $websites as $website ) {
-					if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+					if ( ! empty( $website->sync_errors ) || MainWP_System_Utility::is_suspended_site( $website ) ) {
 						continue;
 					}
 					$dbwebsites[ $website->id ] = $website;
@@ -1022,7 +1019,7 @@ class MainWP_User {
 					$allUsersCount    = count( $allUsers );
 					$search_user_role = array();
 					if ( $check_users_role ) {
-						for ( $i = 0; $i < $allUsersCount; $i ++ ) {
+						for ( $i = 0; $i < $allUsersCount; $i++ ) {
 							$user = $allUsers[ $i ];
 							foreach ( $roles as $_role ) {
 								if ( stristr( $user['role'], $_role ) ) {
@@ -1034,9 +1031,9 @@ class MainWP_User {
 							}
 						}
 					}
-					for ( $i = 0; $i < $allUsersCount; $i ++ ) {
+					for ( $i = 0; $i < $allUsersCount; $i++ ) {
 						$user = $allUsers[ $i ];
-						if ( '' != $search && ! stristr( $user['login'], trim( $search ) ) && ! stristr( $user['display_name'], trim( $search ) ) && ! stristr( $user['email'], trim( $search ) ) ) {
+						if ( ! empty( $search ) && ! stristr( $user['login'], trim( $search ) ) && ! stristr( $user['display_name'], trim( $search ) ) && ! stristr( $user['email'], trim( $search ) ) ) {
 							continue;
 						}
 
@@ -1057,7 +1054,7 @@ class MainWP_User {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$website = MainWP_DB::instance()->get_website_by_id( $v );
-						if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+						if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
 							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 								$website,
 								$data_fields
@@ -1071,7 +1068,7 @@ class MainWP_User {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 								continue;
 							}
 							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
@@ -1093,7 +1090,7 @@ class MainWP_User {
 				);
 				if ( $websites ) {
 					foreach ( $websites as $website ) {
-						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+						if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 							continue;
 						}
 						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
@@ -1127,7 +1124,7 @@ class MainWP_User {
 			array(
 				'count'   => $output->users,
 				'keyword' => $search,
-				'status'  => ( isset( $_POST['role'] ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : 'administrator' ), // phpcs:ignore WordPress.Security.NonceVerification
+				'status'  => ( isset( $_POST['role'] ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : 'administrator' ), // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				'sites'   => '' !== $sites ? $sites : '',
 				'groups'  => '' !== $groups ? $groups : '',
 				'clients' => ( '' !== $clients ) ? $clients : '',
@@ -1136,7 +1133,7 @@ class MainWP_User {
 
 		// Sort if required.
 
-		if ( 0 == $output->users ) {
+		if ( empty( $output->users ) ) {
 			self::render_cache_not_found();
 			return;
 		}
@@ -1221,9 +1218,9 @@ class MainWP_User {
 						<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 						<div class="menu">
 							<a class="item user_getedit" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-							<?php if ( ( 1 != $user['id'] ) && ( $user['login'] != $website->adminname ) ) { ?>
+							<?php if ( ( 1 !== (int) $user['id'] ) && ( $user['login'] !== $website->adminname ) ) { ?>
 							<a class="item user_submitdelete" href="#"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
-							<?php } elseif ( ( 1 == $user['id'] ) || ( $user['login'] == $website->adminname ) ) { ?>
+							<?php } elseif ( ( 1 === (int) $user['id'] ) || ( $user['login'] === $website->adminname ) ) { ?>
 							<a href="javascript:void(0)" class="item" data-tooltip="This user is used for our secure link, it can not be deleted." data-inverted="" data-position="left center"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
 							<?php if ( ! $is_demo ) : ?>
@@ -1255,7 +1252,7 @@ class MainWP_User {
 			$newOutput = ob_get_clean();
 			echo $newOutput; // phpcs:ignore WordPress.Security.EscapeOutput
 			MainWP_Cache::add_body( 'Users', $newOutput );
-			$return ++;
+			++$return;
 		}
 
 		return $return;
@@ -1337,11 +1334,17 @@ class MainWP_User {
 	 */
 	public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$userId    = isset( $_POST['userId'] ) ? sanitize_text_field( wp_unslash( $_POST['userId'] ) ) : false;
 		$userName  = isset( $_POST['userName'] ) ? sanitize_text_field( wp_unslash( $_POST['userName'] ) ) : '';
 		$websiteId = isset( $_POST['websiteId'] ) ? sanitize_text_field( wp_unslash( $_POST['websiteId'] ) ) : false;
-		$pass      = isset( $_POST['update_password'] ) ? utf8_decode( urldecode( wp_unslash( $_POST['update_password'] ) ) ) : '';
+		$pass      = isset( $_POST['update_password'] ) ? rawurldecode( wp_unslash( $_POST['update_password'] ) ) : '';
+
+		if ( function_exists( '\mb_convert_encoding' ) ) {
+			$pass = \mb_convert_encoding( $pass, 'ISO-8859-1', 'UTF-8' );
+		} else {
+			$pass = utf8_decode( $pass ); // to compatible.
+		}
 
 		if ( empty( $userId ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'Site ID or user ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
@@ -1364,14 +1367,14 @@ class MainWP_User {
 			die( wp_json_encode( array( 'error' => esc_html__( 'You can not edit this website!', 'mainwp' ) ) ) );
 		}
 
-		if ( ( 'delete' === $pAction ) && ( $website->adminname == $userName ) ) {
+		if ( ( 'delete' === $pAction ) && ( $website->adminname === $userName ) ) {
 			die( wp_json_encode( array( 'error' => esc_html__( 'This user is used for our secure link, it can not be deleted.', 'mainwp' ) ) ) );
 		}
 
 		if ( 'update_user' === $pAction ) {
 			$user_data = isset( $_POST['user_data'] ) ? wp_unslash( $_POST['user_data'] ) : '';
 			parse_str( $user_data, $extra );
-			if ( $website->adminname == $userName ) {
+			if ( $website->adminname === $userName ) {
 
 				if ( is_array( $extra ) && isset( $extra['role'] ) ) {
 					unset( $extra['role'] );
@@ -1383,9 +1386,9 @@ class MainWP_User {
 				$extra['pass2'] = $pass;
 			}
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 
-		$optimize = ( 1 == get_option( 'mainwp_optimize' ) ) ? 1 : 0;
+		$optimize = ( 1 === (int) get_option( 'mainwp_optimize' ) ) ? 1 : 0;
 
 		/**
 		* Action: mainwp_before_user_action
@@ -1446,7 +1449,7 @@ class MainWP_User {
 		}
 
 		if ( 'edit' === $pAction ) {
-			if ( $website->adminname == $userName ) {
+			if ( $website->adminname === $userName ) {
 				// This user is used for our secure link, you can not change the role.
 				if ( is_array( $information ) && isset( $information['user_data'] ) ) {
 					$information['is_secure_admin'] = 1;
@@ -1471,7 +1474,7 @@ class MainWP_User {
 		 */
 		$pass_complexity = apply_filters( 'mainwp_new_user_password_complexity', '24' );
 		self::render_header( 'Add' );
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		?>
 		<div class="ui alt segment" id="mainwp-add-users">
 			<?php
@@ -1491,7 +1494,7 @@ class MainWP_User {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-user-info-message' ) ) : ?>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-user-info-message"></i>
-						<?php echo sprintf( esc_html__( 'Use the provided form to create a new user on your child site.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-user/" target="_blank">', '</a>' ); ?>
+						<?php printf( esc_html__( 'Use the provided form to create a new user on your child site.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-user/" target="_blank">', '</a>' ); ?>
 					</div>
 				<?php endif; ?>
 					<div class="ui message" id="mainwp-message-zone" style="display:none;"></div>
@@ -1587,7 +1590,7 @@ class MainWP_User {
 												continue;
 											}
 											?>
-											<option value="<?php echo esc_html( $r ); ?>" <?php echo ( isset( $_POST['role'] ) && $_POST['role'] == $r ) ? esc_html( 'selected' ) : ''; ?>><?php echo esc_html( $n ); ?></option>
+											<option value="<?php echo esc_html( $r ); ?>" <?php echo ( isset( $_POST['role'] ) && $_POST['role'] === $r ) ? esc_html( 'selected' ) : ''; ?>><?php echo esc_html( $n ); ?></option>
 											<?php
 										}
 										?>
@@ -1705,7 +1708,7 @@ class MainWP_User {
 			?>
 		</div>
 		<?php
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 
 		self::render_footer( 'Add' );
 	}
@@ -1716,7 +1719,7 @@ class MainWP_User {
 	 * @return void
 	 */
 	public static function render_bulk_import_users() {
-		if ( isset( $_FILES['import_user_file_bulkupload'] ) && isset( $_FILES['import_user_file_bulkupload']['error'] ) && UPLOAD_ERR_OK == $_FILES['import_user_file_bulkupload']['error'] ) {
+		if ( isset( $_FILES['import_user_file_bulkupload'] ) && isset( $_FILES['import_user_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['import_user_file_bulkupload']['error'] ) { //phpcs:ignore WordPress.Security.NonceVerification.Missing
 			self::render_bulk_upload();
 			return;
 		}
@@ -1743,7 +1746,7 @@ class MainWP_User {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-users-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-users-info-message"></i>
-					<?php echo sprintf( esc_html__( 'Use the form to bulk import users.  You can download the sample CSV file to see how to fomat the import file properly.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-users/" target="_blank">', '</a>' ); ?>
+					<?php printf( esc_html__( 'Use the form to bulk import users.  You can download the sample CSV file to see how to fomat the import file properly.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-users/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 
@@ -1820,13 +1823,13 @@ class MainWP_User {
 		$errors      = array();
 		$errorFields = array();
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( isset( $_POST['select_by'] ) ) {
 			$selected_sites   = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
 			$selected_groups  = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
 			$selected_clients = ( isset( $_POST['selected_clients'] ) && is_array( $_POST['selected_clients'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_clients'] ) ) : array();
 
-			if ( ( 'group' === $_POST['select_by'] && 0 == count( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && 0 == count( $selected_sites ) ) || ( 'client' === $_POST['select_by'] && 0 == count( $selected_clients ) ) ) {
+			if ( ( 'group' === $_POST['select_by'] && 0 === count( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && 0 === count( $selected_sites ) ) || ( 'client' === $_POST['select_by'] && 0 === count( $selected_clients ) ) ) {
 				$errors[] = esc_html__( 'Please select at least one website or group or client.', 'mainwp' );
 			}
 		} else {
@@ -1857,7 +1860,7 @@ class MainWP_User {
 
 		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
-		if ( ( 0 == count( $errors ) ) && ( 0 == count( $errorFields ) ) ) {
+		if ( ( 0 === count( $errors ) ) && ( 0 === count( $errorFields ) ) ) {
 			$user_to_add = array(
 				'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',
 				'user_login' => isset( $_POST['user_login'] ) ? sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) : '',
@@ -1874,7 +1877,7 @@ class MainWP_User {
 				foreach ( $selected_sites as $k ) {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
 						$website = MainWP_DB::instance()->get_website_by_id( $k );
-						if ( '' == $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+						if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
 							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 								$website,
 								$data_fields
@@ -1892,7 +1895,7 @@ class MainWP_User {
 
 				if ( $websites ) {
 					foreach ( $websites as $website ) {
-						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+						if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 							continue;
 						}
 						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
@@ -1906,7 +1909,7 @@ class MainWP_User {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
 						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 								continue;
 							}
 							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
@@ -1962,16 +1965,16 @@ class MainWP_User {
 			$countSites     = 0;
 			$countRealItems = 0;
 			foreach ( $dbwebsites as $website ) {
-				if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
-					$countSites ++;
-					$countRealItems++;
+				if ( isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ) {
+					++$countSites;
+					++$countRealItems;
 				}
 			}
 			self::render_bulk_add_modal( $dbwebsites, $output );
 		} else {
 			echo wp_json_encode( array( $errorFields, $errors ) );
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 	}
 
 	/**
@@ -1990,7 +1993,7 @@ class MainWP_User {
 						<?php foreach ( $dbwebsites as $website ) : ?>
 						<div class="item ui grid">
 							<span class="content"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></span>
-							<span class="right floated content"><?php echo( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? '<i class="check green icon"></i> ' : '<i class="times red icon"></i> ' . $output->errors[ $website->id ] ); ?></span>
+							<span class="right floated content"><?php echo( isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ? '<i class="check green icon"></i> ' : '<i class="times red icon"></i> ' . $output->errors[ $website->id ] ); ?></span>
 						</div>
 						<?php endforeach; ?>
 					</div>
@@ -2000,7 +2003,7 @@ class MainWP_User {
 				</div>
 			</div>
 		<?php
-		// phpcs:enable WordPress.Security.EscapeOutput
+		// phpcs:enable
 	}
 
 	/**
@@ -2011,13 +2014,13 @@ class MainWP_User {
 	 */
 	public static function render_bulk_upload() {
 		self::render_header( 'Import' );
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$errors = array();
-		if ( isset( $_FILES['import_user_file_bulkupload']['error'] ) && UPLOAD_ERR_OK == $_FILES['import_user_file_bulkupload']['error'] ) {
+		if ( isset( $_FILES['import_user_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['import_user_file_bulkupload']['error'] ) {
 			if ( isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) {
 				$tmp_path     = isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) : '';
 				$wpFileSystem = MainWP_System_Utility::get_wp_file_system();
-				// phpcs:enable WordPress.Security.NonceVerification
+				// phpcs:enable
 				/**
 				 * WordPress files system object.
 				 *
@@ -2030,12 +2033,12 @@ class MainWP_User {
 
 				if ( is_array( $lines ) && 0 < count( $lines ) ) {
 					$i = 0;
-					// phpcs:disable WordPress.Security.NonceVerification
+					// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 					if ( ! empty( $_POST['import_user_chk_header_first'] ) ) {
 						$header_line = trim( $lines[0] ) . "\n";
 						unset( $lines[0] );
 					}
-					// phpcs:enable WordPress.Security.NonceVerification
+					// phpcs:enable
 
 					foreach ( $lines as $originalLine ) {
 
@@ -2067,7 +2070,7 @@ class MainWP_User {
 						?>
 						<input type="hidden" id="user_import_csv_line_<?php echo intval( $i + 1 ); ?>" original-line="<?php echo esc_html( $line ); ?>" encoded-data="<?php echo esc_html( $encoded ); ?>" />
 						<?php
-						$i++;
+						++$i;
 					}
 					$header_line = trim( $header_line );
 					?>
@@ -2164,7 +2167,7 @@ class MainWP_User {
 	 */
 	public static function do_import() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$selected_sites  = ( isset( $_POST['select_sites'] ) && is_array( $_POST['select_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_sites'] ) ) : array();
 		$selected_groups = ( isset( $_POST['select_groups'] ) && is_array( $_POST['select_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_groups'] ) ) : array();
 
@@ -2190,7 +2193,7 @@ class MainWP_User {
 				if ( ! empty( $url ) ) {
 					$website = MainWP_DB::instance()->get_websites_by_url( $url );
 					if ( $website ) {
-						if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+						if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 							continue;
 						}
 						$dbwebsites[ $website[0]->id ] = MainWP_Utility::map_site(
@@ -2209,7 +2212,7 @@ class MainWP_User {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_name( $group ) );
 					if ( $websites ) {
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' != $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
 								continue;
 							}
 							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
@@ -2271,7 +2274,7 @@ class MainWP_User {
 		$ret['ok_list']    = array();
 		$ret['error_list'] = array();
 		foreach ( $dbwebsites as $website ) {
-			if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
+			if ( isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ) {
 				$ret['ok_list'][] = 'New user(s) created: ' . esc_html( stripslashes( $website->name ) );
 			} else {
 				$ret['error_list'][] = esc_html( $output->errors[ $website->id ] . ' ' . stripslashes( $website->name ) );
@@ -2299,7 +2302,7 @@ class MainWP_User {
 			$ret['failed_logging'] = esc_html( $user_login . ',' . $email . ',' . $first_name . ',' . $last_name . ',' . $url . ',' . $pass1 . ',' . $send_password . ',' . $role . ',' . $error_sites . ',' );
 		}
 		$ret['line_number'] = isset( $_POST['line_number'] ) ? intval( $_POST['line_number'] ) : 0;
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 		die( wp_json_encode( $ret ) );
 	}
 
@@ -2307,7 +2310,7 @@ class MainWP_User {
 	 * Hooks the section help content to the Help Sidebar element.
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && ( 'UserBulkManage' === $_GET['page'] || 'UserBulkAdd' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['page'] ) && ( 'UserBulkManage' === $_GET['page'] || 'UserBulkAdd' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			?>
 			<p><?php esc_html_e( 'If you need help with managing users, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
@@ -2334,5 +2337,4 @@ class MainWP_User {
 			<?php
 		}
 	}
-
 }

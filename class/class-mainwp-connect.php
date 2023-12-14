@@ -120,17 +120,15 @@ class MainWP_Connect {
 
 		$force_use_ipv4 = false;
 		if ( null !== $forceUseIPv4 ) {
-			if ( 1 == $forceUseIPv4 ) {
+			if ( 1 === $forceUseIPv4 ) {
 				$force_use_ipv4 = true;
-			} elseif ( 2 == $forceUseIPv4 ) {
-				if ( 1 == get_option( 'mainwp_forceUseIPv4' ) ) {
+			} elseif ( 2 === $forceUseIPv4 ) {
+				if ( 1 === (int) get_option( 'mainwp_forceUseIPv4' ) ) {
 					$force_use_ipv4 = true;
 				}
 			}
-		} else {
-			if ( 1 == get_option( 'mainwp_forceUseIPv4' ) ) {
+		} elseif ( 1 === (int) get_option( 'mainwp_forceUseIPv4' ) ) {
 				$force_use_ipv4 = true;
-			}
 		}
 
 		if ( $force_use_ipv4 ) {
@@ -197,8 +195,8 @@ class MainWP_Connect {
 
 			if ( ! isset( $dnsRecord['host'] ) ) {
 				foreach ( $dnsRecord as $dnsRec ) {
-					if ( $dnsRec['host'] == $host ) {
-						if ( 'CNAME' == $dnsRec['type'] ) {
+					if ( $dnsRec['host'] === $host ) {
+						if ( 'CNAME' === $dnsRec['type'] ) {
 							$target = $dnsRec['target'];
 						}
 						$found = true;
@@ -206,8 +204,8 @@ class MainWP_Connect {
 					}
 				}
 			} else {
-				$found = ( $dnsRecord['host'] == $host );
-				if ( 'CNAME' == $dnsRecord['type'] ) {
+				$found = ( $dnsRecord['host'] === $host );
+				if ( 'CNAME' === $dnsRecord['type'] ) {
 					$target = $dnsRecord['target'];
 				}
 			}
@@ -216,7 +214,7 @@ class MainWP_Connect {
 		if ( false === $ip ) {
 			$ip = gethostbynamel( $host );
 		}
-		if ( ( false !== $target ) && ( $target != $host ) ) {
+		if ( ( false !== $target ) && ( $target !== $host ) ) {
 			$host .= ' (CNAME: ' . $target . ')';
 		}
 
@@ -231,7 +229,7 @@ class MainWP_Connect {
 			$found     = true;
 		}
 
-		$out['error'] = ( '' == $err && false === $found ? 'Invalid host.' : $err );
+		$out['error'] = ( '' === $err && false === $found ? 'Invalid host.' : $err );
 
 		return $out;
 	}
@@ -246,7 +244,8 @@ class MainWP_Connect {
 	 * @return bolean True|False.
 	 */
 	public static function check_ignored_http_code( $value ) {
-		if ( 200 == $value ) {
+		$value = (int) $value;
+		if ( 200 === $value ) {
 			return true;
 		}
 		$ignored_code = get_option( 'mainwp_ignore_HTTP_response_status', '' );
@@ -255,7 +254,7 @@ class MainWP_Connect {
 			$ignored_code = explode( ',', $ignored_code );
 			foreach ( $ignored_code as $code ) {
 				$code = trim( $code );
-				if ( $value == $code ) {
+				if ( (int) $value === (int) $code ) {
 					return true;
 				}
 			}
@@ -282,7 +281,7 @@ class MainWP_Connect {
 		$forceUseIPv4      = null;
 		if ( is_object( $website ) && isset( $website->url ) ) {
 			$url               = $website->url;
-			$verifyCertificate = isset( $website->verify_certificate ) ? $website->verify_certificate : null;
+			$verifyCertificate = isset( $website->verify_certificate ) ? (int) $website->verify_certificate : null;
 			$forceUseIPv4      = $website->force_use_ipv4;
 			$http_user         = $website->http_user;
 			$http_pass         = $website->http_pass;
@@ -297,10 +296,10 @@ class MainWP_Connect {
 
 		$ssl_verifyhost = false;
 
-		if ( 1 == $verifyCertificate ) {
+		if ( 1 === $verifyCertificate ) {
 			$ssl_verifyhost = true;
-		} elseif ( 2 == $verifyCertificate || null === $verifyCertificate ) {
-			if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
+		} elseif ( 2 === $verifyCertificate || null === $verifyCertificate ) {
+			if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
 				$ssl_verifyhost = true;
 			}
 		}
@@ -321,7 +320,7 @@ class MainWP_Connect {
 	 * @return mixed null|http_build_query()
 	 */
 	public static function get_post_data_authed( &$website, $what, $params = null ) {  //phpcs:ignore -- complex method.
-		if ( $website && '' != $what ) {
+		if ( $website && '' !== $what ) {
 			$data             = array();
 			$data['user']     = $website->adminname;
 			$data['function'] = $what;
@@ -332,7 +331,7 @@ class MainWP_Connect {
 				$data = array_merge( $data, $params_filter );
 			}
 
-			if ( null != $params ) {
+			if ( null !== $params ) {
 				$data = array_merge( $data, $params );
 			}
 
@@ -419,13 +418,12 @@ class MainWP_Connect {
 	 *
 	 * @param mixed $website Array of Child Site Info.
 	 * @param mixed $what What we are posting.
-	 * @param null  $params Post parameters.
 	 *
 	 * @return mixed null|http_build_query()
 	 */
-	private static function get_renew_post_data_authed( &$website, $what, $params = null ) {
+	private static function get_renew_post_data_authed( &$website, $what ) {
 
-		if ( $website && '' != $what ) {
+		if ( $website && '' !== $what ) {
 			$compat_what      = 'disconnect'; // to compatible, renew will call disconnect.
 			$data             = array();
 			$data['user']     = $website->adminname;
@@ -490,7 +488,7 @@ class MainWP_Connect {
 	 */
 	public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false ) { //phpcs:ignore -- complex method.
 		$params = array();
-		if ( $website && '' != $paramValue ) {
+		if ( $website && '' !== $paramValue ) {
 
 			$sign_success = null;
 			$alg          = false;
@@ -554,8 +552,8 @@ class MainWP_Connect {
 			return $params;
 		}
 
-		$url  = ( isset( $website->url ) && '' != $website->url ? $website->url : $website->siteurl );
-		$url .= ( substr( $url, - 1 ) != '/' ? '/' : '' );
+		$url  = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
+		$url .= ( substr( $url, - 1 ) !== '/' ? '/' : '' );
 		$url .= '?';
 
 		foreach ( $params as $key => $value ) {
@@ -598,11 +596,11 @@ class MainWP_Connect {
 	 * @return mixed null|http_build_query()
 	 */
 	public static function get_post_data_not_authed( $url, $admin, $what, $params = null ) {
-		if ( '' != $url && '' != $admin && '' != $what ) {
+		if ( '' !== $url && '' !== $admin && '' !== $what ) {
 			$data             = array();
 			$data['user']     = $admin;
 			$data['function'] = $what;
-			if ( null != $params ) {
+			if ( null !== $params ) {
 				$data = array_merge( $data, $params );
 			}
 
@@ -644,7 +642,7 @@ class MainWP_Connect {
 		if ( count( $websites ) > $chunkSize ) {
 			$total = count( $websites );
 			$loops = ceil( $total / $chunkSize );
-			for ( $i = 0; $i < $loops; $i ++ ) {
+			for ( $i = 0; $i < $loops; $i++ ) {
 				$newSites = array_slice( $websites, $i * $chunkSize, $chunkSize, true );
 				self::fetch_urls_authed( $newSites, $what, $params, $handler, $output, $whatPage, $others );
 				sleep( 5 );
@@ -676,7 +674,7 @@ class MainWP_Connect {
 			}
 
 			$url = $website->url;
-			if ( '/' != substr( $url, - 1 ) ) {
+			if ( '/' !== substr( $url, - 1 ) ) {
 				$url .= '/';
 			}
 
@@ -684,7 +682,7 @@ class MainWP_Connect {
 				$url .= 'wp-admin/';
 			}
 
-			if ( null != $whatPage ) {
+			if ( null !== $whatPage ) {
 				$url .= $whatPage;
 			} else {
 				$url .= 'admin-ajax.php';
@@ -752,7 +750,7 @@ class MainWP_Connect {
 				}
 			}
 
-			if ( ( null != $website ) && ( ( property_exists( $website, 'wpe' ) && 1 != $website->wpe ) || ( isset( $others['upgrade'] ) && ( true == $others['upgrade'] ) ) ) ) {
+			if ( ( null !== $website ) && ( ( property_exists( $website, 'wpe' ) && 1 !== $website->wpe ) || ( isset( $others['upgrade'] ) && ( true === $others['upgrade'] ) ) ) ) {
 				// to fix.
 				if ( defined( 'LOGGED_IN_SALT' ) && defined( 'NONCE_SALT' ) ) {
 					$cookie_salt = sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
@@ -787,19 +785,17 @@ class MainWP_Connect {
 			}
 
 			$ssl_verifyhost    = false;
-			$verifyCertificate = isset( $website->verify_certificate ) ? $website->verify_certificate : null;
+			$verifyCertificate = isset( $website->verify_certificate ) ? (int) $website->verify_certificate : null;
 			if ( null !== $verifyCertificate ) {
-				if ( 1 == $verifyCertificate ) {
+				if ( 1 === $verifyCertificate ) {
 					$ssl_verifyhost = true;
-				} elseif ( 2 == $verifyCertificate ) {
-					if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
+				} elseif ( 2 === $verifyCertificate ) {
+					if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
 						$ssl_verifyhost = true;
 					}
 				}
-			} else {
-				if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-					$ssl_verifyhost = true;
-				}
+			} elseif ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
+				$ssl_verifyhost = true;
 			}
 
 			if ( $ssl_verifyhost ) {
@@ -836,7 +832,7 @@ class MainWP_Connect {
 			$requestUrls[ self::get_resource_id( $ch ) ]     = $website->url;
 			$requestHandles[ self::get_resource_id( $ch ) ]  = $ch;
 
-			if ( null != $_new_post ) {
+			if ( null !== $_new_post ) {
 				$params['new_post'] = $_new_post;
 			}
 		}
@@ -859,11 +855,11 @@ class MainWP_Connect {
 						curl_setopt( $info['handle'], CURLOPT_URL, $requestUrls[ self::get_resource_id( $info['handle'] ) ] );
 						curl_multi_add_handle( $mh, $info['handle'] );
 						unset( $requestUrls[ self::get_resource_id( $info['handle'] ) ] );
-						$running ++;
+						++$running;
 						continue;
 					}
 
-					if ( null != $handler ) {
+					if ( null !== $handler ) {
 						$site = &$handleToWebsite[ self::get_resource_id( $info['handle'] ) ];
 						call_user_func_array( $handler, array( $data, $site, &$output, $params ) );
 					}
@@ -884,7 +880,7 @@ class MainWP_Connect {
 			foreach ( $requestHandles as $id => $ch ) {
 				$data = curl_exec( $ch );
 
-				if ( null != $handler ) {
+				if ( null !== $handler ) {
 					$site = &$handleToWebsite[ self::get_resource_id( $ch ) ];
 					call_user_func_array( $handler, array( $data, $site, &$output, $params ) );
 				}
@@ -926,16 +922,16 @@ class MainWP_Connect {
 	 *
 	 * Get resource id.
 	 *
-	 * @param mixed $resource The given resource.
+	 * @param mixed $res The given resource.
 	 *
 	 * @return $result Resource ID only.
 	 */
-	public static function get_resource_id( $resource ) {
+	public static function get_resource_id( $res ) {
 		$result = false;
-		if ( is_a( $resource, 'CurlHandle' ) ) {
-			$result = spl_object_hash( $resource );
-		} elseif ( is_resource( $resource ) ) {
-			$resourceString = (string) $resource;
+		if ( is_a( $res, 'CurlHandle' ) ) {
+			$result = spl_object_hash( $res );
+		} elseif ( is_resource( $res ) ) {
+			$resourceString = (string) $res;
 			$exploded       = explode( '#', $resourceString );
 			$result         = array_pop( $exploded );
 		}
@@ -952,7 +948,7 @@ class MainWP_Connect {
 	 * @return mixed false|sem_get()|@fopen
 	 */
 	public static function get_lock_identifier( $pLockName ) {
-		if ( ( null == $pLockName ) || ( false == $pLockName ) ) {
+		if ( ( null === $pLockName ) || ( false === $pLockName ) ) {
 			return false;
 		}
 
@@ -980,7 +976,7 @@ class MainWP_Connect {
 	 * @return mixed false|sem_acquire()|@flock
 	 */
 	public static function lock( $identifier ) {
-		if ( ( null == $identifier ) || ( false == $identifier ) ) {
+		if ( ( null === $identifier ) || ( false === $identifier ) ) {
 			return false;
 		}
 
@@ -990,7 +986,7 @@ class MainWP_Connect {
 			if ( ! is_resource( $identifier ) ) {
 				return false; // to fix.
 			}
-			for ( $i = 0; $i < 3; $i ++ ) {
+			for ( $i = 0; $i < 3; $i++ ) {
 				if ( @flock( $identifier, LOCK_EX ) ) {
 					return $identifier;
 				} else {
@@ -1014,7 +1010,7 @@ class MainWP_Connect {
 	 * @return mixed false|sem_release()|@flock
 	 */
 	public static function release( $identifier ) {
-		if ( ( null == $identifier ) || ( false == $identifier ) ) {
+		if ( ( null === $identifier ) || ( false === $identifier ) ) {
 			return false;
 		}
 
@@ -1057,11 +1053,12 @@ class MainWP_Connect {
 		$checkConstraints = false,
 		$pForceFetch = false,
 		$pRetryFailed = true,
-		$rawResponse = null ) {
+		$rawResponse = null
+	) {
 
 		// to support demo data.
 		if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
-			return MainWP_Demo_Handle::get_instance()->handle_action_demo( $website, $what, $params );
+			return MainWP_Demo_Handle::get_instance()->handle_action_demo( $website, $what );
 		}
 
 		if ( ! is_array( $params ) ) {
@@ -1079,7 +1076,7 @@ class MainWP_Connect {
 			$others['raw_response'] = 'yes';
 		}
 
-		$params['optimize'] = ( ( 1 == get_option( 'mainwp_optimize', 0 ) ) ? 1 : 0 );
+		$params['optimize'] = ( ( 1 === (int) get_option( 'mainwp_optimize', 0 ) ) ? 1 : 0 );
 
 		$updating_website = false;
 		$type             = '';
@@ -1111,7 +1108,7 @@ class MainWP_Connect {
 		}
 
 		if ( 'renew' === $what ) {
-			$postdata = self::get_renew_post_data_authed( $website, $what, $params );
+			$postdata = self::get_renew_post_data_authed( $website, $what );
 		} else {
 			$postdata = self::get_post_data_authed( $website, $what, $params );
 
@@ -1158,7 +1155,7 @@ class MainWP_Connect {
 			 * @since Unknown
 			 */
 			do_action( 'mainwp_website_updated', $website, $type, $list, $information );
-			if ( 1 == get_option( 'mainwp_check_http_response', 0 ) ) {
+			if ( 1 === (int) get_option( 'mainwp_check_http_response', 0 ) ) {
 				MainWP_Monitoring_Handler::handle_check_website( $website );
 			}
 		}
@@ -1196,7 +1193,8 @@ class MainWP_Connect {
 		$http_pass = null,
 		$sslVersion = 0,
 		$others = array(),
-		&$output = array() ) {
+		&$output = array()
+	) {
 
 		if ( empty( $params ) ) {
 			$params = array();
@@ -1241,13 +1239,14 @@ class MainWP_Connect {
 		$http_pass = null,
 		$sslVersion = 0,
 		$others = array(),
-		&$output = array() ) {
+		&$output = array()
+	) {
 
 		$start = time();
 
 		try {
 			$tmpUrl = $url;
-			if ( '/' != substr( $tmpUrl, - 1 ) ) {
+			if ( '/' !== substr( $tmpUrl, - 1 ) ) {
 				$tmpUrl .= '/';
 			}
 
@@ -1307,7 +1306,8 @@ class MainWP_Connect {
 		$http_pass = null,
 		$sslVersion = 0,
 		$others = array(),
-		&$output = array() ) {
+		&$output = array()
+	) {
 
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
@@ -1320,11 +1320,11 @@ class MainWP_Connect {
 			self::check_constraints( $identifier, $website );
 		}
 
-		if ( null != $website ) {
+		if ( null !== $website ) {
 			MainWP_DB_Common::instance()->insert_or_update_request_log( $website->id, null, microtime( true ), null );
 		}
 
-		if ( null != $identifier ) {
+		if ( null !== $identifier ) {
 			self::release( $identifier );
 		}
 
@@ -1347,7 +1347,7 @@ class MainWP_Connect {
 			}
 		}
 
-		if ( ( null != $website ) && ( ( property_exists( $website, 'wpe' ) && 1 != $website->wpe ) || ( isset( $others['upgrade'] ) && ( true == $others['upgrade'] ) ) ) ) {
+		if ( ( null !== $website ) && ( ( property_exists( $website, 'wpe' ) && 1 !== $website->wpe ) || ( isset( $others['upgrade'] ) && ( true === $others['upgrade'] ) ) ) ) {
 			// to fix.
 			if ( defined( 'LOGGED_IN_SALT' ) && defined( 'NONCE_SALT' ) ) {
 				$cookie_salt = sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
@@ -1382,17 +1382,15 @@ class MainWP_Connect {
 
 		$ssl_verifyhost = false;
 		if ( null !== $verifyCertificate ) {
-			if ( 1 == $verifyCertificate ) {
+			if ( 1 === (int) $verifyCertificate ) {
 				$ssl_verifyhost = true;
-			} elseif ( 2 == $verifyCertificate ) {
-				if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
+			} elseif ( 2 === (int) $verifyCertificate ) {
+				if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
 					$ssl_verifyhost = true;
 				}
 			}
-		} else {
-			if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
+		} elseif ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
 				$ssl_verifyhost = true;
-			}
 		}
 
 		if ( $ssl_verifyhost ) {
@@ -1430,19 +1428,17 @@ class MainWP_Connect {
 		curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
 
 		$force_use_ipv4 = false;
-		$forceUseIPv4   = isset( $others['force_use_ipv4'] ) ? $others['force_use_ipv4'] : null;
+		$forceUseIPv4   = isset( $others['force_use_ipv4'] ) ? (int) $others['force_use_ipv4'] : null;
 		if ( null !== $forceUseIPv4 ) {
-			if ( 1 == $forceUseIPv4 ) {
+			if ( 1 === $forceUseIPv4 ) {
 				$force_use_ipv4 = true;
-			} elseif ( 2 == $forceUseIPv4 ) {
-				if ( 1 == get_option( 'mainwp_forceUseIPv4' ) ) {
+			} elseif ( 2 === $forceUseIPv4 ) {
+				if ( 1 === (int) get_option( 'mainwp_forceUseIPv4' ) ) {
 					$force_use_ipv4 = true;
 				}
 			}
-		} else {
-			if ( 1 == get_option( 'mainwp_forceUseIPv4' ) ) {
+		} elseif ( 1 === (int) get_option( 'mainwp_forceUseIPv4' ) ) {
 				$force_use_ipv4 = true;
-			}
 		}
 
 		if ( $force_use_ipv4 ) {
@@ -1495,17 +1491,17 @@ class MainWP_Connect {
 		$host = wp_parse_url( $real_url, PHP_URL_HOST );
 		$ip   = gethostbyname( $host );
 
-		if ( null != $website ) {
+		if ( null !== $website ) {
 			MainWP_DB_Common::instance()->insert_or_update_request_log( $website->id, $ip, null, microtime( true ) );
 		}
 
-		$raw_response = isset( $others['raw_response'] ) && 'yes' == $others['raw_response'] ? true : false;
+		$raw_response = isset( $others['raw_response'] ) && 'yes' === $others['raw_response'] ? true : false;
 
 		$output['fetch_data']  = $data;
-		$output['http_status'] = $http_status;
+		$output['http_status'] = (int) $http_status;
 
 		MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'http status: [' . $http_status . '] err: [' . $err . ']' );
-		if ( '400' == $http_status ) {
+		if ( '400' === $http_status ) {
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'post data: [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
 		}
 
@@ -1513,20 +1509,21 @@ class MainWP_Connect {
 
 		$thr_error = null;
 
-		if ( ( false === $data ) && ( 0 == $http_status ) ) {
+		if ( ( false === $data ) && empty( $http_status ) ) {
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );
-			$thr_error = new MainWP_Exception( 'HTTPERROR', $err );
+			$thr_error = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		} elseif ( empty( $data ) && ! empty( $err ) ) {
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=' . $http_status . '][' . $err . ']' );
-			$thr_error = new MainWP_Exception( 'HTTPERROR', $err );
+			$thr_error = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		} elseif ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result      = $results[1];
 			$information = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			unset( $output['fetch_data'] ); // hide the data.
-			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'information: [OK]' );
+			$data_log = is_array( $postdata ) ? print_r( $postdata, true ) : ( is_string( $postdata ) ? $postdata : '' );  //phpcs:ignore -- good.
+			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[' . $url . '] postdata [' . $data_log . '] information: [OK]' ); //phpcs:ignore -- ok.
 			return $information;
-		} elseif ( 200 == $http_status && ! empty( $err ) ) {
-			$thr_error = new MainWP_Exception( 'HTTPERROR', $err );
+		} elseif ( 200 === (int) $http_status && ! empty( $err ) ) {
+			$thr_error = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		} elseif ( $raw_response ) {
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Response: [RAW]' );
 			return $data;
@@ -1536,7 +1533,7 @@ class MainWP_Connect {
 			if ( false !== $detect_wsidchk ) {
 				$thr_error = new MainWP_Exception( 'ERROR:Connection Failed. We suspect that Imunify360, a security layer added by your host, is causing this problem. Please contact your host to whitelist your Dashboard IP in their system. If you need help determining your MainWP Dashboard site IP address, check with your hosting provider.', $url );
 			} else {
-				$thr_error = new MainWP_Exception( 'NOMAINWP', $url );
+				$thr_error = new MainWP_Exception( 'NOMAINWP', $url ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 			}
 		}
 
@@ -1578,9 +1575,9 @@ class MainWP_Connect {
 				continue;
 			}
 
-			if ( 0 < $minimumIPDelay && null != $website ) {
+			if ( 0 < $minimumIPDelay && null !== $website ) {
 				$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
-				if ( null != $ip && '' !== $ip ) {
+				if ( null !== $ip && '' !== $ip ) {
 					if ( self::check_constraints_last_request( $identifier, $minimumIPDelay, $ip ) ) {
 						continue;
 					}
@@ -1607,9 +1604,9 @@ class MainWP_Connect {
 				continue;
 			}
 
-			if ( 0 < $maximumIPRequests && null != $website ) {
+			if ( 0 < $maximumIPRequests && null !== $website ) {
 				$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
-				if ( null != $ip && '' != $ip ) {
+				if ( null !== $ip && '' !== $ip ) {
 					if ( self::check_constraints_open_requests( $identifier, $maximumIPRequests, $ip ) ) {
 						continue;
 					}
@@ -1691,7 +1688,7 @@ class MainWP_Connect {
 		 */
 		global $wp_filesystem;
 
-		if ( $wp_filesystem->exists( $file ) && ( ( false == $size ) || ( $wp_filesystem->size( $file ) > $size ) ) ) {
+		if ( $wp_filesystem->exists( $file ) && ( ( false === $size ) || ( $wp_filesystem->size( $file ) > $size ) ) ) {
 			$wp_filesystem->delete( $file );
 		}
 
@@ -1703,7 +1700,11 @@ class MainWP_Connect {
 			throw new MainWP_Exception( esc_html__( 'MainWP plugin could not create directory in order to download the file.', 'mainwp' ) );
 		}
 
-		if ( ! is_writable( @dirname( $file ) ) ) {
+		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
+			if ( ! $wp_filesystem->is_writable( @dirname( $file ) ) ) {
+				throw new MainWP_Exception( esc_html__( 'MainWP upload directory is not writable.', 'mainwp' ) );
+			}
+		} elseif ( ! is_writable( @dirname( $file ) ) ) { //phpcs:ignore -- ok.
 			throw new MainWP_Exception( esc_html__( 'MainWP upload directory is not writable.', 'mainwp' ) );
 		}
 
@@ -1839,7 +1840,7 @@ class MainWP_Connect {
 		if ( 'resource' === gettype( $ch ) ) {
 			curl_close( $ch );
 		}
-		if ( 200 == $httpCode ) {
+		if ( 200 === (int) $httpCode ) {
 			return $data;
 		} else {
 			return false;
@@ -1878,6 +1879,7 @@ class MainWP_Connect {
 				$faviurl = MainWP_Utility::remove_http_prefix( $faviurl );
 			}
 		}
+
 		if ( empty( $faviurl ) ) {
 			$faviurl = false;
 		}

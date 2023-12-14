@@ -62,7 +62,7 @@ class MainWP_Client_Overview {
 	 * @uses \MainWP\Dashboard\MainWP_Overview
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 
@@ -88,7 +88,7 @@ class MainWP_Client_Overview {
 	 * @return int $columns Number of desired page columns.
 	 */
 	public function on_screen_layout_columns( $columns, $screen ) {
-		if ( $screen == self::$page ) {
+		if ( $screen === self::$page ) {
 			$columns[ self::$page ] = 3;
 		}
 
@@ -171,12 +171,14 @@ class MainWP_Client_Overview {
 			if ( isset( $box['plugin'] ) ) {
 				$name                          = basename( $box['plugin'], '.php' );
 				self::$enable_widgets[ $name ] = true;
+			} elseif ( ! empty( $box['widget_id'] ) ) {
+				self::$enable_widgets[ $box['widget_id'] ] = true;
 			}
 		}
 
 		$client_contacts = array();
-		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$client_contacts = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'client_id', $_GET['client_id'], ARRAY_A ); // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$client_contacts = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'client_id', intval( $_GET['client_id'] ), ARRAY_A ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		}
 
 		if ( is_array( $client_contacts ) ) {
@@ -257,8 +259,10 @@ class MainWP_Client_Overview {
 			$id = isset( $metaBox['id'] ) ? $metaBox['id'] : $i++;
 			$id = 'advanced-' . $id;
 
+			$layout = ! empty( $metaBox['layout'] ) && is_array( $metaBox['layout'] ) ? $metaBox['layout'] : array( 1, 1, 2, 3 );
+
 			if ( $enabled ) {
-				MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, 'right', $metaBox['metabox_title'] );
+				MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, $layout );
 			}
 		}
 	}
@@ -296,14 +300,14 @@ class MainWP_Client_Overview {
 	 */
 	public static function render_dashboard_body() {
 		$screen   = get_current_screen();
-		$clientid = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		$clientid = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		?>
 		<div class="mainwp-primary-content-wrap">
 		<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'client-widgets' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="client-widgets"></i>
-					<?php echo sprintf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
+					<?php printf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -418,8 +422,8 @@ class MainWP_Client_Overview {
 			'non_mainwp_changes' => esc_html__( 'Non-MainWP Changes', 'mainwp' ),
 		);
 
-		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$client_contacts = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'client_id', $_GET['client_id'], ARRAY_A ); // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$client_contacts = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'client_id', intval( $_GET['client_id'] ), ARRAY_A ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			if ( $client_contacts ) {
 				foreach ( $client_contacts as $contact ) {
 					$default_widgets[ 'contact_' . $contact['contact_id'] ] = esc_html( $contact['contact_name'] );
@@ -457,10 +461,10 @@ class MainWP_Client_Overview {
 		do_action( 'mainwp_screen_options_modal_top' );
 		$which_settings = 'overview_settings';
 		?>
-		<?php if ( isset( $_GET['page'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+		<?php if ( isset( $_GET['page'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
 			<?php
 			$overviewColumns = get_option( 'mainwp_number_clients_overview_columns', 2 );
-			if ( 2 != $overviewColumns && 3 != $overviewColumns ) {
+			if ( 2 !== $overviewColumns && 3 !== $overviewColumns ) {
 				$overviewColumns = 2;
 			}
 
@@ -472,7 +476,7 @@ class MainWP_Client_Overview {
 				<?php
 				foreach ( $default_widgets as $name => $title ) {
 					$_selected = '';
-					if ( ! isset( $show_widgets[ $name ] ) || 1 == $show_widgets[ $name ] ) {
+					if ( ! isset( $show_widgets[ $name ] ) || 1 === (int) $show_widgets[ $name ] ) {
 						$_selected = 'checked';
 					}
 					?>
@@ -510,7 +514,7 @@ class MainWP_Client_Overview {
 	 * @return void
 	 */
 	public static function mainwp_help_content() {
-		if ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Dashboard, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
@@ -533,5 +537,4 @@ class MainWP_Client_Overview {
 			<?php
 		}
 	}
-
 }

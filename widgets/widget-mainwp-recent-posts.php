@@ -60,21 +60,21 @@ class MainWP_Recent_Posts {
 
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
 
-		if ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.NonceVerification.Missing
 			$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 			$data_fields[] = 'recent_posts';
 			$individual    = false;
-			$client_id     = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+			$client_id     = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.NonceVerification.Missing
 			$websites      = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id, array( 'select_data' => $data_fields ) );
 
 			if ( $websites ) {
 				foreach ( $websites as $website ) {
-					if ( '' == $website->recent_posts ) {
+					if ( empty( $website->recent_posts ) ) {
 						continue;
 					}
 
 					$posts = json_decode( $website->recent_posts, 1 );
-					if ( 0 == count( $posts ) ) {
+					if ( 0 === count( $posts ) ) {
 						continue;
 					}
 					foreach ( $posts as $post ) {
@@ -99,12 +99,12 @@ class MainWP_Recent_Posts {
 
 			if ( $websites ) {
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-					if ( '' == $website->recent_posts ) {
+					if ( empty( $website->recent_posts ) ) {
 						continue;
 					}
 
 					$posts = json_decode( $website->recent_posts, 1 );
-					if ( 0 == count( $posts ) ) {
+					if ( 0 === count( $posts ) ) {
 						continue;
 					}
 					foreach ( $posts as $post ) {
@@ -188,7 +188,7 @@ class MainWP_Recent_Posts {
 					 */
 					echo esc_html( apply_filters( 'mainwp_recent_posts_widget_title', esc_html__( 'Recent Posts', 'mainwp' ) ) );
 					?>
-					<?php if ( isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?> 
+					<?php if ( isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.NonceVerification.Missing ?> 
 					<div class="sub header"><?php esc_html_e( 'The most recent posts from the Client websites', 'mainwp' ); ?></div>
 					<?php else : ?>
 					<div class="sub header"><?php esc_html_e( 'The most recent posts from your websites', 'mainwp' ); ?></div>
@@ -242,7 +242,7 @@ class MainWP_Recent_Posts {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_recent_posts_before_publised_list', $allPosts, $recent_number );
-			if ( 0 == count( $recent_posts_published ) ) {
+			if ( 0 === count( $recent_posts_published ) ) {
 				?>
 			<h2 class="ui icon header">
 				<i class="folder open outline icon"></i>
@@ -256,8 +256,8 @@ class MainWP_Recent_Posts {
 			<div class="ui middle aligned divided selection list">
 			<?php
 			$_count = count( $recent_posts_published );
-			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-				if ( ! isset( $recent_posts_published[ $i ]['title'] ) || ( '' == $recent_posts_published[ $i ]['title'] ) ) {
+			for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
+				if ( ! isset( $recent_posts_published[ $i ]['title'] ) || empty( $recent_posts_published[ $i ]['title'] ) ) {
 					$recent_posts_published[ $i ]['title'] = '(No Title)';
 				}
 				if ( isset( $recent_posts_published[ $i ]['dts'] ) ) {
@@ -289,7 +289,7 @@ class MainWP_Recent_Posts {
 										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-unpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
 										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $recent_posts_published[ $i ]['website']->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?action=editpost&post=' . $recent_posts_published[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
-										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ) . ( '/' != substr( $recent_posts_published[ $i ]['website']->url, - 1 ) ? '/' : '' ) . '?p=' . esc_attr( $recent_posts_published[ $i ]['id'] ); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
+										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ) . ( '/' !== substr( $recent_posts_published[ $i ]['website']->url, - 1 ) ? '/' : '' ) . '?p=' . esc_attr( $recent_posts_published[ $i ]['id'] ); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
 									</div>
 							</div>
 						</div>
@@ -345,7 +345,7 @@ class MainWP_Recent_Posts {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_recent_posts_before_draft_list', $allPosts, $recent_number );
-			if ( 0 == count( $recent_posts_draft ) ) {
+			if ( 0 === count( $recent_posts_draft ) ) {
 				?>
 			<h2 class="ui icon header">
 				<i class="folder open outline icon"></i>
@@ -359,8 +359,8 @@ class MainWP_Recent_Posts {
 			<div class="ui middle aligned divided selection list">
 			<?php
 			$_count = count( $recent_posts_draft );
-			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-				if ( ! isset( $recent_posts_draft[ $i ]['title'] ) || ( '' == $recent_posts_draft[ $i ]['title'] ) ) {
+			for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
+				if ( ! isset( $recent_posts_draft[ $i ]['title'] ) || empty( $recent_posts_draft[ $i ]['title'] ) ) {
 					$recent_posts_draft[ $i ]['title'] = '(No Title)';
 				}
 				if ( isset( $recent_posts_draft[ $i ]['dts'] ) ) {
@@ -445,7 +445,7 @@ class MainWP_Recent_Posts {
 				 * @since 4.1
 				 */
 				do_action( 'mainwp_recent_posts_before_pending_list', $allPosts, $recent_number );
-				if ( 0 == count( $recent_posts_pending ) ) {
+				if ( 0 === count( $recent_posts_pending ) ) {
 					?>
 				<h2 class="ui icon header">
 					<i class="folder open outline icon"></i>
@@ -459,8 +459,8 @@ class MainWP_Recent_Posts {
 			<div class="ui middle aligned divided selection list">
 			<?php
 			$_count = count( $recent_posts_pending );
-			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-				if ( ! isset( $recent_posts_pending[ $i ]['title'] ) || ( '' == $recent_posts_pending[ $i ]['title'] ) ) {
+			for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
+				if ( ! isset( $recent_posts_pending[ $i ]['title'] ) || empty( $recent_posts_pending[ $i ]['title'] ) ) {
 					$recent_posts_pending[ $i ]['title'] = '(No Title)';
 				}
 				if ( isset( $recent_posts_pending[ $i ]['dts'] ) ) {
@@ -545,7 +545,7 @@ class MainWP_Recent_Posts {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_recent_posts_before_future_list', $allPosts, $recent_number );
-		if ( 0 == count( $recent_posts_future ) ) {
+		if ( 0 === count( $recent_posts_future ) ) {
 			?>
 			<h2 class="ui icon header">
 				<i class="folder open outline icon"></i>
@@ -559,8 +559,8 @@ class MainWP_Recent_Posts {
 		<div class="ui middle aligned divided selection list">
 		<?php
 		$_count = count( $recent_posts_future );
-		for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-			if ( ! isset( $recent_posts_future[ $i ]['title'] ) || ( '' == $recent_posts_future[ $i ]['title'] ) ) {
+		for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
+			if ( ! isset( $recent_posts_future[ $i ]['title'] ) || empty( $recent_posts_future[ $i ]['title'] ) ) {
 				$recent_posts_future[ $i ]['title'] = '(No Title)';
 			}
 			if ( isset( $recent_posts_future[ $i ]['dts'] ) ) {
@@ -646,7 +646,7 @@ class MainWP_Recent_Posts {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_recent_posts_before_trash_list', $allPosts, $recent_number );
-		if ( 0 == count( $recent_posts_trash ) ) {
+		if ( 0 === count( $recent_posts_trash ) ) {
 			?>
 				<h2 class="ui icon header">
 					<i class="folder open outline icon"></i>
@@ -660,8 +660,8 @@ class MainWP_Recent_Posts {
 		<div class="ui middle aligned divided selection list">
 		<?php
 		$_count = count( $recent_posts_trash );
-		for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-			if ( ! isset( $recent_posts_trash[ $i ]['title'] ) || ( '' == $recent_posts_trash[ $i ]['title'] ) ) {
+		for ( $i = 0; $i < $_count && $i < $recent_number; $i++ ) {
+			if ( ! isset( $recent_posts_trash[ $i ]['title'] ) || empty( $recent_posts_trash[ $i ]['title'] ) ) {
 				$recent_posts_trash[ $i ]['title'] = '(No Title)';
 			}
 			if ( isset( $recent_posts_trash[ $i ]['dts'] ) ) {
@@ -697,7 +697,7 @@ class MainWP_Recent_Posts {
 				</div>
 				<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e( 'Please wait...', 'mainwp' ); ?></div>
 				</div>
-					<?php }; ?>
+					<?php } ?>
 			</div>
 		<?php
 		/**
@@ -793,8 +793,8 @@ class MainWP_Recent_Posts {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action( $pAction, $type = 'post' ) {
-		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
-		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.NonceVerification.Missing
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.NonceVerification.Missing
 
 		if ( empty( $postId ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => 'Post ID or site ID not found. Please, reload the page and try again.' ) ) );
@@ -851,7 +851,7 @@ class MainWP_Recent_Posts {
 
 		if ( is_array( $information ) && isset( $information['error'] ) ) {
 			die( wp_json_encode( $information ) );
-		} elseif ( ! isset( $information['status'] ) || ( 'SUCCESS' != $information['status'] ) ) {
+		} elseif ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
 			die( wp_json_encode( array( 'error' => 'Unexpected error!' ) ) );
 		}
 	}

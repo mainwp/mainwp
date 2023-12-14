@@ -84,24 +84,24 @@ class Log_Filter_Input {
 	/**
 	 * Sanitize or validate input.
 	 *
-	 * @param mixed $var      Raw input.
+	 * @param mixed $var_value      Raw input.
 	 * @param int   $filter   Filter callback.
 	 * @param array $options  Filter callback parameters.
 	 * @throws \Exception Unsupported filter provided.
 	 * @return mixed
 	 */
-	public static function filter( $var, $filter = null, $options = array() ) {
+	public static function filter( $var_value, $filter = null, $options = array() ) {
 		// Default filter is a sanitizer, not validator.
 		$filter_type = 'sanitizer';
 
 		// Only filter value if it is not null.
-		if ( isset( $var ) && $filter && FILTER_DEFAULT !== $filter ) {
+		if ( isset( $var_value ) && $filter && FILTER_DEFAULT !== $filter ) {
 			if ( ! isset( self::$filter_callbacks[ $filter ] ) ) {
 				throw new \Exception( esc_html__( 'Filter not supported.', 'mainwp' ) );
 			}
 
 			$filter_callback = self::$filter_callbacks[ $filter ];
-			$result          = call_user_func( $filter_callback, $var );
+			$result          = call_user_func( $filter_callback, $var_value );
 
 			/**
 			 * "filter_var / filter_input" treats validation/sanitization filters the same
@@ -111,41 +111,41 @@ class Log_Filter_Input {
 			$filter_type = ( $filter < 500 ) ? 'validator' : 'sanitizer';
 			if ( 'validator' === $filter_type ) { // Validation functions.
 				if ( ! $result ) {
-					$var = false;
+					$var_value = false;
 				}
 			} else { // Santization functions.
-				$var = $result;
+				$var_value = $result;
 			}
 		}
 
 		// Detect FILTER_REQUIRE_ARRAY flag.
-		if ( isset( $var ) && is_int( $options ) && FILTER_REQUIRE_ARRAY === $options ) {
-			if ( ! is_array( $var ) ) {
-				$var = ( 'validator' === $filter_type ) ? false : null;
+		if ( isset( $var_value ) && is_int( $options ) && FILTER_REQUIRE_ARRAY === $options ) {
+			if ( ! is_array( $var_value ) ) {
+				$var_value = ( 'validator' === $filter_type ) ? false : null;
 			}
 		}
 
 		// Polyfill the `default` attribute only, for now.
 		if ( is_array( $options ) && ! empty( $options['options']['default'] ) ) {
-			if ( 'validator' === $filter_type && false === $var ) {
-				$var = $options['options']['default'];
-			} elseif ( 'sanitizer' === $filter_type && null === $var ) {
-				$var = $options['options']['default'];
+			if ( 'validator' === $filter_type && false === $var_value ) {
+				$var_value = $options['options']['default'];
+			} elseif ( 'sanitizer' === $filter_type && null === $var_value ) {
+				$var_value = $options['options']['default'];
 			}
 		}
 
-		return $var;
+		return $var_value;
 	}
 
 	/**
 	 * Returns whether the variable is a Regular Expression or not?
 	 *
-	 * @param string $var  Raw input.
+	 * @param string $var_value  Raw input.
 	 * @return boolean
 	 */
-	public static function is_regex( $var ) {
+	public static function is_regex( $var_value ) {
 		// @codingStandardsIgnoreStart
-		$test = @preg_match( $var, '' );
+		$test = @preg_match( $var_value, '' );
 		// @codingStandardsIgnoreEnd
 
 		return false !== $test;
@@ -154,10 +154,10 @@ class Log_Filter_Input {
 	/**
 	 * Returns whether the variable is an IP address or not?
 	 *
-	 * @param string $var  Raw input.
+	 * @param string $var_value  Raw input.
 	 * @return boolean
 	 */
-	public static function is_ip_address( $var ) {
-		return false !== \WP_Http::is_ip_address( $var );
+	public static function is_ip_address( $var_value ) {
+		return false !== \WP_Http::is_ip_address( $var_value );
 	}
 }

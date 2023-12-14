@@ -36,7 +36,7 @@ class MainWP_DB_Monitoring extends MainWP_DB {
 	 * @return MainWP_DB_Common
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;

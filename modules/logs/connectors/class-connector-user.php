@@ -140,5 +140,4 @@ class Connector_User extends Log_Connector {
 				$state
 			);
 		}
-
 }

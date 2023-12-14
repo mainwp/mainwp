@@ -78,7 +78,7 @@ class MainWP_Notes {
 			 */
 			do_action( 'mainwp_notes_widget_top', $website );
 
-			if ( '' == $website->note ) {
+			if ( empty( $website->note ) ) {
 				?>
 				<h2 class="ui icon header">
 					<i class="info circle icon"></i>
@@ -112,7 +112,7 @@ class MainWP_Notes {
 		do_action( 'mainwp_notes_widget_bottom', $website );
 		?>
 			</div>
-			<?php if ( '' != $website->note ) : ?>
+			<?php if ( '' !== $website->note ) : ?>
 			<div class="ui two columns grid mainwp-widget-footer">
 				<div class="column">
 					<a href="javascript:void(0)" class="ui button mini fluid green mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>"><?php esc_html_e( 'Edit Notes', 'mainwp' ); ?></a>
@@ -125,5 +125,4 @@ class MainWP_Notes {
 			<?php
 			MainWP_UI::render_modal_edit_notes();
 	}
-
 }

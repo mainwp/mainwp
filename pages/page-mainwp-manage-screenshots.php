@@ -46,11 +46,11 @@ class MainWP_Manage_Screenshots {
 	 * Render manage sites table top.
 	 */
 	public function render_manage_sites_table_top() {
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$selected_status = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
 		$selected_group  = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
 		$selected_client = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
-		$is_not          = isset( $_REQUEST['isnot'] ) && ( 'yes' == $_REQUEST['isnot'] ) ? true : false;
+		$is_not          = isset( $_REQUEST['isnot'] ) && ( 'yes' === $_REQUEST['isnot'] ) ? true : false;
 
 		if ( ! isset( $_REQUEST['g'] ) ) {
 			$selected_status = get_user_option( 'mainwp_screenshots_filter_status', '' );
@@ -58,7 +58,7 @@ class MainWP_Manage_Screenshots {
 			$selected_client = get_user_option( 'mainwp_screenshots_filter_client', '' );
 			$is_not          = get_user_option( 'mainwp_screenshots_filter_is_not', '' );
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 
 		?>
 		<div class="ui stackable grid">
@@ -257,7 +257,7 @@ class MainWP_Manage_Screenshots {
 						}
 
 						if ( is_array( $wp_upgrades ) && 0 < count( $wp_upgrades ) ) {
-							$total_wp_upgrades ++;
+							++$total_wp_upgrades;
 						}
 
 						$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
@@ -374,13 +374,13 @@ class MainWP_Manage_Screenshots {
 									<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $website->id ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
 									<div class="sub header" style="font-size:11px"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_url( $website->url ); ?></a></div>
 								</h5>
-								<?php if ( isset( $website->wpgroups ) && '' != $website->wpgroups ) : ?>
+								<?php if ( isset( $website->wpgroups ) && '' !== $website->wpgroups ) : ?>
 								<small data-tooltip="<?php esc_attr_e( 'Site tags', 'mainwp' ); ?>" data-position="top left" data-inverted="">
 									<?php echo MainWP_System_Utility::get_site_tags( (array) $website ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 								</small>
 								<?php endif; ?>
 						</div>
-							<?php if ( isset( $website->client_id ) && '0' != $website->client_id ) : ?>
+							<?php if ( isset( $website->client_id ) && ! empty( $website->client_id ) ) : ?>
 							<div class="extra content">
 								<small data-tooltip="<?php esc_attr_e( 'See client details', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="user icon"></i> <a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" class="ui small"><?php echo esc_html( stripslashes( $website->client_name ) ); ?></a></small>
 							</div>
@@ -397,7 +397,7 @@ class MainWP_Manage_Screenshots {
 							<?php if ( $hasSyncErrors ) : ?>
 								<a class="ui mini green basic icon button fluid mainwp_site_card_reconnect" site-id="<?php echo intval( $website->id ); ?>" href="#"><i class="sync alternate icon"></i> <?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 							<?php else : ?>
-							<div data-tooltip="<?php esc_html_e( 'Last Sync: ', 'mainwp' ); ?> <?php echo 0 != $website->dtsSync ? esc_html( MainWP_Utility::format_timestamp( MainWP_Utility::format_timestamp( $website->dtsSync ) ) ) : ''; ?>" data-inverted="" data-position="bottom center">
+							<div data-tooltip="<?php esc_html_e( 'Last Sync: ', 'mainwp' ); ?> <?php echo 0 !== $website->dtsSync ? esc_html( MainWP_Utility::format_timestamp( MainWP_Utility::format_timestamp( $website->dtsSync ) ) ) : ''; ?>" data-inverted="" data-position="bottom center">
 								<a href="javascript:void(0)" class="ui mini green icon button fluid mainwp-sync-this-site" site-id="<?php echo intval( $website->id ); ?>"><i class="sync alternate icon"></i> <?php esc_html_e( 'Sync Site ', 'mainwp' ); ?></a>
 							</div>
 							<?php endif; ?>
@@ -468,8 +468,8 @@ class MainWP_Manage_Screenshots {
 								<div><?php echo esc_html__( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you a preview of URLs.', 'mainwp' ); ?></div>
 							</div>
 							<select name="mainwp_sitesviewmode" id="mainwp_sitesviewmode" class="ui dropdown">
-								<option value="table" <?php echo ( 'table' == $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Table', 'mainwp' ); ?></option>
-								<option value="grid" <?php echo ( 'grid' == $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Grid', 'mainwp' ); ?></option>
+								<option value="table" <?php echo ( 'table' === $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Table', 'mainwp' ); ?></option>
+								<option value="grid" <?php echo ( 'grid' === $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Grid', 'mainwp' ); ?></option>
 							</select>
 						</div>
 					</div>
@@ -543,10 +543,10 @@ class MainWP_Manage_Screenshots {
 		$perPage = 9999;
 		$start   = 0;
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$get_saved_state = ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] ) && ! isset( $_REQUEST['client'] );
 		$get_all         = ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && empty( $_REQUEST['g'] ) && empty( $_REQUEST['client'] ) ? true : false;
-		$is_not          = ( isset( $_REQUEST['isnot'] ) && 'yes' == $_REQUEST['isnot'] ) ? true : false;
+		$is_not          = ( isset( $_REQUEST['isnot'] ) && 'yes' === $_REQUEST['isnot'] ) ? true : false;
 
 		$site_status = '';
 
@@ -637,7 +637,7 @@ class MainWP_Manage_Screenshots {
 				}
 			}
 		}
-		// phpcs:enable WordPress.Security.NonceVerification
+		// phpcs:enable
 
 		$params = array(
 			'selectgroups' => true,
@@ -695,5 +695,4 @@ class MainWP_Manage_Screenshots {
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
 		return $websites;
 	}
-
 }

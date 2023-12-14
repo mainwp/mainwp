@@ -18,7 +18,11 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 
-	/** @var $instance Singleton MainWP_Post_Backup_Handler. */
+	/**
+	 * Instance class.
+	 *
+	 * @var $instance Singleton MainWP_Post_Backup_Handler.
+	 */
 	private static $instance = null;
 
 	/**
@@ -28,7 +32,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * @return self $instance MainWP_Post_Backup_Handler.
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -82,14 +86,14 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Run backup task of site
 	 *
-	 * @throws MainWP_Exception on errors.
+	 * @throws MainWP_Exception On errors.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_backup_run_site() {
 		$this->secure_request( 'mainwp_backup_run_site' );
-		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		try {
 			if ( ! $site_id ) {
 				throw new MainWP_Exception( 'Site ID not found. Please reload the page and try again.', 'mainwp' );
@@ -116,21 +120,21 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Run backup task
 	 *
-	 * @throws MainWP_Exception on errors.
+	 * @throws MainWP_Exception On errors.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_backup() {
 		$this->secure_request( 'mainwp_backup' );
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
 				throw new MainWP_Exception( 'Site ID not found. Please reload the page and try again.', 'mainwp' );
 			}
 
-			$excludedFolder = isset( $_POST['exclude'] ) ? trim( $_POST['exclude'], "\n" ) : '';
+			$excludedFolder = isset( $_POST['exclude'] ) ? trim( wp_unslash( $_POST['exclude'] ), "\n" ) : '';
 			$excludedFolder = explode( "\n", $excludedFolder );
 			$excludedFolder = array_map( array( MainWP_Utility::get_class_name(), 'trim_slashes' ), $excludedFolder );
 			$excludedFolder = array_map( 'htmlentities', $excludedFolder );
@@ -174,14 +178,14 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Check backup task
 	 *
-	 * @throws MainWP_Exception on errors.
+	 * @throws MainWP_Exception On errors.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup_check_pid()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_backup_checkpid() {
 		$this->secure_request( 'mainwp_backup_checkpid' );
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
@@ -212,14 +216,14 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Download backup file
 	 *
-	 * @throws MainWP_Exception on errors.
+	 * @throws MainWP_Exception On errors.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup_download_file()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_backup_download_file() {
 		$this->secure_request( 'mainwp_backup_download_file' );
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
@@ -249,14 +253,14 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Delete backup file
 	 *
-	 * @throws MainWP_Exception on errors.
+	 * @throws MainWP_Exception On errors.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup_delete_file()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_backup_delete_file() {
 		$this->secure_request( 'mainwp_backup_delete_file' );
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
@@ -287,7 +291,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Get create backup file size.
 	 *
-	 * @throws \Exception on errors.
+	 * @throws \Exception On errors.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
@@ -297,7 +301,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_createbackup_getfilesize() {
 		$this->secure_request( 'mainwp_createbackup_getfilesize' );
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		try {
 			if ( ! isset( $_POST['siteId'] ) ) {
 				throw new \Exception( esc_html__( 'No site selected!', 'mainwp' ) );
@@ -353,7 +357,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_backup_getfilesize' );
 
 		try {
-			$local = isset( $_POST['local'] ) ? sanitize_text_field( wp_unslash( $_POST['local'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+			$local = isset( $_POST['local'] ) ? sanitize_text_field( wp_unslash( $_POST['local'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			die( wp_json_encode( array( 'result' => MainWP_Backup_Handler::backup_get_file_size( $local ) ) ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
@@ -374,7 +378,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Check upload status
 	 *
-	 * @throws MainWP_Exception on errors.
+	 * @throws MainWP_Exception On errors.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
@@ -382,9 +386,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_backup_upload_checkstatus' );
 
 		try {
-			$unique = isset( $_POST['unique'] ) ? sanitize_text_field( wp_unslash( $_POST['unique'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+			$unique = isset( $_POST['unique'] ) ? sanitize_text_field( wp_unslash( $_POST['unique'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$array  = get_option( 'mainwp_upload_progress' );
-			$info   = apply_filters( 'mainwp_remote_destination_info', array(), ( isset( $_POST['remote_destination'] ) ? sanitize_text_field( wp_unslash( $_POST['remote_destination'] ) ) : '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
+			$info   = apply_filters( 'mainwp_remote_destination_info', array(), ( isset( $_POST['remote_destination'] ) ? sanitize_text_field( wp_unslash( $_POST['remote_destination'] ) ) : '' ) ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 			if ( ! is_array( $array ) || empty( $unique ) || empty( $array[ $unique ] ) || empty( $array[ $unique ]['dts'] ) ) {
 				die(
@@ -404,9 +408,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 						)
 					)
 				);
-			} else {
+			} elseif ( isset( $array[ $unique ]['dts'] ) && intval( $array[ $unique ]['dts'] ) < ( time() - ( 2 * 60 ) ) ) {
 
-				if ( isset( $array[ $unique ]['dts'] ) && intval( $array[ $unique ]['dts'] ) < ( time() - ( 2 * 60 ) ) ) { // 2minutes.
+				// 2minutes.
 					die(
 						wp_json_encode(
 							array(
@@ -415,16 +419,15 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 							)
 						)
 					);
-				} else {
-					die(
-						wp_json_encode(
-							array(
-								'status' => 'busy',
-								'info'   => $info,
-							)
+			} else {
+				die(
+					wp_json_encode(
+						array(
+							'status' => 'busy',
+							'info'   => $info,
 						)
-					);
-				}
+					)
+				);
 			}
 		} catch ( MainWP_Exception $e ) {
 			die(
@@ -443,9 +446,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	/**
 	 * Method mainwp_backup_upload_getprogress()
 	 *
-	 * Get progress status
+	 * Get progress status.
 	 *
-	 * @throws MainWP_Exception on finished or errors.
+	 * @throws MainWP_Exception On finished or errors.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
@@ -454,7 +457,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 
 		try {
 			$array  = get_option( 'mainwp_upload_progress' );
-			$unique = isset( $_POST['unique'] ) ? sanitize_text_field( wp_unslash( $_POST['unique'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+			$unique = isset( $_POST['unique'] ) ? sanitize_text_field( wp_unslash( $_POST['unique'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 			if ( ! is_array( $array ) || ! isset( $array[ $unique ] ) ) {
 				die( wp_json_encode( array( 'result' => 0 ) ) );
@@ -556,7 +559,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_backuptask_get_sites() {
 		$this->secure_request( 'mainwp_backuptask_get_sites' );
 
-		$taskID = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		$taskID = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		wp_send_json( array( 'result' => MainWP_Manage_Backups_Handler::get_backup_task_sites( $taskID ) ) );
 	}
@@ -566,7 +569,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Run backup task of site.
 	 *
-	 * @throws MainWP_Exception on errors.
+	 * @throws MainWP_Exception On errors.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::backup()
@@ -574,13 +577,13 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_backuptask_run_site() {
 		try {
 			$this->secure_request( 'mainwp_backuptask_run_site' );
-			$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
-			$task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+			$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			if ( ! $site_id || ! $task_id ) {
 				throw new MainWP_Exception( esc_html__( 'Site ID or backup task ID not found. Please reload the page and try again.', 'mainwp' ) );
 			}
 
-			$fileNameUID = isset( $_POST['fileNameUID'] ) ? sanitize_text_field( wp_unslash( $_POST['fileNameUID'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification
+			$fileNameUID = isset( $_POST['fileNameUID'] ) ? sanitize_text_field( wp_unslash( $_POST['fileNameUID'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			wp_send_json( array( 'result' => MainWP_Manage_Backups_Handler::backup( $task_id, $site_id, $fileNameUID ) ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
@@ -601,7 +604,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Check backup status.
 	 *
-	 * @throws \Exception on errors.
+	 * @throws \Exception On errors.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Updates_Overview::check_backups()
 	 */

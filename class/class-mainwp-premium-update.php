@@ -154,20 +154,20 @@ class MainWP_Premium_Update {
 			$check_premi_themes  = array();
 
 			if ( 'stats' === $what ) {
-				if ( '' != $website->plugins ) {
+				if ( '' !== $website->plugins ) {
 					$check_premi_plugins = json_decode( $website->plugins, 1 );
 				}
-				if ( '' != $website->themes ) {
+				if ( '' !== $website->themes ) {
 					$check_premi_themes = json_decode( $website->themes, 1 );
 				}
 			} elseif ( 'upgradeplugintheme' === $what ) {
 				$update_type = ( isset( $params['type'] ) ) ? $params['type'] : '';
 				if ( 'plugin' === $update_type ) {
-					if ( '' != $website->plugins ) {
+					if ( '' !== $website->plugins ) {
 						$check_premi_plugins = json_decode( $website->plugins, 1 );
 					}
 				} elseif ( 'theme' === $update_type ) {
-					if ( '' != $website->themes ) {
+					if ( '' !== $website->themes ) {
 						$check_premi_themes = json_decode( $website->themes, 1 );
 					}
 				}
@@ -199,14 +199,14 @@ class MainWP_Premium_Update {
 	 *
 	 * Check if any updates are on the premiums list.
 	 *
-	 * @param array  $list List of updates.
+	 * @param array  $list_items List of updates.
 	 * @param string $type Type of update. plugin|theme.
 	 *
 	 * @return bool true|false.
 	 */
-	public static function check_request_update_premium( $list, $type ) {
+	public static function check_request_update_premium( $list_items, $type ) {
 
-		$updates = explode( ',', $list );
+		$updates = explode( ',', $list_items );
 
 		if ( ! is_array( $updates ) || empty( $updates ) ) {
 			return false;
@@ -305,15 +305,15 @@ class MainWP_Premium_Update {
 	 *
 	 * @param mixed $website Child Site to update.
 	 * @param mixed $type Type of update, plugin|theme.
-	 * @param mixed $list list of plugins & themes installed.
+	 * @param mixed $list_items list of plugins & themes installed.
 	 *
 	 * @return mixed null|true.
 	 */
-	public static function request_premiums_update( $website, $type, $list ) {
+	public static function request_premiums_update( $website, $type, $list_items ) {
 		if ( 'plugin' === $type ) {
-			$where_url = 'plugins.php?_request_update_premiums_type=plugin&list=' . $list;
+			$where_url = 'plugins.php?_request_update_premiums_type=plugin&list=' . $list_items;
 		} elseif ( 'theme' === $type ) {
-			$where_url = 'update-core.php?_request_update_premiums_type=theme&list=' . $list;
+			$where_url = 'update-core.php?_request_update_premiums_type=theme&list=' . $list_items;
 		} else {
 			return null;
 		}

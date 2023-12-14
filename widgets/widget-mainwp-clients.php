@@ -91,25 +91,25 @@ class MainWP_Clients {
 							</td>
 							<td class="left aligned middle aligned">
 							<span><a href="admin.php?page=ManageClients&client_id=<?php echo intval( $client['client_id'] ); ?>"><?php echo esc_html( $client['name'] ); ?></a></span><br/>
-							<?php if ( isset( $client['client_email'] ) && '' != $client['client_email'] ) : ?>
+							<?php if ( isset( $client['client_email'] ) && '' !== $client['client_email'] ) : ?>
 								<span class="ui small text"><a href="mailto:<?php echo esc_attr( $client['client_email'] ); ?>"><i class="envelope icon"></i> <?php echo esc_html( $client['client_email'] ); ?></a></span><br/>
 							<?php endif; ?>
-							<?php if ( isset( $client['client_phone'] ) && '' != $client['client_phone'] ) : ?>
+							<?php if ( isset( $client['client_phone'] ) && '' !== $client['client_phone'] ) : ?>
 								<span class="ui small text"><a href="tel:<?php echo esc_attr( $client['client_phone'] ); ?>"><i class="phone alternate icon"></i> <?php echo esc_html( $client['client_phone'] ); ?></a></span>
 							<?php endif; ?>
 							</td>
 							<td class="left aligned middle aligned">
 								<?php
 								$contact = false;
-								if ( isset( $client['primary_contact_id'] ) && '' != $client['primary_contact_id'] ) {
+								if ( isset( $client['primary_contact_id'] ) && '' !== $client['primary_contact_id'] ) {
 									$contact = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', $client['primary_contact_id'] );
 									if ( $contact ) {
 										?>
-									<span><?php echo esc_html( $contact->contact_name ); ?> <?php echo ( isset( $contact->contact_role ) && '' != $contact->contact_role ) ? ' - ' . esc_html( $contact->contact_role ) : ''; ?></span><br/>
-										<?php if ( isset( $contact->contact_email ) && '' != $contact->contact_email ) : ?>
+									<span><?php echo esc_html( $contact->contact_name ); ?> <?php echo ( isset( $contact->contact_role ) && '' !== $contact->contact_role ) ? ' - ' . esc_html( $contact->contact_role ) : ''; ?></span><br/>
+										<?php if ( isset( $contact->contact_email ) && '' !== $contact->contact_email ) : ?>
 										<span class="ui small text"><a href="mailto:<?php echo esc_attr( $contact->contact_email ); ?>"><i class="envelope icon"></i> <?php echo esc_html( $contact->contact_email ); ?></a></span><br/>
 									<?php endif; ?>
-										<?php if ( isset( $contact->contact_phone ) && '' != $contact->contact_phone ) : ?>
+										<?php if ( isset( $contact->contact_phone ) && '' !== $contact->contact_phone ) : ?>
 										<span class="ui small text"><a href="tel:<?php echo esc_attr( $contact->contact_phone ); ?>"><i class="phone alternate icon"></i> <?php echo esc_html( $contact->contact_phone ); ?></a></span>
 									<?php endif; ?>
 										<?php
@@ -179,5 +179,4 @@ class MainWP_Clients {
 			</div>
 			<?php
 	}
-
 }

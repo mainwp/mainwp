@@ -34,7 +34,7 @@ class MainWP_System_Utility {
 	 * @return MainWP_Post_Handler
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -67,11 +67,46 @@ class MainWP_System_Utility {
 		 * @global string
 		 */
 		global $current_user;
-		if ( 0 === $current_user->ID ) {
+		if ( empty( $current_user->ID ) ) {
 			return false;
 		}
 
-		if ( 10 == $current_user->wp_user_level || ( isset( $current_user->user_level ) && 10 == $current_user->user_level ) || current_user_can( 'level_10' ) ) {
+		if ( ( property_exists( $current_user, 'wp_user_level' ) && 10 === (int) $current_user->wp_user_level ) || ( isset( $current_user->user_level ) && 10 === (int) $current_user->user_level ) || self::current_user_has_role( 'administrator' ) ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Method current_user_has_role()
+	 *
+	 * Check if the user has role.
+	 *
+	 * @param array|string $roles role or array of roles to check.
+	 * @param object|null  $user user check.
+	 *
+	 * @return bool true|false If the user is administrator (Level 10), return true, if not, return false.
+	 */
+	public static function current_user_has_role( $roles, $user = null ) {
+
+		if ( null === $user ) {
+			$user = wp_get_current_user();
+		}
+
+		if ( empty( $user ) || empty( $user->ID ) ) {
+			return false;
+		}
+
+		if ( is_string( $roles ) ) {
+			$allowed_roles = array( $roles );
+		} elseif ( is_array( $roles ) ) {
+			$allowed_roles = $roles;
+		} else {
+			return false;
+		}
+
+		if ( array_intersect( $allowed_roles, $user->roles ) ) {
 			return true;
 		}
 
@@ -98,13 +133,11 @@ class MainWP_System_Utility {
 	 *
 	 * Check if user wants to recieve MainWP Notification Emails.
 	 *
-	 * @param null $user User Email Address.
-	 *
 	 * @return mixed null|User Email Address.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
 	 */
-	public static function get_notification_email( $user = null ) {
+	public static function get_notification_email() {
 		return get_option( 'admin_email' );
 	}
 
@@ -152,6 +185,55 @@ class MainWP_System_Utility {
 	}
 
 	/**
+	 * Method touch().
+	 *
+	 * If the file does not exist, it will be created.
+	 *
+	 * @param string $filename File name.
+	 */
+	public static function touch( $filename ) {
+		$hasWPFileSystem = self::get_wp_file_system();
+		/**
+		 * WordPress files system object.
+		 *
+		 * @global object
+		 */
+		global $wp_filesystem;
+		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
+			if ( ! $wp_filesystem->exists( $filename ) ) {
+				$wp_filesystem->touch( $filename );
+			}
+		} elseif ( ! file_exists( $filename ) ) { //phpcs:ignore -- ok.
+			touch( $filename ); //phpcs:ignore -- ok.
+		}
+	}
+
+	/**
+	 * Method is_writable().
+	 *
+	 * @param string $file The file.
+	 */
+	public static function is_writable( $file ) {
+		$hasWPFileSystem = self::get_wp_file_system();
+		/**
+		 * WordPress files system object.
+		 *
+		 * @global object
+		 */
+		global $wp_filesystem;
+
+		$is_writable = true;
+		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
+			if ( ! $wp_filesystem->is_writable( $file ) ) {
+				$is_writable = false;
+			}
+		} elseif ( ! is_writable( $file ) ) { //phpcs:ignore -- ok.
+			$is_writable = false;
+		}
+		return $is_writable;
+	}
+
+	/**
 	 * Method get_mainwp_dir()
 	 *
 	 * Get the MainWP directory,
@@ -182,7 +264,7 @@ class MainWP_System_Utility {
 			$wp_filesystem->touch( $dir . 'index.php' );
 		}
 
-		if ( null != $subdir && ! stristr( $subdir, '..' ) ) {
+		if ( ! empty( $subdir ) && ! stristr( $subdir, '..' ) ) {
 			$newdir = $dir . $subdir . DIRECTORY_SEPARATOR;
 			$url    = $url . $subdir . '/';
 
@@ -197,10 +279,8 @@ class MainWP_System_Utility {
 				if ( $wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
 					$wp_filesystem->delete( trailingslashit( $newdir ) . '.htaccess' );
 				}
-			} else {
-				if ( ! $wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
+			} elseif ( ! $wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
 					$wp_filesystem->put_contents( trailingslashit( $newdir ) . '.htaccess', 'deny from all' );
-				}
 			}
 			return array( $newdir, $url );
 		}
@@ -329,7 +409,7 @@ class MainWP_System_Utility {
 		$dirs = self::get_mainwp_dir();
 
 		$newdir = $dirs[0] . $userid;
-		if ( '/' == $dir || null === $dir ) {
+		if ( '/' === $dir || null === $dir ) {
 			$newdir .= DIRECTORY_SEPARATOR;
 		} else {
 			$newdir .= DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR;
@@ -341,7 +421,7 @@ class MainWP_System_Utility {
 				$wp_filesystem->mkdir( $newdir, 0777 );
 			}
 
-			if ( null != $dirs[0] . $userid && ! $wp_filesystem->exists( trailingslashit( $dirs[0] . $userid ) . '.htaccess' ) ) {
+			if ( ! empty( $dirs[0] ) . $userid && ! $wp_filesystem->exists( trailingslashit( $dirs[0] . $userid ) . '.htaccess' ) ) {
 				$file_htaccess = trailingslashit( $dirs[0] . $userid ) . '.htaccess';
 				$wp_filesystem->put_contents( $file_htaccess, 'deny from all' );
 			}
@@ -351,7 +431,7 @@ class MainWP_System_Utility {
 				mkdir( $newdir, 0777, true );
 			}
 
-			if ( null != $dirs[0] . $userid && ! file_exists( trailingslashit( $dirs[0] . $userid ) . '.htaccess' ) ) {
+			if ( ! empty( $dirs[0] ) . $userid && ! file_exists( trailingslashit( $dirs[0] . $userid ) . '.htaccess' ) ) {
 				$file = fopen( trailingslashit( $dirs[0] . $userid ) . '.htaccess', 'w+' );
 				fwrite( $file, 'deny from all' );
 				fclose( $file );
@@ -485,7 +565,7 @@ class MainWP_System_Utility {
 	 * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
 	 */
 	public static function can_edit_website( &$website ) {
-		if ( null == $website ) {
+		if ( empty( $website ) ) {
 			return false;
 		}
 
@@ -500,7 +580,7 @@ class MainWP_System_Utility {
 		 */
 		global $current_user;
 
-		return ( $website->userid == $current_user->ID );
+		return ( $website->userid === $current_user->ID );
 	}
 
 	/**
@@ -543,7 +623,7 @@ class MainWP_System_Utility {
 					$tag  = trim( $tag );
 					$tagx = MainWP_DB_Common::instance()->get_group_by_name( $tag );
 
-					if ( is_object( $tagx ) && '' != $tagx->color ) {
+					if ( is_object( $tagx ) && '' !== $tagx->color ) {
 						$tag_a_style = 'style="color:#fff!important;opacity:1;"';
 						$tag_style   = 'style="background-color:' . esc_html( $tagx->color ) . '"';
 					} else {
@@ -738,7 +818,7 @@ class MainWP_System_Utility {
 	 * @return mixed $data.
 	 */
 	public static function maybe_unserialyze( $data ) {
-		if ( '' == $data || is_array( $data ) ) {
+		if ( empty( $data ) || is_array( $data ) ) {
 			return $data;
 		} elseif ( is_serialized( $data ) ) {
 			// phpcs:ignore -- for compatability.
@@ -759,12 +839,8 @@ class MainWP_System_Utility {
 		if ( defined( 'MAINWP_CRYPT_RSA_OPENSSL_CONFIG' ) ) {
 			return MAINWP_CRYPT_RSA_OPENSSL_CONFIG;
 		}
-
-		$setup_conf_loc = '';
-		if ( get_option( 'mainwp_opensslLibLocation' ) != '' ) {
-			$setup_conf_loc = get_option( 'mainwp_opensslLibLocation' );
-		}
-		return $setup_conf_loc;
+		$lib_loc = get_option( 'mainwp_opensslLibLocation' );
+		return ! empty( $lib_loc ) ? $lib_loc : '';
 	}
 
 	/**
@@ -784,7 +860,7 @@ class MainWP_System_Utility {
 		);
 
 		$site_info = MainWP_DB::instance()->get_website_option( $site, 'site_info' );
-		$site_info = ( '' != $site_info ) ? json_decode( $site_info, true ) : array();
+		$site_info = ! empty( $site_info ) ? json_decode( $site_info, true ) : array();
 
 		if ( is_array( $site_info ) ) {
 			$map_site_tokens = array(
@@ -805,15 +881,15 @@ class MainWP_System_Utility {
 	 *
 	 * Replace site tokens.
 	 *
-	 * @param string $string String data.
+	 * @param string $str String data.
 	 * @param array  $replace_tokens array of tokens.
 	 *
 	 * @return string content with replaced tokens.
 	 */
-	public static function replace_tokens_values( $string, $replace_tokens ) {
+	public static function replace_tokens_values( $str, $replace_tokens ) {
 		$tokens = array_keys( $replace_tokens );
 		$values = array_values( $replace_tokens );
-		return str_replace( $tokens, $values, $string );
+		return str_replace( $tokens, $values, $str );
 	}
 
 	/**
@@ -926,7 +1002,6 @@ class MainWP_System_Utility {
 				'downloadlink'  => false,
 				'last_updated'  => false,
 				'homepage'      => false,
-				'tags'          => false,
 				'compatibility' => false,
 				'ratings'       => false,
 				'added'         => false,
@@ -941,7 +1016,6 @@ class MainWP_System_Utility {
 				'downloaded'       => false,
 				'download_link'    => false,
 				'last_updated'     => false,
-				'homepage'         => false,
 				'tags'             => false,
 				'template'         => false,
 				'parent'           => false,
@@ -1027,7 +1101,7 @@ class MainWP_System_Utility {
 		if ( empty( $slug ) ) {
 			return false;
 		}
-		if ( 'plugin' == $type || 'theme' == $type ) {
+		if ( 'plugin' === $type || 'theme' === $type ) {
 			return self::fetch_wp_org_icons( $slug, $type );
 		}
 		return '';
@@ -1244,7 +1318,7 @@ class MainWP_System_Utility {
 			'png',
 		);
 
-		$upload_ok = ( false === $file_subindex ) ? ( UPLOAD_ERR_OK == $file_uploader['error'][ $file_index ] ) : ( UPLOAD_ERR_OK == $file_uploader['error'][ $file_index ][ $file_subindex ] );
+		$upload_ok = ( false === $file_subindex ) ? ( UPLOAD_ERR_OK === $file_uploader['error'][ $file_index ] ) : ( UPLOAD_ERR_OK === $file_uploader['error'][ $file_index ][ $file_subindex ] );
 
 		if ( $upload_ok ) {
 			$tmp_file = ( false === $file_subindex ) ? ( $file_uploader['tmp_name'][ $file_index ] ) : ( $file_uploader['tmp_name'][ $file_index ][ $file_subindex ] );
@@ -1299,7 +1373,7 @@ class MainWP_System_Utility {
 							if ( ! $cropped_file || is_wp_error( $cropped_file ) ) {
 								$output['error'][] = 9;
 							} else {
-								unlink( $dest_file );
+								wp_delete_file( $dest_file );
 								$filename = basename( $cropped_file );
 								$filepath = $cropped_file;
 							}
@@ -1350,7 +1424,7 @@ class MainWP_System_Utility {
 			return '';
 		}
 		$wphost = MainWP_DB::instance()->get_website_option( $website, 'wphost' );
-		if ( ! empty( $wphost ) && ( 'flywheel' != $wphost && 'pressable' != $wphost ) ) {
+		if ( ! empty( $wphost ) && ( 'flywheel' !== $wphost && 'pressable' !== $wphost ) ) {
 			$wphost = '';
 		}
 		return empty( $wphost ) ? '' : $wphost;
@@ -1391,7 +1465,7 @@ class MainWP_System_Utility {
 
 		if ( empty( $alg ) ) {
 			$site_info = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
-			$site_info = ( '' != $site_info ) ? json_decode( $site_info, true ) : array();
+			$site_info = ! empty( $site_info ) ? json_decode( $site_info, true ) : array();
 			if ( is_array( $site_info ) && ! empty( $site_info['child_version'] ) ) {
 				if ( version_compare( $site_info['child_version'], '4.5', '>=' ) ) {
 					$alg = $default_alg;
@@ -1417,15 +1491,15 @@ class MainWP_System_Utility {
 	 */
 	public static function is_valid_supported_sign_alg( $alg ) {
 		$valid = false;
-		if ( defined( 'OPENSSL_ALGO_SHA1' ) && OPENSSL_ALGO_SHA1 == $alg ) {
+		if ( defined( 'OPENSSL_ALGO_SHA1' ) && OPENSSL_ALGO_SHA1 === $alg ) {
 			$valid = true;
-		} elseif ( defined( 'OPENSSL_ALGO_SHA224' ) && OPENSSL_ALGO_SHA224 == $alg ) {
+		} elseif ( defined( 'OPENSSL_ALGO_SHA224' ) && OPENSSL_ALGO_SHA224 === $alg ) {
 			$valid = true;
-		} elseif ( defined( 'OPENSSL_ALGO_SHA256' ) && OPENSSL_ALGO_SHA256 == $alg ) {
+		} elseif ( defined( 'OPENSSL_ALGO_SHA256' ) && OPENSSL_ALGO_SHA256 === $alg ) {
 			$valid = true;
-		} elseif ( defined( 'OPENSSL_ALGO_SHA384' ) && OPENSSL_ALGO_SHA384 == $alg ) {
+		} elseif ( defined( 'OPENSSL_ALGO_SHA384' ) && OPENSSL_ALGO_SHA384 === $alg ) {
 			$valid = true;
-		} elseif ( defined( 'OPENSSL_ALGO_SHA512' ) && OPENSSL_ALGO_SHA512 == $alg ) {
+		} elseif ( defined( 'OPENSSL_ALGO_SHA512' ) && OPENSSL_ALGO_SHA512 === $alg ) {
 			$valid = true;
 		}
 		return $valid;
@@ -1482,5 +1556,4 @@ class MainWP_System_Utility {
 		);
 		return $data_fields;
 	}
-
 }

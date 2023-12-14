@@ -32,7 +32,7 @@ class MainWP_Common_Handler {
 	 * @return self::$instance
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -63,14 +63,14 @@ class MainWP_Common_Handler {
 
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			$wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-			$wp_upgrades = ( '' != $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+			$wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
 			if ( $website->is_ignoreCoreUpdates ) {
 				$wp_upgrades = array();
 			}
 
 			if ( is_array( $wp_upgrades ) && count( $wp_upgrades ) > 0 ) {
-				$total_wp_upgrades ++;
+				++$total_wp_upgrades;
 			}
 
 			$translation_upgrades = json_decode( $website->translation_upgrades, true );
@@ -86,13 +86,13 @@ class MainWP_Common_Handler {
 			}
 
 			$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-			$decodedPremiumUpgrades = ( '' != $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+			$decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 
 			if ( is_array( $decodedPremiumUpgrades ) ) {
 				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 					$premiumUpgrade['premium'] = true;
 
-					if ( 'plugin' == $premiumUpgrade['type'] ) {
+					if ( 'plugin' === $premiumUpgrade['type'] ) {
 						if ( ! is_array( $plugin_upgrades ) ) {
 							$plugin_upgrades = array();
 						}
@@ -105,7 +105,7 @@ class MainWP_Common_Handler {
 
 							$plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
 						}
-					} elseif ( 'theme' == $premiumUpgrade['type'] ) {
+					} elseif ( 'theme' === $premiumUpgrade['type'] ) {
 						if ( ! is_array( $theme_upgrades ) ) {
 							$theme_upgrades = array();
 						}
@@ -164,10 +164,10 @@ class MainWP_Common_Handler {
 			);
 		} else {
 			$data = array(
-				'total'        => $total_upgrades,
-				'wp'           => $total_wp_upgrades,
-				'plugins'      => $total_plugin_upgrades,
-				'themes'       => $total_theme_upgrades,
+				'total'   => $total_upgrades,
+				'wp'      => $total_wp_upgrades,
+				'plugins' => $total_plugin_upgrades,
+				'themes'  => $total_theme_upgrades,
 			);
 		}
 
@@ -175,7 +175,6 @@ class MainWP_Common_Handler {
 
 		return $data;
 	}
-
 }
 
 // End of class.

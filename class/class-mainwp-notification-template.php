@@ -360,7 +360,7 @@ class MainWP_Notification_Template {
 		}
 
 		if ( ! empty( $templ_base_name ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'save-email-template' ) ) {
-			$template_code = isset( $_POST[ 'edit_' . $type . '_code' ] ) ? sanitize_text_field( wp_unslash( $_POST[ 'edit_' . $type . '_code' ] ) ) : '';
+			$template_code = isset( $_POST[ 'edit_' . $type . '_code' ] ) ? wp_unslash( $_POST[ 'edit_' . $type . '_code' ] ) : ''; //phpcs:ignore -- saving template content.
 			$updated       = $this->save_template( $template_code, $templ_base_name );
 			if ( $updated ) {
 				$updated_templ = 3;
@@ -389,7 +389,7 @@ class MainWP_Notification_Template {
 		if ( current_user_can( 'edit_themes' ) && ! empty( $template_code ) && ! empty( $template ) ) {
 			$saved = false;
 			$file  = $this->template_custom_path . $template;
-			$code  = $template_code;
+			$code  = str_replace( PHP_EOL, '', $template_code ); // to fix issue create extra line breaks in custom template file.
 
 			$is_writable = MainWP_System_Utility::is_writable( $file );
 			// phpcs:disable WordPress.WP.AlternativeFunctions

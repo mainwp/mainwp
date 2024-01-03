@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.4.2
 Requires PHP: 7.4
-Stable tag: 4.6-RC1
+Stable tag: 4.6
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -302,12 +302,14 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 4.6-RC1 - 12-14-2023 =
-* Refactored: Updated and optimized the plugin codebase to align with the latest WordPress coding standards, ensuring improved compatibility and performance.
+= 4.6 - 1-3-2024 =
+* Refactored: Updated and optimized the plugin codebase to align with the latest WordPress coding standards, contributing to better compatibility and performance.
 * Fixed: An issue with the status icon not displaying correctly during the Re-establish Connection process, enhancing the user's ability to monitor connection status effectively.
-* Fixed: The absence of "Next Run" information in the Cron Schedules table, ensuring complete and accurate scheduling data is visible.
-* Fixed: The display and functionality of the Clients table length menu, ensuring a smoother user interaction when adjusting table views.
+* Fixed: The absence of "Next Run" information in the Cron Schedules table, providing complete and accurate scheduling data is visible.
+* Fixed: The display and functionality of the Clients table length menu, offering a smoother user interaction when adjusting table views.
 * Fixed: Issues with overlapping tooltip elements in the "Add New" dropdown menu items, improving clarity and usability of the navigation interface.
+
+[See Video Changelog](https://www.youtube.com/watch?v=_wmDS3_c_T0)
 
 = 4.5.3.2 - 11-27-2023 =
 * Fixed: An issue where the SEOPress for MainWP extension was incorrectly marked as not installed in the Install Extensions modal.

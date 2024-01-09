@@ -213,18 +213,20 @@ class MainWP_Server_Information_Handler {
 		if ( ! empty( $conf_loc ) ) {
 			$conf['config'] = $conf_loc;
 		}
-		$errors = array();
+		$errors             = array();
+		$general_verify_con = (int) get_option( 'mainwp_verify_connection_method', 0 );
+		if ( 2 !== $general_verify_con ) {
+			if ( function_exists( 'openssl_pkey_new' ) ) {
+				$res = openssl_pkey_new( $conf );
+				openssl_pkey_export( $res, $privkey, null, $conf );
 
-		if ( function_exists( 'openssl_pkey_new' ) ) {
-			$res = openssl_pkey_new( $conf );
-			openssl_pkey_export( $res, $privkey, null, $conf );
-
-			$error = '';
-			while ( ( $errorRow = openssl_error_string() ) !== false ) {
-				$error = $errorRow . "\n" . $error;
-			}
-			if ( ! empty( $error ) ) {
-				$errors[] = $error;
+				$error = '';
+				while ( ( $errorRow = openssl_error_string() ) !== false ) {
+					$error = $errorRow . "\n" . $error;
+				}
+				if ( ! empty( $error ) ) {
+					$errors[] = $error;
+				}
 			}
 		}
 
@@ -240,7 +242,10 @@ class MainWP_Server_Information_Handler {
 
 		$ok = false;
 
-		if ( function_exists( 'openssl_verify' ) && function_exists( 'openssl_pkey_new' ) ) {
+		$general_verify_con = (int) get_option( 'mainwp_verify_connection_method', 0 );
+		if ( 2 === $general_verify_con ) {
+			$ok = 1;
+		} elseif ( function_exists( 'openssl_verify' ) && function_exists( 'openssl_pkey_new' ) ) {
 
 			$conf = array(
 				'private_key_bits' => 2048,

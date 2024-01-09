@@ -118,14 +118,14 @@ class MainWP_Connect_Lib {
 	public static function is_use_fallback_sec_lib( $website ) {
 		$use_fallback_lib = false;
 		if ( is_object( $website ) && property_exists( $website, 'verify_method' ) ) {
-			if ( ! empty( $website->verify_method ) ) {
-				$val = (int) $website->verify_method;
-				if ( 2 === $val ) {
-					$use_fallback_lib = true;
-				} elseif ( 3 === $val ) { // general settings.
-					$use_fallback_lib = ( 2 === (int) get_option( 'mainwp_verify_connection_method' ) ) ? true : false;
-				}
+			$val = (int) $website->verify_method;
+			if ( 2 === $val ) {
+				$use_fallback_lib = true;
+			} elseif ( 3 === $val || empty( $val ) ) { // use general settings.
+				$use_fallback_lib = ( 2 === (int) get_option( 'mainwp_verify_connection_method' ) ) ? true : false;
 			}
+		} else {
+			$use_fallback_lib = ( 2 === (int) get_option( 'mainwp_verify_connection_method' ) ) ? true : false;
 		}
 		return $use_fallback_lib;
 	}

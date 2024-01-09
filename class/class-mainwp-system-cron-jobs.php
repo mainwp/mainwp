@@ -82,7 +82,7 @@ class MainWP_System_Cron_Jobs {
 	public function init_cron() {
 
 		// Check wether or not to use MainWP Cron false|1.
-		$useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( get_option( 'mainwp_wp_cron' ) === 1 );
+		$useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( (int) get_option( 'mainwp_wp_cron' ) === 1 );
 
 		// Default Cron Jobs.
 		$jobs = array(
@@ -355,7 +355,7 @@ class MainWP_System_Cron_Jobs {
 
 		$local_timestamp = MainWP_Utility::get_timestamp();
 
-		$frequencyDailyUpdate = get_option( 'mainwp_frequencyDailyUpdate', 1 );
+		$frequencyDailyUpdate = (int) get_option( 'mainwp_frequencyDailyUpdate', 1 );
 		if ( $frequencyDailyUpdate <= 0 ) {
 			$frequencyDailyUpdate = 1;
 		}
@@ -1036,7 +1036,7 @@ class MainWP_System_Cron_Jobs {
 				return;
 			}
 
-			if ( 1 !== $mainwpAutomaticDailyUpdate && 1 !== $plugin_automaticDailyUpdate && 1 !== $theme_automaticDailyUpdate ) {
+			if ( 1 !== (int) $mainwpAutomaticDailyUpdate && 1 !== (int) $plugin_automaticDailyUpdate && 1 !== (int) $theme_automaticDailyUpdate ) {
 				return;
 			}
 

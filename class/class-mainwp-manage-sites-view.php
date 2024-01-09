@@ -1519,7 +1519,7 @@ class MainWP_Manage_Sites_View {
 			try {
 				if ( $sync_first ) {
 					$success = MainWP_Sync::sync_site( $website, true );
-					if ( ! $success ) {
+					if ( ! $success && ! MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) { // fix sign algo in case not use phpseclib.
 						// to compatible.
 						$alg = is_object( $website ) && property_exists( $website, 'signature_algo' ) && ! empty( $website->signature_algo ) ? $website->signature_algo : false;
 						if ( empty( $alg ) && is_object( $website ) ) {

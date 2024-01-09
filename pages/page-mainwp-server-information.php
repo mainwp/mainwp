@@ -978,7 +978,7 @@ class MainWP_Server_Information {
 
 		$local_timestamp = MainWP_Utility::get_timestamp();
 
-		$freq = get_option( 'mainwp_frequencyDailyUpdate' );
+		$freq = (int) get_option( 'mainwp_frequencyDailyUpdate' );
 		if ( $freq <= 0 ) {
 			$freq = 1;
 		}

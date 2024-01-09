@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.4.2
 Requires PHP: 7.4
-Stable tag: 4.6
+Stable tag: 4.6.0.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -301,6 +301,12 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 10. Manage Clients Screen
 
 == Changelog ==
+
+= 4.6.0.1 - 1-10-2024 =
+* Fixed: Issues with broken cron jobs, ensuring that scheduled tasks are executed reliably and efficiently.
+* Fixed: Implementation of PHPSecLib in localhost environments.
+* Fixed: A problem with SSL verification when using PHPSecLib, to improve security and stability during SSL communications.
+* Fixed: Incorrect firing of the automated check for available updates, ensuring automatic updates perform correctly.
 
 = 4.6 - 1-3-2024 =
 * Refactored: Updated and optimized the plugin codebase to align with the latest WordPress coding standards, contributing to better compatibility and performance.

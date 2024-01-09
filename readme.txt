@@ -302,7 +302,7 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 4.6.0.1 - 1-10-2024 =
+= 4.6.0.1 - 1-9-2024 =
 * Fixed: Issues with broken cron jobs, ensuring that scheduled tasks are executed reliably and efficiently.
 * Fixed: Implementation of PHPSecLib in localhost environments.
 * Fixed: A problem with SSL verification when using PHPSecLib, to improve security and stability during SSL communications.

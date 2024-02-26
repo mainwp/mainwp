@@ -8,6 +8,7 @@
  * @since  4.2.7.1
  */
 
+/* eslint complexity: ["error", 100] */
 
 jQuery(document).ready(function () {
 
@@ -2278,8 +2279,8 @@ plesk_action_restore_backup = function () {
                 })
                 ;
 
-           // Stop button animation.
-			jQuery(button).removeClass('disabled loading');
+            // Stop button animation.
+            jQuery(button).removeClass('disabled loading');
 
         } else {
             jQuery('#backups_site_toast').addClass('red')
@@ -2291,7 +2292,7 @@ plesk_action_restore_backup = function () {
                 })
                 ;
 
-           // Stop button animation.
+            // Stop button animation.
             jQuery(button).removeClass('disabled loading');
         }
     });

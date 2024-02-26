@@ -930,7 +930,7 @@ class Api_Backups_3rd_Party {
 													 * Grab home directory & build download directory.
 													 * Eg.: /home/cpanel_username/wordpress-backups/
 													 */
-													$home_dir = self::cPanel_action_get_home_directory();
+													$home_dir = self::cpanel_action_get_home_directory();
 													$dirdl    = $home_dir . '/wordpress-backups/';
 												?>
 												<button class="ui mini icon button mainwp_3rd_party_api_<?php echo esc_attr( $backup_api ); ?>_action_download_wptk_backup item"
@@ -1850,11 +1850,11 @@ class Api_Backups_3rd_Party {
 		$response = array();
 		// Basic Error reporting. ( should wrap in try catch MainWP Exceptions call during code refactoring ).
 		$httpCode = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
-		if ( ( $httpCode != '201' ) && ( $httpCode != '200' ) && ( $httpCode != '202' ) && ( $httpCode != '204' ) ) {
+		if ( ( '201' !== $httpCode ) && ( '200' !== $httpCode ) && ( '202' !== $httpCode ) && ( '204' !== $httpCode ) ) {
 			$decode_resp = json_decode( $resp );
 			$error       = $decode_resp->error;
 			if ( ! $not_die ) { // die when error.
-				die( 'Code: ' . $httpCode . ' - ' . $error );
+				die( 'Code: ' . esc_html( $httpCode ) . ' - ' . esc_html( $error ) );
 			} else {
 				$response['response'] = $decode_resp;
 				$response['status']   = false;
@@ -3689,9 +3689,9 @@ class Api_Backups_3rd_Party {
 	 *
 	 * Grab cPanel Home Directory for manual backup links.
 	 *
-	 * @return void
+	 * @return string
 	 */
-	public static function cPanel_action_get_home_directory() {
+	public static function cpanel_action_get_home_directory() {
 
 		// Authenticate cPanel account.
 		$cpanel_authentication_credentials = self::get_cpanel_authentication_credentials();
@@ -3757,6 +3757,8 @@ class Api_Backups_3rd_Party {
 	 *
 	 * Create manual database backup via mysqldump.
 	 * Backups will be stored within `/uploads/mainwp/api_db_backups` directory.
+	 * 
+	 * @param int $website_id Website ID.
 	 *
 	 * @return false|string cPanel account backups
 	 */
@@ -3806,6 +3808,8 @@ class Api_Backups_3rd_Party {
 	 * CPanel: Action refresh available WP-Toolit backups.
 	 *
 	 * Save backups to DB for the selected server.
+	 *
+	 * @param int $website_id Website id.
 	 *
 	 * @return array
 	 */
@@ -3994,7 +3998,7 @@ class Api_Backups_3rd_Party {
 						// If WP Toolkit is enabled, create WP Toolkit backup.
 					if ( 'on' === $mainwp_enable_wp_toolkit ) {
 						$cpanel_wptk_backup_response = self::cpanel_action_create_wptk_backup( true );
-						if ( $cpanel_wptk_backup_response['httpCode'] != '201' && $cpanel_wptk_backup_response['httpCode'] != '200' && $cpanel_wptk_backup_response['httpCode'] != '204' ) {
+						if ( '201' !== $cpanel_wptk_backup_response['httpCode'] && '200' !== $cpanel_wptk_backup_response['httpCode'] && '204' !== $cpanel_wptk_backup_response['httpCode'] ) {
 							wp_die( 'There was an issue while creating the Database backup. Please check logs and try again.' );
 						} else {
 							// Return true for WP-Toolkit backup.
@@ -4023,7 +4027,7 @@ class Api_Backups_3rd_Party {
 	 * @param bool $ret_val Return output or not.
 	 * @param int  $website_id Website ID.
 	 *
-	 * @return void | array
+	 * @return mixed
 	 */
 	public static function ajax_cpanel_action_create_database_backup( $ret_val = false, $website_id = null ) {
 
@@ -4066,7 +4070,7 @@ class Api_Backups_3rd_Party {
 	 * @param bool $ret_val Return output or not.
 	 * @param int  $website_id Website ID.
 	 *
-	 * @return void | array
+	 * @return mixed
 	 */
 	public static function cpanel_action_create_manual_backup( $ret_val = false, $website_id = null ) {
 
@@ -4135,9 +4139,9 @@ class Api_Backups_3rd_Party {
 		$wp_toolkit_installation_list         = self::call_cpanel_api( 'GET', '/3rdparty/wpt/index.php/v1/installations?sortBy=title&sortOrder=asc', $cpanel_baseurl, $cpanel_username, $cpanel_password );
 		$wp_toolkit_installation_list_decoded = json_decode( $wp_toolkit_installation_list['response'] );
 
-		if ( $wp_toolkit_installation_list['httpCode'] != '201' && $wp_toolkit_installation_list['httpCode'] != '200' && $wp_toolkit_installation_list['httpCode'] != '204' ) {
+		if ( '201' !== $wp_toolkit_installation_list['httpCode'] && '200' !== $wp_toolkit_installation_list['httpCode'] && '204' !== $wp_toolkit_installation_list['httpCode'] ) {
 			$error = $wp_toolkit_installation_list_decoded->meta->message;
-			wp_die( $error );
+			wp_die( esc_html( $error ) );
 		} elseif ( is_array( $wp_toolkit_installation_list_decoded ) ) {
 			foreach ( $wp_toolkit_installation_list_decoded as $site ) {
 				if ( $site->url === $website_url ) {
@@ -4159,7 +4163,7 @@ class Api_Backups_3rd_Party {
 		$wp_toolkit_backup_response_decoded = is_array( $wp_toolkit_backup_response ) && ! empty( $wp_toolkit_backup_response['response'] ) ? json_decode( $wp_toolkit_backup_response['response'] ) : '';
 
 		$error = '';
-		if ( $wp_toolkit_backup_response['httpCode'] != '201' && $wp_toolkit_backup_response['httpCode'] != '200' && $wp_toolkit_backup_response['httpCode'] != '204' ) {
+		if ( '201' !== $wp_toolkit_backup_response['httpCode'] && '200' !== $wp_toolkit_backup_response['httpCode'] && '204' !== $wp_toolkit_backup_response['httpCode'] ) {
 			$error = ! empty( $wp_toolkit_backup_response_decoded ) && ! empty( $wp_toolkit_backup_response_decoded->meta->message ) ? $wp_toolkit_backup_response_decoded->meta->message : '';
 		} else {
 			// Save Timestamp.
@@ -4212,9 +4216,9 @@ class Api_Backups_3rd_Party {
 		$wp_toolkit_installation_list         = self::call_cpanel_api( 'GET', '/3rdparty/wpt/index.php/v1/installations?sortBy=title&sortOrder=asc', $cpanel_baseurl, $cpanel_username, $cpanel_password );
 		$wp_toolkit_installation_list_decoded = json_decode( $wp_toolkit_installation_list['response'] );
 
-		if ( $wp_toolkit_installation_list['httpCode'] != '201' && $wp_toolkit_installation_list['httpCode'] != '200' && $wp_toolkit_installation_list['httpCode'] != '204' ) {
+		if ( '201' !== $wp_toolkit_installation_list['httpCode'] && '200' !== $wp_toolkit_installation_list['httpCode'] && '204' !== $wp_toolkit_installation_list['httpCode'] ) {
 			$error = $wp_toolkit_installation_list_decoded->meta->message;
-			wp_die( $error );
+			wp_die( esc_html( $error ) );
 		} elseif ( is_array( $wp_toolkit_installation_list_decoded ) ) {
 			foreach ( $wp_toolkit_installation_list_decoded as $site ) {
 				if ( $site->url === $website_url ) {
@@ -4241,7 +4245,7 @@ class Api_Backups_3rd_Party {
 
 		if ( '201' !== $wp_toolkit_backup_response['httpCode'] && '200' !== $wp_toolkit_backup_response['httpCode'] && '204' !== $wp_toolkit_backup_response['httpCode'] ) {
 			$error = $wp_toolkit_backup_response_decoded->meta->message;
-			wp_die( $error );
+			wp_die( esc_html( $error ) );
 		} else {
 			wp_send_json( 'true' );
 		}
@@ -4286,9 +4290,9 @@ class Api_Backups_3rd_Party {
 		$wp_toolkit_installation_list         = self::call_cpanel_api( 'GET', '/3rdparty/wpt/index.php/v1/installations?sortBy=title&sortOrder=asc', $cpanel_baseurl, $cpanel_username, $cpanel_password );
 		$wp_toolkit_installation_list_decoded = json_decode( $wp_toolkit_installation_list['response'] );
 
-		if ( $wp_toolkit_installation_list['httpCode'] != '201' && $wp_toolkit_installation_list['httpCode'] != '200' && $wp_toolkit_installation_list['httpCode'] != '204' ) {
+		if ( '201' !== $wp_toolkit_installation_list['httpCode'] && '200' !== $wp_toolkit_installation_list['httpCode'] && '204' !== $wp_toolkit_installation_list['httpCode'] ) {
 			$error = $wp_toolkit_installation_list_decoded->meta->message;
-			wp_die( $error );
+			wp_die( esc_html( $error ) );
 		} elseif ( is_array( $wp_toolkit_installation_list_decoded ) ) {
 			foreach ( $wp_toolkit_installation_list_decoded as $site ) {
 				if ( $site->url === $website_url ) {
@@ -4450,7 +4454,7 @@ class Api_Backups_3rd_Party {
 
 		$backup_full_path = $backup_path . '/' . $backup_id;
 
-		// Send Payload & create backup. https://{host}:{port}/execute/Backup/restore_databases?backup=database_file_name.sql.gz
+		// Send Payload & create backup. https://{host}:{port}/execute/Backup/restore_databases?backup=database_file_name.sql.gz.
 		$api_response = self::call_cpanel_api( 'POST', '/execute/Backup/restore_databases?backup=' . $backup_full_path, $cpanel_baseurl, $cpanel_username, $cpanel_password );
 
 		// Return AJAX.
@@ -4495,7 +4499,7 @@ class Api_Backups_3rd_Party {
 		 * Backup directory: /home/{cpanel-user}
 		 * Backup full path: /home/{cpanel-user}/backup-1.4.2024_17-45-59_cpanel-user.tar.gz
 		 *
-		 * https://{host}:{port}/execute/Backup/restore_files?backup=/home/{cpanel-user}/backup-1.4.2024_17-45-59_cpanel-user.tar.gz&directory=/home/{cpanel-user}
+		 * https://{host}:{port}/execute/Backup/restore_files?backup=/home/{cpanel-user}/backup-1.4.2024_17-45-59_cpanel-user.tar.gz&directory=/home/{cpanel-user}.
 		 */
 		$backup_full_path = $backup_path . '/' . $backup_id;
 		$directory        = $backup_path;

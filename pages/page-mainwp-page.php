@@ -1369,7 +1369,12 @@ class MainWP_Page {
 	public static function posting() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		$succes_message = '';
 		$post_id        = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$edit_id        = 0;
+
+		if ( ! isset( $_GET['posting_nonce'] ) || ( isset( $_GET['posting_nonce'] ) && ! wp_verify_nonce( sanitize_key( $_POST['posting_nonce'] ), 'posting_nonce_' . $post_id ) ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+			wp_die( 'Invalid request!' );
+		}
+
+		$edit_id = 0;
 		if ( $post_id ) {
 			$edit_id = get_post_meta( $post_id, '_mainwp_edit_post_id', true );
 			$edit_id = intval( $edit_id );

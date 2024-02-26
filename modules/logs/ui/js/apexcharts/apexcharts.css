@@ -540,7 +540,7 @@
   max-width: 176px;
   text-align: right;
   border-radius: 3px;
-  padding: 0px 6px 2px 6px;
+  padding: 0px 6px 2px;
   display: flex;
   justify-content: space-between;
   align-items: center;

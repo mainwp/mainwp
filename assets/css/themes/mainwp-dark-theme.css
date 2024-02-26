@@ -151,7 +151,7 @@ body.mainwp-ui.mainwp-custom-theme,
   background-color: var( --background-color-3 );
 }
 .mainwp-ui.mainwp-custom-theme #mainwp-page-navigation-wrapper .menu .item {
-  padding: 21px 21px;
+  padding: 21px;
   color: var(--font-color);
 }
 

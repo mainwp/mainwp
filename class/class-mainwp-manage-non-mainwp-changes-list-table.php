@@ -225,7 +225,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table {
 	/**
 	 * Prepare the items to be listed.
 	 */
-	public function prepare_items() {
+	public function prepare_items() { //phpcs:ignore -- complex method.
 
 		$orderby = '';
 

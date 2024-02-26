@@ -958,7 +958,7 @@ class MainWP_Extensions_Groups {
 	 *
 	 * @return void
 	 */
-	public static function render_extensions_groups() {
+	public static function render_extensions_groups() { //phpcs:ignore -- complex method.
 
 		$get_ext_group = array();
 

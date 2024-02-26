@@ -329,7 +329,7 @@ class MainWP_Menu {
 	 * @param array  $menus_items menus items.
 	 * @param string $part menus part.
 	 */
-	public static function init_mainwp_menu_items( $menus_items, $part ) {
+	public static function init_mainwp_menu_items( $menus_items, $part ) { //phpcs:ignore -- complex method.
 		if ( ! is_array( $menus_items ) ) {
 			return;
 		}
@@ -550,7 +550,7 @@ class MainWP_Menu {
 	 *
 	 * @return array $mainwp_leftmenu[] | $mainwp_sub_leftmenu[].
 	 */
-	public static function add_left_menu( $params = array(), $level = 1 ) {
+	public static function add_left_menu( $params = array(), $level = 1 ) { //phpcs:ignore -- complex method.
 
 		if ( empty( $params ) ) {
 			return;
@@ -1336,7 +1336,7 @@ class MainWP_Menu {
 	 *
 	 * @param mixed $parent_key The parent key.
 	 */
-	public static function render_sub_item( $parent_key ) {
+	public static function render_sub_item( $parent_key ) { //phpcs:ignore -- complex method.
 		if ( empty( $parent_key ) ) {
 			return;
 		}

@@ -373,7 +373,7 @@ class Log_Events_List_Table {
 	 * @param bool  $with_prev_data To get previous data.
 	 * @param array $insights_filters Insights filters.
 	 */
-	public function prepare_items( $with_prev_data = false, $insights_filters = array() ) {
+	public function prepare_items( $with_prev_data = false, $insights_filters = array() ) { //phpcs:ignore -- complex method.
 
 		$req_orderby = '';
 		$req_order   = null;

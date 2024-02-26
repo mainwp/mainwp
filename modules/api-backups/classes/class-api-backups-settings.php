@@ -118,7 +118,7 @@ class Api_Backups_Settings {
 	}
 
 	/** Render 3rd-Party API Manager `Settings` SubPage */
-	public static function render_3rd_party_api_manager() {
+	public static function render_3rd_party_api_manager() { //phpcs:ignore -- complex method.
 		?>
 		<div id="3rd-party-api-manager">
 			<div class="ui segment">
@@ -658,7 +658,7 @@ class Api_Backups_Settings {
 	 *
 	 * @return void
 	 */
-	public function hook_mainwp_update_site( $website_id ) {
+	public function hook_mainwp_update_site( $website_id ) { //phpcs:ignore -- complex method.
 		/**
 		 * 3rd-Party Backup API Provider Settings.
 		 *
@@ -742,7 +742,7 @@ class Api_Backups_Settings {
 	 * @param mixed $website Website.
 	 * @return mixed
 	 */
-	public function hook_render_mainwp_manage_sites_edit( $website ) {
+	public function hook_render_mainwp_manage_sites_edit( $website ) { //phpcs:ignore -- complex method.
 
 		if ( empty( $website ) ) {
 			return;

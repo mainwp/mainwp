@@ -1786,7 +1786,7 @@ cpanel_action_delete_wptk_backup = function (pObj) {
 };
 
 // Download Backup.
-cpanel_action_download_wptk_backup = function (pObj) {
+cpanel_action_download_wptk_backup = function () {
 
     var href = jQuery('.mainwp_3rd_party_api_cpanel_action_download_wptk_backup').attr('href');
     window.open(href, '_blank');
@@ -1994,7 +1994,7 @@ cpanel_action_restore_database_backup = function (pObj) {
 };
 
 // restore Backup.
-cpanel_action_restore_manual_backup = function (pObj) {
+cpanel_action_restore_manual_backup = function () {
 
     var websiteId = jQuery('#cpanel_automatic_backup_button').attr('website_id');
     var backupID = jQuery('#database_backup_button').attr('backup_name');
@@ -2245,7 +2245,7 @@ plesk_action_create_backup = function (pObj) {
 };
 
 // Restore backups.
-plesk_action_restore_backup = function (pObj) {
+plesk_action_restore_backup = function () {
 
     //jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').attr('disabled', 'true');
     var button = jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').closest('td');
@@ -2298,8 +2298,7 @@ plesk_action_restore_backup = function (pObj) {
 };
 
 // Delete backups.
-plesk_action_delete_backup = function (pObj) {
-
+plesk_action_delete_backup = function () {
     jQuery('.mainwp_3rd_party_api_plesk_action_delete_backup').attr('disabled', 'true');
     var button = jQuery('.mainwp_3rd_party_api_plesk_action_delete_backup').closest('td');
 

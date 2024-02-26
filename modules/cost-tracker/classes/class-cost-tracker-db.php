@@ -184,7 +184,7 @@ PRIMARY KEY  (`id`)  '; }
 	 *
 	 * @return mixed Result
 	 */
-	public function get_cost_tracker_by( $by = 'id', $value = null, $params = array() ) {
+	public function get_cost_tracker_by( $by = 'id', $value = null, $params = array() ) { //phpcs:ignore -- complex method.
 		global $wpdb;
 
 		if ( ! is_array( $params ) ) {
@@ -300,7 +300,7 @@ PRIMARY KEY  (`id`)  '; }
 	 *
 	 * @return mixed Result
 	 */
-	public function get_cost_tracker_info_of_clients( $client_ids, $params = array() ) {
+	public function get_cost_tracker_info_of_clients( $client_ids, $params = array() ) { //phpcs:ignore -- complex method.
 
 		if ( is_string( $client_ids ) ) {
 			$client_ids = explode( ',', $client_ids );
@@ -441,7 +441,7 @@ PRIMARY KEY  (`id`)  '; }
 	 *
 	 * @return mixed Result
 	 */
-	public function get_cost_trackers_info_of_sites( $sites_ids ) {
+	public function get_cost_trackers_info_of_sites( $sites_ids ) { //phpcs:ignore -- complex method.
 
 		if ( is_string( $sites_ids ) ) {
 			$sites_ids = explode( ',', $sites_ids );

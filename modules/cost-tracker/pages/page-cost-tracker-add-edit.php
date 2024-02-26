@@ -85,7 +85,7 @@ class Cost_Tracker_Add_Edit {
 	 *
 	 * @param int $edit_id Cost Id to edit.
 	 */
-	public function render_add_edit_content( $edit_id ) {
+	public function render_add_edit_content( $edit_id ) { //phpcs:ignore -- complex method.
 
 		$edit_cost                    = false;
 		$selected_payment_type        = '';

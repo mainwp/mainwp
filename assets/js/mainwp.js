@@ -3717,7 +3717,7 @@ mainwp_non_mainwp_actions_dismiss_specific = function (pObj, selector, pBulk) {
 
 
 // fix menu overflow with scroll tables.
-mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight, pLeft) {
+mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight) {
   var fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');
   jQuery(document).on('click', 'table td.check-column.dtr-control', function () {
     if (jQuery(this).parent().hasClass('parent')) {

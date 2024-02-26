@@ -201,7 +201,7 @@ class Api_Backups_Utility {
 	 *
 	 * @return mixed
 	 */
-	public static function save_lasttime_backup( $site_id, $available_backups, $backup_api ) {
+	public static function save_lasttime_backup( $site_id, $available_backups, $backup_api ) { //phpcs:ignore -- complex method.
 
 		self::log_debug( 'save backup time :: [available backups=' . ( is_string( $available_backups ) ? $available_backups : 'is not string' ) . ']' );
 

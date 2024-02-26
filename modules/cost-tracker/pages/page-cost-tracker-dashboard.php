@@ -342,7 +342,7 @@ class Cost_Tracker_Dashboard {
 	 * @param array $subscriptions Subscriptions data.
 	 * @param array $output Subscriptions output data.
 	 */
-	public function get_dashboard_table_row( $subscriptions, &$output = array() ) {
+	public function get_dashboard_table_row( $subscriptions, &$output = array() ) { //phpcs:ignore -- complex method.
 
 		$lifetime_costs = 0;
 		$yearly_costs   = 0;

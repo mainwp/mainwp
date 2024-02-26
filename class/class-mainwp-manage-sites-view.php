@@ -327,7 +327,7 @@ class MainWP_Manage_Sites_View {
 	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
-	private static function render_managesites_header( $site_pages, $managesites_pages, $subPages, $site_id, $shownPage ) {
+	private static function render_managesites_header( $site_pages, $managesites_pages, $subPages, $site_id, $shownPage ) { //phpcs:ignore -- complex method.
 
 		$renderItems = array();
 		if ( isset( $managesites_pages[ $shownPage ] ) ) {

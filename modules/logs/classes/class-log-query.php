@@ -29,7 +29,7 @@ class Log_Query {
 	 *
 	 * @return array Logs Records
 	 */
-	public function query( $args ) {
+	public function query( $args ) { //phpcs:ignore -- complex method.
 		global $wpdb;
 
 		$join  = '';

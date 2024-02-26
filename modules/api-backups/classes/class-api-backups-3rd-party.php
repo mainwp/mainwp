@@ -23,7 +23,7 @@ use MainWP\Dashboard\MainWP_Extensions_Handler;
  */
 class Api_Backups_3rd_Party {
 
-	//phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+	//phpcs:disable Generic.Metrics.CyclomaticComplexity,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 	/**
 	 * Public static variable to hold the single instance of the class.
 	 *
@@ -342,7 +342,7 @@ class Api_Backups_3rd_Party {
 	 *
 	 * @param mixed $website The Child Site Object.
 	 */
-	public function render_api_backups_site( $website ) {
+	public function render_api_backups_site( $website ) { //phpcs:ignore -- complex function.
 
 		$available_backups = array();
 

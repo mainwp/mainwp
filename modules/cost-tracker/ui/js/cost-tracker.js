@@ -9,25 +9,25 @@ mainwp_module_cost_tracker_valid_input_data = function () {
 	}
 
 	if (jQuery('#select_by').val() == 'site') {
-		jQuery("input[name='selected_sites[]']:checked").each(function (i) {
+		jQuery("input[name='selected_sites[]']:checked").each(function () {
 			selected_sites.push(jQuery(this).val());
 		});
 		if (selected_sites.length == 0) {
 			errors.push('Please select websites or groups or clients.');
 		}
 	} else if (jQuery('#select_by').val() == 'group') {
-		jQuery("input[name='selected_groups[]']:checked").each(function (i) {
+		jQuery("input[name='selected_groups[]']:checked").each(function () {
 			selected_groups.push(jQuery(this).val());
 		});
 		if (selected_groups.length == 0) {
-			errors.push('Please select websites or groups or clients.'); x
+			errors.push('Please select websites or groups or clients.');
 		}
 	} else if (jQuery('#select_by').val() == 'client') {
-		jQuery("input[name='selected_clients[]']:checked").each(function (i) {
+		jQuery("input[name='selected_clients[]']:checked").each(function () {
 			selected_clients.push(jQuery(this).val());
 		});
 		if (selected_clients.length == 0) {
-			errors.push('Please select websites or groups or clients.'); x
+			errors.push('Please select websites or groups or clients.');
 		}
 	}
 

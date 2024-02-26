@@ -55,6 +55,21 @@ class Log_Record {
 	 */
 	public $user_meta;
 
+
+	/**
+	 * Record log_site_name
+	 *
+	 * @var string
+	 */
+	public $log_site_name;
+
+	/**
+	 * Record url
+	 *
+	 * @var string
+	 */
+	public $url;
+
 	/**
 	 * Record item
 	 *
@@ -105,25 +120,33 @@ class Log_Record {
 	public $meta;
 
 	/**
+	 * Record extra_meta data
+	 *
+	 * @var array
+	 */
+	public $extra_meta;
+
+	/**
 	 * Class constructor
 	 *
-	 * @param object $item  Record data object.
+	 * @param object $log  Record data object.
 	 */
-	public function __construct( $item ) { //phpcs:ignore -- complex method.
-		$this->log_id    = isset( $item->log_id ) ? $item->log_id : null;
-		$this->created   = isset( $item->created ) ? $item->created : null;
-		$this->site_id   = isset( $item->site_id ) ? $item->site_id : null;
-		$this->name      = isset( $item->name ) ? $item->name : null;
-		$this->url       = isset( $item->url ) ? $item->url : null;
-		$this->user_id   = isset( $item->user_id ) ? $item->user_id : null;
-		$this->user_meta = isset( $item->meta['user_meta'] ) ? $item->meta['user_meta'] : null;
-		$this->item      = isset( $item->item ) ? $item->item : null;
-		$this->connector = isset( $item->connector ) ? $item->connector : null;
-		$this->context   = isset( $item->context ) ? $item->context : null;
-		$this->action    = isset( $item->action ) ? $item->action : null;
-		$this->state     = isset( $item->state ) ? $item->state : null;
-		$this->duration  = isset( $item->duration ) ? $item->duration : null;
-		$this->meta      = isset( $item->meta ) ? $item->meta : null;
+	public function __construct( $log ) { //phpcs:ignore -- complex method.
+		$this->log_id        = isset( $log->log_id ) ? $log->log_id : null;
+		$this->created       = isset( $log->created ) ? $log->created : null;
+		$this->site_id       = isset( $log->site_id ) ? $log->site_id : null;
+		$this->log_site_name = isset( $log->log_site_name ) ? $log->log_site_name : null;
+		$this->url           = isset( $log->url ) ? $log->url : null;
+		$this->user_id       = isset( $log->user_id ) ? $log->user_id : null;
+		$this->user_meta     = isset( $log->meta['user_meta'] ) ? $log->meta['user_meta'] : null;
+		$this->item          = isset( $log->item ) ? $log->item : null;
+		$this->connector     = isset( $log->connector ) ? $log->connector : null;
+		$this->context       = isset( $log->context ) ? $log->context : null;
+		$this->action        = isset( $log->action ) ? $log->action : null;
+		$this->state         = isset( $log->state ) ? $log->state : null;
+		$this->duration      = isset( $log->duration ) ? $log->duration : null;
+		$this->meta          = isset( $log->meta ) ? $log->meta : null;
+		$this->extra_meta    = isset( $log->extra_info ) ? $log->extra_info : null;
 
 		if ( isset( $this->meta['user_meta'] ) ) {
 			unset( $this->meta['user_meta'] );

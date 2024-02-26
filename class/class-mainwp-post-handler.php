@@ -1412,7 +1412,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		}
 
 		if ( empty( $error ) ) {
-			$error = __( 'Undefined error. Please try again.', 'mainwp' );
+			$error = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
 		}
 		wp_die( wp_json_encode( array( 'error' => $error ) ) );
 	}

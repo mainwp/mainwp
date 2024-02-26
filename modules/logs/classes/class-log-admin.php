@@ -39,11 +39,11 @@ class Log_Admin {
 	 */
 	public $screen_id = array();
 
-		/**
-		 * List table object
-		 *
-		 * @var List_Table
-		 */
+	/**
+	 * List table object
+	 *
+	 * @var List_Table
+	 */
 	public $list_table = null;
 
 	/**
@@ -71,18 +71,18 @@ class Log_Admin {
 		);
 
 		// Auto purge setup.
-		add_action( 'wp_loaded', array( $this, 'purge_schedule_setup' ) );
-		add_action(
-			'mainwp_module_log_auto_purge',
-			array(
-				$this,
-				'purge_scheduled_action',
-			)
-		);
+		add_action( 'wp_loaded', array( $this, 'hook_purge_scheduled_action' ) );
+		add_action( 'admin_init', array( $this, 'admin_init' ) );
+	}
 
+	/**
+	 * Handle admin_init action.
+	 */
+	public function admin_init() {
 		MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_display_rows', array( $this, 'ajax_display_rows' ) );
 		MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_delete_records', array( $this, 'ajax_delete_records' ) );
 		MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_compact_records', array( $this, 'ajax_compact_records' ) );
+		MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_events_display_rows', array( Log_Insights_Page::instance(), 'ajax_events_display_rows' ) );
 	}
 
 
@@ -139,10 +139,10 @@ class Log_Admin {
 	 * @return void
 	 */
 	public function admin_enqueue_scripts( $hook ) {
+		$script_screens = array( 'mainwp_page_InsightsOverview', 'mainwp_page_SettingsDashboardInsights', 'mainwp_page_SettingsInsights' );
 		wp_enqueue_style( 'mainwp-module-log-admin', $this->manager->locations['url'] . 'ui/css/admin.css', array(), $this->manager->get_version() );
-		$script_screens = array( 'plugins.php' );
 
-		if ( true || in_array( $hook, $script_screens, true ) ) {
+		if ( in_array( $hook, $script_screens, true ) ) {
 			wp_enqueue_script(
 				'mainwp-module-log-admin',
 				$this->manager->locations['url'] . 'ui/js/admin.js',
@@ -153,6 +153,20 @@ class Log_Admin {
 				$this->manager->get_version(),
 				false
 			);
+
+			if ( in_array( $hook, array( 'mainwp_page_InsightsOverview' ), true ) ) {
+				wp_enqueue_script(
+					'mainwp-module-log-apexcharts',
+					$this->manager->locations['url'] . 'ui/js/apexcharts/apexcharts.js',
+					array(
+						'jquery',
+						'mainwp',
+					),
+					$this->manager->get_version(),
+					true
+				);
+			}
+
 			wp_localize_script(
 				'mainwp-module-log-admin',
 				'mainwpModuleLog',
@@ -169,13 +183,11 @@ class Log_Admin {
 	 * Method ajax_display_rows()
 	 *
 	 * Display table rows, optimize for shared hosting or big networks.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_List_Table
 	 */
 	public function ajax_display_rows() {
 		MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_display_rows' );
 		$this->load_list_table();
-		$this->list_table->prepare_items( true );
+		$this->list_table->prepare_items();
 		$output = $this->list_table->ajax_get_datatable_rows();
 		MainWP_Logger::instance()->log_execution_time( 'ajax_display_rows()' );
 		wp_send_json( $output );
@@ -225,7 +237,6 @@ class Log_Admin {
 		wp_send_json( array( 'result' => 'SUCCESS' ) );
 	}
 
-
 	/**
 	 * Method load_sites_table()
 	 *
@@ -241,45 +252,44 @@ class Log_Admin {
 	 *
 	 * @return void
 	 */
-	public function purge_schedule_setup() {
+	public function hook_purge_scheduled_action() {
 		$enable_schedule = is_array( $this->manager->settings->options ) && ! empty( $this->manager->settings->options['enabled'] ) && ! empty( $this->manager->settings->options['auto_purge'] ) ? true : false;
 		if ( $enable_schedule ) {
-			if ( ! wp_next_scheduled( 'mainwp_module_log_auto_purge' ) ) {
-				wp_schedule_event( time(), 'twicedaily', 'mainwp_module_log_auto_purge' );
+			$last_purge = get_option( 'mainwp_module_log_last_time_auto_purge_logs' );
+			$next_purge = get_option( 'mainwp_module_log_next_time_auto_purge_logs' );
+			$days       = false;
+			if ( is_array( $this->manager->settings->options ) && isset( $this->manager->settings->options['records_ttl'] ) ) {
+				$days = intval( $this->manager->settings->options['records_ttl'] );
+			} else {
+				$days = 100;
 			}
-		} else {
-			$sched = wp_next_scheduled( 'mainwp_module_log_auto_purge' );
-			if ( $sched ) {
-				wp_unschedule_event( $sched, 'mainwp_module_log_auto_purge' );
+
+			if ( defined( 'MAINWP_MODULE_LOG_KEEP_RECORDS_TTL' ) && is_numeric( MAINWP_MODULE_LOG_KEEP_RECORDS_TTL ) && MAINWP_MODULE_LOG_KEEP_RECORDS_TTL > 0 ) {
+				$days = MAINWP_MODULE_LOG_KEEP_RECORDS_TTL;
+			}
+
+			if ( $days ) {
+				$time            = time();
+				$next_time_purge = false;
+				if ( false === $last_purge && false === $next_purge ) {
+					$next_purge = $time + $days * DAY_IN_SECONDS;
+				} elseif ( ! empty( $next_purge ) && $time > (int) $next_purge ) {
+					do_action( 'mainwp_log_action', 'module log :: purge logs schedule start.', MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY );
+
+					$end_time   = $time - $days * DAY_IN_SECONDS;
+					$start_time = ! empty( $last_purge ) ? $last_purge : $end_time - $days * DAY_IN_SECONDS;
+
+					$this->manager->db->create_compact_and_erase_records( false, $end_time );
+					update_option( 'mainwp_module_log_last_time_auto_purge_logs', $time );
+					$next_time_purge = $time + $days * DAY_IN_SECONDS;
+				}
+				if ( $next_time_purge ) {
+					update_option( 'mainwp_module_log_next_time_auto_purge_logs', $next_time_purge );
+				}
 			}
 		}
 	}
 
-	/**
-	 * Executes a scheduled purge
-	 *
-	 * @return void
-	 */
-	public function purge_scheduled_action() {
-
-		do_action( 'mainwp_log_action', 'CRON :: module log :: purge logs schedule start.', MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY );
-
-		if ( empty( $this->manager->settings->options['auto_purge'] ) ) {
-			return;
-		}
-		$days = isset( $this->manager->settings->options['records_ttl'] ) ? intval( $this->manager->settings->options['records_ttl'] ) : 100;
-
-		if ( defined( 'MAINWP_MODULE_LOG_KEEP_RECORDS_TTL' ) && is_numeric( MAINWP_MODULE_LOG_KEEP_RECORDS_TTL ) && MAINWP_MODULE_LOG_KEEP_RECORDS_TTL > 0 ) {
-			$days = MAINWP_MODULE_LOG_KEEP_RECORDS_TTL;
-		}
-
-		global $wpdb;
-
-		$end_time   = time();
-		$start_time = $end_time - $days * DAY_IN_SECONDS;
-
-		$this->manager->db->create_compact_and_erase_records( $start_time, $end_time );
-	}
 
 
 	/**
@@ -312,5 +322,28 @@ class Log_Admin {
 		set_transient( 'mainwp_module_log_transient_db_logs_size', $dbsize_mb, 15 * MINUTE_IN_SECONDS );
 
 		return $dbsize_mb;
+	}
+
+	/**
+	 * Get WP users.
+	 *
+	 * @return array Array of users.
+	 */
+	public function get_all_users() {
+		$list_users = array();
+		$all_users  = get_users();
+		if ( is_array( $all_users ) ) {
+			foreach ( $all_users as $user ) {
+				if ( empty( $user->ID ) ) {
+					continue;
+				}
+				$fields             = array();
+				$fields['id']       = $user->ID;
+				$fields['login']    = $user->user_login;
+				$fields['nicename'] = $user->user_nicename;
+				$list_users[]       = $fields;
+			}
+		}
+		return $list_users;
 	}
 }

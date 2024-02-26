@@ -35,20 +35,9 @@
 	}
 }
 
-@media only screen and ( min-width: 1140px ) and ( max-width: 1449px ) {
-	.mainwp-sync-button-icon {
-		display: inline-block !important;
-		margin: 0px !important;
-	}
-	.mainwp-sync-button-text  {
-		display: none !important;
-	}
-
-	#mainwp-add-new-buttons .ui.icon.button {
-		display: inline-block !important;
-	}
-	#mainwp-add-new-buttons .ui.button:not(.icon) {
-		display: none !important;
+@media only screen and ( min-width: 1360px ) and ( max-width: 1645px ) {
+	#mainwp-update-everything-button {
+		font-size: 14px;
 	}
 }
 
@@ -82,6 +71,21 @@
 
 }
 
+@media screen and ( min-width: 1200px ) {
+	#mainwp-get-purchased-extensions-modal {
+		width: 1210px;
+	}
+}
+
+@media screen and ( max-width: 1200px ) {
+	#mainwp-get-purchased-extensions-modal #mainwp-install-extensions-menu {
+		overflow-x: auto;
+		overflow-y: hidden;
+	}
+}
+
+
+
 @media screen and ( max-width: 1366px ) {
 
 	.mainwp-ui #mainwp-grid-wrapper {
@@ -107,8 +111,9 @@
 @media screen and ( max-width: 1140px ) {
 	.mainwp-content-wrap {
 		width: 100%;
-		margin: 0 !important;
+		margin-left: 0 !important;
 	}
+
 	/*--- Menu ---*/
 
 	#mainwp-main-navigation-container {
@@ -121,12 +126,32 @@
 		vertical-align: middle;
 	}
 
+	.mainwp-ui.toplevel_page_mainwp_tab.mainwp-ui-leftmenu .mainwp-content-wrap, .mainwp-ui.mainwp_page_Settings .mainwp-content-wrap, .mainwp-ui.mainwp_page_SettingsAdvanced .mainwp-content-wrap, .mainwp-ui.mainwp_page_SettingsEmail .mainwp-content-wrap, .mainwp-ui.mainwp_page_MainWPTools .mainwp-content-wrap, .mainwp-ui.mainwp_page_SettingsInsights .mainwp-content-wrap, .mainwp-ui.mainwp_page_SettingsApiBackups .mainwp-content-wrap, .mainwp-ui.mainwp_page_ServerInformation .mainwp-content-wrap, .mainwp-ui.mainwp_page_ServerInformationCron .mainwp-content-wrap, .mainwp-ui.mainwp_page_ErrorLog .mainwp-content-wrap, .mainwp-ui.mainwp_page_ActionLogs .mainwp-content-wrap, .mainwp-ui.mainwp_page_PluginPrivacy .mainwp-content-wrap, .mainwp-ui.mainwp-hidden-second-level-navigation.mainwp-ui-leftmenu .mainwp-content-wrap {
+		margin-left: 0 !important;
+	}
+
 	#mainwp-main-menu.ui.menu {
 		min-height: 0;
 	}
 }
 
 @media screen and ( max-width: 767px ) {
+
+	#mainwp-page-navigation-wrapper,
+	#mainwp-page-navigation-wrapper .mainwp-page-navigation {
+		display: block !important;
+		width: 100% !important;
+		float: none !important;
+		position: relative !important;
+		top: auto !important;
+		bottom: auto !important;
+	}
+
+	#mainwp-site-mode-wrap {
+		display: block !important;
+		width: 100% !important;
+		float: none !important;
+	}
 
 	.mainwp-ui .ui.five.cards > .card {
 		width: 100%;
@@ -216,6 +241,10 @@
 		display: none !important;
 	}
 
+	#mainwp-top-header .ui.icon.button#mainwp-sync-sites {
+		display: block !important;
+	}
+
 	#mainwp-top-header #mainwp-sync-sites {
 		display: block;
 		width: 100%;
@@ -302,14 +331,6 @@
 
 	.mainwp-manage-wpsites-table {
 		white-space: normal !important;
-	}
-
-	.mainwp-manage-wpsites-table tbody tr td.mainwp-site-cell,
-	.mainwp-manage-wpsites-table tbody tr td.mainwp-url-cell {
-		white-space: nowrap;
-	  overflow: hidden;
-	  text-overflow: ellipsis;
-	  max-width: 185px;
 	}
 
 	/*--- Groups ---*/

@@ -140,16 +140,7 @@ class MainWP_Client_Overview_Custom_Info {
 				</table>
 					<?php
 				} else {
-					?>
-					<h2 class="ui grey icon header">
-						<i class="info icon"></i>
-						<div class="content">
-							<?php echo esc_html__( 'No Custom Info Created', 'mainwp' ); ?>
-							<div class="ui hidden divider"></div>
-							<div class="sub header"><a href="admin.php?page=ClientAddField" title="" class="ui button basic green"><?php echo esc_html__( 'Add Custom Client Info', 'mainwp' ); ?></a></div>
-						</div>
-					</h2>
-					<?php
+					MainWP_UI::render_empty_element_placeholder();
 				}
 				?>
 				<?php

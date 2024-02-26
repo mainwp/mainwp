@@ -580,8 +580,6 @@ class MainWP_Client_Overview_Sites {
 
 		list( $columns ) = $this->get_column_info();
 
-		$use_favi = get_option( 'mainwp_use_favicon', 1 );
-
 		$http_error_codes = MainWP_Utility::get_http_codes();
 
 		foreach ( $columns as $column_name => $column_display_name ) {
@@ -593,9 +591,9 @@ class MainWP_Client_Overview_Sites {
 			<?php if ( 'status' === $column_name ) { ?>
 				<td class="center aligned collapsing">
 					<?php if ( $hasSyncErrors ) : ?>
-						<span data-tooltip="<?php esc_attr_e( 'Site appears to be disconnected. Click here to reconnect.', 'mainwp' ); ?>"  data-position="right center"  data-inverted=""><a class="mainwp_site_reconnect" href="#"><i class="circular inverted red unlink icon"></i></a></span>
+						<a class="mainwp_site_reconnect" href="#"><i class="circular inverted red unlink icon"></i></a>
 					<?php else : ?>
-						<span data-tooltip="<?php esc_attr_e( 'Site appears to be connected properly. Click here to sync the site.', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><a class="managesites_syncdata" href="#"><?php echo '1' === $website['suspended'] ? '<i class="pause circular yellow inverted circle icon"></i>' : '<i class="circular inverted green check icon"></i>'; ?></a></span>
+						<a class="managesites_syncdata" href="#"><?php echo '1' === $website['suspended'] ? '<i class="pause circular yellow inverted circle icon"></i>' : '<i class="circular inverted green check icon"></i>'; ?></a>
 					<?php endif; ?>
 				</td>
 				<?php

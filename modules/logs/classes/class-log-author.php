@@ -219,6 +219,8 @@ class Log_Author {
 			$agent = 'wp_cli';
 		} elseif ( $this->is_doing_wp_cron() ) {
 			$agent = 'wp_cron';
+		} elseif ( defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ) {
+			$agent = 'wp_rest_api';
 		}
 
 		/**
@@ -243,6 +245,8 @@ class Log_Author {
 			$label = esc_html__( 'via WP-CLI', 'mainwp' );
 		} elseif ( 'wp_cron' === $agent ) {
 			$label = esc_html__( 'during WP Cron', 'mainwp' );
+		} elseif ( 'wp_rest_api' === $agent ) {
+			$label = esc_html__( 'during WP REST API', 'mainwp' );
 		} else {
 			$label = '';
 		}

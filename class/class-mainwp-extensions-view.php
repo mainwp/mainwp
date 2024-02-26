@@ -15,6 +15,16 @@ namespace MainWP\Dashboard;
  * @package MainWP\Dashboard
  */
 class MainWP_Extensions_View {
+
+	/**
+	 * Get Class name.
+	 *
+	 * @return string __CLASS__.
+	 */
+	public static function get_class_name() {
+		return __CLASS__;
+	}
+
 	/**
 	 * Method init_menu()
 	 *
@@ -129,34 +139,39 @@ class MainWP_Extensions_View {
 		$is_demo          = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div id="mainwp-manage-extensions" class="ui alt segment">
-			<div class="mainwp-main-content">
-		<?php
-		self::render_incompatible_notice();
-		if ( $is_demo ) {
-			?>
-			<div class="ui yellow message">
-				<?php esc_html_e( 'Extensions are disabled in the Demo Mode.', 'mainwp' ); ?>
-				<i class="close icon"></i>
+			<div class="mainwp-extensions-api-loading" style="display:none">
+				<div class="ui active inverted page dimmer">
+					<div class="ui medium text loader"></div>
+				</div>
 			</div>
-			<?php
-		}
-		?>
-		<?php if ( 0 === count( $extensions ) && empty( $extensions_disabled ) ) { ?>
-				<?php self::render_intro_notice(); ?>
+			<div class="mainwp-main-content">
 				<?php
-		} else {
-			?>
-			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-extensions-info-message' ) ) { ?>
-					<div class="ui info message">
-						<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-extensions-info-message"></i>
-						<?php printf( esc_html__( 'Quickly access, install, and activate your MainWP extensions.  If you need additional help with managing your MainWP Extensions, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/category/getting-started/first-steps-with-extensions/" target="_blank">', '</a>' ); ?>
+				self::render_incompatible_notice();
+				if ( $is_demo ) {
+					?>
+					<div class="ui yellow message">
+						<?php esc_html_e( 'Extensions are disabled in the Demo Mode.', 'mainwp' ); ?>
+						<i class="close icon"></i>
 					</div>
-					<?php } ?>
-					<div class="ui segment" id="mainwp-extensions-search-no-results" style="display:none">
-						<div class="ui info message"><?php esc_html_e( 'Your search returned no results. The extension may need to be installed or does not exist.' ); ?></div>
-					</div>
-				<div class="ui four stackable cards" id="mainwp-extensions-list">
-			<?php if ( isset( $extensions ) && is_array( $extensions ) ) { ?>
+					<?php
+				}
+				?>
+				<?php if ( 0 === count( $extensions ) && empty( $extensions_disabled ) ) { ?>
+					<?php self::render_intro_notice(); ?>
+					<?php
+				} else {
+					?>
+					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-extensions-info-message' ) ) { ?>
+						<div class="ui info message">
+							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-extensions-info-message"></i>
+							<?php printf( esc_html__( 'Quickly access, install, and activate your MainWP extensions.  If you need additional help with managing your MainWP Extensions, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/category/getting-started/first-steps-with-extensions/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+						</div>
+						<?php } ?>
+						<div class="ui segment" id="mainwp-extensions-search-no-results" style="display:none">
+							<div class="ui info message"><?php esc_html_e( 'Your search returned no results. The extension may need to be installed or does not exist.' ); ?></div>
+						</div>
+					<div class="ui four stackable cards" id="mainwp-extensions-list">
+					<?php if ( isset( $extensions ) && is_array( $extensions ) ) { ?>
 							<?php foreach ( $extensions as $extension ) { ?>
 									<?php
 									if ( ! mainwp_current_user_have_right( 'extension', dirname( $extension['slug'] ) ) ) {
@@ -267,13 +282,11 @@ class MainWP_Extensions_View {
 		</div>
 
 		<div class="ui tiny second coupled modal" id="mainwp-privacy-info-modal">
+			<i class="close icon"></i>
 			<div class="header"></div>
 			<div class="content"></div>
-			<div class="actions">
-				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
-			</div>
 		</div>
-			<?php
+		<?php
 	}
 
 	/**
@@ -322,7 +335,7 @@ class MainWP_Extensions_View {
 			</div>
 			<a class="ui basic green button" href="https://mainwp.com/mainwp-extensions/" target="_blank"><?php esc_html_e( 'Browse All Extensions', 'mainwp' ); ?></a> <a class="ui green button" href="https://mainwp.com/free-vs-pro/" target="_blank"><?php esc_html_e( 'Free Vs. Pro', 'mainwp' ); ?></a> <a class="ui green button" href="https://mainwp.com/signup/" target="_blank"><?php esc_html_e( 'Get Pro', 'mainwp' ); ?></a>
 			<h2 class="header"><?php esc_html_e( 'How to install your MainWP Extensions?', 'mainwp' ); ?></h2>
-			<p><?php printf( esc_html__( 'Once you have ordered MainWP Extensions, you can either use the %1$sautomatic extension installation%2$s option or %3$smanual installation%4$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-extensions/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/my-downloads-and-api-keys/" target="_blank">', '</a>' ); ?></p>
+			<p><?php printf( esc_html__( 'Once you have ordered MainWP Extensions, you can either use the %1$sautomatic extension installation%2$s option or %3$smanual installation%4$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-extensions/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://kb.mainwp.com/docs/my-downloads-and-api-keys/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></p>
 		</div>
 		<?php
 	}
@@ -386,11 +399,12 @@ class MainWP_Extensions_View {
 	 * @param mixed $extension_update Extension update.
 	 * @param mixed $img_url Extension image.
 	 * @param mixed $disabled Disabled extension.
+	 * @param bool  $simple Simple info.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::is_extension_activated()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::polish_ext_name()
 	 */
-	public static function render_extension_card( $extension, $extension_update, $img_url, $disabled = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function render_extension_card( $extension, $extension_update, $img_url, $disabled = false, $simple = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		if ( isset( $extension['href'] ) && ! empty( $extension['href'] ) ) {
 			$extension_page_url = $extension['href'];
@@ -416,11 +430,6 @@ class MainWP_Extensions_View {
 
 			if ( ! isset( $extension['product_item_id'] ) ) {
 				$extension['product_item_id'] = 0;
-			}
-
-			if ( empty( $extension['product_item_id'] ) ) {
-				$active               = false;
-				$extension['api_key'] = '';
 			}
 		}
 
@@ -487,8 +496,9 @@ class MainWP_Extensions_View {
 					</div>
 
 					<div class="meta">
-				<?php echo '<i class="code branch icon"></i>' . esc_html( $extension['version'] ); ?> <?php echo ( isset( $extension['DocumentationURI'] ) && ! empty( $extension['DocumentationURI'] ) ) ? ' - <a href="' . esc_url( str_replace( array( 'http:', 'https:' ), '', $extension['DocumentationURI'] ) ) . '" target="_blank">' . esc_html__( 'Documentation', 'mainwp' ) . '</a>' : ''; ?>
+				<?php echo '<i class="code branch icon"></i>' . esc_html( $extension['version'] ); ?> <?php echo ( isset( $extension['DocumentationURI'] ) && ! empty( $extension['DocumentationURI'] ) ) ? ' - <a href="' . esc_url( str_replace( array( 'http:', 'https:' ), '', $extension['DocumentationURI'] ) ) . '" target="_blank">' . esc_html__( 'Documentation', 'mainwp' ) . '</a> <i class="external alternate icon"></i>' : ''; ?>
 				</div>
+				
 				<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
 					<?php if ( ! $active && ! $disabled ) { ?>
 						<span class="ui red ribbon label"><?php esc_html_e( 'License not activated', 'mainwp' ); ?></span>
@@ -497,11 +507,13 @@ class MainWP_Extensions_View {
 				<?php if ( isset( $extension_update->response[ $extension['slug'] ] ) ) { ?>
 					<a href="<?php echo esc_url( admin_url( 'plugins.php' ) ); ?>" class="ui yellow ribbon label"><?php esc_html_e( 'Update available', 'mainwp' ); ?></a>
 				<?php } ?>
+
 				<div class="description">
 					<?php echo esc_html( preg_replace( '/\<cite\>.*\<\/cite\>/', '', $extension['description'] ) ); ?>
 				</div>
 			</div>
 			<?php echo $new; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+			<?php if ( ! $simple ) { ?>
 			<div class="extra content">
 				<div class="ui mini fluid stackable buttons">
 					<a class="ui basic button extension-the-plugin-action" plugin-action="<?php echo $disabled ? 'active' : 'disable'; ?>"><?php echo $disabled ? '<i class="toggle on icon"></i> ' . esc_html__( 'Enable', 'mainwp' ) : '<i class="toggle off icon"></i> ' . esc_html__( 'Disable', 'mainwp' ); ?></a>
@@ -514,7 +526,7 @@ class MainWP_Extensions_View {
 					<?php } ?>
 				</div>
 			</div>
-
+			<?php } ?>
 			<div class="extra content action-feedback" style="display:none;">
 				<div class="ui mini message"></div>
 			</div>
@@ -563,15 +575,56 @@ class MainWP_Extensions_View {
 	}
 
 	/**
+	 * Method render_inactive_extension_card()
+	 *
+	 * Render the MainWP Extension Cards.
+	 *
+	 * @param mixed $extension Extention to render.
+	 * @param mixed $img_url Extension image.
+	 * @param bool  $installed Extension installed.
+	 */
+	public static function render_inactive_extension_card( $extension, $img_url, $installed = false ) {
+
+		if ( ! isset( $extension['link'] ) && isset( $extension['DocumentationURI'] ) ) {
+			$extension['link'] = $extension['DocumentationURI'];
+		}
+
+		if ( ! isset( $extension['version'] ) ) {
+			$extension['version'] = '';
+		}
+		?>
+		<div class="ui card extension grey mainwp-disabled-extension extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $extension['slug'] ); ?>">
+			<div class="content">
+				<img class="right floated mini ui image" src="<?php echo esc_html( $img_url ); ?>">
+				<div class="header">
+					<?php echo esc_html( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>
+				</div>
+				
+				<?php if ( $installed ) : ?>
+					<a href="admin.php?page=Extensions" class="ui black ribbon label"><?php echo esc_html__( 'Activate extension', 'mainwp' ); ?></a>
+				<?php else : ?>
+					<a href="admin.php?page=Extensions&message=install-ext-<?php echo esc_attr( $extension['slug'] ); ?>" class="ui grey ribbon label"><?php echo esc_html__( 'Install extension', 'mainwp' ); ?></a>
+				<?php endif; ?>
+				<div class="description">
+					<?php echo esc_html( preg_replace( '/\<cite\>.*\<\/cite\>/', '', $extension['description'] ) ); ?>
+				</div>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Method render_purchase_notice()
 	 *
 	 * Render Purchase Notice.
 	 */
 	public static function render_purchase_notice() {
 		$is_demo = MainWP_Demo_Handle::is_demo_mode();
+		$is_pro  = MainWP_Hooks::is_pro_member();
 		?>
 		<div id="mainwp-get-purchased-extensions-modal" class="ui first coupled large modal">
-			<div class="header"><?php esc_html_e( 'Install purchased extensions', 'mainwp' ); ?></div>
+		<i class="close icon"></i>
+			<div class="header"><?php esc_html_e( 'Install Extensions', 'mainwp' ); ?></div>
 			<div class="scrolling content"></div>
 			<div class="actions">
 				<div class="ui two columns stackable grid">
@@ -584,7 +637,11 @@ class MainWP_Extensions_View {
 						<input type="button" class="ui green button" id="mainwp-extensions-installnow" value="<?php esc_attr_e( 'Install Selected Extensions', 'mainwp' ); ?>">
 					<?php } ?>
 					</div>
-					<div class="right aligned column"><div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div></div>
+					<div class="right aligned column">
+						<?php if ( ! $is_pro ) : ?>
+						<a href="https://mainwp.com/signup/?utm_campaign=Dashboard%20-%20Upgrade%20to%20Pro&utm_source=Dashboard&utm_medium=install%20modal&utm_term=get%20mainwp%20pro" class="ui green basic button" target="_blank"><?php esc_html_e( 'Get MainWP Pro', 'mainwp' ); ?></a>
+						<?php endif; ?>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -607,7 +664,7 @@ class MainWP_Extensions_View {
 			<div class="content active">
 		<?php if ( empty( $mainwp_api_key ) ) { ?>
 		<div class="ui message info">
-			<?php printf( esc_html__( 'Not sure how to find your MainWP Main API Key? %1$sClick here to get it.%2$s', 'mainwp' ), '<a href="https://mainwp.com/my-account/my-api-keys/" target="_blank">', '</a>' ); ?>
+			<?php printf( esc_html__( 'Not sure how to find your MainWP Main API Key? %1$sClick here to get it.%2$s', 'mainwp' ), '<a href="https://mainwp.com/my-account/my-api-keys/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 		</div>
 		<?php } ?>
 		<div class="ui form" id="mainwp-extensions-api-fields">
@@ -627,7 +684,7 @@ class MainWP_Extensions_View {
 			</div>
 		</div>
 		<div class="ui compact hidden divider"></div>
-		<div class="ui message mainwp-extensions-api-loading" style="display: none"></div>
+		
 		<input type="button" class="ui fluid button" id="mainwp-extensions-savelogin" value="<?php esc_attr_e( 'Validate my MainWP Main API Key', 'mainwp' ); ?>">
 		<?php if ( ! $is_demo ) { ?>
 		<div class="ui divider"></div>
@@ -636,28 +693,50 @@ class MainWP_Extensions_View {
 		<input type="button" class="ui fluid green button" id="mainwp-extensions-grabkeys" value="<?php esc_attr_e( 'Activate Extensions', 'mainwp' ); ?>">
 		<?php } ?>
 	</div>
-		</div>
+	</div>
+		<?php
+		$install_ext_slug = '';
+		if ( isset( $_GET['message'] ) && 0 === strpos( wp_unslash( $_GET['message'] ), 'install-ext-' ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$install_ext_slug = str_replace( 'install-ext-', '', wp_unslash( $_GET['message'] ) ); //phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			?>
+			<input type="hidden" id="extension_install_ext_slug" value="<?php echo esc_attr( $install_ext_slug ); ?>">
 			<?php
+		}
+		?>
+		<script type="text/javascript">
+			jQuery( document ).ready( function ($) {
+				<?php
+				if ( ! empty( $install_ext_slug ) ) {
+					?>
+					$('#mainwp-extensions-bulkinstall').trigger('click');
+					<?php
+				}
+				?>
+			});
+		</script>
+		<?php
 	}
-		/**
-		 * Metod get_extension_groups()
-		 *
-		 * Grab current MainWP Extension Groups.
-		 *
-		 * @return array $groups
-		 */
+
+	/**
+	 * Metod get_extension_groups()
+	 *
+	 * Grab current MainWP Extension Groups.
+	 *
+	 * @return array $groups
+	 */
 	public static function get_extension_groups() {
 		$groups = array(
 			'admin'       => esc_html__( 'Administrative', 'mainwp' ),
 			'agency'      => esc_html__( 'Agency', 'mainwp' ),
 			'backup'      => esc_html__( 'Backups', 'mainwp' ),
-			'content'     => esc_html__( 'Content', 'mainwp' ),
-			'hosting'     => esc_html__( 'Hosting', 'mainwp' ),
+			'client'      => esc_html__( 'Client', 'mainwp' ),
+			'content'     => esc_html__( 'Posts/Pages', 'mainwp' ),
+			'development' => esc_html__( 'Development', 'mainwp' ),
 			'monitoring'  => esc_html__( 'Monitoring', 'mainwp' ),
 			'performance' => esc_html__( 'Performance', 'mainwp' ),
-			'policies'    => esc_html__( 'Policies', 'mainwp' ),
 			'security'    => esc_html__( 'Security', 'mainwp' ),
 			'visitor'     => esc_html__( 'Analytics', 'mainwp' ),
+			'updates'     => esc_html__( 'Updates', 'mainwp' ),
 		);
 		return $groups;
 	}
@@ -668,14 +747,15 @@ class MainWP_Extensions_View {
 	 * Static Arrays of all Available Extensions.
 	 *
 	 * @param mixed $types Extensions type. Default: array( 'free', 'pro' ).
+	 * @param array $ext_grouped Extensions grouped. Default: array().
 	 *
 	 * @todo Move to MainWP Server via an XML file.
 	 */
-	public static function get_available_extensions( $types = array( 'free', 'pro' ) ) {
+	public static function get_available_extensions( $types = array( 'free', 'pro' ), $ext_grouped = array() ) {
 
 		$folder_url = MAINWP_PLUGIN_URL . 'assets/images/extensions/';
 		$all_exts   = array(
-			'advanced-uptime-monitor-extension'      =>
+			'advanced-uptime-monitor-extension'       =>
 			array(
 				'type'                   => 'free',
 				'slug'                   => 'advanced-uptime-monitor-extension',
@@ -705,42 +785,7 @@ class MainWP_Extensions_View {
 				'integration_owner_3'    => 'Zoho Corporation Pvt. Ltd.',
 				'integration_owner_pp_3' => 'https://www.zoho.com/privacy.html',
 			),
-			'mainwp-api-backups-extension'           =>
-			array(
-				'type'                   => 'pro',
-				'slug'                   => 'mainwp-api-backups-extension',
-				'title'                  => 'MainWP API Backups Extension',
-				'desc'                   => 'MainWP API Backups Extension uses Child Site hosting API to create and restore child site backups. Currently supported hosts: Cloudways, GridPane, Digital Ocean, Linode, and Vultr.',
-				'link'                   => 'https://mainwp.com/extension/api-backups/',
-				'img'                    => $folder_url . 'api-backups.png',
-				'product_id'             => 'MainWP API Backups Extension',
-				'product_item_id'        => 0,
-				'catalog_id'             => 'MainWP API Backups Extension',
-				'group'                  => array( 'backup' ),
-				'privacy'                => 1,
-				'integration'            => 'Cloudways API',
-				'integration_url'        => 'https://www.cloudways.com/',
-				'integration_owner'      => 'Cloudways Ltd.',
-				'integration_owner_pp'   => 'https://www.cloudways.com/en/terms.php#privacy',
-				'integration_1'          => 'GridPane API',
-				'integration_url_1'      => 'https://gridpane.com/',
-				'integration_owner_1'    => 'GridPane Inc.',
-				'integration_owner_pp_1' => 'https://gridpane.com/privacy/',
-				'integration_2'          => 'Digital Ocean API',
-				'integration_url_2'      => 'https://www.digitalocean.com/',
-				'integration_owner_2'    => 'DigitalOcean, LLC.',
-				'integration_owner_pp_2' => 'https://www.digitalocean.com/legal/privacy-policy',
-				'integration_3'          => 'Linode (Akamai) API',
-				'integration_url_3'      => 'https://www.linode.com/',
-				'integration_owner_3'    => 'Akamai Technologies',
-				'integration_owner_pp_3' => 'https://www.linode.com/legal-privacy/',
-				'integration_4'          => 'Vultr API',
-				'integration_url_4'      => 'https://www.vultr.com/',
-				'integration_owner_4'    => 'Constant Company, LLC.',
-				'integration_owner_pp_4' => 'https://www.vultr.com/legal/privacy/',
-				'release_date'           => 1677193200,
-			),
-			'mainwp-article-uploader-extension'      =>
+			'mainwp-article-uploader-extension'       =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-article-uploader-extension',
@@ -758,7 +803,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-atarim-extension'                =>
+			'mainwp-atarim-extension'                 =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-atarim-extension',
@@ -769,14 +814,14 @@ class MainWP_Extensions_View {
 				'product_id'           => 'MainWP Atarim Extension',
 				'product_item_id'      => 0,
 				'catalog_id'           => '1251161',
-				'group'                => array( 'agency' ),
+				'group'                => array( 'development' ),
 				'privacy'              => 1,
 				'integration'          => 'Atarim API',
 				'integration_url'      => 'https://atarim.io/',
 				'integration_owner'    => 'WP FeedBack LTD',
 				'integration_owner_pp' => 'https://atarim.io/privacy-policy/',
 			),
-			'mainwp-backwpup-extension'              =>
+			'mainwp-backwpup-extension'               =>
 			array(
 				'type'                 => 'free',
 				'slug'                 => 'mainwp-backwpup-extension',
@@ -794,7 +839,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'Inpsyde GmbH',
 				'integration_owner_pp' => 'https://backwpup.com/privacy/',
 			),
-			'boilerplate-extension'                  =>
+			'boilerplate-extension'                   =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'boilerplate-extension',
@@ -812,7 +857,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-buddy-extension'                 =>
+			'mainwp-buddy-extension'                  =>
 			array(
 				'type'                 => 'free',
 				'slug'                 => 'mainwp-buddy-extension',
@@ -830,7 +875,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'Liquid Web, LLC',
 				'integration_owner_pp' => 'https://www.liquidweb.com/about-us/policies/privacy-policy/',
 			),
-			'mainwp-bulk-settings-manager'           =>
+			'mainwp-bulk-settings-manager'            =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-bulk-settings-manager',
@@ -841,14 +886,14 @@ class MainWP_Extensions_View {
 				'product_id'           => 'MainWP Bulk Settings Manager',
 				'product_item_id'      => 0,
 				'catalog_id'           => '347704',
-				'group'                => array( 'admin' ),
+				'group'                => array( 'development' ),
 				'privacy'              => 0,
 				'integration'          => '',
 				'integration_url'      => '',
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-cache-control-extension'         =>
+			'mainwp-cache-control-extension'          =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-cache-control-extension',
@@ -859,7 +904,7 @@ class MainWP_Extensions_View {
 				'product_id'           => 'MainWP Cache Control Extension',
 				'product_item_id'      => 0,
 				'catalog_id'           => '1263050',
-				'group'                => array( 'admin' ),
+				'group'                => array( 'performance' ),
 				'privacy'              => 1,
 				'integration'          => 'Cloudflare API',
 				'integration_url'      => 'https://www.cloudflare.com/',
@@ -867,7 +912,7 @@ class MainWP_Extensions_View {
 				'integration_owner_pp' => 'https://www.cloudflare.com/privacypolicy/',
 				'release_date'         => 1676847600,
 			),
-			'mainwp-clone-extension'                 =>
+			'mainwp-clone-extension'                  =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-clone-extension',
@@ -878,14 +923,14 @@ class MainWP_Extensions_View {
 				'product_id'           => 'MainWP Clone Extension',
 				'product_item_id'      => 0,
 				'catalog_id'           => '1555',
-				'group'                => array( 'admin' ),
+				'group'                => array( 'development' ),
 				'privacy'              => 0,
 				'integration'          => '',
 				'integration_url'      => '',
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-code-snippets-extension'         =>
+			'mainwp-code-snippets-extension'          =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-code-snippets-extension',
@@ -896,14 +941,14 @@ class MainWP_Extensions_View {
 				'product_id'           => 'MainWP Code Snippets Extension',
 				'product_item_id'      => 0,
 				'catalog_id'           => '11196',
-				'group'                => array( 'admin' ),
+				'group'                => array( 'development' ),
 				'privacy'              => 0,
 				'integration'          => '',
 				'integration_url'      => '',
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-comments-extension'              =>
+			'mainwp-comments-extension'               =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-comments-extension',
@@ -921,7 +966,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-custom-dashboard-extension'      =>
+			'mainwp-custom-dashboard-extension'       =>
 			array(
 				'type'                 => 'free',
 				'slug'                 => 'mainwp-custom-dashboard-extension',
@@ -932,14 +977,14 @@ class MainWP_Extensions_View {
 				'product_id'           => 'MainWP Custom Dashboard Extension',
 				'product_item_id'      => 0,
 				'catalog_id'           => '1080528',
-				'group'                => array( 'admin' ),
+				'group'                => array( 'development' ),
 				'privacy'              => 0,
 				'integration'          => '',
 				'integration_url'      => '',
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-custom-post-types'               =>
+			'mainwp-custom-post-types'                =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-custom-post-types',
@@ -950,14 +995,14 @@ class MainWP_Extensions_View {
 				'product_id'           => 'MainWP Custom Post Types',
 				'product_item_id'      => 0,
 				'catalog_id'           => '1002564',
-				'group'                => array( 'content' ),
+				'group'                => array( 'development' ),
 				'privacy'              => 0,
 				'integration'          => '',
 				'integration_url'      => '',
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-clean-and-lock-extension'        =>
+			'mainwp-clean-and-lock-extension'         =>
 			array(
 				'type'                 => 'free',
 				'slug'                 => 'mainwp-clean-and-lock-extension',
@@ -975,7 +1020,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-database-updater-extension'      =>
+			'mainwp-database-updater-extension'       =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-database-updater-extension',
@@ -986,7 +1031,7 @@ class MainWP_Extensions_View {
 				'product_id'           => 'MainWP Database Updater Extension',
 				'product_item_id'      => 0,
 				'catalog_id'           => '1263539',
-				'group'                => array( 'admin' ),
+				'group'                => array( 'updates' ),
 				'privacy'              => 0,
 				'integration'          => '',
 				'integration_url'      => '',
@@ -994,7 +1039,7 @@ class MainWP_Extensions_View {
 				'integration_owner_pp' => '',
 				'release_date'         => 1677106800,
 			),
-			'mainwp-domain-monitor-extension'        =>
+			'mainwp-domain-monitor-extension'         =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-domain-monitor-extension',
@@ -1012,7 +1057,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-favorites-extension'             =>
+			'mainwp-favorites-extension'              =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-favorites-extension',
@@ -1023,14 +1068,14 @@ class MainWP_Extensions_View {
 				'product_id'           => 'MainWP Favorites Extension',
 				'product_item_id'      => 0,
 				'catalog_id'           => '1379',
-				'group'                => array( 'admin' ),
+				'group'                => array( 'development' ),
 				'privacy'              => 0,
 				'integration'          => '',
 				'integration_url'      => '',
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-fathom-extension'                =>
+			'mainwp-fathom-extension'                 =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-fathom-extension',
@@ -1048,7 +1093,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'Conva Ventures Inc.',
 				'integration_owner_pp' => 'https://usefathom.com/privacy',
 			),
-			'mainwp-file-uploader-extension'         =>
+			'mainwp-file-uploader-extension'          =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-file-uploader-extension',
@@ -1059,14 +1104,14 @@ class MainWP_Extensions_View {
 				'product_id'           => 'MainWP File Uploader Extension',
 				'product_item_id'      => 0,
 				'catalog_id'           => '11637',
-				'group'                => array( 'content' ),
+				'group'                => array( 'development' ),
 				'privacy'              => 0,
 				'integration'          => '',
 				'integration_url'      => '',
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-google-analytics-extension'      =>
+			'mainwp-google-analytics-extension'       =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-google-analytics-extension',
@@ -1084,7 +1129,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'Google LLC',
 				'integration_owner_pp' => 'https://policies.google.com/privacy',
 			),
-			'mainwp-jetpack-protect-extension'       =>
+			'mainwp-jetpack-protect-extension'        =>
 			array(
 				'type'                 => 'free',
 				'slug'                 => 'mainwp-jetpack-protect-extension',
@@ -1103,7 +1148,7 @@ class MainWP_Extensions_View {
 				'integration_owner_pp' => 'https://automattic.com/privacy/',
 				'release_date'         => 1677020400,
 			),
-			'mainwp-jetpack-scan-extension'          =>
+			'mainwp-jetpack-scan-extension'           =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-jetpack-scan-extension',
@@ -1122,7 +1167,7 @@ class MainWP_Extensions_View {
 				'integration_owner_pp' => 'https://automattic.com/privacy/',
 				'release_date'         => 1677020400,
 			),
-			'mainwp-lighthouse-extension'            =>
+			'mainwp-lighthouse-extension'             =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-lighthouse-extension',
@@ -1133,14 +1178,14 @@ class MainWP_Extensions_View {
 				'product_id'           => 'MainWP Lighthouse Extension',
 				'product_item_id'      => 0,
 				'catalog_id'           => '1233934',
-				'group'                => array( 'performance' ),
+				'group'                => array( 'monitoring' ),
 				'privacy'              => 1,
 				'integration'          => 'Google PageSpeed Insights API',
 				'integration_url'      => 'https://pagespeed.web.dev/',
 				'integration_owner'    => 'Google LLC',
 				'integration_owner_pp' => 'https://policies.google.com/privacy',
 			),
-			'mainwp-maintenance-extension'           =>
+			'mainwp-maintenance-extension'            =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-maintenance-extension',
@@ -1158,7 +1203,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-piwik-extension'                 =>
+			'mainwp-piwik-extension'                  =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-piwik-extension',
@@ -1176,7 +1221,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'InnoCraft',
 				'integration_owner_pp' => 'https://matomo.org/privacy-policy/',
 			),
-			'mainwp-post-dripper-extension'          =>
+			'mainwp-post-dripper-extension'           =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-post-dripper-extension',
@@ -1194,7 +1239,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-post-plus-extension'             =>
+			'mainwp-post-plus-extension'              =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-post-plus-extension',
@@ -1212,7 +1257,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-pressable-extension'             =>
+			'mainwp-pressable-extension'              =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-pressable-extension',
@@ -1223,14 +1268,14 @@ class MainWP_Extensions_View {
 				'product_id'           => 'MainWP Pressable Extension',
 				'product_item_id'      => 0,
 				'catalog_id'           => '1271427',
-				'group'                => array( 'hosting' ),
+				'group'                => array( 'development' ),
 				'privacy'              => 1,
 				'integration'          => 'Pressable API',
 				'integration_url'      => 'https://pressable.com/',
 				'integration_owner'    => 'Pressable, Inc.',
 				'integration_owner_pp' => 'https://automattic.com/privacy/',
 			),
-			'mainwp-pro-reports-extension'           =>
+			'mainwp-pro-reports-extension'            =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-pro-reports-extension',
@@ -1241,14 +1286,14 @@ class MainWP_Extensions_View {
 				'product_id'           => 'MainWP Pro Reports Extension',
 				'product_item_id'      => 0,
 				'catalog_id'           => '1133708',
-				'group'                => array( 'agency' ),
+				'group'                => array( 'client' ),
 				'privacy'              => 0,
 				'integration'          => '',
 				'integration_url'      => '',
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-rocket-extension'                =>
+			'mainwp-rocket-extension'                 =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-rocket-extension',
@@ -1266,7 +1311,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'WP Media, Inc.',
 				'integration_owner_pp' => 'https://wp-rocket.me/privacy-policy/',
 			),
-			'mainwp-sucuri-extension'                =>
+			'mainwp-sucuri-extension'                 =>
 			array(
 				'type'                 => 'free',
 				'slug'                 => 'mainwp-sucuri-extension',
@@ -1284,7 +1329,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'GoDaddy Mediatemple, Inc., d/b/a Sucuri.',
 				'integration_owner_pp' => 'https://sucuri.net/privacy/',
 			),
-			'mainwp-ithemes-security-extension'      =>
+			'mainwp-ithemes-security-extension'       =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-ithemes-security-extension',
@@ -1302,7 +1347,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'Liquid Web, LLC',
 				'integration_owner_pp' => 'https://www.liquidweb.com/about-us/policies/privacy-policy/',
 			),
-			'mainwp-ssl-monitor-extension'           =>
+			'mainwp-ssl-monitor-extension'            =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-ssl-monitor-extension',
@@ -1321,7 +1366,7 @@ class MainWP_Extensions_View {
 				'integration_owner_pp' => '',
 				'release_date'         => 1676934000,
 			),
-			'mainwp-staging-extension'               =>
+			'mainwp-staging-extension'                =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-staging-extension',
@@ -1332,14 +1377,14 @@ class MainWP_Extensions_View {
 				'product_id'           => 'MainWP Staging Extension',
 				'product_item_id'      => 0,
 				'catalog_id'           => '1034878',
-				'group'                => array( 'admin' ),
+				'group'                => array( 'development' ),
 				'privacy'              => 2,
 				'integration'          => 'WP STAGING Backup Duplicator & Migration Plugin',
 				'integration_url'      => 'https://wp-staging.com/',
 				'integration_owner'    => 'WP STAGING',
 				'integration_owner_pp' => 'https://wp-staging.com/privacy-policy/',
 			),
-			'mainwp-team-control'                    =>
+			'mainwp-team-control'                     =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-team-control',
@@ -1357,7 +1402,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'termageddon-for-mainwp'                 =>
+			'termageddon-for-mainwp'                  =>
 			array(
 				'type'                 => 'free',
 				'slug'                 => 'termageddon-for-mainwp',
@@ -1368,7 +1413,7 @@ class MainWP_Extensions_View {
 				'product_id'           => 'Termageddon for MainWP',
 				'product_item_id'      => 0,
 				'catalog_id'           => '1200201',
-				'group'                => array( 'policies' ),
+				'group'                => array( 'content' ),
 				'privacy'              => 1,
 				'integration'          => 'Termageddon API',
 				'integration_url'      => 'https://termageddon.com/',
@@ -1376,7 +1421,7 @@ class MainWP_Extensions_View {
 				'integration_owner_pp' => 'https://termageddon.com/privacy-policy/',
 				'release_date'         => 1678921200,
 			),
-			'mainwp-timecapsule-extension'           =>
+			'mainwp-timecapsule-extension'            =>
 			array(
 				'type'                 => 'free',
 				'slug'                 => 'mainwp-timecapsule-extension',
@@ -1394,7 +1439,43 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'Revmakx, LLC.',
 				'integration_owner_pp' => 'https://wptimecapsule.com/privacy-policy/',
 			),
-			'mainwp-updraftplus-extension'           =>
+			'mainwp-time-tracker-extension'           =>
+			array(
+				'type'                 => 'pro',
+				'slug'                 => 'mainwp-time-tracker-extension',
+				'title'                => 'MainWP Time Tracker Extension',
+				'desc'                 => 'Simplify client billing with precise project hour logging and detailed reporting. This tool integrates directly into your Dashboard for streamlined billing, ensuring accuracy and transparency in client charges.',
+				'link'                 => 'https://mainwp.com/extension/time-tracker/',
+				'img'                  => $folder_url . 'time-tracker.png',
+				'product_id'           => 'MainWP Time Tracker Extension',
+				'product_item_id'      => 0,
+				'catalog_id'           => '000000000',
+				'group'                => array( 'client' ),
+				'privacy'              => 0,
+				'integration'          => '',
+				'integration_url'      => '',
+				'integration_owner'    => '',
+				'integration_owner_pp' => '',
+			),
+			'mainwp-cost-tracker-assistant-extension' =>
+			array(
+				'type'                 => 'pro',
+				'slug'                 => 'mainwp-cost-tracker-assistant-extension',
+				'title'                => 'MainWP Time Tracker Extension',
+				'desc'                 => 'Enhance your MainWP Dashboard by adding timely notifications for upcoming subscription renewals and automates cost tracking for newly installed plugins and themes through zip uploads, streamlining cost management tasks.',
+				'link'                 => 'https://mainwp.com/extension/cost-tracker-assistant/',
+				'img'                  => $folder_url . 'cost-tracker-assistant.png',
+				'product_id'           => 'MainWP Cost Tracker Assistant Extension',
+				'product_item_id'      => 0,
+				'catalog_id'           => '000000000',
+				'group'                => array( 'admin' ),
+				'privacy'              => 0,
+				'integration'          => '',
+				'integration_url'      => '',
+				'integration_owner'    => '',
+				'integration_owner_pp' => '',
+			),
+			'mainwp-updraftplus-extension'            =>
 			array(
 				'type'                 => 'free',
 				'slug'                 => 'mainwp-updraftplus-extension',
@@ -1412,7 +1493,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'Updraft WP Software Ltd.',
 				'integration_owner_pp' => 'https://updraftplus.com/data-protection-and-privacy-centre/',
 			),
-			'mainwp-url-extractor-extension'         =>
+			'mainwp-url-extractor-extension'          =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-url-extractor-extension',
@@ -1423,14 +1504,14 @@ class MainWP_Extensions_View {
 				'product_id'           => 'MainWP Url Extractor Extension',
 				'product_item_id'      => 0,
 				'catalog_id'           => '11965',
-				'group'                => array( 'admin' ),
+				'group'                => array( 'development' ),
 				'privacy'              => 0,
 				'integration'          => '',
 				'integration_url'      => '',
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-virusdie-extension'              =>
+			'mainwp-virusdie-extension'               =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-virusdie-extension',
@@ -1448,7 +1529,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'Virusdie OU',
 				'integration_owner_pp' => 'https://virusdie.com/rules/privacypolicy/',
 			),
-			'mainwp-vulnerability-checker-extension' =>
+			'mainwp-vulnerability-checker-extension'  =>
 			array(
 				'type'                   => 'pro',
 				'slug'                   => 'mainwp-vulnerability-checker-extension',
@@ -1470,7 +1551,7 @@ class MainWP_Extensions_View {
 				'integration_owner_1'    => 'National Institute of Standards and Technology',
 				'integration_owner_pp_1' => 'https://www.nist.gov/privacy-policy',
 			),
-			'mainwp-branding-extension'              =>
+			'mainwp-branding-extension'               =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-branding-extension',
@@ -1488,7 +1569,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => '',
 				'integration_owner_pp' => '',
 			),
-			'mainwp-woocommerce-shortcuts-extension' =>
+			'mainwp-woocommerce-shortcuts-extension'  =>
 			array(
 				'type'                 => 'free',
 				'slug'                 => 'mainwp-woocommerce-shortcuts-extension',
@@ -1506,7 +1587,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'Automattic Inc.',
 				'integration_owner_pp' => 'https://automattic.com/privacy/',
 			),
-			'mainwp-woocommerce-status-extension'    =>
+			'mainwp-woocommerce-status-extension'     =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-woocommerce-status-extension',
@@ -1517,14 +1598,14 @@ class MainWP_Extensions_View {
 				'product_id'           => 'MainWP WooCommerce Status Extension',
 				'product_item_id'      => 0,
 				'catalog_id'           => '12671',
-				'group'                => array( 'monitoring' ),
+				'group'                => array( 'admin' ),
 				'privacy'              => 2,
 				'integration'          => 'WooCommerce Plugin',
 				'integration_url'      => 'https://woocommerce.com',
 				'integration_owner'    => 'Automattic Inc.',
 				'integration_owner_pp' => 'https://automattic.com/privacy/',
 			),
-			'mainwp-wordfence-extension'             =>
+			'mainwp-wordfence-extension'              =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-wordfence-extension',
@@ -1542,7 +1623,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'Defiant, Inc.',
 				'integration_owner_pp' => 'https://www.wordfence.com/privacy-policy/',
 			),
-			'wordpress-seo-extension'                =>
+			'wordpress-seo-extension'                 =>
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'wordpress-seo-extension',
@@ -1560,26 +1641,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'Newfold Capital Inc.',
 				'integration_owner_pp' => 'https://yoast.com/privacy-policy/',
 			),
-			'mainwp-wp-compress-extension'           =>
-			array(
-				'type'                 => 'free',
-				'slug'                 => 'mainwp-wp-compress-extension',
-				'title'                => 'MainWP WP Compress Extension',
-				'desc'                 => 'MainWP has partnered with WP Compress to bring you an automatic image optimization for all your MainWP Child sites at an exclusive discount of 30% off their normal prices.',
-				'link'                 => 'https://mainwp.com/extension/wp-compress/',
-				'img'                  => $folder_url . 'wp-compress.png',
-				'product_id'           => 'MainWP WP Compress Extension',
-				'product_item_id'      => 0,
-				'catalog_id'           => '1053988',
-				'group'                => array( 'performance' ),
-				'privacy'              => 0,
-				'integration'          => '',
-				'integration_url'      => '',
-				'integration_owner'    => '',
-				'integration_owner_pp' => '',
-			),
-
-			'activity-log-mainwp'                    => array(
+			'activity-log-mainwp'                     => array(
 				'type'                 => 'org',
 				'product_id'           => 'activity-log-mainwp',
 				'slug'                 => 'activity-log-mainwp/activity-log-mainwp.php',
@@ -1592,8 +1654,9 @@ class MainWP_Extensions_View {
 				'integration_url'      => 'https://wpactivitylog.com/',
 				'integration_owner'    => 'WP White Security',
 				'integration_owner_pp' => 'https://www.wpwhitesecurity.com/privacy-policy/',
+				'desc'                 => 'Add the Activity Logs for MainWP extension to also keep a log of all the user activity and other changes that happen both on the MainWP dashboard, collate child site activity logs',
 			),
-			'security-ninja-for-mainwp'              => array(
+			'security-ninja-for-mainwp'               => array(
 				'type'                 => 'org',
 				'product_id'           => 'security-ninja-for-mainwp',
 				'slug'                 => 'security-ninja-for-mainwp/security-ninja-mainwp.php',
@@ -1606,8 +1669,9 @@ class MainWP_Extensions_View {
 				'integration_url'      => 'https://wpsecurityninja.com/',
 				'integration_owner'    => 'Larsik Corp',
 				'integration_owner_pp' => 'https://larsik.com/privacy/',
+				'desc'                 => 'Security Ninja is a strong plugin that helps you find vulnerabilites and improve the security on your website.',
 			),
-			'wp-compress-mainwp'                     => array(
+			'wp-compress-mainwp'                      => array(
 				'type'                 => 'org',
 				'product_id'           => 'wp-compress-mainwp',
 				'slug'                 => 'wp-compress-mainwp/wp-compress-main-wp.php',
@@ -1621,7 +1685,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'WP Compress',
 				'integration_owner_pp' => 'https://wpcompress.com/privacy-policy/',
 			),
-			'seopress-for-mainwp'                    => array(
+			'seopress-for-mainwp'                     => array(
 				'type'                 => 'org',
 				'product_id'           => 'seopress-for-mainwp',
 				'slug'                 => 'seopress-for-mainwp/seopress-for-mainwp.php',
@@ -1635,7 +1699,7 @@ class MainWP_Extensions_View {
 				'integration_owner'    => 'SEOPRESS',
 				'integration_owner_pp' => 'https://www.seopress.org/privacy-policy/',
 			),
-			'wpvivid-backup-mainwp'                  => array(
+			'wpvivid-backup-mainwp'                   => array(
 				'type'                 => 'org',
 				'product_id'           => 'wpvivid-backup-mainwp',
 				'slug'                 => 'wpvivid-backup-mainwp/wpvivid-backup-mainwp.php',
@@ -1648,6 +1712,7 @@ class MainWP_Extensions_View {
 				'integration_url'      => 'https://wpvivid.com/',
 				'integration_owner'    => 'VPSrobots Inc.',
 				'integration_owner_pp' => 'https://wpvivid.com/privacy-policy',
+				'desc'                 => 'WPvivid Backup for MainWP enables you to create and download backups of a specific child site, set backup schedules, set WPvivid Backup Plugin settings for all of your child sites directly from your MainWP Dashboard.',
 			),
 		);
 
@@ -1675,6 +1740,17 @@ class MainWP_Extensions_View {
 			foreach ( $all_exts as $slug => $ext ) {
 				if ( in_array( $ext['type'], $types ) ) {
 					$list[ $slug ] = $ext;
+				}
+			}
+		}
+
+		if ( is_array( $ext_grouped ) && ! empty( $ext_grouped ) ) {
+			$list = array();
+			foreach ( $all_exts as $slug => $ext ) {
+				foreach ( $ext_grouped as $group ) {
+					if ( in_array( $group, $ext['group'] ) ) {
+						$list[ $slug ] = $ext;
+					}
 				}
 			}
 		}

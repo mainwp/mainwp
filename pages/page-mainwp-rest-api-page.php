@@ -231,12 +231,14 @@ class MainWP_Rest_Api_Page {
 				$pers            = ! empty( $_POST['mainwp_rest_api_key_edit_pers'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_rest_api_key_edit_pers'] ) ) : '';
 
 				// hash the password.
+				$consumer_key_hashed       = wp_hash_password( $consumer_key );
 				$consumer_secret_hashed    = wp_hash_password( $consumer_secret );
 				$all_keys[ $consumer_key ] = array(
-					'cs'      => $consumer_secret_hashed,
-					'desc'    => $desc,
-					'enabled' => $enabled,
-					'perms'   => $pers,
+					'ck_hashed' => $consumer_key_hashed,
+					'cs'        => $consumer_secret_hashed,
+					'desc'      => $desc,
+					'enabled'   => $enabled,
+					'perms'     => $pers,
 				);
 				// store the data.
 				MainWP_Utility::update_option( 'mainwp_rest_api_keys', $all_keys );
@@ -404,7 +406,7 @@ class MainWP_Rest_Api_Page {
 		self::render_table_top();
 		if ( ! self::check_rest_api_enabled() ) {
 			?>
-			<div class="ui message yellow"><?php printf( esc_html__( 'It seems the WordPress REST API is currently disabled on your site. MainWP REST API requires the WordPress REST API to function properly. Please enable it to ensure smooth operation. Need help? %sClick here for a guide%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/wordpress-rest-api-does-not-respond/" target="_blank">', '</a>' ); ?></div>
+			<div class="ui message yellow"><?php printf( esc_html__( 'It seems the WordPress REST API is currently disabled on your site. MainWP REST API requires the WordPress REST API to function properly. Please enable it to ensure smooth operation. Need help? %sClick here for a guide%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/wordpress-rest-api-does-not-respond/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
 			<?php
 		}
 

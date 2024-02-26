@@ -256,7 +256,12 @@ class MainWP_Post_Page_Handler {
 	 * Create bulk posts on sites.
 	 */
 	public static function posting_bulk() {
-		$p_id               = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$p_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		if ( ! isset( $_GET['posting_nonce'] ) || ( isset( $_GET['posting_nonce'] ) && ! wp_verify_nonce( sanitize_key( $_POST['posting_nonce'] ), 'posting_nonce_' . $p_id ) ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+			wp_die( 'Invalid request!' );
+		}
+
 		$posting_bulk_sites = apply_filters( 'mainwp_posts_posting_bulk_sites', false );
 		?>
 		<input type="hidden" name="bulk_posting_id" id="bulk_posting_id" value="<?php echo intval( $p_id ); ?>"/>						
@@ -292,6 +297,7 @@ class MainWP_Post_Page_Handler {
 
 		?>
 		<div class="ui modal" id="mainwp-posting-post-modal">
+			<i class="close icon"></i>
 			<div class="header"><?php $edit_id ? esc_html_e( 'Edit Post', 'mainwp' ) : esc_html_e( 'New Post', 'mainwp' ); ?></div>
 			<div class="scrolling content">
 				<?php
@@ -331,7 +337,6 @@ class MainWP_Post_Page_Handler {
 		</div>
 		<div class="actions">
 			<a href="admin.php?page=PostBulkAdd" class="ui green button"><?php esc_html_e( 'New Post', 'mainwp' ); ?></a>
-			<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 		</div>
 	</div>
 	<div class="ui active inverted dimmer" id="mainwp-posting-running">
@@ -362,6 +367,7 @@ class MainWP_Post_Page_Handler {
 		$edit_id = get_post_meta( $post_id, '_mainwp_edit_post_id', true );
 		?>
 		<div class="ui modal" id="mainwp-posting-post-modal">
+			<i class="close icon"></i>
 			<div class="header"><?php $edit_id ? esc_html_e( 'Edit Post', 'mainwp' ) : esc_html_e( 'New Post', 'mainwp' ); ?></div>
 			<div class="scrolling content">
 				<?php
@@ -380,7 +386,6 @@ class MainWP_Post_Page_Handler {
 			</div>
 		<div class="actions">
 			<a href="admin.php?page=PostBulkAdd" class="ui green button"><?php esc_html_e( 'New Post', 'mainwp' ); ?></a>
-			<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 		</div>
 	</div>
 	<div class="ui active inverted dimmer" id="mainwp-posting-running">

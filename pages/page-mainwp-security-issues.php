@@ -52,7 +52,7 @@ class MainWP_Security_Issues {
 		<thead>
 				<tr>
 					<th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Detected security issues', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Detected Issues', 'mainwp' ); ?></th>
 					<th class="collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
 				</tr>
 		</thead>
@@ -217,7 +217,7 @@ class MainWP_Security_Issues {
 					<td>
 						<?php if ( ! $is_wpengine ) { ?>
 						<span id="readme_fix" style="display: none"><a href="#" class="ui mini green fluid button"><?php esc_html_e( 'Fix', 'mainwp' ); ?></a></span>
-						<span id="readme_unfix" style="display: none"><a href="#" class="ui mini fluid button"><?php esc_html_e( 'Unfix', 'mainwp' ); ?></a> - <?php esc_html_e( 'You need to re-upload the readme.html file manually to unfix this.', 'mainwp' ); ?></span>
+							<?php esc_html_e( 'You need to re-upload the readme.html file manually to unfix this.', 'mainwp' ); ?></span>
 						<?php } else { ?>
 						<span><a href="javascript:void(0)" class="ui mini fluid button"><?php esc_html_e( 'Fix', 'mainwp' ); ?></a>
 						<?php } ?>

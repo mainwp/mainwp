@@ -133,15 +133,7 @@ class MainWP_Site_Info {
 			?>
 			<?php
 			if ( ! is_array( $website_info ) || ! isset( $website_info['wpversion'] ) ) {
-				?>
-				<h2 class="ui icon header">
-					<i class="info circle icon"></i>
-					<div class="content">
-						<?php esc_html_e( 'No info found!', 'mainwp' ); ?>
-						<div class="sub header"><?php esc_html_e( 'Site information could not be found. Make sure your site is properly connected and syncs correctly.', 'mainwp' ); ?></div>
-					</div>
-				</h2>
-				<?php
+				MainWP_UI::render_empty_element_placeholder();
 			} else {
 
 				$website_info['group'] = empty( $website->wpgroups ) ? 'None' : $website->wpgroups;

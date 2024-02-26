@@ -163,7 +163,7 @@ class MainWP_DB_Base {
 
 		$result = self::m_query( $sql, $this->wpdb->dbh );
 
-		if ( ! $result || ( 0 === self::num_rows( $result ) ) ) {
+		if ( ! $result || ( empty( self::num_rows( $result ) ) ) ) {
 			return false;
 		}
 

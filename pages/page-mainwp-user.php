@@ -237,12 +237,13 @@ class MainWP_User {
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => esc_html__( 'Users', 'mainwp' ),
-				'parent_key' => 'managesites',
-				'slug'       => 'UserBulkManage',
-				'href'       => 'admin.php?page=UserBulkManage',
-				'icon'       => '<i class="user icon"></i>',
-				'desc'       => 'Manage users on your child sites',
+				'title'         => esc_html__( 'Users', 'mainwp' ),
+				'parent_key'    => 'managesites',
+				'slug'          => 'UserBulkManage',
+				'href'          => 'admin.php?page=UserBulkManage',
+				'icon'          => '<i class="user icon"></i>',
+				'desc'          => 'Manage users on your child sites',
+				'leftsub_order' => 7,
 			),
 			1
 		);
@@ -679,6 +680,7 @@ class MainWP_User {
 
 		?>
 		<div id="mainwp-edit-users-modal" class="ui modal">
+			<i class="close icon"></i>
 			<div class="header"><?php esc_html_e( 'Edit User', 'mainwp' ); ?></div>
 			<div class="ui message"><?php esc_html_e( 'Empty fields will not be passed to child sites.', 'mainwp' ); ?></div>
 			<form id="update_user_profile">
@@ -789,7 +791,6 @@ class MainWP_User {
 			<div class="actions">
 				<div id="mainwp_update_password_error" style="display: none"></div>
 				<span id="mainwp_users_updating"><i class="ui active inline loader tiny"></i></span>
-				<div class="ui cancel button"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></div>
 				<?php
 				if ( $is_demo ) {
 					MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<input type="button" class="ui green button disabled" disabled="disabled" value="' . esc_attr__( 'Update', 'mainwp' ) . '">' );
@@ -960,7 +961,7 @@ class MainWP_User {
 		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 		$data_fields[] = 'users';
 
-		if ( 1 === (int) get_option( 'mainwp_optimize' ) || MainWP_Demo_Handle::is_demo_mode() ) {
+		if ( 1 === (int) get_option( 'mainwp_optimize', 1 ) || MainWP_Demo_Handle::is_demo_mode() ) {
 
 			$check_users_role = false;
 
@@ -1388,7 +1389,7 @@ class MainWP_User {
 		}
 		// phpcs:enable
 
-		$optimize = ( 1 === (int) get_option( 'mainwp_optimize' ) ) ? 1 : 0;
+		$optimize = ( 1 === (int) get_option( 'mainwp_optimize', 1 ) ) ? 1 : 0;
 
 		/**
 		* Action: mainwp_before_user_action
@@ -1987,6 +1988,7 @@ class MainWP_User {
 		// phpcs:disable WordPress.Security.EscapeOutput
 		?>
 		<div id="mainwp-creating-new-user-modal" class="ui modal">
+			<i class="close icon"></i>
 				<div class="header"><?php esc_html_e( 'New User', 'mainwp' ); ?></div>
 				<div class="content">
 					<div class="ui middle aligned divided selection list">
@@ -1999,7 +2001,6 @@ class MainWP_User {
 					</div>
 				</div>
 				<div class="actions">
-					<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 				</div>
 			</div>
 		<?php
@@ -2075,6 +2076,7 @@ class MainWP_User {
 					$header_line = trim( $header_line );
 					?>
 					<div class="ui modal" id="mainwp-import-users-modal">
+					<i class="close icon"></i>
 						<div class="header"><?php esc_html_e( 'Importing new users and add them to your sites.', 'mainwp' ); ?></div>
 						<div class="scrolling content">
 							<?php
@@ -2110,7 +2112,6 @@ class MainWP_User {
 							?>
 						</div>
 						<div class="actions">
-							<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 							<input type="button" name="import_user_btn_import" id="import_user_btn_import" class="ui basic button" value="<?php esc_attr_e( 'Pause', 'mainwp' ); ?>"/>
 							<input type="button" name="import_user_btn_save_csv" id="import_user_btn_save_csv" disabled="disabled" class="ui basic green button" value="<?php esc_attr_e( 'Save failed', 'mainwp' ); ?>"/>
 						</div>
@@ -2314,11 +2315,11 @@ class MainWP_User {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing users, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-users/" target="_blank">Manage Users</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/create-a-new-user/" target="_blank">Create a New User</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/edit-an-existing-user/" target="_blank">Edit an Existing User</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/bulk-update-administrator-passwords/" target="_blank">Bulk Update Administrator Passwords</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/delete-users/" target="_blank">Delete User(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-users/" target="_blank">Manage Users</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/create-a-new-user/" target="_blank">Create a New User</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/edit-an-existing-user/" target="_blank">Edit an Existing User</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/bulk-update-administrator-passwords/" target="_blank">Bulk Update Administrator Passwords</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/delete-users/" target="_blank">Delete User(s)</a> <i class="external alternate icon"></i></div>
 				<?php
 				/**
 				 * Action: mainwp_users_help_item

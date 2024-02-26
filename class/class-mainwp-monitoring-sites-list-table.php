@@ -70,6 +70,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
 		switch ( $column_name ) {
 			case 'status':
+			case 'favicon':
 			case 'site':
 			case 'login':
 			case 'url':
@@ -111,6 +112,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 		return array(
 			'cb'           => '<input type="checkbox" />',
 			'status'       => '',
+			'favicon'      => '',
 			'site'         => esc_html__( 'Site', 'mainwp' ),
 			'login'        => '<i class="sign in alternate icon"></i>',
 			'url'          => esc_html__( 'URL', 'mainwp' ),
@@ -188,6 +190,10 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 		);
 		$defines[] = array(
 			'targets'   => array( 'manage-login-column', 'manage-last_check-column', 'manage-status_code-column', 'manage-site_health-column', 'manage-site_actions-column', 'extra-column', 'manage-client_name-column' ),
+			'className' => 'collapsing',
+		);
+		$defines[] = array(
+			'targets'   => 'manage-favicon-column',
 			'className' => 'collapsing',
 		);
 		$defines[] = array(
@@ -595,7 +601,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-monitoring-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-monitoring-info-message"></i>
-				<?php printf( esc_html__( 'Monitor your sites uptime and site health.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a>' ); ?>
+				<?php printf( esc_html__( 'Monitor your sites uptime and site health.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 			</div>
 		<?php endif; ?>
 		<table id="mainwp-manage-sites-monitor-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table mainwp-manage-wpsites-table">
@@ -1023,6 +1029,17 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
 		$website = apply_filters( 'mainwp_monitoring_sitestable_website', $website );
 
+		$imgfavi = '';
+		if ( $use_favi ) {
+			$siteObj  = (object) $website;
+			$favi_url = MainWP_Connect::get_favico_url( $siteObj );
+			if ( ! empty( $favi_url ) ) {
+				$imgfavi = '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" />';
+			} else {
+				$imgfavi = '<i class="icon big wordpress" style="width:28px;height:28px;"></i> '; // phpcs:ignore -- Prevent modify WP icon.
+			}
+		}
+
 		foreach ( $columns as $column_name => $column_display_name ) {
 
 			$classes    = "collapsing center aligned $column_name column-$column_name";
@@ -1038,75 +1055,65 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			<?php } elseif ( 'status' === $column_name ) { ?>
 				<td class="center aligned collapsing">
 					<?php if ( $statusUndefined ) : ?>
-						<span data-tooltip="<?php esc_attr_e( 'Site status appears to be undefined.', 'mainwp' ); ?>"  data-position="right center"  data-inverted=""><a href="#"><i class="circular inverted exclamation red icon"></i></a></span>
+						<a href="#"><i class="circular inverted exclamation red icon"></i></a>
 						<?php
 					elseif ( $statusOnline ) :
 						if ( ! $good_health ) {
 							?>
-							<span data-tooltip="<?php esc_attr_e( 'Site status appears to be online.', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><i class="circular inverted yellow heartbeat icon"></i></span>
+							<i class="circular inverted yellow heartbeat icon"></i>
 							<?php
 						} else {
 							?>
-							<span data-tooltip="<?php esc_attr_e( 'Site status appears to be online.', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><i class="circular inverted green check icon"></i></span>
+							<i class="circular inverted green check icon"></i>
 							<?php
 						}
 						?>
 
 					<?php else : ?>
-						<span data-tooltip="<?php esc_attr_e( 'Site status appears to be offline.', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><a href="#"><i class="circular inverted exclamation red icon"></i></a></span>
+						<a href="#"><i class="circular inverted exclamation red icon"></i></a>
 						<?php
 					endif;
 					?>
 				</td>
+				<?php } elseif ( 'favicon' === $column_name ) { ?>
+					<td class="collapsing"><?php echo $imgfavi; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 				<?php
-			} elseif ( 'site' === $column_name ) {
-				$cls_site = '';
-				if ( ! $statusOnline ) {
-					$cls_site = 'site-sync-error';
-				}
-				?>
-				<td class="column-site-bulk mainwp-site-cell <?php echo esc_html( $cls_site ); ?>"><a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Open the site overview', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><?php echo esc_html( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span></td>
-			<?php } elseif ( 'login' === $column_name ) { ?>
+				} elseif ( 'site' === $column_name ) {
+					$cls_site = '';
+					if ( ! $statusOnline ) {
+						$cls_site = 'site-sync-error';
+					}
+					?>
+				<td class="column-site-bulk mainwp-site-cell <?php echo esc_html( $cls_site ); ?>"><a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>"><?php echo esc_html( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span></td>
+				<?php } elseif ( 'login' === $column_name ) { ?>
 				<td class="collapsing">
-				<?php if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
+					<?php if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
 					<i class="sign in icon"></i>
-					<?php
+						<?php
 				else :
 					?>
-					<a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>" data-position="right center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
+					<a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
 					<?php
 				endif;
 				?>
 				</td>
-				<?php
-			} elseif ( 'login' === $column_name ) {
-				?>
+					<?php
+				} elseif ( 'login' === $column_name ) {
+					?>
 				<td class="collapsing">
-				<a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website['client_name'] ); ?></a>
+				<a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website['client_id'] ); ?>"><?php echo esc_html( $website['client_name'] ); ?></a>
 				</td>
-				<?php
-			} elseif ( 'client_name' === $column_name ) {
-				?>
+					<?php
+				} elseif ( 'client_name' === $column_name ) {
+					?>
 				<td class="collapsing">
-				<a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website['client_name'] ); ?></a>
+				<a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website['client_id'] ); ?>"><?php echo esc_html( $website['client_name'] ); ?></a>
 				</td>
-				<?php
-			} elseif ( 'url' === $column_name ) {
-
-				$imgfavi = '';
-				if ( $use_favi ) {
-					$siteObj  = (object) $website;
-					$favi_url = MainWP_Connect::get_favico_url( $siteObj );
-					if ( ! empty( $favi_url ) ) {
-						$imgfavi = '<img src="' . esc_attr( $favi_url ) . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
-					} else {
-						$imgfavi = '<i class="icon wordpress"></i> '; // phpcs:ignore -- Prevent modify WP icon.
-					}
-				}
-
-				?>
-				<td class="mainwp-url-cell"><?php echo $imgfavi; // phpcs:ignore WordPress.Security.EscapeOutput ?><a href="<?php echo esc_url( $website['url'] ); ?>" class="mainwp-may-hide-referrer open_site_url" target="_blank"><?php echo esc_html( $website['url'] ); ?></a></td>
-			<?php } elseif ( 'status_code' === $column_name ) { ?>
+					<?php
+				} elseif ( 'url' === $column_name ) {
+					?>
+				<td class="mainwp-url-cell"><a href="<?php echo esc_url( $website['url'] ); ?>" class="mainwp-may-hide-referrer open_site_url" target="_blank"><?php echo esc_html( MainWP_Utility::get_nice_url( $website['url'] ) ); ?></a></td>
+				<?php } elseif ( 'status_code' === $column_name ) { ?>
 				<td class="collapsing" data-order="<?php echo esc_html( $website['http_response_code'] ); ?>">
 					<?php
 					if ( $website['http_response_code'] ) {
@@ -1121,7 +1128,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			<?php } elseif ( 'last_check' === $column_name ) { ?>
 				<td class="collapsing"><?php echo ! empty( $website['offline_checks_last'] ) ? esc_html( MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['offline_checks_last'] ) ) ) : ''; ?></td>
 			<?php } elseif ( 'site_health' === $column_name ) { ?>
-				<td class="collapsing"><span><a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo esc_attr( base64_encode( 'site-health.php' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_attr( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php echo esc_html__( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"><span class="ui <?php echo esc_html( $h_color ); ?> empty circular label"></span></a> <?php echo esc_html( $h_text ); ?></span></td>
+				<td class="collapsing"><span><a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo esc_attr( base64_encode( 'site-health.php' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_attr( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><span class="ui <?php echo esc_html( $h_color ); ?> empty circular label"></span></a> <?php echo esc_html( $h_text ); ?></span></td>
 			<?php } elseif ( 'site_actions' === $column_name ) { ?>
 					<td class="collapsing">
 						<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999;">
@@ -1170,6 +1177,16 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 		$http_error_codes = MainWP_Utility::get_http_codes();
 
 		$use_favi = get_option( 'mainwp_use_favicon', 1 );
+		$imgfavi  = '';
+		if ( $use_favi ) {
+			$siteObj  = (object) $website;
+			$favi_url = MainWP_Connect::get_favico_url( $siteObj );
+			if ( ! empty( $favi_url ) ) {
+				$imgfavi = '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" />';
+			} else {
+				$imgfavi = '<i class="icon big wordpress" style="width:28px;height:28px;"></i> '; // phpcs:ignore -- Prevent modify WP icon.
+			}
+		}
 		if ( $this->items ) {
 			foreach ( $this->items as $website ) {
 				$rw_classes = '';
@@ -1217,58 +1234,49 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				$cols_data = array();
 
 				foreach ( $columns as $column_name => $column_display_name ) {
-					$default_classes = esc_html( "collapsing $column_name column-$column_name" );
 					ob_start();
 					?>
 						<?php if ( 'cb' === $column_name ) { ?>
 							<div class="ui checkbox"><input type="checkbox" value="<?php echo intval( $website['id'] ); ?>" /></div>
 							<?php } elseif ( 'status' === $column_name ) { ?>
 								<?php if ( $statusUndefined ) : ?>
-									<span data-tooltip="<?php esc_attr_e( 'The site status appears to be undefined.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a href="#"><i class="circular inverted exclamation red icon"></i></a></span>
+									<a href="#"><i class="circular inverted exclamation red icon"></i></a>
 									<?php
 								elseif ( $statusOnline ) :
 									if ( ! $good_health ) {
 										?>
-									<span data-tooltip="<?php esc_attr_e( 'The site status appears to be online.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><i class="circular inverted yellow heartbeat icon"></i></span>
+									<i class="circular inverted yellow heartbeat icon"></i>
 										<?php
 									} else {
 										?>
-									<span data-tooltip="<?php esc_attr_e( 'The site status appears to be online.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><i class="circular green check inverted icon"></i></span>
+									<i class="circular green check inverted icon"></i>
 										<?php
 									}
 									?>
 								<?php else : ?>
-									<span data-tooltip="<?php esc_attr_e( 'The site status appears to be offline.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a href="#"><i class="circular inverted exclamation red icon"></i></a></span>
+									<a href="#"><i class="circular inverted exclamation red icon"></i></a>
 								<?php endif; ?>
+
+							<?php } elseif ( 'favicon' === $column_name ) { ?>
+								<?php echo $imgfavi; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 							<?php } elseif ( 'site' === $column_name ) { ?>
-								<a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Open the site overview', 'mainwp' ); ?>" data-position="right center"  data-inverted=""><?php echo esc_html( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span>
+								<a href="<?php echo 'admin.php?page=managesites&dashboard=' . intval( $website['id'] ); ?>"><?php echo esc_html( stripslashes( $website['name'] ) ); ?></a><i class="ui active inline loader tiny" style="display:none"></i><span id="site-status-<?php echo esc_attr( $website['id'] ); ?>" class="status hidden"></span>
 							<?php } elseif ( 'login' === $column_name ) { ?>
 								<?php if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
 									<i class="sign in icon"></i>
 								<?php else : ?>
-									<a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="right center"  data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
+									<a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
 								<?php endif; ?>
 								<?php
 							} elseif ( 'client_name' === $column_name ) {
 								?>
 								<td class="collapsing">
-								<a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website['client_id'] ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website['client_name'] ); ?></a>
+								<a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website['client_id'] ); ?>"><?php echo esc_html( $website['client_name'] ); ?></a>
 								</td>
 								<?php
 							} elseif ( 'url' === $column_name ) {
-								$imgfavi = '';
-								if ( $use_favi ) {
-									$siteObj  = (object) $website;
-									$favi_url = MainWP_Connect::get_favico_url( $siteObj );
-									if ( ! empty( $favi_url ) ) {
-										$imgfavi = '<img src="' . esc_attr( $favi_url ) . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
-									} else {
-										$imgfavi = '<i class="icon wordpress"></i> '; // phpcs:ignore -- Prevent modify WP icon.
-									}
-								}
-								echo $imgfavi; // phpcs:ignore WordPress.Security.EscapeOutput
 								?>
-								<a href="<?php echo esc_url( $website['url'] ); ?>" class="mainwp-may-hide-referrer open_site_url" target="_blank"><?php echo esc_html( $website['url'] ); ?></a>
+								<a href="<?php echo esc_url( $website['url'] ); ?>" class="mainwp-may-hide-referrer open_site_url" target="_blank"><?php echo esc_html( MainWP_Utility::get_nice_url( $website['url'] ) ); ?></a>
 								<?php
 							} elseif ( 'status_code' === $column_name ) {
 								if ( $website['http_response_code'] ) {
@@ -1282,7 +1290,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 								?>
 								<?php echo ! empty( $website['offline_checks_last'] ) ? esc_html( MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['offline_checks_last'] ) ) ) : ''; ?>
 							<?php } elseif ( 'site_health' === $column_name ) { ?>
-									<span><a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo esc_attr( base64_encode( 'site-health.php' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_attr( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php echo esc_html__( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"><span class="ui <?php echo esc_html( $h_color ); ?> empty circular label"></span></a> <?php echo esc_html( $h_text ); ?></span>
+									<span><a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo esc_attr( base64_encode( 'site-health.php' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_attr( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><span class="ui <?php echo esc_html( $h_color ); ?> empty circular label"></span></a> <?php echo esc_html( $h_text ); ?></span>
 									<?php
 							} elseif ( 'site_actions' === $column_name ) {
 								?>

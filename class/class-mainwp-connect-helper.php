@@ -58,6 +58,7 @@ class MainWP_Connect_Helper {
 	public static function render_renew_connections_modal() {
 		?>
 		<div class="ui small modal" id="mainwp-tool-renew-connect-modal">
+			<i class="close icon mainwp-modal-close"></i>
 			<div class="header"><?php esc_html_e( 'Force your MainWP Dashboard to set a new pair of OpenSSL Keys', 'mainwp' ); ?></div>
 			<div class="ui green progress mainwp-modal-progress" style="display:none;">
 				<div class="bar"><div class="progress"></div></div>
@@ -85,7 +86,6 @@ class MainWP_Connect_Helper {
 			</div>
 			<div class="actions mainwp-modal-actions">
 				<button class="ui green left floated button" onclick="mainwp_tool_prepare_renew_connections(this); return false;"><?php esc_html_e( 'Reset OpenSSL Key Pair', 'mainwp' ); ?></button>
-				<div class="mainwp-modal-close ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 			</div>
 		</div>
 		<?php

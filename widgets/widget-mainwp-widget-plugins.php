@@ -178,7 +178,7 @@ class MainWP_Widget_Plugins {
 			 */
 			do_action( 'mainwp_before_active_plugins_list', $website, $actived_plugins );
 			?>
-			<div class="ui divided selection list">
+			<div class="ui divided selection middle aligned list">
 				<?php
 				$_count = count( $actived_plugins );
 				for ( $i = 0; $i < $_count; $i++ ) {

@@ -194,6 +194,9 @@ class MainWP_Manage_Sites {
 
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
+				if ( ! empty( $subPage['no_submenu_page'] ) ) {
+					continue;
+				}
 				if ( ! isset( $subPage['slug'] ) && ! isset( $subPage['title'] ) ) {
 					continue;
 				}
@@ -341,6 +344,10 @@ class MainWP_Manage_Sites {
 			$columns['status'] = esc_html__( 'Status', 'mainwp' );
 		}
 
+		if ( isset( $columns['favicon'] ) ) {
+			$columns['favicon'] = esc_html__( 'Favicon', 'mainwp' );
+		}
+
 		$sites_per_page = get_option( 'mainwp_default_sites_per_page', 25 );
 
 		if ( isset( $columns['site_actions'] ) && empty( $columns['site_actions'] ) ) {
@@ -382,6 +389,7 @@ class MainWP_Manage_Sites {
 		$siteViewMode = MainWP_Utility::get_siteview_mode();
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
+			<i class="close icon"></i>
 			<div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
 			<div class="scrolling content ui form">
 				<form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
@@ -451,15 +459,9 @@ class MainWP_Manage_Sites {
 						</div>
 					</div>
 					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php esc_html_e( 'Show favicons', 'mainwp' ); ?></label>
-						<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will download and show child sites favicons.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-							<input type="checkbox" name="mainwp_use_favicon" id="mainwp_use_favicon" <?php echo ( ( 1 === (int) get_option( 'mainwp_use_favicon', 1 ) ) ? 'checked="true"' : '' ); ?> />
-						</div>
-					</div>
-					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Optimize for shared hosting or big networks', 'mainwp' ); ?></label>
 						<div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will cache updates for faster loading.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-							<input type="checkbox" name="mainwp_optimize" id="mainwp_optimize" <?php echo ( ( 1 === (int) get_option( 'mainwp_optimize', 0 ) ) ? 'checked="true"' : '' ); ?> /><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
+							<input type="checkbox" name="mainwp_optimize" id="mainwp_optimize" <?php echo ( ( 1 === (int) get_option( 'mainwp_optimize', 1 ) ) ? 'checked="true"' : '' ); ?> /><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
 						</div>
 					</div>
 					<div class="ui grid field">
@@ -484,11 +486,10 @@ class MainWP_Manage_Sites {
 				<div class="actions">
 					<div class="ui two columns grid">
 						<div class="left aligned column">
-							<span data-tooltip="<?php esc_attr_e( 'Returns this page to the state it was in when installed. The feature also restores any column you have moved through the drag and drop feature on the page.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><input type="button" class="ui button" name="reset" id="reset-managersites-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
+							<span data-tooltip="<?php esc_attr_e( 'Resets the page to its original layout and reinstates relocated columns.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><input type="button" class="ui button" name="reset" id="reset-managersites-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
 						</div>
 						<div class="ui right aligned column">
 					<input type="submit" class="ui green button" name="btnSubmit" id="submit-managersites-settings" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
-					<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 				</div>
 					</div>
 				</div>
@@ -590,8 +591,8 @@ class MainWP_Manage_Sites {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-site-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-site-info-message"></i>
-					<div><?php printf( esc_html__( 'Use the provided form to connect your websites to your MainWP Dashboard.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">', '</a>' ); ?></div>
-					<div><?php printf( esc_html__( 'If you are experiencing issues with adding a website to your MainWP Dashboard, use the %1$sTest Connection%2$s feature to ensure that your MainWP Dashboard can communicate with your website.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/test-connection-between-your-mainwp-dashboard-and-child-site/" target="_blank">', '</a>' ); ?></div>
+					<div><?php printf( esc_html__( 'Use the provided form to connect your websites to your MainWP Dashboard.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
+					<div><?php printf( esc_html__( 'If you are experiencing issues with adding a website to your MainWP Dashboard, use the %1$sTest Connection%2$s feature to ensure that your MainWP Dashboard can communicate with your website.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/test-connection-between-your-mainwp-dashboard-and-child-site/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
 					<div><?php printf( esc_html__( 'If you still can not connect the site, see the list of %1$spotential issues%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a>' ); ?></div>
 					</div>
 			<?php endif; ?>
@@ -790,6 +791,7 @@ class MainWP_Manage_Sites {
 		</div>
 
 		<div class="ui modal" id="mainwp-test-connection-modal">
+			<i class="close icon"></i>
 			<div class="header"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
 			<div class="content">
 				<div class="ui active inverted dimmer">
@@ -806,7 +808,6 @@ class MainWP_Manage_Sites {
 				</div>
 			</div>
 			<div class="actions">
-				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 			</div>
 		</div>
 		<script type="text/javascript">
@@ -837,12 +838,12 @@ class MainWP_Manage_Sites {
 		} elseif ( isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {
 			?>
 				<div class="ui large modal" id="mainwp-import-sites-modal">
+				<i class="close icon"></i>
 					<div class="header"><?php esc_html_e( 'Import Sites', 'mainwp' ); ?></div>
 					<div class="scrolling header">
 					<?php MainWP_Manage_Sites_View::render_import_sites(); ?>
 					</div>
 					<div class="actions">
-						<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 						<input type="button" name="mainwp_managesites_btn_import" id="mainwp_managesites_btn_import" class="ui basic button" value="<?php esc_attr_e( 'Pause', 'mainwp' ); ?>"/>
 						<input type="button" name="mainwp_managesites_btn_save_csv" id="mainwp_managesites_btn_save_csv" disabled="disabled" class="ui basic green button" value="<?php esc_attr_e( 'Save failed', 'mainwp' ); ?>"/>
 					</div>
@@ -864,7 +865,7 @@ class MainWP_Manage_Sites {
 				<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-sites-info-message"></i>
-							<?php printf( esc_html__( 'You can download the sample CSV file to see how to format the import file properly. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a>' ); ?>
+							<?php printf( esc_html__( 'You can download the sample CSV file to see how to format the import file properly. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -965,60 +966,6 @@ class MainWP_Manage_Sites {
 		$values               = apply_filters( 'mainwp_overview_enabled_widgets', $values, $dashboard_siteid );
 		self::$enable_widgets = array_merge( self::$enable_widgets, $values );
 
-		// Load the Updates Overview widget.
-		if ( self::$enable_widgets['overview'] ) {
-			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 6 ) );
-		}
-
-		// Load the Securtiy Issues widget.
-		if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
-			if ( self::$enable_widgets['security_issues'] ) {
-				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), self::$page, array( 1, 1, 2, 2 ) );
-			}
-		}
-
-		// Load the Client widget.
-		if ( self::$enable_widgets['client_info'] ) {
-			MainWP_UI::add_widget_box( 'client_info', array( MainWP_Client_Info::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 3 ) );
-		}
-
-		// Load the Non-MainWP Changes widget.
-		if ( self::$enable_widgets['non_mainwp_changes'] ) {
-			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 3 ) );
-		}
-
-		// Load the Notes widget.
-		if ( self::$enable_widgets['notes'] ) {
-			MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 2 ) );
-		}
-
-		// Load the Recent Posts widget.
-		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
-			if ( self::$enable_widgets['recent_posts'] ) {
-				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 3 ) );
-			}
-		}
-
-		// Load the Recent Pages widget.
-		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
-			if ( self::$enable_widgets['recent_pages'] ) {
-				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 3 ) );
-			}
-		}
-
-		// Load the Site Info widget.
-		MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), self::$page, array( 1, 1, 2, 2 ) );
-
-		// Load the Pluins widget.
-		if ( self::$enable_widgets['plugins'] ) {
-			MainWP_UI::add_widget_box( 'plugins', array( MainWP_Widget_Plugins::get_class_name(), 'render' ), self::$page, array( 1, 1, 3, 3 ) );
-		}
-
-		// Load the Themes widget.
-		if ( self::$enable_widgets['themes'] ) {
-			MainWP_UI::add_widget_box( 'themes', array( MainWP_Widget_Themes::get_class_name(), 'render' ), self::$page, array( 1, 1, 3, 3 ) );
-		}
-
 		$i = 0;
 		foreach ( $extMetaBoxs as $metaBox ) {
 			$enabled = true;
@@ -1033,13 +980,67 @@ class MainWP_Manage_Sites {
 			$id = 'advanced-' . $id;
 
 			if ( $enabled ) {
-				$layout = array( 1, 1, 2, 3 );
+				$layout = array( 1, 1, 4, 11 );
 				if ( isset( $metaBox['id'] ) && ( 'google-widget' === $metaBox['id'] || 'matomo' === $metaBox['id'] ) ) {
-					$layout = array( 1, 1, 2, 7 );
+					$layout = array( 1, 1, 4, 15 );
 				}
 				$layout = ! empty( $metaBox['layout'] ) && is_array( $metaBox['layout'] ) ? $metaBox['layout'] : $layout;
 				MainWP_UI::add_widget_box( $id, $metaBox['callback'], self::$page, $layout );
 			}
+		}
+
+		// Load the Notes widget.
+		if ( self::$enable_widgets['notes'] ) {
+			MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::get_class_name(), 'render' ), self::$page, array( 1, 1, 4, 11 ) );
+		}
+
+		// Load the Client widget.
+		if ( self::$enable_widgets['client_info'] ) {
+			MainWP_UI::add_widget_box( 'client_info', array( MainWP_Client_Info::get_class_name(), 'render' ), self::$page, array( 1, 1, 4, 11 ) );
+		}
+
+		// Load the Recent Pages widget.
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
+			if ( self::$enable_widgets['recent_pages'] ) {
+				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), self::$page, array( 1, 1, 6, 11 ) );
+			}
+		}
+
+		// Load the Recent Posts widget.
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
+			if ( self::$enable_widgets['recent_posts'] ) {
+				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), self::$page, array( 1, 1, 6, 11 ) );
+			}
+		}
+
+		// Load the Themes widget.
+		if ( self::$enable_widgets['themes'] ) {
+			MainWP_UI::add_widget_box( 'themes', array( MainWP_Widget_Themes::get_class_name(), 'render' ), self::$page, array( 1, 1, 6, 11 ) );
+		}
+
+		// Load the Pluins widget.
+		if ( self::$enable_widgets['plugins'] ) {
+			MainWP_UI::add_widget_box( 'plugins', array( MainWP_Widget_Plugins::get_class_name(), 'render' ), self::$page, array( 1, 1, 6, 11 ) );
+		}
+
+		// Load the Non-MainWP Changes widget.
+		if ( self::$enable_widgets['non_mainwp_changes'] ) {
+			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), self::$page, array( 1, 1, 4, 10 ) );
+		}
+
+		// Load the Site Info widget.
+		MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), self::$page, array( 1, 1, 4, 18 ) );
+
+		// Load the Securtiy Issues widget.
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
+			if ( self::$enable_widgets['security_issues'] ) {
+				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), self::$page, array( 1, 1, 4, 8 ) );
+			}
+		}
+
+		// Load the Updates Overview widget.
+		if ( self::$enable_widgets['overview'] ) {
+			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), self::$page, array( 1, 1, 4, 18 ) );
 		}
 	}
 
@@ -1137,7 +1138,7 @@ class MainWP_Manage_Sites {
 	/**
 	 * Method render_scan_site()
 	 *
-	 * Render Security Scan.
+	 * Render Site Hardening.
 	 *
 	 * @param mixed $website Child Site.
 	 *
@@ -1203,7 +1204,7 @@ class MainWP_Manage_Sites {
 
 		self::load_sites_table();// to fix loading.
 
-		$optimize_for_sites_table = ( 1 === (int) get_option( 'mainwp_optimize' ) );
+		$optimize_for_sites_table = apply_filters( 'mainwp_manage_sites_optimize_loading', 1 ); // use ajax to load sites table .
 
 		if ( ! $optimize_for_sites_table ) {
 			self::$sitesTable->prepare_items( false );
@@ -1623,37 +1624,37 @@ class MainWP_Manage_Sites {
 				?>
 				<p><?php esc_html_e( 'If you need help connecting your websites, please review following help documents', 'mainwp' ); ?></p>
 				<div class="ui relaxed bulleted list">
-					<div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/" target="_blank">Set up the MainWP Plugin</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/install-mainwp-child/" target="_blank">Install MainWP Child</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/set-unique-security-id/" target="_blank">Set Unique Security ID</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">Add a Site to your Dashboard</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">Import Sites</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/" target="_blank">Set up the MainWP Plugin</a> <i class="external alternate icon"></i></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/install-mainwp-child/" target="_blank">Install MainWP Child</a> <i class="external alternate icon"></i></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/set-unique-security-id/" target="_blank">Set Unique Security ID</a> <i class="external alternate icon"></i></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">Add a Site to your Dashboard</a> <i class="external alternate icon"></i></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">Import Sites</a> <i class="external alternate icon"></i></div>
 				</div>
 				<?php
 			} elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
 				?>
 				<p><?php esc_html_e( 'If you need help connecting your websites, please review following help documents', 'mainwp' ); ?></p>
 				<div class="ui relaxed bulleted list">
-					<div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/" target="_blank">Set up the MainWP Plugin</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/install-mainwp-child/" target="_blank">Install MainWP Child</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/set-unique-security-id/" target="_blank">Set Unique Security ID</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">Add a Site to your Dashboard</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">Import Sites</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/" target="_blank">Set up the MainWP Plugin</a> <i class="external alternate icon"></i></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/install-mainwp-child/" target="_blank">Install MainWP Child</a> <i class="external alternate icon"></i></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/set-unique-security-id/" target="_blank">Set Unique Security ID</a> <i class="external alternate icon"></i></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">Add a Site to your Dashboard</a> <i class="external alternate icon"></i></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">Import Sites</a> <i class="external alternate icon"></i></div>
 				</div>
 				<?php
 			} else {
 				?>
 				<p><?php esc_html_e( 'If you need help with managing child sites, please review following help documents', 'mainwp' ); ?></p>
 				<div class="ui relaxed bulleted list">
-					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-sites/" target="_blank">Manage Child Sites</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/access-child-site-wp-admin/" target="_blank">Access Child Site WP Admin</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/synchronize-a-child-site/" target="_blank">Synchronize a Child Site</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">Edit a Child Site</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/reconnect-a-child-site/" target="_blank">Reconnect a Child Site</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/delete-a-child-site/" target="_blank">Delete a Child Site</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">Security Issues</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">Manage Child Site Tags</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-site-notes/" target="_blank">Manage Child Site Notes</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-sites/" target="_blank">Manage Child Sites</a> <i class="external alternate icon"></i></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/access-child-site-wp-admin/" target="_blank">Access Child Site WP Admin</a> <i class="external alternate icon"></i></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/synchronize-a-child-site/" target="_blank">Synchronize a Child Site</a> <i class="external alternate icon"></i></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">Edit a Child Site</a> <i class="external alternate icon"></i></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/reconnect-a-child-site/" target="_blank">Reconnect a Child Site</a> <i class="external alternate icon"></i></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/delete-a-child-site/" target="_blank">Delete a Child Site</a> <i class="external alternate icon"></i></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">Security Issues</a> <i class="external alternate icon"></i></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">Manage Child Site Tags</a> <i class="external alternate icon"></i></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-site-notes/" target="_blank">Manage Child Site Notes</a> <i class="external alternate icon"></i></div>
 				</div>
 				<?php
 			}

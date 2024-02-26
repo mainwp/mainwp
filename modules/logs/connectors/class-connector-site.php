@@ -53,14 +53,13 @@ class Connector_Site extends Log_Connector {
 	 */
 	public function get_action_labels() {
 		return array(
-			'added'       => esc_html__( 'Added', 'mainwp' ),
-			'updated'     => esc_html__( 'Updated', 'mainwp' ),
-			'sync'        => esc_html__( 'Sync Data', 'mainwp' ),
-			'deleted'     => esc_html__( 'Deleted', 'mainwp' ),
-			'reconnected' => esc_html__( 'Reconnected', 'mainwp' ),
-			'suspend'     => esc_html__( 'Suspend', 'mainwp' ),
-			'unsuspend'   => esc_html__( 'Unsuspend', 'mainwp' ),
-			'reconnect'   => esc_html__( 'Reconnect', 'mainwp' ),
+			'added'     => esc_html__( 'Added', 'mainwp' ),
+			'updated'   => esc_html__( 'Updated', 'mainwp' ),
+			'sync'      => esc_html__( 'Sync Data', 'mainwp' ),
+			'deleted'   => esc_html__( 'Deleted', 'mainwp' ),
+			'suspend'   => esc_html__( 'Suspend', 'mainwp' ),
+			'unsuspend' => esc_html__( 'Unsuspend', 'mainwp' ),
+			'reconnect' => esc_html__( 'Reconnected', 'mainwp' ),
 		);
 	}
 

@@ -74,7 +74,7 @@ class Log_Install extends MainWP_Install {
 		$currentVersion = get_site_option( $this->log_db_option_key );
 
 		$rslt = $this->query( "SHOW TABLES LIKE '" . $this->table_name( 'wp_logs' ) . "'" );
-		if ( 0 === self::num_rows( $rslt ) ) {
+		if ( empty( self::num_rows( $rslt ) ) ) {
 			$currentVersion = false;
 		}
 

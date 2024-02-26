@@ -241,7 +241,7 @@ var managesitesShowBusyFunction;
 var managesitesShowBusyTimeout;
 
 mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
-    if (mainwpParams['disable_checkBackupBeforeUpgrade'] == true) {
+    if (mainwpParams['backup_before_upgrade'] == false) {
         if (managesitesContinueAfterBackup != undefined)
             managesitesContinueAfterBackup();
         return false;

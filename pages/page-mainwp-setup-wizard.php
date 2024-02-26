@@ -310,22 +310,25 @@ class MainWP_Setup_Wizard {
 		$this->mwp_setup_ready_actions();
 		$is_new       = MainWP_Demo_Handle::get_instance()->is_new_instance();
 		$enabled_demo = apply_filters( 'mainwp_demo_mode_enabled', false );
+		$count_sites  = MainWP_DB::instance()->get_websites_count();
 		?>
 		<h1 class="ui header"><?php esc_html_e( 'Welcome to your MainWP Dashboard!', 'mainwp' ); ?></h1>
 		<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
 		<div class="ui hidden divider"></div>
 		<h3><?php esc_html_e( 'Are you ready to get started adding your sites?', 'mainwp' ); ?></h3>
 		<a class="ui big green basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp-setup&step=introduction' ) ); ?>"><?php esc_html_e( 'Start the MainWP Quick Setup Wizard', 'mainwp' ); ?></a>
-		<div class="ui hidden divider"></div>
-		<h3><?php esc_html_e( 'Would you like to see Demo content first? ', 'mainwp' ); ?> - <?php printf( esc_html__( '%sWhat is this?%s', 'mainwp' ), '<a href="https://www.youtube.com/watch?v=fCHT47AKt7s" target="_blank">', '</a>' ); ?></h3>
-		<p><?php esc_attr_e( 'Explore MainWP\'s capabilities using our pre-loaded demo content.', 'mainwp' ); ?></p>
-		<p><?php esc_attr_e( 'It\'s the perfect way to experience the benefits and ease of use MainWP provides without connecting to any of your own sites.', 'mainwp' ); ?></p>
-		<p><?php esc_html_e( 'The demo content serves as placeholder data to give you a feel for the MainWP Dashboard. Please note that because no real websites are connected in this demo, some functionality will be restricted. Features that require a connection to actual websites will be disabled for the duration of the demo.', 'mainwp' ); ?></p>
-		<p><?php esc_attr_e( 'Click this button to import the Demo content to your MainWP Dashboard and enable the Demo mode.', 'mainwp' ); ?></p>
-		<p><span><button class="ui big green button mainwp-import-demo-data-button" page-import="qsw-import" <?php echo ( ! $is_new || $enabled_demo ? 'disabled="disabled"' : '' ); ?>><?php esc_html_e( 'Enable Demo Mode With Guided Tours', 'mainwp' ); ?></button></span></p>
-		<div class="ui blue message">
-			<?php printf( esc_html__( 'Guided tours feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
-		</div>
+		<?php if ( 0 === $count_sites ) : ?>
+			<div class="ui hidden divider"></div>
+			<h3><?php esc_html_e( 'Would you like to see Demo content first? ', 'mainwp' ); ?> - <?php printf( esc_html__( '%sWhat is this?%s', 'mainwp' ), '<a href="https://www.youtube.com/watch?v=fCHT47AKt7s" target="_blank">', '</a>' ); ?></h3>
+			<p><?php esc_attr_e( 'Explore MainWP\'s capabilities using our pre-loaded demo content.', 'mainwp' ); ?></p>
+			<p><?php esc_attr_e( 'It\'s the perfect way to experience the benefits and ease of use MainWP provides without connecting to any of your own sites.', 'mainwp' ); ?></p>
+			<p><?php esc_html_e( 'The demo content serves as placeholder data to give you a feel for the MainWP Dashboard. Please note that because no real websites are connected in this demo, some functionality will be restricted. Features that require a connection to actual websites will be disabled for the duration of the demo.', 'mainwp' ); ?></p>
+			<p><?php esc_attr_e( 'Click this button to import the Demo content to your MainWP Dashboard and enable the Demo mode.', 'mainwp' ); ?></p>
+			<p><span><button class="ui big green button mainwp-import-demo-data-button" page-import="qsw-import" <?php echo ( ! $is_new || $enabled_demo ? 'disabled="disabled"' : '' ); ?>><?php esc_html_e( 'Enable Demo Mode With Guided Tours', 'mainwp' ); ?></button></span></p>
+			<div class="ui blue message">
+				<?php printf( esc_html__( 'Guided tours feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
+			</div>
+		<?php endif; ?>
 		<?php
 		MainWP_System_View::render_comfirm_modal();
 	}
@@ -339,7 +342,7 @@ class MainWP_Setup_Wizard {
 		?>
 		<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
 		<h1 class="ui header"><?php esc_html_e( 'MainWP Quick Setup Wizard', 'mainwp' ); ?></h1>
-		<p><?php esc_html_e( 'Thank you for choosing MainWP for managing your WordPress sites. This quick setup wizard will help you configure the basic settings. It\'s completely optional and shouldn\'t take longer than five minutes.', 'mainwp' ); ?></p>
+		<div><?php esc_html_e( 'Thank you for choosing MainWP for managing your WordPress sites. This quick setup wizard will help you configure the basic settings. It\'s completely optional and shouldn\'t take longer than five minutes.', 'mainwp' ); ?></div>
 		<div class="ui hidden divider"></div>
 		<a href="https://kb.mainwp.com/docs/quick-setup-wizard-video/" target="_blank" class="ui big icon green button"><i class="youtube icon"></i> <?php esc_html_e( 'Walkthrough', 'mainwp' ); ?></a>
 		<div class="ui hidden divider"></div>
@@ -402,7 +405,7 @@ class MainWP_Setup_Wizard {
 					<div class="ui fluid input">
 						<input type="text" name="mwp_setup_openssl_lib_location" value="<?php echo esc_attr( $openssl_loc ); ?>">
 					</div>
-							<div><em><?php esc_html_e( 'Due to bug with PHP on some servers, enter the openssl.cnf file location so MainWP Dashboard can connect to your child sites. If your openssl.cnf file is saved to a different path from what is entered above please enter your exact path. ', 'mainwp' ); ?><?php printf( esc_html__( '%1$sClick here%2$s to see how to find the OpenSSL.cnf file.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a>' ); ?></em></div>
+							<div><em><?php esc_html_e( 'Due to bug with PHP on some servers, enter the openssl.cnf file location so MainWP Dashboard can connect to your child sites. If your openssl.cnf file is saved to a different path from what is entered above please enter your exact path. ', 'mainwp' ); ?><?php printf( esc_html__( '%1$sClick here%2$s to see how to find the OpenSSL.cnf file.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></em></div>
 						</div>
 				</div>
 			</div>
@@ -495,6 +498,7 @@ class MainWP_Setup_Wizard {
 				<?php if ( empty( $count_clients ) ) { ?>
 					<div class="field">
 						<label><?php esc_html_e( 'Do you want to create a client for your first child site?', 'mainwp' ); ?></label>
+						<div><?php esc_html_e( 'By adding a new client, you streamline site management within MainWP. Assigning sites to clients allows you to group and manage websites according to the clients they belong to for better organization and accessibility.', 'mainwp' ); ?></div>
 						<div class="ui hidden divider"></div>
 						<div class="ui toggle checkbox">
 						<input type="checkbox" name="mainwp-qsw-confirm-add-new-client" id="mainwp-qsw-confirm-add-new-client" checked="true"/>
@@ -770,12 +774,15 @@ class MainWP_Setup_Wizard {
 		<h1 class="ui header">
 			<?php esc_html_e( 'Basic Uptime Monitoring', 'mainwp' ); ?>
 		</h1>
+		<div><?php esc_html_e( 'The MainWP Basic Uptime Monitoring function periodically sends HTTP requests to your child sites, based on a chosen frequency from every 5 minutes to once daily, to check their operational status. It uses a direct cURL request to obtain an HTTP Header response, alerting you via email if a site fails to return a Status Code 200 (OK). This feature operates independently of third-party services, providing a straightforward and no-cost option for uptime monitoring across all your managed sites. However, it does not diagnose the specific nature of errors leading to site unavailability.', 'mainwp' ); ?></div>
+		<div class="ui hidden divider"></div>
+		<div class="ui hidden divider"></div>
 		<form method="post" class="ui form">
 			<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			<div class="ui grid field">
-				<div class="ui info message"><?php printf( esc_html__( 'Excessive checking can cause server resource issues.  For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a>' ); ?></div>
+				<div class="ui info message"><?php printf( esc_html__( 'Excessive checking can cause server resource issues. For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a>' ); ?></div>
 				<label class="six wide column middle aligned"><?php esc_html_e( 'Enable basic uptime monitoring', 'mainwp' ); ?></label>
-				<div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring">
+				<div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring" style="max-width:100px !important;">
 					<input type="checkbox" name="mainwp_setup_disableSitesChecking" id="mainwp_setup_disableSitesChecking" <?php echo ( 1 === $disableSitesMonitoring ? '' : 'checked="true"' ); ?>/>
 					<label class=""></label>
 				</div>
@@ -799,9 +806,12 @@ class MainWP_Setup_Wizard {
 			<h1 class="ui header">
 				<?php esc_html_e( 'Site Health Monitoring', 'mainwp' ); ?>
 			</h1>
+			<div><?php esc_html_e( "The MainWP Site Health Monitoring feature integrates with WordPress 5.1's Site Health tool, providing centralized notifications regarding the health status of your child sites. It allows you to choose between being notified for any status changes or only when the health drops below the 'Good' threshold, ensuring you're informed about crucial security and performance metrics.", 'mainwp' ); ?></div>
+			<div class="ui hidden divider"></div>
+			<div class="ui hidden divider"></div>
 			<div class="ui grid field">
 				<label class="six wide column middle aligned"><?php esc_html_e( 'Enable Site Health monitoring', 'mainwp' ); ?></label>
-				<div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="health-monitoring">
+				<div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="health-monitoring" style="max-width:100px !important;">
 					<input type="checkbox" name="mainwp_setup_disable_sitesHealthMonitoring" id="mainwp_setup_disable_sitesHealthMonitoring" <?php echo ( 1 === $disableSitesHealthMonitoring ? '' : 'checked="true"' ); ?>/>
 				</div>
 			</div>
@@ -815,6 +825,8 @@ class MainWP_Setup_Wizard {
 					</select>
 				</div>
 			</div>
+			<div class="ui hidden divider"></div>
+			<div class="ui hidden divider"></div>
 			<input type="submit" class="ui big green right floated button" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
 			<a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="ui big button"><?php esc_html_e( 'Skip', 'mainwp' ); ?></a>
 			<a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>				

@@ -104,12 +104,13 @@ class MainWP_Manage_Groups {
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => esc_html__( 'Tags', 'mainwp' ),
-				'parent_key' => 'managesites',
-				'slug'       => 'ManageGroups',
-				'href'       => 'admin.php?page=ManageGroups',
-				'icon'       => '<i class="tags icon"></i>',
-				'desc'       => 'Manage tags on your MainWP Dashboard',
+				'title'         => esc_html__( 'Tags', 'mainwp' ),
+				'parent_key'    => 'managesites',
+				'slug'          => 'ManageGroups',
+				'href'          => 'admin.php?page=ManageGroups',
+				'icon'          => '<i class="tags icon"></i>',
+				'desc'          => 'Manage tags on your MainWP Dashboard',
+				'leftsub_order' => 3,
 			),
 			1
 		);
@@ -307,7 +308,7 @@ class MainWP_Manage_Groups {
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp_groups_info"></i>
 					<div><?php esc_html_e( 'In case you are managing a large number of WordPress sites, it could be useful for you to mark them with different tags . Later, you will be able to make Site Selection by a tag that will speed up your work and makes it much easier.', 'mainwp' ); ?></div>
 					<div><?php esc_html_e( 'One child site can be assigned to multiple Tags at the same time.', 'mainwp' ); ?></div>
-					<div><?php printf( esc_html__( 'for more information check the %1$sKnowledge Base %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">', '</a>' ); ?></div>
+					<div><?php printf( esc_html__( 'for more information check the %1$sKnowledge Base %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
 			</div>
 			<?php } ?>
 			<?php
@@ -363,6 +364,7 @@ class MainWP_Manage_Groups {
 			</div>
 			<?php MainWP_UI::render_modal_edit_notes(); ?>
 			<div class="ui mini modal" id="mainwp-create-group-modal">
+			<i class="close icon"></i>
 				<div class="header"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></div>
 				<div class="content">
 					<div class="ui form">
@@ -379,10 +381,10 @@ class MainWP_Manage_Groups {
 				<div class="actions">
 					<div class="ui two columns grid">
 						<div class="left aligned column">
-							<a class="ui green button" id="mainwp-save-new-group-button" href="#"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></a>
+							
 						</div>
 						<div class="right aligned column">
-							<div class="ui cancel button"><?php echo esc_html__( 'Close', 'mainwp' ); ?></div>
+						<a class="ui green button" id="mainwp-save-new-group-button" href="#"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></a>
 						</div>
 					</div>
 				</div>
@@ -407,6 +409,7 @@ class MainWP_Manage_Groups {
 			</div>
 
 			<div class="ui mini modal" id="mainwp-rename-group-modal">
+			<i class="close icon"></i>
 				<div class="header"><?php echo esc_html__( 'Rename Tag', 'mainwp' ); ?></div>
 				<div class="content">
 					<div class="ui form">
@@ -423,10 +426,10 @@ class MainWP_Manage_Groups {
 				<div class="actions">
 					<div class="ui two columns stackable grid">
 						<div class="left aligned column">
-							<a class="ui green button" id="mainwp-update-new-group-button" href="#"><?php echo esc_html__( 'Update Tag', 'mainwp' ); ?></a>
+							
 						</div>
 						<div class="right aligned column">
-							<div class="ui cancel button"><?php echo esc_html__( 'Close', 'mainwp' ); ?></div>
+						<a class="ui green button" id="mainwp-update-new-group-button" href="#"><?php echo esc_html__( 'Update Tag', 'mainwp' ); ?></a>
 						</div>
 					</div>
 				</div>
@@ -748,38 +751,6 @@ class MainWP_Manage_Groups {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Method get_sites()
-	 *
-	 * Get Child Sites by Group ID.
-	 *
-	 * @return mixed $websiteIds|ERROR Child Site ID or Error is returned.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_group_id()
-	 */
-	public static function get_sites() {
-		//phpcs:disable WordPress.Security.NonceVerification.Missing
-		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		//phpcs:enable
-
-		if ( $groupid ) {
-			$group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
-			if ( ! empty( $group ) ) {
-				$websites   = MainWP_DB::instance()->get_websites_by_group_id( $group->id );
-				$websiteIds = array();
-				if ( ! empty( $websites ) ) {
-					foreach ( $websites as $website ) {
-						$websiteIds[] = $website->id;
-					}
-				}
-
-				return wp_json_encode( $websiteIds );
-			}
-		}
-		die( 'ERROR' );
 	}
 
 	/**

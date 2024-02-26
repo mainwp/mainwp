@@ -160,7 +160,7 @@ postAction = function (elem, what) {
     } else if (response.result) {
       rowElement.show();
       rowElement.next('.mainwp-row-actions-working').hide();
-      rowElement.html('<div class="sixteen wide column"><i class="check circle green icon"></i>' + response.result + '</div>');
+      rowElement.html('<div class="sixteen wide column"><i class="check green icon"></i>' + response.result + '</div>');
     } else {
       rowElement.show();
       rowElement.next('.mainwp-row-actions-working').hide();
@@ -2316,11 +2316,12 @@ bulkInstallDone = 0;
  *
  * @return void
  */
-mainwp_install_bulk = function (type, slug) {
+mainwp_install_bulk = function (type, slug, name) {
   var data = mainwp_secure_data({
     action: 'mainwp_preparebulkinstallplugintheme',
     type: type,
     slug: slug,
+    name: name,
     selected_by: jQuery('#select_by').val()
   });
   var placeholder = '<div class="ui placeholder"><div class="paragraph"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div></div>';
@@ -2397,7 +2398,7 @@ mainwp_install_bulk = function (type, slug) {
 
       jQuery('#plugintheme-installation-queue').html(installQueueContent);
       jQuery('#plugintheme-installation-progress-modal .mainwp-modal-progress').progress({ value: 0, total: bulkInstallTotal });
-      mainwp_install_bulk_start_next(type, response.url, activatePlugin, overwrite, slug);
+      mainwp_install_bulk_start_next(type, response.url, activatePlugin, overwrite, slug, response);
     }
   }(type, jQuery('#chk_activate_plugin').is(':checked'), jQuery('#chk_overwrite').is(':checked')), 'json');
 
@@ -2420,13 +2421,29 @@ bulkInstallCurrentThreads = 0;
  *
  * @return void
  */
-mainwp_install_bulk_start_next = function (type, url, activatePlugin, overwrite, slug) {
+mainwp_install_bulk_start_next = function (type, url, activatePlugin, overwrite, slug, installResults) {
   while ((siteToInstall = jQuery('.siteBulkInstall[status="queue"]:first')) && (siteToInstall.length > 0) && (bulkInstallCurrentThreads < bulkInstallMaxThreads)) {
-    mainwp_install_bulk_start_specific(type, url, activatePlugin, overwrite, siteToInstall, slug);
+    mainwp_install_bulk_start_specific(type, url, activatePlugin, overwrite, siteToInstall, slug, installResults);
   }
-
   if (bulkInstallDone == bulkInstallTotal && bulkInstallTotal != 0) {
     jQuery('#bulk_install_info').before('<div class="ui info message">' + mainwp_install_bulk_you_know_msg(type, 1) + '</div>');
+    if (jQuery('.mainwp-cost-tracker-assistant-add-to-cost-tracker-button').length > 0) { // to support add to cost tracker pro.
+      if (installResults.add_to_cost_tracker_id != undefined) {
+        if (installResults.add_to_cost_tracker_id > 0) {
+          jQuery('.mainwp-cost-tracker-assistant-add-to-cost-tracker-button').text(_('Edit Cost Tracker'));
+          jQuery('#mainwp-cost-tracker-assistant-add-to-tracker-modal .header').text(_('Edit Cost Tracker'));
+        }
+        jQuery('.mainwp-cost-tracker-assistant-add-to-cost-tracker-button').attr('disabled', false);
+        jQuery('.mainwp-cost-tracker-assistant-add-to-cost-tracker-button').removeClass('disabled');
+        jQuery('.mainwp-cost-tracker-assistant-add-to-cost-tracker-button').attr('item-slug', slug);
+        jQuery('.mainwp-cost-tracker-assistant-add-to-cost-tracker-button').attr('item-type', type);
+        jQuery('.mainwp-cost-tracker-assistant-add-to-cost-tracker-button').attr('item-name', installResults.name);
+        jQuery('.mainwp-cost-tracker-assistant-add-to-cost-tracker-button').attr('cost-id', installResults.add_to_cost_tracker_id);
+        if (installResults.installed_sites != undefined) {
+          jQuery('.mainwp-cost-tracker-assistant-add-to-cost-tracker-button').attr('installed-sites', installResults.installed_sites.join(','));
+        }
+      }
+    }
   }
 };
 
@@ -2443,7 +2460,7 @@ mainwp_install_bulk_start_next = function (type, url, activatePlugin, overwrite,
  *
  * @return void
  */
-mainwp_install_bulk_start_specific = function (type, url, activatePlugin, overwrite, siteToInstall, slug) {
+mainwp_install_bulk_start_specific = function (type, url, activatePlugin, overwrite, siteToInstall, slug, installResults) {
   bulkInstallCurrentThreads++;
 
   siteToInstall.attr('status', 'progress');
@@ -2474,6 +2491,10 @@ mainwp_install_bulk_start_specific = function (type, url, activatePlugin, overwr
       } else if ((response.ok != undefined) && (response.ok[siteToInstall.attr('siteid')] != undefined)) {
         statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Installation completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>');
         success = true;
+        if (installResults.installed_sites == undefined) {
+          installResults.installed_sites = [];
+        }
+        installResults.installed_sites.push(siteToInstall.attr('siteid'));
       } else if ((response.errors != undefined) && (response.errors[siteToInstall.attr('siteid')] != undefined)) {
         _error = response.errors[siteToInstall.attr('siteid')][1];
       } else {
@@ -2489,7 +2510,7 @@ mainwp_install_bulk_start_specific = function (type, url, activatePlugin, overwr
 
       jQuery('#plugintheme-installation-progress-modal .mainwp-modal-progress').progress('set progress', bulkInstallDone);
       jQuery('#plugintheme-installation-progress-modal .mainwp-modal-progress').find('.label').html(bulkInstallDone + '/' + bulkInstallTotal + ' ' + __('Installed'));
-      mainwp_install_bulk_start_next(type, url, activatePlugin, overwrite, slug);
+      mainwp_install_bulk_start_next(type, url, activatePlugin, overwrite, slug, installResults);
     }
   }(type, url, activatePlugin, overwrite, siteToInstall), 'json');
 };
@@ -2670,6 +2691,36 @@ mainwp_upload_bulk_start_next = function (type, urls, activatePlugin, overwrite)
     var msg = mainwp_install_bulk_you_know_msg(type, jQuery('#bulk_upload_info').attr('number-files'));
 
     jQuery('#bulk_upload_info').html('<div class="mainwp-notice mainwp-notice-blue">' + msg + '</div>');
+
+    if (jQuery('.mainwp_cost_tracker_assistant_installed_items').length > 0) { // to support add to cost tracker pro.
+      var cost_tracker_items = [];
+      var cost_tracker_check_slugs = [];
+      jQuery('.mainwp_cost_tracker_assistant_installed_items').each(function () {
+        var slug = jQuery(this).attr('item-slug');
+        var items_slug = {};
+        if (!cost_tracker_check_slugs.includes(slug)) {
+          cost_tracker_check_slugs.push(slug);
+          var siteids = [];
+          jQuery('.mainwp_cost_tracker_assistant_installed_items[item-slug="' + slug + '"]').each(function () {
+            siteids.push(jQuery(this).attr('item-siteid'));
+          });
+          items_slug.slug = slug;
+          items_slug.name = jQuery(this).attr('item-name');
+          items_slug.type = jQuery(this).attr('item-type');
+          items_slug.cost_id = jQuery(this).attr('cost-id');
+          items_slug.sites_ids = siteids;
+          cost_tracker_items.push(items_slug);
+        }
+      });
+
+      if (cost_tracker_items.length > 0) {
+        jQuery('.mainwp-cost-tracker-assistant-add-buttons-wrapper').html('');
+        var multiAddTo = cost_tracker_items.length > 1 ? 1 : 0;
+        cost_tracker_items.forEach(item => {
+          jQuery('.mainwp-cost-tracker-assistant-add-buttons-wrapper').append('<a href="javascript:void(0)" item-type="' + item.type + '" item-slug="' + item.slug + '" cost-id="' + item.cost_id + '" item-name="' + item.name + '" installed-sites="' + item.sites_ids.join(',') + '" multi-add-to="' + multiAddTo + '" class="ui mini button mainwp-cost-tracker-assistant-add-to-cost-tracker-button">' + ((item.cost_id != undefined && item.cost_id > 0) ? __('Edit Cost Tracker') : __('Add to Cost Tracker')) + '</a>');
+        });
+      }
+    }
   }
 };
 
@@ -2724,6 +2775,9 @@ mainwp_upload_bulk_start_specific = function (type, urls, activatePlugin, overwr
           results += '</div>';
         }
         jQuery('div[siteId="' + siteid + '"] .installation-entries').html(results);
+        if (response.cost_tracker_installed_info != undefined) { // to support add to cost tracker pro.
+          jQuery('div[siteId="' + siteid + '"] .installation-entries').after(response.cost_tracker_installed_info);
+        }
         statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Installation completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>');
       } else if ((response.errors != undefined) && (response.errors[siteid] != undefined)) {
         statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + response.errors[siteid][1] + '"><i class="times red icon"></i></span>');
@@ -2921,6 +2975,11 @@ jQuery(document).ready(function () {
     return false;
   });
   jQuery('#redirectForm').trigger("submit");
+  if (jQuery('div.ui.open-site-close-window').length > 0) {
+    setTimeout(function () {
+      window.close()
+    }, 3000);
+  }
 });
 
 mainwp_notes_show = function (reloadClose) {
@@ -3427,8 +3486,238 @@ jQuery(document).on('change', '#cb-select-all-top, #cb-select-all-bottom', funct
     });
 });
 
+
+jQuery(document).ready(function ($) {
+  // Trigger the bulk actions
+  $('#mainwp_non_mainwp_actions_action_btn').on('click', function () {
+    var bulk_act = jQuery('#non_mainwp_actions_bulk_action').dropdown("get value");
+    var confirmMsg = '';
+    switch (bulk_act) {
+      case 'delete':
+        confirmMsg = __("You are about to delete the selected changes?");
+        break;
+      case 'dismiss':
+        confirmMsg = __("You are about to dismiss the selected changes?");
+        break;
+    }
+    if (confirmMsg == '') {
+      return false;
+    }
+    mainwp_confirm(confirmMsg, function () { mainwp_non_mainwp_actions_table_bulk_action(bulk_act); });
+    return false; // return those case
+  });
+
+
+  $(document).on('click', '.non-mainwp-action-row-dismiss', function () {
+    var row = $(this).closest('tr');
+    var confirmMsg = __("You are about to dismiss the selected changes?");
+    mainwp_confirm(confirmMsg, function () {
+      row.html('<td></td><td colspan="999"><i class="notched circle loading icon"></i> Please wait...</td>');
+      var data = mainwp_secure_data({
+        action: 'mainwp_non_mainwp_changes_dismiss_actions',
+        act_id: $(row).attr('action-id')
+      });
+      $.post(ajaxurl, data, function (response) {
+        if (response) {
+          if (response['error']) {
+            row.html('<td></td><td colspan="999"><i class="times red icon"></i> ' + response['error'] + '</td>');
+          } else if (response['success'] == 'yes') {
+            row.html('<td></td><td colspan="999"><i class="green check icon"></i> Successfully.</td>');
+            setTimeout(function () {
+              jQuery(row).fadeOut("slow");
+            }, 2000);
+          } else {
+            row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
+          }
+        } else {
+          row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
+        }
+      }, 'json');
+    });
+
+    return false;
+  });
+
+  $(document).on('click', '.non-mainwp-action-row-delete', function () {
+    var row = $(this).closest('tr');
+    var confirmMsg = __("You are about to delete the selected changes?");
+
+    mainwp_confirm(confirmMsg, function () {
+      row.html('<td></td><td colspan="999"><i class="notched circle loading icon"></i> Please wait...</td>');
+      var data = mainwp_secure_data({
+        action: 'mainwp_non_mainwp_changes_delete_actions',
+        act_id: $(row).attr('action-id')
+      });
+      $.post(ajaxurl, data, function (response) {
+        if (response) {
+          if (response['error']) {
+            row.html('<td></td><td colspan="999"><i class="times red icon"></i> ' + response['error'] + '</td>');
+          } else if (response['success'] == 'yes') {
+            row.html('<td></td><td colspan="999"><i class="green check icon"></i> Successfully.</td>');
+            setTimeout(function () {
+              jQuery(row).fadeOut("slow");
+            }, 2000);
+          } else {
+            row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
+          }
+        } else {
+          row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
+        }
+      }, 'json');
+    });
+    return false;
+  });
+
+})
+
+
+// Manage Bulk Actions
+mainwp_non_mainwp_actions_table_bulk_action = function (act) {
+  bulkInstallTotal = 0;
+  bulkInstallCurrentThreads = 0;
+  bulkInstallDone = 0;
+  var selector = '';
+  switch (act) {
+    case 'delete':
+      selector += '#mainwp-manage-non-mainwp-actions-table tbody tr';
+      jQuery(selector).addClass('queue');
+      mainwp_non_mainwp_actions_delete_start_next(selector, true);
+      break;
+    case 'dismiss':
+      selector += '#mainwp-manage-non-mainwp-actions-table tbody tr';
+      jQuery(selector).addClass('queue');
+      mainwp_non_mainwp_actions_dismiss_start_next(selector, true);
+      break;
+  }
+}
+
+mainwp_non_mainwp_actions_delete_start_next = function (selector) {
+  if (bulkInstallTotal == 0) {
+    bulkInstallTotal = jQuery('#mainwp-manage-non-mainwp-actions-table tbody').find('input[type="checkbox"]:checked').length;
+  }
+  while ((objProcess = jQuery(selector + '.queue:first')) && (objProcess.length > 0) && (bulkInstallCurrentThreads < bulkInstallMaxThreads)) {
+    objProcess.removeClass('queue');
+    if (objProcess.closest('tr').find('input[type="checkbox"]:checked').length == 0) {
+      continue;
+    }
+    mainwp_non_mainwp_actions_delete_specific(objProcess, selector, true);
+  }
+}
+
+mainwp_non_mainwp_actions_delete_specific = function (pObj, selector, pBulk) {
+  var row = pObj.closest('tr');
+  var act_id = jQuery(row).attr('action-id');
+  var bulk = pBulk ? true : false;
+
+  if (bulk) {
+    bulkInstallCurrentThreads++;
+  }
+
+  var data = mainwp_secure_data({
+    action: 'mainwp_non_mainwp_changes_delete_actions',
+    act_id: act_id,
+  });
+
+  row.html('<td></td><td colspan="999"><i class="notched circle loading icon"></i> Please wait...</td>');
+
+  jQuery.post(ajaxurl, data, function (response) {
+    pObj.removeClass('queue');
+    if (response) {
+      if (response['error']) {
+        row.html('<td></td><td colspan="999"><i class="times red icon"></i> ' + response['error'] + '</td>');
+      } else if (response['success'] == 'yes') {
+        row.html('<td></td><td colspan="999"><i class="green check icon"></i> Successfully.</td>');
+        setTimeout(function () {
+          jQuery(row).fadeOut("slow");
+        }, 2000);
+      } else {
+        row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
+      }
+    } else {
+      row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
+    }
+
+    if (bulk) {
+      bulkInstallCurrentThreads--;
+      bulkInstallDone++;
+      mainwp_non_mainwp_actions_delete_start_next(selector);
+      if (bulkInstallTotal == bulkInstallDone) {
+        setTimeout(function () {
+          window.location.reload(true);
+        }, 3000);
+      }
+    }
+
+  }, 'json');
+  return false;
+}
+
+
+
+mainwp_non_mainwp_actions_dismiss_start_next = function (selector) {
+  if (bulkInstallTotal == 0) {
+    bulkInstallTotal = jQuery('#mainwp-manage-non-mainwp-actions-table tbody').find('input[type="checkbox"]:checked').length;
+  }
+  while ((objProcess = jQuery(selector + '.queue:first')) && (objProcess.length > 0) && (bulkInstallCurrentThreads < bulkInstallMaxThreads)) {
+    objProcess.removeClass('queue');
+    if (objProcess.closest('tr').find('input[type="checkbox"]:checked').length == 0) {
+      continue;
+    }
+    mainwp_non_mainwp_actions_dismiss_specific(objProcess, selector, true);
+  }
+}
+
+mainwp_non_mainwp_actions_dismiss_specific = function (pObj, selector, pBulk) {
+  var row = pObj.closest('tr');
+  var act_id = jQuery(row).attr('action-id');
+  var bulk = pBulk ? true : false;
+
+  if (bulk) {
+    bulkInstallCurrentThreads++;
+  }
+
+  var data = mainwp_secure_data({
+    action: 'mainwp_non_mainwp_changes_dismiss_actions',
+    act_id: act_id,
+  });
+
+  row.html('<td></td><td colspan="999"><i class="notched circle loading icon"></i> Please wait...</td>');
+
+  jQuery.post(ajaxurl, data, function (response) {
+    pObj.removeClass('queue');
+    if (response) {
+      if (response['error']) {
+        row.html('<td></td><td colspan="999"><i class="times red icon"></i> ' + response['error'] + '</td>');
+      } else if (response['success'] == 'yes') {
+        row.html('<td></td><td colspan="999"><i class="green check icon"></i> Successfully.</td>');
+        setTimeout(function () {
+          jQuery(row).fadeOut("slow");
+        }, 2000);
+      } else {
+        row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
+      }
+    } else {
+      row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
+    }
+
+    if (bulk) {
+      bulkInstallCurrentThreads--;
+      bulkInstallDone++;
+      mainwp_non_mainwp_actions_dismiss_start_next(selector);
+      if (bulkInstallTotal == bulkInstallDone) {
+        setTimeout(function () {
+          window.location.reload(true);
+        }, 3000);
+      }
+    }
+
+  }, 'json');
+  return false;
+}
+
+
 // fix menu overflow with scroll tables.
-mainwp_datatable_fix_menu_overflow = function () {
+mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight, pLeft) {
   var fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');
   jQuery(document).on('click', 'table td.check-column.dtr-control', function () {
     if (jQuery(this).parent().hasClass('parent')) {
@@ -3437,9 +3726,12 @@ mainwp_datatable_fix_menu_overflow = function () {
       mainwp_datatable_fix_child_menu_overflow(chilRow, fix_overflow);
     }
   });
+  var tblSelect = pTableSelector !== '' && pTableSelector !== undefined && pTableSelector !== false ? pTableSelector : 'table';
+
+  console.log('mainwp_datatable_fix_menu_overflow :: ' + tblSelect);
 
   // Fix the overflow prbolem for the actions menu element (right pointing menu).
-  jQuery('table tr td .ui.right.pointing.dropdown.button').on('click', function () {
+  jQuery(tblSelect + ' tr td .ui.right.pointing.dropdown.button').on('click', function () {
     jQuery(this).closest('.dataTables_scrollBody').css('position', '');
     jQuery(this).closest('.dataTables_scroll').css('position', 'relative');
     jQuery(this).css('position', 'static');
@@ -3451,8 +3743,14 @@ mainwp_datatable_fix_menu_overflow = function () {
       position = jQuery(this).closest('td').position();
       top = position.top + 85;
     }
+    if (pTop !== undefined) {
+      top = top + pTop;
+    }
+    if (pRight !== undefined) {
+      right = right + pRight;
+    }
     console.log('right');
-    console.log('top: ' + position.top);
+    console.log('top: ' + top + ' right: ' + right);
     //return false;
     jQuery(this).find('.menu').css('min-width', '170px');
     jQuery(this).find('.menu').css('top', top);
@@ -3460,7 +3758,7 @@ mainwp_datatable_fix_menu_overflow = function () {
   });
 
   // Fix the overflow prbolem for the actions menu element (left pointing menu).
-  jQuery('table tr td .ui.left.pointing.dropdown.button').on('click', function () {
+  jQuery(tblSelect + ' tr td .ui.left.pointing.dropdown.button').on('click', function () {
     jQuery(this).closest('.dataTables_scrollBody').css('position', '');
     jQuery(this).closest('.dataTables_scroll').css('position', 'relative');
     jQuery(this).css('position', 'static');
@@ -3475,6 +3773,12 @@ mainwp_datatable_fix_menu_overflow = function () {
       left = position.left - scroll_left - 145;
     }
 
+    if (pTop !== undefined) {
+      top = top + pTop;
+    }
+    if (pRight !== undefined) {
+      right = right + pRight;
+    }
     console.log('left');
     console.log('top: ' + top + ' left: ' + left);
 

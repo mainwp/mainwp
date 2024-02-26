@@ -96,7 +96,7 @@ class Log_List_Table {
 				break;
 
 			case 'name':
-				$out     = ! empty( $record->name ) ? '<a href="admin.php?page=managesites&dashboard="' . intval( $record->site_id ) . '">' . esc_html( $record->name ) . '</a>' : 'N/A';
+				$out     = ! empty( $record->log_site_name ) ? '<a href="admin.php?page=managesites&dashboard=' . intval( $record->site_id ) . '">' . esc_html( $record->log_site_name ) . '</a>' : 'N/A';
 				$escaped = true;
 				break;
 
@@ -323,7 +323,7 @@ class Log_List_Table {
 	 * @return integer
 	 */
 	public function get_total_found_rows() {
-		return $this->manager->db->get_found_records_count();
+		return $this->total_items;
 	}
 
 	/**
@@ -335,7 +335,7 @@ class Log_List_Table {
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
-	public function prepare_items() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public function prepare_items() {
 
 		$req_orderby = '';
 		$req_order   = null;
@@ -373,7 +373,7 @@ class Log_List_Table {
 		$args['records_per_page'] = $perPage ? $perPage : 20;
 
 		$this->items       = $this->manager->db->get_records( $args );
-		$this->total_items = $this->get_total_found_rows();
+		$this->total_items = $this->manager->db->get_found_records_count();
 	}
 
 
@@ -644,7 +644,7 @@ class Log_List_Table {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
-	public function ajax_get_datatable_rows() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public function ajax_get_datatable_rows() {
 
 		$all_rows  = array();
 		$info_rows = array();

@@ -90,3 +90,23 @@ if ( ! function_exists( 'mainwp_send_json_output' ) ) {
 		wp_send_json( $output );
 	}
 }
+
+
+if ( ! function_exists( 'mainwp_modules_is_enabled' ) ) {
+
+	/**
+	 * Check if module is enable.
+	 *
+	 * @param string $module module slug.
+	 *
+	 * @return bool true|false
+	 */
+	function mainwp_modules_is_enabled( $module ) {
+		$enable_mainwp_modules = array(
+			'logs'         => defined( 'MAINWP_MODULE_LOG_ENABLED' ) && MAINWP_MODULE_LOG_ENABLED ? true : false,
+			'cost-tracker' => defined( 'MAINWP_MODULE_COST_TRACKER_ENABLED' ) && MAINWP_MODULE_COST_TRACKER_ENABLED ? true : false,
+			'api-backups'  => defined( 'MAINWP_MODULE_API_BACKUPS_ENABLED' ) && MAINWP_MODULE_API_BACKUPS_ENABLED ? true : false,
+		);
+		return ! empty( $enable_mainwp_modules[ $module ] ) ? true : false;
+	}
+}

@@ -30,20 +30,18 @@ class MainWP_Includes {
 		$this->includes();
 	}
 
-
-	/**
-	 * Check if enable log module.
-	 */
-	public static function is_enable_log_module() {
-		return defined( 'MAINWP_MODULE_LOG_ENABLED' ) && MAINWP_MODULE_LOG_ENABLED ? true : false;
-	}
-
 	/**
 	 * Load files.
 	 */
 	private function includes() {
-		if ( file_exists( self::$plugin_basedir . '/modules/class-module-log.php' ) ) {
-			require_once self::$plugin_basedir . '/modules/class-module-log.php';
+		if ( file_exists( self::$plugin_basedir . 'modules/common/class-module-log.php' ) ) {
+			require_once self::$plugin_basedir . 'modules/common/class-module-log.php';
+		}
+		if ( file_exists( self::$plugin_basedir . 'modules/common/class-module-cost-tracker.php' ) ) {
+			require_once self::$plugin_basedir . 'modules/common/class-module-cost-tracker.php';
+		}
+		if ( file_exists( self::$plugin_basedir . 'modules/common/class-module-api-backups.php' ) ) {
+			require_once self::$plugin_basedir . 'modules/common/class-module-api-backups.php';
 		}
 	}
 }

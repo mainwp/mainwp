@@ -135,7 +135,7 @@ class MainWP_Sync {
 			$saved_days_number = apply_filters( 'mainwp_site_actions_saved_days_number', 30 );
 
 			$postdata = array(
-				'optimize'                        => 1 === (int) get_option( 'mainwp_optimize', 0 ) ? 1 : 0,
+				'optimize'                        => 1 === (int) get_option( 'mainwp_optimize', 1 ) ? 1 : 0,
 				'cloneSites'                      => ( ! $cloneEnabled || $disallowed_current_site ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ) ),
 				'othersData'                      => wp_json_encode( $othersData ),
 				'server'                          => get_admin_url(),
@@ -164,7 +164,7 @@ class MainWP_Sync {
 				$sync_errors  = esc_html__( 'HTTP error', 'mainwp' ) . ( ! empty( $e->get_message_extra() ) ? ' - ' . $e->get_message_extra() : '' );
 				$check_result = - 1;
 			} elseif ( $e->getMessage() === 'NOMAINWP' ) {
-				$sync_errors  = sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a>' );
+				$sync_errors  = sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a> <i class="external alternate icon"></i>' );
 				$check_result = 1;
 			}
 
@@ -264,8 +264,9 @@ class MainWP_Sync {
 		} else {
 			MainWP_DB::instance()->update_website_option( $pWebsite, 'site_info', $emptyArray );
 		}
-		MainWP_DB::instance()->update_website_option( $pWebsite, 'phpversion', $phpversion );
-
+		if ( ! empty( $phpversion ) ) {
+			MainWP_DB::instance()->update_website_option( $pWebsite, 'phpversion', $phpversion );
+		}
 		if ( isset( $information['directories'] ) && is_array( $information['directories'] ) ) {
 			$websiteValues['directories'] = wp_json_encode( $information['directories'] );
 			$done                         = true;

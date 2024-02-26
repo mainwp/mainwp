@@ -86,7 +86,7 @@ class MainWP_Manage_Sites_Backup_View {
 		<div id="ajax-information-zone" class="updated" style="display: none;"></div>
 
 		<?php if ( 0 === count( $primaryBackupMethods ) ) { ?>
-			<div class="mainwp-notice mainwp-notice-blue"><?php printf( esc_html__( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %1$sExtensions Site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
+			<div class="mainwp-notice mainwp-notice-blue"><?php printf( esc_html__( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %1$sExtensions Site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a> <i class="external alternate icon"></i>' ); ?></div>
 			<?php
 		}
 		?>

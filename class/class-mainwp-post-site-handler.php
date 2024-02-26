@@ -144,13 +144,29 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_group_getsites()
 	 *
 	 * Get Child Sites in group.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Manage_Groups::get_sites()
 	 */
 	public function mainwp_group_getsites() {
-		$this->secure_request( 'mainwp_group_getsites' );
 
-		die( MainWP_Manage_Groups::get_sites() ); // phpcs:ignore WordPress.Security.EscapeOutput
+		$this->secure_request( 'mainwp_group_getsites' );
+		//phpcs:disable WordPress.Security.NonceVerification.Missing
+		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		//phpcs:enable
+
+		if ( $groupid ) {
+			$group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
+			if ( ! empty( $group ) ) {
+				$websites   = MainWP_DB::instance()->get_websites_by_group_id( $group->id );
+				$websiteIds = array();
+				if ( ! empty( $websites ) ) {
+					foreach ( $websites as $website ) {
+						$websiteIds[] = $website->id;
+					}
+				}
+
+				die( wp_json_encode( $websiteIds ) );  // phpcs:ignore WordPress.Security.EscapeOutput
+			}
+		}
+		die( 'ERROR' );
 	}
 
 	/**
@@ -389,6 +405,15 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		}
 
 		if ( MainWP_Sync::sync_website( $website ) ) {
+			$website = MainWP_DB::instance()->get_website_by_id( $website->id ); // reload.
+			/**
+			 * Fires immediately after website synced successfully.
+			 *
+			 * @since 4.6
+			 *
+			 * @param object $website  website data.
+			 */
+			do_action( 'mainwp_after_sync_site_success', $website );
 			die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 		}
 

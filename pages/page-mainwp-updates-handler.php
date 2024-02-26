@@ -728,11 +728,13 @@ class MainWP_Updates_Handler {
 							$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
 							if ( is_array( $plugin_upgrades ) ) {
 								$updated = false;
-								foreach ( $return_results['result'] as $k => $v ) {
-									$k = rawurldecode( $k );
-									if ( isset( $plugin_upgrades[ $k ] ) ) {
-										unset( $plugin_upgrades[ $k ] ); // updated.
-										$updated = true;
+								if ( isset( $return_results['result'] ) && is_array( $return_results['result'] ) && ! empty( $return_results['result'] ) ) {
+									foreach ( $return_results['result'] as $k => $v ) {
+										$k = rawurldecode( $k );
+										if ( isset( $plugin_upgrades[ $k ] ) ) {
+											unset( $plugin_upgrades[ $k ] ); // updated.
+											$updated = true;
+										}
 									}
 								}
 								if ( $updated ) {

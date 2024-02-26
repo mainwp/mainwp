@@ -274,7 +274,9 @@ class MainWP_UI_Select_Sites {
 			<?php
 		}
 
-		self::render_create_tag_modal();
+		if ( $show_new_tag ) {
+			self::render_create_tag_modal();
+		}
 		?>
 		<script type="text/javascript">
 		jQuery( document ).ready( function () {
@@ -424,6 +426,7 @@ class MainWP_UI_Select_Sites {
 	public static function render_create_tag_modal() {
 		?>
 		<div class="ui mini modal" id="mainwp-create-group-sites-modal">
+		<i class="close icon"></i>
 			<div class="header"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></div>
 				<div class="content">
 					<div id="mainwp-message-zone-tag" style="display: none;">
@@ -443,10 +446,10 @@ class MainWP_UI_Select_Sites {
 				<div class="actions">
 					<div class="ui two columns grid">
 						<div class="left aligned column">
-							<a class="ui green button" id="mainwp-save-new-tag-button" href="javascript:void(0);"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></a>
+							
 						</div>
 						<div class="right aligned column">
-							<div class="ui cancel button"><?php echo esc_html__( 'Close', 'mainwp' ); ?></div>
+						<a class="ui green button" id="mainwp-save-new-tag-button" href="javascript:void(0);"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></a>
 						</div>
 					</div>
 				</div>

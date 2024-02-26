@@ -86,7 +86,7 @@ class MainWP_Install extends MainWP_DB_Base {
 		}
 
 		$rslt = self::instance()->query( "SHOW TABLES LIKE '" . $this->table_name( 'wp' ) . "'" );
-		if ( 0 === self::num_rows( $rslt ) ) {
+		if ( empty( self::num_rows( $rslt ) ) ) {
 			$currentVersion = false;
 		}
 

@@ -78,26 +78,66 @@ class MainWP_Install_Bulk {
 		$favorites_enabled = is_plugin_active( 'mainwp-favorites-extension/mainwp-favorites-extension.php' );
 		$cls               = $favorites_enabled ? 'favorites-extension-enabled ' : '';
 		$cls              .= ( 'plugin' === $type ) ? 'qq-upload-plugins' : '';
-		?>
-		<div class="ui secondary center aligned padded segment">
-			<h2 class="ui icon header">
-				<i class="file archive outline icon"></i>
-				<div class="content">
-					<?php esc_html_e( 'Upload .zip File', 'mainwp' ); ?>
-					<div class="sub header"><?php esc_html_e( 'If you have', 'mainwp' ); ?> <?php echo esc_html( strtolower( $title ) ); ?> <?php esc_html_e( 'in a .zip format, you may install it by uploading it here.', 'mainwp' ); ?></div>
+
+		$disabled_upload    = false;
+		$disabled_functions = ini_get( 'disable_functions' );
+		if ( ! empty( $disable_functions ) ) {
+			$disabled_functions_array = explode( ',', $disabled_functions );
+			if ( is_array( $disabled_functions_array ) && in_array( 'tmpfile', $disabled_functions_array ) ) {
+				$disabled_upload = true;
+			}
+		}
+
+		if ( $disabled_upload ) {
+			?>
+				<div class="ui red message">
+					<div><?php esc_html_e( 'MainWP has detected that the tmpfile() PHP function is disabled on your server. This function is essential for uploading and installing zip files for plugins and themes. Please enable the tmpfile() function on your server to proceed. Contact your hosting provider for assistance if needed.', 'mainwp' ); ?></div>
 				</div>
-			</h2>
-			<div class="ui divider"></div>
-				<div id="mainwp-file-uploader" class="<?php echo esc_attr( $cls ); ?>" >
-					<noscript>
-					<div class="ui message red"><?php esc_html_e( 'Please enable JavaScript to use file uploader.', 'mainwp' ); ?></div>
-					</noscript>
+
+				<div class="ui secondary center aligned padded segment">
+					<h2 class="ui icon header">
+						<i class="file archive outline icon" style="color: #ddd"></i>
+						<div class="content" style="color: #ddd">
+							<?php esc_html_e( 'Upload .zip File', 'mainwp' ); ?>
+							<div class="sub header" style="color: #ddd"><?php esc_html_e( 'If you have', 'mainwp' ); ?> <?php echo esc_html( strtolower( $title ) ); ?> <?php esc_html_e( 'in a .zip format, you may install it by uploading it here.', 'mainwp' ); ?></div>
+						</div>
+					</h2>
+
+					<div class="ui hidden divider"></div>
+
+					<div class="ui center aligned segment">
+						<div class="ui labeled icon massive green button disabled">
+							<i class="upload icon"></i>
+							<?php esc_html_e( 'Upload Now', 'mainwp' ); ?> 
+						</div>
+					</div>
+
 				</div>
-				<script>
-					function createUploader() {
-						var uploader = new qq.FileUploader( {
-							element: document.getElementById( 'mainwp-file-uploader' ),
-							action: location.href,
+				<?php
+		} else {
+			?>
+				<div class="ui secondary center aligned padded segment">
+					<h2 class="ui icon header">
+						<i class="file archive outline icon"></i>
+						<div class="content">
+						<?php esc_html_e( 'Upload .zip File', 'mainwp' ); ?>
+							<div class="sub header"><?php esc_html_e( 'If you have', 'mainwp' ); ?> <?php echo esc_html( strtolower( $title ) ); ?> <?php esc_html_e( 'in a .zip format, you may install it by uploading it here.', 'mainwp' ); ?></div>
+						</div>
+					</h2>
+
+					<div class="ui hidden divider"></div>
+
+					<div id="mainwp-file-uploader" class="<?php echo esc_attr( $cls ); ?>" >
+						<noscript>
+						<div class="ui message red"><?php esc_html_e( 'Please enable JavaScript to use file uploader.', 'mainwp' ); ?></div>
+						</noscript>
+					</div>
+
+					<script>
+						function createUploader() {
+							var uploader = new qq.FileUploader( {
+								element: document.getElementById( 'mainwp-file-uploader' ),
+								action: location.href,
 							<?php
 							/**
 							 * Uploader options
@@ -115,16 +155,17 @@ class MainWP_Install_Bulk {
 								echo wp_strip_all_tags( $extraOptions ) . ','; // phpcs:ignore WordPress.Security.EscapeOutput
 							}
 							?>
-							params: {mainwp_do: 'MainWP_Install_Bulk-uploadfile', qq_nonce: '<?php echo esc_js( wp_create_nonce( 'qq_nonce' ) ); ?>' }
-						} );
-					}
+								params: {mainwp_do: 'MainWP_Install_Bulk-uploadfile', qq_nonce: '<?php echo esc_js( wp_create_nonce( 'qq_nonce' ) ); ?>' }
+							} );
+						}
 
-					// in your app create uploader as soon as the DOM is ready.
-					// don't wait for the window to load.
-					createUploader();
-				</script>
-			</div>
-		<?php
+						// in your app create uploader as soon as the DOM is ready.
+						// don't wait for the window to load.
+						createUploader();
+					</script>
+				</div>
+				<?php
+		}
 	}
 
 	/**
@@ -146,14 +187,14 @@ class MainWP_Install_Bulk {
 	public static function prepare_install() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		if ( ! isset( $_POST['url'] ) ) {
 
-			$what = 'theme';
-			if ( isset( $_POST['type'] ) && 'plugin' === $_POST['type'] ) {
-				$what = 'plugin';
-			}
+		$type = 'theme';
+		if ( isset( $_POST['type'] ) && 'plugin' === $_POST['type'] ) {
+			$type = 'plugin';
+		}
+		if ( ! isset( $_POST['url'] ) ) {
 			$api = MainWP_System_Utility::get_plugin_theme_info(
-				$what,
+				$type,
 				array(
 					'slug'   => isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '',
 					'fields' => array( 'sections' => false ),
@@ -175,6 +216,8 @@ class MainWP_Install_Bulk {
 
 		$output          = array();
 		$output['url']   = $url;
+		$output['slug']  = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
+		$output['name']  = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
 		$output['sites'] = array();
 
 		$data_fields = array(
@@ -250,6 +293,15 @@ class MainWP_Install_Bulk {
 			}
 		}
 		// phpcs:enable
+
+		/**
+		* Filter: mainwp_bulk_prepare_install_result
+		*
+		* Fires after plugin/theme prepare install.
+		*
+		* @since 4.6
+		*/
+		$output = apply_filters( 'mainwp_bulk_prepare_install_result', $output, $type );
 		mainwp_send_json_output( $output );
 	}
 
@@ -574,7 +626,16 @@ class MainWP_Install_Bulk {
 		*
 		* @since 4.1
 		*/
-		do_action( 'mainwp_after_plugin_theme_install', $output, $post_data, $websites );
+		do_action( 'mainwp_after_plugin_theme_install', $output, $post_data, $websites, $type );
+
+		/**
+		* Filter: mainwp_bulk_upload_install_result
+		*
+		* Fires after plugin/theme install.
+		*
+		* @since 4.6
+		*/
+		$output = apply_filters( 'mainwp_bulk_upload_install_result', $output, $type, $post_data, $websites );
 
 		wp_send_json( $output );
 	}

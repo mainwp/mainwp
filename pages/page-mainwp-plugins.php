@@ -232,51 +232,66 @@ class MainWP_Plugins {
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => esc_html__( 'Plugins', 'mainwp' ),
-				'parent_key' => 'managesites',
-				'slug'       => 'PluginsManage',
-				'href'       => 'admin.php?page=PluginsManage',
-				'icon'       => '<i class="plug icon"></i>',
+				'title'         => esc_html__( 'Plugins', 'mainwp' ),
+				'parent_key'    => 'managesites',
+				'slug'          => 'PluginsManage',
+				'href'          => 'admin.php?page=PluginsManage',
+				'icon'          => '<i class="plug icon"></i>',
+				'leftsub_order' => 5,
 			),
 			1
 		);
 
 		$init_sub_subleftmenu = array(
 			array(
-				'title'      => esc_html__( 'Manage Plugins', 'mainwp' ),
-				'parent_key' => 'PluginsManage',
-				'href'       => 'admin.php?page=PluginsManage',
-				'slug'       => 'PluginsManage',
-				'right'      => '',
+				'title'                => esc_html__( 'Manage Plugins', 'mainwp' ),
+				'parent_key'           => 'PluginsManage',
+				'href'                 => 'admin.php?page=PluginsManage',
+				'slug'                 => 'PluginsManage',
+				'right'                => '',
+				'leftsub_order_level2' => 1,
 			),
 			array(
-				'title'      => esc_html__( 'Install Plugins', 'mainwp' ),
-				'parent_key' => 'PluginsManage',
-				'href'       => 'admin.php?page=PluginsInstall',
-				'slug'       => 'PluginsInstall',
-				'right'      => 'install_plugins',
+				'title'                => esc_html__( 'Install Plugins', 'mainwp' ),
+				'parent_key'           => 'PluginsManage',
+				'href'                 => 'admin.php?page=PluginsInstall',
+				'slug'                 => 'PluginsInstall',
+				'right'                => 'install_plugins',
+				'leftsub_order_level2' => 2,
 			),
 			array(
-				'title'      => esc_html__( 'Advanced Auto Updates', 'mainwp' ),
-				'parent_key' => 'PluginsManage',
-				'href'       => 'admin.php?page=PluginsAutoUpdate',
-				'slug'       => 'PluginsAutoUpdate',
-				'right'      => '',
+				'title'                => esc_html__( 'Advanced Auto Updates', 'mainwp' ),
+				'parent_key'           => 'PluginsManage',
+				'href'                 => 'admin.php?page=PluginsAutoUpdate',
+				'slug'                 => 'PluginsAutoUpdate',
+				'right'                => '',
+				'leftsub_order_level2' => 3,
 			),
 			array(
-				'title'      => esc_html__( 'Ignored Updates', 'mainwp' ),
-				'parent_key' => 'PluginsManage',
-				'href'       => 'admin.php?page=PluginsIgnore',
-				'slug'       => 'PluginsIgnore',
-				'right'      => '',
+				'title'                => esc_html__( 'Ignored Updates', 'mainwp' ),
+				'parent_key'           => 'PluginsManage',
+				'href'                 => 'admin.php?page=PluginsIgnore',
+				'slug'                 => 'PluginsIgnore',
+				'right'                => '',
+				'leftsub_order_level2' => 4,
 			),
 			array(
-				'title'      => esc_html__( 'Ignored Abandoned', 'mainwp' ),
-				'parent_key' => 'PluginsManage',
-				'href'       => 'admin.php?page=PluginsIgnoredAbandoned',
-				'slug'       => 'PluginsIgnoredAbandoned',
-				'right'      => '',
+				'title'                => esc_html__( 'Abandoned Plugins', 'mainwp' ),
+				'parent_key'           => 'PluginsManage',
+				'href'                 => 'admin.php?page=UpdatesManage&tab=abandoned-plugins',
+				'slug'                 => 'PluginsManage&tab=abandoned-plugins',
+				'right'                => '',
+				'leftsub_order_level2' => 4.1,
 			),
+			array(
+				'title'                => esc_html__( 'Ignored Abandoned', 'mainwp' ),
+				'parent_key'           => 'PluginsManage',
+				'href'                 => 'admin.php?page=PluginsIgnoredAbandoned',
+				'slug'                 => 'PluginsIgnoredAbandoned',
+				'right'                => '',
+				'leftsub_order_level2' => 5,
+			),
+
 		);
 
 		MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'PluginsManage', 'Plugins' );
@@ -460,7 +475,7 @@ class MainWP_Plugins {
 							<div><?php echo esc_html__( 'Manage installed plugins on your child sites. Here you can activate, deactivate, and delete installed plugins.', 'mainwp' ); ?></div>
 							<p><?php echo esc_html__( 'To Activate or Delete a specific plugin, you must search only for Inactive plugin on your child sites. If you search for Active or both Active and Inactive, the Activate and Delete actions will be disabled.', 'mainwp' ); ?></p>
 							<p><?php echo esc_html__( 'To Deactivate a specific plugin, you must search only for Active plugins on your child sites. If you search for Inactive or both Active and Inactive, the Deactivate action will be disabled.', 'mainwp' ); ?></p>
-							<p><?php printf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">', '</a>' ); ?></p>
+							<p><?php printf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></p>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -731,7 +746,7 @@ class MainWP_Plugins {
 		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 		$data_fields[] = 'plugins';
 
-		if ( 1 === (int) get_option( 'mainwp_optimize' ) || MainWP_Demo_Handle::is_demo_mode() ) {
+		if ( 1 === (int) get_option( 'mainwp_optimize', 1 ) || MainWP_Demo_Handle::is_demo_mode() ) {
 
 			$multi_kws = explode( ',', $keyword );
 			$multi_kws = array_filter( array_map( 'trim', $multi_kws ) );
@@ -1174,8 +1189,8 @@ class MainWP_Plugins {
 				<input type="hidden" name="whichview" value="<?php echo esc_attr( $which ); ?>" />
 				<div class="inline field">
 					<select class="ui dropdown" onchange="mainwp_siteview_onchange(this)"  name="select_mainwp_options_plugintheme_view">
-					<option value="0" class="item" <?php echo MAINWP_VIEW_PER_PLUGIN_THEME === (int) $view_mode ? 'selected' : ''; ?>><?php echo esc_html( 'plugin' === $which ? __( 'Show Plugins per Item', 'mainwp' ) : __( 'Show Themes per Item', 'mainwp' ) ); ?></option>
-					<option value="1" class="item" <?php echo MAINWP_VIEW_PER_SITE === (int) $view_mode ? 'selected' : ''; ?>><?php echo esc_html( 'plugin' === $which ? __( 'Show Plugins per Site', 'mainwp' ) : __( 'Show Themes per Site', 'mainwp' ) ); ?></option>
+					<option value="0" class="item" <?php echo MAINWP_VIEW_PER_PLUGIN_THEME === (int) $view_mode ? 'selected' : ''; ?>><?php echo esc_html( 'plugin' === $which ? esc_html__( 'Show Plugins per Item', 'mainwp' ) : esc_html__( 'Show Themes per Item', 'mainwp' ) ); ?></option>
+					<option value="1" class="item" <?php echo MAINWP_VIEW_PER_SITE === (int) $view_mode ? 'selected' : ''; ?>><?php echo esc_html( 'plugin' === $which ? esc_html__( 'Show Plugins per Site', 'mainwp' ) : esc_html__( 'Show Themes per Site', 'mainwp' ) ); ?></option>
 					</select>
 				</div>
 			</form>
@@ -1863,7 +1878,7 @@ class MainWP_Plugins {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-install-plugins-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-install-plugins-info-message"></i>
-					<?php printf( esc_html__( 'Install plugins on your child sites.  You can install plugins from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-plugins/" target="_blank">', '</a>' ); ?>
+					<?php printf( esc_html__( 'Install plugins on your child sites.  You can install plugins from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-plugins/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 				</div>
 			<?php endif; ?>
 			<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
@@ -1956,7 +1971,7 @@ class MainWP_Plugins {
 		?>
 			<?php do_action( 'mainwp_manage_plugins_before_submit_button' ); ?>
 		</div>
-		<?php do_action( 'mainwp_manage_plugins_sidebar_bottom' ); ?>
+		<?php do_action( 'mainwp_manage_plugins_sidebar_bottom', 'install' ); ?>
 	</div>
 	<div class="ui clearing hidden divider"></div>
 	</div>
@@ -2135,7 +2150,7 @@ class MainWP_Plugins {
 			$output->plugins           = array();
 			$output->plugins_installed = array(); // to fix.
 
-			if ( 1 === (int) get_option( 'mainwp_optimize' ) || MainWP_Demo_Handle::is_demo_mode() ) {
+			if ( 1 === (int) get_option( 'mainwp_optimize', 1 ) || MainWP_Demo_Handle::is_demo_mode() ) {
 				$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$allPlugins = json_decode( $website->plugins, true );
@@ -2451,7 +2466,7 @@ class MainWP_Plugins {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-plugins-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-plugins-info-message"></i>
-					<?php printf( esc_html__( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>' ); ?>
+					<?php printf( esc_html__( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -2694,7 +2709,7 @@ class MainWP_Plugins {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-abandoned-plugins-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-abandoned-plugins-info-message"></i>
-					<?php printf( esc_html__( 'Manage abandoned plugins you have told your MainWP Dashboard to ignore on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-plugins/" target="_blank">', '</a>' ); ?>
+					<?php printf( esc_html__( 'Manage abandoned plugins you have told your MainWP Dashboard to ignore on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-plugins/" target="_blank">', '</a> <i class="external alternate icon"></i> ' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -2913,14 +2928,14 @@ class MainWP_Plugins {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing plugins, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">Managing Plugins with MainWP</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/install-plugins/" target="_blank">Install Plugins</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/activate-plugins/" target="_blank">Activate Plugins</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/delete-plugins/" target="_blank">Delete Plugins</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/abandoned-plugins/" target="_blank">Abandoned Plugins</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">Update Plugins</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/plugins-auto-updates/" target="_blank">Plugins Auto Updates</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">Ignore Plugin Updates</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">Managing Plugins with MainWP</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/install-plugins/" target="_blank">Install Plugins</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/activate-plugins/" target="_blank">Activate Plugins</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/delete-plugins/" target="_blank">Delete Plugins</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/abandoned-plugins/" target="_blank">Abandoned Plugins</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">Update Plugins</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/plugins-auto-updates/" target="_blank">Plugins Auto Updates</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">Ignore Plugin Updates</a> <i class="external alternate icon"></i></div>
 				<?php
 				/**
 				 * Action: mainwp_plugins_help_item

@@ -243,14 +243,7 @@ class MainWP_Recent_Posts {
 			 */
 			do_action( 'mainwp_recent_posts_before_publised_list', $allPosts, $recent_number );
 			if ( 0 === count( $recent_posts_published ) ) {
-				?>
-			<h2 class="ui icon header">
-				<i class="folder open outline icon"></i>
-				<div class="content">
-					<?php esc_html_e( 'No published posts found!', 'mainwp' ); ?>
-				</div>
-			</h2>
-				<?php
+				MainWP_UI::render_empty_element_placeholder();
 			}
 			?>
 			<div class="ui middle aligned divided selection list">
@@ -273,24 +266,24 @@ class MainWP_Recent_Posts {
 					<div class="ui stackable grid">
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_published[ $i ]['id'] ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_published[ $i ]['website']->id ); ?>"/>
-						<div class="<?php echo $individual ? 'fourteen' : 'ten'; ?> wide column middle aligned">
-							<div><a href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_published[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_posts_published[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a></div>
+						<div class="fifteen wide column middle aligned">
+							<div>
+								<a href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_published[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_posts_published[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
+								<?php if ( ! $individual ) : ?>
+									<?php esc_html_e( 'on', 'mainwp' ); ?> <a href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+								<?php endif; ?>
+							</div>
 							<span class="ui small text"><?php echo esc_html( $recent_posts_published[ $i ]['dts'] ); ?></span>
 						</div>
-						<?php if ( ! $individual ) : ?>
-						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
-						</div>
-						<?php endif; ?>
-						<div class="two wide column right aligned">
+						<div class="one wide column right aligned">
 							<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
-									<div class="menu">
-										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-unpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
-										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $recent_posts_published[ $i ]['website']->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?action=editpost&post=' . $recent_posts_published[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
-										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ) . ( '/' !== substr( $recent_posts_published[ $i ]['website']->url, - 1 ) ? '/' : '' ) . '?p=' . esc_attr( $recent_posts_published[ $i ]['id'] ); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
-									</div>
+								<div class="menu">
+									<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-unpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
+									<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $recent_posts_published[ $i ]['website']->id ); ?>&location=<?php echo esc_attr( base64_encode( 'post.php?action=editpost&post=' . $recent_posts_published[ $i ]['id'] . '&action=edit' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+									<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
+									<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item" href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ) . ( '/' !== substr( $recent_posts_published[ $i ]['website']->url, - 1 ) ? '/' : '' ) . '?p=' . esc_attr( $recent_posts_published[ $i ]['id'] ); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -346,14 +339,7 @@ class MainWP_Recent_Posts {
 			 */
 			do_action( 'mainwp_recent_posts_before_draft_list', $allPosts, $recent_number );
 			if ( 0 === count( $recent_posts_draft ) ) {
-				?>
-			<h2 class="ui icon header">
-				<i class="folder open outline icon"></i>
-				<div class="content">
-					<?php esc_html_e( 'No draft posts found!', 'mainwp' ); ?>
-				</div>
-			</h2>
-				<?php
+				MainWP_UI::render_empty_element_placeholder();
 			}
 			?>
 			<div class="ui middle aligned divided selection list">
@@ -371,19 +357,19 @@ class MainWP_Recent_Posts {
 				$name = wp_strip_all_tags( $recent_posts_draft[ $i ]['website']->name );
 				?>
 				<div class="item">
-					<div class="ui grid">
+					<div class="ui stackable grid">
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_draft[ $i ]['id'] ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_draft[ $i ]['website']->id ); ?>"/>
-						<div class="<?php echo $individual ? 'fourteen' : 'ten'; ?> wide column middle aligned">
-							<div><a href="<?php echo esc_url( $recent_posts_draft[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_draft[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_posts_draft[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a></div>
+						<div class="fifteen wide column middle aligned">
+							<div>
+								<a href="<?php echo esc_url( $recent_posts_draft[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_draft[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_posts_draft[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
+								<?php if ( ! $individual ) : ?>
+									<?php esc_html_e( 'on', 'mainwp' ); ?> <a href="<?php echo esc_url( $recent_posts_draft[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+								<?php endif; ?>
+							</div>
 							<span class="ui small text"><?php echo esc_html( $recent_posts_draft[ $i ]['dts'] ); ?></span>
 						</div>
-						<?php if ( ! $individual ) : ?>
-						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_draft[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
-						</div>
-						<?php endif; ?>
-						<div class="two wide column right aligned">
+						<div class="one wide column right aligned">
 							<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
@@ -446,14 +432,7 @@ class MainWP_Recent_Posts {
 				 */
 				do_action( 'mainwp_recent_posts_before_pending_list', $allPosts, $recent_number );
 				if ( 0 === count( $recent_posts_pending ) ) {
-					?>
-				<h2 class="ui icon header">
-					<i class="folder open outline icon"></i>
-					<div class="content">
-						<?php esc_html_e( 'No pending posts found!', 'mainwp' ); ?>
-					</div>
-				</h2>
-					<?php
+					MainWP_UI::render_empty_element_placeholder();
 				}
 				?>
 			<div class="ui middle aligned divided selection list">
@@ -471,19 +450,19 @@ class MainWP_Recent_Posts {
 				$name = wp_strip_all_tags( $recent_posts_pending[ $i ]['website']->name );
 				?>
 				<div class="item">
-					<div class="ui grid">
+					<div class="ui stackable grid">
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_pending[ $i ]['id'] ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_pending[ $i ]['website']->id ); ?>"/>
-						<div class="<?php echo $individual ? 'fourteen' : 'ten'; ?> wide column middle aligned">
-							<div><a href="<?php echo esc_url( $recent_posts_pending[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_pending[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_posts_pending[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a></div>
+						<div class="fifteen wide column middle aligned">
+							<div>
+								<a href="<?php echo esc_url( $recent_posts_pending[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_pending[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_posts_pending[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
+								<?php if ( ! $individual ) : ?>
+									<?php esc_html_e( 'on', 'mainwp' ); ?> <a href="<?php echo esc_url( $recent_posts_pending[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+								<?php endif; ?>
+							</div>
 							<span class="ui small text"><?php echo esc_html( $recent_posts_pending[ $i ]['dts'] ); ?></span>
 						</div>
-						<?php if ( ! $individual ) : ?>
-						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_pending[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
-						</div>
-						<?php endif; ?>
-						<div class="two wide column right aligned">
+						<div class="one wide column right aligned">
 							<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
@@ -546,14 +525,7 @@ class MainWP_Recent_Posts {
 		 */
 		do_action( 'mainwp_recent_posts_before_future_list', $allPosts, $recent_number );
 		if ( 0 === count( $recent_posts_future ) ) {
-			?>
-			<h2 class="ui icon header">
-				<i class="folder open outline icon"></i>
-				<div class="content">
-				<?php esc_html_e( 'No future posts found!', 'mainwp' ); ?>
-				</div>
-			</h2>
-			<?php
+			MainWP_UI::render_empty_element_placeholder();
 		}
 		?>
 		<div class="ui middle aligned divided selection list">
@@ -571,19 +543,19 @@ class MainWP_Recent_Posts {
 			$name = wp_strip_all_tags( $recent_posts_future[ $i ]['website']->name );
 			?>
 				<div class="item">
-					<div class="ui grid">
+					<div class="ui stackable grid">
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_future[ $i ]['id'] ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_future[ $i ]['website']->id ); ?>"/>
-						<div class="<?php echo $individual ? 'fourteen' : 'ten'; ?> wide column middle aligned">
-							<div><a href="<?php echo esc_url( $recent_posts_future[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_future[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_posts_future[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a></div>
+						<div class="fifteen wide column middle aligned">
+							<div>
+								<a href="<?php echo esc_url( $recent_posts_future[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_future[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_posts_future[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
+								<?php if ( ! $individual ) : ?>
+									<?php esc_html_e( 'on', 'mainwp' ); ?> <a href="<?php echo esc_url( $recent_posts_future[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+								<?php endif; ?>
+							</div>
 							<span class="ui small text"><?php echo esc_html( $recent_posts_future[ $i ]['dts'] ); ?></span>
 						</div>
-																																		<?php if ( ! $individual ) : ?>
-						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_posts_future[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
-						</div>
-						<?php endif; ?>
-						<div class="two wide column right aligned">
+						<div class="one wide column right aligned">
 							<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
@@ -647,14 +619,7 @@ class MainWP_Recent_Posts {
 		 */
 		do_action( 'mainwp_recent_posts_before_trash_list', $allPosts, $recent_number );
 		if ( 0 === count( $recent_posts_trash ) ) {
-			?>
-				<h2 class="ui icon header">
-					<i class="folder open outline icon"></i>
-					<div class="content">
-						<?php esc_html_e( 'No trashed posts found!', 'mainwp' ); ?>
-					</div>
-				</h2>
-				<?php
+			MainWP_UI::render_empty_element_placeholder();
 		}
 		?>
 		<div class="ui middle aligned divided selection list">
@@ -672,20 +637,19 @@ class MainWP_Recent_Posts {
 			$name = wp_strip_all_tags( $recent_posts_trash[ $i ]['website']->name );
 			?>
 			<div class="item">
-				<div class="ui grid">
+				<div class="ui stackable grid">
 					<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_trash[ $i ]['id'] ); ?>"/>
 					<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_posts_trash[ $i ]['website']->id ); ?>"/>
-					<div class="<?php echo $individual ? 'fourteen' : 'ten'; ?> wide column middle aligned">
-						<div><?php echo esc_html( htmlentities( $recent_posts_trash[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></div>
+					<div class="fifteen wide column middle aligned">
+						<div>
+							<a href="<?php echo esc_url( $recent_posts_trash[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_trash[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_posts_trash[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
+							<?php if ( ! $individual ) : ?>
+								<?php esc_html_e( 'on', 'mainwp' ); ?> <a href="<?php echo esc_url( $recent_posts_trash[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+							<?php endif; ?>
+						</div>
 						<span class="ui small text"><?php echo esc_html( $recent_posts_trash[ $i ]['dts'] ); ?></span>
 					</div>
-					<?php if ( ! $individual ) : ?>
-					?>
-					<div class="four wide column middle aligned">
-						<a href="<?php echo esc_url( $recent_posts_trash[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
-					</div>
-					<?php endif; ?>
-					<div class="two wide column right aligned">
+					<div class="one wide column right aligned">
 						<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
 							<i class="ellipsis horizontal icon"></i>
 								<div class="menu">
@@ -723,7 +687,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function publish() {
 		self::action( 'publish' );
-		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been published!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'The post has been published.', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -733,7 +697,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function approve() {
 		self::action( 'publish' );
-		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been approved!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'The post has been approved.', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -743,7 +707,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function unpublish() {
 		self::action( 'unpublish' );
-		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been unpublished!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'The post has been unpublished.', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -753,7 +717,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function trash() {
 		self::action( 'trash' );
-		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been moved to trash!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'The post has been moved to the trash.', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -763,7 +727,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function delete() {
 		self::action( 'delete' );
-		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been permanently deleted!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'The post has been permanently deleted.', 'mainwp' ) ) ) );
 	}
 
 	/**
@@ -773,7 +737,7 @@ class MainWP_Recent_Posts {
 	 */
 	public static function restore() {
 		self::action( 'restore' );
-		die( wp_json_encode( array( 'result' => esc_html__( 'Post has been restored!', 'mainwp' ) ) ) );
+		die( wp_json_encode( array( 'result' => esc_html__( 'The post has been restored.', 'mainwp' ) ) ) );
 	}
 
 	/**

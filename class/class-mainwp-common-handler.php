@@ -47,7 +47,23 @@ class MainWP_Common_Handler {
 	 */
 	public function sites_available_updates_count() {  // phpcs:ignore -- complex function.
 		$is_staging = 'no';
-		$sql        = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'favi_icon' ), $is_staging );
+
+		$db_updater_count             = false;
+		$total_plugin_db_upgrades     = 0;
+		$supported_db_updater_plugins = array();
+
+		$get_fields    = array( 'premium_upgrades', 'favi_icon' );
+		$custom_fields = apply_filters( 'mainwp_available_updates_count_custom_fields_data', array(), 'updates_count' );
+
+		if ( is_array( $custom_fields ) && 1 === count( $custom_fields ) && in_array( 'plugin_db_upgrades', $custom_fields ) ) {
+			$get_fields                   = array_merge( $get_fields, $custom_fields );
+			$db_updater_count             = true;
+			$supported_db_updater_plugins = apply_filters( 'mainwp_database_updater_supported_plugins', array() );
+		}
+
+		$sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, $get_fields, $is_staging );
+
+		$sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, $get_fields, $is_staging );
 
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		$websites      = MainWP_DB::instance()->query( $sql );
@@ -147,6 +163,35 @@ class MainWP_Common_Handler {
 
 				$total_theme_upgrades += count( $theme_upgrades );
 			}
+
+			if ( $db_updater_count ) {
+
+				$plugin_db_upgrades = ! empty( $website->plugin_db_upgrades ) ? json_decode( $website->plugin_db_upgrades, true ) : array();
+				if ( $website->is_ignorePluginUpdates ) {
+					$plugin_db_upgrades = array();
+				}
+
+				if ( is_array( $plugin_db_upgrades ) && ! $website->is_ignorePluginUpdates ) {
+					$_ignored_plugins = ! empty( $website->ignored_plugins ) ? json_decode( $website->ignored_plugins, true ) : array();
+					if ( is_array( $_ignored_plugins ) ) {
+						$plugin_db_upgrades = array_diff_key( $plugin_db_upgrades, $_ignored_plugins );
+					}
+
+					$_ignored_plugins = ! empty( $userExtension->ignored_plugins ) ? json_decode( $userExtension->ignored_plugins, true ) : array();
+					if ( is_array( $_ignored_plugins ) ) {
+						$plugin_db_upgrades = array_diff_key( $plugin_db_upgrades, $_ignored_plugins );
+					}
+
+					// supported the WC plugin.
+					if ( is_array( $plugin_db_upgrades ) ) {
+						foreach ( $supported_db_updater_plugins as $supp_slug ) {
+							if ( isset( $plugin_db_upgrades[ $supp_slug ] ) ) {
+								++$total_plugin_db_upgrades;
+							}
+						}
+					}
+				}
+			}
 		}
 
 		// WP Upgrades part.
@@ -171,6 +216,10 @@ class MainWP_Common_Handler {
 			);
 		}
 
+		if ( $db_updater_count ) {
+			$data['db_updater_count'] = $total_plugin_db_upgrades;
+			$data['total']           += $total_plugin_db_upgrades;
+		}
 		MainWP_DB::free_result( $websites );
 
 		return $data;

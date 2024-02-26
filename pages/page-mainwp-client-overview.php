@@ -201,51 +201,6 @@ class MainWP_Client_Overview {
 		$values               = apply_filters( 'mainwp_clients_overview_enabled_widgets', $values, null );
 		self::$enable_widgets = array_merge( self::$enable_widgets, $values );
 
-		// Load the Overview widget.
-		if ( self::$enable_widgets['overview'] ) {
-			MainWP_UI::add_widget_box( 'overview', array( MainWP_Client_Overview_Info::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
-		}
-
-		// Load the Info widget.
-		if ( self::$enable_widgets['fields_info'] ) {
-			MainWP_UI::add_widget_box( 'fields_info', array( MainWP_Client_Overview_Custom_Info::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
-		}
-
-		// Load the Websites widget.
-		if ( self::$enable_widgets['websites'] ) {
-			MainWP_UI::add_widget_box( 'websites', array( MainWP_Client_Overview_Sites::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
-		}
-
-		if ( is_array( $client_contacts ) ) {
-			foreach ( $client_contacts as $contact ) {
-				if ( isset( self::$enable_widgets[ 'contact_' . $contact['contact_id'] ] ) && self::$enable_widgets[ 'contact_' . $contact['contact_id'] ] ) {
-					$contact_widget          = new MainWP_Client_Overview_Contacts();
-					$contact_widget->contact = $contact;
-					MainWP_UI::add_widget_box( 'contact_' . $contact['contact_id'], array( $contact_widget, 'render' ), $page, array( 1, 1, 2, 3 ) );
-				}
-			}
-		}
-
-		// Load the Notes widget.
-		if ( self::$enable_widgets['note'] ) {
-			MainWP_UI::add_widget_box( 'note', array( MainWP_Client_Overview_Note::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
-		}
-
-		// Load the Recent Posts widget.
-		if ( self::$enable_widgets['recent_posts'] ) {
-			MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
-		}
-
-		// Load the Recent Pages widget.
-		if ( self::$enable_widgets['recent_pages'] ) {
-			MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
-		}
-
-		// Load the Non-MainWP Changes widget.
-		if ( self::$enable_widgets['non_mainwp_changes'] ) {
-			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
-		}
-
 		$i = 1;
 		foreach ( $extMetaBoxs as $metaBox ) {
 			$enabled = true;
@@ -259,11 +214,56 @@ class MainWP_Client_Overview {
 			$id = isset( $metaBox['id'] ) ? $metaBox['id'] : $i++;
 			$id = 'advanced-' . $id;
 
-			$layout = ! empty( $metaBox['layout'] ) && is_array( $metaBox['layout'] ) ? $metaBox['layout'] : array( 1, 1, 2, 3 );
+			$layout = ! empty( $metaBox['layout'] ) && is_array( $metaBox['layout'] ) ? $metaBox['layout'] : array( 1, 1, 4, 11 );
 
 			if ( $enabled ) {
 				MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, $layout );
 			}
+		}
+
+		// Load the Non-MainWP Changes widget.
+		if ( self::$enable_widgets['non_mainwp_changes'] ) {
+			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
+		}
+
+		// Load the Recent Pages widget.
+		if ( self::$enable_widgets['recent_pages'] ) {
+			MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
+		}
+
+		// Load the Recent Posts widget.
+		if ( self::$enable_widgets['recent_posts'] ) {
+			MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
+		}
+
+		// Load the Notes widget.
+		if ( self::$enable_widgets['note'] ) {
+			MainWP_UI::add_widget_box( 'note', array( MainWP_Client_Overview_Note::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
+		}
+
+		if ( is_array( $client_contacts ) ) {
+			foreach ( $client_contacts as $contact ) {
+				if ( isset( self::$enable_widgets[ 'contact_' . $contact['contact_id'] ] ) && self::$enable_widgets[ 'contact_' . $contact['contact_id'] ] ) {
+					$contact_widget          = new MainWP_Client_Overview_Contacts();
+					$contact_widget->contact = $contact;
+					MainWP_UI::add_widget_box( 'contact_' . $contact['contact_id'], array( $contact_widget, 'render' ), $page, array( 1, 1, 4, 9 ) );
+				}
+			}
+		}
+
+		// Load the Websites widget.
+		if ( self::$enable_widgets['websites'] ) {
+			MainWP_UI::add_widget_box( 'websites', array( MainWP_Client_Overview_Sites::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
+		}
+
+		// Load the Info widget.
+		if ( self::$enable_widgets['fields_info'] ) {
+			MainWP_UI::add_widget_box( 'fields_info', array( MainWP_Client_Overview_Custom_Info::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
+		}
+
+		// Load the Overview widget.
+		if ( self::$enable_widgets['overview'] ) {
+			MainWP_UI::add_widget_box( 'overview', array( MainWP_Client_Overview_Info::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
 		}
 	}
 
@@ -318,7 +318,7 @@ class MainWP_Client_Overview {
 			 *
 			 * @since 4.3
 			 */
-			do_action( 'mainwp_before_overview_widgets' );
+			do_action( 'mainwp_before_overview_widgets', 'clients' );
 			?>
 			<div id="mainwp-grid-wrapper" class="gridster">
 				<?php MainWP_UI::do_widget_boxes( $screen->id ); ?>
@@ -331,7 +331,7 @@ class MainWP_Client_Overview {
 			 *
 			 * @since 4.3
 			 */
-			do_action( 'mainwp_after_overview_widgets' );
+			do_action( 'mainwp_after_overview_widgets', 'clients' );
 			?>
 	<script type="text/javascript">
 		jQuery( document ).ready( function( $ ) {
@@ -357,6 +357,7 @@ class MainWP_Client_Overview {
 		} );
 	</script>
 	<div class="ui modal" id="mainwp-clients-overview-screen-options-modal">
+	<i class="close icon"></i>
 			<div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
 			<div class="content ui form">
 				<?php
@@ -387,11 +388,10 @@ class MainWP_Client_Overview {
 			<div class="actions">
 				<div class="ui two columns grid">
 					<div class="left aligned column">
-						<span data-tooltip="<?php esc_attr_e( 'Returns this page to the state it was in when installed. The feature also restores any widgets you have moved through the drag and drop feature on the page.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><input type="button" class="ui button" name="reset" id="reset-clients-overview-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
+						<span data-tooltip="<?php esc_attr_e( 'Resets the page to its original layout and reinstates relocated widgets.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><input type="button" class="ui button" name="reset" id="reset-clients-overview-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
 					</div>
 					<div class="ui right aligned column">
 						<input type="submit" class="ui green button" id="submit-client-overview-settings" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
-						<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 					</div>
 				</div>
 			</div>
@@ -459,16 +459,8 @@ class MainWP_Client_Overview {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_screen_options_modal_top' );
-		$which_settings = 'overview_settings';
 		?>
 		<?php if ( isset( $_GET['page'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
-			<?php
-			$overviewColumns = get_option( 'mainwp_number_clients_overview_columns', 2 );
-			if ( 2 !== $overviewColumns && 3 !== $overviewColumns ) {
-				$overviewColumns = 2;
-			}
-
-			?>
 		<div class="ui grid field">
 			<label class="six wide column"><?php esc_html_e( 'Show widgets', 'mainwp' ); ?></label>
 			<div class="ten wide column" <?php echo 'data-tooltip="' . esc_attr_e( 'Select widgets that you want to hide in the MainWP Overview page.', 'mainwp' ); ?> data-inverted="" data-position="top left">
@@ -518,7 +510,7 @@ class MainWP_Client_Overview {
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Dashboard, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">Manage Clients</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">Manage Clients</a> <i class="external alternate icon"></i></div>
 				<?php
 				/**
 				 * Action: mainwp_clients_overview_help_item

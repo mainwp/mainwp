@@ -8,6 +8,13 @@ jQuery(document).on('click', '#mainwp-do-sites-bulk-actions', function () {
   return false;
 });
 
+jQuery( document ).on( 'click', '#mainwp-manage-sites-filter-toggle-button', function () {
+  jQuery( '#mainwp-sites-filters-row' ).toggle( 300 );
+  return false;
+} );
+
+
+
 // Manage Sites Bulk Actions
 /* eslint-disable complexity */
 mainwp_managesites_doaction = function (action) {

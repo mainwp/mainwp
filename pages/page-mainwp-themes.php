@@ -213,50 +213,64 @@ class MainWP_Themes {
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => esc_html__( 'Themes', 'mainwp' ),
-				'parent_key' => 'managesites',
-				'slug'       => 'ThemesManage',
-				'href'       => 'admin.php?page=ThemesManage',
-				'icon'       => '<i class="paint brush icon"></i>',
+				'title'         => esc_html__( 'Themes', 'mainwp' ),
+				'parent_key'    => 'managesites',
+				'slug'          => 'ThemesManage',
+				'href'          => 'admin.php?page=ThemesManage',
+				'icon'          => '<i class="paint brush icon"></i>',
+				'leftsub_order' => 6,
 			),
 			1
 		);
 
 		$init_sub_subleftmenu = array(
 			array(
-				'title'      => esc_html__( 'Manage Themes', 'mainwp' ),
-				'parent_key' => 'ThemesManage',
-				'href'       => 'admin.php?page=ThemesManage',
-				'slug'       => 'ThemesManage',
-				'right'      => '',
+				'title'                => esc_html__( 'Manage Themes', 'mainwp' ),
+				'parent_key'           => 'ThemesManage',
+				'href'                 => 'admin.php?page=ThemesManage',
+				'slug'                 => 'ThemesManage',
+				'right'                => '',
+				'leftsub_order_level2' => 1,
 			),
 			array(
-				'title'      => esc_html__( 'Install', 'mainwp' ),
-				'parent_key' => 'ThemesManage',
-				'href'       => 'admin.php?page=ThemesInstall',
-				'slug'       => 'ThemesInstall',
-				'right'      => 'install_themes',
+				'title'                => esc_html__( 'Install', 'mainwp' ),
+				'parent_key'           => 'ThemesManage',
+				'href'                 => 'admin.php?page=ThemesInstall',
+				'slug'                 => 'ThemesInstall',
+				'right'                => 'install_themes',
+				'leftsub_order_level2' => 2,
 			),
 			array(
-				'title'      => esc_html__( 'Advanced Auto Updates', 'mainwp' ),
-				'parent_key' => 'ThemesManage',
-				'href'       => 'admin.php?page=ThemesAutoUpdate',
-				'slug'       => 'ThemesAutoUpdate',
-				'right'      => '',
+				'title'                => esc_html__( 'Advanced Auto Updates', 'mainwp' ),
+				'parent_key'           => 'ThemesManage',
+				'href'                 => 'admin.php?page=ThemesAutoUpdate',
+				'slug'                 => 'ThemesAutoUpdate',
+				'right'                => '',
+				'leftsub_order_level2' => 3,
 			),
 			array(
-				'title'      => esc_html__( 'Ignored Updates', 'mainwp' ),
-				'parent_key' => 'ThemesManage',
-				'href'       => 'admin.php?page=ThemesIgnore',
-				'slug'       => 'ThemesIgnore',
-				'right'      => '',
+				'title'                => esc_html__( 'Ignored Updates', 'mainwp' ),
+				'parent_key'           => 'ThemesManage',
+				'href'                 => 'admin.php?page=ThemesIgnore',
+				'slug'                 => 'ThemesIgnore',
+				'right'                => '',
+				'leftsub_order_level2' => 4,
 			),
 			array(
-				'title'      => esc_html__( 'Ignored Abandoned', 'mainwp' ),
-				'parent_key' => 'ThemesManage',
-				'href'       => 'admin.php?page=ThemesIgnoredAbandoned',
-				'slug'       => 'ThemesIgnoredAbandoned',
-				'right'      => '',
+				'title'                => esc_html__( 'Abandoned Themes', 'mainwp' ),
+				'parent_key'           => 'ThemesManage',
+				'href'                 => 'admin.php?page=UpdatesManage&tab=abandoned-themes',
+				'slug'                 => 'ThemesManage',
+				'right'                => '',
+				'leftsub_order_level2' => 4.1,
+			),
+			array(
+				'title'                => esc_html__( 'Ignored Abandoned', 'mainwp' ),
+				'parent_key'           => 'ThemesManage',
+				'href'                 => 'admin.php?page=ThemesIgnoredAbandoned',
+				'slug'                 => 'ThemesIgnoredAbandoned',
+				'right'                => '',
+				'leftsub_order_level2' => 5,
 			),
 		);
 
@@ -439,7 +453,7 @@ class MainWP_Themes {
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-themes-info-message"></i>
 							<div><?php echo esc_html__( 'Manage installed themes on your child sites. Here you can activate, deactivate, and delete installed themes.', 'mainwp' ); ?></div>
 							<p><?php echo esc_html__( 'To Activate or Delete a specific theme, you must search only for Inactive themes on your child sites. If you search for Active or both Active and Inactive, the Activate and Delete actions will be disabled.', 'mainwp' ); ?></p>
-							<p><?php printf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">', '</a>' ); ?></p>
+							<p><?php printf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></p>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -702,7 +716,7 @@ class MainWP_Themes {
 		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
 		$data_fields[] = 'themes';
 
-		if ( 1 === (int) get_option( 'mainwp_optimize' ) || MainWP_Demo_Handle::is_demo_mode() ) {
+		if ( 1 === (int) get_option( 'mainwp_optimize', 1 ) || MainWP_Demo_Handle::is_demo_mode() ) {
 
 			$keyword   = trim( $keyword );
 			$multi_kws = explode( ',', $keyword );
@@ -1765,7 +1779,7 @@ class MainWP_Themes {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-install-themes-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-install-themes-info-message"></i>
-							<?php printf( esc_html__( 'Install themes on your child sites.  You can install themes from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-themes/" target="_blank">', '</a>' ); ?>
+							<?php printf( esc_html__( 'Install themes on your child sites.  You can install themes from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-themes/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
@@ -1849,7 +1863,7 @@ class MainWP_Themes {
 				?>
 				<?php do_action( 'mainwp_manage_themes_after_submit_button' ); ?>
 				</div>
-				<?php do_action( 'mainwp_manage_themes_sidebar_bottom' ); ?>
+				<?php do_action( 'mainwp_manage_themes_sidebar_bottom', 'install' ); ?>
 			</div>
 			<div class="ui clearing hidden divider"></div>
 		</div>
@@ -1899,6 +1913,7 @@ class MainWP_Themes {
 					<a class="ui huge star rating right floated <# if ( data.added_fav ) { #> favorite <# } #>" data-max-rating="1" id="add-favorite-theme-{{data.slug}}"></a>
 				</div>
 				<?php } ?>
+				<?php do_action( 'mainwp_install_theme_card_template_bottom' ); ?>				
 		</script>
 
 		<script id="tmpl-theme-preview" type="text/template">
@@ -2126,7 +2141,7 @@ class MainWP_Themes {
 			$output->themes_installed = array();
 			$output->status           = $search_theme_status;
 
-			if ( 1 === (int) get_option( 'mainwp_optimize' ) || MainWP_Demo_Handle::is_demo_mode() ) {
+			if ( 1 === (int) get_option( 'mainwp_optimize', 1 ) || MainWP_Demo_Handle::is_demo_mode() ) {
 				$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$allThemes = json_decode( $website->themes, true );
@@ -2411,7 +2426,7 @@ class MainWP_Themes {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-themes-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-themes-info-message"></i>
-					<?php printf( esc_html__( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-themes-updates/" target="_blank">', '</a>' ); ?>
+					<?php printf( esc_html__( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-themes-updates/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -2635,7 +2650,7 @@ class MainWP_Themes {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-abandoned-themes-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-abandoned-themes-info-message"></i>
-					<?php printf( esc_html__( 'Manage abandoned themes you have told your MainWP Dashboard to ignore on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-themes/" target="_blank">', '</a>' ); ?>
+					<?php printf( esc_html__( 'Manage abandoned themes you have told your MainWP Dashboard to ignore on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-themes/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -2837,14 +2852,14 @@ class MainWP_Themes {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing themes, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">Managing Themes with MainWP</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/install-themes/" target="_blank">Install Themes</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/activate-themes/" target="_blank">Activate Themes</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/delete-themes/" target="_blank">Delete Themes</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/abandoned-themes/" target="_blank">Abandoned Themes</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">Update Themes</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/themes-auto-updates/" target="_blank">Themes Auto Updates</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">Ignore Theme Updates</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">Managing Themes with MainWP</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/install-themes/" target="_blank">Install Themes</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/activate-themes/" target="_blank">Activate Themes</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/delete-themes/" target="_blank">Delete Themes</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/abandoned-themes/" target="_blank">Abandoned Themes</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">Update Themes</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/themes-auto-updates/" target="_blank">Themes Auto Updates</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">Ignore Theme Updates</a> <i class="external alternate icon"></i></div>
 				<?php
 				/**
 				 * Action: mainwp_themes_help_item

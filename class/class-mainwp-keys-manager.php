@@ -233,6 +233,7 @@ class MainWP_Keys_Manager {
 	 * @return mixed Result.
 	 */
 	private function save_key_file( $key_file, $key_val ) {
+		self::init_keys_dir();
 		$key_dir   = self::get_keys_dir();
 		$file_path = $key_dir . $key_file;
 		$saved     = file_put_contents( $file_path, $key_val ); //phpcs:ignore

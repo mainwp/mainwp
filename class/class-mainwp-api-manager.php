@@ -151,7 +151,22 @@ class MainWP_Api_Manager {
 	 * @return mixed Remove activation info.
 	 */
 	public function remove_activation_info( $ext_key ) {
-		self::instance()->set_activation_info( $ext_key, '' );
+		if ( empty( $ext_key ) ) {
+			return;
+		}
+
+		$options = $this->get_activation_info( $ext_key );
+		if ( ! is_array( $options ) ) {
+			$options = array();
+		}
+
+		if ( isset( $options['api_key'] ) ) {
+			$options['api_key'] = '';
+		}
+		if ( isset( $options['activated_key'] ) ) {
+			$options['activated_key'] = 'Deactivated';
+		}
+		$this->set_activation_info( $ext_key, $options );
 	}
 
 	/**
@@ -179,9 +194,11 @@ class MainWP_Api_Manager {
 			if ( $current_api_key !== $api_key ) {
 				$reset = $this->replace_license_key(
 					array(
-						'api_key'    => $api_key,
-						'product_id' => $options['product_id'],
-						'instance'   => $options['instance_id'],
+						'api_key'          => $api_key,
+						'product_id'       => $options['product_id'],
+						'instance'         => $options['instance_id'],
+						'software_version' => $options['software_version'],
+						'software_slug'    => $api_slug,
 					)
 				);
 				if ( ! $reset ) {
@@ -197,6 +214,7 @@ class MainWP_Api_Manager {
 				'instance'         => $options['instance_id'],
 				'software_version' => $options['software_version'],
 				'object'           => $this->domain,
+				'software_slug'    => $api_slug,
 			);
 
 			$activate_results = MainWP_Api_Manager_Key::instance()->activate( $args );
@@ -213,6 +231,8 @@ class MainWP_Api_Manager {
 				$options['api_key']             = $api_key;
 				$options['activated_key']       = 'Activated';
 				$options['deactivate_checkbox'] = 'off';
+				$options['mainwp_version']      = MainWP_System::instance()->get_dashboard_version();
+				MainWP_Utility::instance()->get_set_deactivated_licenses_alerted( $api_slug, 0, 'set' ); // so next time deactived it will alerted.
 			}
 
 			if ( false === $activate_results ) {
@@ -286,10 +306,12 @@ class MainWP_Api_Manager {
 		if ( 'Activated' === $activation_status && '' !== $api_key ) {
 			$activate_results = MainWP_Api_Manager_Key::instance()->deactivate(
 				array(
-					'product_id' => $options['product_id'],
-					'instance'   => $options['instance_id'],
-					'api_key'    => $api_key,
-					'object'     => $this->domain,
+					'product_id'       => $options['product_id'],
+					'instance'         => $options['instance_id'],
+					'api_key'          => $api_key,
+					'object'           => $this->domain,
+					'software_version' => $options['software_version'],
+					'software_slug'    => $api_slug,
 				)
 			); // reset license key activation.
 
@@ -414,6 +436,7 @@ class MainWP_Api_Manager {
 					'instance'         => isset( $options['instance_id'] ) ? $options['instance_id'] : '',
 					'software_version' => isset( $options['software_version'] ) ? $options['software_version'] : '',
 					'object'           => $this->domain,
+					'software_slug'    => $api_slug,
 				);
 
 				$activate_results = MainWP_Api_Manager_Key::instance()->grab_api_key( $args );
@@ -440,8 +463,7 @@ class MainWP_Api_Manager {
 					$options['product_item_id']     = isset( $activate_results['product_item_id'] ) ? intval( $activate_results['product_item_id'] ) : 0;
 					$options['deactivate_checkbox'] = 'off';
 				} elseif ( false === $activate_results ) {
-
-						$return['error'] = esc_html__( 'Connection with the API license server could not be established. Please, try again later.', 'mainwp' );
+					$return['error'] = esc_html__( 'Connection with the API license server could not be established. Please, try again later.', 'mainwp' );
 				} elseif ( isset( $activate_results['error'] ) ) {
 					$return['error'] = $activate_results['error'];
 				} elseif ( empty( $activate_results['api_key'] ) ) {

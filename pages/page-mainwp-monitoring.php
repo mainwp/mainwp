@@ -108,6 +108,10 @@ class MainWP_Monitoring {
 			unset( $columns['cb'] );
 		}
 
+		if ( isset( $columns['favicon'] ) ) {
+			$columns['favicon'] = esc_html__( 'Favicon', 'mainwp' );
+		}
+
 		$sites_per_page = get_option( 'mainwp_default_monitoring_sites_per_page', 25 );
 
 		if ( isset( $columns['site_actions'] ) && empty( $columns['site_actions'] ) ) {
@@ -145,6 +149,7 @@ class MainWP_Monitoring {
 
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
+		<i class="close icon"></i>
 			<div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
 			<div class="scrolling content ui form">
 				<form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
@@ -198,11 +203,11 @@ class MainWP_Monitoring {
 				<div class="actions">
 					<div class="ui two columns grid">
 						<div class="left aligned column">
-							<span data-tooltip="<?php esc_attr_e( 'Returns this page to the state it was in when installed. The feature also restores any column you have moved through the drag and drop feature on the page.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><input type="button" class="ui button" name="reset" id="reset-monitoringsites-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
+							<span data-tooltip="<?php esc_attr_e( 'Resets the page to its original layout and reinstates relocated columns.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><input type="button" class="ui button" name="reset" id="reset-monitoringsites-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
 						</div>
 						<div class="ui right aligned column">
 					<input type="submit" class="ui green button" name="btnSubmit" id="submit-monitoringsites-settings" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
-					<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+					
 				</div>
 					</div>
 				</div>
@@ -265,7 +270,7 @@ class MainWP_Monitoring {
 			return;
 		}
 
-		$optimize_for_sites_table = ( 1 === (int) get_option( 'mainwp_optimize' ) );
+		$optimize_for_sites_table = ( 1 === (int) get_option( 'mainwp_optimize', 1 ) );
 
 		if ( ! $optimize_for_sites_table ) {
 			self::$sitesTable->prepare_items( false );

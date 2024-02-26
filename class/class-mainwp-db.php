@@ -39,6 +39,29 @@ class MainWP_DB extends MainWP_DB_Base {
 	private static $general_options = null;
 
 	/**
+	 * Possible options.
+	 *
+	 * @var array $possible_options
+	 */
+	private static $possible_options = array(
+		'plugin_upgrades',
+		'theme_upgrades',
+		'premium_upgrades',
+		'plugins',
+		'themes',
+		'dtsSync',
+		'version',
+		'sync_errors',
+		'ignored_plugins',
+		'wp_upgrades',
+		'site_info',
+		'client',
+		'signature_algo',
+		'verify_method',
+		'pubkey',
+	);
+
+	/**
 	 * Create public static instance.
 	 *
 	 * @static
@@ -210,6 +233,42 @@ class MainWP_DB extends MainWP_DB_Base {
 		$qry = 'SELECT COUNT(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp WHERE 1 ' . $where;
 
 		return $this->wpdb->get_var( $qry );
+	}
+
+
+	/**
+	 * Get child sites stats count.
+	 *
+	 * @param array $params Params.
+	 */
+	public function get_websites_stats_count( $params = array() ) {
+		if ( ! is_array( $params ) ) {
+			$params = array();
+		}
+
+		if ( isset( $params['all_access'] ) ) {
+			$all_access = ! empty( $params['all_access'] ) ? true : false;
+		} else {
+			$all_access = true;
+		}
+
+		$where = '';
+		if ( ! $all_access ) {
+			$where .= $this->get_sql_where_allow_access_sites( 'wp' );
+		}
+
+		$select_stats = ' ( SELECT COUNT(wp.id) as count_all ';
+		if ( ! empty( $params['count_disconnected'] ) ) {
+			$select_stats .= ',( SELECT COUNT(wp_disconnected.id) FROM ' . $this->table_name( 'wp' ) . ' wp_disconnected LEFT JOIN ' . $this->table_name( 'wp_sync' ) . ' as wp_sync ';
+			$select_stats .= ' ON wp_disconnected.id = wp_sync.wpid WHERE wp_sync.sync_errors != "" ) as count_disconnected  ';
+		}
+		if ( ! empty( $params['count_suspended'] ) ) {
+			$select_stats .= ',( SELECT COUNT(wp_suspended.id) FROM ' . $this->table_name( 'wp' ) . ' wp_suspended WHERE wp_suspended.suspended = 1 ) as count_suspended ';
+		}
+		$qry  = 'SELECT * FROM ' . $select_stats;
+		$qry .= ' FROM ' . $this->table_name( 'wp' ) . ' wp ' . $where . ' ) as wp_stats ';
+
+		return $this->wpdb->get_row( $qry, ARRAY_A ); //phpcs:ignore -- ok.
 	}
 
 	/**
@@ -964,7 +1023,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			}
 		}
 
-		$data = array( 'id', 'url', 'name' );
+		$data = array( 'id', 'url', 'name', 'client_id' );
 
 		if ( $full_data ) {
 			$data = array(
@@ -997,6 +1056,14 @@ class MainWP_DB extends MainWP_DB_Base {
 				'wp_upgrades',
 				'security_stats',
 				'client_id',
+				'adminname',
+				'privkey',
+				'http_user',
+				'http_pass',
+				'ssl_version',
+				'signature_algo',
+				'verify_method',
+				'verify_certificate',
 			);
 
 			if ( ! in_array( 'security_stats', $extra_view ) ) {
@@ -1013,7 +1080,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 
 		$dbwebsites = array();
-		$websites   = self::instance()->query( self::instance()->get_sql_websites_for_current_user( $selectgroups, $search_site, $orderBy, $offset, $rowcount, $extraWhere, $for_manager, $extra_view, $is_staging ) );
+		$websites   = $this->query( $this->get_sql_websites_for_current_user( $selectgroups, $search_site, $orderBy, $offset, $rowcount, $extraWhere, $for_manager, $extra_view, $is_staging ) );
 		while ( $websites && ( $website = self::fetch_object( $websites ) ) ) {
 			$obj_data = MainWP_Utility::map_site( $website, $data );
 
@@ -1067,19 +1134,20 @@ class MainWP_DB extends MainWP_DB_Base {
 			$params = array();
 		}
 
-		$selectgroups = isset( $params['selectgroups'] ) && $params['selectgroups'] ? true : false;
-		$search_site  = isset( $params['search'] ) ? $this->escape( trim( $params['search'] ) ) : null;
-		$orderBy      = isset( $params['orderby'] ) ? $params['orderby'] : 'wp.url';
-		$offset       = isset( $params['offset'] ) ? intval( $params['offset'] ) : false;
-		$rowcount     = isset( $params['rowcount'] ) ? intval( $params['rowcount'] ) : false;
-		$extraWhere   = isset( $params['extra_where'] ) ? $params['extra_where'] : null;
-		$for_manager  = isset( $params['for_manager'] ) && $params['for_manager'] ? true : false;
-		$extra_view   = isset( $params['extra_view'] ) ? $params['extra_view'] : array( 'favi_icon' );
-		$is_staging   = isset( $params['is_staging'] ) && 'yes' === $params['is_staging'] ? 'yes' : 'no';
-		$is_count     = isset( $params['count_only'] ) && $params['count_only'] ? true : false;
-		$group_ids    = isset( $params['group_id'] ) && ! empty( $params['group_id'] ) ? $params['group_id'] : array();
-		$client_ids   = isset( $params['client_id'] ) && ! empty( $params['client_id'] ) ? $params['client_id'] : array();
-		$is_not       = isset( $params['isnot'] ) && ! empty( $params['isnot'] ) ? true : false;
+		$selectgroups   = isset( $params['selectgroups'] ) && $params['selectgroups'] ? true : false;
+		$search_site    = isset( $params['search'] ) ? $this->escape( trim( $params['search'] ) ) : null;
+		$orderBy        = isset( $params['orderby'] ) ? $params['orderby'] : 'wp.url';
+		$offset         = isset( $params['offset'] ) ? intval( $params['offset'] ) : false;
+		$rowcount       = isset( $params['rowcount'] ) ? intval( $params['rowcount'] ) : false;
+		$extraWhere     = isset( $params['extra_where'] ) ? $params['extra_where'] : null;
+		$for_manager    = isset( $params['for_manager'] ) && $params['for_manager'] ? true : false;
+		$extra_view     = isset( $params['extra_view'] ) ? $params['extra_view'] : array( 'favi_icon' );
+		$is_staging     = isset( $params['is_staging'] ) && 'yes' === $params['is_staging'] ? 'yes' : 'no';
+		$is_count       = isset( $params['count_only'] ) && $params['count_only'] ? true : false;
+		$group_ids      = isset( $params['group_id'] ) && ! empty( $params['group_id'] ) ? $params['group_id'] : array();
+		$client_ids     = isset( $params['client_id'] ) && ! empty( $params['client_id'] ) ? $params['client_id'] : array();
+		$is_not         = isset( $params['isnot'] ) && ! empty( $params['isnot'] ) ? true : false;
+		$selected_sites = isset( $params['selected_sites'] ) ? $params['selected_sites'] : array();
 
 		if ( ! is_array( $group_ids ) ) {
 			$group_ids = array();
@@ -1124,6 +1192,11 @@ class MainWP_DB extends MainWP_DB_Base {
 			}
 		}
 
+		if ( ! is_array( $selected_sites ) ) {
+			$selected_sites = array();
+		}
+		$selected_sites = MainWP_Utility::array_numeric_filter( $selected_sites );
+
 		$where = '';
 		if ( MainWP_System::instance()->is_multi_user() ) {
 
@@ -1135,6 +1208,10 @@ class MainWP_DB extends MainWP_DB_Base {
 			global $current_user;
 
 			$where .= ' AND wp.userid = ' . $current_user->ID . ' ';
+		}
+
+		if ( ! empty( $selected_sites ) ) {
+			$where .= ' AND wp.id IN (' . implode( ',', $selected_sites ) . ') ';
 		}
 
 		// for searching.
@@ -1308,7 +1385,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 
 		// Run from Rest Api.
-		if ( defined( 'MAINWP_REST_API' ) && MAINWP_REST_API ) {
+		if ( defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ) {
 			return $_where;
 		}
 
@@ -1379,7 +1456,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 
 		// Run from Rest Api.
-		if ( defined( 'MAINWP_REST_API' ) && MAINWP_REST_API ) {
+		if ( defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ) {
 			return $_where;
 		}
 
@@ -1931,7 +2008,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	) {
 
 		if ( MainWP_Utility::ctype_digit( $websiteid ) && MainWP_Utility::ctype_digit( $userid ) ) {
-			$website = self::instance()->get_website_by_id( $websiteid );
+			$website = $this->get_website_by_id( $websiteid );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				// update admin.
 				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( wp_strip_all_tags( $name ) ) . '", adminname="' . $this->escape( $siteadmin ) . '",pluginDir="' . $this->escape( $pluginDir ) . '", verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", wpe="' . intval( $wpe ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '", disable_status_check="' . $this->escape( $disableChecking ) . '", status_check_interval="' . $this->escape( $checkInterval ) . '", disable_health_check="' . $this->escape( $disableHealthChecking ) . '", health_threshold="' . $this->escape( $healthThreshold ) . '" WHERE id=%d', $websiteid ) );
@@ -2172,5 +2249,204 @@ class MainWP_DB extends MainWP_DB_Base {
 			$where,
 			OBJECT
 		);
+	}
+
+	/**
+	 * Get DB Sites.
+	 *
+	 * @since 4.6
+	 *
+	 * @param mixed $params params.
+	 *
+	 * @return array $dbwebsites.
+	 */
+	public static function get_db_sites( $params = array() ) {
+
+		$dbwebsites = array();
+
+		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
+		$data_fields[] = 'verify_certificate';
+		$data_fields[] = 'client_id';
+
+		$fields  = isset( $params['fields'] ) && is_array( $params['fields'] ) ? $params['fields'] : array();
+		$sites   = isset( $params['sites'] ) && is_array( $params['sites'] ) ? $params['sites'] : array();
+		$groups  = isset( $params['groups'] ) && is_array( $params['groups'] ) ? $params['groups'] : array();
+		$clients = isset( $params['clients'] ) && is_array( $params['clients'] ) ? $params['clients'] : array();
+
+		if ( is_array( $fields ) ) {
+			foreach ( $fields as $field_indx => $field_name ) {
+
+				$get_field = $field_name;
+				if ( is_numeric( $get_field ) || is_bool( $get_field ) ) { // to compatible fix.
+					$get_field = $field_indx;
+				}
+
+				if ( in_array( $get_field, self::$possible_options ) ) {
+					if ( ! in_array( $get_field, $data_fields ) ) {
+						$data_fields[] = $get_field;
+					}
+				}
+			}
+		}
+
+		if ( ! empty( $sites ) ) {
+			foreach ( $sites as $k => $v ) {
+				if ( MainWP_Utility::ctype_digit( $v ) ) {
+					$website = self::instance()->get_website_by_id( $v );
+					if ( empty( $website ) ) {
+						continue;
+					}
+					$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
+				}
+			}
+		}
+
+		if ( ! empty( $groups ) ) {
+			foreach ( $groups as $k => $v ) {
+				if ( MainWP_Utility::ctype_digit( $v ) ) {
+					$websites = self::instance()->query( self::instance()->get_sql_websites_by_group_id( $v ) );
+					while ( $websites && ( $website = self::fetch_object( $websites ) ) ) {
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
+					}
+					self::free_result( $websites );
+				}
+			}
+		}
+
+		$params       = array(
+			'full_data' => true,
+		);
+		$client_sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $clients, $params );
+		if ( $client_sites ) {
+			foreach ( $client_sites as $website ) {
+				$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
+			}
+		}
+		return $dbwebsites;
+	}
+
+	/**
+	 * Get Sites.
+	 *
+	 * @param int   $websiteid The id of the child site you wish to retrieve.
+	 * @param bool  $for_manager Check Team Control.
+	 * @param array $others Array of others.
+	 *
+	 * @return array $output Array of content to output.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
+	 */
+	public function get_sites( $websiteid = null, $for_manager = false, $others = array() ) { // phpcs:ignore -- not quite complex function.
+
+		if ( ! is_array( $others ) ) {
+			$others = array();
+		}
+
+		$search_site = null;
+		$orderBy     = 'wp.url';
+		$offset      = false;
+		$rowcount    = false;
+		$extraWhere  = null;
+
+		if ( isset( $websiteid ) && ( null !== $websiteid ) ) {
+			$website = self::instance()->get_website_by_id( $websiteid );
+
+			if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
+				return false;
+			}
+
+			if ( ! mainwp_current_user_have_right( 'site', $websiteid ) ) {
+				return false;
+			}
+
+			return array(
+				array(
+					'id'          => $websiteid,
+					'url'         => MainWP_Utility::get_nice_url( $website->url, true ),
+					'name'        => $website->name,
+					'totalsize'   => $website->totalsize,
+					'sync_errors' => $website->sync_errors,
+				),
+			);
+		} else {
+			if ( isset( $others['orderby'] ) ) {
+				if ( ( 'site' === $others['orderby'] ) ) {
+					$orderBy = 'wp.name ' . ( 'asc' === $others['order'] ? 'asc' : 'desc' );
+				} elseif ( ( 'url' === $others['orderby'] ) ) {
+					$orderBy = 'wp.url ' . ( 'asc' === $others['order'] ? 'asc' : 'desc' );
+				}
+			}
+			if ( isset( $others['search'] ) ) {
+				$search_site = trim( $others['search'] );
+			}
+
+			if ( is_array( $others ) ) {
+				if ( isset( $others['plugins_slug'] ) ) {
+
+					$slugs      = explode( ',', $others['plugins_slug'] );
+					$extraWhere = '';
+					foreach ( $slugs as $slug ) {
+						$slug        = wp_json_encode( $slug );
+						$slug        = trim( $slug, '"' );
+						$slug        = str_replace( '\\', '.', $slug );
+						$extraWhere .= ' wp.plugins REGEXP "' . $slug . '" OR';
+					}
+					$extraWhere = trim( rtrim( $extraWhere, 'OR' ) );
+
+					if ( '' === $extraWhere ) {
+						$extraWhere = null;
+					} else {
+						$extraWhere = '(' . $extraWhere . ')';
+					}
+				}
+			}
+		}
+
+		$totalRecords = '';
+
+		if ( isset( $others['per_page'] ) && ! empty( $others['per_page'] ) ) {
+			$sql            = self::instance()->get_sql_websites_for_current_user( false, $search_site, $orderBy, false, false, $extraWhere, $for_manager );
+			$websites_total = self::instance()->query( $sql );
+			$totalRecords   = ( $websites_total ? self::num_rows( $websites_total ) : 0 );
+
+			if ( $websites_total ) {
+				self::free_result( $websites_total );
+			}
+
+			$rowcount = absint( $others['per_page'] );
+			$pagenum  = isset( $others['paged'] ) ? absint( $others['paged'] ) : 0;
+			if ( $pagenum > $totalRecords ) {
+				$pagenum = $totalRecords;
+			}
+			$pagenum = max( 1, $pagenum );
+			$offset  = ( $pagenum - 1 ) * $rowcount;
+
+		}
+
+		$sql      = self::instance()->get_sql_websites_for_current_user( false, $search_site, $orderBy, $offset, $rowcount, $extraWhere, $for_manager );
+		$websites = self::instance()->query( $sql );
+
+		$output = array();
+		while ( $websites && ( $website = self::fetch_object( $websites ) ) ) {
+			$re = array(
+				'id'          => $website->id,
+				'url'         => MainWP_Utility::get_nice_url( $website->url, true ),
+				'name'        => $website->name,
+				'totalsize'   => $website->totalsize,
+				'sync_errors' => $website->sync_errors,
+				'client_id'   => $website->client_id,
+			);
+
+			if ( 0 < $totalRecords ) {
+				$re['totalRecords'] = $totalRecords;
+				$totalRecords       = 0;
+			}
+
+			$output[] = $re;
+		}
+		self::free_result( $websites );
+
+		return $output;
 	}
 }

@@ -23,7 +23,8 @@ use MainWP\Dashboard\MainWP_Extensions_Handler;
  */
 class Api_Backups_3rd_Party {
 
-	//phpcs:disable Generic.Metrics.CyclomaticComplexity
+	// phpcs:disable WordPress.DB.RestrictedFunctions, Generic.Metrics.CyclomaticComplexity, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
+
 	/**
 	 * Public static variable to hold the single instance of the class.
 	 *
@@ -1386,7 +1387,6 @@ class Api_Backups_3rd_Party {
 	public static function call_cloudways_api( $method, $url, $accessToken, $post = array() ) {
 		$baseURL = 'https://api.cloudways.com/api/v1';
 
-		//phpcs:disable
 		$ch = curl_init();
 		curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, $method );
 		curl_setopt( $ch, CURLOPT_URL, $baseURL . $url );
@@ -1412,14 +1412,11 @@ class Api_Backups_3rd_Party {
 		$output = curl_exec( $ch );
 
 		$httpcode = (string) curl_getinfo( $ch, CURLINFO_HTTP_CODE );
-		
 
 		if ( '200' !== $httpcode ) {
 			return false;
 		}
 		curl_close( $ch );
-		//phpcs:enable
-
 		return json_decode( $output );
 	}
 
@@ -1831,7 +1828,6 @@ class Api_Backups_3rd_Party {
 
 		$Baseurl = 'https://api.vultr.com/v2';
 
-		//phpcs:disable
 		$curl = curl_init( $Baseurl . $url );
 		curl_setopt( $curl, CURLOPT_CUSTOMREQUEST, $method );
 		curl_setopt( $curl, CURLOPT_URL, $Baseurl . $url );
@@ -1869,8 +1865,6 @@ class Api_Backups_3rd_Party {
 
 		}
 		curl_close( $curl );
-		//phpcs:enable
-
 		// Return Response.
 		return $response;
 	}
@@ -2221,9 +2215,7 @@ class Api_Backups_3rd_Party {
 	public static function call_gridpane_api( $method, $url, $accessToken, $backup_data = array() ) {
 
 		$Baseurl = 'https://my.gridpane.com/oauth/api/v1';
-		//phpcs:disable
-		$curl = curl_init();
-
+		$curl    = curl_init();
 		curl_setopt_array(
 			$curl,
 			array(
@@ -2242,13 +2234,8 @@ class Api_Backups_3rd_Party {
 				),
 			)
 		);
-
 		$response = curl_exec( $curl );
-
 		curl_close( $curl );
-
-		//phpcs:enable
-
 		return $response;
 	}
 
@@ -2582,10 +2569,7 @@ class Api_Backups_3rd_Party {
 	public static function call_linode_api( $method, $url, $accessToken, $backup_data = array() ) {
 
 		$Baseurl = 'https://api.linode.com/v4/linode';
-
-		//phpcs:disable
-		$curl = curl_init();
-
+		$curl    = curl_init();
 		curl_setopt_array(
 			$curl,
 			array(
@@ -2608,8 +2592,6 @@ class Api_Backups_3rd_Party {
 		$response = curl_exec( $curl );
 
 		curl_close( $curl );
-		//phpcs:enable
-
 		return $response;
 	}
 
@@ -2892,9 +2874,7 @@ class Api_Backups_3rd_Party {
 
 		$Baseurl = 'https://api.digitalocean.com/v2';
 
-		//phpcs:disable
 		$curl = curl_init();
-
 		curl_setopt_array(
 			$curl,
 			array(
@@ -2926,9 +2906,6 @@ class Api_Backups_3rd_Party {
 
 		}
 		curl_close( $curl );
-
-		//phpcs:enable
-
 		return $response;
 	}
 
@@ -3153,7 +3130,6 @@ class Api_Backups_3rd_Party {
 	 */
 	public static function call_plesk_api( $method, $url, $baseurl, $api_key, $backup_data = array() ) {
 
-		//phpcs:disable
 		$curl = curl_init();
 
 		$api_Key = $api_key;
@@ -3188,10 +3164,7 @@ class Api_Backups_3rd_Party {
 		} else {
 			$response['status'] = 'true';
 		}
-
 		curl_close( $curl );
-		//phpcs:enable
-
 		return $response;
 	}
 
@@ -3552,8 +3525,7 @@ class Api_Backups_3rd_Party {
 
 		// base64encode cPanel Username & Password.
 		$base64encoded = base64_encode( $username . ':' . $password ); //phpcs:ignore -- base64 encode.
-		//phpcs:disable
-		$curl = curl_init();
+		$curl          = curl_init();
 
 		curl_setopt_array(
 			$curl,
@@ -3585,7 +3557,6 @@ class Api_Backups_3rd_Party {
 			$response['status'] = 'true';
 		}
 		curl_close( $curl );
-		//phpcs:enable
 		return $response;
 	}
 
@@ -3607,8 +3578,7 @@ class Api_Backups_3rd_Party {
 
 		// base64encode cPanel Username & Password.
 		$base64encoded = base64_encode( $username . ':' . $password ); //phpcs:ignore -- base64 encode.
-		//phpcs:disable
-		$curl = curl_init();
+		$curl          = curl_init();
 
 		curl_setopt_array(
 			$curl,
@@ -3641,7 +3611,6 @@ class Api_Backups_3rd_Party {
 			$response['status'] = 'true';
 		}
 		curl_close( $curl );
-		//phpcs:enable
 		return $response;
 	}
 
@@ -3691,19 +3660,10 @@ class Api_Backups_3rd_Party {
 			$cpanel_site_path = isset( $site_path['cpanel_site_path'] ) ? $site_path['cpanel_site_path'] : null;
 
 		} elseif ( '0' === $mainwp_enable_cpanel_individual ) {
-			//phpcs:disable -- coding comment.
 			// Grab cPanel baseurl, username & password.
-			// $baseurl        = Api_Backups_Helper::get_website_options( $website_id, array( 'cpanel_api_url' ) );
-			// $cpanel_baseurl = isset( $baseurl['cpanel_api_url'] ) ? $baseurl['cpanel_api_url'] : null;
-
 			$cpanel_baseurl = get_option( 'mainwp_cpanel_url' ); // Fixing when mergeing ???.
-
 			// Grab cPanel username.
-			// $username        = Api_Backups_Helper::get_website_options( $website_id, array( 'cpanel_account_username' ) );
-			// $cpanel_username = isset( $username['cpanel_account_username'] ) ? $username['cpanel_account_username'] : null;
-
 			$cpanel_username = get_option( 'mainwp_cpanel_account_username' ); // Fixing when mergeing ???.
-			//phpcs:disable
 			// Grab cPanel password.
 			$cpanel_password = self::get_cpanel_account_password();
 

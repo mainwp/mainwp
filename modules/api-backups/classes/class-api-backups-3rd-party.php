@@ -3757,7 +3757,7 @@ class Api_Backups_3rd_Party {
 	 *
 	 * Create manual database backup via mysqldump.
 	 * Backups will be stored within `/uploads/mainwp/api_db_backups` directory.
-	 * 
+	 *
 	 * @param int $website_id Website ID.
 	 *
 	 * @return false|string cPanel account backups
@@ -4014,7 +4014,7 @@ class Api_Backups_3rd_Party {
 				}
 			} else {
 				// If cpanel file backup errors, return false.
-				wp_die( $errors );
+				wp_die( esc_html( $errors ) );
 			}
 		}
 	}
@@ -4105,7 +4105,7 @@ class Api_Backups_3rd_Party {
 			if ( empty( $errors ) ) {
 				wp_send_json( 'true' );
 			} else {
-				wp_die( $errors );
+				wp_die( esc_html( $errors ) );
 			}
 		}
 	}
@@ -4182,7 +4182,7 @@ class Api_Backups_3rd_Party {
 			if ( empty( $errors ) ) {
 				wp_send_json( 'true' );
 			} else {
-				wp_die( $errors );
+				wp_die( esc_html( $errors ) );
 			}
 		}
 	}
@@ -4328,7 +4328,7 @@ class Api_Backups_3rd_Party {
 			if ( empty( $errors ) && '204' === (string) $api_response['httpCode'] && 'true' === (string) $api_response['status'] ) {
 				wp_send_json( 'true' );
 			} else {
-				wp_die( $errors );
+				wp_die( esc_html( $errors ) );
 			}
 		}
 	}
@@ -4499,7 +4499,7 @@ class Api_Backups_3rd_Party {
 		 * Backup directory: /home/{cpanel-user}
 		 * Backup full path: /home/{cpanel-user}/backup-1.4.2024_17-45-59_cpanel-user.tar.gz
 		 *
-		 * https://{host}:{port}/execute/Backup/restore_files?backup=/home/{cpanel-user}/backup-1.4.2024_17-45-59_cpanel-user.tar.gz&directory=/home/{cpanel-user}.
+		 * Https://{host}:{port}/execute/Backup/restore_files?backup=/home/{cpanel-user}/backup-1.4.2024_17-45-59_cpanel-user.tar.gz&directory=/home/{cpanel-user}.
 		 */
 		$backup_full_path = $backup_path . '/' . $backup_id;
 		$directory        = $backup_path;

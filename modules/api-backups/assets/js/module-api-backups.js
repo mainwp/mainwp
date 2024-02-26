@@ -1,3 +1,4 @@
+/* eslint complexity: ["error", 100] */
 var apibackups_bulkMaxThreads = 1; // rate limiting.
 var apibackups_bulkTotalThreads = 0;
 var apibackups_bulkCurrentThreads = 0;

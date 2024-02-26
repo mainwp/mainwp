@@ -363,7 +363,7 @@ action_backup_selected_sites = function (pObj) {
  *  Handle switching TAB Action Buttons on Individual Cpanel Backups page.
  *  Check if cPanel or Plesk is selected TAB when TAB is clicked & display the correct content.
  */
-action_check_tab = function (pObj) {
+action_check_tab = function () {
 
     var ref_this = jQuery('#mainwp_api_cpanel_backup_tabs div.active');
     if (ref_this.data('tab') === 'cpanel-native') {
@@ -1943,7 +1943,7 @@ cPanel_action_restore_backup = function (pObj) {
 };
 
 // restore Backup.
-cpanel_action_restore_database_backup = function (pObj) {
+cpanel_action_restore_database_backup = function () {
 
     var websiteId = jQuery('#cpanel_automatic_backup_button').attr('website_id');
     var backupID = jQuery('#database_backup_button').attr('backup_name');

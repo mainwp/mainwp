@@ -23,7 +23,7 @@ use MainWP\Dashboard\MainWP_Extensions_Handler;
  */
 class Api_Backups_3rd_Party {
 
-	//phpcs:disable Generic.Metrics.CyclomaticComplexity,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+	//phpcs:disable Generic.Metrics.CyclomaticComplexity
 	/**
 	 * Public static variable to hold the single instance of the class.
 	 *

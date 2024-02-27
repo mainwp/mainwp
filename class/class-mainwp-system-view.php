@@ -291,7 +291,7 @@ class MainWP_System_View {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
 	 */
 	public static function mainwp_ver5_update_notice() {
-		if ( MainWP_Utility::show_mainwp_message( 'notice', 'upgrade_ver5' ) ) {
+		if ( MainWP_Utility::show_mainwp_message( 'notice', 'upgrade_version5' ) ) {
 			?>
 			<div class="ui modal" id="mainwp-v5-update-notice-modal">
 				<i class="close icon mainwp-notice-dismiss" notice-id="upgrade_version5"></i>

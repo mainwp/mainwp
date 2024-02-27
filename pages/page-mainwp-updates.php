@@ -200,7 +200,7 @@ class MainWP_Updates {
 
 			$init_sub_subleftmenu = array(
 				array(
-					'title'      => esc_html__( 'Plugins', 'mainwp' ) . ' <span class="ui' . $label_color_plugins . 'label">' . intval( $updates_count['plugins'] ) . '</span>',
+					'title'      => esc_html__( 'Plugins', 'mainwp' ) . ' <span class="ui ' . $label_color_plugins . ' label">' . intval( $updates_count['plugins'] ) . '</span>',
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=plugins-updates',
 					'slug'       => 'UpdatesManage',
@@ -232,21 +232,21 @@ class MainWP_Updates {
 		} else {
 			$init_sub_subleftmenu = array(
 				array(
-					'title'      => esc_html__( 'Plugins', 'mainwp' ) . ' <span class="ui' . $label_color_plugins . 'label">' . intval( $updates_count['plugins'] ) . '</span>',
+					'title'      => esc_html__( 'Plugins', 'mainwp' ) . ' <span class="ui ' . $label_color_plugins . ' label">' . intval( $updates_count['plugins'] ) . '</span>',
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=plugins-updates',
 					'slug'       => 'UpdatesManage',
 					'right'      => '',
 				),
 				array(
-					'title'      => esc_html__( 'Themes', 'mainwp' ) . ' <span class="ui' . $label_color_themes . 'label">' . intval( $updates_count['themes'] ) . '</span>',
+					'title'      => esc_html__( 'Themes', 'mainwp' ) . ' <span class="ui ' . $label_color_themes . ' label">' . intval( $updates_count['themes'] ) . '</span>',
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=themes-updates',
 					'slug'       => 'UpdatesManage',
 					'right'      => '',
 				),
 				array(
-					'title'      => esc_html__( 'WordPress', 'mainwp' ) . ' <span class="ui' . $label_color_wp . 'label">' . intval( $updates_count['wp'] ) . '1</span>',
+					'title'      => esc_html__( 'WordPress', 'mainwp' ) . ' <span class="ui ' . $label_color_wp . ' label">' . intval( $updates_count['wp'] ) . '1</span>',
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=wordpress-updates',
 					'slug'       => 'UpdatesManage&tab=wordpress-updates',

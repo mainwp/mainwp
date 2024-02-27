@@ -21,7 +21,8 @@ class MainWP_Logger {
 	const UPDATE_CHECK_LOG_PRIORITY    = 10;
 	const EXECUTION_TIME_LOG_PRIORITY  = 15;
 	const LOGS_AUTO_PURGE_LOG_PRIORITY = 16;
-
+	const COST_TRACKER_LOG_PRIORITY    = 20230112;
+	const API_BACKUPS_LOG_PRIORITY     = 20240130;
 
 	const DISABLED = - 1;
 	const LOG      = 0;
@@ -381,6 +382,12 @@ class MainWP_Logger {
 		$do_log = apply_filters( 'mainwp_log_do_to_db', $do_log, $website );
 
 		$text = $this->prepare_log_info( $text );
+
+		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+			if ( 'CRON' !== strtoupper( substr( $text, 0, 4 ) ) ) {
+				$text = 'CRON :: ' . $text;
+			}
+		}
 
 		if ( $forced || $do_log ) {
 
@@ -762,6 +769,7 @@ class MainWP_Logger {
 
 		?>
 		<div class="ui large modal" id="mainwp-action-log-response-modal">
+			<i class="close icon mainwp-reload"></i>
 			<div class="header"><?php esc_html_e( 'Child Site Response', 'mainwp' ); ?></div>
 			<div class="content">
 				<div class="ui info message"><?php esc_html_e( 'To see the response in a more readable way, you can copy it and paste it into some HTML render tool, such as Codepen.io.', 'mainwp' ); ?>
@@ -770,7 +778,6 @@ class MainWP_Logger {
 			<div class="scrolling content content-response"></div>
 			<div class="actions">
 				<button class="ui green button mainwp-response-copy-button"><?php esc_html_e( 'Copy Response', 'mainwp' ); ?></button>				
-				<div class="ui cancel button mainwp-reload"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 			</div>
 		</div>
 		<?php
@@ -842,6 +849,7 @@ class MainWP_Logger {
 
 		?>
 		<div class="ui large modal" id="mainwp-action-log-response-modal">
+			<i class="close icon mainwp-reload"></i>
 			<div class="header"><?php esc_html_e( 'Child Site Response', 'mainwp' ); ?></div>
 			<div class="content">
 				<div class="ui info message"><?php esc_html_e( 'To see the response in a more readable way, you can copy it and paste it into some HTML render tool, such as Codepen.io.', 'mainwp' ); ?>
@@ -850,7 +858,6 @@ class MainWP_Logger {
 			<div class="scrolling content content-response"></div>
 			<div class="actions">
 				<button class="ui green button mainwp-response-copy-button"><?php esc_html_e( 'Copy Response', 'mainwp' ); ?></button>				
-				<div class="ui cancel button mainwp-reload"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 			</div>
 		</div>
 		<?php

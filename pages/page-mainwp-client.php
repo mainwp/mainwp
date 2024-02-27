@@ -236,25 +236,28 @@ class MainWP_Client {
 
 		$init_sub_subleftmenu = array(
 			array(
-				'title'      => esc_html__( 'Clients', 'mainwp' ),
-				'parent_key' => 'ManageClients',
-				'href'       => 'admin.php?page=ManageClients',
-				'slug'       => 'ManageClients',
-				'right'      => 'manage_clients',
+				'title'                => esc_html__( 'Clients', 'mainwp' ),
+				'parent_key'           => 'ManageClients',
+				'href'                 => 'admin.php?page=ManageClients',
+				'slug'                 => 'ManageClients',
+				'right'                => 'manage_clients',
+				'leftsub_order_level2' => 1,
 			),
 			array(
-				'title'      => esc_html__( 'Add Client', 'mainwp' ),
-				'parent_key' => 'ManageClients',
-				'href'       => 'admin.php?page=ClientAddNew',
-				'slug'       => 'ClientAddNew',
-				'right'      => '',
+				'title'                => esc_html__( 'Add Client', 'mainwp' ),
+				'parent_key'           => 'ManageClients',
+				'href'                 => 'admin.php?page=ClientAddNew',
+				'slug'                 => 'ClientAddNew',
+				'right'                => '',
+				'leftsub_order_level2' => 2,
 			),
 			array(
-				'title'      => esc_html__( 'Client Fields', 'mainwp' ),
-				'parent_key' => 'ManageClients',
-				'href'       => 'admin.php?page=ClientAddField',
-				'slug'       => 'ClientAddField',
-				'right'      => '',
+				'title'                => esc_html__( 'Client Fields', 'mainwp' ),
+				'parent_key'           => 'ManageClients',
+				'href'                 => 'admin.php?page=ClientAddField',
+				'slug'                 => 'ClientAddField',
+				'right'                => '',
+				'leftsub_order_level2' => 3,
 			),
 		);
 
@@ -292,7 +295,13 @@ class MainWP_Client {
 		if ( $client_id ) {
 			$client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id );
 			if ( $client ) {
-				$params['title'] = $client->name;
+				$client_pic = isset( $client->image ) ? MainWP_Client_Handler::get_client_image_url( $client->image ) : '';
+				if ( '' !== $client_pic ) {
+					$client_pic = '<img src="' . esc_attr( $client_pic ) . '" class="ui circurlar avatar image" />';
+				} else {
+					$client_pic  = '<i class="user circle icon"></i>'; // phpcs:ignore -- Prevent modify WP icon.
+				}
+				$params['title'] = $client_pic . '<div class="content">' . $client->name . '<div class="sub header"><a href="mailto:' . $client->client_email . '" target="_blank" style="color:#666!important;font-weight:normal!important;">' . $client->client_email . '</a> </div></div>';
 			}
 		}
 
@@ -431,6 +440,7 @@ class MainWP_Client {
 
 		?>
 		<div id="mainwp-edit-clients-modal" class="ui modal">
+		<i class="close icon"></i>
 			<div class="header"><?php esc_html_e( 'Edit client', 'mainwp' ); ?></div>
 			<div class="ui message"><?php esc_html_e( 'Empty fields will not be passed to child sites.', 'mainwp' ); ?></div>
 			<form id="update_client_profile">
@@ -523,7 +533,6 @@ class MainWP_Client {
 			<div class="actions">
 				<div id="mainwp_update_password_error" style="display: none"></div>
 				<span id="mainwp_clients_updating"><i class="ui active inline loader tiny"></i></span>
-				<div class="ui cancel button"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></div>
 				<input type="button" class="ui green button" id="mainwp_btn_update_client" value="<?php esc_attr_e( 'Update', 'mainwp' ); ?>">
 			</div>
 		</div>
@@ -580,6 +589,7 @@ class MainWP_Client {
 
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
+		<i class="close icon"></i>
 			<div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
 			<div class="scrolling content ui form">
 				<form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
@@ -632,11 +642,10 @@ class MainWP_Client {
 				<div class="actions">
 					<div class="ui two columns grid">
 						<div class="left aligned column">
-							<span data-tooltip="<?php esc_attr_e( 'Returns this page to the state it was in when installed. The feature also restores any column you have moved through the drag and drop feature on the page.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><input type="button" class="ui button" name="reset" id="reset-manageclients-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
+							<span data-tooltip="<?php esc_attr_e( 'Resets the page to its original layout and reinstates relocated columns.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><input type="button" class="ui button" name="reset" id="reset-manageclients-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
 						</div>
 						<div class="ui right aligned column">
 					<input type="submit" class="ui green button" name="btnSubmit" id="submit-manageclients-settings" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
-					<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 				</div>
 					</div>
 				</div>
@@ -937,7 +946,7 @@ class MainWP_Client {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-client-info-message' ) ) : ?>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-client-info-message"></i>
-						<?php printf( esc_html__( 'use the provided form to create a new client on your child site(). for additional help, please check this %1$shelp documentation %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-client/" target="_blank">', '</a>' ); ?>
+						<?php printf( esc_html__( 'use the provided form to create a new client on your child site(). for additional help, please check this %1$shelp documentation %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-client/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 					</div>
 				<?php endif; ?>
 					<div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
@@ -1091,6 +1100,7 @@ class MainWP_Client {
 	public static function render_add_field_modal( $client_id = 0 ) {
 		?>
 		<div class="ui modal" id="mainwp-clients-custom-field-modal">
+		<i class="close icon"></i>
 			<div class="header"><?php esc_html_e( 'Custom Field', 'mainwp' ); ?></div>
 			<div class="content ui mini form">
 				<div class="ui yellow message" style="display:none"></div>
@@ -1105,7 +1115,6 @@ class MainWP_Client {
 			</div>
 			<div class="actions">
 				<input type="button" class="ui green button" client-id="<?php echo intval( $client_id ); ?>" id="mainwp-clients-save-new-custom-field" value="<?php esc_attr_e( 'Save Field', 'mainwp' ); ?>">
-				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 			</div>
 			<input type="hidden" value="0" name="field-id">
 		</div>
@@ -1410,6 +1419,7 @@ class MainWP_Client {
 	public static function render_add_client_modal() {
 		?>
 			<div id="mainwp-creating-new-client-modal" class="ui modal">
+			<i class="close icon"></i>
 				<div class="header"><?php esc_html_e( 'New client', 'mainwp' ); ?></div>
 				<div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
 				<div class="scrolling content mainwp-modal-content">				
@@ -1421,7 +1431,6 @@ class MainWP_Client {
 				</div>
 				<div class="actions">
 					<div class="ui button green" current-page="modal-add" id="bulk_add_createclient"><?php esc_html_e( 'Add Client', 'mainwp' ); ?></div>	
-					<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 				</div>
 			</div>
 
@@ -1873,7 +1882,7 @@ class MainWP_Client {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing clients, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">Manage Clients</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">Manage Clients</a> <i class="external alternate icon"></i></div>
 				<?php
 				/**
 				 * Action: mainwp_clients_help_item

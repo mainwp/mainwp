@@ -86,9 +86,9 @@ class MainWP_Security_Issues_Widget {
 			 *
 			 * @since 4.1
 			 */
-			echo esc_html( apply_filters( 'mainwp_security_issues_widget_title', esc_html__( 'Security Issues', 'mainwp' ) ) );
+			echo esc_html( apply_filters( 'mainwp_security_issues_widget_title', esc_html__( 'Site Hardening', 'mainwp' ) ) );
 			?>
-			<div class="sub header"><?php esc_html_e( 'Detected security issues', 'mainwp' ); ?></div>
+			<div class="sub header"><?php esc_html_e( 'Identify and strengthen weak spots to boost site hardening', 'mainwp' ); ?></div>
 		</h3>
 		</div>
 
@@ -103,25 +103,26 @@ class MainWP_Security_Issues_Widget {
 		do_action( 'mainwp_security_issues_widget_top' );
 		if ( $total_securityIssues > 0 ) {
 			?>
-			<div class="ui two columns grid">
-				<div class="column">
-				<div class="ui horizontal statistics">
-					<div class="statistic" style="margin: 0px;">
-						<div class="value">
-							<?php echo intval( $total_securityIssues ); ?>
-						</div>
-						<div class="label">
-							<?php echo esc_html( _n( 'Security Issue Detected', 'Security Issues Detected', $total_securityIssues, 'mainwp' ) ); ?>
+			<div class="ui compact grid">
+				<div class="eight wide column">
+					<div class="ui horizontal statistics">
+						<div class="statistic" style="margin: 0px;">
+							<div class="value">
+								<?php echo intval( $total_securityIssues ); ?>
+							</div>
+							<div class="label">
+								<?php echo esc_html( _n( 'Recommendation', 'Recommendations', $total_securityIssues, 'mainwp' ) ); ?>
+							</div>
 						</div>
 					</div>
 				</div>
+				<div class="right aligned middle aligned four wide column">
+					<a href="#" class="ui fluid button mini basic" id="show-security-issues-widget-list" data-tooltip="<?php esc_attr_e( 'Click here to see the list of all sites and detected security issues.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+				</div>
+				<div class="right aligned middle aligned four wide column">
+					<a href="#" class="<?php echo $is_demo ? 'disabled' : ''; ?> fix-all-security-issues ui fluid button mini green" id="show-security-issues-widget-list" data-tooltip="<?php esc_attr_e( 'Clicking this buttin will resolve all detected security issue on all your child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Fix All Issues', 'mainwp' ); ?></a>
+				</div>
 			</div>
-			<div class="right aligned middle aligned column">
-				<a href="#" class="ui button mini basic" id="show-security-issues-widget-list" data-tooltip="<?php esc_attr_e( 'Click here to see the list of all sites and detected security issues.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-				<a href="#" class="<?php echo $is_demo ? 'disabled' : ''; ?> fix-all-security-issues ui button mini green" id="show-security-issues-widget-list" data-tooltip="<?php esc_attr_e( 'Clicking this buttin will resolve all detected security issue on all your child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Fix All Issues', 'mainwp' ); ?></a>
-
-			</div>
-		</div>
 
 			<div class="mainwp-scrolly-overflow">
 		<div id="mainwp-security-issues-widget-list" class="ui middle aligned divided selection list" style="display: none;">
@@ -209,13 +210,9 @@ class MainWP_Security_Issues_Widget {
 			<?php
 		} else {
 			?>
-		<h2 class="ui icon header">
-			<i class="thumbs up outline icon"></i>
-			<div class="content">
-				<?php esc_html_e( 'Well done!', 'mainwp' ); ?>
-				<div class="sub header"><?php esc_html_e( 'No security issues detected!', 'mainwp' ); ?></div>
+			<div class="mainwp-scrolly-overflow">
+				<?php MainWP_UI::render_empty_element_placeholder(); ?>
 			</div>
-		</h2>
 			<?php
 		}
 		/**

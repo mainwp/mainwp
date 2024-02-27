@@ -239,49 +239,6 @@ class MainWP_Overview {
 		$values               = apply_filters( 'mainwp_overview_enabled_widgets', $values, null );
 		self::$enable_widgets = array_merge( self::$enable_widgets, $values );
 
-		// Load the Updates Overview widget.
-		if ( self::$enable_widgets['overview'] ) {
-			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), $page, array( 1, 1, 2, 6 ) );
-		}
-
-		// Load the Security Issues widget.
-		if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
-			if ( self::$enable_widgets['security_issues'] ) {
-				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), $page, array( 1, 1, 2, 2 ) );
-			}
-		}
-
-		// Load the Clients widget.
-		if ( self::$enable_widgets['clients'] ) {
-			MainWP_UI::add_widget_box( 'clients', array( MainWP_Clients::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
-		}
-
-		// Load the Connection Status widget.
-		if ( ! MainWP_System_Utility::get_current_wpid() ) {
-			if ( self::$enable_widgets['connection_status'] ) {
-				MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, array( 1, 1, 2, 4 ) );
-			}
-		}
-
-		// Load the Non-MainWP Changes widget.
-		if ( self::$enable_widgets['non_mainwp_changes'] ) {
-			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, array( 1, 1, 2, 3 ) );
-		}
-
-		// Load the Recent Pages widget.
-		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
-			if ( self::$enable_widgets['recent_pages'] ) {
-				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( 1, 1, 3, 3 ) );
-			}
-		}
-
-		// Load the Recent Posts widget.
-		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
-			if ( self::$enable_widgets['recent_posts'] ) {
-				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( 1, 1, 3, 3 ) );
-			}
-		}
-
 		$i = 1;
 		foreach ( $extMetaBoxs as $metaBox ) {
 			$enabled = true;
@@ -297,11 +254,54 @@ class MainWP_Overview {
 
 			if ( $enabled ) {
 				if ( 'google-widget' === $metaBox['id'] || 'matomo' === $metaBox['id'] ) {
-					MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( 1, 1, 2, 7 ) );
+					MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( 1, 1, 4, 18 ) );
 				} else {
-					MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( 1, 1, 2, 3 ) );
+					MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( 1, 1, 4, 11 ) );
 				}
 			}
+		}
+
+		// Load the Recent Posts widget.
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
+			if ( self::$enable_widgets['recent_posts'] ) {
+				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( 1, 1, 6, 11 ) );
+			}
+		}
+
+		// Load the Recent Pages widget.
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
+			if ( self::$enable_widgets['recent_pages'] ) {
+				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( 1, 1, 6, 11 ) );
+			}
+		}
+
+		// Load the Security Issues widget.
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
+			if ( self::$enable_widgets['security_issues'] ) {
+				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), $page, array( 1, 1, 4, 4 ) );
+			}
+		}
+
+		// Load the Connection Status widget.
+		if ( ! MainWP_System_Utility::get_current_wpid() ) {
+			if ( self::$enable_widgets['connection_status'] ) {
+				MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, array( 1, 1, 4, 5 ) );
+			}
+		}
+
+		// Load the Non-MainWP Changes widget.
+		if ( self::$enable_widgets['non_mainwp_changes'] ) {
+			MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, array( 1, 1, 4, 18 ) );
+		}
+
+		// Load the Clients widget.
+		if ( self::$enable_widgets['clients'] ) {
+			MainWP_UI::add_widget_box( 'clients', array( MainWP_Clients::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
+		}
+
+		// Load the Updates Overview widget.
+		if ( self::$enable_widgets['overview'] ) {
+			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), $page, array( 1, 1, 4, 18 ) );
 		}
 	}
 
@@ -393,7 +393,7 @@ class MainWP_Overview {
 			 *
 			 * @since 4.1
 			 */
-			do_action( 'mainwp_before_overview_widgets' );
+			do_action( 'mainwp_before_overview_widgets', 'dashboard' );
 			?>
 			<div id="mainwp-grid-wrapper" class="gridster">
 				<?php MainWP_UI::do_widget_boxes( $screen->id ); ?>
@@ -406,7 +406,7 @@ class MainWP_Overview {
 			 *
 			 * @since 4.1
 			 */
-			do_action( 'mainwp_after_overview_widgets' );
+			do_action( 'mainwp_after_overview_widgets', 'dashboard' );
 			?>
 	<script type="text/javascript">
 		jQuery( document ).ready( function( $ ) {
@@ -431,12 +431,12 @@ class MainWP_Overview {
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Dashboard, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://kb.mainwp.com/docs/understanding-mainwp-dashboard-user-interface/" target="_blank">Understanding MainWP Dashboard UI</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-navigation/" target="_blank">MainWP Navigation</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/screen-options/" target="_blank">Page Settings</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-dashboard/" target="_blank">MainWP Dashboard</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-tables/" target="_blank">MainWP Tables</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/individual-child-site-mode/" target="_blank">Individual Child Site Mode</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/understanding-mainwp-dashboard-user-interface/" target="_blank">Understanding MainWP Dashboard UI</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-navigation/" target="_blank">MainWP Navigation</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/screen-options/" target="_blank">Page Settings</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-dashboard/" target="_blank">MainWP Dashboard</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-tables/" target="_blank">MainWP Tables</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/individual-child-site-mode/" target="_blank">Individual Child Site Mode</a> <i class="external alternate icon"></i></div>
 				<?php
 				/**
 				 * Action: mainwp_overview_help_item

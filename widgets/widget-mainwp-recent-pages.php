@@ -239,14 +239,9 @@ class MainWP_Recent_Pages {
 			 */
 			do_action( 'mainwp_recent_pages_before_publised_list', $allPages, $recent_number );
 			if ( 0 === count( $recent_pages_published ) ) :
-				?>
-			<h2 class="ui icon header">
-				<i class="folder open outline icon"></i>
-				<div class="content">
-					<?php esc_html_e( 'No pages found!', 'mainwp' ); ?>
-				</div>
-			</h2>
-			<?php endif; ?>
+				MainWP_UI::render_empty_element_placeholder();
+			endif;
+			?>
 			<div class="ui middle aligned divided selection list">
 			<?php
 			$_count = count( $recent_pages_published );
@@ -267,16 +262,16 @@ class MainWP_Recent_Pages {
 					<div class="ui stackable grid">
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_published[ $i ]['id'] ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_published[ $i ]['website']->id ); ?>"/>
-						<div class="<?php echo $individual ? 'fourteen' : 'ten'; ?> wide column middle aligned">
-						<div><a href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_published[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_pages_published[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a></div>
-						<span class="ui small text"><?php echo esc_html( $recent_pages_published[ $i ]['dts'] ); ?></span>
-					</div>
-						<?php if ( ! $individual ) : ?>
-						<div class="four wide column middle aligned">
-							<a href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+						<div class="fifteen wide column middle aligned">
+							<div>
+								<a href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_published[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_pages_published[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
+								<?php if ( ! $individual ) : ?>
+									<?php esc_html_e( 'on', 'mainwp' ); ?> <a href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+								<?php endif; ?>
+							</div>
+							<span class="ui small text"><?php echo esc_html( $recent_pages_published[ $i ]['dts'] ); ?></span>
 						</div>
-						<?php endif; ?>
-						<div class="two wide column right aligned">
+						<div class="one wide column right aligned">
 							<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
 							<i class="ellipsis horizontal icon"></i>
 								<div class="menu">
@@ -341,14 +336,7 @@ class MainWP_Recent_Pages {
 				 */
 				do_action( 'mainwp_recent_pages_before_draft_list', $allPages, $recent_number );
 				if ( 0 === count( $recent_pages_draft ) ) {
-					?>
-					<h2 class="ui icon header">
-						<i class="folder open outline icon"></i>
-						<div class="content">
-							<?php esc_html_e( 'No draft pages found!', 'mainwp' ); ?>
-						</div>
-					</h2>
-					<?php
+					MainWP_UI::render_empty_element_placeholder();
 				}
 				?>
 				<div class="ui middle aligned divided selection list">
@@ -367,20 +355,18 @@ class MainWP_Recent_Pages {
 					?>
 					<div class="item">
 						<div class="ui stackable grid">
-							<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_draft[ $i ]['id'] ); ?>"/>
-							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_draft[ $i ]['website']->id ); ?>"/>
-							<div class="six wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_draft[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_draft[ $i ]['id'] ); ?>" target="_blank" class="mainwp-may-hide-referrer" ><?php echo esc_html( htmlentities( $recent_pages_draft[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
+						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_draft[ $i ]['id'] ); ?>"/>
+						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_draft[ $i ]['website']->id ); ?>"/>
+						<div class="fifteen wide column middle aligned">
+							<div>
+								<a href="<?php echo esc_url( $recent_pages_draft[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_draft[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_pages_draft[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
+								<?php if ( ! $individual ) : ?>
+									<?php esc_html_e( 'on', 'mainwp' ); ?> <a href="<?php echo esc_url( $recent_pages_draft[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+								<?php endif; ?>
 							</div>
-							<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
-							<?php echo esc_html( $recent_pages_draft[ $i ]['dts'] ); ?>
+							<span class="ui small text"><?php echo esc_html( $recent_pages_draft[ $i ]['dts'] ); ?></span>
 						</div>
-							<?php if ( ! $individual ) : ?>
-							<div class="four wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_draft[ $i ]['website']->url ); ?>" target="_blank" class="mainwp-may-hide-referrer" ><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
-							</div>
-							<?php endif; ?>
-							<div class="two wide column right aligned">
+						<div class="one wide column right aligned">
 								<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
 									<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
@@ -443,14 +429,7 @@ class MainWP_Recent_Pages {
 				 */
 				do_action( 'mainwp_recent_pages_before_pending_list', $allPages, $recent_number );
 				if ( 0 === count( $recent_pages_pending ) ) {
-					?>
-					<h2 class="ui icon header">
-						<i class="folder open outline icon"></i>
-						<div class="content">
-							<?php esc_html_e( 'No pending pages found!', 'mainwp' ); ?>
-						</div>
-					</h2>
-					<?php
+					MainWP_UI::render_empty_element_placeholder();
 				}
 				?>
 				<div class="ui middle aligned divided selection list">
@@ -469,20 +448,18 @@ class MainWP_Recent_Pages {
 					?>
 					<div class="item">
 						<div class="ui stackable grid">
-							<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_pending[ $i ]['id'] ); ?>"/>
-							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_pending[ $i ]['website']->id ); ?>"/>
-							<div class="six wide column middle aligned">
+						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_pending[ $i ]['id'] ); ?>"/>
+						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_pending[ $i ]['website']->id ); ?>"/>
+						<div class="fifteen wide column middle aligned">
+							<div>
 								<a href="<?php echo esc_url( $recent_pages_pending[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_pending[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_pages_pending[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
+								<?php if ( ! $individual ) : ?>
+									<?php esc_html_e( 'on', 'mainwp' ); ?> <a href="<?php echo esc_url( $recent_pages_pending[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+								<?php endif; ?>
 							</div>
-							<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
-							<?php echo esc_html( $recent_pages_pending[ $i ]['dts'] ); ?>
+							<span class="ui small text"><?php echo esc_html( $recent_pages_pending[ $i ]['dts'] ); ?></span>
 						</div>
-							<?php if ( ! $individual ) : ?>
-							<div class="four wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_pending[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank" ><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
-							</div>
-							<?php endif; ?>
-							<div class="two wide column right aligned">
+						<div class="one wide column right aligned">
 								<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
 									<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
@@ -546,14 +523,7 @@ class MainWP_Recent_Pages {
 		 */
 		do_action( 'mainwp_recent_pages_before_future_list', $allPages, $recent_number );
 		if ( 0 === count( $recent_pages_future ) ) {
-			?>
-			<h2 class="ui icon header">
-				<i class="folder open outline icon"></i>
-				<div class="content">
-					<?php esc_html_e( 'No future pages found!', 'mainwp' ); ?>
-				</div>
-			</h2>
-			<?php
+			MainWP_UI::render_empty_element_placeholder();
 		}
 		?>
 		<div class="ui middle aligned divided selection list">
@@ -574,18 +544,16 @@ class MainWP_Recent_Pages {
 				<div class="ui stackable grid">
 					<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_future[ $i ]['id'] ); ?>"/>
 					<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_future[ $i ]['website']->id ); ?>"/>
-					<div class="six wide column middle aligned">
-						<a href="<?php echo esc_url( $recent_pages_future[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_future[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_pages_future[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
+					<div class="fifteen wide column middle aligned">
+						<div>
+							<a href="<?php echo esc_url( $recent_pages_future[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_future[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_pages_future[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
+							<?php if ( ! $individual ) : ?>
+								<?php esc_html_e( 'on', 'mainwp' ); ?> <a href="<?php echo esc_url( $recent_pages_future[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+							<?php endif; ?>
+						</div>
+						<span class="ui small text"><?php echo esc_html( $recent_pages_future[ $i ]['dts'] ); ?></span>
 					</div>
-					<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
-																																	<?php echo esc_html( $recent_pages_future[ $i ]['dts'] ); ?>
-				</div>
-																																	<?php if ( ! $individual ) : ?>
-					<div class="four wide column middle aligned">
-						<a href="<?php echo esc_url( $recent_pages_future[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
-					</div>
-					<?php endif; ?>
-					<div class="two wide column right aligned">
+					<div class="one wide column right aligned">
 						<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
 							<i class="ellipsis horizontal icon"></i>
 							<div class="menu">
@@ -650,14 +618,7 @@ class MainWP_Recent_Pages {
 		 */
 		do_action( 'mainwp_recent_pages_before_trash_list', $allPages, $recent_number );
 		if ( 0 === count( $recent_pages_trash ) ) {
-			?>
-				<h2 class="ui icon header">
-					<i class="folder open outline icon"></i>
-					<div class="content">
-				<?php esc_html_e( 'No trashed pages found!', 'mainwp' ); ?>
-					</div>
-				</h2>
-			<?php
+			MainWP_UI::render_empty_element_placeholder();
 		}
 		?>
 			<div class="ui middle aligned divided selection list">
@@ -676,22 +637,18 @@ class MainWP_Recent_Pages {
 			?>
 				<div class="item">
 					<div class="ui stackable grid">
-						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_trash[ $i ]['id'] ); ?>"/>
+					<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_trash[ $i ]['id'] ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_trash[ $i ]['website']->id ); ?>"/>
-						<div class="six wide column middle aligned">
-						<?php echo esc_html( $recent_pages_trash[ $i ]['title'] ); ?>
+						<div class="fifteen wide column middle aligned">
+							<div>
+								<a href="<?php echo esc_url( $recent_pages_trash[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_trash[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_pages_trash[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
+								<?php if ( ! $individual ) : ?>
+									<?php esc_html_e( 'on', 'mainwp' ); ?> <a href="<?php echo esc_url( $recent_pages_trash[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
+								<?php endif; ?>
+							</div>
+							<span class="ui small text"><?php echo esc_html( $recent_pages_trash[ $i ]['dts'] ); ?></span>
 						</div>
-						<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
-					<?php echo esc_html( $recent_pages_trash[ $i ]['dts'] ); ?>
-					</div>
-				<?php
-				if ( ! $individual ) :
-					?>
-						<div class="four wide column middle aligned">
-					<?php echo $name; // phpcs:ignore WordPress.Security.EscapeOutput ?>
-						</div>
-					<?php endif; ?>
-						<div class="two wide column right aligned">
+						<div class="one wide column right aligned">
 							<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 								<div class="menu">

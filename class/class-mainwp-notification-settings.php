@@ -130,7 +130,7 @@ class MainWP_Notification_Settings {
 			<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 			<?php endif; ?>
 			<div class="ui info message">
-				<?php printf( esc_html__( 'Email notifications sent from MainWP Dashboard are listed below.  Click on an email to configure it.  For additional help, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/email-settings/">', '</a>' ); ?>
+				<?php printf( esc_html__( 'Email notifications sent from MainWP Dashboard are listed below.  Click on an email to configure it.  For additional help, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/email-settings/">', '</a> <i class="external alternate icon"></i>' ); ?>
 			</div>
 			<table class="ui unstackable table" id="mainwp-emails-settings-table">
 				<thead>
@@ -249,7 +249,7 @@ class MainWP_Notification_Settings {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-email-tokens-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-message"></i>
-							<?php printf( esc_html__( '%1$sBoilerplate%2$s and %3$sReports%4$s extensions tokens are supported in the email settings and templates if Extensions are in use.', 'mainwp' ), '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">', '</a>', '<a href="https://mainwp.com/extension/pro-reports/" target="_blank">', '</a>' ); ?>
+							<?php printf( esc_html__( '%1$sBoilerplate%2$s and %3$sReports%4$s extensions tokens are supported in the email settings and templates if Extensions are in use.', 'mainwp' ), '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://mainwp.com/extension/pro-reports/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 						</div>
 					<?php endif; ?>
 					<h3 class="ui header"><?php echo esc_html( $title ); ?></h3>
@@ -350,6 +350,8 @@ class MainWP_Notification_Settings {
 			$email_description = esc_html__( 'Alert if any of your websites site health goes under the threshold.', 'mainwp' );
 		} elseif ( 'http_check' === $type ) {
 			$email_description = esc_html__( 'Alert if any of your websites return unexpected HTTP status after running updates.', 'mainwp' );
+		} elseif ( 'deactivated_license_alert' === $type ) {
+			$email_description = esc_html__( 'Receive a notification when an extension\'s license is deactivated.', 'mainwp' );
 		}
 
 		$addition_desc = apply_filters( 'mainwp_notification_type_desc', '', $type );
@@ -388,9 +390,10 @@ class MainWP_Notification_Settings {
 	 */
 	public static function get_notification_types( $type = '' ) {
 		$types = array(
-			'daily_digest' => esc_html__( 'Daily Digest Email', 'mainwp' ),
-			'uptime'       => esc_html__( 'Basic Uptime Monitoring Email', 'mainwp' ),
-			'site_health'  => esc_html__( 'Site Health Monitoring Email', 'mainwp' ),
+			'daily_digest'              => esc_html__( 'Daily Digest Email', 'mainwp' ),
+			'uptime'                    => esc_html__( 'Basic Uptime Monitoring Email', 'mainwp' ),
+			'site_health'               => esc_html__( 'Site Health Monitoring Email', 'mainwp' ),
+			'deactivated_license_alert' => esc_html__( 'Extension License Deactivation Notification Email', 'mainwp' ),
 		);
 
 		$enable_http_check = get_option( 'mainwp_check_http_response', 0 );
@@ -510,7 +513,7 @@ class MainWP_Notification_Settings {
 	 * @param string $field   Field name.
 	 * @param bool   $general General or individual site settings.
 	 *
-	 * @return string Email field settings value.
+	 * @return array|string Email field settings value.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_notification_email()
 	 */
@@ -520,29 +523,35 @@ class MainWP_Notification_Settings {
 		$disable    = $general ? 0 : 1;
 
 		$default_fields = array(
-			'daily_digest' => array(
+			'daily_digest'              => array(
 				'disable'    => $disable,
 				'recipients' => $recipients,
 				'subject'    => $general ? 'Daily Digest' : '[site.name] Daily Digest',
 				'heading'    => $general ? 'Daily Digest' : '[site.name] Daily Digest',
 			),
-			'uptime'       => array(
+			'uptime'                    => array(
 				'disable'    => $disable,
 				'recipients' => $recipients,
 				'subject'    => $general ? 'Uptime Monitoring' : '[site.name] Uptime Monitoring',
 				'heading'    => $general ? 'Uptime Monitoring' : '[site.name] Uptime Monitoring',
 			),
-			'site_health'  => array(
+			'site_health'               => array(
 				'disable'    => $disable,
 				'recipients' => $recipients,
 				'subject'    => $general ? 'Site Health Monitoring' : '[site.name] Site Health Monitoring',
 				'heading'    => $general ? 'Site Health Monitoring' : '[site.name] Site Health Monitoring',
 			),
-			'http_check'   => array(
+			'http_check'                => array(
 				'disable'    => $disable,
 				'recipients' => $recipients,
 				'subject'    => 'HTTP response check',
 				'heading'    => 'Sites Check',
+			),
+			'deactivated_license_alert' => array(
+				'disable'    => $disable,
+				'recipients' => $recipients,
+				'subject'    => 'Extension License Deactivation Notification',
+				'heading'    => 'Extension License Deactivation Notification',
 			),
 		);
 
@@ -556,10 +565,10 @@ class MainWP_Notification_Settings {
 		}
 
 		if ( ! empty( $type ) && empty( $field ) ) {
-			return isset( $default_fields[ $type ] ) ? $default_fields[ $type ] : false;
+			return isset( $default_fields[ $type ] ) ? $default_fields[ $type ] : array();
 		}
 
-		return false;
+		return array();
 	}
 
 	/**

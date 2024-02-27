@@ -209,7 +209,7 @@ class Log_DB extends MainWP_DB {
 	 * @param int $start_time  start time to compact.
 	 * @param int $end_time  end time to compact.
 	 *
-	 * @return int results number.
+	 * @return mixed results.
 	 */
 	public function create_compact_and_erase_records( $start_time, $end_time ) {
 

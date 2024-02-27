@@ -283,7 +283,7 @@ class MainWP_System_Handler {
 					}
 				}
 			}
-			MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
+			MainWP_Utility::update_option( 'mainwp_use_favicon', 1 );
 			MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
 			$user = wp_get_current_user();
 			if ( $user ) {
@@ -1058,13 +1058,16 @@ class MainWP_System_Handler {
 	 * Deactivate MaiNWP Extension.
 	 *
 	 * @param mixed $ext_key Exnension API Key.
+	 * @param bool  $dashboard_only Deactive API Key on dashboard only.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::set_activation_info()
 	 */
-	public function deactivate_extension( $ext_key ) {
+	public function deactivate_extension( $ext_key, $dashboard_only = false ) {
 		// try to deactivate license.
-		$mainwp_api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
-		$result         = MainWP_Api_Manager::instance()->license_key_deactivation( $ext_key, $mainwp_api_key );
+		if ( ! $dashboard_only ) {
+			$mainwp_api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
+			$result         = MainWP_Api_Manager::instance()->license_key_deactivation( $ext_key, $mainwp_api_key );
+		}
 
 		MainWP_Api_Manager::instance()->remove_activation_info( $ext_key );
 	}

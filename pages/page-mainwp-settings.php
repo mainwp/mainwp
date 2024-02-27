@@ -96,31 +96,33 @@ class MainWP_Settings {
 			$new_extensions = array();
 			$extensions     = get_option( 'mainwp_extensions', array() );
 
-			foreach ( $extensions as $ext ) {
-				if ( isset( $ext['api'] ) && isset( $ext['apiManager'] ) && ! empty( $ext['apiManager'] ) ) {
-					if ( isset( $ext['api_key'] ) ) {
-						$ext['api_key'] = '';
-					}
-					if ( isset( $ext['activation_email'] ) ) {
-						$ext['activation_email'] = '';
-					}
-					if ( isset( $ext['activated_key'] ) ) {
-						$ext['activated_key'] = 'Deactivated';
-					}
+			if ( is_array( $extensions ) ) {
+				foreach ( $extensions as $ext ) {
+					if ( isset( $ext['api'] ) && isset( $ext['apiManager'] ) && ! empty( $ext['apiManager'] ) ) {
+						if ( isset( $ext['api_key'] ) ) {
+							$ext['api_key'] = '';
+						}
+						if ( isset( $ext['activation_email'] ) ) {
+							$ext['activation_email'] = '';
+						}
+						if ( isset( $ext['activated_key'] ) ) {
+							$ext['activated_key'] = 'Deactivated';
+						}
 
-					$act_info = MainWP_Api_Manager::instance()->get_activation_info( $ext['api'] );
-					if ( isset( $act_info['api_key'] ) ) {
-						$act_info['api_key'] = '';
+						$act_info = MainWP_Api_Manager::instance()->get_activation_info( $ext['api'] );
+						if ( isset( $act_info['api_key'] ) ) {
+							$act_info['api_key'] = '';
+						}
+						if ( isset( $act_info['activation_email'] ) ) {
+							$act_info['activation_email'] = '';
+						}
+						if ( isset( $act_info['activated_key'] ) ) {
+							$act_info['activated_key'] = 'Deactivated';
+						}
+						MainWP_Api_Manager::instance()->set_activation_info( $ext['api'], $act_info );
 					}
-					if ( isset( $act_info['activation_email'] ) ) {
-						$act_info['activation_email'] = '';
-					}
-					if ( isset( $act_info['activated_key'] ) ) {
-						$act_info['activated_key'] = 'Deactivated';
-					}
-					MainWP_Api_Manager::instance()->set_activation_info( $ext['api'], $act_info );
+					$new_extensions[] = $ext;
 				}
-				$new_extensions[] = $ext;
 			}
 
 			MainWP_Utility::update_option( 'mainwp_extensions', $new_extensions );
@@ -208,8 +210,6 @@ class MainWP_Settings {
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Settings' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
-
-		self::init_left_menu( self::$subPages );
 	}
 
 	/**
@@ -441,9 +441,15 @@ class MainWP_Settings {
 				if ( is_plugin_active( 'mainwp-comments-extension/mainwp-comments-extension.php' ) ) {
 					MainWP_Utility::update_option( 'mainwp_maximumComments', isset( $_POST['mainwp_maximumComments'] ) ? intval( $_POST['mainwp_maximumComments'] ) : 50 );
 				}
-				MainWP_Utility::update_option( 'mainwp_timeDailyUpdate', isset( $_POST['mainwp_timeDailyUpdate'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_timeDailyUpdate'] ) ) : '' );
 
-				$new_freq = ( isset( $_POST['mainwp_frequencyDailyUpdate'] ) ? intval( $_POST['mainwp_frequencyDailyUpdate'] ) : 1 );
+				$current_timeDailyUpdate = get_option( 'mainwp_timeDailyUpdate' );
+				$new_timeDailyUpdate     = isset( $_POST['mainwp_timeDailyUpdate'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_timeDailyUpdate'] ) ) : '';
+
+				if ( $current_timeDailyUpdate !== $new_timeDailyUpdate ) {
+					MainWP_Utility::update_option( 'mainwp_timeDailyUpdate', $new_timeDailyUpdate );
+				}
+
+				$new_freq = ( isset( $_POST['mainwp_frequencyDailyUpdate'] ) ? intval( $_POST['mainwp_frequencyDailyUpdate'] ) : 2 );
 				MainWP_Utility::update_option( 'mainwp_frequencyDailyUpdate', $new_freq );
 
 				$new_delay = ( isset( $_POST['mainwp_delay_autoupdate'] ) ? intval( $_POST['mainwp_delay_autoupdate'] ) : 1 );
@@ -507,7 +513,7 @@ class MainWP_Settings {
 				}
 				//phpcs:enable
 
-				MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
+				MainWP_Utility::update_option( 'mainwp_use_favicon', 1 );
 
 				/**
 				* Action: mainwp_after_save_general_settings
@@ -544,7 +550,7 @@ class MainWP_Settings {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-general-settings-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-general-settings-info-message"></i>
-					<?php printf( esc_html__( 'Manage MainWP general settings.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a>' ); ?>
+					<?php printf( esc_html__( 'Manage MainWP general settings.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 				</div>
 			<?php endif; ?>
 				<?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
@@ -567,14 +573,14 @@ class MainWP_Settings {
 						<h3 class="ui dividing header"><?php esc_html_e( 'General Settings', 'mainwp' ); ?></h3>
 						<?php
 						$timeDailyUpdate      = get_option( 'mainwp_timeDailyUpdate' );
-						$frequencyDailyUpdate = (int) get_option( 'mainwp_frequencyDailyUpdate' );
+						$frequencyDailyUpdate = (int) get_option( 'mainwp_frequencyDailyUpdate', 2 );
 						$run_timestamp        = MainWP_System_Cron_Jobs::get_timestamp_from_hh_mm( $timeDailyUpdate );
 						$delay_autoupdate     = (int) get_option( 'mainwp_delay_autoupdate', 1 );
 
 						?>
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Automatic daily sync time', 'mainwp' ); ?></label>
-							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set specific time for the automatic daily sync process.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Daily sync & update time', 'mainwp' ); ?></label>
+							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Choose a specific time to initiate the first daily synchronization and update process.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<div class="time-selector">
 									<div class="ui input left icon">
 										<i class="clock icon"></i>
@@ -585,15 +591,19 @@ class MainWP_Settings {
 								jQuery( document ).ready( function() {
 									jQuery( '.time-selector' ).calendar( {
 										type: 'time',
-										ampm: false
+										ampm: false,
+										formatter: {
+											time: 'H:mm',
+											cellTime: 'H:mm'
+										}
 									} );
 								} );
 								</script>
 							</div>
 						</div>
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Daily update frequency', 'mainwp' ); ?></label>
-							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set how often you want your MainWP Dashboard to run the auto update process.', 'mainwp' ); ?>" data-inverted="" data-position="top left" >
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Frequency of auto sync & updates', 'mainwp' ); ?></label>
+							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set the frequency for automatic synchronization and updates throughout the day.', 'mainwp' ); ?>" data-inverted="" data-position="top left" >
 								<select name="mainwp_frequencyDailyUpdate" id="mainwp_frequencyDailyUpdate" class="ui dropdown">
 									<option value="1" <?php echo ( 1 === $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Once per day', 'mainwp' ); ?></option>
 									<option value="2" <?php echo ( 2 === $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Twice per day', 'mainwp' ); ?></option>
@@ -631,12 +641,7 @@ class MainWP_Settings {
 							</div>
 						</div>
 						<?php MainWP_UI::render_screen_options(); ?>
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Show favicons', 'mainwp' ); ?></label>
-							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will download and show child sites favicons.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-								<input type="checkbox" name="mainwp_use_favicon" id="mainwp_use_favicon" <?php echo ( ( 1 === (int) get_option( 'mainwp_use_favicon', 1 ) ) ? 'checked="true"' : '' ); ?> />
-							</div>
-						</div>
+						
 						<h3 class="ui dividing header"><?php esc_html_e( 'Updates Settings', 'mainwp' ); ?></h3>
 						<?php
 						$snAutomaticDailyUpdate            = (int) get_option( 'mainwp_automaticDailyUpdate', 0 );
@@ -685,9 +690,6 @@ class MainWP_Settings {
 									<option value="1" <?php echo ( 1 === $snAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
 									<option value="0" <?php echo ( 0 === $snAutomaticDailyUpdate || 2 === (int) $snAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
 								</select>
-								<div class="ui hidden divider"></div>
-								<div class="ui label"><?php esc_html_e( 'Last run: ', 'mainwp' ); ?><?php echo esc_html( $lastAutomaticUpdate ); ?></div>
-								<div class="ui label"><?php esc_html_e( 'Next run: ', 'mainwp' ); ?><?php echo esc_html( $nextAutomaticUpdate ); ?></div>
 							</div>
 						</div>
 						<div class="ui grid field">
@@ -871,8 +873,8 @@ class MainWP_Settings {
 	public static function render_datetime_settings() {
 		?>
 		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Date Format', 'mainwp' ); ?></label>
-			<div class="ten wide column fieldset-wrapper" data-tooltip="<?php esc_attr_e( 'Date Format.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+			<label class="six wide column middle aligned"><?php esc_html_e( 'Date format', 'mainwp' ); ?></label>
+			<div class="ten wide column fieldset-wrapper" data-tooltip="<?php esc_attr_e( 'Choose the display format for date.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 			<?php
 				/**
 				 * Filters the default date formats.
@@ -909,7 +911,7 @@ class MainWP_Settings {
 
 	<div class="ui grid field">
 		<label class="six wide column middle aligned"><?php esc_html_e( 'Time format', 'mainwp' ); ?></label>
-		<div class="ten wide column fieldset-wrapper" data-tooltip="<?php esc_attr_e( 'Select preferred time format.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+		<div class="ten wide column fieldset-wrapper" data-tooltip="<?php esc_attr_e( 'Choose the display format for time.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 		<?php
 				/**
 				 * Filters the default time formats.
@@ -1136,7 +1138,7 @@ class MainWP_Settings {
 									<label class="six wide column middle aligned"><?php esc_html_e( 'OpenSSL.cnf location', 'mainwp' ); ?></label>
 									<div class="ten wide column ui field">
 										<input type="text" name="mainwp_openssl_lib_location" value="<?php echo esc_html( $openssl_loc ); ?>">
-										<em><?php esc_html_e( 'If your openssl.cnf file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?> <?php printf( esc_html__( 'If you are not sure how to find the openssl.cnf location, please %1$scheck this help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a>' ); ?></em>
+										<em><?php esc_html_e( 'If your openssl.cnf file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?> <?php printf( esc_html__( 'If you are not sure how to find the openssl.cnf location, please %1$scheck this help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></em>
 										<em><?php esc_html_e( 'If you have confirmed the placement of your openssl.cnf and are still receiving an error banner, click the "Error Fixed" button to dismiss it.', 'mainwp' ); ?></em>
 									</div>
 								</div>
@@ -1192,9 +1194,9 @@ class MainWP_Settings {
 
 						<h3 class="ui dividing header"><?php esc_html_e( 'Miscellaneous Settings', 'mainwp' ); ?></h3>
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Optimize for shared hosting or big networks', 'mainwp' ); ?></label>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Optimize data loading', 'mainwp' ); ?></label>
 							<div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will cache updates for faster loading.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-								<input type="checkbox" name="mainwp_optimize" id="mainwp_optimize" <?php echo ( ( 1 === (int) get_option( 'mainwp_optimize', 0 ) ) ? 'checked="true"' : '' ); ?> /><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
+								<input type="checkbox" name="mainwp_optimize" id="mainwp_optimize" <?php echo ( ( 1 === (int) get_option( 'mainwp_optimize', 1 ) ) ? 'checked="true"' : '' ); ?> /><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
 							</div>
 						</div>
 						<div class="ui grid field">
@@ -1293,7 +1295,7 @@ class MainWP_Settings {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-tools-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-tools-info-message"></i>
-					<?php printf( esc_html__( 'Use MainWP tools to adjust your MainWP Dashboard to your needs and perform specific actions when needed.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a>' ); ?>
+					<?php printf( esc_html__( 'Use MainWP tools to adjust your MainWP Dashboard to your needs and perform specific actions when needed.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-tools-info-custom-theme' ) ) : ?>
@@ -1649,7 +1651,7 @@ class MainWP_Settings {
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Dashboard settings, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">MainWP Dashboard Settings</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">MainWP Dashboard Settings</a> <i class="external alternate icon"></i></div>
 			</div>
 			<?php
 		}

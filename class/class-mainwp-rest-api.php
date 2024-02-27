@@ -507,14 +507,23 @@ class Rest_Api {
 		} else {
 			$headers = apache_request_headers();
 
+			$header_keys = '';
+
 			if ( isset( $headers['x-api-key'] ) ) {
 				$header_keys = $headers['x-api-key'];
-				$api_keys    = json_decode( $header_keys, true );
-				if ( is_array( $api_keys ) && isset( $api_keys['consumer_key'] ) ) {
-					// users entered consumer key and secret.
-					$consumer_key    = $api_keys['consumer_key'];
-					$consumer_secret = $api_keys['consumer_secret'];
-				}
+			} elseif ( isset( $headers['X-Api-Key'] ) ) {
+				$header_keys = $headers['X-Api-Key'];
+			}
+
+			$api_keys = array();
+			if ( is_string( $header_keys ) && ! empty( $header_keys ) ) {
+				$api_keys = json_decode( $header_keys, true );
+			}
+
+			if ( is_array( $api_keys ) && isset( $api_keys['consumer_key'] ) ) {
+				// users entered consumer key and secret.
+				$consumer_key    = $api_keys['consumer_key'];
+				$consumer_secret = $api_keys['consumer_secret'];
 			}
 		}
 
@@ -527,23 +536,37 @@ class Rest_Api {
 		if ( isset( $all_keys[ $consumer_key ] ) ) {
 			$existed_key = $all_keys[ $consumer_key ];
 			if ( is_array( $existed_key ) && isset( $existed_key['cs'] ) ) {
-				$consumer_secret_key = $existed_key['cs'];
-				$enabled             = isset( $existed_key['enabled'] ) && ! empty( $existed_key['enabled'] ) ? true : false;
-				if ( $enabled && wp_check_password( $consumer_secret, $consumer_secret_key ) ) {
-					try {
-						if ( $this->mainwp_permission_check_request( $request, $existed_key ) ) {
-							if ( ! defined( 'MAINWP_REST_API' ) ) {
-								define( 'MAINWP_REST_API', true );
-							}
-							return true;
+				$cs_hashed = $existed_key['cs'];
+				$enabled   = isset( $existed_key['enabled'] ) && ! empty( $existed_key['enabled'] ) ? true : false;
+				if ( $enabled && wp_check_password( $consumer_secret, $cs_hashed ) ) {
+
+					$valid_auth = true;
+
+					if ( isset( $existed_key['ck_hashed'] ) ) {
+						if ( ! wp_check_password( $consumer_key, $existed_key['ck_hashed'] ) ) {
+							$valid_auth = false;
 						}
-					} catch ( \Exception $ex ) {
-						$err = $ex->getMessage();
-						return new \WP_Error(
-							'rest_method_not_allowed',
-							is_string( $err ) ? $err : esc_html__( 'Sorry, you are not allowed to do the method.', 'mainwp' ),
-							array( 'status' => 401 )
-						);
+					}
+
+					if ( $valid_auth ) {
+						try {
+							if ( $this->mainwp_permission_check_request( $request, $existed_key ) ) {
+								if ( ! defined( 'MAINWP_REST_API' ) ) { // compatible.
+									define( 'MAINWP_REST_API', true );
+								}
+								if ( ! defined( 'MAINWP_REST_API_DOING' ) ) {
+									define( 'MAINWP_REST_API_DOING', true );
+								}
+								return true;
+							}
+						} catch ( \Exception $ex ) {
+							$err = $ex->getMessage();
+							return new \WP_Error(
+								'rest_method_not_allowed',
+								is_string( $err ) ? $err : esc_html__( 'Sorry, you are not allowed to do the method.', 'mainwp' ),
+								array( 'status' => 401 )
+							);
+						}
 					}
 				}
 			}
@@ -1316,7 +1339,9 @@ class Rest_Api {
 			$format           = isset( $request['format'] ) ? $request['format'] : 'array';
 			$params['format'] = $format;
 
-			if ( isset( $request['client'] ) && ! empty( $request['client'] ) ) {
+			if ( isset( $request['client_id'] ) && ! empty( $request['client_id'] ) ) {
+				$params['client'] = $request['client_id'];
+			} elseif ( isset( $request['client'] ) && ! empty( $request['client'] ) ) {
 				$params['client'] = rawurldecode( $request['client'] );
 			}
 

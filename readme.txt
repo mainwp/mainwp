@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 6.4.2
+Tested up to: 6.4.3
 Requires PHP: 7.4
-Stable tag: 4.6.0.1
+Stable tag: 5.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -17,11 +17,9 @@ Perform WordPress maintenance tasks like Updates, Backups, Uptime Monitoring, Se
 
 The [MainWP WordPress Manager](https://mainwp.com) Dashboard plugin allows you to control multiple WordPress websites **(even those on different hosting)** from your own WordPress website.
 
-🎉 Over 600k WordPress sites are being managed by 20k active dashboards.
+🎉 Over 700K WordPress sites are being managed by 20k active dashboards.
 
 And, MainWP is the only WordPress sites management plugin with **over 2000** ⭐⭐⭐⭐⭐ reviews on wp.org. Additionally, [here's](https://mainwp.com/love/) what our users have to say about MainWP.
-
-[Try the Live Demo](https://mainwp.com/live-demo/)
 
 == How is MainWP different from ManageWP and other SaaS WordPress Management plugins? ==
 
@@ -301,6 +299,73 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 10. Manage Clients Screen
 
 == Changelog ==
+
+= 5.0 - 2-27-2024 =
+* Added: Support for cPanel (WP Toolkit) API Backups to enable easier backup management for users utilizing cPanel, enhancing data protection.
+* Added: Support for Plesk (WP Toolkit) API Backups to facilitate backup management for users on Plesk, improving data security.
+* Added: Dashboard insights module to provide users with a comprehensive overview of their dashboard's activity.
+* Added: Cost Tracker module to efficiently manage and monitor costs with a comprehensive dashboard
+* Added: Shadow effect to widgets, tables, and buttons UI elements to improve the visual hierarchy and make the interface more user-friendly.
+* Added: Button to hide and show sites filter form element to offer users more control over their UI experience, allowing them to customize the visibility of filter forms.
+* Added: Info messages for the Basic Uptime Monitoring and Site Health Monitoring options in the Quick setup wizard to improve user understanding.
+* Added: Info messages about Clients on the Client creation step in the Quick setup wizard for enhanced clarity.
+* Added: Icons to indicate external links for better user experience.
+* Added: The Remove site icon next to the site name in the page header for easier site management.
+* Added: A custom illustration as a placeholder for empty widgets to enhance the visual appeal.
+* Added: A blur effect for the Modal background overlay to improve focus on the modal content.
+* Added: Created the Site actions dropdown menu on the page title (site name) in site mode for streamlined site management.
+* Added: Extensions links to the main navigation for easier access to extensions.
+* Added: Extensions categories menu links to improve navigation and user experience.
+* Added: Non-MainWP Changes page to the Sites submenu for enhanced site management capabilities.
+* Added: Indicator for the active tab item in the Install Extensions modal to improve usability.
+* Fixed: Text alignment in mini button and mini label UI elements to correct UI inconsistencies and enhance readability.
+* Fixed: Default widgets layout on the Overview page and Client view page to improve the initial user experience by optimizing the placement of widgets for better information access.
+* Fixed: Padding of the toggle buttons for the Basic Uptime Monitoring and Site Health Monitoring options in the Quick setup wizard for better alignment.
+* Fixed: Overlay issue in the Plugin card element to improve visual clarity and user interaction.
+* Fixed: The padding issues for the Walkthrough button in the Quick setup wizard for improved UI consistency.
+* Updated: Content for various tooltip elements to provide clearer explanations and guidance, enhancing user understanding.
+* Updated: Content for various form option label elements to improve clarity and help users make more informed decisions.
+* Updated: Order of loading widgets sequence so new widgets get to the bottom to streamline the addition of new widgets, ensuring a cleaner and more organized presentation.
+* Updated: Changed the default accent color to refresh the UI with a more modern and appealing look.
+* Updated: Changed link color to improve readability and contrast.
+* Updated: Merged the Get Support, Managed Community, My MainWP Account, WP Admin, and Log Out buttons into a single dropdown menu to simplify the interface, making it cleaner and reducing clutter.
+* Updated: Renamed the Sync Dashboard with Sites button to Sync Sites to clarify the button's function, making it more intuitive for users.
+* Updated: Redesigned the page navigation element for a more intuitive and user-friendly navigation experience.
+* Updated: Redesigned the Show/Hide second-level navigation button to make the UI more intuitive and the navigation experience smoother.
+* Updated: Reduced the maximal width for the site URL and name columns in the Manage Sites table to optimize space and improve readability.
+* Updated: Increased the site favicon size to 28px and extracted it to a separate column to enhance visual recognition and organization of sites.
+* Updated: Reduced the content width on the Privacy Policy page to improve readability by optimizing text line lengths.
+* Updated: Renamed the Action Logs page to Custom Event Monitor to better reflect the page's purpose and content.
+* Updated: Renamed mainwp_cronstats_action to mainwp_cronreconnect_action tor clarity and to better describe its functionality.
+* Updated: Redesigned the Page title on the Individual site and Client page to improve clarity and visual appeal.
+* Updated: Reduced the resize increments for flexible widgets to offer more precise control over widget sizing, enhancing customization.
+* Updated: Changed default font to Inter font family to modernize the interface with a more readable and aesthetically pleasing font.
+* Updated: Moved the sites filter form element under the actions bar to optimize the UI layout for better usability.
+* Updated: The Demo mode info content to be hidden if the number of connected sites is higher than zero to avoid clutter.
+* Updated: The font size for the Update Everything button for better visibility.
+* Updated: The style of the widgets placeholder for the drag and drop functionality to improve user interaction.
+* Updated: Font color for widget titles for better readability.
+* Updated: Modal header, footer background color, border radius, and close icon location for a consistent design language.
+* Updated: Modal background overlay color for better visual integration.
+* Updated: The option label for the Automatic daily sync time and Automatic update frequency options in the Settings for clearer communication.
+* Updated: The order of Extensions and the REST API menu items for more intuitive navigation.
+* Updated: The Sync Sites button to an icon button for a cleaner interface.
+* Updated: The Add New items button group to a single dropdown menu button for a simplified UI.
+* Updated: Increased list items padding for enhanced readability and interaction.
+* Updated: The Settings menu item from the Main navigation to the header menu element to streamline the navigation structure.
+* Updated: The Info menu item from the Main navigation to the header menu element for a more organized layout.
+* Updated: The Security Scan feature to "Site Hardening" to better reflect the feature's purpose.
+* Updated: The sun icon in the Change theme icon button to a color palette for a more intuitive representation of the theme change functionality.
+* Updated: Automatic daily sync default frequency to 12 times per day to enhance synchronization efficiency.
+* Updated: Renamed the "Optimize for shared hosting and big networks" option label to "Optimize data loading" for clearer understanding.
+* Updated: Limit the number of Non-MainWP changes to 50 by default to maintain dashboard performance.
+* Updated: "Optimize data loading" to enabled by default, facilitating improved performance out of the box for all users.
+* Updated: The page navigation from a horizontal to a vertical layout to better utilize space and improve navigation.
+* Updated: Moved the Monitoring menu item under the Monitoring category for a more organized menu structure.
+* Updated: Updated the phpSecLib library to enhance security and performance.
+* Updated: Widget titles in the Page Settings modal on the Insights page for clearer identification.
+* Updated: Loader element for the process of validating the MainWP API key, improving feedback and usability during the validation process.
+* Removed: The Jump to Site dropdown menu from the individual Overview page header to streamline the interface and reduce redundancy, focusing on a cleaner navigation experience.
 
 = 4.6.0.1 - 1-9-2024 =
 * Fixed: Issues with broken cron jobs, ensuring that scheduled tasks are executed reliably and efficiently.

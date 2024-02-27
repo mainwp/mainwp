@@ -213,8 +213,10 @@ class MainWP_Server_Information_Handler {
 		if ( ! empty( $conf_loc ) ) {
 			$conf['config'] = $conf_loc;
 		}
-		$errors             = array();
+		$errors = array();
+
 		$general_verify_con = (int) get_option( 'mainwp_verify_connection_method', 0 );
+
 		if ( 2 !== $general_verify_con ) {
 			if ( function_exists( 'openssl_pkey_new' ) ) {
 				$res = openssl_pkey_new( $conf );
@@ -240,8 +242,7 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function get_openssl_working_status() {
 
-		$ok = false;
-
+		$ok                 = false;
 		$general_verify_con = (int) get_option( 'mainwp_verify_connection_method', 0 );
 		if ( 2 === $general_verify_con ) {
 			$ok = 1;
@@ -852,7 +853,7 @@ class MainWP_Server_Information_Handler {
 		$mainwp_options = array(
 			'mainwp_number_of_child_sites'           => esc_html__( 'Number of connected sites', 'mainwp' ),
 			'mainwp_wp_cron'                         => esc_html__( 'Use WP Cron', 'mainwp' ),
-			'mainwp_optimize'                        => esc_html__( 'Optimize for shared hosting or big networks', 'mainwp' ),
+			'mainwp_optimize'                        => esc_html__( 'Optimize data loading', 'mainwp' ),
 			'mainwp_automaticDailyUpdate'            => esc_html__( 'WP Core advanced automatic updates enabled', 'mainwp' ),
 			'mainwp_pluginAutomaticDailyUpdate'      => esc_html__( 'Plugin advanced automatic updates enabled', 'mainwp' ),
 			'mainwp_themeAutomaticDailyUpdate'       => esc_html__( 'Theme advanced automatic updates enabled', 'mainwp' ),

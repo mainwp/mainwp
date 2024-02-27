@@ -51,7 +51,7 @@ class MainWP_Site_Actions {
 			}
 
 			if ( ! empty( $site_ids ) ) {
-				$limit        = apply_filters( 'mainwp_widget_site_actions_limit_number', 10000 );
+				$limit        = apply_filters( 'mainwp_widget_site_actions_limit_number', 50 );
 				$params       = array(
 					'limit'       => $limit,
 					'where_extra' => ' AND dismiss = 0 ',
@@ -60,7 +60,7 @@ class MainWP_Site_Actions {
 				$actions_info = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
 			}
 		} else {
-			$limit        = apply_filters( 'mainwp_widget_site_actions_limit_number', 10000 );
+			$limit        = apply_filters( 'mainwp_widget_site_actions_limit_number', 50 );
 			$params       = array(
 				'limit'       => $limit,
 				'where_extra' => ' AND dismiss = 0 ',
@@ -97,7 +97,7 @@ class MainWP_Site_Actions {
 			 */
 			echo esc_html( apply_filters( 'mainwp_non_mainwp_changes_widget_title', esc_html__( 'Non-MainWP Changes', 'mainwp' ), $website ) );
 			?>
-				<div class="sub header"><?php esc_html_e( 'The most recent Non-MainWP plugin and theme changes. Sync to get latest info.', 'mainwp' ); ?></div>
+				<div class="sub header"><?php esc_html_e( 'The most recent changes made to your Child Sites that were not done through your MainWP Dashboard.', 'mainwp' ); ?></div>
 			</h3>
 		</div>
 
@@ -202,28 +202,22 @@ class MainWP_Site_Actions {
 				} );
 				</script>
 			<?php else : ?>
-				<h2 class="ui icon header">
-					<i class="info circle icon"></i>
-					<div class="content">
-						<?php esc_html_e( 'No changes detected!', 'mainwp' ); ?>
-						<div class="sub header"><?php esc_html_e( 'Sync to get the latest information about plugin and theme changes made directly on the child site.', 'mainwp' ); ?></div>
-					</div>
-				</h2>
+				<?php MainWP_UI::render_empty_element_placeholder(); ?>
 			<?php endif; ?>
 		</div>
 		<?php
-		$is_demo = MainWP_Demo_Handle::is_demo_mode();
+		$params       = array(
+			'total_count' => true,
+			'dismiss'     => 0,
+		);
+		$totalRecords = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
 		?>
 		<div class="mainwp-widget-footer">
 			<div class="ui two columns stackable grid">
 				<div class="middle aligned column">
-					<?php
-					if ( $is_demo ) {
-						MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui button mini fluid green disabled" disabled="disabled">' . esc_html__( 'Clear All Non-MainWP Changes', 'mainwp' ) . '</a>' );
-					} else {
-						?>
-						<a href="javascript:void(0)" id="mainwp-delete-all-nonmainwp-actions-button" class="ui button mini fluid green"><?php esc_html_e( 'Clear All Non-MainWP Changes', 'mainwp' ); ?></a>
-					<?php } ?>
+					<?php if ( $totalRecords ) : ?>
+					<a href="admin.php?page=NonMainWPChanges" class="ui button mini fluid green"><?php printf( esc_html__( 'See all %d Non-MainWP Changes', 'mainwp' ), intval( $totalRecords ) ); ?></a>
+					<?php endif; ?>
 				</div>
 				<div class="middle aligned column"></div>
 			</div>

@@ -203,6 +203,8 @@ class MainWP_Extensions {
 				$extension['product_id']          = isset( $options['product_id'] ) ? $options['product_id'] : '';
 				$extension['instance_id']         = isset( $options['instance_id'] ) ? $options['instance_id'] : '';
 				$extension['software_version']    = isset( $options['software_version'] ) ? $options['software_version'] : '';
+				$extension['mainwp_version']      = isset( $options['mainwp_version'] ) ? $options['mainwp_version'] : '';
+
 				if ( isset( $options['product_item_id'] ) ) {
 					$extension['product_item_id'] = $options['product_item_id'];
 				}
@@ -616,13 +618,13 @@ class MainWP_Extensions {
 				$html .= '<br /><br />';
 				$html .= esc_html__( 'To avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Skip any Extension you do not want to install at this time.', 'mainwp' );
 				$html .= '<br /><br />';
-				$html .= sprintf( esc_html__( 'After installing all your selected Extensions, close the modal by clicking the Close button and %1$sactivate Extensions API license%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank">', '</a>' ) . '</div>';
+				$html .= sprintf( esc_html__( 'After installing all your selected Extensions, close the modal by clicking the Close button and %1$sactivate Extensions API license%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank">', '</a> <i class="external alternate icon"></i>' ) . '</div>';
 			} else {
 				$html .= '<div class="ui message info">' . esc_html__( 'You have access to the MainWP Pro plan, which gives you access to all MainWP-created Extensions, but you DO NOT need to install all of them.', 'mainwp' );
 				$html .= '<br /><br />';
 				$html .= esc_html__( 'To avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Skip any Extension you do not want to install at this time.', 'mainwp' );
 				$html .= '<br /><br />';
-				$html .= sprintf( esc_html__( 'After installing all your selected Extensions, close the modal by clicking the Close button and %1$sactivate Extensions API license%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank">', '</a>' ) . '</div>';
+				$html .= sprintf( esc_html__( 'After installing all your selected Extensions, close the modal by clicking the Close button and %1$sactivate Extensions API license%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank">', '</a> <i class="external alternate icon"></i>' ) . '</div>';
 			}
 
 			$html .= '<div id="mainwp-bulk-activating-extensions-status" class="ui message" style="display:none;"></div>';
@@ -798,13 +800,13 @@ class MainWP_Extensions {
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Extensions, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/" target="_blank"><i class="fa fa-book"></i> What are the MainWP Extensions</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/order-extensions/" target="_blank"><i class="fa fa-book"></i> Order Extension(s)</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/my-downloads-and-api-keys/" target="_blank"><i class="fa fa-book"></i> My Downloads and API Keys</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/install-extensions/" target="_blank"><i class="fa fa-book"></i> Install Extension(s)</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank"><i class="fa fa-book"></i> Activate Extension(s) API</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/updating-extensions/" target="_blank"><i class="fa fa-book"></i> Updating Extension(s)</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/remove-extensions/" target="_blank"><i class="fa fa-book"></i> Remove Extension(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/" target="_blank"><i class="fa fa-book"></i> What are the MainWP Extensions</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/order-extensions/" target="_blank"><i class="fa fa-book"></i> Order Extension(s)</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/my-downloads-and-api-keys/" target="_blank"><i class="fa fa-book"></i> My Downloads and API Keys</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/install-extensions/" target="_blank"><i class="fa fa-book"></i> Install Extension(s)</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank"><i class="fa fa-book"></i> Activate Extension(s) API</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/updating-extensions/" target="_blank"><i class="fa fa-book"></i> Updating Extension(s)</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/remove-extensions/" target="_blank"><i class="fa fa-book"></i> Remove Extension(s)</a> <i class="external alternate icon"></i></div>
 			</div>
 			<?php
 		}

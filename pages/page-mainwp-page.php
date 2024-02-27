@@ -216,28 +216,31 @@ class MainWP_Page {
 
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => esc_html__( 'Pages', 'mainwp' ),
-				'parent_key' => 'managesites',
-				'slug'       => 'PageBulkManage',
-				'href'       => 'admin.php?page=PageBulkManage',
-				'icon'       => '<i class="file icon"></i>',
+				'title'         => esc_html__( 'Pages', 'mainwp' ),
+				'parent_key'    => 'managesites',
+				'slug'          => 'PageBulkManage',
+				'href'          => 'admin.php?page=PageBulkManage',
+				'icon'          => '<i class="file icon"></i>',
+				'leftsub_order' => 8,
 			),
 			1
 		);
 		$init_sub_subleftmenu = array(
 			array(
-				'title'      => esc_html__( 'Manage Pages', 'mainwp' ),
-				'parent_key' => 'PageBulkManage',
-				'href'       => 'admin.php?page=PageBulkManage',
-				'slug'       => 'PageBulkManage',
-				'right'      => 'manage_pages',
+				'title'                => esc_html__( 'Manage Pages', 'mainwp' ),
+				'parent_key'           => 'PageBulkManage',
+				'href'                 => 'admin.php?page=PageBulkManage',
+				'slug'                 => 'PageBulkManage',
+				'right'                => 'manage_pages',
+				'leftsub_order_level2' => 1,
 			),
 			array(
-				'title'      => esc_html__( 'Add New', 'mainwp' ),
-				'parent_key' => 'PageBulkManage',
-				'href'       => 'admin.php?page=PageBulkAdd',
-				'slug'       => 'PageBulkAdd',
-				'right'      => 'manage_pages',
+				'title'                => esc_html__( 'Add New', 'mainwp' ),
+				'parent_key'           => 'PageBulkManage',
+				'href'                 => 'admin.php?page=PageBulkAdd',
+				'slug'                 => 'PageBulkAdd',
+				'right'                => 'manage_pages',
+				'leftsub_order_level2' => 2,
 			),
 		);
 		MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'PageBulkManage', 'Page' );
@@ -517,7 +520,7 @@ class MainWP_Page {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-pages-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-pages-info-message"></i>
-							<?php printf( esc_html__( 'Manage existing pages on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">', '</a>' ); ?>
+							<?php printf( esc_html__( 'Manage existing pages on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 						</div>
 					<?php endif; ?>
 					<?php self::render_table( true ); ?>
@@ -1366,7 +1369,12 @@ class MainWP_Page {
 	public static function posting() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		$succes_message = '';
 		$post_id        = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$edit_id        = 0;
+
+		if ( ! isset( $_GET['posting_nonce'] ) || ( isset( $_GET['posting_nonce'] ) && ! wp_verify_nonce( sanitize_key( $_POST['posting_nonce'] ), 'posting_nonce_' . $post_id ) ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+			wp_die( 'Invalid request!' );
+		}
+
+		$edit_id = 0;
 		if ( $post_id ) {
 			$edit_id = get_post_meta( $post_id, '_mainwp_edit_post_id', true );
 			$edit_id = intval( $edit_id );
@@ -1379,6 +1387,7 @@ class MainWP_Page {
 		$data_fields = MainWP_System_Utility::get_default_map_site_fields();
 		?>
 		<div class="ui modal" id="mainwp-posting-page-modal">
+			<i class="close icon"></i>
 			<div class="header"><?php $edit_id ? esc_html_e( 'Edit Page', 'mainwp' ) : esc_html_e( 'New Page', 'mainwp' ); ?></div>
 			<div class="scrolling content">
 			<?php
@@ -1657,7 +1666,6 @@ class MainWP_Page {
 			</div>
 			<div class="actions">
 				<a href="admin.php?page=PageBulkAdd" class="ui green button"><?php esc_html_e( 'New Page', 'mainwp' ); ?></a>
-				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 			</div>
 		</div>
 		<div class="ui active inverted dimmer" id="mainwp-posting-running">
@@ -1689,12 +1697,12 @@ class MainWP_Page {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing pages, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">Manage Pages</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/create-a-new-page/" target="_blank">Create a New Page</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/edit-an-existing-page/" target="_blank">Edit an Existing Page</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/change-status-of-an-existing-page/" target="_blank">Change Status of an Existing Page</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/view-an-existing-page/" target="_blank">View an Existing Page</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/delete-pages/" target="_blank">Delete Page(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">Manage Pages</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/create-a-new-page/" target="_blank">Create a New Page</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/edit-an-existing-page/" target="_blank">Edit an Existing Page</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/change-status-of-an-existing-page/" target="_blank">Change Status of an Existing Page</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/view-an-existing-page/" target="_blank">View an Existing Page</a> <i class="external alternate icon"></i></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/delete-pages/" target="_blank">Delete Page(s)</a> <i class="external alternate icon"></i></div>
 				<?php
 				/**
 				 * Action: mainwp_pages_help_item

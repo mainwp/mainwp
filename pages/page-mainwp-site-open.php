@@ -63,7 +63,21 @@ class MainWP_Site_Open {
 		if ( isset( $_GET['openUrl'] ) && 'yes' === $_GET['openUrl'] ) {
 			self::open_site_location( $website, $location );
 		} else {
-			self::open_site( $website, $location, ( isset( $_GET['newWindow'] ) ? sanitize_text_field( wp_unslash( $_GET['newWindow'] ) ) : null ) );
+			$allow_params = array();
+
+			$allow_vars = array(
+				'filedl',
+				'dirdl',
+			);
+			$allow_vars = apply_filters( 'mainwp_open_site_allow_vars', $allow_vars );
+			if ( is_array( $allow_vars ) ) {
+				foreach ( $allow_vars as $var ) {
+					if ( is_string( $var ) && isset( $_GET[ $var ] ) ) {
+						$allow_params[ $var ] = $_GET[ $var ]; // phpcs:ignore -- ok.
+					}
+				}
+			}
+			self::open_site( $website, $location, $allow_params );
 		}
 		// phpcs:enable
 	}
@@ -73,19 +87,32 @@ class MainWP_Site_Open {
 	 *
 	 * @param mixed $website Website ID.
 	 * @param mixed $location Website Location.
+	 * @param array $params others params.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
 	 */
-	public static function open_site( $website, $location ) {
+	private static function open_site( $website, $location, $params = array() ) {
 		if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
 			$action = $website->url . 'wp-admin.html';
 		} else {
-			$action = MainWP_Connect::get_get_data_authed( $website, ( null === $location || '' === $location ) ? 'index.php' : $location );
+			$action = MainWP_Connect::get_get_data_authed( $website, ( null === $location || '' === $location ) ? 'index.php' : $location, 'where', false, $params );
 		}
+		$open_download = ! empty( $params['filedl'] ) ? true : false;
+		$close_window  = ! empty( $_GET['closeWindow'] ) ? true : false; //phpcs:ignore -- ok.
 		?>
 		<div class="ui segment" style="padding: 25rem">
-			<div class="ui active inverted dimmer">
-				<div class="ui massive text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
+			<div class="ui active inverted dimmer <?php echo $open_download || $close_window ? 'open-site-close-window' : ''; ?>">
+				<?php
+				if ( $open_download ) {
+					?>
+					<div class="ui massive text loader"><?php esc_html_e( 'Downloading...', 'mainwp' ); ?></div>
+					<?php
+				} else {
+					?>
+					<div class="ui massive text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
+					<?php
+				}
+				?>
 			</div>
 			<form method="POST" action="<?php echo $action; // phpcs:ignore WordPress.Security.EscapeOutput ?>" id="redirectForm">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>

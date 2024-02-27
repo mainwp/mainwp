@@ -8,7 +8,7 @@
  * Author URI: https://mainwp.com
  * Plugin URI: https://mainwp.com/
  * Text Domain: mainwp
- * Version:  4.6.0.1
+ * Version:  5.0
  *
  * @package MainWP/Dashboard
  *
@@ -46,12 +46,31 @@ if ( ! defined( 'MAINWP_PLUGIN_URL' ) ) {
 	define( 'MAINWP_PLUGIN_URL', plugin_dir_url( MAINWP_PLUGIN_FILE ) );
 }
 
+
+if ( ! defined( 'MAINWP_MODULES_DIR' ) ) {
+	define( 'MAINWP_MODULES_DIR', MAINWP_PLUGIN_DIR . 'modules' . DIRECTORY_SEPARATOR );
+}
+
+if ( ! defined( 'MAINWP_MODULES_URL' ) ) {
+	define( 'MAINWP_MODULES_URL', MAINWP_PLUGIN_URL . 'modules/' );
+}
+
+
 /**
  * Define enable Log Module.
  */
 if ( ! defined( 'MAINWP_MODULE_LOG_ENABLED' ) ) {
 	define( 'MAINWP_MODULE_LOG_ENABLED', true );
 }
+
+if ( ! defined( 'MAINWP_MODULE_COST_TRACKER_ENABLED' ) ) {
+	define( 'MAINWP_MODULE_COST_TRACKER_ENABLED', true );
+}
+
+if ( ! defined( 'MAINWP_MODULE_API_BACKUPS_ENABLED' ) ) {
+	define( 'MAINWP_MODULE_API_BACKUPS_ENABLED', true );
+}
+
 
 // Version information from WordPress.
 require_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'version.php';

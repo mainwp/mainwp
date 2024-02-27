@@ -61,8 +61,19 @@ class MainWP_Manage_Screenshots {
 		// phpcs:enable
 
 		?>
-		<div class="ui stackable grid">
-			<div class="row ui mini form" id="mainwp-sites-filters-row">
+		<div class="ui stackable three column grid">
+
+			<div class="row ui mini form">
+				<div class="middle aligned column">
+					<input type="text" id="mainwp-screenshots-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>">
+				</div>
+				<div class="middle aligned column"></div>
+				<div class="right aligned middle aligned column">
+					<?php MainWP_Manage_Sites_List_Table::render_page_navigation_left_items(); ?>
+				</div>
+			</div>
+
+			<div class="row ui mini form" id="mainwp-sites-filters-row" style="display:none">
 				<div class="sixteen wide left aligned middle aligned column">
 				<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
 					<div class="ui selection dropdown" id="mainwp_is_not_site">
@@ -123,15 +134,7 @@ class MainWP_Manage_Screenshots {
 						<button onclick="mainwp_screenshots_sites_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
 				</div>
 				</div>
-			<div class="row ui mini form">
-				<div class="eight wide middle aligned column">
-					<input type="text" id="mainwp-screenshots-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>">
-				</div>
-
-				<div class="eight wide right aligned middle aligned column">
-					<?php MainWP_Manage_Sites_List_Table::render_page_navigation_left_items(); ?>
-				</div>
-			</div>
+			
 		</div>
 		<script type="text/javascript">
 				mainwp_screenshots_sites_filter = function() {
@@ -454,6 +457,7 @@ class MainWP_Manage_Screenshots {
 		$is_demo      = MainWP_Demo_Handle::is_demo_mode();
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
+			<i class="close icon"></i>
 			<div class="header"><?php esc_html_e( 'Page Settings', 'mainwp' ); ?></div>
 			<div class="scrolling content ui form">
 				<form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
@@ -495,11 +499,10 @@ class MainWP_Manage_Screenshots {
 				<div class="actions">
 					<div class="ui two columns grid">
 						<div class="left aligned column">
-							<span data-tooltip="<?php esc_attr_e( 'Returns this page to the state it was in when installed. The feature also restores any column you have moved through the drag and drop feature on the page.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><input type="button" class="ui button" name="reset" id="reset-managersites-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
+							<span data-tooltip="<?php esc_attr_e( 'Resets the page to its original layout and reinstates relocated columns.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><input type="button" class="ui button" name="reset" id="reset-managersites-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
 						</div>
 						<div class="ui right aligned column">
 					<input type="submit" class="ui green button" name="btnSubmit" id="submit-managersites-settings" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
-					<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 				</div>
 					</div>
 				</div>

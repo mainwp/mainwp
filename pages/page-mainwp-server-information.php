@@ -115,8 +115,8 @@ class MainWP_Server_Information {
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ActionLogs' ) ) {
 			add_submenu_page(
 				'mainwp_tab',
-				__( 'Action logs', 'mainwp' ),
-				'<div class="mainwp-hidden">' . esc_html__( 'Action logs', 'mainwp' ) . '</div>',
+				__( 'Custom Event Monitor', 'mainwp' ),
+				'<div class="mainwp-hidden">' . esc_html__( 'Custom Event Monitor', 'mainwp' ) . '</div>',
 				'read',
 				'ActionLogs',
 				array(
@@ -161,7 +161,6 @@ class MainWP_Server_Information {
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Server' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
-		self::init_left_menu( self::$subPages );
 	}
 
 	/**
@@ -269,7 +268,7 @@ class MainWP_Server_Information {
 				'right'      => '',
 			),
 			array(
-				'title'      => esc_html__( 'Action Logs', 'mainwp' ),
+				'title'      => esc_html__( 'Custom Event Monitor', 'mainwp' ),
 				'parent_key' => 'ServerInformation',
 				'href'       => 'admin.php?page=ActionLogs',
 				'slug'       => 'ActionLogs',
@@ -336,7 +335,7 @@ class MainWP_Server_Information {
 
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ActionLogs' ) ) {
 				$renderItems[] = array(
-					'title'  => esc_html__( 'Action Logs', 'mainwp' ),
+					'title'  => esc_html__( 'Custom Event Monitor', 'mainwp' ),
 					'href'   => 'admin.php?page=ActionLogs',
 					'active' => ( 'ActionLogs' === $shownPage ) ? true : false,
 				);
@@ -443,7 +442,7 @@ class MainWP_Server_Information {
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-server-info-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-server-info-info-message"></i>
-				<?php printf( esc_html__( 'Check your system configuration and make sure your MainWP Dashboard passes all system requirements.  If you need help with resolving specific errors, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/resolving-system-requirement-issues/" target="_blank">', '</a>' ); ?>
+				<?php printf( esc_html__( 'Check your system configuration and make sure your MainWP Dashboard passes all system requirements.  If you need help with resolving specific errors, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/resolving-system-requirement-issues/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 			</div>
 		<?php endif; ?>
 		<?php
@@ -978,7 +977,7 @@ class MainWP_Server_Information {
 
 		$local_timestamp = MainWP_Utility::get_timestamp();
 
-		$freq = (int) get_option( 'mainwp_frequencyDailyUpdate' );
+		$freq = (int) get_option( 'mainwp_frequencyDailyUpdate', 2 );
 		if ( $freq <= 0 ) {
 			$freq = 1;
 		}
@@ -986,7 +985,7 @@ class MainWP_Server_Information {
 
 		$cron_jobs = array(
 			'Check for available updates' => array( 'mainwp_updatescheck_start_last_timestamp', 'mainwp_cronupdatescheck_action', $auto_update_text ),
-			'Check for new statistics'    => array( 'mainwp_cron_last_stats', 'mainwp_cronstats_action', esc_html__( 'Once hourly', 'mainwp' ), 'hourly' ),
+			'Check for reconnect sites'   => array( 'mainwp_cron_last_stats', 'mainwp_cronreconnect_action', esc_html__( 'Once hourly', 'mainwp' ), 'hourly' ),
 			'Ping childs sites'           => array( 'mainwp_cron_last_ping', 'mainwp_cronpingchilds_action', esc_html__( 'Once daily', 'mainwp' ), 'daily' ),
 		);
 
@@ -1018,7 +1017,7 @@ class MainWP_Server_Information {
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-cron-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-cron-info-message"></i>
-				<?php printf( esc_html__( 'Make sure scheduled actions are working correctly.  If scheduled actions do not run normally, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/scheduled-events-not-occurring/" target="_blank">', '</a>' ); ?>
+				<?php printf( esc_html__( 'Make sure scheduled actions are working correctly.  If scheduled actions do not run normally, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/scheduled-events-not-occurring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 			</div>
 		<?php endif; ?>
 		<table class="ui single line unstackable table" id="mainwp-cron-jobs-table">
@@ -1688,7 +1687,7 @@ class MainWP_Server_Information {
 					<div><?php echo esc_html__( 'Enable a specific logging system.', 'mainwp' ); ?></div>
 					<p><?php echo esc_html__( 'Each specific log type changes only the type of information logged. It does not change the log view.', 'mainwp' ); ?></p>
 					<p><?php echo esc_html__( 'After disabling the Action Log, logs will still be visible. To remove records, click the Delete Logs button.', 'mainwp' ); ?></p>
-					<p><?php printf( esc_html__( 'For additional help, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/action-logs/" target="_blank">', '</a>' ); ?></p>
+					<p><?php printf( esc_html__( 'For additional help, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/action-logs/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></p>
 				</div>
 			<?php endif; ?>
 		<?php
@@ -1722,7 +1721,7 @@ class MainWP_Server_Information {
 		do_action( 'mainwp_before_plugin_privacy_section' );
 		?>
 		<div class="ui segment">
-					<div id="mainwp-plugin-privacy" class="ui piled segment">
+					<div id="mainwp-plugin-privacy">
 						<h2 class="ui header">
 							<?php echo esc_html__( 'MainWP Dashboard Plugin Privacy Policy', 'mainwp' ); ?>
 							<div class="sub header"><em><?php echo esc_html__( 'Last updated: April 14, 2022', 'mainwp' ); ?></em></div>
@@ -1770,8 +1769,9 @@ class MainWP_Server_Information {
 								<div class="item"><?php echo esc_html__( 'England', 'mainwp' ); ?></div>
 							</div>
 						</div>
+						<div class="ui divider"></div>
 					</div>
-					<div class="ui divider"></div>
+					
 					<a href="<?php echo esc_url( get_site_url() ) . '/wp-content/plugins/mainwp/privacy-policy.txt'; ?>" class="ui green basic button" target="_blank"><?php echo esc_html__( 'Download MainWP Dashboard Privacy Policy', 'mainwp' ); ?></a> <a href="<?php echo esc_url( get_site_url() ) . '/wp-content/plugins/mainwp/mainwp-child-privacy-policy.txt'; ?>" class="ui green basic button" target="_blank"><?php echo esc_html__( 'Download MainWP Child Privacy Policy', 'mainwp' ); ?></a>
 		</div>
 

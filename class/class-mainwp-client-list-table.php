@@ -380,7 +380,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-client-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-client-info-message"></i>
-				<?php printf( esc_html__( 'Manage your clients.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">', '</a>' ); ?>
+				<?php printf( esc_html__( 'Manage your clients. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 			</div>
 		<?php endif; ?>
 		<?php

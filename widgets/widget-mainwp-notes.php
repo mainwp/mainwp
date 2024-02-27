@@ -79,15 +79,7 @@ class MainWP_Notes {
 			do_action( 'mainwp_notes_widget_top', $website );
 
 			if ( empty( $website->note ) ) {
-				?>
-				<h2 class="ui icon header">
-					<i class="info circle icon"></i>
-					<div class="content">
-						<?php esc_html_e( 'No saved notes!', 'mainwp' ); ?>
-						<div class="sub header"><?php esc_html_e( 'No saved notes for the child site. ', 'mainwp' ); ?><?php echo '<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-' . intval( $website->id ) . '">' . esc_html__( 'Click here to add a note.', 'mainwp' ) . '</a>'; ?></div>
-					</div>
-				</h2>
-				<?php
+				MainWP_UI::render_empty_element_placeholder();
 			} else {
 				?>
 				<div class="content">

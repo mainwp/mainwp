@@ -11,3 +11,13 @@
 #mainwp-second-level-navigation #SettingsDashboardInsights {
     display: none !important;
 }
+
+#mainwp-module-log-filters-row .mainwp_datepicker {
+    display: inline-block;
+}
+
+@media only screen and (min-width: 1370px) {
+    #widget-recent_events .mainwp-scrolly-overflow {
+        height: calc(100% - 120px) !important;
+    }
+}

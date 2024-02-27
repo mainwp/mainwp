@@ -39,31 +39,6 @@ class MainWP_Extensions_Handler {
 	 */
 	public static $extensions_disabled;
 
-
-	/**
-	 * Possible options.
-	 *
-	 * @var array $possible_options
-	 */
-	private static $possible_options = array(
-		'plugin_upgrades',
-		'theme_upgrades',
-		'premium_upgrades',
-		'plugins',
-		'themes',
-		'dtsSync',
-		'version',
-		'sync_errors',
-		'ignored_plugins',
-		'wp_upgrades',
-		'site_info',
-		'client',
-		'signature_algo',
-		'verify_method',
-		'pubkey',
-	);
-
-
 	/**
 	 * Get Extension Slug.
 	 *
@@ -262,13 +237,47 @@ class MainWP_Extensions_Handler {
 	}
 
 	/**
+	 * Get not installed MainWP Extensions.
+	 *
+	 * @return array Array of not installed Extensions.
+	 */
+	public static function get_extensions_not_installed() {
+		$all_available_extensions = MainWP_Extensions_View::get_available_extensions( 'all' );
+
+		$all_plugins = get_plugins();
+
+		$installed_slugs = array();
+		foreach ( $all_plugins as $plugin => $plugin_data ) {
+			$slug = dirname( $plugin );
+			if ( ! isset( $installed_slugs[ $slug ] ) ) {
+				$installed_slugs[] = $slug;
+			}
+		}
+
+		$exts_not_installed = array();
+		foreach ( $all_available_extensions as $slug => $info ) {
+			if ( ! in_array( $slug, $installed_slugs ) ) {
+				$exts_not_installed[ $slug ] = array(
+					'name'        => $info['title'],
+					'slug'        => $info['slug'],
+					'link'        => $info['link'],
+					'img'         => isset( $info['img'] ) ? $info['img'] : '',
+					'description' => isset( $info['desc'] ) ? $info['desc'] : '',
+				);
+			}
+		}
+		return $exts_not_installed;
+	}
+
+	/**
 	 * Get MainWP Extensions infor array.
 	 *
 	 * @param array $args Empty Array.
+	 * @param bool  $deactivated_license Get extensions that deactivated license or not.
 	 *
 	 * @return array Array of Extensions.
 	 */
-	public static function get_indexed_extensions_infor( $args = array() ) {
+	public static function get_indexed_extensions_infor( $args = array(), $deactivated_license = null ) {
 		if ( ! is_array( $args ) ) {
 			$args = array();
 		}
@@ -282,13 +291,26 @@ class MainWP_Extensions_Handler {
 					}
 				}
 			}
-			$ext            = array();
-			$ext['version'] = $extension['version'];
-			$ext['name']    = $extension['name'];
-			$ext['page']    = $extension['page'];
+			$apiManager            = isset( $extension['apiManager'] ) && $extension['apiManager'] ? true : false;
+			$ext                   = array();
+			$ext['version']        = $extension['version'];
+			$ext['apiManager']     = $apiManager;
+			$ext['name']           = $extension['name'];
+			$ext['page']           = $extension['page'];
+			$ext['mainwp_version'] = isset( $extension['mainwp_version'] ) ? $extension['mainwp_version'] : '';
+
 			if ( isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ) {
 				$ext['activated_key'] = 'Activated';
 			}
+
+			if ( null !== $deactivated_license ) {
+				if ( $deactivated_license && $apiManager && isset( $ext['activated_key'] ) && 'Activated' === $ext['activated_key'] ) {
+					continue; // get deactivated license, skip activated license.
+				} elseif ( ! $deactivated_license && ( ! isset( $ext['activated_key'] ) || 'Activated' !== $ext['activated_key'] ) ) {
+					continue; // get activated license, so skip deactivated license.
+				}
+			}
+
 			$return[ $extension['slug'] ] = $ext;
 		}
 		return $return;
@@ -638,7 +660,23 @@ class MainWP_Extensions_Handler {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
 			return false;
 		}
+		return self::fetch_url_authed( $websiteId, $what, $params, $rawResponse );
+	}
 
+	/**
+	 * Fetch Authorized URL.
+	 *
+	 * @throws MainWP_Exception On incorrect website.
+	 * @param mixed $websiteId Child Site ID.
+	 * @param mixed $what What.
+	 * @param mixed $params Parameters.
+	 * @param null  $rawResponse Raw responce.
+	 *
+	 * @return mixed false|throw|error
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 */
+	public static function fetch_url_authed( $websiteId, $what, $params, $rawResponse = null ) {
 		try {
 			$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 			if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
@@ -674,49 +712,13 @@ class MainWP_Extensions_Handler {
 		}
 
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
-
-		$dbwebsites = array();
-
-		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
-		$data_fields[] = 'verify_certificate';
-
-		if ( is_array( $options ) ) {
-			foreach ( $options as $option_name => $value ) {
-				if ( ! empty( $value ) && in_array( $option_name, self::$possible_options ) ) {
-					if ( ! in_array( $option_name, $data_fields ) ) {
-						$data_fields[] = $option_name;
-					}
-				}
-			}
-		}
-
-		if ( '' !== $sites ) {
-			foreach ( $sites as $k => $v ) {
-				if ( MainWP_Utility::ctype_digit( $v ) ) {
-					$website = MainWP_DB::instance()->get_website_by_id( $v );
-					if ( empty( $website ) ) {
-						continue;
-					}
-					$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
-				}
-			}
-		}
-
-		if ( is_array( $groups ) ) {
-			foreach ( $groups as $k => $v ) {
-				if ( MainWP_Utility::ctype_digit( $v ) ) {
-					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
-					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
-					}
-					MainWP_DB::free_result( $websites );
-				}
-			}
-		}
-
-		return $dbwebsites;
+		$params = array(
+			'fields' => $options,
+			'sites'  => $sites,
+			'groups' => $groups,
+		);
+		return MainWP_DB::instance()->get_db_sites( $params );
 	}
-
 
 	/**
 	 * Get DB Sites.
@@ -737,59 +739,7 @@ class MainWP_Extensions_Handler {
 		if ( empty( $params ) || ! is_array( $params ) ) {
 			return false;
 		}
-
-		$dbwebsites = array();
-
-		$data_fields   = MainWP_System_Utility::get_default_map_site_fields();
-		$data_fields[] = 'verify_certificate';
-
-		$fields  = isset( $params['fields'] ) && is_array( $params['fields'] ) ? $params['fields'] : array();
-		$sites   = isset( $params['sites'] ) && is_array( $params['sites'] ) ? $params['sites'] : array();
-		$groups  = isset( $params['groups'] ) && is_array( $params['groups'] ) ? $params['groups'] : array();
-		$clients = isset( $params['clients'] ) && is_array( $params['clients'] ) ? $params['clients'] : array();
-
-		if ( is_array( $fields ) ) {
-			foreach ( $fields as $field ) {
-				if ( in_array( $field, self::$possible_options ) ) {
-					if ( ! in_array( $field, $data_fields ) ) {
-						$data_fields[] = $field;
-					}
-				}
-			}
-		}
-
-		if ( ! empty( $sites ) ) {
-			foreach ( $sites as $k => $v ) {
-				if ( MainWP_Utility::ctype_digit( $v ) ) {
-					$website = MainWP_DB::instance()->get_website_by_id( $v );
-					if ( empty( $website ) ) {
-						continue;
-					}
-					$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
-				}
-			}
-		}
-
-		if ( ! empty( $groups ) ) {
-			foreach ( $groups as $k => $v ) {
-				if ( MainWP_Utility::ctype_digit( $v ) ) {
-					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
-					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
-					}
-					MainWP_DB::free_result( $websites );
-				}
-			}
-		}
-
-		$client_sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $clients );
-		if ( $client_sites ) {
-			foreach ( $client_sites as $website ) {
-				$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
-			}
-		}
-
-		return $dbwebsites;
+		return MainWP_DB::instance()->get_db_sites( $params );
 	}
 
 
@@ -815,117 +765,9 @@ class MainWP_Extensions_Handler {
 		if ( $for_manager && ( ! defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) || ! mainwp_current_user_have_right( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) ) {
 			return false;
 		}
-
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 
-		if ( ! is_array( $others ) ) {
-			$others = array();
-		}
-
-		$search_site = null;
-		$orderBy     = 'wp.url';
-		$offset      = false;
-		$rowcount    = false;
-		$extraWhere  = null;
-
-		if ( isset( $websiteid ) && ( null !== $websiteid ) ) {
-			$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
-
-			if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
-				return false;
-			}
-
-			if ( ! mainwp_current_user_have_right( 'site', $websiteid ) ) {
-				return false;
-			}
-
-			return array(
-				array(
-					'id'          => $websiteid,
-					'url'         => MainWP_Utility::get_nice_url( $website->url, true ),
-					'name'        => $website->name,
-					'totalsize'   => $website->totalsize,
-					'sync_errors' => $website->sync_errors,
-				),
-			);
-		} else {
-			if ( isset( $others['orderby'] ) ) {
-				if ( ( 'site' === $others['orderby'] ) ) {
-					$orderBy = 'wp.name ' . ( 'asc' === $others['order'] ? 'asc' : 'desc' );
-				} elseif ( ( 'url' === $others['orderby'] ) ) {
-					$orderBy = 'wp.url ' . ( 'asc' === $others['order'] ? 'asc' : 'desc' );
-				}
-			}
-			if ( isset( $others['search'] ) ) {
-				$search_site = trim( $others['search'] );
-			}
-
-			if ( is_array( $others ) ) {
-				if ( isset( $others['plugins_slug'] ) ) {
-
-					$slugs      = explode( ',', $others['plugins_slug'] );
-					$extraWhere = '';
-					foreach ( $slugs as $slug ) {
-						$slug        = wp_json_encode( $slug );
-						$slug        = trim( $slug, '"' );
-						$slug        = str_replace( '\\', '.', $slug );
-						$extraWhere .= ' wp.plugins REGEXP "' . $slug . '" OR';
-					}
-					$extraWhere = trim( rtrim( $extraWhere, 'OR' ) );
-
-					if ( '' === $extraWhere ) {
-						$extraWhere = null;
-					} else {
-						$extraWhere = '(' . $extraWhere . ')';
-					}
-				}
-			}
-		}
-
-		$totalRecords = '';
-
-		if ( isset( $others['per_page'] ) && ! empty( $others['per_page'] ) ) {
-			$sql            = MainWP_DB::instance()->get_sql_websites_for_current_user( false, $search_site, $orderBy, false, false, $extraWhere, $for_manager );
-			$websites_total = MainWP_DB::instance()->query( $sql );
-			$totalRecords   = ( $websites_total ? MainWP_DB::num_rows( $websites_total ) : 0 );
-
-			if ( $websites_total ) {
-				MainWP_DB::free_result( $websites_total );
-			}
-
-			$rowcount = absint( $others['per_page'] );
-			$pagenum  = isset( $others['paged'] ) ? absint( $others['paged'] ) : 0;
-			if ( $pagenum > $totalRecords ) {
-				$pagenum = $totalRecords;
-			}
-			$pagenum = max( 1, $pagenum );
-			$offset  = ( $pagenum - 1 ) * $rowcount;
-
-		}
-
-		$sql      = MainWP_DB::instance()->get_sql_websites_for_current_user( false, $search_site, $orderBy, $offset, $rowcount, $extraWhere, $for_manager );
-		$websites = MainWP_DB::instance()->query( $sql );
-
-		$output = array();
-		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-			$re = array(
-				'id'          => $website->id,
-				'url'         => MainWP_Utility::get_nice_url( $website->url, true ),
-				'name'        => $website->name,
-				'totalsize'   => $website->totalsize,
-				'sync_errors' => $website->sync_errors,
-			);
-
-			if ( 0 < $totalRecords ) {
-				$re['totalRecords'] = $totalRecords;
-				$totalRecords       = 0;
-			}
-
-			$output[] = $re;
-		}
-		MainWP_DB::free_result( $websites );
-
-		return $output;
+		return MainWP_DB::instance()->get_sites( $websiteid, $for_manager, $others );
 	}
 
 	/**
@@ -1045,7 +887,7 @@ class MainWP_Extensions_Handler {
 			$tmp2 = MainWP_Utility::remove_http_www_prefix( $clone_url );
 
 			if ( false === strpos( $tmp2, $tmp1 ) ) {
-					return false;
+				return false;
 			}
 
 			$clone_sites = MainWP_DB::instance()->get_websites_by_url( $clone_url );

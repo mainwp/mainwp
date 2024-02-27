@@ -33,7 +33,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getmainwpdir', array( &$this, 'hook_get_mainwp_dir' ), 10, 3 );
 		add_filter( 'mainwp_is_multi_user', array( &$this, 'is_multi_user' ) );
 		add_filter( 'mainwp_qq2fileuploader', array( &$this, 'filter_qq2_file_uploader' ), 10, 2 );
-		add_action( 'mainwp_select_sites_box', array( &$this, 'select_sites_box' ), 10, 11 );
+		add_action( 'mainwp_select_sites_box', array( &$this, 'hook_select_sites_box' ), 10, 12 );
 		add_action( 'mainwp_add_categories_box', array( &$this, 'hook_add_categories_box' ), 10, 1 );
 		add_action( 'mainwp_prepareinstallplugintheme', array( MainWP_Install_Bulk::get_class_name(), 'prepare_install' ) );
 		add_action( 'mainwp_performinstallplugintheme', array( MainWP_Install_Bulk::get_class_name(), 'perform_install' ) );
@@ -322,6 +322,29 @@ class MainWP_Hooks {
 	}
 
 	/**
+	 * Method is_pro_member()
+	 *
+	 * Check for inactive MainWP Extensions.
+	 *
+	 * @param mixed $input Input value.
+	 *
+	 * @return bool Activation notice.
+	 */
+	public static function is_pro_member( $input = false ) {
+		$info = get_option( 'mainwp_extensions_plan_info' );
+		if ( ! empty( $info ) ) {
+			$info = json_decode( $info, true );
+			if ( is_array( $info ) && isset( $info['plan_purchased'] ) && isset( $info['plan_status'] ) ) {
+				if ( 'active' === $info['plan_status'] && in_array( $info['plan_purchased'], array( 'monthly', 'yearly', 'lifetime' ) ) ) {
+					return true;
+				}
+			}
+		}
+		return $input;
+	}
+
+
+	/**
 	 * Method hook_delete_site()
 	 *
 	 * Hook to delete Child Site.
@@ -475,28 +498,6 @@ class MainWP_Hooks {
 		return MainWP_Extensions_Handler::is_extension_activated( $slug );
 	}
 
-	/**
-	 * Method is_pro_member()
-	 *
-	 * Check for inactive MainWP Extensions.
-	 *
-	 * @param mixed $input Input value.
-	 *
-	 * @return bool Activation notice.
-	 */
-	public function is_pro_member( $input = false ) {
-		$info = get_option( 'mainwp_extensions_plan_info' );
-		if ( ! empty( $info ) ) {
-			$info = json_decode( $info, true );
-			if ( is_array( $info ) && isset( $info['plan_purchased'] ) && isset( $info['plan_status'] ) ) {
-				if ( 'active' === $info['plan_status'] && in_array( $info['plan_purchased'], array( 'monthly', 'yearly', 'lifetime' ) ) ) {
-					return true;
-				}
-			}
-		}
-		return $input;
-	}
-
 
 	/**
 	 * Method get_activate_extension_notice()
@@ -587,7 +588,7 @@ class MainWP_Hooks {
 	}
 
 	/**
-	 * Method select_sites_box()
+	 * Method hook_select_sites_box()
 	 *
 	 * Hook to select sites box.
 	 *
@@ -602,8 +603,9 @@ class MainWP_Hooks {
 	 * @param bool   $show_client Show Clients.
 	 * @param array  $selected_clients Selected Clients.
 	 * @param mixed  $post_id post ID.
+	 * @param bool   $show_create_tag Show create tag button.
 	 */
-	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class_style = '', $style = '', $selected_websites = array(), $selected_groups = array(), $show_client = false, $selected_clients = array(), $post_id = false ) {
+	public function hook_select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class_style = '', $style = '', $selected_websites = array(), $selected_groups = array(), $show_client = false, $selected_clients = array(), $post_id = false, $show_create_tag = true ) {
 		$sel_params = array(
 			'type'             => $type,
 			'show_group'       => $show_group,
@@ -615,6 +617,7 @@ class MainWP_Hooks {
 			'show_client'      => $show_client,
 			'selected_clients' => $selected_clients,
 			'post_id'          => $post_id,
+			'show_create_tag'  => $show_create_tag,
 		);
 		MainWP_UI_Select_Sites::select_sites_box( $sel_params );
 	}
@@ -1142,6 +1145,8 @@ class MainWP_Hooks {
 	 */
 	public function hook_check_security_request( $input_value, $action = '', $query_arg = '' ) {
 		if ( empty( $query_arg ) ) {
+			//phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+			// to do, $query_arg = 'security'.
 			$query_arg = $action; // to check wp_verify_nonce - sanitize_key( $_REQUEST[ $query_arg ] ) - $action.
 		}
 		return MainWP_Post_Handler::instance()->check_security( $action, $query_arg, false );

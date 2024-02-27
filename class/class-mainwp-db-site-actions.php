@@ -129,11 +129,20 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 		);
 
 		foreach ( $sync_actions as $index => $data ) {
-
+			if ( ! is_array( $data ) ) {
+				continue;
+			}
+			$meta_data   = array();
 			$update_data = array_merge( $default, $data );
 			if ( isset( $update_data['meta_data'] ) && ! empty( $update_data['meta_data'] ) ) {
+				$meta_data                = $update_data['meta_data'];
 				$update_data['meta_data'] = wp_json_encode( $update_data['meta_data'] );
 			}
+
+			$sum                    = is_array( $meta_data ) && ! empty( $meta_data['name'] ) ? esc_html( $meta_data['name'] ) : 'WP Core';
+			$sum                   .= ' ';
+			$sum .= 'wordpress' !== $data['context'] ? esc_html( ucfirst( rtrim( $data['context'], 's' ) ) ) : 'WordPress'; //phpcs:ignore -- wordpress text.
+			$update_data['summary'] = $sum;
 
 			if ( empty( $update_data['action_user'] ) ) {
 				continue;
@@ -287,31 +296,34 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 	 */
 	public function get_wp_actions( $params = array(), $obj = OBJECT ) { //phpcs:ignore -- complex.
 
-		$action_id    = isset( $params['action_id'] ) ? intval( $params['action_id'] ) : 0;
-		$site_id      = isset( $params['wpid'] ) ? $params['wpid'] : 0;
-		$object_id    = isset( $params['object_id'] ) ? $this->escape( $params['object_id'] ) : '';
-		$where_extra  = isset( $params['where_extra'] ) ? $params['where_extra'] : '';
-		$check_access = isset( $params['check_access'] ) ? $params['check_access'] : true;
+		$action_id     = isset( $params['action_id'] ) ? intval( $params['action_id'] ) : 0;
+		$site_id       = isset( $params['wpid'] ) ? $params['wpid'] : 0;
+		$object_id     = isset( $params['object_id'] ) ? $this->escape( $params['object_id'] ) : '';
+		$where_extra   = isset( $params['where_extra'] ) ? $params['where_extra'] : ''; // compatible.
+		$where_dismiss = isset( $params['dismiss'] ) ? ' AND dismiss = ' . ( $params['dismiss'] ? 1 : 0 ) : '';
+		$check_access  = isset( $params['check_access'] ) ? $params['check_access'] : true;
+		$search_str    = isset( $params['search'] ) ? $this->escape( trim( $params['search'] ) ) : null;
+
+		$order_by    = isset( $params['order_by'] ) && ! empty( $params['order_by'] ) ? $params['order_by'] : ' wa.created DESC ';
+		$offset      = isset( $params['offset'] ) ? intval( $params['offset'] ) : false;
+		$rowcount    = isset( $params['rowcount'] ) ? intval( $params['rowcount'] ) : false;
+		$total_count = isset( $params['total_count'] ) && $params['total_count'] ? true : false;
 
 		$limit = isset( $params['limit'] ) ? intval( $params['limit'] ) : '';
 
-		$order_by = ' ORDER BY wa.created DESC ';
+		$limit_qry = '';
 
 		if ( ! empty( $limit ) ) {
-			$limit = 'LIMIT ' . intval( $limit );
+			$limit_qry = ' LIMIT ' . $limit;
 		}
 
 		$where_actions = '';
 
 		$sql = '';
 
-		if ( empty( $action_id ) && empty( $site_id ) && empty( $object_id ) ) {
-			$where_actions .= '';
-			$order_by       = ' ORDER BY wa.created DESC ';
-		} elseif ( ! empty( $action_id ) ) {
+		if ( ! empty( $action_id ) ) {
 			$where_actions .= ' AND wa.action_id = ' . $action_id;
 		} else {
-
 			$sql_and = '';
 			if ( ! empty( $site_id ) ) {
 				if ( is_array( $site_id ) ) {
@@ -339,11 +351,35 @@ class MainWP_DB_Site_Actions extends MainWP_DB {
 			$where_actions .= $this->get_sql_where_allow_access_sites( 'wp' );
 		}
 
+		$where = '';
+		// for searching.
+		if ( ! empty( $search_str ) ) {
+			$where .= ' AND (wp.name LIKE "%' . $search_str . '%" OR wp.url LIKE  "%' . $search_str . '%" OR wa.action_user LIKE  "%' . $search_str . '%" OR wa.summary LIKE  "%' . $search_str . '%") ';
+		}
+
+		if ( $total_count ) {
+			$sql  = ' SELECT count(*)';
+			$sql .= ' FROM ' . $this->table_name( 'wp_actions' ) . ' wa ';
+			$sql .= ' LEFT JOIN ' . $this->table_name( 'wp' ) . ' wp ON wp.id = wa.wpid';
+			$sql .= ' WHERE 1 ' . $where . $where_actions . $where_dismiss . $where_extra;
+			return $this->wpdb->get_var( $sql );
+		}
+
 		$sql  = ' SELECT wp.name,wp.url,wa.* ';
 		$sql .= ' FROM ' . $this->table_name( 'wp_actions' ) . ' wa ';
 		$sql .= ' LEFT JOIN ' . $this->table_name( 'wp' ) . ' wp ON wp.id = wa.wpid';
-		$sql .= ' WHERE 1 ' . $where_actions . $where_extra;
-		$sql .= $order_by . $limit;
+		$sql .= ' WHERE 1 ' . $where . $where_actions . $where_dismiss . $where_extra;
+		$sql .= ' ORDER BY ' . $order_by;
+
+		if ( empty( $limit_qry ) ) {
+			if ( ( false !== $offset ) && ( false !== $rowcount ) ) {
+				$limit_qry = ' LIMIT ' . $offset . ', ' . $rowcount;
+			} elseif ( false !== $rowcount ) {
+				$limit_qry = ' LIMIT ' . $rowcount;
+			}
+		}
+
+		$sql .= $limit_qry;
 
 		if ( OBJECT === $obj ) {
 			$result = $this->wpdb->get_results( $sql, OBJECT );

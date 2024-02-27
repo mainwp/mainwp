@@ -481,7 +481,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 			$last_updated_timestamp = strtotime( $plugin['last_updated'] );
 			?>
 
-			<div class="card plugin-card-<?php echo sanitize_html_class( $plugin['slug'] ); ?>">
+			<div class="card plugin-card-<?php echo sanitize_html_class( $plugin['slug'] ); ?>" plugin-slug="<?php echo esc_attr( $plugin['slug'] ); ?>" plugin-name="<?php echo esc_attr( $plugin['name'] ); ?>">
 			<?php
 			/**
 			 * Action: mainwp_install_plugin_card_top
@@ -517,7 +517,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 					);
 					?>
 					</div>
-						<div class="twelve wide right aligned column"><strong><?php esc_html_e( 'Updated: ', 'mainwp' ); ?></strong><?php printf( esc_html__( '%s ago', 'mainwp' ), human_time_diff( $last_updated_timestamp ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+						<div class="twelve wide right aligned column"><span class="ui small text"><?php esc_html_e( 'Updated: ', 'mainwp' ); ?><?php printf( esc_html__( '%s ago', 'mainwp' ), human_time_diff( $last_updated_timestamp ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></div>
 					</div>
 				</div>
 					<div class="extra content">

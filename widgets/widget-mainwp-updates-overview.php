@@ -132,7 +132,7 @@ class MainWP_Updates_Overview {
 			// To support staging extension.
 			$is_staging = 'no';
 			if ( $staging_enabled ) {
-				$staging_updates_view = get_user_option( 'mainwp_staging_options_updates_view', $current_user->ID );
+				$staging_updates_view = MainWP_System_Utility::get_staging_options_sites_view_for_current_users();
 				if ( 'staging' === $staging_updates_view ) {
 					$is_staging = 'yes';
 				}
@@ -420,6 +420,10 @@ class MainWP_Updates_Overview {
 		);
 		self::render_bottom( $websites, $globalView );
 		echo '</div>';
+		echo '<div class="ui stackable grid mainwp-widget-footer">';
+		echo '<div class="eight wide column"></div>';
+		echo '<div class="eight wide column"></div>';
+		echo '</div>';
 	}
 
 	/**
@@ -467,15 +471,17 @@ class MainWP_Updates_Overview {
 			do_action( 'mainwp_updates_overview_before_total_updates' );
 			?>
 			<div class="ui stackable grid">
+			
 				<div class="eight wide middle aligned column">
-					<div class="ui large statistic horizontal">
-						<div class="value">
-						<?php echo intval( $total_upgrades ); ?>
-					</div>
-					<div class="label">
-						<?php esc_html_e( 'Total Updates', 'mainwp' ); ?>
-					</div>
-					</div>
+					
+						<div class="ui large statistic horizontal">
+							<div class="value">
+								<?php echo intval( $total_upgrades ); ?>
+							</div>
+							<div class="label">
+								<?php esc_html_e( 'Total Updates', 'mainwp' ); ?>
+							</div>
+						</div>
 				</div>
 
 				<div class="eight wide middle aligned right aligned column">
@@ -499,19 +505,19 @@ class MainWP_Updates_Overview {
 							?>
 							<a href="#" <?php echo empty( $total_upgrades ) ? 'disabled' : 'onClick="return updatesoverview_global_upgrade_all( \'all\' );"'; ?> class="ui big button fluid green" id="mainwp-update-everything-button" data-tooltip="<?php $globalView ? esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on ALL your websites.', 'mainwp' ) : esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', esc_html__( 'Update Everything', 'mainwp' ) ) ); ?></a>
 						<?php } ?>
-			<?php endif; ?>
-		<?php endif; ?>
+					<?php endif; ?>
+				<?php endif; ?>
 				</div>
 			</div>
 		<?php
-			/**
-			 * Action: mainwp_updates_overview_after_total_updates
-			 *
-			 * Fires after the total updates section in the Updates Overview widget.
-			 *
-			 * @since 4.1
-			 */
-			do_action( 'mainwp_updates_overview_after_total_updates' );
+		/**
+		 * Action: mainwp_updates_overview_after_total_updates
+		 *
+		 * Fires after the total updates section in the Updates Overview widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_overview_after_total_updates' );
 	}
 
 	/**
@@ -537,7 +543,7 @@ class MainWP_Updates_Overview {
 			 *
 			 * @since 4.1
 			 */
-			echo esc_html( apply_filters( 'mainwp_updates_overview_update_details_divider', esc_html__( 'Update Details', 'mainwp' ) ) );
+			echo esc_html( apply_filters( 'mainwp_updates_overview_update_details_divider', esc_html__( 'Available Updates', 'mainwp' ) ) );
 			?>
 		</div>
 		<div class="ui hidden divider"></div>
@@ -564,17 +570,20 @@ class MainWP_Updates_Overview {
 		?>
 		<div class="ui grid">
 			<div class="two column row">
-				<div class="column">
+
+				<div class="six wide column">
 					<div class="ui horizontal statistic">
 					<div class="value">
 						<?php echo intval( $total_wp_upgrades ); ?>
 					</div>
 					<div class="label">
-					<?php esc_html_e( 'WordPress Updates', 'mainwp' ); ?>
+					<?php esc_html_e( 'WordPress', 'mainwp' ); ?>
 					</div>
 					</div>
 				</div>
-				<div class="right aligned column">
+
+				<div class="ten wide right aligned column">
+				<div class="ui small buttons">
 				<?php
 				if ( $user_can_update_wordpress ) :
 					$wpcore_update_disabled_by = '';
@@ -602,10 +611,13 @@ class MainWP_Updates_Overview {
 						}
 						?>
 					<?php else : ?>
-						<a href="<?php echo esc_url( $detail_wp_up ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-						<a href="#" class="ui disabled green basic button mainwp-update-all-button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+						
+							<a href="<?php echo esc_url( $detail_wp_up ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+							<a href="#" class="ui disabled green basic button mainwp-update-all-button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+						
 					<?php endif; ?>
 				<?php endif; ?>
+				</div>
 			</div>
 			</div>
 		</div>
@@ -644,17 +656,18 @@ class MainWP_Updates_Overview {
 		?>
 	<div class="ui grid">
 		<div class="two column row">
-			<div class="column">
+			<div class="six wide column">
 				<div class="ui horizontal statistic">
 						<div class="value">
 							<?php echo intval( $total_plugin_upgrades ); ?>
 						</div>
 							<div class="label">
-						<?php esc_html_e( 'Plugin Updates', 'mainwp' ); ?>
+						<?php esc_html_e( 'Plugins', 'mainwp' ); ?>
 					</div>
 					</div>
 				</div>
-			<div class="right aligned column">
+			<div class="ten wide right aligned column">
+			<div class="ui small buttons">
 				<?php
 				if ( $user_can_update_plugins ) {
 						MainWP_Updates::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
@@ -686,6 +699,7 @@ class MainWP_Updates_Overview {
 				}
 				?>
 							</div>
+			</div>
 						</div>
 				</div>
 		<?php
@@ -723,17 +737,18 @@ class MainWP_Updates_Overview {
 		?>
 	<div class="ui grid">
 		<div class="two column row">
-			<div class="column">
+			<div class="six wide column">
 				<div class="ui horizontal statistic">
 					<div class="value">
 						<?php echo intval( $total_theme_upgrades ); ?>
 					</div>
 					<div class="label">
-						<?php esc_html_e( 'Theme Updates', 'mainwp' ); ?>
+						<?php esc_html_e( 'Themes', 'mainwp' ); ?>
 					</div>
 				</div>
 			</div>
-			<div class="right aligned column">
+			<div class="ten wide right aligned column">
+			<div class="ui small buttons">
 			<?php
 			if ( $user_can_update_themes ) {
 				MainWP_Updates::set_continue_update_html_selector( 'themes_global_upgrade_all' );
@@ -762,6 +777,7 @@ class MainWP_Updates_Overview {
 			}
 			?>
 				</div>
+		</div>
 			</div>
 		</div>
 		<?php
@@ -798,17 +814,18 @@ class MainWP_Updates_Overview {
 		?>
 	<div class="ui grid">
 		<div class="two column row">
-			<div class="column">
+			<div class="six wide column">
 				<div class="ui horizontal statistic">
 					<div class="value">
 						<?php echo intval( $total_translation_upgrades ); ?>
 					</div>
 					<div class="label">
-						<?php esc_html_e( 'Translation Updates', 'mainwp' ); ?>
+						<?php esc_html_e( 'Translations', 'mainwp' ); ?>
 					</div>
 				</div>
 			</div>
-			<div class="right aligned column">
+			<div class="ten wide right aligned column">
+			<div class="ui small buttons">
 			<?php
 			if ( $user_can_update_translation ) {
 				MainWP_Updates::set_continue_update_html_selector( 'translations_global_upgrade_all' );
@@ -838,6 +855,7 @@ class MainWP_Updates_Overview {
 			?>
 				</div>
 			</div>
+		</div>
 		</div>
 		<?php
 		/**
@@ -894,7 +912,7 @@ class MainWP_Updates_Overview {
 		?>
 		<div class="ui grid">
 			<div class="two column row">
-				<div class="column">
+				<div class="six wide column">
 					<div class="ui horizontal statistic">
 						<?php
 						if ( $globalView ) {
@@ -907,11 +925,11 @@ class MainWP_Updates_Overview {
 					<?php echo intval( $total_plugins_outdate ); ?>
 					</div>
 					<div class="label">
-					<?php esc_html_e( 'Abandoned Plugins', 'mainwp' ); ?>
+					<?php esc_html_e( 'Plugins', 'mainwp' ); ?>
 					</div>
 					</div>
 						</div>
-						<div class="right aligned column">
+						<div class="ten wide right aligned column">
 							<a href="<?php echo esc_url( $detail_aban_plugins ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 						</div>
 			</div>
@@ -930,7 +948,7 @@ class MainWP_Updates_Overview {
 		?>
 		<div class="ui grid">
 			<div class="two column row">
-				<div class="column">
+				<div class="six wide column">
 					<div class="ui horizontal statistic">
 						<?php
 						if ( $globalView ) {
@@ -943,11 +961,11 @@ class MainWP_Updates_Overview {
 							<?php echo intval( $total_themes_outdate ); ?>
 							</div>
 						<div class="label">
-							<?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?>
+							<?php esc_html_e( 'Themes', 'mainwp' ); ?>
 						</div>
 					</div>
 				</div>
-				<div class="right aligned column">
+				<div class="ten wide right aligned column">
 					<a href="<?php echo esc_url( $detail_aban_themes ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 				</div>
 			</div>

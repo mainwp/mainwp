@@ -107,10 +107,10 @@ class Log_Manager {
 	 */
 	public function __construct() {
 
-		$mod_log_dir     = MAINWP_PLUGIN_DIR . 'modules/logs/';
+		$mod_log_dir     = MAINWP_MODULES_DIR . 'logs/';
 		$this->locations = array(
 			'dir'       => $mod_log_dir,
-			'url'       => MAINWP_PLUGIN_URL . 'modules/logs/',
+			'url'       => MAINWP_MODULES_URL . 'logs/',
 			'inc_dir'   => $mod_log_dir . 'includes/',
 			'class_dir' => $mod_log_dir . 'classes/',
 		);
@@ -164,11 +164,19 @@ class Log_Manager {
 		}
 
 		$autoload_name = $matches['autoload'];
-		$autoload_dir  = \trailingslashit( $this->locations['class_dir'] );
-		$autoload_path = sprintf( '%sclass-%s.php', $autoload_dir, strtolower( str_replace( '_', '-', $autoload_name ) ) );
-
-		if ( is_readable( $autoload_path ) ) {
-			require_once $autoload_path;
+		$autoload_dir  = \trailingslashit( $this->locations['dir'] );
+		$load_dirs     = array(
+			'classes' => 'class',
+			'pages'   => 'page',
+			'widgets' => 'widget',
+		);
+		foreach ( $load_dirs as $dir => $prefix ) {
+			$dir           = $dir . '/';
+			$autoload_path = sprintf( '%s%s%s-%s.php', $autoload_dir, $dir, $prefix, strtolower( str_replace( '_', '-', $autoload_name ) ) );
+			if ( is_readable( $autoload_path ) ) {
+				require_once $autoload_path;
+				return;
+			}
 		}
 	}
 

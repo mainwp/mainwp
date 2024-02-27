@@ -1556,4 +1556,19 @@ class MainWP_System_Utility {
 		);
 		return $data_fields;
 	}
+
+	/**
+	 * Method get_staging_options_sites_view_for_current_users()
+	 *
+	 * Get staging options sites view for current users.
+	 *
+	 * @return string Site views.
+	 */
+	public static function get_staging_options_sites_view_for_current_users() {
+		$view = apply_filters( 'mainwp_staging_current_user_sites_view', 'undefined' );
+		if ( 'undefined' === $view ) { // to compatible.
+			$view = get_user_option( 'mainwp_staging_options_updates_view' );
+		}
+		return $view;
+	}
 }

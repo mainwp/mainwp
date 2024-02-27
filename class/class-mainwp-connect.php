@@ -483,10 +483,11 @@ class MainWP_Connect {
 	 * @param mixed  $paramValue OpenSSL parameter.
 	 * @param string $paramName Parameter name.
 	 * @param bool   $asArray true|false Default is false.
+	 * @param array  $other_params other params.
 	 *
 	 * @return string $url
 	 */
-	public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false ) { //phpcs:ignore -- complex method.
+	public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false, $other_params = array() ) { //phpcs:ignore -- complex method.
 		$params = array();
 		if ( $website && '' !== $paramValue ) {
 
@@ -521,6 +522,14 @@ class MainWP_Connect {
 				'nonce'           => $nonce,
 				$paramName        => rawurlencode( $paramValue ),
 			);
+
+			if ( is_array( $other_params ) ) {
+				foreach ( $other_params as $name => $value ) {
+					if ( is_string( $name ) && ! empty( $name ) && is_scalar( $value ) ) {
+						$params[ sanitize_text_field( wp_unslash( $name ) ) ] = rawurlencode( sanitize_text_field( wp_unslash( $value ) ) );
+					}
+				}
+			}
 
 			if ( false !== $alg ) {
 				$params['sign_algo'] = $alg;
@@ -1076,7 +1085,7 @@ class MainWP_Connect {
 			$others['raw_response'] = 'yes';
 		}
 
-		$params['optimize'] = ( ( 1 === (int) get_option( 'mainwp_optimize', 0 ) ) ? 1 : 0 );
+		$params['optimize'] = ( ( 1 === (int) get_option( 'mainwp_optimize', 1 ) ) ? 1 : 0 );
 
 		$updating_website = false;
 		$type             = '';

@@ -69,7 +69,7 @@ class Connector_Installer extends Log_Connector {
 		return array(
 			'plugins'     => esc_html__( 'Plugins', 'mainwp' ),
 			'themes'      => esc_html__( 'Themes', 'mainwp' ),
-			'wordpress'   => esc_html__( 'WordPress', 'mainwp' ),
+			'core'        => esc_html__( 'Core', 'mainwp' ),
 			'translation' => esc_html__( 'Translation', 'mainwp' ),
 		);
 	}
@@ -158,7 +158,7 @@ class Connector_Installer extends Log_Connector {
 			}
 
 			$message = esc_html_x(
-				'%1$s (%2$s)',
+				'%1$s',
 				'Plugin/theme installation. 1: Plugins/themes namess, 2: vesion',
 				'mainwp'
 			);
@@ -195,13 +195,13 @@ class Connector_Installer extends Log_Connector {
 
 			if ( 'plugin' === $type || 'theme' === $type ) {
 				$message = esc_html_x(
-					'%1$s (%2$s)',
+					'%1$s',
 					'Update. 1: name',
 					'mainwp'
 				);
 			} elseif ( 'trans' === $type ) {
 				$message = esc_html_x(
-					'%1$s (%2$s)',
+					'%1$s',
 					'Update. 1: name',
 					'mainwp'
 				);
@@ -211,7 +211,7 @@ class Connector_Installer extends Log_Connector {
 		} elseif ( 'updated' === $action && 'core' === $type ) {
 			$message     = esc_html__( '%1$s', 'mainwp' );
 			$args        = array(
-				'name'        => 'WordPress',
+				'name'        => 'WordPress', // label.
 				'version'     => isset( $data['version'] ) ? $data['version'] : '',
 				'old_version' => isset( $data['old_version'] ) ? $data['old_version'] : '',
 				'error'       => isset( $data['error'] ) ? $data['error'] : '',
@@ -296,7 +296,7 @@ class Connector_Installer extends Log_Connector {
 		$context = 'plugin';
 
 		$message = esc_html_x(
-			'%1$s (%2$s)',
+			'%1$s',
 			'1: Plugin name, 2: plugin version',
 			'mainwp'
 		);
@@ -365,7 +365,7 @@ class Connector_Installer extends Log_Connector {
 		$context = 'theme';
 
 		$message = esc_html_x(
-			'%1$s (%2$s)',
+			'%1$s',
 			'1: Theme name, 2: Theme version',
 			'mainwp'
 		);

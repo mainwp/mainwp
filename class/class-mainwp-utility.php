@@ -25,6 +25,15 @@ class MainWP_Utility {
 	public static $enabled_wp_seo = null;
 
 	/**
+	 * Private static variable.
+	 *
+	 * @static
+	 *
+	 * @var mixed Default null
+	 */
+	public static $last_deactivated_alerts = null;
+
+	/**
 	 * Private static variable to hold the single instance of the class.
 	 *
 	 * @static
@@ -359,6 +368,30 @@ class MainWP_Utility {
 	public static function format_date( $timestamp ) {
 		return date_i18n( get_option( 'date_format' ), $timestamp );
 	}
+
+	/**
+	 * Format duration time to show.
+	 *
+	 * @param  float $time timestamp.
+	 * @return mixed result.
+	 */
+	public static function format_duration_time( $time ) {
+
+		$original_sec  = absint( $time );
+		$dura_sec      = $original_sec;
+		$days          = floor( $dura_sec / 86400 );
+		$dura_sec     -= $days * 86400;
+		$dura_hour_sec = $dura_sec;
+		$dura_hours    = floor( $dura_sec / 3600 );
+
+		if ( $days > 0 ) {
+			$formatted_dura = ( $days * 24 + $dura_hours ) . gmdate( 'i\m s\s', $dura_hour_sec );
+		} else {
+			$formatted_dura = gmdate( 'H\h i\m s\s', $original_sec );
+		}
+		return '<bdi>' . esc_html( $formatted_dura ) . '</bdi>';
+	}
+
 
 	/**
 	 * Method human_filesize()
@@ -907,6 +940,60 @@ class MainWP_Utility {
 	}
 
 	/**
+	 * Method array_sort_existed_keys()
+	 *
+	 * Sort given array by given flags.
+	 *
+	 * @param mixed  $arr Array to sort.
+	 * @param mixed  $key Array key.
+	 * @param string $sort_flag Flags to sort by. Default = SORT_STRING.
+	 */
+	public static function array_sort_existed_keys( &$arr, $key, $sort_flag = SORT_STRING ) {
+		$sorter = array();
+		$ret    = array();
+		reset( $arr );
+
+		// get items with $key to sort.
+		foreach ( $arr as $ii => $val ) {
+			if ( isset( $val[ $key ] ) ) {
+				$sorter[ $ii ] = $val[ $key ];
+			}
+		}
+		asort( $sorter, $sort_flag );
+
+		foreach ( $sorter as $ii => $val ) {
+			$ret[ $ii ] = $arr[ $ii ];
+		}
+
+		// asign other items (without $keys).
+		foreach ( $arr as $ii => $val ) {
+			if ( ! isset( $val[ $key ] ) ) {
+				$ret[ $ii ] = $val;
+			}
+		}
+
+		$arr = $ret;
+	}
+
+	/**
+	 * Method array_numeric_filter()
+	 *
+	 * Filter given numeric array.
+	 *
+	 * @param array $arr_ints Array to filter.
+	 * @return array $arr_ints Array filtered.
+	 */
+	public static function array_numeric_filter( $arr_ints ) {
+		$arr_ints = array_filter(
+			$arr_ints,
+			function ( $e ) {
+				return ( is_numeric( $e ) && 0 < $e ) ? true : false;
+			}
+		);
+		return $arr_ints;
+	}
+
+	/**
 	 * Method enabled_wp_seo()
 	 *
 	 * Check if Yoast SEO is enabled.
@@ -1317,5 +1404,30 @@ class MainWP_Utility {
 		}
 		$result = array_intersect_key( $right_array, $left_array );
 		return array_merge( $left_array, $result );
+	}
+
+
+	/**
+	 * Method get_set_deactivated_licenses_alerted().
+	 *
+	 * @param  string $slug Extension slug.
+	 * @param  bool   $time_value Time value.
+	 * @param  string $act get/set value.
+	 *
+	 * @return array $result result array.
+	 */
+	public function get_set_deactivated_licenses_alerted( $slug, $time_value = false, $act = 'get' ) {
+		if ( null === $this->last_deactivated_alerts ) {
+			$this->last_deactivated_alerts = get_option( 'mainwp_cron_licenses_deactivated_alerted', array() );
+			if ( ! is_array( $this->last_deactivated_alerts ) ) {
+				$this->last_deactivated_alerts = array();
+			}
+		}
+		if ( 'get' === $act ) {
+			return isset( $this->last_deactivated_alerts[ $slug ] ) ? $this->last_deactivated_alerts[ $slug ] : 0;
+		} elseif ( 'set' === $act ) {
+			$this->last_deactivated_alerts[ $slug ] = intval( $time_value );
+			get_option( 'mainwp_cron_licenses_deactivated_alerted', $this->last_deactivated_alerts );
+		}
 	}
 }

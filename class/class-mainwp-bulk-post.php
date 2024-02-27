@@ -170,7 +170,7 @@ class MainWP_Bulk_Post {
 			 * @since 4.0
 			 */
 			do_action( 'mainwp_before_redirect_posting_bulkpost', $_post );
-			wp_safe_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&id=' . $post_id . '&hideall=1' );
+			wp_safe_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&id=' . $post_id . '&hideall=1&posting_nonce=' . wp_create_nonce( 'posting_nonce_' . $post_id ) );
 			die();
 		}
 	}
@@ -239,7 +239,7 @@ class MainWP_Bulk_Post {
 			 * @since 4.0
 			 */
 			do_action( 'mainwp_before_redirect_posting_bulkpage', $_post );
-			wp_safe_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPage&id=' . $post_id . '&hideall=1' );
+			wp_safe_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPage&posting_nonce=' . wp_create_nonce( 'posting_nonce_' . $post_id ) . '&id=' . $post_id . '&hideall=1' );
 			die();
 		}
 	}

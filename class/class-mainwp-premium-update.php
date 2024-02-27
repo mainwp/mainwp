@@ -77,6 +77,14 @@ class MainWP_Premium_Update {
 				'gp-premium/gp-premium.php',
 				'flying-press/flying-press.php',
 				'wp-rocket/wp-rocket.php',
+				'fluentformpro/fluentformpro.php',
+				'fluentform-signature/fluentform-signature.php',
+				'fluentcampaign-pro/fluentcampaign-pro.php',
+				'fluent-support-pro/fluent-support-pro.php',
+				'ninja-tables-pro/ninja-tables-pro.php',
+				'fluent-booking-pro/fluent-booking-pro.php',
+				'wp-social-ninja-pro/wp-social-ninja-pro.php',
+				'wp-payment-form-pro/wp-payment-form-pro.php',
 			);
 
 			/**

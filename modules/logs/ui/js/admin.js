@@ -1,11 +1,11 @@
 /* logs module js */
 jQuery(document).ready(function ($) {
 
-    if (jQuery('.ui.calendar').length > 0) {
+    if (jQuery('.mainwp-module-logs-content-wrap .ui.calendar').length > 0) {
         if (mainwpParams.use_wp_datepicker == 1) {
-            jQuery('mainwp-module-log-settings-wrapper .ui.calendar input[type=text],').datepicker({ dateFormat: "yy-mm-dd" });
+            jQuery('.mainwp-module-logs-content-wrap .ui.calendar input[type=text]').datepicker({ dateFormat: "yy-mm-dd" });
         } else {
-            jQuery('#mainwp-module-log-settings-wrapper .ui.calendar').calendar({
+            jQuery('.mainwp-module-logs-content-wrap .ui.calendar').calendar({
                 type: 'date',
                 monthFirst: false,
                 today: true,
@@ -44,7 +44,7 @@ jQuery(document).ready(function ($) {
             jQuery('#mainwp-message-zone').html('<i class="close icon"></i>' + errors).addClass('red').show();
             return;
         }
-       
+
         var msg = __('Are you sure you want to delete logs for selected date?');
 
         mainwp_confirm(msg, function () {
@@ -81,7 +81,7 @@ jQuery(document).ready(function ($) {
 
         var msg = __('Are you sure you want to compact logs for selected year?');
 
-        mainwp_confirm(msg, function(){
+        mainwp_confirm(msg, function () {
             var data = mainwp_secure_data({
                 action: 'mainwp_module_log_compact_records',
                 year: year,

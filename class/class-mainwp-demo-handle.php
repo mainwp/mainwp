@@ -521,7 +521,7 @@ class MainWP_Demo_Handle {
 	 * Get demo message to notice.
 	 */
 	public function get_demo_tooltip() {
-		return __( 'This function does not work in the demo mode!', 'mainwp' );
+		return esc_html__( 'This function does not work in the demo mode!', 'mainwp' );
 	}
 
 	/**

@@ -105,8 +105,8 @@ class Connector_User extends Log_Connector {
 
 			// translators: 1: User display name, 2: Roles.
 			$message = esc_html_x(
-				'%1$s (%2$s)',
-				'1: User display name, 2: Roles',
+				'%1$s',
+				'1: User display name',
 				'mainwp'
 			);
 

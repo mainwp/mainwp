@@ -105,34 +105,30 @@ class MainWP_Manage_Sites_View {
 
 		$items_menu = array(
 			array(
-				'title'      => esc_html__( 'Manage Sites', 'mainwp' ),
-				'parent_key' => 'managesites',
-				'slug'       => 'managesites',
-				'href'       => 'admin.php?page=managesites',
-				'right'      => '',
+				'title'                => esc_html__( 'Manage Sites', 'mainwp' ),
+				'parent_key'           => 'managesites',
+				'slug'                 => 'managesites',
+				'href'                 => 'admin.php?page=managesites',
+				'right'                => '',
+				'leftsub_order_level2' => 1,
 			),
 			array(
-				'title'      => esc_html__( 'Add New', 'mainwp' ),
-				'parent_key' => 'managesites',
-				'href'       => 'admin.php?page=managesites&do=new',
-				'slug'       => 'managesites',
-				'right'      => 'add_sites',
-				'item_slug'  => 'managesites_add_new',
+				'title'                => esc_html__( 'Add New', 'mainwp' ),
+				'parent_key'           => 'managesites',
+				'href'                 => 'admin.php?page=managesites&do=new',
+				'slug'                 => 'managesites',
+				'right'                => 'add_sites',
+				'item_slug'            => 'managesites_add_new',
+				'leftsub_order_level2' => 2,
 			),
 			array(
-				'title'      => esc_html__( 'Import Sites', 'mainwp' ),
-				'parent_key' => 'managesites',
-				'href'       => 'admin.php?page=managesites&do=bulknew',
-				'slug'       => 'managesites',
-				'right'      => 'add_sites',
-				'item_slug'  => 'managesites_import',
-			),
-			array(
-				'title'      => esc_html__( 'Monitoring', 'mainwp' ),
-				'parent_key' => 'managesites',
-				'href'       => 'admin.php?page=MonitoringSites',
-				'slug'       => 'MonitoringSites',
-				'right'      => '',
+				'title'                => esc_html__( 'Import Sites', 'mainwp' ),
+				'parent_key'           => 'managesites',
+				'href'                 => 'admin.php?page=managesites&do=bulknew',
+				'slug'                 => 'managesites',
+				'right'                => 'add_sites',
+				'item_slug'            => 'managesites_import',
+				'leftsub_order_level2' => 3,
 			),
 		);
 
@@ -213,7 +209,7 @@ class MainWP_Manage_Sites_View {
 
 		$total_info    = MainWP_Manage_Sites_Update_View::get_total_info( $site_id );
 		$total_updates = $total_info['total_upgrades'];
-		$after_title   = '<div class="ui small ' . ( empty( $total_updates ) ? 'green' : 'red' ) . ' label" timestamp="' . time() . '">' . intval( $total_updates ) . '</div>';
+		$after_title   = empty( $total_updates ) ? '' : '<div class="ui mini circular red label" timestamp="' . time() . '" style="font-size:6px;" data-tooltip="View pending updates" data-inverted="" data-position="top center"></div>';
 
 		$site_pages = array(
 			'ManageSitesDashboard'     => array(
@@ -244,7 +240,7 @@ class MainWP_Manage_Sites_View {
 			),
 			'SecurityScan'             => array(
 				'href'   => 'admin.php?page=managesites&scanid=' . $site_id,
-				'title'  => esc_html__( 'Security', 'mainwp' ),
+				'title'  => esc_html__( 'Site Hardening', 'mainwp' ),
 				'access' => true,
 			),
 		);
@@ -267,17 +263,26 @@ class MainWP_Manage_Sites_View {
 		$pagetitle = esc_html__( 'Sites', 'mainwp' );
 
 		if ( ! empty( $site_id ) ) {
-			$website = MainWP_DB::instance()->get_website_by_id( $site_id );
-			$imgfavi = '';
+			$website   = MainWP_DB::instance()->get_website_by_id( $site_id );
+			$reconnect = '';
+			if ( $site_id && $website && '' !== $website->sync_errors ) {
+				$reconnect = '<a href="#" class="mainwp-updates-overview-reconnect-site item" siteid="' . intval( $site_id ) . '"><i class="sync alternate icon"></i> Reconnect</a>';
+			}
+			$wp_admin_href = MainWP_Site_Open::get_open_site_url( $site_id, false, false );
+			$dropdown      = $reconnect . '
+			<a class="item mainwp-remove-site-button" site-id="' . intval( $site_id ) . '" id="mainwp-remove-site-button" href="#"><i class="trash alternate icon"></i> Remove Site</a>
+			<a id="mainwp-go-wp-admin-button" target="_blank" href="' . $wp_admin_href . '" class="item open_newwindow_wpadmin"><i class="sign in icon"></i> Go to WP Admin</a>
+			';
+			$imgfavi       = '';
 			if ( 1 === (int) get_option( 'mainwp_use_favicon', 1 ) ) {
 				$favi_url = MainWP_Connect::get_favico_url( $website );
 				if ( false !== $favi_url ) {
-					$imgfavi = '<img src="' . esc_attr( $favi_url ) . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
+					$imgfavi = '<img src="' . esc_attr( $favi_url ) . '" class="ui circurlar avatar image" />';
 				} else {
-					$imgfavi  = '<i class="icon wordpress"></i>'; // phpcs:ignore -- Prevent modify WP icon.
+					$imgfavi  = '<i class="icon large wordpress"></i>'; // phpcs:ignore -- Prevent modify WP icon.
 				}
 			}
-			$pagetitle = $imgfavi . ' ' . $website->url;
+			$pagetitle = $imgfavi . '<div class="content"><div class="ui pointing dropdown"><div class="text">' . $website->name . '</div><i class="dropdown icon"></i><div class="menu">' . $dropdown . '</div></div><div class="sub header"><a href="' . $website->url . '" target="_blank" style="color:#666!important;font-weight:normal!important;">' . MainWP_Utility::get_nice_url( $website->url ) . '</a> <a href="' . MainWP_Site_Open::get_open_site_url( $website->id, '', false ) . '" target="_blank" class="open_newwindow_wpadmin" style="color:#666!important;font-weight:normal!important;"><i class="sign in icon" style="color:#666!important;font-weight:normal!important;"></i></a></div></div>';
 		}
 
 		$params = array(
@@ -322,7 +327,7 @@ class MainWP_Manage_Sites_View {
 	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
-	private static function render_managesites_header( $site_pages, $managesites_pages, $subPages, $site_id, $shownPage ) {
+	private static function render_managesites_header( $site_pages, $managesites_pages, $subPages, $site_id, $shownPage ) { //phpcs:ignore -- complex method.
 
 		$renderItems = array();
 		if ( isset( $managesites_pages[ $shownPage ] ) ) {
@@ -355,13 +360,18 @@ class MainWP_Manage_Sites_View {
 				if ( isset( $subPage['sitetab'] ) && true === $subPage['sitetab'] && empty( $site_id ) ) {
 					continue;
 				}
-				$item           = array();
-				$item['title']  = $subPage['title'];
-				$item['href']   = 'admin.php?page=ManageSites' . $subPage['slug'] . ( $site_id ? '&id=' . esc_attr( $site_id ) : '' );
-				$item['active'] = ( $subPage['slug'] === $shownPage ) ? true : false;
+				$item          = array();
+				$item['title'] = $subPage['title'];
+				if ( ! empty( $subPage['href'] ) ) {
+					$item['href'] = $subPage['href'];
+				} else {
+					$item['href'] = 'admin.php?page=ManageSites' . $subPage['slug'] . ( $site_id ? '&id=' . esc_attr( $site_id ) : '' );
+				}
+				$item['active'] = isset( $subPage['slug'] ) && ( $subPage['slug'] === $shownPage ) ? true : false;
 				$renderItems[]  = $item;
 			}
 		}
+		$renderItems = apply_filters( 'mainwp_manage_sites_navigation_items', $renderItems, $site_id, $shownPage );
 		MainWP_UI::render_page_navigation( $renderItems );
 	}
 
@@ -649,7 +659,7 @@ class MainWP_Manage_Sites_View {
 	/**
 	 * Method render_scan_site()
 	 *
-	 * Render Security Scan sub page.
+	 * Render Site Hardening sub page.
 	 *
 	 * @param mixed $website Child Site.
 	 *
@@ -665,7 +675,7 @@ class MainWP_Manage_Sites_View {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-security-info-message' ) ) { ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-security-info-message"></i>
-					<?php printf( esc_html__( 'Fix detected security issues on the childs site.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">', '</a>' ); ?>
+					<?php printf( esc_html__( 'Fix detected hardening issues on the childs site. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 				</div>
 			<?php } ?>
 			<?php
@@ -681,9 +691,9 @@ class MainWP_Manage_Sites_View {
 				/**
 				 * Action: mainwp_securityissues_sites
 				 *
-				 * Fires on a child site Security Scan page at top.
+				 * Fires on a child site Hardening page at top.
 				 *
-				 * @hooked MainWP basic security scan features.
+				 * @hooked MainWP basic hardening features.
 				 *
 				 * @param object $website Object containing child site info.
 				 *
@@ -702,7 +712,7 @@ class MainWP_Manage_Sites_View {
 					/**
 					 * Action: mainwp_sucuriscan_sites
 					 *
-					 * Fires on a child site Security Scan page.
+					 * Fires on a child site Hardening page.
 					 *
 					 * @hooked MainWP Sucuri Extension data.
 					 *
@@ -724,7 +734,7 @@ class MainWP_Manage_Sites_View {
 					/**
 					 * Action: mainwp_wordfence_sites
 					 *
-					 * Fires on a child site Security Scan page.
+					 * Fires on a child site Hardening page.
 					 *
 					 * @hooked MainWP Wordfence Extension data.
 					 *
@@ -787,7 +797,7 @@ class MainWP_Manage_Sites_View {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-edit-site-info-message' ) ) { ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-edit-site-info-message"></i>
-					<?php printf( esc_html__( 'Edit the %1$s (%2$s) child site settings.  For additional help, please check this %3$shelp documentation%4$s.', 'mainwp' ), esc_html( stripslashes( $website->name ) ), '<a href="' . esc_url( $website->url ) . '" target="_blank">' . esc_url( $website->url ) . '</a>', '<a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">', '</a>' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+					<?php printf( esc_html__( 'Edit the %1$s (%2$s) child site settings.  For additional help, please check this %3$shelp documentation%4$s.', 'mainwp' ), esc_html( stripslashes( $website->name ) ), '<a href="' . esc_url( $website->url ) . '" target="_blank">' . esc_url( $website->url ) . '</a>', '<a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 				</div>
 			<?php } ?>
 			<?php
@@ -1124,6 +1134,7 @@ class MainWP_Manage_Sites_View {
 			</form>
 		</div>
 		<div class="ui modal" id="mainwp-test-connection-modal">
+			<i class="close icon"></i>
 			<div class="header"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
 			<div class="content">
 				<div class="ui active inverted dimmer">
@@ -1138,9 +1149,6 @@ class MainWP_Manage_Sites_View {
 						</div>
 					</h2>
 				</div>
-			</div>
-			<div class="actions">
-				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 			</div>
 		</div>
 
@@ -1229,7 +1237,7 @@ class MainWP_Manage_Sites_View {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-email-tokens-info-message' ) ) { ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-message"></i>
-					<?php echo ( '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">Boilerplate</a> and <a href="https://mainwp.com/extension/pro-reports/" target="_blank">Reports</a> extensions tokens are supported in the email settings and templates if Extensions are in use.' ); ?>
+					<?php echo ( '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">Boilerplate</a> <i class="external alternate icon"></i> and <a href="https://mainwp.com/extension/pro-reports/" target="_blank">Reports</a> <i class="external alternate icon"></i> extensions tokens are supported in the email settings and templates if Extensions are in use.' ); ?>
 				</div>
 			<?php } ?>
 			<h3 class="ui header"><?php echo esc_html( $title ); ?></h3>
@@ -1335,6 +1343,7 @@ class MainWP_Manage_Sites_View {
 		$editable = false;
 		?>
 			<div class="ui large modal" id="mainwp-edit-email-template-modal">
+				<i class="close icon"></i>
 				<div class="header"><?php esc_html_e( 'Edit Email Template', 'mainwp' ); ?></div>
 					<div class="scrolling header">
 					<form method="POST" id="email-template-form" action="<?php echo esc_html( $localion ); ?>" class="ui form">		
@@ -1370,9 +1379,8 @@ class MainWP_Manage_Sites_View {
 					</div>
 					<div class="actions">
 						<?php if ( $editable ) { ?>
-						<input type="submit" form="email-template-form" class="ui green button" value="<?php esc_attr_e( 'Save', 'mainwp' ); ?>"/>
+						<input type="submit" form="email-template-form" class="ui green button" value="<?php esc_attr_e( 'Save Changes', 'mainwp' ); ?>"/>
 						<?php } ?>
-						<input type="button" class="ui cancel button" value="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"/>					
 					</div>			
 				</div>
 			</div>
@@ -1836,13 +1844,13 @@ class MainWP_Manage_Sites_View {
 
 						MainWP_Sync::sync_information_array( $website, $information );
 				} else {
-					$error = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a>' );
+					$error = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a> <i class="external alternate icon"></i>' );
 				}
 			} catch ( MainWP_Exception $e ) {
 				if ( 'HTTPERROR' === $e->getMessage() ) {
 					$error = 'HTTP error' . ( null !== $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
 				} elseif ( 'NOMAINWP' === $e->getMessage() ) {
-					$error = sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a>' );
+					$error = sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a> <i class="external alternate icon"></i>' );
 				} else {
 					$error = $e->getMessage();
 				}

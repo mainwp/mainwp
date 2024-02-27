@@ -156,13 +156,7 @@ class MainWP_Clients {
 				} );
 				</script>
 				<?php else : ?>
-					<h2 class="ui icon header">
-						<i class="info circle icon"></i>
-						<div class="content">
-							<?php esc_html_e( 'No Clients Created', 'mainwp' ); ?>
-							<div class="sub header"><?php esc_html_e( 'Create clients in the MainWP > Clients area.', 'mainwp' ); ?></div>
-						</div>
-					</h2>
+					<?php MainWP_UI::render_empty_element_placeholder(); ?>
 				<?php endif; ?>
 				<?php
 				/**

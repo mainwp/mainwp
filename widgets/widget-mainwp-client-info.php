@@ -191,7 +191,11 @@ class MainWP_Client_Info {
 					?>
 					</tbody>
 				</table>
-				<?php } ?>
+					<?php
+				} else {
+					MainWP_UI::render_empty_element_placeholder();
+				}
+				?>
 				<?php
 				/**
 				 * Action: mainwp_clients_info_widget_bottom

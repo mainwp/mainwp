@@ -41,7 +41,7 @@ jQuery(document).ready(function () {
     });
 
     // Trigger action_restore_backup.
-    jQuery('.mainwp_3rd_party_api_cloudways_action_restore_backup').on('click', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_cloudways_action_restore_backup', function (event) {
         cloudways_action_restore_backup(this, event);
     });
 
@@ -75,12 +75,12 @@ jQuery(document).ready(function () {
     });
 
     // Trigger action_restore_backup.
-    jQuery('.mainwp_3rd_party_api_vultr_action_restore_backup').on('click', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_vultr_action_restore_backup', function (event) {
         vultr_action_restore_backup(this, event);
     });
 
     // Trigger action_delete_backup.
-    jQuery('.mainwp_3rd_party_api_vultr_action_delete_backup').on('click', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_vultr_action_delete_backup', function (event) {
         vultr_action_delete_backup(this, event);
     });
 
@@ -109,12 +109,12 @@ jQuery(document).ready(function () {
     });
 
     // Trigger action_restore_backup.
-    jQuery('.mainwp_3rd_party_api_gridpane_action_restore_backup').on('click', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_gridpane_action_restore_backup', function (event) {
         gridpane_action_restore_backup(this, event);
     });
 
     // Trigger action_delete_backup.
-    jQuery('.mainwp_3rd_party_api_gridpane_action_delete_backup').on('click', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_gridpane_action_delete_backup', function (event) {
         gridpane_action_delete_backup(this, event);
     });
 
@@ -143,7 +143,7 @@ jQuery(document).ready(function () {
     });
 
     // Trigger action_restore_backup.
-    jQuery('.mainwp_3rd_party_api_linode_action_restore_backup').on('click', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_linode_action_restore_backup', function (event) {
         linode_action_restore_backup(this, event);
     });
 
@@ -180,12 +180,12 @@ jQuery(document).ready(function () {
     });
 
     // Trigger action_delete_backup.
-    jQuery('.mainwp_3rd_party_api_digitalocean_action_delete_backup').on('click', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_digitalocean_action_delete_backup', function (event) {
         digitalocean_action_delete_backup(this, event);
     });
 
     // Trigger action_restore_backup.
-    jQuery('.mainwp_3rd_party_api_digitalocean_action_restore_backup').on('click', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_digitalocean_action_restore_backup', function (event) {
         digitalocean_action_restore_backup(this, event);
     });
 
@@ -199,7 +199,7 @@ jQuery(document).ready(function () {
     });
 
     // Trigger action_restore_backup.
-    jQuery('.mainwp_3rd_party_api_cpanel_action_restore_backup').on('click', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_backup', function (event) {
         var confirmMsg = __('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
             cPanel_action_restore_backup(this, event);
@@ -207,15 +207,16 @@ jQuery(document).ready(function () {
     });
 
     // Trigger action_restore_database_backup.
-    jQuery('.mainwp_3rd_party_api_cpanel_action_restore_database_backup').on('click', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_database_backup', function (event) {
         var confirmMsg = __('Are you sure you want to Restore this backup?');
+        var btObj = this;
         mainwp_confirm(confirmMsg, function () {
-            cpanel_action_restore_database_backup(this, event);
+            cpanel_action_restore_database_backup(btObj, event);
         });
     });
 
     // Trigger action_restore_manual_backup.
-    jQuery('.mainwp_3rd_party_api_cpanel_action_restore_manual_backup').on('click', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_manual_backup', function (event) {
         var confirmMsg = __('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
             cpanel_action_restore_manual_backup(this, event);
@@ -288,7 +289,7 @@ jQuery(document).ready(function () {
     });
 
     // Trigger action_restore_backup.
-    jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').on('click', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_plesk_action_restore_backup', function (event) {
         var confirmMsg = __('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
             plesk_action_restore_backup(this, event);
@@ -296,7 +297,7 @@ jQuery(document).ready(function () {
     });
 
     // Trigger action_delete_backup.
-    jQuery('.mainwp_3rd_party_api_plesk_action_delete_backup').on('click', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_plesk_action_delete_backup', function (event) {
         var confirmMsg = __('Are you sure you want to Delete this backup?');
         mainwp_confirm(confirmMsg, function () {
             plesk_action_delete_backup(this, event);
@@ -510,12 +511,9 @@ cloudways_action_refresh_available_backups = function (pObj) {
     }, 'json');
 };
 
-// Delete backups.
+// Restore backups.
 cloudways_action_restore_backup = function (pObj) {
-
-    jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
-
+    var button = jQuery(pObj);
     var websiteId = jQuery(pObj).attr('website_id');
     var backupDate = jQuery(pObj).attr('backup_date');
 
@@ -527,8 +525,7 @@ cloudways_action_restore_backup = function (pObj) {
     });
 
     // Start button animation.
-    jQuery(button).find('i.loading').css({ 'display': 'block' });
-    jQuery(button).find('div').addClass('hidden');
+    jQuery(button).html('<i class="notched circle loading icon"></i>');
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -544,8 +541,7 @@ cloudways_action_restore_backup = function (pObj) {
                 ;
 
             // Stop button animation.
-            jQuery(button).find('i.loading').css({ 'display': 'none' });
-            jQuery(button).find('div').removeClass('hidden');
+            jQuery(button).html('<i class="undo icon"></i>');
 
         } else {
             jQuery('#backups_site_toast').addClass('red')
@@ -558,8 +554,7 @@ cloudways_action_restore_backup = function (pObj) {
                 ;
 
             // Stop button animation.
-            jQuery(button).find('i.loading').css({ 'display': 'none' });
-            jQuery(button).find('div').removeClass('hidden');
+            jQuery(button).html('<i class="undo icon"></i>');
 
         }
     });
@@ -689,7 +684,6 @@ vultr_action_create_snapshot = function (pObj) {
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
-
         if (response === 'true') {
 
             jQuery('#backups_site_toast').addClass('green')
@@ -704,12 +698,13 @@ vultr_action_create_snapshot = function (pObj) {
                 location.reload();
             }, 5000);
         } else {
+            var err_message = '' != response ? response : 'There was an issue while requesting your backup. Please check that your ID and API Key are correct.';
             jQuery('#backups_site_toast').addClass('red')
                 .toast({
                     class: 'warning',
                     position: 'top right',
                     displayTime: 5000,
-                    message: 'There was an issue while requesting your backup. Please check that your ID and API Key are correct.',
+                    message: err_message,
                 })
                 ;
             setTimeout(function () {
@@ -767,13 +762,10 @@ vultr_action_refresh_available_backups = function (pObj) {
         }
     });
 };
-
 // Restore Backup.
 vultr_action_restore_backup = function (pObj) {
 
-    jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
-
+    var button = jQuery(pObj);
     var websiteId = jQuery(pObj).attr('website_id');
     var snapshotID = jQuery(pObj).attr('snapshot_id');
 
@@ -785,8 +777,7 @@ vultr_action_restore_backup = function (pObj) {
     });
 
     // Start button animation.
-    jQuery(button).find('i.loading').css({ 'display': 'block' });
-    jQuery(button).find('div').addClass('hidden');
+    jQuery(button).html('<i class="notched circle loading icon"></i>');
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -802,8 +793,7 @@ vultr_action_restore_backup = function (pObj) {
                 ;
 
             // Stop button animation.
-            jQuery(button).find('i.loading').css({ 'display': 'none' });
-            jQuery(button).find('div').removeClass('hidden');
+            jQuery(button).html('<i class="undo icon"></i>');
 
         } else {
             jQuery('#backups_site_toast').addClass('red')
@@ -816,19 +806,17 @@ vultr_action_restore_backup = function (pObj) {
                 ;
 
             // Stop button animation.
-            jQuery(button).find('i.loading').css({ 'display': 'none' });
-            jQuery(button).find('div').removeClass('hidden');
+            jQuery(button).html('<i class="undo icon"></i>');
 
         }
     });
 };
 
+
 // Delete Backup.
 vultr_action_delete_backup = function (pObj) {
 
-    jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
-
+    var button = jQuery(pObj);
     var websiteId = jQuery(pObj).attr('website_id');
     var snapshotID = jQuery(pObj).attr('snapshot_id');
 
@@ -840,8 +828,7 @@ vultr_action_delete_backup = function (pObj) {
     });
 
     // Start button animation.
-    jQuery(button).find('i.loading').css({ 'display': 'block' });
-    jQuery(button).find('div').addClass('hidden');
+    jQuery(button).html('<i class="notched circle loading icon"></i>');
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -857,8 +844,7 @@ vultr_action_delete_backup = function (pObj) {
                 ;
 
             // Stop button animation.
-            jQuery(button).find('i.loading').css({ 'display': 'none' });
-            jQuery(button).find('div').removeClass('hidden');
+            jQuery(button).html('<i class="undo icon"></i>');
 
         } else {
             jQuery('#backups_site_toast').addClass('red')
@@ -871,12 +857,12 @@ vultr_action_delete_backup = function (pObj) {
                 ;
 
             // Stop button animation.
-            jQuery(button).find('i.loading').css({ 'display': 'none' });
-            jQuery(button).find('div').removeClass('hidden');
+            jQuery(button).html('<i class="undo icon"></i>');
 
         }
     });
 };
+
 
 /********************************************************
  * Gridpane Functions.
@@ -1007,9 +993,7 @@ gridpane_action_refresh_available_backups = function (pObj) {
 // Restore Backup.
 gridpane_action_restore_backup = function (pObj) {
 
-    jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
-
+    var button = jQuery(pObj);
     var websiteId = jQuery(pObj).attr('website_id');
     var backupType = jQuery(pObj).attr('backup_type');
     var backupName = jQuery(pObj).attr('backup_name');
@@ -1023,8 +1007,7 @@ gridpane_action_restore_backup = function (pObj) {
     });
 
     // Start button animation.
-    jQuery(button).find('i.loading').css({ 'display': 'block' });
-    jQuery(button).find('div').addClass('hidden');
+    jQuery(button).html('<i class="notched circle loading icon"></i>');
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -1040,8 +1023,7 @@ gridpane_action_restore_backup = function (pObj) {
                 ;
 
             // Stop button animation.
-            jQuery(button).find('i.loading').css({ 'display': 'none' });
-            jQuery(button).find('div').removeClass('hidden');
+            jQuery(button).html('<i class="undo icon"></i>');
 
         } else {
             jQuery('#backups_site_toast').addClass('red')
@@ -1054,8 +1036,7 @@ gridpane_action_restore_backup = function (pObj) {
                 ;
 
             // Stop button animation.
-            jQuery(button).find('i.loading').css({ 'display': 'none' });
-            jQuery(button).find('div').removeClass('hidden');
+            jQuery(button).html('<i class="undo icon"></i>');
 
         }
     });
@@ -1064,8 +1045,7 @@ gridpane_action_restore_backup = function (pObj) {
 // Delete Backup.
 gridpane_action_delete_backup = function (pObj) {
 
-    jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
+    var button = jQuery(pObj);
 
     var websiteId = jQuery(pObj).attr('website_id');
     var backupType = jQuery(pObj).attr('backup_type');
@@ -1080,8 +1060,7 @@ gridpane_action_delete_backup = function (pObj) {
     });
 
     // Start button animation.
-    jQuery(button).find('i.loading').css({ 'display': 'block' });
-    jQuery(button).find('div').addClass('hidden');
+    jQuery(button).html('<i class="notched circle loading icon"></i>');
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -1097,8 +1076,7 @@ gridpane_action_delete_backup = function (pObj) {
                 ;
 
             // Stop button animation.
-            jQuery(button).find('i.loading').css({ 'display': 'none' });
-            jQuery(button).find('div').removeClass('hidden');
+            jQuery(button).html('<i class="trash icon"></i>');
 
         } else {
             jQuery('#backups_site_toast').addClass('red')
@@ -1111,8 +1089,7 @@ gridpane_action_delete_backup = function (pObj) {
                 ;
 
             // Stop button animation.
-            jQuery(button).find('i.loading').css({ 'display': 'none' });
-            jQuery(button).find('div').removeClass('hidden');
+            jQuery(button).html('<i class="trash icon"></i>');
 
         }
     });
@@ -1524,8 +1501,7 @@ digitalocean_action_refresh_available_backups = function (pObj) {
 // restore Backup.
 digitalocean_action_restore_backup = function (pObj) {
 
-    jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
+    var button = jQuery(pObj);
     var lastBackup = jQuery(pObj).closest('td').prev();
     var websiteId = jQuery(pObj).attr('website_id');
     var snapshotId = jQuery(pObj).attr('snapshot_id');
@@ -1537,9 +1513,8 @@ digitalocean_action_restore_backup = function (pObj) {
         snapshot_id: snapshotId
     });
 
+    // Start button animation.
     jQuery(button).html('<i class="notched circle loading icon"></i>');
-
-    jQuery(lastBackup).html('Requesting Restore...');
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -1557,8 +1532,7 @@ digitalocean_action_restore_backup = function (pObj) {
                 ;
 
             // Stop button animation.
-            jQuery(button).find('i.loading').css({ 'display': 'none' });
-            jQuery(button).find('div').removeClass('hidden');
+            jQuery(button).html('<i class="undo icon"></i>');
 
         } else {
             jQuery('#backups_site_toast').addClass('red')
@@ -1571,8 +1545,7 @@ digitalocean_action_restore_backup = function (pObj) {
                 ;
 
             // Stop button animation.
-            jQuery(button).find('i.loading').css({ 'display': 'none' });
-            jQuery(button).find('div').removeClass('hidden');
+            jQuery(button).html('<i class="undo icon"></i>');
         }
 
 
@@ -1582,8 +1555,7 @@ digitalocean_action_restore_backup = function (pObj) {
 // Delete Backup.
 digitalocean_action_delete_backup = function (pObj) {
 
-    jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
+    var button = jQuery(pObj);
 
     var snapshotId = jQuery(pObj).attr('snapshot_id');
 
@@ -1593,8 +1565,7 @@ digitalocean_action_delete_backup = function (pObj) {
     });
 
     // Start button animation.
-    jQuery(button).find('i.loading').css({ 'display': 'block' });
-    jQuery(button).find('div').addClass('hidden');
+    jQuery(button).html('<i class="notched circle loading icon"></i>');
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -1610,8 +1581,7 @@ digitalocean_action_delete_backup = function (pObj) {
                 ;
 
             // Stop button animation.
-            jQuery(button).find('i.loading').css({ 'display': 'none' });
-            jQuery(button).find('div').removeClass('hidden');
+            jQuery(button).html('<i class="trash icon"></i>');
 
         } else {
             jQuery('#backups_site_toast').addClass('red')
@@ -1624,8 +1594,7 @@ digitalocean_action_delete_backup = function (pObj) {
                 ;
 
             // Stop button animation.
-            jQuery(button).find('i.loading').css({ 'display': 'none' });
-            jQuery(button).find('div').removeClass('hidden');
+            jQuery(button).html('<i class="trash icon"></i>');
 
         }
     });
@@ -1944,11 +1913,11 @@ cPanel_action_restore_backup = function (pObj) {
 };
 
 // restore Backup.
-cpanel_action_restore_database_backup = function () {
+cpanel_action_restore_database_backup = function (btObj) {
 
-    var websiteId = jQuery('#cpanel_automatic_backup_button').attr('website_id');
-    var backupID = jQuery('#database_backup_button').attr('backup_name');
-    var backupPath = jQuery('#database_backup_button').attr('backup_path');
+    var websiteId = jQuery(btObj).attr('website_id');
+    var backupID = jQuery(btObj).attr('backup_name');
+    var backupPath = jQuery(btObj).attr('backup_path');
 
     var data = mainwp_secure_data({
         action: 'cpanel_action_restore_database_backup',

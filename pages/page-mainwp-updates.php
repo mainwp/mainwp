@@ -183,7 +183,7 @@ class MainWP_Updates {
 
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'         => esc_html__( 'Updates', 'mainwp' ) . ' <span class="ui ' . $label_color_total . ' mini label">' . $updates_count['total'] . '</span>',
+				'title'         => esc_html__( 'Updates', 'mainwp' ) . ' <span class="ui ' . $label_color_total . ' mini label">' . intval( $updates_count['total'] ) . '</span>',
 				'parent_key'    => 'managesites',
 				'slug'          => 'UpdatesManage',
 				'href'          => 'admin.php?page=UpdatesManage',
@@ -200,28 +200,28 @@ class MainWP_Updates {
 
 			$init_sub_subleftmenu = array(
 				array(
-					'title'      => esc_html__( 'Plugins Updates', 'mainwp' ) . ' <span class="ui' . $label_color_plugins . 'label">' . $updates_count['plugins'] . '</span>',
+					'title'      => esc_html__( 'Plugins', 'mainwp' ) . ' <span class="ui' . $label_color_plugins . 'label">' . intval( $updates_count['plugins'] ) . '</span>',
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=plugins-updates',
 					'slug'       => 'UpdatesManage',
 					'right'      => '',
 				),
 				array(
-					'title'      => esc_html__( 'Themes Updates', 'mainwp' ) . ' <span class="ui ' . $label_color_themes . ' label">' . $updates_count['themes'] . '</span>',
+					'title'      => esc_html__( 'Themes', 'mainwp' ) . ' <span class="ui ' . $label_color_themes . ' label">' . intval( $updates_count['themes'] ) . '</span>',
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=themes-updates',
 					'slug'       => 'UpdatesManage',
 					'right'      => '',
 				),
 				array(
-					'title'      => esc_html__( 'WordPress Updates', 'mainwp' ) . ' <span class="ui ' . $label_color_wp . ' label">' . $updates_count['wp'] . '</span>',
+					'title'      => esc_html__( 'WordPress', 'mainwp' ) . ' <span class="ui ' . $label_color_wp . ' label">' . intval( $updates_count['wp'] ) . '</span>',
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=wordpress-updates',
 					'slug'       => 'UpdatesManage&tab=wordpress-updates',
 					'right'      => '',
 				),
 				array(
-					'title'      => esc_html__( 'Translation Updates', 'mainwp' ) . ' <span class="ui ' . $label_color_translations . ' label">' . $updates_count['translations'] . '</span>',
+					'title'      => esc_html__( 'Translation', 'mainwp' ) . ' <span class="ui ' . $label_color_translations . ' label">' . intval( $updates_count['translations'] ) . '</span>',
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=translations-updates',
 					'slug'       => 'UpdatesManage&tab=translations-updates',
@@ -232,21 +232,21 @@ class MainWP_Updates {
 		} else {
 			$init_sub_subleftmenu = array(
 				array(
-					'title'      => esc_html__( 'Plugins Updates', 'mainwp' ) . ' <span class="ui' . $label_color_plugins . 'label">' . $updates_count['plugins'] . '</span>',
+					'title'      => esc_html__( 'Plugins', 'mainwp' ) . ' <span class="ui' . $label_color_plugins . 'label">' . intval( $updates_count['plugins'] ) . '</span>',
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=plugins-updates',
 					'slug'       => 'UpdatesManage',
 					'right'      => '',
 				),
 				array(
-					'title'      => esc_html__( 'Themes Updates', 'mainwp' ) . ' <span class="ui' . $label_color_themes . 'label">' . $updates_count['themes'] . '</span>',
+					'title'      => esc_html__( 'Themes', 'mainwp' ) . ' <span class="ui' . $label_color_themes . 'label">' . intval( $updates_count['themes'] ) . '</span>',
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=themes-updates',
 					'slug'       => 'UpdatesManage',
 					'right'      => '',
 				),
 				array(
-					'title'      => esc_html__( 'WordPress Updates', 'mainwp' ) . ' <span class="ui' . $label_color_wp . 'label">' . $updates_count['wp'] . '1</span>',
+					'title'      => esc_html__( 'WordPress', 'mainwp' ) . ' <span class="ui' . $label_color_wp . 'label">' . intval( $updates_count['wp'] ) . '1</span>',
 					'parent_key' => 'UpdatesManage',
 					'href'       => 'admin.php?page=UpdatesManage&tab=wordpress-updates',
 					'slug'       => 'UpdatesManage&tab=wordpress-updates',

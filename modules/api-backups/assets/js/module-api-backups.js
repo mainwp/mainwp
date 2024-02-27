@@ -41,13 +41,14 @@ mainwp_api_backups_do_backups = function (pObj) {
     apibackups_bulkCurrentThreads = 0;
     apibackups_bulkFinishedThreads = 0;
 
+
     jQuery(pObj).addClass('disabled');
     mainwp_api_backups_do_backups_specific_next(selector);
 }
 
 
 mainwp_api_backups_do_backups_specific_next = function (selector) {
-    while ((objProcess = jQuery(selector + ':first')) && (objProcess.length > 0) && (objProcess.length > 0) && (apibackups_bulkCurrentThreads < apibackups_bulkMaxThreads)) {
+    while ((objProcess = jQuery(selector + ':first')) && objProcess.length > 0 && apibackups_bulkCurrentThreads < apibackups_bulkMaxThreads) {
         objProcess.attr('status', 'proceed');
         mainwp_api_backups_do_backups_specific(objProcess, true, selector);
     }
@@ -76,6 +77,7 @@ mainwp_api_backups_do_backups_specific = function (pObj, bulk, selector) {
     var data = mainwp_secure_data({
         action: 'mainwp_api_backups_selected_websites',
         websiteId: parent.attr('website-id'),
+        bulk_backups: 1,
     });
 
     if (bulk) {

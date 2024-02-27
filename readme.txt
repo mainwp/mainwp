@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.4.3
 Requires PHP: 7.4
-Stable tag: 5.0-RC4.0
+Stable tag: 5.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -17,11 +17,9 @@ Perform WordPress maintenance tasks like Updates, Backups, Uptime Monitoring, Se
 
 The [MainWP WordPress Manager](https://mainwp.com) Dashboard plugin allows you to control multiple WordPress websites **(even those on different hosting)** from your own WordPress website.
 
-🎉 Over 600k WordPress sites are being managed by 20k active dashboards.
+🎉 Over 700K WordPress sites are being managed by 20k active dashboards.
 
 And, MainWP is the only WordPress sites management plugin with **over 2000** ⭐⭐⭐⭐⭐ reviews on wp.org. Additionally, [here's](https://mainwp.com/love/) what our users have to say about MainWP.
-
-[Try the Live Demo](https://mainwp.com/live-demo/)
 
 == How is MainWP different from ManageWP and other SaaS WordPress Management plugins? ==
 

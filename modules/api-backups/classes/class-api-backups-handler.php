@@ -134,7 +134,7 @@ class Api_Backups_Handler {
 							self::send_backups_response( false );
 						}
 					}
-					wp_die( esc_html__( 'Error: DigitalOcean Backup', 'mainwp' ) );
+					self::send_bulk_backups_error( false, esc_html__( 'Error: DigitalOcean Backup', 'mainwp' ) );
 				}
 				break;
 			case 'linode':
@@ -151,7 +151,7 @@ class Api_Backups_Handler {
 						}
 					}
 				}
-				wp_die( esc_html__( 'Error: Linode Backup', 'mainwp' ) );
+				self::send_bulk_backups_error( false, esc_html__( 'Error: Linode Backup', 'mainwp' ) );
 				break;
 			case 'gridpane':
 				$result = Api_Backups_3rd_Party::gridpane_action_create_backup( $website_id, $return );
@@ -163,9 +163,8 @@ class Api_Backups_Handler {
 							self::send_backups_response( false, $error->get_error_message() );
 						}
 					}
-						self::send_backups_response();
-
-					wp_die( esc_html__( 'Error: GridPane Backup', 'mainwp' ) );
+					self::send_backups_response();
+					self::send_bulk_backups_error( false, esc_html__( 'Error: GridPane Backup', 'mainwp' ) );
 				}
 
 				break;
@@ -181,7 +180,7 @@ class Api_Backups_Handler {
 							self::send_backups_response();
 						}
 					}
-					wp_die( esc_html__( 'Error: Cloudways Backup', 'mainwp' ) );
+					self::send_bulk_backups_error( false, esc_html__( 'Error: Cloudways Backup', 'mainwp' ) );
 				}
 				break;
 			case 'cpanel':
@@ -207,7 +206,7 @@ class Api_Backups_Handler {
 							}
 						}
 					}
-					wp_die( esc_html__( 'Error: cPanel Backup', 'mainwp' ) );
+					self::send_bulk_backups_error( false, esc_html__( 'Error: cPanel Backup', 'mainwp' ) );
 				}
 				break;
 			case 'plesk':
@@ -216,14 +215,16 @@ class Api_Backups_Handler {
 				if ( $die_output ) {
 					$api_response = $result;
 					if ( is_array( $api_response ) ) {
-						if ( true !== $api_response['status'] ) {
-							self::send_backups_response( false );
+						if ( 'true' !== $api_response['status'] ) {
+							$response_decoded = is_array( $api_response ) && ! empty( $api_response['response'] ) ? json_decode( $api_response['response'] ) : '';
+							$errors           = ! empty( $response_decoded ) && ! empty( $response_decoded->task->errors ) ? $response_decoded->task->errors : '';
+							self::send_backups_response( false, $errors );
 						} else {
 							// Return success.
 							self::send_backups_response();
 						}
 					}
-					wp_die( esc_html__( 'Error: Plesk Backup', 'mainwp' ) );
+					self::send_bulk_backups_error( false, esc_html__( 'Error: Plesk Backup', 'mainwp' ) );
 				}
 				break;
 		}
@@ -246,11 +247,33 @@ class Api_Backups_Handler {
 	public static function send_backups_response( $success = true, $error = '' ) {
 		if ( ! $success ) {
 			if ( $error instanceof WP_Error ) {
-				$error = $error->getMessage();
+				$error = $error->get_error_message();
 			}
 			wp_send_json( array( 'error' => ! empty( $error ) ? esc_html( $error ) : esc_html__( 'Send Backups request failed.', 'mainwp' ) ) );
 		} else {
 			wp_send_json( array( 'success' => true ) );
+		}
+	}
+
+	/**
+	 * Send bulk backups error.
+	 *
+	 * @param bool  $success Suceess or not.
+	 * @param mixed $error error.
+	 * @return void
+	 */
+	public static function send_bulk_backups_error( $success = true, $error = '' ) {
+		if ( isset( $_POST['bulk_backups'] ) && ! empty( $_POST['bulk_backups'] ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Missing
+			if ( ! $success ) {
+				if ( $error instanceof WP_Error ) {
+					$error = $error->get_error_message();
+				}
+				wp_send_json( array( 'error' => ! empty( $error ) ? esc_html( $error ) : esc_html__( 'Send Backups request failed.', 'mainwp' ) ) );
+			} else {
+				wp_send_json( array( 'success' => true ) );
+			}
+		} else { // to compatible with previous error messages.
+			wp_die( esc_html( $error ) );
 		}
 	}
 }

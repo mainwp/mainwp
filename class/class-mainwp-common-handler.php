@@ -209,10 +209,11 @@ class MainWP_Common_Handler {
 			);
 		} else {
 			$data = array(
-				'total'   => $total_upgrades,
-				'wp'      => $total_wp_upgrades,
-				'plugins' => $total_plugin_upgrades,
-				'themes'  => $total_theme_upgrades,
+				'total'        => $total_upgrades,
+				'wp'           => $total_wp_upgrades,
+				'plugins'      => $total_plugin_upgrades,
+				'themes'       => $total_theme_upgrades,
+				'translations' => 0,
 			);
 		}
 

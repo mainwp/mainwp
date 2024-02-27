@@ -1461,7 +1461,7 @@ class MainWP_Extensions_View {
 			array(
 				'type'                 => 'pro',
 				'slug'                 => 'mainwp-cost-tracker-assistant-extension',
-				'title'                => 'MainWP Time Tracker Extension',
+				'title'                => 'MainWP Cost Tracker Assistant Extension',
 				'desc'                 => 'Enhance your MainWP Dashboard by adding timely notifications for upcoming subscription renewals and automates cost tracking for newly installed plugins and themes through zip uploads, streamlining cost management tasks.',
 				'link'                 => 'https://mainwp.com/extension/cost-tracker-assistant/',
 				'img'                  => $folder_url . 'cost-tracker-assistant.png',

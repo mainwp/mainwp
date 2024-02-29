@@ -206,13 +206,13 @@ class Api_Backups_3rd_Party {
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_wp_for_current_user() );
 
 		?>
-			<div class="ui toast" id="backups_site_toast">
-				<i class="archive icon"></i>
+			<?php // Render action notifications. I get replaced by JS. ?>
+			<div id="mainwp-api-backups-message-zone" class="ui message" style="display: none;">
+				<i class="icon close"></i>
 				<div class="content">
 					<div class="message"></div>
 				</div>
 			</div>
-
 			<table id="mainwp-3rd-party-backups-table" class="ui mainwp-api-backup-table table" style="width:100%">
 				<thead>
 				<tr>
@@ -406,12 +406,7 @@ class Api_Backups_3rd_Party {
 					</div>
 				</div>
 			<?php } else { ?>
-				<div class="ui toast" id="backups_site_toast">
-					<i class="archive icon"></i>
-					<div class="content">
-						<div class="message"></div>
-					</div>
-				</div>
+
 				<?php
 				$columns = 'one';
 				if ( 'cpanel' === $backup_api || 'plesk' === $backup_api ) {
@@ -511,6 +506,14 @@ class Api_Backups_3rd_Party {
 				</div>
 				<div class="ui segment">
 
+					<?php // Render action notifications. I get replaced by JS. ?>
+					<div id="mainwp-api-backups-message-zone" class="ui message" style="display: none;">
+						<i class="icon close"></i>
+						<div class="content">
+							<div class="message"></div>
+						</div>
+					</div>
+
 				<?php // Render info notifications. ?>
 					<?php // Render Linode info notifications. ?>
 					<?php if ( 'linode' === $backup_api ) { ?>
@@ -564,7 +567,7 @@ class Api_Backups_3rd_Party {
 							</div>
 						<?php endif; ?>
 					<?php } ?>
-				
+
 				<?php // Display Plesk Table. ?>
 				<?php
 				if ( 'plesk' === $backup_api ) {
@@ -623,7 +626,7 @@ class Api_Backups_3rd_Party {
 											$dirdl               = '/var/www/vhosts/' . $installation_domain . '/wordpress-backups/';
 										?>
 
-										<a id="plesk_download_button" class="ui circular icon button  mainwp_3rd_party_api_<?php echo esc_attr( $backup_api ); ?>_action_downlaod_backup item"
+										<a id="plesk_download_button" class="ui circular mini icon button  mainwp_3rd_party_api_<?php echo esc_attr( $backup_api ); ?>_action_downlaod_backup item"
 												installation_id="<?php echo intval( $installation_id ); ?>"
 												website_id="<?php echo intval( $website['id'] ); ?>"
 												backup_name="<?php echo esc_attr( $backup->value->fileName->value ); ?>"
@@ -634,7 +637,7 @@ class Api_Backups_3rd_Party {
 												target="_blank">
 												<i class="download icon"></i>
 											</a>
-										<button id="plesk_delete_button" class="ui circular icon button mainwp_3rd_party_api_<?php echo esc_attr( $backup_api ); ?>_action_delete_backup item"
+										<button id="plesk_delete_button" class="ui circular mini icon button mainwp_3rd_party_api_<?php echo esc_attr( $backup_api ); ?>_action_delete_backup item"
 												installation_id="<?php echo intval( $installation_id ); ?>"
 												website_id="<?php echo intval( $website['id'] ); ?>"
 												backup_name="<?php echo esc_attr( $backup->value->fileName->value ); ?>"

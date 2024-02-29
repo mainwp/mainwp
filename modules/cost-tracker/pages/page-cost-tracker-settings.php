@@ -113,7 +113,7 @@ class Cost_Tracker_Settings {
 		?>
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Currency', 'mainwp' ); ?></label>
-			<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select preferred currency.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+			<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select preferred currency.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 				<select id="mainwp_module_cost_tracker_settings_currency" name="mainwp_module_cost_tracker_settings_currency" class="ui search selection dropdown">
 					<?php foreach ( $currencies as $code => $name ) : ?>
 						<?php
@@ -138,7 +138,7 @@ class Cost_Tracker_Settings {
 		?>
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Currency symbol position ', 'mainwp' ); ?></label>
-			<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Choose the position of the currency symbol: before or after the amount.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+			<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Choose the position of the currency symbol: before or after the amount.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 				<div class="ui selection dropdown">
 					<input type="hidden" name="mainwp_module_cost_tracker_currency_format[currency_position]" value="<?php echo esc_attr( $currency_position ); ?>">
 					<i class="dropdown icon"></i>
@@ -158,26 +158,26 @@ class Cost_Tracker_Settings {
 			
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Thousand separator', 'mainwp' ); ?></label>
-			<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select a separator for thousands to enhance number readability.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+			<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select a separator for thousands to enhance number readability.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 				<input type="text" name="mainwp_module_cost_tracker_currency_format[thousand_separator]" value="<?php echo esc_html( $thousand_separator ); ?>" class="regular-text"/>
 			</div>
 		</div>
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Decimal separator', 'mainwp' ); ?></label>
-			<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Choose a symbol to separate decimal portions in numbers.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+			<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Choose a symbol to separate decimal portions in numbers.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 				<input type="text" name="mainwp_module_cost_tracker_currency_format[decimal_separator]" value="<?php echo esc_html( $decimal_separator ); ?>" class="regular-text"/>
 			</div>
 		</div>
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Decimal places', 'mainwp' ); ?></label>
-			<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Set the number of decimal places for numerical values.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+			<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Set the number of decimal places for numerical values.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 			<input type="number" name="mainwp_module_cost_tracker_currency_format[decimals]" id="mainwp_module_cost_tracker_currency_format[decimals]" class="small-text" placeholder="" min="1" max="8" step="1" value="<?php echo intval( $decimals ); ?>">
 			</div>
 		</div>
 
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Custom product types', 'mainwp' ); ?></label>
-			<div class="ui ten wide column module-cost-tracker-settings-custom-product-types-wrapper" data-tooltip="<?php esc_attr_e( 'Create custom product types you need track.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+			<div class="ui ten wide column module-cost-tracker-settings-custom-product-types-wrapper" data-tooltip="<?php esc_attr_e( 'Create custom product types you need track.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 				<?php
 				foreach ( $cust_product_types as $slug => $title ) {
 					if ( empty( $slug ) || empty( $title ) ) {
@@ -201,7 +201,7 @@ class Cost_Tracker_Settings {
 
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Custom payment methods', 'mainwp' ); ?></label>
-			<div class="ui ten wide column module-cost-tracker-settings-custom-payment-methods-wrapper" data-tooltip="<?php esc_attr_e( 'Create custom payment methods.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+			<div class="ui ten wide column module-cost-tracker-settings-custom-payment-methods-wrapper" data-tooltip="<?php esc_attr_e( 'Create custom payment methods.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 				<?php
 				foreach ( $cust_payment_methods as $slug => $title ) {
 					if ( empty( $slug ) || empty( $title ) ) {

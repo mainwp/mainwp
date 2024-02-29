@@ -443,6 +443,14 @@ body.mainwp-ui.mainwp-custom-theme,
 
 /* Invert Modal */
 
+.mainwp-ui.mainwp-custom-theme .ui.modal i.icon.close {
+  top:  0.8em;
+  right: 0.8em;
+  color: #ffffff;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.modal > .header,
 .mainwp-ui.mainwp-custom-theme .ui.modal > .actions {
   background: var(--background-color-3);

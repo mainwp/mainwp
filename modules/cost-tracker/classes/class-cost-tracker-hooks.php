@@ -177,6 +177,7 @@ class Cost_Tracker_Hooks {
 				'monthly'   => 0,
 				'quarterly' => 0,
 				'yearly'    => 0,
+				'lifetime'  => 0,
 			);
 
 			// get all cost trackers of current client.
@@ -198,7 +199,9 @@ class Cost_Tracker_Hooks {
 								}
 							}
 						}
-						if ( isset( $array_costs[ $sub->renewal_type ] ) ) {
+						if ( 'lifetime' === $sub->type ) {
+							$array_costs['lifetime'] += $cost_val;
+						} elseif ( isset( $array_costs[ $sub->renewal_type ] ) ) {
 							$array_costs[ $sub->renewal_type ] += $cost_val;
 						}
 					}
@@ -263,6 +266,7 @@ class Cost_Tracker_Hooks {
 				'monthly'   => 0,
 				'quarterly' => 0,
 				'yearly'    => 0,
+				'lifetime'  => 0,
 			);
 			$site_costs  = is_array( $this->sites_costs ) && isset( $this->sites_costs[ $item_id ] ) ? $this->sites_costs[ $item_id ] : array();
 			if ( is_array( $site_costs ) ) {
@@ -276,7 +280,9 @@ class Cost_Tracker_Hooks {
 					} elseif ( 'multi_site' === $sub->license_type && ! empty( $sub->count_sites ) ) {
 						$price += $sub->price / $sub->count_sites;
 					}
-					if ( isset( $array_costs[ $sub->renewal_type ] ) ) {
+					if ( 'lifetime' === $sub->type ) {
+						$array_costs['lifetime'] += $price;
+					} elseif ( isset( $array_costs[ $sub->renewal_type ] ) ) {
 						$array_costs[ $sub->renewal_type ] += $price;
 					}
 				}

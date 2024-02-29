@@ -200,6 +200,7 @@ class Cost_Tracker_Utility {
 			'monthly'   => 'M',
 			'quarterly' => 'Q',
 			'yearly'    => 'Y',
+			'lifetime'  => 'L',
 		);
 
 		$formated_prices = array();

@@ -1,7 +1,3 @@
-.mainwp_page_ManageSitesApiBackups .mainwp-sub-header {
-    background-color: #f9fafb !important;
-}
-
 .mainwp_page_ManageSitesApiBackups #mainwp_api_cpanel_backup_tabs {
     border-bottom: none;
     margin-bottom: -20px;
@@ -9,8 +5,4 @@
 
 .mainwp_page_ManageSitesApiBackups #mainwp_api_cpanel_backup_tabs .item {
     cursor: pointer;
-}
-.mainwp_page_ManageSitesApiBackups #mainwp_api_cpanel_backup_tabs .active.item {
-    /*noinspection CssUnresolvedCustomProperty*/
-    background-color: var( --grey-light ) !important;
 }

@@ -125,18 +125,35 @@ class Cost_Tracker_Add_Edit {
 		$renewal_frequency = $all_defaults['renewal_frequency'];
 		$cost_status       = $all_defaults['cost_status'];
 
+		$currency        = Cost_Tracker_Utility::get_instance()->get_option( 'currency' );
+		$currency_symbol = Cost_Tracker_Utility::get_instance()->get_currency_symbol( $currency );
+
 		?>
 		<div class="mainwp-main-content">
 			<div class="ui segment">
 				<?php
 				if ( isset( $_GET['message'] ) && ! empty( $_GET['message'] ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended
-					$message = esc_html__( 'Subscription saved.', 'mainwp' );
-					?>
-				<div class="ui green message" id="mainwp-module-cost-tracker-message-zone" >
-					<?php echo esc_html( $message ); ?>
-					<i class="ui close icon"></i>
-				</div>
-				<?php } ?>
+					$msg     = (int) $_GET['message']; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					$id      = isset( $_GET['id'] ) ? (int) $_GET['id'] : 0; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					$err     = false;
+					$message = '';
+					if ( 1 === $msg ) {
+						$message = esc_html__( 'Subscription saved.', 'mainwp' );
+					} elseif ( 2 === $msg ) {
+						$err     = true;
+						$message = get_transient( 'mainwp_cost_tracker_update_error_' . $id );
+						delete_transient( 'mainwp_cost_tracker_update_error_' . $id );
+					}
+					if ( ! empty( $message ) ) {
+						?>
+						<div class="ui <?php echo $err ? 'yellow' : 'green'; ?> message" id="mainwp-module-cost-tracker-message-zone" >
+						<?php echo esc_html( $message ); ?>
+							<i class="ui close icon"></i>
+						</div>
+						<?php
+					}
+				}
+				?>
 				<div class="ui red message" id="mainwp-module-cost-tracker-error-zone" style="display:none">
 					<div class="error-message"></div>			
 					<i class="ui close icon"></i>
@@ -148,19 +165,19 @@ class Cost_Tracker_Add_Edit {
 				<?php endif; ?>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Name', 'mainwp' ); ?></label>
-					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the Company (Product) name.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the Company (Product) name.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<input type="text" name="mainwp_module_cost_tracker_edit_name" id="mainwp_module_cost_tracker_edit_name" value="<?php echo $edit_cost ? esc_html( $edit_cost->name ) : ''; ?>">
 					</div>
 				</div>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Product URL', 'mainwp' ); ?></label>
-					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the URL of the product (optional).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the URL of the product (optional).', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<input type="text" name="mainwp_module_cost_tracker_edit_url" id="mainwp_module_cost_tracker_edit_url" value="<?php echo $edit_cost ? esc_html( $edit_cost->url ) : ''; ?>">
 					</div>
 				</div>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Type', 'mainwp' ); ?></label>
-					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the type of this cost.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the type of this cost.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<select id="mainwp_module_cost_tracker_edit_payment_type" name="mainwp_module_cost_tracker_edit_payment_type" class="ui dropdown not-auto-init">
 							<?php foreach ( $payment_types as $key => $val ) : ?>
 								<?php
@@ -179,7 +196,7 @@ class Cost_Tracker_Add_Edit {
 				
 				<div class="ui grid field hide-if-lifetime-subscription-selected" <?php echo $lifetime_selected ? 'style="display:none;"' : ''; ?>>
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Renewal frequency', 'mainwp' ); ?></label>
-					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter renewal frequency.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter renewal frequency.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<select id="mainwp_module_cost_tracker_edit_renewal_type" name="mainwp_module_cost_tracker_edit_renewal_type" class="ui dropdown">
 							<?php foreach ( $renewal_frequency as $key => $val ) : ?>
 								<?php
@@ -195,7 +212,7 @@ class Cost_Tracker_Add_Edit {
 				</div>
 				<div class="ui grid field hide-if-lifetime-subscription-selected" <?php echo $lifetime_selected ? 'style="display:none;"' : ''; ?>>
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Subscription status', 'mainwp' ); ?></label>
-					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter subscription status.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter subscription status.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<select id="mainwp_module_cost_tracker_edit_cost_tracker_status" name="mainwp_module_cost_tracker_edit_cost_tracker_status" class="ui dropdown">
 							<?php foreach ( $cost_status as $key => $val ) : ?>
 								<?php
@@ -213,7 +230,7 @@ class Cost_Tracker_Add_Edit {
 				<?php if ( $edit_id ) : ?>
 				<div class="ui grid field hide-if-lifetime-subscription-selected" <?php echo $lifetime_selected ? 'style="display:none;"' : ''; ?>>
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Next renewal', 'mainwp' ); ?></label>
-						<div class="five wide column" data-inverted="" data-position="top left">
+						<div class="five wide column" data-inverted="" data-position="left center">
 						<?php Cost_Tracker_Admin::generate_next_renewal( $edit_cost ); ?>
 					</div>
 				</div>
@@ -221,7 +238,7 @@ class Cost_Tracker_Add_Edit {
 
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Category', 'mainwp' ); ?></label>
-					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the category for this cost.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the category for this cost.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<select id="mainwp_module_cost_tracker_edit_product_type" name="mainwp_module_cost_tracker_edit_product_type" class="ui dropdown not-auto-init">
 							<?php foreach ( $product_types as $key => $val ) : ?>
 								<?php
@@ -237,13 +254,13 @@ class Cost_Tracker_Add_Edit {
 				</div>
 				<div class="ui grid field hide-if-product-type-isnot-plugintheme" <?php echo $is_plugintheme ? '' : 'style="display:none;"'; ?>>
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Slug', 'mainwp' ); ?></label>
-					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the product slug.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the product slug.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<input type="text" name="mainwp_module_cost_tracker_edit_product_slug" id="mainwp_module_cost_tracker_edit_product_slug" value="<?php echo esc_attr( $slug ); ?>">
 					</div>
 				</div>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'License type', 'mainwp' ); ?></label>
-					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the license type of this cost.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the license type of this cost.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<select id="mainwp_module_cost_tracker_edit_license_type" name="mainwp_module_cost_tracker_edit_license_type" class="ui dropdown">
 							<?php foreach ( $license_types as $key => $val ) : ?>
 								<?php
@@ -259,20 +276,20 @@ class Cost_Tracker_Add_Edit {
 				</div>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Price', 'mainwp' ); ?></label>
-					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter Subscription Price.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Please input a value using a single decimal point (.) without thousand separators or currency symbols.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<div class="ui left labeled input">
-							<label for="mainwp_module_cost_tracker_edit_price" class="ui label">$</label>
+							<label for="mainwp_module_cost_tracker_edit_price" class="ui label"><?php echo esc_html( $currency_symbol ); ?></label>
 							<input type="text" name="mainwp_module_cost_tracker_edit_price" id="mainwp_module_cost_tracker_edit_price" value="<?php echo $edit_cost ? esc_html( $edit_cost->price ) : ''; ?>">
 						</div>
 					</div>
 				</div>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Purchase date', 'mainwp' ); ?></label>
-					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the purchase date.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the purchase date.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<div class="ui calendar mainwp_datepicker">
 							<div class="ui input left icon">
 								<i class="calendar icon"></i>
-								<input type="text" placeholder="<?php esc_attr_e( 'Select date', 'mainwp' ); ?>" id="mainwp_module_cost_tracker_edit_last_renewal" name="mainwp_module_cost_tracker_edit_last_renewal" value="<?php echo $last_renewal ? esc_attr( MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $last_renewal ) ) ) : ''; ?>" />
+								<input type="text" placeholder="<?php esc_attr_e( 'Select date', 'mainwp' ); ?>" id="mainwp_module_cost_tracker_edit_last_renewal" name="mainwp_module_cost_tracker_edit_last_renewal" value="<?php echo $last_renewal ? esc_attr( gmdate( 'Y-m-d', $last_renewal ) ) : ''; ?>" />
 							</div>
 						</div>
 					</div>
@@ -280,7 +297,7 @@ class Cost_Tracker_Add_Edit {
 
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Payment method', 'mainwp' ); ?></label>
-					<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter the payment method.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter the payment method.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<select id="mainwp_module_cost_tracker_edit_payment_method" name="mainwp_module_cost_tracker_edit_payment_method" class="ui dropdown">
 							<?php foreach ( $payment_methods as $key => $val ) : ?>
 								<?php
@@ -297,7 +314,7 @@ class Cost_Tracker_Add_Edit {
 				
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Notes', 'mainwp' ); ?></label>
-					<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter the description for this cost tracking item.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter the description for this cost tracking item.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<textarea id="mainwp_module_cost_tracker_edit_note" name="mainwp_module_cost_tracker_edit_note"><?php echo $edit_cost ? esc_html( $edit_cost->note ) : ''; ?></textarea>
 					</div>
 				</div>

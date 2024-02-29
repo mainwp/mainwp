@@ -139,15 +139,32 @@ PRIMARY KEY  (`id`)  '; }
 			if ( in_array( $update['product_type'], array( 'plugin', 'theme' ), true ) ) {
 				// check existed cost tracker for this plugin / theme .
 				$current = $this->get_cost_tracker_by( 'slug', $update['slug'], $update['product_type'] );
-				if ( $current ) {
-					if ( isset( $update['id'] ) && $current->id !== $update['id'] ) {
-						$error = esc_html__( 'Existed cost tracker for this plugin. Please try again.', 'mainwp' );
+				if ( is_array( $current ) && ! empty( $current ) ) {
+					$existed = false;
+					if ( 1 === count( $current ) ) {
+						$current = current( $current );
+						if ( is_object( $current ) ) {
+							if ( ! empty( $update['id'] ) ) {
+								if ( ! empty( $current->id ) && (int) $current->id !== (int) $update['id'] ) {
+									$existed = true; // to fix.
+								} elseif ( ! empty( $current->id ) ) {
+									$id = $current->id; // to update.
+								}
+							} else {
+								$existed = true; // to fix: existed one.
+							}
+						}
+					} else {
+						$existed = true; // to fix found multi items.
+					}
+
+					if ( $existed ) {
+						$error = esc_html__( 'A cost tracker for this plugin already exists.', 'mainwp' );
 						if ( 'theme' === $update['product_type'] ) {
-							$error = esc_html__( 'Existed cost tracker for this theme. Please try again.', 'mainwp' );
+							$error = esc_html__( 'A cost tracker for this theme already exists.', 'mainwp' );
 						}
 						throw new \Exception( esc_html( $error ) );
 					}
-					$id = $current->id; // to update.
 				}
 			}
 		}
@@ -512,7 +529,7 @@ PRIMARY KEY  (`id`)  '; }
 				if ( is_array( $cost_sites ) ) {
 					foreach ( $sites_ids as $site_id ) {
 						foreach ( $cost_sites as $cost_site ) {
-							if ( in_array( $cost_site->id, $sites_ids ) ) {
+							if ( $cost_site->id === $site_id ) {
 								if ( ! isset( $sites_costs[ $site_id ] ) ) {
 									$sites_costs[ $site_id ] = array();
 								}

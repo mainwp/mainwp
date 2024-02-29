@@ -167,3 +167,8 @@
 .mainwp-ui i.plug.circular.icon {
   height: auto !important;
 }
+
+
+.mainwp-ui .ui.dimmer.modals.active {
+  z-index: 99999;
+}

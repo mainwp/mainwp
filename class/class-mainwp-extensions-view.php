@@ -355,7 +355,7 @@ class MainWP_Extensions_View {
 			<div class="content">
 				<div id="mainwp-search-extensions" class="ui fluid search">
 					<div class="ui icon fluid input">
-						<input class="prompt" id="mainwp-search-extensions-input" type="text" placeholder="<?php esc_attr_e( 'Find extension...', 'mainwp' ); ?>">
+						<input class="prompt" id="mainwp-search-extensions-input" autocomplete="one-time-code" type="text" placeholder="<?php esc_attr_e( 'Find extension...', 'mainwp' ); ?>">
 						<i class="search icon"></i>
 					</div>
 				</div>
@@ -673,7 +673,7 @@ class MainWP_Extensions_View {
 					</div>
 					<div class="field">
 				<div class="ui input fluid">
-					<input type="password" id="mainwp_com_api_key" placeholder="<?php esc_attr_e( '', 'mainwp' ); ?>" value="<?php echo esc_attr( $mainwp_api_key ); ?>"/>
+					<input type="password" id="mainwp_com_api_key" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="<?php esc_attr_e( '', 'mainwp' ); ?>" value="<?php echo esc_attr( $mainwp_api_key ); ?>"/>
 				</div>
 			</div>
 			<div class="field">

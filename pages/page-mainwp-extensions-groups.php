@@ -289,13 +289,13 @@ class MainWP_Extensions_Groups {
 
 			self::add_extension_menu(
 				array(
-					'title'                => esc_html__( 'Solid Security', 'mainwp' ),
-					'slug'                 => 'mainwp-ithemes-extension/mainwp-ithemes-extension.php',
+					'title'                => esc_html__( 'iThemes Security', 'mainwp' ),
+					'slug'                 => 'mainwp-ithemes-security-extension/mainwp-ithemes-security-extension.php',
 					'parent_key'           => 'Extensions-Mainwp-Security',
-					'ext_page'             => 'admin.php?page=Extensions-Mainwp-Ithemes-Extension',
+					'ext_page'             => 'admin.php?page=Extensions-Mainwp-Ithemes-Security-Extension',
 					'leftsub_order_level2' => 7,
 					'level'                => 2,
-					'active_path'          => array( 'Extensions-Mainwp-Ithemes-Extension' => 'managesites' ),
+					'active_path'          => array( 'Extensions-Mainwp-Ithemes-Security-Extension' => 'managesites' ),
 				),
 			);
 
@@ -515,10 +515,10 @@ class MainWP_Extensions_Groups {
 					'title'                => esc_html__( 'WooCommerce Status', 'mainwp' ),
 					'slug'                 => 'mainwp-woocommerce-status-extension/mainwp-woocommerce-status-extension.php',
 					'parent_key'           => 'Extensions-Mainwp-Administrative',
-					'ext_page'             => 'admin.php?page=Extensions-Mainwp-Woocommerce-status-Extension',
+					'ext_page'             => 'admin.php?page=Extensions-Mainwp-Woocommerce-Status-Extension',
 					'leftsub_order_level2' => 2,
 					'level'                => 2,
-					'active_path'          => array( 'Extensions-Mainwp-Woocommerce-status-Extension' => 'managesites' ),
+					'active_path'          => array( 'Extensions-Mainwp-Woocommerce-Status-Extension' => 'managesites' ),
 				),
 			);
 

@@ -432,18 +432,14 @@ class Cost_Tracker_Dashboard {
 			<tr class="" item-id="<?php echo esc_html( $subscription->id ); ?>">
 				<td class="check-column"><span class="ui checkbox" data-tooltip="<?php esc_attr_e( 'Click to select the site.', 'mainwp' ); ?>" data-inverted="" data-position="right center"><input type="checkbox" name="checked[]"></span></td>
 				<td>
-					<?php if ( ! empty( $subscription->url ) ) { ?>
-						<a href="<?php echo esc_url( $subscription->url ); ?>" target="_blank"><?php echo esc_html( $subscription->name ); ?></a>					 
-					<?php } else { ?>
-						<?php echo esc_html( $subscription->name ); ?>
-					<?php } ?>
+					<a class="item" href="admin.php?page=CostTrackerAdd&id=<?php echo intval( $subscription->id ); ?>"><?php echo esc_html( $subscription->name ); ?></a>
 				</td>
 				<td><?php echo $sub_type_icon; //phpcs:ignore -- escaped. ?> <?php echo 'lifetime' === $subscription->type ? 'Lifetime' : esc_html( ucfirst( $subscription->renewal_type ) ); ?></td>
 				<td><?php echo isset( $product_types[ $subscription->product_type ] ) ? esc_html( $product_types[ $subscription->product_type ] ) : 'N/A'; ?></td>
 				<td><?php echo isset( $license_types[ $subscription->license_type ] ) ? esc_html( $license_types[ $subscription->license_type ] ) : 'N/A'; ?></td>
 				<td class="right aligned"><span class="ui large text"><?php Cost_Tracker_Utility::cost_tracker_format_price( $subscription->price ); ?></span></td>
 				<td><?php echo Cost_Tracker_Admin::get_cost_status_label( $subscription->cost_status ); //phpcs:ignore -- escaped. ?></td>
-				<td><?php echo $last_renewal ? MainWP_Utility::format_date( MainWP_Utility::get_timestamp( $last_renewal ) ) : ''; //phpcs:ignore -- escaped. ?></td>
+				<td><?php echo $last_renewal ? MainWP_Utility::format_date( $last_renewal ) : ''; //phpcs:ignore -- escaped. ?></td>
 				<td><?php Cost_Tracker_Admin::generate_next_renewal( $subscription ); ?></td>
 				<td><?php echo isset( $payment_methods[ $subscription->payment_method ] ) ? esc_html( $payment_methods[ $subscription->payment_method ] ) : 'N/A'; ?></td>
 				

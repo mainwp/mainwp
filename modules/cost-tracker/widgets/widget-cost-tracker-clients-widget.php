@@ -200,6 +200,7 @@ class Cost_Tracker_Clients_Widget {
 					'monthly'   => 0,
 					'quarterly' => 0,
 					'yearly'    => 0,
+					'lifetime'  => 0,
 				);
 
 				if ( 'active' === $item->cost_status ) {
@@ -213,7 +214,9 @@ class Cost_Tracker_Clients_Widget {
 								} elseif ( 'multi_site' === $item->license_type && ! empty( $item->count_sites ) ) {
 									$cost_val = $item->price / $item->count_sites;
 								}
-								if ( isset( $array_costs[ $item->renewal_type ] ) ) {
+								if ( 'lifetime' === $item->type ) {
+									$array_costs['lifetime'] += $cost_val;
+								} elseif ( isset( $array_costs[ $item->renewal_type ] ) ) {
 									$array_costs[ $item->renewal_type ] += $cost_val;
 								}
 								$order_val += $cost_val;

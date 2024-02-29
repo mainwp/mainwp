@@ -138,6 +138,11 @@ class MainWP_Client_Info {
 									<a class="item" href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_info['client_id'] ); ?>"><?php echo esc_html( $client_info['email'] ); ?></a>
 									<?php
 
+								} elseif ( 'created' === $db_field ) {
+									?>
+									<?php echo MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( esc_html( $client_info['created'] ) ) ); //phpcs:ignore ?>
+									<?php
+
 								} elseif ( 'note' === $db_field ) {
 									$note       = html_entity_decode( $client_info['note'] );
 									$esc_note   = MainWP_Utility::esc_content( $note );

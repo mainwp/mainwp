@@ -262,7 +262,7 @@ class MainWP_Recent_Pages {
 					<div class="ui stackable grid">
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_published[ $i ]['id'] ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_published[ $i ]['website']->id ); ?>"/>
-						<div class="fifteen wide column middle aligned">
+						<div class="fourteen wide column middle aligned">
 							<div>
 								<a href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_published[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_pages_published[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
 								<?php if ( ! $individual ) : ?>
@@ -271,8 +271,8 @@ class MainWP_Recent_Pages {
 							</div>
 							<span class="ui small text"><?php echo esc_html( $recent_pages_published[ $i ]['dts'] ); ?></span>
 						</div>
-						<div class="one wide column right aligned">
-							<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
+						<div class="two wide column right aligned">
+							<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
 							<i class="ellipsis horizontal icon"></i>
 								<div class="menu">
 									<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-unpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
@@ -357,7 +357,7 @@ class MainWP_Recent_Pages {
 						<div class="ui stackable grid">
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_draft[ $i ]['id'] ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_draft[ $i ]['website']->id ); ?>"/>
-						<div class="fifteen wide column middle aligned">
+						<div class="fourteen wide column middle aligned">
 							<div>
 								<a href="<?php echo esc_url( $recent_pages_draft[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_draft[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_pages_draft[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
 								<?php if ( ! $individual ) : ?>
@@ -366,8 +366,8 @@ class MainWP_Recent_Pages {
 							</div>
 							<span class="ui small text"><?php echo esc_html( $recent_pages_draft[ $i ]['dts'] ); ?></span>
 						</div>
-						<div class="one wide column right aligned">
-								<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
+						<div class="two wide column right aligned">
+								<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
 									<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
 										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
@@ -450,7 +450,7 @@ class MainWP_Recent_Pages {
 						<div class="ui stackable grid">
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_pending[ $i ]['id'] ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_pending[ $i ]['website']->id ); ?>"/>
-						<div class="fifteen wide column middle aligned">
+						<div class="fourteen wide column middle aligned">
 							<div>
 								<a href="<?php echo esc_url( $recent_pages_pending[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_pending[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_pages_pending[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
 								<?php if ( ! $individual ) : ?>
@@ -459,8 +459,8 @@ class MainWP_Recent_Pages {
 							</div>
 							<span class="ui small text"><?php echo esc_html( $recent_pages_pending[ $i ]['dts'] ); ?></span>
 						</div>
-						<div class="one wide column right aligned">
-								<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
+						<div class="two wide column right aligned">
+								<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
 									<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
 										<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
@@ -544,7 +544,7 @@ class MainWP_Recent_Pages {
 				<div class="ui stackable grid">
 					<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_future[ $i ]['id'] ); ?>"/>
 					<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_future[ $i ]['website']->id ); ?>"/>
-					<div class="fifteen wide column middle aligned">
+					<div class="fourteen wide column middle aligned">
 						<div>
 							<a href="<?php echo esc_url( $recent_pages_future[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_future[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_pages_future[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
 							<?php if ( ! $individual ) : ?>
@@ -553,8 +553,8 @@ class MainWP_Recent_Pages {
 						</div>
 						<span class="ui small text"><?php echo esc_html( $recent_pages_future[ $i ]['dts'] ); ?></span>
 					</div>
-					<div class="one wide column right aligned">
-						<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
+					<div class="two wide column right aligned">
+						<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
 							<i class="ellipsis horizontal icon"></i>
 							<div class="menu">
 								<a class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
@@ -639,7 +639,7 @@ class MainWP_Recent_Pages {
 					<div class="ui stackable grid">
 					<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_trash[ $i ]['id'] ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_trash[ $i ]['website']->id ); ?>"/>
-						<div class="fifteen wide column middle aligned">
+						<div class="fourteen wide column middle aligned">
 							<div>
 								<a href="<?php echo esc_url( $recent_pages_trash[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_trash[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( htmlentities( $recent_pages_trash[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ) ); ?></a>
 								<?php if ( ! $individual ) : ?>
@@ -648,8 +648,8 @@ class MainWP_Recent_Pages {
 							</div>
 							<span class="ui small text"><?php echo esc_html( $recent_pages_trash[ $i ]['dts'] ); ?></span>
 						</div>
-						<div class="one wide column right aligned">
-							<div class="ui right pointing dropdown icon mini basic green button mainwp-768-hide" style="z-index:999">
+						<div class="two wide column right aligned">
+							<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 								<div class="menu">
 									<a href="#" class="<?php echo $is_demo ? 'disabled' : ''; ?> item mainwp-post-restore"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>

@@ -458,17 +458,24 @@ class Cost_Tracker_Admin {
 			$update['id'] = intval( $_POST['mainwp_module_cost_tracker_edit_id'] );
 		}
 		//phpcs:enable
-		$error = false;
+		$err_msg = '';
+		$output  = false;
 		try {
 			$output = Cost_Tracker_DB::get_instance()->update_cost_tracker( $update );
 		} catch ( \Exception $ex ) {
-			$error = true;
+			$err_msg = $ex->getMessage();
 		}
 
-		if ( ! $error && ! empty( $output ) ) {
+		$msg_id = ! empty( $update['id'] ) ? intval( $update['id'] ) : 0;
+
+		if ( ! empty( $err_msg ) ) {
+			set_transient( 'mainwp_cost_tracker_update_error_' . $msg_id, $err_msg, HOUR_IN_SECONDS );
+		}
+
+		if ( empty( $err_msg ) && ! empty( $output ) ) { // success.
 			wp_safe_redirect( admin_url( 'admin.php?page=CostTrackerAdd&message=1&id=' . $output->id ) );
-		} else {
-			wp_safe_redirect( admin_url( 'admin.php?page=ManageCostTracker' ) );
+		} elseif ( ! empty( $err_msg ) ) { // error.
+			wp_safe_redirect( admin_url( 'admin.php?page=CostTrackerAdd&message=2&id=' . $msg_id ) );
 		}
 		exit();
 	}
@@ -568,13 +575,15 @@ class Cost_Tracker_Admin {
 			if ( 'monthly' === $renewal_type ) {
 				$next_renewal = strtotime( '+1 month', $previous_renewal );
 			} elseif ( 'yearly' === $renewal_type ) {
-				$next_renewal = strtotime( '+365 day', $previous_renewal );
+				$next_renewal = strtotime( '+1 year', $previous_renewal );
 			} elseif ( 'weekly' === $renewal_type ) {
 				$next_renewal = strtotime( '+7 day', $previous_renewal );
 			} elseif ( 'quarterly' === $renewal_type ) {
 				$next_renewal = strtotime( '+3 month', $previous_renewal );
 			}
+
 			$today_time = strtotime( gmdate( 'Y-m-d 00:00:00' ) );
+
 			if ( $next_renewal < $today_time ) {
 				$next_renewal = self::get_next_renewal( $next_renewal, $renewal_type );
 			}
@@ -729,7 +738,7 @@ class Cost_Tracker_Admin {
 		}
 
 		$current_time = time();
-		$renewal_html = MainWP_Utility::format_date( MainWP_Utility::get_timestamp( $next_renewal ) );
+		$renewal_html = MainWP_Utility::format_date( $next_renewal );
 		$day1         = $next_renewal - 15 * DAY_IN_SECONDS;
 		$day2         = $next_renewal - 7 * DAY_IN_SECONDS;
 		if ( $day1 > $current_time ) {
@@ -753,7 +762,7 @@ class Cost_Tracker_Admin {
 
 		$default = array(
 			'active'              => array(
-				'label' => esc_html__( 'Activate', 'mainwp' ),
+				'label' => esc_html__( 'Active', 'mainwp' ),
 				'class' => 'basic green center aligned fluid',
 			),
 			'onhold'              => array(

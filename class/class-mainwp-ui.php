@@ -2226,7 +2226,7 @@ class MainWP_UI {
 		?>
 		<div class="ui one column grid" style="height:100%">
 			<div class="middle aligned center aligned column">
-				<img src="/wp-content/plugins/mainwp/assets/images/mainwp-widget-placeholder.png" class="mainwp-no-results-placeholder"/>
+				<img src="<?php echo esc_url( MAINWP_PLUGIN_URL ); ?>assets/images/mainwp-widget-placeholder.png" class="mainwp-no-results-placeholder"/>
 				<?php if ( '' !== $placeholder ) : ?>
 					<p><?php echo $placeholder; //phpcs:ignore -- requires escaped. ?></p>
 				<?php else : ?>

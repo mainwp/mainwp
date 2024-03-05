@@ -438,24 +438,34 @@ class MainWP_Utility {
 	 * @return mixed $outputSite Mapped site.
 	 */
 	public static function map_site( &$website, $keys, $object_output = true ) {
-		$outputSite = array();
-		if ( ! empty( $website ) ) {
-			if ( is_object( $website ) ) {
-				foreach ( $keys as $key ) {
-					$outputSite[ $key ] = $website->$key;
+		if ( $object_output ) {
+			$outputSite = new \stdClass();
+			if ( ! empty( $website ) ) {
+				if ( is_object( $website ) ) {
+					foreach ( $keys as $key ) {
+						$outputSite->{$key} = $website->$key;
+					}
+				} elseif ( is_array( $website ) ) {
+					foreach ( $keys as $key ) {
+						$outputSite->{$key} = $website[ $key ];
+					}
 				}
-			} elseif ( is_array( $website ) ) {
-				foreach ( $keys as $key ) {
-					$outputSite[ $key ] = $website[ $key ];
+			}
+		} else {
+			$outputSite = array();
+			if ( ! empty( $website ) ) {
+				if ( is_object( $website ) ) {
+					foreach ( $keys as $key ) {
+						$outputSite[ $key ] = $website->$key;
+					}
+				} elseif ( is_array( $website ) ) {
+					foreach ( $keys as $key ) {
+						$outputSite[ $key ] = $website[ $key ];
+					}
 				}
 			}
 		}
-
-		if ( $object_output ) {
-			return (object) $outputSite;
-		} else {
-			return $outputSite;
-		}
+		return $outputSite;
 	}
 
 	/**

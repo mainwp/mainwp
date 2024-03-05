@@ -98,7 +98,7 @@ class Api_Backups_Overview {
 				if ( 'backups' === $curent_tab ) :
 						Api_Backups_3rd_Party::instance()->render_api_backups_site( $website );
 				elseif ( 'settings' === $curent_tab ) :
-					Api_Backups_Settings::get_instance()->render_settings_content();
+					Api_Backups_Settings::get_instance()->render_settings_content( true );
 				endif;
 			}
 		}

@@ -468,6 +468,8 @@ PRIMARY KEY  (`id`)  '; }
 			return array();
 		}
 
+		$sites_ids = array_map( 'intval', $sites_ids );
+
 		global $wpdb;
 
 		$sites_costs     = array();
@@ -529,7 +531,7 @@ PRIMARY KEY  (`id`)  '; }
 				if ( is_array( $cost_sites ) ) {
 					foreach ( $sites_ids as $site_id ) {
 						foreach ( $cost_sites as $cost_site ) {
-							if ( $cost_site->id === $site_id ) {
+							if ( (int) $cost_site->id === $site_id ) {
 								if ( ! isset( $sites_costs[ $site_id ] ) ) {
 									$sites_costs[ $site_id ] = array();
 								}

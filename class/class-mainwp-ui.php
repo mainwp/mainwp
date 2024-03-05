@@ -565,7 +565,7 @@ class MainWP_UI {
 			$sidebarPosition = 1;
 		}
 
-		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.name' ) );
 
 		$count_sites = MainWP_DB::instance()->get_websites_count();
 

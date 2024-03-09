@@ -231,7 +231,10 @@ class Cost_Tracker_Add_Edit {
 				<div class="ui grid field hide-if-lifetime-subscription-selected" <?php echo $lifetime_selected ? 'style="display:none;"' : ''; ?>>
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Next renewal', 'mainwp' ); ?></label>
 						<div class="five wide column" data-inverted="" data-position="left center">
-						<?php Cost_Tracker_Admin::generate_next_renewal( $edit_cost ); ?>
+						<?php
+						$next_rl = Cost_Tracker_Admin::get_next_renewal( $edit_cost->last_renewal, $edit_cost->renewal_type );
+						Cost_Tracker_Admin::generate_next_renewal( $edit_cost, $next_rl );
+						?>
 					</div>
 				</div>
 				<?php endif; ?>
@@ -274,12 +277,13 @@ class Cost_Tracker_Add_Edit {
 						</select>
 					</div>
 				</div>
+				<?php $dec = Cost_Tracker_Utility::cost_tracker_format_price( 0, true, array( 'get_decimals' => true ) ); ?>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Price', 'mainwp' ); ?></label>
 					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Please input a value using a single decimal point (.) without thousand separators or currency symbols.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<div class="ui left labeled input">
 							<label for="mainwp_module_cost_tracker_edit_price" class="ui label"><?php echo esc_html( $currency_symbol ); ?></label>
-							<input type="text" name="mainwp_module_cost_tracker_edit_price" id="mainwp_module_cost_tracker_edit_price" value="<?php echo $edit_cost ? esc_html( $edit_cost->price ) : ''; ?>">
+							<input type="text" name="mainwp_module_cost_tracker_edit_price" id="mainwp_module_cost_tracker_edit_price" value="<?php echo $edit_cost ? esc_html( round( $edit_cost->price, $dec ) ) : ''; ?>">
 						</div>
 					</div>
 				</div>

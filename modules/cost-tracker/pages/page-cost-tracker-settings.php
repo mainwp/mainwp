@@ -98,8 +98,8 @@ class Cost_Tracker_Settings {
 		$decimal_separator  = $currency_format['decimal_separator'];
 		$decimals           = $currency_format['decimals'];
 
-		$cust_product_types   = Cost_Tracker_Utility::get_instance()->get_option( 'custom_product_types', array() );
-		$cust_payment_methods = Cost_Tracker_Utility::get_instance()->get_option( 'custom_payment_methods', array() );
+		$cust_product_types   = Cost_Tracker_Utility::get_instance()->get_option( 'custom_product_types', array(), true );
+		$cust_payment_methods = Cost_Tracker_Utility::get_instance()->get_option( 'custom_payment_methods', array(), true );
 
 		if ( isset( $_GET['message'] ) && ! empty( $_GET['message'] ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$message = esc_html__( 'Settings saved.', 'mainwp' );
@@ -174,7 +174,31 @@ class Cost_Tracker_Settings {
 			<input type="number" name="mainwp_module_cost_tracker_currency_format[decimals]" id="mainwp_module_cost_tracker_currency_format[decimals]" class="small-text" placeholder="" min="1" max="8" step="1" value="<?php echo intval( $decimals ); ?>">
 			</div>
 		</div>
-
+		<?php
+		$default_product_types = Cost_Tracker_Admin::get_default_product_types();
+		$product_colors        = Cost_Tracker_Admin::get_product_colors();
+		?>
+		<div class="ui grid field">
+			<label class="six wide column middle aligned"><?php esc_html_e( 'Default product types', 'mainwp' ); ?></label>
+			<div class="ui ten wide column" data-tooltip="<?php esc_attr_e( 'Default product types.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+			<?php
+			if ( is_array( $default_product_types ) ) {
+				foreach ( $default_product_types as $slug => $title ) {
+					?>
+					<div class="ui two columns grid cost-tracker-product-types-item">
+						<div class="ui column">
+							<input type="hidden" value="<?php echo esc_attr( $slug ); ?>" name="cost_tracker_default_product_types[slug][]"/>
+							<input type="hidden" value="<?php echo esc_attr( $title ); ?>" name="cost_tracker_default_product_types[title][]"/>
+							<input type="text" style="width:60%"  class="regular-text"readonly="readonly" value="<?php echo esc_attr( $title ); ?>"/>
+							<input type="text" name="cost_tracker_default_product_types[color][]" class="mainwp-cost-tracker-color-picker" id="cost_tracker_default_product_types[color][]"  value="<?php echo isset( $product_colors[ $slug ] ) ? esc_attr( $product_colors[ $slug ] ) : ''; ?>" />
+						</div>									
+					</div>	
+					<?php
+				}
+				?>
+			<?php } ?>	
+			</div>
+		</div>
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Custom product types', 'mainwp' ); ?></label>
 			<div class="ui ten wide column module-cost-tracker-settings-custom-product-types-wrapper" data-tooltip="<?php esc_attr_e( 'Create custom product types you need track.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
@@ -187,7 +211,8 @@ class Cost_Tracker_Settings {
 					<div class="ui two columns grid cost-tracker-product-types-item">
 						<div class="ui column">
 							<input type="hidden" value="<?php echo esc_attr( $slug ); ?>" name="cost_tracker_custom_product_types[slug][]"/>
-							<input type="text" class="regular-text" value="<?php echo esc_attr( $title ); ?>" name="cost_tracker_custom_product_types[title][]"/>
+							<input type="text" style="width:60%" class="regular-text" value="<?php echo esc_attr( $title ); ?>" name="cost_tracker_custom_product_types[title][]"/>
+							<input type="text" name="cost_tracker_custom_product_types[color][]" class="mainwp-cost-tracker-color-picker" id="cost_tracker_custom_product_types[color][]"  value="<?php echo isset( $product_colors[ $slug ] ) ? esc_attr( $product_colors[ $slug ] ) : ''; ?>" />
 						</div>									
 					</div>								
 					<?php
@@ -229,6 +254,15 @@ class Cost_Tracker_Settings {
 		<input type="hidden" name="mwp_cost_tracker_settings_submit" value="1">
 		<div class="ui divider"></div>
 		<input type="submit" value="<?php esc_html_e( 'Save Settings', 'mainwp' ); ?>" class="ui green big button" id="mainwp-module-cost-tracker-manager-save-settings-button" <?php echo apply_filters( 'mainwp_module_cost_tracker_manager_check_status', false ) ? 'disabled' : ''; ?>>
+		<script type="text/javascript">
+					jQuery( document ).ready( function() {
+						jQuery('.mainwp-cost-tracker-color-picker').wpColorPicker({
+							hide: true,
+							clear: false,
+							palettes: [ '#18a4e0','#0253b3','#7fb100','#446200','#ad0000','#ffd300','#2d3b44','#6435c9','#e03997','#00b5ad' ],
+						});
+					} );
+				</script>
 		<?php
 	}
 
@@ -241,7 +275,8 @@ class Cost_Tracker_Settings {
 		<div class="ui two columns grid cost-tracker-product-types-item">
 			<div class="ui column">
 				<input type="hidden" value="" name="cost_tracker_custom_product_types[slug][]"/>
-				<input type="text" class="regular-text" value="" placeholder="<?php esc_attr_e( 'Title', 'mainwp' ); ?>" name="cost_tracker_custom_product_types[title][]"/>
+				<input type="text" style="width:60%" class="regular-text" value="" placeholder="<?php esc_attr_e( 'Title', 'mainwp' ); ?>" name="cost_tracker_custom_product_types[title][]"/>
+				<input type="text" name="cost_tracker_custom_product_types[color][]" class="mainwp-cost-tracker-color-picker" id="cost_tracker_custom_product_types[color][]"  value="#ad0000" />
 			</div>									
 		</div>		
 		<?php

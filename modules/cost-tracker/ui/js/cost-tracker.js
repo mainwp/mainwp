@@ -109,6 +109,11 @@ jQuery(document).ready(function ($) {
 
 	$(document).on('click', '.module-cost-tracker-add-custom-product-types', function () {
 		jQuery('.cost-tracker-product-types-bottom').before(jQuery(this).attr('add-custom-product-types-tmpl'));
+		jQuery('.mainwp-cost-tracker-color-picker').wpColorPicker({
+			hide: true,
+			clear: false,
+			palettes: [ '#18a4e0','#0253b3','#7fb100','#446200','#ad0000','#ffd300','#2d3b44','#6435c9','#e03997','#00b5ad' ],
+		})
 	});
 
 	$(document).on('click', '.module-cost-tracker-add-custom-payment-methods', function () {
@@ -260,3 +265,7 @@ mainwp_module_cost_tracker_delete_start_specific = function (pObj, selector, pBu
 	return false;
 }
 
+function mainwp_cost_tracker_round_digit(num, decimalPlaces = 0) {
+    num = Math.round(num + "e" + decimalPlaces);
+    return Number(num + "e" + -decimalPlaces);
+}

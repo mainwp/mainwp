@@ -77,7 +77,7 @@ jQuery(document).ready(function () {
   // Delete a group
   jQuery(document).on('click', '#mainwp-delete-group-button', function () {
     var gruopItem = jQuery('#mainwp-groups-menu').find('.active');
-    mainwp_confirm('Are you sure you want to delete this group?', function () {
+    mainwp_confirm('Are you sure you want to delete this tag?', function () {
       var groupID = gruopItem.attr('id');
       var data = mainwp_secure_data({
         action: 'mainwp_group_delete',

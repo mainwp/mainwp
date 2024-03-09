@@ -505,15 +505,15 @@ box-shadow: 0 1px 2px 0 rgba( 0, 0, 0, .1 );
 }
 
 /* Tooltips */
-.mainwp-ui.mainwp-custom-theme [data-content]:before,
-.mainwp-ui.mainwp-custom-theme [data-content]:after,
+
 .mainwp-ui.mainwp-custom-theme [data-tooltip]:before,
 .mainwp-ui.mainwp-custom-theme [data-tooltip]:after,
-.mainwp-ui.mainwp-custom-theme .ui.popup:not( .calendar, .menu ):before {
-  background-color: var( --grey-dark-alt );
-  border-color: var( --grey-dark );
+.mainwp-ui.mainwp-custom-theme .ui.popup:not( .calendar, .menu, .mainwp-popup-tooltip ):before
+.mainwp-ui.mainwp-custom-theme .ui.popup:not( .calendar, .menu, .mainwp-popup-tooltip ):after {
+  background-color: var( --grey-dark-alt ) !important;
+  border-color: var( --grey-dark ) !important;
   box-shadow: 0 1px 2px 0 rgba( 0, 0, 0, .1 );
-  z-index: 15 !important;
+  z-index: 99 !important;
   color: #ffffff !important;
 }
 

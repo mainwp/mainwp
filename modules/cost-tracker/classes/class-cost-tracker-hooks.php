@@ -102,7 +102,7 @@ class Cost_Tracker_Hooks {
 	}
 
 	/**
-	 * Method screen_options()
+	 * Method hook_screen_options()
 	 *
 	 * Create Screen Options button.
 	 *
@@ -128,7 +128,7 @@ class Cost_Tracker_Hooks {
 	 * @return array $columns columns.
 	 */
 	public function hook_manage_clients_column( $columns ) {
-		$columns['client-cost-tracker'] = __( 'Cost', 'mainwp' );
+		$columns['client-cost-tracker'] = '<span data-tooltip="30-Day cost forecast" data-position="left center" data-inverted=""><i class="dollar sign icon"></i></span>';
 		return $columns;
 	}
 
@@ -180,35 +180,73 @@ class Cost_Tracker_Hooks {
 				'lifetime'  => 0,
 			);
 
+			$current_time = time();
+			$upcoming1    = strtotime( gmdate( 'Y-m-d 00:00:00', $current_time ) );
+			$upcoming2    = strtotime( '+1 month', $current_time );
+
+			$series_products_price = array();
+			$total_prices          = 0;
+
 			// get all cost trackers of current client.
 			$client_costs = is_array( $this->clients_costs ) && isset( $this->clients_costs[ $client_id ] ) ? $this->clients_costs[ $client_id ] : array();
 			if ( is_array( $client_costs ) && ! empty( $this->clients_sites[ $client_id ] ) ) {
-				foreach ( $client_costs as $sub ) {
-					if ( 'active' !== $sub->cost_status ) {
+
+				foreach ( $client_costs as $cost ) {
+					if ( 'active' !== $cost->cost_status || 'subscription' !== $cost->type ) {
 						continue;
 					}
-					if ( is_array( $sub->cost_sites_ids ) ) {
+
+					$next_rl = $cost->next_renewal;
+
+					if ( $next_rl <= $upcoming1 ) {
+						$next_rl = Cost_Tracker_Admin::get_next_renewal( $upcoming1, $cost->renewal_type, false );
+					}
+
+					$next_price = 0;
+					while ( $next_rl <= $upcoming2 ) {
+
+						if ( $next_rl > $upcoming1 && $next_rl <= $upcoming2 ) {
+							$next_price = $cost->price;
+						}
+
 						$cost_val = 0;
-						foreach ( $sub->cost_sites_ids as $ct_siteid ) {
-							// if site of cost tracker in the client's sites then calculate the site's cost/price.
-							if ( is_array( $this->clients_sites[ $client_id ] ) && in_array( $ct_siteid, $this->clients_sites[ $client_id ] ) ) {
-								if ( 'single_site' === $sub->license_type ) {
-									$cost_val += $sub->price;
-								} elseif ( 'multi_site' === $sub->license_type && ! empty( $sub->count_sites ) ) {
-									$cost_val += $sub->price / $sub->count_sites;
+
+						if ( ! empty( $next_price ) ) {
+							if ( is_array( $cost->cost_sites_ids ) ) {
+								foreach ( $cost->cost_sites_ids as $ct_siteid ) {
+									// if site of cost tracker in the client's sites then calculate the site's cost/price.
+									if ( is_array( $this->clients_sites[ $client_id ] ) && in_array( $ct_siteid, $this->clients_sites[ $client_id ] ) ) {
+										if ( 'single_site' === $cost->license_type ) {
+											$cost_val += $cost->price;
+										} elseif ( 'multi_site' === $cost->license_type && ! empty( $cost->count_sites ) ) {
+											$cost_val += $cost->price / $cost->count_sites;
+										}
+									}
 								}
 							}
 						}
-						if ( 'lifetime' === $sub->type ) {
-							$array_costs['lifetime'] += $cost_val;
-						} elseif ( isset( $array_costs[ $sub->renewal_type ] ) ) {
-							$array_costs[ $sub->renewal_type ] += $cost_val;
+
+						if ( ! empty( $cost_val ) ) {
+							if ( ! isset( $series_products_price[ $cost->id ] ) ) {
+								$series_products_price[ $cost->id ] = 0;
+							}
+							$series_products_price[ $cost->id ] += $cost_val;
+							$total_prices                       += $cost_val;
 						}
+
+						$next_rl    = Cost_Tracker_Admin::get_next_renewal( $next_rl, $cost->renewal_type, false );
+						$next_price = 0;
 					}
 				}
 			}
 
-			$item['client-cost-tracker'] = Cost_Tracker_Utility::get_separated_costs_price( $array_costs );
+			$params       = '';
+			$selected_ids = array_keys( $series_products_price );
+			if ( ! empty( $selected_ids ) ) {
+				$params = '&selected_ids=' . implode( ',', $selected_ids ) . '&client_id=' . intval( $client_id );
+			}
+			$item['client-cost-tracker'] = '<a href="admin.php?page=ManageCostTracker' . $params . '" >' . Cost_Tracker_Utility::cost_tracker_format_price( $total_prices, true ) . '</a>';
+
 		}
 		return $item;
 	}
@@ -225,7 +263,7 @@ class Cost_Tracker_Hooks {
 	 * @return array $columns columns.
 	 */
 	public function hook_manage_sites_column( $columns ) {
-		$columns['site-cost-tracker'] = esc_html__( 'Cost', 'mainwp' );
+		$columns['site-cost-tracker'] = '<span data-tooltip="30-Day cost forecast" data-position="left center" data-inverted=""><i class="dollar sign icon"></i></span>';
 		return $columns;
 	}
 
@@ -261,34 +299,61 @@ class Cost_Tracker_Hooks {
 		$item_id = $item['id'];
 
 		if ( ! isset( $item['site-cost-tracker'] ) ) {
-			$array_costs = array(
-				'weekly'    => 0,
-				'monthly'   => 0,
-				'quarterly' => 0,
-				'yearly'    => 0,
-				'lifetime'  => 0,
-			);
-			$site_costs  = is_array( $this->sites_costs ) && isset( $this->sites_costs[ $item_id ] ) ? $this->sites_costs[ $item_id ] : array();
+
+			$current_time = time();
+			$upcoming1    = strtotime( gmdate( 'Y-m-d 00:00:00', $current_time ) );
+			$upcoming2    = strtotime( '+1 month', $current_time );
+
+			$series_products_price = array();
+			$total_prices          = 0;
+			$site_costs            = is_array( $this->sites_costs ) && isset( $this->sites_costs[ $item_id ] ) ? $this->sites_costs[ $item_id ] : array();
 			if ( is_array( $site_costs ) ) {
-				foreach ( $site_costs as $sub ) {
-					if ( 'active' !== $sub->cost_status ) {
+				foreach ( $site_costs as $cost ) {
+					if ( 'active' !== $cost->cost_status || 'subscription' !== $cost->type ) {
 						continue;
 					}
-					$price = 0;
-					if ( 'single_site' === $sub->license_type ) {
-						$price = $sub->price;
-					} elseif ( 'multi_site' === $sub->license_type && ! empty( $sub->count_sites ) ) {
-						$price += $sub->price / $sub->count_sites;
+					$next_rl = $cost->next_renewal;
+					if ( $next_rl <= $upcoming1 ) {
+						$next_rl = Cost_Tracker_Admin::get_next_renewal( $upcoming1, $cost->renewal_type, false );
 					}
-					if ( 'lifetime' === $sub->type ) {
-						$array_costs['lifetime'] += $price;
-					} elseif ( isset( $array_costs[ $sub->renewal_type ] ) ) {
-						$array_costs[ $sub->renewal_type ] += $price;
+					$next_price = 0;
+					while ( $next_rl <= $upcoming2 ) {
+						if ( $next_rl > $upcoming1 && $next_rl <= $upcoming2 ) {
+							$next_price = $cost->price;
+						}
+
+						$price = 0;
+						if ( ! empty( $next_price ) ) {
+							if ( 'single_site' === $cost->license_type ) {
+								$price = $cost->price;
+							} elseif ( 'multi_site' === $cost->license_type && ! empty( $cost->count_sites ) ) {
+								$price = $cost->price / $cost->count_sites;
+							}
+						}
+
+						if ( ! empty( $price ) ) {
+
+							if ( ! isset( $series_products_price[ $cost->id ] ) ) {
+								$series_products_price[ $cost->id ] = 0;
+							}
+
+							$series_products_price[ $cost->id ] += $price;
+							$total_prices                       += $price;
+						}
+
+						$next_rl    = Cost_Tracker_Admin::get_next_renewal( $next_rl, $cost->renewal_type, false );
+						$next_price = 0;
 					}
 				}
 			}
-			$item['site-cost-tracker'] = Cost_Tracker_Utility::get_separated_costs_price( $array_costs );
+			$params       = '';
+			$selected_ids = array_keys( $series_products_price );
+			if ( ! empty( $selected_ids ) ) {
+				$params = '&selected_ids=' . implode( ',', $selected_ids ) . '&site_id=' . intval( $item_id );
+			}
+			$item['site-cost-tracker'] = '<a href="admin.php?page=ManageCostTracker' . $params . '" >' . Cost_Tracker_Utility::cost_tracker_format_price( $total_prices, true ) . '</a>';
 		}
+
 		return $item;
 	}
 

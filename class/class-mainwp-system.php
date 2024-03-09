@@ -1015,6 +1015,21 @@ class MainWP_System {
 			if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				wp_enqueue_script( 'mainwp-groups', MAINWP_PLUGIN_URL . 'assets/js/mainwp-groups.js', array(), $this->current_version, true );
 			}
+			$enqueue_scripts = apply_filters( 'mainwp_admin_enqueue_scripts', array() );
+			if ( is_array( $enqueue_scripts ) ) {
+				if ( ! empty( $enqueue_scripts['apexcharts'] ) ) {
+					wp_enqueue_script(
+						'mainwp-apexcharts',
+						MAINWP_PLUGIN_URL . 'assets/js/apexcharts/apexcharts.js',
+						array(
+							'jquery',
+							'mainwp',
+						),
+						$this->current_version,
+						true
+					);
+				}
+			}
 		}
 
 		if ( $load_cust_scripts ) {

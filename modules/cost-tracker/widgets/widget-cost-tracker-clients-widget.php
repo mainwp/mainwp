@@ -1,8 +1,8 @@
 <?php
 /**
- * MainWP Logs Widget
+ * MainWP Cost Tracker Clients Widget
  *
- * Displays the Logs Info.
+ * Displays the Clients's Cost Tracker Info.
  *
  * @package MainWP/Dashboard
  * @version 4.6
@@ -14,7 +14,7 @@ use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_Utility;
 
 /**
- * Class MainWP_Time_Tracker_Tasks_Widget
+ * Class Cost_Tracker_Clients_Widget
  */
 class Cost_Tracker_Clients_Widget {
 

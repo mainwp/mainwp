@@ -213,7 +213,6 @@ class Rest_Api {
 				$client    = false;
 				if ( ! empty( $client_id ) ) {
 					$client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id );
-
 				}
 
 				if ( empty( $client ) ) {

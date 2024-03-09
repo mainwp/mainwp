@@ -145,7 +145,7 @@ class Log_Insights_Page {
 				update_user_option( $current_user->ID, 'mainwp_module_log_overview_show_widgets', $show_wids, true );
 				if ( isset( $_POST['reset_module_log_overview_widgets_settings'] ) && ! empty( $_POST['reset_module_log_overview_widgets_settings'] ) ) {
 					update_user_option( $current_user->ID, 'mainwp_module_log_overview_show_widgets', false, true );
-					update_user_option( $current_user->ID, 'mainwp_widgets_sorted_' . strtolower( 'mainwp_page_InsightsOverview ' ), false, true );
+					update_user_option( $current_user->ID, 'mainwp_widgets_sorted_' . strtolower( 'mainwp_page_InsightsOverview' ), false, true );
 				}
 			}
 		}

@@ -140,6 +140,7 @@ class MainWP_Extensions_Groups {
 				'slug'          => 'Extensions-Mainwp-Backups',
 				'href'          => 'admin.php?page=Extensions-Mainwp-Backups',
 				'leftsub_order' => 8.1,
+				'id'            => 'mainwp-backups-extensions-category',
 			),
 			1
 		);
@@ -204,6 +205,18 @@ class MainWP_Extensions_Groups {
 				),
 			);
 
+			self::add_extension_menu(
+				array(
+					'title'                => esc_html__( 'WPvivid Backup', 'mainwp' ),
+					'slug'                 => 'wpvivid-backup-mainwp/wpvivid-backup-mainwp.php',
+					'parent_key'           => 'Extensions-Mainwp-Backups',
+					'ext_page'             => 'admin.php?page=Extensions-Wpvivid-Backup-Mainwp',
+					'leftsub_order_level2' => 6,
+					'level'                => 2,
+					'active_path'          => array( 'Extensions-Wpvivid-Backup-Mainwp' => 'managesites' ),
+				),
+			);
+
 		MainWP_Menu::add_left_menu(
 			array(
 				'title'         => esc_html__( 'Security', 'mainwp' ),
@@ -211,6 +224,7 @@ class MainWP_Extensions_Groups {
 				'slug'          => 'Extensions-Mainwp-Security',
 				'href'          => 'admin.php?page=Extensions-Mainwp-Security',
 				'leftsub_order' => 8.2,
+				'id'            => 'mainwp-security-extensions-category',
 			),
 			1
 		);
@@ -314,7 +328,7 @@ class MainWP_Extensions_Groups {
 			self::add_extension_menu(
 				array(
 					'title'                => esc_html__( 'Vulnerability Checker', 'mainwp' ),
-					'slug'                 => 'mainwp-vulnerability-extension/mainwp-vulnerability-checker-extension.php',
+					'slug'                 => 'mainwp-vulnerability-checker-extension/mainwp-vulnerability-checker-extension.php',
 					'parent_key'           => 'Extensions-Mainwp-Security',
 					'ext_page'             => 'admin.php?page=Extensions-Mainwp-Vulnerability-Checker-Extension',
 					'leftsub_order_level2' => 9,
@@ -342,6 +356,7 @@ class MainWP_Extensions_Groups {
 				'slug'          => 'Extensions-Mainwp-Analytics',
 				'href'          => 'admin.php?page=Extensions-Mainwp-Analytics',
 				'leftsub_order' => 8.3,
+				'id'            => 'mainwp-analytics-extensions-category',
 			),
 			1
 		);
@@ -389,6 +404,7 @@ class MainWP_Extensions_Groups {
 				'slug'          => 'Extensions-Mainwp-Monitoring',
 				'href'          => 'admin.php?page=Extensions-Mainwp-Monitoring',
 				'leftsub_order' => 8.4,
+				'id'            => 'mainwp-monitoring-extensions-category',
 			),
 			1
 		);
@@ -459,6 +475,7 @@ class MainWP_Extensions_Groups {
 				'slug'          => 'Extensions-Mainwp-Agency',
 				'href'          => 'admin.php?page=Extensions-Mainwp-Agency',
 				'leftsub_order' => 8.4,
+				'id'            => 'mainwp-agency-extensions-category',
 			),
 			1
 		);
@@ -494,6 +511,7 @@ class MainWP_Extensions_Groups {
 				'slug'          => 'Extensions-Mainwp-Administrative',
 				'href'          => 'admin.php?page=Extensions-Mainwp-Administrative',
 				'leftsub_order' => 8.5,
+				'id'            => 'mainwp-administrative-extensions-category',
 			),
 			1
 		);
@@ -529,6 +547,7 @@ class MainWP_Extensions_Groups {
 				'slug'          => 'Extensions-Mainwp-Development',
 				'href'          => 'admin.php?page=Extensions-Mainwp-Development',
 				'leftsub_order' => 8.6,
+				'id'            => 'mainwp-development-extensions-category',
 			),
 			1
 		);
@@ -584,7 +603,7 @@ class MainWP_Extensions_Groups {
 			self::add_extension_menu(
 				array(
 					'title'                => esc_html__( 'Custom Post Type', 'mainwp' ),
-					'slug'                 => 'mainwp-custom-post-types/mainwp-custom-post-type.php',
+					'slug'                 => 'mainwp-custom-post-types/mainwp-custom-post-types.php',
 					'parent_key'           => 'Extensions-Mainwp-Development',
 					'ext_page'             => 'admin.php?page=Extensions-Mainwp-Custom-Post-Types',
 					'leftsub_order_level2' => 5,
@@ -648,6 +667,7 @@ class MainWP_Extensions_Groups {
 				'slug'          => 'Extensions-Mainwp-Performance',
 				'href'          => 'admin.php?page=Extensions-Mainwp-Performance',
 				'leftsub_order' => 8.6,
+				'id'            => 'mainwp-performance-extensions-category',
 			),
 			1
 		);
@@ -846,7 +866,7 @@ class MainWP_Extensions_Groups {
 		self::add_extension_menu(
 			array(
 				'title'                => esc_html__( 'SEOPress', 'mainwp' ),
-				'slug'                 => 'seopress-for-mainwp/seopress-for-mainwp.php',
+				'slug'                 => 'seopress-for-mainwp/wp-seopress-mainwp.php',
 				'parent_key'           => 'PostBulkManage',
 				'ext_page'             => 'admin.php?page=Extensions-Seopress-For-Mainwp',
 				'leftsub_order_level2' => 6,

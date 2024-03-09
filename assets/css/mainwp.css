@@ -160,6 +160,10 @@
     width: 170px;
 }
 
+#mainwp-collapse-second-level-navigation {
+    background-color: #3E3F3D;
+}
+
 .mainwp-individual-site-view #mainwp-page-navigation-wrapper .mainwp-page-navigation {
     width: 170px;
     box-shadow: none !important;
@@ -286,7 +290,7 @@
 
 #mainwp-main-menu {
     width: 100%;
-    background: #1c1d1b !important;
+    background: #3E3F3D !important;
 }
 
 #mainwp-second-level-navigation .ui.inverted.menu {
@@ -508,6 +512,17 @@
         width: 800px;
     }
 
+    #widget-cost_upcomming_renewals .mainwp-scrolly-overflow,
+    #widget-cost_monthly_renewals .mainwp-scrolly-overflow,
+    #widget-cost_yearly_renewals .mainwp-scrolly-overflow {
+        height: calc(100% - 100px) !important;
+    }
+
+    #widget-cost_monthly_totals .mainwp-scrolly-overflow,
+    #widget-cost_category_totals .mainwp-scrolly-overflow {
+        height: calc(100% - 70px) !important;
+    }
+
 }
 
 .mainwp-ui .mainwp-widget .ui.form .ui.input,
@@ -605,7 +620,14 @@ table.mainwp-manage-wpsites-table .error a {
     padding-top: 1em;
 }
 
-
+/* Manage Costs Table */
+#mainwp-module-cost-tracker-sites-table tbody tr td.mainwp-manage-costs-name-cell {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+    max-width: 150px;
+    min-width: 150px;
+}
 /* Manage Groups */
 
 #mainwp-manage-groups .mainwp-group-sites-row .list {

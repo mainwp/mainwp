@@ -8,6 +8,8 @@
 
 namespace MainWP\Dashboard\Module\CostTracker;
 
+use MainWP\Dashboard\MainWP_Utility;
+
 /**
  * Class Cost_Tracker_Utility
  */
@@ -71,13 +73,14 @@ class Cost_Tracker_Utility {
 	 *
 	 * @param string $key Option key.
 	 * @param mixed  $defval Default value.
+	 * @param bool   $json_encoded Is json encoded value.
 	 *
 	 * @return mixed Retruns option value.
 	 */
-	public function get_option( $key = null, $defval = '' ) {
+	public function get_option( $key = null, $defval = '', $json_encoded = false ) {
 		if ( isset( $this->option[ $key ] ) ) {
 			$values = $this->option[ $key ];
-			if ( 'custom_product_types' === $key || 'custom_payment_methods' === $key ) {
+			if ( $json_encoded ) {
 				$values = ! empty( $values ) ? json_decode( $values, true ) : array();
 				if ( ! is_array( $values ) ) {
 					$values = array();
@@ -126,14 +129,45 @@ class Cost_Tracker_Utility {
 	}
 
 	/**
+	 * Method render_product_icon().
+	 *
+	 * @param  string $file_name File icon.
+	 * @param  bool   $ret True|False To return.
+	 *
+	 * @return string
+	 */
+	public static function render_product_icon( $file_name, $ret = false ) {
+
+		$imgfavi = '';
+
+		$favi_url = MainWP_Utility::get_saved_favicon_url( $file_name );
+		if ( ! empty( $favi_url ) ) {
+			$imgfavi = '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" />';
+		}
+
+		if ( $ret ) {
+			return $imgfavi;
+		}
+		echo $imgfavi;//phpcs:ignore -- ok.
+	}
+
+	/**
 	 * Format the price with a currency symbol.
 	 *
 	 * @param  float $price Raw price.
 	 * @param  bool  $ret Return or echo value.
+	 * @param  array $params other params.
 	 *
 	 * @return string
 	 */
-	public static function cost_tracker_format_price( $price, $ret = false ) {
+	public static function cost_tracker_format_price( $price, $ret = false, $params = array() ) {
+		if ( ! is_array( $params ) ) {
+			$params = array();
+		}
+
+		$get_currency_format = ! empty( $params['get_currency_format'] ) ? true : false;
+		$get_formated_number = ! empty( $params['get_formated_number'] ) ? true : false;
+		$get_decimals        = ! empty( $params['get_decimals'] ) ? true : false;
 
 		$currency = self::get_instance()->get_option( 'currency' );
 		$settings = self::get_instance()->get_option( 'currency_format' );
@@ -154,6 +188,14 @@ class Cost_Tracker_Utility {
 
 		$price = $negative ? $price * -1 : $price;
 		$price = number_format( $price, $args['decimals'], $args['decimal_separator'], $args['thousand_separator'] );
+
+		if ( $get_decimals ) {
+			return $args['decimals'];
+		}
+
+		if ( $get_formated_number ) {
+			return $price;
+		}
 
 		if ( $args['decimals'] > 0 ) {
 			// trim zezos.
@@ -178,8 +220,16 @@ class Cost_Tracker_Utility {
 				break;
 		}
 
+		if ( $get_currency_format ) {
+			return array(
+				'format'   => sprintf( $format, esc_html( self::get_currency_symbol( $currency ) ), '%1' ), // %1 for price holder.
+				'decimals' => $args['decimals'],
+			);
+		}
+
 		$formatted_price = ( $negative ? '-' : '' ) . sprintf( $format, '<span class="cost-tracker-currency-symbol">' . esc_html( self::get_currency_symbol( $currency ) ) . '</span>', esc_html( $price ) );
 		$value           = '<span class="cost-tracker-currency-amount"><bdi>' . $formatted_price . '</bdi></span>';
+
 		if ( $ret ) {
 			return $value;
 		}

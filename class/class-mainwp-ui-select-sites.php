@@ -186,7 +186,7 @@ class MainWP_UI_Select_Sites {
 			$selectedby = 'client';
 		}
 
-		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.name' ) );
 		$groups   = MainWP_DB_Common::instance()->get_not_empty_groups( null, $enableOfflineSites );
 
 		// support staging extension.

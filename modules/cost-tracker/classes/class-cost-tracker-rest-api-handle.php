@@ -99,12 +99,11 @@ class Cost_Tracker_Rest_Api_Handle {
 			'license_type',
 			'cost_status',
 			'payment_method',
-			'author',
 			'price',
 			'renewal_type',
 			'last_renewal',
 			'next_renewal',
-			'last_alert',
+			'last_alert', // to support assistant extension.
 			'sites',
 			'groups',
 			'clients',
@@ -162,9 +161,6 @@ class Cost_Tracker_Rest_Api_Handle {
 				break;
 			case 'payment_method':
 				$value = esc_html( $cost->payment_method );
-				break;
-			case 'author':
-				$value = esc_html( $cost->author );
 				break;
 			case 'price':
 				$value = esc_html( $cost->price );

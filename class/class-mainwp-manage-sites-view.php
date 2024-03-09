@@ -931,7 +931,7 @@ class MainWP_Manage_Sites_View {
 					</div>
 				</div>
 				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Auto update core', 'mainwp' ); ?></label>
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Install trusted updates', 'mainwp' ); ?></label>
 					<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want MainWP to automatically update WP Core on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<input type="checkbox" name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" <?php echo ( 1 === (int) $website->automatic_update ? 'checked="true"' : '' ); ?>><label for="mainwp_automaticDailyUpdate"></label>
 					</div>

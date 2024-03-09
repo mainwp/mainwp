@@ -67,7 +67,8 @@ class Log_Admin {
 			array(
 				$this,
 				'admin_enqueue_scripts',
-			)
+			),
+			9
 		);
 
 		// Auto purge setup.
@@ -155,15 +156,14 @@ class Log_Admin {
 			);
 
 			if ( in_array( $hook, array( 'mainwp_page_InsightsOverview' ), true ) ) {
-				wp_enqueue_script(
-					'mainwp-module-log-apexcharts',
-					$this->manager->locations['url'] . 'ui/js/apexcharts/apexcharts.js',
-					array(
-						'jquery',
-						'mainwp',
-					),
-					$this->manager->get_version(),
-					true
+				add_filter(
+					'mainwp_admin_enqueue_scripts',
+					function ( $scripts ) {
+						if ( is_array( $scripts ) ) {
+							$scripts['apexcharts'] = true;
+						}
+						return $scripts;
+					}
 				);
 			}
 

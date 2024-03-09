@@ -126,7 +126,7 @@ class MainWP_UI {
 			$selectedby = 'group';
 		}
 
-		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.name' ) );
 		$groups   = MainWP_DB_Common::instance()->get_not_empty_groups( null, $enableOfflineSites );
 
 		// support staging extension.
@@ -269,12 +269,9 @@ class MainWP_UI {
 			<div id="mainwp-select-sites-body">
 				<div class="ui relaxed divided list" id="mainwp-select-sites-list">
 					<?php if ( ! $websites ) : ?>
-						<h2 class="ui icon header">
-							<i class="folder open outline icon"></i>
-							<div class="content"><?php esc_html_e( 'No Sites connected!', 'mainwp' ); ?></div>
-							<div class="ui divider hidden"></div>
-							<a href="admin.php?page=managesites&do=new" class="ui green button basic"><?php esc_html_e( 'Add Site', 'mainwp' ); ?></a>
-						</h2>
+						<div id="mainwp-select-sites-placeholder" class="ui segment">
+							<?php self::render_empty_element_placeholder( __( 'No sites connected.', 'mainwp' ) ); ?>
+						</div>
 						<?php
 						else :
 							while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -1286,7 +1283,7 @@ class MainWP_UI {
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
 			?>
 			<?php if ( $id && $website && '' !== $website->sync_errors ) : ?>
-				<a href="#" class="mainwp-updates-overview-reconnect-site ui green icon button" siteid="<?php echo intval( $website->id ); ?>" data-position="bottom right" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><i class="undo alternate"></i></a>
+				<a href="#" class="mainwp-updates-overview-reconnect-site ui green icon button" siteid="<?php echo intval( $website->id ); ?>" data-position="bottom right" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><i class="undo alternate icon"></i></a>
 			<?php else : ?>
 				<a class="ui icon button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?>" id="mainwp-sync-sites" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?> data-inverted="" data-position="bottom right">
 					<i class="sync icon"></i>
@@ -2224,9 +2221,9 @@ class MainWP_UI {
 	 */
 	public static function render_empty_element_placeholder( $placeholder = '' ) {
 		?>
-		<div class="ui one column grid" style="height:100%">
+		<div class="ui one column grid">
 			<div class="middle aligned center aligned column">
-				<img src="<?php echo esc_url( MAINWP_PLUGIN_URL ); ?>assets/images/mainwp-widget-placeholder.png" class="mainwp-no-results-placeholder"/>
+				<img src="<?php echo esc_url( MAINWP_PLUGIN_URL ); ?>assets/images/mainwp-widget-placeholder.png" style="max-width:200px" class="mainwp-no-results-placeholder ui middle aligned image"/>
 				<?php if ( '' !== $placeholder ) : ?>
 					<p><?php echo $placeholder; //phpcs:ignore -- requires escaped. ?></p>
 				<?php else : ?>

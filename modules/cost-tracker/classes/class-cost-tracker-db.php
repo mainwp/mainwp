@@ -22,7 +22,7 @@ class Cost_Tracker_DB extends MainWP_Install {
 	 *
 	 * @var string Version.
 	 */
-	private $cost_tracker_db_version = '1.0.6';
+	private $cost_tracker_db_version = '1.0.9';
 
 
 	/**
@@ -87,8 +87,7 @@ class Cost_Tracker_DB extends MainWP_Install {
 `license_type` varchar(20) NOT NULL,
 `cost_status` varchar(20) NOT NULL,
 `payment_method` varchar(50) NOT NULL,
-`author` text NOT NULL,
-`price` decimal(12,2) NOT NULL,
+`price` decimal(26,8) NOT NULL,
 `renewal_type` varchar(20) NOT NULL,
 `last_renewal` int(11) NOT NULL,
 `next_renewal` int(11) NOT NULL,
@@ -108,10 +107,28 @@ PRIMARY KEY  (`id`)  '; }
 		foreach ( $sql as $query ) {
 			dbDelta( $query );
 		}
-
+		$this->update_db( $currentVersion );
 		update_option( 'mainwp_module_cost_tracker_db_version', $this->cost_tracker_db_version );
 	}
 
+
+	/**
+	 * Method update_db().
+	 *
+	 * @param array $current_version DB version number.
+	 *
+	 * @return void
+	 */
+	public function update_db( $current_version ) {
+		if ( ! empty( $current_version ) ) {
+			if ( version_compare( $current_version, '1.0.8', '<' ) ) {
+				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'cost_tracker' ) . ' MODIFY COLUMN price decimal(26,8)' ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			}
+			if ( version_compare( $current_version, '1.0.9', '<' ) ) {
+				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'cost_tracker' ) . ' DROP COLUMN author' ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			}
+		}
+	}
 
 	/**
 	 * Method update_cost_tracker().
@@ -209,9 +226,20 @@ PRIMARY KEY  (`id`)  '; }
 		}
 
 		$product_type = isset( $params['product_type'] ) ? $params['product_type'] : '';
+		$selected_ids = isset( $params['selected_ids'] ) ? $params['selected_ids'] : array();
+
+		if ( is_array( $selected_ids ) ) {
+			$selected_ids = MainWP_Utility::array_numeric_filter( $selected_ids );
+		} else {
+			$selected_ids = array();
+		}
 
 		if ( 'all' === $by ) {
-			return $wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'cost_tracker' ) ); //phpcs:ignore -- good.
+			$where = '';
+			if ( ! empty( $selected_ids ) ) {
+				$where = ' AND id IN (' . implode( ',', $selected_ids ) . ') ';
+			}
+			return $wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'cost_tracker' ) . ' WHERE 1 ' . $where ); //phpcs:ignore -- good.
 		}
 
 		$sql = '';
@@ -551,5 +579,31 @@ PRIMARY KEY  (`id`)  '; }
 		}
 
 		return $sites_costs;
+	}
+
+	/**
+	 * Method get_summary_data().
+	 *
+	 * @param array $params Params.
+	 *
+	 * @return mixed Result
+	 */
+	public function get_summary_data( $params = array() ) {
+		if ( ! is_array( $params ) ) {
+			$params = array();
+		}
+
+		global  $wpdb;
+
+		$sum_data = isset( $params['sum_data'] ) ? $params['sum_data'] : '';
+		$where    = '';
+		$sql      = '';
+		if ( 'all' === $sum_data ) {
+			$where .= ' AND co.cost_status = "active" AND co.type = "subscription" ';
+			$sql   .= 'SELECT * FROM ' . $this->table_name( 'cost_tracker' ) . ' co WHERE 1 ' . $where . ' ORDER BY co.next_renewal ASC ';
+		} else {
+			return false;
+		}
+		return $wpdb->get_results( $sql ); //phpcs:ignore -- good.
 	}
 }

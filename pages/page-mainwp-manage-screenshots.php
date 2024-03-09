@@ -46,6 +46,8 @@ class MainWP_Manage_Screenshots {
 	 * Render manage sites table top.
 	 */
 	public function render_manage_sites_table_top() {
+		$filters_row_style = 'display:none';
+
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$selected_status = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
 		$selected_group  = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
@@ -60,6 +62,10 @@ class MainWP_Manage_Screenshots {
 		}
 		// phpcs:enable
 
+		if ( ! empty( $selected_status ) || ! empty( $selected_group ) || ! empty( $selected_client ) ) {
+			$filters_row_style = 'display:block';
+		}
+
 		?>
 		<div class="ui stackable three column grid">
 
@@ -73,7 +79,7 @@ class MainWP_Manage_Screenshots {
 				</div>
 			</div>
 
-			<div class="row ui mini form" id="mainwp-sites-filters-row" style="display:none">
+			<div class="row ui mini form" id="mainwp-sites-filters-row" style="<?php echo esc_attr( $filters_row_style ); ?>">
 				<div class="sixteen wide left aligned middle aligned column">
 				<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
 					<div class="ui selection dropdown" id="mainwp_is_not_site">

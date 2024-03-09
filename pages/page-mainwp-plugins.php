@@ -487,18 +487,10 @@ class MainWP_Plugins {
 							<?php if ( is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) : ?>
 								<?php echo $cachedResult['result']; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 							<?php else : ?>
-								<div class="ui padded segment">
-									<div class="ui hidden divider"></div>
-									<div class="ui hidden divider"></div>
-									<div class="ui hidden divider"></div>
-									<h2 class="ui icon header">
-										<i class="settings icon"></i>
-										<div class="content">
-										<?php esc_html_e( 'Manage Plugins', 'mainwp' ); ?>
-										<div class="sub header"><?php esc_html_e( 'Use the search options to find the plugin you want to manage.', 'mainwp' ); ?></div>
-										</div>
-									</h2>
-								</div>
+								<div class="ui hidden divider"></div>
+								<div class="ui hidden divider"></div>
+								<div class="ui hidden divider"></div>
+								<?php MainWP_UI::render_empty_element_placeholder( __( 'Use the search options to find the plugin you want to manage', 'mainwp' ) ); ?>
 							<?php endif; ?>
 						</div>
 					</div>

@@ -1,6 +1,6 @@
 <?php
 /**
- * MainWP Upcomming Monthly Totals Widget
+ * MainWP Upcoming Monthly Totals Widget
  *
  * Displays the Monthly Totals.
  *

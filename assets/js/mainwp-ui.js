@@ -713,6 +713,52 @@ mainwp_upload_custom_icon = function (iconObj) {
 
 };
 
+mainwp_upload_custom_types_icon = function (iconObj, upload_act, callback_uploaded ) {
+    var slug = jQuery(iconObj).attr('item-slug');
+    var deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
+    var deleteIconId = jQuery('#mainwp_delete_image_chk').attr('item-icon-id');
+    
+    jQuery('#mainwp-message-zone-upload').removeClass('red green yellow');
+    var msg = __('Updating the icon. Please wait...');
+
+    jQuery('#mainwp-message-zone-upload').html('<i class="notched circle loading icon"></i> ' + msg);
+    jQuery('#mainwp-message-zone-upload').show();
+    jQuery('#update_custom_icon_btn').attr('disabled', 'disabled');
+
+    var act_request = typeof upload_act !== undefined & '' != upload_act ? upload_act : 'mainwp_upload_custom_types_icon';
+
+    //Add via ajax!!
+    var formdata = new FormData(jQuery('#uploadicon_form')[0]);
+    formdata.append("action", act_request);
+    formdata.append("slug", slug);
+    formdata.append("delete", deleteIcon ? 1 : 0);
+    formdata.append("deleteIconId", deleteIconId);
+    formdata.append("security", security_nonces[act_request]);
+    jQuery.ajax({
+        type: 'POST',
+        url: ajaxurl,
+        data: formdata,
+        success: function (response) {
+            if (response && response.result == 'success') {
+                jQuery('#mainwp-message-zone-upload').hide();
+                if(typeof callback_uploaded == 'function' ){
+                    callback_uploaded(response);
+                }
+            } else {
+                feedback('mainwp-message-zone-upload', __('Undefined error. Please try again.'), 'red');
+            }
+        },
+        error: function () {
+        },
+        contentType: false,
+        cache: false,
+        processData: false,
+        enctype: 'multipart/form-data',
+        dataType: 'json'
+    });
+
+};
+
 mainwp_guidedtours_onchange = function (me) {
     var data = mainwp_secure_data({
         action: 'mainwp_guided_tours_option_update',

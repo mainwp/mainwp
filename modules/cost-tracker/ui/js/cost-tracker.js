@@ -109,11 +109,16 @@ jQuery(document).ready(function ($) {
 
 	$(document).on('click', '.module-cost-tracker-add-custom-product-types', function () {
 		jQuery('.cost-tracker-product-types-bottom').before(jQuery(this).attr('add-custom-product-types-tmpl'));
-		jQuery('.mainwp-cost-tracker-color-picker').wpColorPicker({
-			hide: true,
-			clear: false,
-			palettes: [ '#18a4e0','#0253b3','#7fb100','#446200','#ad0000','#ffd300','#2d3b44','#6435c9','#e03997','#00b5ad' ],
-		})
+		var justAdded = jQuery(this).prev().prev();
+		jQuery(justAdded).find('.mainwp-module-cost-tracker-select-custom-product-types-icons').dropdown( {							
+			onChange: function( val ) {
+				var parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
+				if(jQuery(parent).find('.module_cost_tracker_settings_upload_img_display').length > 0){
+					jQuery( '.module_cost_tracker_settings_upload_img_display').hide();
+				}							
+				jQuery(parent).find('input[name="cost_tracker_custom_product_types[icon][]"]' ).val('deficon:' + val);
+			}
+		} );
 	});
 
 	$(document).on('click', '.module-cost-tracker-add-custom-payment-methods', function () {

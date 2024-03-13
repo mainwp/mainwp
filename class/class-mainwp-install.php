@@ -25,7 +25,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '9.0.0.4';
+	protected $mainwp_db_version = '9.0.0.6';
 
 	/**
 	 * Protected variable to hold the database option name.
@@ -274,6 +274,22 @@ class MainWP_Install extends MainWP_DB_Base {
   PRIMARY KEY  (wp_group_id)  ';
 		}
 		$tbl  .= ') ' . $charset_collate;
+		$sql[] = $tbl;
+
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'lookup_item_objects' ) . ' (
+	lookup_id bigint(20) unsigned NOT NULL auto_increment,
+	item_id bigint(20) unsigned NOT NULL,
+	item_name varchar(32) NOT NULL,
+	object_id bigint(20) unsigned NOT NULL,
+	object_name varchar(32) NOT NULL,
+	KEY item_id (item_id),
+	KEY object_id (object_id)';
+
+		if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.5', '<' ) ) {
+			$tbl .= ',
+	PRIMARY KEY  (lookup_id)  ';
+		}
+		$tbl  .= ') ' . $charset_collate . ';';
 		$sql[] = $tbl;
 
 		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup_progress' ) . " (

@@ -1800,7 +1800,7 @@ class MainWP_UI {
 		<i class="close icon"></i>
 			<div class="header">
 			<?php
-			esc_html_e( 'Update Icon', 'mainwp' );
+			esc_html_e( 'Upload Icon', 'mainwp' );
 			?>
 			</div>
 				<div class="content" id="mainwp-upload-custom-icon-content">
@@ -1821,7 +1821,9 @@ class MainWP_UI {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Custom icon', 'mainwp' ); ?></label>
 							<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Upload a custom icon.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="file" id="mainwp_upload_icon_uploader" name="mainwp_upload_icon_uploader[]" accept="image/*" data-inverted="" data-tooltip="<?php esc_attr_e( 'Upload a custom icon.', 'mainwp' ); ?>" />
+								<div class="ui file input">
+									<input type="file" id="mainwp_upload_icon_uploader" name="mainwp_upload_icon_uploader[]" accept="image/*" data-inverted="" data-tooltip="<?php esc_attr_e( 'Upload a custom icon.', 'mainwp' ); ?>" />
+								</div>
 							</div>
 						</div>
 						<div class="ui grid field" id="mainwp_delete_image_field">
@@ -1829,7 +1831,7 @@ class MainWP_UI {
 							<div class="six wide column">
 								<img class="ui tiny image" src="" /><br/>
 								<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, delete image.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-									<input type="checkbox"id="mainwp_delete_image_chk" />
+									<input type="checkbox"id="mainwp_delete_image_chk" item-icon-id="" />
 									<label for="mainwp_delete_image_chk"><?php esc_html_e( 'Delete Image', 'mainwp' ); ?></label>
 								</div>
 							</div>
@@ -2231,6 +2233,54 @@ class MainWP_UI {
 				<?php endif; ?>
 			</div>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Method render_modal_save_segment()
+	 *
+	 * Render modal window.
+	 *
+	 * @return void
+	 */
+	public static function render_modal_save_segment() {
+		?>
+		<div id="mainwp-common-filter-segment-modal" class="ui tiny modal">
+			<i class="close icon" id="mainwp-common-filter-segment-cancel"></i>
+			<div class="header"><?php esc_html_e( 'Save Segment', 'mainwp' ); ?></div>
+			<div class="content" id="mainwp-common-filter-segment-content">
+				<div id="mainwp-common-filter-edit-segment-status" class="ui message hidden"></div>
+				<div id="mainwp-common-filter-segment-edit-fields" class="ui form">
+					<div class="field">
+						<label><?php esc_html_e( 'Enter the segment name', 'mainwp' ); ?></label>
+					</div>
+					<div class="field">
+						<input type="text" id="mainwp-common-filter-edit-segment-name" value=""/>
+					</div>
+				</div>
+				<div id="mainwp-common-filter-segment-select-fields" style="display:none;">
+					<div class="field">
+						<label><?php esc_html_e( 'Select a segment', 'mainwp' ); ?></label>
+					</div>
+					<div class="field">
+						<div id="mainwp-common-filter-segments-lists-wrapper"></div>
+					</div>
+				</div>
+			</div>
+			<div class="actions">
+				<div class="ui grid">
+					<div class="eight wide left aligned middle aligned column">
+						<input type="button" class="ui green button" id="mainwp-common-filter-edit-segment-save" value="<?php esc_attr_e( 'Save', 'mainwp' ); ?>"/>
+						<input type="button" class="ui green button" id="mainwp-common-filter-select-segment-choose-button" value="<?php esc_attr_e( 'Choose', 'mainwp' ); ?>" style="display:none;"/>
+						<input type="button" class="ui basic button" id="mainwp-common-filter-select-segment-delete-button" value="<?php esc_attr_e( 'Delete', 'mainwp' ); ?>" style="display:none;"/>
+					</div>
+					<div class="eight wide column">
+						
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<?php
 	}
 }

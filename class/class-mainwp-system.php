@@ -27,7 +27,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '5.0.1';
+	public static $version = '5.0.2';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -145,6 +145,10 @@ class MainWP_System {
 
 			if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '5.0', '<' ) && version_compare( $this->current_version, '5.0', '>=' ) ) {
 				add_action( 'mainwp_before_header', array( MainWP_System_View::get_class_name(), 'mainwp_ver5_update_notice' ) );
+			}
+
+			if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '5.0.2', '<' ) && version_compare( $this->current_version, '5.0.2', '>=' ) ) {
+				add_action( 'mainwp_before_header', array( MainWP_System_View::get_class_name(), 'mainwp_ver502_update_notice' ) );
 			}
 
 			MainWP_Utility::update_option( 'mainwp_plugin_version', $this->current_version );
@@ -790,6 +794,7 @@ class MainWP_System {
 		MainWP_Post_Plugin_Theme_Handler::instance()->init();
 		MainWP_Post_Extension_Handler::instance()->init();
 		MainWP_Post_Backup_Handler::instance()->init();
+		MainWP_Manage_Sites_Filter_Segment::get_instance()->admin_init();
 
 		/**
 		 * Filter: mainwp_ui_use_wp_calendar

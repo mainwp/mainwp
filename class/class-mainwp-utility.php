@@ -986,6 +986,18 @@ class MainWP_Utility {
 	}
 
 	/**
+	 * Method numeric_filter()
+	 *
+	 * Filter given numeric.
+	 *
+	 * @param int $int_num Int number.
+	 * @return array $arr_ints Array filtered.
+	 */
+	public static function numeric_filter( $int_num ) {
+		return ( (string) (int) $int_num === (string) $int_num && 0 < $int_num ) ? $int_num : false;
+	}
+
+	/**
 	 * Method array_numeric_filter()
 	 *
 	 * Filter given numeric array.
@@ -1445,8 +1457,9 @@ class MainWP_Utility {
 	 * Method get_remote_favicon().
 	 *
 	 * @param  string $url Url.
-	 * @param  int    $product_id Product id.
 	 * @param  string $favi favicon file name.
+	 * @param  int    $item_id item id.
+	 * @param  string $file_prefix favicon file prefix name.
 	 *
 	 * @return mixed result.
 	 */

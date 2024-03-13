@@ -153,7 +153,7 @@ class Cost_Tracker_Hooks {
 					$this->clients_sites[ $cls_site->client_id ][] = $cls_site->id;
 				}
 			}
-			$this->clients_costs = Cost_Tracker_DB::get_instance()->get_cost_tracker_info_of_clients( $clients_ids, array( 'with_sites' => true ) );
+			$this->clients_costs = Cost_Tracker_DB::get_instance()->get_all_cost_trackers_by_clients( $clients_ids, array( 'get_cost_sites' => true ) );
 		}
 	}
 
@@ -278,7 +278,7 @@ class Cost_Tracker_Hooks {
 	 */
 	public function hook_sitestable_prepared_items( $websites, $site_ids ) {
 		if ( null === $this->sites_costs ) {
-			$this->sites_costs = Cost_Tracker_DB::get_instance()->get_cost_trackers_info_of_sites( $site_ids );
+			$this->sites_costs = Cost_Tracker_DB::get_instance()->get_all_cost_trackers_by_sites( $site_ids );
 		}
 	}
 

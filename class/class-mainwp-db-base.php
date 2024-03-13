@@ -171,6 +171,26 @@ class MainWP_DB_Base {
 	}
 
 	/**
+	 * Method escape_array()
+	 *
+	 * Escape SQL Data.
+	 *
+	 * @param mixed $data_arr Data array to escape.
+	 *
+	 * @return mixed Escapped SQL Data.
+	 */
+	public function escape_array( $data_arr ) {
+		if ( ! is_array( $data_arr ) || empty( $data_arr ) ) {
+			return false;
+		}
+		$tmp_arr = array();
+		foreach ( $data_arr as $dt ) {
+			$tmp_arr[] = $this->escape( $dt );
+		}
+		return $tmp_arr;
+	}
+
+	/**
 	 * Method escape()
 	 *
 	 * Escape SQL Data.

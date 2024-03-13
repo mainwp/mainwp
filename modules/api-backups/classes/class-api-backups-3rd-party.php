@@ -2305,8 +2305,6 @@ class Api_Backups_3rd_Party {
 	 */
 	public static function gridpane_action_update_ids() {
 
-		$updated = '';
-
 		// Grab site count & pass to gridpane_get_sites_list() for pagination.
 		$sites_count = Api_Backups_Utility::get_instance()->count_child_sites();
 
@@ -2316,8 +2314,9 @@ class Api_Backups_3rd_Party {
 		// Compare Child Sites domain against connected GridPane account Server / Apps List.
 		while ( $websites && ( $website = Api_Backups_Helper::fetch_object( $websites ) ) ) {
 			// Remove http://, www., and slash(/) from the URL.
-			$url       = rawurlencode( $website->url );
-			$clean_url = preg_replace( '#^[^:/.]*[:/]+#i', '', preg_replace( '{/$}', '', urldecode( $url ) ) );
+			$url             = rawurlencode( $website->url );
+			$strip_protocall = preg_replace( '#^[^:/.]*[:/]+#i', '', preg_replace( '{/$}', '', urldecode( $url ) ) );
+			$clean_url       = preg_replace( '/^www\./', '', $strip_protocall );
 
 			// Get Sites list.
 			$sites_list = self::gridpane_get_sites_list( $sites_count );
@@ -2332,7 +2331,6 @@ class Api_Backups_3rd_Party {
 					}
 				}
 			}
-			$updated = 1;
 		}
 
 		Api_Backups_Helper::free_result( $websites );

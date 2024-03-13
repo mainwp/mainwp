@@ -445,18 +445,18 @@ class MainWP_Manage_Sites_List_Table {
 		$filters_row_style = 'display:none';
 
 		// phpcs:disable WordPress.Security.NonceVerification,Missing,Missing,Missing,Missing,Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$selected_status  = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
-		$selected_group   = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
-		$selected_client  = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
-		$is_not           = isset( $_REQUEST['isnot'] ) && ( 'yes' === $_REQUEST['isnot'] ) ? true : false;
-		$selected_siteids = isset( $_REQUEST['selected_sites'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['selected_sites'] ) ) : '';
+		$selected_status           = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
+		$selected_group            = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
+		$selected_client           = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
+		$is_not                    = isset( $_REQUEST['isnot'] ) && ( 'yes' === $_REQUEST['isnot'] ) ? true : false;
+		$selected_one_time_siteids = isset( $_REQUEST['selected_sites'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['selected_sites'] ) ) : '';
 		// phpcs:enable
 
-		if ( ! empty( $selected_siteids ) ) {
-			MainWP_Utility::update_user_option( 'mainwp_managesites_filter_onetime_selected_siteids', $selected_siteids );
+		if ( ! empty( $selected_one_time_siteids ) ) {
+			MainWP_Utility::update_user_option( 'mainwp_managesites_filter_onetime_selected_siteids', $selected_one_time_siteids );
 		}
 
-		if ( empty( $selected_status ) && empty( $selected_group ) && empty( $selected_client ) && empty( $selected_siteids ) ) {
+		if ( empty( $selected_status ) && empty( $selected_group ) && empty( $selected_client ) && empty( $selected_one_time_siteids ) ) {
 			$selected_status = get_user_option( 'mainwp_managesites_filter_status' );
 			$selected_group  = get_user_option( 'mainwp_managesites_filter_group' );
 			$selected_client = get_user_option( 'mainwp_managesites_filter_client' );
@@ -488,11 +488,10 @@ class MainWP_Manage_Sites_List_Table {
 					<?php self::render_page_navigation_left_items(); ?>
 				</div>
 			</div>
-
 			<div class="row ui mini form" id="mainwp-sites-filters-row" style="<?php echo esc_attr( $filters_row_style ); ?>">
-				<div class="sixteen wide left aligned middle aligned column">
+				<div class="thirteen wide middle aligned column ui compact grid">
 						<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
-					<div class="ui selection dropdown" id="mainwp_is_not_site">
+					<div class="ui selection dropdown seg_is_not" id="mainwp_is_not_site">
 							<input type="hidden" value="<?php echo $is_not ? 'yes' : ''; ?>">
 							<i class="dropdown icon"></i>
 							<div class="default text"><?php esc_html_e( 'Is', 'mainwp' ); ?></div>
@@ -501,7 +500,7 @@ class MainWP_Manage_Sites_List_Table {
 								<div class="item" data-value="yes"><?php esc_html_e( 'Is not', 'mainwp' ); ?></div>
 							</div>
 						</div>										
-						<div id="mainwp-filter-sites-group" class="ui selection multiple dropdown">
+						<div id="mainwp-filter-sites-group" class="ui selection multiple dropdown seg_site_tags">
 							<input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
 							<i class="dropdown icon"></i>
 							<div class="default text"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
@@ -517,7 +516,7 @@ class MainWP_Manage_Sites_List_Table {
 								<div class="item" data-value="nogroups"><?php esc_html_e( 'No Tags', 'mainwp' ); ?></div>
 							</div>
 						</div>
-						<div class="ui selection dropdown" id="mainwp-filter-sites-status">
+						<div class="ui selection dropdown seg_site_status" id="mainwp-filter-sites-status">
 							<input type="hidden" value="<?php echo esc_html( $selected_status ); ?>">
 							<div class="default text"><?php esc_html_e( 'All statuses', 'mainwp' ); ?></div>
 							<i class="dropdown icon"></i>
@@ -531,7 +530,7 @@ class MainWP_Manage_Sites_List_Table {
 								<div class="item" data-value="suspended"><?php esc_html_e( 'Suspended', 'mainwp' ); ?></div>
 							</div>
 						</div>
-						<div id="mainwp-filter-clients" class="ui selection multiple dropdown">
+						<div id="mainwp-filter-clients" class="ui selection multiple dropdown seg_site_clients">
 							<input type="hidden" value="<?php echo esc_html( $selected_client ); ?>">
 							<i class="dropdown icon"></i>
 							<div class="default text"><?php esc_html_e( 'All clients', 'mainwp' ); ?></div>
@@ -549,12 +548,14 @@ class MainWP_Manage_Sites_List_Table {
 						</div>
 						<button onclick="mainwp_manage_sites_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
 				</div>
-			</div>
+				<?php
+				MainWP_Manage_Sites_Filter_Segment::get_instance()->render_filters_segment();
+				?>
 		</div>
-
-		
 		<?php
+		MainWP_UI::render_modal_save_segment();
 	}
+
 
 	/**
 	 * Method render_page_navigation_left_items()
@@ -710,15 +711,15 @@ class MainWP_Manage_Sites_List_Table {
 		$get_all         = ( '' === $search ) && ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && empty( $_REQUEST['g'] ) && empty( $_REQUEST['client'] ) ? true : false;
 		$is_not          = ( isset( $_REQUEST['isnot'] ) && 'yes' === $_REQUEST['isnot'] ) ? true : false;
 
-		$selected_siteids = get_user_option( 'mainwp_managesites_filter_onetime_selected_siteids' );
+		$selected_one_time_siteids = get_user_option( 'mainwp_managesites_filter_onetime_selected_siteids' );
 
-		if ( ! empty( $selected_siteids ) ) {
+		if ( ! empty( $selected_one_time_siteids ) ) {
 			$userid = get_current_user_id();
 			if ( ! empty( $userid ) ) {
 				delete_user_option( $userid, 'mainwp_managesites_filter_onetime_selected_siteids' );
 				$get_all = true;
 			} else {
-				$selected_siteids = '';
+				$selected_one_time_siteids = '';
 			}
 		}
 
@@ -738,7 +739,7 @@ class MainWP_Manage_Sites_List_Table {
 			$site_status = sanitize_text_field( wp_unslash( $_REQUEST['status'] ) );
 		}
 
-		if ( $get_all ) {
+		if ( $get_all && ! $selected_one_time_siteids ) {
 			MainWP_Utility::update_user_option( 'mainwp_managesites_filter_group', '' );
 			MainWP_Utility::update_user_option( 'mainwp_managesites_filter_client', '' );
 		}
@@ -884,12 +885,12 @@ class MainWP_Manage_Sites_List_Table {
 			}
 		}
 
-		if ( empty( $selected_siteids ) ) {
-			$selected_siteids = isset( $_REQUEST['selected_sites'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['selected_sites'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( empty( $selected_one_time_siteids ) ) {
+			$selected_one_time_siteids = isset( $_REQUEST['selected_sites'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['selected_sites'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		}
 
-		if ( ! empty( $selected_siteids ) ) {
-			$selected_siteids = explode( ',', $selected_siteids );
+		if ( ! empty( $selected_one_time_siteids ) ) {
+			$selected_siteids = explode( ',', $selected_one_time_siteids );
 			$selected_siteids = MainWP_Utility::array_numeric_filter( $selected_siteids );
 			if ( ! empty( $selected_siteids ) ) {
 				$params['selected_sites'] = $selected_siteids;

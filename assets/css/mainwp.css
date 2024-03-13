@@ -87,7 +87,8 @@
     margin-bottom: 0px;
 }
 
-.mainwp-ui-leftmenu .mainwp-content-wrap {
+.mainwp-ui-leftmenu .mainwp-content-wrap,
+.mainwp-ui-leftmenu #mainwp-screenshots-sites {
     margin-left: 272px;
 }
 
@@ -103,7 +104,8 @@
 .mainwp-ui.mainwp_page_ErrorLog .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_ActionLogs .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_PluginPrivacy .mainwp-content-wrap,
-.mainwp-ui.mainwp-hidden-second-level-navigation.mainwp-ui-leftmenu .mainwp-content-wrap {
+.mainwp-ui.mainwp-hidden-second-level-navigation.mainwp-ui-leftmenu .mainwp-content-wrap,
+.mainwp-ui.mainwp-hidden-second-level-navigation.mainwp-ui-leftmen #mainwp-screenshots-sites {
     margin-left: 72px !important;
 }
 

@@ -58,27 +58,50 @@ class Cost_Tracker_Yearly_Renewals {
 				 */
 				echo esc_html( apply_filters( 'mainwp_module_cost_tracker_yearly_renewals_widget_title', esc_html__( 'Upcoming Yearly Renewals', 'mainwp' ) ) );
 				?>
-				<div class="sub header"><?php esc_html_e( 'Keep your expenses in check with the upcoming yearly renewals.', 'mainwp' ); ?></div>
+				<div class="sub header"><?php esc_html_e( 'Monitor your expenses - this widget highlights your upcoming yearly renewals.', 'mainwp' ); ?></div>
 				</h3>
 			</div>
 
 			<div class="four wide column right aligned">
-				<div class="ui dropdown right pointing mainwp-dropdown-tab">
+				<div class="ui dropdown right pointing mainwp-dropdown-tab not-auto-init" id="cost-tracker-widget-yearly-renewals-top-select">
 						<div class="text"><?php esc_html_e( 'Today', 'mainwp' ); ?></div>
 						<i class="dropdown icon"></i>
 						<div class="menu">
-							<a class="item yearly_renewals_today_lnk" data-tab="yearly-renewals-today" title="<?php esc_attr_e( 'Today', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Today', 'mainwp' ); ?></a>
-							<a class="item yearly_renewals_tomorrow_lnk" data-tab="yearly-renewals-tomorrow" title="<?php esc_attr_e( 'Tomorrow', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Tomorrow', 'mainwp' ); ?></a>
-							<a class="item yearly_renewals_week_lnk" data-tab="yearly-renewals-week" title="<?php esc_attr_e( 'This Week', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'This Week', 'mainwp' ); ?></a>
-							<a class="item yearly_renewals_next_week_lnk" data-tab="yearly-renewals-next_week" title="<?php esc_attr_e( 'Next Week', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Next Week', 'mainwp' ); ?></a>
-							<a class="item yearly_renewals_month_lnk" data-tab="yearly-renewals-month" title="<?php esc_attr_e( 'This Month', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'This Month', 'mainwp' ); ?></a>
-							<a class="item yearly_renewals_next_month_lnk" data-tab="yearly-renewals-next_month" title="<?php esc_attr_e( 'Next Month', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Next Month', 'mainwp' ); ?></a>
-							<a class="item yearly_renewals_year_lnk" data-tab="yearly-renewals-year" title="<?php esc_attr_e( 'This Year', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'This Year', 'mainwp' ); ?></a>
-							<a class="item yearly_renewals_next_year_lnk" data-tab="yearly-renewals-next_year" title="<?php esc_attr_e( 'Next Year', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Next Year', 'mainwp' ); ?></a>
+							<a class="item yearly_renewals_today_lnk" data-tab="yearly-renewals-today" data-value="yearly-renewals-today" title="<?php esc_attr_e( 'Today', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Today', 'mainwp' ); ?></a>
+							<a class="item yearly_renewals_tomorrow_lnk" data-tab="yearly-renewals-tomorrow"  data-value="yearly-renewals-tomorrow" title="<?php esc_attr_e( 'Tomorrow', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Tomorrow', 'mainwp' ); ?></a>
+							<a class="item yearly_renewals_week_lnk" data-tab="yearly-renewals-week"  data-value="yearly-renewals-week" title="<?php esc_attr_e( 'This Week', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'This Week', 'mainwp' ); ?></a>
+							<a class="item yearly_renewals_next_week_lnk" data-tab="yearly-renewals-next_week" data-value="yearly-renewals-next_week"  title="<?php esc_attr_e( 'Next Week', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Next Week', 'mainwp' ); ?></a>
+							<a class="item yearly_renewals_month_lnk" data-tab="yearly-renewals-month" data-value="yearly-renewals-month"  title="<?php esc_attr_e( 'This Month', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'This Month', 'mainwp' ); ?></a>
+							<a class="item yearly_renewals_next_month_lnk" data-tab="yearly-renewals-next_month" data-value="yearly-renewals-next_month"  title="<?php esc_attr_e( 'Next Month', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Next Month', 'mainwp' ); ?></a>
+							<a class="item yearly_renewals_year_lnk" data-tab="yearly-renewals-year" data-value="yearly-renewals-year" title="<?php esc_attr_e( 'This Year', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'This Year', 'mainwp' ); ?></a>
+							<a class="item yearly_renewals_next_year_lnk" data-tab="yearly-renewals-next_year" data-value="yearly-renewals-next_year"  title="<?php esc_attr_e( 'Next Year', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Next Year', 'mainwp' ); ?></a>
 						</div>
 				</div>
 			</div>
 		</div>
+
+		<script type="text/javascript">
+			jQuery( document ).ready( function () {
+				var $topSelect = jQuery( '#cost-tracker-widget-yearly-renewals-top-select' ).dropdown( {
+					onChange: function( value, text, $selectedItem ) {
+						var tab = jQuery($selectedItem).attr('data-tab');
+						console.log('onChange:' + tab);
+						mainwp_ui_state_save('cost-widget-yearly-renewals', tab);
+					}
+				} );
+
+				var curTab = mainwp_ui_state_load('cost-widget-yearly-renewals');
+				if( curTab == '' ) {
+					curTab = 'yearly-renewals-month';
+					mainwp_ui_state_save('cost-widget-yearly-renewals', curTab );
+				}
+				console.log('curTab:' + curTab);
+				$topSelect.dropdown( 'set selected', curTab );
+				jQuery( '.cost_tracker_yearly_renewals').removeClass('active');
+				jQuery( '.cost_tracker_yearly_renewals[data-tab="' + curTab + '"]' ).addClass( 'active' );
+				
+			} );
+		</script>
 		<?php
 	}
 
@@ -107,7 +130,7 @@ class Cost_Tracker_Yearly_Renewals {
 	}
 
 	/**
-	 * Render upcomming renewals tabs.
+	 * Render upcoming renewals tabs.
 	 *
 	 * @param string $tab Tab.
 	 * @param array  $cost_data     Cost data.
@@ -159,7 +182,7 @@ class Cost_Tracker_Yearly_Renewals {
 	}
 
 	/**
-	 * Render upcomming renewals tabs.
+	 * Render upcoming renewals tabs.
 	 *
 	 * @param string $tab Tab.
 	 * @param array  $cost_data     Cost data.
@@ -181,7 +204,10 @@ class Cost_Tracker_Yearly_Renewals {
 			 */
 			do_action( 'mainwp_module_yearly_renewals_before_costs_list', $tab, $cost_data );
 			if ( 0 === count( $lists ) ) {
-				MainWP_UI::render_empty_element_placeholder( __( 'No monthly renewals for the selected priod.', 'mainwp' ) );
+				echo '<div class="ui hidden divider"></div>';
+				echo '<div class="ui hidden divider"></div>';
+				echo '<div class="ui hidden divider"></div>';
+				MainWP_UI::render_empty_element_placeholder( __( 'No upcoming renewals for the selected priod.', 'mainwp' ) );
 			} else {
 				?>
 				<table class="ui stacking table" id="mainwp-yearly-renewals-table-<?php echo esc_attr( $tab ); ?>">

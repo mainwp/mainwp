@@ -2449,4 +2449,92 @@ class MainWP_DB extends MainWP_DB_Base {
 
 		return $output;
 	}
+
+	/**
+	 * Method get_lookup_items().
+	 *
+	 * Get bulk lookup items to reduce number of db queries.
+	 *
+	 * @param string $item_name lookup item name.
+	 * @param int    $item_id lookup item id.
+	 * @param string $obj_name loockup object name.
+	 *
+	 * @return mixed Result
+	 */
+	public function get_lookup_items( $item_name, $item_id, $obj_name ) {
+		return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'lookup_item_objects' ) . ' WHERE item_name=%s AND item_id = %d AND object_name = %s', $item_name, $item_id, $obj_name ) ); //phpcs:ignore -- ok.
+	}
+
+	/**
+	 * Method insert_lookup_item().
+	 *
+	 * Insert lookup item, need checks existed before to prevent double values.
+	 *
+	 * @param string $item_name item name.
+	 * @param int    $item_id item id.
+	 * @param string $obj_name object name.
+	 * @param int    $obj_id object id.
+	 *
+	 * @return mixed Result
+	 */
+	public function insert_lookup_item( $item_name, $item_id, $obj_name, $obj_id ) {
+		if ( empty( $item_name ) || empty( $item_id ) || empty( $obj_name ) || empty( $obj_id ) ) {
+			return false;
+		}
+		$data = array(
+			'item_name'   => 'cost',
+			'item_id'     => $item_id,
+			'object_name' => $obj_name,
+			'object_id'   => $obj_id,
+		);
+		$this->wpdb->insert( $this->table_name( 'lookup_item_objects' ), $data );
+		return $this->wpdb->insert_id; // must return lookup id.
+	}
+
+	/**
+	 * Method delete_lookup_items().
+	 *
+	 * Delete bulk lookup items by lookup ids or object names with item id and item name, to reduce number of db queries.
+	 *
+	 * @param string $by Delete by.
+	 * @param array  $params params.
+	 *
+	 * @return mixed Result
+	 */
+	public function delete_lookup_items( $by = 'lookup_id', $params = array() ) {
+		if ( ! is_array( $params ) ) {
+			return false;
+		}
+
+		$lookup_ids = isset( $params['lookup_ids'] ) ? $params['lookup_ids'] : null;
+		$item_id    = isset( $params['item_id'] ) ? $params['item_id'] : null;
+		$item_name  = isset( $params['item_name'] ) ? $params['item_name'] : null;
+		$obj_names  = isset( $params['object_names'] ) ? $params['object_names'] : null;
+
+		if ( 'object_name' === $by ) {
+			if ( empty( $item_id ) || empty( $item_name ) ) {
+				return false;
+			}
+
+			$obj_names = $this->escape_array( $obj_names );
+			if ( ! empty( $obj_names ) ) {
+				$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'lookup_item_objects' ) . ' WHERE item_name = %s AND item_id = %d AND object_name IN ("' . implode( '","', $obj_names ) . '") ', $item_name, $item_id ) );  //phpcs:ignore -- ok.
+				return true;
+			}
+		} elseif ( 'lookup_id' === $by ) {
+			if ( empty( $lookup_ids ) ) {
+				return false;
+			}
+			if ( is_numeric( $lookup_ids ) ) {
+				$lookup_ids = array( $lookup_ids );
+			} elseif ( is_array( $lookup_ids ) ) {
+				$lookup_ids = MainWP_Utility::array_numeric_filter( $lookup_ids );
+			} else {
+				return false;
+			}
+			$this->wpdb->query( 'DELETE FROM ' . $this->table_name( 'lookup_item_objects' ) . ' WHERE lookup_id IN (' . implode( ',', $lookup_ids ) . ') ' );  //phpcs:ignore -- ok.
+			return true;
+		}
+		return false;
+	}
 }

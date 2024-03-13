@@ -74,7 +74,7 @@ class Cost_Tracker_Sites_Widget {
 	 */
 	public function render_costs_tracker_widget_content() {
 		$site_id = intval( $_GET['dashboard'] ); //phpcs:ignore -- ok.
-		$site_costs = Cost_Tracker_DB::get_instance()->get_cost_trackers_info_of_sites( array( $site_id ) );
+		$site_costs = Cost_Tracker_DB::get_instance()->get_all_cost_trackers_by_sites( array( $site_id ) );
 
 		if ( is_array( $site_costs ) ) {
 			$site_costs = current( $site_costs ); // for current site.

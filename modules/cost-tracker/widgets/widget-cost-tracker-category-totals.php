@@ -1,6 +1,6 @@
 <?php
 /**
- * MainWP Upcomming Category Totals Widget
+ * MainWP Upcoming Category Totals Widget
  *
  * Displays the Category Totals.
  *

@@ -11,6 +11,7 @@ namespace MainWP\Dashboard\Module\CostTracker;
 use MainWP\Dashboard\MainWP_Install;
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_DB_Client;
 
 /**
  * Class Cost_Tracker_DB
@@ -22,7 +23,7 @@ class Cost_Tracker_DB extends MainWP_Install {
 	 *
 	 * @var string Version.
 	 */
-	private $cost_tracker_db_version = '1.0.9';
+	private $cost_tracker_db_version = '1.0.16';
 
 
 	/**
@@ -92,6 +93,8 @@ class Cost_Tracker_DB extends MainWP_Install {
 `last_renewal` int(11) NOT NULL,
 `next_renewal` int(11) NOT NULL,
 `last_alert` int(11) NOT NULL,
+`cost_icon` varchar(64) NOT NULL DEFAULT "",
+`cost_color` varchar(64) NOT NULL DEFAULT "",
 `sites` text NOT NULL,
 `groups` text NOT NULL,
 `clients` text NOT NULL,
@@ -107,25 +110,60 @@ PRIMARY KEY  (`id`)  '; }
 		foreach ( $sql as $query ) {
 			dbDelta( $query );
 		}
-		$this->update_db( $currentVersion );
+		$this->update_db_cost( $currentVersion );
 		update_option( 'mainwp_module_cost_tracker_db_version', $this->cost_tracker_db_version );
 	}
 
 
 	/**
-	 * Method update_db().
+	 * Method update_db_cost().
 	 *
 	 * @param array $current_version DB version number.
 	 *
 	 * @return void
 	 */
-	public function update_db( $current_version ) {
+	public function update_db_cost( $current_version ) {
 		if ( ! empty( $current_version ) ) {
 			if ( version_compare( $current_version, '1.0.8', '<' ) ) {
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'cost_tracker' ) . ' MODIFY COLUMN price decimal(26,8)' ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			}
 			if ( version_compare( $current_version, '1.0.9', '<' ) ) {
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'cost_tracker' ) . ' DROP COLUMN author' ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			}
+
+			if ( version_compare( $current_version, '1.0.13', '<' ) ) {
+				$costs = $this->get_cost_tracker_by( 'all' );
+
+				foreach ( $costs as $cost ) {
+					$obj_name = '';
+					if ( ! empty( $cost->sites ) ) {
+						$items    = json_decode( $cost->sites, true );
+						$obj_name = 'site';
+					} elseif ( ! empty( $cost->groups ) ) {
+						$items    = json_decode( $cost->groups, true );
+						$obj_name = 'tag';
+					} elseif ( ! empty( $cost->clients ) ) {
+						$items    = json_decode( $cost->clients, true );
+						$obj_name = 'client';
+					} else {
+						continue;
+					}
+
+					if ( ! empty( $items ) ) {
+						foreach ( $items as $it_id ) {
+							$success = $this->wpdb->insert(
+								$this->table_name( 'lookup_item_objects' ),
+								array(
+									'item_id'     => $cost->id,
+									'item_name'   => 'cost',
+									'object_id'   => $it_id,
+									'object_name' => $obj_name,
+								)
+							);
+
+						}
+					}
+				}
 			}
 		}
 	}
@@ -193,12 +231,14 @@ PRIMARY KEY  (`id`)  '; }
 		$site_id = isset( $update['site_id'] ) ? $update['site_id'] : '';
 
 		if ( ! empty( $id ) ) {
+
 			$wpdb->update( $this->table_name( 'cost_tracker' ), $update, array( 'id' => intval( $id ) ) );
 			return $this->get_cost_tracker_by( 'id', $id );
 		} else {
 			if ( isset( $update['id'] ) ) {
 				unset( $update['id'] );
 			}
+
 			if ( $wpdb->insert( $this->table_name( 'cost_tracker' ), $update ) ) {
 				return $this->get_cost_tracker_by( 'id', $wpdb->insert_id );
 			}
@@ -206,8 +246,115 @@ PRIMARY KEY  (`id`)  '; }
 		return false;
 	}
 
+	/**
+	 * Method update_selected_lookup_cost().
+	 *
+	 * @param int   $item_id Cost id.
+	 * @param array $selected_sites selected sites.
+	 * @param array $selected_groups selected tags.
+	 * @param array $selected_clients selected clients.
+	 *
+	 * @return mixed Result
+	 */
+	public function update_selected_lookup_cost( $item_id, $selected_sites = false, $selected_groups = false, $selected_clients = false ) {
 
+		if ( empty( $item_id ) ) {
+			return false;
+		}
 
+		$obj_name = '';
+
+		$new_obj_ids = array();
+
+		if ( ! empty( $selected_sites ) ) {
+			$obj_name    = 'site';
+			$new_obj_ids = $selected_sites;
+		} elseif ( ! empty( $selected_groups ) ) {
+			$obj_name    = 'tag';
+			$new_obj_ids = $selected_groups;
+		} elseif ( ! empty( $selected_clients ) ) {
+			$obj_name    = 'client';
+			$new_obj_ids = $selected_clients;
+		}
+
+		if ( ! empty( $obj_name ) ) {
+			self::get_instance()->update_lookup_cost( $item_id, $obj_name, $new_obj_ids );
+		} else {
+			// to support saving cost without selected sites, tags, clients.
+			MainWP_DB::instance()->delete_lookup_items(
+				'object_name',
+				array(
+					'item_name'    => 'cost',
+					'item_id'      => $item_id,
+					'object_names' => array( 'site', 'tag', 'client' ),
+				)
+			);
+
+		}
+		return true;
+	}
+
+	/**
+	 * Method update_lookup_cost().
+	 *
+	 * @param int    $item_id item id to insert lookup value.
+	 * @param string $obj_name loockup object name.
+	 * @param array  $new_obj_ids New|Update object ids.
+	 *
+	 * @return mixed Result
+	 */
+	public function update_lookup_cost( $item_id, $obj_name, $new_obj_ids ) {
+
+		$allows = array( 'site', 'tag', 'client' );
+
+		if ( empty( $item_id ) || ! is_array( $new_obj_ids ) || ! in_array( $obj_name, $allows ) ) {
+			return false;
+		}
+
+		$remove_obj_names = array_diff( $allows, array( $obj_name ) );
+
+		$found_look_ids  = array();
+		$existed_look_id = array();
+
+		$results = MainWP_DB::instance()->get_lookup_items( 'cost', $item_id, $obj_name );
+		if ( $results ) {
+			foreach ( $results as $item ) {
+				$found_look_ids[] = $item->lookup_id;
+				if ( ! empty( $new_obj_ids ) && in_array( $item->object_id, $new_obj_ids ) ) {
+					$existed_look_id[ $item->object_id ] = $item->lookup_id;
+				}
+			}
+		}
+
+		$new_look_ids = array();
+
+		foreach ( $new_obj_ids as $obj_id ) {
+			if ( isset( $existed_look_id[ $obj_id ] ) ) {
+				$new_look_ids[] = $existed_look_id[ $obj_id ];
+				continue;
+			}
+			$insert_id = MainWP_DB::instance()->insert_lookup_item( 'cost', $item_id, $obj_name, $obj_id );
+			if ( $insert_id ) {
+				$new_look_ids[] = $this->wpdb->insert_id;
+			}
+		}
+		$remove_ids = array_diff( $found_look_ids, $new_look_ids );
+		if ( $remove_ids ) {
+			MainWP_DB::instance()->delete_lookup_items( 'lookup_id', array( 'lookup_ids' => $remove_ids ) );
+		}
+
+		if ( ! empty( $remove_obj_names ) ) {
+			MainWP_DB::instance()->delete_lookup_items(
+				'object_name',
+				array(
+					'item_name'    => 'cost',
+					'item_id'      => $item_id,
+					'object_names' => $remove_obj_names,
+
+				)
+			);
+		}
+	}
 
 	/**
 	 * Method get_cost_tracker_by().
@@ -326,26 +473,32 @@ PRIMARY KEY  (`id`)  '; }
 		if ( 'id' !== $by && 'site_id' !== $by ) {
 			return false;
 		}
+		$deleted = false;
 
 		if ( 'id' === $by ) {
 			if ( $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'cost_tracker' ) . ' WHERE id=%d ', $value ) ) ) { //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-				return true;
+				$deleted = true;
 			}
 		} elseif ( $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'cost_tracker' ) . ' WHERE site_id=%d ', $value ) ) ) { //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-				return true;
+			$deleted = true;
 		}
-		return false;
+
+		if ( $deleted ) {
+			$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'lookup_item_objects' ) . ' WHERE item_id=%d AND item_name = "cost"', $value ) ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		}
+
+		return $deleted;
 	}
 
 	/**
-	 * Method get_cost_tracker_info_of_clients().
+	 * Method get_all_cost_trackers_by_clients().
 	 *
 	 * @param array $client_ids Client ids.
 	 * @param array $params Orther params.
 	 *
 	 * @return mixed Result
 	 */
-	public function get_cost_tracker_info_of_clients( $client_ids, $params = array() ) { //phpcs:ignore -- complex method.
+	public function get_all_cost_trackers_by_clients( $client_ids, $params = array() ) { //phpcs:ignore -- complex method.
 
 		if ( is_string( $client_ids ) ) {
 			$client_ids = explode( ',', $client_ids );
@@ -359,21 +512,19 @@ PRIMARY KEY  (`id`)  '; }
 			$params = array();
 		}
 
-		$with_sites = isset( $params['with_sites'] ) && $params['with_sites'] ? true : false;
+		$get_sites_of_cost = isset( $params['get_cost_sites'] ) && $params['get_cost_sites'] ? true : false;
+		$clients_site_ids  = array();
 
-		$clients_site_ids = array();
-		$all_sites        = MainWP_DB::instance()->get_sites();
-
-		if ( $all_sites ) {
-			foreach ( $all_sites as $site ) {
-				if ( ! empty( $site['client_id'] ) ) {
-					if ( in_array( $site['client_id'], $client_ids ) ) { //phpcs:ignore -- in array compare.
-						if ( ! isset( $clients_site_ids[ $site['client_id'] ] ) ) {
-							$clients_site_ids[ $site['client_id'] ] = array();
-						}
-						$clients_site_ids[ $site['client_id'] ][] = $site['id'];
-					}
+		$client_sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_ids );
+		if ( $client_sites ) {
+			foreach ( $client_sites as $website ) {
+				if ( ! empty( $website->client_id ) ) {
+					continue;
 				}
+				if ( ! isset( $clients_site_ids[ $website->client_id ] ) ) {
+					$clients_site_ids[ $website->client_id ] = array();
+				}
+				$clients_site_ids[ $website->client_id ][] = $website->id;
 			}
 		}
 
@@ -416,7 +567,7 @@ PRIMARY KEY  (`id`)  '; }
 									$clients_costs_ids[ $client_id ] = array();
 								}
 
-								if ( $with_sites ) {
+								if ( $get_sites_of_cost ) {
 									$cost->cost_sites_ids = $sites; // sites ids.
 								}
 								if ( ! in_array( $cost->id, $clients_costs_ids[ $client_id ] ) ) {
@@ -458,7 +609,7 @@ PRIMARY KEY  (`id`)  '; }
 								if ( ! isset( $clients_costs_ids[ $client_id ] ) ) {
 									$clients_costs_ids[ $client_id ] = array();
 								}
-								if ( $with_sites ) {
+								if ( $get_sites_of_cost ) {
 									$cost->cost_sites_ids = $cost_sites_ids;
 								}
 								if ( ! in_array( $cost->id, $clients_costs_ids[ $client_id ] ) ) {
@@ -480,13 +631,13 @@ PRIMARY KEY  (`id`)  '; }
 
 
 	/**
-	 * Method get_cost_trackers_info_of_sites().
+	 * Method get_all_cost_trackers_by_sites().
 	 *
 	 * @param array $sites_ids Sites ids.
 	 *
 	 * @return mixed Result
 	 */
-	public function get_cost_trackers_info_of_sites( $sites_ids ) { //phpcs:ignore -- complex method.
+	public function get_all_cost_trackers_by_sites( $sites_ids ) { //phpcs:ignore -- complex method.
 
 		if ( is_string( $sites_ids ) ) {
 			$sites_ids = explode( ',', $sites_ids );

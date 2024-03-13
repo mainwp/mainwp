@@ -103,7 +103,7 @@ class Cost_Tracker_Clients_Widget {
 			}
 		}
 
-		$client_costs = Cost_Tracker_DB::get_instance()->get_cost_tracker_info_of_clients( array( $client_id ), array( 'with_sites' => true ) );
+		$client_costs = Cost_Tracker_DB::get_instance()->get_all_cost_trackers_by_clients( array( $client_id ), array( 'get_cost_sites' => true ) );
 
 		if ( is_array( $client_costs ) ) {
 			$client_costs = current( $client_costs ); // for current client.

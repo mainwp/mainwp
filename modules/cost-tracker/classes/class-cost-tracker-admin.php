@@ -11,7 +11,10 @@ namespace MainWP\Dashboard\Module\CostTracker;
 use MainWP\Dashboard\MainWP_Menu;
 use MainWP\Dashboard\MainWP_UI;
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_System_Utility;
 use MainWP\Dashboard\MainWP_Logger;
+use MainWP\Dashboard\MainWP_Post_Handler;
+
 use function MainWP\Dashboard\mainwp_current_user_have_right;
 
 /**
@@ -77,6 +80,7 @@ class Cost_Tracker_Admin {
 		add_filter( 'mainwp_init_primary_menu_items', array( $this, 'hook_init_primary_menu_items' ), 10, 2 );
 		add_filter( 'mainwp_module_cost_tracker_get_default_cost_fields', array( $this, 'hook_get_default_cost_fields' ), 10, 2 );
 		add_filter( 'mainwp_module_cost_tracker_get_next_renewal', array( $this, 'hook_get_next_renewal' ), 10, 3 );
+		add_action( 'mainwp_delete_site', array( $this, 'hook_delete_site' ), 10, 3 );
 	}
 
 
@@ -91,7 +95,24 @@ class Cost_Tracker_Admin {
 		add_filter( 'mainwp_log_specific_actions', array( $this, 'hook_log_specific_actions' ) );
 		Cost_Tracker_Hooks::get_instance()->init();
 		Cost_Tracker_Dashboard::get_instance();
+		Cost_Tracker_DB::get_instance()->init();
 		$this->handle_sites_screen_settings();
+	}
+
+	/**
+	 * Method hook_delete_site()
+	 *
+	 * Installs the new DB.
+	 *
+	 * @param mixed $site site object.
+	 *
+	 * @return bool result.
+	 */
+	public function hook_delete_site( $site ) {
+		if ( empty( $site ) ) {
+			return false;
+		}
+		return $this->delete_lookup_cost( 'site', $site->id );
 	}
 
 	/**
@@ -100,6 +121,9 @@ class Cost_Tracker_Admin {
 	 * Initiates admin hooks.
 	 */
 	public function admin_init() {
+
+		MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_upload_product_icon', array( Cost_Tracker_Add_Edit::get_instance(), 'ajax_upload_product_icon' ) );
+
 		$this->handle_edit_cost_tracker_post();
 		$this->handle_settings_post();
 
@@ -443,7 +467,6 @@ class Cost_Tracker_Admin {
 		if ( ! isset( $_POST['mwp_cost_tracker_editing_submit'] ) || ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'module_cost_tracker_edit_nonce' ) ) {
 			return;
 		}
-
 		//phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotValidated,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$last_renewal             = isset( $_POST['mainwp_module_cost_tracker_edit_last_renewal'] ) ? strtotime( wp_unslash( $_POST['mainwp_module_cost_tracker_edit_last_renewal'] ) ) : 0;
 		$update                   = array();
@@ -454,6 +477,8 @@ class Cost_Tracker_Admin {
 		$update['license_type']   = sanitize_text_field( wp_unslash( $_POST['mainwp_module_cost_tracker_edit_license_type'] ) );
 		$update['cost_status']    = sanitize_text_field( wp_unslash( $_POST['mainwp_module_cost_tracker_edit_cost_tracker_status'] ) );
 		$update['url']            = ! empty( $_POST['mainwp_module_cost_tracker_edit_url'] ) ? esc_url_raw( wp_unslash( $_POST['mainwp_module_cost_tracker_edit_url'] ) ) : '';
+		$update['cost_icon']      = ! empty( $_POST['mainwp_module_cost_tracker_edit_icon_hidden'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_module_cost_tracker_edit_icon_hidden'] ) ) : '';
+		$update['cost_color']     = sanitize_hex_color( wp_unslash( $_POST['mainwp_module_cost_tracker_edit_product_color'] ) );
 		$update['price']          = floatval( $_POST['mainwp_module_cost_tracker_edit_price'] );
 		$update['payment_method'] = sanitize_text_field( wp_unslash( $_POST['mainwp_module_cost_tracker_edit_payment_method'] ) );
 
@@ -496,14 +521,23 @@ class Cost_Tracker_Admin {
 		$update['groups']  = ! empty( $selected_groups ) ? wp_json_encode( $selected_groups ) : '';
 		$update['clients'] = ! empty( $selected_clients ) ? wp_json_encode( $selected_clients ) : '';
 
+		$current = false;
 		if ( ! empty( $_POST['mainwp_module_cost_tracker_edit_id'] ) ) {
 			$update['id'] = intval( $_POST['mainwp_module_cost_tracker_edit_id'] );
+			$current      = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $update['id'] );
 		}
+
 		//phpcs:enable
 		$err_msg = '';
 		$output  = false;
 		try {
 			$output = Cost_Tracker_DB::get_instance()->update_cost_tracker( $update );
+			if ( $output && ! empty( $output->id ) ) {
+				Cost_Tracker_DB::get_instance()->update_selected_lookup_cost( $output->id, $selected_sites, $selected_groups, $selected_clients );
+				if ( $current && ! empty( $current->cost_icon ) && false === strpos( $current->cost_icon, 'deficon:' ) && $current->cost_icon !== $update['cost_icon'] ) {
+					Cost_Tracker_Add_Edit::get_instance()->delete_product_icon_file( $current->cost_icon );
+				}
+			}
 		} catch ( \Exception $ex ) {
 			$err_msg = $ex->getMessage();
 		}
@@ -541,11 +575,15 @@ class Cost_Tracker_Admin {
 		$currency_format = Cost_Tracker_Utility::validate_currency_settings( $currency_format );
 
 		$product_types_colors = array();
-		$cust_product_types   = isset( $_POST['cost_tracker_custom_product_types'] ) ? wp_unslash( $_POST['cost_tracker_custom_product_types'] ) : array(); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$cust_product_types   = self::validate_custom_settings_text_fields( $cust_product_types, $product_types_colors );
+		$product_types_icons  = array();
 
+		// first.
+		$cust_product_types = isset( $_POST['cost_tracker_custom_product_types'] ) ? wp_unslash( $_POST['cost_tracker_custom_product_types'] ) : array(); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$cust_product_types = self::validate_custom_settings_text_fields( $cust_product_types, $product_types_colors, $product_types_icons );
+
+		// second.
 		$default_product_colors = isset( $_POST['cost_tracker_default_product_types'] ) ? wp_unslash( $_POST['cost_tracker_default_product_types'] ) : array(); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		self::validate_custom_settings_text_fields( $default_product_colors, $product_types_colors );
+		self::validate_custom_settings_text_fields( $default_product_colors, $product_types_colors, $product_types_icons );
 
 		$cust_payment_methods = isset( $_POST['cost_tracker_custom_payment_methods'] ) ? wp_unslash( $_POST['cost_tracker_custom_payment_methods'] ) : array(); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$cust_payment_methods = self::validate_custom_settings_text_fields( $cust_payment_methods );
@@ -555,6 +593,7 @@ class Cost_Tracker_Admin {
 		$all_opts['custom_product_types']   = wp_json_encode( $cust_product_types );
 		$all_opts['custom_payment_methods'] = wp_json_encode( $cust_payment_methods );
 		$all_opts['product_types_colors']   = wp_json_encode( $product_types_colors );
+		$all_opts['product_types_icons']    = wp_json_encode( $product_types_icons );
 
 		$all_opts = apply_filters( 'mainwp_module_cost_tracker_before_save_settings', $all_opts );
 
@@ -570,10 +609,11 @@ class Cost_Tracker_Admin {
 	 *
 	 * @param array $arr Data to valid.
 	 * @param mixed $product_types_colors Product types colors.
+	 * @param mixed $product_types_icons Product types icons.
 	 *
 	 * @return array Validated array fields data.
 	 */
-	public static function validate_custom_settings_text_fields( $arr, &$product_types_colors = null ) {
+	public static function validate_custom_settings_text_fields( $arr, &$product_types_colors = null, &$product_types_icons = null ) {
 		if ( ! is_array( $arr ) || ! isset( $arr['title'] ) || ! is_array( $arr['title'] ) ) {
 			return array();
 		}
@@ -593,6 +633,10 @@ class Cost_Tracker_Admin {
 
 			if ( is_array( $product_types_colors ) && is_array( $arr['color'] ) && isset( $arr['color'][ $idx ] ) ) {
 				$product_types_colors[ $slug ] = sanitize_hex_color( wp_unslash( $arr['color'][ $idx ] ) );
+			}
+
+			if ( is_array( $product_types_icons ) && is_array( $arr['icon'] ) && isset( $arr['icon'][ $idx ] ) ) {
+				$product_types_icons[ $slug ] = sanitize_text_field( wp_unslash( $arr['icon'][ $idx ] ) );
 			}
 		}
 		return $valid_arr;
@@ -658,18 +702,25 @@ class Cost_Tracker_Admin {
 	}
 
 	/**
-	 * Method get_product_colors().
-	 *
-	 * @param string $type Product type.
+	 * Method get_default_product_types().
 	 */
-	public static function get_product_colors( $type = false ) {
-		$defaults = array(
+	public static function get_default_product_type_colors() {
+		return array(
 			'plugin'  => '#5ec130',
 			'theme'   => '#34afd8',
 			'hosting' => '#f2e93a',
 			'service' => '#ed1730',
 			'other'   => '#14f4fc',
 		);
+	}
+
+	/**
+	 * Method get_product_colors().
+	 *
+	 * @param string $type Product type.
+	 */
+	public static function get_product_colors( $type = false ) {
+		$defaults = self::get_default_product_type_colors();
 
 		$product_colors = Cost_Tracker_Utility::get_instance()->get_option( 'product_types_colors', array(), true );
 		if ( is_array( $product_colors ) && ! empty( $product_colors ) ) {
@@ -682,6 +733,36 @@ class Cost_Tracker_Admin {
 			return isset( $product_colors[ $type ] ) ? $product_colors[ $type ] : '';
 		}
 		return $product_colors; // return all colors.
+	}
+
+
+	/**
+	 * Method get_default_product_types_icons().
+	 */
+	public static function get_default_product_types_icons() {
+		return array(
+			'plugin'  => 'plug',
+			'theme'   => 'tint',
+			'hosting' => 'server',
+			'service' => 'wrench',
+			'other'   => 'folder',
+		);
+	}
+
+	/**
+	 * Method get_product_type_icons().
+	 *
+	 * @param string $type Product type.
+	 */
+	public static function get_product_type_icons( $type = false ) {
+		$product_icons = Cost_Tracker_Utility::get_instance()->get_option( 'product_types_icons', array(), true );
+		if ( ! is_array( $product_icons ) ) {
+			$product_icons = array();
+		}
+		if ( ! empty( $type ) && is_string( $type ) ) {
+			return isset( $product_icons[ $type ] ) ? $product_icons[ $type ] : '';
+		}
+		return $product_icons; // return all colors.
 	}
 
 	/**
@@ -701,8 +782,14 @@ class Cost_Tracker_Admin {
 	 */
 	public static function get_payment_methods() {
 		$payment_methods      = array(
-			'paypal'       => esc_html__( 'Paypal', 'mainwp' ),
-			'credit_debit' => esc_html__( 'Credit/Debit Card', 'mainwp' ),
+			'paypal'       => esc_html__( 'PayPal', 'mainwp' ),
+			'stripe'       => esc_html__( 'Stripe', 'mainwp' ),
+			'apple'        => esc_html__( 'Apple Pay', 'mainwp' ),
+			'amazon'       => esc_html__( 'Amazon Pay', 'mainwp' ),
+			'google'       => esc_html__( 'Google Pay', 'mainwp' ),
+			'credit_debit' => esc_html__( 'Credit Card', 'mainwp' ),
+			'debit_card'   => esc_html__( 'Debit Card', 'mainwp' ),
+			'cash'         => esc_html__( 'Cash', 'mainwp' ),
 		);
 		$cust_payment_methods = Cost_Tracker_Utility::get_instance()->get_option( 'custom_payment_methods', array(), true );
 		if ( ! empty( $cust_payment_methods ) ) {
@@ -806,7 +893,7 @@ class Cost_Tracker_Admin {
 	 */
 	public static function generate_next_renewal( $subscription, $next_renewal = false ) {
 		if ( empty( $subscription ) || ! is_object( $subscription ) ) {
-			echo 'N/A';
+			echo '';
 			return;
 		}
 
@@ -818,11 +905,11 @@ class Cost_Tracker_Admin {
 		$next_renewal = ! empty( $next_renewal ) ? intval( $next_renewal ) : (int) $subscription->next_renewal;
 
 		if ( empty( $next_renewal ) ) {
-			echo 'N/A';
+			echo esc_html__( '', 'mainwp' );
 			return;
 		}
 		if ( 'active' !== $subscription->cost_status ) {
-			echo 'N/A';
+			echo esc_html__( '', 'mainwp' );
 			return;
 		}
 
@@ -831,11 +918,11 @@ class Cost_Tracker_Admin {
 		$day1         = $next_renewal - 15 * DAY_IN_SECONDS;
 		$day2         = $next_renewal - 7 * DAY_IN_SECONDS;
 		if ( $day1 > $current_time ) {
-			$renewal_html = esc_html( $renewal_html );
+			$renewal_html = '<strong>' . esc_html( $renewal_html ) . '</strong>';
 		} elseif ( $day1 <= $current_time && $current_time < $day2 ) {
-			$renewal_html = '<span data-tooltip="Renewal approaching soon. Please review your subscription details." data-inverted="" data-position="left center"><i class="yellow bell icon"></i></span>' . esc_html( $renewal_html );
+			$renewal_html = '<strong><span data-tooltip="Renewal approaching soon. Please review your subscription details." data-inverted="" data-position="left center"><i class="orange bell icon"></i></span>' . esc_html( $renewal_html ) . '</strong>';
 		} elseif ( $day2 <= $current_time && $current_time < $next_renewal ) {
-			$renewal_html = '<span data-tooltip="Renewal approaching soon. Please review your subscription details." data-inverted="" data-position="left center"><i class="yellow bell icon"></i></span>' . esc_html( $renewal_html );
+			$renewal_html = '<strong><span data-tooltip="Renewal approaching soon. Please review your subscription details." data-inverted="" data-position="left center"><i class="orange bell icon"></i></span>' . esc_html( $renewal_html ) . '</strong>';
 		}
 		echo $renewal_html; //phpcs:ignore -- ok.
 	}
@@ -880,5 +967,101 @@ class Cost_Tracker_Admin {
 		}
 
 		return $default;
+	}
+
+	/**
+	 * Gets  product icon to output.
+	 *
+	 * @param string $prod_icon Product icon.
+	 * @param bool   $get_scr Get icon src.
+	 * @param bool   $table_layout Table layout.
+	 * @param string $img_id_attr img id attr.
+	 */
+	public function get_product_icon( $prod_icon = '', $get_scr = false, $table_layout = false, $img_id_attr = '' ) {
+		$dirs           = MainWP_System_Utility::get_mainwp_dir( Cost_Tracker_Settings::$icon_sub_dir, true );
+		$icon_base      = $dirs[1];
+		$cls_uploadable = ' cached-custom-icon-customable ';
+		$style          = 'width:32px;height:auto;display:inline-block;';
+
+		if ( $table_layout ) {
+			$style = 'width:32px;height:auto;display:inline-block;';
+		}
+
+		if ( empty( $prod_icon ) || false !== strpos( $prod_icon, 'deficon:' ) ) {
+			$scr = '';
+		} else {
+			$scr = $icon_base . $prod_icon;
+		}
+
+		if ( $get_scr ) {
+			return $scr;
+		}
+
+		if ( empty( $prod_icon ) ) {
+			$def_icon = Cost_Tracker_Utility::get_product_default_icons( false, 'default_product' );
+			return '<i class="' . $def_icon . ' large"></i>';
+		} elseif ( false !== strpos( $prod_icon, 'deficon:' ) ) {
+			return '<i class="' . str_replace( 'deficon:', '', $prod_icon ) . ' large icon" ></i>';
+		} else {
+			$img_attr = ! empty( $img_id_attr ) ? 'id="' . $img_id_attr . '"' : 'class="module_cost_tracker_settings_upload_img_display ui mini circular image ' . $cls_uploadable . '"';
+			return '<img style="' . $style . '" ' . $img_attr . ' icon-base="' . esc_attr( $icon_base ) . '" src="' . esc_attr( $scr ) . '"/>';
+		}
+	}
+
+	/**
+	 * Gets product icon to output.
+	 *
+	 * @param string $product Product object.
+	 * @param bool   $get_scr Get icon src.
+	 * @param bool   $table_layout Table layout.
+	 * @param string $img_id_attr img id attr.
+	 * @param bool   $with_color with color.
+	 */
+	public function get_product_icon_display( $product = false, $get_scr = false, $table_layout = false, $img_id_attr = '', $with_color = true ) {
+
+		$dirs      = MainWP_System_Utility::get_mainwp_dir( Cost_Tracker_Settings::$icon_sub_dir, true );
+		$icon_base = $dirs[1];
+
+		$prod_icon  = '';
+		$prod_color = '';
+
+		if ( $product ) {
+			$prod_icon  = $product->cost_icon;
+			$prod_color = $product->cost_color;
+		}
+		if ( empty( $prod_icon ) || false !== strpos( $prod_icon, 'deficon:' ) ) {
+			$scr = '';
+		} else {
+			$scr = $icon_base . $prod_icon;
+		}
+
+		if ( $get_scr ) {
+			return $scr;
+		}
+
+		$style = 'width:32px;height:auto;display:inline-block;';
+		if ( $table_layout ) {
+			$style = 'width:32px;height:auto;display:inline-block;';
+		}
+
+		if ( empty( $prod_color ) ) {
+			$prod_color = '#34424D';
+		}
+
+		$color_style = '';
+		if ( $with_color ) {
+			$color_style = 'color:' . esc_attr( $prod_color ) . ';';
+		}
+
+		if ( empty( $prod_icon ) ) {
+			$def_icon = Cost_Tracker_Utility::get_product_default_icons( false, 'default_product' );
+			$icon     = '<i style="' . $color_style . '" class="' . $def_icon . ' large icon"></i>';
+		} elseif ( false !== strpos( $prod_icon, 'deficon:' ) ) {
+			$icon = '<i style="' . $color_style . '" class="' . str_replace( 'deficon:', '', $prod_icon ) . ' large icon" ></i>';
+		} else {
+			$img_attr = ! empty( $img_id_attr ) ? 'id="' . $img_id_attr . '"' : 'class="module_cost_tracker_settings_upload_img_display ui mini circular image "';
+			$icon     = '<img style="' . $style . $color_style . '" ' . $img_attr . ' icon-base="' . esc_attr( $icon_base ) . '" src="' . esc_attr( $scr ) . '"/>';
+		}
+		return $icon;
 	}
 }

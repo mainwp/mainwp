@@ -172,3 +172,19 @@
 .mainwp-ui .ui.dimmer.modals.active {
   z-index: 99999;
 }
+
+.mainwp-ui .icon.card {
+  padding: 0;
+  min-width: auto;
+  max-width: none;
+  border: none;
+  box-shadow: none;
+  background: none !important;
+}
+
+.mainwp-ui .left.action.input .mainwp-color-picker-input {
+  min-height: 2.71428571em;
+  padding: 5px !important;
+  border-radius: 0 10px 10px 0 !important;
+  -webkit-border-radius: 0 10px 10px 0 !important;
+}

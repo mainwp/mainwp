@@ -999,6 +999,7 @@ class MainWP_Menu {
 						if ( show ) {
 							jQuery( '#mainwp-second-level-navigation' ).show();
 							jQuery( '.mainwp-content-wrap' ).css( "margin-left", "272px" );
+							jQuery( '#mainwp-screenshots-sites' ).css( "margin-left", "272px" );
 							jQuery( '#mainwp-main-navigation-container' ).css( "width", "272px" );
 							jQuery( lbar ).find( '.icon' ).removeClass( 'right' );
 							jQuery( lbar ).find( '.icon' ).addClass( 'left' );
@@ -1008,6 +1009,7 @@ class MainWP_Menu {
 						} else {
 							jQuery( '#mainwp-second-level-navigation' ).hide();
 							jQuery( '.mainwp-content-wrap' ).css( "margin-left", "72px" );
+							jQuery( '#mainwp-screenshots-sites' ).css( "margin-left", "72px" );
 							jQuery( '#mainwp-main-navigation-container' ).css( "width", "72px" );
 							jQuery( lbar ).find( '.icon' ).removeClass( 'left' );
 							jQuery( lbar ).find( '.icon' ).addClass( 'right' );

@@ -101,7 +101,7 @@ class Cost_Tracker_Monthly_Totals {
 	 *
 	 * @param array $cost_data     Cost data.
 	 */
-	public static function get_costs_widgets_data( $cost_data ) {
+	public static function get_costs_widgets_data( $cost_data ) { //phpcs:ignore -- complex.
 		$categories            = array();
 		$series_data           = array();
 		$series_products_price = array();

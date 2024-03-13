@@ -162,10 +162,6 @@
     width: 170px;
 }
 
-#mainwp-collapse-second-level-navigation {
-    background-color: #3E3F3D;
-}
-
 .mainwp-individual-site-view #mainwp-page-navigation-wrapper .mainwp-page-navigation {
     width: 170px;
     box-shadow: none !important;
@@ -272,6 +268,7 @@
     padding: 7px 4px 7px 2px;
     border-radius: 0 8px 8px 0 !important;
     min-width: auto !important;
+    background-color: #3E3F3D;
 }
 
 #mainwp-collapse-second-level-navigation .icon {

@@ -90,7 +90,7 @@ class Cost_Tracker_Settings {
 	 *
 	 * Renders the extension settings page.
 	 */
-	public function render_settings_content() {
+	public function render_settings_content() { //phpcs:ignore -- complex.
 
 		$currencies        = Cost_Tracker_Utility::get_all_currency_symbols();
 		$selected_currency = Cost_Tracker_Utility::get_instance()->get_option( 'currency' );

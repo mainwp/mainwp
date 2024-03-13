@@ -176,7 +176,7 @@ PRIMARY KEY  (`id`)  '; }
 	 * @throws \Exception Existed cost tracker error.
 	 * @return mixed Result
 	 */
-	public function update_cost_tracker( $update ) {
+	public function update_cost_tracker( $update ) { //phpcs:ignore -- complex.
 		/**
 		 * WP database.
 		 *

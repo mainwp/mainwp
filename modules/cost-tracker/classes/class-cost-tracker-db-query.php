@@ -51,7 +51,7 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
 	 *
 	 * @return array Records
 	 */
-	public function query_costs( $args ) {
+	public function query_costs( $args ) { //phpcs:ignore -- complex.
 		global $wpdb;
 
 		$all_defaults = Cost_Tracker_Admin::get_default_fields_values();

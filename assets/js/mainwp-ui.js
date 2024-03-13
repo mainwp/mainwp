@@ -725,7 +725,7 @@ mainwp_upload_custom_types_icon = function (iconObj, upload_act, callback_upload
     jQuery('#mainwp-message-zone-upload').show();
     jQuery('#update_custom_icon_btn').attr('disabled', 'disabled');
 
-    var act_request = typeof upload_act !== undefined & '' != upload_act ? upload_act : 'mainwp_upload_custom_types_icon';
+    var act_request = typeof upload_act !== "undefined" & '' != upload_act ? upload_act : 'mainwp_upload_custom_types_icon';
 
     //Add via ajax!!
     var formdata = new FormData(jQuery('#uploadicon_form')[0]);

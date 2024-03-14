@@ -369,8 +369,12 @@ class MainWP_Manage_Sites_List_Table {
 			'className' => 'mainwp-url-cell collapsing',
 		);
 		$defines[] = array(
-			'targets'   => array( 'manage-login-column', 'manage-wpcore_update-column', 'manage-plugin_update-column', 'manage-theme_update-column', 'manage-last_sync-column', 'manage-last_post-column', 'manage-site_health-column', 'manage-status_code-column', 'manage-site_actions-column', 'extra-column', 'manage-client_name-column' ),
+			'targets'   => array( 'manage-last_sync-column', 'manage-last_post-column', 'manage-site_health-column', 'manage-status_code-column', 'manage-site_actions-column', 'extra-column', 'manage-client_name-column' ),
 			'className' => 'collapsing',
+		);
+		$defines[] = array(
+			'targets'   => array( 'manage-login-column', 'manage-wpcore_update-column', 'manage-plugin_update-column', 'manage-theme_update-column' ),
+			'className' => 'center aligned collapsing',
 		);
 		$defines[] = array(
 			'targets'   => 'manage-update-column',
@@ -437,21 +441,30 @@ class MainWP_Manage_Sites_List_Table {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_for_manage_sites()
 	 */
 	public function render_manage_sites_table_top() {
-		$items_bulk = $this->get_bulk_actions();
+		$items_bulk        = $this->get_bulk_actions();
+		$filters_row_style = 'display:none';
 
 		// phpcs:disable WordPress.Security.NonceVerification,Missing,Missing,Missing,Missing,Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$selected_status  = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
-		$selected_group   = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
-		$selected_client  = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
-		$is_not           = isset( $_REQUEST['isnot'] ) && ( 'yes' === $_REQUEST['isnot'] ) ? true : false;
-		$selected_siteids = isset( $_REQUEST['selected_sites'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['selected_sites'] ) ) : '';
+		$selected_status           = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
+		$selected_group            = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
+		$selected_client           = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
+		$is_not                    = isset( $_REQUEST['isnot'] ) && ( 'yes' === $_REQUEST['isnot'] ) ? true : false;
+		$selected_one_time_siteids = isset( $_REQUEST['selected_sites'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['selected_sites'] ) ) : '';
 		// phpcs:enable
 
-		if ( empty( $selected_status ) && empty( $selected_group ) && empty( $selected_client ) && empty( $selected_siteids ) ) {
+		if ( ! empty( $selected_one_time_siteids ) ) {
+			MainWP_Utility::update_user_option( 'mainwp_managesites_filter_onetime_selected_siteids', $selected_one_time_siteids );
+		}
+
+		if ( empty( $selected_status ) && empty( $selected_group ) && empty( $selected_client ) && empty( $selected_one_time_siteids ) ) {
 			$selected_status = get_user_option( 'mainwp_managesites_filter_status' );
 			$selected_group  = get_user_option( 'mainwp_managesites_filter_group' );
 			$selected_client = get_user_option( 'mainwp_managesites_filter_client' );
 			$is_not          = get_user_option( 'mainwp_managesites_filter_is_not' );
+		}
+
+		if ( ! empty( $selected_status ) || ! empty( $selected_group ) || ! empty( $selected_client ) ) {
+			$filters_row_style = 'display:block';
 		}
 
 		?>
@@ -475,13 +488,10 @@ class MainWP_Manage_Sites_List_Table {
 					<?php self::render_page_navigation_left_items(); ?>
 				</div>
 			</div>
-		
-		
-
-			<div class="row ui mini form" id="mainwp-sites-filters-row" style="display:none">
-				<div class="sixteen wide left aligned middle aligned column">
+			<div class="row ui mini form" id="mainwp-sites-filters-row" style="<?php echo esc_attr( $filters_row_style ); ?>">
+				<div class="thirteen wide middle aligned column ui compact grid">
 						<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
-					<div class="ui selection dropdown" id="mainwp_is_not_site">
+					<div class="ui selection dropdown seg_is_not" id="mainwp_is_not_site">
 							<input type="hidden" value="<?php echo $is_not ? 'yes' : ''; ?>">
 							<i class="dropdown icon"></i>
 							<div class="default text"><?php esc_html_e( 'Is', 'mainwp' ); ?></div>
@@ -490,7 +500,7 @@ class MainWP_Manage_Sites_List_Table {
 								<div class="item" data-value="yes"><?php esc_html_e( 'Is not', 'mainwp' ); ?></div>
 							</div>
 						</div>										
-						<div id="mainwp-filter-sites-group" class="ui selection multiple dropdown">
+						<div id="mainwp-filter-sites-group" class="ui selection multiple dropdown seg_site_tags">
 							<input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
 							<i class="dropdown icon"></i>
 							<div class="default text"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
@@ -506,7 +516,7 @@ class MainWP_Manage_Sites_List_Table {
 								<div class="item" data-value="nogroups"><?php esc_html_e( 'No Tags', 'mainwp' ); ?></div>
 							</div>
 						</div>
-						<div class="ui selection dropdown" id="mainwp-filter-sites-status">
+						<div class="ui selection dropdown seg_site_status" id="mainwp-filter-sites-status">
 							<input type="hidden" value="<?php echo esc_html( $selected_status ); ?>">
 							<div class="default text"><?php esc_html_e( 'All statuses', 'mainwp' ); ?></div>
 							<i class="dropdown icon"></i>
@@ -520,7 +530,7 @@ class MainWP_Manage_Sites_List_Table {
 								<div class="item" data-value="suspended"><?php esc_html_e( 'Suspended', 'mainwp' ); ?></div>
 							</div>
 						</div>
-						<div id="mainwp-filter-clients" class="ui selection multiple dropdown">
+						<div id="mainwp-filter-clients" class="ui selection multiple dropdown seg_site_clients">
 							<input type="hidden" value="<?php echo esc_html( $selected_client ); ?>">
 							<i class="dropdown icon"></i>
 							<div class="default text"><?php esc_html_e( 'All clients', 'mainwp' ); ?></div>
@@ -538,12 +548,14 @@ class MainWP_Manage_Sites_List_Table {
 						</div>
 						<button onclick="mainwp_manage_sites_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
 				</div>
-			</div>
+				<?php
+				MainWP_Manage_Sites_Filter_Segment::get_instance()->render_filters_segment();
+				?>
 		</div>
-
-		
 		<?php
+		MainWP_UI::render_modal_save_segment();
 	}
+
 
 	/**
 	 * Method render_page_navigation_left_items()
@@ -558,7 +570,7 @@ class MainWP_Manage_Sites_List_Table {
 		<div data-tooltip="<?php esc_html_e( 'Switch between Table or Grid view, or toggle the sites filters element visibility', 'mainwp' ); ?>" data-position="bottom right" data-inverted="">
 			<div class="ui mini buttons view-mode-manage-site">
 				<a class="ui button basic <?php echo 'table' === $siteViewMode ? 'disabled' : ''; ?> icon" href="admin.php?page=managesites&viewmode=table&modenonce=<?php echo esc_html( $nonce ); ?>">
-					<i class="list icon"></i>
+					<i class="bars icon"></i>
 				</a>
 				<a class="ui button basic <?php echo 'grid' === $siteViewMode ? 'disabled' : ''; ?> icon" href="admin.php?page=managesites&viewmode=grid&modenonce=<?php echo esc_html( $nonce ); ?>">
 					<i class="grid layout icon"></i>
@@ -699,6 +711,18 @@ class MainWP_Manage_Sites_List_Table {
 		$get_all         = ( '' === $search ) && ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && empty( $_REQUEST['g'] ) && empty( $_REQUEST['client'] ) ? true : false;
 		$is_not          = ( isset( $_REQUEST['isnot'] ) && 'yes' === $_REQUEST['isnot'] ) ? true : false;
 
+		$selected_one_time_siteids = get_user_option( 'mainwp_managesites_filter_onetime_selected_siteids' );
+
+		if ( ! empty( $selected_one_time_siteids ) ) {
+			$userid = get_current_user_id();
+			if ( ! empty( $userid ) ) {
+				delete_user_option( $userid, 'mainwp_managesites_filter_onetime_selected_siteids' );
+				$get_all = true;
+			} else {
+				$selected_one_time_siteids = '';
+			}
+		}
+
 		$group_ids   = false;
 		$client_ids  = false;
 		$site_status = '';
@@ -715,7 +739,7 @@ class MainWP_Manage_Sites_List_Table {
 			$site_status = sanitize_text_field( wp_unslash( $_REQUEST['status'] ) );
 		}
 
-		if ( $get_all ) {
+		if ( $get_all && ! $selected_one_time_siteids ) {
 			MainWP_Utility::update_user_option( 'mainwp_managesites_filter_group', '' );
 			MainWP_Utility::update_user_option( 'mainwp_managesites_filter_client', '' );
 		}
@@ -861,9 +885,12 @@ class MainWP_Manage_Sites_List_Table {
 			}
 		}
 
-		$selected_siteids = isset( $_REQUEST['selected_sites'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['selected_sites'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( ! empty( $selected_siteids ) ) {
-			$selected_siteids = explode( ',', $selected_siteids );
+		if ( empty( $selected_one_time_siteids ) ) {
+			$selected_one_time_siteids = isset( $_REQUEST['selected_sites'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['selected_sites'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		}
+
+		if ( ! empty( $selected_one_time_siteids ) ) {
+			$selected_siteids = explode( ',', $selected_one_time_siteids );
 			$selected_siteids = MainWP_Utility::array_numeric_filter( $selected_siteids );
 			if ( ! empty( $selected_siteids ) ) {
 				$params['selected_sites'] = $selected_siteids;
@@ -1306,16 +1333,6 @@ class MainWP_Manage_Sites_List_Table {
 			if ( 'cb' === $column_key ) {
 				$class[] = 'check-column';
 				$class[] = 'collapsing';
-			}
-
-			if ( 'wpcore_update' === $column_key ) {
-				$class[] = 'center aligned';
-			}
-			if ( 'plugin_update' === $column_key ) {
-				$class[] = 'center aligned';
-			}
-			if ( 'theme_update' === $column_key ) {
-				$class[] = 'center aligned';
 			}
 
 			if ( ! isset( $sortable[ $column_key ] ) ) {
@@ -2011,11 +2028,11 @@ class MainWP_Manage_Sites_List_Table {
 				?>
 				<td class="collapsing center aligned mainwp-update-cell"><a class="ui mini compact button <?php echo esc_attr( $a_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>"><?php echo intval( $total_updates ); ?></a></td>
 			<?php } elseif ( 'wpcore_update' === $column_name ) { ?>
-				<td class="collapsing mainwp-wp-core-update-cell"><a class="ui basic mini compact button <?php echo esc_attr( $w_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>&tab=wordpress-updates"><?php echo intval( $total_wp_upgrades ); ?></a></td>
+				<td class="collapsing mainwp-wp-core-update-cell center aligned"><a class="ui basic mini compact button <?php echo esc_attr( $w_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>&tab=wordpress-updates"><?php echo intval( $total_wp_upgrades ); ?></a></td>
 			<?php } elseif ( 'plugin_update' === $column_name ) { ?>
-				<td class="collapsing mainwp-plugin-update-cell"><a class="ui basic mini compact button <?php echo esc_attr( $p_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>"><?php echo intval( $total_plugin_upgrades ); ?></a></td>
+				<td class="collapsing mainwp-plugin-update-cell center aligned"><a class="ui basic mini compact button <?php echo esc_attr( $p_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>"><?php echo intval( $total_plugin_upgrades ); ?></a></td>
 			<?php } elseif ( 'theme_update' === $column_name ) { ?>
-				<td class="collapsing mainwp-theme-update-cell"><a class="ui basic mini compact button <?php echo esc_attr( $t_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>&tab=themes-updates"><?php echo intval( $total_theme_upgrades ); ?></a></td>
+				<td class="collapsing mainwp-theme-update-cell center aligned"><a class="ui basic mini compact button <?php echo esc_attr( $t_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>&tab=themes-updates"><?php echo intval( $total_theme_upgrades ); ?></a></td>
 			<?php } elseif ( 'last_sync' === $column_name ) { ?>
 				<td class="collapsing mainwp-last-sync-cell"><?php echo ! empty( $website['dtsSync'] ) ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['dtsSync'] ) ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 			<?php } elseif ( 'last_post' === $column_name ) { ?>

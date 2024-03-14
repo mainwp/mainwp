@@ -438,24 +438,34 @@ class MainWP_Utility {
 	 * @return mixed $outputSite Mapped site.
 	 */
 	public static function map_site( &$website, $keys, $object_output = true ) {
-		$outputSite = array();
-		if ( ! empty( $website ) ) {
-			if ( is_object( $website ) ) {
-				foreach ( $keys as $key ) {
-					$outputSite[ $key ] = $website->$key;
+		if ( $object_output ) {
+			$outputSite = new \stdClass();
+			if ( ! empty( $website ) ) {
+				if ( is_object( $website ) ) {
+					foreach ( $keys as $key ) {
+						$outputSite->{$key} = $website->$key;
+					}
+				} elseif ( is_array( $website ) ) {
+					foreach ( $keys as $key ) {
+						$outputSite->{$key} = $website[ $key ];
+					}
 				}
-			} elseif ( is_array( $website ) ) {
-				foreach ( $keys as $key ) {
-					$outputSite[ $key ] = $website[ $key ];
+			}
+		} else {
+			$outputSite = array();
+			if ( ! empty( $website ) ) {
+				if ( is_object( $website ) ) {
+					foreach ( $keys as $key ) {
+						$outputSite[ $key ] = $website->$key;
+					}
+				} elseif ( is_array( $website ) ) {
+					foreach ( $keys as $key ) {
+						$outputSite[ $key ] = $website[ $key ];
+					}
 				}
 			}
 		}
-
-		if ( $object_output ) {
-			return (object) $outputSite;
-		} else {
-			return $outputSite;
-		}
+		return $outputSite;
 	}
 
 	/**
@@ -976,6 +986,18 @@ class MainWP_Utility {
 	}
 
 	/**
+	 * Method numeric_filter()
+	 *
+	 * Filter given numeric.
+	 *
+	 * @param int $int_num Int number.
+	 * @return array $arr_ints Array filtered.
+	 */
+	public static function numeric_filter( $int_num ) {
+		return ( (string) (int) $int_num === (string) $int_num && 0 < $int_num ) ? $int_num : false;
+	}
+
+	/**
 	 * Method array_numeric_filter()
 	 *
 	 * Filter given numeric array.
@@ -987,7 +1009,7 @@ class MainWP_Utility {
 		$arr_ints = array_filter(
 			$arr_ints,
 			function ( $e ) {
-				return ( is_numeric( $e ) && 0 < $e ) ? true : false;
+				return ( (string) (int) $e === (string) $e && 0 < $e ) ? true : false;
 			}
 		);
 		return $arr_ints;
@@ -1429,5 +1451,118 @@ class MainWP_Utility {
 			$this->last_deactivated_alerts[ $slug ] = intval( $time_value );
 			get_option( 'mainwp_cron_licenses_deactivated_alerted', $this->last_deactivated_alerts );
 		}
+	}
+
+	/**
+	 * Method get_remote_favicon().
+	 *
+	 * @param  string $url Url.
+	 * @param  string $favi favicon file name.
+	 * @param  int    $item_id item id.
+	 * @param  string $file_prefix favicon file prefix name.
+	 *
+	 * @return mixed result.
+	 */
+	public static function get_remote_favicon( $url, $favi = '', $item_id = false, $file_prefix = '' ) {
+
+		if ( empty( $favi ) ) {
+			$favi = 'favicon.ico';
+		}
+
+		if ( '/' !== substr( $url, - 1 ) ) {
+			$url .= '/';
+		}
+
+		$favi_url = $url . $favi;
+
+		$content = MainWP_Connect::get_file_content( $favi_url );
+
+		if ( empty( $content ) && 'favicon.ico' === $favi ) {
+			$favi_url = $url . 'favicon.png';
+			$content  = MainWP_Connect::get_file_content( $favi_url ); // try other file.
+		}
+
+		if ( ! empty( $content ) ) {
+
+			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+
+			global $wp_filesystem;
+
+			$dirs     = MainWP_System_Utility::get_mainwp_dir( 'icons', true );
+			$iconsDir = $dirs[0];
+			if ( $favi ) {
+
+				$tmp = explode( '.', $favi );
+				if ( 2 !== count( $tmp ) ) {
+					return false;
+				}
+
+				$favi_ext = $tmp[1];
+
+				if ( empty( $item_id ) ) {
+					$item_id = time() . '-' . wp_rand( 100, 999 );
+				}
+				if ( ! empty( $file_prefix ) ) {
+					$filename = $file_prefix . $item_id . '.' . $favi_ext;
+				} else {
+					$filename = 'favi-' . $item_id . '.' . $favi_ext;
+				}
+
+				$size     = $wp_filesystem->put_contents( $iconsDir . $filename, $content ); // phpcs:ignore --
+				if ( $size ) {
+					MainWP_Logger::instance()->debug( 'Icon Cost Product size :: ' . $size );
+					return array(
+						'result' => 'success',
+						'file'   => $filename,
+						'dir'    => $iconsDir,
+					);
+				} else {
+					return array( 'error' => 'Save icon file failed.' );
+				}
+			}
+			return false;
+		} else {
+			return array( 'error' => esc_html__( 'Download icon file failed', 'mainwp' ) );
+		}
+	}
+
+	/**
+	 * Method get_saved_favicon_url()
+	 *
+	 * @param string $favi Favicon file name.
+	 *
+	 * @return mixed $faviurl Favicon URL.
+	 */
+	public static function get_saved_favicon_url( $favi ) {
+		$faviurl = '';
+		if ( ! empty( $favi ) ) {
+			$dirs = MainWP_System_Utility::get_icons_dir();
+			if ( file_exists( $dirs[0] . $favi ) ) {
+				$faviurl = $dirs[1] . $favi;
+			} else {
+				$faviurl = '';
+			}
+		}
+		return $faviurl;
+	}
+
+	/**
+	 * Method delete_saved_favicon()
+	 *
+	 * @param string $favi Favicon file name.
+	 *
+	 * @return bool Success result.
+	 */
+	public static function delete_saved_favicon( $favi ) {
+		if ( ! empty( $favi ) ) {
+			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+			global $wp_filesystem;
+			$dirs = MainWP_System_Utility::get_icons_dir();
+			if ( $hasWPFileSystem && $wp_filesystem->exists( $dirs[0] . $favi ) ) {
+				$wp_filesystem->delete( $dirs[0] . $current->icon_file );
+				return true;
+			}
+		}
+		return false;
 	}
 }

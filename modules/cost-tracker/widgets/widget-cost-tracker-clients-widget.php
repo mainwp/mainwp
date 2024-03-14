@@ -1,8 +1,8 @@
 <?php
 /**
- * MainWP Logs Widget
+ * MainWP Cost Tracker Clients Widget
  *
- * Displays the Logs Info.
+ * Displays the Clients's Cost Tracker Info.
  *
  * @package MainWP/Dashboard
  * @version 4.6
@@ -14,7 +14,7 @@ use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_Utility;
 
 /**
- * Class MainWP_Time_Tracker_Tasks_Widget
+ * Class Cost_Tracker_Clients_Widget
  */
 class Cost_Tracker_Clients_Widget {
 
@@ -103,7 +103,7 @@ class Cost_Tracker_Clients_Widget {
 			}
 		}
 
-		$client_costs = Cost_Tracker_DB::get_instance()->get_cost_tracker_info_of_clients( array( $client_id ), array( 'with_sites' => true ) );
+		$client_costs = Cost_Tracker_DB::get_instance()->get_all_cost_trackers_by_clients( array( $client_id ), array( 'get_cost_sites' => true ) );
 
 		if ( is_array( $client_costs ) ) {
 			$client_costs = current( $client_costs ); // for current client.
@@ -183,7 +183,7 @@ class Cost_Tracker_Clients_Widget {
 	 *
 	 * @return string $out Output.
 	 */
-	public function column_default( $item, $column_name, $client_id ) {
+	public function column_default( $item, $column_name, $client_id ) { //phpcs:ignore -- complex.
 		$out = '';
 
 		$order_val = 0;

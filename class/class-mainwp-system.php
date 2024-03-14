@@ -27,7 +27,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '5.0.1';
+	public static $version = '5.0.2';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -145,6 +145,10 @@ class MainWP_System {
 
 			if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '5.0', '<' ) && version_compare( $this->current_version, '5.0', '>=' ) ) {
 				add_action( 'mainwp_before_header', array( MainWP_System_View::get_class_name(), 'mainwp_ver5_update_notice' ) );
+			}
+
+			if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '5.0.2', '<' ) && version_compare( $this->current_version, '5.0.2', '>=' ) ) {
+				add_action( 'mainwp_before_header', array( MainWP_System_View::get_class_name(), 'mainwp_ver502_update_notice' ) );
 			}
 
 			MainWP_Utility::update_option( 'mainwp_plugin_version', $this->current_version );
@@ -790,6 +794,7 @@ class MainWP_System {
 		MainWP_Post_Plugin_Theme_Handler::instance()->init();
 		MainWP_Post_Extension_Handler::instance()->init();
 		MainWP_Post_Backup_Handler::instance()->init();
+		MainWP_Manage_Sites_Filter_Segment::get_instance()->admin_init();
 
 		/**
 		 * Filter: mainwp_ui_use_wp_calendar
@@ -1014,6 +1019,21 @@ class MainWP_System {
 
 			if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				wp_enqueue_script( 'mainwp-groups', MAINWP_PLUGIN_URL . 'assets/js/mainwp-groups.js', array(), $this->current_version, true );
+			}
+			$enqueue_scripts = apply_filters( 'mainwp_admin_enqueue_scripts', array() );
+			if ( is_array( $enqueue_scripts ) ) {
+				if ( ! empty( $enqueue_scripts['apexcharts'] ) ) {
+					wp_enqueue_script(
+						'mainwp-apexcharts',
+						MAINWP_PLUGIN_URL . 'assets/js/apexcharts/apexcharts.js',
+						array(
+							'jquery',
+							'mainwp',
+						),
+						$this->current_version,
+						true
+					);
+				}
 			}
 		}
 

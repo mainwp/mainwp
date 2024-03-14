@@ -1305,7 +1305,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$delete = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0;
 
 		if ( empty( $slug ) || ( 'plugin' !== $type && 'theme' !== $type ) ) {
-			wp_die( 'failed' );
+			wp_die( 'invalid data!' );
 		}
 
 		$sub_folder = '';

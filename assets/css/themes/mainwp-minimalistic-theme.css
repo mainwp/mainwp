@@ -411,7 +411,7 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme .ui.modal i.icon.close {
   top:  0.8em;
   right:  0.8em;
-  color: #ffffff;
+  color: var(--font-color);
   opacity: 1 !important;
   text-shadow: none !important;
 }

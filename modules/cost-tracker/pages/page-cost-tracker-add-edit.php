@@ -10,6 +10,9 @@ namespace MainWP\Dashboard\Module\CostTracker;
 
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_UI;
+use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_System_Utility;
 use function MainWP\Dashboard\mainwp_current_user_have_right;
 use function MainWP\Dashboard\mainwp_do_not_have_permissions;
 
@@ -26,6 +29,9 @@ class Cost_Tracker_Add_Edit {
 	 * @var mixed Default null
 	 */
 	private static $instance = null;
+
+
+
 
 	/**
 	 * Get Instance
@@ -76,6 +82,7 @@ class Cost_Tracker_Add_Edit {
 			<div class="ui clearing hidden divider"></div>
 		</div>
 		<?php
+		MainWP_UI::render_modal_upload_icon();
 	}
 
 	/**
@@ -97,8 +104,10 @@ class Cost_Tracker_Add_Edit {
 		$next_renewal                 = 0;
 		$selected_payment_method      = 'paypal';
 		$slug                         = '';
-
-		$is_plugintheme = true;
+		$selected_default_icon        = '';
+		$selected_prod_icon           = '';
+		$selected_prod_color          = '';
+		$is_plugintheme               = true;
 
 		if ( $edit_id ) {
 			$edit_cost = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $edit_id );
@@ -112,6 +121,8 @@ class Cost_Tracker_Add_Edit {
 				$next_renewal                 = $edit_cost->next_renewal;
 				$selected_payment_method      = $edit_cost->payment_method;
 				$slug                         = $edit_cost->slug;
+				$selected_prod_icon           = $edit_cost->cost_icon;
+				$selected_prod_color          = $edit_cost->cost_color;
 				$is_plugintheme               = 'plugin' === $selected_product_type || 'theme' === $selected_product_type ? true : false;
 			}
 		}
@@ -127,6 +138,20 @@ class Cost_Tracker_Add_Edit {
 
 		$currency        = Cost_Tracker_Utility::get_instance()->get_option( 'currency' );
 		$currency_symbol = Cost_Tracker_Utility::get_instance()->get_currency_symbol( $currency );
+		$product_icons   = Cost_Tracker_Utility::get_product_default_icons();
+
+		$cust_prod_src = $selected_prod_icon;
+		if ( ! empty( $selected_prod_icon ) && false !== strpos( $selected_prod_icon, 'deficon:' ) ) {
+			$selected_default_icon = str_replace( 'deficon:', '', $selected_prod_icon );
+			$cust_prod_src         = '';
+		}
+		// new cost.
+		if ( ! $edit_id ) {
+			$selected_default_icon = 'archive';
+			$selected_prod_icon    = 'deficon:' . $selected_default_icon;
+			$selected_prod_color   = '#34424D';
+			$cust_prod_src         = '';
+		}
 
 		?>
 		<div class="mainwp-main-content">
@@ -175,6 +200,39 @@ class Cost_Tracker_Add_Edit {
 						<input type="text" name="mainwp_module_cost_tracker_edit_url" id="mainwp_module_cost_tracker_edit_url" value="<?php echo $edit_cost ? esc_html( $edit_cost->url ) : ''; ?>">
 					</div>
 				</div>
+				<input type="hidden" name="mainwp_module_cost_tracker_edit_icon_hidden" id="mainwp_module_cost_tracker_edit_icon_hidden" value="<?php echo esc_attr( $selected_prod_icon ); ?>">
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Upload product icon', 'mainwp' ); ?></label>
+					<div class="two wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Upload the product icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+						<div class="ui green button basic module-cost-tracker-product-icon-customable" icon-src="<?php echo esc_attr( $cust_prod_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
+					</div>
+					<div class="one wide middle aligned center aligned column">
+						<?php if ( $edit_cost ) : ?>
+							<?php echo Cost_Tracker_Admin::get_instance()->get_product_icon_display( $edit_cost ); //phpcs:ignore --ok. ?>
+						<?php endif; ?>
+					</div>
+					
+				</div>
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Select icon', 'mainwp' ); ?></label>
+					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select an icon if not using original product icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+						<div class="ui left action input">
+							<div class="ui five column selection search dropdown not-auto-init" style="min-width:21em" id="mainwp_module_cost_tracker_edit_icon_select">
+								<div class="text">
+									<span style="color:<?php echo esc_attr( $selected_prod_color ); ?>" ><?php echo ! empty( $selected_default_icon ) ? '<i class="' . esc_attr( $selected_default_icon ) . ' icon"></i>' : ''; ?></span>
+								</div>
+								<i class="dropdown icon"></i>
+								<div class="menu">
+									<?php foreach ( $product_icons as $icon ) : ?>
+										<?php echo '<div class="item" style="color:' . esc_attr( $selected_prod_color ) . '" data-value="' . esc_attr( $icon ) . '"><i class="' . esc_attr( $icon ) . ' icon"></i></div>'; ?>
+									<?php endforeach; ?>
+								</div>
+							</div>
+							<input type="color" data-tooltip="Color will update on save" data-position="top center" data-inverted="" name="mainwp_module_cost_tracker_edit_product_color" class="mainwp-color-picker-input" id="mainwp_module_cost_tracker_edit_product_color"  value="<?php echo esc_attr( $selected_prod_color ); ?>" />
+						</div>
+					</div>
+					<div class="one wide column"></div>
+				</div>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Type', 'mainwp' ); ?></label>
 					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the type of this cost.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
@@ -188,7 +246,7 @@ class Cost_Tracker_Add_Edit {
 								echo '<option value="' . esc_attr( $key ) . '" ' . esc_attr( $_select ) . '>' . esc_html( $val ) . '</option>';
 								?>
 							<?php endforeach; ?>
-						</select>
+						</select>						
 					</div>
 				</div>
 
@@ -231,11 +289,13 @@ class Cost_Tracker_Add_Edit {
 				<div class="ui grid field hide-if-lifetime-subscription-selected" <?php echo $lifetime_selected ? 'style="display:none;"' : ''; ?>>
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Next renewal', 'mainwp' ); ?></label>
 						<div class="five wide column" data-inverted="" data-position="left center">
-						<?php Cost_Tracker_Admin::generate_next_renewal( $edit_cost ); ?>
+						<?php
+						$next_rl = Cost_Tracker_Admin::get_next_renewal( $edit_cost->last_renewal, $edit_cost->renewal_type );
+						Cost_Tracker_Admin::generate_next_renewal( $edit_cost, $next_rl );
+						?>
 					</div>
 				</div>
 				<?php endif; ?>
-
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Category', 'mainwp' ); ?></label>
 					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the category for this cost.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
@@ -274,12 +334,13 @@ class Cost_Tracker_Add_Edit {
 						</select>
 					</div>
 				</div>
+				<?php $dec = Cost_Tracker_Utility::cost_tracker_format_price( 0, true, array( 'get_decimals' => true ) ); ?>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Price', 'mainwp' ); ?></label>
 					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Please input a value using a single decimal point (.) without thousand separators or currency symbols.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<div class="ui left labeled input">
 							<label for="mainwp_module_cost_tracker_edit_price" class="ui label"><?php echo esc_html( $currency_symbol ); ?></label>
-							<input type="text" name="mainwp_module_cost_tracker_edit_price" id="mainwp_module_cost_tracker_edit_price" value="<?php echo $edit_cost ? esc_html( $edit_cost->price ) : ''; ?>">
+							<input type="text" name="mainwp_module_cost_tracker_edit_price" id="mainwp_module_cost_tracker_edit_price" value="<?php echo $edit_cost ? esc_html( round( $edit_cost->price, $dec ) ) : ''; ?>">
 						</div>
 					</div>
 				</div>
@@ -368,6 +429,15 @@ class Cost_Tracker_Add_Edit {
 					}
 				} );
 
+				jQuery( '#mainwp_module_cost_tracker_edit_icon_select' ).dropdown( {
+					onChange: function( val ) {
+						if(jQuery( '#module_cost_tracker_upload_custom_icon_img_display').length > 0){
+							jQuery( '#module_cost_tracker_upload_custom_icon_img_display').hide();
+						}
+						jQuery( '#mainwp_module_cost_tracker_edit_icon_hidden' ).val('deficon:' + val);
+					}
+				} );
+
 				jQuery( '#mainwp_module_cost_tracker_edit_product_type' ).dropdown( {
 					onChange: function( val ) {
 						if ( val == 'plugin' || val == 'theme') {
@@ -379,8 +449,113 @@ class Cost_Tracker_Add_Edit {
 						}
 					}
 				} );
+
+				jQuery(document).on('click', '.module-cost-tracker-product-icon-customable', function () {
+					var iconObj = jQuery(this);
+					jQuery('#mainwp_delete_image_field').hide();
+					jQuery('#mainwp-upload-custom-icon-modal').modal('setting', 'closable', false).modal('show');
+					jQuery('#update_custom_icon_btn').removeAttr('disabled');
+					if (iconObj.attr('icon-src') != '') {
+						jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', iconObj.attr('icon-src'));
+						jQuery('#mainwp_delete_image_field').show();
+					}
+					jQuery(document).on('click', '#update_custom_icon_btn', function () {
+							mainwp_upload_custom_types_icon(iconObj, 'mainwp_module_cost_tracker_upload_product_icon', function(response){
+								if (jQuery('#mainwp_module_cost_tracker_edit_icon_hidden').length > 0) {
+									if (typeof response.iconfile !== undefined) {
+										jQuery('#mainwp_module_cost_tracker_edit_icon_hidden').val(response.iconfile);
+									} else {
+										jQuery('#mainwp_module_cost_tracker_edit_icon_hidden').val('');
+									}
+								}
+								var deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
+								if(deleteIcon){
+									jQuery('#module_cost_tracker_upload_custom_icon_img_display').hide();
+								} else if (jQuery('#module_cost_tracker_upload_custom_icon_img_display').length > 0) {
+									if (typeof response.iconfile !== undefined) {
+										var scr = response.iconsrc !== undefined ? response.iconsrc : '';
+										iconObj.attr('icon-src', scr);
+										jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', scr);
+										jQuery('#module_cost_tracker_upload_custom_icon_img_display').attr('src', scr);
+										jQuery('#module_cost_tracker_upload_custom_icon_img_display').attr('style', 'display:inline-block');
+										jQuery('#module_cost_tracker_upload_custom_icon_img_display').show();
+									}
+								}
+								setTimeout(function () {
+									//window.location.href = location.href;
+									jQuery('#mainwp-upload-custom-icon-modal').modal('hide')
+								}, 1000);
+							});
+							return false;
+					});
+				});
 			});
 		</script>
 		<?php
+	}
+
+	/**
+	 * Method ajax_upload_product_icon()
+	 */
+	public function ajax_upload_product_icon() {
+		MainWP_Post_Handler::instance()->secure_request( 'mainwp_module_cost_tracker_upload_product_icon' );
+
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$slug         = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
+		$delete       = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0;
+		$deleteIconId = isset( $_POST['deleteIconId'] ) ? intval( $_POST['deleteIconId'] ) : 0;
+
+		if ( $delete && $deleteIconId ) {
+			$cost = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $deleteIconId );
+			if ( $cost && '' !== $cost->cost_icon && false === strpos( $cost->cost_icon, 'deficon:' ) ) {
+				$update = array(
+					'id'        => $deleteIconId,
+					'cost_icon' => '',
+				);
+				Cost_Tracker_DB::get_instance()->update_cost_tracker( $update );
+				$this->delete_product_icon_file( $cost->cost_icon );
+			}
+			wp_die( wp_json_encode( array( 'result' => 'success' ) ) );
+		}
+
+		$output = isset( $_FILES['mainwp_upload_icon_uploader'] ) ? MainWP_System_Utility::handle_upload_image( Cost_Tracker_Settings::$icon_sub_dir, $_FILES['mainwp_upload_icon_uploader'], 0 ) : null;
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		$uploaded_icon = 'NOTCHANGE';
+		if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
+			$uploaded_icon = $output['filename'];
+		}
+
+		if ( 'NOTCHANGE' !== $uploaded_icon ) {
+			$dirs      = MainWP_System_Utility::get_mainwp_dir( Cost_Tracker_Settings::$icon_sub_dir, true );
+			$icon_base = $dirs[1];
+			wp_die(
+				wp_json_encode(
+					array(
+						'result'   => 'success',
+						'iconfile' => esc_html( $uploaded_icon ),
+						'iconsrc'  => esc_html( $icon_base . $uploaded_icon ),
+					)
+				)
+			);
+		} else {
+			wp_die( wp_json_encode( array( 'result' => 'failed' ) ) );
+		}
+	}
+
+	/**
+	 * Delete product icon file.
+	 *
+	 * @param string $cost_icon file icon.
+	 */
+	public function delete_product_icon_file( $cost_icon ) {
+		$valid_file = 0 === validate_file( $cost_icon ) ? true : false;
+		if ( $valid_file ) {
+			$dirs = MainWP_System_Utility::get_mainwp_dir( Cost_Tracker_Settings::$icon_sub_dir, true );
+			$f    = $dirs[0] . $cost_icon;
+			if ( file_exists( $f ) ) {
+				wp_delete_file( $f );
+			}
+		}
 	}
 }

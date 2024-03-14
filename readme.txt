@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 6.4.3
 Requires PHP: 7.4
-Stable tag: 5.0.1
+Stable tag: 5.0.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -250,28 +250,33 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 5.0.1 - 2-29-2024 =
+= 5.0.2 - 3-14-2024 =
 
-* Fixed: Display of incorrect currency symbols in the add and edit cost forms.
-* Fixed: Incorrect link for the WooCommerce Status extension in the menu.
-* Fixed: "Invalid request" error during post and page publication.
-* Fixed: Inaccurate background color in the API Backups action bar.
-* Fixed: Displaying unformatted dates in the Client Info widget.
-* Fixed: Misalignment of icon button menus in the Recent Posts and Recent Pages widgets.
-* Fixed: Issue with the Solid Security menu item.
-* Fixed: Problems loading widget placeholder images.
-* Fixed: Purchase Date field on the New/Edit Cost page saving incorrect dates with some WordPress languages.
-* Fixed: Display of lifetime purchases as a weekly cost in Site and Client widgets and the Manage Sites table.
-* Fixed: Costs assigned to a Tag being incorrectly shown for sites not in that Tag.
-* Fixed: "Renews at" date appearing one day early.
-* Fixed: Editing and saving entries with a defined Slug, including a duplication check.
-* Fixed: Cost price field tooltip for clearer instructions.
-* Added: A page reload method after deleting Plesk backups to ensure the UI is immediately updated.
-* Updated: Changed the cost status label from "Activate" to "Active" for clarity.
-* Updated: Close icon in modals for dark theme for better visibility.
-* Updated: Z-index value of modal dimmers to ensure proper layering.
-* Updated: Notice style for the API Backups feature for enhanced readability.
-* Updated: Style of icon buttons for Plesk backup actions for consistency.
-* Updated: Prevention of auto-filling in the MainWP Main API Key field for usability.
+* Fixed: Tag-related cost display issues in the child site widget.
+* Fixed: Tooltip positioning anomalies on the Insights page.
+* Fixed: Incorrect extension slugs affecting main navigation for SEOPress, Custom Post Types, and Vulnerability Checker.
+* Fixed: The reconnect site button functionality by adding the missing icon class.
+* Fixed: An uncaught type error on the site-specific themes update page.
+* Added: Cost Summary: a new widgetized page for financial oversight.
+* Added: Widgets for "Payments Left for This Month," "Upcoming Renewals" (monthly and yearly), "Monthly Totals," and "Annual Expense Distribution by Category" on the Cost Summary page.
+* Added: Filtering system and the ability to save filter segments on the 'Manage Costs' page.
+* Added: Feature for saving icons or custom images for costs.
+* Added: Color picker tool for product categories and cost items.
+* Added: Option to arrange default columns in the 'Manage Cost' table.
+* Updated: Central alignment for WP Core, Plugins, and Themes columns in 'Manage Sites.'
+* Updated: Automatically reveal the site filters row upon any filter application.
+* Updated: Amended tag deletion confirmation to correctly reference 'tag' instead of 'group.'
+* Updated: Changed background colors for the second-level navigation menu and the Collapse button in the classic theme.
+* Updated: Introduced a new menu item for WPvivid under 'Backups.'
+* Updated: ID attributes for second-level menu items in extension categories.
+* Updated: Adjusted modal close icon color in Minimalistic and WP Admin themes.
+* Updated: Refined default column layout in the 'Manage Cost' table.
+* Updated: Updated display icons for Single-Site and Multi-Site licenses.
+* Updated: Enhanced display of cost type column content.
+* Updated: Visual update to show payment methods with icons.
+* Updated: Moved 'Edit Notes' to the actions menu.
+* Updated: Updated 'Cost Tracker' column in 'Manage Sites' and 'Manage Clients' for 30-Day Cost Forecast visibility.
+
+[See Video Changelog](https://www.youtube.com/watch?v=QuD0T3Mfmuw)
 
 [See changelog for all versions.](https://mainwp.com/changelog.txt).

@@ -60,7 +60,7 @@ class MainWP_Client_Info {
 		 *
 		 * @param object $website Object containing the child site info.
 		 */
-	public static function render_info( $website ) {
+	public static function render_info( $website ) { //phpcs:ignore -- complex.
 
 		$client_info = $website->client_id ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $website->client_id, ARRAY_A ) : false;
 

@@ -217,7 +217,10 @@ class MainWP_Updates_Per_Site {
 					if ( $website->is_ignorePluginUpdates ) {
 						continue;
 					}
-					$plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
+					$plugin_upgrades = ! empty( $website->plugin_upgrades ) ? json_decode( $website->plugin_upgrades, true ) : array();
+					if ( ! is_array( $plugin_upgrades ) ) {
+						$plugin_upgrades = array();
+					}
 					$decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
 					$decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 

@@ -1931,7 +1931,7 @@ class MainWP_Post {
 							}
 						}
 						 // phpcs:enable
-						call_user_func( $box['callback'], $object, $box );
+						call_user_func( $box['callback'], $input_obj, $box );
 						echo "</div>\n";
 						echo "</div>\n";
 					}

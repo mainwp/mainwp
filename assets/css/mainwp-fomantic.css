@@ -118,7 +118,7 @@
 .mainwp-ui .ui.message a:not(.button) { color: rgba(0,0,0,.87); font-weight: bolder; text-decoration: underline !important;}
 
 .mainwp-ui [data-tooltip][data-inverted]:before,
-.mainwp-ui [data-tooltip][data-inverted]:after { z-index: 15 !important; }
+.mainwp-ui [data-tooltip][data-inverted]:after { z-index: 99 !important; }
 
 .mainwp-ui .progress .bar {
   border-radius: 0;
@@ -168,7 +168,23 @@
   height: auto !important;
 }
 
-
+.mainwp-ui .ui.dimmer.active,
 .mainwp-ui .ui.dimmer.modals.active {
   z-index: 99999;
+}
+
+.mainwp-ui .icon.card {
+  padding: 0;
+  min-width: auto;
+  max-width: none;
+  border: none;
+  box-shadow: none;
+  background: none !important;
+}
+
+.mainwp-ui .left.action.input .mainwp-color-picker-input {
+  min-height: 2.71428571em;
+  padding: 5px !important;
+  border-radius: 0 10px 10px 0 !important;
+  -webkit-border-radius: 0 10px 10px 0 !important;
 }

@@ -87,7 +87,8 @@
     margin-bottom: 0px;
 }
 
-.mainwp-ui-leftmenu .mainwp-content-wrap {
+.mainwp-ui-leftmenu .mainwp-content-wrap,
+.mainwp-ui-leftmenu #mainwp-screenshots-sites {
     margin-left: 272px;
 }
 
@@ -103,7 +104,8 @@
 .mainwp-ui.mainwp_page_ErrorLog .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_ActionLogs .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_PluginPrivacy .mainwp-content-wrap,
-.mainwp-ui.mainwp-hidden-second-level-navigation.mainwp-ui-leftmenu .mainwp-content-wrap {
+.mainwp-ui.mainwp-hidden-second-level-navigation.mainwp-ui-leftmenu .mainwp-content-wrap,
+.mainwp-ui.mainwp-hidden-second-level-navigation.mainwp-ui-leftmen #mainwp-screenshots-sites {
     margin-left: 72px !important;
 }
 
@@ -266,6 +268,7 @@
     padding: 7px 4px 7px 2px;
     border-radius: 0 8px 8px 0 !important;
     min-width: auto !important;
+    background-color: #3E3F3D;
 }
 
 #mainwp-collapse-second-level-navigation .icon {
@@ -286,7 +289,7 @@
 
 #mainwp-main-menu {
     width: 100%;
-    background: #1c1d1b !important;
+    background: #3E3F3D !important;
 }
 
 #mainwp-second-level-navigation .ui.inverted.menu {
@@ -508,6 +511,17 @@
         width: 800px;
     }
 
+    #widget-cost_upcomming_renewals .mainwp-scrolly-overflow,
+    #widget-cost_monthly_renewals .mainwp-scrolly-overflow,
+    #widget-cost_yearly_renewals .mainwp-scrolly-overflow {
+        height: calc(100% - 100px) !important;
+    }
+
+    #widget-cost_monthly_totals .mainwp-scrolly-overflow,
+    #widget-cost_category_totals .mainwp-scrolly-overflow {
+        height: calc(100% - 70px) !important;
+    }
+
 }
 
 .mainwp-ui .mainwp-widget .ui.form .ui.input,
@@ -605,7 +619,14 @@ table.mainwp-manage-wpsites-table .error a {
     padding-top: 1em;
 }
 
-
+/* Manage Costs Table */
+#mainwp-module-cost-tracker-sites-table tbody tr td.mainwp-manage-costs-name-cell {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+    max-width: 150px;
+    min-width: 150px;
+}
 /* Manage Groups */
 
 #mainwp-manage-groups .mainwp-group-sites-row .list {

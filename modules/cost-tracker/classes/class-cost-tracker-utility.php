@@ -8,6 +8,8 @@
 
 namespace MainWP\Dashboard\Module\CostTracker;
 
+use MainWP\Dashboard\MainWP_Utility;
+
 /**
  * Class Cost_Tracker_Utility
  */
@@ -71,13 +73,14 @@ class Cost_Tracker_Utility {
 	 *
 	 * @param string $key Option key.
 	 * @param mixed  $defval Default value.
+	 * @param bool   $json_encoded Is json encoded value.
 	 *
 	 * @return mixed Retruns option value.
 	 */
-	public function get_option( $key = null, $defval = '' ) {
+	public function get_option( $key = null, $defval = '', $json_encoded = false ) {
 		if ( isset( $this->option[ $key ] ) ) {
 			$values = $this->option[ $key ];
-			if ( 'custom_product_types' === $key || 'custom_payment_methods' === $key ) {
+			if ( $json_encoded ) {
 				$values = ! empty( $values ) ? json_decode( $values, true ) : array();
 				if ( ! is_array( $values ) ) {
 					$values = array();
@@ -126,14 +129,45 @@ class Cost_Tracker_Utility {
 	}
 
 	/**
+	 * Method render_product_icon().
+	 *
+	 * @param  string $file_name File icon.
+	 * @param  bool   $ret True|False To return.
+	 *
+	 * @return string
+	 */
+	public static function render_product_icon( $file_name, $ret = false ) {
+
+		$imgfavi = '';
+
+		$favi_url = MainWP_Utility::get_saved_favicon_url( $file_name );
+		if ( ! empty( $favi_url ) ) {
+			$imgfavi = '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" />';
+		}
+
+		if ( $ret ) {
+			return $imgfavi;
+		}
+		echo $imgfavi;//phpcs:ignore -- ok.
+	}
+
+	/**
 	 * Format the price with a currency symbol.
 	 *
 	 * @param  float $price Raw price.
 	 * @param  bool  $ret Return or echo value.
+	 * @param  array $params other params.
 	 *
 	 * @return string
 	 */
-	public static function cost_tracker_format_price( $price, $ret = false ) {
+	public static function cost_tracker_format_price( $price, $ret = false, $params = array() ) { //phpcs:ignore -- complex.
+		if ( ! is_array( $params ) ) {
+			$params = array();
+		}
+
+		$get_currency_format = ! empty( $params['get_currency_format'] ) ? true : false;
+		$get_formated_number = ! empty( $params['get_formated_number'] ) ? true : false;
+		$get_decimals        = ! empty( $params['get_decimals'] ) ? true : false;
 
 		$currency = self::get_instance()->get_option( 'currency' );
 		$settings = self::get_instance()->get_option( 'currency_format' );
@@ -154,6 +188,14 @@ class Cost_Tracker_Utility {
 
 		$price = $negative ? $price * -1 : $price;
 		$price = number_format( $price, $args['decimals'], $args['decimal_separator'], $args['thousand_separator'] );
+
+		if ( $get_decimals ) {
+			return $args['decimals'];
+		}
+
+		if ( $get_formated_number ) {
+			return $price;
+		}
 
 		if ( $args['decimals'] > 0 ) {
 			// trim zezos.
@@ -178,8 +220,16 @@ class Cost_Tracker_Utility {
 				break;
 		}
 
+		if ( $get_currency_format ) {
+			return array(
+				'format'   => sprintf( $format, esc_html( self::get_currency_symbol( $currency ) ), '%1' ), // %1 for price holder.
+				'decimals' => $args['decimals'],
+			);
+		}
+
 		$formatted_price = ( $negative ? '-' : '' ) . sprintf( $format, '<span class="cost-tracker-currency-symbol">' . esc_html( self::get_currency_symbol( $currency ) ) . '</span>', esc_html( $price ) );
 		$value           = '<span class="cost-tracker-currency-amount"><bdi>' . $formatted_price . '</bdi></span>';
+
 		if ( $ret ) {
 			return $value;
 		}
@@ -952,5 +1002,339 @@ class Cost_Tracker_Utility {
 		}
 
 		return $valid_settings;
+	}
+
+	/**
+	 * Get payment method icon
+	 *
+	 * Returns FOmantic UI icon for payment selected payment method.
+	 *
+	 * @param string $payment_method Selected patyment method.
+	 */
+	public static function get_payment_method_icon( $payment_method ) {
+		$icon = '<i class="money bill large icon"></i>';
+
+		switch ( $payment_method ) {
+			case 'PayPal':
+				$icon = '<span data-tooltip="PayPal" data-inverted="" data-position="left center"><i class="paypal large icon"></i></span>';
+				break;
+			case 'Stripe':
+				$icon = '<span data-tooltip="Stripe" data-inverted="" data-position="left center"><i class="stripe large icon"></i></span>';
+				break;
+			case 'Apple Pay':
+				$icon = '<span data-tooltip="Apple Pay" data-inverted="" data-position="left center"><i class="apple pay large icon"></i></span>';
+				break;
+			case 'Amazon Pay':
+				$icon = '<span data-tooltip="Amazon Pay" data-inverted="" data-position="left center"><i class="amazon pay large icon"></i></span>';
+				break;
+			case 'Google Pay':
+				$icon = '<span data-tooltip="Google Pay" data-inverted="" data-position="left center"><i class="google pay large icon"></i></span>';
+				break;
+			case 'Credit Card':
+				$icon = '<span data-tooltip="Credit Card" data-inverted="" data-position="left center"><i class="credit card large icon"></i></span>';
+				break;
+			case 'Debit Card':
+				$icon = '<span data-tooltip="Debit Card" data-inverted="" data-position="left center"><i class="credit card outline large icon"></i></span>';
+				break;
+			case 'Cash':
+				$icon = '<span data-tooltip="Cash" data-inverted="" data-position="left center"><i class="money bill alternate outline large icon"></i></span>';
+				break;
+		}
+
+		return $icon;
+	}
+
+
+	/**
+	 * Method get_product_default_icons().
+	 *
+	 * @param bool   $get_all Get all icons.
+	 * @param string $def_type_icon to get default icon for types.
+	 *
+	 * @return string icon.
+	 */
+	public static function get_product_default_icons( $get_all = true, $def_type_icon = '' ) {
+
+		if ( 'default_custom_product_type' === $def_type_icon ) {
+			return 'folder open';
+		} elseif ( 'default_product' === $def_type_icon ) {
+			return 'archive';
+		}
+
+		if ( ! empty( $def_type_icon ) ) {
+			$default_pro_type_icons = Cost_Tracker_Admin::get_default_product_types_icons();
+			if ( isset( $default_pro_type_icons[ $def_type_icon ] ) ) {
+				return $default_pro_type_icons[ $def_type_icon ];
+			}
+		}
+
+		$icons = array(
+			'ambulance',
+			'anchor',
+			'archive',
+			'award',
+			'baby carriage',
+			'balance scale',
+			'balance scale left',
+			'balance scale right',
+			'bath',
+			'bed',
+			'beer',
+			'bell',
+			'bell outline',
+			'bicycle',
+			'binoculars',
+			'birthday cake',
+			'blender',
+			'bomb',
+			'book',
+			'book dead',
+			'bookmark',
+			'bookmark outline',
+			'briefcase',
+			'broadcast tower',
+			'bug',
+			'building',
+			'building outline',
+			'bullhorn',
+			'bullseye',
+			'bus',
+			'calculator',
+			'calendar',
+			'calendar alternate',
+			'calendar alternate outline',
+			'calendar outline',
+			'camera',
+			'camera retro',
+			'candy cane',
+			'car',
+			'carrot',
+			'church',
+			'clipboard',
+			'clipboard outline',
+			'cloud',
+			'coffee',
+			'cog',
+			'cogs',
+			'compass',
+			'compass outline',
+			'cookie',
+			'cookie bite',
+			'copy',
+			'copy outline',
+			'cube',
+			'cubes',
+			'cut',
+			'dice',
+			'dice d20',
+			'dice d6',
+			'dice five',
+			'dice four',
+			'dice one',
+			'dice six',
+			'dice three',
+			'dice two',
+			'digital tachograph',
+			'door closed',
+			'door open',
+			'drum',
+			'drum steelpan',
+			'envelope',
+			'envelope open',
+			'envelope open outline',
+			'envelope outline',
+			'eraser',
+			'eye',
+			'eye dropper',
+			'eye outline',
+			'fax',
+			'feather',
+			'feather alternate',
+			'fighter jet',
+			'file',
+			'file alternate',
+			'file alternate outline',
+			'file outline',
+			'file prescription',
+			'film',
+			'fire',
+			'fire alternate',
+			'fire extinguisher',
+			'flag',
+			'flag checkered',
+			'flag outline',
+			'flask',
+			'futbol',
+			'futbol outline',
+			'gamepad',
+			'gavel',
+			'gem',
+			'gem outline',
+			'gift',
+			'gifts',
+			'glass cheers',
+			'glass martini',
+			'glass whiskey',
+			'glasses',
+			'globe',
+			'graduation cap',
+			'guitar',
+			'hat wizard',
+			'hdd',
+			'hdd outline',
+			'headphones',
+			'headphones alternate',
+			'headset',
+			'heart',
+			'heart broken',
+			'heart outline',
+			'helicopter',
+			'highlighter',
+			'holly berry',
+			'home',
+			'hospital',
+			'hospital outline',
+			'hourglass',
+			'hourglass outline',
+			'igloo',
+			'image',
+			'image outline',
+			'images',
+			'images outline',
+			'industry',
+			'key',
+			'keyboard',
+			'keyboard outline',
+			'laptop',
+			'leaf',
+			'lemon',
+			'lemon outline',
+			'life ring',
+			'life ring outline',
+			'lightbulb',
+			'lightbulb outline',
+			'lock',
+			'lock open',
+			'magic',
+			'magnet',
+			'map',
+			'map marker',
+			'map marker alternate',
+			'map outline',
+			'map pin',
+			'map signs',
+			'marker',
+			'medal',
+			'medkit',
+			'memory',
+			'microchip',
+			'microphone',
+			'microphone alternate',
+			'mitten',
+			'mobile',
+			'mobile alternate',
+			'money bill',
+			'money bill alternate',
+			'money bill alternate outline',
+			'money check',
+			'money check alternate',
+			'moon',
+			'moon outline',
+			'motorcycle',
+			'mug hot',
+			'newspaper',
+			'newspaper outline',
+			'paint brush',
+			'paper plane',
+			'paper plane outline',
+			'paperclip',
+			'paste',
+			'paw',
+			'pen',
+			'pen alternate',
+			'pen fancy',
+			'pen nib',
+			'pencil alternate',
+			'phone',
+			'phone alternate',
+			'plane',
+			'plug',
+			'print',
+			'puzzle piece',
+			'ring',
+			'road',
+			'rocket',
+			'ruler combined',
+			'ruler horizontal',
+			'ruler vertical',
+			'satellite',
+			'satellite dish',
+			'save',
+			'save outline',
+			'school',
+			'screwdriver',
+			'scroll',
+			'sd card',
+			'search',
+			'shield alternate',
+			'shopping bag',
+			'shopping basket',
+			'shopping cart',
+			'shower',
+			'sim card',
+			'skull crossbones',
+			'sleigh',
+			'snowflake',
+			'snowflake outline',
+			'snowplow',
+			'space shuttle',
+			'star',
+			'star outline',
+			'sticky note',
+			'sticky note outline',
+			'stopwatch',
+			'stroopwafel',
+			'subway',
+			'suitcase',
+			'sun',
+			'sun outline',
+			'tablet',
+			'tablet alternate',
+			'tachometer alternate',
+			'tag',
+			'tags',
+			'taxi',
+			'thumbtack',
+			'ticket alternate',
+			'toilet',
+			'toolbox',
+			'tools',
+			'train',
+			'tram',
+			'trash',
+			'trash alternate',
+			'trash alternate outline',
+			'tree',
+			'trophy',
+			'truck',
+			'tv',
+			'umbrella',
+			'university',
+			'unlock',
+			'unlock alternate',
+			'utensil spoon',
+			'utensils',
+			'wallet',
+			'weight',
+			'wheelchair',
+			'wine glass',
+			'wrench',
+			'folder',
+			'folder open',
+			'palette',
+			'server',
+			'tint',
+		);
+		return $icons;
 	}
 }

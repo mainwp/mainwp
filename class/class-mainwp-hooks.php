@@ -198,6 +198,10 @@ class MainWP_Hooks {
 		add_action( 'mainwp_delete_key_file', array( &$this, 'hook_delete_key_file' ), 10, 1 );
 		add_filter( 'mainwp_verify_ping_nonce', array( MainWP_Utility::class, 'hook_verify_ping_nonce' ), 10, 3 );
 		add_action( 'mainwp_fetch_url_authed', array( MainWP_Actions_Handler::instance(), 'hook_mainwp_fetch_url_authed' ), 10, 5 );
+
+		add_filter( 'mainwp_get_lookup_items', array( &$this, 'hook_get_lookup_items' ), 10, 4 );
+		add_filter( 'mainwp_insert_lookup_item', array( &$this, 'hook_insert_lookup_item' ), 10, 5 );
+		add_filter( 'mainwp_delete_lookup_items', array( &$this, 'hook_delete_lookup_items' ), 10, 3 );
 	}
 
 	/**
@@ -1850,5 +1854,47 @@ class MainWP_Hooks {
 	 */
 	public function hook_delete_key_file( $key_file ) {
 		return MainWP_Keys_Manager::instance()->delete_key_file( $key_file );
+	}
+
+	/**
+	 * Method hook_get_lookup_items().
+	 *
+	 * @param bool   $false_val false value.
+	 * @param string $item_name item name.
+	 * @param int    $item_id item id.
+	 * @param string $obj_name object name.
+	 *
+	 * @return array Lookup items.
+	 */
+	public function hook_get_lookup_items( $false_val, $item_name, $item_id, $obj_name ) {
+		return MainWP_DB::instance()->get_lookup_items( $item_name, $item_id, $obj_name );
+	}
+
+	/**
+	 * Method hook_insert_lookup_item().
+	 *
+	 * @param bool   $false_val false value.
+	 * @param string $item_name item name.
+	 * @param int    $item_id item id.
+	 * @param string $obj_name object name.
+	 * @param int    $obj_id object id.
+	 *
+	 * @return array Lookup items.
+	 */
+	public function hook_insert_lookup_item( $false_val, $item_name, $item_id, $obj_name, $obj_id ) {
+		return MainWP_DB::instance()->insert_lookup_item( $item_name, $item_id, $obj_name, $obj_id );
+	}
+
+	/**
+	 * Method hook_delete_lookup_items().
+	 *
+	 * @param bool   $false_val false value.
+	 * @param string $by Delete by.
+	 * @param array  $params params.
+	 *
+	 * @return mixed results.
+	 */
+	public function hook_delete_lookup_items( $false_val, $by = 'lookup_id', $params = array() ) {
+		return MainWP_DB::instance()->delete_lookup_items( $by, $params );
 	}
 }

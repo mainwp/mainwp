@@ -126,7 +126,7 @@ class MainWP_UI {
 			$selectedby = 'group';
 		}
 
-		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.name' ) );
 		$groups   = MainWP_DB_Common::instance()->get_not_empty_groups( null, $enableOfflineSites );
 
 		// support staging extension.
@@ -269,12 +269,9 @@ class MainWP_UI {
 			<div id="mainwp-select-sites-body">
 				<div class="ui relaxed divided list" id="mainwp-select-sites-list">
 					<?php if ( ! $websites ) : ?>
-						<h2 class="ui icon header">
-							<i class="folder open outline icon"></i>
-							<div class="content"><?php esc_html_e( 'No Sites connected!', 'mainwp' ); ?></div>
-							<div class="ui divider hidden"></div>
-							<a href="admin.php?page=managesites&do=new" class="ui green button basic"><?php esc_html_e( 'Add Site', 'mainwp' ); ?></a>
-						</h2>
+						<div id="mainwp-select-sites-placeholder" class="ui segment">
+							<?php self::render_empty_element_placeholder( __( 'No sites connected.', 'mainwp' ) ); ?>
+						</div>
 						<?php
 						else :
 							while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -565,7 +562,7 @@ class MainWP_UI {
 			$sidebarPosition = 1;
 		}
 
-		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.name' ) );
 
 		$count_sites = MainWP_DB::instance()->get_websites_count();
 
@@ -1286,7 +1283,7 @@ class MainWP_UI {
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
 			?>
 			<?php if ( $id && $website && '' !== $website->sync_errors ) : ?>
-				<a href="#" class="mainwp-updates-overview-reconnect-site ui green icon button" siteid="<?php echo intval( $website->id ); ?>" data-position="bottom right" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><i class="undo alternate"></i></a>
+				<a href="#" class="mainwp-updates-overview-reconnect-site ui green icon button" siteid="<?php echo intval( $website->id ); ?>" data-position="bottom right" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><i class="undo alternate icon"></i></a>
 			<?php else : ?>
 				<a class="ui icon button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?>" id="mainwp-sync-sites" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?> data-inverted="" data-position="bottom right">
 					<i class="sync icon"></i>
@@ -1803,7 +1800,7 @@ class MainWP_UI {
 		<i class="close icon"></i>
 			<div class="header">
 			<?php
-			esc_html_e( 'Update Icon', 'mainwp' );
+			esc_html_e( 'Upload Icon', 'mainwp' );
 			?>
 			</div>
 				<div class="content" id="mainwp-upload-custom-icon-content">
@@ -1824,7 +1821,9 @@ class MainWP_UI {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Custom icon', 'mainwp' ); ?></label>
 							<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Upload a custom icon.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="file" id="mainwp_upload_icon_uploader" name="mainwp_upload_icon_uploader[]" accept="image/*" data-inverted="" data-tooltip="<?php esc_attr_e( 'Upload a custom icon.', 'mainwp' ); ?>" />
+								<div class="ui file input">
+									<input type="file" id="mainwp_upload_icon_uploader" name="mainwp_upload_icon_uploader[]" accept="image/*" data-inverted="" data-tooltip="<?php esc_attr_e( 'Upload a custom icon.', 'mainwp' ); ?>" />
+								</div>
 							</div>
 						</div>
 						<div class="ui grid field" id="mainwp_delete_image_field">
@@ -1832,7 +1831,7 @@ class MainWP_UI {
 							<div class="six wide column">
 								<img class="ui tiny image" src="" /><br/>
 								<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, delete image.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-									<input type="checkbox"id="mainwp_delete_image_chk" />
+									<input type="checkbox"id="mainwp_delete_image_chk" item-icon-id="" />
 									<label for="mainwp_delete_image_chk"><?php esc_html_e( 'Delete Image', 'mainwp' ); ?></label>
 								</div>
 							</div>
@@ -2224,9 +2223,9 @@ class MainWP_UI {
 	 */
 	public static function render_empty_element_placeholder( $placeholder = '' ) {
 		?>
-		<div class="ui one column grid" style="height:100%">
+		<div class="ui one column grid">
 			<div class="middle aligned center aligned column">
-				<img src="<?php echo esc_url( MAINWP_PLUGIN_URL ); ?>assets/images/mainwp-widget-placeholder.png" class="mainwp-no-results-placeholder"/>
+				<img src="<?php echo esc_url( MAINWP_PLUGIN_URL ); ?>assets/images/mainwp-widget-placeholder.png" style="max-width:200px" class="mainwp-no-results-placeholder ui middle aligned image"/>
 				<?php if ( '' !== $placeholder ) : ?>
 					<p><?php echo $placeholder; //phpcs:ignore -- requires escaped. ?></p>
 				<?php else : ?>
@@ -2234,6 +2233,54 @@ class MainWP_UI {
 				<?php endif; ?>
 			</div>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Method render_modal_save_segment()
+	 *
+	 * Render modal window.
+	 *
+	 * @return void
+	 */
+	public static function render_modal_save_segment() {
+		?>
+		<div id="mainwp-common-filter-segment-modal" class="ui tiny modal">
+			<i class="close icon" id="mainwp-common-filter-segment-cancel"></i>
+			<div class="header"><?php esc_html_e( 'Save Segment', 'mainwp' ); ?></div>
+			<div class="content" id="mainwp-common-filter-segment-content">
+				<div id="mainwp-common-filter-edit-segment-status" class="ui message hidden"></div>
+				<div id="mainwp-common-filter-segment-edit-fields" class="ui form">
+					<div class="field">
+						<label><?php esc_html_e( 'Enter the segment name', 'mainwp' ); ?></label>
+					</div>
+					<div class="field">
+						<input type="text" id="mainwp-common-filter-edit-segment-name" value=""/>
+					</div>
+				</div>
+				<div id="mainwp-common-filter-segment-select-fields" style="display:none;">
+					<div class="field">
+						<label><?php esc_html_e( 'Select a segment', 'mainwp' ); ?></label>
+					</div>
+					<div class="field">
+						<div id="mainwp-common-filter-segments-lists-wrapper"></div>
+					</div>
+				</div>
+			</div>
+			<div class="actions">
+				<div class="ui grid">
+					<div class="eight wide left aligned middle aligned column">
+						<input type="button" class="ui green button" id="mainwp-common-filter-edit-segment-save" value="<?php esc_attr_e( 'Save', 'mainwp' ); ?>"/>
+						<input type="button" class="ui green button" id="mainwp-common-filter-select-segment-choose-button" value="<?php esc_attr_e( 'Choose', 'mainwp' ); ?>" style="display:none;"/>
+						<input type="button" class="ui basic button" id="mainwp-common-filter-select-segment-delete-button" value="<?php esc_attr_e( 'Delete', 'mainwp' ); ?>" style="display:none;"/>
+					</div>
+					<div class="eight wide column">
+						
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<?php
 	}
 }

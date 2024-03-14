@@ -360,6 +360,48 @@ class MainWP_System_View {
 	 *
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
 	 */
+	public static function mainwp_ver502_update_notice() {
+		if ( MainWP_Utility::show_mainwp_message( 'notice', 'upgrade_version502' ) ) {
+			?>
+			<div class="ui modal" id="mainwp-v502-update-notice-modal">
+				<i class="close icon mainwp-notice-dismiss" notice-id="upgrade_version502"></i>
+				<div class="header">
+					<?php echo esc_html__( 'MainWP 5.0.2 Update Notice', 'mainwp' ); ?>
+				</div>
+				<div class="content">
+					<div><?php echo esc_html__( 'Please perform a hard refresh of your browser to ensure optimal performance and access to all new features.', 'mainwp' ); ?></div>
+					<br/>
+					<div><?php echo esc_html__( 'This step is crucial for loading the latest updates effectively.', 'mainwp' ); ?></div>
+					<div class="ui list">
+						<div class="item"><i class="windows icon"></i> <?php echo esc_html__( 'Windows users: Press `Ctrl + F5`', 'mainwp' ); ?></div>
+						<div class="item"><i class="apple icon"></i> <?php echo esc_html__( 'Mac users: Press `Command + R`', 'mainwp' ); ?></div>
+						<div class="item"><i class="linux icon"></i> <?php echo esc_html__( 'Linux users: Press `F5`', 'mainwp' ); ?></div>
+					</div>
+				</div>
+			</div>
+			<script type="text/javascript">
+			jQuery( document ).ready( function() {
+				jQuery( '#mainwp-v502-update-notice-modal' ).modal({
+					onHidden: function () {
+						var notice_id = jQuery( '#mainwp-v502-update-notice-modal' ).find('.mainwp-notice-dismiss').attr('notice-id');
+						var data = {
+							action: 'mainwp_notice_status_update'
+						};
+						data['notice_id'] = notice_id;
+						jQuery.post(ajaxurl, mainwp_secure_data(data), function () { });
+					},
+				}).modal('show');
+			});
+			</script>
+			<?php
+		}
+	}
+
+	/**
+	 * MainWP Version ver 5 update Notice.
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
+	 */
 	public static function mainwp_ver5_update_clear_cache_notice() {
 		if ( MainWP_Utility::show_mainwp_message( 'notice', 'upgrade_ver5_clear_cache' ) ) {
 			?>

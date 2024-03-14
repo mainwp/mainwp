@@ -62,7 +62,7 @@ jQuery(document).ready(function ($) {
 
 	jQuery('.mainwp-module-cost-tracker-score.label').tab();
 
-	jQuery('.subscription_menu_item_delete').on('click', function () {
+	jQuery( document ).on( 'click', '.subscription_menu_item_delete', function () {
 		var objDel = jQuery(this);
 		mainwp_confirm(__('Are you sure.'), function () {
 			mainwp_module_cost_tracker_delete_start_specific(objDel, '', false);
@@ -109,6 +109,16 @@ jQuery(document).ready(function ($) {
 
 	$(document).on('click', '.module-cost-tracker-add-custom-product-types', function () {
 		jQuery('.cost-tracker-product-types-bottom').before(jQuery(this).attr('add-custom-product-types-tmpl'));
+		var justAdded = jQuery(this).prev().prev();
+		jQuery(justAdded).find('.mainwp-module-cost-tracker-select-custom-product-types-icons').dropdown( {							
+			onChange: function( val ) {
+				var parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
+				if(jQuery(parent).find('.module_cost_tracker_settings_upload_img_display').length > 0){
+					jQuery( '.module_cost_tracker_settings_upload_img_display').hide();
+				}							
+				jQuery(parent).find('input[name="cost_tracker_custom_product_types[icon][]"]' ).val('deficon:' + val);
+			}
+		} );
 	});
 
 	$(document).on('click', '.module-cost-tracker-add-custom-payment-methods', function () {
@@ -260,3 +270,7 @@ mainwp_module_cost_tracker_delete_start_specific = function (pObj, selector, pBu
 	return false;
 }
 
+function mainwp_cost_tracker_round_digit(num, decimalPlaces = 0) {
+    num = Math.round(num + "e" + decimalPlaces);
+    return Number(num + "e" + -decimalPlaces);
+}

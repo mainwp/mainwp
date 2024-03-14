@@ -185,11 +185,17 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
 		}
 
 		if ( ! empty( $filter_prod_type_slugs ) && is_array( $filter_prod_type_slugs ) ) {
-			$where .= ' AND co.product_type IN ("' . implode( '","', $filter_prod_type_slugs ) . '") ';
+			$filter_prod_type_slugs = MainWP_DB::instance()->escape_array( $filter_prod_type_slugs );
+			if ( ! empty( $filter_prod_type_slugs ) ) {
+				$where .= ' AND co.product_type IN ("' . implode( '","', $filter_prod_type_slugs ) . '") ';
+			}
 		}
 
 		if ( ! empty( $filter_cost_state ) && is_array( $filter_cost_state ) ) {
-			$where .= ' AND co.cost_status IN ("' . implode( '","', $filter_cost_state ) . '") ';
+			$filter_cost_state = MainWP_DB::instance()->escape_array( $filter_cost_state );
+			if ( ! empty( $filter_cost_state ) ) {
+				$where .= ' AND co.cost_status IN ("' . implode( '","', $filter_cost_state ) . '") ';
+			}
 		}
 
 		$filter_next_renewal = false;
@@ -208,13 +214,22 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
 		}
 
 		if ( ! empty( $filter_license_type ) && is_array( $filter_license_type ) ) {
-			$where .= ' AND co.license_type IN ("' . implode( '","', $filter_license_type ) . '") ';
+			$filter_license_type = MainWP_DB::instance()->escape_array( $filter_license_type );
+			if ( ! empty( $filter_license_type ) ) {
+				$where .= ' AND co.license_type IN ("' . implode( '","', $filter_license_type ) . '") ';
+			}
 		}
 		if ( ! empty( $filter_payment_method ) && is_array( $filter_payment_method ) ) {
-			$where .= ' AND co.payment_method IN ("' . implode( '","', $filter_payment_method ) . '") ';
+			$filter_payment_method = MainWP_DB::instance()->escape_array( $filter_payment_method );
+			if ( ! empty( $filter_payment_method ) ) {
+				$where .= ' AND co.payment_method IN ("' . implode( '","', $filter_payment_method ) . '") ';
+			}
 		}
 		if ( ! empty( $filter_renewal_type ) && is_array( $filter_renewal_type ) ) {
-			$where .= ' AND co.renewal_type IN ("' . implode( '","', $filter_renewal_type ) . '") ';
+			$filter_renewal_type = MainWP_DB::instance()->escape_array( $filter_renewal_type );
+			if ( ! empty( $filter_renewal_type ) ) {
+				$where .= ' AND co.renewal_type IN ("' . implode( '","', $filter_renewal_type ) . '") ';
+			}
 		}
 
 		/**

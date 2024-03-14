@@ -62,7 +62,7 @@ jQuery(document).ready(function ($) {
 
 	jQuery('.mainwp-module-cost-tracker-score.label').tab();
 
-	jQuery('.subscription_menu_item_delete').on('click', function () {
+	jQuery( document ).on( 'click', '.subscription_menu_item_delete', function () {
 		var objDel = jQuery(this);
 		mainwp_confirm(__('Are you sure.'), function () {
 			mainwp_module_cost_tracker_delete_start_specific(objDel, '', false);

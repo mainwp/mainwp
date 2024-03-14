@@ -5,7 +5,7 @@ jQuery(document).ready(function ($) {
 
   if(jQuery('.mainwp-ui-page').length){
     jQuery( '.mainwp-popup-tooltip' ).popup()
-  };
+  }
 
   // review for new UI update
   jQuery(document).on('click', '#mainwp-category-add-submit', function () {

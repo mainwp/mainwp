@@ -250,7 +250,7 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 5.0.2 - 3-13-2024 =
+= 5.0.2 - 3-14-2024 =
 
 * Fixed: Tag-related cost display issues in the child site widget.
 * Fixed: Tooltip positioning anomalies on the Insights page.

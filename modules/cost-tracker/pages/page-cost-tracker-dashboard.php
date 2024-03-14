@@ -826,7 +826,7 @@ class Cost_Tracker_Dashboard {
 							break;
 						case 'icon':
 							?>
-							<?php echo Cost_Tracker_Admin::get_instance()->get_product_icon_display( $subscription, false, true ); //phpcs:ignore -- escaped.?>
+							<?php echo Cost_Tracker_Admin::get_instance()->get_product_icon_display( $subscription ); //phpcs:ignore -- escaped.?>
 							<?php
 							break;
 						case 'name':

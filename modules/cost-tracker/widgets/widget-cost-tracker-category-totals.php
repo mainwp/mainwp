@@ -174,7 +174,13 @@ class Cost_Tracker_Category_Totals {
 						type: 'donut',
 					},
 					labels: <?php echo wp_json_encode($chart_data['categories'], true ); //phpcs:ignore -- ok. ?>,
-					legend: { show: true },
+					legend: { 
+						show: true,
+						labels: {
+							colors: '#999999',
+							useSeriesColors: false
+						},
+					},
 					responsive: [{
 						breakpoint: 480,
 						options: {
@@ -195,14 +201,24 @@ class Cost_Tracker_Category_Totals {
 							}
 						}
 					],
+					xaxis: {
+						labels: {
+							style: {
+								colors: '#999999',
+							}
+						}
+					},
 					yaxis:{
 						type: 'string',
 						labels: {
 							formatter: function (value) {
 								return __(cost_chart_currency_format, value );
+							},
+							style: {
+								colors: '#999999',
 							}
 						}
-					},	
+					},
 				};
 		
 				var cost_chart = new ApexCharts(document.querySelector("#mainwp-module-cost-tracker-category-totals-wrapper"), options);

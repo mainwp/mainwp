@@ -204,22 +204,31 @@ class Cost_Tracker_Payment_Left_This_Month {
 								labels: {
 									formatter: function (value) {
 										return isNaN(value) ? value : __(cost_chart_currency_format, value ); // to fix month name format.
-									}
-								}
+									},
+									style: {
+										colors: '#999999',
+									},
+								},
 							},
 							yaxis:{
 								type: 'string',
 								labels: {
 									formatter: function (value) {
 										return isNaN(value) ? value : __(cost_chart_currency_format, value ); // to fix month name format.
-									}
-								}
+									},
+									style: {
+										colors: '#999999',
+									},
+								},
 							},	
 							fill: {
 								opacity: 1
 							},
 							legend: {
 								show: false
+							},
+							tooltip: {
+								theme: 'dark'
 							},
 							colors: [
 								function ( { value, seriesIndex, dataPointIndex, w } ) {									

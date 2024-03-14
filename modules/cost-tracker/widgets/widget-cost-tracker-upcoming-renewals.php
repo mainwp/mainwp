@@ -65,7 +65,7 @@ class Cost_Tracker_Upcoming_Renewals {
 			<div class="four wide column right aligned">
 				<div class="ui dropdown right pointing mainwp-dropdown-tab not-auto-init" id="cost-tracker-widget-upcoming-renewals-top-select">
 						<input type="hidden" value="renewals-month">
-						<div class="text"><?php esc_html_e( 'Today', 'mainwp' ); ?></div>
+						<div class="text"><?php esc_html_e( 'Select period', 'mainwp' ); ?></div>
 						<i class="dropdown icon"></i>
 						<div class="menu">
 							<a class="item upcoming_renewals_today_lnk" data-tab="renewals-today" data-value="renewals-today" title="<?php esc_attr_e( 'Today', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Today', 'mainwp' ); ?></a>
@@ -83,21 +83,16 @@ class Cost_Tracker_Upcoming_Renewals {
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
 				var $topSelect = jQuery( '#cost-tracker-widget-upcoming-renewals-top-select' ).dropdown( {
-					onChange: function( value, text, $selectedItem ) {
-						var tab = jQuery($selectedItem).attr('data-tab');
-						mainwp_ui_state_save('cost-widget-upcoming-renewals', tab);
+					onChange: function( value ) {
+						mainwp_ui_state_save('cost-widget-upcoming-renewals', value);
 					}
 				} );
-
 				var curTab = mainwp_ui_state_load('cost-widget-upcoming-renewals');
-				if( curTab == '' ) {
-					curTab = 'renewals-month';
-					mainwp_ui_state_save('cost-widget-upcoming-renewals', curTab );
+				if(  curTab != '' && curTab != null ){
+					$topSelect.dropdown( 'set selected', curTab );
+					jQuery( '.cost_tracker_upcoming_renewals').removeClass('active'); //to fix preset.
+					jQuery( '.cost_tracker_upcoming_renewals[data-tab="' + curTab + '"]' ).addClass( 'active' );
 				}
-				$topSelect.dropdown( 'set selected', curTab );
-				jQuery( '.cost_tracker_upcoming_renewals').removeClass('active');
-				jQuery( '.cost_tracker_upcoming_renewals[data-tab="' + curTab + '"]' ).addClass( 'active' );
-				
 			} );
 		</script>
 		<?php
@@ -185,7 +180,7 @@ class Cost_Tracker_Upcoming_Renewals {
 	public static function render_renewals_tab( $tab, $cost_data ) {
 		$lists = self::get_costs_widgets_data( $tab, $cost_data );
 		?>
-		<div class="cost_tracker_upcoming_renewals ui middle aligned tab <?php echo 'today' === $tab ? 'active' : ''; ?>" data-tab="renewals-<?php echo esc_attr( $tab ); ?>">
+		<div class="cost_tracker_upcoming_renewals ui middle aligned tab <?php echo 'month' === $tab ? 'active' : ''; ?>" data-tab="renewals-<?php echo esc_attr( $tab ); ?>">
 			<?php
 			/**
 			 * Action: mainwp_module_upcoming_renewals_before_costs_list

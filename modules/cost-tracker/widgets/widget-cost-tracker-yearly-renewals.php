@@ -64,7 +64,8 @@ class Cost_Tracker_Yearly_Renewals {
 
 			<div class="four wide column right aligned">
 				<div class="ui dropdown right pointing mainwp-dropdown-tab not-auto-init" id="cost-tracker-widget-yearly-renewals-top-select">
-						<div class="text"><?php esc_html_e( 'Today', 'mainwp' ); ?></div>
+					<input type="hidden" value="yearly-renewals-month">
+						<div class="text"><?php esc_html_e( 'Select period', 'mainwp' ); ?></div>
 						<i class="dropdown icon"></i>
 						<div class="menu">
 							<a class="item yearly_renewals_today_lnk" data-tab="yearly-renewals-today" data-value="yearly-renewals-today" title="<?php esc_attr_e( 'Today', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Today', 'mainwp' ); ?></a>
@@ -83,22 +84,19 @@ class Cost_Tracker_Yearly_Renewals {
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
 				var $topSelect = jQuery( '#cost-tracker-widget-yearly-renewals-top-select' ).dropdown( {
-					onChange: function( value, text, $selectedItem ) {
-						var tab = jQuery($selectedItem).attr('data-tab');
-						console.log('onChange:' + tab);
-						mainwp_ui_state_save('cost-widget-yearly-renewals', tab);
+					onChange: function( value ) {
+						console.log('value:' + value);
+						mainwp_ui_state_save('cost-widget-yearly-renewals', value);
 					}
 				} );
 
 				var curTab = mainwp_ui_state_load('cost-widget-yearly-renewals');
-				if( curTab == '' ) {
-					curTab = 'yearly-renewals-month';
-					mainwp_ui_state_save('cost-widget-yearly-renewals', curTab );
-				}
 				console.log('curTab:' + curTab);
-				$topSelect.dropdown( 'set selected', curTab );
-				jQuery( '.cost_tracker_yearly_renewals').removeClass('active');
-				jQuery( '.cost_tracker_yearly_renewals[data-tab="' + curTab + '"]' ).addClass( 'active' );
+				if(  curTab != '' && curTab != null ){
+					$topSelect.dropdown( 'set selected', curTab );
+					jQuery( '.cost_tracker_yearly_renewals').removeClass('active'); //to fix preset.
+					jQuery( '.cost_tracker_yearly_renewals[data-tab="' + curTab + '"]' ).addClass( 'active' );
+				}
 				
 			} );
 		</script>
@@ -190,7 +188,7 @@ class Cost_Tracker_Yearly_Renewals {
 	public static function render_renewals_tab( $tab, $cost_data ) {
 		$lists = self::get_costs_widgets_data( $tab, $cost_data );
 		?>
-		<div class="cost_tracker_yearly_renewals ui middle aligned tab <?php echo 'today' === $tab ? 'active' : ''; ?>" data-tab="yearly-renewals-<?php echo esc_attr( $tab ); ?>">
+		<div class="cost_tracker_yearly_renewals ui middle aligned tab <?php echo 'month' === $tab ? 'active' : ''; ?>" data-tab="yearly-renewals-<?php echo esc_attr( $tab ); ?>">
 			<?php
 			/**
 			 * Action: mainwp_module_yearly_renewals_before_costs_list

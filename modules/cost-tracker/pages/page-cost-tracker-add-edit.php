@@ -140,18 +140,17 @@ class Cost_Tracker_Add_Edit {
 		$currency_symbol = Cost_Tracker_Utility::get_instance()->get_currency_symbol( $currency );
 		$product_icons   = Cost_Tracker_Utility::get_product_default_icons();
 
+		$cust_prod_src = $selected_prod_icon;
 		if ( ! empty( $selected_prod_icon ) && false !== strpos( $selected_prod_icon, 'deficon:' ) ) {
 			$selected_default_icon = str_replace( 'deficon:', '', $selected_prod_icon );
+			$cust_prod_src         = '';
 		}
-		$cust_prod_icon = Cost_Tracker_Admin::get_instance()->get_product_icon( $selected_prod_icon, false, false, 'module_cost_tracker_upload_custom_icon_img_display' );
-		$cust_prod_src  = Cost_Tracker_Admin::get_instance()->get_product_icon( $selected_prod_icon, true, false, 'module_cost_tracker_upload_custom_icon_img_display' );
-
 		// new cost.
 		if ( ! $edit_id ) {
 			$selected_default_icon = 'archive';
 			$selected_prod_icon    = 'deficon:' . $selected_default_icon;
 			$selected_prod_color   = '#34424D';
-			$cust_prod_icon        = Cost_Tracker_Admin::get_instance()->get_product_icon( $selected_prod_icon, false, false, 'module_cost_tracker_upload_custom_icon_img_display' );
+			$cust_prod_src         = '';
 		}
 
 		?>
@@ -205,7 +204,7 @@ class Cost_Tracker_Add_Edit {
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Upload product icon', 'mainwp' ); ?></label>
 					<div class="two wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Upload the product icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-						<div class="ui green button basic module-cost-tracker-product-icon-customable" item-icon-id="<?php echo $edit_id && ! empty( $selected_prod_icon ) && empty( $selected_default_icon ) ? intval( $edit_id ) : ''; ?>" icon-src="<?php echo esc_attr( $cust_prod_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
+						<div class="ui green button basic module-cost-tracker-product-icon-customable" icon-src="<?php echo esc_attr( $cust_prod_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
 					</div>
 					<div class="one wide middle aligned center aligned column">
 						<?php if ( $edit_cost ) : ?>
@@ -220,7 +219,7 @@ class Cost_Tracker_Add_Edit {
 						<div class="ui left action input">
 							<div class="ui five column selection search dropdown not-auto-init" style="min-width:21em" id="mainwp_module_cost_tracker_edit_icon_select">
 								<div class="text">
-									<span style="color:<?php echo esc_attr( $selected_prod_color ); ?>" ><?php echo empty( $selected_default_icon ) ? '<i class="archive icon"></i>' : '<i class="' . esc_attr( $selected_default_icon ) . ' icon"></i>'; ?></span>
+									<span style="color:<?php echo esc_attr( $selected_prod_color ); ?>" ><?php echo ! empty( $selected_default_icon ) ? '<i class="' . esc_attr( $selected_default_icon ) . ' icon"></i>' : ''; ?></span>
 								</div>
 								<i class="dropdown icon"></i>
 								<div class="menu">
@@ -297,7 +296,6 @@ class Cost_Tracker_Add_Edit {
 					</div>
 				</div>
 				<?php endif; ?>
-
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Category', 'mainwp' ); ?></label>
 					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the category for this cost.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
@@ -459,7 +457,6 @@ class Cost_Tracker_Add_Edit {
 					jQuery('#update_custom_icon_btn').removeAttr('disabled');
 					if (iconObj.attr('icon-src') != '') {
 						jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', iconObj.attr('icon-src'));
-						jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('item-icon-id', iconObj.attr('item-icon-id') ); 
 						jQuery('#mainwp_delete_image_field').show();
 					}
 					jQuery(document).on('click', '#update_custom_icon_btn', function () {
@@ -476,7 +473,7 @@ class Cost_Tracker_Add_Edit {
 									jQuery('#module_cost_tracker_upload_custom_icon_img_display').hide();
 								} else if (jQuery('#module_cost_tracker_upload_custom_icon_img_display').length > 0) {
 									if (typeof response.iconfile !== undefined) {
-										var scr = jQuery('#module_cost_tracker_upload_custom_icon_img_display').attr('icon-base') + response.iconfile;
+										var scr = response.iconsrc !== undefined ? response.iconsrc : '';
 										iconObj.attr('icon-src', scr);
 										jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', scr);
 										jQuery('#module_cost_tracker_upload_custom_icon_img_display').attr('src', scr);
@@ -530,11 +527,14 @@ class Cost_Tracker_Add_Edit {
 		}
 
 		if ( 'NOTCHANGE' !== $uploaded_icon ) {
+			$dirs      = MainWP_System_Utility::get_mainwp_dir( Cost_Tracker_Settings::$icon_sub_dir, true );
+			$icon_base = $dirs[1];
 			wp_die(
 				wp_json_encode(
 					array(
 						'result'   => 'success',
 						'iconfile' => esc_html( $uploaded_icon ),
+						'iconsrc'  => esc_html( $icon_base . $uploaded_icon ),
 					)
 				)
 			);

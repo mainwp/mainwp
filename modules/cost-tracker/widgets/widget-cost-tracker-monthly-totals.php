@@ -223,19 +223,29 @@ class Cost_Tracker_Monthly_Totals {
 						xaxis: {
 							type: 'string',
 							categories: <?php echo wp_json_encode($chart_data['categories'], true ); //phpcs:ignore -- ok. ?>,
-							
+							labels: {
+								style: {
+									colors: '#999999',
+								},
+							},
 						},
 						yaxis:{
 							type: 'string',
 							labels: {
 								formatter: function (value) {
 									return __(cost_chart_currency_format, value);
-								}
-							}
+								},
+								style: {
+									colors: '#999999',
+								},
+							},
 						},
 						legend: { show: false },
 						fill: {
 							opacity: 1
+						},
+						tooltip: {
+							theme: 'dark'
 						},
 						colors: [
 							function ( { value, seriesIndex, dataPointIndex, w } ) {

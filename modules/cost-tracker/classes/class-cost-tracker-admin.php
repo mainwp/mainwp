@@ -702,7 +702,7 @@ class Cost_Tracker_Admin {
 	}
 
 	/**
-	 * Method get_default_product_types().
+	 * Method get_default_product_type_colors().
 	 */
 	public static function get_default_product_type_colors() {
 		return array(
@@ -724,7 +724,7 @@ class Cost_Tracker_Admin {
 
 		$product_colors = Cost_Tracker_Utility::get_instance()->get_option( 'product_types_colors', array(), true );
 		if ( is_array( $product_colors ) && ! empty( $product_colors ) ) {
-			$product_colors = array_merge( $defaults, $product_colors );
+			$product_colors = array_replace( $defaults, $product_colors ); // to fix: array merge with keys.
 		} else {
 			$product_colors = $defaults;
 		}
@@ -772,7 +772,7 @@ class Cost_Tracker_Admin {
 		$product_types      = self::get_default_product_types();
 		$cust_product_types = Cost_Tracker_Utility::get_instance()->get_option( 'custom_product_types', array(), true );
 		if ( ! empty( $cust_product_types ) ) {
-			$product_types = array_merge( $product_types, $cust_product_types );
+			$product_types = array_replace( $product_types, $cust_product_types ); // to fix: array merge with keys.
 		}
 		return $product_types;
 	}
@@ -793,7 +793,7 @@ class Cost_Tracker_Admin {
 		);
 		$cust_payment_methods = Cost_Tracker_Utility::get_instance()->get_option( 'custom_payment_methods', array(), true );
 		if ( ! empty( $cust_payment_methods ) ) {
-			$payment_methods = array_merge( $payment_methods, $cust_payment_methods );
+			$payment_methods = array_replace( $payment_methods, $cust_payment_methods ); // to fix: array merge with keys.
 		}
 		return $payment_methods;
 	}
@@ -970,57 +970,13 @@ class Cost_Tracker_Admin {
 	}
 
 	/**
-	 * Gets  product icon to output.
-	 *
-	 * @param string $prod_icon Product icon.
-	 * @param bool   $get_scr Get icon src.
-	 * @param bool   $table_layout Table layout.
-	 * @param string $img_id_attr img id attr.
-	 */
-	public function get_product_icon( $prod_icon = '', $get_scr = false, $table_layout = false, $img_id_attr = '' ) {
-		$dirs           = MainWP_System_Utility::get_mainwp_dir( Cost_Tracker_Settings::$icon_sub_dir, true );
-		$icon_base      = $dirs[1];
-		$cls_uploadable = ' cached-custom-icon-customable ';
-		$style          = 'width:32px;height:auto;display:inline-block;';
-
-		if ( $table_layout ) {
-			$style = 'width:32px;height:auto;display:inline-block;';
-		}
-
-		if ( empty( $prod_icon ) || false !== strpos( $prod_icon, 'deficon:' ) ) {
-			$scr = '';
-		} else {
-			$scr = $icon_base . $prod_icon;
-		}
-
-		if ( $get_scr ) {
-			return $scr;
-		}
-
-		if ( empty( $prod_icon ) ) {
-			$def_icon = Cost_Tracker_Utility::get_product_default_icons( false, 'default_product' );
-			return '<i class="' . $def_icon . ' large"></i>';
-		} elseif ( false !== strpos( $prod_icon, 'deficon:' ) ) {
-			return '<i class="' . str_replace( 'deficon:', '', $prod_icon ) . ' large icon" ></i>';
-		} else {
-			$img_attr = ! empty( $img_id_attr ) ? 'id="' . $img_id_attr . '"' : 'class="module_cost_tracker_settings_upload_img_display ui mini circular image ' . $cls_uploadable . '"';
-			return '<img style="' . $style . '" ' . $img_attr . ' icon-base="' . esc_attr( $icon_base ) . '" src="' . esc_attr( $scr ) . '"/>';
-		}
-	}
-
-	/**
 	 * Gets product icon to output.
 	 *
 	 * @param string $product Product object.
-	 * @param bool   $get_scr Get icon src.
-	 * @param bool   $table_layout Table layout.
 	 * @param string $img_id_attr img id attr.
 	 * @param bool   $with_color with color.
 	 */
-	public function get_product_icon_display( $product = false, $get_scr = false, $table_layout = false, $img_id_attr = '', $with_color = true ) {
-
-		$dirs      = MainWP_System_Utility::get_mainwp_dir( Cost_Tracker_Settings::$icon_sub_dir, true );
-		$icon_base = $dirs[1];
+	public function get_product_icon_display( $product = false, $img_id_attr = '', $with_color = true ) {
 
 		$prod_icon  = '';
 		$prod_color = '';
@@ -1029,20 +985,17 @@ class Cost_Tracker_Admin {
 			$prod_icon  = $product->cost_icon;
 			$prod_color = $product->cost_color;
 		}
-		if ( empty( $prod_icon ) || false !== strpos( $prod_icon, 'deficon:' ) ) {
-			$scr = '';
-		} else {
-			$scr = $icon_base . $prod_icon;
-		}
 
-		if ( $get_scr ) {
-			return $scr;
+		$dirs      = MainWP_System_Utility::get_mainwp_dir( Cost_Tracker_Settings::$icon_sub_dir, true );
+		$icon_base = $dirs[1];
+
+		if ( empty( $prod_icon ) || false !== strpos( $prod_icon, 'deficon:' ) ) {
+			$upload_icon = '';
+		} else {
+			$upload_icon = $prod_icon;
 		}
 
 		$style = 'width:32px;height:auto;display:inline-block;';
-		if ( $table_layout ) {
-			$style = 'width:32px;height:auto;display:inline-block;';
-		}
 
 		if ( empty( $prod_color ) ) {
 			$prod_color = '#34424D';
@@ -1059,8 +1012,15 @@ class Cost_Tracker_Admin {
 		} elseif ( false !== strpos( $prod_icon, 'deficon:' ) ) {
 			$icon = '<i style="' . $color_style . '" class="' . str_replace( 'deficon:', '', $prod_icon ) . ' large icon" ></i>';
 		} else {
-			$img_attr = ! empty( $img_id_attr ) ? 'id="' . $img_id_attr . '"' : 'class="module_cost_tracker_settings_upload_img_display ui mini circular image "';
-			$icon     = '<img style="' . $style . $color_style . '" ' . $img_attr . ' icon-base="' . esc_attr( $icon_base ) . '" src="' . esc_attr( $scr ) . '"/>';
+			if ( ! empty( $upload_icon ) ) {
+				$dirs      = MainWP_System_Utility::get_mainwp_dir( Cost_Tracker_Settings::$icon_sub_dir, true );
+				$icon_base = $dirs[1];
+				$scr       = $icon_base . $upload_icon;
+			} else {
+				$scr = '';
+			}
+			$img_attr = ! empty( $img_id_attr ) ? 'id="' . esc_attr( $img_id_attr ) . '" class="ui mini circular image" ' : 'class="module_cost_tracker_settings_upload_img_display ui mini circular image "';
+			$icon     = '<img style="' . $style . $color_style . '" ' . $img_attr . ' src="' . esc_attr( $scr ) . '"/>';
 		}
 		return $icon;
 	}

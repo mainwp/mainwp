@@ -3,7 +3,9 @@
 
 jQuery(document).ready(function ($) {
 
-  jQuery( '.mainwp-popup-tooltip' ).popup();
+  if(jQuery('.mainwp-ui-page').length){
+    jQuery( '.mainwp-popup-tooltip' ).popup()
+  };
 
   // review for new UI update
   jQuery(document).on('click', '#mainwp-category-add-submit', function () {

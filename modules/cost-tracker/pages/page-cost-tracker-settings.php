@@ -214,15 +214,13 @@ class Cost_Tracker_Settings {
 									} elseif ( ! empty( $selected_prod_icon ) && false !== strpos( $selected_prod_icon, 'deficon:' ) ) {
 										$selected_default_icon = str_replace( 'deficon:', '', $selected_prod_icon );
 									}
-									$cust_prod_icon = Cost_Tracker_Admin::get_instance()->get_product_icon( $selected_prod_icon );
-									$cust_prod_src  = Cost_Tracker_Admin::get_instance()->get_product_icon( $selected_prod_icon, true );
 									$selected_color = isset( $product_colors[ $slug ] ) ? $product_colors[ $slug ] : '#34424D';
 									$this->render_icons_select( $product_default_icons, $selected_default_icon, $selected_color );
 									?>
 									<input type="hidden" name="cost_tracker_default_product_types[icon][]" id="cost_tracker_default_product_types[icon][]"  value="<?php echo esc_attr( $selected_prod_icon ); ?>" />
 								</div>
 								<input type="text" style="width:200px;border-radius:0px" class="regular-text ui disabled input" readonly="readonly" value="<?php echo esc_attr( $title ); ?>"/>
-								<input type="color" data-tooltip="Color will update on save" data-position="top center" data-inverted="" name="cost_tracker_default_product_types[color][]" class="mainwp-color-picker-input" id="cost_tracker_default_product_types[color][]"  value="<?php echo isset( $product_colors[ $slug ] ) ? esc_attr( $product_colors[ $slug ] ) : ''; ?>" />
+								<input type="color" data-tooltip="Color will update on save" data-position="top center" data-inverted="" name="cost_tracker_default_product_types[color][]" class="mainwp-color-picker-input" id="cost_tracker_default_product_types[color][]"  value="<?php echo esc_attr( $selected_color ); ?>" />
 							</div>
 						</div>	
 						<?php
@@ -253,16 +251,13 @@ class Cost_Tracker_Settings {
 								} elseif ( ! empty( $selected_prod_icon ) && false !== strpos( $selected_prod_icon, 'deficon:' ) ) {
 									$selected_default_icon = str_replace( 'deficon:', '', $selected_prod_icon );
 								}
-								$cust_prod_icon = Cost_Tracker_Admin::get_instance()->get_product_icon( $selected_prod_icon );
-								$cust_prod_src  = Cost_Tracker_Admin::get_instance()->get_product_icon( $selected_prod_icon, true );
 								$selected_color = isset( $product_colors[ $slug ] ) ? $product_colors[ $slug ] : '#34424D';
 								$this->render_icons_select( $product_default_icons, $selected_default_icon, $selected_color, 'mainwp-module-cost-tracker-select-custom-product-types-icons' );
 								?>
-								
 								<input type="hidden" name="cost_tracker_custom_product_types[icon][]" id="cost_tracker_custom_product_types[icon][]"  value="<?php echo esc_attr( $selected_prod_icon ); ?>" />
 							</div>
 							<input type="text" style="width:200px;border-radius:0px" class="regular-text" value="<?php echo esc_attr( $title ); ?>" name="cost_tracker_custom_product_types[title][]"/>
-							<input type="color" data-tooltip="Color will update on save" data-position="top center" data-inverted="" name="cost_tracker_custom_product_types[color][]" class="mainwp-color-picker-input" id="cost_tracker_custom_product_types[color][]"  value="<?php echo isset( $product_colors[ $slug ] ) ? esc_attr( $product_colors[ $slug ] ) : ''; ?>" />
+							<input type="color" data-tooltip="Color will update on save" data-position="top center" data-inverted="" name="cost_tracker_custom_product_types[color][]" class="mainwp-color-picker-input" id="cost_tracker_custom_product_types[color][]"  value="<?php echo esc_attr( $selected_color ); ?>" />
 						</div>									
 					</div>								
 					<?php
@@ -333,7 +328,6 @@ class Cost_Tracker_Settings {
 							jQuery('#update_custom_icon_btn').removeAttr('disabled');
 							if (iconObj.attr('icon-src') != '') {
 								jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', iconObj.attr('icon-src'));
-								jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('item-icon-id', iconObj.attr('item-icon-id') ); 
 								jQuery('#mainwp_delete_image_field').show();
 							}
 							jQuery(document).on('click', '#update_custom_icon_btn', function () {
@@ -350,7 +344,7 @@ class Cost_Tracker_Settings {
 											jQuery(parent).find('.module_cost_tracker_settings_upload_img_display').hide();
 										} else if (jQuery('#module_cost_tracker_settings_upload_img_display').length > 0) {
 											if (typeof response.iconfile !== undefined) {
-												var scr = jQuery(parent).find('.module_cost_tracker_settings_upload_img_display').attr('icon-base') + response.iconfile;
+												var scr = response.iconsrc !== undefined ? response.iconsrc : '';
 												iconObj.attr('icon-src', scr);
 												jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', scr);
 												jQuery(parent).find('.module_cost_tracker_settings_upload_img_display').attr('src', scr);
@@ -412,7 +406,7 @@ class Cost_Tracker_Settings {
 				<?php
 					$selected_default_icon = Cost_Tracker_Utility::get_product_default_icons( false, 'default_custom_product_type' );
 					$selected_prod_icon    = 'deficon:' . $selected_default_icon;
-					$default_color         = '#ad0000';
+					$default_color         = '#34424D';
 					$this->render_icons_select( $product_default_icons, $selected_default_icon, $default_color, 'mainwp-module-cost-tracker-select-custom-product-types-icons' );
 				?>
 				<input type="hidden" name="cost_tracker_custom_product_types[icon][]" id="cost_tracker_custom_product_types[icon][]"  value="<?php echo esc_attr( $selected_prod_icon ); ?>" />

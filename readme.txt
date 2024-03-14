@@ -237,16 +237,16 @@ Yes, we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Screenshots ==
 
-1. Quick Setup Wizard
-2. Add New Site Screen
-3. Manage Sites Screen
-4. Install Plugins Screen
-5. Install Themes Screen
-6. Add New User Screen
-7. Manage Posts Screen
-8. MainWP Settings Screen
-9. Global Dashboard Screen
-10. Manage Clients Screen
+1. Sites - Overview
+2. Sites - Manage Sites
+3. Sites - Add a New Site
+4. Sites - Manage Plugins
+5. Sites - Manage Posts
+6. Sites - Manage Updates
+7. Clients - Manage Clients
+8. Cost Tracker - Cost Summary
+9. Cost Tracker - Manage Costs
+10. Dashboard Insights
 
 == Changelog ==
 

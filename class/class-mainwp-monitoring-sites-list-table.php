@@ -708,7 +708,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 							},
 							<?php do_action( 'mainwp_manage_sites_table_columns_defs' ); ?>
 						],
-						"lengthMenu" : [ [<?php echo intval( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All" ] ],
+						"lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All" ] ],
 						"pageLength": <?php echo intval( $sites_per_page ); ?>
 					} );
 				} catch(err) {

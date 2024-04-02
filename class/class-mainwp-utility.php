@@ -580,7 +580,10 @@ class MainWP_Utility {
 	 */
 	public static function remove_http_www_prefix( $pUrl ) {
 		$pUrl = self::remove_http_prefix( $pUrl, true );
-		return str_replace( 'www.', '', $pUrl );
+		if ( self::starts_with( strtolower( $pUrl ), 'www.' ) ) {
+			$pUrl = substr( $pUrl, 4 );
+		}
+				return $pUrl;
 	}
 
 	/**

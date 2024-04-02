@@ -143,10 +143,115 @@ class Api_Backups_3rd_Party {
 		// Backup selected sites.
 		do_action( 'mainwp_ajax_add_action', 'action_backup_selected_sites', array( &$this, 'action_backup_selected_sites' ) );
 
-		// Fire off Cloudways & Gridpane ID auto lookup on site addition.
-		add_action( 'mainwp_added_new_site', array( &$this, 'cloudways_action_update_ids' ) );
-		add_action( 'mainwp_added_new_site', array( &$this, 'gridpane_action_update_ids' ) );
+		// Fire off Cloudways & Gridpane ID auto lookup on site addition.	     
+        add_action( 'mainwp_added_new_site', array( &$this, 'hook_added_new_site' ), 10, 2 );
 	}
+    
+    
+	/**
+	 * Hook after new site added.
+	 *
+	 * @param int    $id Site id just added.
+	 * @param object $website Site data just added.
+	 *
+	 * @return void
+	 */
+	public function hook_added_new_site( $id, $website ) {
+		$success = $this->fetch_cloudways_settings_for_site( $id, $website );
+		if ( ! $success ) {
+			$this->fetch_gridpane_settings_for_site( $id, $website );
+		}
+	}
+
+
+	/**
+	 * Hook after new site added.
+	 *
+	 * @param int    $id Site id just added.
+	 * @param object $website Site data just added.
+	 *
+	 * @return bool result.
+	 */
+	public function fetch_cloudways_settings_for_site( $id, $website ) {
+
+		if ( empty( $website ) || empty( $website->id ) || empty( $website->url ) ) {
+			return false;
+		}
+
+		$url = preg_replace( '#^[^:/.]*[:/]+#i', '', preg_replace( '{/$}', '', $website->url ) );
+
+		// Fetch Cloudways Server List.
+		$server_list = self::fetch_cloudways_server_list();
+
+		/**
+		 * Search $server_list for Child Site app ID & server ID.
+		 *
+		 * Loop through each Server/App & check if app cname / fqdn name matches any Child Site domain name.
+		 * if so, save the server & app ID to that Child Site's options table.
+		 */
+		if ( ! is_array( $server_list ) ) {
+			return false;
+		}
+
+		$found_child_site_id = $website->id;
+
+		foreach ( $server_list as $server ) {
+			foreach ( $server->apps as $app ) {
+				if ( $app->cname === $url ) {
+					// Update Child Site options table.
+					Api_Backups_Helper::update_website_option( $found_child_site_id, 'mainwp_3rd_party_app_id', $app->id );
+					Api_Backups_Helper::update_website_option( $found_child_site_id, 'mainwp_3rd_party_instance_id', $app->server_id );
+					Api_Backups_Helper::update_website_option( $found_child_site_id, 'mainwp_3rd_party_api', 'Cloudways' );
+					return true;
+				} elseif ( $app->app_fqdn === $url ) { // Check if app fqdn name matches any Child Site domain name, if so, save the server & app ID to that Child Site's options table.
+					// Update Child Site options table.
+					Api_Backups_Helper::update_website_option( $found_child_site_id, 'mainwp_3rd_party_app_id', $app->id );
+					Api_Backups_Helper::update_website_option( $found_child_site_id, 'mainwp_3rd_party_instance_id', $app->server_id );
+					Api_Backups_Helper::update_website_option( $found_child_site_id, 'mainwp_3rd_party_api', 'Cloudways' );
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+
+	/**
+	 * Hook after new site added.
+	 *
+	 * @param int    $id Site id just added.
+	 * @param object $website Site data just added.
+	 *
+	 * @return bool result.
+	 */
+	public function fetch_gridpane_settings_for_site( $id, $website ) {
+
+		if ( empty( $website ) || empty( $website->id ) || empty( $website->url ) ) {
+			return false;
+		}
+
+		$url             = rawurlencode( $website->url );
+		$strip_protocall = preg_replace( '#^[^:/.]*[:/]+#i', '', preg_replace( '{/$}', '', urldecode( $url ) ) );
+		$clean_url       = preg_replace( '/^www\./', '', $strip_protocall );
+
+		// Get Sites list.
+		$gridpane_list = self::gridpane_get_sites_list( 200 );
+
+		// Check for Child Site IP @ each instance. Add to Child Site Options Table.
+		if ( is_array( $gridpane_list ) ) {
+			foreach ( $gridpane_list as $gpane_site ) {
+				if ( $gpane_site->url === $clean_url ) {
+					// Grab Site options then update Child Site options.
+					Api_Backups_Helper::update_website_option( $website->id, 'mainwp_3rd_party_instance_id', $gpane_site->id );
+					Api_Backups_Helper::update_website_option( $website->id, 'mainwp_3rd_party_api', 'GridPane' );
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+    
 
 	/**
 	 * Global backup page Action notification handler.
@@ -2319,7 +2424,7 @@ class Api_Backups_3rd_Party {
 			$clean_url       = preg_replace( '/^www\./', '', $strip_protocall );
 
 			// Get Sites list.
-			$sites_list = self::gridpane_get_sites_list( $sites_count );
+			$sites_list = self::gridpane_get_sites_list( $sites_count = 99999 );
 
 			// Check for Child Site IP @ each instance. Add to Child Site Options Table.
 			if ( is_array( $sites_list ) ) {

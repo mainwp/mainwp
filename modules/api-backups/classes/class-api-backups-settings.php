@@ -137,11 +137,11 @@ class Api_Backups_Settings {
 							<h3 class="item ui header"><?php esc_html_e( 'Backup API Providers', 'mainwp' ); ?></h3>
 							<a class="item active" data-tab="cloudways"><?php esc_html_e( 'Cloudways', 'mainwp' ); ?></a>
 							<a class="item" data-tab="gridpane"><?php esc_html_e( 'GridPane', 'mainwp' ); ?></a>
-							
+
 							<a class="item" data-tab="vultr"><?php echo esc_html__( 'Vultr', 'mainwp' ); ?></a>
 							<a class="item" data-tab="linode"><?php echo esc_html__( 'Akamai (Linode)', 'mainwp' ); ?></a>
 							<a class="item" data-tab="digitalocean"><?php echo esc_html__( 'DigitalOcean', 'mainwp' ); ?></a>
-							
+
 							<a class="item" data-tab="cpanel"><?php echo esc_html__( 'cPanel (WP Toolkit)', 'mainwp' ); ?></a>
 							<a class="item" data-tab="plesk"><?php echo esc_html__( 'Plesk (WP Toolkit)', 'mainwp' ); ?></a>
 						</div>
@@ -153,7 +153,7 @@ class Api_Backups_Settings {
 								<?php
 								printf(
 									esc_html__(
-										'These settings allow you to Enable 3rd-Party API functionality within your 
+										'These settings allow you to Enable 3rd-Party API functionality within your
 									MainWP Dashboard. Check this %1$shelp document%2$s to see all available services & the endpoints that MainWP currently supports.',
 										'mainwp'
 									),
@@ -290,6 +290,7 @@ class Api_Backups_Settings {
 									?>
 									<div class="ui divider"></div>
 									<input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+									<input type="submit" name="submit" id="submit" class="ui green big button mainwp_3rd_party_api_cloudways_action_update_ids" value="<?php esc_attr_e( 'Update Site IDs', 'mainwp' ); ?>"/>
 									<div style="clear:both"></div>
 								</form>
 							</div>
@@ -347,6 +348,7 @@ class Api_Backups_Settings {
 									?>
 									<div class="ui divider"></div>
 									<input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+									<input type="submit" name="submit" id="submit" class="ui green big button mainwp_3rd_party_api_gridpane_action_update_ids" value="<?php esc_attr_e( 'Update Site IDs', 'mainwp' ); ?>"/>
 									<div style="clear:both"></div>
 								</form>
 							</div>
@@ -811,7 +813,8 @@ class Api_Backups_Settings {
 			<div class="sub header"><?php esc_html_e( 'Use these settings to select Provider and instance ID only if the site is hosted on DigitalOcean, Akamai (Linode), or Vultr hosting.', 'mainwp' ); ?></div>
 			<div class="sub header"><?php esc_html_e( 'Sites hosted on Cloudways and GridPane do not require these settings to be added manually. All the necessary info for the feature will be obtained automatically so you can leave these settings blank.', 'mainwp' ); ?></div>
 		</h3>
-		<?php if ( '' === $mainwp_3rd_party_api || 'cPanel' === $mainwp_3rd_party_api || 'Plesk' === $mainwp_3rd_party_api ) : ?>
+		<?php if ( '' === $mainwp_3rd_party_api || 'None' === $mainwp_3rd_party_api || 'cPanel' === $mainwp_3rd_party_api || 'Plesk' === $mainwp_3rd_party_api ) : ?>
+
 			<div class="ui grid field">
 				<label class="six wide column middle aligned"><?php esc_html_e( 'Choose a provider', 'mainwp' ); ?></label>
 				<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Detected provider', 'mainwp' ); ?>" data-inverted="" data-position="top left">

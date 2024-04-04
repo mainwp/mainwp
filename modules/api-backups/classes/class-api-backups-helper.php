@@ -43,6 +43,23 @@ class Api_Backups_Helper {
 		// constructor.
 	}
 
+
+	/**
+	 * Clean URL.
+	 * Remove http(s)://, www., and trailing slash(/) from the URL.
+	 */
+	public static function clean_url( $url ) {
+		$clean_url = '';
+		$protocall = array( 'http://', 'https://', 'http://www.', 'https://www.' );
+		foreach ( $protocall as $p ) {
+			if ( strpos( $url, $p ) === 0 ) {
+				$protocalls_striped = str_replace( $p, '', $url );
+				$clean_url          = preg_replace( '{/$}', '', $protocalls_striped );
+			}
+		}
+		return $clean_url;
+	}
+
 	/**
 	 * Get sites by website ID.
 	 *

@@ -135,19 +135,14 @@ class Api_Backups_3rd_Party {
 		do_action( 'mainwp_ajax_add_action', 'plesk_action_restore_backup', array( &$this, 'ajax_plesk_action_restore_backup' ) );
 		do_action( 'mainwp_ajax_add_action', 'plesk_action_delete_backup', array( &$this, 'ajax_plesk_action_delete_backup' ) );
 
-		// TODO: non-functional.
-		// Automatically make backup before updating WP Core, Themes, Plugins & Translations.
-		// add_action( 'mainwp_before_wp_update', array( &$this, 'third_party_auto_backup' ) );.
-		// add_action( 'mainwp_before_plugin_theme_translation_update', array( &$this, 'third_party_auto_backup' ) );.
-
 		// Backup selected sites.
 		do_action( 'mainwp_ajax_add_action', 'action_backup_selected_sites', array( &$this, 'action_backup_selected_sites' ) );
 
-		// Fire off Cloudways & Gridpane ID auto lookup on site addition.	     
-        add_action( 'mainwp_added_new_site', array( &$this, 'hook_added_new_site' ), 10, 2 );
+		// Fire off Cloudways & Gridpane ID auto lookup on site addition.
+		add_action( 'mainwp_added_new_site', array( &$this, 'hook_added_new_site' ), 10, 2 );
 	}
-    
-    
+
+
 	/**
 	 * Hook after new site added.
 	 *
@@ -251,7 +246,7 @@ class Api_Backups_3rd_Party {
 		}
 		return false;
 	}
-    
+
 
 	/**
 	 * Global backup page Action notification handler.
@@ -2385,6 +2380,28 @@ class Api_Backups_3rd_Party {
 	}
 
 	/**
+	 * Get GridPane Site List.
+	 *
+	 * Request for all sites for current user token.
+	 *
+	 * @param int $sites_count sites count.
+	 * @return object|bool Return Sites Object.
+	 */
+	public static function gridpane_get_domain_list() {
+
+		// Grab Vultr Access token.
+		$accessToken = self::get_gridpane_api_key();
+
+		// Grab Sites List.
+		$grid_response         = (array) self::call_gridpane_api( 'GET', '/domain', $accessToken );
+		$grid_response_decoded = json_decode( $grid_response[0] );
+		if ( is_object( $grid_response_decoded ) && property_exists( $grid_response_decoded, 'data' ) ) {
+			return $grid_response_decoded->data;
+		}
+		return false;
+	}
+
+	/**
 	 * Ajax.
 	 * Assign Server:Apps to Child Sites options table.
 	 *
@@ -2410,34 +2427,63 @@ class Api_Backups_3rd_Party {
 	 */
 	public static function gridpane_action_update_ids() {
 
-		// Grab site count & pass to gridpane_get_sites_list() for pagination.
-		$sites_count = Api_Backups_Utility::get_instance()->count_child_sites();
-
-		// Get child_sites list.
+		// Get child_sites list from MainWP.
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_wp_for_current_user() );
 
-		// Compare Child Sites domain against connected GridPane account Server / Apps List.
+		// Build an array of websites by URL.
+		$websites_by_urls = array();
+		if ( $websites ) {
+			while ( $websites && ( $website = Api_Backups_Helper::fetch_object( $websites ) ) ) {
+				$clean_url                      = Api_Backups_Helper::clean_url( $website->url );
+				$websites_by_urls[ $clean_url ] = $website->id;
+			}
+			MainWP_DB::data_seek( $websites, 0 );
+		}
+
+		// Get GP Sites list.
+		$sites_list = self::gridpane_get_sites_list( 99999 ); // 99999 to pull all sites. High number at least for now.
+
+		// Loop through Child Sites.
 		while ( $websites && ( $website = Api_Backups_Helper::fetch_object( $websites ) ) ) {
-			// Remove http://, www., and slash(/) from the URL.
-			$url             = rawurlencode( $website->url );
-			$strip_protocall = preg_replace( '#^[^:/.]*[:/]+#i', '', preg_replace( '{/$}', '', urldecode( $url ) ) );
-			$clean_url       = preg_replace( '/^www\./', '', $strip_protocall );
 
-			// Get Sites list.
-			$sites_list = self::gridpane_get_sites_list( $sites_count = 99999 );
+			// Grab non-stagingChild Site ID.
+			$website_id = $website->id;
 
-			// Check for Child Site IP @ each instance. Add to Child Site Options Table.
+			// Remove http(s)://, www., and trailing slash(/) from the URL.
+			$clean_url = Api_Backups_Helper::clean_url( $website->url );
+
+			/**
+			 * Check if the URLs of Child Sites match with those of GridPane Sites.
+			 * If they do, add the GridPane Site ID and the provider name 'GridPane'
+			 * to the Child Site options table.
+			 */
 			if ( is_array( $sites_list ) ) {
 				foreach ( $sites_list as $site ) {
+
+					// If the URL of the Child Site matches the URL of the GridPane Site.
 					if ( $site->url === $clean_url ) {
-						// Grab Site options then update Child Site options.
-						Api_Backups_Helper::update_website_option( $website->id, 'mainwp_3rd_party_instance_id', $site->id );
-						Api_Backups_Helper::update_website_option( $website->id, 'mainwp_3rd_party_api', 'GridPane' );
+
+						// GridPane Site found here....
+
+						// Grab GridPane Site ID.
+						$gp_site_id = $site->id;
+
+						// Update Production Child Site options.
+						Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_instance_id', $gp_site_id );
+						Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_api', 'GridPane' );
+
+						// Check if the site is a staging site.
+						if ( ! empty( $site->staging_site_built_at ) && isset( $websites_by_urls[ 'staging.' . $site->url ] ) ) {
+							$staging_child_site_id = $websites_by_urls[ 'staging.' . $site->url ];
+
+							// Update Staging Child Site options.
+							Api_Backups_Helper::update_website_option( $staging_child_site_id, 'mainwp_3rd_party_instance_id', $gp_site_id + 1 );
+							Api_Backups_Helper::update_website_option( $staging_child_site_id, 'mainwp_3rd_party_api', 'GridPane' );
+						}
 					}
 				}
 			}
 		}
-
 		Api_Backups_Helper::free_result( $websites );
 	}
 

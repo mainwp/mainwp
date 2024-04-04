@@ -1815,7 +1815,7 @@ class MainWP_Client {
 	 * @param mixed $edit_contact The contact data to edit.
 	 * @param bool  $echo_out Echo template or not.
 	 */
-	public static function get_add_contact_temp( $edit_contact = false, $echo_out = false ) {
+	public static function get_add_contact_temp( $edit_contact = false, $echo_out = false ) { //phpcs:ignore -- complex.
 
 		$input_name    = 'new_contacts_field';
 		$contact_id    = 0;

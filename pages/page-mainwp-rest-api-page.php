@@ -756,7 +756,7 @@ class MainWP_Rest_Api_Page {
 	 * @param string $keyid Key ID edit.
 	 * @param array  $item The Key edit.
 	 */
-	public static function render_rest_api_edit( $keyid, $item ) {
+	public static function render_rest_api_edit( $keyid, $item ) { //phpcs:ignore -- complex.
 
 		$edit_desc = is_array( $item ) && isset( $item['desc'] ) ? $item['desc'] : '';
 		$enabled   = is_array( $item ) && isset( $item['enabled'] ) && ! empty( $item['enabled'] ) ? true : false;

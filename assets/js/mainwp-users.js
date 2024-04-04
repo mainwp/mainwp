@@ -136,8 +136,13 @@ mainwpuser_postAction = function ( elem, what ) {
         data['user_data'] = jQuery( 'form#update_user_profile' ).serialize();
     }
 
+
+						
+                    
     rowElement.find( '.row-actions' ).hide();
-    rowElement.find( '.row-actions-working' ).show();
+    if(what === 'delete'){
+        rowElement.html( '<td colspan="8"><i class="ui active inline loader tiny"></i>  Please wait</td>' );
+    }
     jQuery.post( ajaxurl, data, function ( response ) {
         if ( what == 'edit' && response && response.user_data ) {
             var roles_filter = [ 'administrator', 'subscriber', 'contributor', 'author', 'editor' ];
@@ -178,15 +183,15 @@ mainwpuser_postAction = function ( elem, what ) {
 
             jQuery( 'form#update_user_profile #description' ).val( response.user_data.description );
             rowElement.find( 'td.check-column input[type="checkbox"]' )[0].checked = true;
-            rowElement.find( '.row-actions-working' ).hide();
             return;
         }
-
+        
         if ( response.result ) {
-            rowElement.html( '<td colspan="8"><i class="check circle icon"></i> ' + response.result + '</td>' );
+            rowElement.html( '<td colspan="8"><i class="green check icon"></i> ' + response.result + '</td>' );
         } else {
-            rowElement.find( '.row-actions-working' ).hide();
+            rowElement.html( '<td colspan="8"><i class="times red icon"></i> Undefined error. Please try again.</td>' );
         }
+
         userCountReceived++;
         if ( userCountReceived == userCountSent ) {
             userCountReceived = 0;
@@ -326,14 +331,18 @@ jQuery( document ).ready( function () {
             jQuery( '#import_user_import_logging .log' ).append( _( 'Paused import by user.' ) + "\n" );
             jQuery( '#import_user_btn_import' ).val( __( 'Continue' ) );
             jQuery( '#MainWPBulkUploadUserLoading' ).hide();
-            jQuery( '#import_user_btn_save_csv' ).prop("disabled", false); //Enable
+            if ( import_user_count_create_fails > 0 ) {
+                jQuery( '#import_user_btn_save_csv' ).attr("style", 'display:inline-block;'); //Enable
+            }
         } else
         {
             import_user_stop_by_user = false;
             jQuery( '#import_user_import_logging .log' ).append( __( 'Continue import.' ) + "\n" );
             jQuery( '#import_user_btn_import' ).val( __( 'Pause' ) );
             jQuery( '#MainWPBulkUploadUserLoading' ).show();
-            jQuery( '#import_user_btn_save_csv' ).attr( 'disabled', 'true' ); // Disable
+            if ( import_user_count_create_fails > 0 ) {
+                jQuery( '#import_user_btn_save_csv' ).attr("style", 'display:inline-block;'); //Enable
+            }
             mainwp_import_users_next();
         }
     } );
@@ -510,7 +519,7 @@ mainwp_import_users_finished = function() {
 	jQuery( '#MainWPBulkUploadUserLoading' ).hide();
 	jQuery( '#import_user_import_logging .log' ).append( '\n' + __( 'Number of users to import: %1 Created users: %2 Failed: %3', import_user_total_import, import_user_count_created_users, import_user_count_create_fails ) + '\n' );
 	if ( import_user_count_create_fails > 0 ) {
-		jQuery( '#import_user_btn_save_csv' ).prop("disabled", false); //Enable
+		jQuery( '#import_user_btn_save_csv' ).attr("style", 'display:inline-block;'); //Enable
 	}
 	jQuery( '#import_user_import_logging' ).scrollTop( jQuery( '#import_user_import_logging .log' ).height() );
 }

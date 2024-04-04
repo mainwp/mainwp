@@ -2237,7 +2237,7 @@ class MainWP_Post {
 					<div class="ui fitted divider"></div>
 					<?php
 					if ( 'bulkpost' === $post_type ) {
-						self::render_categories( $post );
+						self::render_categories_list( $post );
 					}
 					self::render_post_fields( $post, $post_type );
 					?>
@@ -2299,6 +2299,94 @@ class MainWP_Post {
 	 *
 	 * @param object $post Post object.
 	 */
+	public static function render_categories_list( $post ) {
+
+		?>
+		<div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
+			<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Categories', 'mainwp' ); ?></div>
+		
+		<?php
+		$categories = array();
+		if ( $post ) {
+			$categories = base64_decode( get_post_meta( $post->ID, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			$categories = explode( ',', $categories );
+		}
+		if ( ! is_array( $categories ) ) {
+			$categories = array();
+		}
+
+		$uncat     = esc_html__( 'Uncategorized', 'mainwp' );
+		$post_only = false;
+		if ( $post ) {
+			$post_only = get_post_meta( $post->ID, '_post_to_only_existing_categories', true );
+		}
+		?>
+			<div class="content active">
+			<input type="hidden" name="post_category_nonce" id="post_category_nonce" value="<?php echo esc_attr( wp_create_nonce( 'post_category_' . $post->ID ) ); ?>" />
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="post_only_existing" id="post_only_existing" value="1" <?php echo $post_only ? 'checked' : ''; ?>>
+					<label><?php esc_html_e( 'Post only to existing categories', 'mainwp' ); ?></label>
+				</div>
+			</div>
+			<div class="field">
+
+				<div class="ui selection dropdown multiple search fluid" id="categorychecklist">
+					<input type="hidden" name="post_category[]">
+					<div class="text"><?php esc_html_e( 'Select categories', 'mainwp' ); ?></div>
+					<i class="dropdown icon"></i>
+					<div class="menu">
+					<?php if ( ! in_array( $uncat, $categories ) ) : ?>
+						<div class="item" data-value="<?php esc_attr_e( 'Uncategorized', 'mainwp' ); ?>" class="sitecategory-list"><?php esc_html_e( 'Uncategorized', 'mainwp' ); ?></div>
+						<?php endif; ?>
+						
+						<?php foreach ( $categories as $cat ) : ?>
+							<?php
+							if ( empty( $cat ) ) {
+								continue;
+							}
+							$cat_name = rawurldecode( $cat );
+							?>
+							<div class="item" data-value="<?php echo esc_attr( $cat ); ?>" class="sitecategory-list"><?php echo esc_html( $cat_name ); ?></div>
+						<?php endforeach; ?>
+					</div>
+				</div>
+
+				<?php
+				$init_cats = '';
+				foreach ( $categories as $cat ) {
+					$init_cats .= "'" . esc_attr( $cat ) . "',";
+				}
+				$init_cats = rtrim( $init_cats, ',' );
+				?>
+				
+				<script type="text/javascript">
+					jQuery( document ).ready( function () {
+						jQuery( '#categorychecklist' ).dropdown( 'set selected', [<?php echo $init_cats; //phpcs:ignore -- safe. ?>] );
+					} );
+				</script>
+
+			</div>
+			<div class="field">
+				<a href="#" id="category-add-toggle" class="ui button fluid mini"><?php esc_html_e( 'Create New Category', 'mainwp' ); ?></a>
+			</div>
+			<div class="field" id="newcategory-field" style="display:none">
+				<input type="text" name="newcategory" id="newcategory" value="">
+			</div>
+			<div class="field" id="mainwp-category-add-submit-field" style="display:none">
+				<input type="button" id="mainwp-category-add-submit" class="ui fluid basic green mini button" value="<?php esc_attr_e( 'Add New Category', 'mainwp' ); ?>">
+			</div>
+		</div>
+		</div>
+		<div class="ui fitted divider"></div>
+		<?php
+	}
+
+	/**
+	 * Renders Select Categories form
+	 *
+	 * @param object $post Post object.
+	 */
 	public static function render_categories( $post ) {
 		?>
 		<div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
@@ -2331,7 +2419,7 @@ class MainWP_Post {
 				<select name="post_category[]" id="categorychecklist" multiple="" class="ui fluid dropdown">
 					<option value=""><?php esc_html_e( 'Select categories', 'mainwp' ); ?></option>
 					<?php if ( ! in_array( $uncat, $categories ) ) : ?>
-					<option value="<?php esc_attr_e( 'Uncategorized', 'mainwp' ); ?>" class="sitecategory"><?php esc_html_e( 'Uncategorized', 'mainwp' ); ?></option>
+					<option value="<?php esc_attr_e( 'Uncategorized', 'mainwp' ); ?>" class="sitecategory-list"><?php esc_html_e( 'Uncategorized', 'mainwp' ); ?></option>
 					<?php endif; ?>
 					<?php foreach ( $categories as $cat ) : ?>
 						<?php
@@ -2340,7 +2428,7 @@ class MainWP_Post {
 						}
 						$cat_name = rawurldecode( $cat );
 						?>
-					<option value="<?php echo esc_attr( $cat ); ?>" class="sitecategory"><?php echo esc_html( $cat_name ); ?></option>
+					<option value="<?php echo esc_attr( $cat ); ?>" class="sitecategory-list"><?php echo esc_html( $cat_name ); ?></option>
 					<?php endforeach; ?>
 				</select>
 				<?php

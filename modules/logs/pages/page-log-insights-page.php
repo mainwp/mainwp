@@ -259,7 +259,6 @@ class Log_Insights_Page {
 	 * @uses \MainWP\Dashboard\MainWP_Recent_Pages::get_class_name()
 	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::get_class_name()
 	 * @uses \MainWP\Dashboard\MainWP_Security_Issues_Widget::get_class_name()
-	 * @uses \MainWP\Dashboard\MainWP_Updates_Overview::get_class_name()
 	 */
 	public static function add_meta_boxes( $page ) { //phpcs:ignore -- complex method.
 
@@ -588,6 +587,12 @@ class Log_Insights_Page {
 
 		extract( $insights_filters ); //phpcs:ignore -- ok.
 
+		$default_filter = false;
+		// extracted values.
+		if ( ( empty( $filter_ranges ) || 'thismonth' === $filter_ranges ) && empty( $filter_groups_ids ) && empty( $filter_client_ids ) && empty( $filter_user_ids ) && empty( $filter_user_ids ) && empty( $filter_dtsstart ) && empty( $filter_dtsstop ) && empty( $array_clients_ids ) && empty( $array_groups_ids ) && empty( $array_users_ids ) ) {
+			$default_filter = true;
+		}
+
 		$disable_dt = ( '' === $filter_ranges || 'custom' === $filter_ranges ) ? false : true;
 
 		$groups = MainWP_DB_Common::instance()->get_groups_for_current_user();
@@ -595,12 +600,11 @@ class Log_Insights_Page {
 			$groups = array();
 		}
 		?>
-		<div class="mainwp-sub-header" id="mainwp-module-log-overview-sub-header">
-			<div class="ui mini form stackable grid" id="mainwp-module-log-filters-row">
-				<div class="one wide middle aligned column"><?php esc_html_e( 'Show data for', 'mainwp' ); ?></div>
-				
-				<div class="two wide middle aligned column">
-					<div id="mainwp-module-log-filter-ranges" class="ui selection fluid dropdown not-auto-init">
+	<div class="mainwp-sub-header" id="mainwp-module-log-overview-sub-header">
+		<div class="ui stackable compact grid mini form" id="mainwp-module-log-filters-row">
+			<div class="thirteen wide column ui compact grid">
+				<div class="three wide middle aligned column">
+					<div id="mainwp-module-log-filter-ranges" class="ui selection fluid dropdown seg_ranges not-auto-init">
 						<input type="hidden" value="<?php echo esc_html( $filter_ranges ); ?>">
 						<i class="dropdown icon"></i>
 						<div class="default text"><?php esc_html_e( 'Select range', 'mainwp' ); ?></div>
@@ -625,29 +629,24 @@ class Log_Insights_Page {
 						</div>
 					</div>
 				</div>
-
-				<div class="two wide middle aligned column">
-					<div class="ui calendar mainwp_datepicker" id="mainwp-module-log-filter-dtsstart" >
-						<div class="ui input left icon">
+				<div class="three wide middle aligned column">
+					<div class="ui calendar mainwp_datepicker seg_dtsstart" id="mainwp-module-log-filter-dtsstart" >
+						<div class="ui input left fluid icon">
 							<i class="calendar icon"></i>
 							<input type="text" <?php echo $disable_dt ? 'disabled="disabled"' : ''; ?> autocomplete="off" placeholder="<?php esc_attr_e( 'Start date', 'mainwp' ); ?>" value="<?php echo ! empty( $filter_dtsstart ) ? esc_attr( $filter_dtsstart ) : ''; ?>"/>
 						</div>
 					</div>
 				</div>
-
-				<div class="two wide middle aligned column">
-					<div class="ui calendar mainwp_datepicker" id="mainwp-module-log-filter-dtsstop" >
+				<div class="three wide middle aligned column">
+					<div class="ui calendar mainwp_datepicker seg_dtsstop" id="mainwp-module-log-filter-dtsstop" >
 						<div class="ui input left icon">
 							<i class="calendar icon"></i>
 							<input type="text" <?php echo $disable_dt ? 'disabled="disabled"' : ''; ?> autocomplete="off" placeholder="<?php esc_attr_e( 'End date', 'mainwp' ); ?>" value="<?php echo ! empty( $filter_dtsstop ) ? esc_attr( $filter_dtsstop ) : ''; ?>"/>
 						</div>
 					</div>
 				</div>
-
-				<div class="one wide center aligned middle aligned column"><?php esc_html_e( 'from', 'mainwp' ); ?></div>
-
-				<div class="two wide middle aligned column">
-					<div id="mainwp-module-log-filter-groups" class="ui selection multiple fluid dropdown">
+				<div class="three wide middle aligned column">
+					<div id="mainwp-module-log-filter-groups" class="ui selection multiple fluid dropdown seg_groups">
 						<input type="hidden" value="<?php echo esc_html( $filter_groups_ids ); ?>">
 						<i class="dropdown icon"></i>
 						<div class="default text"><?php esc_html_e( 'All tags', 'mainwp' ); ?></div>
@@ -663,9 +662,8 @@ class Log_Insights_Page {
 						</div>
 					</div>
 				</div>
-
-				<div class="two wide middle aligned column">
-					<div id="mainwp-module-log-filter-clients" class="ui selection multiple fluid dropdown">
+				<div class="three wide middle aligned column">
+					<div id="mainwp-module-log-filter-clients" class="ui selection multiple fluid dropdown seg_clients">
 						<input type="hidden" value="<?php echo esc_html( $filter_client_ids ); ?>">
 						<i class="dropdown icon"></i>
 						<div class="default text"><?php esc_html_e( 'All clients', 'mainwp' ); ?></div>
@@ -682,11 +680,8 @@ class Log_Insights_Page {
 						</div>
 					</div>
 				</div>
-
-				<div class="one wide center aligned middle aligned column"><?php esc_html_e( 'made by', 'mainwp' ); ?></div>
-
-				<div class="two wide middle aligned column">
-					<div id="mainwp-module-log-filter-users" class="ui selection multiple fluid dropdown">
+				<div class="three wide middle aligned column">
+					<div id="mainwp-module-log-filter-users" class="ui selection multiple fluid dropdown seg_users">
 						<input type="hidden" value="<?php echo esc_html( $filter_user_ids ); ?>">
 						<i class="dropdown icon"></i>
 						<div class="default text"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
@@ -703,13 +698,24 @@ class Log_Insights_Page {
 						</div>
 					</div>
 				</div>
-
-				<div class="one wide middle aligned column">
-					<button onclick="mainwp_module_log_overview_content_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Data', 'mainwp' ); ?></button>
+				<div class="three wide middle aligned column">
 				</div>
+				<div class="three wide middle aligned column">
+				</div>
+				<div class="three wide middle aligned column">
+				</div>	
+				<div class="three wide middle aligned right aligned column">
+					<button onclick="mainwp_module_log_overview_content_filter()" class="ui mini basic button"><?php esc_html_e( 'Filter Data', 'mainwp' ); ?></button>
+					<button onclick="mainwp_module_log_overview_content_reset_filters(this)" class="ui mini green button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
+					
+				</div>				
 			</div>
+			<?php Log_Events_Filter_Segment::get_instance()->render_filters_segment(); ?>
 		</div>
+	</div>
 		<?php
+		MainWP_UI::render_modal_save_segment();
+
 		$time          = time();
 		$format        = 'Y-m-d';
 		$ranges_values = array(
@@ -837,13 +843,15 @@ class Log_Insights_Page {
 		$stats_prev_data = ! empty( $items_prev ) ? Log_Stats::get_stats_data( $items_prev ) : array();
 		?>
 		<div class="mainwp-primary-content-wrap">
-		<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
-		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'insights-widgets' ) ) : ?>
-				<div class="ui info message">
-					<i class="close icon mainwp-notice-dismiss" notice-id="insights-widgets"></i>
-					<?php printf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
-				</div>
-			<?php endif; ?>
+		<div class="ui segment" style="padding-top:0;padding-bottom:0;">	
+			<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'insights-widgets' ) ) : ?>
+					<div class="ui info message">
+						<i class="close icon mainwp-notice-dismiss" notice-id="insights-widgets"></i>
+						<?php printf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
+					</div>
+				<?php endif; ?>
+		</div>
 			<?php
 			/**
 			 * Action: mainwp_before_overview_widgets

@@ -472,9 +472,6 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table {
 								$( '#mainwp-manage-non-mainwp-actions-table .ui.dropdown' ).dropdown();
 								$( '#mainwp-manage-non-mainwp-actions-table .ui.checkbox' ).checkbox();
 							}
-						} ).on( 'column-reorder.dt', function ( e, settings, details ) {
-							$( '#mainwp-manage-non-mainwp-actions-table .ui.dropdown' ).dropdown();
-							$( '#mainwp-manage-non-mainwp-actions-table .ui.checkbox' ).checkbox();
 						} ).DataTable( {
 							"ajax": {
 								"url": ajaxurl,
@@ -534,6 +531,11 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table {
 								jQuery( row ).attr( 'action-id', data.actionID );
 								jQuery( row ).attr( 'id', "child-site-" + data.siteID );
 							}
+						} ).on( 'columns-reordered', function ( e, settings, details ) {
+							$( '#mainwp-manage-non-mainwp-actions-table .ui.dropdown' ).dropdown();
+							$( '#mainwp-manage-non-mainwp-actions-table .ui.checkbox' ).checkbox();
+							console.log('columns-reordered');							
+							mainwp_datatable_fix_menu_overflow('#mainwp-manage-non-mainwp-actions-table');
 						} );
 					} catch(err) {
 						// to fix js error.

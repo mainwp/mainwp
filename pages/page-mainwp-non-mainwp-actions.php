@@ -191,6 +191,7 @@ class MainWP_Non_MainWP_Actions {
 	 * Display table rows, optimize for shared hosting or big networks.
 	 */
 	public static function ajax_optimize_display_rows() {
+		MainWP_Post_Handler::instance()->secure_request( 'mainwp_non_mainwp_changes_display_rows' );
 		$actionsTable = new MainWP_Manage_Non_MainWP_Changes_List_Table();
 		$actionsTable->prepare_items( true );
 		$output = $actionsTable->ajax_get_datatable_rows();

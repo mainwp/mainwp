@@ -164,6 +164,10 @@ class Cost_Tracker_Dashboard {
 			'targets'   => array( 'column-site-price', 'column-price' ),
 			'className' => 'right aligned',
 		);
+		$defines[] = array(
+			'targets'   => 'check-column',
+			'className' => 'check-column',
+		);
 		return $defines;
 	}
 
@@ -448,7 +452,7 @@ class Cost_Tracker_Dashboard {
 		<table class="ui single line table" id="mainwp-module-cost-tracker-sites-table" style="width:100%">
 			<thead>
 				<tr>
-					<th class="no-sort collapsing check-column column-check"><span class="ui checkbox"><input type="checkbox"></span></th>
+					<th class="no-sort collapsing check-column column-check"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox"></span></th>
 					<th id="cost_status" class="collapsing column-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					<th id="icon" class="no-sort column-icon collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
 					<th id="name" class="column-name"><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
@@ -470,7 +474,7 @@ class Cost_Tracker_Dashboard {
 			</thead>
 			<tfoot>
 				<tr>
-					<th class="no-sort collapsing check-column column-check"><span class="ui checkbox"><input type="checkbox"></span></th>
+					<th class="no-sort collapsing check-column column-check"><span class="ui checkbox"><input id="cb-select-all-bottom" type="checkbox"></span></th>
 					<th id="cost_status" class="collapsing column-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					<th id="icon" class="column-icon collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
 					<th id="name" class="column-name" ><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
@@ -564,7 +568,6 @@ class Cost_Tracker_Dashboard {
 							});
 						}
 					}
-				
 					try {
 						$subscription_sites_table = jQuery( '#mainwp-module-cost-tracker-sites-table' ).on( 'processing.dt', function ( e, settings, processing ) {
 							jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
@@ -573,10 +576,7 @@ class Cost_Tracker_Dashboard {
 								$( '#mainwp-module-cost-tracker-sites-table .ui.dropdown' ).dropdown();
 								$( '#mainwp-module-cost-tracker-sites-table .ui.checkbox' ).checkbox();
 							}
-						} ).on( 'column-reorder.dt', function ( e, settings, details ) {
-							$( '#mainwp-module-cost-tracker-sites-table .ui.dropdown' ).dropdown();
-							$( '#mainwp-module-cost-tracker-sites-table .ui.checkbox' ).checkbox();
-						} ).DataTable( {
+						}).DataTable( {
 							"ajax": {
 								"url": ajaxurl,
 								"type": "POST",
@@ -589,13 +589,11 @@ class Cost_Tracker_Dashboard {
 										license_types: $( '#mainwp-module-cost-tracker-costs-filter-license-types').dropdown('get value'),
 										renewal_frequency: $( '#mainwp-module-cost-tracker-costs-filter-renewal-frequency').dropdown('get value'),
 										payment_methods: $( '#mainwp-module-cost-tracker-costs-filter-payment-methods').dropdown('get value'),
+										client: $( '#mainwp-module-cost-tracker-costs-filter-clients').dropdown('get value'),
 										dtsstart: $('#mainwp-module-cost-tracker-costs-filter-dtsstart').val(),
 										dtsstop: $('#mainwp-module-cost-tracker-costs-filter-dtsstop').val(),
 										show_per_site_price: <?php echo $filtered ? 1 : 0; ?>,
 									} );
-									if($( '#mainwp-module-cost-tracker-costs-filter-clients').length > 0){
-										data.client = $( '#mainwp-module-cost-tracker-costs-filter-clients').dropdown('get value');
-									}
 									return $.extend( {}, d, data );
 								},
 								"dataSrc": function ( json ) {
@@ -637,6 +635,11 @@ class Cost_Tracker_Dashboard {
 								jQuery( row ).attr( 'item-id', data.cost_id );
 								
 							}
+						}).on( 'columns-reordered', function ( e, settings, details ) {
+							$( '#mainwp-module-cost-tracker-sites-table .ui.dropdown' ).dropdown();
+							$( '#mainwp-module-cost-tracker-sites-table .ui.checkbox' ).checkbox();
+							console.log('columns-reordered');							
+							mainwp_datatable_fix_menu_overflow('#mainwp-module-cost-tracker-sites-table');
 						} );
 					} catch(err) {
 						// to fix js error.
@@ -647,7 +650,45 @@ class Cost_Tracker_Dashboard {
 
 			mainwp_module_cost_tracker_manage_costs_filter = function() {
 				try {
+					var emptyFilter =  ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-sites').dropdown('get value') ) && 
+					( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-cats').dropdown('get value') ) &&
+					( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-status').dropdown('get value') ) &&
+					( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-license-types').dropdown('get value') ) &&
+					( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-renewal-frequency').dropdown('get value') ) &&
+					( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-payment-methods').dropdown('get value') ) &&
+					( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-clients').dropdown('get value') ) &&
+					( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-dtsstart').dropdown('get value') ) &&
+					( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-dtsstop').dropdown('get value') );
+					
+					console.log('emptyFilter: ' + ( emptyFilter ? 'yes' : 'no' ) );
+
+					if(emptyFilter){
+						jQuery( '#mainwp_module_cost_tracker_manage_costs_reset_filters' ).attr('disabled', 'disabled');
+					} else {
+						jQuery( '#mainwp_module_cost_tracker_manage_costs_reset_filters' ).attr('disabled', false);
+					}
+
 					$subscription_sites_table.ajax.reload();
+					
+				} catch(err) {
+					// to fix js error.
+					console.log(err);
+				}
+			};
+
+			mainwp_module_cost_tracker_manage_costs_reset_filters = function() {
+				try {
+					jQuery( '#mainwp-module-cost-tracker-costs-filter-clients').dropdown('clear');
+					jQuery( '#mainwp-module-cost-tracker-costs-filter-sites').dropdown('clear');
+					jQuery( '#mainwp-module-cost-tracker-costs-filter-cats').dropdown('clear');
+					jQuery( '#mainwp-module-cost-tracker-costs-filter-status').dropdown('clear');
+					jQuery( '#mainwp-module-cost-tracker-costs-filter-license-types').dropdown('clear');
+					jQuery( '#mainwp-module-cost-tracker-costs-filter-renewal-frequency').dropdown('clear');
+					jQuery( '#mainwp-module-cost-tracker-costs-filter-payment-methods').dropdown('clear');
+					jQuery('#mainwp-module-cost-tracker-costs-filter-dtsstart').val('');
+					jQuery('#mainwp-module-cost-tracker-costs-filter-dtsstop').val('');
+					$subscription_sites_table.ajax.reload();
+					jQuery( '#mainwp_module_cost_tracker_manage_costs_reset_filters' ).attr('disabled', 'disabled');
 				} catch(err) {
 					// to fix js error.
 					console.log(err);
@@ -1202,6 +1243,11 @@ class Cost_Tracker_Dashboard {
 			$filter_dtsstop   = gmdate( 'Y-m-d', time() + 30 * DAY_IN_SECONDS );
 		}
 
+		$empty_filter = true;
+		if ( ! $sel_one_time_ids ) {
+			$empty_filter = empty( $filter_sites_ids ) && empty( $filter_client_ids ) && empty( $filter_prod_type_slugs ) && empty( $filter_cost_state ) && empty( $filter_dtsstart ) && empty( $filter_dtsstop ) && empty( $filter_license_type ) && empty( $filter_sub_renewal_type ) && empty( $filter_payment_method );
+		}
+
 		$all_defaults  = Cost_Tracker_Admin::get_default_fields_values();
 		$product_types = $all_defaults['product_types'];
 		$cost_status   = $all_defaults['cost_status'];
@@ -1361,7 +1407,8 @@ class Cost_Tracker_Dashboard {
 						</div>
 					</div>
 					<div class="three wide middle aligned right aligned column">
-						<button onclick="mainwp_module_cost_tracker_manage_costs_filter()" class="ui mini green button"><?php esc_html_e( 'Filter Costs', 'mainwp' ); ?></button>
+						<button onclick="mainwp_module_cost_tracker_manage_costs_filter()"  class="ui mini basic button"><?php esc_html_e( 'Filter Costs', 'mainwp' ); ?></button>
+						<button onclick="mainwp_module_cost_tracker_manage_costs_reset_filters()" id="mainwp_module_cost_tracker_manage_costs_reset_filters" class="ui mini green button" <?php echo $empty_filter ? 'disabled' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
 					</div>
 				</div>
 				<div class="three wide top aligned right aligned column">
@@ -1521,7 +1568,6 @@ class Cost_Tracker_Dashboard {
 								for (const [key, value] of Object.entries(seg_values)) {
 									try {
 										if(fieldsAllows.includes(key)){
-											console.log(key + ' === '+ value);
 											if( 'seg_dtsstart' !== key && 'seg_dtsstop' !== key ){
 												jQuery( '#mainwp-module-cost-tracker-costs-filters-row .ui.dropdown.' + key ).dropdown('clear');
 												arrVal = value.split(",");
@@ -1531,7 +1577,6 @@ class Cost_Tracker_Dashboard {
 											}
 										}
 									} catch (err) {
-										console.log(key + ' === '+ value);
 										console.log(err);
 									}
 								}

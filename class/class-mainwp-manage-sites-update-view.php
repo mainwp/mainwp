@@ -775,12 +775,10 @@ class MainWP_Manage_Sites_Update_View {
 			<table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-abandoned-plugins-table">
 				<thead>
 					<tr>
-						<tr>
-							<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-							<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-							<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
-							<th class="no-sort"></th>
-						</tr>
+						<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
+						<th class="no-sort"></th>
 					</tr>
 				</thead>
 				<tbody id="wp_plugins_outdate_<?php echo intval( $website->id ); ?>" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>">
@@ -812,12 +810,10 @@ class MainWP_Manage_Sites_Update_View {
 				</tbody>
 				<tfoot>
 					<tr>
-						<tr>
-							<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-							<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-							<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
-							<th class="no-sort"></th>
-						</tr>
+						<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
+						<th class="no-sort"></th>
 					</tr>
 				</tfoot>
 			</table>
@@ -868,12 +864,10 @@ class MainWP_Manage_Sites_Update_View {
 			<table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-abandoned-themes-table">
 				<thead>
 					<tr>
-						<tr>
-							<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-							<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-							<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
-							<th class="no-sort"></th>
-						</tr>
+						<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
+						<th class="no-sort"></th>
 					</tr>
 				</thead>
 				<tbody site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>">

@@ -47,6 +47,9 @@ class Api_Backups_Helper {
 	/**
 	 * Clean URL.
 	 * Remove http(s)://, www., and trailing slash(/) from the URL.
+	 *
+	 * @param string $url url.
+	 * @return string clean url.
 	 */
 	public static function clean_url( $url ) {
 		$clean_url = '';

@@ -25,7 +25,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '9.0.0.6';
+	protected $mainwp_db_version = '9.0.0.8';
 
 	/**
 	 * Protected variable to hold the database option name.
@@ -78,7 +78,7 @@ class MainWP_Install extends MainWP_DB_Base {
 			update_option( 'mainwp_run_quick_setup', 'yes' );
 			MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 0 );
 		} elseif ( false === get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-				MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+			MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 1 );
 		}
 
 		if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.8', '<' ) ) {

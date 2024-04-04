@@ -103,7 +103,7 @@ class MainWP_Meta_Boxes {
 			return;
 		}
 		$post = get_post( $post_id );
-		MainWP_Post::render_categories( $post );
+		MainWP_Post::render_categories_list( $post );
 	}
 
 	/**

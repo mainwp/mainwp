@@ -32,7 +32,7 @@ class MainWP_Error_Helper {
 		if ( $pException->getMessage() === 'HTTPERROR' ) {
 			$error = 'HTTP error' . ( ! empty( $pException->get_message_extra() ) ? ' - ' . $pException->get_message_extra() : '' );
 		} elseif ( $pException->getMessage() === 'NOMAINWP' ) {
-			$error = sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a> <i class="external alternate icon"></i>' );
+			$error = self::get_error_not_detected_connect();
 		}
 
 		return $error;
@@ -53,11 +53,20 @@ class MainWP_Error_Helper {
 		if ( $pException->getMessage() === 'HTTPERROR' ) {
 			$error = 'HTTP error' . ( ! empty( $pException->get_message_extra() ) ? ' - ' . $pException->get_message_extra() : '' );
 		} elseif ( $pException->getMessage() === 'NOMAINWP' ) {
-			$error = sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank>', '</a>' );
+			$error = self::get_error_not_detected_connect();
 		} elseif ( $pException->getMessage() !== 'WPERROR' && ! empty( $pException->get_message_extra() ) ) {
 			$error .= ' - ' . $pException->get_message_extra();
 		}
 
 		return $error;
+	}
+
+	/**
+	 * Method get_error_not_detected_connect()
+	 *
+	 * @return string @error Error message.
+	 */
+	public static function get_error_not_detected_connect() {
+		return sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank>', '</a>' );
 	}
 }

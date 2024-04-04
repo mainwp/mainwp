@@ -15,6 +15,53 @@ namespace MainWP\Dashboard;
 class MainWP_Manage_Sites {
 
 	/**
+	 * The single instance of the class
+	 *
+	 * @var mixed Default null
+	 */
+	protected static $instance = null;
+
+	/**
+	 * Private static variable to hold the total sites.
+	 *
+	 * @var mixed Default null
+	 */
+	private static $total_sites = null;
+
+	/**
+	 * Get instance.
+	 *
+	 *  @return self::singlton
+	 */
+	public static function get_instance() {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	/**
+	 * MainWP_Setup_Wizard constructor.
+	 *
+	 * Run each time the class is called.
+	 */
+	public function __construct() {
+		$this->get_total_sites();
+	}
+
+	/**
+	 * Get instance.
+	 *
+	 *  @return self::singlton
+	 */
+	public static function get_total_sites() {
+		if ( null === self::$total_sites ) {
+			self::$total_sites = MainWP_DB::instance()->get_websites_count();
+		}
+		return self::$total_sites;
+	}
+
+	/**
 	 * Get Class Name
 	 *
 	 * @return string __CLASS__
@@ -106,6 +153,7 @@ class MainWP_Manage_Sites {
 
 		// Hook the Help Sidebar content.
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
+		MainWP_Post_Handler::instance()->add_action( 'mainwp_managesites_add_edit_site_upload_site_icon', array( self::class, 'ajax_upload_icon' ) );
 	}
 
 	/**
@@ -691,6 +739,53 @@ class MainWP_Manage_Sites {
 				</div>
 
 				<div class="ui grid field">
+					<label class="six wide column middle aligned">
+					<?php
+					esc_html_e( 'Upload site icon', 'mainwp' );
+					?>
+					</label>
+					<input type="hidden" name="mainwp_managesites_add_site_uploaded_icon_hidden" id="mainwp_managesites_add_site_uploaded_icon_hidden" value="">
+					
+					<div class="three wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Upload the site icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+						<div class="ui green button basic mainwp-managesites-add-site-icon-customable" iconItemId="" iconFileSlug="" icon-src=""><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
+						<div style="display:inline-block;" id="mainw_managesites_add_edit_site_upload_custom_icon"></div> <?php // used for icon holder. ?>
+					</div>
+				</div>
+
+				<?php
+				$default_icons         = MainWP_UI::get_default_icons();
+				$selected_default_icon = 'wordpress'; //phpcs:ignore -- WP icon.
+				$selected_site_color   = '#34424D';
+				?>
+
+				<div class="ui grid field">
+					<label class="six wide column middle aligned">
+					<?php
+					esc_html_e( 'Select icon', 'mainwp' );
+					?>
+					</label>
+					<input type="hidden" name="mainwp_managesites_add_site_select_icon_hidden" id="mainwp_managesites_add_site_select_icon_hidden" value="">
+					<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Select an icon if not using original site icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+						<div class="ui left action input mainwp-dropdown-color-picker-field">
+							<div class="ui five column selection search dropdown not-auto-init" id="mainwp_manage_add_edit_site_icon_select">
+								<div class="text">
+									<span style="color:<?php echo esc_attr( $selected_site_color ); ?>" ><?php echo ! empty( $selected_default_icon ) ? '<i class="' . esc_attr( $selected_default_icon ) . ' icon"></i>' : ''; ?></span>
+								</div>
+								<i class="dropdown icon"></i>
+								<div class="menu">
+									<?php foreach ( $default_icons as $icon ) : ?>
+										<?php echo '<div class="item" style="color:' . esc_attr( $selected_site_color ) . '" data-value="' . esc_attr( $icon ) . '"><i class="' . esc_attr( $icon ) . ' icon"></i></div>'; ?>
+									<?php endforeach; ?>
+								</div>
+							</div>
+							<input type="color" data-tooltip="Color will update on save" data-position="top center" data-inverted="" name="mainwp_managesites_add_site_color" class="mainwp-color-picker-input" id="mainwp_managesites_add_site_color"  value="<?php echo esc_attr( $selected_site_color ); ?>" />
+						</div>
+					</div>
+					<div class="one wide column"></div>
+				</div>
+
+
+				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Tags (optional)', 'mainwp' ); ?></label>
 					<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add the website to existing tag(s).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<div class="ui multiple search selection dropdown" init-value="" id="mainwp_managesites_add_addgroups">
@@ -766,9 +861,9 @@ class MainWP_Manage_Sites {
 						</div>
 					</div>
 				</div>
-						<?php MainWP_Manage_Sites_View::render_sync_exts_settings(); ?>
-					</div>
-
+			
+				<?php MainWP_Manage_Sites_View::render_sync_exts_settings(); ?>
+				</div>
 
 				<?php
 				do_action_deprecated( 'mainwp-manage-sites-edit', array( false ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
@@ -814,13 +909,217 @@ class MainWP_Manage_Sites {
 			jQuery( document ).ready( function () {
 				jQuery( '#mainwp_managesites_add_addgroups' ).dropdown( {
 					allowAdditions: true
+				} );		
+				jQuery( '#mainwp_manage_add_edit_site_icon_select' ).dropdown( {
+					onChange: function( val ) {
+						jQuery( '#mainwp_managesites_add_site_select_icon_hidden' ).val(val);
+					}
 				} );
+				
+				jQuery(document).on('click', '.mainwp-managesites-add-site-icon-customable', function () {
+					var iconObj = jQuery(this);
+					jQuery('#mainwp_delete_image_field').hide();
+					jQuery('#mainwp-upload-custom-icon-modal').modal('setting', 'closable', false).modal('show');
+					jQuery('#update_custom_icon_btn').removeAttr('disabled');
+					jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconItemId', iconObj.attr('iconItemId') ); // @see used by mainwp_upload_custom_types_icon().
+					jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconFileSlug', iconObj.attr('iconFileSlug') ); // @see used by mainwp_upload_custom_types_icon().
+					
+					if (iconObj.attr('icon-src') != '') {
+						jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', iconObj.attr('icon-src'));
+						jQuery('#mainwp_delete_image_field').show();
+					}
+
+					jQuery(document).on('click', '#update_custom_icon_btn', function () {
+							var deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
+							var iconItemId = iconObj.attr('iconItemId');
+							var iconFileSlug = iconObj.attr('iconFileSlug'); // to support delete file when iconItemId = 0.
+
+							// upload/delete icon action. 
+							mainwp_upload_custom_types_icon(iconObj, 'mainwp_managesites_add_edit_site_upload_site_icon', iconItemId, iconFileSlug, deleteIcon, function(response){
+								if (jQuery('#mainwp_managesites_add_site_uploaded_icon_hidden').length > 0) {
+									if (typeof response.iconfile !== undefined) {
+										jQuery('#mainwp_managesites_add_site_uploaded_icon_hidden').val(response.iconfile);
+									} else {
+										jQuery('#mainwp_managesites_add_site_uploaded_icon_hidden').val('');
+									}
+								}
+								var deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false; // to delete.
+								if(deleteIcon){
+									jQuery('#mainw_managesites_add_edit_site_upload_custom_icon').hide();
+								} else if (jQuery('#mainw_managesites_add_edit_site_upload_custom_icon').length > 0) {
+									if (typeof response.iconfile !== undefined) {
+										var icon_img = typeof response.iconimg !== undefined ? response.iconimg : '';
+										var icon_src = typeof response.iconsrc !== undefined ? response.iconsrc : '';
+										iconObj.attr('icon-src', icon_src);
+										iconObj.attr('iconFileSlug', response.iconfile); // to support delete file when iconItemId = 0.
+										jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', icon_src);
+										jQuery('#mainw_managesites_add_edit_site_upload_custom_icon').html(icon_img);
+										jQuery('#mainw_managesites_add_edit_site_upload_custom_icon').show();
+									}
+								}
+								setTimeout(function () {
+									//window.location.href = location.href;
+									jQuery('#mainwp-upload-custom-icon-modal').modal('hide')
+								}, 1000);
+							});
+							return false;
+					});
+				});
+				
 			} );
 		</script>
 			<?php
 		}
 		self::render_footer( $showpage );
+		MainWP_UI::render_modal_upload_icon();
 	}
+
+	/**
+	 * Method ajax_upload_icon()
+	 */
+	public static function ajax_upload_icon() {
+		MainWP_Post_Handler::instance()->secure_request( 'mainwp_managesites_add_edit_site_upload_site_icon' );
+
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$iconfile_slug = isset( $_POST['iconFileSlug'] ) ? sanitize_text_field( wp_unslash( $_POST['iconFileSlug'] ) ) : '';
+		$delete        = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0;
+		$site_id       = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : 0;
+
+		if ( $delete ) {
+			if ( $site_id ) {
+				$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+				if ( $website && ! empty( $website->cust_site_icon_info ) ) {
+					$uploaded_site_icon = self::get_instance()->get_cust_site_icon( $website->cust_site_icon_info, 'uploaded' );
+					if ( ! empty( $uploaded_site_icon ) ) {
+						$tmp      = explode( ';', $website->cust_site_icon_info );
+						$new_info = 'uploaded:;' . $tmp[1] . ';' . $tmp[2];
+						MainWP_DB::instance()->update_website_option( $website, 'cust_site_icon_info', $new_info ); // to delete uploaded icon.
+						MainWP_Utility::instance()->delete_uploaded_icon_file( 'site-icons', $uploaded_site_icon );
+					}
+				}
+			} elseif ( ! empty( $iconfile_slug ) ) {
+				MainWP_Utility::instance()->delete_uploaded_icon_file( 'site-icons', $iconfile_slug );
+			}
+			wp_die( wp_json_encode( array( 'result' => 'success' ) ) );
+		}
+
+		$output = isset( $_FILES['mainwp_upload_icon_uploader'] ) ? MainWP_System_Utility::handle_upload_image( 'site-icons', $_FILES['mainwp_upload_icon_uploader'] ) : null;
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		$uploaded_icon = 'NOTCHANGE';
+		if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
+			$uploaded_icon = $output['filename'];
+		}
+
+		if ( 'NOTCHANGE' !== $uploaded_icon ) {
+			$dirs     = MainWP_System_Utility::get_mainwp_dir( 'site-icons', true );
+			$icon_url = $dirs[1] . $uploaded_icon;
+			wp_die(
+				wp_json_encode(
+					array(
+						'result'   => 'success',
+						'iconfile' => esc_html( $uploaded_icon ),
+						'iconsrc'  => esc_html( $icon_url ),
+						'iconimg'  => '<img class="ui mini circular image" src="' . esc_attr( $icon_url ) . '" style="width:32px;height:auto;display:inline-block;">',
+					)
+				)
+			);
+		} else {
+			wp_die( wp_json_encode( array( 'result' => 'failed' ) ) );
+		}
+	}
+
+	/**
+	 * Method get_cust_site_icon()
+	 *
+	 * Get site icon.
+	 *
+	 * @param string $icon_data icon data.
+	 * @param string $favi_url favico url.
+	 */
+	public function get_site_icon_display( $icon_data, $favi_url ) {
+
+		// 1 priority.
+		if ( ! empty( $icon_data ) ) {
+			$uploaded = $this->get_cust_site_icon( $icon_data, 'uploaded' );
+			if ( ! empty( $uploaded ) ) {
+				return $this->get_cust_site_icon( $icon_data, 'display' );
+			}
+		}
+
+		// 2 priority.
+		if ( ! empty( $favi_url ) ) {
+			return '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" />';
+		}
+
+		// 3 priority.
+		$selected = $this->get_cust_site_icon( $icon_data, 'selected' );
+		if ( ! empty( $selected ) ) {
+			return $this->get_cust_site_icon( $icon_data, 'display_selected' );
+		}
+
+		// last default.
+		return'<i class="icon big wordpress" style="width:28px;height:28px;"></i> '; // phpcs:ignore -- WP icon.
+	}
+
+	/**
+	 * Method get_cust_site_icon()
+	 *
+	 * Get site icon.
+	 *
+	 * @param string $icon_data icon data.
+	 * @param string $type Type: uploaded|selected|color|display.
+	 */
+	public function get_cust_site_icon( $icon_data, $type = 'display' ) {
+		if ( empty( $icon_data ) ) {
+			return '';
+		}
+		$data = explode( ';', $icon_data );
+
+		$uploaded = str_replace( 'uploaded:', '', $data[0] );
+		$selected = str_replace( 'selected:', '', $data[1] );
+		$color    = str_replace( 'color:', '', $data[2] );
+
+		if ( empty( $color ) ) {
+			$color = '#34424D';
+		}
+
+		if ( 'display_selected' === $type ) {
+			if ( empty( $selected ) ) {
+				$selected = 'wordpress'; // phpcs:ignore -- WP icon.
+			}
+			return '<span style="color:' . esc_attr( $color ) . '" ><i class="' . esc_attr( $selected ) . ' big icon"></i></span>';
+		}
+
+		if ( 'uploaded' === $type ) {
+			return $uploaded;
+		} elseif ( 'selected' === $type ) {
+			return $selected;
+		} elseif ( 'color' === $type ) {
+			return $color;
+		} elseif ( 'display' === $type || 'display_edit' === $type ) {
+			$style       = 'width:32px;height:auto;display:inline-block;';
+			$color_style = '';
+			if ( empty( $uploaded ) ) {
+				$color_style = 'color:' . esc_attr( $color ) . ';';
+			}
+			$default_cls = 'mainw_site_custom_icon_display';
+			$icon        = '';
+			if ( ! empty( $uploaded ) ) {
+				$dirs              = MainWP_System_Utility::get_mainwp_dir( 'site-icons', true );
+				$icon_base         = $dirs[1];
+				$scr               = $icon_base . $uploaded;
+				$icon_wrapper_attr = ' class="' . esc_attr( $default_cls ) . ' ui mini circular image " ';
+				if ( 'display_edit' === $type ) {
+					$icon_wrapper_attr = ' id="mainw_managesites_add_edit_site_upload_custom_icon" class="' . esc_attr( $default_cls ) . ' ui mini circular image" ';
+				}
+				$icon = '<div style="display:inline-block;" ' . $icon_wrapper_attr . '><img style="' . $style . '" src="' . esc_attr( $scr ) . '"/></div>';
+			}
+			return $icon;
+		}
+		return '';
+	}
+
 
 	/**
 	 * Method render_bulk_new_site()
@@ -835,7 +1134,7 @@ class MainWP_Manage_Sites {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) {
 			mainwp_do_not_have_permissions( esc_html__( 'add sites', 'mainwp' ) );
 			return;
-		} elseif ( isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {
+		} elseif ( isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Missing
 			?>
 				<div class="ui large modal" id="mainwp-import-sites-modal">
 				<i class="close icon"></i>
@@ -1204,7 +1503,7 @@ class MainWP_Manage_Sites {
 
 		self::load_sites_table();// to fix loading.
 
-		$optimize_for_sites_table = apply_filters( 'mainwp_manage_sites_optimize_loading', 1 ); // use ajax to load sites table .
+		$optimize_for_sites_table = apply_filters( 'mainwp_manage_sites_optimize_loading', 1, 'manage-sites' ); // use ajax to load sites table .
 
 		if ( ! $optimize_for_sites_table ) {
 			self::$sitesTable->prepare_items( false );
@@ -1545,6 +1844,19 @@ class MainWP_Manage_Sites {
 
 				$use_lib = isset( $_POST['mainwp_managesites_edit_verify_connection_method'] ) ? intval( $_POST['mainwp_managesites_edit_verify_connection_method'] ) : 0;
 				MainWP_DB::instance()->update_website_option( $website, 'verify_method', $use_lib );
+
+				$uploaded_site_icon = isset( $_POST['mainwp_managesites_edit_site_uploaded_icon_hidden'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_site_uploaded_icon_hidden'] ) ) : '';
+				$selected_site_icon = isset( $_POST['mainwp_managesites_edit_site_selected_icon_hidden'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_site_selected_icon_hidden'] ) ) : '';
+				$cust_icon_color    = isset( $_POST['mainwp_managesites_edit_site_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['mainwp_managesites_edit_site_color'] ) ) : '';
+				$icon_info          = 'uploaded:' . $uploaded_site_icon . ';selected:' . $selected_site_icon . ';color:' . $cust_icon_color;
+				MainWP_DB::instance()->update_website_option( $website, 'cust_site_icon_info', $icon_info );
+
+				if ( ! empty( $website->cust_site_icon_info ) ) {
+					$current_uploaded = self::get_instance()->get_cust_site_icon( $website->cust_site_icon_info, 'uploaded' );
+					if ( ! empty( $current_uploaded ) && $current_uploaded !== $uploaded_site_icon ) {
+						MainWP_Utility::instance()->delete_uploaded_icon_file( 'site-icons', $current_uploaded ); // delete old icon.
+					}
+				}
 
 				/**
 				 * Update site

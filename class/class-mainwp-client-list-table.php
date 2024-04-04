@@ -233,7 +233,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 		$items_bulk = $this->get_bulk_actions();
 
 		$selected_group = isset( $_REQUEST['tags'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['tags'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-
+		$default_filter = empty( $selected_group ) ? true : false;
 		?>
 		<div class="ui grid">
 			<div class="equal width row ui mini form">
@@ -268,6 +268,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 						<div class="menu">
 							<?php
 							$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
+
 							foreach ( $groups as $group ) {
 								?>
 								<div class="item" data-value="<?php echo intval( $group->id ); ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
@@ -277,7 +278,8 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 							<div class="item" data-value="nogroups"><?php esc_html_e( 'No Tags', 'mainwp' ); ?></div>
 						</div>
 					</div>
-					<button onclick="mainwp_manage_clients_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Clients', 'mainwp' ); ?></button>
+					<button onclick="mainwp_manage_clients_filter()" class="ui mini basic button"><?php esc_html_e( 'Filter Clients', 'mainwp' ); ?></button>
+					<a href="admin.php?page=ManageClients" class="ui mini green button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></a>
 				</div>
 		</div>
 		</div>
@@ -485,12 +487,18 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 							<?php do_action( 'mainwp_manage_sites_table_columns_defs' ); ?>
 						],
 						"lengthMenu" : [ [<?php echo intval( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All" ] ],
-						"pageLength": <?php echo intval( $sites_per_page ); ?>
-					} );
+						"pageLength": <?php echo intval( $sites_per_page ); ?>,
+						"drawCallback": function( settings ) {
+						},
+						} ).on( 'columns-reordered', function ( e, settings, details ) {
+							$( '#mainwp-manage-clients-table .ui.dropdown' ).dropdown();
+							$( '#mainwp-manage-clients-table .ui.checkbox' ).checkbox();
+							console.log('columns-reordered');							
+							mainwp_datatable_fix_menu_overflow();
+						} );
 				} catch(err) {
 					// to fix js error.
 				}
-
 				mainwp_datatable_fix_menu_overflow();		
 				_init_manage_sites_screen = function() {
 					jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
@@ -653,7 +661,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 			} elseif ( 'client_actions' === $column_name ) {
 				$selected_sites = isset( $item['selected_sites'] ) ? trim( $item['selected_sites'] ) : '';
 				?>
-					<td class="collapsing">
+					<td class="collapsing manage-clients-actions">
 						<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999;">
 							<i class="ellipsis horizontal icon"></i>
 							<div class="menu" clientid=<?php echo intval( $item['client_id'] ); ?>>
@@ -670,8 +678,8 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 			} elseif ( 'image' === $column_name ) {
 				echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
 				?>
-				<?php $image_url = MainWP_Client_Handler::get_client_image_url( $item['image'] ); ?>
-				<a class="item" href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>"><img class="ui mini circular image" src="<?php echo esc_attr( $image_url ); ?>"></a>
+				<?php $client_display_image = MainWP_Client_Handler::get_client_contact_image( $item ); ?>
+				<a class="item" href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php echo $client_display_image; //phpcs:ignore --- ok.?></a>
 				<?php
 				echo '</td>';
 			} elseif ( 'name' === $column_name ) {

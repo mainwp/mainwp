@@ -212,7 +212,6 @@ class Cost_Tracker_Summary {
 	 * @uses \MainWP\Dashboard\MainWP_Recent_Pages::get_class_name()
 	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::get_class_name()
 	 * @uses \MainWP\Dashboard\MainWP_Security_Issues_Widget::get_class_name()
-	 * @uses \MainWP\Dashboard\MainWP_Updates_Overview::get_class_name()
 	 */
 	public static function add_meta_boxes( $page ) { //phpcs:ignore -- complex method.
 
@@ -369,6 +368,7 @@ class Cost_Tracker_Summary {
 		$costs_data = Cost_Tracker_DB::get_instance()->get_summary_data( array( 'sum_data' => 'all' ) );
 		?>
 		<div class="mainwp-primary-content-wrap">
+		<div class="ui segment" style="padding-top:0;padding-bottom:0;">
 		<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'cost-summany-widgets' ) ) : ?>
 				<div class="ui info message">
@@ -376,6 +376,7 @@ class Cost_Tracker_Summary {
 					<?php printf( esc_html__( 'To hide or show a widget, click the Cog (%1$s) icon.', 'mainwp' ), '<i class="cog icon"></i>' ); ?>
 				</div>
 			<?php endif; ?>
+		</div>
 			<?php
 			/**
 			 * Action: mainwp_before_overview_widgets
@@ -407,7 +408,7 @@ class Cost_Tracker_Summary {
 			do_action( 'mainwp_after_overview_widgets', 'costsummary' );
 			?>
 			<script type="text/javascript">
-				jQuery( document ).ready( function( $ ) {
+				jQuery( function( $ ) {
 
 					jQuery( '.mainwp-widget .mainwp-dropdown-tab .item' ).tab();
 
@@ -427,6 +428,15 @@ class Cost_Tracker_Summary {
 						}, false, false, true);
 						return false;
 					});
+					
+					jQuery( '#mainwp-upcoming-renewals-table-today' ).DataTable();
+					jQuery( '#mainwp-upcoming-renewals-table-tomorrow' ).DataTable();
+					jQuery( '#mainwp-upcoming-renewals-table-week' ).DataTable();
+					jQuery( '#mainwp-upcoming-renewals-table-next_week' ).DataTable();
+					jQuery( '#mainwp-upcoming-renewals-table-month' ).DataTable();
+					jQuery( '#mainwp-upcoming-renewals-table-next_month' ).DataTable();
+					jQuery( '#mainwp-upcoming-renewals-table-year' ).DataTable();
+					jQuery( '#mainwp-upcoming-renewals-table-next_year' ).DataTable();
 				} );
 			</script>
 		<div class="ui modal" id="mainwp-module-log-overview-screen-options-modal">

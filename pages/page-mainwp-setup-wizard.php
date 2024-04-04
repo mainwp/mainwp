@@ -307,7 +307,6 @@ class MainWP_Setup_Wizard {
 	 * Renders the Welcome screen of the Quick Start Wizard
 	 */
 	public function mwp_setup_welcome() {
-		$this->mwp_setup_ready_actions();
 		$is_new       = MainWP_Demo_Handle::get_instance()->is_new_instance();
 		$enabled_demo = apply_filters( 'mainwp_demo_mode_enabled', false );
 		$count_sites  = MainWP_DB::instance()->get_websites_count();
@@ -764,7 +763,7 @@ class MainWP_Setup_Wizard {
 	 */
 	public function mwp_setup_monitoring() {
 
-		$disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking', 1 );
+		$disableSitesMonitoring = (int) get_option( 'mainwp_disableSitesChecking', 1 );
 		$frequencySitesChecking = (int) get_option( 'mainwp_frequencySitesChecking', 60 );
 
 		$disableSitesHealthMonitoring = get_option( 'mainwp_disableSitesHealthMonitoring', 1 );
@@ -781,7 +780,12 @@ class MainWP_Setup_Wizard {
 			<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			<div class="ui grid field">
 				<div class="ui info message"><?php printf( esc_html__( 'Excessive checking can cause server resource issues. For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a>' ); ?></div>
-				<label class="six wide column middle aligned"><?php esc_html_e( 'Enable basic uptime monitoring', 'mainwp' ); ?></label>
+				<label class="six wide column middle aligned">
+				<?php
+				MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_disableSitesChecking', (int) $disableSitesMonitoring );
+				esc_html_e( 'Enable basic uptime monitoring', 'mainwp' );
+				?>
+				</label>
 				<div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring" style="max-width:100px !important;">
 					<input type="checkbox" name="mainwp_setup_disableSitesChecking" id="mainwp_setup_disableSitesChecking" <?php echo ( 1 === $disableSitesMonitoring ? '' : 'checked="true"' ); ?>/>
 					<label class=""></label>
@@ -810,14 +814,24 @@ class MainWP_Setup_Wizard {
 			<div class="ui hidden divider"></div>
 			<div class="ui hidden divider"></div>
 			<div class="ui grid field">
-				<label class="six wide column middle aligned"><?php esc_html_e( 'Enable Site Health monitoring', 'mainwp' ); ?></label>
+				<label class="six wide column middle aligned">
+				<?php
+				MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_disableSitesHealthMonitoring', (int) $disableSitesHealthMonitoring );
+				esc_html_e( 'Enable Site Health monitoring', 'mainwp' );
+				?>
+				</label>
 				<div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="health-monitoring" style="max-width:100px !important;">
 					<input type="checkbox" name="mainwp_setup_disable_sitesHealthMonitoring" id="mainwp_setup_disable_sitesHealthMonitoring" <?php echo ( 1 === $disableSitesHealthMonitoring ? '' : 'checked="true"' ); ?>/>
 				</div>
 			</div>
 
 			<div class="ui grid field" <?php echo $disableSitesHealthMonitoring ? 'style="display:none"' : ''; ?> hide-element="health-monitoring">
-				<label class="six wide column middle aligned"><?php esc_html_e( 'Site health threshold', 'mainwp' ); ?></label>
+				<label class="six wide column middle aligned">
+				<?php
+				MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_sitehealthThreshold', (int) $sitehealthThreshold );
+				esc_html_e( 'Site health threshold', 'mainwp' );
+				?>
+				</label>
 				<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set preferred site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
 					<select name="mainwp_setup_site_healthThreshold" id="mainwp_setup_site_healthThreshold" class="ui dropdown">
 						<option value="80" <?php echo ( ( 80 === $sitehealthThreshold || 0 === $sitehealthThreshold ) ? 'selected' : '' ); ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
@@ -855,16 +869,6 @@ class MainWP_Setup_Wizard {
 		// phpcs:enable
 		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
-	}
-
-	/**
-	 * Method mwp_setup_ready_actions()
-	 *
-	 * Delete option 'mainwp_run_quick_setup' when Quick Wizard
-	 * Setup is completed.
-	 */
-	private function mwp_setup_ready_actions() {
-		delete_option( 'mainwp_run_quick_setup' );
 	}
 
 	/**

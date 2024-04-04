@@ -1292,7 +1292,7 @@ class MainWP_System_Utility {
 	 * @param int    $max_width max image width.
 	 * @param int    $max_height max image height.
 	 */
-	public static function handle_upload_image( $sub_folder, $file_uploader, $file_index, $file_subindex = false, $max_width = 300, $max_height = 300 ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function handle_upload_image( $sub_folder, $file_uploader, $file_index = 0, $file_subindex = false, $max_width = 300, $max_height = 300 ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$dirs     = self::get_mainwp_dir( $sub_folder, true );
 		$base_dir = $dirs[0];

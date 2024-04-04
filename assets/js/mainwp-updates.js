@@ -1860,9 +1860,9 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                     for (var i = 0; i < slugParts.length; i++) {
                         var result;
                         success = false;
-                        var websiteHolder = jQuery('div[theme_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
+                        var websiteHolder = jQuery('div[plugin_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
                         if (!websiteHolder.exists()) {
-                            websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + slugParts[i] + '"]');
+                            websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[plugin_slug="' + slugParts[i] + '"]');
                         }
                         if (response.error) {
                             result = getErrorMessage(response.error);

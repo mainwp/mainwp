@@ -496,6 +496,10 @@ class MainWP_Menu {
 					'right'      => '',
 				);
 
+				if ( ! empty( $subPage['before_title'] ) ) {
+					$item['before_title'] = $subPage['before_title'];
+				}
+
 				// To support check right to open menu for sometime.
 				if ( isset( $subPage['item_slug'] ) ) {
 					$_item['item_slug'] = $subPage['item_slug'];
@@ -562,7 +566,8 @@ class MainWP_Menu {
 			$level = 1;
 		}
 
-		$title = $params['title'];
+		$title        = $params['title'];
+		$before_title = ! empty( $params['before_title'] ) ? $params['before_title'] : '';
 
 		$slug  = isset( $params['slug'] ) ? $params['slug'] : '';
 		$href  = $params['href'];
@@ -629,7 +634,7 @@ class MainWP_Menu {
 			if ( empty( $parent_key ) ) {
 				$parent_key = 'mainwp_tab'; // forced value.
 			}
-			$mainwp_sub_leftmenu[ $parent_key ][] = array( $title, $href, $right, $id, $slug, $leftsub_order_level2, $ext_state, $active_path );
+			$mainwp_sub_leftmenu[ $parent_key ][] = array( $title, $href, $right, $id, $slug, $leftsub_order_level2, $ext_state, $active_path, $before_title );
 		}
 
 		if ( ! empty( $slug ) ) {
@@ -1348,7 +1353,7 @@ class MainWP_Menu {
 		 *
 		 * @global object $mainwp_sub_leftmenu
 		 */
-		global $mainwp_sub_leftmenu;
+		global $mainwp_sub_leftmenu, $_mainwp_menu_active_slugs;
 
 		$submenu_items = $mainwp_sub_leftmenu[ $parent_key ];
 
@@ -1358,16 +1363,19 @@ class MainWP_Menu {
 
 		global $plugin_page;
 
+		$set_actived = false;
+
 		MainWP_Utility::array_sort_existed_keys( $submenu_items, 5 ); //phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- 5 => 'leftsub_order_level2'.
 
 		foreach ( $submenu_items as $sub_key => $sub_item ) {
-			$title       = $sub_item[0];
-			$href        = $sub_item[1];
-			$right       = $sub_item[2];
-			$id          = isset( $sub_item[3] ) ? $sub_item[3] : '';
-			$slug        = isset( $sub_item[4] ) ? $sub_item[4] : '';
-			$ext_state   = isset( $sub_item[6] ) ? $sub_item[6] : '';
-			$active_path = isset( $sub_item[7] ) ? $sub_item[7] : '';
+			$title        = $sub_item[0];
+			$href         = $sub_item[1];
+			$right        = $sub_item[2];
+			$id           = isset( $sub_item[3] ) ? $sub_item[3] : '';
+			$slug         = isset( $sub_item[4] ) ? $sub_item[4] : '';
+			$ext_state    = isset( $sub_item[6] ) ? $sub_item[6] : '';
+			$active_path  = isset( $sub_item[7] ) ? $sub_item[7] : '';
+			$before_title = isset( $sub_item[8] ) ? $sub_item[8] : '';
 
 			$item_classes = 'inactive' === $ext_state ? 'extension-inactive' : '';
 
@@ -1376,13 +1384,33 @@ class MainWP_Menu {
 				$_blank = true;
 			}
 
-			$level2_active = self::is_level2_menu_item_active( $href ) ? true : false;
+			$level2_active = false;
 
-			if ( is_array( $active_path ) && ! empty( $active_path ) ) {
-				reset( $active_path );
-				$item = key( $active_path );
-				if ( $item === $plugin_page ) {
-					$level2_active = true;
+			if ( ! $set_actived ) {
+				$level2_active = self::is_level2_menu_item_active( $href ) ? true : false;
+				if ( is_array( $active_path ) && ! empty( $active_path ) ) {
+					reset( $active_path );
+					$item = key( $active_path );
+					if ( $item === $plugin_page ) {
+						$level2_active = true;
+					}
+				}
+				// hard fix managesite menu items active status.
+				//phpcs:disable WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+				if ( false !== strpos( $href, 'admin.php?page=managesites' ) ) {
+					$page_name     = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
+					$level2_active = false;
+					if ( isset( $_GET['do'] ) && 'new' === $_GET['do'] && false !== strpos( $href, 'admin.php?page=managesites&do=new' ) ) {
+						$level2_active = true;
+					} elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] && false !== strpos( $href, 'admin.php?page=managesites&do=bulknew' ) ) {
+						$level2_active = true;
+					} elseif ( ! isset( $_GET['do'] ) && 'NonMainWPChanges' !== $page_name && 'admin.php?page=managesites' === $href ) {
+						$level2_active = true;
+					}
+				}
+				//phpcs:enable WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+				if ( $level2_active ) {
+					$set_actived = true;
 				}
 			}
 
@@ -1396,7 +1424,7 @@ class MainWP_Menu {
 			if ( empty( $right ) || ( ! empty( $right ) && mainwp_current_user_have_right( $right_group, $right ) ) ) {
 				?>
 				<a class="item <?php echo $level2_active ? 'active level-two-active' : ''; ?> <?php echo esc_attr( $item_classes ); ?>" href="<?php echo esc_url( $href ); ?>" id="<?php echo esc_attr( $slug ); ?>" <?php echo $_blank ? 'target="_blank"' : ''; ?>>
-					<?php echo $title; //phpcs:ignore -- requires escaped. ?>
+					<?php echo $before_title . $title; //phpcs:ignore -- requires escaped. ?>
 				</a>
 				
 				<?php

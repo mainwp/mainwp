@@ -114,9 +114,9 @@ mainwppage_postAction = function (elem, what) {
     rowElement.html('<td colspan="99"><i class="notched circle loading icon"></i> Please wait...</td>');
     jQuery.post(ajaxurl, data, function (response) {
         if (response.error) {
-            rowElement.html('<td colspan="99"><i class="times circle red icon"></i>' + response.error + '</td>');
+            rowElement.html('<td colspan="99"><i class="times red icon"></i>' + response.error + '</td>');
         } else if (response.result) {
-            rowElement.html('<td colspan="99"><i class="check circle green icon"></i> ' + response.result + '</td>');
+            rowElement.html('<td colspan="99"><i class="green check icon"></i> ' + response.result + '</td>');
             if (jQuery(rowElement).hasClass('child')) {
                 jQuery(rowElement).prev().hide();
             }
@@ -333,9 +333,9 @@ mainwppost_postAction = function (elem, what, postType) {
     rowElement.html('<td colspan="99"><i class="notched circle loading icon"></i> Please wait...</td>');
     jQuery.post(ajaxurl, data, function (response) {
         if (response.error) {
-            rowElement.html('<td colspan="99"><i class="times circle red icon"></i>' + response.error + '</td>');
+            rowElement.html('<td colspan="99"><i class="times red icon"></i>' + response.error + '</td>');
         } else if (response.result) {
-            rowElement.html('<td colspan="99"><i class="check circle green icon"></i> ' + response.result + '</td>');
+            rowElement.html('<td colspan="99"><i class="green check icon"></i> ' + response.result + '</td>');
             if (jQuery(rowElement).hasClass('child')) {
                 jQuery(rowElement).prev().hide();
             }

@@ -18,7 +18,7 @@ jQuery(document).ready(function () {
       });
       jQuery.post(ajaxurl, data, function (response) {
         if (response.success) {
-          rowElement.html('<td colspan="8"><i class="check circle icon"></i> ' + response.result + '</td>');
+          rowElement.html('<td colspan="8"><i class="green check icon"></i> ' + response.result + '</td>');
         }
       }, 'json');
     }
@@ -46,9 +46,35 @@ jQuery(document).ready(function () {
     });
   });
 
+  jQuery('#mainwp_edit_clients_icon_select').dropdown({
+    onChange: function (val) {
+      jQuery('#client_fields\\[default_field\\]\\[selected_icon\\]').val(val);
+    }
+  });
+
+  jQuery('.mainwp-edit-clients-select-contact-icon').dropdown({
+    onChange: function (val) {
+      var parent = jQuery(this).closest('.mainwp_edit_clients_contact_icon_wrapper');
+      var inname = parent.attr('input-name');
+      if (undefined !== inname) {
+        jQuery(parent).find('#client_fields\\[' + inname + '\\]\\[selected_icon\\]\\[\\]').val(val);
+      }
+    }
+  });
+
   jQuery(document).on('click', '.mainwp-client-add-contact', function () {
     var templ = jQuery(this).attr('add-contact-temp');
     jQuery('.after-add-contact-field').after(templ);
+    var justAdded = jQuery('.after-add-contact-field').next().next().next().next().next();
+    jQuery(justAdded).find('.mainwp-edit-clients-select-contact-icon').dropdown({
+      onChange: function (val) {
+        var parent = jQuery(this).closest('.mainwp_edit_clients_contact_icon_wrapper');
+        var inname = parent.attr('input-name');
+        if (undefined !== inname) {
+          jQuery(parent).find('#client_fields\\[' + inname + '\\]\\[selected_icon\\]\\[\\]').val(val);
+        }
+      }
+    });
   });
 
   jQuery(document).on('click', '.mainwp-client-remove-contact', function () {
@@ -170,9 +196,9 @@ mainwp_manageclients_bulk_remove_specific = function (pCheckedBox) {
     }
 
     if (error != '') {
-      rowObj.html('<td colspan="999"><i class="red times icon"></i>' + error + '</td>');
+      rowObj.html('<td colspan="999"><i class="red times icon"></i> ' + error + '</td>');
     } else {
-      rowObj.html('<td colspan="999"><i class="green check icon"></i>' + result + '</td>');
+      rowObj.html('<td colspan="999"><i class="green check icon"></i> ' + result + '</td>');
     }
     setTimeout(function () {
       jQuery('tr[clientid=' + id + ']').fadeOut(1000);
@@ -391,13 +417,13 @@ jQuery(document).on('click', '#mainwp-clients-delete-general-field', function ()
   if (confirm(__('Are you sure you want to delete this field?'))) {
 
     var parent = jQuery(this).closest('.mainwp-field');
-
     jQuery.post(ajaxurl, mainwp_secure_data({
       action: 'mainwp_clients_delete_general_field',
       field_id: parent.attr('field-id'),
     }), function (data) {
+      jQuery('#mainwp-message-zone-client').hide();
       if (data && data.success) {
-        parent.html('<td colspan="3">' + __('Field has been deleted successfully.') + '</td>').fadeOut(3000);
+        parent.html('<td colspan="3"><i class="green check icon"></i> ' + __('Field has been deleted successfully.') + '</td>').fadeOut(3000);
       } else {
         jQuery('#mainwp-message-zone-client').html(__('Field can not be deleted.')).addClass('red').show();
       }
@@ -419,7 +445,7 @@ jQuery(document).on('click', '#mainwp-clients-delete-individual-field', function
       client_id: jQuery(this).attr('client-id'),
     }), function (data) {
       if (data && data.success) {
-        parent.html('<td colspan="3">' + __('Field has been deleted successfully.') + '</td>').fadeOut(3000);
+        parent.html('<td colspan="3"><i class="green check icon"></i> ' + __('Field has been deleted successfully.') + '</td>').fadeOut(3000);
       } else {
         jQuery('#mainwp-message-zone-client').html(__('Field can not be deleted.')).addClass('red').show();
       }

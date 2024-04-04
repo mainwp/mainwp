@@ -540,7 +540,7 @@ class MainWP_System_Cron_Jobs {
 			}
 		}
 
-		MainWP_Logger::instance()->info( 'updates check found' . count( $checkupdate_websites ) . ' websites' );
+		MainWP_Logger::instance()->info( 'updates check found ' . count( $checkupdate_websites ) . ' websites' );
 		MainWP_Logger::instance()->log_update_check( 'updates check found [' . count( $checkupdate_websites ) . ' websites] :: going to check [' . count( $websites ) . ' websites]' );
 
 		$userid = null;

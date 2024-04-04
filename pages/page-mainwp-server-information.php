@@ -565,18 +565,18 @@ class MainWP_Server_Information {
 		</script>
 		</div>
 
-						<?php
+		<?php
 
-						/**
-						 * Action: mainwp_after_server_info_table
-						 *
-						 * Fires on the bottom of the Info page, after the Server Info table.
-						 *
-						 * @since 4.0
-						 */
-						do_action( 'mainwp_after_server_info_table' );
+		/**
+		 * Action: mainwp_after_server_info_table
+		 *
+		 * Fires on the bottom of the Info page, after the Server Info table.
+		 *
+		 * @since 4.0
+		 */
+		do_action( 'mainwp_after_server_info_table' );
 
-						self::render_footer( '' );
+		self::render_footer( '' );
 	}
 
 	/**
@@ -1120,7 +1120,7 @@ class MainWP_Server_Information {
 			"paging": <?php echo esc_html( $table_features['paging'] ); ?>,
 			"info": <?php echo esc_html( $table_features['info'] ); ?>,
 				"responsive": responsive,
-			} );
+			}
 		} );
 		</script>
 		</div>

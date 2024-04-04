@@ -1954,9 +1954,16 @@ class Api_Backups_3rd_Party {
 		curl_setopt( $curl, CURLOPT_HTTPHEADER, $headers );
 		curl_setopt( $curl, CURLOPT_POSTFIELDS, $data );
 
-		// for debug only!
-		curl_setopt( $curl, CURLOPT_SSL_VERIFYHOST, false );
-		curl_setopt( $curl, CURLOPT_SSL_VERIFYPEER, false );
+		$ssl_verifyhost = ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) );
+
+		if ( $ssl_verifyhost ) {
+			curl_setopt( $curl, CURLOPT_SSL_VERIFYHOST, 2 );
+			curl_setopt( $curl, CURLOPT_SSL_VERIFYPEER, true );
+		} else {
+			// for debug only!
+			curl_setopt( $curl, CURLOPT_SSL_VERIFYHOST, false ); // NOSONAR .
+			curl_setopt( $curl, CURLOPT_SSL_VERIFYPEER, false ); // NOSONAR .
+		}
 
 		$resp = curl_exec( $curl );
 
@@ -2384,7 +2391,6 @@ class Api_Backups_3rd_Party {
 	 *
 	 * Request for all sites for current user token.
 	 *
-	 * @param int $sites_count sites count.
 	 * @return object|bool Return Sites Object.
 	 */
 	public static function gridpane_get_domain_list() {

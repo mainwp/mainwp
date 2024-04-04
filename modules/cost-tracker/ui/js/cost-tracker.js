@@ -113,9 +113,6 @@ jQuery(document).ready(function ($) {
 		jQuery(justAdded).find('.mainwp-module-cost-tracker-select-custom-product-types-icons').dropdown( {							
 			onChange: function( val ) {
 				var parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
-				if(jQuery(parent).find('.module_cost_tracker_settings_upload_img_display').length > 0){
-					jQuery( '.module_cost_tracker_settings_upload_img_display').hide();
-				}							
 				jQuery(parent).find('input[name="cost_tracker_custom_product_types[icon][]"]' ).val('deficon:' + val);
 			}
 		} );
@@ -247,12 +244,12 @@ mainwp_module_cost_tracker_delete_start_specific = function (pObj, selector, pBu
 			if (response['error']) {
 				row.html('<td></td><td colspan="999"><i class="times red icon"></i> ' + response['error'] + ' Page will reload in 3 seconds.</td>');
 			} else if (response['status'] == 'success') {
-				row.html('<td></td><td colspan="999"><i class="green check icon"></i> Successfully.</td>');
+				row.html('<td></td><td colspan="999"><i class="green check icon"></i> The Cost has been deleted.</td>');
 			} else {
-				row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
+				row.html('<td></td><td colspan="999"><i class="times red icon"></i> The Cost could not be deleted.</td>');
 			}
 		} else {
-			row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
+			row.html('<td></td><td colspan="999"><i class="times red icon"></i> The Cost could not be deleted.</td>');
 		}
 
 		if (bulk) {

@@ -11,6 +11,7 @@ namespace MainWP\Dashboard\Module\CostTracker;
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_System_Utility;
+use MainWP\Dashboard\MainWP_Settings_Indicator;
 use function MainWP\Dashboard\mainwp_current_user_have_right;
 use function MainWP\Dashboard\mainwp_do_not_have_permissions;
 
@@ -94,7 +95,10 @@ class Cost_Tracker_Settings {
 
 		$currencies        = Cost_Tracker_Utility::get_all_currency_symbols();
 		$selected_currency = Cost_Tracker_Utility::get_instance()->get_option( 'currency' );
-		$currency_format   = Cost_Tracker_Utility::get_instance()->get_option( 'currency_format', array() );
+		if ( empty( $selected_currency ) ) {
+			$selected_currency = 'USD';
+		}
+		$currency_format = Cost_Tracker_Utility::get_instance()->get_option( 'currency_format', array() );
 
 		if ( ! is_array( $currency_format ) ) {
 			$currency_format = array();
@@ -119,7 +123,7 @@ class Cost_Tracker_Settings {
 		$product_types_default_icons = Cost_Tracker_Admin::get_default_product_types_icons();
 
 		if ( isset( $_GET['message'] ) && ! empty( $_GET['message'] ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$message = esc_html__( 'Settings saved successfully!', 'mainwp' );
+			$message = esc_html__( 'Cost Tracker settings saved successfully.', 'mainwp' );
 			?>
 			<div class="ui green message" id="mainwp-module-cost-tracker-message-zone" >
 				<?php echo esc_html( $message ); ?>
@@ -128,8 +132,10 @@ class Cost_Tracker_Settings {
 			<?php
 		}
 		?>
-		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Currency', 'mainwp' ); ?></label>
+		<div class="ui grid field settings-field-indicator-cost-settings">
+			<label class="six wide column middle aligned">
+			<?php MainWP_Settings_Indicator::render_not_default_indicator( 'cost_tracker_currency_selected', $selected_currency ); ?>
+			<?php esc_html_e( 'Currency', 'mainwp' ); ?></label>
 			<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select preferred currency.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 				<select id="mainwp_module_cost_tracker_settings_currency" name="mainwp_module_cost_tracker_settings_currency" class="ui search selection dropdown">
 					<?php foreach ( $currencies as $code => $name ) : ?>
@@ -153,8 +159,13 @@ class Cost_Tracker_Settings {
 			'right_space' => esc_html__( 'Right Space', 'mainwp' ),
 		);
 		?>
-		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Currency symbol position ', 'mainwp' ); ?></label>
+		<div class="ui grid field settings-field-indicator-cost-settings">
+			<label class="six wide column middle aligned">
+			<?php
+			MainWP_Settings_Indicator::render_not_default_indicator( 'cost_tracker_currency_position', $currency_position );
+			esc_html_e( 'Currency symbol position', 'mainwp' );
+			?>
+			</label>
 			<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Choose the position of the currency symbol: before or after the amount.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 				<div class="ui selection dropdown">
 					<input type="hidden" name="mainwp_module_cost_tracker_currency_format[currency_position]" value="<?php echo esc_attr( $currency_position ); ?>">
@@ -173,26 +184,46 @@ class Cost_Tracker_Settings {
 			</div>
 		</div>
 			
-		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Thousand separator', 'mainwp' ); ?></label>
+		<div class="ui grid field settings-field-indicator-cost-settings">
+			<label class="six wide column middle aligned">
+			<?php
+			MainWP_Settings_Indicator::render_not_default_indicator( 'cost_tracker_thousand_separator', $thousand_separator );
+			esc_html_e( 'Thousand separator', 'mainwp' );
+			?>
+			</label>
 			<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select a separator for thousands to enhance number readability.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 				<input type="text" name="mainwp_module_cost_tracker_currency_format[thousand_separator]" value="<?php echo esc_html( $thousand_separator ); ?>" class="regular-text"/>
 			</div>
 		</div>
-		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Decimal separator', 'mainwp' ); ?></label>
+		<div class="ui grid field settings-field-indicator-cost-settings">
+			<label class="six wide column middle aligned">
+			<?php
+			MainWP_Settings_Indicator::render_not_default_indicator( 'cost_tracker_decimal_separator', $decimal_separator );
+			esc_html_e( 'Decimal separator', 'mainwp' );
+			?>
+			</label>
 			<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Choose a symbol to separate decimal portions in numbers.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 				<input type="text" name="mainwp_module_cost_tracker_currency_format[decimal_separator]" value="<?php echo esc_html( $decimal_separator ); ?>" class="regular-text"/>
 			</div>
 		</div>
-		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Decimal places', 'mainwp' ); ?></label>
+		<div class="ui grid field settings-field-indicator-cost-settings">
+			<label class="six wide column middle aligned">
+			<?php
+			MainWP_Settings_Indicator::render_not_default_indicator( 'cost_tracker_decimals', intval( $decimals ) );
+			esc_html_e( 'Decimal places', 'mainwp' );
+			?>
+			</label>
 			<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Set the number of decimal places for numerical values.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 			<input type="number" name="mainwp_module_cost_tracker_currency_format[decimals]" id="mainwp_module_cost_tracker_currency_format[decimals]" class="small-text" placeholder="" min="1" max="8" step="1" value="<?php echo intval( $decimals ); ?>">
 			</div>
 		</div>
-		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Default product categories', 'mainwp' ); ?></label>
+		<div class="ui grid field settings-field-indicator-cost-settings ">
+			<label class="six wide column middle aligned">
+			<?php
+			MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $cust_product_types );
+			esc_html_e( 'Default product categories', 'mainwp' );
+			?>
+			</label>
 			<div class="ui five wide column" data-tooltip="<?php esc_attr_e( 'Customize and create product categories.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 				<?php
 				if ( is_array( $default_product_types ) ) {
@@ -269,8 +300,13 @@ class Cost_Tracker_Settings {
 			</div>
 		</div>
 
-		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Custom payment methods', 'mainwp' ); ?></label>
+		<div class="ui grid field settings-field-indicator-cost-settings">
+			<label class="six wide column middle aligned">
+			<?php
+			MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $cust_payment_methods );
+			esc_html_e( 'Custom payment methods', 'mainwp' );
+			?>
+			</label>
 			<div class="ui ten wide column module-cost-tracker-settings-custom-payment-methods-wrapper" data-tooltip="<?php esc_attr_e( 'Create custom payment methods.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 				<?php
 				foreach ( $cust_payment_methods as $slug => $title ) {
@@ -303,9 +339,6 @@ class Cost_Tracker_Settings {
 						jQuery( '.mainwp-module-cost-tracker-select-default-icons' ).dropdown( {							
 							onChange: function( val ) {
 								var parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
-								if(jQuery(parent).find('.module_cost_tracker_settings_upload_img_display').length > 0){
-									jQuery( '.module_cost_tracker_settings_upload_img_display').hide();
-								}								
 								jQuery(parent).find('input[name="cost_tracker_default_product_types[icon][]"]' ).val('deficon:' + val);
 							}
 						} );
@@ -313,55 +346,9 @@ class Cost_Tracker_Settings {
 						jQuery( '.mainwp-module-cost-tracker-select-custom-product-types-icons' ).dropdown( {							
 							onChange: function( val ) {
 								var parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
-								if(jQuery(parent).find('.module_cost_tracker_settings_upload_img_display').length > 0){
-									jQuery( '.module_cost_tracker_settings_upload_img_display').hide();
-								}								
 								jQuery(parent).find('input[name="cost_tracker_custom_product_types[icon][]"]' ).val('deficon:' + val);
 							}
 						} );
-
-						jQuery(document).on('click', '.module-cost-tracker-settings-product-type-icon-customable', function () {
-							var parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
-							var iconObj = jQuery(this);
-							jQuery('#mainwp_delete_image_field').hide();
-							jQuery('#mainwp-upload-custom-icon-modal').modal('setting', 'closable', false).modal('show');
-							jQuery('#update_custom_icon_btn').removeAttr('disabled');
-							if (iconObj.attr('icon-src') != '') {
-								jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', iconObj.attr('icon-src'));
-								jQuery('#mainwp_delete_image_field').show();
-							}
-							jQuery(document).on('click', '#update_custom_icon_btn', function () {
-									mainwp_upload_custom_types_icon(iconObj, 'mainwp_module_cost_tracker_upload_product_icon', function(response){
-										if (jQuery('#mainwp_module_cost_tracker_edit_icon_hidden').length > 0) {
-											if (typeof response.iconfile !== undefined) {
-												jQuery('#mainwp_module_cost_tracker_edit_icon_hidden').val(response.iconfile);
-											} else {
-												jQuery('#mainwp_module_cost_tracker_edit_icon_hidden').val('');
-											}
-										}
-										var deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
-										if(deleteIcon){
-											jQuery(parent).find('.module_cost_tracker_settings_upload_img_display').hide();
-										} else if (jQuery('#module_cost_tracker_settings_upload_img_display').length > 0) {
-											if (typeof response.iconfile !== undefined) {
-												var scr = response.iconsrc !== undefined ? response.iconsrc : '';
-												iconObj.attr('icon-src', scr);
-												jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', scr);
-												jQuery(parent).find('.module_cost_tracker_settings_upload_img_display').attr('src', scr);
-												jQuery(parent).find('.module_cost_tracker_settings_upload_img_display').attr('style', 'display:inline-block');
-												jQuery(parent).find('.module_cost_tracker_settings_upload_img_display').show();
-											}
-										}
-										setTimeout(function () {
-											//window.location.href = location.href;
-											jQuery('#mainwp-upload-custom-icon-modal').modal('hide')
-										}, 1000);
-									});
-									return false;
-							});
-						});
-
-
 					} );
 				</script>
 		<?php

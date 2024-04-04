@@ -269,7 +269,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_get_categories() {
 		$this->secure_request( 'mainwp_get_categories' );
-		MainWP_Post_Page_Handler::get_categories();
+		MainWP_Post_Page_Handler::ajax_handle_get_categories();
 		die();
 	}
 
@@ -537,9 +537,29 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_status_saving' );
 		$values = get_option( 'mainwp_status_saved_values' );
 
+		if ( ! is_array( $values ) ) {
+			$values = array();
+		}
+
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! isset( $_POST['status'] ) ) {
 			die( -1 );
+		}
+
+		if ( 'save_indicator_values' === $_POST['status'] ) {
+
+			if ( ! empty( $_POST['name'] ) ) {
+				$current_values = is_array( $values ) && isset( $values['save_indicator_values'] ) && ! empty( $values['save_indicator_values'] ) ? json_decode( $values['save_indicator_values'], true ) : array();
+				if ( ! is_array( $current_values ) ) {
+					$current_values = array();
+				}
+				$current_values[ sanitize_text_field( wp_unslash( $_POST['name'] ) ) ] = isset( $_POST['value'] ) ? intval( wp_unslash( $_POST['value'] ) ) : 0;
+
+				$values['save_indicator_values'] = wp_json_encode( $current_values );
+				update_option( 'mainwp_status_saved_values', $values );
+				die( 'ok' );
+			}
+			die( 'failed' );
 		}
 
 		if ( 'last_sync_sites' === $_POST['status'] ) {

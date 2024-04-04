@@ -9,6 +9,7 @@
 namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_Utility;
+use MainWP\Dashboard\MainWP_Settings_Indicator;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -84,6 +85,7 @@ class Log_Settings {
 	 * @action init
 	 */
 	public function add_subpage_menu_settings( $subpages = array() ) {
+		$active     = isset( $_GET['page'] ) && 'SettingsInsights' === $_GET['page'] ? true : false; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$subpages[] = array(
 			'title'    => esc_html__( 'Dashboard Insights', 'mainwp' ),
 			'slug'     => 'Insights',
@@ -174,9 +176,16 @@ class Log_Settings {
 			<div class="ui form">
 				<form method="post" class="mainwp-table-container">
 					<div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
-						<h3 class="ui dividing header"><?php esc_html_e( 'Dashboard Insights Settings', 'mainwp' ); ?></h3>
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable insights logging', 'mainwp' ); ?></label>
+						<h3 class="ui dividing header">
+						<?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-insights', 'insights-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						<?php esc_html_e( 'Dashboard Insights Settings', 'mainwp' ); ?></h3>
+						<div class="ui grid field settings-field-indicator-insights">
+							<label class="six wide column middle aligned">
+							<?php
+							MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_module_log_enabled', (int) $enabled );
+							esc_html_e( 'Enable insights logging', 'mainwp' );
+							?>
+							</label>
 							<div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will enable logging.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
 								<input type="checkbox" name="mainwp_module_log_enabled" id="mainwp_module_log_enabled" <?php echo ( $enabled ? 'checked="true"' : '' ); ?> /><label><?php esc_html_e( 'Default: Enabled', 'mainwp' ); ?></label>
 							</div>

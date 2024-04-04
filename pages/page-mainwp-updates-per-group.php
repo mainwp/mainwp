@@ -1029,13 +1029,11 @@ class MainWP_Updates_Per_Group {
 										<table class="ui mainwp-manage-updates-table table" id="mainwp-abandoned-plugins-table">
 											<thead class="mainwp-768-hide">
 												<tr>
-													<tr>
-														<th></th>
-														<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-														<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-														<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
-														<th class="no-sort"></th>
-													</tr>
+													<th></th>
+													<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+													<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+													<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
+													<th class="no-sort"></th>
 												</tr>
 											</thead>
 											<tbody site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>">
@@ -1190,12 +1188,10 @@ class MainWP_Updates_Per_Group {
 										<table class="ui mainwp-manage-updates-item-table mainwp-manage-updates-table table" id="mainwp-abandoned-themes-table">
 											<thead class="mainwp-768-hide">
 												<tr>
-													<tr>
-														<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-														<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-														<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
-														<th class="no-sort"></th>
-													</tr>
+													<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+													<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+													<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
+													<th class="no-sort"></th>
 												</tr>
 											</thead>
 											<tbody site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>">

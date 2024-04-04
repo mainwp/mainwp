@@ -244,7 +244,7 @@ jQuery(document).ready(function () {
             return function (response) {
                 var rowEl = jQuery('tr[plugin-slug="' + pSlug + '"]');
                 if (response.result == 'SUCCESS') {
-                    jQuery('#mainwp-notes-status').html('<i class="check circle green icon"></i> ' + __('Note saved!'));
+                    jQuery('#mainwp-notes-status').html('<i class="green check icon"></i> ' + __('Note saved!'));
                     rowEl.find('.esc-content-note').html(jQuery('#mainwp-notes-note').val());
 
                     if (newnote == '') {
@@ -254,9 +254,9 @@ jQuery(document).ready(function () {
                     }
 
                 } else if (response.error != undefined) {
-                    jQuery('#mainwp-notes-status').html('<i class="times circle red icon"></i> ' + __('Undefined error occured while saving your note') + ': ' + response.error);
+                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + __('Undefined error occured while saving your note') + ': ' + response.error);
                 } else {
-                    jQuery('#mainwp-notes-status').html('<i class="times circle red icon"></i> ' + __('Undefined error occured while saving your note') + '.');
+                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + __('Undefined error occured while saving your note') + '.');
                 }
             }
         }(slug), 'json');
@@ -292,7 +292,7 @@ jQuery(document).ready(function () {
             return function (response) {
                 var rowEl = jQuery('tr[theme-slug="' + pSlug + '"]');
                 if (response.result == 'SUCCESS') {
-                    jQuery('#mainwp-notes-status').html('<i class="check circle green icon"></i> ' + __('Note saved!'));
+                    jQuery('#mainwp-notes-status').html('<i class="green check icon"></i> ' + __('Note saved!'));
                     rowEl.find('.esc-content-note').html(jQuery('#mainwp-notes-note').val());
                     if (newnote == '') {
                         rowEl.find('.mainwp-edit-theme-note').html('<i class="sticky note outline icon"></i>');
@@ -300,9 +300,9 @@ jQuery(document).ready(function () {
                         rowEl.find('.mainwp-edit-theme-note').html('<i class="sticky green note icon"></i>');
                     }
                 } else if (response.error != undefined) {
-                    jQuery('#mainwp-notes-status').html('<i class="times circle red icon"></i> ' + __('Undefined error occured while saving your note!') + ': ' + response.error);
+                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + __('Undefined error occured while saving your note!') + ': ' + response.error);
                 } else {
-                    jQuery('#mainwp-notes-status').html('<i class="times circle red icon"></i> ' + __('Undefined error occured while saving your note!'));
+                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + __('Undefined error occured while saving your note!'));
                 }
             }
         }(slug), 'json');
@@ -441,7 +441,7 @@ mainwp_fetch_all_themes = function () {
 /**
  * MainWP_Themes.page
  */
-jQuery(document).ready(function () {
+jQuery(function () {
     jQuery(document).on('click', '#mainwp_show_themes', function () {
         mainwp_fetch_themes();
     });
@@ -692,7 +692,7 @@ mainwp_fetch_themes = function () {
 /**
  * Plugins manages.
  */
-jQuery(document).ready(function () {
+jQuery(function () {
     jQuery(document).on('click', '.mainwp-manage-plugin-deactivate', function () {
         manage_plugin_Action(jQuery(this), 'deactivate');
         return false;
@@ -717,26 +717,27 @@ manage_plugin_Action = function (elem, what) {
         plugin: plugin,
         websiteId: websiteId
     });
-    var parent = jQuery(elem).closest('.column.column-actions');
-    jQuery(parent).html('<i class="notched circle loading icon"></i>' + __('Please wait...') + '</div>');
+    var start_row = '<div class="one wide center aligned middle aligned column"></div><div class="thirteen wide left aligned middle aligned column">';
+    var end_row = '</div>';
+    jQuery(rowElement).html(start_row + '<i class="notched circle loading icon"></i>' + __('Please wait...') + end_row);
     jQuery.post(ajaxurl, data, function (response) {
         if (response && response.error) {
-            jQuery(parent).html('<span data-tooltip="' + response.error + '" data-inverted="" data-position="left center"><i class="times red icon"></i></span>');
+            jQuery(rowElement).html(start_row + '<span data-tooltip="' + response.error + '" data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
         } else if (response && response.result) {
             if (what == 'delete') {
-                jQuery(rowElement).html('<i class="check circle green icon"></i> ' + response.result);
+                jQuery(rowElement).html(start_row + '<i class="green check icon"></i> ' + response.result + '</div>');
                 setTimeout(function () {
                     jQuery(rowElement).fadeOut(1000);
                 }, 1000);
 
             } else {
-                jQuery(parent).html('<i class="check circle green icon"></i> ' + response.result);
+                jQuery(rowElement).html(start_row + '<i class="green check icon"></i> ' + response.result + end_row);
             }
             setTimeout(function () {
                 mainwp_fetch_plugins();
             }, 3000);
         } else {
-            jQuery(parent).html('<span data-tooltip="Undefined error occured. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>');
+            jQuery(rowElement).html(start_row + '<span data-tooltip="Undefined error occured. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
         }
     }, 'json');
 
@@ -844,7 +845,7 @@ manage_plugins_upgrade_int = function (slug, websiteId) {
 /**
  * Themes manage.
  */
-jQuery(document).ready(function () {
+jQuery(function () {
     jQuery(document).on('click', '.mainwp-manages-theme-activate', function () {
         manages_themeAction(jQuery(this), 'activate');
         return false;
@@ -866,27 +867,28 @@ manages_themeAction = function (elem, what) {
         websiteId: websiteId
     });
 
-    var parent = jQuery(elem).closest('.column.column-actions');
-    jQuery(parent).html('<i class="notched circle loading icon"></i>' + __('Please wait...') + '</div>');
+    var start_row = '<div class="one wide center aligned middle aligned column"></div><div class="thirteen wide left aligned middle aligned column">';
+    var end_row = '</div>';
 
+    jQuery(rowElement).html(start_row + '<i class="notched circle loading icon"></i>' + __('Please wait...') + end_row);
     jQuery.post(ajaxurl, data, function (response) {
         if (response && response.error) {
-            jQuery(parent).html('<span data-tooltip="' + response.error + '" data-inverted="" data-position="left center"><i class="times red icon"></i></span>');
+            jQuery(rowElement).html(start_row + '<span data-tooltip="' + response.error + '" data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
         } else if (response && response.result) {
             if (what == 'delete') {
-                jQuery(rowElement).html('<i class="check circle green icon"></i> ' + response.result);
+                jQuery(rowElement).html(start_row + '<i class="green check icon"></i> ' + response.result + end_row);
                 setTimeout(function () {
                     jQuery(rowElement).fadeOut(1000);
                 }, 1000);
 
             } else {
-                jQuery(parent).html('<i class="check circle green icon"></i> ' + response.result);
+                jQuery(rowElement).html(start_row + '<i class="green check icon"></i> ' + response.result + end_row);
             }
             setTimeout(function () {
                 mainwp_fetch_themes();
             }, 3000);
         } else {
-            jQuery(parent).html('<span data-tooltip="Undefined error occured. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>');
+            jQuery(rowElement).html(start_row + '<span data-tooltip="Undefined error occured. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
         }
     }, 'json');
 

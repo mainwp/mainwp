@@ -838,6 +838,35 @@ class MainWP_Utility {
 	}
 
 	/**
+	 * Method parse_html_error_message()
+	 *
+	 * @param string $error_msg Error message.
+	 *
+	 * @return mixed array|string.
+	 */
+	public static function parse_html_error_message( $error_msg ) {
+		// pasing error message that included link html.
+		preg_match( '/([^\<]*)(<a[^\>]*>)([^\<]*)(<[^\>]*>)(.*)/', $error_msg, $output_array );
+		if ( is_array( $output_array ) && 6 === count( $output_array ) ) {
+			preg_match( '/<a href="([^\"]*)"(.*)/', $output_array[2], $link_array );
+			$link = '';
+			if ( is_array( $link_array ) && 3 === count( $link_array ) ) {
+				$link = $link_array[1];
+			}
+			if ( ! empty( $link ) ) {
+				$arr_msg = array(
+					'el_before' => esc_html( $output_array[1] ),
+					'el_link'   => esc_html( $link ),
+					'el_text'   => esc_html( $output_array[3] ),
+					'el_after'  => esc_html( $output_array[5] ),
+				);
+				return $arr_msg;
+			}
+		}
+		return $error_msg;
+	}
+
+	/**
 	 * Method show_mainwp_message()
 	 *
 	 * Check whenther or not to show the MainWP Message.
@@ -1567,5 +1596,22 @@ class MainWP_Utility {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Delete icon file.
+	 *
+	 * @param string $sub_dir Sub dir file icon.
+	 * @param string $cost_icon file icon.
+	 */
+	public function delete_uploaded_icon_file( $sub_dir, $cost_icon ) {
+		$valid_file = 0 === validate_file( $cost_icon ) ? true : false;
+		if ( $valid_file ) {
+			$dirs = MainWP_System_Utility::get_mainwp_dir( $sub_dir, true );
+			$f    = $dirs[0] . $cost_icon;
+			if ( file_exists( $f ) ) {
+				wp_delete_file( $f );
+			}
+		}
 	}
 }

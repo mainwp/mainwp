@@ -785,7 +785,39 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$plugin_upgrades      = json_decode( $website->plugin_upgrades, true );
 		$theme_upgrades       = json_decode( $website->theme_upgrades, true );
 		$translation_upgrades = json_decode( $website->translation_upgrades, true );
-		$data                 = array(
+
+		if ( $website->is_ignorePluginUpdates ) {
+			$plugin_upgrades = array();
+		}
+		if ( $website->is_ignoreThemeUpdates ) {
+			$theme_upgrades = array();
+		}
+
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
+		if ( is_array( $plugin_upgrades ) && ! empty( $plugin_upgrades ) ) {
+			$ignored_plugins = json_decode( $website->ignored_plugins, true );
+			if ( is_array( $ignored_plugins ) ) {
+				$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+			}
+			$ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
+			if ( is_array( $ignored_plugins ) ) {
+				$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+			}
+		}
+
+		if ( is_array( $theme_upgrades ) && ! empty( $theme_upgrades ) ) {
+			$ignored_themes = json_decode( $website->ignored_themes, true );
+			if ( is_array( $ignored_themes ) ) {
+				$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+			}
+
+			$ignored_themes = json_decode( $userExtension->ignored_themes, true );
+			if ( is_array( $ignored_themes ) ) {
+				$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+			}
+		}
+
+		$data = array(
 			'wp_core'     => $wp_upgrades,
 			'plugins'     => $plugin_upgrades,
 			'themes'      => $theme_upgrades,
@@ -858,8 +890,40 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_site_available_updates_count( $args = array(), $assoc_args = array(), $website = false ) {
-		$plugins      = json_decode( $website->plugin_upgrades, true );
-		$themes       = json_decode( $website->theme_upgrades, true );
+		$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
+		$theme_upgrades  = json_decode( $website->theme_upgrades, true );
+
+		if ( $website->is_ignorePluginUpdates ) {
+			$plugin_upgrades = array();
+		}
+		if ( $website->is_ignoreThemeUpdates ) {
+			$theme_upgrades = array();
+		}
+
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
+		if ( is_array( $plugin_upgrades ) && ! empty( $plugin_upgrades ) ) {
+			$ignored_plugins = json_decode( $website->ignored_plugins, true );
+			if ( is_array( $ignored_plugins ) ) {
+				$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+			}
+			$ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
+			if ( is_array( $ignored_plugins ) ) {
+				$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+			}
+		}
+
+		if ( is_array( $theme_upgrades ) && ! empty( $theme_upgrades ) ) {
+			$ignored_themes = json_decode( $website->ignored_themes, true );
+			if ( is_array( $ignored_themes ) ) {
+				$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+			}
+
+			$ignored_themes = json_decode( $userExtension->ignored_themes, true );
+			if ( is_array( $ignored_themes ) ) {
+				$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+			}
+		}
+
 		$translations = json_decode( $website->translation_upgrades, true );
 		$wp           = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
 		$wp           = ! empty( $wp ) ? json_decode( $wp, true ) : array();
@@ -869,11 +933,11 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		} else {
 			$wp = 0;
 		}
-		$total = array_merge( $plugins, $themes, $translations );
+		$total = array_merge( $plugin_upgrades, $theme_upgrades, $translations );
 		$data  = array(
 			'total'        => count( $total ) + $wp,
 			'wp'           => $wp,
-			'plugins'      => count( $plugins ),
+			'plugins'      => count( $plugin_upgrades ),
 			'themes'       => count( $themes ),
 			'translations' => count( $translations ),
 		);
@@ -1217,7 +1281,24 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		\WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
 
 		$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
-		$slugs           = array();
+
+		if ( $website->is_ignorePluginUpdates ) {
+			$plugin_upgrades = array();
+		}
+
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
+		if ( is_array( $plugin_upgrades ) && ! empty( $plugin_upgrades ) ) {
+			$ignored_plugins = json_decode( $website->ignored_plugins, true );
+			if ( is_array( $ignored_plugins ) ) {
+				$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+			}
+			$ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
+			if ( is_array( $ignored_plugins ) ) {
+				$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+			}
+		}
+
+		$slugs = array();
 		foreach ( $plugin_upgrades as $slug => $plugin ) {
 			$slugs[] = $slug;
 		}
@@ -1453,6 +1534,37 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 			$plugin_upgrades      = json_decode( $website->plugin_upgrades, true );
 			$theme_upgrades       = json_decode( $website->theme_upgrades, true );
 			$translation_upgrades = json_decode( $website->translation_upgrades, true );
+
+			if ( $website->is_ignorePluginUpdates ) {
+				$plugin_upgrades = array();
+			}
+			if ( $website->is_ignoreThemeUpdates ) {
+				$theme_upgrades = array();
+			}
+
+			$userExtension = MainWP_DB_Common::instance()->get_user_extension();
+			if ( is_array( $plugin_upgrades ) && ! empty( $plugin_upgrades ) ) {
+				$ignored_plugins = json_decode( $website->ignored_plugins, true );
+				if ( is_array( $ignored_plugins ) ) {
+					$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+				}
+				$ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
+				if ( is_array( $ignored_plugins ) ) {
+					$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+				}
+			}
+
+			if ( is_array( $theme_upgrades ) && ! empty( $theme_upgrades ) ) {
+				$ignored_themes = json_decode( $website->ignored_themes, true );
+				if ( is_array( $ignored_themes ) ) {
+					$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+				}
+
+				$ignored_themes = json_decode( $userExtension->ignored_themes, true );
+				if ( is_array( $ignored_themes ) ) {
+					$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+				}
+			}
 
 			\WP_CLI::line( \WP_CLI::colorize( '%B' . $website->name . ' (' . $website->url . ')%n' ) );
 			if ( 0 < count( $wp_upgrades ) ) {

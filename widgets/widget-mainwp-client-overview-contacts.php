@@ -93,14 +93,10 @@ class MainWP_Client_Overview_Contacts {
 				<?php if ( $contact_info ) { ?>
 						<div class="ui stackable grid">
 								<div class="four wide column">
-								<?php if ( empty( $contact_info['contact_image'] ) ) { ?>
-									<i class="user icon massive"></i>
-									<?php
-								} else {
-									$image_url = MainWP_Client_Handler::get_client_image_url( $contact_info['contact_image'] );
-									?>
-								<img class="ui circular medium image" src="<?php echo esc_attr( $image_url ); ?>">
-									<?php } ?>
+								<?php
+									$contact_display_image = MainWP_Client_Handler::get_client_contact_image( $contact_info, 'contact', 'card' );
+									echo $contact_display_image; //phpcs:ignore -- ok.
+								?>
 								</div>
 								<div class="twelve wide middle aligned column">
 							<div class="ui relaxed list">

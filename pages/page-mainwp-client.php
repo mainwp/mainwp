@@ -295,12 +295,8 @@ class MainWP_Client {
 		if ( $client_id ) {
 			$client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id );
 			if ( $client ) {
-				$client_pic = isset( $client->image ) ? MainWP_Client_Handler::get_client_image_url( $client->image ) : '';
-				if ( '' !== $client_pic ) {
-					$client_pic = '<img src="' . esc_attr( $client_pic ) . '" class="ui circurlar avatar image" />';
-				} else {
-					$client_pic  = '<i class="user circle icon"></i>'; // phpcs:ignore -- Prevent modify WP icon.
-				}
+				$arr_client      = MainWP_Utility::map_fields( $client, array( 'image', 'selected_icon_info' ), false ); // array map.
+				$client_pic      = MainWP_Client_Handler::get_client_contact_image( $arr_client );
 				$params['title'] = $client_pic . '<div class="content">' . $client->name . '<div class="sub header"><a href="mailto:' . $client->client_email . '" target="_blank" style="color:#666!important;font-weight:normal!important;">' . $client->client_email . '</a> </div></div>';
 			}
 		}
@@ -983,7 +979,8 @@ class MainWP_Client {
 					<?php endif; ?>
 
 					<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
-						<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
+						<div class="title active"><i class="dropdown icon"></i> 
+						<?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 						<div class="content active">
 							<?php
 							$sel_params = array(
@@ -1048,7 +1045,7 @@ class MainWP_Client {
 							<td class="field-name">[<?php echo esc_html( stripslashes( $field->field_name ) ); ?>]</td>
 							<td class="field-description"><?php echo esc_html( stripslashes( $field->field_desc ) ); ?></td>
 							<td>
-								<div class="ui left pointing dropdown icon mini basic green button">
+								<div class="ui right pointing dropdown icon mini basic green button">
 									<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
 										<a class="item" id="mainwp-clients-edit-custom-field" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
@@ -1255,8 +1252,18 @@ class MainWP_Client {
 			MainWP_DB_Client::instance()->update_client( $update );
 		}
 
-			$is_first_contact       = true;
-			$auto_assign_contact_id = 0;
+		if ( $client_id && isset( $client_fields['default_field']['selected_icon'] ) ) {
+			$cust_icon  = sanitize_text_field( wp_unslash( $client_fields['default_field']['selected_icon'] ) );
+			$cust_color = sanitize_hex_color( wp_unslash( $client_fields['default_field']['selected_color'] ) );
+			$update     = array(
+				'client_id'          => $client_id,
+				'selected_icon_info' => 'selected:' . $cust_icon . ';color:' . $cust_color,
+			);
+			MainWP_DB_Client::instance()->update_client( $update );
+		}
+
+		$is_first_contact       = true;
+		$auto_assign_contact_id = 0;
 
 		if ( $client_id && isset( $client_fields['contacts_field'] ) ) {
 
@@ -1286,6 +1293,11 @@ class MainWP_Client {
 				$contact_to_add['twitter']       = $client_fields['contacts_field']['contact.twitter'][ $indx ];
 				$contact_to_add['instagram']     = $client_fields['contacts_field']['contact.instagram'][ $indx ];
 				$contact_to_add['linkedin']      = $client_fields['contacts_field']['contact.linkedin'][ $indx ];
+
+				$cust_icon  = sanitize_text_field( wp_unslash( $client_fields['contacts_field']['selected_icon'][ $indx ] ) );
+				$cust_color = sanitize_hex_color( wp_unslash( $client_fields['contacts_field']['selected_color'][ $indx ] ) );
+
+				$contact_to_add['contact_icon_info'] = 'selected:' . $cust_icon . ';color:' . $cust_color;
 
 				$contact_to_add['contact_client_id'] = $client_id;
 				$contact_to_add['contact_id']        = $contact_id;
@@ -1349,6 +1361,11 @@ class MainWP_Client {
 				$contact_to_add['twitter']       = $client_fields['new_contacts_field']['contact.twitter'][ $indx ];
 				$contact_to_add['instagram']     = $client_fields['new_contacts_field']['contact.instagram'][ $indx ];
 				$contact_to_add['linkedin']      = $client_fields['new_contacts_field']['contact.linkedin'][ $indx ];
+
+				$cust_icon  = sanitize_text_field( wp_unslash( $client_fields['new_contacts_field']['selected_icon'][ $indx ] ) );
+				$cust_color = sanitize_hex_color( wp_unslash( $client_fields['new_contacts_field']['selected_color'][ $indx ] ) );
+
+				$contact_to_add['contact_icon_info'] = 'selected:' . $cust_icon . ';color:' . $cust_color;
 
 				$contact_to_add['contact_client_id'] = $client_id;
 
@@ -1461,6 +1478,7 @@ class MainWP_Client {
 		?>
 		<h3 class="ui dividing header">
 			<?php if ( $client_id ) : ?>
+				<?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-edit-client', 'edit-client' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 				<?php echo esc_html__( 'Edit Client', 'mainwp' ); ?>
 				<div class="sub header"><?php esc_html_e( 'Edit client information.', 'mainwp' ); ?></div>
 			<?php else : ?>
@@ -1476,8 +1494,15 @@ class MainWP_Client {
 				$val      = $edit_client && '' !== $db_field && property_exists( $edit_client, $db_field ) ? $edit_client->{$db_field} : '';
 				$tip      = isset( $field['tooltip'] ) ? $field['tooltip'] : '';
 				?>
-				<div class="ui grid field">
-					<label class="six wide column middle aligned" <?php echo ! empty( $tip ) ? 'data-tooltip="' . esc_attr( $tip ) . '" data-inverted="" data-position="top left"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>><?php echo esc_html( $field['title'] ); ?></label>
+				<div class="ui grid field settings-field-indicator-edit-client">
+					<label class="six wide column middle aligned" <?php echo ! empty( $tip ) ? 'data-tooltip="' . esc_attr( $tip ) . '" data-inverted="" data-position="top left"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>>
+					<?php
+					if ( $edit_client ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $val );
+					}
+					echo esc_html( $field['title'] );
+					?>
+					</label>
 					<div class="ui six wide column">
 						<div class="ui left labeled input">
 					<?php
@@ -1526,8 +1551,14 @@ class MainWP_Client {
 
 					if ( 'client.name' === $field_name ) {
 						?>
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Client photo', 'mainwp' ); ?></label>
+						<div class="ui grid field settings-field-indicator-edit-client">
+							<label class="six wide column middle aligned">
+							<?php
+							if ( $edit_client ) {
+								MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $client_image );
+							}
+							?>
+							<?php esc_html_e( 'Client photo', 'mainwp' ); ?></label>
 							<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Upload a client photo.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<div class="ui file fluid input">
 								<input type="file" name="mainwp_client_image_uploader[client_field]" accept="image/*" data-inverted="" data-tooltip="<?php esc_attr_e( "Image must be 500KB maximum. It will be cropped to 310px wide and 70px tall. For best results  us an image of this site. Allowed formats: jpeg, gif and png. Note that animated gifs aren't going to be preserved.", 'mainwp' ); ?>" />
@@ -1535,7 +1566,7 @@ class MainWP_Client {
 						</div>
 						</div>
 						<?php if ( ! empty( $client_image ) ) : ?>
-						<div class="ui grid field">
+						<div class="ui grid field settings-field-indicator-edit-client">
 							<label class="six wide column middle aligned"></label>
 							<div class="six wide column">
 								<img class="ui tiny circular image" src="<?php echo esc_url( MainWP_Client_Handler::get_client_image_url( $client_image ) ); ?>" /><br/>
@@ -1546,6 +1577,45 @@ class MainWP_Client {
 							</div>
 						</div>
 					<?php endif; ?>
+
+					<div class="ui grid field settings-field-indicator-edit-client">
+							<label class="six wide column middle aligned">
+							<?php
+							$default_icons  = MainWP_UI::get_default_icons();
+							$selected_icon  = 'wordpress'; //phpcs:ignore -- WP icon.
+							$selected_color = '#34424D';
+
+							$icon_info = $edit_client ? $edit_client->selected_icon_info : '';
+							if ( ! empty( $icon_info ) ) {
+								$selected_icon  = self::get_cust_client_icon( $icon_info, 'selected' );
+								$selected_color = self::get_cust_client_icon( $icon_info, 'color' );
+							}
+
+							if ( 'wordpress' !== $selected_icon ) { //phpcs:ignore -- WP icon.
+								MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', 1 );
+							}
+							esc_html_e( 'Select icon', 'mainwp' );
+							?>
+							</label>
+							<input type="hidden" name="client_fields[default_field][selected_icon]" id="client_fields[default_field][selected_icon]" value="<?php echo esc_attr( $selected_icon ); ?>">
+							<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Select an icon if not using original client icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+								<div class="ui left action input mainwp-dropdown-color-picker-field">
+									<div class="ui five column selection search dropdown not-auto-init" id="mainwp_edit_clients_icon_select">
+										<div class="text">
+											<span style="color:<?php echo esc_attr( $selected_color ); ?>" ><?php echo ! empty( $selected_icon ) ? '<i class="' . esc_attr( $selected_icon ) . ' icon"></i>' : ''; ?></span>
+										</div>
+										<i class="dropdown icon"></i>
+										<div class="menu">
+											<?php foreach ( $default_icons as $icon ) : ?>
+												<?php echo '<div class="item" style="color:' . esc_attr( $selected_color ) . '" data-value="' . esc_attr( $icon ) . '"><i class="' . esc_attr( $icon ) . ' icon"></i></div>'; ?>
+											<?php endforeach; ?>
+										</div>
+									</div>
+									<input type="color" data-tooltip="Color will update on save" data-position="top center" data-inverted="" name="client_fields[default_field][selected_color]" class="mainwp-color-picker-input" id="client_fields[default_field][selected_color]"  value="<?php echo esc_attr( $selected_color ); ?>" />
+								</div>
+							</div>
+							<div class="one wide column"></div>
+					</div>
 						<?php
 					}
 			}
@@ -1554,8 +1624,15 @@ class MainWP_Client {
 			if ( $client_id ) {
 				$client_contacts = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'client_id', $client_id );
 				?>
-			<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php echo esc_html_e( 'Client primary contact', 'mainwp' ); ?></label>
+			<div class="ui grid field settings-field-indicator-edit-client">
+					<label class="six wide column middle aligned">
+					<?php
+					if ( $edit_client ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $client_contacts );
+					}
+					echo esc_html_e( 'Client primary contact', 'mainwp' );
+					?>
+					</label>
 					<div class="ui six wide column">
 						<div class="ui left labeled">
 							<div class="ui search selection dropdown" init-value="" id="client_fields[default_field][primary_contact_id]">
@@ -1596,12 +1673,20 @@ class MainWP_Client {
 					if ( isset( $compatible_tokens[ $field->field_name ] ) ) {
 						continue;
 					}
+					$field_val = ( property_exists( $field, 'field_value' ) && '' !== $field->field_value ) ? esc_html( $field->field_value ) : '';
 					?>
-					<div class="ui grid field mainwp-field"  field-id="<?php echo intval( $field->field_id ); ?>">
-						<label class="six wide column middle aligned field-description"><?php echo esc_html( $field->field_desc ); ?></label>
+					<div class="ui grid field mainwp-field settings-field-indicator-edit-client"  field-id="<?php echo intval( $field->field_id ); ?>">
+						<label class="six wide column middle aligned field-description">
+						<?php
+						if ( $edit_client ) {
+							MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $field_val );
+						}
+						echo esc_html( $field->field_desc );
+						?>
+						</label>
 						<div class="ui six wide column">
 							<div class="ui left labeled input">
-								<input type="text" value="<?php echo ( property_exists( $field, 'field_value' ) && '' !== $field->field_value ) ? esc_html( $field->field_value ) : ''; ?>" class="regular-text" name="client_fields[custom_fields][<?php echo esc_html( $field->field_name ); ?>][<?php echo esc_html( $field->field_id ); ?>]"/>
+								<input type="text" value="<?php echo esc_attr( $field_val ); ?>" class="regular-text" name="client_fields[custom_fields][<?php echo esc_html( $field->field_name ); ?>][<?php echo esc_html( $field->field_id ); ?>]"/>
 							</div>
 						</div>
 						<div class="ui four wide column">
@@ -1631,7 +1716,7 @@ class MainWP_Client {
 				}
 			}
 			?>
-		<div class="ui grid field">
+		<div class="ui grid field settings-field-indicator-edit-client">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Create a new contact for this client', 'mainwp' ); ?></label>
 			<div class="ui six wide column">
 				<div class="ui left labeled input">
@@ -1672,10 +1757,54 @@ class MainWP_Client {
 								}
 							});
 						}
-					}
+					}					
 				} );
 			</script>
 		<?php
+	}
+
+	/**
+	 * Method get_cust_client_icon()
+	 *
+	 * Get site icon.
+	 *
+	 * @param string $icon_data icon data.
+	 * @param string $type Type: selected|color|display.
+	 * @param string $what Icon display for what.
+	 */
+	public static function get_cust_client_icon( $icon_data, $type = 'display', $what = 'default' ) {
+		if ( empty( $icon_data ) ) {
+			return '';
+		}
+		$data          = explode( ';', $icon_data );
+		$selected_icon = str_replace( 'selected:', '', $data[0] );
+		$color         = str_replace( 'color:', '', $data[1] );
+
+		if ( empty( $color ) ) {
+			$color = '#34424D';
+		}
+
+		$icon_cls = 'large icon custom-icon';
+		if ( 'card' === $what ) {
+			$icon_cls = 'icon huge custom-icon';
+		}
+
+		if ( 'selected' === $type ) {
+			return $selected_icon;
+		} elseif ( 'color' === $type ) {
+			return $color;
+		} elseif ( 'display' === $type ) {
+			$color_style = '';
+			if ( ! empty( $color ) ) {
+				$color_style = 'color:' . esc_attr( $color ) . ';';
+			}
+
+			$icon_wrapper_attr = 'class="mainwp_client_icon_display"';
+			$icon              = '<div style="display:inline-block;' . $color_style . '" ' . $icon_wrapper_attr . ' ><i class="' . esc_attr( $selected_icon ) . ' ' . $icon_cls . '" ></i></div>';
+
+			return $icon;
+		}
+		return '';
 	}
 
 	/**
@@ -1709,6 +1838,7 @@ class MainWP_Client {
 			<?php endif; ?>
 		</h3>
 			<?php
+			$default_icons  = MainWP_UI::get_default_icons();
 			$contact_fields = MainWP_Client_Handler::get_default_contact_fields();
 			foreach ( $contact_fields as $field_name => $field ) {
 					$db_field   = isset( $field['db_field'] ) ? $field['db_field'] : '';
@@ -1716,46 +1846,95 @@ class MainWP_Client {
 					$contact_id = $edit_contact && property_exists( $edit_contact, 'contact_id' ) ? $edit_contact->contact_id : '';
 				?>
 				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php echo esc_html( $field['title'] ); ?></label>
+					<label class="six wide column middle aligned">
+					<?php
+					if ( $edit_contact ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $val );
+					}
+					echo esc_html( $field['title'] );
+					?>
+					</label>
 					<div class="ui six wide column">
 						<div class="ui left labeled input">
-							<input type="text" value="<?php echo esc_html( $val ); ?>" class="regular-text" name="client_fields[<?php echo esc_html( $input_name ); ?>][<?php echo esc_attr( $field_name ); ?>][]"/>
+							<input type="text" value="<?php echo esc_attr( $val ); ?>" class="regular-text" name="client_fields[<?php echo esc_attr( $input_name ); ?>][<?php echo esc_attr( $field_name ); ?>][]"/>
 						</div>											
 					</div>
-							<?php if ( $edit_contact ) : ?>
+					<?php if ( $edit_contact ) : ?>
 					<div class="ui four wide middle aligned hidden token column" style="display:none">
 						[<?php echo esc_html( $field_name ); ?>]
 					</div>	
 					<?php endif; ?>
 				</div>
-							<?php
-
-							if ( 'contact.role' === $field_name ) {
-								?>
-					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php esc_html_e( 'Contact photo', 'mainwp' ); ?></label>
-						<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Upload a client photo.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-							<div class="ui file fluid  input">
-							<input type="file" name="mainwp_client_image_uploader[<?php echo esc_html( $input_name ); ?>][]" accept="image/*" data-inverted="" data-tooltip="<?php esc_attr_e( "Image must be 500KB maximum. It will be cropped to 310px wide and 70px tall. For best results  us an image of this site. Allowed formats: jpeg, gif and png. Note that animated gifs aren't going to be preserved.", 'mainwp' ); ?>" />
-							</div>
-						</div>
-					</div>
-
-								<?php if ( ! empty( $contact_image ) ) : ?>
+				<?php
+				if ( 'contact.role' === $field_name ) {
+					?>
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"></label>
-							<div class="six wide column">
-								<img class="ui tiny circular image" src="<?php echo esc_url( MainWP_Client_Handler::get_client_image_url( $contact_image ) ); ?>" /><br/>
-								<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, delete contact image.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-									<input type="checkbox" value="<?php echo intval( $contact_id ); ?>" id="mainwp_client_delete_image[contacts_field][<?php echo intval( $contact_id ); ?>]" name="mainwp_client_delete_image[contacts_field][<?php echo intval( $contact_id ); ?>]" />
-									<label for="mainwp_client_delete_image[contacts_field][<?php echo intval( $contact_id ); ?>]"><?php esc_html_e( 'Delete photo', 'mainwp' ); ?></label>
+							<label class="six wide column middle aligned">
+							<?php
+							if ( $edit_contact ) {
+								MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $contact_image );
+							}
+							?>
+							<?php esc_html_e( 'Contact photo', 'mainwp' ); ?></label>
+							<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Upload a client photo.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+								<div class="ui file fluid  input">
+								<input type="file" name="mainwp_client_image_uploader[<?php echo esc_html( $input_name ); ?>][]" accept="image/*" data-inverted="" data-tooltip="<?php esc_attr_e( "Image must be 500KB maximum. It will be cropped to 310px wide and 70px tall. For best results  us an image of this site. Allowed formats: jpeg, gif and png. Note that animated gifs aren't going to be preserved.", 'mainwp' ); ?>" />
 								</div>
-
 							</div>
 						</div>
-									<?php
-			endif;
-							}
+						<?php if ( ! empty( $contact_image ) ) : ?>
+							<div class="ui grid field">
+								<label class="six wide column middle aligned"></label>
+								<div class="six wide column">
+									<img class="ui tiny circular image" src="<?php echo esc_url( MainWP_Client_Handler::get_client_image_url( $contact_image ) ); ?>" /><br/>
+									<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, delete contact image.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+										<input type="checkbox" value="<?php echo intval( $contact_id ); ?>" id="mainwp_client_delete_image[contacts_field][<?php echo intval( $contact_id ); ?>]" name="mainwp_client_delete_image[contacts_field][<?php echo intval( $contact_id ); ?>]" />
+										<label for="mainwp_client_delete_image[contacts_field][<?php echo intval( $contact_id ); ?>]"><?php esc_html_e( 'Delete photo', 'mainwp' ); ?></label>
+									</div>
+
+								</div>
+							</div>
+							<?php
+						endif;
+						?>
+						<div class="ui grid field mainwp_edit_clients_contact_icon_wrapper" input-name="<?php echo esc_attr( $input_name ); ?>" >
+								<label class="six wide column middle aligned">
+								<?php
+								$selected_icon  = 'wordpress'; //phpcs:ignore -- WP icon.
+								$selected_color = '#34424D';
+								$icon_info      = $edit_contact ? $edit_contact->contact_icon_info : '';
+
+								if ( ! empty( $icon_info ) ) {
+									$selected_icon  = self::get_cust_client_icon( $icon_info, 'selected' );
+									$selected_color = self::get_cust_client_icon( $icon_info, 'color' );
+								}
+								if ( 'wordpress' !== $selected_icon ) { //phpcs:ignore -- WP icon.
+									MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', 1 );
+								}
+								esc_html_e( 'Select icon', 'mainwp' );
+								?>
+								</label>
+								<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select an icon if not using original contact icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+									<input type="hidden" name="client_fields[<?php echo esc_html( $input_name ); ?>][selected_icon][]" id="client_fields[<?php echo esc_attr( $input_name ); ?>][selected_icon][]" value="<?php echo esc_attr( $selected_icon ); ?>">
+									<div class="ui left action input">
+										<div class="ui five column selection search dropdown not-auto-init mainwp-edit-clients-select-contact-icon" style="min-width:21em">
+											<div class="text">
+												<span style="color:<?php echo esc_attr( $selected_color ); ?>" ><?php echo ! empty( $selected_icon ) ? '<i class="' . esc_attr( $selected_icon ) . ' icon"></i>' : ''; ?></span>
+											</div>
+											<i class="dropdown icon"></i>
+											<div class="menu">
+												<?php foreach ( $default_icons as $icon ) : ?>
+													<?php echo '<div class="item" style="color:' . esc_attr( $selected_color ) . '" data-value="' . esc_attr( $icon ) . '"><i class="' . esc_attr( $icon ) . ' icon"></i></div>'; ?>
+												<?php endforeach; ?>
+											</div>
+										</div>
+										<input type="color" data-tooltip="Color will update on save" data-position="top center" data-inverted="" name="client_fields[<?php echo esc_html( $input_name ); ?>][selected_color][]" class="mainwp-color-picker-input" id="client_fields[<?php echo esc_html( $input_name ); ?>][selected_color][]"  value="<?php echo esc_attr( $selected_color ); ?>" />
+									</div>
+								</div>
+								<div class="one wide column"></div>
+						</div>
+					<?php
+				}
 			}
 
 			?>

@@ -526,9 +526,48 @@ class MainWP_Client_Handler {
 	}
 
 	/**
-	 * Method get_favico_url()
+	 * Method get_client_contact_image()
 	 *
-	 * Get Child Site favicon URL.
+	 * Get client contact image.
+	 *
+	 * @param array  $item client|contact array data.
+	 * @param string $type type of image.
+	 * @param string $what image for what.
+	 */
+	public static function get_client_contact_image( $item, $type = 'client', $what = 'default' ) {
+
+		if ( empty( $item ) ) {
+			return '';
+		}
+
+		$img_cls = 'ui mini circular image';
+		if ( 'card' === $what ) {
+			$img_cls = 'ui medium circular image';
+		}
+
+		if ( 'client' === $type ) {
+			$image_path = $item['image'];
+			$icon_info  = $item['selected_icon_info'];
+		} else {
+			$image_path = $item['contact_image'];
+			$icon_info  = $item['contact_icon_info'];
+		}
+
+		$dirs = MainWP_System_Utility::get_mainwp_dir( 'client-images', true );
+		if ( ! empty( $image_path ) && file_exists( $dirs[0] . $image_path ) ) {
+			$full_url = $dirs[1] . $image_path;
+			return '<img class="' . $img_cls . '" src="' . esc_attr( $full_url ) . '">';
+		} elseif ( ! empty( $icon_info ) ) {
+			return MainWP_Client::get_cust_client_icon( $icon_info, 'display', $what );
+		}
+		return '';
+	}
+
+
+	/**
+	 * Method get_client_image_url()
+	 *
+	 * Get client icon URL.
 	 *
 	 * @param string $image_path Client image url path.
 	 *

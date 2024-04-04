@@ -2563,7 +2563,7 @@ class MainWP_Plugins {
 					} ],
 					"language": {
 						"emptyTable": "<?php esc_html_e( 'No ignored plugins.', 'mainwp' ); ?>"
-					},
+					}
 				} );
 			} );
 			</script>
@@ -2663,7 +2663,7 @@ class MainWP_Plugins {
 				} ],
 				"language": {
 					"emptyTable": "<?php esc_html_e( 'No ignored plugins', 'mainwp' ); ?>"
-				},
+				}
 			} );
 		} );
 		</script>
@@ -2807,7 +2807,7 @@ class MainWP_Plugins {
 				} ],
 				"language": {
 					"emptyTable": "<?php esc_html_e( 'No ignored abandoned plugins.', 'mainwp' ); ?>"
-				},
+				}
 			} );
 		} );
 		</script>
@@ -2904,7 +2904,7 @@ class MainWP_Plugins {
 				} ],
 				"language": {
 					"emptyTable": "<?php esc_html_e( 'No ignored abandoned plugins.', 'mainwp' ); ?>"
-				},
+				}
 			} );
 		} );
 		</script>

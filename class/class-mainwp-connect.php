@@ -89,8 +89,8 @@ class MainWP_Connect {
 			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
 			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 		} else {
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false ); // NOSONAR .
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false ); // NOSONAR .
 		}
 
 		curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
@@ -675,6 +675,8 @@ class MainWP_Connect {
 
 		self::init_cookiesdir( $cookieDir );
 
+		$_org_params = null;
+
 		foreach ( $websites as $website ) {
 
 			if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
@@ -704,9 +706,11 @@ class MainWP_Connect {
 				$http_pass = $website->http_pass;
 			}
 
-			$_new_post = null;
 			if ( isset( $params ) && isset( $params['new_post'] ) ) {
-				$_new_post = $params['new_post'];
+
+				if ( null === $_org_params ) {
+					$_org_params = $params;
+				}
 
 				/**
 				 * Filter is being replaced with mainwp_pre_posting_posts.
@@ -811,8 +815,8 @@ class MainWP_Connect {
 				curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
 				curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 			} else {
-				curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-				curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+				curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false ); // NOSONAR .
+				curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false ); // NOSONAR .
 			}
 
 			curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
@@ -841,8 +845,8 @@ class MainWP_Connect {
 			$requestUrls[ self::get_resource_id( $ch ) ]     = $website->url;
 			$requestHandles[ self::get_resource_id( $ch ) ]  = $ch;
 
-			if ( null !== $_new_post ) {
-				$params['new_post'] = $_new_post;
+			if ( null !== $_org_params ) {
+				$params = $_org_params;
 			}
 		}
 
@@ -1406,8 +1410,8 @@ class MainWP_Connect {
 			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
 			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 		} else {
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false ); // NOSONAR .
+			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false ); // NOSONAR .
 		}
 
 		curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );

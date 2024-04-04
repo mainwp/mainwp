@@ -13,6 +13,7 @@ use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_UI;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_System_Utility;
+use MainWP\Dashboard\MainWP_Settings_Indicator;
 use function MainWP\Dashboard\mainwp_current_user_have_right;
 use function MainWP\Dashboard\mainwp_do_not_have_permissions;
 
@@ -140,11 +141,21 @@ class Cost_Tracker_Add_Edit {
 		$currency_symbol = Cost_Tracker_Utility::get_instance()->get_currency_symbol( $currency );
 		$product_icons   = Cost_Tracker_Utility::get_product_default_icons();
 
-		$cust_prod_src = $selected_prod_icon;
-		if ( ! empty( $selected_prod_icon ) && false !== strpos( $selected_prod_icon, 'deficon:' ) ) {
-			$selected_default_icon = str_replace( 'deficon:', '', $selected_prod_icon );
-			$cust_prod_src         = '';
+		$cust_prod_src       = '';
+		$cust_prod_icon_file = '';
+
+		if ( ! empty( $selected_prod_icon ) ) {
+			if ( false !== strpos( $selected_prod_icon, 'deficon:' ) ) {
+				$selected_default_icon = str_replace( 'deficon:', '', $selected_prod_icon );
+				$cust_prod_src         = '';
+			} else {
+				$dirs                = MainWP_System_Utility::get_mainwp_dir( Cost_Tracker_Settings::$icon_sub_dir, true );
+				$icon_base           = $dirs[1];
+				$cust_prod_icon_file = $selected_prod_icon;
+				$cust_prod_src       = $icon_base . $cust_prod_icon_file;
+			}
 		}
+
 		// new cost.
 		if ( ! $edit_id ) {
 			$selected_default_icon = 'archive';
@@ -163,7 +174,7 @@ class Cost_Tracker_Add_Edit {
 					$err     = false;
 					$message = '';
 					if ( 1 === $msg ) {
-						$message = esc_html__( 'Subscription saved.', 'mainwp' );
+						$message = esc_html__( 'Cost saved successfully.', 'mainwp' );
 					} elseif ( 2 === $msg ) {
 						$err     = true;
 						$message = get_transient( 'mainwp_cost_tracker_update_error_' . $id );
@@ -184,37 +195,68 @@ class Cost_Tracker_Add_Edit {
 					<i class="ui close icon"></i>
 				</div>
 				<?php if ( $edit_cost ) : ?>
-					<h3 class="ui dividing header"><?php echo esc_html__( 'Edit ', 'mainwp' ) . esc_html__( $edit_cost->name ); ?></h3>
+					<h3 class="ui dividing header">
+					<?php echo esc_html__( 'Edit ', 'mainwp' ) . esc_html__( $edit_cost->name ); ?></h3>
 				<?php else : ?>
 					<h3 class="ui dividing header"><?php esc_html_e( 'Add New Cost', 'mainwp' ); ?></h3>
 				<?php endif; ?>
-				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Name', 'mainwp' ); ?></label>
+				<div class="ui grid field settings-field-indicator-cost-add-edit">
+					<label class="six wide column middle aligned">
+					<?php
+					if ( $edit_cost ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost->name );
+					}
+					esc_html_e( 'Name', 'mainwp' );
+					?>
+					</label>
 					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the Company (Product) name.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<input type="text" name="mainwp_module_cost_tracker_edit_name" id="mainwp_module_cost_tracker_edit_name" value="<?php echo $edit_cost ? esc_html( $edit_cost->name ) : ''; ?>">
 					</div>
 				</div>
-				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Product URL', 'mainwp' ); ?></label>
+				<div class="ui grid field settings-field-indicator-cost-add-edit">
+					<label class="six wide column middle aligned">
+					<?php
+					if ( $edit_cost ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost->url );
+					}
+					esc_html_e( 'Product URL', 'mainwp' );
+					?>
+					</label>
 					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the URL of the product (optional).', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<input type="text" name="mainwp_module_cost_tracker_edit_url" id="mainwp_module_cost_tracker_edit_url" value="<?php echo $edit_cost ? esc_html( $edit_cost->url ) : ''; ?>">
 					</div>
 				</div>
 				<input type="hidden" name="mainwp_module_cost_tracker_edit_icon_hidden" id="mainwp_module_cost_tracker_edit_icon_hidden" value="<?php echo esc_attr( $selected_prod_icon ); ?>">
-				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Upload product icon', 'mainwp' ); ?></label>
+				<div class="ui grid field settings-field-indicator-cost-add-edit">
+					<label class="six wide column middle aligned">
+					<?php
+					if ( $edit_cost ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $cust_prod_src );
+					}
+					esc_html_e( 'Upload product icon', 'mainwp' );
+					?>
+					</label>
 					<div class="two wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Upload the product icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-						<div class="ui green button basic module-cost-tracker-product-icon-customable" icon-src="<?php echo esc_attr( $cust_prod_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
+						<div class="ui green button basic module-cost-tracker-product-icon-customable" iconItemId="<?php echo intval( $edit_id ); ?>" iconFileSlug="<?php echo esc_attr( $cust_prod_icon_file ); ?>" icon-src="<?php echo esc_attr( $cust_prod_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
 					</div>
 					<div class="one wide middle aligned center aligned column">
-						<?php if ( $edit_cost ) : ?>
-							<?php echo Cost_Tracker_Admin::get_instance()->get_product_icon_display( $edit_cost ); //phpcs:ignore --ok. ?>
-						<?php endif; ?>
+						<?php if ( $edit_cost ) { ?>
+							<?php echo Cost_Tracker_Admin::get_instance()->get_product_icon_display( $edit_cost, 'module_cost_tracker_upload_custom_icon_img_display' ); //phpcs:ignore --ok. ?>
+						<?php } else { ?>
+							<div style="display:inline-block;" id="module_cost_tracker_upload_custom_icon_img_display"></div> <?php // used for icon holder. ?>
+						<?php } ?>
 					</div>
 					
 				</div>
-				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Select icon', 'mainwp' ); ?></label>
+				<div class="ui grid field settings-field-indicator-cost-add-edit">
+					<label class="six wide column middle aligned">
+					<?php
+					if ( $edit_cost ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $selected_default_icon );
+					}
+					esc_html_e( 'Select icon', 'mainwp' );
+					?>
+					</label>
 					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select an icon if not using original product icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<div class="ui left action input">
 							<div class="ui five column selection search dropdown not-auto-init" style="min-width:21em" id="mainwp_module_cost_tracker_edit_icon_select">
@@ -233,8 +275,15 @@ class Cost_Tracker_Add_Edit {
 					</div>
 					<div class="one wide column"></div>
 				</div>
-				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Type', 'mainwp' ); ?></label>
+				<div class="ui grid field settings-field-indicator-cost-add-edit">
+					<label class="six wide column middle aligned">
+					<?php
+					if ( $edit_cost ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', ( 'subscription' !== $selected_payment_type ) );
+					}
+					esc_html_e( 'Type', 'mainwp' );
+					?>
+					</label>
 					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the type of this cost.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<select id="mainwp_module_cost_tracker_edit_payment_type" name="mainwp_module_cost_tracker_edit_payment_type" class="ui dropdown not-auto-init">
 							<?php foreach ( $payment_types as $key => $val ) : ?>
@@ -252,8 +301,15 @@ class Cost_Tracker_Add_Edit {
 
 				<?php $lifetime_selected = ( 'lifetime' === $selected_payment_type ) ? true : false; ?>
 				
-				<div class="ui grid field hide-if-lifetime-subscription-selected" <?php echo $lifetime_selected ? 'style="display:none;"' : ''; ?>>
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Renewal frequency', 'mainwp' ); ?></label>
+				<div class="ui grid field settings-field-indicator-cost-add-edit hide-if-lifetime-subscription-selected" <?php echo $lifetime_selected ? 'style="display:none;"' : ''; ?>>
+					<label class="six wide column middle aligned">
+					<?php
+					if ( $edit_cost ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', ( 'weekly' !== $selected_renewal ) );
+					}
+					esc_html_e( 'Renewal frequency', 'mainwp' );
+					?>
+					</label>
 					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter renewal frequency.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<select id="mainwp_module_cost_tracker_edit_renewal_type" name="mainwp_module_cost_tracker_edit_renewal_type" class="ui dropdown">
 							<?php foreach ( $renewal_frequency as $key => $val ) : ?>
@@ -268,8 +324,15 @@ class Cost_Tracker_Add_Edit {
 						</select>
 					</div>
 				</div>
-				<div class="ui grid field hide-if-lifetime-subscription-selected" <?php echo $lifetime_selected ? 'style="display:none;"' : ''; ?>>
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Subscription status', 'mainwp' ); ?></label>
+				<div class="ui grid field settings-field-indicator-cost-add-edit hide-if-lifetime-subscription-selected" <?php echo $lifetime_selected ? 'style="display:none;"' : ''; ?>>
+					<label class="six wide column middle aligned">
+					<?php
+					if ( $edit_cost ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', ( 'active' !== $selected_cost_tracker_status ) );
+					}
+					esc_html_e( 'Subscription status', 'mainwp' );
+					?>
+					</label>
 					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter subscription status.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<select id="mainwp_module_cost_tracker_edit_cost_tracker_status" name="mainwp_module_cost_tracker_edit_cost_tracker_status" class="ui dropdown">
 							<?php foreach ( $cost_status as $key => $val ) : ?>
@@ -287,18 +350,31 @@ class Cost_Tracker_Add_Edit {
 
 				<?php if ( $edit_id ) : ?>
 				<div class="ui grid field hide-if-lifetime-subscription-selected" <?php echo $lifetime_selected ? 'style="display:none;"' : ''; ?>>
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Next renewal', 'mainwp' ); ?></label>
+					<label class="six wide column middle aligned">
+					<?php
+					$next_rl = Cost_Tracker_Admin::get_next_renewal( $edit_cost->last_renewal, $edit_cost->renewal_type );
+					esc_html_e( 'Next renewal', 'mainwp' );
+					?>
+					</label>
 						<div class="five wide column" data-inverted="" data-position="left center">
 						<?php
-						$next_rl = Cost_Tracker_Admin::get_next_renewal( $edit_cost->last_renewal, $edit_cost->renewal_type );
+
 						Cost_Tracker_Admin::generate_next_renewal( $edit_cost, $next_rl );
 						?>
 					</div>
 				</div>
 				<?php endif; ?>
-				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Category', 'mainwp' ); ?></label>
-					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the category for this cost.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+				<div class="ui grid field settings-field-indicator-cost-add-edit">
+					<label class="six wide column middle aligned">
+					<?php
+					if ( $edit_cost ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', ( 'plugin' !== $selected_product_type ) );
+					}
+					?>
+						
+					<?php esc_html_e( 'Category', 'mainwp' ); ?></label>
+					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the category for this cost.', 'mainwp' ); ?>
+					" data-inverted="" data-position="left center">
 						<select id="mainwp_module_cost_tracker_edit_product_type" name="mainwp_module_cost_tracker_edit_product_type" class="ui dropdown not-auto-init">
 							<?php foreach ( $product_types as $key => $val ) : ?>
 								<?php
@@ -312,14 +388,28 @@ class Cost_Tracker_Add_Edit {
 						</select>
 					</div>
 				</div>
-				<div class="ui grid field hide-if-product-type-isnot-plugintheme" <?php echo $is_plugintheme ? '' : 'style="display:none;"'; ?>>
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Slug', 'mainwp' ); ?></label>
+				<div class="ui grid field settings-field-indicator-cost-add-edit hide-if-product-type-isnot-plugintheme" <?php echo $is_plugintheme ? '' : 'style="display:none;"'; ?>>
+					<label class="six wide column middle aligned">
+					<?php
+					if ( $edit_cost ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $slug );
+					}
+					esc_html_e( 'Slug', 'mainwp' );
+					?>
+					</label>
 					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the product slug.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<input type="text" name="mainwp_module_cost_tracker_edit_product_slug" id="mainwp_module_cost_tracker_edit_product_slug" value="<?php echo esc_attr( $slug ); ?>">
 					</div>
 				</div>
-				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'License type', 'mainwp' ); ?></label>
+				<div class="ui grid field settings-field-indicator-cost-add-edit">
+					<label class="six wide column middle aligned">
+					<?php
+					if ( $edit_cost ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', ( 'single_site' !== $selected_license_type ) );
+					}
+					esc_html_e( 'License type', 'mainwp' );
+					?>
+					</label>
 					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the license type of this cost.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<select id="mainwp_module_cost_tracker_edit_license_type" name="mainwp_module_cost_tracker_edit_license_type" class="ui dropdown">
 							<?php foreach ( $license_types as $key => $val ) : ?>
@@ -335,8 +425,15 @@ class Cost_Tracker_Add_Edit {
 					</div>
 				</div>
 				<?php $dec = Cost_Tracker_Utility::cost_tracker_format_price( 0, true, array( 'get_decimals' => true ) ); ?>
-				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Price', 'mainwp' ); ?></label>
+				<div class="ui grid field settings-field-indicator-cost-add-edit">
+					<label class="six wide column middle aligned">
+					<?php
+					if ( $edit_cost ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $currency_symbol );
+					}
+					esc_html_e( 'Price', 'mainwp' );
+					?>
+					</label>
 					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Please input a value using a single decimal point (.) without thousand separators or currency symbols.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<div class="ui left labeled input">
 							<label for="mainwp_module_cost_tracker_edit_price" class="ui label"><?php echo esc_html( $currency_symbol ); ?></label>
@@ -344,8 +441,15 @@ class Cost_Tracker_Add_Edit {
 						</div>
 					</div>
 				</div>
-				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Purchase date', 'mainwp' ); ?></label>
+				<div class="ui grid field settings-field-indicator-cost-add-edit">
+					<label class="six wide column middle aligned">
+					<?php
+					if ( $edit_cost ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $last_renewal );
+					}
+					esc_html_e( 'Purchase date', 'mainwp' );
+					?>
+					</label>
 					<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Enter the purchase date.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<div class="ui calendar mainwp_datepicker">
 							<div class="ui input left icon">
@@ -356,8 +460,15 @@ class Cost_Tracker_Add_Edit {
 					</div>
 				</div>
 
-				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Payment method', 'mainwp' ); ?></label>
+				<div class="ui grid field settings-field-indicator-cost-add-edit">
+					<label class="six wide column middle aligned">
+					<?php
+					if ( $edit_cost ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', ( 'paypal' !== $selected_payment_method ) );
+					}
+					esc_html_e( 'Payment method', 'mainwp' );
+					?>
+					</label>
 					<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter the payment method.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<select id="mainwp_module_cost_tracker_edit_payment_method" name="mainwp_module_cost_tracker_edit_payment_method" class="ui dropdown">
 							<?php foreach ( $payment_methods as $key => $val ) : ?>
@@ -373,8 +484,15 @@ class Cost_Tracker_Add_Edit {
 					</div>
 				</div>
 				
-				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Notes', 'mainwp' ); ?></label>
+				<div class="ui grid field settings-field-indicator-cost-add-edit">
+					<label class="six wide column middle aligned">
+					<?php
+					if ( $edit_cost ) {
+						MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost->note );
+					}
+					esc_html_e( 'Notes', 'mainwp' );
+					?>
+					</label>
 					<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter the description for this cost tracking item.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 						<textarea id="mainwp_module_cost_tracker_edit_note" name="mainwp_module_cost_tracker_edit_note"><?php echo $edit_cost ? esc_html( $edit_cost->note ) : ''; ?></textarea>
 					</div>
@@ -385,27 +503,31 @@ class Cost_Tracker_Add_Edit {
 			</div>
 		</div>
 		<div class="mainwp-side-content mainwp-no-padding">
+			<?php
+
+			$sel_sites   = array();
+			$sel_groups  = array();
+			$sel_clients = array();
+			if ( ! empty( $edit_cost ) ) {
+				$sel_sites   = json_decode( $edit_cost->sites, true );
+				$sel_groups  = json_decode( $edit_cost->groups, true );
+				$sel_clients = json_decode( $edit_cost->clients, true );
+				if ( ! is_array( $sel_sites ) ) {
+					$sel_sites = array();
+				}
+				if ( ! is_array( $sel_groups ) ) {
+					$sel_groups = array();
+				}
+				if ( ! is_array( $sel_clients ) ) {
+					$sel_clients = array();
+				}
+			}
+			?>
 			<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
-				<div class="title active"><i class="dropdown icon"></i> <?php echo esc_html__( 'Select Sites', 'mainwp' ); ?></div>
+				<div class="title active"><i class="dropdown icon"></i> 
+				<?php echo esc_html__( 'Select Sites', 'mainwp' ); ?></div>
 				<div class="content active">
 					<?php
-					$sel_sites   = array();
-					$sel_groups  = array();
-					$sel_clients = array();
-					if ( ! empty( $edit_cost ) ) {
-						$sel_sites   = json_decode( $edit_cost->sites, true );
-						$sel_groups  = json_decode( $edit_cost->groups, true );
-						$sel_clients = json_decode( $edit_cost->clients, true );
-						if ( ! is_array( $sel_sites ) ) {
-							$sel_sites = array();
-						}
-						if ( ! is_array( $sel_groups ) ) {
-							$sel_groups = array();
-						}
-						if ( ! is_array( $sel_clients ) ) {
-							$sel_clients = array();
-						}
-					}
 					do_action( 'mainwp_select_sites_box', '', 'checkbox', true, true, '', '', $sel_sites, $sel_groups, true, $sel_clients );
 					?>
 				</div>
@@ -431,9 +553,6 @@ class Cost_Tracker_Add_Edit {
 
 				jQuery( '#mainwp_module_cost_tracker_edit_icon_select' ).dropdown( {
 					onChange: function( val ) {
-						if(jQuery( '#module_cost_tracker_upload_custom_icon_img_display').length > 0){
-							jQuery( '#module_cost_tracker_upload_custom_icon_img_display').hide();
-						}
 						jQuery( '#mainwp_module_cost_tracker_edit_icon_hidden' ).val('deficon:' + val);
 					}
 				} );
@@ -455,12 +574,21 @@ class Cost_Tracker_Add_Edit {
 					jQuery('#mainwp_delete_image_field').hide();
 					jQuery('#mainwp-upload-custom-icon-modal').modal('setting', 'closable', false).modal('show');
 					jQuery('#update_custom_icon_btn').removeAttr('disabled');
+					jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconItemId', iconObj.attr('iconItemId') ); // @see used by mainwp_upload_custom_types_icon().
+					jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconFileSlug', iconObj.attr('iconFileSlug') ); // @see used by mainwp_upload_custom_types_icon().
+					
 					if (iconObj.attr('icon-src') != '') {
 						jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', iconObj.attr('icon-src'));
 						jQuery('#mainwp_delete_image_field').show();
 					}
+
 					jQuery(document).on('click', '#update_custom_icon_btn', function () {
-							mainwp_upload_custom_types_icon(iconObj, 'mainwp_module_cost_tracker_upload_product_icon', function(response){
+							var deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
+							var iconItemId = iconObj.attr('iconItemId');
+							var iconFileSlug = iconObj.attr('iconFileSlug'); // to support delete file when iconItemId = 0.
+
+							// upload/delete icon action. 
+							mainwp_upload_custom_types_icon(iconObj, 'mainwp_module_cost_tracker_upload_product_icon', iconItemId, iconFileSlug, deleteIcon, function(response){
 								if (jQuery('#mainwp_module_cost_tracker_edit_icon_hidden').length > 0) {
 									if (typeof response.iconfile !== undefined) {
 										jQuery('#mainwp_module_cost_tracker_edit_icon_hidden').val(response.iconfile);
@@ -468,16 +596,17 @@ class Cost_Tracker_Add_Edit {
 										jQuery('#mainwp_module_cost_tracker_edit_icon_hidden').val('');
 									}
 								}
-								var deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
+								var deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false; // to delete.
 								if(deleteIcon){
 									jQuery('#module_cost_tracker_upload_custom_icon_img_display').hide();
 								} else if (jQuery('#module_cost_tracker_upload_custom_icon_img_display').length > 0) {
 									if (typeof response.iconfile !== undefined) {
-										var scr = response.iconsrc !== undefined ? response.iconsrc : '';
-										iconObj.attr('icon-src', scr);
-										jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', scr);
-										jQuery('#module_cost_tracker_upload_custom_icon_img_display').attr('src', scr);
-										jQuery('#module_cost_tracker_upload_custom_icon_img_display').attr('style', 'display:inline-block');
+										var icon_img = typeof response.iconimg !== undefined ? response.iconimg : '';
+										var icon_src = typeof response.iconsrc !== undefined ? response.iconsrc : '';
+										iconObj.attr('icon-src', icon_src);
+										iconObj.attr('iconFileSlug', response.iconfile); // to support delete file when iconItemId = 0.
+										jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', icon_src);
+										jQuery('#module_cost_tracker_upload_custom_icon_img_display').html(icon_img);
 										jQuery('#module_cost_tracker_upload_custom_icon_img_display').show();
 									}
 								}
@@ -501,19 +630,23 @@ class Cost_Tracker_Add_Edit {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_module_cost_tracker_upload_product_icon' );
 
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$slug         = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
-		$delete       = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0;
-		$deleteIconId = isset( $_POST['deleteIconId'] ) ? intval( $_POST['deleteIconId'] ) : 0;
+		$iconfile_slug   = isset( $_POST['iconFileSlug'] ) ? sanitize_text_field( wp_unslash( $_POST['iconFileSlug'] ) ) : '';
+		$delete          = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0;
+		$icon_product_id = isset( $_POST['iconItemId'] ) ? intval( $_POST['iconItemId'] ) : 0;
 
-		if ( $delete && $deleteIconId ) {
-			$cost = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $deleteIconId );
-			if ( $cost && '' !== $cost->cost_icon && false === strpos( $cost->cost_icon, 'deficon:' ) ) {
-				$update = array(
-					'id'        => $deleteIconId,
-					'cost_icon' => '',
-				);
-				Cost_Tracker_DB::get_instance()->update_cost_tracker( $update );
-				$this->delete_product_icon_file( $cost->cost_icon );
+		if ( $delete ) {
+			if ( $icon_product_id ) {
+				$cost = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $icon_product_id );
+				if ( $cost && '' !== $cost->cost_icon && false === strpos( $cost->cost_icon, 'deficon:' ) ) {
+					$update = array(
+						'id'        => $icon_product_id,
+						'cost_icon' => '',
+					);
+					Cost_Tracker_DB::get_instance()->update_cost_tracker( $update );
+					$this->delete_product_icon_file( $cost->cost_icon );
+				}
+			} elseif ( ! empty( $iconfile_slug ) ) {
+				$this->delete_product_icon_file( $iconfile_slug );
 			}
 			wp_die( wp_json_encode( array( 'result' => 'success' ) ) );
 		}
@@ -528,13 +661,15 @@ class Cost_Tracker_Add_Edit {
 
 		if ( 'NOTCHANGE' !== $uploaded_icon ) {
 			$dirs      = MainWP_System_Utility::get_mainwp_dir( Cost_Tracker_Settings::$icon_sub_dir, true );
-			$icon_base = $dirs[1];
+			$cust_icon = $dirs[1] . $uploaded_icon;
+
 			wp_die(
 				wp_json_encode(
 					array(
 						'result'   => 'success',
 						'iconfile' => esc_html( $uploaded_icon ),
-						'iconsrc'  => esc_html( $icon_base . $uploaded_icon ),
+						'iconsrc'  => esc_html( $cust_icon ),
+						'iconimg'  => '<img class="ui mini circular image" src="' . esc_attr( $cust_icon ) . '" style="width:32px;height:auto;display:inline-block;">',
 					)
 				)
 			);

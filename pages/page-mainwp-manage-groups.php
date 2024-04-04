@@ -374,7 +374,7 @@ class MainWP_Manage_Groups {
 						</div>
 						<div class="field">
 							<label><?php esc_html_e( 'Select tag color', 'mainwp' ); ?></label>
-							<input type="text" name="mainwp-new-tag-color" class="mainwp-tag-color-picker" id="mainwp-new-tag-color"  value="" />
+							<input type="color" name="mainwp-new-tag-color" class="mainwp-color-picker-input" id="mainwp-new-tag-color"  value="" />
 						</div>
 					</div>
 				</div>
@@ -397,15 +397,6 @@ class MainWP_Manage_Groups {
 						margin-left: 5px;
 					}
 				</style>
-				<script type="text/javascript">
-					jQuery( document ).ready( function() {
-						jQuery('.mainwp-tag-color-picker').wpColorPicker({
-							hide: true,
-							clear: false,
-							palettes: [ '#18a4e0','#0253b3','#7fb100','#446200','#ad0000','#ffd300','#2d3b44','#6435c9','#e03997','#00b5ad' ],
-						});
-					} );
-				</script>
 			</div>
 
 			<div class="ui mini modal" id="mainwp-rename-group-modal">
@@ -419,7 +410,7 @@ class MainWP_Manage_Groups {
 						</div>
 						<div class="field">
 							<label><?php esc_html_e( 'Select tag color', 'mainwp' ); ?></label>
-							<input type="text" name="mainwp-new-tag-color" class="mainwp-tag-color-picker" id="mainwp-new-tag-color" value="" />
+							<input type="color" name="mainwp-new-tag-color mainwp-color-picker-input" class="mainwp-color-picker-input" id="mainwp-new-tag-color" value="" />
 						</div>
 					</div>
 				</div>
@@ -442,15 +433,6 @@ class MainWP_Manage_Groups {
 						margin-left: 5px;
 					}
 				</style>
-				<script type="text/javascript">
-					jQuery( document ).ready( function() {
-						jQuery('.mainwp-tag-color-picker').wpColorPicker({
-							hide: true,
-							clear: false,
-							palettes: [ '#18a4e0','#0253b3','#7fb100','#446200','#ad0000','#ffd300','#2d3b44','#6435c9','#e03997','#00b5ad' ],
-						});
-					} );
-				</script>
 			</div>
 			<?php
 			/**

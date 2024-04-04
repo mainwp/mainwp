@@ -1201,10 +1201,7 @@ class MainWP_User {
 					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="user[]" value="1"></span></td>
 					<?php do_action( 'mainwp_users_table_column', $user, $website ); ?>
 					<td class="name column-name">
-					<?php echo ! empty( $user['display_name'] ) ? esc_html( $user['display_name'] ) : '&nbsp;'; ?>
-					<div class="row-actions-working">
-						<i class="ui active inline loader tiny"></i> <?php esc_html_e( 'Please wait', 'mainwp' ); ?>
-					</div>
+					<?php echo ! empty( $user['display_name'] ) ? esc_html( $user['display_name'] ) : '&nbsp;'; ?>					
 					</td>
 				<td class="username column-username"><strong><abbr title="<?php echo esc_attr( $user['login'] ); ?>"><?php echo esc_html( $user['login'] ); ?></abbr></strong></td>
 				<td class="email column-email"><a href="mailto:<?php echo esc_attr( $user['email'] ); ?>"><?php echo esc_html( $user['email'] ); ?></a></td>
@@ -2113,7 +2110,7 @@ class MainWP_User {
 						</div>
 						<div class="actions">
 							<input type="button" name="import_user_btn_import" id="import_user_btn_import" class="ui basic button" value="<?php esc_attr_e( 'Pause', 'mainwp' ); ?>"/>
-							<input type="button" name="import_user_btn_save_csv" id="import_user_btn_save_csv" disabled="disabled" class="ui basic green button" value="<?php esc_attr_e( 'Save failed', 'mainwp' ); ?>"/>
+							<input type="button" name="import_user_btn_save_csv" id="import_user_btn_save_csv" style="display:none;" class="ui basic green button" value="<?php esc_attr_e( 'Save failed', 'mainwp' ); ?>"/>
 						</div>
 					</div>
 						<script type="text/javascript">
@@ -2193,12 +2190,22 @@ class MainWP_User {
 			foreach ( $selected_sites as $url ) {
 				if ( ! empty( $url ) ) {
 					$website = MainWP_DB::instance()->get_websites_by_url( $url );
+					if ( ! empty( $website ) ) {
+						$website = current( $website );
+					}
 					if ( $website ) {
 						if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+							if ( '' !== $website->sync_errors ) {
+								$err_imp = esc_html__( 'Site disconnected:', 'mainwp' );
+							} else {
+								$err_imp = esc_html__( 'Site suspended:', 'mainwp' );
+							}
+							$not_valid[]  = $err_imp . ' ' . $website->url;
+							$error_sites .= $website->url . ';';
 							continue;
 						}
-						$dbwebsites[ $website[0]->id ] = MainWP_Utility::map_site(
-							$website[0],
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+							$website,
 							$data_fields
 						);
 					} else {
@@ -2214,6 +2221,13 @@ class MainWP_User {
 					if ( $websites ) {
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+								if ( '' !== $website->sync_errors ) {
+									$err_imp = esc_html__( 'Site disconnected:', 'mainwp' );
+								} else {
+									$err_imp = esc_html__( 'Site suspended:', 'mainwp' );
+								}
+								$not_valid[]  = $err_imp . ' ' . $website->url;
+								$error_sites .= $website->url . ';';
 								continue;
 							}
 							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(

@@ -384,6 +384,10 @@ body.mainwp-ui.mainwp-custom-theme,
 
 /* Invert Messages */
 
+.mainwp-ui.mainwp-custom-theme .ui.message .header {
+  color: var( --font-color );
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.info.message {
   color: var(--font-color) !important;
   border-left: 5px solid var(--blue-color) !important;

@@ -270,7 +270,7 @@ class MainWP_Monitoring {
 			return;
 		}
 
-		$optimize_for_sites_table = ( 1 === (int) get_option( 'mainwp_optimize', 1 ) );
+		$optimize_for_sites_table = apply_filters( 'mainwp_manage_sites_optimize_loading', 1, 'monitor-sites' ); // use ajax to load sites table .
 
 		if ( ! $optimize_for_sites_table ) {
 			self::$sitesTable->prepare_items( false );

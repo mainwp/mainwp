@@ -252,39 +252,68 @@ class MainWP_Notification_Settings {
 							<?php printf( esc_html__( '%1$sBoilerplate%2$s and %3$sReports%4$s extensions tokens are supported in the email settings and templates if Extensions are in use.', 'mainwp' ), '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">', '</a> <i class="external alternate icon"></i>', '<a href="https://mainwp.com/extension/pro-reports/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
 						</div>
 					<?php endif; ?>
-					<h3 class="ui header"><?php echo esc_html( $title ); ?></h3>
+					<h3 class="ui header">
+					<?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-email-' . esc_attr( $type ), 'email-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>	
+					<?php echo esc_html( $title ); ?></h3>
 					<div class="sub header"><?php echo esc_html( $email_description ); ?></h3></div>
 					<div class="ui divider"></div>
-					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php esc_html_e( 'Enable', 'mainwp' ); ?></label>
+					<div class="ui grid field settings-field-indicator-email-<?php echo esc_attr( $type ); ?>">
+						<label class="six wide column middle aligned">
+						<?php
+						MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'disable', (int) $options['disable'] );
+						esc_html_e( 'Enable', 'mainwp' );
+						?>
+						</label>
 						<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable this email notification.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 							<input type="checkbox" name="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][disable]" id="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][disable]" <?php echo ( 0 === (int) $options['disable'] ) ? 'checked="true"' : ''; ?>/>
 						</div>
 					</div>
-					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php esc_html_e( 'Recipient(s)', 'mainwp' ); ?></label>
+					<div class="ui grid field settings-field-indicator-email-<?php echo esc_attr( $type ); ?>">
+						<label class="six wide column middle aligned">
+						<?php
+						MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'recipients', $options['recipients'] );
+						esc_html_e( 'Recipient(s)', 'mainwp' );
+						?>
+						</label>
 						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'You can add multiple emails by separating them with comma.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 							<input type="text" name="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][recipients]" id="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][recipients]" value="<?php echo esc_html( $options['recipients'] ); ?>"/>
 						</div>
 					</div>
-					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php esc_html_e( 'Subject', 'mainwp' ); ?></label>
+					<div class="ui grid field settings-field-indicator-email-<?php echo esc_attr( $type ); ?>">
+						<label class="six wide column middle aligned">
+						<?php
+						MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'subject', $options['subject'] );
+						esc_html_e( 'Subject', 'mainwp' );
+						?>
+						</label>
 						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter the email subject.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 							<input type="text" name="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][subject]" id="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][subject]" value="<?php echo esc_html( $options['subject'] ); ?>"/>
 						</div>
 					</div>
-					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php esc_html_e( 'Email heading', 'mainwp' ); ?></label>
+					<div class="ui grid field settings-field-indicator-email-<?php echo esc_attr( $type ); ?>">
+						<label class="six wide column middle aligned">
+						<?php
+						MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'heading', $options['heading'] );
+						esc_html_e( 'Email heading', 'mainwp' );
+						?>
+						</label>
 						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter the email heading.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 							<input type="text" name="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][heading]" id="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][heading]" value="<?php echo esc_html( $options['heading'] ); ?>"/>
 						</div>
 					</div>
-					<div class="ui grid field" >				
-						<label class="six wide column middle aligned"><?php esc_html_e( 'HTML template', 'mainwp' ); ?></label>
-						<div class="ui ten wide column" data-tooltip="<?php esc_attr_e( 'Manage the email HTML template.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<div class="ui grid field settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" >
 						<?php
 						$templ     = MainWP_Notification_Template::get_template_name_by_notification_type( $type );
 						$overrided = MainWP_Notification_Template::instance()->is_overrided_template( $type );
+						?>
+						<label class="six wide column middle aligned">
+						<?php
+						MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'overrided', (int) $overrided );
+						esc_html_e( 'HTML template', 'mainwp' );
+						?>
+						</label>
+						<div class="ui ten wide column" data-tooltip="<?php esc_attr_e( 'Manage the email HTML template.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<?php
 						/**
 						 *
 						 * Use mainwp_notification_template_copy_message instead.
@@ -306,7 +335,7 @@ class MainWP_Notification_Settings {
 						?>
 						</div>		
 					</div>
-					<div class="ui grid field" >				
+					<div class="ui grid field settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" >				
 						<label class="six wide column middle aligned"></label>
 						<div class="ui ten wide column" data-tooltip="<?php esc_attr_e( 'Manage the email HTML template.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<?php if ( $overrided ) : ?>

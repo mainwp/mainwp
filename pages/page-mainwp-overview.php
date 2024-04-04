@@ -51,6 +51,7 @@ class MainWP_Overview {
 		'backup_tasks'       => true,
 		'non_mainwp_changes' => true,
 		'clients'            => true,
+		'get-started'        => true,
 	);
 
 	/**
@@ -253,12 +254,17 @@ class MainWP_Overview {
 			$id = 'advanced-' . $id;
 
 			if ( $enabled ) {
-				if ( 'google-widget' === $metaBox['id'] || 'matomo' === $metaBox['id'] ) {
+				if ( 'google-widget' === $id || 'matomo' === $id ) {
 					MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( 1, 1, 4, 18 ) );
 				} else {
 					MainWP_UI::add_widget_box( $id, $metaBox['callback'], $page, array( 1, 1, 4, 11 ) );
 				}
 			}
+		}
+
+		// Load the Updates Overview widget.
+		if ( self::$enable_widgets['get-started'] ) {
+			MainWP_UI::add_widget_box( 'get-started', array( MainWP_Get_Started::get_class_name(), 'render' ), $page, array( 1, 1, 4, 11 ) );
 		}
 
 		// Load the Recent Posts widget.

@@ -10,10 +10,12 @@ namespace MainWP\Dashboard\Module\CostTracker;
 
 use MainWP\Dashboard\MainWP_Menu;
 use MainWP\Dashboard\MainWP_UI;
+use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_System_Utility;
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Post_Handler;
+use MainWP\Dashboard\MainWP_Settings_Indicator;
 
 use function MainWP\Dashboard\mainwp_current_user_have_right;
 
@@ -81,6 +83,7 @@ class Cost_Tracker_Admin {
 		add_filter( 'mainwp_module_cost_tracker_get_default_cost_fields', array( $this, 'hook_get_default_cost_fields' ), 10, 2 );
 		add_filter( 'mainwp_module_cost_tracker_get_next_renewal', array( $this, 'hook_get_next_renewal' ), 10, 3 );
 		add_action( 'mainwp_delete_site', array( $this, 'hook_delete_site' ), 10, 3 );
+		add_filter( 'mainwp_module_cost_tracker_get_total_cost', array( $this, 'hook_get_total_cost' ), 10, 2 );
 	}
 
 
@@ -112,7 +115,14 @@ class Cost_Tracker_Admin {
 		if ( empty( $site ) ) {
 			return false;
 		}
-		return $this->delete_lookup_cost( 'site', $site->id );
+		return MainWP_DB::instance()->delete_lookup_items(
+			'object_id',
+			array(
+				'item_name'    => 'cost',
+				'object_id'    => $site->id,
+				'object_names' => array( 'site' ),
+			)
+		);
 	}
 
 	/**
@@ -401,6 +411,7 @@ class Cost_Tracker_Admin {
 			'which'      => 'page_cost_tracker_overview',
 			'wrap_class' => 'mainwp-module-cost-tracker-content-wrapper',
 		);
+
 		MainWP_UI::render_top_header( $params );
 
 		$renderItems = array();
@@ -437,15 +448,15 @@ class Cost_Tracker_Admin {
 				'active' => ( 'settings' === $shownPage ) ? true : false,
 			);
 		}
-
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
 				if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageCostTracker' . $subPage['slug'] ) ) {
 					continue;
 				}
 
-				$item           = array();
-				$item['title']  = $subPage['title'];
+				$item          = array();
+				$item['title'] = $subPage['title'];
+
 				$item['href']   = 'admin.php?page=ManageCostTracker' . $subPage['slug'];
 				$item['active'] = ( $subPage['slug'] === $shownPage ) ? true : false;
 				$renderItems[]  = $item;
@@ -651,9 +662,18 @@ class Cost_Tracker_Admin {
 	 * @param int    $previous_renewal last renewal.
 	 * @param string $renewal_type renewal time.
 	 */
-	public static function hook_get_next_renewal( $filter_input, $previous_renewal, $renewal_type ) {
+	public function hook_get_next_renewal( $filter_input, $previous_renewal, $renewal_type ) {
 		unset( $filter_input );
 		return self::get_next_renewal( $previous_renewal, $renewal_type );
+	}
+
+	/**
+	 * Method hook_get_total_cost().
+	 *
+	 * Get total costs.
+	 */
+	public function hook_get_total_cost() {
+		return Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'count' );
 	}
 
 	/**
@@ -1006,11 +1026,14 @@ class Cost_Tracker_Admin {
 			$color_style = 'color:' . esc_attr( $prod_color ) . ';';
 		}
 
+		$default_cls = 'module_cost_tracker_settings_upload_img_display';
 		if ( empty( $prod_icon ) ) {
-			$def_icon = Cost_Tracker_Utility::get_product_default_icons( false, 'default_product' );
-			$icon     = '<i style="' . $color_style . '" class="' . $def_icon . ' large icon"></i>';
+			$def_icon          = Cost_Tracker_Utility::get_product_default_icons( false, 'default_product' );
+			$icon_wrapper_attr = ! empty( $img_id_attr ) ? 'id="' . esc_attr( $img_id_attr ) . '" ' : 'class="' . esc_attr( $default_cls ) . '"';
+			$icon              = '<div style="display:inline-block;" ' . $icon_wrapper_attr . '><i style="' . $color_style . '" class="' . esc_attr( $def_icon ) . ' large icon"></i></div>';
 		} elseif ( false !== strpos( $prod_icon, 'deficon:' ) ) {
-			$icon = '<i style="' . $color_style . '" class="' . str_replace( 'deficon:', '', $prod_icon ) . ' large icon" ></i>';
+			$icon_wrapper_attr = ! empty( $img_id_attr ) ? 'id="' . esc_attr( $img_id_attr ) . '" ' : 'class="' . esc_attr( $default_cls ) . '"';
+			$icon              = '<div style="display:inline-block;" ' . $icon_wrapper_attr . '><i class="' . str_replace( 'deficon:', '', $prod_icon ) . ' large icon" style="' . $color_style . '" ></i></div>';
 		} else {
 			if ( ! empty( $upload_icon ) ) {
 				$dirs      = MainWP_System_Utility::get_mainwp_dir( Cost_Tracker_Settings::$icon_sub_dir, true );
@@ -1019,8 +1042,8 @@ class Cost_Tracker_Admin {
 			} else {
 				$scr = '';
 			}
-			$img_attr = ! empty( $img_id_attr ) ? 'id="' . esc_attr( $img_id_attr ) . '" class="ui mini circular image" ' : 'class="module_cost_tracker_settings_upload_img_display ui mini circular image "';
-			$icon     = '<img style="' . $style . $color_style . '" ' . $img_attr . ' src="' . esc_attr( $scr ) . '"/>';
+			$icon_wrapper_attr = ! empty( $img_id_attr ) ? 'id="' . esc_attr( $img_id_attr ) . '" class="ui mini circular image" ' : 'class="' . esc_attr( $default_cls ) . ' ui mini circular image "';
+			$icon              = '<div style="display:inline-block;" ' . $icon_wrapper_attr . '><img style="' . $style . '" src="' . esc_attr( $scr ) . '"/></div>';
 		}
 		return $icon;
 	}

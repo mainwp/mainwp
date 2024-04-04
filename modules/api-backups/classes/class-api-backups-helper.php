@@ -51,10 +51,10 @@ class Api_Backups_Helper {
 	public static function clean_url( $url ) {
 		$clean_url = '';
 		$protocall = array( 'http://', 'https://', 'http://www.', 'https://www.' );
-		foreach( $protocall as $p ) {
-			if( strpos( $url, $p ) === 0 ) {
+		foreach ( $protocall as $p ) {
+			if ( strpos( $url, $p ) === 0 ) {
 				$protocalls_striped = str_replace( $p, '', $url );
-				$clean_url = preg_replace( '{/$}', '', $protocalls_striped );
+				$clean_url          = preg_replace( '{/$}', '', $protocalls_striped );
 			}
 		}
 		return $clean_url;

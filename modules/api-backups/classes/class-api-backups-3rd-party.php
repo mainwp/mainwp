@@ -139,8 +139,7 @@ class Api_Backups_3rd_Party {
 		do_action( 'mainwp_ajax_add_action', 'action_backup_selected_sites', array( &$this, 'action_backup_selected_sites' ) );
 
 		// Fire off Cloudways & Gridpane ID auto lookup on site addition.
-        add_action( 'mainwp_added_new_site', array( &$this, 'hook_added_new_site' ), 10, 2 );
-
+		add_action( 'mainwp_added_new_site', array( &$this, 'hook_added_new_site' ), 10, 2 );
 	}
 
 
@@ -2433,10 +2432,10 @@ class Api_Backups_3rd_Party {
 
 		// Build an array of websites by URL.
 		$websites_by_urls = array();
-		if( $websites ){
+		if ( $websites ) {
 			while ( $websites && ( $website = Api_Backups_Helper::fetch_object( $websites ) ) ) {
-				$clean_url = Api_Backups_Helper::clean_url( $website->url );
-				$websites_by_urls[$clean_url] = $website->id;
+				$clean_url                      = Api_Backups_Helper::clean_url( $website->url );
+				$websites_by_urls[ $clean_url ] = $website->id;
 			}
 			MainWP_DB::data_seek( $websites, 0 );
 		}
@@ -2474,8 +2473,8 @@ class Api_Backups_3rd_Party {
 						Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_api', 'GridPane' );
 
 						// Check if the site is a staging site.
-						if ( !empty( $site->staging_site_built_at ) && isset( $websites_by_urls[ 'staging.' . $site->url] ) ) {
-							$staging_child_site_id = $websites_by_urls[ 'staging.' . $site->url];
+						if ( ! empty( $site->staging_site_built_at ) && isset( $websites_by_urls[ 'staging.' . $site->url ] ) ) {
+							$staging_child_site_id = $websites_by_urls[ 'staging.' . $site->url ];
 
 							// Update Staging Child Site options.
 							Api_Backups_Helper::update_website_option( $staging_child_site_id, 'mainwp_3rd_party_instance_id', $gp_site_id + 1 );

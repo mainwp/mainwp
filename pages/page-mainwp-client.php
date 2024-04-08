@@ -1914,9 +1914,9 @@ class MainWP_Client {
 								esc_html_e( 'Select icon', 'mainwp' );
 								?>
 								</label>
-								<div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select an icon if not using original contact icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+								<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Select an icon if not using original contact icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
 									<input type="hidden" name="client_fields[<?php echo esc_html( $input_name ); ?>][selected_icon][]" id="client_fields[<?php echo esc_attr( $input_name ); ?>][selected_icon][]" value="<?php echo esc_attr( $selected_icon ); ?>">
-									<div class="ui left action input">
+									<div class="ui left action input mainwp-dropdown-color-picker-field">
 										<div class="ui five column selection search dropdown not-auto-init mainwp-edit-clients-select-contact-icon" style="min-width:21em">
 											<div class="text">
 												<span style="color:<?php echo esc_attr( $selected_color ); ?>" ><?php echo ! empty( $selected_icon ) ? '<i class="' . esc_attr( $selected_icon ) . ' icon"></i>' : ''; ?></span>

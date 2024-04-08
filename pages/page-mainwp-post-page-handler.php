@@ -447,7 +447,8 @@ class MainWP_Post_Page_Handler {
 				?>
 		</div>
 		<div class="actions">
-			<a href="admin.php?page=PostBulkAdd" class="ui green button"><?php esc_html_e( 'New Post', 'mainwp' ); ?></a>
+			<?php do_action( 'mainwp_posts_posting_popup_actions', $post_id ); ?>
+			<a href="admin.php?page=PostBulkAdd" class="ui green button new-bulk-post"><?php esc_html_e( 'New Post', 'mainwp' ); ?></a>
 		</div>
 	</div>
 	<div class="ui active inverted dimmer" id="mainwp-posting-running">

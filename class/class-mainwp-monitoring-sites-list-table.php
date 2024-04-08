@@ -277,7 +277,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 							?>
 						</div>
 					</div>
-					<button class="ui tiny basic button" id="mainwp-do-manage-sites-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
+					<button class="ui tiny basic button" id="mainwp-do-sites-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
 				</div>
 				<div class="right aligned middle aligned column">
 						<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>

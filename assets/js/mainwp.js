@@ -1880,7 +1880,7 @@ mainwp_extension_prepareinstallplugin = function (pPluginToInstall, pSiteId) {
             syc_msg = '<span style="color:#0073aa">' + syc_msg + '!</span>';
           else
             syc_msg = '<span style="color:red">' + syc_msg + '!</span>';
-          jQuery('#mainwp-message-zone').append(pPluginToInstall.find(".sync-install-plugin").attr('plugin_name') + ' ' + syc_msg + '<br/>');
+          jQuery('#mainwp-message-zone').append('<br/>' + pPluginToInstall.find(".sync-install-plugin").attr('plugin_name') + ' ' + syc_msg );
         }
 
         if (!apply_settings) {
@@ -1945,11 +1945,11 @@ mainwp_extension_apply_plugin_settings = function (pPluginToInstall, pSiteId, pG
       else
         syc_msg = '<span style="color:red">' + syc_msg + '!</span>';
       if (pGlobal) {
-        syc_msg = __('Apply global %1 options', pPluginToInstall.attr('ext_name')) + ' ' + syc_msg + '<br/>';
+        syc_msg = __('Apply global %1 options', pPluginToInstall.attr('ext_name')) + ' ' + syc_msg;
       } else {
-        syc_msg = __('Apply %1 settings', pPluginToInstall.find('.sync-install-plugin').attr('plugin_name')) + ' ' + syc_msg + '<br/>';
+        syc_msg = __('Apply %1 settings', pPluginToInstall.find('.sync-install-plugin').attr('plugin_name')) + ' ' + syc_msg;
       }
-      jQuery('#mainwp-message-zone').append(syc_msg);
+      jQuery('#mainwp-message-zone').append('<br/>' + syc_msg);
     }
     bulkInstallCurrentThreads--;
     mainwp_managesites_sync_extension_start_next(pSiteId);

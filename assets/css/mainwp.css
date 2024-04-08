@@ -629,6 +629,7 @@ table.mainwp-manage-wpsites-table .error a {
 #mainwp-manage-clients-table .custom-icon {
     font-size: 35px;
 }
+
 /* Manage Costs Table */
 #mainwp-module-cost-tracker-sites-table tbody tr td.mainwp-manage-costs-name-cell {
     white-space: nowrap;
@@ -776,11 +777,14 @@ table.mainwp-manage-wpsites-table .error a {
 }
 
 .mainwp-ui .mainwp-dropdown-color-picker-field #mainwp_edit_clients_icon_select,
-.mainwp-ui .mainwp-dropdown-color-picker-field #mainwp_manage_add_edit_site_icon_select {
-    max-width: calc( 100% - 65px ) !important;
-    min-width: calc( 100% - 65px ) !important;
+.mainwp-ui .mainwp-dropdown-color-picker-field #mainwp_manage_add_edit_site_icon_select,
+.mainwp-ui .mainwp-dropdown-color-picker-field .mainwp-edit-clients-select-contact-icon {
+    max-width: calc(100% - 65px) !important;
+    min-width: calc(100% - 65px) !important;
 }
-.mainwp-ui .mainwp-dropdown-color-picker-field .mainwp-color-picker-input {
+
+.mainwp-ui .mainwp-dropdown-color-picker-field .mainwp-color-picker-input,
+.mainwp-ui .ui.form .field .mainwp-color-picker-input {
     max-width: 65px !important;
 }
 
@@ -1508,33 +1512,41 @@ th .down.icon {
     margin-left: -12px !important;
 }
 
-.category-select-item-sub1{
+.category-select-item-sub1 {
     padding-left: 35px !important;
 }
-.category-select-item-sub2{
+
+.category-select-item-sub2 {
     padding-left: 45px !important;
 }
-.category-select-item-sub3{
+
+.category-select-item-sub3 {
     padding-left: 65px !important;
 }
-.category-select-item-sub4{
+
+.category-select-item-sub4 {
     padding-left: 85px !important;
 }
-.category-select-item-sub5{
+
+.category-select-item-sub5 {
     padding-left: 105px !important;
 }
-.mainwp-get-started-widget-check-lists .item{
+
+.mainwp-get-started-widget-check-lists .item {
     line-height: 2rem !important;
 }
+
 .mainwp-ui .qq-upload-drop-area {
     min-width: 100%;
     padding: 50px;
     border: 5px dashed #999999;
     margin-top: 20px;
 }
-.mainwp-get-started-widget-check-lists .item .content{
+
+.mainwp-get-started-widget-check-lists .item .content {
     width: auto !important;
 }
-#mainw_managesites_add_edit_site_upload_custom_icon{
+
+#mainw_managesites_add_edit_site_upload_custom_icon {
     margin-left: 30px !important;
 }

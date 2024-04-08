@@ -1,6 +1,6 @@
 
 // Trigger Manage Sites Bulk Actions
-jQuery(document).on('click', '#mainwp-do-manage-sites-bulk-actions', function () {
+jQuery(document).on('click', '#mainwp-do-sites-bulk-actions', function () {
   var action = jQuery("#mainwp-sites-bulk-actions-menu").dropdown("get value");
   if (action == '')
     return false;

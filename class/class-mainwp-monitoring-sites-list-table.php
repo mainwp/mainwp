@@ -786,10 +786,10 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 								jQuery( row ).find( 'td.column-site-bulk' ).addClass( 'site-sync-error' );
 							};
 						},
-					} ).on( 'columns-reordered', function ( e, settings, details ) {
+					} ).on( 'column-reorder', function ( e, settings, details ) {
 							$( '#mainwp-manage-sites-monitor-table .ui.dropdown' ).dropdown();
 							$( '#mainwp-manage-sites-monitor-table .ui.checkbox' ).checkbox();
-							console.log('columns-reordered');							
+							console.log('column-reorder');							
 							mainwp_datatable_fix_menu_overflow( '#mainwp-manage-sites-monitor-table' );
 						} );
 				} catch(err) {

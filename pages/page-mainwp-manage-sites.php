@@ -921,6 +921,7 @@ class MainWP_Manage_Sites {
 					jQuery('#mainwp_delete_image_field').hide();
 					jQuery('#mainwp-upload-custom-icon-modal').modal('setting', 'closable', false).modal('show');
 					jQuery('#update_custom_icon_btn').removeAttr('disabled');
+					jQuery('#update_custom_icon_btn').attr('uploading-icon', 'site');
 					jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconItemId', iconObj.attr('iconItemId') ); // @see used by mainwp_upload_custom_types_icon().
 					jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconFileSlug', iconObj.attr('iconFileSlug') ); // @see used by mainwp_upload_custom_types_icon().
 					
@@ -983,7 +984,7 @@ class MainWP_Manage_Sites {
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$iconfile_slug = isset( $_POST['iconFileSlug'] ) ? sanitize_text_field( wp_unslash( $_POST['iconFileSlug'] ) ) : '';
 		$delete        = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0;
-		$site_id       = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : 0;
+		$site_id       = isset( $_POST['iconItemId'] ) ? intval( $_POST['iconItemId'] ) : 0;
 
 		if ( $delete ) {
 			if ( $site_id ) {
@@ -1030,7 +1031,7 @@ class MainWP_Manage_Sites {
 	}
 
 	/**
-	 * Method get_cust_site_icon()
+	 * Method get_site_icon_display()
 	 *
 	 * Get site icon.
 	 *
@@ -1071,6 +1072,7 @@ class MainWP_Manage_Sites {
 	 * @param string $type Type: uploaded|selected|color|display.
 	 */
 	public function get_cust_site_icon( $icon_data, $type = 'display' ) {
+
 		if ( empty( $icon_data ) ) {
 			return '';
 		}

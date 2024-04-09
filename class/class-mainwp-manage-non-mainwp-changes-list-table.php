@@ -62,7 +62,6 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table {
 	 */
 	public function get_sortable_columns() {
 		$sortable_columns = array(
-
 			'name'        => array( 'name', false ),
 			'site'        => array( 'site', false ),
 			'action_user' => array( 'action_user', false ),
@@ -531,15 +530,15 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table {
 								jQuery( row ).attr( 'action-id', data.actionID );
 								jQuery( row ).attr( 'id', "child-site-" + data.siteID );
 							}
-						} ).on( 'columns-reordered', function ( e, settings, details ) {
+						} ).on( 'column-reorder', function ( e, settings, details ) {
+							console.log('column-reorder');
+							mainwp_datatable_fix_menu_overflow('#mainwp-manage-non-mainwp-actions-table');
 							$( '#mainwp-manage-non-mainwp-actions-table .ui.dropdown' ).dropdown();
 							$( '#mainwp-manage-non-mainwp-actions-table .ui.checkbox' ).checkbox();
-							console.log('columns-reordered');							
-							mainwp_datatable_fix_menu_overflow('#mainwp-manage-non-mainwp-actions-table');
 						} );
 					} catch(err) {
 						// to fix js error.
-					}		
+					}
 					setTimeout( function () {
 						mainwp_datatable_fix_menu_overflow();
 					}, 1000 );

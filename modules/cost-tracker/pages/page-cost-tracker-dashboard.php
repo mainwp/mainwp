@@ -635,10 +635,10 @@ class Cost_Tracker_Dashboard {
 								jQuery( row ).attr( 'item-id', data.cost_id );
 								
 							}
-						}).on( 'columns-reordered', function ( e, settings, details ) {
+						}).on( 'column-reorder', function ( e, settings, details ) {
 							$( '#mainwp-module-cost-tracker-sites-table .ui.dropdown' ).dropdown();
 							$( '#mainwp-module-cost-tracker-sites-table .ui.checkbox' ).checkbox();
-							console.log('columns-reordered');							
+							console.log('column-reorder');
 							mainwp_datatable_fix_menu_overflow('#mainwp-module-cost-tracker-sites-table');
 						} );
 					} catch(err) {

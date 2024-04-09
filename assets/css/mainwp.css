@@ -1547,6 +1547,8 @@ th .down.icon {
     width: auto !important;
 }
 
-#mainw_managesites_add_edit_site_upload_custom_icon {
+#mainw_managesites_add_edit_site_upload_custom_icon,
+#mainwp_add_edit_client_upload_custom_icon,
+.mainwp_add_edit_contact_upload_custom_icon{
     margin-left: 30px !important;
 }

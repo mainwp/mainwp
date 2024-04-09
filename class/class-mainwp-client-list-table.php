@@ -490,10 +490,10 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 						"pageLength": <?php echo intval( $sites_per_page ); ?>,
 						"drawCallback": function( settings ) {
 						},
-						} ).on( 'columns-reordered', function ( e, settings, details ) {
+						} ).on( 'column-reorder', function ( e, settings, details ) {
 							$( '#mainwp-manage-clients-table .ui.dropdown' ).dropdown();
 							$( '#mainwp-manage-clients-table .ui.checkbox' ).checkbox();
-							console.log('columns-reordered');							
+							console.log('column-reordere');							
 							mainwp_datatable_fix_menu_overflow();
 						} );
 				} catch(err) {

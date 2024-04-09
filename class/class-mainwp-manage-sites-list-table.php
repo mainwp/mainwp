@@ -498,7 +498,7 @@ class MainWP_Manage_Sites_List_Table {
 			</div>
 			<div class="row ui mini form" id="mainwp-sites-filters-row" style="<?php echo esc_attr( $filters_row_style ); ?>">
 				<div class="thirteen wide middle aligned column ui grid">
-						<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
+					<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
 					<div class="ui selection dropdown seg_is_not" id="mainwp_is_not_site">
 							<input type="hidden" value="<?php echo $is_not ? 'yes' : ''; ?>">
 							<i class="dropdown icon"></i>

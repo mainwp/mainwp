@@ -630,6 +630,7 @@ jQuery(document).ready(function () {
         }
         jQuery(document).on('click', '#update_custom_icon_btn', function () {
             mainwp_upload_custom_icon(iconObj);
+            return false;
         });
         return false;
     });

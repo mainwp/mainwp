@@ -602,8 +602,8 @@ class Log_Insights_Page {
 		?>
 	<div class="mainwp-sub-header" id="mainwp-module-log-overview-sub-header">
 		<div class="ui stackable compact grid mini form" id="mainwp-module-log-filters-row">
-			<div class="thirteen wide column ui compact grid">
-				<div class="three wide middle aligned column">
+			<div class="twelve wide column ui compact grid">
+				<div class="two wide middle aligned column">
 					<div id="mainwp-module-log-filter-ranges" class="ui selection fluid dropdown seg_ranges not-auto-init">
 						<input type="hidden" value="<?php echo esc_html( $filter_ranges ); ?>">
 						<i class="dropdown icon"></i>
@@ -629,7 +629,7 @@ class Log_Insights_Page {
 						</div>
 					</div>
 				</div>
-				<div class="three wide middle aligned column">
+				<div class="two wide middle aligned column">
 					<div class="ui calendar mainwp_datepicker seg_dtsstart" id="mainwp-module-log-filter-dtsstart" >
 						<div class="ui input left fluid icon">
 							<i class="calendar icon"></i>
@@ -637,7 +637,7 @@ class Log_Insights_Page {
 						</div>
 					</div>
 				</div>
-				<div class="three wide middle aligned column">
+				<div class="two wide middle aligned column">
 					<div class="ui calendar mainwp_datepicker seg_dtsstop" id="mainwp-module-log-filter-dtsstop" >
 						<div class="ui input left icon">
 							<i class="calendar icon"></i>
@@ -645,7 +645,7 @@ class Log_Insights_Page {
 						</div>
 					</div>
 				</div>
-				<div class="three wide middle aligned column">
+				<div class="two wide middle aligned column">
 					<div id="mainwp-module-log-filter-groups" class="ui selection multiple fluid dropdown seg_groups">
 						<input type="hidden" value="<?php echo esc_html( $filter_groups_ids ); ?>">
 						<i class="dropdown icon"></i>
@@ -662,7 +662,7 @@ class Log_Insights_Page {
 						</div>
 					</div>
 				</div>
-				<div class="three wide middle aligned column">
+				<div class="two wide middle aligned column">
 					<div id="mainwp-module-log-filter-clients" class="ui selection multiple fluid dropdown seg_clients">
 						<input type="hidden" value="<?php echo esc_html( $filter_client_ids ); ?>">
 						<i class="dropdown icon"></i>
@@ -680,7 +680,7 @@ class Log_Insights_Page {
 						</div>
 					</div>
 				</div>
-				<div class="three wide middle aligned column">
+				<div class="two wide middle aligned column">
 					<div id="mainwp-module-log-filter-users" class="ui selection multiple fluid dropdown seg_users">
 						<input type="hidden" value="<?php echo esc_html( $filter_user_ids ); ?>">
 						<i class="dropdown icon"></i>
@@ -698,13 +698,7 @@ class Log_Insights_Page {
 						</div>
 					</div>
 				</div>
-				<div class="three wide middle aligned column">
-				</div>
-				<div class="three wide middle aligned column">
-				</div>
-				<div class="three wide middle aligned column">
-				</div>	
-				<div class="three wide middle aligned right aligned column">
+				<div class="three wide middle aligned left aligned column">
 					<button onclick="mainwp_module_log_overview_content_filter()" class="ui mini basic button"><?php esc_html_e( 'Filter Data', 'mainwp' ); ?></button>
 					<button onclick="mainwp_module_log_overview_content_reset_filters(this)" class="ui mini green button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
 					

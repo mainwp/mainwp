@@ -143,33 +143,37 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
-= 5.0.2 - 3-14-2024 =
+= 5.0.3 - 4-9-2024 =
 
-* Fixed: Tag-related cost display issues in the child site widget.
-* Fixed: Tooltip positioning anomalies on the Insights page.
-* Fixed: Incorrect extension slugs affecting main navigation for SEOPress, Custom Post Types, and Vulnerability Checker.
-* Fixed: The reconnect site button functionality by adding the missing icon class.
-* Fixed: An uncaught type error on the site-specific themes update page.
-* Added: Cost Summary: a new widgetized page for financial oversight.
-* Added: Widgets for "Payments Left for This Month," "Upcoming Renewals" (monthly and yearly), "Monthly Totals," and "Annual Expense Distribution by Category" on the Cost Summary page.
-* Added: Filtering system and the ability to save filter segments on the 'Manage Costs' page.
-* Added: Feature for saving icons or custom images for costs.
-* Added: Color picker tool for product categories and cost items.
-* Added: Option to arrange default columns in the 'Manage Cost' table.
-* Updated: Central alignment for WP Core, Plugins, and Themes columns in 'Manage Sites.'
-* Updated: Automatically reveal the site filters row upon any filter application.
-* Updated: Amended tag deletion confirmation to correctly reference 'tag' instead of 'group.'
-* Updated: Changed background colors for the second-level navigation menu and the Collapse button in the classic theme.
-* Updated: Introduced a new menu item for WPvivid under 'Backups.'
-* Updated: ID attributes for second-level menu items in extension categories.
-* Updated: Adjusted modal close icon color in Minimalistic and WP Admin themes.
-* Updated: Refined default column layout in the 'Manage Cost' table.
-* Updated: Updated display icons for Single-Site and Multi-Site licenses.
-* Updated: Enhanced display of cost type column content.
-* Updated: Visual update to show payment methods with icons.
-* Updated: Moved 'Edit Notes' to the actions menu.
-* Updated: Updated 'Cost Tracker' column in 'Manage Sites' and 'Manage Clients' for 30-Day Cost Forecast visibility.
+* Fixed: Issues with importing users through CSV uploads have been resolved.
+* Fixed: The error message that was previously truncated when attempting to reconnect a Child Site is now fully visible.
+* Fixed: The "PHP < 7.0" filter in the Manage Sites table has been corrected to function as intended.
+* Fixed: Resolved an issue where duplicate Tags were displayed in the Manage Sites table due to certain filter combinations.
+* Fixed: Post subcategories sharing the same name but belonging to different main categories are now correctly displayed.
+* Fixed: Resolved a conflict with the API Backups extension that caused the site addition process to hang on "Adding site…".
+* Fixed: Alignment and padding issues with filter elements on the Insights page have been addressed.
+* Fixed: Corrected the active menu item display on the Add New Site page.
+* Fixed: Addressed visual inconsistencies with the Boilerplate New Post and New Page modals.
+* Fixed: An issue with detection of GridPane sites with WWW prefix in API Backups
+* Fixed: Resolved an issue with detection of GridPane staging sites in API Backups
+* Added: A new "PHP < 8" filter has been introduced to the Manage Sites table.
+* Added: Dot icon indicators have been added to form fields to signify when a field's value differs from the default.
+* Added: An icon and color picker feature on the Add and Edit Site screen for setting a site icon when the site favicon is unavailable.
+* Added: An icon and color picker feature on the Add and Edit Client screen as an alternative to using an image.
+* Added: The ability to save and load segments on the Dashboard Insights page has been added.
+* Added: A Reset Filters button has been added to the Manage Sites, Manage Clients, Insights, and Cost Tracker pages.
+* Added: Extension Settings Synchronization support when adding a new Child Site for Staging and Jetpack Protect extensions.
+* Added: Support for Database Updater information in the Updates Overview widget.
+* Added: A new Getting Started Widget has been introduced on the Overview page.
+* Added: Support for Boilerplate tokens in Custom Fields when creating Boilerplate Posts and Pages has been added.
+* Updated: The MainWP Dashboard plugin activation will no longer automatically redirect users to the Quick Setup Wizard.
+* Updated: The color picker in the Create/Edit Tag modal has been updated to a Fomantic UI one.
+* Updated: Improved the display and messaging for row item processing and status updates across the MainWP Dashboard.
+* Updated: Revised success and error messages following form submissions across the MainWP Dashboard.
+* Updated: Made visual adjustments to the info tooltip on the Insights page.
+* Updated: Enhanced the size and visual indication of the drag and drop zone for plugin and theme installations via ZIP upload.
+* Updated: Standardized the design of the Filter / Reset Filter buttons across Manage Sites, Manage Clients, Insights, and Cost Tracker pages.
 
-[See Video Changelog](https://www.youtube.com/watch?v=QuD0T3Mfmuw)
+[See Video Changelog](https://www.youtube.com/watch?v=)
 
 [See changelog for all versions.](https://mainwp.com/changelog.txt)

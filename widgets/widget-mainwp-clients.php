@@ -82,11 +82,11 @@ class MainWP_Clients {
 					</thead>
 					<tbody>
 					<?php foreach ( $clients as $client ) : ?>
-						<?php $image_url = MainWP_Client_Handler::get_client_image_url( $client['image'] ); ?>
+						<?php $client_display_image = MainWP_Client_Handler::get_client_contact_image( $client ); ?>
 						<tr>
 							<td class="left aligned middle aligned">
 								<a href="admin.php?page=ManageClients&client_id=<?php echo intval( $client['client_id'] ); ?>">
-									<img class="ui tiny circular image" src="<?php echo esc_attr( $image_url ); ?>">
+									<?php echo $client_display_image; //phpcs:ignore -- ok. ?>
 								</a>
 							</td>
 							<td class="left aligned middle aligned">

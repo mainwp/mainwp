@@ -540,10 +540,7 @@ class MainWP_Client_Handler {
 			return '';
 		}
 
-		$img_cls = 'ui mini circular image';
-		if ( 'card' === $what ) {
-			$img_cls = 'ui medium circular image';
-		}
+		$dirs = MainWP_System_Utility::get_mainwp_dir( 'client-images', true );
 
 		if ( 'client' === $type ) {
 			$image_path = $item['image'];
@@ -553,10 +550,30 @@ class MainWP_Client_Handler {
 			$icon_info  = $item['contact_icon_info'];
 		}
 
-		$dirs = MainWP_System_Utility::get_mainwp_dir( 'client-images', true );
+		if ( 'uploaded_icon' === $what ) {
+			$full_url = '';
+			if ( ! empty( $image_path ) && file_exists( $dirs[0] . $image_path ) ) {
+				$full_url = $dirs[1] . $image_path;
+			}
+			return $full_url; // return path to uploaded icon.
+		}
+
+		$img_cls = 'ui mini circular image';
+		if ( 'card' === $what ) {
+			$img_cls = 'ui medium circular image';
+		}
+
+		$icon_wrapper_attr = ' class="' . $img_cls . '" style="height:auto;display:inline-block;" ';
+		if ( 'display_edit' === $what ) {
+			$icon_wrapper_attr = ' id="mainwp_add_edit_client_upload_custom_icon" style="width:32px;height:auto;display:inline-block;" class="' . esc_attr( $img_cls ) . '" ';
+			if ( 'contact' === $type ) {
+				$icon_wrapper_attr = ' style="width:32px;height:auto;display:inline-block;" class="mainwp_add_edit_contact_upload_custom_icon ' . esc_attr( $img_cls ) . '" ';
+			}
+		}
+
 		if ( ! empty( $image_path ) && file_exists( $dirs[0] . $image_path ) ) {
 			$full_url = $dirs[1] . $image_path;
-			return '<img class="' . $img_cls . '" src="' . esc_attr( $full_url ) . '">';
+			return '<img ' . $icon_wrapper_attr . ' src="' . esc_attr( $full_url ) . '">';
 		} elseif ( ! empty( $icon_info ) ) {
 			return MainWP_Client::get_cust_client_icon( $icon_info, 'display', $what );
 		}

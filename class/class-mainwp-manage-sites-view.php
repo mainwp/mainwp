@@ -1408,6 +1408,7 @@ class MainWP_Manage_Sites_View {
 							jQuery('#mainwp_delete_image_field').hide();
 							jQuery('#mainwp-upload-custom-icon-modal').modal('setting', 'closable', false).modal('show');
 							jQuery('#update_custom_icon_btn').removeAttr('disabled');
+							jQuery('#update_custom_icon_btn').attr('uploading-icon', 'site');
 							jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconItemId', iconObj.attr('iconItemId') ); // @see used by mainwp_upload_custom_types_icon().
 							jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconFileSlug', iconObj.attr('iconFileSlug') ); // @see used by mainwp_upload_custom_types_icon().
 							

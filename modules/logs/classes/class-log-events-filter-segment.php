@@ -64,19 +64,13 @@ class Log_Events_Filter_Segment {
 		$saved_segments = $this->set_get_manage_sites_filter_segments();
 		?>
 
-		<div class="three wide top aligned right aligned column">
-			<div class="ui compact grid">
-				<div class="eight wide column"></div>
-				<div class="eight wide column">
-					<button class="ui mini fluid button" id="mainwp-module-log-filter-save-segment-button" selected-segment-id="" selected-segment-name=""><?php esc_html_e( 'Save Segment', 'mainwp' ); ?></button>
-					<br/>
-					<?php if ( ! empty( $saved_segments ) ) : ?>
-						<button class="ui mini fluid button mainwp_module_log_filter_choose_segment"><?php esc_html_e( 'Load a Segment', 'mainwp' ); ?></button>
-					<?php else : ?>
-						<button class="ui mini fluid disabled button"><?php esc_html_e( 'Load a Segment', 'mainwp' ); ?></button>
-					<?php endif; ?>
-				</div>
-			</div>			
+		<div class="four wide top aligned right aligned column">
+			<button class="ui mini button" id="mainwp-module-log-filter-save-segment-button" selected-segment-id="" selected-segment-name=""><?php esc_html_e( 'Save Segment', 'mainwp' ); ?></button>
+			<?php if ( ! empty( $saved_segments ) ) : ?>
+				<button class="ui mini button mainwp_module_log_filter_choose_segment"><?php esc_html_e( 'Load a Segment', 'mainwp' ); ?></button>
+			<?php else : ?>
+				<button class="ui mini disabled button"><?php esc_html_e( 'Load a Segment', 'mainwp' ); ?></button>
+			<?php endif; ?>
 		</div>
 					
 		<script type="text/javascript">

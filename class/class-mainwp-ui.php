@@ -1854,7 +1854,7 @@ class MainWP_UI {
 					</form>
 				</div>
 				<div class="actions">
-					<div class="ui green button" id="update_custom_icon_btn"><?php esc_html_e( 'Update', 'mainwp' ); ?></div>
+					<div class="ui green button"  uploading-icon="default" id="update_custom_icon_btn"><?php esc_html_e( 'Update', 'mainwp' ); ?></div>
 				</div>
 		</div>
 				<?php

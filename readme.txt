@@ -174,6 +174,6 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 * Updated: Enhanced the size and visual indication of the drag and drop zone for plugin and theme installations via ZIP upload.
 * Updated: Standardized the design of the Filter / Reset Filter buttons across Manage Sites, Manage Clients, Insights, and Cost Tracker pages.
 
-[See Video Changelog](https://www.youtube.com/watch?v=)
+[See Video Changelog](https://www.youtube.com/watch?v=5idFDPrgFf8)
 
 [See changelog for all versions.](https://mainwp.com/changelog.txt)

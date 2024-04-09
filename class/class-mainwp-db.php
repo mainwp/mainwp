@@ -111,6 +111,10 @@ class MainWP_DB extends MainWP_DB_Base {
 			$fields[] = 'verify_method';
 		}
 
+		if ( ! in_array( 'cust_site_icon_info', $fields, true ) ) {
+			$fields[] = 'cust_site_icon_info';
+		}
+
 		if ( is_array( $fields ) ) {
 			foreach ( $fields as $field ) {
 				if ( empty( $field ) ) {
@@ -1316,12 +1320,16 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 		// wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
 		if ( $selectgroups ) {
+
+			if ( empty( $join_group ) ) {
+				$join_group = ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
+			}
+
 			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, wpclient.name as client_name 
             FROM ' . $this->table_name( 'wp' ) . ' wp ' .
-			$join_group . ' ' .
-			$join_client . '
-            LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
-            LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
+			$join_client . ' ' .
+			$join_group . '
+            LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgroup.groupid = gr.id
 			
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
@@ -2156,7 +2164,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		if ( '/' !== substr( $url, - 1 ) ) {
 			$url .= '/';
 		}
-		$results = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE url = %s ', $this->escape( $url ) ), OBJECT );
+		$results = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE wp.url = %s ', $this->escape( $url ) ), OBJECT );
 		if ( $results ) {
 			return $results;
 		}
@@ -2170,14 +2178,14 @@ class MainWP_DB extends MainWP_DB_Base {
 			$url = str_replace( 'http://', 'http://www.', $url );
 		}
 
-		$results = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE url = %s ', $this->escape( $url ) ), OBJECT );
+		$results = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid  WHERE wp.url = %s ', $this->escape( $url ) ), OBJECT );
 		if ( $results ) {
 			return $results;
 		}
 
 		$url = str_replace( array( 'https://www.', 'http://www.', 'https://', 'http://', 'www.' ), array( '', '', '', '', '' ), $url );
 
-		return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . " WHERE  replace(replace(replace(replace(replace(url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www.', '')  = %s ", $this->escape( $url ) ), OBJECT );
+		return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . " wp_sync ON wp.id = wp_sync.wpid WHERE  replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www.', '')  = %s ", $this->escape( $url ) ), OBJECT );
 	}
 
 	/**
@@ -2508,6 +2516,7 @@ class MainWP_DB extends MainWP_DB_Base {
 
 		$lookup_ids = isset( $params['lookup_ids'] ) ? $params['lookup_ids'] : null;
 		$item_id    = isset( $params['item_id'] ) ? $params['item_id'] : null;
+		$object_id  = isset( $params['object_id'] ) ? $params['object_id'] : null;
 		$item_name  = isset( $params['item_name'] ) ? $params['item_name'] : null;
 		$obj_names  = isset( $params['object_names'] ) ? $params['object_names'] : null;
 
@@ -2519,6 +2528,16 @@ class MainWP_DB extends MainWP_DB_Base {
 			$obj_names = $this->escape_array( $obj_names );
 			if ( ! empty( $obj_names ) ) {
 				$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'lookup_item_objects' ) . ' WHERE item_name = %s AND item_id = %d AND object_name IN ("' . implode( '","', $obj_names ) . '") ', $item_name, $item_id ) );  //phpcs:ignore -- ok.
+				return true;
+			}
+		} elseif ( 'object_id' === $by ) {
+			if ( empty( $object_id ) || empty( $item_name ) || empty( $obj_names ) ) {
+				return false;
+			}
+
+			$obj_names = $this->escape_array( $obj_names );
+			if ( ! empty( $obj_names ) ) {
+				$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'lookup_item_objects' ) . ' WHERE item_name = %s AND object_id = %d AND object_name IN ("' . implode( '","', $obj_names ) . '") ', $item_name, $object_id ) );  //phpcs:ignore -- ok.
 				return true;
 			}
 		} elseif ( 'lookup_id' === $by ) {

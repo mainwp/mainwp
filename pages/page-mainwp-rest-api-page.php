@@ -190,6 +190,7 @@ class MainWP_Rest_Api_Page {
 				'slug'       => 'RESTAPI',
 				'right'      => 'manage_restapi',
 			),
+
 			array(
 				'title'      => esc_html__( 'Add API Keys', 'mainwp' ),
 				'parent_key' => 'RESTAPI',
@@ -755,7 +756,7 @@ class MainWP_Rest_Api_Page {
 	 * @param string $keyid Key ID edit.
 	 * @param array  $item The Key edit.
 	 */
-	public static function render_rest_api_edit( $keyid, $item ) {
+	public static function render_rest_api_edit( $keyid, $item ) { //phpcs:ignore -- complex.
 
 		$edit_desc = is_array( $item ) && isset( $item['desc'] ) ? $item['desc'] : '';
 		$enabled   = is_array( $item ) && isset( $item['enabled'] ) && ! empty( $item['enabled'] ) ? true : false;
@@ -778,28 +779,55 @@ class MainWP_Rest_Api_Page {
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<input type="hidden" name="edit_key_nonce" value="<?php echo esc_attr( wp_create_nonce( 'edit-key-nonce-' . $keyid ) ); ?>" />
 						<input type="hidden" name="editkey_id" value="<?php echo esc_html( $keyid ); ?>" />
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable REST API Key', 'mainwp' ); ?></label>
+						<div class="ui grid field <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>">
+							<label class="six wide column middle aligned">
+							<?php
+							if ( $item ) {
+								MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $enabled );
+							}
+							?>
+							<?php esc_html_e( 'Enable REST API Key', 'mainwp' ); ?></label>
 							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the REST API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
 								<input type="checkbox" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" value="1" <?php echo ( $enabled ? 'checked="true"' : '' ); ?> />
 							</div>
 						</div>
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Description', 'mainwp' ); ?></label>
+						<div class="ui grid field <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>"">
+							<label class="six wide column middle aligned">
+							<?php
+							if ( $item ) {
+								MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_desc );
+							}
+							?>
+							<?php esc_html_e( 'Description', 'mainwp' ); ?></label>
 							<div class="five wide column">
 								<input type="text" name="mainwp_rest_api_key_desc" id="mainwp_rest_api_key_desc" value="<?php echo esc_html( $edit_desc ); ?>" />
 							</div>
 						</div>
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Consumer key ending in', 'mainwp' ); ?></label>
+						<div class="ui grid field <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>"">
+							<label class="six wide column middle aligned">
+							<?php
+							if ( $item ) {
+								MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $ending );
+							}
+							?>
+							<?php esc_html_e( 'Consumer key ending in', 'mainwp' ); ?></label>
 							<div class="five wide column">
 								<div class="ui disabled input">
 									<input type="text" value="<?php echo esc_attr( '...' . $ending ); ?>" />
 								</div>
 							</div>
 						</div>
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Permissions', 'mainwp' ); ?></label>
+						<div class="ui grid field <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>"">
+							<label class="six wide column middle aligned">
+							<?php
+							if ( $item ) {
+								$tmp = explode( ',', $init_pers );
+								if ( 3 !== count( $tmp ) ) {
+									echo MainWP_Settings_Indicator::get_indicator(); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+								}
+							}
+							?>
+							<?php esc_html_e( 'Permissions', 'mainwp' ); ?></label>
 							<div class="five wide column">
 								<div class="ui multiple selection dropdown" init-value="<?php echo esc_attr( $init_pers ); ?>">
 									<input name="mainwp_rest_api_key_edit_pers" value="" type="hidden">

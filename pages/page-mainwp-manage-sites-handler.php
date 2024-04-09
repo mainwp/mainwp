@@ -45,7 +45,7 @@ class MainWP_Manage_Sites_Handler {
 			$invalid = true;
 		}
 
-		if ( $invalid || 0 !== strpos( $url, 'http://' ) && 0 !== strpos( $url, 'https://' ) || false !== strpos( $url, '?=' ) ) { // to fix: valid url to check.
+		if ( $invalid || ( 0 !== strpos( $url, 'http://' ) && 0 !== strpos( $url, 'https://' ) ) || false !== strpos( $url, '?=' ) ) { // to fix: valid url to check.
 			die( wp_json_encode( array( 'error' => esc_html__( 'Invalid URL! Please enter valid URL to the Site URL field.', 'mainwp' ) ) ) );
 		}
 
@@ -107,7 +107,12 @@ class MainWP_Manage_Sites_Handler {
 				throw new \Exception( esc_html__( 'Site could not be connected. Please check the Status page and be sure that all system requirments pass.', 'mainwp' ) );
 			}
 		} catch ( \Exception $e ) {
-			die( 'ERROR ' . $e->getMessage() ); // phpcs:ignore WordPress.Security.EscapeOutput
+			$msg     = $e->getMessage();
+			$arr_msg = MainWP_Utility::parse_html_error_message( $msg );
+			if ( is_array( $arr_msg ) ) {
+				die( 'ERROR ' . wp_json_encode( $arr_msg ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+			}
+			die( 'ERROR ' . $msg ); // phpcs:ignore WordPress.Security.EscapeOutput
 		}
 
 		die( esc_html__( 'Site has been reconnected successfully!', 'mainwp' ) );

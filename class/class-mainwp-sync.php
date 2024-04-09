@@ -164,7 +164,7 @@ class MainWP_Sync {
 				$sync_errors  = esc_html__( 'HTTP error', 'mainwp' ) . ( ! empty( $e->get_message_extra() ) ? ' - ' . $e->get_message_extra() : '' );
 				$check_result = - 1;
 			} elseif ( $e->getMessage() === 'NOMAINWP' ) {
-				$sync_errors  = sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a> <i class="external alternate icon"></i>' );
+				$sync_errors  = MainWP_Error_Helper::get_error_not_detected_connect();
 				$check_result = 1;
 			}
 
@@ -401,7 +401,10 @@ class MainWP_Sync {
 			$done                   = true;
 		}
 
-		if ( isset( $information['categories'] ) ) {
+		if ( isset( $information['categories_list'] ) ) {
+			$websiteValues['categories'] = wp_json_encode( $information['categories_list'] );
+			$done                        = true;
+		} elseif ( isset( $information['categories'] ) ) { // support old child version.
 			$websiteValues['categories'] = wp_json_encode( $information['categories'] );
 			$done                        = true;
 		}

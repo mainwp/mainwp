@@ -409,25 +409,31 @@ mainwp_newpost_updateCategories = function () {
 
         var selected_categories = catsSelection.dropdown('get value');
 
+        console.log('selected cats:');
+        console.log(selected_categories);
+
         var data = mainwp_secure_data({
             action: 'mainwp_get_categories',
             sites: encodeURIComponent(sites.join(',')),
             groups: encodeURIComponent(groups.join(',')),
             clients: encodeURIComponent(clients.join(',')),
-            selected_categories: selected_categories ? encodeURIComponent(selected_categories.join(',')) : '',
+            selected_categories: selected_categories ? encodeURIComponent(selected_categories) : '',
             post_id: jQuery('#post_ID').val()
         });
 
         jQuery.post(ajaxurl, data, function (pSelectedCategories) {
             return function (response) {
-                response = response.trim();
-                catsSelection.dropdown('remove selected');
-                catsSelection.find('.sitecategory').remove();
-                catsSelection.append(response);
-                catsSelection.dropdown('set selected', pSelectedCategories);
-                updateCategoriesPostFunc();
+                if (response && undefined !== response.content){
+                    catsSelection.dropdown('remove selected');
+                    catsSelection.find('.menu').html(response.content);
+                    catsSelection.dropdown('refresh');
+                    arrVal = pSelectedCategories.split(",");
+                    catsSelection.dropdown('set selected', arrVal);
+                    console.log('re-selected: ' + pSelectedCategories);
+                    updateCategoriesPostFunc();
+                }
             };
-        }(selected_categories));
+        }(selected_categories), 'json');
     } else {
         updateCategoriesPostFunc();
     }
@@ -624,6 +630,7 @@ jQuery(document).ready(function () {
         }
         jQuery(document).on('click', '#update_custom_icon_btn', function () {
             mainwp_upload_custom_icon(iconObj);
+            return false;
         });
         return false;
     });
@@ -713,11 +720,7 @@ mainwp_upload_custom_icon = function (iconObj) {
 
 };
 
-mainwp_upload_custom_types_icon = function (iconObj, upload_act, callback_uploaded ) {
-    var slug = jQuery(iconObj).attr('item-slug');
-    var deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
-    var deleteIconId = jQuery('#mainwp_delete_image_chk').attr('item-icon-id');
-    
+mainwp_upload_custom_types_icon = function (iconObj, upload_act, iconItemId, iconFileSlug, deleteIcon, callback_uploaded) {
     jQuery('#mainwp-message-zone-upload').removeClass('red green yellow');
     var msg = __('Updating the icon. Please wait...');
 
@@ -725,23 +728,25 @@ mainwp_upload_custom_types_icon = function (iconObj, upload_act, callback_upload
     jQuery('#mainwp-message-zone-upload').show();
     jQuery('#update_custom_icon_btn').attr('disabled', 'disabled');
 
-    var act_request = typeof upload_act !== "undefined" & '' != upload_act ? upload_act : 'mainwp_upload_custom_types_icon';
-
+    var upload_act = typeof upload_act !== "undefined" & '' != upload_act ? upload_act : 'mainwp_upload_custom_types_icon';
+    var elemid = undefined !== jQuery(iconObj).attr('data-element-id') ? jQuery(iconObj).attr('data-element-id') : '';
     //Add via ajax!!
     var formdata = new FormData(jQuery('#uploadicon_form')[0]);
-    formdata.append("action", act_request);
-    formdata.append("slug", slug);
+    formdata.append("action", upload_act);
+    formdata.append("iconFileSlug", iconFileSlug);
+    formdata.append("iconItemId", iconItemId);
     formdata.append("delete", deleteIcon ? 1 : 0);
-    formdata.append("deleteIconId", deleteIconId);
-    formdata.append("security", security_nonces[act_request]);
+    formdata.append("security", security_nonces[upload_act]);
+    formdata.append("elementid", elemid);
     jQuery.ajax({
         type: 'POST',
         url: ajaxurl,
         data: formdata,
         success: function (response) {
+            jQuery('#update_custom_icon_btn').removeAttr('disabled');
             if (response && response.result == 'success') {
                 jQuery('#mainwp-message-zone-upload').hide();
-                if(typeof callback_uploaded == 'function' ){
+                if (typeof callback_uploaded == 'function') {
                     callback_uploaded(response);
                 }
             } else {

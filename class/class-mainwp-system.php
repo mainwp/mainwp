@@ -27,7 +27,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '5.0.2';
+	public static $version = '5.0.3';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -221,6 +221,8 @@ class MainWP_System {
 		add_action( 'init', array( &$this, 'parse_init' ) );
 		add_action( 'init', array( &$this, 'init' ), 9999 );
 		add_action( 'admin_init', array( $this, 'admin_redirects' ) );
+		add_action( 'current_screen', array( &$this, 'current_screen_redirects' ), 15 );
+		add_filter( 'plugin_action_links', array( $this, 'hook_plugin_action_links' ), 10, 4 );
 		add_action( 'admin_menu', array( &$this, 'admin_menu' ) );
 		add_action( 'admin_print_styles', array( MainWP_System_View::get_class_name(), 'admin_print_styles' ) );
 
@@ -884,6 +886,67 @@ class MainWP_System {
 	}
 
 	/**
+	 * Method hook_plugin_action_links()
+	 *
+	 *  @param string[] $actions     An array of plugin action links. By default this can include
+	 *                              'activate', 'deactivate', and 'delete'. With Multisite active
+	 *                              this can also include 'network_active' and 'network_only' items.
+	 * @param string   $plugin_file Path to the plugin file relative to the plugins directory.
+	 * @param array    $plugin_data An array of plugin data. See get_plugin_data()
+	 *                              and the {@see 'plugin_row_meta'} filter for the list
+	 *                              of possible values.
+	 */
+	public function hook_plugin_action_links( $actions, $plugin_file, $plugin_data ) {
+		if ( is_array( $plugin_data ) && ! empty( $plugin_data['slug'] ) && ! empty( $plugin_data['plugin'] ) && 'mainwp' === $plugin_data['slug'] && 'mainwp/mainwp.php' === $plugin_data['plugin'] ) {
+			$tmp = array(
+				'mainwp-setup' => '<a href="admin.php?page=mainwp-setup" id="mainwp-setup" aria-label="' . esc_html__( 'MainWP Dashboard Setup Wizard', 'mainwp' ) . '">' . esc_html__( 'Setup Wizard', 'mainwp' ) . '</a>',
+			);
+			if ( is_array( $actions ) ) {
+				foreach ( $actions as $key => $val ) {
+					$tmp[ $key ] = $val;
+
+				}
+			}
+			return $tmp;
+		}
+		return $actions;
+	}
+
+	/**
+	 * Method current_screen_redirects()
+	 *
+	 * MainWP current screen redirects.
+	 */
+	public function current_screen_redirects() {
+
+		if ( ( defined( 'DOING_CRON' ) && DOING_CRON ) || defined( 'DOING_AJAX' ) ) {
+			return;
+		}
+		if ( self::is_mainwp_pages() ) {
+			$quick_setup = get_option( 'mainwp_run_quick_setup', false );
+			if ( 'yes' === $quick_setup ) {
+				delete_option( 'mainwp_run_quick_setup' );
+				wp_safe_redirect( admin_url( 'admin.php?page=mainwp-setup' ) );
+				exit;
+			}
+		}
+
+		if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], array( 'mainwp-setup' ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			return;
+		}
+
+		if ( self::is_mainwp_pages() ) {
+			if ( 'yes' === get_option( 'mainwp_activated' ) ) {
+				delete_option( 'mainwp_activated' );
+				wp_cache_delete( 'mainwp_activated', 'options' );
+				wp_cache_delete( 'alloptions', 'options' );
+				wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
+				exit;
+			}
+		}
+	}
+
+	/**
 	 * Method admin_redirects()
 	 *
 	 * MainWP admin redirects.
@@ -894,21 +957,6 @@ class MainWP_System {
 		}
 
 		if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], array( 'mainwp-setup' ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			return;
-		}
-
-		$quick_setup = get_option( 'mainwp_run_quick_setup', false );
-		if ( 'yes' === $quick_setup ) {
-			wp_safe_redirect( admin_url( 'admin.php?page=mainwp-setup' ) );
-			exit;
-		}
-
-		if ( 'yes' === get_option( 'mainwp_activated' ) ) {
-			delete_option( 'mainwp_activated' );
-			wp_cache_delete( 'mainwp_activated', 'options' );
-			wp_cache_delete( 'alloptions', 'options' );
-			wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
-
 			return;
 		}
 

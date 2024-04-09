@@ -324,7 +324,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 							</div>
 						</div>
 						<button onclick="mainwp_manage_monitor_sites_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
-				</div>
+					</div>
 		</div>
 		</div>
 		<script type="text/javascript">
@@ -714,7 +714,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				} catch(err) {
 					// to fix js error.
 				}
-				mainwp_datatable_fix_menu_overflow();
+				mainwp_datatable_fix_menu_overflow( '#mainwp-manage-sites-monitor-table' );
 			<?php } else { ?>
 				try {
 					$manage_sites_table = jQuery( '#mainwp-manage-sites-monitor-table' ).on( 'processing.dt', function ( e, settings, processing ) {
@@ -732,9 +732,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 							$( '#mainwp-manage-sites-monitor-table .ui.checkbox' ).checkbox();
 						}
 
-					} ).on( 'column-reorder.dt', function ( e, settings, details ) {
-						$( '#mainwp-manage-sites-monitor-table .ui.dropdown' ).dropdown();
-						$( '#mainwp-manage-sites-monitor-table .ui.checkbox' ).checkbox();
 					} ).DataTable( {
 						"ajax": {
 							"url": ajaxurl,
@@ -758,7 +755,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 								return json.data;
 							}
 						},
-						"responsive" : responsive,
+						"responsive" : responsive
 						"searching" : <?php echo esc_js( $table_features['searching'] ); ?>,
 						"paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
 						"pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
@@ -775,7 +772,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 						"columns": <?php echo wp_json_encode( $this->get_columns_init() ); ?>,
 						"drawCallback": function( settings ) {
 							this.api().tables().body().to$().attr( 'id', 'mainwp-manage-sites-body-table' );
-							mainwp_datatable_fix_menu_overflow();
+							mainwp_datatable_fix_menu_overflow( '#mainwp-manage-sites-monitor-table' );
 							if ( typeof mainwp_preview_init_event !== "undefined" ) {
 								mainwp_preview_init_event();
 							}
@@ -788,8 +785,13 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 							if ( data.syncError ) {
 								jQuery( row ).find( 'td.column-site-bulk' ).addClass( 'site-sync-error' );
 							};
-						}
-					} );
+						},
+					} ).on( 'column-reorder', function ( e, settings, details ) {
+							$( '#mainwp-manage-sites-monitor-table .ui.dropdown' ).dropdown();
+							$( '#mainwp-manage-sites-monitor-table .ui.checkbox' ).checkbox();
+							console.log('column-reorder');							
+							mainwp_datatable_fix_menu_overflow( '#mainwp-manage-sites-monitor-table' );
+						} );
 				} catch(err) {
 					// to fix js error.
 				}
@@ -1089,13 +1091,11 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				<td class="collapsing">
 					<?php if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
 					<i class="sign in icon"></i>
-						<?php
-				else :
-					?>
+					<?php else : ?>
 					<a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
-					<?php
-				endif;
-				?>
+						<?php
+					endif;
+					?>
 				</td>
 					<?php
 				} elseif ( 'login' === $column_name ) {

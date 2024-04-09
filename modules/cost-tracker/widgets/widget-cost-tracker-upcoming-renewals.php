@@ -221,19 +221,7 @@ class Cost_Tracker_Upcoming_Renewals {
 					<?php
 				}
 				?>
-				</table>
-				<script type="text/javascript">
-				jQuery( document ).ready( function() {
-					jQuery( '#mainwp-upcoming-renewals-table-today' ).DataTable();
-					jQuery( '#mainwp-upcoming-renewals-table-tomorrow' ).DataTable();
-					jQuery( '#mainwp-upcoming-renewals-table-week' ).DataTable();
-					jQuery( '#mainwp-upcoming-renewals-table-next_week' ).DataTable();
-					jQuery( '#mainwp-upcoming-renewals-table-month' ).DataTable();
-					jQuery( '#mainwp-upcoming-renewals-table-next_month' ).DataTable();
-					jQuery( '#mainwp-upcoming-renewals-table-year' ).DataTable();
-					jQuery( '#mainwp-upcoming-renewals-table-next_year' ).DataTable();
-				} );
-				</script>
+				</table>				
 				<?php
 			}
 			/**

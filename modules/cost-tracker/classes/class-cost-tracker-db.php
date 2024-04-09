@@ -393,6 +393,9 @@ PRIMARY KEY  (`id`)  '; }
 		if ( 'id' === $by && is_numeric( $value ) ) {
 			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'cost_tracker' ) . ' WHERE `id`=%d ', $value ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			return $wpdb->get_row( $sql, OBJECT ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		} elseif ( 'count' === $by ) {
+			$sql = 'SELECT count(*) FROM ' . $this->table_name( 'cost_tracker' ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			return $wpdb->get_var( $sql ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		} elseif ( 'id' === $by && false !== strpos( $value, ',' ) ) {
 			$cost_ids = explode( ',', $value );
 			$cost_ids = MainWP_Utility::array_numeric_filter( $cost_ids );

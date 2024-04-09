@@ -489,7 +489,7 @@ qq.FileUploader = function(o){
         '<div class="mainwp-upload-button-area">' +
         '<div class="ui labeled icon massive green button qq-upload-button"><i class="upload icon"></i> Upload Now </div>' +
         '</div>' +
-        '<div class="qq-upload-drop-area ui raised green padded segment"><span>Drop files here to upload</span></div>' +
+        '<div class="qq-upload-drop-area"><span>Drop files here to upload</span></div>' +
         '<div class="ui hidden divider"></div>' +
         '<div class="ui middle aligned divided selection list qq-upload-list"></div>' +
         '</div>',

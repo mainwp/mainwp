@@ -156,7 +156,7 @@ class MainWP_Post_Page_Handler {
 
 
 	/**
-	 * Method get_categories()
+	 * Method ajax_handle_get_categories()
 	 *
 	 * Get categories.
 	 *
@@ -164,7 +164,7 @@ class MainWP_Post_Page_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_ids()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
-	public static function get_categories() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function ajax_handle_get_categories() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$websites = array();
 		if ( isset( $_REQUEST['sites'] ) && ( '' !== $_REQUEST['sites'] ) ) {
@@ -229,25 +229,136 @@ class MainWP_Post_Page_Handler {
 			$selectedCategories = array();
 		}
 
-		$allCategories = array( 'Uncategorized' );
+		$allCategories_new_tree = array();
+		$allCategories          = array( 'Uncategorized' );
+
 		if ( 0 < count( $websites ) ) {
 			foreach ( $websites as $website ) {
-				$cats = json_decode( $website->categories, true );
-				if ( is_array( $cats ) && ( 0 < count( $cats ) ) ) {
-					$allCategories = array_unique( array_merge( $allCategories, $cats ) );
+				$new_cats = json_decode( $website->categories, true );
+				if ( is_array( $new_cats ) && ( 0 < count( $new_cats ) ) ) {
+					$current = current( $new_cats );
+					if ( is_array( $current ) && ! empty( $current ) ) { // new site's category format data.
+						self::arrange_categories_list( $new_cats, $allCategories_new_tree );
+					} elseif ( is_string( $current ) ) { // old format.
+						$allCategories = array_unique( array_merge( $allCategories, $new_cats ) );
+					}
 				}
 			}
 		}
+
 		$allCategories = array_unique( array_merge( $allCategories, $selectedCategories ) );
 
-		if ( 0 < count( $allCategories ) ) {
-			natcasesort( $allCategories );
-			foreach ( $allCategories as $category ) {
-				echo '<option value="' . esc_attr( $category ) . '" class="sitecategory">' . esc_html( $category ) . '</option>';
+		ob_start();
+		echo '<div class="item" data-value="Uncategorized" class="sitecategory-list">Uncategorized</div>';
+
+		if ( ! empty( $allCategories ) || ! empty( $allCategories_new_tree ) ) {
+			?>
+			<?php
+			$check_printed_cats_names = array();
+
+			if ( ! empty( $allCategories_new_tree ) ) {
+				// print new casts list.
+				self::print_catergories_tree( $allCategories_new_tree, $check_printed_cats_names );
+			}
+
+			if ( 0 < count( $allCategories ) ) {
+				echo '<div class="ui horizontal divider"></div>';
+				natcasesort( $allCategories );
+				foreach ( $allCategories as $category ) {
+					if ( 'Uncategorized' === $category || isset( $check_printed_cats_names[ $category ] ) ) {
+						continue; // printed.
+					}
+					echo '<div class="item" data-value="' . esc_attr( $category ) . '" class="sitecategory-list">' . esc_html( $category ) . '</div>';
+				}
 			}
 		}
-		die();
-		// phpcs:enable
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		$output = ob_get_clean();
+		wp_die( wp_json_encode( array( 'content' => $output ) ) );
+	}
+
+	/**
+	 * Method print_catergories_tree()
+	 *
+	 * @param array $print_cats categories to print.
+	 * @param array $check_printed_cats_names check printed cats slugs.
+	 */
+	public static function print_catergories_tree( $print_cats, &$check_printed_cats_names = array() ) {
+		foreach ( $print_cats as $item ) {
+
+			$level = isset( $item['level'] ) ? $item['level'] : 0;
+
+			if ( 'Uncategorized' !== $item['name'] && ! isset( $check_printed_cats_names[ $item['slug'] ] ) ) {
+				$cls = 'category-select-item-sub' . ( ! empty( $level ) ? intval( $level ) : '' );
+
+				$check_printed_cats_names[ $item['slug'] ] = 1;
+				echo '<div class="item ' . esc_attr( $cls ) . '" data-value="' . esc_attr( $item['name'] ) . '" data-slug="' . esc_attr( $item['slug'] ) . '" class="sitecategory-list">' . esc_html( $item['name'] ) . '</div>';
+			}
+
+			if ( ! empty( $item['children'] ) ) {
+				self::print_catergories_tree( $item['children'], $check_printed_cats_names );
+			}
+		}
+	}
+
+	/**
+	 * Method arrange_categories_list()
+	 *
+	 * Tweaked John#105641 at StackOver#4284616.
+	 *
+	 * @param array $categories categories.
+	 * @param array $save_all_cats_tree all categories tree.
+	 */
+	public static function arrange_categories_list( $categories, &$save_all_cats_tree ) {
+
+		if ( ! is_array( $save_all_cats_tree ) ) {
+			$save_all_cats_tree = array();
+		}
+		$tree_cats  = $save_all_cats_tree;
+		$all_cats   = array();
+		$child_cats = array();
+
+		foreach ( $categories as $cat ) {
+
+			if ( ! is_array( $cat ) || empty( $cat['name'] ) ) {
+				continue;
+			}
+
+			$cat['children'] = array();
+			$term_id         = $cat['term_id'];
+
+			// If this is a top-level.
+			if ( empty( $cat['parent'] ) ) {
+				$cat['level']         = 0;
+				$all_cats[ $term_id ] = $cat;
+				$tree_cats[]          =& $all_cats[ $term_id ];
+				// If this isn't a top-level.
+			} else {
+				$cat['level']           = isset( $all_cats[ $cat['parent'] ] ) && isset( $all_cats[ $cat['parent'] ]['level'] ) ? $all_cats[ $cat['parent'] ]['level'] + 1 : 1;
+				$child_cats[ $term_id ] = $cat;
+			}
+		}
+
+		$stop  = count( $categories );
+		$limit = 0;
+		$count = count( $child_cats );
+		// Process child cats.
+		while ( $count > 0 && $limit < $stop ) {
+			foreach ( $child_cats as $cat ) {
+				$term_id = $cat['term_id'];
+				$pid     = isset( $cat['parent'] ) ? $cat['parent'] : -1;
+
+				if ( isset( $all_cats[ $pid ] ) ) {
+					$cat['level']                   = isset( $all_cats[ $pid ] ) && isset( $all_cats[ $pid ]['level'] ) ? $all_cats[ $pid ]['level'] + 1 : 1;
+					$all_cats[ $term_id ]           = $cat;
+					$all_cats[ $pid ]['children'][] =& $all_cats[ $term_id ];
+					unset( $child_cats[ $cat['term_id'] ] );
+				}
+			}
+			++$limit;
+		}
+		$save_all_cats_tree = $tree_cats; // to prevent it deleted by reference.
 	}
 
 	/**
@@ -336,7 +447,8 @@ class MainWP_Post_Page_Handler {
 				?>
 		</div>
 		<div class="actions">
-			<a href="admin.php?page=PostBulkAdd" class="ui green button"><?php esc_html_e( 'New Post', 'mainwp' ); ?></a>
+			<?php do_action( 'mainwp_posts_posting_popup_actions', $post_id ); ?>
+			<a href="admin.php?page=PostBulkAdd" class="ui green button new-bulk-post"><?php esc_html_e( 'New Post', 'mainwp' ); ?></a>
 		</div>
 	</div>
 	<div class="ui active inverted dimmer" id="mainwp-posting-running">

@@ -439,7 +439,7 @@ class MainWP_UI_Select_Sites {
 						</div>
 						<div class="field">
 							<label><?php esc_html_e( 'Select tag color', 'mainwp' ); ?></label>
-							<input type="text" name="mainwp-group-color" class="mainwp-tag-color-picker" id="mainwp-group-color"  value="" />
+							<input type="color" name="mainwp-group-color" class="mainwp-color-picker-input" id="mainwp-group-color"  value="" />
 						</div>
 					</div>
 				</div>
@@ -462,15 +462,6 @@ class MainWP_UI_Select_Sites {
 						margin-left: 5px;
 					}
 				</style>
-				<script type="text/javascript">
-					jQuery( document ).ready( function() {
-						jQuery('.mainwp-tag-color-picker').wpColorPicker({
-							hide: true,
-							clear: false,
-							palettes: [ '#18a4e0','#0253b3','#7fb100','#446200','#ad0000','#ffd300','#2d3b44','#6435c9','#e03997','#00b5ad' ],
-						});
-					} );
-				</script>
 			</div>
 		<?php
 	}

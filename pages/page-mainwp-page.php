@@ -1665,7 +1665,8 @@ class MainWP_Page {
 			?>
 			</div>
 			<div class="actions">
-				<a href="admin.php?page=PageBulkAdd" class="ui green button"><?php esc_html_e( 'New Page', 'mainwp' ); ?></a>
+				<?php do_action( 'mainwp_pages_posting_popup_actions', $id ); ?>
+				<a href="admin.php?page=PageBulkAdd" class="ui green button new-bulk-page"><?php esc_html_e( 'New Page', 'mainwp' ); ?></a>
 			</div>
 		</div>
 		<div class="ui active inverted dimmer" id="mainwp-posting-running">

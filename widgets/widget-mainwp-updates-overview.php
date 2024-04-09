@@ -400,6 +400,16 @@ class MainWP_Updates_Overview {
 		if ( 1 === (int) $mainwp_show_language_updates ) {
 			self::render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid );
 		}
+
+		/**
+		 * Action: mainwp_updates_overview_after_update_details
+		 *
+		 * Fires at the bottom of the Update Details section in the Updates Overview widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_overview_after_update_details', $currentSite, $globalView, $userExtension );
+
 		self::render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid );
 		self::render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid );
 
@@ -866,15 +876,6 @@ class MainWP_Updates_Overview {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_updates_overview_after_translation_updates' );
-
-		/**
-		 * Action: mainwp_updates_overview_after_update_details
-		 *
-		 * Fires at the bottom of the Update Details section in the Updates Overview widget.
-		 *
-		 * @since 4.1
-		 */
-		do_action( 'mainwp_updates_overview_after_update_details' );
 	}
 
 	/**
@@ -1180,7 +1181,7 @@ class MainWP_Updates_Overview {
 					// Check if backup ok.
 					$lastBackup = - 1;
 					if ( file_exists( $dir ) ) {
-						$dh = opendir( $dir );
+						$dh = opendir( $dir ); // NOSONAR .
 						if ( $dh ) {
 							while ( false !== ( $file = readdir( $dh ) ) ) {
 								if ( '.' !== $file && '..' !== $file ) {

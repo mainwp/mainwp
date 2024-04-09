@@ -54,7 +54,9 @@ class MainWP_Manage_Screenshots {
 		$selected_client = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
 		$is_not          = isset( $_REQUEST['isnot'] ) && ( 'yes' === $_REQUEST['isnot'] ) ? true : false;
 
-		if ( ! isset( $_REQUEST['g'] ) ) {
+		$reset_filter = isset( $_REQUEST['reset'] ) && ( 'yes' === $_REQUEST['reset'] ) ? true : false;
+
+		if ( ! isset( $_REQUEST['g'] ) && ! $reset_filter ) {
 			$selected_status = get_user_option( 'mainwp_screenshots_filter_status', '' );
 			$selected_group  = get_user_option( 'mainwp_screenshots_filter_group', '' );
 			$selected_client = get_user_option( 'mainwp_screenshots_filter_client', '' );
@@ -80,7 +82,7 @@ class MainWP_Manage_Screenshots {
 			</div>
 
 			<div class="row ui mini form manage-sites-screenshots-filter-top" id="mainwp-sites-filters-row" style="<?php echo esc_attr( $filters_row_style ); ?>">
-				<div class="thirteen wide middle aligned column ui compact grid">
+				<div class="thirteen wide middle aligned column ui grid">
 				<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
 					<div class="ui selection dropdown seg_is_not" id="mainwp_is_not_site">
 							<input type="hidden" value="<?php echo $is_not ? 'yes' : ''; ?>">
@@ -118,6 +120,7 @@ class MainWP_Manage_Screenshots {
 								<div class="item" data-value="update"><?php esc_html_e( 'Available update', 'mainwp' ); ?></div>
 								<div class="item" data-value="sitehealthnotgood"><?php esc_html_e( 'Site Health Not Good', 'mainwp' ); ?></div>
 								<div class="item" data-value="phpver7"><?php esc_html_e( 'PHP Ver < 7.0', 'mainwp' ); ?></div>
+								<div class="item" data-value="phpver8"><?php esc_html_e( 'PHP Ver < 8.0', 'mainwp' ); ?></div>
 								<div class="item" data-value="suspended"><?php esc_html_e( 'Suspended', 'mainwp' ); ?></div>
 							</div>
 						</div>
@@ -138,6 +141,7 @@ class MainWP_Manage_Screenshots {
 							</div>
 						</div>
 						<button onclick="mainwp_screenshots_sites_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
+						<button onclick="mainwp_screenshots_sites_reset_filters()" class="ui tiny green button"><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
 				</div>
 				<?php
 				MainWP_Manage_Sites_Filter_Segment::get_instance()->render_filters_segment();
@@ -146,24 +150,28 @@ class MainWP_Manage_Screenshots {
 		</div>
 		<script type="text/javascript">
 				mainwp_screenshots_sites_filter = function() {
-						var group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
-						var status = jQuery( "#mainwp-filter-sites-status" ).dropdown( "get value" );
-						var isNot = jQuery("#mainwp_is_not_site").dropdown("get value");
-						var client = jQuery("#mainwp-filter-clients").dropdown("get value");
-						var params = '';						
-						params += '&g=' + group;						
-						params += '&client=' + client;						
-						if ( status != '' ) {
-							params += '&status=' + status;
-						}
-						if ( 'yes' == isNot ){
-							params += '&isnot=yes';
-						}
-						console.log(params);
-						window.location = 'admin.php?page=managesites' + params;
-						return false;
+					var group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
+					var status = jQuery( "#mainwp-filter-sites-status" ).dropdown( "get value" );
+					var isNot = jQuery("#mainwp_is_not_site").dropdown("get value");
+					var client = jQuery("#mainwp-filter-clients").dropdown("get value");
+					var params = '';						
+					params += '&g=' + group;						
+					params += '&client=' + client;						
+					if ( status != '' ) {
+						params += '&status=' + status;
+					}
+					if ( 'yes' == isNot ){
+						params += '&isnot=yes';
+					}
+					console.log(params);
+					window.location = 'admin.php?page=managesites' + params;
+					return false;
 				};	
 
+				mainwp_screenshots_sites_reset_filters = function() {
+					window.location = 'admin.php?page=managesites&reset=yes'
+					return false;
+				};	
 
 				jQuery( document ).on( 'keyup', '#mainwp-screenshots-sites-filter', function () {
 					var filter = jQuery(this).val().toLowerCase();
@@ -555,10 +563,16 @@ class MainWP_Manage_Screenshots {
 		$perPage = 9999;
 		$start   = 0;
 
+		$reset_filter = isset( $_REQUEST['reset'] ) && ( 'yes' === $_REQUEST['reset'] ) ? true : false; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$get_saved_state = ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] ) && ! isset( $_REQUEST['client'] );
+		$get_saved_state = ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] ) && ! isset( $_REQUEST['client'] ) && ! $reset_filter;
 		$get_all         = ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && empty( $_REQUEST['g'] ) && empty( $_REQUEST['client'] ) ? true : false;
 		$is_not          = ( isset( $_REQUEST['isnot'] ) && 'yes' === $_REQUEST['isnot'] ) ? true : false;
+
+		if ( $reset_filter ) {
+			$get_all = true;
+		}
 
 		$site_status = '';
 
@@ -638,6 +652,11 @@ class MainWP_Manage_Screenshots {
 					$where = 'wp_sync.health_status = 0';
 				}
 			} elseif ( 'phpver7' === $site_status ) {
+				$where = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) < INET_ATON("7.0.0.0") ';
+				if ( $is_not ) {
+					$where = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) >= INET_ATON("7.0.0.0") ';
+				}
+			} elseif ( 'phpver8' === $site_status ) {
 				$where = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) < INET_ATON("8.0.0.0") ';
 				if ( $is_not ) {
 					$where = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) >= INET_ATON("8.0.0.0") ';

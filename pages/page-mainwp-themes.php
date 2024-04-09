@@ -2512,7 +2512,7 @@ class MainWP_Themes {
 				responsive: true,
 				"language": {
 					"emptyTable": "<?php esc_html_e( 'No ignored themes.', 'mainwp' ); ?>"
-				},
+				}
 			} );
 		} );
 		</script>
@@ -2604,7 +2604,7 @@ class MainWP_Themes {
 				responsive: true,
 				"language": {
 					"emptyTable": "<?php esc_html_e( 'No ignored themes', 'mainwp' ); ?>"
-				},
+				}
 			} );
 		} );
 		</script>
@@ -2735,7 +2735,7 @@ class MainWP_Themes {
 				"info": false,
 				"language": {
 					"emptyTable": "<?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?>"
-				},
+				}
 			} );
 		} );
 		</script>
@@ -2827,7 +2827,7 @@ class MainWP_Themes {
 				"info": false,
 				"language": {
 					"emptyTable": "<?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?>"
-				},
+				}
 			} );
 		} );
 		</script>

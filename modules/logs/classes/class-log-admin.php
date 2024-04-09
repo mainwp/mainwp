@@ -84,6 +84,7 @@ class Log_Admin {
 		MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_delete_records', array( $this, 'ajax_delete_records' ) );
 		MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_compact_records', array( $this, 'ajax_compact_records' ) );
 		MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_events_display_rows', array( Log_Insights_Page::instance(), 'ajax_events_display_rows' ) );
+		Log_Events_Filter_Segment::get_instance()->admin_init();
 	}
 
 

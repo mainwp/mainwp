@@ -36,12 +36,6 @@ jQuery(document).ready(function () {
         var groupColor = jQuery('#mainwp-groups-menu').find('.active').find('#mainwp-hidden-group-color').val();
         jQuery('#mainwp-rename-group-modal').find('input#mainwp-group-name').val(groupName);
         jQuery('#mainwp-rename-group-modal').find('input#mainwp-new-tag-color').val(groupColor);
-        var $renameColor = jQuery('#mainwp-rename-group-modal .mainwp-tag-color-picker').wpColorPicker({
-          hide: true,
-          clear: false,
-          palettes: ['#18a4e0', '#0253b3', '#7fb100', '#446200', '#ad0000', '#ffd300', '#2d3b44', '#6435c9', '#e03997', '#00b5ad'],
-        });
-        $renameColor.wpColorPicker('color', groupColor);
       }
     }).modal('show');
   });

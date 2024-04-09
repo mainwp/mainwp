@@ -487,7 +487,9 @@ class MainWP_UI {
 	 */
 	public static function render_top_header( $params = array() ) { // phpcs:ignore -- complex.
 
-		$title = isset( $params['title'] ) ? $params['title'] : '';
+		$before_title = isset( $params['before_title'] ) ? $params['before_title'] . ' ' : '';
+		$title        = isset( $params['title'] ) ? $params['title'] : '';
+
 		$which = isset( $params['which'] ) ? $params['which'] : '';
 
 		/**
@@ -530,7 +532,8 @@ class MainWP_UI {
 				'style'  => array(),
 			),
 		);
-		$title     = MainWP_Utility::esc_content( $title, 'note', $more_tags );
+
+		$title = $before_title . $title;
 
 		/**
 		 * Filter: mainwp_header_left
@@ -539,7 +542,7 @@ class MainWP_UI {
 		 *
 		 * @since 4.0
 		 */
-		$left = apply_filters( 'mainwp_header_left', $title );
+		$left = apply_filters( 'mainwp_header_left', $title, $params );
 
 		$right = self::render_header_actions();
 
@@ -1459,10 +1462,11 @@ class MainWP_UI {
 						}
 
 						?>
-								<a class="<?php echo esc_attr( $class ); ?> item" style="<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $item['href'] ); ?>">
-							<?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
-								</a>
-								<?php
+						
+						<a class="<?php echo esc_attr( $class ); ?> item" style="<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $item['href'] ); ?>">
+						<?php echo isset( $item['before_title'] ) ? $item['before_title'] : ''; ?> <?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+						</a>
+						<?php
 					}
 				}
 
@@ -1850,7 +1854,7 @@ class MainWP_UI {
 					</form>
 				</div>
 				<div class="actions">
-					<div class="ui green button" id="update_custom_icon_btn"><?php esc_html_e( 'Update', 'mainwp' ); ?></div>
+					<div class="ui green button"  uploading-icon="default" id="update_custom_icon_btn"><?php esc_html_e( 'Update', 'mainwp' ); ?></div>
 				</div>
 		</div>
 				<?php
@@ -2024,6 +2028,7 @@ class MainWP_UI {
 					'child_site_info'    => esc_html__( 'Child site info (Individual Site Overview page)', 'mainwp' ),
 					'client_info'        => esc_html__( 'Client info (Individual Site Overview page)', 'mainwp' ),
 					'non_mainwp_changes' => esc_html__( 'Non-MainWP Changes', 'mainwp' ),
+					'get-started'        => esc_html__( 'Get Started with MainWP', 'mainwp' ),
 				);
 
 				$custom_opts = apply_filters_deprecated( 'mainwp-widgets-screen-options', array( array() ), '4.0.7.2', 'mainwp_widgets_screen_options' );  // @deprecated Use 'mainwp_widgets_screen_options' instead.
@@ -2082,38 +2087,66 @@ class MainWP_UI {
 			</div>
 			<?php endif; ?>
 		<?php endif; ?>
-						<?php if ( isset( $_GET['page'] ) && ! in_array( $_GET['page'], $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended ?>
+		<?php
+		if ( isset( $_GET['page'] ) && ! in_array( $_GET['page'], $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended 
+			$hide_up_everything = (int) get_option( 'mainwp_hide_update_everything' );
+			?>
 		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Hide the Update Everything button', 'mainwp' ); ?></label>
+			<label class="six wide column middle aligned">
+			<?php
+			MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_hide_update_everything', $hide_up_everything );
+			esc_html_e( 'Hide the Update Everything button', 'mainwp' );
+			?>
+			</label>
 			<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the "Update Everything" button will be hidden in the Updates Overview widget.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-				<input type="checkbox" name="hide_update_everything" <?php echo ( ( 1 === (int) get_option( 'mainwp_hide_update_everything' ) ) ? 'checked="true"' : '' ); ?> />
+				<input type="checkbox" name="hide_update_everything" <?php echo ( ( 1 === $hide_up_everything ) ? 'checked="true"' : '' ); ?> />
 			</div>
 		</div>
+			<?php
+			$indi_val = 'all';
+			foreach ( $default_widgets as $name => $title ) {
+				$_selected = '';
+				if ( ! isset( $show_widgets[ $name ] ) || 1 === (int) $show_widgets[ $name ] ) {
+					$_selected = 'checked';
+					continue;
+				}
+				$indi_val = '';
+			}
+			?>
 		<div class="ui grid field">
-			<label class="six wide column"><?php esc_html_e( 'Show widgets', 'mainwp' ); ?></label>
+			<label class="six wide column">
+			<?php
+			if ( $setting_page ) {
+				MainWP_Settings_Indicator::render_not_default_indicator( 'show_default_widgets', $indi_val );
+			}
+			esc_html_e( 'Show widgets', 'mainwp' );
+			?>
+			</label>
 			<div class="ten wide column" <?php echo $setting_page ? 'data-tooltip="' . esc_attr_e( 'Select widgets that you want to hide in the MainWP Overview page.', 'mainwp' ) . '"' : ''; ?> data-inverted="" data-position="top left">
 				<ul class="mainwp_hide_wpmenu_checkboxes">
-							<?php
-							foreach ( $default_widgets as $name => $title ) {
-								$_selected = '';
-								if ( ! isset( $show_widgets[ $name ] ) || 1 === (int) $show_widgets[ $name ] ) {
-									$_selected = 'checked';
-								}
-								?>
-					<li>
-						<div class="ui checkbox">
-							<input type="checkbox" id="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" name="mainwp_show_widgets[]" <?php echo esc_html( $_selected ); ?> value="<?php echo esc_attr( $name ); ?>">
-							<label for="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" ><?php echo esc_html( $title ); ?></label>
-						</div>
-						<input type="hidden" name="mainwp_widgets_name[]" value="<?php echo esc_attr( $name ); ?>">
-					</li>
-								<?php
-							}
-							?>
+					<?php
+					foreach ( $default_widgets as $name => $title ) {
+						$_selected = '';
+						if ( ! isset( $show_widgets[ $name ] ) || 1 === (int) $show_widgets[ $name ] ) {
+							$_selected = 'checked';
+						}
+						?>
+						<li>
+							<div class="ui checkbox">
+								<input type="checkbox" id="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" name="mainwp_show_widgets[]" <?php echo esc_html( $_selected ); ?> value="<?php echo esc_attr( $name ); ?>">
+								<label for="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" ><?php echo esc_html( $title ); ?></label>
+							</div>
+							<input type="hidden" name="mainwp_widgets_name[]" value="<?php echo esc_attr( $name ); ?>">
+						</li>
+						<?php
+					}
+					?>
 				</ul>
 			</div>
 		</div>
-		<?php endif; ?>
+			<?php
+		endif;
+		?>
 		<input type="hidden" name="reset_overview_which_settings" value="<?php echo esc_html( $which_settings ); ?>" />			
 		<?php
 		/**
@@ -2126,13 +2159,13 @@ class MainWP_UI {
 		do_action( 'mainwp_screen_options_modal_bottom' );
 	}
 
-	/**
-	 * Method render_select_mainwp_themes_modal()
-	 *
-	 * Render modal window for mainwp themes selection.
-	 *
-	 * @return void  Render modal window for themes selection.
-	 */
+		/**
+		 * Method render_select_mainwp_themes_modal()
+		 *
+		 * Render modal window for mainwp themes selection.
+		 *
+		 * @return void  Render modal window for themes selection.
+		 */
 	public static function render_select_mainwp_themes_modal() {
 		?>
 		<div class="ui modal" id="mainwp-select-mainwp-themes-modal">
@@ -2143,29 +2176,29 @@ class MainWP_UI {
 				<div class=""><?php printf( esc_html__( 'Did you know you can create your custom theme? %1$sSee here how to do it%2$s!', '' ), '<a href="https://kb.mainwp.com/docs/how-to-change-the-theme-for-mainwp/" target="_blank">', '</a>' ); ?></div>
 			</div>
 			<form method="POST" action="" name="mainwp_select_mainwp_themes_form" id="mainwp_select_mainwp_themes_form">
-				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+			<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<input type="hidden" name="wp_scr_options_nonce" value="<?php echo esc_attr( wp_create_nonce( 'MainWPSelectThemes' ) ); ?>" />
-				<?php
-				/**
-				 * Action: mainwp_select_themes_modal_top
-				 *
-				 * Fires at the top of the modal.
-				 *
-				 * @since 4.3
-				 */
-				do_action( 'mainwp_select_themes_modal_top' );
+			<?php
+			/**
+			 * Action: mainwp_select_themes_modal_top
+			 *
+			 * Fires at the top of the modal.
+			 *
+			 * @since 4.3
+			 */
+			do_action( 'mainwp_select_themes_modal_top' );
 
-				MainWP_Settings::get_instance()->render_select_custom_themes();
+			MainWP_Settings::get_instance()->render_select_custom_themes();
 
-				/**
-				 * Action: mainwp_select_themes_modal_bottom
-				 *
-				 * Fires at the bottom of the modal.
-				 *
-				 * @since 4.3
-				 */
-				do_action( 'mainwp_select_themes_modal_bottom' );
-				?>
+			/**
+			 * Action: mainwp_select_themes_modal_bottom
+			 *
+			 * Fires at the bottom of the modal.
+			 *
+			 * @since 4.3
+			 */
+			do_action( 'mainwp_select_themes_modal_bottom' );
+			?>
 		</div>
 		<div class="actions">
 			<div class="ui two columns grid">
@@ -2179,18 +2212,18 @@ class MainWP_UI {
 		</div>
 		</form>
 	</div>
-		<?php
+			<?php
 	}
 
-	/**
-	 * Method render_install_extensions_promo_modal()
-	 */
+		/**
+		 * Method render_install_extensions_promo_modal()
+		 */
 	public static function render_install_extensions_promo_modal() {
 		$mainwp_api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
 		?>
 		<div class="ui small modal" id="mainwp-install-extensions-promo-modal">
 			<i class="close icon"></i>
-			<?php if ( empty( $mainwp_api_key ) ) : ?>
+		<?php if ( empty( $mainwp_api_key ) ) : ?>
 				<div class="header"><?php esc_html_e( 'Get MainWP Pro', 'mainwp' ); ?></div>
 				<div class="content">
 					<div class="ui header"><?php esc_html_e( 'With your MainWP Pro subscription, you get access to:', 'mainwp' ); ?></div>
@@ -2211,38 +2244,38 @@ class MainWP_UI {
 				</div>
 			<?php endif; ?>
 		</div>
-		<?php
+			<?php
 	}
 
-	/**
-	 * Method render_empty_element_placeholder()
-	 *
-	 * Renders the content for empty elements.
-	 *
-	 * @param string $placeholder Placelolder text.
-	 */
+		/**
+		 * Method render_empty_element_placeholder()
+		 *
+		 * Renders the content for empty elements.
+		 *
+		 * @param string $placeholder Placelolder text.
+		 */
 	public static function render_empty_element_placeholder( $placeholder = '' ) {
 		?>
 		<div class="ui one column grid">
 			<div class="middle aligned center aligned column">
 				<img src="<?php echo esc_url( MAINWP_PLUGIN_URL ); ?>assets/images/mainwp-widget-placeholder.png" style="max-width:200px" class="mainwp-no-results-placeholder ui middle aligned image"/>
-				<?php if ( '' !== $placeholder ) : ?>
+			<?php if ( '' !== $placeholder ) : ?>
 					<p><?php echo $placeholder; //phpcs:ignore -- requires escaped. ?></p>
 				<?php else : ?>
 					<p><?php echo esc_html__( 'Nothing to show here, check back later!', 'mainwp' ); ?></p>
 				<?php endif; ?>
 			</div>
 		</div>
-		<?php
+			<?php
 	}
 
-	/**
-	 * Method render_modal_save_segment()
-	 *
-	 * Render modal window.
-	 *
-	 * @return void
-	 */
+		/**
+		 * Method render_modal_save_segment()
+		 *
+		 * Render modal window.
+		 *
+		 * @return void
+		 */
 	public static function render_modal_save_segment() {
 		?>
 		<div id="mainwp-common-filter-segment-modal" class="ui tiny modal">
@@ -2281,6 +2314,284 @@ class MainWP_UI {
 			</div>
 		</div>
 
-		<?php
+			<?php
+	}
+
+
+	/**
+	 * Method get_default_icons().
+	 *
+	 * @return array icons.
+	 */
+	public static function get_default_icons() {
+		$icons = array(
+			'wordpress', //phpcs:ignore -- WP icon.
+			'ambulance',
+			'anchor',
+			'archive',
+			'award',
+			'baby carriage',
+			'balance scale',
+			'balance scale left',
+			'balance scale right',
+			'bath',
+			'bed',
+			'beer',
+			'bell',
+			'bell outline',
+			'bicycle',
+			'binoculars',
+			'birthday cake',
+			'blender',
+			'bomb',
+			'book',
+			'book dead',
+			'bookmark',
+			'bookmark outline',
+			'briefcase',
+			'broadcast tower',
+			'bug',
+			'building',
+			'building outline',
+			'bullhorn',
+			'bullseye',
+			'bus',
+			'calculator',
+			'calendar',
+			'calendar alternate',
+			'calendar alternate outline',
+			'calendar outline',
+			'camera',
+			'camera retro',
+			'candy cane',
+			'car',
+			'carrot',
+			'church',
+			'clipboard',
+			'clipboard outline',
+			'cloud',
+			'coffee',
+			'cog',
+			'cogs',
+			'compass',
+			'compass outline',
+			'cookie',
+			'cookie bite',
+			'copy',
+			'copy outline',
+			'cube',
+			'cubes',
+			'cut',
+			'dice',
+			'dice d20',
+			'dice d6',
+			'dice five',
+			'dice four',
+			'dice one',
+			'dice six',
+			'dice three',
+			'dice two',
+			'digital tachograph',
+			'door closed',
+			'door open',
+			'drum',
+			'drum steelpan',
+			'envelope',
+			'envelope open',
+			'envelope open outline',
+			'envelope outline',
+			'eraser',
+			'eye',
+			'eye dropper',
+			'eye outline',
+			'fax',
+			'feather',
+			'feather alternate',
+			'fighter jet',
+			'file',
+			'file alternate',
+			'file alternate outline',
+			'file outline',
+			'file prescription',
+			'film',
+			'fire',
+			'fire alternate',
+			'fire extinguisher',
+			'flag',
+			'flag checkered',
+			'flag outline',
+			'flask',
+			'futbol',
+			'futbol outline',
+			'gamepad',
+			'gavel',
+			'gem',
+			'gem outline',
+			'gift',
+			'gifts',
+			'glass cheers',
+			'glass martini',
+			'glass whiskey',
+			'glasses',
+			'globe',
+			'graduation cap',
+			'guitar',
+			'hat wizard',
+			'hdd',
+			'hdd outline',
+			'headphones',
+			'headphones alternate',
+			'headset',
+			'heart',
+			'heart broken',
+			'heart outline',
+			'helicopter',
+			'highlighter',
+			'holly berry',
+			'home',
+			'hospital',
+			'hospital outline',
+			'hourglass',
+			'hourglass outline',
+			'igloo',
+			'image',
+			'image outline',
+			'images',
+			'images outline',
+			'industry',
+			'key',
+			'keyboard',
+			'keyboard outline',
+			'laptop',
+			'leaf',
+			'lemon',
+			'lemon outline',
+			'life ring',
+			'life ring outline',
+			'lightbulb',
+			'lightbulb outline',
+			'lock',
+			'lock open',
+			'magic',
+			'magnet',
+			'map',
+			'map marker',
+			'map marker alternate',
+			'map outline',
+			'map pin',
+			'map signs',
+			'marker',
+			'medal',
+			'medkit',
+			'memory',
+			'microchip',
+			'microphone',
+			'microphone alternate',
+			'mitten',
+			'mobile',
+			'mobile alternate',
+			'money bill',
+			'money bill alternate',
+			'money bill alternate outline',
+			'money check',
+			'money check alternate',
+			'moon',
+			'moon outline',
+			'motorcycle',
+			'mug hot',
+			'newspaper',
+			'newspaper outline',
+			'paint brush',
+			'paper plane',
+			'paper plane outline',
+			'paperclip',
+			'paste',
+			'paw',
+			'pen',
+			'pen alternate',
+			'pen fancy',
+			'pen nib',
+			'pencil alternate',
+			'phone',
+			'phone alternate',
+			'plane',
+			'plug',
+			'print',
+			'puzzle piece',
+			'ring',
+			'road',
+			'rocket',
+			'ruler combined',
+			'ruler horizontal',
+			'ruler vertical',
+			'satellite',
+			'satellite dish',
+			'save',
+			'save outline',
+			'school',
+			'screwdriver',
+			'scroll',
+			'sd card',
+			'search',
+			'shield alternate',
+			'shopping bag',
+			'shopping basket',
+			'shopping cart',
+			'shower',
+			'sim card',
+			'skull crossbones',
+			'sleigh',
+			'snowflake',
+			'snowflake outline',
+			'snowplow',
+			'space shuttle',
+			'star',
+			'star outline',
+			'sticky note',
+			'sticky note outline',
+			'stopwatch',
+			'stroopwafel',
+			'subway',
+			'suitcase',
+			'sun',
+			'sun outline',
+			'tablet',
+			'tablet alternate',
+			'tachometer alternate',
+			'tag',
+			'tags',
+			'taxi',
+			'thumbtack',
+			'ticket alternate',
+			'toilet',
+			'toolbox',
+			'tools',
+			'train',
+			'tram',
+			'trash',
+			'trash alternate',
+			'trash alternate outline',
+			'tree',
+			'trophy',
+			'truck',
+			'tv',
+			'umbrella',
+			'university',
+			'unlock',
+			'unlock alternate',
+			'utensil spoon',
+			'utensils',
+			'wallet',
+			'weight',
+			'wheelchair',
+			'wine glass',
+			'wrench',
+			'folder',
+			'folder open',
+			'palette',
+			'server',
+			'tint',
+		);
+		return $icons;
 	}
 }

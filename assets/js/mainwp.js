@@ -1,19 +1,23 @@
 /* eslint complexity: ["error", 100] */
 // current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-jQuery(document).ready(function ($) {
+jQuery(function ($) {
 
-  if(jQuery('.mainwp-ui-page').length){
-    jQuery( '.mainwp-popup-tooltip' ).popup()
+  if (jQuery('.mainwp-ui-page').length) {
+    jQuery('.mainwp-popup-tooltip').popup()
   }
 
   // review for new UI update
   jQuery(document).on('click', '#mainwp-category-add-submit', function () {
     var newCat = jQuery('#newcategory').val();
-    if (jQuery('#categorychecklist').find('option[value="' + encodeURIComponent(newCat) + '"]').length > 0)
+    if (jQuery('#categorychecklist .menu').find('.item[data-value="' + encodeURIComponent(newCat) + '"]').length > 0) {
+      console.log('Existed: ' + encodeURIComponent(newCat));
+      jQuery('#newcategory').val('');
       return;
-    jQuery('#categorychecklist').append('<option value="' + encodeURIComponent(newCat) + '">' + newCat + '</option>');
-    jQuery('#category-adder').addClass('wp-hidden-children');
+    }
+    var selected_categories = jQuery('#categorychecklist').dropdown('get value');
+    jQuery('#categorychecklist .menu').append('<div class="item" data-value="' + encodeURIComponent(newCat) + '">' + newCat + '</div>');
+    jQuery('#categorychecklist .menu').dropdown('set selected', selected_categories); // to refresh.
     jQuery('#newcategory').val('');
   });
 
@@ -92,7 +96,7 @@ jQuery(document).ready(function ($) {
 /**
  * Global
  */
-jQuery(document).ready(function () {
+jQuery(function () {
   jQuery('.mainwp-row').on({
     mouseenter: function () {
       rowMouseEnter(this);
@@ -160,7 +164,7 @@ postAction = function (elem, what) {
     if (response.error) {
       rowElement.show();
       rowElement.next('.mainwp-row-actions-working').hide();
-      rowElement.html('<div class="sixteen wide column"><i class="times circle red icon"></i> ' + response.error + '</div>');
+      rowElement.html('<div class="sixteen wide column"><i class="times red icon"></i> ' + response.error + '</div>');
     } else if (response.result) {
       rowElement.show();
       rowElement.next('.mainwp-row-actions-working').hide();
@@ -228,6 +232,7 @@ jQuery(document).ready(function () {
     return false;
   });
 });
+
 
 pluginAction = function (elem, what) {
   var rowElement = jQuery(elem).parent().parent();
@@ -386,6 +391,36 @@ subMenuOut = function (subName) {
   jQuery('#mainwp-' + subName).css('color', '');
 };
 
+mainwp_js_get_error_not_detected_connect = function (jsonStr, what, elemId, retErrText) {
+  if (undefined !== jsonStr && '' != jsonStr && undefined !== what && 'html_msg' === what) {
+    try {
+      var obj_err = JSON.parse(jsonStr);
+      if (typeof obj_err === 'object') {
+        if (obj_err.el_before !== undefined && obj_err.el_link !== undefined && obj_err.el_text !== undefined) {
+          var elafter = obj_err.el_after !== undefined ? obj_err.el_after : '';
+          if (true === retErrText) {
+            return obj_err.el_before + obj_err.el_text + elafter;
+          }
+          if (undefined !== elemId && '' != elemId) {
+            var el = document.createElement('a');
+            el.text = obj_err.el_text;
+            el.href = obj_err.el_link;
+            el.target = "_blank";
+            console.log(el);
+            jQuery('#' + elemId).html('').append(document.createTextNode(obj_err.el_before), el, document.createTextNode(elafter));
+            feedback_scroll(elemId, 'red');
+          }
+          return true;
+        }
+      } else {
+        return false; // it is not or invalid json.
+      }
+    } catch (e) {
+      return false; // it is not or invalid json.
+    }
+  }
+  return __('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the MainWP Community for help.');
+}
 
 function shake_element(select) {
   var pos = jQuery(select).position();
@@ -445,6 +480,14 @@ feedback = function (id, text, type, append) {
   // automatically scroll to error message if it's not visible
   scrollElementTop(id);
 };
+
+feedback_scroll = function (id, color) {
+  jQuery('#' + id).removeClass('green red yellow');
+  jQuery('#' + id).addClass(color);
+  jQuery('#' + id).show();
+  // automatically scroll to error message if it's not visible
+  scrollElementTop(id);
+}
 
 scrollElementTop = function (id) {
   var scrolltop = jQuery(window).scrollTop();
@@ -1471,10 +1514,14 @@ mainwp_site_overview_reconnect = function (pElement) {
         var error;
         if (response.length == 5) {
           error = 'Undefined error! Please try again. If the process keeps failing, please review <a href="https://kb.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.';
+          feedback('mainwp-message-zone', error, 'red');
         } else {
           error = response.substr(6);
+          var err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', 'mainwp-message-zone');
+          if (false === err) {
+            feedback('mainwp-message-zone', error, 'red');  // it is not json error string.
+          }
         }
-        feedback('mainwp-message-zone', error, 'red');
       } else {
         location.reload();
       }
@@ -1498,10 +1545,14 @@ mainwp_managesites_reconnect = function (pElement) {
         var error;
         if (response.length == 5) {
           error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.';
+          feedback('mainwp-message-zone', error, 'red');
         } else {
           error = response.substr(6);
+          var err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', 'mainwp-message-zone');
+          if (false === err) {
+            feedback('mainwp-message-zone', error, 'red');  // it is not json error string.
+          }
         }
-        feedback('mainwp-message-zone', error, 'red');
       } else {
         feedback('mainwp-message-zone', response, 'green');
       }
@@ -1528,10 +1579,14 @@ mainwp_managesites_cards_reconnect = function (element) {
         var error;
         if (response.length == 5) {
           error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.';
+          feedback('mainwp-message-zone', error, 'red');
         } else {
           error = response.substr(6);
+          var err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', 'mainwp-message-zone');
+          if (false === err) {
+            feedback('mainwp-message-zone', error, 'red');  // it is not json error string.
+          }
         }
-        feedback('mainwp-message-zone', error, 'red');
       } else {
         feedback('mainwp-message-zone', response, 'green');
       }
@@ -1625,7 +1680,7 @@ mainwp_managesites_add = function () {
       if (response == 'HTTPERROR') {
         errors.push(__('This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.'));
       } else if (response == 'NOMAINWP') {
-        errors.push(__('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.'));
+        errors.push(mainwp_js_get_error_not_detected_connect());
       } else if (response.substr(0, 5) == 'ERROR') {
         if (response.length == 5) {
           errors.push(__('Undefined error occurred. Please try again. If the issue does not resolve, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.'));
@@ -1649,6 +1704,9 @@ mainwp_managesites_add = function () {
           ssl_version: jQuery('#mainwp_managesites_add_ssl_version').val(),
           groupids: group_ids,
           clientid: client_id,
+          selected_icon: jQuery('#mainwp_managesites_add_site_select_icon_hidden').val(),
+          cust_color: jQuery('#mainwp_managesites_add_site_color').val(),
+          uploaded_icon: jQuery('#mainwp_managesites_add_site_uploaded_icon_hidden').val(),
           managesites_add_http_user: jQuery('#mainwp_managesites_add_http_user').val(),
           managesites_add_http_pass: jQuery('#mainwp_managesites_add_http_pass').val(),
         });
@@ -1822,7 +1880,7 @@ mainwp_extension_prepareinstallplugin = function (pPluginToInstall, pSiteId) {
             syc_msg = '<span style="color:#0073aa">' + syc_msg + '!</span>';
           else
             syc_msg = '<span style="color:red">' + syc_msg + '!</span>';
-          jQuery('#mainwp-message-zone').append(pPluginToInstall.find(".sync-install-plugin").attr('plugin_name') + ' ' + syc_msg + '<br/>');
+          jQuery('#mainwp-message-zone').append('<br/>' + pPluginToInstall.find(".sync-install-plugin").attr('plugin_name') + ' ' + syc_msg );
         }
 
         if (!apply_settings) {
@@ -1887,11 +1945,11 @@ mainwp_extension_apply_plugin_settings = function (pPluginToInstall, pSiteId, pG
       else
         syc_msg = '<span style="color:red">' + syc_msg + '!</span>';
       if (pGlobal) {
-        syc_msg = __('Apply global %1 options', pPluginToInstall.attr('ext_name')) + ' ' + syc_msg + '<br/>';
+        syc_msg = __('Apply global %1 options', pPluginToInstall.attr('ext_name')) + ' ' + syc_msg;
       } else {
-        syc_msg = __('Apply %1 settings', pPluginToInstall.find('.sync-install-plugin').attr('plugin_name')) + ' ' + syc_msg + '<br/>';
+        syc_msg = __('Apply %1 settings', pPluginToInstall.find('.sync-install-plugin').attr('plugin_name')) + ' ' + syc_msg;
       }
-      jQuery('#mainwp-message-zone').append(syc_msg);
+      jQuery('#mainwp-message-zone').append('<br/>' + syc_msg);
     }
     bulkInstallCurrentThreads--;
     mainwp_managesites_sync_extension_start_next(pSiteId);
@@ -3045,14 +3103,7 @@ getErrorMessage = function (pError, msgOnly) {
   if (pError.message == 'HTTPERROR') {
     return __('HTTP error') + '! ' + pError.extra;
   } else if (pError.message == 'NOMAINWP' || pError == 'NOMAINWP') {
-    var error = '';
-    if (pError.extra) {
-      error = __('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a> for help.', pError.extra); // to fix incorrect encoding
-    } else {
-      error = __('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a> for help.');
-    }
-
-    return error;
+    return mainwp_js_get_error_not_detected_connect();
   } else if (pError.message == 'ERROR') {
     return 'ERROR' + ((pError.extra != '') && (pError.extra != undefined) ? ': ' + pError.extra : '');
   } else if (pError.message == 'WPERROR') {
@@ -3090,7 +3141,7 @@ getErrorMessageInfo = function (repError, outputType) {
     msg = getErrorMessage(repError);
 
     if (repError.message == 'NOMAINWP' || repError == 'NOMAINWP') {
-      msg = __('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the MainWP Community for help.');
+      msg = mainwp_js_get_error_not_detected_connect();
     }
 
     if (msg != '') {
@@ -3491,7 +3542,7 @@ jQuery(document).on('change', '#cb-select-all-top, #cb-select-all-bottom', funct
 });
 
 
-jQuery(document).ready(function ($) {
+jQuery(function ($) {
   // Trigger the bulk actions
   $('#mainwp_non_mainwp_actions_action_btn').on('click', function () {
     var bulk_act = jQuery('#non_mainwp_actions_bulk_action').dropdown("get value");
@@ -3526,52 +3577,21 @@ jQuery(document).ready(function ($) {
           if (response['error']) {
             row.html('<td></td><td colspan="999"><i class="times red icon"></i> ' + response['error'] + '</td>');
           } else if (response['success'] == 'yes') {
-            row.html('<td></td><td colspan="999"><i class="green check icon"></i> Successfully.</td>');
+            row.html('<td></td><td colspan="999"><i class="green check icon"></i> Non-MainWP Change has been dismissed.</td>');
             setTimeout(function () {
               jQuery(row).fadeOut("slow");
             }, 2000);
           } else {
-            row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
+            row.html('<td></td><td colspan="999"><i class="times red icon"></i> Non-MainWP Change could not be dismissed.</td>');
           }
         } else {
-          row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
+          row.html('<td></td><td colspan="999"><i class="times red icon"></i> Non-MainWP Change could not be dismissed.</td>');
         }
       }, 'json');
     });
 
     return false;
   });
-
-  $(document).on('click', '.non-mainwp-action-row-delete', function () {
-    var row = $(this).closest('tr');
-    var confirmMsg = __("You are about to delete the selected changes?");
-
-    mainwp_confirm(confirmMsg, function () {
-      row.html('<td></td><td colspan="999"><i class="notched circle loading icon"></i> Please wait...</td>');
-      var data = mainwp_secure_data({
-        action: 'mainwp_non_mainwp_changes_delete_actions',
-        act_id: $(row).attr('action-id')
-      });
-      $.post(ajaxurl, data, function (response) {
-        if (response) {
-          if (response['error']) {
-            row.html('<td></td><td colspan="999"><i class="times red icon"></i> ' + response['error'] + '</td>');
-          } else if (response['success'] == 'yes') {
-            row.html('<td></td><td colspan="999"><i class="green check icon"></i> Successfully.</td>');
-            setTimeout(function () {
-              jQuery(row).fadeOut("slow");
-            }, 2000);
-          } else {
-            row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
-          }
-        } else {
-          row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
-        }
-      }, 'json');
-    });
-    return false;
-  });
-
 })
 
 
@@ -3582,11 +3602,6 @@ mainwp_non_mainwp_actions_table_bulk_action = function (act) {
   bulkInstallDone = 0;
   var selector = '';
   switch (act) {
-    case 'delete':
-      selector += '#mainwp-manage-non-mainwp-actions-table tbody tr';
-      jQuery(selector).addClass('queue');
-      mainwp_non_mainwp_actions_delete_start_next(selector, true);
-      break;
     case 'dismiss':
       selector += '#mainwp-manage-non-mainwp-actions-table tbody tr';
       jQuery(selector).addClass('queue');
@@ -3594,69 +3609,6 @@ mainwp_non_mainwp_actions_table_bulk_action = function (act) {
       break;
   }
 }
-
-mainwp_non_mainwp_actions_delete_start_next = function (selector) {
-  if (bulkInstallTotal == 0) {
-    bulkInstallTotal = jQuery('#mainwp-manage-non-mainwp-actions-table tbody').find('input[type="checkbox"]:checked').length;
-  }
-  while ((objProcess = jQuery(selector + '.queue:first')) && (objProcess.length > 0) && (bulkInstallCurrentThreads < bulkInstallMaxThreads)) {
-    objProcess.removeClass('queue');
-    if (objProcess.closest('tr').find('input[type="checkbox"]:checked').length == 0) {
-      continue;
-    }
-    mainwp_non_mainwp_actions_delete_specific(objProcess, selector, true);
-  }
-}
-
-mainwp_non_mainwp_actions_delete_specific = function (pObj, selector, pBulk) {
-  var row = pObj.closest('tr');
-  var act_id = jQuery(row).attr('action-id');
-  var bulk = pBulk ? true : false;
-
-  if (bulk) {
-    bulkInstallCurrentThreads++;
-  }
-
-  var data = mainwp_secure_data({
-    action: 'mainwp_non_mainwp_changes_delete_actions',
-    act_id: act_id,
-  });
-
-  row.html('<td></td><td colspan="999"><i class="notched circle loading icon"></i> Please wait...</td>');
-
-  jQuery.post(ajaxurl, data, function (response) {
-    pObj.removeClass('queue');
-    if (response) {
-      if (response['error']) {
-        row.html('<td></td><td colspan="999"><i class="times red icon"></i> ' + response['error'] + '</td>');
-      } else if (response['success'] == 'yes') {
-        row.html('<td></td><td colspan="999"><i class="green check icon"></i> Successfully.</td>');
-        setTimeout(function () {
-          jQuery(row).fadeOut("slow");
-        }, 2000);
-      } else {
-        row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
-      }
-    } else {
-      row.html('<td></td><td colspan="999"><i class="times red icon"></i> Failed. Please try again.</td>');
-    }
-
-    if (bulk) {
-      bulkInstallCurrentThreads--;
-      bulkInstallDone++;
-      mainwp_non_mainwp_actions_delete_start_next(selector);
-      if (bulkInstallTotal == bulkInstallDone) {
-        setTimeout(function () {
-          window.location.reload(true);
-        }, 3000);
-      }
-    }
-
-  }, 'json');
-  return false;
-}
-
-
 
 mainwp_non_mainwp_actions_dismiss_start_next = function (selector) {
   if (bulkInstallTotal == 0) {
@@ -3693,7 +3645,7 @@ mainwp_non_mainwp_actions_dismiss_specific = function (pObj, selector, pBulk) {
       if (response['error']) {
         row.html('<td></td><td colspan="999"><i class="times red icon"></i> ' + response['error'] + '</td>');
       } else if (response['success'] == 'yes') {
-        row.html('<td></td><td colspan="999"><i class="green check icon"></i> Successfully.</td>');
+        row.html('<td></td><td colspan="999"><i class="green check icon"></i> Non-MainWP Change has been dismissed.</td>');
         setTimeout(function () {
           jQuery(row).fadeOut("slow");
         }, 2000);
@@ -3721,7 +3673,7 @@ mainwp_non_mainwp_actions_dismiss_specific = function (pObj, selector, pBulk) {
 
 
 // fix menu overflow with scroll tables.
-mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight) {
+mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight, pLeft) {
   var fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');
   jQuery(document).on('click', 'table td.check-column.dtr-control', function () {
     if (jQuery(this).parent().hasClass('parent')) {
@@ -3758,7 +3710,8 @@ mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight) {
     //return false;
     jQuery(this).find('.menu').css('min-width', '170px');
     jQuery(this).find('.menu').css('top', top);
-    jQuery(this).find('.menu').css('right', right);
+    jQuery(this).find('.menu').css('right', right + ' !important;');
+    jQuery(this).find('.menu')[0].style.setProperty('right', right + 'px', 'important'); // to fix important in jquery.
   });
 
   // Fix the overflow prbolem for the actions menu element (left pointing menu).
@@ -3767,6 +3720,7 @@ mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight) {
     jQuery(this).closest('.dataTables_scroll').css('position', 'relative');
     jQuery(this).css('position', 'static');
     var position = jQuery(this).position();
+
     var top = position.top;
     var left = position.left - 159;
 
@@ -3780,9 +3734,11 @@ mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight) {
     if (pTop !== undefined) {
       top = top + pTop;
     }
-    if (pRight !== undefined) {
-      right = right + pRight;
+    
+    if(undefined !== pLeft){
+      left -= pLeft; // custom left.
     }
+
     console.log('left');
     console.log('top: ' + top + ' left: ' + left);
 
@@ -4278,3 +4234,88 @@ function mainwp_setCookie() {
 function mainwp_getCookie() {
   return false;
 }
+
+mainwp_setttings_fields_indicator_show = function () {
+
+  // show saved indicator status.
+  // if (undefined !== mainwp_settings_saved_menu_indicator_status && '' !== mainwp_settings_saved_menu_indicator_status) {
+  //   var saved_status = JSON.parse(mainwp_settings_saved_menu_indicator_status);
+  //   for (const [key, value] of Object.entries(saved_status)) {
+  //     if (key !== undefined && key !== '' && jQuery('.settings-field-menu-indicator[menu-indicator="' + key + '"]').length) {
+  //       if ('1' == value) {
+  //         jQuery('.settings-field-menu-indicator[menu-indicator="' + key + '"]').attr('style', 'display:inline-block;');
+  //         jQuery('.settings-field-menu-indicator[menu-indicator="' + key + '"]').attr('indicator-status', 'show');
+  //       }
+  //     }
+  //   }
+  // }
+
+  // if (jQuery('.settings-field-menu-indicator[menu-indicator-active="1"]').length) {
+  //   var current_menu_active = jQuery('.settings-field-menu-indicator[menu-indicator-active="1"]').attr('menu-indicator');
+  //   var current_menu_status = 'show' == jQuery('.settings-field-menu-indicator[menu-indicator-active="1"]').attr('indicator-status') ? 1 : 0;
+  //   var val_indi = jQuery('.settings-field-icon-indicator[indicator-status="show"]').length > 0 ? 1 : 0;
+  //   if (current_menu_status != val_indi) {
+  //     mainwp_setttings_fields_save_indicator_status(current_menu_active, val_indi);
+  //     if (val_indi) {
+  //       jQuery('.settings-field-menu-indicator[menu-indicator="' + current_menu_active + '"]').attr('style', 'display:inline-block;');
+  //       jQuery('.settings-field-menu-indicator[menu-indicator="' + current_menu_active + '"]').attr('indicator-status', 'show');
+  //     } else {
+  //       jQuery('.settings-field-menu-indicator[menu-indicator="' + current_menu_active + '"]').attr('style', 'display:none;');
+  //       jQuery('.settings-field-menu-indicator[menu-indicator="' + current_menu_active + '"]').attr('indicator-status', 'hide');
+  //     }
+  //   }
+  // }
+
+  // for each header indicator.
+  jQuery('.settings-field-header-indicator').each(function () {
+    var cls = jQuery(this).attr('field-indicator-wrapper-class');
+    let menu_indi = jQuery(this).attr('menu-indicator');
+    if ('' != cls && jQuery('.' + cls + ' .settings-field-icon-indicator').length > 0) {
+      jQuery(this).attr('style', 'display:inline-block;');
+      jQuery(this).attr('indicator-status', 'show');
+      if (menu_indi !== undefined && menu_indi !== '' && jQuery('.settings-field-menu-indicator[menu-indicator="' + menu_indi + '"]').length) {
+        jQuery('.settings-field-menu-indicator[menu-indicator="' + menu_indi + '"]').attr('style', 'display:inline-block;');
+      }
+    }
+  });
+}
+
+
+mainwp_setttings_fields_save_indicator_status = function (menu_indi, val_indi) {
+  var data = mainwp_secure_data({
+    action: 'mainwp_status_saving',
+    status: 'save_indicator_values',
+    name: menu_indi,
+    value: val_indi
+  });
+
+  jQuery.ajax({
+    type: 'POST',
+    url: ajaxurl,
+    data: data,
+    success: function () {
+      // ok.
+    },
+  });
+}
+
+jQuery(document).ready(function () {
+  if (jQuery('.mainwp-ui-page').length) {
+    mainwp_setttings_fields_indicator_show();
+  }
+});
+
+mainwp_common_filter_hide_segments_message = function () {
+  jQuery('#mainwp-common-filter-edit-segment-status').removeClass('red green').hide();
+};
+mainwp_common_filter_show_segments_modal = function (loadSeg) {
+  mainwp_common_filter_hide_segments_message();
+  jQuery('#mainwp-common-filter-segment-modal').modal({
+    allowMultiple: false,
+    onShow: function () {
+      if (typeof loadSeg !== "undefined" && loadSeg) {
+        mainwp_common_filter_load_segments();
+      }
+    }
+  }).modal('show');
+};

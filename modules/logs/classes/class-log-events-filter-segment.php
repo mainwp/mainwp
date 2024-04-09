@@ -1,18 +1,20 @@
 <?php
 /**
- * Manage Sites List Table.
+ * Manage filter segment Logs List Table.
  *
  * @package     MainWP/Dashboard
  */
 
-namespace MainWP\Dashboard;
+namespace MainWP\Dashboard\Module\Log;
+
+use MainWP\Dashboard\MainWP_Post_Handler;
 
 /**
- * Class MainWP_Manage_Sites_Filter_Segment
+ * Class Log_Events_Filter_Segment
  *
  * @package MainWP\Dashboard
  */
-class MainWP_Manage_Sites_Filter_Segment {
+class Log_Events_Filter_Segment {
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -33,15 +35,6 @@ class MainWP_Manage_Sites_Filter_Segment {
 	}
 
 	/**
-	 * Method admin_init().
-	 */
-	public function admin_init() {
-		MainWP_Post_Handler::instance()->add_action( 'mainwp_manage_sites_filter_save_segment', array( $this, 'ajax_filter_save_segment' ) );
-		MainWP_Post_Handler::instance()->add_action( 'mainwp_manage_sites_filter_load_segments', array( $this, 'ajax_filter_load_segments' ) );
-		MainWP_Post_Handler::instance()->add_action( 'mainwp_manage_sites_filter_delete_segment', array( $this, 'ajax_filter_delete_segment' ) );
-	}
-
-	/**
 	 * Create public static instance.
 	 *
 	 * @static
@@ -56,32 +49,34 @@ class MainWP_Manage_Sites_Filter_Segment {
 	}
 
 	/**
+	 * Method admin_init().
+	 */
+	public function admin_init() {
+		MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_filter_save_segment', array( $this, 'ajax_filter_save_segment' ) );
+		MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_filter_load_segments', array( $this, 'ajax_filter_load_segments' ) );
+		MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_filter_delete_segment', array( $this, 'ajax_filter_delete_segment' ) );
+	}
+
+	/**
 	 * Method render_filters_segment().
 	 */
 	public function render_filters_segment() {
 		$saved_segments = $this->set_get_manage_sites_filter_segments();
 		?>
-		<div class="three wide middle aligned right aligned column">
-				<div class="ui middle aligned compact grid">
-					<div class="eight wide column">
-					<button class="ui mini fluid button" id="mainwp-manage-sites-filter-save-segment-button" selected-segment-id="" selected-segment-name=""><?php esc_html_e( 'Save Segment', 'mainwp' ); ?></button>
-					</div>
-					<div class="eight wide column">
-						<?php if ( ! empty( $saved_segments ) ) : ?>
-							<button class="ui mini fluid button mainwp_manage_sites_filter_choose_segment"><?php esc_html_e( 'Load a Segment', 'mainwp' ); ?></button>
-						<?php else : ?>
-							<button class="ui mini fluid disabled button"><?php esc_html_e( 'Load a Segment', 'mainwp' ); ?></button>
-						<?php endif; ?>
-					</div>
-				</div>
-				
-			</div>
+
+		<div class="four wide top aligned right aligned column">
+			<button class="ui mini button" id="mainwp-module-log-filter-save-segment-button" selected-segment-id="" selected-segment-name=""><?php esc_html_e( 'Save Segment', 'mainwp' ); ?></button>
+			<?php if ( ! empty( $saved_segments ) ) : ?>
+				<button class="ui mini button mainwp_module_log_filter_choose_segment"><?php esc_html_e( 'Load a Segment', 'mainwp' ); ?></button>
+			<?php else : ?>
+				<button class="ui mini disabled button"><?php esc_html_e( 'Load a Segment', 'mainwp' ); ?></button>
+			<?php endif; ?>
 		</div>
 					
 		<script type="text/javascript">
 			jQuery( document ).ready( function( $ ) {
 
-				jQuery('#mainwp-manage-sites-filter-save-segment-button').on( 'click', function () {
+				jQuery('#mainwp-module-log-filter-save-segment-button').on( 'click', function () {
 					jQuery( '#mainwp-common-filter-segment-modal > div.header' ).html(__('Save Segment'));
 					jQuery( '#mainwp-common-filter-segment-edit-fields' ).show();
 					jQuery( '#mainwp-common-filter-edit-segment-save' ).show();
@@ -92,7 +87,7 @@ class MainWP_Manage_Sites_Filter_Segment {
 					mainwp_common_filter_show_segments_modal();
 				} );
 
-				jQuery('.mainwp_manage_sites_filter_choose_segment').on( 'click', function () {
+				jQuery('.mainwp_module_log_filter_choose_segment').on( 'click', function () {
 					jQuery( '#mainwp-common-filter-segment-edit-fields' ).hide();
 					jQuery( '#mainwp-common-filter-edit-segment-save' ).hide();
 					jQuery( '#mainwp-common-filter-segment-modal > div.header' ).html(__('Load a Segment'));
@@ -101,11 +96,12 @@ class MainWP_Manage_Sites_Filter_Segment {
 					jQuery( '#mainwp-common-filter-select-segment-delete-button' ).show();
 					mainwp_common_filter_show_segments_modal(true);
 				} );
+						
 
 				mainwp_common_filter_load_segments = function () {
 					jQuery('#mainwp-common-filter-segment-select-fields').hide();
 					var data = mainwp_secure_data({
-						action: 'mainwp_manage_sites_filter_load_segments',
+						action: 'mainwp_module_log_filter_load_segments',
 					});
 					jQuery('#mainwp-common-filter-edit-segment-status').html('<i class="notched circle loading icon"></i> ' + __('Loading segments. Please wait...')).show();
 					jQuery.post(ajaxurl, data, function (response) {
@@ -134,13 +130,14 @@ class MainWP_Manage_Sites_Filter_Segment {
 					}
 
 					var data = mainwp_secure_data({
-						action: 'mainwp_manage_sites_filter_save_segment',
+						action: 'mainwp_module_log_filter_save_segment',
 						name: seg_name,
-						seg_is_not: $( '#mainwp-sites-filters-row #mainwp_is_not_site').dropdown('get value'),
-						seg_site_tags: $( '#mainwp-sites-filters-row #mainwp-filter-sites-group').dropdown('get value'),
-						seg_site_status: $( '#mainwp-sites-filters-row #mainwp-filter-sites-status').dropdown('get value'),
-						seg_site_clients: $( '#mainwp-sites-filters-row #mainwp-filter-clients').dropdown('get value'),
-						seg_id:$('#mainwp-manage-sites-filter-save-segment-button').attr('selected-segment-id'),
+						seg_ranges: $( '#mainwp-module-log-filter-ranges').dropdown('get value'),
+						seg_dtsstart: $( '#mainwp-module-log-filter-dtsstart input[type=text]').val(),
+						seg_dtsstop: $( '#mainwp-module-log-filter-dtsstop input[type=text]').val(),
+						seg_groups: $( '#mainwp-module-log-filter-groups').dropdown('get value'),
+						seg_clients:$('#mainwp-module-log-filter-clients').dropdown('get value'),
+						seg_users:$('#mainwp-module-log-filter-users').dropdown('get value'),
 					});
 
 					jQuery('#mainwp-common-filter-edit-segment-status').html('<i class="notched circle loading icon"></i> ' + __('Saving segment. Please wait...')).show();
@@ -171,37 +168,39 @@ class MainWP_Manage_Sites_Filter_Segment {
 					var valErr = true;
 					var arrVal = '';
 					var fieldsAllows = [						
-						'seg_is_not',
-						'seg_site_tags',
-						'seg_site_status',
-						'seg_site_clients',
+						'seg_ranges',
+						'seg_dtsstart',
+						'seg_dtsstop',
+						'seg_groups',
+						'seg_clients',
+						'seg_users',
 					];
 					if('' != seg_values ) {
 						try {
 							seg_values = JSON.parse(seg_values);
 							if('' != seg_values){
-								jQuery( '#mainwp-manage-sites-filter-save-segment-button' ).attr('selected-segment-id',seg_id);
-								jQuery( '#mainwp-manage-sites-filter-save-segment-button' ).attr('selected-segment-name',seg_values.name);
+								jQuery( '#mainwp-module-log-filter-save-segment-button' ).attr('selected-segment-id',seg_id);
+								jQuery( '#mainwp-module-log-filter-save-segment-button' ).attr('selected-segment-name',seg_values.name);
 								
 								for (const [key, value] of Object.entries(seg_values)) {
 									try {
 										if(fieldsAllows.includes(key)){
-											console.log(key + ' === '+ value);
-											jQuery( '#mainwp-sites-filters-row .ui.dropdown.' + key ).dropdown('clear');
-											arrVal = value.split(",");
-											jQuery( '#mainwp-sites-filters-row .ui.dropdown.' + key ).dropdown('set selected', arrVal);
+											if( 'seg_dtsstart' !== key && 'seg_dtsstop' !== key ){
+												if('seg_ranges' != key){ // to fix onChange filter-ranges issue.
+													jQuery( '#mainwp-module-log-filters-row .ui.dropdown.' + key ).dropdown('clear'); 
+												}
+												arrVal = value.split(",");
+												jQuery( '#mainwp-module-log-filters-row .ui.dropdown.' + key ).dropdown('set selected', arrVal);
+											} else {
+												jQuery( '#mainwp-module-log-filters-row .ui.calendar.' + key ).calendar('set date', value );
+											}
 										}
 									} catch (err) {
-										console.log(key + ' === '+ value);
 										console.log(err);
 									}
 								}
 								jQuery( '#mainwp-common-filter-segment-modal' ).modal('hide');
-								if(jQuery('.manage-sites-screenshots-filter-top').length > 0 ){
-									mainwp_screenshots_sites_filter();
-								}else {
-									mainwp_manage_sites_filter();
-								}
+								mainwp_module_log_overview_content_filter();
 								valErr = false;
 							}
 						} catch (err) {
@@ -228,7 +227,7 @@ class MainWP_Manage_Sites_Filter_Segment {
 
 					jQuery(seg_id).attr('running', 'yes');
 					var data = mainwp_secure_data({
-						action: 'mainwp_manage_sites_filter_delete_segment',
+						action: 'mainwp_module_log_filter_delete_segment',
 						seg_id: seg_id,
 					});
 					jQuery('#mainwp-common-filter-edit-segment-status').html('<i class="notched circle loading icon"></i> ' + __('Deleting segment. Please wait...')).show();
@@ -269,9 +268,9 @@ class MainWP_Manage_Sites_Filter_Segment {
 		global $current_user;
 		if ( $current_user && ! empty( $current_user->ID ) ) {
 			if ( $set_val ) {
-				update_user_option( $current_user->ID, 'mainwp_manage_sites_filter_saved_segments', $saved_segments );
+				update_user_option( $current_user->ID, 'mainwp_module_log_filter_saved_segments', $saved_segments );
 			} else {
-				$values = get_user_option( 'mainwp_manage_sites_filter_saved_segments', array() );
+				$values = get_user_option( 'mainwp_module_log_filter_saved_segments', array() );
 				if ( ! is_array( $values ) ) {
 					$values = array();
 				}
@@ -288,23 +287,24 @@ class MainWP_Manage_Sites_Filter_Segment {
 	 * Post handler for save segment.
 	 */
 	public function ajax_filter_save_segment() {
-		MainWP_Post_Handler::instance()->check_security( 'mainwp_manage_sites_filter_save_segment' );
+		MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_filter_save_segment' );
 		//phpcs:disable WordPress.Security.NonceVerification.Missing
 
 		$not_filters = array(
-			'seg_site_tags'    => 'nogroups',
-			'seg_site_status'  => 'all',
-			'seg_site_clients' => 'noclients',
+			'seg_groups'  => 'alltags',
+			'seg_clients' => 'allclients',
+			'seg_users'   => 'allusers',
 		);
 
-		$fields = array(
+		$fields      = array(
 			'name',
-			'seg_is_not',
-			'seg_site_tags',
-			'seg_site_status',
-			'seg_site_clients',
+			'seg_ranges',
+			'seg_dtsstart',
+			'seg_dtsstop',
+			'seg_groups',
+			'seg_clients',
+			'seg_users',
 		);
-
 		$save_fields = array();
 
 		foreach ( $fields as $field ) {
@@ -336,11 +336,11 @@ class MainWP_Manage_Sites_Filter_Segment {
 	 * Post handler for save segment.
 	 */
 	public function ajax_filter_load_segments() {
-		MainWP_Post_Handler::instance()->check_security( 'mainwp_manage_sites_filter_load_segments' );
+		MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_filter_load_segments' );
 		$saved_segments = $this->set_get_manage_sites_filter_segments();
 		$list_segs      = '';
 		if ( is_array( $saved_segments ) && ! empty( $saved_segments ) ) {
-			$list_segs .= '<select id="mainwp_manage_sites_edit_payment_type" class="ui fluid dropdown">';
+			$list_segs .= '<select id="mainwp_module_log_edit_payment_type" class="ui fluid dropdown">';
 			$list_segs .= '<option segment-filters="" value="">' . esc_html__( 'Select a segment', 'mainwp' ) . '</option>';
 			foreach ( $saved_segments as $sid => $values ) {
 				if ( empty( $values['name'] ) ) {
@@ -359,7 +359,7 @@ class MainWP_Manage_Sites_Filter_Segment {
 	 * Post handler for save segment.
 	 */
 	public function ajax_filter_delete_segment() {
-		MainWP_Post_Handler::instance()->check_security( 'mainwp_manage_sites_filter_delete_segment' );
+		MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_filter_delete_segment' );
 		$seg_id = ! empty( $_POST['seg_id'] ) ? sanitize_text_field( wp_unslash( $_POST['seg_id'] ) ) : 0; //phpcs:ignore -- ok.
 
 		$saved_segments = $this->set_get_manage_sites_filter_segments();

@@ -90,12 +90,10 @@ class MainWP_Client_Overview_Info {
 					?>
 					<div class="ui stackable grid">
 						<div class="four wide middle aligned column">
-							<?php if ( empty( $client_info['image'] ) ) : ?>
-								<i class="user icon massive"></i>
-							<?php else : ?>
-								<?php $image_url = MainWP_Client_Handler::get_client_image_url( $client_info['image'] ); ?>
-								<img class="ui medium circular image" src="<?php echo esc_attr( $image_url ); ?>">
-							<?php endif; ?>
+						<?php
+							$client_display_image = MainWP_Client_Handler::get_client_contact_image( $client_info, 'client', 'card' );
+							echo $client_display_image; //phpcs:ignore -- ok.
+						?>
 						</div>
 						<div class="twelve wide middle aligned column">
 							<div class="ui relaxed list">

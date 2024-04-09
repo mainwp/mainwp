@@ -1808,7 +1808,7 @@ class MainWP_Updates {
 							"info": false,
 							"searching": false,
 							"ordering" : false,
-							"responsive": true,
+							"responsive": true
 						});					
 						tb.columns.adjust();
 						tb.responsive.recalc();
@@ -2194,7 +2194,7 @@ class MainWP_Updates {
 						"stateSave": <?php echo esc_html( $table_features['stateSave'] ); ?>,
 						"info" : <?php echo esc_html( $table_features['info'] ); ?>,
 						"columnDefs" : [ { "orderable": false, "targets": "no-sort" } ],
-						"language" : { "emptyTable": "No HTTP issues detected." }
+						"language" : { "emptyTable": "No HTTP issues detected." },
 				} );
 			} );
 			</script>

@@ -409,7 +409,7 @@ class Log_Events_List_Table {
 		 // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$perPage = isset( $_REQUEST['length'] ) ? intval( $_REQUEST['length'] ) : false;
 		if ( -1 === (int) $perPage || empty( $perPage ) ) {
-			$perPage = 99999;
+			$perPage = 3999999;
 		}
 		$start = isset( $_REQUEST['start'] ) ? intval( $_REQUEST['start'] ) : 0;
 
@@ -640,6 +640,21 @@ class Log_Events_List_Table {
 						params += '&_insights_opennonce=' + mainwpParams._wpnonce;
 						window.location = 'admin.php?page=InsightsOverview' + params;
 						return false;
+					};
+					mainwp_module_log_overview_content_reset_filters = function(resetObj) {
+						try {
+							var range = jQuery( '#mainwp-module-log-filter-ranges').dropdown('set selected', 'thismonth');
+							var group = jQuery( '#mainwp-module-log-filter-groups').dropdown('clear');
+							var client = jQuery( '#mainwp-module-log-filter-clients').dropdown('clear');
+							var user = jQuery( '#mainwp-module-log-filter-users').dropdown('clear');
+							var dtsstart = jQuery('#mainwp-module-log-filter-dtsstart input[type=text]').val('');
+							var dtsstop = jQuery('#mainwp-module-log-filter-dtsstop input[type=text]').val('');
+							jQuery(resetObj).attr('disabled', 'disabled');
+							mainwp_module_log_overview_content_filter();
+						} catch(err) {
+							// to fix js error.
+							console.log(err);
+						}
 					};
 
 			} );

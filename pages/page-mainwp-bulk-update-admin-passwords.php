@@ -345,7 +345,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 								"stateSave":  <?php echo esc_html( $table_features['stateSave'] ); ?>,
 								"order": [],
 								"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
-								"responsive": responsive,
+								"responsive": responsive
 							} );
 						} );
 						</script>

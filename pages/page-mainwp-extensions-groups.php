@@ -145,6 +145,7 @@ class MainWP_Extensions_Groups {
 			1
 		);
 
+		if ( defined( 'MAINWP_MODULE_API_BACKUPS_ENABLED' ) && MAINWP_MODULE_API_BACKUPS_ENABLED ) {
 			self::add_extension_menu(
 				array(
 					'title'                => esc_html__( 'API Backups', 'mainwp' ),
@@ -156,6 +157,7 @@ class MainWP_Extensions_Groups {
 					'active_path'          => array( 'ManageApiBackups' => 'managesites' ),
 				),
 			);
+		}
 
 			self::add_extension_menu(
 				array(
@@ -828,16 +830,18 @@ class MainWP_Extensions_Groups {
 			),
 		);
 
-		self::add_extension_menu(
-			array(
-				'title'                => esc_html__( 'Cost Tracker Assistant', 'mainwp' ),
-				'slug'                 => 'mainwp-cost-tracker-assistant-extension/mainwp-cost-tracker-assistant-extension.php',
-				'parent_key'           => 'ManageCostTracker',
-				'ext_page'             => 'admin.php?page=ManageCostTracker',
-				'leftsub_order_level2' => 4,
-				'level'                => 2,
-			),
-		);
+		if ( defined( 'MAINWP_MODULE_COST_TRACKER_ENABLED' ) && MAINWP_MODULE_COST_TRACKER_ENABLED ) {
+			self::add_extension_menu(
+				array(
+					'title'                => esc_html__( 'Cost Tracker Assistant', 'mainwp' ),
+					'slug'                 => 'mainwp-cost-tracker-assistant-extension/mainwp-cost-tracker-assistant-extension.php',
+					'parent_key'           => 'ManageCostTracker',
+					'ext_page'             => 'admin.php?page=ManageCostTracker',
+					'leftsub_order_level2' => 4,
+					'level'                => 2,
+				),
+			);
+		}
 
 		self::add_extension_menu(
 			array(

@@ -8,18 +8,17 @@ jQuery(document).on('click', '#mainwp-do-sites-bulk-actions', function () {
   return false;
 });
 
-jQuery( document ).on( 'click', '#mainwp-manage-sites-filter-toggle-button', function () {
-  jQuery( '#mainwp-sites-filters-row' ).toggle( 300 );
+jQuery(document).on('click', '#mainwp-manage-sites-filter-toggle-button', function () {
+  jQuery('#mainwp-sites-filters-row').toggle(300);
   return false;
-} );
-
+});
 
 
 // Manage Sites Bulk Actions
 /* eslint-disable complexity */
 mainwp_managesites_doaction = function (action) {
 
-  if (action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'refresh_favico' || action == 'checknow' || action == 'update_everything' || action == 'check_abandoned_plugin' || action == 'check_abandoned_theme' || action == 'suspend' || action == 'unsuspend' ) {
+  if (action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'refresh_favico' || action == 'checknow' || action == 'update_everything' || action == 'check_abandoned_plugin' || action == 'check_abandoned_theme' || action == 'suspend' || action == 'unsuspend') {
 
     if (bulkManageSitesTaskRunning)
       return false;
@@ -149,8 +148,8 @@ mainwp_managesites_doaction_process = function (action) {
   } else if (action == 'check_abandoned_theme') {
     mainwp_managesites_bulk_check_abandoned(selectedIds, 'theme');
   } else if (action == 'suspend' || action == 'unsuspend') {
-    mainwp_managesites_bulk_suspend_status(selectedIds, action );
-  } 
+    mainwp_managesites_bulk_suspend_status(selectedIds, action);
+  }
 }
 
 
@@ -233,10 +232,14 @@ mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
     if (response.substr(0, 5) == 'ERROR') {
       if (response.length == 5) {
         error = __('Undefined error occured. Please try again.');
+        error = siteUrl + ' - ' + error;
       } else {
         error = response.substr(6);
+        var err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', false, true);
+        if (true !== err && '' != err) {
+          error = err; // decoded error.
+        }
       }
-      error = siteUrl + ' - ' + error;
     } else {
       msg = siteUrl + ' - ' + response;
     }
@@ -439,7 +442,7 @@ mainwp_managesites_refresh_favico_int = function (siteid) {
 
 
 /* Suspend sites */
-mainwp_managesites_bulk_suspend_status = function (siteIds , status) {
+mainwp_managesites_bulk_suspend_status = function (siteIds, status) {
 
   var allWebsiteIds = jQuery('.dashboard_wp_id').map(function (indx, el) {
     return jQuery(el).val();
@@ -513,7 +516,7 @@ mainwp_managesites_suspend_status_all_upgrade_next = function (status) {
 mainwp_managesites_suspend_status_int = function (siteid, status) {
   var data = mainwp_secure_data({
     action: 'mainwp_manage_sites_suspend_site',
-    suspended: (status == 'suspend' ) ? 1 : 0,
+    suspended: (status == 'suspend') ? 1 : 0,
     siteid: siteid,
   });
 

@@ -1,0 +1,28 @@
+name: Create Release on Stable Tag
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  add-release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Read version from readme.txt
+      id: read-version
+      run: |
+        VERSION=$(grep -Po 'Stable tag: \K.*' readme.txt)
+        echo "RELEASE_TAG=$VERSION" >> "$GITHUB_OUTPUT"
+      
+
+    - name: Create Release
+      id: create-release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.read-version.outputs.RELEASE_TAG }}
+        generate_release_notes: true

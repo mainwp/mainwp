@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 6.5
+Tested up to: 6.5.2
 Requires PHP: 7.4
-Stable tag: 5.0.3
+Stable tag: 5.0.3.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -142,6 +142,10 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 10. Dashboard Insights
 
 == Changelog ==
+
+= 5.0.3.1 - 4-16-2024 =
+
+* Fixed: A JavaScript error on the Monitoring page that prevented the table element from loading.
 
 = 5.0.3 - 4-9-2024 =
 

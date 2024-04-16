@@ -22,12 +22,14 @@ const MAINWP_VIEW_PER_GROUP        = 2;
  */
 class MainWP_System {
 
+	// BEGIN-NOSCAN
 	/**
 	 * Public static variable to hold the current plugin version.
 	 *
 	 * @var string Current plugin version.
 	 */
 	public static $version = '5.0.3.1';
+	// END-NOSCAN
 
 	/**
 	 * Private static variable to hold the single instance of the class.

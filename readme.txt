@@ -143,6 +143,10 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 
 == Changelog ==
 
+= 5.0.3.1 - 4-16-2024 =
+
+* Fixed: A JavaScript error on the Monitoring page that prevented the table element from loading.
+
 = 5.0.3 - 4-9-2024 =
 
 * Fixed: Issues with importing users through CSV uploads have been resolved.

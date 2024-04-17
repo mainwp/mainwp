@@ -236,7 +236,7 @@ class MainWP_Post_Page_Handler {
 
 		if ( 0 < count( $websites ) ) {
 			foreach ( $websites as $website ) {
-				if( ! $is_cpt  ){
+				if ( ! $is_cpt ) {
 					$new_cats = json_decode( $website->categories, true );
 					if ( is_array( $new_cats ) && ( 0 < count( $new_cats ) ) ) {
 						$current = current( $new_cats );

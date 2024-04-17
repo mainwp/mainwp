@@ -198,14 +198,14 @@ class Log_List_Table {
 	 */
 	public function get_sortable_columns() {
 		$sortable_columns = array(
-			'date'     => array( 'date', false ),
-			'log_site_name'     => array( 'site', false ),
-			'url'      => array( 'site', false ),
-			'user_id'  => array( 'user_id', false ),
-			'context'  => array( 'context', false ),
-			'action'   => array( 'action', false ),
-			'state'    => array( 'state', false ),
-			'duration' => array( 'duration', false ),
+			'date'          => array( 'date', false ),
+			'log_site_name' => array( 'site', false ),
+			'url'           => array( 'site', false ),
+			'user_id'       => array( 'user_id', false ),
+			'context'       => array( 'context', false ),
+			'action'        => array( 'action', false ),
+			'state'         => array( 'state', false ),
+			'duration'      => array( 'duration', false ),
 		);
 		return $sortable_columns;
 	}
@@ -217,15 +217,15 @@ class Log_List_Table {
 	 */
 	public function get_default_columns() {
 		return array(
-			'date'     => esc_html__( 'Date', 'mainwp' ),
-			'log_site_name'     => esc_html__( 'Site', 'mainwp' ),
-			'url'      => esc_html__( 'Url', 'mainwp' ),
-			'item'     => esc_html__( 'Item', 'mainwp' ),
-			'user_id'  => esc_html__( 'User', 'mainwp' ),
-			'context'  => esc_html__( 'Context', 'mainwp' ),
-			'action'   => esc_html__( 'Action', 'mainwp' ),
-			'state'    => esc_html__( 'State', 'mainwp' ),
-			'duration' => esc_html__( 'Duration', 'mainwp' ),
+			'date'          => esc_html__( 'Date', 'mainwp' ),
+			'log_site_name' => esc_html__( 'Site', 'mainwp' ),
+			'url'           => esc_html__( 'Url', 'mainwp' ),
+			'item'          => esc_html__( 'Item', 'mainwp' ),
+			'user_id'       => esc_html__( 'User', 'mainwp' ),
+			'context'       => esc_html__( 'Context', 'mainwp' ),
+			'action'        => esc_html__( 'Action', 'mainwp' ),
+			'state'         => esc_html__( 'State', 'mainwp' ),
+			'duration'      => esc_html__( 'Duration', 'mainwp' ),
 		);
 	}
 

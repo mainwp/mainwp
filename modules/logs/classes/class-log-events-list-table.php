@@ -82,9 +82,9 @@ class Log_Events_List_Table {
 	 */
 	public function get_sortable_columns() {
 		$sortable_columns = array(
-			'created' => array( 'created', false ),
-			'log_site_name'    => array( 'name', false ),
-			'user_id' => array( 'user_id', false ),
+			'created'       => array( 'created', false ),
+			'log_site_name' => array( 'name', false ),
+			'user_id'       => array( 'user_id', false ),
 		);
 		return $sortable_columns;
 	}

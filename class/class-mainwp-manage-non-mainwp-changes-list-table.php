@@ -211,7 +211,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table {
 			'className' => 'check-column collapsing',
 		);
 		$defines[] = array(
-			'targets'   => array( 'manage-name-column', 'manage-site-column', 'manage-action_user-column'),
+			'targets'   => array( 'manage-name-column', 'manage-site-column', 'manage-action_user-column' ),
 			'className' => 'collapsing',
 		);
 		$defines[] = array(

@@ -168,7 +168,7 @@ class Cost_Tracker_Dashboard {
 			'targets'   => 'column-actions',
 			'className' => 'collapsing not-selectable',
 		);
-		
+
 		return $defines;
 	}
 

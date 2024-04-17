@@ -211,12 +211,16 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table {
 			'className' => 'check-column collapsing',
 		);
 		$defines[] = array(
-			'targets'   => array( 'manage-name-column', 'manage-site-column', 'manage-action_user-column', 'manage-data_actions-column' ),
+			'targets'   => array( 'manage-name-column', 'manage-site-column', 'manage-action_user-column'),
 			'className' => 'collapsing',
 		);
 		$defines[] = array(
 			'targets'   => 'no-sort',
 			'orderable' => false,
+		);
+		$defines[] = array(
+			'targets'   => 'manage-data_actions-column',
+			'className' => 'collapsing not-selectable',
 		);
 		return $defines;
 	}
@@ -437,7 +441,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table {
 			'paging'        => 'true',
 			'pagingType'    => 'full_numbers',
 			'info'          => 'true',
-			'colReorder'    => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
+			'colReorder'    => '{columns:":not(.check-column):not(.manage-data_actions-column)"}',
 			'stateSave'     => 'true',
 			'stateDuration' => '0',
 			'order'         => '[]',
@@ -496,7 +500,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table {
 							"paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
 							"pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
 							"info" : <?php echo esc_js( $table_features['info'] ); ?>,
-							"colReorder" : <?php echo esc_js( $table_features['colReorder'] ); ?>,
+							"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
 							"scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
 							"stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
 							"stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
@@ -517,8 +521,8 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table {
 									mainwp_preview_init_event();
 								}
 								jQuery( '#mainwp-sites-table-loader' ).hide();
-								if ( jQuery('#mainwp-manage-sites-body-table td.dataTables_empty').length > 0 && jQuery('#sites-table-count-empty').length ){
-									jQuery('#mainwp-manage-sites-body-table td.dataTables_empty').html(jQuery('#sites-table-count-empty').html());
+								if ( jQuery('#mainwp-manage-sites-body-table td.dt-empty').length > 0 && jQuery('#sites-table-count-empty').length ){
+									jQuery('#mainwp-manage-sites-body-table td.dt-empty').html(jQuery('#sites-table-count-empty').html());
 								}
 							},
 							"initComplete": function( settings, json ) {
@@ -529,13 +533,32 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table {
 								jQuery( row ).attr( 'siteid', data.siteID );
 								jQuery( row ).attr( 'action-id', data.actionID );
 								jQuery( row ).attr( 'id', "child-site-" + data.siteID );
+							},
+							select: {
+								items: 'row',
+								style: 'multi+shift',
+								selector: 'tr>td:not(.not-selectable)'
 							}
-						} ).on( 'column-reorder', function ( e, settings, details ) {
-							console.log('column-reorder');
-							mainwp_datatable_fix_menu_overflow('#mainwp-manage-non-mainwp-actions-table');
-							$( '#mainwp-manage-non-mainwp-actions-table .ui.dropdown' ).dropdown();
-							$( '#mainwp-manage-non-mainwp-actions-table .ui.checkbox' ).checkbox();
-						} );
+						} ).on( 'columns-reordered', function ( e, settings, details ) {
+							console.log('columns-reordered');
+							setTimeout(() => {
+								mainwp_datatable_fix_menu_overflow('#mainwp-manage-non-mainwp-actions-table');
+								$( '#mainwp-manage-non-mainwp-actions-table .ui.dropdown' ).dropdown();
+								$( '#mainwp-manage-non-mainwp-actions-table .ui.checkbox' ).checkbox();
+							}, 1000 );
+						} ).on('select', function (e, dt, type, indexes) {
+							if( 'row' == type ){
+								dt.rows(indexes)
+								.nodes()
+								.to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
+							}
+						}).on('deselect', function (e, dt, type, indexes) {
+							if( 'row' == type ){
+								dt.rows(indexes)
+								.nodes()
+								.to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
+							}
+						});
 					} catch(err) {
 						// to fix js error.
 					}

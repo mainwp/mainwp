@@ -727,32 +727,41 @@ securityIssues_handle = function (response) {
       for (var issue in res) {
         if (jQuery('#' + issue + '_loading')) {
           jQuery('#' + issue + '_loading').hide();
-          if (res[issue] == 'Y') {
+          if (res[issue] == 'Y' || res[issue] == 'Y_UNABLE') {
             jQuery('#' + issue + '_extra').hide();
             jQuery('#' + issue + '_nok').hide();
             if (jQuery('#' + issue + '_fix')) {
               jQuery('#' + issue + '_fix').hide();
             }
+
             if (jQuery('#' + issue + '_unfix')) {
               jQuery('#' + issue + '_unfix').show();
+              if (res[issue] == 'Y_UNABLE') { // Y_UNABLE will disable unfix.
+                jQuery('#' + issue + '_unfix').hide().after('<a href="javascript:void(0);" class="ui mini fluid button" disabled="disabled">Unfix</a>');
+              }
             }
+
             jQuery('#' + issue + '_ok').show();
             jQuery('#' + issue + '-status-ok').show();
             jQuery('#' + issue + '-status-nok').hide();
             if (issue == 'readme') {
               jQuery('#readme-wpe-nok').hide();
             }
-          } else {
+          } else if (res[issue] == 'N' || res[issue] == 'N_UNABLE') {
             jQuery('#' + issue + '_extra').hide();
             jQuery('#' + issue + '_ok').hide();
             jQuery('#' + issue + '_nok').show();
+
             if (jQuery('#' + issue + '_fix')) {
               jQuery('#' + issue + '_fix').show();
+              if (res[issue] == 'N_UNABLE') { // N_UNABLE will disable fix.
+                jQuery('#' + issue + '_fix').hide().after('<a href="javascript:void(0);" class="ui mini fluid button" disabled="disabled">fix</a>');
+              }
             }
+
             if (jQuery('#' + issue + '_unfix')) {
               jQuery('#' + issue + '_unfix').hide();
             }
-
             if (res[issue] != 'N') {
               jQuery('#' + issue + '_extra').html(res[issue]);
               jQuery('#' + issue + '_extra').show();
@@ -1880,7 +1889,7 @@ mainwp_extension_prepareinstallplugin = function (pPluginToInstall, pSiteId) {
             syc_msg = '<span style="color:#0073aa">' + syc_msg + '!</span>';
           else
             syc_msg = '<span style="color:red">' + syc_msg + '!</span>';
-          jQuery('#mainwp-message-zone').append('<br/>' + pPluginToInstall.find(".sync-install-plugin").attr('plugin_name') + ' ' + syc_msg );
+          jQuery('#mainwp-message-zone').append('<br/>' + pPluginToInstall.find(".sync-install-plugin").attr('plugin_name') + ' ' + syc_msg);
         }
 
         if (!apply_settings) {
@@ -3513,7 +3522,7 @@ jQuery(document).on('keyup', '#managegroups-filter', function () {
 // for normal checkboxes
 jQuery(document).on('change', '#cb-select-all-top, #cb-select-all-bottom', function () {
   var $this = jQuery(this),
-    $table = $this.closest('table'),
+    $table = $this.closest('.dt-scroll').find('.dt-scroll-body table'),
     controlChecked = $this.prop('checked');
 
   if ($table.length == 0)
@@ -3526,8 +3535,10 @@ jQuery(document).on('change', '#cb-select-all-top, #cb-select-all-bottom', funct
         return false;
       }
       if (controlChecked) {
+        jQuery(this).closest('tr').addClass('selected');
         return true;
       }
+      jQuery(this).closest('tr').removeClass('selected');
       return false;
     });
 
@@ -3535,8 +3546,10 @@ jQuery(document).on('change', '#cb-select-all-top, #cb-select-all-bottom', funct
     .children().children('.check-column').find(':checkbox')
     .prop('checked', function () {
       if (controlChecked) {
+        jQuery(this).closest('tr').addClass('selected');
         return true;
       }
+      jQuery(this).closest('tr').removeClass('selected');
       return false;
     });
 });
@@ -3673,7 +3686,9 @@ mainwp_non_mainwp_actions_dismiss_specific = function (pObj, selector, pBulk) {
 
 
 // fix menu overflow with scroll tables.
-mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight, pLeft) {
+mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight) {
+  var dtScrollBdCls = '.dt-scroll-body';
+  var dtScrollCls = '.dt-scroll';
   var fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');
   jQuery(document).on('click', 'table td.check-column.dtr-control', function () {
     if (jQuery(this).parent().hasClass('parent')) {
@@ -3688,8 +3703,8 @@ mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight, pLe
 
   // Fix the overflow prbolem for the actions menu element (right pointing menu).
   jQuery(tblSelect + ' tr td .ui.right.pointing.dropdown.button').on('click', function () {
-    jQuery(this).closest('.dataTables_scrollBody').css('position', '');
-    jQuery(this).closest('.dataTables_scroll').css('position', 'relative');
+    jQuery(this).closest(dtScrollBdCls).css('position', '');
+    jQuery(this).closest(dtScrollCls).css('position', 'relative');
     jQuery(this).css('position', 'static');
     var fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');
     var position = jQuery(this).position();
@@ -3710,14 +3725,13 @@ mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight, pLe
     //return false;
     jQuery(this).find('.menu').css('min-width', '170px');
     jQuery(this).find('.menu').css('top', top);
-    jQuery(this).find('.menu').css('right', right + ' !important;');
-    jQuery(this).find('.menu')[0].style.setProperty('right', right + 'px', 'important'); // to fix important in jquery.
+    jQuery(this).find('.menu')[0].style.setProperty('right', right + 'px', 'important');
   });
 
   // Fix the overflow prbolem for the actions menu element (left pointing menu).
   jQuery(tblSelect + ' tr td .ui.left.pointing.dropdown.button').on('click', function () {
-    jQuery(this).closest('.dataTables_scrollBody').css('position', '');
-    jQuery(this).closest('.dataTables_scroll').css('position', 'relative');
+    jQuery(this).closest(dtScrollBdCls).css('position', '');
+    jQuery(this).closest(dtScrollCls).css('position', 'relative');
     jQuery(this).css('position', 'static');
     var position = jQuery(this).position();
 
@@ -3726,17 +3740,13 @@ mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight, pLe
 
     if (fix_overflow > 1) {
       position = jQuery(this).closest('td').position();
-      var scroll_left = jQuery(this).closest('.dataTables_scrollBody').scrollLeft();
+      var scroll_left = jQuery(this).closest(dtScrollBdCls).scrollLeft();
       top = position.top + 85;
       left = position.left - scroll_left - 145;
     }
 
     if (pTop !== undefined) {
       top = top + pTop;
-    }
-    
-    if(undefined !== pLeft){
-      left -= pLeft; // custom left.
     }
 
     console.log('left');
@@ -3747,11 +3757,13 @@ mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRight, pLe
     jQuery(this).addClass('right');
     //return false;
     jQuery(this).find('.menu').css('top', top);
-    jQuery(this).find('.menu').css('left', left);
+    jQuery(this).find('.menu')[0].style.setProperty('left', left + 'px', 'important');
   });
 }
 
 mainwp_datatable_fix_child_menu_overflow = function (chilRow, fix_overflow) {
+  var dtScrollBdCls = '.dt-scroll-body';
+  var dtScrollCls = '.dt-scroll';
   // Fix the overflow prbolem for the actions child menu element (pointing menu).
   jQuery(chilRow).find('.ui.pointing.dropdown.button').on('click', function () {
 
@@ -3764,8 +3776,8 @@ mainwp_datatable_fix_child_menu_overflow = function (chilRow, fix_overflow) {
       top = position.top + jQuery(this).closest('td.child').height() + 85;
     }
 
-    jQuery(this).closest('.dataTables_scrollBody').css('position', '');
-    jQuery(this).closest('.dataTables_scroll').css('position', 'relative');
+    jQuery(this).closest(dtScrollBdCls).css('position', '');
+    jQuery(this).closest(dtScrollCls).css('position', 'relative');
     jQuery(this).css('position', 'static');
     jQuery(this).find('.menu').css('top', top);
     jQuery(this).find('.menu').css('left', left);

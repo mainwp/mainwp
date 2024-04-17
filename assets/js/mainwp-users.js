@@ -262,9 +262,9 @@ mainwp_fetch_users = function () {
     jQuery( '#mainwp-message-zone' ).hide();
   }
 
-  var name = jQuery( '#mainwp_search_users' ).val();
+  let name = jQuery( '#mainwp_search_users' ).val();
 
-  var data = mainwp_secure_data( {
+  let data = mainwp_secure_data( {
     action: 'mainwp_users_search',
     role: role,
     search: name,
@@ -280,17 +280,12 @@ mainwp_fetch_users = function () {
     jQuery( '#mainwp-loading-users-row' ).hide();
     jQuery( '#mainwp_users_loading_info' ).hide();
     jQuery( '#mainwp_users_main' ).show();
-    // var matches = ( response == null ? null : response.match( /user\[\]/g ) );
-    // jQuery( '#mainwp_users_total' ).html( matches == null ? 0 : matches.length );
     jQuery( '#mainwp_users_wrap_table' ).html( response );
     // re-initialize datatable
     jQuery("#mainwp-users-table").DataTable().destroy();
     jQuery('#mainwp-users-table').DataTable( {
         "responsive" : true,
-        "colReorder": {
-            fixedColumnsLeft: 1,
-            fixedColumnsRight: 1
-        },
+        "colReorder": {columns:":not(.check-column):not(#mainwp-users-actions)"},
         "stateSave":  true,
         "pagingType": "full_numbers",
         "order": [],
@@ -301,12 +296,40 @@ mainwp_fetch_users = function () {
             "orderable": false
         } ],
         "preDrawCallback": function() {
+            setTimeout(() => {
+                console.log('preDrawCallback');
+                jQuery( '#mainwp_users_wrap_table table .ui.dropdown' ).dropdown();
+                jQuery( '#mainwp_users_wrap_table table .ui.checkbox' ).checkbox();
+                mainwp_datatable_fix_menu_overflow();
+                mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
+            }, 1000);
+        },
+        select: {
+            items: 'row',
+            style: 'multi+shift',
+            selector: 'tr>td:not(.not-selectable)'
+        }
+    } ).on('select', function (e, dt, type, indexes) {
+        if( 'row' == type ){
+            dt.rows(indexes)
+            .nodes()
+            .to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
+        }
+    }).on('deselect', function (e, dt, type, indexes) {
+        if( 'row' == type ){
+            dt.rows(indexes)
+            .nodes()
+            .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
+        }
+    }).on( 'columns-reordered', function ( e, settings, details ) {
+        console.log('columns-reordered');
+        setTimeout(() => {
             jQuery( '#mainwp_users_wrap_table table .ui.dropdown' ).dropdown();
             jQuery( '#mainwp_users_wrap_table table .ui.checkbox' ).checkbox();
             mainwp_datatable_fix_menu_overflow();
             mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
-        }
-    } );
+        }, 1000);
+    });
   } );
 };
 

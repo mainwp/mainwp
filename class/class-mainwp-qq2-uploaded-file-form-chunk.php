@@ -11,11 +11,11 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP_QQ2_Uploaded_File_Form
+ * Class MainWP_QQ2_Uploaded_File_Form_Chunk
  *
  * @package MainWP\Dashboard
  */
-class MainWP_QQ2_Uploaded_File_Form {
+class MainWP_QQ2_Uploaded_File_Form_Chunk {
 	/**
 	 * Save the file to the specified path.
 	 *
@@ -26,25 +26,27 @@ class MainWP_QQ2_Uploaded_File_Form {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_base_dir()
 	 */
 	public function save( $path ) {
-		$wpFileSystem = MainWP_System_Utility::get_wp_file_system();
 
-		/**
-		 * WordPress files system object.
-		 *
-		 * @global object
-		 */
-		global $wp_filesystem;
-
-		$moved = false;
-
+		$moved    = false;
 		$tmp_name = isset( $_FILES['qqfile']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['qqfile']['tmp_name'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Missing -- verify in caller.
 
-		if ( ! empty( $tmp_name ) ) {
-			if ( false != $wpFileSystem ) { //phpcs:ignore -- to valid.
-				$moved = $wp_filesystem->put_contents( $path, $wp_filesystem->get_contents( $tmp_name ) );
-			} else {
-				$moved = move_uploaded_file( $tmp_name, $path );
+		if ( ! is_dir( dirname( $path ) ) ) {
+			mkdir( dirname( $path ), 0777, true );
+		}
+
+		if ( empty( $_REQUEST['dzchunkbyteoffset'] ) ) {
+			if ( file_exists( $path ) ) {
+				unlink( $path ); // first chuck, delete file if existed, to upload to new file.
 			}
+		}
+
+		// to append to file, wp_filesystem put_contents does not support.
+		$str = file_get_contents( $tmp_name );
+
+		$moved = file_put_contents( $path, $str, FILE_APPEND );
+
+		if ( ! file_exists( $path ) ) {
+			throw new \Exception( 'Unable to save the file to the MainWP upload directory, please check your system configuration.' );
 		}
 
 		if ( ! $moved ) {

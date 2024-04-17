@@ -874,7 +874,7 @@ class MainWP_User {
 			'stateSave'  => 'true',
 			'scrollX'    => 'true',
 			'responsive' => 'true',
-			'colReorder' => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
+			'colReorder' => '{columns:":not(.check-column):not(:last-child)"}',
 			'order'      => '[]',
 		);
 		$table_features = apply_filters( 'mainwp_users_table_fatures', $table_features );
@@ -890,7 +890,7 @@ class MainWP_User {
 				$manage_users_table = jQuery( "#mainwp-users-table" ).DataTable( {
 					"responsive" : responsive,
 					"searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
-					"colReorder" : <?php echo esc_html( $table_features['colReorder'] ); ?>,
+					"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
 					"stateSave":  <?php echo esc_html( $table_features['stateSave'] ); ?>,
 					"paging": <?php echo esc_html( $table_features['paging'] ); ?>,
 					"info": <?php echo esc_html( $table_features['info'] ); ?>,
@@ -902,13 +902,41 @@ class MainWP_User {
 						"targets": 'no-sort',
 						"orderable": false
 					} ],
-					"preDrawCallback": function() {					
-						jQuery('#mainwp-users-table .ui.dropdown').dropdown();
-						jQuery('#mainwp-users-table .ui.checkbox').checkbox();
+					"preDrawCallback": function() {
+						console.log('preDrawCallback mainwp-users-table');
+						setTimeout(() => {
+							jQuery('#mainwp-users-table .ui.dropdown').dropdown();
+							jQuery('#mainwp-users-table .ui.checkbox').checkbox();
+							mainwp_datatable_fix_menu_overflow();
+							mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
+						}, 1000);
+					},
+					select: {
+						items: 'row',
+						style: 'multi+shift',
+						selector: 'tr>td:not(.not-selectable)'
+					}
+				} ).on('select', function (e, dt, type, indexes) {
+					if( 'row' == type ){
+						dt.rows(indexes)
+						.nodes()
+						.to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
+					}
+				}).on('deselect', function (e, dt, type, indexes) {
+					if( 'row' == type ){
+						dt.rows(indexes)
+						.nodes()
+						.to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
+					}
+				}).on( 'columns-reordered', function ( e, settings, details ) {
+					console.log('columns-reordered');
+					setTimeout(() => {
+						jQuery( '#mainwp-users-table .ui.dropdown' ).dropdown();
+						jQuery( '#mainwp-users-table .ui.checkbox' ).checkbox();
 						mainwp_datatable_fix_menu_overflow();
 						mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
-					}
-				} );
+					}, 1000);
+				});
 			} catch ( err ) {
 				// to fix js error.
 			}
@@ -1198,17 +1226,17 @@ class MainWP_User {
 			ob_start();
 			?>
 			<tr>
-					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="user[]" value="1"></span></td>
-					<?php do_action( 'mainwp_users_table_column', $user, $website ); ?>
-					<td class="name column-name">
+				<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="user[]" value="1"></span></td>
+				<?php do_action( 'mainwp_users_table_column', $user, $website ); ?>
+				<td class="name column-name">
 					<?php echo ! empty( $user['display_name'] ) ? esc_html( $user['display_name'] ) : '&nbsp;'; ?>					
-					</td>
+				</td>
 				<td class="username column-username"><strong><abbr title="<?php echo esc_attr( $user['login'] ); ?>"><?php echo esc_html( $user['login'] ); ?></abbr></strong></td>
 				<td class="email column-email"><a href="mailto:<?php echo esc_attr( $user['email'] ); ?>"><?php echo esc_html( $user['email'] ); ?></a></td>
 				<td class="role column-role"><?php echo self::get_role( $user['role'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 				<td class="posts column-posts"><a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkManage&siteid=' . intval( $website->id ) ) . '&userid=' . $user['id'] ); ?>"><?php echo esc_html( $user['post_count'] ); ?></a></td>
 				<td class="website column-website"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
-				<td class="right aligned">
+				<td class="right aligned not-selectable">
 					<input class="userId" type="hidden" name="id" value="<?php echo esc_attr( $user['id'] ); ?>" />
 					<input class="userName" type="hidden" name="name" value="<?php echo esc_attr( $user['login'] ); ?>" />
 					<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>" />

@@ -937,7 +937,7 @@ class MainWP_Post {
 						<th id="seo-readability"><?php esc_html_e( 'Readability score', 'mainwp' ); ?></th>
 					<?php endif; ?>
 					<th id="website" class="min-tablet"><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-					<th id="posts-actions" class="no-sort min-tablet"></th>
+					<th id="posts-actions" class="no-sort min-tablet not-selectable"></th>
 				</tr>
 			</thead>
 
@@ -968,7 +968,7 @@ class MainWP_Post {
 			'info'       => 'true',
 			'stateSave'  => 'true',
 			'scrollX'    => 'true',
-			'colReorder' => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
+			'colReorder' => '{columns:":not(.check-column):not(:last-child)"}',
 			'order'      => '[]',
 			'responsive' => 'true',
 		);
@@ -994,7 +994,7 @@ class MainWP_Post {
 					$manage_posts_table = jQuery('#mainwp-posts-table').DataTable( {
 						"responsive" : responsive,
 						"searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
-						"colReorder" : <?php echo esc_html( $table_features['colReorder'] ); ?>,
+						"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
 						"stateSave":  <?php echo esc_html( $table_features['stateSave'] ); ?>,
 						"paging": <?php echo esc_html( $table_features['paging'] ); ?>,
 						"info": <?php echo esc_html( $table_features['info'] ); ?>,
@@ -1007,12 +1007,40 @@ class MainWP_Post {
 						} ],
 						"language" : { "emptyTable": "<?php esc_html_e( 'Use the search options to find the post you want to manage.', 'mainwp' ); ?>" },
 						"preDrawCallback": function( settings ) {
-							jQuery( '#mainwp-posts-table-wrapper table .ui.dropdown' ).dropdown();
-							jQuery( '#mainwp-posts-table-wrapper table .ui.checkbox' ).checkbox();
+							console.log('preDrawCallback mainwp-posts-table');
+							setTimeout(() => { // to fix.
+								jQuery( '#mainwp-posts-table-wrapper table .ui.dropdown' ).dropdown();
+								jQuery( '#mainwp-posts-table-wrapper table .ui.checkbox' ).checkbox();
+								mainwp_datatable_fix_menu_overflow();
+								mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
+							}, 1000);
+						},
+						select: {
+							items: 'row',
+							style: 'multi+shift',
+							selector: 'tr>td:not(.not-selectable)'
+						}
+					} ).on('select', function (e, dt, type, indexes) {
+						if( 'row' == type ){
+							dt.rows(indexes)
+							.nodes()
+							.to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
+						}
+					}).on('deselect', function (e, dt, type, indexes) {
+						if( 'row' == type ){
+							dt.rows(indexes)
+							.nodes()
+							.to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
+						}
+					}).on( 'columns-reordered', function ( e, settings, details ) {
+						console.log('columns-reordered');
+						setTimeout(() => { // to fix.
+							jQuery( '#mainwp-posts-table .ui.dropdown' ).dropdown();
+							jQuery( '#mainwp-posts-table .ui.checkbox' ).checkbox();
 							mainwp_datatable_fix_menu_overflow();
 							mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
-						}
-					} );
+						}, 1000);
+					});
 				} catch ( err ) {
 					// to fix js error.
 				}
@@ -1359,7 +1387,7 @@ class MainWP_Post {
 					<?php endif; ?>
 
 					<td class="website column-website"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
-					<td class="right aligned">
+					<td class="right aligned not-selectable">
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $post['id'] ); ?>"/>
 						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'publish' === $post['status'] ) ? 'unpublish|' : ''; ?><?php echo ( 'pending' === $post['status'] ) ? 'approve|' : ''; ?><?php echo ( 'trash' === $post['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' === $post['status'] || 'draft' === $post['status'] ) ? 'publish|' : ''; ?>" />
 						<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>"/>

@@ -418,7 +418,8 @@ mainwp_newpost_updateCategories = function () {
             groups: encodeURIComponent(groups.join(',')),
             clients: encodeURIComponent(clients.join(',')),
             selected_categories: selected_categories ? encodeURIComponent(selected_categories) : '',
-            post_id: jQuery('#post_ID').val()
+            post_id: jQuery('#post_ID').val(),
+            custom_post_type: jQuery('#mainwp_custom_post_type_edit_post').length ? jQuery('#mainwp_custom_post_type_edit_post').val() : '' // support CPT ext.
         });
 
         jQuery.post(ajaxurl, data, function (pSelectedCategories) {

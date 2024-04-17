@@ -516,7 +516,7 @@ class MainWP_Client {
 				self::$itemsTable->clear_items();
 				?>
 			</form>
-		</div>		
+		</div>
 		<?php
 		self::render_footer( '' );
 		self::render_screen_options();
@@ -803,122 +803,6 @@ class MainWP_Client {
 	}
 
 	/**
-	 * Renders Clients Table.
-	 *
-	 * @param string $role Current client role.
-	 * @param string $groups Current client groups.
-	 * @param string $sites Current Child Sites the client is on.
-	 * @param null   $search Search field.
-	 */
-	public static function render_table( $role = '', $groups = '', $sites = '', $search = null ) {
-
-		/**
-		 * Action: mainwp_before_clients_table
-		 *
-		 * Fires before the client table.
-		 *
-		 * @since 4.1
-		 */
-		do_action( 'mainwp_before_clients_table' );
-		?>
-		<table id="mainwp-clients-table" class="ui unstackable single line table" style="width:100%">
-			<thead>
-				<tr>
-					<th  class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
-					<?php do_action( 'mainwp_clients_table_header' ); ?>
-					<th><?php esc_html_e( 'Client name', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Company', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Phone', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Websites', 'mainwp' ); ?></th>
-					<th id="mainwp-clients-actions" class="no-sort collapsing"></th>
-				</tr>
-			</thead>
-			<tbody id="mainwp-clients-list">
-			<?php
-			self::render_table_body( $role, $groups, $sites, $search );
-			?>
-			</tbody>
-			<tfoot>
-				<tr>
-					<th  class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
-					<?php do_action( 'mainwp_clients_table_header' ); ?>
-					<th><?php esc_html_e( 'Client name', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Company', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Phone', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Websites', 'mainwp' ); ?></th>
-					<th id="mainwp-clients-actions" class="no-sort collapsing"></th>
-				</tr>
-			</tfoot>
-		</table>
-		<?php
-		/**
-		 * Action: mainwp_after_clients_table
-		 *
-		 * Fires after the client table.
-		 *
-		 * @since 4.1
-		 */
-		do_action( 'mainwp_after_clients_table' );
-
-		/**
-		 * Filter: mainwp_clients_table_fatures
-		 *
-		 * Filters the Manage Clients table features.
-		 *
-		 * @since 4.1
-		 */
-		$table_features = array(
-			'searching'  => 'true',
-			'paging'     => 'true',
-			'info'       => 'true',
-			'stateSave'  => 'true',
-			'scrollX'    => 'true',
-			'responsive' => 'true',
-			'colReorder' => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
-			'order'      => '[]',
-		);
-		$table_features = apply_filters( 'mainwp_clients_table_fatures', $table_features );
-		?>
-		<script type="text/javascript">
-		var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
-		if( jQuery( window ).width() > 1140 ) {
-			responsive = false;
-		}
-		jQuery( document ).ready( function () {
-			try {
-				jQuery( "#mainwp-clients-table" ).DataTable().destroy(); // to fix re-init database issue.
-				jQuery( "#mainwp-clients-table" ).DataTable( {
-					"responsive" : responsive,
-					"searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
-					"colReorder" : <?php echo esc_html( $table_features['colReorder'] ); ?>,
-					"stateSave":  <?php echo esc_html( $table_features['stateSave'] ); ?>,
-					"paging": <?php echo esc_html( $table_features['paging'] ); ?>,
-					"info": <?php echo esc_html( $table_features['info'] ); ?>,
-					"order": <?php echo esc_html( $table_features['order'] ); ?>,
-					"scrollX" : <?php echo esc_html( $table_features['scrollX'] ); ?>,
-					"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-					"columnDefs": [ {
-						"targets": 'no-sort',
-						"orderable": false
-					} ],
-					"preDrawCallback": function() {					
-						jQuery('#mainwp-clients-table .ui.dropdown').dropdown();
-						jQuery('#mainwp-clients-table .ui.checkbox').checkbox();
-						mainwp_datatable_fix_menu_overflow();
-						mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
-					}
-				} );
-			} catch ( err ) {
-				// to fix js error.
-			}
-		} );
-		</script>
-		<?php
-	}
-
-	/**
 	 * Renders the table body.
 	 *
 	 * @param string $role   client Role.
@@ -927,10 +811,8 @@ class MainWP_Client {
 	 * @param string $search Search field.
 	 */
 	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
-
 		if ( empty( $output->clients ) ) {
 			self::render_not_found();
-			return;
 		} else {
 			self::clients_search_handler_renderer( $clients, $website );
 		}

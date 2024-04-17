@@ -95,7 +95,7 @@ class Log_List_Table {
 				$out = $record->item;
 				break;
 
-			case 'name':
+			case 'log_site_name':
 				$out     = ! empty( $record->log_site_name ) ? '<a href="admin.php?page=managesites&dashboard=' . intval( $record->site_id ) . '">' . esc_html( $record->log_site_name ) . '</a>' : 'N/A';
 				$escaped = true;
 				break;
@@ -199,7 +199,7 @@ class Log_List_Table {
 	public function get_sortable_columns() {
 		$sortable_columns = array(
 			'date'     => array( 'date', false ),
-			'name'     => array( 'site', false ),
+			'log_site_name'     => array( 'site', false ),
 			'url'      => array( 'site', false ),
 			'user_id'  => array( 'user_id', false ),
 			'context'  => array( 'context', false ),
@@ -218,7 +218,7 @@ class Log_List_Table {
 	public function get_default_columns() {
 		return array(
 			'date'     => esc_html__( 'Date', 'mainwp' ),
-			'name'     => esc_html__( 'Site', 'mainwp' ),
+			'log_site_name'     => esc_html__( 'Site', 'mainwp' ),
 			'url'      => esc_html__( 'Url', 'mainwp' ),
 			'item'     => esc_html__( 'Item', 'mainwp' ),
 			'user_id'  => esc_html__( 'User', 'mainwp' ),
@@ -287,6 +287,10 @@ class Log_List_Table {
 		$defines[] = array(
 			'targets'   => array( 'extra-column' ),
 			'className' => 'collapsing',
+		);
+		$defines[] = array(
+			'targets'   => array( 'manage-site_actions-column' ),
+			'className' => 'collapsing not-selectable',
 		);
 		return $defines;
 	}
@@ -434,7 +438,7 @@ class Log_List_Table {
 			'paging'        => 'true',
 			'pagingType'    => 'full_numbers',
 			'info'          => 'true',
-			'colReorder'    => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
+			'colReorder'    => '{columns:":not(.check-column):not(:last-child)"}',
 			'stateSave'     => 'true',
 			'stateDuration' => '0',
 			'order'         => '[]',
@@ -466,9 +470,6 @@ class Log_List_Table {
 								$( '#mainwp-module-log-records-table .ui.dropdown' ).dropdown();
 								$( '#mainwp-module-log-records-table .ui.checkbox' ).checkbox();
 							}
-						} ).on( 'column-reorder.dt', function ( e, settings, details ) {
-							$( '#mainwp-module-log-records-table .ui.dropdown' ).dropdown();
-							$( '#mainwp-module-log-records-table .ui.checkbox' ).checkbox();
 						} ).DataTable( {
 							"ajax": {
 								"url": ajaxurl,
@@ -494,7 +495,7 @@ class Log_List_Table {
 							"paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
 							"pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
 							"info" : <?php echo esc_js( $table_features['info'] ); ?>,
-							"colReorder" : <?php echo esc_js( $table_features['colReorder'] ); ?>,
+							"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
 							"scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
 							"stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
 							"stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
@@ -515,8 +516,8 @@ class Log_List_Table {
 									mainwp_preview_init_event();
 								}
 								jQuery( '#mainwp-sites-table-loader' ).hide();
-								if ( jQuery('#mainwp-module-log-records-body-table td.dataTables_empty').length > 0 && jQuery('#sites-table-count-empty').length ){
-									jQuery('#mainwp-module-log-records-body-table td.dataTables_empty').html(jQuery('#sites-table-count-empty').html());
+								if ( jQuery('#mainwp-module-log-records-body-table td.dt-empty').length > 0 && jQuery('#sites-table-count-empty').length ){
+									jQuery('#mainwp-module-log-records-body-table td.dt-empty').html(jQuery('#sites-table-count-empty').html());
 								}
 							},
 							"initComplete": function( settings, json ) {
@@ -527,10 +528,16 @@ class Log_List_Table {
 								jQuery( row ).find('.mainwp-date-cell').attr('data-sort', data.created_sort );
 								jQuery( row ).find('.mainwp-state-cell').attr('data-sort', data.state_sort );
 							}
+						} ).on( 'columns-reordered', function ( e, settings, details ) {
+							setTimeout(() => {
+								$( '#mainwp-module-log-records-table .ui.dropdown' ).dropdown();
+								$( '#mainwp-module-log-records-table .ui.checkbox' ).checkbox();
+								mainwp_datatable_fix_menu_overflow();
+							}, 1000 );
 						} );
 					} catch(err) {
 						// to fix js error.
-					}			
+					}
 			} );
 
 			mainwp_module_log_records_filter = function() {
@@ -539,7 +546,7 @@ class Log_List_Table {
 				} catch(err) {
 					// to fix js error.
 				}
-			};			
+			};
 		</script>
 		<?php
 	}

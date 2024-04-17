@@ -24,7 +24,7 @@
 		text-align: right !important;
 	}
 
-	.mainwp-manage-updates-table tbody tr td.dataTables_empty {
+	.mainwp-manage-updates-table tbody tr td.dt-empty {
 		text-align: center !important;
 	}
 }

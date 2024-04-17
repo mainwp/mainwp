@@ -847,7 +847,7 @@ class MainWP_Page {
 			'info'       => 'true',
 			'stateSave'  => 'true',
 			'scrollX'    => 'true',
-			'colReorder' => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
+			'colReorder' => '{columns:":not(.check-column):not(:last-child)"}',
 			'order'      => '[]',
 			'responsive' => 'true',
 		);
@@ -872,7 +872,7 @@ class MainWP_Page {
 				$manage_pages_table = jQuery( '#mainwp-pages-table' ).DataTable( {
 					"responsive" : responsive,
 					"searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
-					"colReorder" : <?php echo esc_html( $table_features['colReorder'] ); ?>,
+					"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
 					"stateSave":  <?php echo esc_html( $table_features['stateSave'] ); ?>,
 					"paging": <?php echo esc_html( $table_features['paging'] ); ?>,
 					"info": <?php echo esc_html( $table_features['info'] ); ?>,
@@ -884,13 +884,41 @@ class MainWP_Page {
 						"orderable": false
 					} ],
 					"language" : { "emptyTable": "<?php esc_html_e( 'Use the search options to find the page you want to manage.', 'mainwp' ); ?>" },
-					"preDrawCallback": function( settings ) {
+					"drawCallback": function( settings ) {
+						console.log('drawCallback page');
+						setTimeout(() => { // to fix.
+							jQuery( '#mainwp_pages_wrap_table table .ui.dropdown' ).dropdown();
+							jQuery( '#mainwp_pages_wrap_table table .ui.checkbox' ).checkbox();
+							mainwp_datatable_fix_menu_overflow();
+							mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
+						}, 1000);
+					},
+					select: {
+						items: 'row',
+						style: 'multi+shift',
+						selector: 'tr>td:not(.not-selectable)'
+					}
+				} ).on('select', function (e, dt, type, indexes) {
+					if( 'row' == type ){
+						dt.rows(indexes)
+						.nodes()
+						.to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
+					}
+				}).on('deselect', function (e, dt, type, indexes) {
+					if( 'row' == type ){
+						dt.rows(indexes)
+						.nodes()
+						.to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
+					}
+				}).on( 'columns-reordered', function ( e, settings, details ) {
+					console.log('columns-reordered');
+					setTimeout(() => { // to fix.
 						jQuery( '#mainwp_pages_wrap_table table .ui.dropdown' ).dropdown();
 						jQuery( '#mainwp_pages_wrap_table table .ui.checkbox' ).checkbox();
 						mainwp_datatable_fix_menu_overflow();
 						mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
-					}
-				} );
+					}, 1000);
+				});
 			} catch( err ) {
 				// to fix js error.
 			}
@@ -1172,12 +1200,11 @@ class MainWP_Page {
 					<td class="website">
 						<a href="<?php echo esc_html( $website->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( $website->url ); ?></a>
 					</td>
-					<td class="right aligned">
+					<td class="right aligned  not-selectable">
 						<input class="pageId" type="hidden" name="id" value="<?php echo intval( $page['id'] ); ?>"/>
 						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'trash' === $page['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' === $page['status'] || 'draft' === $page['status'] ) ? 'publish|' : ''; ?>" />
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
-
-						<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
+						<div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999">
 							<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 							<div class="menu">
 								<?php if ( 'future' === $page['status'] || 'draft' === $page['status'] ) : ?>

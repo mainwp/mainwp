@@ -341,7 +341,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 								"searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
 								"paging" : <?php echo esc_html( $table_features['paging'] ); ?>,
 								"info" : <?php echo esc_html( $table_features['info'] ); ?>,
-								"colReorder" : <?php echo esc_html( $table_features['colReorder'] ); ?>,
+								"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
 								"stateSave":  <?php echo esc_html( $table_features['stateSave'] ); ?>,
 								"order": [],
 								"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],

@@ -153,10 +153,6 @@ class Cost_Tracker_Dashboard {
 			'className' => 'mainwp-state-cell',
 		);
 		$defines[] = array(
-			'targets'   => array( 'actions-column' ),
-			'className' => 'collapsing',
-		);
-		$defines[] = array(
 			'targets'   => array( 'column-sites', 'column-payment-method', 'column-license-type', 'column-icon' ),
 			'className' => 'center aligned',
 		);
@@ -168,6 +164,11 @@ class Cost_Tracker_Dashboard {
 			'targets'   => 'check-column',
 			'className' => 'check-column',
 		);
+		$defines[] = array(
+			'targets'   => 'column-actions',
+			'className' => 'collapsing not-selectable',
+		);
+		
 		return $defines;
 	}
 
@@ -536,7 +537,7 @@ class Cost_Tracker_Dashboard {
 			'paging'        => 'true',
 			'pagingType'    => 'full_numbers',
 			'info'          => 'true',
-			'colReorder'    => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
+			'colReorder'    => '{columns:":not(.check-column):not(.column-actions)"}',
 			'stateSave'     => 'true',
 			'stateDuration' => '0',
 			'order'         => '[]',
@@ -609,7 +610,7 @@ class Cost_Tracker_Dashboard {
 							"paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
 							"pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
 							"info" : <?php echo esc_js( $table_features['info'] ); ?>,
-							"colReorder" : <?php echo esc_js( $table_features['colReorder'] ); ?>,
+							"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
 							"scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
 							"stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
 							"stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
@@ -634,12 +635,31 @@ class Cost_Tracker_Dashboard {
 								jQuery( row ).attr( 'id', "cost-row-" + data.cost_id );
 								jQuery( row ).attr( 'item-id', data.cost_id );
 								
+							},
+							'select': {
+								items: 'row',
+								style: 'multi+shift',
+								selector: 'tr>td:not(.not-selectable)'
 							}
-						}).on( 'column-reorder', function ( e, settings, details ) {
-							$( '#mainwp-module-cost-tracker-sites-table .ui.dropdown' ).dropdown();
-							$( '#mainwp-module-cost-tracker-sites-table .ui.checkbox' ).checkbox();
-							console.log('column-reorder');
-							mainwp_datatable_fix_menu_overflow('#mainwp-module-cost-tracker-sites-table');
+						}).on('select', function (e, dt, type, indexes) {
+							if( 'row' == type ){
+								dt.rows(indexes)
+								.nodes()
+								.to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
+							}
+						}).on('deselect', function (e, dt, type, indexes) {
+							if( 'row' == type ){
+								dt.rows(indexes)
+								.nodes()
+								.to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
+							}
+						}).on( 'columns-reordered', function ( e, settings, details ) {
+							console.log('columns-reordered');
+							setTimeout(() => {
+								$( '#mainwp-module-cost-tracker-sites-table .ui.dropdown' ).dropdown();
+								$( '#mainwp-module-cost-tracker-sites-table .ui.checkbox' ).checkbox();
+								mainwp_datatable_fix_menu_overflow('#mainwp-module-cost-tracker-sites-table');
+							}, 1000 );
 						} );
 					} catch(err) {
 						// to fix js error.

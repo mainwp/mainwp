@@ -416,7 +416,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 			'paging'        => 'true',
 			'pagingType'    => 'full_numbers',
 			'info'          => 'true',
-			'colReorder'    => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
+			'colReorder'    => '{columns:":not(.check-column):not(.manage-client_actions-column)"}',
 			'stateSave'     => 'true',
 			'stateDuration' => '0',
 			'order'         => '[]',
@@ -452,7 +452,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 					jQuery( '#manage-sites-screen-options-form' ).submit( function() {
 						if ( jQuery('input[name=reset_manageclients_columns_order]').attr('value') == 1 ) {
 							$manage_sites_table.colReorder.reset();
-						}					
+						}
 						jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( 'hide' );
 					} );
 					return false;
@@ -470,7 +470,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 						"paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
 						"pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
 						"info" : <?php echo esc_js( $table_features['info'] ); ?>,
-						"colReorder" : <?php echo esc_js( $table_features['colReorder'] ); ?>,
+						"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
 						"stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
 						"stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
 						"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
@@ -490,16 +490,35 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 						"pageLength": <?php echo intval( $sites_per_page ); ?>,
 						"drawCallback": function( settings ) {
 						},
-						} ).on( 'column-reorder', function ( e, settings, details ) {
+						select: {
+							items: 'row',
+							style: 'multi+shift',
+							selector: 'tr>td:not(.not-selectable)'
+						}
+					} ).on( 'columns-reordered', function ( e, settings, details ) {
+						console.log('columns-reorderede');
+						setTimeout(() => {
 							$( '#mainwp-manage-clients-table .ui.dropdown' ).dropdown();
 							$( '#mainwp-manage-clients-table .ui.checkbox' ).checkbox();
-							console.log('column-reordere');							
 							mainwp_datatable_fix_menu_overflow();
-						} );
+						}, 1000 );
+					} ).on('select', function (e, dt, type, indexes) {
+						if( 'row' == type ){
+							dt.rows(indexes)
+							.nodes()
+							.to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
+						}
+					}).on('deselect', function (e, dt, type, indexes) {
+						if( 'row' == type ){
+							dt.rows(indexes)
+							.nodes()
+							.to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
+						}
+					});
 				} catch(err) {
 					// to fix js error.
 				}
-				mainwp_datatable_fix_menu_overflow();		
+				mainwp_datatable_fix_menu_overflow();
 				_init_manage_sites_screen = function() {
 					jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
 						var col_id = jQuery( this ).attr( 'id' );
@@ -661,7 +680,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table {
 			} elseif ( 'client_actions' === $column_name ) {
 				$selected_sites = isset( $item['selected_sites'] ) ? trim( $item['selected_sites'] ) : '';
 				?>
-					<td class="collapsing manage-clients-actions">
+					<td class="collapsing manage-clients-actions not-selectable">
 						<div class="ui right pointing dropdown icon mini basic green button" style="z-index:999;">
 							<i class="ellipsis horizontal icon"></i>
 							<div class="menu" clientid=<?php echo intval( $item['client_id'] ); ?>>

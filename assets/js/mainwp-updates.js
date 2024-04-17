@@ -3077,8 +3077,8 @@ mainwp_table_check_columns_init = function () {
         // check all children
         onChecked: function () {
             var $table = jQuery(this).closest('table');
-            if ($table.parent().hasClass('dataTables_scrollHeadInner')) {
-                $table = jQuery(this).closest('.dataTables_scroll'); // to compatible with datatable scroll            
+            if ($table.parent().hasClass('dt-scroll-head')) {
+                $table = jQuery(this).closest('.dt-scroll'); // to compatible with datatable scroll            
             }
 
             if ($table.length > 0) {
@@ -3090,8 +3090,8 @@ mainwp_table_check_columns_init = function () {
         onUnchecked: function () {
             var $table = jQuery(this).closest('table');
 
-            if ($table.parent().hasClass('dataTables_scrollHeadInner'))
-                $table = jQuery(this).closest('.dataTables_scroll'); // to compatible with datatable scroll
+            if ($table.parent().hasClass('dt-scroll-head'))
+                $table = jQuery(this).closest('.dt-scroll'); // to compatible with datatable scroll
 
 
             if ($table.length > 0) {
@@ -3109,8 +3109,8 @@ mainwp_table_check_columns_init = function () {
 
             var $table = jQuery(this).closest('table');
 
-            if ($table.parent().hasClass('dataTables_scrollBody'))
-                $table = jQuery(this).closest('.dataTables_scroll'); // to compatible with datatable scroll
+            if ($table.parent().hasClass('dt-scroll-body'))
+                $table = jQuery(this).closest('.dt-scroll'); // to compatible with datatable scroll
 
             var $parentCheckbox = $table.find('th.check-column .checkbox'),
                 $checkbox = $table.find('td.check-column .checkbox'),

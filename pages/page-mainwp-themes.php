@@ -2369,7 +2369,7 @@ class MainWP_Themes {
 				jQuery( '#mainwp-all-active-themes-table' ).DataTable( {
 					"searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
 					"stateSave" : <?php echo esc_html( $table_features['stateSave'] ); ?>,
-					"colReorder" : <?php echo esc_html( $table_features['colReorder'] ); ?>,
+					"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
 					"info" : <?php echo esc_html( $table_features['info'] ); ?>,
 					"paging" : <?php echo esc_html( $table_features['paging'] ); ?>,
 					"ordering" : <?php echo esc_html( $table_features['ordering'] ); ?>,

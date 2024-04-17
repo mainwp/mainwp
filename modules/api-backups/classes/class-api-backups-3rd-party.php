@@ -381,7 +381,7 @@ class Api_Backups_3rd_Party {
 						<td><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_url( $website->url ); ?></a></td>
 						<td><?php esc_html_e( $api_provider, 'mainwp' ); ?></td>
 						<td class="last-backup-date" ><?php echo ( $last_backup ) ? esc_html( $last_backup ) : esc_html__( 'Awaiting first backup', 'mainwp' ); ?></td>
-						<td>
+						<td class="collapsing not-selectable">
 							<i class="ui notched circle loading icon" style="display:none;"></i>
 							<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
 								<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
@@ -417,10 +417,7 @@ class Api_Backups_3rd_Party {
 					jQuery( '.mainwp-api-backup-table' ).DataTable( {
 						"stateSave": true,
 						"stateDuration": 0,
-						"colReorder" : {
-							fixedColumnsLeft: 1,
-							fixedColumnsRight: 1
-						},
+						"colReorder" : {columns:":not(.check-column):not(:last-child)"},
 						"responsive": responsive,
 						"scrollX": true,
 						"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
@@ -428,11 +425,38 @@ class Api_Backups_3rd_Party {
 						"order": [ [ 1, "asc" ] ],
 						"language": { "emptyTable": "No backups found." },
 						"drawCallback": function( settings ) {
-							jQuery('#mainwp-3rd-party-backups-table .ui.checkbox').checkbox();
-							jQuery('.mainwp-api-backup-table .ui.dropdown').dropdown();
-							mainwp_datatable_fix_menu_overflow();
+							setTimeout(() => {
+								jQuery('#mainwp-3rd-party-backups-table .ui.checkbox').checkbox();
+								jQuery('.mainwp-api-backup-table .ui.dropdown').dropdown();
+								mainwp_datatable_fix_menu_overflow();
+							}, 1000);
 						},
-					} );
+						select: {
+							items: 'row',
+							style: 'multi+shift',
+							selector: 'tr>td:not(.not-selectable)'
+						}
+					}).on('select', function (e, dt, type, indexes) {
+						if( 'row' == type ){
+							dt.rows(indexes)
+							.nodes()
+							.to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
+						}
+					}).on('deselect', function (e, dt, type, indexes) {
+						if( 'row' == type ){
+							dt.rows(indexes)
+							.nodes()
+							.to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
+						}
+					}).on( 'columns-reordered', function ( e, settings, details ) {
+						console.log('columns-reordered');
+						setTimeout(() => {
+							jQuery( '#mainwp-3rd-party-backups-table .ui.dropdown' ).dropdown();
+							jQuery( '#mainwp-3rd-party-backups-table .ui.checkbox' ).checkbox();
+							mainwp_datatable_fix_menu_overflow();
+							mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
+						}, 1000);
+					});
 				} );
 			</script>
 			<?php
@@ -1457,10 +1481,7 @@ class Api_Backups_3rd_Party {
 						jQuery( '.mainwp-api-backup-table' ).DataTable( {
 							"stateSave": true,
 							"stateDuration": 0,
-							"colReorder" : {
-								fixedColumnsLeft: 1,
-								fixedColumnsRight: 1
-							},
+							"colReorder" : {columns:":not(.check-column):not(:last-child)"},
 							"responsive": responsive,
 							"scrollX": false,
 							"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
@@ -1468,11 +1489,38 @@ class Api_Backups_3rd_Party {
 							"order": [ [ 1, "asc" ] ],
 							"language": { "emptyTable": "No backups found." },
 							"drawCallback": function( settings ) {
-								jQuery('.mainwp-api-backup-table .ui.checkbox').checkbox();
-								jQuery('.mainwp-api-backup-table .ui.dropdown').dropdown();
-								mainwp_datatable_fix_menu_overflow('.mainwp-api-backup-table', -55, 10 );
+								setTimeout(() => {
+									jQuery('.mainwp-api-backup-table .ui.checkbox').checkbox();
+									jQuery('.mainwp-api-backup-table .ui.dropdown').dropdown();
+									mainwp_datatable_fix_menu_overflow('.mainwp-api-backup-table', -55, 10 );
+								}, 1000);
 							},
-						} );
+							select: {
+								items: 'row',
+								style: 'multi+shift',
+								selector: 'tr>td:not(.not-selectable)'
+							}
+						} ).on('select', function (e, dt, type, indexes) {
+							if( 'row' == type ){
+								dt.rows(indexes)
+								.nodes()
+								.to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
+							}
+						}).on('deselect', function (e, dt, type, indexes) {
+							if( 'row' == type ){
+								dt.rows(indexes)
+								.nodes()
+								.to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
+							}
+						}).on( 'columns-reordered', function ( e, settings, details ) {
+							console.log('columns-reordered');
+							setTimeout(() => {
+								jQuery( '.mainwp-api-backup-table .ui.dropdown' ).dropdown();
+								jQuery( '.mainwp-api-backup-table .ui.checkbox' ).checkbox();
+								mainwp_datatable_fix_menu_overflow('.mainwp-api-backup-table', -55, 10 );
+								mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
+							}, 1000);
+						});
 					} );
 				</script>
 			<?php

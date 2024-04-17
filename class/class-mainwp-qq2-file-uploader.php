@@ -64,6 +64,8 @@ class MainWP_QQ2_File_Uploader {
 
 		if ( isset( $_GET['qqfile'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$this->file = new MainWP_QQ2_Uploaded_File_Xhr();
+		} elseif ( isset( $_FILES['qqfile'] ) && isset( $_REQUEST['dzuuid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized --- do not use dzChunkIndex.
+			$this->file = new MainWP_QQ2_Uploaded_File_Form_Chunk();
 		} elseif ( isset( $_FILES['qqfile'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$this->file = new MainWP_QQ2_Uploaded_File_Form();
 		} else {
@@ -119,7 +121,11 @@ class MainWP_QQ2_File_Uploader {
 		$postSize   = $this->to_bytes( ini_get( 'post_max_size' ) );
 		$uploadSize = $this->to_bytes( ini_get( 'upload_max_filesize' ) );
 		if ( $postSize < $size || $uploadSize < $size ) {
-			return array( 'error' => esc_html__( 'File is too large, increase post_max_size and/or upload_max_filesize', 'mainwp' ) );
+			return array(
+				'error' => esc_html__( 'File is too large, increase post_max_size and/or upload_max_filesize', 'mainwp' ),
+				'size'  => esc_html( $size ),
+			);
+
 		}
 
 		$pathinfo = pathinfo( $this->file->get_name() );
@@ -141,10 +147,15 @@ class MainWP_QQ2_File_Uploader {
 
 		try {
 			if ( $this->file->save( $uploadDirectory . $filename . '.' . $ext ) ) {
-				return array( 'success' => true );
+				$tmp_name = isset( $_FILES['qqfile']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['qqfile']['tmp_name'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Missing -- verify in caller.
+				return array(
+					'success' => true,
+					'path'    => esc_html( $uploadDirectory . $filename . '.' . $ext ),
+					'tmp'     => esc_html( $tmp_name ),
+				);
 			} else {
 				return array(
-					'error' => esc_html__( 'Could not save uploaded file!', 'mainwp' ) .
+					'error' => esc_html__( 'Could not save uploaded file!', 'mainwp' ) . ' ' .
 							esc_html__( 'The upload was cancelled, or server error encountered.', 'mainwp' ),
 				);
 			}

@@ -221,6 +221,8 @@ class MainWP_Post_Page_Handler {
 		$selectedCategories  = array();
 		$selectedCategories2 = array();
 
+		$is_cpt = isset( $_POST['custom_post_type'] ) && ! empty( $_POST['custom_post_type'] ) ? true : false;
+
 		if ( isset( $_REQUEST['selected_categories'] ) && ( '' !== $_REQUEST['selected_categories'] ) ) {
 			$selectedCategories = explode( ',', sanitize_text_field( urldecode( wp_unslash( $_REQUEST['selected_categories'] ) ) ) );
 		}
@@ -234,13 +236,20 @@ class MainWP_Post_Page_Handler {
 
 		if ( 0 < count( $websites ) ) {
 			foreach ( $websites as $website ) {
-				$new_cats = json_decode( $website->categories, true );
-				if ( is_array( $new_cats ) && ( 0 < count( $new_cats ) ) ) {
-					$current = current( $new_cats );
-					if ( is_array( $current ) && ! empty( $current ) ) { // new site's category format data.
-						self::arrange_categories_list( $new_cats, $allCategories_new_tree );
-					} elseif ( is_string( $current ) ) { // old format.
-						$allCategories = array_unique( array_merge( $allCategories, $new_cats ) );
+				if( ! $is_cpt  ){
+					$new_cats = json_decode( $website->categories, true );
+					if ( is_array( $new_cats ) && ( 0 < count( $new_cats ) ) ) {
+						$current = current( $new_cats );
+						if ( is_array( $current ) && ! empty( $current ) ) { // new site's category format data.
+							self::arrange_categories_list( $new_cats, $allCategories_new_tree );
+						} elseif ( is_string( $current ) ) { // old format.
+							$allCategories = array_unique( array_merge( $allCategories, $new_cats ) );
+						}
+					}
+				} else {
+					$custom_categories = apply_filters( 'mainwp_edit_post_get_categories', false, $website, $_REQUEST );
+					if ( is_array( $custom_categories ) && ! empty( $custom_categories ) ) {
+						self::arrange_categories_list( $custom_categories, $allCategories_new_tree );
 					}
 				}
 			}
@@ -261,7 +270,7 @@ class MainWP_Post_Page_Handler {
 				self::print_catergories_tree( $allCategories_new_tree, $check_printed_cats_names );
 			}
 
-			if ( 0 < count( $allCategories ) ) {
+			if ( ! $is_cpt && 0 < count( $allCategories ) ) {
 				echo '<div class="ui horizontal divider"></div>';
 				natcasesort( $allCategories );
 				foreach ( $allCategories as $category ) {
@@ -287,13 +296,37 @@ class MainWP_Post_Page_Handler {
 	public static function print_catergories_tree( $print_cats, &$check_printed_cats_names = array() ) {
 		foreach ( $print_cats as $item ) {
 
-			$level = isset( $item['level'] ) ? $item['level'] : 0;
+			$level   = isset( $item['level'] ) ? $item['level'] : 0;
+			$term_pt = isset( $item['term_post_type'] ) && ! empty( $item['term_post_type'] ) ? sanitize_text_field( wp_unslash( $item['term_post_type'] ) ) : '';
 
-			if ( 'Uncategorized' !== $item['name'] && ! isset( $check_printed_cats_names[ $item['slug'] ] ) ) {
+			$print_slug = $item['slug'];
+
+			if ( ! empty( $term_pt ) ) {
+				$print_slug .= '_' . $term_pt;
+			}
+
+			if ( 'Uncategorized' !== $item['name'] && ! in_array( $print_slug, $check_printed_cats_names, true ) ) {
 				$cls = 'category-select-item-sub' . ( ! empty( $level ) ? intval( $level ) : '' );
 
-				$check_printed_cats_names[ $item['slug'] ] = 1;
-				echo '<div class="item ' . esc_attr( $cls ) . '" data-value="' . esc_attr( $item['name'] ) . '" data-slug="' . esc_attr( $item['slug'] ) . '" class="sitecategory-list">' . esc_html( $item['name'] ) . '</div>';
+				$check_printed_cats_names[] = $print_slug;
+
+				if ( ! empty( $term_pt ) ) {
+					$cat_val = wp_json_encode(
+						array(
+							'name'        => $item['name'],
+							'slug'        => $item['slug'],
+							'taxonomy'    => $item['taxonomy'],
+							'parent'      => $item['parent'],
+							'description' => $item['description'],
+						)
+					);
+					$cat_val = ! empty( $cat_val ) ? '_custom_term_' . esc_attr( base64_encode( $cat_val ) ) : '';
+				} else {
+					$cat_val = esc_attr( $item['name'] );
+				}
+
+				$title = ! empty( $term_pt ) ? '<strong>' . esc_html( $item['name'] ) . '</strong>' : esc_html( $item['name'] );
+				echo '<div class="item ' . esc_attr( $cls ) . '" data-value="' . $cat_val . '" data-slug="' . esc_attr( $item['slug'] ) . '" post-type="' . esc_attr( $term_pt ) . '"class="sitecategory-list">' . $title . '</div>'; //phpcs:ignore -- ok.
 			}
 
 			if ( ! empty( $item['children'] ) ) {
@@ -315,6 +348,11 @@ class MainWP_Post_Page_Handler {
 		if ( ! is_array( $save_all_cats_tree ) ) {
 			$save_all_cats_tree = array();
 		}
+
+		if ( ! is_array( $categories ) ) {
+			return;
+		}
+
 		$tree_cats  = $save_all_cats_tree;
 		$all_cats   = array();
 		$child_cats = array();
@@ -742,7 +780,6 @@ class MainWP_Post_Page_Handler {
 				$output         = new \stdClass();
 				$output->ok     = array();
 				$output->errors = array();
-				$startTime      = time();
 
 				if ( 0 < count( $dbwebsites ) ) {
 
@@ -758,7 +795,6 @@ class MainWP_Post_Page_Handler {
 						}
 						$new_post_custom[ $meta_key ] = $new_meta_values;
 					}
-
 					$post_data = array(
 						'new_post'            => base64_encode( wp_json_encode( $new_post ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 						'post_custom'         => base64_encode( wp_json_encode( $new_post_custom ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.

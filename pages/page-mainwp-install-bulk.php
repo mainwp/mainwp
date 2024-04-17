@@ -131,37 +131,139 @@ class MainWP_Install_Bulk {
 						<noscript>
 						<div class="ui message red"><?php esc_html_e( 'Please enable JavaScript to use file uploader.', 'mainwp' ); ?></div>
 						</noscript>
+
+						<div class="dropzone" id="mainwp-dropzone-upload" >
+							<div class="dz-clickable-area">
+								<div class="ui labeled icon massive green button qq-upload-button" style="position: relative; overflow: hidden; direction: ltr;">
+									<i class="upload icon"></i> <?php esc_html_e( 'Upload Now', 'mainwp' ); ?>
+									<div style="position: absolute; right: 0px; top: 0px; font-family: Arial; font-size: 118px; margin: 0px; padding: 0px; cursor: pointer; opacity: 0;"></div>
+								</div>
+								<div class="qq-upload-drop-area">
+									<div class="dz-message">
+										<?php esc_html_e( 'Drop files here or click to upload.', 'mainwp' ); ?>
+									</div>
+								</div>
+							</div>
+							<div class="ui hidden divider"></div>
+						</div>
+
 					</div>
 
-					<script>
-						function createUploader() {
-							var uploader = new qq.FileUploader( {
-								element: document.getElementById( 'mainwp-file-uploader' ),
-								action: location.href,
-							<?php
-							/**
-							 * Uploader options
-							 *
-							 * Adds extra options to the bulk upload process as a support for the Favorites extension.
-							 *
-							 * @param string $type Determines if plugins or themes are being installed.
-							 *
-							 * @since Unknown
-							 */
-							$extraOptions = apply_filters( 'mainwp_uploadbulk_uploader_options', '', $type );
-							$extraOptions = trim( $extraOptions );
-							$extraOptions = trim( trim( $extraOptions, ',' ) );
-							if ( '' !== $extraOptions ) {
-								echo wp_strip_all_tags( $extraOptions ) . ','; // phpcs:ignore WordPress.Security.EscapeOutput
-							}
-							?>
-								params: {mainwp_do: 'MainWP_Install_Bulk-uploadfile', qq_nonce: '<?php echo esc_js( wp_create_nonce( 'qq_nonce' ) ); ?>' }
-							} );
-						}
+					<div id="mainwp-dropzone-preview-tpl" style="display: none">
+						<div class="item file-uploaded-item" style="padding:0!important;">
+							<div class="ui grid" style="margin:0!important;">
+								<div class="four column row">
+									<div class="left aligned middle aligned column dz-filename"><span class="qq-upload-file" filename="" data-dz-name=""></span></div>
+									<div class="middle aligned column">
+										<span class="qq-upload-percent"></span> 
+										<span class="qq-upload-size dz-size" data-dz-size=""></span>
+									</div>
+									<div class="middle aligned column ">
+										<div class="dz-error-message"><span data-dz-errormessage=""></span></div>
+										<span class="qq-upload-processing">
+											<i class="notched circle loading icon"></i> Uploading...
+										</span>
+									</div>
+									<div class="right aligned middle aligned column">
+										<a class="ui mini button basic red qq-upload-cancel" href="#">Cancel Upload</a> 
+									<?php echo $favorites_enabled ? '<span class="qq-upload-add-to-favorites" style="display:none;"><a class="ui mini button basic" href="#">Add to Favorites</a></span>' : ''; ?> 
+										<a class="ui mini button basic red qq-upload-cancel-install" style="display:none;" href="#">Remove Item</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<?php
 
-						// in your app create uploader as soon as the DOM is ready.
-						// don't wait for the window to load.
-						createUploader();
+					$chunksize_upload = apply_filters( 'mainwp_file_uploader_chunk_size', 1000000 ); // to support custom chunk size upload.
+					if ( empty( $chunksize_upload ) ) {
+						$chunksize_upload = 1000000; // bytes.
+					}
+
+					?>
+					<script type="text/javascript">
+						document.addEventListener("DOMContentLoaded", (event) => {
+							Dropzone.autoDiscover = false;
+							var dropzone = new Dropzone('#mainwp-dropzone-upload', {
+								url: function(){
+									return 'admin.php?page=<?php echo isset( $_GET['page'] ) ? esc_js( $_GET['page'] ) : ''; ?>';
+								},
+								paramName: 'qqfile', // file input name.
+								autoProcessQueue : true,
+								clickable: '.dz-clickable-area',
+								previewTemplate: document.querySelector('#mainwp-dropzone-preview-tpl').innerHTML,
+								parallelUploads: 3,
+								chunking: true,
+								chunkSize: <?php echo intval( $chunksize_upload ); ?>,
+								uploadMultiple: false, // 1: to compatible with server side process.
+								acceptedFiles: '.zip',
+								createImageThumbnails: 0,
+								maxFilesize: 150,
+								filesizeBase: 1000,
+								init: function() {
+									var self = this;
+									this.on("addedfile", file => {
+										jQuery(file.previewElement).find('.qq-upload-cancel').on('click',function(){
+											self.removeFile(file); // Remove the specific file from Dropzone
+											return false;
+										});
+										jQuery(file.previewElement).find('.qq-upload-file').attr('filename', file.name );
+									});
+									this.on("error", function(file, errorMessage) {
+										jQuery(file.previewElement).find('.qq-upload-processing').hide();
+									});
+									this.on("sending", function(file, xhr, formData) {
+										// Add custom parameters to the FormData object
+										formData.append("mainwp_do", "MainWP_Install_Bulk-uploadfile");
+										formData.append("qq_nonce", "<?php echo esc_js( wp_create_nonce( 'qq_nonce' ) ); ?>");
+									});
+									this.on("uploadprogress", function( file, progress, bytesSent ) {
+										progress = parseInt(progress);
+										jQuery(file.previewElement).find('.qq-upload-percent').html( progress + '% from ');
+									});
+									this.on("success", function( file, result ) {
+										let obj = false;
+										try{
+											obj =JSON.parse(result);
+										} catch( err ){
+											//error parse response.
+											obj = false;
+										}
+
+										file.previewElement.classList.add('qq-upload-completed');
+										jQuery(file.previewElement).find('.qq-upload-cancel-install').show();
+										jQuery(file.previewElement).find('.qq-upload-cancel-install').on('click',function(){
+											self.removeFile(file); // Remove the specific file from Dropzone
+											return false;
+										});
+
+										let unerror = true;
+
+										if( obj ){
+											if(obj.success){
+												file.previewElement.classList.add('qq-upload-success');
+												jQuery(file.previewElement).find('.qq-upload-processing').html('Upload completed.');
+												unerror = false;
+											} else if(obj.error){
+												jQuery(file.previewElement).find('.qq-upload-processing').html('<span data-tooltip="' + obj.error + '" data-inverted="" data-position="top left"><i class="red times icon"></i></span>' );
+												unerror = false;
+											}
+										}
+
+										if(unerror){
+											jQuery(file.previewElement).find('.qq-upload-processing').html('<span data-tooltip="Upload failed. Please try again." data-inverted="" data-position="top left"><i class="red times icon"></i></span>' );
+										}
+									});
+								}
+							});
+						});
+						(function(){
+							jQuery('.dz-clickable-area').hover(function(){
+								if(!jQuery('.qq-upload-drop-area').hasClass('active-area')){
+									jQuery('.qq-upload-drop-area').addClass('active-area');
+								}
+							});
+						})();
 					</script>
 				</div>
 				<?php

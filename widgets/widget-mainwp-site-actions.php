@@ -165,7 +165,7 @@ class MainWP_Site_Actions {
 							</td>
 							<?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
 								<td class="collapsing"><a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $data->wpid ); ?>"><?php echo esc_html( $data->name ); ?></a></td>
-								<?php endif; ?>
+							<?php endif; ?>
 							<td class="collapsing"><?php echo esc_html( $data->action_user ); ?></td>
 							<td class="collapsing">
 								<a href="javascript:void(0)" class="mainwp-action-dismiss ui mini icon button" action-id="<?php echo intval( $data->action_id ); ?>" data-tooltip="<?php esc_attr_e( 'Dismiss the notice.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="times icon"></i></a>

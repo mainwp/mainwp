@@ -138,14 +138,14 @@ class MainWP_Client_Overview_Sites {
 					?>
 					<table id="mainwp-manage-sites-monitor-table" style="width:100%" class="ui unstackable table mainwp-with-preview-table">
 						<thead>
-								<tr><?php $this->print_column_headers( true ); ?></tr>
-								</thead>
-								<tbody id="mainwp-manage-sites-body-table">
-									<?php $this->display_rows_or_placeholder(); ?>
-								</tbody>
-								<tfoot>
-									<tr><?php $this->print_column_headers( false ); ?></tr>
-						</tfoot>
+							<th><?php $this->print_column_headers( true ); ?></th>
+							</thead>
+							<tbody id="mainwp-manage-sites-body-table">
+								<?php $this->display_rows_or_placeholder(); ?>
+							</tbody>
+							<tfoot>
+								<th><?php $this->print_column_headers( false ); ?></th>
+							</tfoot>
 						</table>
 				<?php } ?>
 				<?php
@@ -191,7 +191,7 @@ class MainWP_Client_Overview_Sites {
 					'paging'        => 'false',
 					'pagingType'    => 'full_numbers',
 					'info'          => 'true',
-					'colReorder'    => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
+					'colReorder'    => '{columns:":not(.check-column):not(:last-child)"}',
 					'stateSave'     => 'true',
 					'stateDuration' => '0',
 					'order'         => '[]',
@@ -207,7 +207,7 @@ class MainWP_Client_Overview_Sites {
 					if( jQuery( window ).width() > 1140 ) {
 						responsive = false;
 					}
-					try {	
+					try {
 						$manage_sites_table = jQuery( '#mainwp-manage-sites-monitor-table' ).DataTable( {
 							"searching" : <?php echo esc_js( $table_features['searching'] ); ?>,
 							"responsive": responsive,
@@ -215,21 +215,21 @@ class MainWP_Client_Overview_Sites {
 							"pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
 							"info" : <?php echo esc_js( $table_features['info'] ); ?>,
 							"scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
-							"colReorder" : <?php echo esc_js( $table_features['colReorder'] ); ?>,
+							"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
 							"stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
 							"stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
 							"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
 							"lengthMenu" : [ [<?php echo intval( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All" ] ],
-							"columnDefs": [ 
-								{ 
-									"targets": 'no-sort', 
-									"orderable": false 
+							"columnDefs": [
+								{
+									"targets": 'no-sort',
+									"orderable": false
 								},
-								{ 
+								{
 									"targets": 'manage-site-column',
-									"type": 'natural-nohtml'										
+									"type": 'natural-nohtml'
 								},
-								<?php do_action( 'mainwp_manage_sites_table_columns_defs' ); ?>									
+								<?php do_action( 'mainwp_manage_sites_table_columns_defs' ); ?>
 							],
 							"pageLength": <?php echo intval( $sites_per_page ); ?>,
 							"initComplete": function( settings, json ) {
@@ -238,16 +238,23 @@ class MainWP_Client_Overview_Sites {
 								"emptyTable": "<?php esc_html_e( 'No websites found.', 'mainwp' ); ?>"
 							},
 							"drawCallback": function( settings ) {
-								if ( jQuery('#mainwp-manage-sites-body-table td.dataTables_empty').length > 0 && jQuery('#sites-table-count-empty').length ){
-									jQuery('#mainwp-manage-sites-body-table td.dataTables_empty').html(jQuery('#sites-table-count-empty').html());
+								if ( jQuery('#mainwp-manage-sites-body-table td.dt-empty').length > 0 && jQuery('#sites-table-count-empty').length ){
+									jQuery('#mainwp-manage-sites-body-table td.dt-empty').html(jQuery('#sites-table-count-empty').html());
 								}
 							}
+						} ).on( 'columns-reordered', function ( e, settings, details ) {
+							console.log('columns-reordered');
+							setTimeout(() => {
+								$( '#mainwp-manage-sites-monitor-table .ui.dropdown' ).dropdown();
+								$( '#mainwp-manage-sites-monitor-table .ui.checkbox' ).checkbox();
+								mainwp_datatable_fix_menu_overflow( '#mainwp-manage-sites-monitor-table' );
+							}, 1000 );
 						} );
 					} catch(err) {
 						// to fix js error.
 						console.log(err);
 					}
-					mainwp_datatable_fix_menu_overflow();		
+					mainwp_datatable_fix_menu_overflow();
 				});
 			</script>
 			<?php
@@ -619,7 +626,7 @@ class MainWP_Client_Overview_Sites {
 				<?php
 			} elseif ( 'site_actions' === $column_name ) {
 				?>
-					<td class="collapsing">
+					<td class="collapsing not-selectable">
 						<div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999;">
 							<i class="ellipsis horizontal icon"></i>
 							<div class="menu" siteid="<?php echo intval( $website['id'] ); ?>">

@@ -430,7 +430,7 @@
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
 }
 
-.mainwp-ui.mainwp-custom-theme .dataTables_scroll {
+.mainwp-ui.mainwp-custom-theme .dt-scroll {
   box-shadow: 0 1px 2px 0 rgba( 0, 0, 0, .1 );
 }
 

@@ -138,6 +138,7 @@ class MainWP_Security_Issues {
 					</td>
 					<td>
 						<span id="db_reporting_fix" style="display: none"><a href="#" class="ui mini fluid green button"><?php esc_html_e( 'Fix', 'mainwp' ); ?></a></span>
+						<span id="db_reporting_unfix" style="display: none"><a href="#" class="ui mini fluid button"><?php esc_html_e( 'Unfix', 'mainwp' ); ?></a></span>
 					</td>
 				</tr>
 				<tr>

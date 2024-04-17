@@ -189,3 +189,11 @@
   -webkit-border-radius: 0 10px 10px 0 !important;,
   max-width: 65px !important;
 }
+.mainwp-widget .mainwp-scrolly-overflow table.ui.dataTable{
+  width: 100% !important;
+}
+
+.mainwp-widget table.dataTable.ui.table th.dt-type-numeric, 
+.mainwp-widget table.dataTable.ui.table td.dt-type-numeric{
+  text-align: left !important;
+}

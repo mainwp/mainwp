@@ -1716,7 +1716,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         if (mainwpParams.use_wp_datepicker == 1) {
                             jQuery('#mainwp-add-new-client-form .ui.calendar input[type=text]').datepicker({ dateFormat: "yy-mm-dd" });
                         } else {
-							mainwp_init_ui_calendar( '#mainwp-add-new-client-form .ui.calendar' );
+                            mainwp_init_ui_calendar( '#mainwp-add-new-client-form .ui.calendar' );
                         }
                     }
 

@@ -1373,7 +1373,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         if (mainwpParams.use_wp_datepicker == 1) {
                             jQuery('#mainwp-edit-site .ui.calendar input[type=text]').datepicker({ dateFormat: "yy-mm-dd" });
                         } else {
-							mainwp_init_ui_calendar( '#mainwp-edit-site .ui.calendar' );							
+                            mainwp_init_ui_calendar( '#mainwp-edit-site .ui.calendar' );                            
                         }
                     }
                 

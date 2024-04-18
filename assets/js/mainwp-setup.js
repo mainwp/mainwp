@@ -30,7 +30,7 @@ jQuery(function () {
   jQuery('.ui.dropdown:not(.not-auto-init)').dropdown();
 
   jQuery('.mainwp-checkbox-showhide-elements').on('click', function () {
-    var hiel = jQuery(this).attr('hide-parent');
+    let hiel = jQuery(this).attr('hide-parent');
     // if semantic ui checkbox is checked.
     if (jQuery(this).find('input').is(':checked')) {
       jQuery('[hide-element=' + hiel + ']').fadeIn(500);
@@ -44,8 +44,8 @@ jQuery(function () {
   });
 
   jQuery(document).on('change', '#mainwp_managesites_add_wpurl', function () {
-    var url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
-    var protocol = jQuery('#mainwp_managesites_add_wpurl_protocol').val();
+    let url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
+    let protocol = jQuery('#mainwp_managesites_add_wpurl_protocol').val();
 
     if (url.lastIndexOf('http://') === 0) {
       protocol = 'http';
@@ -70,7 +70,7 @@ mainwp_setup_managesites_add = function () {
 
   jQuery('#mainwp-message-zone').hide();
 
-  var errors = [];
+  let errors = [];
 
   if (jQuery('#mainwp_managesites_add_wpname').val().trim() == '') {
     errors.push('Please enter a title for the website.');
@@ -79,7 +79,7 @@ mainwp_setup_managesites_add = function () {
   if (jQuery('#mainwp_managesites_add_wpurl').val().trim() == '') {
     errors.push('Please enter a valid URL for the site.');
   } else {
-    var url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
+    let url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
     if (url.substr(-1) != '/') {
       url += '/';
     }
@@ -101,16 +101,16 @@ mainwp_setup_managesites_add = function () {
     jQuery('#mainwp-message-zone').html('Adding the site to your MainWP Dashboard. Please wait...').removeClass('green red yellow').show();
     jQuery('#mainwp_managesites_add').attr('disabled', 'true'); //disable button to add..
 
-    var url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
+    let url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
 
     if (url.substr(-1) != '/') {
       url += '/';
     }
 
-    var name = jQuery('#mainwp_managesites_add_wpname').val().trim();
+    let name = jQuery('#mainwp_managesites_add_wpname').val().trim();
     name = name.replace(/"/g, '&quot;');
 
-    var data = mainwp_setup_secure_data({
+    let data = mainwp_setup_secure_data({
       action: 'mainwp_checkwp',
       name: name,
       url: url,
@@ -121,7 +121,7 @@ mainwp_setup_managesites_add = function () {
       response = res_things.response;
       response = response.trim();
 
-      var url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
+      let url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
       if (url.substr(-1) != '/') {
         url += '/';
       }
@@ -136,8 +136,8 @@ mainwp_setup_managesites_add = function () {
         if (response.length == 5) {
           errors.push('Undefined error occurred. Please try again. If the issue does not resolve, please review <a href="https://kb.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.');
         } else {
-          var error = response.substr(6);
-          var err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', false, true); // return text error.
+          let error = response.substr(6);
+          let err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', false, true); // return text error.
           if (false === err) {
             errors.push(error); // it is not json string error.
           } else if (true !== err && '' != err) {
@@ -147,10 +147,10 @@ mainwp_setup_managesites_add = function () {
       } else if (response == 'OK') {
         jQuery('#mainwp_managesites_add').attr('disabled', 'true');
 
-        var name = jQuery('#mainwp_managesites_add_wpname').val();
+        let name = jQuery('#mainwp_managesites_add_wpname').val();
         name = name.replace(/"/g, '&quot;');
-        var group_ids = '';
-        var data = mainwp_setup_secure_data({
+        let group_ids = '';
+        let data = mainwp_setup_secure_data({
           action: 'mainwp_addwp',
           managesites_add_wpname: name,
           managesites_add_wpurl: url,
@@ -162,15 +162,15 @@ mainwp_setup_managesites_add = function () {
 
         // to support add client reports tokens values
         jQuery("input[name^='creport_token_']").each(function () {
-          var tname = jQuery(this).attr('name');
-          var tvalue = jQuery(this).val();
+          let tname = jQuery(this).attr('name');
+          let tvalue = jQuery(this).val();
           data[tname] = tvalue;
         });
 
         // support hooks fields
         jQuery(".mainwp_addition_fields_addsite input").each(function () {
-          var tname = jQuery(this).attr('name');
-          var tvalue = jQuery(this).val();
+          let tname = jQuery(this).attr('name');
+          let tvalue = jQuery(this).val();
           data[tname] = tvalue;
         });
 
@@ -231,7 +231,7 @@ mainwp_setup_managesites_add = function () {
 
 // Check if the URL field is valid value
 function isUrl(s) {
-  var regexp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-/]))?/;
+  let regexp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-/]))?/;
   return regexp.test(s);
 }
 

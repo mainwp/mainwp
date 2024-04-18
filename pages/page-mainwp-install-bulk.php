@@ -81,7 +81,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         $disabled_upload    = false;
         $disabled_functions = ini_get( 'disable_functions' );
-        if ( ! empty( $disable_functions ) ) {
+        if ( ! empty( $disabled_functions ) ) {
             $disabled_functions_array = explode( ',', $disabled_functions );
             if ( is_array( $disabled_functions_array ) && in_array( 'tmpfile', $disabled_functions_array ) ) {
                 $disabled_upload = true;
@@ -322,79 +322,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $output['name']  = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
         $output['sites'] = array();
 
-        $data_fields = array(
-            'id',
-            'url',
-            'name',
-            'sync_errors',
-        );
-
-        if ( isset( $_POST['selected_by'] ) && 'site' === $_POST['selected_by'] ) {
-            $selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
-            // Get sites.
-            foreach ( $selected_sites as $enc_id ) {
-                $websiteid = $enc_id;
-                if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
-                    $website                         = MainWP_DB::instance()->get_website_by_id( $websiteid );
-                    $output['sites'][ $website->id ] = MainWP_Utility::map_site(
-                        $website,
-                        array(
-                            'id',
-                            'url',
-                            'name',
-                        )
-                    );
-                }
-            }
-        } elseif ( isset( $_POST['selected_by'] ) && 'client' === $_POST['selected_by'] ) {
-            $selected_clients = isset( $_POST['selected_clients'] ) && is_array( $_POST['selected_clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_clients'] ) ) : array();
-            $websites         = MainWP_DB_Client::instance()->get_websites_by_client_ids(
-                $selected_clients,
-                array(
-                    'select_data' => $data_fields,
-                )
-            );
-            // Get sites.
-            if ( $websites ) {
-                foreach ( $websites as $website ) {
-                    if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
-                        continue;
-                    }
-                    $output['sites'][ $website->id ] = MainWP_Utility::map_site(
-                        $website,
-                        array(
-                            'id',
-                            'url',
-                            'name',
-                        )
-                    );
-                }
-            }
-        } else {
-            $selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
-            // Get sites from group.
-            foreach ( $selected_groups as $enc_id ) {
-                $groupid = $enc_id;
-                if ( MainWP_Utility::ctype_digit( $groupid ) ) {
-                    $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $groupid ) );
-                    while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-                        if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
-                            continue;
-                        }
-                        $output['sites'][ $website->id ] = MainWP_Utility::map_site(
-                            $website,
-                            array(
-                                'id',
-                                'url',
-                                'name',
-                            )
-                        );
-                    }
-                    MainWP_DB::free_result( $websites );
-                }
-            }
-        }
-		// phpcs:enable
+        static::get_selected_sites( $output );
 
         /**
         * Filter: mainwp_bulk_prepare_install_result
@@ -555,12 +483,45 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $output          = array();
         $output['sites'] = array();
 
+        static::get_selected_sites( $output );
+
+		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $output['urls']  = array();
+        $output['files'] = array();
+        $files           = isset( $_POST['files'] ) && is_array( $_POST['files'] ) ? wp_unslash( $_POST['files'] ) : array();
+        foreach ( $files as $file ) {
+            $output['urls'][]  = MainWP_System_Utility::get_download_url( 'bulk', $file );
+            $output['files'][] = esc_html( $file );
+        }
+        $output['urls'] = implode( '||', $output['urls'] );
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+        /**
+         * Prepare upload
+         *
+         * Prepares upload URLs for the bulk install process.
+         *
+         * @since Unknown
+         */
+        $output['urls'] = apply_filters( 'mainwp_installbulk_prepareupload', $output['urls'] );
+
+        wp_send_json( $output );
+    }
+
+    /**
+     * Method prepare_upload()
+     *
+     * @param array $output selected sites output.
+     */
+    public static function get_selected_sites( &$output ) {
+
         $data_fields = array(
             'id',
             'url',
             'name',
             'sync_errors',
         );
+
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_POST['selected_by'] ) && 'site' === $_POST['selected_by'] ) {
             $selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
@@ -627,27 +588,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 }
             }
         }
-
-        $output['urls']  = array();
-        $output['files'] = array();
-        $files           = isset( $_POST['files'] ) && is_array( $_POST['files'] ) ? wp_unslash( $_POST['files'] ) : array();
-        foreach ( $files as $file ) {
-            $output['urls'][]  = MainWP_System_Utility::get_download_url( 'bulk', $file );
-            $output['files'][] = esc_html( $file );
-        }
-        $output['urls'] = implode( '||', $output['urls'] );
-		// phpcs:enable
-
-        /**
-         * Prepare upload
-         *
-         * Prepares upload URLs for the bulk install process.
-         *
-         * @since Unknown
-         */
-        $output['urls'] = apply_filters( 'mainwp_installbulk_prepareupload', $output['urls'] );
-
-        wp_send_json( $output );
+		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
     }
 
     /**

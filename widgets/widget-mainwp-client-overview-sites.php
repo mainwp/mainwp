@@ -242,7 +242,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                                     jQuery('#mainwp-manage-sites-body-table td.dt-empty').html(jQuery('#sites-table-count-empty').html());
                                 }
                             }
-                        } ).on( 'columns-reordered', function ( e, settings, details ) {
+                        } ).on( 'columns-reordered', function () {
                             console.log('columns-reordered');
                             setTimeout(() => {
                                 $( '#mainwp-manage-sites-monitor-table .ui.dropdown' ).dropdown();

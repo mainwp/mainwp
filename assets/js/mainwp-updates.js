@@ -4,10 +4,10 @@
 // Init Per Group data
 updatesoverview_updates_init_group_view = function () {
     jQuery('.element_ui_view_values').each(function () {
-        var parent = jQuery(this).parent();
-        var uid = jQuery(this).attr('elem-uid');
-        var total = jQuery(this).attr('total');
-        var can_update = jQuery(this).attr('can-update');
+        let parent = jQuery(this).parent();
+        let uid = jQuery(this).attr('elem-uid');
+        let total = jQuery(this).attr('total');
+        let can_update = jQuery(this).attr('can-update');
 
         if (total == 0) {
             // carefully remove this, or it will causing error with display or according sorting
@@ -27,8 +27,8 @@ updatesoverview_updates_init_group_view = function () {
 // Update individual WP
 updatesoverview_upgrade = function (id, obj) {
 
-    var parent = jQuery(obj).closest('.mainwp-wordpress-update');
-    var upgradeElement = jQuery(parent).find('#wp-updated-' + id);
+    let parent = jQuery(obj).closest('.mainwp-wordpress-update');
+    let upgradeElement = jQuery(parent).find('#wp-updated-' + id);
 
     if (upgradeElement.val() != 0)
         return false;
@@ -38,14 +38,14 @@ updatesoverview_upgrade = function (id, obj) {
         return function () {
             jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ' + __('Updating. Please wait...'));
             pUpgradeElement.val(1);
-            var data = mainwp_secure_data({
+            let data = mainwp_secure_data({
                 action: 'mainwp_upgradewp',
                 id: pId
             });
 
             jQuery.post(ajaxurl, data, function (response) {
                 if (response.error) {
-                    var err_msg = '';
+                    let err_msg = '';
                     if (response.error.extra) {
                         err_msg = response.error.extra + ' ';
                     }
@@ -59,12 +59,12 @@ updatesoverview_upgrade = function (id, obj) {
         }
     }(id, upgradeElement);
 
-    var sitesToUpdate = [id];
-    var siteNames = [];
+    let sitesToUpdate = [id];
+    let siteNames = [];
 
     siteNames[id] = jQuery('.mainwp-wordpress-update[site_id="' + id + '"]').attr('site_name');
 
-    var msg = __('Are you sure you want to update the Wordpress core files on the selected site?');
+    let msg = __('Are you sure you want to update the Wordpress core files on the selected site?');
     mainwp_confirm(msg, function () {
         return mainwp_updatesoverview_checkBackups(sitesToUpdate, siteNames);
     }, false, 1);
@@ -94,9 +94,9 @@ updatesoverview_wordpress_global_upgrade_all = function (groupId, updatesSelecte
         return false;
 
     //Step 1: build form
-    var sitesToUpdate = [];
-    var siteNames = {};
-    var foundChildren = [];
+    let sitesToUpdate = [];
+    let siteNames = {};
+    let foundChildren = [];
 
     if (typeof updatesSelected !== 'undefined' && updatesSelected) {
         if (typeof groupId !== 'undefined' && false !== groupId) {
@@ -133,19 +133,19 @@ updatesoverview_wordpress_global_upgrade_all = function (groupId, updatesSelecte
     if (foundChildren.length == 0)
         return false;
 
-    var sitesCount = 0;
+    let sitesCount = 0;
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
 
-    for (var i = 0; i < foundChildren.length; i++) {
+    for (let i = 0; i < foundChildren.length; i++) {
         if (limitUpdateAll > 0 && i >= limitUpdateAll && typeof groupId === 'undefined') {
             continueUpdatesAll = 'wpcore_global_upgrade_all';
             break;
         }
 
-        var child = foundChildren[i];
-        var siteId = jQuery(child).attr('site_id');
-        var siteName = jQuery(child).attr('site_name');
+        let child = foundChildren[i];
+        let siteId = jQuery(child).attr('site_id');
+        let siteName = jQuery(child).attr('site_name');
 
         if (sitesToUpdate.indexOf(siteId) == -1) {
             sitesCount++;
@@ -154,15 +154,15 @@ updatesoverview_wordpress_global_upgrade_all = function (groupId, updatesSelecte
         }
     }
 
-    var _callback = function () {
+    let _callback = function () {
 
-        for (var j = 0; j < sitesToUpdate.length; j++) {
+        for (let j = 0; j < sitesToUpdate.length; j++) {
             mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(decodeURIComponent(siteNames[sitesToUpdate[j]]) + ' (WordPress update)', '<span class="updatesoverview-upgrade-status-wp" siteid="' + sitesToUpdate[j] + '">' + '<i class="clock outline icon"></i> ' + '</span>');
         }
 
         updatesoverviewContinueAfterBackup = function (pSitesCount, pSitesToUpdate) {
             return function () {
-                var initData = {
+                let initData = {
                     title: __('Updating All'),
                     progressMax: pSitesCount,
                 };
@@ -181,13 +181,13 @@ updatesoverview_wordpress_global_upgrade_all = function (groupId, updatesSelecte
     // new confirm message
     if (!continueUpdating) {
         if (jQuery(siteNames).length > 0) {
-            var sitesList = [];
+            let sitesList = [];
             jQuery.each(siteNames, function (index, value) {
                 if (value) { // to fix
                     sitesList.push(decodeURIComponent(value));
                 }
             });
-            var confirmMsg = __('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', __('WordPress Core'), sitesList.join('<br />'));
+            let confirmMsg = __('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', __('WordPress Core'), sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return false;
@@ -217,7 +217,7 @@ updatesoverview_wordpress_upgrade_all_upgrade_next = function () {
     currentThreads++;
     websitesLeft--;
 
-    var websiteId = websitesToUpgrade[currentWebsite++];
+    let websiteId = websitesToUpgrade[currentWebsite++];
     updatesoverview_wordpress_upgrade_all_update_site_status(websiteId, __('<i class="notched circle loading icon"></i>'));
 
     updatesoverview_wordpress_upgrade_int(websiteId, true);
@@ -237,17 +237,17 @@ updatesoverview_wordpress_upgrade_all_update_done = function () {
 };
 updatesoverview_wordpress_upgrade_int = function (websiteId, bulkMode) {
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_upgradewp',
         id: websiteId
     });
     jQuery.post(ajaxurl, data, function (pWebsiteId, pBulkMode) {
         return function (response) {
-            var error = '';
-            var success = false;
+            let error = '';
+            let success = false;
 
             if (response.error) {
-                var err_msg = '';
+                let err_msg = '';
                 if (response.error.extra) {
                     err_msg = response.error.extra + ' ';
                 }
@@ -274,10 +274,10 @@ updatesoverview_translations_global_upgrade_all = function (groupId, updatesSele
         return false;
 
     //Step 1: build form
-    var sitesToUpdate = [];
-    var siteNames = {};
-    var sitesTranslationSlugs = {};
-    var foundChildren = [];
+    let sitesToUpdate = [];
+    let siteNames = {};
+    let sitesTranslationSlugs = {};
+    let foundChildren = [];
 
     if (typeof updatesSelected !== 'undefined' && updatesSelected) {
         if (typeof groupId !== 'undefined' && false !== groupId) {
@@ -311,22 +311,22 @@ updatesoverview_translations_global_upgrade_all = function (groupId, updatesSele
 
     if (foundChildren.length == 0)
         return false;
-    var sitesCount = 0;
+    let sitesCount = 0;
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
 
-    for (var i = 0; i < foundChildren.length; i++) {
+    for (let i = 0; i < foundChildren.length; i++) {
         if (limitUpdateAll > 0 && i >= limitUpdateAll && typeof groupId === 'undefined') {
             continueUpdatesAll = 'translations_global_upgrade_all';
             break;
         }
-        var child = jQuery(foundChildren[i]);
-        var parent = child.parent(); // to fix
+        let child = jQuery(foundChildren[i]);
+        let parent = child.parent(); // to fix
 
-        var siteElement;
-        var translationElement;
+        let siteElement;
+        let translationElement;
 
-        var checkAttr = child.attr('site_id');
+        let checkAttr = child.attr('site_id');
         if ((typeof checkAttr !== 'undefined') && (checkAttr !== false)) {
             siteElement = child;
             translationElement = parent;
@@ -335,9 +335,9 @@ updatesoverview_translations_global_upgrade_all = function (groupId, updatesSele
             translationElement = child;
         }
 
-        var siteId = siteElement.attr('site_id');
-        var siteName = siteElement.attr('site_name');
-        var translationSlug = translationElement.attr('translation_slug');
+        let siteId = siteElement.attr('site_id');
+        let siteName = siteElement.attr('site_name');
+        let translationSlug = translationElement.attr('translation_slug');
 
         if (sitesToUpdate.indexOf(siteId) == -1) {
             sitesCount++;
@@ -351,9 +351,9 @@ updatesoverview_translations_global_upgrade_all = function (groupId, updatesSele
         }
     }
 
-    var _callback = function () {
-        for (var i = 0; i < sitesToUpdate.length; i++) {
-            var updateCount = sitesTranslationSlugs[sitesToUpdate[i]].match(/,/g);
+    let _callback = function () {
+        for (let i = 0; i < sitesToUpdate.length; i++) {
+            let updateCount = sitesTranslationSlugs[sitesToUpdate[i]].match(/,/g);
             if (updateCount == null)
                 updateCount = 1;
             else
@@ -365,7 +365,7 @@ updatesoverview_translations_global_upgrade_all = function (groupId, updatesSele
         updatesoverviewContinueAfterBackup = function (pSitesCount, pSitesToUpdate, pSitesTranslationSlugs) {
             return function () {
 
-                var initData = {
+                let initData = {
                     title: __('Updating all...'),
                     progressMax: pSitesCount
                 };
@@ -386,13 +386,13 @@ updatesoverview_translations_global_upgrade_all = function (groupId, updatesSele
     // new confirm message
     if (!continueUpdating) {
         if (jQuery(siteNames).length > 0) {
-            var sitesList = [];
+            let sitesList = [];
             jQuery.each(siteNames, function (index, value) {
                 if (value) { // to fix
                     sitesList.push(decodeURIComponent(value));
                 }
             });
-            var confirmMsg = __('You are about to update %1 on the following site(s):\n%2?', 'translations', sitesList.join(', '));
+            let confirmMsg = __('You are about to update %1 on the following site(s):\n%2?', 'translations', sitesList.join(', '));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return false;
@@ -404,25 +404,25 @@ updatesoverview_translations_upgrade_all = function (slug, translationName) {
     if (bulkTaskRunning)
         return false;
     //Step 1: build form
-    var sitesToUpdate = [];
-    var siteNames = [];
-    //    var foundChildren = jQuery( 'div[translation_slug="' + slug + '"]' ).children( 'div[updated="0"]' );
-    var foundChildren = jQuery('.translations-bulk-updates[translation_slug="' + slug + '"]').find('tr[updated="0"]');
+    let sitesToUpdate = [];
+    let siteNames = [];
+    //    let foundChildren = jQuery( 'div[translation_slug="' + slug + '"]' ).children( 'div[updated="0"]' );
+    let foundChildren = jQuery('.translations-bulk-updates[translation_slug="' + slug + '"]').find('tr[updated="0"]');
 
     if (foundChildren.length == 0)
         return false;
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
 
-    for (var i = 0; i < foundChildren.length; i++) {
+    for (let i = 0; i < foundChildren.length; i++) {
         if (limitUpdateAll > 0 && i >= limitUpdateAll) {
             continueUpdatesAll = 'translations_upgrade_all';
             continueUpdatesSlug = slug;
             break;
         }
-        var child = foundChildren[i];
-        var siteId = jQuery(child).attr('site_id');
-        var siteName = jQuery(child).attr('site_name');
+        let child = foundChildren[i];
+        let siteId = jQuery(child).attr('site_id');
+        let siteName = jQuery(child).attr('site_name');
         siteNames[siteId] = siteName;
         sitesToUpdate.push(siteId);
     }
@@ -430,20 +430,20 @@ updatesoverview_translations_upgrade_all = function (slug, translationName) {
     translationName = decodeURIComponent(translationName);
     translationName = translationName.replace(/\+/g, ' ');
 
-    var _callback = function () {
+    let _callback = function () {
 
-        for (var i = 0; i < sitesToUpdate.length; i++) {
+        for (let i = 0; i < sitesToUpdate.length; i++) {
             mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(decodeURIComponent(siteNames[sitesToUpdate[i]]), '<span class="updatesoverview-upgrade-status-wp" siteid="' + sitesToUpdate[i] + '">' + '<i class="clock outline icon"></i> ' + '</span>');
         }
 
-        var sitesCount = sitesToUpdate.length;
+        let sitesCount = sitesToUpdate.length;
 
         updatesoverviewContinueAfterBackup = function (pSitesCount, pSlug, pSitesToUpdate) {
             return function () {
 
                 // init and show popup
 
-                var initData = {
+                let initData = {
                     title: __('Updating %1', decodeURIComponent(translationName)),
                     progressMax: pSitesCount
                 };
@@ -460,13 +460,13 @@ updatesoverview_translations_upgrade_all = function (slug, translationName) {
     // new confirm message
     if (!continueUpdating) {
         if (jQuery(siteNames).length > 0) {
-            var sitesList = [];
+            let sitesList = [];
             jQuery.each(siteNames, function (index, value) {
                 if (value) { // to fix
                     sitesList.push(decodeURIComponent(value));
                 }
             });
-            var confirmMsg = __('You are about to update the %1 translation on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', translationName, sitesList.join('<br />'));
+            let confirmMsg = __('You are about to update the %1 translation on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', translationName, sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return false;
@@ -498,10 +498,10 @@ updatesoverview_translations_upgrade_all_upgrade_next = function () {
     currentThreads++;
     websitesLeft--;
 
-    var websiteId = websitesToUpdateTranslations[currentWebsite++];
+    let websiteId = websitesToUpdateTranslations[currentWebsite++];
     updatesoverview_translations_upgrade_all_update_site_status(websiteId, '<i class="notched circle loading icon"></i>');
 
-    var slugToUpgrade = currentTranslationSlugToUpgrade;
+    let slugToUpgrade = currentTranslationSlugToUpgrade;
     if (slugToUpgrade == undefined)
         slugToUpgrade = websitesTranslationSlugsToUpgrade[websiteId];
     updatesoverview_translations_upgrade_int(slugToUpgrade, websiteId, true, true);
@@ -524,9 +524,9 @@ updatesoverview_translations_upgrade_all_update_done = function () {
 updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMode, noCheck) {
     updatesoverviewContinueAfterBackup = function (pSlug, pWebsiteId, pBulkMode) {
         return function () {
-            var slugParts = pSlug.split(',');
-            for (var i = 0; i < slugParts.length; i++) {
-                var websiteHolder = jQuery('.translations-bulk-updates[translation_slug="' + slugParts[i] + '"] tr[site_id="' + pWebsiteId + '"]');
+            let slugParts = pSlug.split(',');
+            for (let i = 0; i < slugParts.length; i++) {
+                let websiteHolder = jQuery('.translations-bulk-updates[translation_slug="' + slugParts[i] + '"] tr[site_id="' + pWebsiteId + '"]');
                 if (!websiteHolder.exists()) {
                     websiteHolder = jQuery('.translations-bulk-updates[site_id="' + pWebsiteId + '"] tr[translation_slug="' + slugParts[i] + '"]');
                 }
@@ -534,7 +534,7 @@ updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMode, 
                 websiteHolder.find('td:last-child').html('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
             }
 
-            var data = mainwp_secure_data({
+            let data = mainwp_secure_data({
                 action: 'mainwp_upgradeplugintheme',
                 websiteId: pWebsiteId,
                 type: 'translation',
@@ -546,12 +546,12 @@ updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMode, 
                 data: data,
                 success: function (pSlug, pWebsiteId, pBulkMode) {
                     return function (response) {
-                        var slugParts = pSlug.split(',');
-                        var done = false;
-                        var success = false;
-                        var error = '';
-                        for (var i = 0; i < slugParts.length; i++) {
-                            var websiteHolder = jQuery('.translations-bulk-updates[translation_slug="' + slugParts[i] + '"] tr[site_id="' + pWebsiteId + '"]');
+                        let slugParts = pSlug.split(',');
+                        let done = false;
+                        let success = false;
+                        let error = '';
+                        for (let i = 0; i < slugParts.length; i++) {
+                            let websiteHolder = jQuery('.translations-bulk-updates[translation_slug="' + slugParts[i] + '"] tr[site_id="' + pWebsiteId + '"]');
                             if (!websiteHolder.exists()) {
                                 websiteHolder = jQuery('.translations-bulk-updates[site_id="' + pWebsiteId + '"] tr[translation_slug="' + slugParts[i] + '"]');
                             }
@@ -562,7 +562,7 @@ updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMode, 
                                 websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
                                 error = response.error;
                             } else {
-                                var res = response.result;
+                                let res = response.result;
                                 if (res[slugParts[i]]) {
                                     if (!done && pBulkMode)
                                         updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, '<i class="green check icon"></i>');
@@ -587,11 +587,11 @@ updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMode, 
                 retryLimit: 3,
                 endError: function (pSlug, pWebsiteId, pBulkMode) {
                     return function () {
-                        var slugParts = pSlug.split(',');
-                        var done = false;
-                        for (var i = 0; i < slugParts.length; i++) {
-                            var result;
-                            var websiteHolder = jQuery('.translations-bulk-updates[translation_slug="' + slugParts[i] + '"] tr[site_id="' + pWebsiteId + '"]');
+                        let slugParts = pSlug.split(',');
+                        let done = false;
+                        for (let i = 0; i < slugParts.length; i++) {
+                            let result;
+                            let websiteHolder = jQuery('.translations-bulk-updates[translation_slug="' + slugParts[i] + '"] tr[site_id="' + pWebsiteId + '"]');
                             if (!websiteHolder.exists()) {
                                 websiteHolder = jQuery('.translations-bulk-updates[site_id="' + pWebsiteId + '"] tr[translation_slug="' + slugParts[i] + '"]');
                             }
@@ -614,7 +614,7 @@ updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMode, 
                         return;
                     }
 
-                    var fnc = function (pRqst, pXhr) {
+                    let fnc = function (pRqst, pXhr) {
                         return function () {
                             if (pXhr.status == 404) {
                                 //handle error
@@ -640,8 +640,8 @@ updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMode, 
         return false;
     }
 
-    var sitesToUpdate = [websiteId];
-    var siteNames = [];
+    let sitesToUpdate = [websiteId];
+    let siteNames = [];
     siteNames[websiteId] = jQuery('div[site_id="' + websiteId + '"]').attr('site_name');
 
     return mainwp_updatesoverview_checkBackups(sitesToUpdate, siteNames);
@@ -653,10 +653,10 @@ updatesoverview_plugins_global_upgrade_all = function (groupId, updatesSelected)
         return false;
 
     //Step 1: build form
-    var sitesToUpdate = [];
-    var siteNames = {};
-    var sitesPluginSlugs = {};
-    var foundChildren = [];
+    let sitesToUpdate = [];
+    let siteNames = {};
+    let sitesPluginSlugs = {};
+    let foundChildren = [];
 
     if (typeof updatesSelected !== 'undefined' && updatesSelected) {
         if (typeof groupId !== 'undefined' && false !== groupId) {
@@ -690,22 +690,22 @@ updatesoverview_plugins_global_upgrade_all = function (groupId, updatesSelected)
 
     if (foundChildren.length == 0)
         return false;
-    var sitesCount = 0;
+    let sitesCount = 0;
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
 
-    for (var i = 0; i < foundChildren.length; i++) {
+    for (let i = 0; i < foundChildren.length; i++) {
         if (limitUpdateAll > 0 && i >= limitUpdateAll && typeof groupId === 'undefined') {
             continueUpdatesAll = 'plugins_global_upgrade_all';
             break;
         }
-        var child = jQuery(foundChildren[i]);
-        var parent = child.parent(); // to fix
+        let child = jQuery(foundChildren[i]);
+        let parent = child.parent(); // to fix
 
-        var siteElement;
-        var pluginElement;
+        let siteElement;
+        let pluginElement;
 
-        var checkAttr = child.attr('site_id');
+        let checkAttr = child.attr('site_id');
         if ((typeof checkAttr !== 'undefined') && (checkAttr !== false)) {
             siteElement = child;
             pluginElement = parent;
@@ -714,9 +714,9 @@ updatesoverview_plugins_global_upgrade_all = function (groupId, updatesSelected)
             pluginElement = child;
         }
 
-        var siteId = siteElement.attr('site_id');
-        var siteName = siteElement.attr('site_name');
-        var pluginSlug = pluginElement.attr('plugin_slug');
+        let siteId = siteElement.attr('site_id');
+        let siteName = siteElement.attr('site_name');
+        let pluginSlug = pluginElement.attr('plugin_slug');
 
         if (sitesToUpdate.indexOf(siteId) == -1) {
             sitesCount++;
@@ -730,10 +730,10 @@ updatesoverview_plugins_global_upgrade_all = function (groupId, updatesSelected)
         }
     }
 
-    var _callback = function () {
+    let _callback = function () {
 
-        for (var i = 0; i < sitesToUpdate.length; i++) {
-            var updateCount = sitesPluginSlugs[sitesToUpdate[i]].match(/,/g);
+        for (let i = 0; i < sitesToUpdate.length; i++) {
+            let updateCount = sitesPluginSlugs[sitesToUpdate[i]].match(/,/g);
             if (updateCount == null)
                 updateCount = 1;
             else
@@ -744,7 +744,7 @@ updatesoverview_plugins_global_upgrade_all = function (groupId, updatesSelected)
         updatesoverviewContinueAfterBackup = function (pSitesCount, pSitesToUpdate, pSitesPluginSlugs) {
             return function () {
 
-                var initData = {
+                let initData = {
                     title: __('Updating all'),
                     progressMax: pSitesCount
                 };
@@ -764,13 +764,13 @@ updatesoverview_plugins_global_upgrade_all = function (groupId, updatesSelected)
     // new confirm message
     if (!continueUpdating) {
         if (jQuery(siteNames).length > 0) {
-            var sitesList = [];
+            let sitesList = [];
             jQuery.each(siteNames, function (index, value) {
                 if (value) { // to fix
                     sitesList.push(decodeURIComponent(value));
                 }
             });
-            var confirmMsg = __('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', __('plugins'), sitesList.join('<br />'));
+            let confirmMsg = __('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', __('plugins'), sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return false;
@@ -783,9 +783,9 @@ updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSelecte
         return false;
 
     //Step 1: build form
-    var sitesToUpdate = [];
-    var siteNames = [];
-    var foundChildren = [];
+    let sitesToUpdate = [];
+    let siteNames = [];
+    let foundChildren = [];
 
     if (typeof updatesSelected !== 'undefined' && updatesSelected) {
         jQuery('tr[plugin_slug="' + slug + '"]').find('table tr[updated="0"]').each(
@@ -807,15 +807,15 @@ updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSelecte
         return false;
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
 
-    for (var i = 0; i < foundChildren.length; i++) {
+    for (let i = 0; i < foundChildren.length; i++) {
         if (limitUpdateAll > 0 && i >= limitUpdateAll) {
             continueUpdatesAll = 'plugins_upgrade_all';
             continueUpdatesSlug = slug;
             break;
         }
-        var child = foundChildren[i];
-        var siteId = jQuery(child).attr('site_id');
-        var siteName = jQuery(child).attr('site_name');
+        let child = foundChildren[i];
+        let siteId = jQuery(child).attr('site_id');
+        let siteName = jQuery(child).attr('site_name');
         siteNames[siteId] = siteName;
         sitesToUpdate.push(siteId);
     }
@@ -823,18 +823,18 @@ updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSelecte
     pluginName = decodeURIComponent(pluginName);
     pluginName = pluginName.replace(/\+/g, ' ');
 
-    var _callback = function () {
+    let _callback = function () {
 
-        for (var i = 0; i < sitesToUpdate.length; i++) {
+        for (let i = 0; i < sitesToUpdate.length; i++) {
             mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(decodeURIComponent(siteNames[sitesToUpdate[i]]), '<span class="updatesoverview-upgrade-status-wp" siteid="' + sitesToUpdate[i] + '">' + '<span data-inverted="" data-position="left center" data-tooltip="' + __('Pending', 'mainwp') + '"><i class="clock outline icon"></i></span> ' + '</span>');
         }
 
-        var sitesCount = sitesToUpdate.length;
+        let sitesCount = sitesToUpdate.length;
 
         updatesoverviewContinueAfterBackup = function (pSitesCount, pSlug, pSitesToUpdate) {
             return function () {
 
-                var initData = {
+                let initData = {
                     title: __('Updating %1', decodeURIComponent(pluginName)),
                     progressMax: pSitesCount
                 };
@@ -853,13 +853,13 @@ updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSelecte
     // new confirm message
     if (!continueUpdating) {
         if (siteNames.length > 0) {
-            var sitesList = [];
+            let sitesList = [];
             jQuery.each(siteNames, function (index, value) {
                 if (value) { // to fix
                     sitesList.push(decodeURIComponent(value));
                 }
             });
-            var confirmMsg = __('You are about to update the %1 plugin on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', pluginName, sitesList.join('<br />'));
+            let confirmMsg = __('You are about to update the %1 plugin on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', pluginName, sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return false;
@@ -891,21 +891,21 @@ updatesoverview_plugins_upgrade_all_upgrade_next = function () {
     currentThreads++;
     websitesLeft--;
 
-    var websiteId = websitesToUpdatePlugins[currentWebsite++];
+    let websiteId = websitesToUpdatePlugins[currentWebsite++];
 
     updatesoverview_plugins_upgrade_all_update_site_status(websiteId, '<i class="notched circle loading icon"></i>');
 
-    var slugToUpgrade = currentPluginSlugToUpgrade;
+    let slugToUpgrade = currentPluginSlugToUpgrade;
     if (slugToUpgrade == undefined)
         slugToUpgrade = websitesPluginSlugsToUpgrade[websiteId];
     updatesoverview_plugins_upgrade_int(slugToUpgrade, websiteId, true, true);
 };
 
 updatesoverview_check_to_continue_updates = function () {
-    var loc_href = location.href;
+    let loc_href = location.href;
     if (limitUpdateAll > 0 && continueUpdatesAll != '') {
         if (loc_href.indexOf("&continue_update=") == -1) {
-            var loc_href = loc_href + '&continue_update=' + continueUpdatesAll;
+            let loc_href = loc_href + '&continue_update=' + continueUpdatesAll;
             if (continueUpdatesAll == 'plugins_upgrade_all' || continueUpdatesAll == 'themes_upgrade_all' || continueUpdatesAll == 'translations_upgrade_all') {
                 loc_href += '&slug=' + continueUpdatesSlug;
             }
@@ -942,16 +942,16 @@ updatesoverview_plugins_upgrade_all_update_done = function () {
 updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noCheck) {
     updatesoverviewContinueAfterBackup = function (pSlug, pWebsiteId, pBulkMode) {
         return function () {
-            var slugParts = pSlug.split(',');
-            for (var i = 0; i < slugParts.length; i++) {
-                var websiteHolder = jQuery('.plugins-bulk-updates[plugin_slug="' + slugParts[i] + '"] tr[site_id="' + pWebsiteId + '"]');
+            let slugParts = pSlug.split(',');
+            for (let i = 0; i < slugParts.length; i++) {
+                let websiteHolder = jQuery('.plugins-bulk-updates[plugin_slug="' + slugParts[i] + '"] tr[site_id="' + pWebsiteId + '"]');
                 if (!websiteHolder.exists()) {
                     websiteHolder = jQuery('.plugins-bulk-updates[site_id="' + pWebsiteId + '"] tr[plugin_slug="' + slugParts[i] + '"]');
                 }
                 websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ' + __('Updating. Please wait...'));
             }
 
-            var data = mainwp_secure_data({
+            let data = mainwp_secure_data({
                 action: 'mainwp_upgradeplugintheme',
                 websiteId: pWebsiteId,
                 type: 'plugin',
@@ -963,18 +963,18 @@ updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noChe
                 data: data,
                 success: function (pSlug, pWebsiteId, pBulkMode) {
                     return function (response) {
-                        var slugParts = pSlug.split(',');
-                        var done = false;
-                        var success = false;
-                        var error = '';
-                        for (var i = 0; i < slugParts.length; i++) {
-                            var websiteHolder = jQuery('.plugins-bulk-updates[plugin_slug="' + slugParts[i] + '"] tr[site_id="' + pWebsiteId + '"]');
+                        let slugParts = pSlug.split(',');
+                        let done = false;
+                        let success = false;
+                        let error = '';
+                        for (let i = 0; i < slugParts.length; i++) {
+                            let websiteHolder = jQuery('.plugins-bulk-updates[plugin_slug="' + slugParts[i] + '"] tr[site_id="' + pWebsiteId + '"]');
                             if (!websiteHolder.exists()) {
                                 websiteHolder = jQuery('.plugins-bulk-updates[site_id="' + pWebsiteId + '"] tr[plugin_slug="' + slugParts[i] + '"]');
                             }
 
                             if (response.error || response.notices) {
-                                var extErr = getErrorMessageInfo(response.error, 'ui')
+                                let extErr = getErrorMessageInfo(response.error, 'ui')
                                 if (!done && pBulkMode)
                                     updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, extErr);
                                 websiteHolder.find('td:last-child').html(extErr);
@@ -982,8 +982,8 @@ updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noChe
                                     error = response.error;
                                 }
                             } else {
-                                var res = response.result;
-                                var res_error = response.result_error;
+                                let res = response.result;
+                                let res_error = response.result_error;
                                 if (res[slugParts[i]]) {
                                     if (!done && pBulkMode)
                                         updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
@@ -1013,11 +1013,11 @@ updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noChe
                 retryLimit: 3,
                 endError: function (pSlug, pWebsiteId, pBulkMode) {
                     return function () {
-                        var slugParts = pSlug.split(',');
-                        var done = false;
-                        for (var i = 0; i < slugParts.length; i++) {
+                        let slugParts = pSlug.split(',');
+                        let done = false;
+                        for (let i = 0; i < slugParts.length; i++) {
                             //Siteview
-                            var websiteHolder = jQuery('div[plugin_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
+                            let websiteHolder = jQuery('div[plugin_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
                             if (!websiteHolder.exists()) {
                                 websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[plugin_slug="' + slugParts[i] + '"]');
                             }
@@ -1038,7 +1038,7 @@ updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noChe
                         return;
                     }
 
-                    var fnc = function (pRqst, pXhr) {
+                    let fnc = function (pRqst, pXhr) {
                         return function () {
                             if (pXhr.status == 404) {
                                 //handle error
@@ -1064,8 +1064,8 @@ updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noChe
         return false;
     }
 
-    var sitesToUpdate = [websiteId];
-    var siteNames = [];
+    let sitesToUpdate = [websiteId];
+    let siteNames = [];
     siteNames[websiteId] = jQuery('div[site_id="' + websiteId + '"]').attr('site_name');
 
     return mainwp_updatesoverview_checkBackups(sitesToUpdate, siteNames);
@@ -1078,10 +1078,10 @@ updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelected) 
         return false;
 
     //Step 1: build form
-    var sitesToUpdate = [];
-    var siteNames = {};
-    var sitesPluginSlugs = {};
-    var foundChildren = [];
+    let sitesToUpdate = [];
+    let siteNames = {};
+    let sitesPluginSlugs = {};
+    let foundChildren = [];
 
     if (typeof updatesSelected !== 'undefined' && updatesSelected) {
         if (typeof groupId !== 'undefined' && false !== groupId) {
@@ -1115,22 +1115,22 @@ updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelected) 
 
     if (foundChildren.length == 0)
         return false;
-    var sitesCount = 0;
+    let sitesCount = 0;
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
 
-    for (var i = 0; i < foundChildren.length; i++) {
+    for (let i = 0; i < foundChildren.length; i++) {
         if (limitUpdateAll > 0 && i >= limitUpdateAll && typeof groupId === 'undefined') {
             continueUpdatesAll = 'themes_global_upgrade_all';
             break;
         }
-        var child = jQuery(foundChildren[i]);
-        var parent = child.parent(); // to fix
+        let child = jQuery(foundChildren[i]);
+        let parent = child.parent(); // to fix
 
-        var siteElement;
-        var themeElement;
+        let siteElement;
+        let themeElement;
 
-        var checkAttr = child.attr('site_id');
+        let checkAttr = child.attr('site_id');
         if ((typeof checkAttr !== 'undefined') && (checkAttr !== false)) {
             siteElement = child;
             themeElement = parent;
@@ -1139,9 +1139,9 @@ updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelected) 
             themeElement = child;
         }
 
-        var siteId = siteElement.attr('site_id');
-        var siteName = siteElement.attr('site_name');
-        var themeSlug = themeElement.attr('theme_slug');
+        let siteId = siteElement.attr('site_id');
+        let siteName = siteElement.attr('site_name');
+        let themeSlug = themeElement.attr('theme_slug');
 
         if (sitesToUpdate.indexOf(siteId) == -1) {
             sitesCount++;
@@ -1155,10 +1155,10 @@ updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelected) 
         }
     }
 
-    var _callback = function () {
+    let _callback = function () {
 
-        for (var i = 0; i < sitesToUpdate.length; i++) {
-            var updateCount = sitesPluginSlugs[sitesToUpdate[i]].match(/,/g);
+        for (let i = 0; i < sitesToUpdate.length; i++) {
+            let updateCount = sitesPluginSlugs[sitesToUpdate[i]].match(/,/g);
             if (updateCount == null)
                 updateCount = 1;
             else
@@ -1169,7 +1169,7 @@ updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelected) 
         updatesoverviewContinueAfterBackup = function (pSitesCount, pSitesToUpdate, pSitesPluginSlugs) {
             return function () {
 
-                var initData = {
+                let initData = {
                     title: __('Updating all...'),
                     progressMax: pSitesCount
                 };
@@ -1188,13 +1188,13 @@ updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelected) 
     // new confirm message
     if (!continueUpdating) {
         if (jQuery(siteNames).length > 0) {
-            var sitesList = [];
+            let sitesList = [];
             jQuery.each(siteNames, function (index, value) {
                 if (value) { // to fix
                     sitesList.push(decodeURIComponent(value));
                 }
             });
-            var confirmMsg = __('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', __('themes'), sitesList.join('<br />'));
+            let confirmMsg = __('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', __('themes'), sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return false;
@@ -1204,7 +1204,7 @@ updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelected) 
 };
 
 updates_please_select_items_notice = function () {
-    var msg = __('Please, select items to update.');
+    let msg = __('Please, select items to update.');
     jQuery('#mainwp-modal-confirm-select .content-massage').html(msg);
     jQuery('#mainwp-modal-confirm-select').modal('show');
     return false;
@@ -1215,9 +1215,9 @@ updatesoverview_themes_upgrade_all = function (slug, themeName, updatesSelected)
         return false;
 
     //Step 1: build form
-    var sitesToUpdate = [];
-    var siteNames = [];
-    var foundChildren = [];
+    let sitesToUpdate = [];
+    let siteNames = [];
+    let foundChildren = [];
     if (typeof updatesSelected !== 'undefined' && updatesSelected) {
         jQuery('tr[theme_slug="' + slug + '"]').find('table tr[updated="0"]').each(
             function () {
@@ -1240,15 +1240,15 @@ updatesoverview_themes_upgrade_all = function (slug, themeName, updatesSelected)
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
 
-    for (var i = 0; i < foundChildren.length; i++) {
+    for (let i = 0; i < foundChildren.length; i++) {
         if (limitUpdateAll > 0 && i >= limitUpdateAll) {
             continueUpdatesAll = 'themes_upgrade_all';
             continueUpdatesSlug = slug;
             break;
         }
-        var child = foundChildren[i];
-        var siteId = jQuery(child).attr('site_id');
-        var siteName = jQuery(child).attr('site_name');
+        let child = foundChildren[i];
+        let siteId = jQuery(child).attr('site_id');
+        let siteName = jQuery(child).attr('site_name');
         siteNames[siteId] = siteName;
         sitesToUpdate.push(siteId);
         mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(decodeURIComponent(siteName), '<span class="updatesoverview-upgrade-status-wp" siteid="' + siteId + '">' + '<i class="clock outline icon"></i> ' + '</span>');
@@ -1257,14 +1257,14 @@ updatesoverview_themes_upgrade_all = function (slug, themeName, updatesSelected)
     themeName = decodeURIComponent(themeName);
     themeName = themeName.replace(/\+/g, ' ');
 
-    var _callback = function () {
+    let _callback = function () {
 
-        var sitesCount = sitesToUpdate.length;
+        let sitesCount = sitesToUpdate.length;
         updatesoverviewContinueAfterBackup = function (pSitesCount, pSlug, pSitesToUpdate) {
             return function () {
                 //Step 2: show form
 
-                var initData = {
+                let initData = {
                     title: __('Updating %1', decodeURIComponent(themeName)),
                     progressMax: pSitesCount
                 };
@@ -1283,13 +1283,13 @@ updatesoverview_themes_upgrade_all = function (slug, themeName, updatesSelected)
     // new confirm message
     if (!continueUpdating) {
         if (jQuery(siteNames).length > 0) {
-            var sitesList = [];
+            let sitesList = [];
             jQuery.each(siteNames, function (index, value) {
                 if (value) { // to fix
                     sitesList.push(decodeURIComponent(value));
                 }
             });
-            var confirmMsg = __('You are about to update the %1 theme on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', themeName, sitesList.join('<br />'));
+            let confirmMsg = __('You are about to update the %1 theme on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', themeName, sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return false;
@@ -1320,10 +1320,10 @@ updatesoverview_themes_upgrade_all_upgrade_next = function () {
     currentThreads++;
     websitesLeft--;
 
-    var websiteId = websitesToUpdate[currentWebsite++];
+    let websiteId = websitesToUpdate[currentWebsite++];
     updatesoverview_themes_upgrade_all_update_site_status(websiteId, '<i class="notched circle loading icon"></i>');
 
-    var slugToUpgrade = currentThemeSlugToUpgrade;
+    let slugToUpgrade = currentThemeSlugToUpgrade;
     if (slugToUpgrade == undefined)
         slugToUpgrade = websitesThemeSlugsToUpgrade[websiteId];
     updatesoverview_themes_upgrade_int(slugToUpgrade, websiteId, true);
@@ -1344,9 +1344,9 @@ updatesoverview_themes_upgrade_all_update_done = function () {
     updatesoverview_themes_upgrade_all_loop_next();
 };
 updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
-    var slugParts = slug.split(',');
-    for (var i = 0; i < slugParts.length; i++) {
-        var websiteHolder = jQuery('.themes-bulk-updates[theme_slug="' + slugParts[i] + '"] tr[site_id="' + websiteId + '"]');
+    let slugParts = slug.split(',');
+    for (let i = 0; i < slugParts.length; i++) {
+        let websiteHolder = jQuery('.themes-bulk-updates[theme_slug="' + slugParts[i] + '"] tr[site_id="' + websiteId + '"]');
         if (!websiteHolder.exists()) {
             websiteHolder = jQuery('.themes-bulk-updates[site_id="' + websiteId + '"] tr[theme_slug="' + slugParts[i] + '"]');
         }
@@ -1354,7 +1354,7 @@ updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
 
     }
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_upgradeplugintheme',
         websiteId: websiteId,
         type: 'theme',
@@ -1366,24 +1366,24 @@ updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
         data: data,
         success: function (pSlug, pWebsiteId, pBulkMode) {
             return function (response) {
-                var slugParts = pSlug.split(',');
-                var done = false;
-                var success = false;
-                var error = '';
-                for (var i = 0; i < slugParts.length; i++) {
-                    var websiteHolder = jQuery('.themes-bulk-updates[theme_slug="' + slugParts[i] + '"] tr[site_id="' + websiteId + '"]');
+                let slugParts = pSlug.split(',');
+                let done = false;
+                let success = false;
+                let error = '';
+                for (let i = 0; i < slugParts.length; i++) {
+                    let websiteHolder = jQuery('.themes-bulk-updates[theme_slug="' + slugParts[i] + '"] tr[site_id="' + websiteId + '"]');
                     if (!websiteHolder.exists()) {
                         websiteHolder = jQuery('.themes-bulk-updates[site_id="' + websiteId + '"] tr[theme_slug="' + slugParts[i] + '"]');
                     }
 
                     if (response.error) {
-                        var extErr = getErrorMessageInfo(response.error, 'ui')
+                        let extErr = getErrorMessageInfo(response.error, 'ui')
                         if (!done && pBulkMode)
                             updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, extErr);
                         websiteHolder.find('td:last-child').html(extErr);
                         error = getErrorMessageInfo(response.error);
                     } else {
-                        var res = response.result;
+                        let res = response.result;
 
                         if (res[slugParts[i]]) {
                             if (!done && pBulkMode)
@@ -1411,10 +1411,10 @@ updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
         retryLimit: 3,
         endError: function (pSlug, pWebsiteId, pBulkMode) {
             return function () {
-                var slugParts = pSlug.split(',');
-                var done = false;
-                for (var i = 0; i < slugParts.length; i++) {
-                    var websiteHolder = jQuery('div[theme_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
+                let slugParts = pSlug.split(',');
+                let done = false;
+                for (let i = 0; i < slugParts.length; i++) {
+                    let websiteHolder = jQuery('div[theme_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
                     if (!websiteHolder.exists()) {
                         websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + slugParts[i] + '"]');
                     }
@@ -1435,7 +1435,7 @@ updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
                 return;
             }
 
-            var fnc = function (pRqst, pXhr) {
+            let fnc = function (pRqst, pXhr) {
                 return function () {
                     if (pXhr.status == 404) {
                         //handle error
@@ -1463,26 +1463,26 @@ updatesoverview_global_upgrade_all = function (which) {
         return false;
 
     //Step 1: build form
-    var sitesToUpdate = [];
-    var sitesToUpgrade = [];
-    var sitesPluginSlugs = {};
-    var sitesThemeSlugs = {};
-    var sitesTranslationSlugs = {};
-    var siteNames = {};
+    let sitesToUpdate = [];
+    let sitesToUpgrade = [];
+    let sitesPluginSlugs = {};
+    let sitesThemeSlugs = {};
+    let sitesTranslationSlugs = {};
+    let siteNames = {};
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
 
-    var sitesCount = 0;
-    var foundChildren = undefined;
+    let sitesCount = 0;
+    let foundChildren = undefined;
 
     if (which == 'all' || which == 'wp') {
         //Find wordpress to update
         foundChildren = jQuery('#wp_upgrades').find('div[updated="0"]');
         if (foundChildren.length != 0) {
-            for (var i = 0; i < foundChildren.length; i++) {
-                var child = jQuery(foundChildren[i]);
-                var siteId = child.attr('site_id');
-                var siteName = child.attr('site_name');
+            for (let i = 0; i < foundChildren.length; i++) {
+                let child = jQuery(foundChildren[i]);
+                let siteId = child.attr('site_id');
+                let siteName = child.attr('site_name');
                 if (sitesToUpdate.indexOf(siteId) == -1) {
                     sitesCount++;
                     sitesToUpdate.push(siteId);
@@ -1498,13 +1498,13 @@ updatesoverview_global_upgrade_all = function (which) {
         //Find plugins to update
         foundChildren = jQuery('#wp_plugin_upgrades').find('div[updated="0"]');
         if (foundChildren.length != 0) {
-            for (var i = 0; i < foundChildren.length; i++) {
-                var child = jQuery(foundChildren[i]);
+            for (let i = 0; i < foundChildren.length; i++) {
+                let child = jQuery(foundChildren[i]);
                 siteElement = child;
 
-                var siteId = siteElement.attr('site_id');
-                var siteName = siteElement.attr('site_name');
-                var pluginSlug = siteElement.attr('plugin_slug');
+                let siteId = siteElement.attr('site_id');
+                let siteName = siteElement.attr('site_name');
+                let pluginSlug = siteElement.attr('plugin_slug');
 
                 if (sitesToUpdate.indexOf(siteId) == -1) {
                     sitesCount++;
@@ -1525,13 +1525,13 @@ updatesoverview_global_upgrade_all = function (which) {
         //Find themes to update
         foundChildren = jQuery('#wp_theme_upgrades').find('div[updated="0"]');
         if (foundChildren.length != 0) {
-            for (var i = 0; i < foundChildren.length; i++) {
-                var child = jQuery(foundChildren[i]);
-                var siteElement = child;
+            for (let i = 0; i < foundChildren.length; i++) {
+                let child = jQuery(foundChildren[i]);
+                let siteElement = child;
 
-                var siteId = siteElement.attr('site_id');
-                var siteName = siteElement.attr('site_name');
-                var themeSlug = siteElement.attr('theme_slug');
+                let siteId = siteElement.attr('site_id');
+                let siteName = siteElement.attr('site_name');
+                let themeSlug = siteElement.attr('theme_slug');
 
                 if (sitesToUpdate.indexOf(siteId) == -1) {
                     sitesCount++;
@@ -1552,13 +1552,13 @@ updatesoverview_global_upgrade_all = function (which) {
         //Find translation to update
         foundChildren = jQuery('#wp_translation_upgrades').find('div[updated="0"]');
         if (foundChildren.length != 0) {
-            for (var i = 0; i < foundChildren.length; i++) {
-                var child = jQuery(foundChildren[i]);
-                var siteElement = child;
+            for (let i = 0; i < foundChildren.length; i++) {
+                let child = jQuery(foundChildren[i]);
+                let siteElement = child;
 
-                var siteId = siteElement.attr('site_id');
-                var siteName = siteElement.attr('site_name');
-                var transSlug = siteElement.attr('translation_slug');
+                let siteId = siteElement.attr('site_id');
+                let siteName = siteElement.attr('site_name');
+                let transSlug = siteElement.attr('translation_slug');
 
                 if (sitesToUpdate.indexOf(siteId) == -1) {
                     sitesCount++;
@@ -1575,18 +1575,18 @@ updatesoverview_global_upgrade_all = function (which) {
         }
     }
 
-    var _callback = function () {
+    let _callback = function () {
         //Build form
-        for (var j = 0; j < sitesToUpdate.length; j++) {
-            var siteId = sitesToUpdate[j];
+        for (let j = 0; j < sitesToUpdate.length; j++) {
+            let siteId = sitesToUpdate[j];
 
-            var whatToUpgrade = '';
+            let whatToUpgrade = '';
 
             if (sitesToUpgrade.indexOf(siteId) != -1)
                 whatToUpgrade = '<span class="wordpress">WordPress core files</span>';
 
             if (sitesPluginSlugs[siteId] != undefined) {
-                var updateCount = sitesPluginSlugs[siteId].match(/,/g);
+                let updateCount = sitesPluginSlugs[siteId].match(/,/g);
                 if (updateCount == null)
                     updateCount = 1;
                 else
@@ -1599,7 +1599,7 @@ updatesoverview_global_upgrade_all = function (which) {
             }
 
             if (sitesThemeSlugs[siteId] != undefined) {
-                var updateCount = sitesThemeSlugs[siteId].match(/,/g);
+                let updateCount = sitesThemeSlugs[siteId].match(/,/g);
                 if (updateCount == null)
                     updateCount = 1;
                 else
@@ -1613,7 +1613,7 @@ updatesoverview_global_upgrade_all = function (which) {
 
 
             if (sitesTranslationSlugs[siteId] != undefined) {
-                var updateCount = sitesTranslationSlugs[siteId].match(/,/g);
+                let updateCount = sitesTranslationSlugs[siteId].match(/,/g);
                 if (updateCount == null)
                     updateCount = 1;
                 else
@@ -1631,7 +1631,7 @@ updatesoverview_global_upgrade_all = function (which) {
             return function () {
                 //Step 2: show form
 
-                var initData = {
+                let initData = {
                     title: __('Updating All'),
                     progressMax: pSitesCount
                 };
@@ -1649,14 +1649,14 @@ updatesoverview_global_upgrade_all = function (which) {
 
     // new confirm message
     if (jQuery(siteNames).length > 0) {
-        var sitesList = [];
+        let sitesList = [];
         jQuery.each(siteNames, function (index, value) {
             if (value) { // to fix
                 sitesList.push(decodeURIComponent(value));
             }
         });
 
-        var whichUpdates = __('WordPress core files, plugins, themes and translations');
+        let whichUpdates = __('WordPress core files, plugins, themes and translations');
         if (which == 'wp') {
             whichUpdates = __('WordPress core files');
         } else if (which == 'plugin') {
@@ -1667,7 +1667,7 @@ updatesoverview_global_upgrade_all = function (which) {
             whichUpdates = __('translations');
         }
 
-        var confirmMsg = __('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', whichUpdates, sitesList.join('<br />'));
+        let confirmMsg = __('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', whichUpdates, sitesList.join('<br />'));
 
         mainwp_confirm(confirmMsg, _callback, false, 2);
         return false;
@@ -1716,13 +1716,13 @@ updatesoverview_upgrade_all_upgrade_next = function () {
     currentThreads++;
     websitesLeft--;
 
-    var websiteId = websitesToUpdate[currentWebsite++];
+    let websiteId = websitesToUpdate[currentWebsite++];
     updatesoverview_upgrade_all_update_site_status(websiteId, '<i class="notched circle loading icon"></i>');
 
-    var themeSlugToUpgrade = websitesThemeSlugsToUpgrade[websiteId];
-    var pluginSlugToUpgrade = websitesPluginSlugsToUpgrade[websiteId];
-    var transSlugToUpgrade = websitesTransSlugsToUpgrade[websiteId];
-    var wordpressUpgrade = (websitesToUpgrade.indexOf(websiteId) != -1);
+    let themeSlugToUpgrade = websitesThemeSlugsToUpgrade[websiteId];
+    let pluginSlugToUpgrade = websitesPluginSlugsToUpgrade[websiteId];
+    let transSlugToUpgrade = websitesTransSlugsToUpgrade[websiteId];
+    let wordpressUpgrade = (websitesToUpgrade.indexOf(websiteId) != -1);
 
     updatesoverview_upgrade_int(websiteId, themeSlugToUpgrade, pluginSlugToUpgrade, wordpressUpgrade, transSlugToUpgrade);
 };
@@ -1760,7 +1760,7 @@ updatesoverview_upgrade_all_update_done = function () {
 
 updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone) {
     if (!pThemeDone) {
-        var data = mainwp_secure_data({
+        let data = mainwp_secure_data({
             action: 'mainwp_upgradeplugintheme',
             websiteId: pWebsiteId,
             type: 'theme',
@@ -1773,12 +1773,12 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
             data: data,
             success: function (pWebsiteId, pSlug, pPluginSlugToUpgrade, pWordpressUpgrade, pPluginDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone) {
                 return function (response) {
-                    var slugParts = pSlug.split(',');
-                    var success = false;
-                    for (var i = 0; i < slugParts.length; i++) {
-                        var result;
+                    let slugParts = pSlug.split(',');
+                    let success = false;
+                    for (let i = 0; i < slugParts.length; i++) {
+                        let result;
                         success = false;
-                        var websiteHolder = jQuery('div[theme_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
+                        let websiteHolder = jQuery('div[theme_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
                         if (!websiteHolder.exists()) {
                             websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[theme_slug="' + slugParts[i] + '"]');
                         }
@@ -1786,7 +1786,7 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                             result = getErrorMessage(response.error);
                             pErrorMessage = result;
                         } else {
-                            var res = response.result;
+                            let res = response.result;
 
                             if (res[slugParts[i]]) {
                                 websiteHolder.attr('updated', 1);
@@ -1801,7 +1801,7 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                     updatesoverview_upgrade_all_update_site_bold(pWebsiteId, 'theme');
 
                     //If all done: continue, else delay 400ms to not stress the server
-                    var fnc = function () {
+                    let fnc = function () {
                         updatesoverview_upgrade_int_loop_flow(pWebsiteId, pSlug, pPluginSlugToUpgrade, pWordpressUpgrade, true, pPluginDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone);
                     };
 
@@ -1825,7 +1825,7 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                     return;
                 }
 
-                var fnc = function (pRqst, pXhr) {
+                let fnc = function (pRqst, pXhr) {
                     return function () {
                         if (pXhr.status == 404) {
                             //handle error
@@ -1842,7 +1842,7 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
             dataType: 'json'
         });
     } else if (!pPluginDone) {
-        var data = mainwp_secure_data({
+        let data = mainwp_secure_data({
             action: 'mainwp_upgradeplugintheme',
             websiteId: pWebsiteId,
             type: 'plugin',
@@ -1855,12 +1855,12 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
             data: data,
             success: function (pWebsiteId, pThemeSlugToUpgrade, pSlug, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone) {
                 return function (response) {
-                    var slugParts = pSlug.split(',');
-                    var success = false;
-                    for (var i = 0; i < slugParts.length; i++) {
-                        var result;
+                    let slugParts = pSlug.split(',');
+                    let success = false;
+                    for (let i = 0; i < slugParts.length; i++) {
+                        let result;
                         success = false;
-                        var websiteHolder = jQuery('div[plugin_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
+                        let websiteHolder = jQuery('div[plugin_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
                         if (!websiteHolder.exists()) {
                             websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[plugin_slug="' + slugParts[i] + '"]');
                         }
@@ -1869,8 +1869,8 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                             pErrorMessage = result;
                         }
                         else {
-                            var res = response.result;   // result is an object     
-                            var res_error = response.result_error;
+                            let res = response.result;   // result is an object     
+                            let res_error = response.result_error;
                             if (res[encodeURIComponent(slugParts[i])]) {
                                 websiteHolder.attr('updated', 1);
                                 success = true;
@@ -1885,7 +1885,7 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                     updatesoverview_upgrade_all_update_site_bold(pWebsiteId, 'plugin');
 
                     //If all done: continue, else delay 400ms to not stress the server
-                    var fnc = function () {
+                    let fnc = function () {
                         updatesoverview_upgrade_int_loop_flow(pWebsiteId, pThemeSlugToUpgrade, pSlug, pWordpressUpgrade, pThemeDone, true, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone);
                     };
 
@@ -1909,7 +1909,7 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                     return;
                 }
 
-                var fnc = function (pRqst, pXhr) {
+                let fnc = function (pRqst, pXhr) {
                     return function () {
                         if (pXhr.status == 404) {
                             //handle error
@@ -1926,7 +1926,7 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
             dataType: 'json'
         });
     } else if (!pUpgradeDone) {
-        var data = mainwp_secure_data({
+        let data = mainwp_secure_data({
             action: 'mainwp_upgradewp',
             id: pWebsiteId
         });
@@ -1937,9 +1937,9 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
             data: data,
             success: function (WebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pErrorMessage, pTransSlugToUpgrade, pTransDone) {
                 return function (response) {
-                    var result;
-                    var websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"]');
-                    var success = false;
+                    let result;
+                    let websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"]');
+                    let success = false;
                     if (response.error) {
                         result = getErrorMessage(response.error);
                         pErrorMessage = result;
@@ -1952,7 +1952,7 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                     updatesoverview_upgrade_all_update_site_bold(pWebsiteId, 'wordpress');
 
                     //If all done: continue, else delay 400ms to not stress the server
-                    var fnc = function () {
+                    let fnc = function () {
                         updatesoverview_upgrade_int_loop_flow(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, true, pErrorMessage, pTransSlugToUpgrade, pTransDone);
                     };
 
@@ -1976,7 +1976,7 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                     return;
                 }
 
-                var fnc = function (pRqst, pXhr) {
+                let fnc = function (pRqst, pXhr) {
                     return function () {
                         if (pXhr.status == 404) {
                             //handle error
@@ -1993,7 +1993,7 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
             dataType: 'json'
         });
     } else if (!pTransDone) {
-        var data = mainwp_secure_data({
+        let data = mainwp_secure_data({
             action: 'mainwp_upgradeplugintheme',
             websiteId: pWebsiteId,
             type: 'translation',
@@ -2006,12 +2006,12 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
             data: data,
             success: function (pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pSlug) {
                 return function (response) {
-                    var slugParts = pSlug.split(',');
-                    var success;
-                    for (var i = 0; i < slugParts.length; i++) {
-                        var result;
+                    let slugParts = pSlug.split(',');
+                    let success;
+                    for (let i = 0; i < slugParts.length; i++) {
+                        let result;
                         success = false;
-                        var websiteHolder = jQuery('div[translation_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
+                        let websiteHolder = jQuery('div[translation_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]');
                         if (!websiteHolder.exists()) {
                             websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[translation_slug="' + slugParts[i] + '"]');
                         }
@@ -2019,7 +2019,7 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                             result = getErrorMessage(response.error);
                             pErrorMessage = result;
                         } else {
-                            var res = response.result;
+                            let res = response.result;
                             if (res[slugParts[i]]) {
                                 websiteHolder.attr('updated', 1);
                                 success = true;
@@ -2034,7 +2034,7 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                     updatesoverview_upgrade_all_update_site_bold(pWebsiteId, 'translation');
 
                     //If all done: continue, else delay 400ms to not stress the server
-                    var fnc = function () {
+                    let fnc = function () {
                         updatesoverview_upgrade_int_loop_flow(pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pErrorMessage, pSlug, true);
                     };
 
@@ -2058,7 +2058,7 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                     return;
                 }
 
-                var fnc = function (pRqst, pXhr) {
+                let fnc = function (pRqst, pXhr) {
                     return function () {
                         if (pXhr.status == 404) {
                             //handle error
@@ -2107,14 +2107,14 @@ updatesoverview_themes_unignore_abandoned_detail_all = function () {
 };
 
 updatesoverview_dismiss_outdate_plugintheme_by_site = function (what, slug, name, id, pObj) {
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_dismissoutdateplugintheme',
         type: what,
         id: id,
         slug: slug,
         name: name
     });
-    var parent = jQuery(pObj).closest('tr');
+    let parent = jQuery(pObj).closest('tr');
     parent.find('td:last-child').html(__('Ignoring...'));
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
@@ -2130,7 +2130,7 @@ updatesoverview_dismiss_outdate_plugintheme_by_site = function (what, slug, name
 
 // Unignore abandoned Plugin/Theme ignored per site basis
 updatesoverview_unignore_plugintheme_abandoned_by_site = function (what, slug, id) {
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_unignoreabandonedplugintheme',
         type: what,
         id: id,
@@ -2140,7 +2140,7 @@ updatesoverview_unignore_plugintheme_abandoned_by_site = function (what, slug, i
     jQuery.post(ajaxurl, data, function (pWhat, pSlug, pId) {
         return function (response) {
             if (response.result) {
-                var siteElement;
+                let siteElement;
                 if (pWhat == 'plugin') {
                     siteElement = jQuery('tr[site-id="' + pId + '"][plugin-slug="' + pSlug + '"]');
                 } else {
@@ -2154,7 +2154,7 @@ updatesoverview_unignore_plugintheme_abandoned_by_site = function (what, slug, i
 
                 //Check if previous tr is same site..
                 //Check if next tr is same site..
-                var siteAfter = siteElement.next();
+                let siteAfter = siteElement.next();
 
                 if (siteAfter.exists() && (siteAfter.attr('site-id') == pId)) {
                     siteAfter.find('div').show();
@@ -2162,7 +2162,7 @@ updatesoverview_unignore_plugintheme_abandoned_by_site = function (what, slug, i
                     return;
                 }
 
-                var parent = siteElement.parent();
+                let parent = siteElement.parent();
 
                 siteElement.remove();
 
@@ -2178,7 +2178,7 @@ updatesoverview_unignore_plugintheme_abandoned_by_site = function (what, slug, i
 
 // Unignore all per site ignored abandoned Plugins / Themese
 updatesoverview_unignore_plugintheme_abandoned_by_site_all = function (what) {
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_unignoreabandonedplugintheme',
         type: what,
         id: '_ALL_',
@@ -2188,7 +2188,7 @@ updatesoverview_unignore_plugintheme_abandoned_by_site_all = function (what) {
     jQuery.post(ajaxurl, data, function (pWhat) {
         return function (response) {
             if (response.result) {
-                var tableElement = jQuery('#ignored-abandoned-' + pWhat + 's-list');
+                let tableElement = jQuery('#ignored-abandoned-' + pWhat + 's-list');
                 tableElement.find('tr').remove();
                 tableElement.append('<tr><td colspan="999">' + __('No ignored abandoned %1s', pWhat) + '</td></tr>');
                 jQuery('#mainwp-unignore-detail-all').addClass('disabled');
@@ -2199,9 +2199,9 @@ updatesoverview_unignore_plugintheme_abandoned_by_site_all = function (what) {
 };
 
 updatesoverview_plugins_abandoned_ignore_all = function (slug, name, pObj) {
-    var parent = jQuery(pObj).closest('tr');
+    let parent = jQuery(pObj).closest('tr');
     parent.find('td:last-child').html(__('Ignoring...'));
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_dismissoutdatepluginsthemes',
         type: 'plugin',
         slug: slug,
@@ -2222,7 +2222,7 @@ updatesoverview_plugins_abandoned_ignore_all = function (slug, name, pObj) {
 // Unignore all globally ignored abandoned plugins
 updatesoverview_plugins_abandoned_unignore_globally_all = function () {
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_unignoreabandonedpluginsthemes',
         type: 'plugin',
         slug: '_ALL_'
@@ -2230,7 +2230,7 @@ updatesoverview_plugins_abandoned_unignore_globally_all = function () {
 
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
-            var tableElement = jQuery('#ignored-globally-abandoned-plugins-list');
+            let tableElement = jQuery('#ignored-globally-abandoned-plugins-list');
             tableElement.find('tr').remove();
             jQuery('#mainwp-unignore-globally-all').addClass('disabled');
             tableElement.append('<tr><td colspan="999">' + __('No ignored abandoned plugins.') + '</td></tr>');
@@ -2244,7 +2244,7 @@ updatesoverview_plugins_abandoned_unignore_globally_all = function () {
 // Unignore globally ignored abandoned plugin
 updatesoverview_plugins_abandoned_unignore_globally = function (slug) {
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_unignoreabandonedpluginsthemes',
         type: 'plugin',
         slug: slug
@@ -2252,8 +2252,8 @@ updatesoverview_plugins_abandoned_unignore_globally = function (slug) {
 
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
-            var ignoreElement = jQuery('#ignored-globally-abandoned-plugins-list tr[plugin-slug="' + slug + '"]');
-            var parent = ignoreElement.parent();
+            let ignoreElement = jQuery('#ignored-globally-abandoned-plugins-list tr[plugin-slug="' + slug + '"]');
+            let parent = ignoreElement.parent();
             ignoreElement.remove();
             if (parent.children('tr').length == 0) {
                 jQuery('.mainwp-unignore-globally-all').addClass('disabled');
@@ -2264,10 +2264,10 @@ updatesoverview_plugins_abandoned_unignore_globally = function (slug) {
     return false;
 };
 updatesoverview_themes_abandoned_ignore_all = function (slug, name, pObj) {
-    var parent = jQuery(pObj).closest('tr');
+    let parent = jQuery(pObj).closest('tr');
     parent.find('td:last-child').html(__('Ignoring...'));
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_dismissoutdatepluginsthemes',
         type: 'theme',
         slug: slug,
@@ -2287,7 +2287,7 @@ updatesoverview_themes_abandoned_ignore_all = function (slug, name, pObj) {
 
 // Unignore all globablly ignored themes
 updatesoverview_themes_abandoned_unignore_globally_all = function () {
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_unignoreabandonedpluginsthemes',
         type: 'theme',
         slug: '_ALL_'
@@ -2295,7 +2295,7 @@ updatesoverview_themes_abandoned_unignore_globally_all = function () {
 
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
-            var tableElement = jQuery('#globally-ignored-themes-list');
+            let tableElement = jQuery('#globally-ignored-themes-list');
             tableElement.find('tr').remove();
             jQuery('.mainwp-unignore-globally-all').addClass('disabled');
             tableElement.append('<tr><td colspan="999">' + __('No ignored abandoned themes.') + '</td></tr>');
@@ -2307,7 +2307,7 @@ updatesoverview_themes_abandoned_unignore_globally_all = function () {
 
 // Unignore globally ignored theme
 updatesoverview_themes_abandoned_unignore_globally = function (slug) {
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_unignoreabandonedpluginsthemes',
         type: 'theme',
         slug: slug
@@ -2315,8 +2315,8 @@ updatesoverview_themes_abandoned_unignore_globally = function (slug) {
 
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
-            var ignoreElement = jQuery('#globally-ignored-themes-list tr[theme-slug="' + slug + '"]');
-            var parent = ignoreElement.parent();
+            let ignoreElement = jQuery('#globally-ignored-themes-list tr[theme-slug="' + slug + '"]');
+            let parent = ignoreElement.parent();
             ignoreElement.remove();
             if (parent.children('tr').length == 0) {
                 jQuery('.mainwp-unignore-globally-all').addClass('disabled');
@@ -2332,7 +2332,7 @@ mainwp_siteview_onchange = function (me) {
     jQuery(me).closest("form").submit();
 }
 
-jQuery(document).ready(function () {
+jQuery(function(){
     if (jQuery('#updatesoverview_limit_updates_all').length > 0 && jQuery('#updatesoverview_limit_updates_all').val() > 0) {
         limitUpdateAll = jQuery('#updatesoverview_limit_updates_all').val();
         if (jQuery('.updatesoverview_continue_update_me').length > 0) {
@@ -2343,7 +2343,7 @@ jQuery(document).ready(function () {
 });
 
 updatesoverview_recheck_http = function (elem, id) {
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_recheck_http',
         websiteid: id
     });
@@ -2352,7 +2352,7 @@ updatesoverview_recheck_http = function (elem, id) {
     jQuery.post(ajaxurl, data, function (response) {
         jQuery(elem).prop("disabled", false);
         if (response) {
-            var hc = (response && response.httpcode) ? response.httpcode : '';
+            let hc = (response && response.httpcode) ? response.httpcode : '';
             jQuery('#wp_http_response_code_' + id + ' .http-code').html('HTTP ' + hc);
             if (response.status) {
                 jQuery('#wp_http_response_code_' + id).addClass('http-response-ok');
@@ -2367,7 +2367,7 @@ updatesoverview_recheck_http = function (elem, id) {
 };
 
 updatesoverview_ignore_http_response = function (elem, id) {
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_ignore_http_response',
         websiteid: id
     });
@@ -2383,7 +2383,7 @@ updatesoverview_ignore_http_response = function (elem, id) {
 };
 
 updatesoverview_ignore_plugintheme_by_site = function (what, slug, name, id, pObj) {
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_ignoreplugintheme',
         type: what,
         id: id,
@@ -2392,7 +2392,7 @@ updatesoverview_ignore_plugintheme_by_site = function (what, slug, name, id, pOb
     });
 
     jQuery.post(ajaxurl, data, function (response) {
-        var parent = jQuery(pObj).closest('tr');
+        let parent = jQuery(pObj).closest('tr');
         if (response.result) {
             jQuery('div[' + what + '_slug="' + slug + '"] div[site_id="' + id + '"]').attr('updated', '-1'); // ok
             parent.attr('updated', '-1');
@@ -2406,7 +2406,7 @@ updatesoverview_ignore_plugintheme_by_site = function (what, slug, name, id, pOb
 
 // Unignore Plugin / Themse ignored per site
 updatesoverview_unignore_plugintheme_by_site = function (what, slug, id) {
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_unignoreplugintheme',
         type: what,
         id: id,
@@ -2416,7 +2416,7 @@ updatesoverview_unignore_plugintheme_by_site = function (what, slug, id) {
     jQuery.post(ajaxurl, data, function (pWhat, pSlug, pId) {
         return function (response) {
             if (response.result) {
-                var siteElement;
+                let siteElement;
                 if (pWhat == 'plugin') {
                     siteElement = jQuery('tr[site-id="' + pId + '"][plugin-slug="' + pSlug + '"]');
                 } else {
@@ -2431,7 +2431,7 @@ updatesoverview_unignore_plugintheme_by_site = function (what, slug, id) {
 
                 //Check if previous tr is same site..
                 //Check if next tr is same site..
-                var siteAfter = siteElement.next();
+                let siteAfter = siteElement.next();
                 if (siteAfter.exists() && (siteAfter.attr('site-id') == pId)) {
                     siteAfter.find('div').show();
                     mainwp_responsive_fix_remove_child_row(siteElement);
@@ -2439,7 +2439,7 @@ updatesoverview_unignore_plugintheme_by_site = function (what, slug, id) {
                     return;
                 }
 
-                var parent = siteElement.parent();
+                let parent = siteElement.parent();
                 mainwp_responsive_fix_remove_child_row(siteElement);
                 siteElement.remove();
                 if (parent.children('tr').length == 0) {
@@ -2455,7 +2455,7 @@ updatesoverview_unignore_plugintheme_by_site = function (what, slug, id) {
 
 // Unignore all Plugins / Themses ignored per site
 updatesoverview_unignore_plugintheme_by_site_all = function (what) {
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_unignoreplugintheme',
         type: what,
         id: '_ALL_',
@@ -2465,7 +2465,7 @@ updatesoverview_unignore_plugintheme_by_site_all = function (what) {
     jQuery.post(ajaxurl, data, function (pWhat) {
         return function (response) {
             if (response.result) {
-                var tableElement = jQuery('#ignored-' + pWhat + 's-list');
+                let tableElement = jQuery('#ignored-' + pWhat + 's-list');
                 tableElement.find('tr').remove();
                 tableElement.append('<tr><td colspan="999">' + __('No ignored %1s', pWhat) + '</td></tr>');
                 jQuery('.mainwp-unignore-detail-all').addClass('disabled');
@@ -2482,7 +2482,7 @@ updatesoverview_translations_detail = function (slug) {
 };
 
 updatesoverview_plugins_ignore_detail = function (slug, name, id, obj) {
-    var msg = __('Are you sure you want to ignore the %1 plugin updates? The updates will no longer be visible in your MainWP Dashboard.', name);
+    let msg = __('Are you sure you want to ignore the %1 plugin updates? The updates will no longer be visible in your MainWP Dashboard.', name);
     mainwp_confirm(msg, function () {
         return updatesoverview_ignore_plugintheme_by_site('plugin', slug, name, id, obj);
     }, false, 1);
@@ -2495,7 +2495,7 @@ updatesoverview_plugins_unignore_detail_all = function () {
     return updatesoverview_unignore_plugintheme_by_site_all('plugin');
 };
 updatesoverview_themes_ignore_detail = function (slug, name, id, obj) {
-    var msg = __('Are you sure you want to ignore the %1 theme updates? The updates will no longer be visible in your MainWP Dashboard.', name);
+    let msg = __('Are you sure you want to ignore the %1 theme updates? The updates will no longer be visible in your MainWP Dashboard.', name);
     mainwp_confirm(msg, function () {
         return updatesoverview_ignore_plugintheme_by_site('theme', slug, name, id, obj);
     }, false, 1);
@@ -2508,15 +2508,15 @@ updatesoverview_themes_unignore_detail_all = function () {
     return updatesoverview_unignore_plugintheme_by_site_all('theme');
 };
 updatesoverview_plugins_ignore_all = function (slug, name, obj) {
-    var msg = __('Are you sure you want to ignore the %1 plugin updates? The updates will no longer be visible in your MainWP Dashboard.', name);
+    let msg = __('Are you sure you want to ignore the %1 plugin updates? The updates will no longer be visible in your MainWP Dashboard.', name);
     mainwp_confirm(msg, function () {
-        var data = mainwp_secure_data({
+        let data = mainwp_secure_data({
             action: 'mainwp_ignorepluginsthemes',
             type: 'plugin',
             slug: slug,
             name: name
         });
-        var parent = jQuery(obj).closest('tr');
+        let parent = jQuery(obj).closest('tr');
         parent.find('td:last-child').html(__('Ignoring...'));
         jQuery.post(ajaxurl, data, function (response) {
             if (response.result) {
@@ -2531,7 +2531,7 @@ updatesoverview_plugins_ignore_all = function (slug, name, obj) {
 
 // Unignore all globally ignored plugins
 updatesoverview_plugins_unignore_globally_all = function () {
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_unignorepluginsthemes',
         type: 'plugin',
         slug: '_ALL_'
@@ -2539,7 +2539,7 @@ updatesoverview_plugins_unignore_globally_all = function () {
 
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
-            var tableElement = jQuery('#globally-ignored-plugins-list');
+            let tableElement = jQuery('#globally-ignored-plugins-list');
             tableElement.find('tr').remove();
             jQuery('#mainwp-unignore-globally-all').addClass('disabled');
             tableElement.append('<tr><td colspan="999">' + __('No ignored plugins.') + '</td></tr>');
@@ -2550,15 +2550,15 @@ updatesoverview_plugins_unignore_globally_all = function () {
 
 // Unignore globally ignored plugin
 updatesoverview_plugins_unignore_globally = function (slug) {
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_unignorepluginsthemes',
         type: 'plugin',
         slug: slug
     });
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
-            var ignoreElement = jQuery('#globally-ignored-plugins-list tr[plugin-slug="' + slug + '"]');
-            var parent = ignoreElement.parent();
+            let ignoreElement = jQuery('#globally-ignored-plugins-list tr[plugin-slug="' + slug + '"]');
+            let parent = ignoreElement.parent();
             ignoreElement.remove();
             if (parent.children('tr').length == 0) {
                 jQuery('#mainwp-unignore-globally-all').addClass('disabled');
@@ -2570,16 +2570,16 @@ updatesoverview_plugins_unignore_globally = function (slug) {
 };
 
 updatesoverview_themes_ignore_all = function (slug, name, obj) {
-    var msg = __('Are you sure you want to ignore the %1 theme updates? The updates will no longer be visible in your MainWP Dashboard.', name);
+    let msg = __('Are you sure you want to ignore the %1 theme updates? The updates will no longer be visible in your MainWP Dashboard.', name);
     mainwp_confirm(msg, function () {
 
-        var data = mainwp_secure_data({
+        let data = mainwp_secure_data({
             action: 'mainwp_ignorepluginsthemes',
             type: 'theme',
             slug: slug,
             name: name
         });
-        var parent = jQuery(obj).closest('tr');
+        let parent = jQuery(obj).closest('tr');
         parent.find('td:last-child').html(__('Ignoring...'));
         jQuery.post(ajaxurl, data, function (response) {
             if (response.result) {
@@ -2594,7 +2594,7 @@ updatesoverview_themes_ignore_all = function (slug, name, obj) {
 
 // Unignore all globally ignored themes
 updatesoverview_themes_unignore_globally_all = function () {
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_unignorepluginsthemes',
         type: 'theme',
         slug: '_ALL_'
@@ -2602,7 +2602,7 @@ updatesoverview_themes_unignore_globally_all = function () {
 
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
-            var tableElement = jQuery('#globally-ignored-themes-list');
+            let tableElement = jQuery('#globally-ignored-themes-list');
             tableElement.find('tr').remove();
             jQuery('#mainwp-unignore-globally-all').addClass('disabled');
             tableElement.append('<tr><td colspan="999">' + __('No ignored themes.') + '</td></tr>');
@@ -2614,15 +2614,15 @@ updatesoverview_themes_unignore_globally_all = function () {
 
 // Unignore globally ignored theme
 updatesoverview_themes_unignore_globally = function (slug) {
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_unignorepluginsthemes',
         type: 'theme',
         slug: slug
     });
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
-            var ignoreElement = jQuery('#globally-ignored-themes-list tr[theme-slug="' + slug + '"]');
-            var parent = ignoreElement.parent();
+            let ignoreElement = jQuery('#globally-ignored-themes-list tr[theme-slug="' + slug + '"]');
+            let parent = ignoreElement.parent();
             ignoreElement.remove();
             if (parent.children('tr').length == 0) {
                 jQuery('#mainwp-unignore-globally-all').addClass('disabled');
@@ -2634,28 +2634,28 @@ updatesoverview_themes_unignore_globally = function (slug) {
 };
 
 updatesoverview_upgrade_translation = function (id, slug) {
-    var msg = __('Are you sure you want to update the translation on the selected site?');
+    let msg = __('Are you sure you want to update the translation on the selected site?');
     mainwp_confirm(msg, function () {
         return updatesoverview_translations_upgrade_int(slug, id);
     }, false, 1);
 };
 
 updatesoverview_translations_upgrade = function (slug, websiteid) {
-    var msg = __('Are you sure you want to update the translation on the selected site?');
+    let msg = __('Are you sure you want to update the translation on the selected site?');
     mainwp_confirm(msg, function () {
         return updatesoverview_translations_upgrade_int(slug, websiteid);
     }, false, 1);
 };
 
 updatesoverview_plugins_upgrade = function (slug, websiteid) {
-    var msg = __('Are you sure you want to update the plugin on the selected site?');
+    let msg = __('Are you sure you want to update the plugin on the selected site?');
     mainwp_confirm(msg, function () {
         return updatesoverview_plugins_upgrade_int(slug, websiteid);
     }, false, 1);
 };
 
 updatesoverview_themes_upgrade = function (slug, websiteid) {
-    var msg = __('Are you sure you want to update the theme on the selected site?');
+    let msg = __('Are you sure you want to update the theme on the selected site?');
     mainwp_confirm(msg, function () {
         return updatesoverview_themes_upgrade_int(slug, websiteid);
     }, false, 1);
@@ -2664,7 +2664,7 @@ updatesoverview_themes_upgrade = function (slug, websiteid) {
 /** END NEW **/
 
 updatesoverview_wp_sync = function (websiteid) {
-    var syncIds = [];
+    let syncIds = [];
     syncIds.push(websiteid);
     mainwp_sync_sites_data(syncIds);
     return false;
@@ -2676,7 +2676,7 @@ updatesoverview_group_upgrade_translation = function (id, slug, groupId) {
 };
 
 updatesoverview_upgrade_translation_all = function (id, updatesSelected) {
-    var msg = __('Are you sure you want to update all translations?');
+    let msg = __('Are you sure you want to update all translations?');
     if (typeof updatesSelected !== 'undefined' && updatesSelected) {
         msg = __('Are you sure you want to update selected translations?');
     }
@@ -2687,7 +2687,7 @@ updatesoverview_upgrade_translation_all = function (id, updatesSelected) {
 };
 
 updatesoverview_group_upgrade_translation_all = function (id, groupId, updatesSelected) {
-    var msg = __('Are you sure you want to update all translations?');
+    let msg = __('Are you sure you want to update all translations?');
     if (typeof updatesSelected !== 'undefined' && updatesSelected) {
         msg = __('Are you sure you want to update selected translations?');
     }
@@ -2698,7 +2698,7 @@ updatesoverview_group_upgrade_translation_all = function (id, groupId, updatesSe
 };
 
 updatesoverview_upgrade_plugin = function (id, slug) {
-    var msg = __('Are you sure you want to update the plugin on the selected site?');
+    let msg = __('Are you sure you want to update the plugin on the selected site?');
     mainwp_confirm(msg, function () {
         return updatesoverview_upgrade_plugintheme('plugin', id, slug);
     }, false, 1);
@@ -2709,7 +2709,7 @@ updatesoverview_group_upgrade_plugin = function (id, slug, groupId) {
 };
 
 updatesoverview_upgrade_plugin_all = function (id, updatesSelected) {
-    var msg = __('Are you sure you want to update all plugins?');
+    let msg = __('Are you sure you want to update all plugins?');
     if (typeof updatesSelected !== 'undefined' && updatesSelected) {
         msg = __('Are you sure you want to update selected plugins?');
     }
@@ -2720,7 +2720,7 @@ updatesoverview_upgrade_plugin_all = function (id, updatesSelected) {
 };
 
 updatesoverview_group_upgrade_plugin_all = function (id, groupId, updatesSelected) {
-    var msg = __('Are you sure you want to update all plugins?');
+    let msg = __('Are you sure you want to update all plugins?');
     if (typeof updatesSelected !== 'undefined' && updatesSelected) {
         msg = __('Are you sure you want to update selected plugins?');
     }
@@ -2731,7 +2731,7 @@ updatesoverview_group_upgrade_plugin_all = function (id, groupId, updatesSelecte
 };
 
 updatesoverview_upgrade_theme = function (id, slug) {
-    var msg = __('Are you sure you want to update the theme on the selected site?');
+    let msg = __('Are you sure you want to update the theme on the selected site?');
     mainwp_confirm(msg, function () {
         return updatesoverview_upgrade_plugintheme('theme', id, slug);
     }, false, 1);
@@ -2741,7 +2741,7 @@ updatesoverview_group_upgrade_theme = function (id, slug, groupId) {
 };
 
 updatesoverview_upgrade_theme_all = function (id, updatesSelected) {
-    var msg = __('Are you sure you want to update all themes?');
+    let msg = __('Are you sure you want to update all themes?');
     if (typeof updatesSelected !== 'undefined' && updatesSelected) {
         msg = __('Are you sure you want to update selected themes?');
     }
@@ -2752,7 +2752,7 @@ updatesoverview_upgrade_theme_all = function (id, updatesSelected) {
 };
 
 updatesoverview_group_upgrade_theme_all = function (id, groupId, updatesSelected) {
-    var msg = __('Are you sure you want to update all themes?');
+    let msg = __('Are you sure you want to update all themes?');
     if (typeof updatesSelected !== 'undefined' && updatesSelected) {
         msg = __('Are you sure you want to update selected themes?');
     }
@@ -2771,9 +2771,9 @@ updatesoverview_upgrade_plugintheme_all = function (what, id, noCheck, updatesSe
     // ok: confirmed to do this
     updatesoverviewContinueAfterBackup = function (pId, pWhat) {
         return function () {
-            var list = [];
-            var slug_att = pWhat + '_slug';
-            var slug = '';
+            let list = [];
+            let slug_att = pWhat + '_slug';
+            let slug = '';
             if (typeof updatesSelected !== 'undefined' && updatesSelected) {
                 jQuery("#wp_" + pWhat + "_upgrades_" + pId + " tr[updated=0]").each(function () {
                     if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
@@ -2796,7 +2796,7 @@ updatesoverview_upgrade_plugintheme_all = function (what, id, noCheck, updatesSe
 
                 });
             }
-            var siteName = jQuery("#wp_" + pWhat + "_upgrades_" + pId).attr('site_name');
+            let siteName = jQuery("#wp_" + pWhat + "_upgrades_" + pId).attr('site_name');
             updatesoverview_upgrade_plugintheme_list_popup(pWhat, pId, siteName, list);
         }
     }(id, what);
@@ -2806,8 +2806,8 @@ updatesoverview_upgrade_plugintheme_all = function (what, id, noCheck, updatesSe
         return false;
     }
 
-    var sitesToUpdate = [];
-    var siteNames = [];
+    let sitesToUpdate = [];
+    let siteNames = [];
 
     sitesToUpdate.push(id);
     siteNames[id] = jQuery('tbody[site_id="' + id + '"]').attr('site_name');
@@ -2819,10 +2819,10 @@ updatesoverview_group_upgrade_plugintheme_all = function (what, id, noCheck, gro
     // ok, confirmed to do this
     updatesoverviewContinueAfterBackup = function (pId, pWhat) {
         return function () {
-            var list = [];
-            var slug_att = pWhat + '_slug';
+            let list = [];
+            let slug_att = pWhat + '_slug';
             jQuery("#wp_" + pWhat + "_upgrades_" + pId + '_group_' + groupId + " tr[updated=0]").each(function () {
-                var slug = jQuery(this).attr(slug_att);
+                let slug = jQuery(this).attr(slug_att);
                 if (typeof updatesSelected !== 'undefined' && updatesSelected) {
                     if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
                         if (slug) {
@@ -2842,7 +2842,7 @@ updatesoverview_group_upgrade_plugintheme_all = function (what, id, noCheck, gro
 
             // proccessed by popup
             //updatesoverview_upgrade_plugintheme_list( what, pId, list, true, groupId );
-            var siteName = jQuery("#wp_" + pWhat + "_upgrades_" + pId + '_group_' + groupId).attr('site_name');
+            let siteName = jQuery("#wp_" + pWhat + "_upgrades_" + pId + '_group_' + groupId).attr('site_name');
             updatesoverview_upgrade_plugintheme_list_popup(what, pId, siteName, list);
         }
     }(id, what);
@@ -2852,8 +2852,8 @@ updatesoverview_group_upgrade_plugintheme_all = function (what, id, noCheck, gro
         return false;
     }
 
-    var sitesToUpdate = [];
-    var siteNames = [];
+    let sitesToUpdate = [];
+    let siteNames = [];
 
     sitesToUpdate.push(id);
     siteNames[id] = jQuery('tbody[site_id="' + id + '"]').attr('site_name');
@@ -2864,17 +2864,17 @@ updatesoverview_group_upgrade_plugintheme_all = function (what, id, noCheck, gro
 updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, groupId) {
     updatesoverviewContinueAfterBackup = function (pWhat, pId, pList, pGroupId) {
         return function () {
-            var strGroup = '';
+            let strGroup = '';
             if (typeof pGroupId !== 'undefined') {
                 strGroup = '_group_' + pGroupId;
             }
-            var newList = [];
+            let newList = [];
 
-            for (var i = pList.length - 1; i >= 0; i--) {
-                var item = pList[i];
-                var elem = document.getElementById('wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item);
+            for (let i = pList.length - 1; i >= 0; i--) {
+                let item = pList[i];
+                let elem = document.getElementById('wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item);
                 if (elem && elem.value == 0) {
-                    var parent = jQuery(elem).closest('tr');
+                    let parent = jQuery(elem).closest('tr');
                     parent.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ' + __('Updating. Please wait...'));
                     elem.value = 1;
                     parent.attr('updated', 1);
@@ -2883,27 +2883,27 @@ updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, gr
             }
 
             if (newList.length > 0) {
-                var data = mainwp_secure_data({
+                let data = mainwp_secure_data({
                     action: 'mainwp_upgradeplugintheme',
                     websiteId: pId,
                     type: pWhat,
                     slug: newList.join(',')
                 });
                 jQuery.post(ajaxurl, data, function (response) {
-                    var success = false;
-                    var extErr = '';
+                    let success = false;
+                    let extErr = '';
                     if (response.error) {
                         extErr = getErrorMessageInfo(response.error, 'ui')
                     }
                     else {
-                        var res = response.result;
-                        var res_error = response.result_error;
+                        let res = response.result;
+                        let res_error = response.result_error;
 
-                        for (var i = 0; i < newList.length; i++) {
-                            var item = newList[i];
+                        for (let i = 0; i < newList.length; i++) {
+                            let item = newList[i];
 
-                            var elem = document.getElementById('wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item);
-                            var parent = jQuery(elem).closest('tr');
+                            let elem = document.getElementById('wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item);
+                            let parent = jQuery(elem).closest('tr');
                             if (res[item]) {
                                 parent.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful.', 'mainwp') + '"><i class="green check icon"></i></span>');
                             } else if (what == 'plugin' && res_error[item]) {
@@ -2915,10 +2915,10 @@ updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, gr
                         success = true;
                     }
                     if (!success) {
-                        for (var i = 0; i < newList.length; i++) {
-                            var item = newList[i];
-                            var elem = document.getElementById('wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item);
-                            var parent = jQuery(elem).closest('tr');
+                        for (let i = 0; i < newList.length; i++) {
+                            let item = newList[i];
+                            let elem = document.getElementById('wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item);
+                            let parent = jQuery(elem).closest('tr');
                             parent.find('td:last-child').html(extErr);
                         }
                     }
@@ -2935,24 +2935,24 @@ updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck, gr
         return false;
     }
 
-    var sitesToUpdate = [id];
-    var siteNames = [];
+    let sitesToUpdate = [id];
+    let siteNames = [];
     siteNames[id] = jQuery('tbody[site_id="' + id + '"]').attr('site_name');
     return mainwp_updatesoverview_checkBackups(sitesToUpdate, siteNames);
 };
 
 updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteName, list) {
-    var updateCount = list.length;
+    let updateCount = list.length;
     if (updateCount == 0)
         return;
 
-    var updateWhat = (what == 'plugin') ? __('plugins') : (what == 'theme' ? __('themes') : __('translations'));
+    let updateWhat = (what == 'plugin') ? __('plugins') : (what == 'theme' ? __('themes') : __('translations'));
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
     mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(decodeURIComponent(pSiteName) + ' (' + updateCount + ' ' + updateWhat + ')', '<span class="updatesoverview-upgrade-status-wp" siteid="' + pId + '">' + '<i class="clock outline icon"></i> ' + '</span>');
 
-    var type = '';
-    var info_type = '';
+    let type = '';
+    let info_type = '';
     if ('plugin' === what || 'theme' === what) {
         type = what;
         info_type = type + 's';
@@ -2961,12 +2961,12 @@ updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteName,
         info_type = type;
     }
 
-    var initData = {
+    let initData = {
         title: __('Updating all'),
         progressMax: 1
     };
     updatesoverview_update_popup_init(initData);
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_upgradeplugintheme',
         websiteId: pId,
         type: what,
@@ -2976,10 +2976,10 @@ updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteName,
     updatesoverview_plugins_upgrade_all_update_site_status(pId, '<i class="notched circle loading icon"></i>');
 
     jQuery.post(ajaxurl, data, function (response) {
-        var success = false;
-        var error = '';
+        let success = false;
+        let error = '';
         if (response.error) {
-            var extErr = getErrorMessageInfo(response.error, 'ui');
+            let extErr = getErrorMessageInfo(response.error, 'ui');
             updatesoverview_plugins_upgrade_all_update_site_status(pId, extErr);
             error = getErrorMessageInfo(response.error);
         }
@@ -2996,7 +2996,7 @@ updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteName,
 }
 
 // for semantic ui checkboxes
-jQuery(document).ready(function () {
+jQuery(function(){
     mainwp_table_check_columns_init(); // call as function to support tables with ajax, may check and call at extensions    
     mainwp_master_checkbox_init(jQuery);
 });
@@ -3076,26 +3076,26 @@ mainwp_table_check_columns_init = function () {
     jQuery(document).find('table th.check-column .checkbox').checkbox({
         // check all children
         onChecked: function () {
-            var $table = jQuery(this).closest('table');
+            let $table = jQuery(this).closest('table');
             if ($table.parent().hasClass('dt-scroll-head')) {
                 $table = jQuery(this).closest('.dt-scroll'); // to compatible with datatable scroll            
             }
 
             if ($table.length > 0) {
-                var $childCheckbox = $table.find('td.check-column .checkbox');
+                let $childCheckbox = $table.find('td.check-column .checkbox');
                 $childCheckbox.checkbox('check');
             }
         },
         // uncheck all children
         onUnchecked: function () {
-            var $table = jQuery(this).closest('table');
+            let $table = jQuery(this).closest('table');
 
             if ($table.parent().hasClass('dt-scroll-head'))
                 $table = jQuery(this).closest('.dt-scroll'); // to compatible with datatable scroll
 
 
             if ($table.length > 0) {
-                var $childCheckbox = $table.find('td.check-column .checkbox');
+                let $childCheckbox = $table.find('td.check-column .checkbox');
                 $childCheckbox.checkbox('uncheck');
             }
         }
@@ -3107,12 +3107,12 @@ mainwp_table_check_columns_init = function () {
         // Change parent state on each child checkbox change
         onChange: function () {
 
-            var $table = jQuery(this).closest('table');
+            let $table = jQuery(this).closest('table');
 
             if ($table.parent().hasClass('dt-scroll-body'))
                 $table = jQuery(this).closest('.dt-scroll'); // to compatible with datatable scroll
 
-            var $parentCheckbox = $table.find('th.check-column .checkbox'),
+            let $parentCheckbox = $table.find('th.check-column .checkbox'),
                 $checkbox = $table.find('td.check-column .checkbox'),
                 allChecked = true,
                 allUnchecked = true

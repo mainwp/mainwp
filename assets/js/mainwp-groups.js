@@ -1,4 +1,4 @@
-jQuery(document).ready(function () {
+jQuery(function () {
 
   // Init the groups menu
   jQuery('#mainwp-groups-menu').find('a.item').on('click', function () {
@@ -32,8 +32,8 @@ jQuery(document).ready(function () {
         window.location.href = location.href;
       },
       onShow: function () {
-        var groupName = jQuery('#mainwp-groups-menu').find('.active').find('#mainwp-hidden-group-name').val();
-        var groupColor = jQuery('#mainwp-groups-menu').find('.active').find('#mainwp-hidden-group-color').val();
+        let groupName = jQuery('#mainwp-groups-menu').find('.active').find('#mainwp-hidden-group-name').val();
+        let groupColor = jQuery('#mainwp-groups-menu').find('.active').find('#mainwp-hidden-group-color').val();
         jQuery('#mainwp-rename-group-modal').find('input#mainwp-group-name').val(groupName);
         jQuery('#mainwp-rename-group-modal').find('input#mainwp-new-tag-color').val(groupColor);
       }
@@ -42,17 +42,17 @@ jQuery(document).ready(function () {
 
   // Create a new group
   jQuery(document).on('click', '#mainwp-save-new-group-button', function () {
-    var newName = jQuery('#mainwp-create-group-modal').find('input#mainwp-group-name').val();
-    var newColor = jQuery('#mainwp-create-group-modal').find('input#mainwp-new-tag-color').val();
+    let newName = jQuery('#mainwp-create-group-modal').find('input#mainwp-group-name').val();
+    let newColor = jQuery('#mainwp-create-group-modal').find('input#mainwp-new-tag-color').val();
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
       action: 'mainwp_group_add',
       newName: newName,
       newColor: newColor
     });
     jQuery.post(ajaxurl, data, function (response) {
       try {
-        resp = JSON.parse(response);
+        let resp = JSON.parse(response);
 
         if (resp.error != undefined)
           return;
@@ -70,10 +70,10 @@ jQuery(document).ready(function () {
 
   // Delete a group
   jQuery(document).on('click', '#mainwp-delete-group-button', function () {
-    var gruopItem = jQuery('#mainwp-groups-menu').find('.active');
+    let gruopItem = jQuery('#mainwp-groups-menu').find('.active');
     mainwp_confirm('Are you sure you want to delete this tag?', function () {
-      var groupID = gruopItem.attr('id');
-      var data = mainwp_secure_data({
+      let groupID = gruopItem.attr('id');
+      let data = mainwp_secure_data({
         action: 'mainwp_group_delete',
         groupId: groupID
       });
@@ -91,10 +91,10 @@ jQuery(document).ready(function () {
 
   // Update group name
   jQuery(document).on('click', '#mainwp-update-new-group-button', function () {
-    var groupID = jQuery('#mainwp-groups-menu').find('.active').attr('id');
-    var newName = jQuery('#mainwp-rename-group-modal').find('input#mainwp-group-name').val();
-    var newColor = jQuery('#mainwp-rename-group-modal').find('input#mainwp-new-tag-color').val();
-    var data = mainwp_secure_data({
+    let groupID = jQuery('#mainwp-groups-menu').find('.active').attr('id');
+    let newName = jQuery('#mainwp-rename-group-modal').find('input#mainwp-group-name').val();
+    let newColor = jQuery('#mainwp-rename-group-modal').find('input#mainwp-new-tag-color').val();
+    let data = mainwp_secure_data({
       action: 'mainwp_group_rename',
       groupId: groupID,
       newName: newName,
@@ -118,7 +118,7 @@ jQuery(document).ready(function () {
 
   // Select all sites
   jQuery('#mainwp-manage-groups-sites-table th input[type="checkbox"]').on('change', function () {
-    var checkboxes = jQuery('#mainwp-manage-groups-sites-table').find(':checkbox');
+    let checkboxes = jQuery('#mainwp-manage-groups-sites-table').find(':checkbox');
     if (jQuery(this).prop('checked')) {
       checkboxes.prop('checked', true);
       checkboxes.parents('tr').addClass('active');
@@ -139,19 +139,19 @@ jQuery(document).ready(function () {
 
   // Save selected sites for a group
   jQuery(document).on('click', '#mainwp-save-sites-groups-selection-button', function () {
-    var groupID = jQuery('#mainwp-groups-menu').find('.active').attr('id');
-    var sites = jQuery('#mainwp-manage-groups-sites-table').find('input.mainwp-site-checkbox:checked');
-    var sitesIDs = [];
+    let groupID = jQuery('#mainwp-groups-menu').find('.active').attr('id');
+    let sites = jQuery('#mainwp-manage-groups-sites-table').find('input.mainwp-site-checkbox:checked');
+    let sitesIDs = [];
 
-    for (var i = 0; i < sites.length; i++) {
-      sitesIDs.push(jQuery(sites[i]).val());
+    for (let id of sites ) {
+      sitesIDs.push(jQuery(id).val());
     }
 
     if (groupID == undefined) {
       return;
     }
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
       action: 'mainwp_group_updategroup',
       groupId: groupID,
       websiteIds: sitesIDs
@@ -164,15 +164,14 @@ jQuery(document).ready(function () {
       jQuery('#mainwp-message-zone').stop(true, true);
       jQuery('#mainwp-message-zone').show();
       jQuery('#mainwp-message-zone').fadeOut(3000);
-      return;
     }, 'json');
 
   });
 
   // Load group sites
-  show_group_items = function (group) {
-    var groupID = jQuery(group).attr('id');
-    var data = mainwp_secure_data({
+  var show_group_items = function (group) {
+    let groupID = jQuery(group).attr('id');
+    let data = mainwp_secure_data({
       action: 'mainwp_group_getsites',
       groupId: groupID
     });
@@ -185,8 +184,8 @@ jQuery(document).ready(function () {
       }
       jQuery('input.mainwp-site-checkbox').prop('checked', false);
       jQuery('input.mainwp-site-checkbox').closest('tr').removeClass('active');
-      var sites = JSON.parse(response);
-      for (var i = 0; i < sites.length; i++) {
+      let sites = JSON.parse(response);
+      for (let i = 0; i < sites.length; i++) {
         jQuery('input[value="' + sites[i] + '"].mainwp-site-checkbox').prop('checked', true);
         jQuery('input[value="' + sites[i] + '"].mainwp-site-checkbox').closest('tr').addClass('active');
       }

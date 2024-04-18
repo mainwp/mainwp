@@ -9,7 +9,7 @@ var import_total = 0;
 var import_count_success = 0;
 var import_count_fails = 0;
 
-jQuery(document).ready(function () {
+jQuery(function(){
     import_total = jQuery('#mainwp_managesites_total_import').val();
 
     jQuery(document).on('click', '#mainwp_managesites_btn_import', function () {
@@ -30,11 +30,11 @@ jQuery(document).ready(function () {
     });
 
     jQuery(document).on('click', '#mainwp_managesites_btn_save_csv', function () {
-        var fail_data = '';
+        let fail_data = '';
         jQuery('#mainwp_managesites_import_fail_logging span').each(function () {
             fail_data += jQuery(this).html() + "\r";
         });
-        var blob = new Blob([fail_data], { type: "text/plain;charset=utf-8" });
+        let blob = new Blob([fail_data], { type: "text/plain;charset=utf-8" });
         saveAs(blob, "import_sites_fails.csv");
     });
 
@@ -62,18 +62,18 @@ mainwp_managesites_import_sites = function () {
         return;
     }
 
-    var import_data = jQuery('#mainwp_managesites_import_csv_line_' + import_current).attr('encoded-data');
-    var import_line_orig = jQuery('#mainwp_managesites_import_csv_line_' + import_current).attr('original');
-    var decodedVal = JSON.parse(import_data);
+    let import_data = jQuery('#mainwp_managesites_import_csv_line_' + import_current).attr('encoded-data');
+    let import_line_orig = jQuery('#mainwp_managesites_import_csv_line_' + import_current).attr('original');
+    let decodedVal = JSON.parse(import_data);
 
-    var import_wpname = decodedVal.name;
-    var import_wpurl = decodedVal.url;
-    var import_wpadmin = decodedVal.adminname;
-    var import_wpgroups = decodedVal.wpgroups;
-    var import_uniqueId = decodedVal.uniqueId;
-    var import_http_username = decodedVal.http_user;
-    var import_http_password = decodedVal.http_pass;
-    var import_verify_certificate = decodedVal.verify_certificate;
+    let import_wpname = decodedVal.name;
+    let import_wpurl = decodedVal.url;
+    let import_wpadmin = decodedVal.adminname;
+    let import_wpgroups = decodedVal.wpgroups;
+    let import_uniqueId = decodedVal.uniqueId;
+    let import_http_username = decodedVal.http_user;
+    let import_http_password = decodedVal.http_pass;
+    let import_verify_certificate = decodedVal.verify_certificate;
 
     if (typeof (import_wpname) == "undefined")
         import_wpname = '';
@@ -88,7 +88,7 @@ mainwp_managesites_import_sites = function () {
 
     jQuery('#mainwp_managesites_import_logging .log').append('[' + import_current + '] ' + import_line_orig + '<br/>');
 
-    var errors = [];
+    let errors = [];
 
     if (import_wpname == '') {
         errors.push(__('Please enter the site name.'));
@@ -110,7 +110,7 @@ mainwp_managesites_import_sites = function () {
         return;
     }
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_checkwp',
         name: import_wpname,
         url: import_wpurl,
@@ -124,10 +124,10 @@ mainwp_managesites_import_sites = function () {
     jQuery.post(ajaxurl, data, function (res_things) {
         response = res_things.response;
 
-        var check_result = '[' + res_things.check_me + ']>> ';
+        let check_result = '[' + res_things.check_me + ']>> ';
 
         response = response.trim();
-        var url = import_wpurl;
+        let url = import_wpurl;
         if (url.substr(0, 4) != 'http') {
             url = 'http://' + url;
         }
@@ -147,8 +147,8 @@ mainwp_managesites_import_sites = function () {
                 errors.push(check_result + 'ERROR: ' + response.substr(6));
             }
         } else if (response == 'OK') {
-            var groupids = [];
-            var data = mainwp_secure_data({
+            let groupids = [];
+            let data = mainwp_secure_data({
                 action: 'mainwp_addwp',
                 managesites_add_wpname: import_wpname,
                 managesites_add_wpurl: url,
@@ -168,7 +168,7 @@ mainwp_managesites_import_sites = function () {
                 } else {
                     response = res_things.response;
                 }
-                var add_result = '[' + res_things.add_me + ']>> ';
+                let add_result = '[' + res_things.add_me + ']>> ';
 
                 response = response.trim();
 

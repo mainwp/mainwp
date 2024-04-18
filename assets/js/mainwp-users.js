@@ -3,7 +3,7 @@
  */
 var userCountSent = 0;
 var userCountReceived = 0;
-jQuery(document).ready(function () {
+jQuery(function(){
 
     // Fetch users
     jQuery(document).on('click', '#mainwp_show_users', function () {
@@ -12,7 +12,7 @@ jQuery(document).ready(function () {
 
     // Delete single user
     jQuery(document).on('click', '.user_submitdelete', function () {
-        var confirmation = confirm('Are you sure you want to proceed?');
+        let confirmation = confirm('Are you sure you want to proceed?');
 
         if (confirmation == true) {
             mainwpuser_postAction(jQuery(this), 'delete');
@@ -35,17 +35,17 @@ jQuery(document).ready(function () {
 
     // Trigger Manage Users bulk actions
     jQuery(document).on('click', '#mainwp-do-users-bulk-actions', function () {
-        var action = jQuery('#mainwp-bulk-actions').val();
+        let action = jQuery('#mainwp-bulk-actions').val();
         if (action == 'none')
             return false;
 
-        var tmp = jQuery("input[name='user[]']:checked");
+        let tmp = jQuery("input[name='user[]']:checked");
         userCountSent = tmp.length;
 
         if (userCountSent == 0)
             return false;
 
-        var _callback = function () {
+        let _callback = function () {
 
             if (action == 'edit') {
                 jQuery('#mainwp-edit-users-modal').modal('setting', 'closable', false).modal('show');
@@ -62,7 +62,7 @@ jQuery(document).ready(function () {
         };
 
         if (action == 'delete') {
-            var msg = __('You are about to delete %1 user(s). Are you sure you want to proceed?', userCountSent);
+            let msg = __('You are about to delete %1 user(s). Are you sure you want to proceed?', userCountSent);
             mainwp_confirm(msg, _callback);
             return false;
         }
@@ -74,8 +74,8 @@ jQuery(document).ready(function () {
 
 
     jQuery(document).on('click', '#mainwp_btn_update_user', function () {
-        var errors = [];
-        var tmp = jQuery("input[name='user[]']:checked");
+        let errors = [];
+        let tmp = jQuery("input[name='user[]']:checked");
         userCountSent = tmp.length;
 
         if (userCountSent == 0) {
@@ -119,12 +119,12 @@ mainwp_edit_users_box_init = function () {
 };
 
 mainwpuser_postAction = function (elem, what) {
-    var rowElement = jQuery(elem).parents('tr');
-    var userId = rowElement.find('.userId').val();
-    var userName = rowElement.find('.userName').val();
-    var websiteId = rowElement.find('.websiteId').val();
+    let rowElement = jQuery(elem).parents('tr');
+    let userId = rowElement.find('.userId').val();
+    let userName = rowElement.find('.userName').val();
+    let websiteId = rowElement.find('.websiteId').val();
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_user_' + what,
         userId: userId,
         userName: userName,
@@ -145,8 +145,8 @@ mainwpuser_postAction = function (elem, what) {
     }
     jQuery.post(ajaxurl, data, function (response) {
         if (what == 'edit' && response && response.user_data) {
-            var roles_filter = ['administrator', 'subscriber', 'contributor', 'author', 'editor'];
-            var disabled_change_role = false;
+            let roles_filter = ['administrator', 'subscriber', 'contributor', 'author', 'editor'];
+            let disabled_change_role = false;
             if (response.user_data.role == '' || jQuery.inArray(response.user_data.role, roles_filter) === -1) {
                 jQuery('form#update_user_profile select#role option[value="donotupdate"]').prop('selected', true);
                 disabled_change_role = true;
@@ -172,7 +172,7 @@ mainwpuser_postAction = function (elem, what) {
             jQuery('form#update_user_profile select#display_name').prop("disabled", false);
             if (response.user_data.public_display) {
                 jQuery.each(response.user_data.public_display, function (index, value) {
-                    var o = new Option(value);
+                    let o = new Option(value);
                     if (value == response.user_data.display_name) {
                         o.selected = true;
                     }
@@ -216,10 +216,10 @@ mainwpuser_postAction = function (elem, what) {
 
 // Fetch users from child sites
 mainwp_fetch_users = function () {
-    var errors = [];
-    var selected_sites = [];
-    var selected_groups = [];
-    var selected_clients = [];
+    let errors = [];
+    let selected_sites = [];
+    let selected_groups = [];
+    let selected_clients = [];
 
     if (jQuery('#select_by').val() == 'site') {
         jQuery("input[name='selected_sites[]']:checked").each(function () {
@@ -244,8 +244,8 @@ mainwp_fetch_users = function () {
         }
     }
 
-    var role = "";
-    var roles = jQuery("#mainwp_user_roles").dropdown("get value");
+    let role = "";
+    let roles = jQuery("#mainwp_user_roles").dropdown("get value");
     if (roles !== null) {
         role = roles.join(',');
     }
@@ -345,7 +345,7 @@ var import_user_total_import = 0;
 var import_user_count_created_users = 0;
 var import_user_count_create_fails = 0;
 
-jQuery(document).ready(function () {
+jQuery(function(){
     import_user_total_import = jQuery('#import_user_total_import').val();
 
     jQuery('#import_user_btn_import').on('click', function () {
@@ -371,11 +371,11 @@ jQuery(document).ready(function () {
 
 
     jQuery('#import_user_btn_save_csv').on('click', function () {
-        var fail_data = '';
+        let fail_data = '';
         jQuery('#import_user_import_failed_rows span').each(function () {
             fail_data += jQuery(this).html() + "\r\n";
         });
-        var blob = new Blob([fail_data], { type: "text/plain;charset=utf-8" });
+        let blob = new Blob([fail_data], { type: "text/plain;charset=utf-8" });
         saveAs(blob, "import_users_fails.csv");
     });
 
@@ -407,12 +407,12 @@ mainwp_import_users_next = function () {
         return;
     }
 
-    var import_data = jQuery('#user_import_csv_line_' + import_user_current_line_number).attr('encoded-data');
-    var original_line = jQuery('#user_import_csv_line_' + import_user_current_line_number).attr('original-line');
+    let import_data = jQuery('#user_import_csv_line_' + import_user_current_line_number).attr('encoded-data');
+    let original_line = jQuery('#user_import_csv_line_' + import_user_current_line_number).attr('original-line');
 
-    var decoded_data = false;
-    var pos_data = [];
-    var errors = [];
+    let decoded_data = false;
+    let pos_data = [];
+    let errors = [];
 
     try {
         decoded_data = JSON.parse(import_data);
@@ -423,7 +423,7 @@ mainwp_import_users_next = function () {
 
     if (false != decoded_data) {
         jQuery('#import_user_import_logging .log').append('[' + import_user_current_line_number + '] ' + original_line + '\n');
-        var valid = mainwp_import_users_valid_data(decoded_data);
+        let valid = mainwp_import_users_valid_data(decoded_data);
         pos_data = valid.data;
         errors = valid.errors;
     }
@@ -443,7 +443,7 @@ mainwp_import_users_next = function () {
 
     pos_data.action = 'mainwp_importuser';
     pos_data.line_number = import_user_current_line_number;
-    var data = mainwp_secure_data(pos_data);
+    let data = mainwp_secure_data(pos_data);
 
     //Add user via ajax!!
     jQuery.post(ajaxurl, data, function (response_data) {
@@ -457,8 +457,8 @@ mainwp_import_users_next = function () {
 /* eslint-disable complexity */
 mainwp_import_users_valid_data = function (decoded_data) {
 
-    var errors = []; // array.
-    var val_data = {}; // object.
+    let errors = []; // array.
+    let val_data = {}; // object.
 
     val_data.user_login = decoded_data.user_login == undefined ? '' : decoded_data.user_login;
     val_data.email = decoded_data.email == undefined ? '' : decoded_data.email;
@@ -484,13 +484,13 @@ mainwp_import_users_valid_data = function (decoded_data) {
         errors.push(__('Please enter a password.'));
     }
 
-    var allowed_roles = ['subscriber', 'administrator', 'editor', 'author', 'contributor'];
+    let allowed_roles = ['subscriber', 'administrator', 'editor', 'author', 'contributor'];
     if (jQuery.inArray(val_data.role, allowed_roles) == -1) {
         errors.push(__('Please select a data role.'));
     }
 
     if (val_data.select_sites != '') {
-        var selected_sites = val_data.select_sites.split(';');
+        let selected_sites = val_data.select_sites.split(';');
         if (selected_sites.length == 0) {
             errors.push(__('Please select websites or groups to add a user.'));
         } else {
@@ -498,7 +498,7 @@ mainwp_import_users_valid_data = function (decoded_data) {
             val_data.select_by = 'site';
         }
     } else {
-        var selected_groups = val_data.select_groups.split(';');
+        let selected_groups = val_data.select_groups.split(';');
         if (selected_groups.length == 0) {
             errors.push(__('Please select websites or groups to add a user.'));
         } else {
@@ -515,17 +515,17 @@ mainwp_import_users_valid_data = function (decoded_data) {
 /* eslint-enable complexity */
 
 mainwp_import_users_response = function (response_data) {
-    var line_num = response_data.line_number;
-    var okList = response_data.ok_list;
-    var errorList = response_data.error_list;
+    let line_num = response_data.line_number;
+    let okList = response_data.ok_list;
+    let errorList = response_data.error_list;
     if (okList != undefined)
-        for (var i = 0; i < okList.length; i++) {
+        for (let i = 0; i < okList.length; i++) {
             import_user_count_created_users++;
             jQuery('#import_user_import_logging .log').append('[' + line_num + ']>> ' + okList[i] + '\n');
         }
 
     if (errorList != undefined)
-        for (var i = 0; i < errorList.length; i++) {
+        for (let i = 0; i < errorList.length; i++) {
             import_user_count_create_fails++;
             jQuery('#import_user_import_logging .log').append('[' + line_num + ']>> ' + errorList[i] + '\n');
         }

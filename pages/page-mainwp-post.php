@@ -750,9 +750,9 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_REQUEST['siteid'] ) && isset( $_REQUEST['postid'] ) ) {
-            echo '<script>jQuery(document).ready(function() { mainwp_show_post(  ' . intval( $_REQUEST['siteid'] ) . ', ' . intval( $_REQUEST['postid'] ) . ', undefined ) } );</script>';
+            echo '<script>jQuery(function(){ mainwp_show_post(  ' . intval( $_REQUEST['siteid'] ) . ', ' . intval( $_REQUEST['postid'] ) . ', undefined ) } );</script>';
         } elseif ( isset( $_REQUEST['siteid'] ) && isset( $_REQUEST['userid'] ) ) {
-            echo '<script>jQuery(document).ready(function() { mainwp_show_post( ' . intval( $_REQUEST['siteid'] ) . ', undefined, ' . intval( $_REQUEST['userid'] ) . ' ) } );</script>';
+            echo '<script>jQuery(function(){ mainwp_show_post( ' . intval( $_REQUEST['siteid'] ) . ', undefined, ' . intval( $_REQUEST['userid'] ) . ' ) } );</script>';
         }
 		// phpcs:enable
 
@@ -1032,7 +1032,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             .nodes()
                             .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
                         }
-                    }).on( 'columns-reordered', function ( e, settings, details ) {
+                    }).on( 'columns-reordered', function () {
                         console.log('columns-reordered');
                         setTimeout(() => { // to fix.
                             jQuery( '#mainwp-posts-table .ui.dropdown' ).dropdown();

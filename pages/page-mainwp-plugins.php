@@ -1453,7 +1453,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 return false;
             } );
 
-            jQuery(document).ready(function ($) {
+            jQuery(function($) {
                 mainwp_master_checkbox_init($);
                 mainwp_get_icon_start();
                 mainwp_show_hide_install_to_selected_sites( 'plugin' );
@@ -1756,7 +1756,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
 
 
-            jQuery(document).ready(function ($) {
+            jQuery(function($) {
                 $( '.lastest-version-hidden' ).each(function(){
                     $(this).closest('.mainwp-manage-plugin-item').find('.lastest-version-info').html( $(this).attr('lastest-version') );
                 });

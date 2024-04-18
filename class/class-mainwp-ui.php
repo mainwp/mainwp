@@ -170,7 +170,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         }
         ?>
         <script type="text/javascript">
-        jQuery( function () {
+        jQuery(function(){
             jQuery('#mainwp-select-sites-header .ui.menu .item').tab( {'onVisible': function() { mainwp_sites_selection_onvisible_callback( this ); } } );
         } );
         </script>
@@ -1001,7 +1001,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             1000
                         );
                     }
-                    jQuery(document).ready(
+                    jQu
                         function () {
                             _try_start_usetiful_tour();
                         }

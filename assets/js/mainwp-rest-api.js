@@ -1,17 +1,17 @@
 
-bulk_RestAPIMaxThreads = 1;
-bulk_RestAPICurrentThreads = 0;
-bulk_RestAPITotal = 0;
-bulk_RestAPIFinished = 0;
-bulk_RestAPITaskRunning = false;
+var bulk_RestAPIMaxThreads = 1;
+var bulk_RestAPICurrentThreads = 0;
+var bulk_RestAPITotal = 0;
+var bulk_RestAPIFinished = 0;
+var bulk_RestAPITaskRunning = false;
 
-jQuery(document).ready(function ($) {
+jQuery(function($) {
     $('body').on('click', '.copy-to-clipboard', function () {
         alert('Copied!');
     });
     // Trigger Manage Bulk Actions
     jQuery(document).on('click', '#mainwp-do-rest-api-bulk-actions', function () {
-        var action = jQuery("#mainwp-rest-api-bulk-actions-menu").dropdown("get value");
+        let action = jQuery("#mainwp-rest-api-bulk-actions-menu").dropdown("get value");
         if (action == 'delete') {
 
             if (bulk_RestAPITaskRunning) {
@@ -62,14 +62,14 @@ mainwp_restapi_remove_keys_next = function () {
 
 mainwp_restapi_bulk_remove_specific = function (pCheckedBox) {
     pCheckedBox.attr('status', 'running');
-    var rowObj = pCheckedBox.closest('tr');
+    let rowObj = pCheckedBox.closest('tr');
     bulk_RestAPICurrentThreads++;
 
-    var id = rowObj.attr('key-ck-id');
+    let id = rowObj.attr('key-ck-id');
 
     rowObj.html('<td colspan="999"><i class="notched circle loading icon"></i> ' + 'Deleting ...' + '</td>');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_rest_api_remove_keys',
         keyId: id
     });
@@ -77,8 +77,8 @@ mainwp_restapi_bulk_remove_specific = function (pCheckedBox) {
         bulk_RestAPICurrentThreads--;
         bulk_RestAPIFinished++;
         rowObj.html('<td colspan="999"></td>');
-        var result = '';
-        var error = '';
+        let result = '';
+        let error = '';
         if (response.error != undefined) {
             error = response.error;
         } else if (response.success == 'SUCCESS') {

@@ -13,11 +13,11 @@ mainwp_post_newmeta_submit = function (action, me) {
 	if (action != 'add' && action != 'delete' && action != 'update')
 		return false;
 
-	var data;
+	let data;
 
 	if (action == 'add') {
 
-		var metakey = jQuery('#metakeyselect').val(), newkey = false;
+		let metakey = jQuery('#metakeyselect').val(), newkey = false;
 		if (jQuery('#metakeyinput').is(':visible')) {
 			metakey = '#NONE#';
 			newkey = true;
@@ -33,8 +33,8 @@ mainwp_post_newmeta_submit = function (action, me) {
 
 	} else {
 
-		var row = jQuery(me).closest('.row');
-		var metaid = row.attr('meta-id');
+		let row = jQuery(me).closest('.row');
+		let metaid = row.attr('meta-id');
 
 		if ((row.length == 0) || !metaid)
 			return false;
@@ -86,8 +86,8 @@ mainwp_post_newmeta_submit = function (action, me) {
 /**
  * All post and postbox controls and functionality.
  */
-jQuery(document).ready(function ($) {
-	var updateText,
+jQuery(function($) {
+	let updateText,
 		$textarea = $('#content'),
 		$document = $(document),
 		$timestampdiv = $('#timestampdiv');
@@ -137,7 +137,7 @@ jQuery(document).ready(function ($) {
 		if (!$timestampdiv.length)
 			return true;
 
-		var attemptedDate,
+		let attemptedDate,
 			aa = $('#aa').val(),
 			mm = $('#mm').val(), jj = $('#jj').val(), hh = $('#hh').val(), mn = $('#mn').val();
 
@@ -157,8 +157,8 @@ jQuery(document).ready(function ($) {
 	jQuery('#schedule_post_datetime').calendar({
 		type: 'datetime',
 		initialDate: function () {
-			var aa = $('#aa').val(), mm = $('#mm').val(), jj = $('#jj').val(), hh = $('#hh').val(), mn = $('#mn').val();
-			var ind = new Date(aa, mm - 1, jj, hh, mn);
+			let aa = $('#aa').val(), mm = $('#mm').val(), jj = $('#jj').val(), hh = $('#hh').val(), mn = $('#mn').val();
+			let ind = new Date(aa, mm - 1, jj, hh, mn);
 			console.log(ind);
 			return ind;
 		}(),
@@ -166,15 +166,15 @@ jQuery(document).ready(function ($) {
 		formatter: {
 			date: function (date) {
 				if (!date) return '';
-				var jj = date.getDate();
-				var mm = date.getMonth() + 1;
-				var aa = date.getFullYear();
+				let jj = date.getDate();
+				let mm = date.getMonth() + 1;
+				let aa = date.getFullYear();
 				return aa + '-' + mm + '-' + jj;
 			}
 		},
 		onChange: function (attemptedDate, textDate) {
 			console.log('onChange:' + textDate);
-			var aa = attemptedDate.getFullYear(), mm = attemptedDate.getMonth() + 1, jj = attemptedDate.getDate(), mn = attemptedDate.getMinutes(), hh = attemptedDate.getHours();
+			let aa = attemptedDate.getFullYear(), mm = attemptedDate.getMonth() + 1, jj = attemptedDate.getDate(), mn = attemptedDate.getMinutes(), hh = attemptedDate.getHours();
 			mm = ('0' + mm).slice(-2); // to format 01,02,03, ... 11,12
 			$('#aa').val(aa);
 			$('#mm').val(mm).trigger("change"); // selector element
@@ -185,7 +185,7 @@ jQuery(document).ready(function ($) {
 		},
 		onSelect: function (attemptedDate, mode) {
 			console.log('onSelect mode:' + mode);
-			var aa = attemptedDate.getFullYear(), mm = attemptedDate.getMonth() + 1, jj = attemptedDate.getDate(), mn = attemptedDate.getMinutes(), hh = attemptedDate.getHours();
+			let aa = attemptedDate.getFullYear(), mm = attemptedDate.getMonth() + 1, jj = attemptedDate.getDate(), mn = attemptedDate.getMinutes(), hh = attemptedDate.getHours();
 			mm = ('0' + mm).slice(-2); // to format 01,02,03, ... 11,12
 			$('#aa').val(aa);
 			$('#mm').val(mm).trigger("change"); // selector element
@@ -205,7 +205,7 @@ jQuery(document).ready(function ($) {
 		if (e.which != 9)
 			return;
 
-		var target = $(e.target);
+		let target = $(e.target);
 
 		// [shift] + [tab] on first tab cycles back to last tab.
 		if (target.hasClass('wp-tab-first') && e.shiftKey) {
@@ -220,7 +220,7 @@ jQuery(document).ready(function ($) {
 
 	// This code is meant to allow tabbing from Title to Post content.
 	$('#title').on('keydown.editor-focus', function (event) {
-		var editor;
+		let editor;
 
 		if (event.keyCode === 9 && !event.ctrlKey && !event.altKey && !event.shiftKey) {
 			editor = typeof tinymce != 'undefined' && tinymce.get('content');
@@ -242,7 +242,7 @@ jQuery(document).ready(function ($) {
 
 	// Resize the WYSIWYG and plain text editors.
 	(function () {
-		var editor, offset, mce,
+		let editor, offset, mce,
 			$handle = $('#post-status-info'),
 			$postdivrich = $('#postdivrich');
 
@@ -276,7 +276,7 @@ jQuery(document).ready(function ($) {
 		 * When the dragging stopped make sure we return focus and do a sanity check on the height.
 		 */
 		function endDrag() {
-			var height, toolbarHeight;
+			let height, toolbarHeight;
 
 			if ($postdivrich.hasClass('wp-editor-expand')) {
 				return;
@@ -329,7 +329,7 @@ jQuery(document).ready(function ($) {
 	if (typeof tinymce !== 'undefined') {
 		// When changing post formats, change the editor body class.
 		$('#post-formats-select input.post-format').on('change.set-editor-class', function () {
-			var editor, body, format = this.id;
+			let editor, body, format = this.id;
 
 			if (format && $(this).prop('checked') && (editor = tinymce.get('content'))) {
 				body = editor.getBody();
@@ -341,7 +341,7 @@ jQuery(document).ready(function ($) {
 
 		// When changing page template, change the editor body class
 		$('#page_template').on('change.set-editor-class', function () {
-			var editor, body, pageTemplate = $(this).val() || '';
+			let editor, body, pageTemplate = $(this).val() || '';
 
 			pageTemplate = pageTemplate.substr(pageTemplate.lastIndexOf('/') + 1, pageTemplate.length)
 				.replace(/\.php$/, '')
@@ -364,7 +364,7 @@ jQuery(document).ready(function ($) {
  */
 (function ($, counter) {
 	$(function () {
-		var $content = $('#content'),
+		let $content = $('#content'),
 			$count = $('#wp-word-count').find('.word-count'),
 			prevCount = 0,
 			contentEditor;
@@ -373,7 +373,7 @@ jQuery(document).ready(function ($) {
 		 * Get the word count from TinyMCE and display it
 		 */
 		function update() {
-			var text, count;
+			let text, count;
 
 			if (!contentEditor || contentEditor.isHidden()) {
 				text = $content.val();

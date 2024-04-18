@@ -186,7 +186,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                 responsive = false;
             }
             jQuery( document ).ready( function() {
-                jQuery( '#mainwp-emails-settings-table' ).DataTable( {                  
+                jQuery( '#mainwp-emails-settings-table' ).DataTable( {
                     "stateSave":  true,
                     "paging":   false,
                     "ordering": true,

@@ -408,10 +408,8 @@ class Cost_Tracker_Summary {
             do_action( 'mainwp_after_overview_widgets', 'costsummary' );
             ?>
             <script type="text/javascript">
-                jQuery( function( $ ) {
-
+                jQuery(function( $ ) {
                     jQuery( '.mainwp-widget .mainwp-dropdown-tab .item' ).tab();
-
                     mainwp_module_cost_tracker_summary_screen_options = function () {
                         jQuery( '#mainwp-module-log-overview-screen-options-modal' ).modal( {
                             allowMultiple: true,

@@ -2,35 +2,14 @@
 /**
  * MainWP_Page.page
  */
-jQuery(document).ready(function () {
+jQuery(function(){
 
     // to fix issue not loaded calendar js library
     if (jQuery('.ui.calendar').length > 0) {
         if (mainwpParams.use_wp_datepicker == 1) {
             jQuery('#mainwp-manage-pages .ui.calendar input[type=text],#mainwp-manage-posts .ui.calendar input[type=text]').datepicker({ dateFormat: "yy-mm-dd" });
         } else {
-            jQuery('#mainwp-manage-pages .ui.calendar, #mainwp-manage-posts .ui.calendar').calendar({
-                type: 'date',
-                monthFirst: false,
-                today: true,
-                touchReadonly: false,
-                formatter: {
-                    date: function (date) {
-                        if (!date) return '';
-                        var day = date.getDate();
-                        var month = date.getMonth() + 1;
-                        var year = date.getFullYear();
-
-                        if (month < 10) {
-                            month = '0' + month;
-                        }
-                        if (day < 10) {
-                            day = '0' + day;
-                        }
-                        return year + '-' + month + '-' + day;
-                    }
-                }
-            });
+            mainwp_init_ui_calendar( '#mainwp-manage-pages .ui.calendar, #mainwp-manage-posts .ui.calendar' );           
         }
     }
 
@@ -54,18 +33,18 @@ jQuery(document).ready(function () {
         return false;
     });
     jQuery(document).on('click', '#mainwp-do-pages-bulk-actions', function () {
-        var action = jQuery('#mainwp-bulk-actions').val();
+        let action = jQuery('#mainwp-bulk-actions').val();
         if (action != 'trash' && action != 'restore' && action != 'delete') {
             return false;
         }
 
-        var tmp = jQuery("input[name='page[]']:checked");
+        let tmp = jQuery("input[name='page[]']:checked");
         countSent = tmp.length;
 
         if (countSent == 0)
             return false;
 
-        var _callback = function () {
+        let _callback = function () {
             jQuery('#mainwp-do-pages-bulk-actions').attr('disabled', 'true');
             tmp.each(
                 function (index, elem) {
@@ -75,7 +54,7 @@ jQuery(document).ready(function () {
         };
 
         if (action == 'delete') {
-            var msg = __('You are about to delete %1 page(s). Are you sure you want to proceed?', countSent);
+            let msg = __('You are about to delete %1 page(s). Are you sure you want to proceed?', countSent);
             mainwp_confirm(msg, _callback);
             return false;
         }
@@ -86,9 +65,9 @@ jQuery(document).ready(function () {
 
 
 mainwppage_postAction = function (elem, what) {
-    var rowElement = jQuery(elem).closest('tr');
-    var pageId = rowElement.find('.pageId').val();
-    var websiteId = rowElement.find('.websiteId').val();
+    let rowElement = jQuery(elem).closest('tr');
+    let pageId = rowElement.find('.pageId').val();
+    let websiteId = rowElement.find('.websiteId').val();
 
     if (rowElement.find('.allowedBulkActions').val().indexOf('|' + what + '|') == -1) {
         jQuery(elem).prop("checked", false);
@@ -105,7 +84,7 @@ mainwppage_postAction = function (elem, what) {
         return;
     }
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_page_' + what,
         postId: pageId,
         websiteId: websiteId
@@ -134,10 +113,10 @@ mainwppage_postAction = function (elem, what) {
 };
 
 mainwp_fetch_pages = function () {
-    var errors = [];
-    var selected_sites = [];
-    var selected_groups = [];
-    var selected_clients = [];
+    let errors = [];
+    let selected_sites = [];
+    let selected_groups = [];
+    let selected_clients = [];
 
     if (jQuery('#select_by').val() == 'site') {
         jQuery("input[name='selected_sites[]']:checked").each(function () {
@@ -162,8 +141,8 @@ mainwp_fetch_pages = function () {
         }
     }
 
-    var _status = '';
-    var statuses = jQuery("#mainwp_page_search_type").dropdown("get value");
+    let _status = '';
+    let statuses = jQuery("#mainwp_page_search_type").dropdown("get value");
     if (statuses == null)
         errors.push('Please select a page status.');
     else {
@@ -179,7 +158,7 @@ mainwp_fetch_pages = function () {
         jQuery('#mainwp_pages_error').hide();
     }
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_pages_search',
         keyword: jQuery('#mainwp_page_search_by_keyword').val(),
         dtsstart: jQuery('#mainwp_page_search_by_dtsstart').val(),
@@ -255,7 +234,7 @@ mainwp_fetch_pages = function () {
  */
 var countSent = 0;
 var countReceived = 0;
-jQuery(document).ready(function () {
+jQuery(function(){
     jQuery(document).on('click', '#mainwp_show_posts', function () {
         mainwp_fetch_posts();
     });
@@ -295,18 +274,18 @@ jQuery(document).ready(function () {
     });
 
     jQuery(document).on('click', '#mainwp-do-posts-bulk-actions', function () {
-        var action = jQuery('#mainwp-bulk-actions').val();
+        let action = jQuery('#mainwp-bulk-actions').val();
         if (action != 'publish' && action != 'unpublish' && action != 'trash' && action != 'restore' && action != 'delete') {
             return false;
         }
 
-        var tmp = jQuery("input[name='post[]']:checked");
+        let tmp = jQuery("input[name='post[]']:checked");
         countSent = tmp.length;
 
         if (countSent == 0)
             return false;
 
-        var _callback = function () {
+        let _callback = function () {
             jQuery('#mainwp-do-posts-bulk-actions').attr('disabled', 'true');
             tmp.each(
                 function (index, elem) {
@@ -315,7 +294,7 @@ jQuery(document).ready(function () {
             );
         }
         if (action == 'delete') {
-            var msg = __('You are about to delete %1 post(s). Are you sure you want to proceed?', countSent);
+            let msg = __('You are about to delete %1 post(s). Are you sure you want to proceed?', countSent);
             mainwp_confirm(msg, _callback);
             return false;
         }
@@ -325,9 +304,9 @@ jQuery(document).ready(function () {
 });
 
 mainwppost_postAction = function (elem, what, postType) {
-    var rowElement = jQuery(elem).closest('tr');
-    var postId = rowElement.find('.postId').val();
-    var websiteId = rowElement.find('.websiteId').val();
+    let rowElement = jQuery(elem).closest('tr');
+    let postId = rowElement.find('.postId').val();
+    let websiteId = rowElement.find('.websiteId').val();
     if (rowElement.find('.allowedBulkActions').val().indexOf('|' + what + '|') == -1) {
         jQuery(elem).prop("checked", false);
         countReceived++;
@@ -347,7 +326,7 @@ mainwppost_postAction = function (elem, what, postType) {
         postId = rowElement.find('.pageId').val();
     }
 
-    var data = {
+    let data = {
         action: 'mainwp_post_' + what,
         postId: postId,
         websiteId: websiteId
@@ -390,23 +369,23 @@ mainwppost_postAction = function (elem, what, postType) {
 };
 
 mainwp_show_post = function (siteId, postId, userId) {
-    var siteElement = jQuery('input[name="selected_sites[]"][siteid="' + siteId + '"]');
+    let siteElement = jQuery('input[name="selected_sites[]"][siteid="' + siteId + '"]');
     siteElement.prop('checked', true);
     siteElement.trigger("change");
     mainwp_fetch_posts(postId, userId);
 };
 /* eslint-disable complexity */
 mainwp_fetch_posts = function (postId, userId, start_sites) {
-    var errors = [];
-    var selected_sites = [];
-    var selected_groups = [];
-    var selected_clients = [];
+    let errors = [];
+    let selected_sites = [];
+    let selected_groups = [];
+    let selected_clients = [];
 
-    var i = 0;
-    var num_sites = jQuery('#search-bulk-sites').attr('number-sites');
+    let i = 0;
+    let num_sites = jQuery('#search-bulk-sites').attr('number-sites');
     num_sites = parseInt(num_sites);
 
-    var bulk_search = num_sites > 0 ? true : false;
+    let bulk_search = num_sites > 0 ? true : false;
 
     if (jQuery('#select_by').val() == 'site') {
         if (start_sites == undefined) {
@@ -448,13 +427,13 @@ mainwp_fetch_posts = function (postId, userId, start_sites) {
                 console.log(num_sites);
                 start_sites = 0;
                 // get sites of groups.
-                var data = mainwp_secure_data({
+                let data = mainwp_secure_data({
                     action: 'mainwp_get_sites_of_groups',
                     'groups[]': selected_groups
                 });
                 jQuery('#mainwp-loading-posts-row').show();
                 jQuery.post(ajaxurl, data, function (response) {
-                    var site_ids = response;
+                    let site_ids = response;
                     console.log(site_ids);
                     if (site_ids) {
                         jQuery("input[name='selected_sites[]'][bulk-search=true]").attr('bulk-search', false);
@@ -475,8 +454,8 @@ mainwp_fetch_posts = function (postId, userId, start_sites) {
             });
         }
     }
-    var _status = '';
-    var statuses = jQuery("#mainwp_post_search_type").dropdown("get value");
+    let _status = '';
+    let statuses = jQuery("#mainwp_post_search_type").dropdown("get value");
     if (statuses == null)
         errors.push('<div class="ui yellow message">' + __('Please select at least one post status.') + '</div>');
     else {
@@ -492,7 +471,7 @@ mainwp_fetch_posts = function (postId, userId, start_sites) {
         jQuery('#mainwp-message-zone').hide();
     }
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_posts_search',
         keyword: jQuery('#mainwp_post_search_by_keyword').val(),
         dtsstart: jQuery('#mainwp_post_search_by_dtsstart').val(),
@@ -541,7 +520,7 @@ mainwp_fetch_posts = function (postId, userId, start_sites) {
 mainwp_fetch_posts_done = function () {
     jQuery('#mainwp-loading-posts-row').hide();
     jQuery('#mainwp_posts_main').show();
-    var responsive = true;
+    let responsive = true;
     if (jQuery(window).width() > 1140) {
         responsive = false;
     }

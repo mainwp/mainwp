@@ -539,7 +539,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
                                 style: 'multi+shift',
                                 selector: 'tr>td:not(.not-selectable)'
                             }
-                        } ).on( 'columns-reordered', function ( e, settings, details ) {
+                        } ).on( 'columns-reordered', function () {
                             console.log('columns-reordered');
                             setTimeout(() => {
                                 mainwp_datatable_fix_menu_overflow('#mainwp-manage-non-mainwp-actions-table');

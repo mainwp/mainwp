@@ -803,7 +803,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                             .nodes()
                             .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
                         }
-                    }).on( 'columns-reordered', function ( e, settings, details ) {
+                    }).on( 'columns-reordered', function () {
                         console.log('columns-reordered');
                         setTimeout(() => {
                             $( '#mainwp-manage-sites-monitor-table .ui.dropdown' ).dropdown();

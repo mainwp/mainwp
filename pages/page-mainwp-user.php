@@ -928,7 +928,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         .nodes()
                         .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
                     }
-                }).on( 'columns-reordered', function ( e, settings, details ) {
+                }).on( 'columns-reordered', function () {
                     console.log('columns-reordered');
                     setTimeout(() => {
                         jQuery( '#mainwp-users-table .ui.dropdown' ).dropdown();

@@ -1,6 +1,6 @@
 /* eslint complexity: ["error", 100] */
 //Ignore plugin
-jQuery(document).ready(function () {
+jQuery(function(){
     jQuery(document).on('click', 'input[name="plugins"]', function () {
         if (jQuery(this).is(':checked')) {
             jQuery('input[name="plugins"]').attr('checked', 'checked');
@@ -22,12 +22,12 @@ jQuery(document).ready(function () {
 
     jQuery(document).on('click', '#mainwp-bulk-trust-plugins-action-apply', function () {
 
-        var action = jQuery("#mainwp-bulk-actions").dropdown("get value");
+        let action = jQuery("#mainwp-bulk-actions").dropdown("get value");
 
         if (action == 'none')
             return false;
 
-        var slugs = jQuery.map(jQuery("input[name='plugin[]']:checked"), function (el) {
+        let slugs = jQuery.map(jQuery("input[name='plugin[]']:checked"), function (el) {
             return jQuery(el).val();
         });
 
@@ -36,7 +36,7 @@ jQuery(document).ready(function () {
 
         jQuery('#mainwp-bulk-trust-plugins-action-apply').attr('disabled', 'true');
 
-        var data = mainwp_secure_data({
+        let data = mainwp_secure_data({
             action: 'mainwp_trust_plugin',
             slugs: slugs,
             do: action
@@ -50,11 +50,11 @@ jQuery(document).ready(function () {
         return false;
     });
     jQuery(document).on('click', '#mainwp-bulk-trust-themes-action-apply', function () {
-        var action = jQuery("#mainwp-bulk-actions").dropdown("get value");
+        let action = jQuery("#mainwp-bulk-actions").dropdown("get value");
         if (action == 'none')
             return false;
 
-        var slugs = jQuery.map(jQuery("input[name='theme[]']:checked"), function (el) {
+        let slugs = jQuery.map(jQuery("input[name='theme[]']:checked"), function (el) {
             return jQuery(el).val();
         });
         if (slugs.length == 0)
@@ -62,7 +62,7 @@ jQuery(document).ready(function () {
 
         jQuery('#mainwp-bulk-trust-themes-action-apply').attr('disabled', 'true');
 
-        var data = mainwp_secure_data({
+        let data = mainwp_secure_data({
             action: 'mainwp_trust_theme',
             slugs: slugs,
             do: action
@@ -81,19 +81,19 @@ jQuery(document).ready(function () {
 /**
  * MainWP_Plugins.page
  */
-jQuery(document).ready(function () {
+jQuery(function(){
     jQuery(document).on('click', '#mainwp-show-plugins', function () {
         mainwp_fetch_plugins();
     });
 
     jQuery(document).on('click', '#mainwp-install-to-selected-sites', function () {
-        var checkedVals = jQuery('.mainwp-manage-plugin-item-website .mainwp-selected-plugin-site:checked').map(function () {
-            var rowElement = jQuery(this).closest('.mainwp-manage-plugin-item-website');
-            var val = rowElement.attr("site-id");
+        let checkedVals = jQuery('.mainwp-manage-plugin-item-website .mainwp-selected-plugin-site:checked').map(function () {
+            let rowElement = jQuery(this).closest('.mainwp-manage-plugin-item-website');
+            let val = rowElement.attr("site-id");
             return val;
         }).get();
 
-        var selectedIds = [];
+        let selectedIds = [];
         if (checkedVals instanceof Array) {
             jQuery.grep(checkedVals, function (val) {
                 if (jQuery.inArray(val, selectedIds) == -1) {
@@ -107,8 +107,8 @@ jQuery(document).ready(function () {
             return false;
         } else {
             jQuery('#mainwp-message-zone').fadeOut(5000);
-            var ids = selectedIds.join("-");
-            var kwd = jQuery('#mainwp_plugin_search_by_keyword').val();
+            let ids = selectedIds.join("-");
+            let kwd = jQuery('#mainwp_plugin_search_by_keyword').val();
             if ('' != kwd) {
                 kwd = '&s=' + encodeURIComponent(kwd);
             }
@@ -130,12 +130,12 @@ jQuery(document).ready(function () {
         return false;
     });
 
-    var pluginCountSent;
-    var pluginCountReceived;
-    var pluginResetAllowed = true;
+    let pluginCountSent;
+    let pluginCountReceived;
+    let pluginResetAllowed = true;
 
     jQuery(document).on('click', '#mainwp-do-plugins-bulk-actions', function () {
-        var action = jQuery("#mainwp-bulk-actions").dropdown("get value");
+        let action = jQuery("#mainwp-bulk-actions").dropdown("get value");
         console.log(action);
         if (action == '') {
             return false;
@@ -146,14 +146,14 @@ jQuery(document).ready(function () {
         pluginResetAllowed = false;
         pluginCountSent = 0;
         pluginCountReceived = 0;
-        var selectedSites = [];
-        var selectedSitePlugins = [];
+        let selectedSites = [];
+        let selectedSitePlugins = [];
 
         //Find all checked boxes
         jQuery('.mainwp-selected-plugin-site:checked').each(function () {
-            var rowElement = jQuery(this).closest('.mainwp-manage-plugin-item-website');
-            var websiteId = jQuery(rowElement).attr('site-id');
-            var pluginSlug = jQuery(rowElement).attr('plugin-slug');
+            let rowElement = jQuery(this).closest('.mainwp-manage-plugin-item-website');
+            let websiteId = jQuery(rowElement).attr('site-id');
+            let pluginSlug = jQuery(rowElement).attr('plugin-slug');
             selectedSitePlugins.push({ 'siteid': websiteId, 'plugin': pluginSlug });
             if (selectedSites.indexOf(websiteId) < 0) {
                 selectedSites.push(websiteId);
@@ -161,8 +161,8 @@ jQuery(document).ready(function () {
         });
 
         jQuery(selectedSites).each(function (idx, val) {
-            var websiteId = val;
-            var selectedPlugins = [];
+            let websiteId = val;
+            let selectedPlugins = [];
 
             jQuery(selectedSitePlugins).each(function (idx, val) {
                 if (val.siteid == websiteId) {
@@ -177,14 +177,14 @@ jQuery(document).ready(function () {
 
 
             if ((action == 'activate') || (action == 'delete') || (action == 'deactivate') || (action == 'ignore_updates')) {
-                var pluginsToSend = [];
-                var namesToSend = [];
-                for (var i = 0; i < selectedPlugins.length; i++) {
+                let pluginsToSend = [];
+                let namesToSend = [];
+                for (let i = 0; i < selectedPlugins.length; i++) {
                     pluginsToSend.push(jQuery(selectedPlugins[i]).attr('plugin-slug'));
                     namesToSend.push(jQuery(selectedPlugins[i]).attr('plugin-name'));
                 }
 
-                var data = mainwp_secure_data({
+                let data = mainwp_secure_data({
                     action: 'mainwp_plugin_' + action,
                     plugins: pluginsToSend,
                     websiteId: websiteId
@@ -217,10 +217,10 @@ jQuery(document).ready(function () {
     });
 
     jQuery(document).on('click', '.mainwp-edit-plugin-note', function () {
-        var rowEl = jQuery(jQuery(this).parents('tr')[0]);
-        var slug = rowEl.attr('plugin-slug');
-        var name = rowEl.attr('plugin-name');
-        var note = rowEl.find('.esc-content-note').html();
+        let rowEl = jQuery(jQuery(this).parents('tr')[0]);
+        let slug = rowEl.attr('plugin-slug');
+        let name = rowEl.attr('plugin-name');
+        let note = rowEl.find('.esc-content-note').html();
         jQuery('#mainwp-notes-title').html(decodeURIComponent(name));
         jQuery('#mainwp-notes-html').html(note == '' ? __('No saved notes. Click the Edit button to edit plugin notes.') : note);
         jQuery('#mainwp-notes-note').val(note);
@@ -229,10 +229,10 @@ jQuery(document).ready(function () {
     });
 
     mainwp_notes_plugin_save = function () {
-        var slug = jQuery('#mainwp-notes-slug').val();
-        var newnote = jQuery('#mainwp-notes-note').val();
+        let slug = jQuery('#mainwp-notes-slug').val();
+        let newnote = jQuery('#mainwp-notes-note').val();
         newnote = newnote.replace(/(?:\r\n|\r|\n)/g, '<br>');
-        var data = mainwp_secure_data({
+        let data = mainwp_secure_data({
             action: 'mainwp_trusted_plugin_notes_save',
             slug: slug,
             note: newnote
@@ -242,7 +242,7 @@ jQuery(document).ready(function () {
 
         jQuery.post(ajaxurl, data, function (pSlug) {
             return function (response) {
-                var rowEl = jQuery('tr[plugin-slug="' + pSlug + '"]');
+                let rowEl = jQuery('tr[plugin-slug="' + pSlug + '"]');
                 if (response.result == 'SUCCESS') {
                     jQuery('#mainwp-notes-status').html('<i class="green check icon"></i> ' + __('Note saved!'));
                     rowEl.find('.esc-content-note').html(jQuery('#mainwp-notes-note').val());
@@ -264,10 +264,10 @@ jQuery(document).ready(function () {
     }
 
     jQuery(document).on('click', '.mainwp-edit-theme-note', function () {
-        var rowEl = jQuery(jQuery(this).parents('tr')[0]);
-        var slug = rowEl.attr('theme-slug');
-        var name = rowEl.attr('theme-name');
-        var note = rowEl.find('.esc-content-note').html();
+        let rowEl = jQuery(jQuery(this).parents('tr')[0]);
+        let slug = rowEl.attr('theme-slug');
+        let name = rowEl.attr('theme-name');
+        let note = rowEl.find('.esc-content-note').html();
         jQuery('#mainwp-notes-modal').removeClass('edit-mode');
         jQuery('#mainwp-notes-title').html(decodeURIComponent(name));
         jQuery('#mainwp-notes-html').html(note == '' ? 'No saved notes. Click the Edit button to edit theme notes.' : note);
@@ -277,10 +277,10 @@ jQuery(document).ready(function () {
     });
 
     mainwp_notes_theme_save = function () {
-        var slug = jQuery('#mainwp-notes-slug').val();
-        var newnote = jQuery('#mainwp-notes-note').val();
+        let slug = jQuery('#mainwp-notes-slug').val();
+        let newnote = jQuery('#mainwp-notes-note').val();
         newnote = newnote.replace(/(?:\r\n|\r|\n)/g, '<br>');
-        var data = mainwp_secure_data({
+        let data = mainwp_secure_data({
             action: 'mainwp_trusted_theme_notes_save',
             slug: slug,
             note: newnote
@@ -290,7 +290,7 @@ jQuery(document).ready(function () {
 
         jQuery.post(ajaxurl, data, function (pSlug) {
             return function (response) {
-                var rowEl = jQuery('tr[theme-slug="' + pSlug + '"]');
+                let rowEl = jQuery('tr[theme-slug="' + pSlug + '"]');
                 if (response.result == 'SUCCESS') {
                     jQuery('#mainwp-notes-status').html('<i class="green check icon"></i> ' + __('Note saved!'));
                     rowEl.find('.esc-content-note').html(jQuery('#mainwp-notes-note').val());
@@ -332,10 +332,10 @@ mainwp_show_hide_install_to_selected_sites = function (what) {
 
 // Manage Plugins -- Fetch plugins
 mainwp_fetch_plugins = function () {
-    var errors = [];
-    var selected_sites = [];
-    var selected_groups = [];
-    var selected_clients = [];
+    let errors = [];
+    let selected_sites = [];
+    let selected_groups = [];
+    let selected_clients = [];
 
     if (jQuery('#select_by').val() == 'site') {
         jQuery("input[name='selected_sites[]']:checked").each(function () {
@@ -361,7 +361,7 @@ mainwp_fetch_plugins = function () {
     }
 
 
-    var _status = jQuery("#mainwp_plugins_search_by_status").dropdown("get value");
+    let _status = jQuery("#mainwp_plugins_search_by_status").dropdown("get value");
 
     if (_status == null) {
         errors.push(__('Please select at least one plugin status.'));
@@ -377,7 +377,7 @@ mainwp_fetch_plugins = function () {
         jQuery('#mainwp-message-zone').removeClass('yellow');
         jQuery('#mainwp-message-zone').hide();
     }
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_plugins_search',
         keyword: jQuery('#mainwp_plugin_search_by_keyword').val(),
         status: _status,
@@ -403,7 +403,7 @@ mainwp_fetch_plugins = function () {
 
 // Fetch plugins for the Auto Update feature
 mainwp_fetch_all_active_plugins = function () {
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_plugins_search_all_active',
         keyword: jQuery("#mainwp_au_plugin_keyword").val(),
         status: jQuery("#mainwp_au_plugin_trust_status").val(),
@@ -421,7 +421,7 @@ mainwp_fetch_all_active_plugins = function () {
 
 // Fetch themes for the Auto Update feature
 mainwp_fetch_all_themes = function () {
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_themes_search_all',
         keyword: jQuery("#mainwp_au_theme_keyword").val(),
         status: jQuery("#mainwp_au_theme_trust_status").val(),
@@ -447,13 +447,13 @@ jQuery(function () {
     });
 
     jQuery(document).on('click', '#mainwp-install-themes-to-selected-sites', function () {
-        var checkedVals = jQuery('.mainwp-manage-theme-item-website .mainwp-selected-theme-site:checked').map(function () {
-            var rowElement = jQuery(this).closest('.mainwp-manage-theme-item-website');
-            var val = rowElement.attr('site-id');
+        let checkedVals = jQuery('.mainwp-manage-theme-item-website .mainwp-selected-theme-site:checked').map(function () {
+            let rowElement = jQuery(this).closest('.mainwp-manage-theme-item-website');
+            let val = rowElement.attr('site-id');
             return val;
         }).get();
 
-        var selectedIds = [];
+        let selectedIds = [];
         if (checkedVals instanceof Array) {
             jQuery.grep(checkedVals, function (val) {
                 if (jQuery.inArray(val, selectedIds) == -1) {
@@ -467,8 +467,8 @@ jQuery(function () {
             return false;
         } else {
             jQuery('#mainwp-message-zone').fadeOut(5000);
-            var ids = selectedIds.join("-");
-            var kwd = jQuery('#mainwp_theme_search_by_keyword').val();
+            let ids = selectedIds.join("-");
+            let kwd = jQuery('#mainwp_theme_search_by_keyword').val();
             if ('' != kwd) {
                 kwd = '&s=' + encodeURIComponent(kwd);
             }
@@ -491,12 +491,12 @@ jQuery(function () {
         return false;
     });
 
-    var themeCountSent;
-    var themeCountReceived;
-    var themeResetAllowed = true;
+    let themeCountSent;
+    let themeCountReceived;
+    let themeResetAllowed = true;
 
     jQuery(document).on('click', '#mainwp-do-themes-bulk-actions', function () {
-        var action = jQuery("#mainwp-bulk-actions").dropdown("get value");
+        let action = jQuery("#mainwp-bulk-actions").dropdown("get value");
         console.log(action);
         if (action == '' || action == 'none')
             return;
@@ -506,14 +506,14 @@ jQuery(function () {
         themeResetAllowed = false;
         themeCountSent = 0;
         themeCountReceived = 0;
-        var selectedSites = [];
-        var selectedSiteThemes = [];
+        let selectedSites = [];
+        let selectedSiteThemes = [];
 
         //Find all checked boxes
         jQuery('.mainwp-selected-theme-site:checked').each(function () {
-            var rowElement = jQuery(this).closest('.mainwp-manage-theme-item-website');
-            var websiteId = jQuery(rowElement).attr('site-id');
-            var theme = jQuery(rowElement).attr('theme-slug');
+            let rowElement = jQuery(this).closest('.mainwp-manage-theme-item-website');
+            let websiteId = jQuery(rowElement).attr('site-id');
+            let theme = jQuery(rowElement).attr('theme-slug');
             selectedSiteThemes.push({ 'siteid': websiteId, 'theme': theme });
             if (selectedSites.indexOf(websiteId) < 0) {
                 selectedSites.push(websiteId);
@@ -522,8 +522,8 @@ jQuery(function () {
 
 
         jQuery(selectedSites).each(function (idx, val) {
-            var websiteId = val;
-            var selectedThemes = [];
+            let websiteId = val;
+            let selectedThemes = [];
 
             jQuery(selectedSiteThemes).each(function (idx, val) {
                 if (val.siteid == websiteId) {
@@ -537,17 +537,17 @@ jQuery(function () {
                 return;
 
             if (action == 'activate' || action == 'ignore_updates') {
-                var themeToActivate = jQuery(selectedThemes[0]).attr('theme-slug');
-                var themesToSend = [];
-                var namesToSend = [];
+                let themeToActivate = jQuery(selectedThemes[0]).attr('theme-slug');
+                let themesToSend = [];
+                let namesToSend = [];
 
-                var data = mainwp_secure_data({
+                let data = mainwp_secure_data({
                     action: 'mainwp_theme_' + action,
                     websiteId: websiteId
                 });
 
                 if (action == 'ignore_updates') {
-                    for (var i = 0; i < selectedThemes.length; i++) {
+                    for (let i = 0; i < selectedThemes.length; i++) {
                         themesToSend.push(jQuery(selectedThemes[i]).attr('theme-slug'));
                         namesToSend.push(jQuery(selectedThemes[i]).attr('theme-name'));
                     }
@@ -569,8 +569,8 @@ jQuery(function () {
                     }
                 });
             } else if (action == 'delete') {
-                var themesToDelete = [];
-                for (var i = 0; i < selectedThemes.length; i++) {
+                let themesToDelete = [];
+                for (let i = 0; i < selectedThemes.length; i++) {
                     if (jQuery(selectedThemes[i]).attr('not-delete') == 1) {
                         jQuery(selectedThemes[i]).find('.mainwp-selected-theme-site').attr('checked', false);
                         continue;
@@ -580,7 +580,7 @@ jQuery(function () {
                 if (themesToDelete.length == 0) {
                     return;
                 }
-                var data = mainwp_secure_data({
+                let data = mainwp_secure_data({
                     action: 'mainwp_theme_delete',
                     themes: themesToDelete,
                     websiteId: websiteId
@@ -590,7 +590,7 @@ jQuery(function () {
                 jQuery.post(ajaxurl, data, function (response) {
                     if (response.error != undefined && response.error == Object(response.error)) { // check if .error is object.
                         entries = Object.entries(response.error);
-                        for (var entry of entries) {
+                        for (let entry of entries) {
                             warnings = __(entry[0], encodeURIComponent(entry[1])); // entry[0]:id message, entry[1] string value.
                             jQuery('#mainwp-message-zone').after('<div class="ui info message yellow"><i class="ui close icon"></i><span>' + warnings + '</span></div>');
                         }
@@ -622,10 +622,10 @@ jQuery(function () {
 
 // Manage Themes -- Fetch themes from child sites
 mainwp_fetch_themes = function () {
-    var errors = [];
-    var selected_sites = [];
-    var selected_groups = [];
-    var selected_clients = [];
+    let errors = [];
+    let selected_sites = [];
+    let selected_groups = [];
+    let selected_clients = [];
 
     if (jQuery('#select_by').val() == 'site') {
         jQuery("input[name='selected_sites[]']:checked").each(function () {
@@ -650,7 +650,7 @@ mainwp_fetch_themes = function () {
         }
     }
 
-    var _status = jQuery("#mainwp_themes_search_by_status").dropdown("get value");
+    let _status = jQuery("#mainwp_themes_search_by_status").dropdown("get value");
     if (_status == null) {
         errors.push(__('Please select at least one theme status.'));
     }
@@ -666,7 +666,7 @@ mainwp_fetch_themes = function () {
         jQuery('#mainwp-message-zone').hide();
     }
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_themes_search',
         keyword: jQuery('#mainwp_theme_search_by_keyword').val(),
         status: _status,
@@ -708,17 +708,17 @@ jQuery(function () {
 });
 
 manage_plugin_Action = function (elem, what) {
-    var rowElement = jQuery(elem).closest('.mainwp-manage-plugin-item-website');
-    var plugin = rowElement.attr('plugin-slug');
-    var websiteId = rowElement.attr('site-id');
+    let rowElement = jQuery(elem).closest('.mainwp-manage-plugin-item-website');
+    let plugin = rowElement.attr('plugin-slug');
+    let websiteId = rowElement.attr('site-id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_widget_plugin_' + what, // same with the widgets.
         plugin: plugin,
         websiteId: websiteId
     });
-    var start_row = '<div class="one wide center aligned middle aligned column"></div><div class="thirteen wide left aligned middle aligned column">';
-    var end_row = '</div>';
+    let start_row = '<div class="one wide center aligned middle aligned column"></div><div class="thirteen wide left aligned middle aligned column">';
+    let end_row = '</div>';
     jQuery(rowElement).html(start_row + '<i class="notched circle loading icon"></i>' + __('Please wait...') + end_row);
     jQuery.post(ajaxurl, data, function (response) {
         if (response && response.error) {
@@ -746,7 +746,7 @@ manage_plugin_Action = function (elem, what) {
 
 
 manage_plugins_upgrade = function (slug, websiteid) {
-    var msg = __('Are you sure you want to update the plugin on the selected site?');
+    let msg = __('Are you sure you want to update the plugin on the selected site?');
     mainwp_confirm(msg, function () {
         return manage_plugins_upgrade_int(slug, websiteid);
     }, false, 1);
@@ -754,13 +754,13 @@ manage_plugins_upgrade = function (slug, websiteid) {
 
 
 manage_plugins_upgrade_int = function (slug, websiteId) {
-    var websiteHolder = jQuery('.mainwp-manage-plugin-item-website[plugin-slug="' + slug + '"][site-id="' + websiteId + '"]');
+    let websiteHolder = jQuery('.mainwp-manage-plugin-item-website[plugin-slug="' + slug + '"][site-id="' + websiteId + '"]');
     websiteHolder.find('.column.update-column').html('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
 
     manage_plugins_upgrade_continueAfterBackup = function () {
         console.log('plugin upgrade continue');
         return function () {
-            var data = mainwp_secure_data({
+            let data = mainwp_secure_data({
                 action: 'mainwp_upgradeplugintheme',
                 websiteId: websiteId,
                 type: 'plugin',
@@ -773,11 +773,11 @@ manage_plugins_upgrade_int = function (slug, websiteId) {
                 success: function (siteHolder) {
                     return function (response) {
                         if (response.error) {
-                            var extErr = getErrorMessageInfo(response.error, 'ui')
+                            let extErr = getErrorMessageInfo(response.error, 'ui')
                             siteHolder.find('.column.update-column').html(extErr);
                         } else {
-                            var res = response.result;
-                            var res_error = response.result_error;
+                            let res = response.result;
+                            let res_error = response.result_error;
                             if (res[slug]) {
                                 siteHolder.attr('updated', 1);
                                 siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
@@ -806,7 +806,7 @@ manage_plugins_upgrade_int = function (slug, websiteId) {
                         return;
                     }
 
-                    var fnc = function (pRqst, pXhr) {
+                    let fnc = function (pRqst, pXhr) {
                         return function () {
                             if (pXhr.status == 404) {
                                 //handle error
@@ -834,8 +834,8 @@ manage_plugins_upgrade_int = function (slug, websiteId) {
         return false;
     }
 
-    var sitesToUpdate = [websiteId]; var siteNames = []
-    var siteNames = []
+    let sitesToUpdate = [websiteId];
+    let siteNames = [];
     siteNames[websiteId] = jQuery(websiteHolder).attr('site-name');
 
     return mainwp_manages_checkBackups(sitesToUpdate, siteNames, manage_plugins_upgrade_continueAfterBackup);
@@ -857,18 +857,18 @@ jQuery(function () {
 });
 
 manages_themeAction = function (elem, what) {
-    var rowElement = jQuery(elem).closest('.mainwp-manage-theme-item-website');
-    var theme = rowElement.attr('theme-slug');
-    var websiteId = rowElement.attr('site-id');
+    let rowElement = jQuery(elem).closest('.mainwp-manage-theme-item-website');
+    let theme = rowElement.attr('theme-slug');
+    let websiteId = rowElement.attr('site-id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_widget_theme_' + what, // same with theme widget.
         theme: theme,
         websiteId: websiteId
     });
 
-    var start_row = '<div class="one wide center aligned middle aligned column"></div><div class="thirteen wide left aligned middle aligned column">';
-    var end_row = '</div>';
+    let start_row = '<div class="one wide center aligned middle aligned column"></div><div class="thirteen wide left aligned middle aligned column">';
+    let end_row = '</div>';
 
     jQuery(rowElement).html(start_row + '<i class="notched circle loading icon"></i>' + __('Please wait...') + end_row);
     jQuery.post(ajaxurl, data, function (response) {
@@ -897,7 +897,7 @@ manages_themeAction = function (elem, what) {
 
 
 manage_themes_upgrade_theme = function (slug, websiteid) {
-    var msg = __('Are you sure you want to update the theme on the selected site?');
+    let msg = __('Are you sure you want to update the theme on the selected site?');
     mainwp_confirm(msg, function () {
         return manage_themes_upgrade_int(slug, websiteid);
     }, false, 1);
@@ -905,12 +905,12 @@ manage_themes_upgrade_theme = function (slug, websiteid) {
 
 
 manage_themes_upgrade_int = function (slug, websiteId) {
-    var websiteHolder = jQuery('.mainwp-manage-theme-item-website[theme-slug="' + slug + '"][site-id="' + websiteId + '"]');
+    let websiteHolder = jQuery('.mainwp-manage-theme-item-website[theme-slug="' + slug + '"][site-id="' + websiteId + '"]');
     websiteHolder.find('.column.update-column').html('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
     manage_themes_upgrade_continueAfterBackup = function () {
         console.log('theme upgrade continue');
         return function () {
-            var data = mainwp_secure_data({
+            let data = mainwp_secure_data({
                 action: 'mainwp_upgradeplugintheme',
                 websiteId: websiteId,
                 type: 'theme',
@@ -923,10 +923,10 @@ manage_themes_upgrade_int = function (slug, websiteId) {
                 success: function (pSlug, siteHolder) {
                     return function (response) {
                         if (response.error) {
-                            var extErr = getErrorMessageInfo(response.error, 'ui')
+                            let extErr = getErrorMessageInfo(response.error, 'ui')
                             siteHolder.find('.column.update-column').html(extErr);
                         } else {
-                            var res = response.result;
+                            let res = response.result;
                             if (res[pSlug]) {
                                 siteHolder.attr('updated', 1);
                                 siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
@@ -952,7 +952,7 @@ manage_themes_upgrade_int = function (slug, websiteId) {
                         this.endError();
                         return;
                     }
-                    var fnc = function (pRqst, pXhr) {
+                    let fnc = function (pRqst, pXhr) {
                         return function () {
                             if (pXhr.status == 404) {
                                 //handle error
@@ -979,8 +979,8 @@ manage_themes_upgrade_int = function (slug, websiteId) {
         return false;
     }
 
-    var sitesToUpdate = [websiteId];
-    var siteNames = []
+    let sitesToUpdate = [websiteId];
+    let siteNames = [];
     siteNames[websiteId] = jQuery(websiteHolder).attr('site-name');
 
     return mainwp_manages_checkBackups(sitesToUpdate, siteNames, manage_themes_upgrade_continueAfterBackup);
@@ -992,7 +992,7 @@ manage_themes_upgrade_int = function (slug, websiteId) {
  */
 mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAfterBackup) {
     managesitesShowBusyFunction = function () {
-        var output = __('Checking if a backup is required for the selected updates...');
+        let output = __('Checking if a backup is required for the selected updates...');
         mainwpPopup('#managesites-backup-box').getContentEl().html(output);
         jQuery('#managesites-backup-all').hide();
         jQuery('#managesites-backup-ignore').hide();
@@ -1005,10 +1005,10 @@ mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAfterB
 
     };
 
-    var managesitesShowBusyTimeout = setTimeout(managesitesShowBusyFunction, 300);
+    let managesitesShowBusyTimeout = setTimeout(managesitesShowBusyFunction, 300);
 
     //Step 2: Check if backups are ok.
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_checkbackups',
         sites: sitesToUpdate
     });
@@ -1022,11 +1022,11 @@ mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAfterB
                 clearTimeout(managesitesShowBusyTimeout);
 
                 mainwpPopup('#managesites-backup-box').close();
-                var siteFeedback = undefined;
+                let siteFeedback = undefined;
 
                 if (response['result'] && response['result']['sites'] != undefined) {
                     siteFeedback = [];
-                    for (var currSiteId in response['result']['sites']) {
+                    for (let currSiteId in response['result']['sites']) {
                         if (response['result']['sites'][currSiteId] == false) {
                             siteFeedback.push(currSiteId);
                         }
@@ -1036,7 +1036,7 @@ mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAfterB
                 }
 
                 if (siteFeedback != undefined) {
-                    var backupPrimary = '';
+                    let backupPrimary = '';
                     if (response['result']['primary_backup'] && response['result']['primary_backup'] != undefined)
                         backupPrimary = response['result']['primary_backup'];
 
@@ -1044,18 +1044,18 @@ mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAfterB
                         jQuery('#managesites-backup-all').show();
                         jQuery('#managesites-backup-ignore').show();
                     } else {
-                        var backupLink = mainwp_get_primaryBackup_link(backupPrimary);
+                        let backupLink = mainwp_get_primaryBackup_link(backupPrimary);
                         jQuery('#managesites-backup-now').attr('href', backupLink).show();
                         jQuery('#managesites-backup-ignore').val(__('Proceed with Updates')).show();
                     }
 
-                    var output = '<span class="mainwp-red">' + __('A full backup has not been taken in the last days for the following sites:') + '</span><br /><br />';
+                    let output = '<span class="mainwp-red">' + __('A full backup has not been taken in the last days for the following sites:') + '</span><br /><br />';
                     if (backupPrimary == '') { // default backup feature
-                        for (var j = 0; j < siteFeedback.length; j++) {
+                        for (let j = 0; j < siteFeedback.length; j++) {
                             output += '<span class="managesites-backup-site" siteid="' + siteFeedback[j] + '">' + decodeURIComponent(pSiteNames[siteFeedback[j]]) + '</span><br />';
                         }
                     } else {
-                        for (var j = 0; j < siteFeedback.length; j++) {
+                        for (let j = 0; j < siteFeedback.length; j++) {
                             output += '<span>' + decodeURIComponent(pSiteNames[siteFeedback[j]]) + '</span><br />';
                         }
                     }

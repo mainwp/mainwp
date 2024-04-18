@@ -718,7 +718,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 </div>
             </div>
             <script type="text/javascript">
-                jQuery(document).ready(function ($) {
+                jQuery(function($) {
                     //we are going to inject the values into the copy buttons to make things easier for people
                     $('#mainwp_consumer_key_clipboard_button').attr('data-clipboard-text', '<?php echo esc_html( $consumer_key ); ?>');
                     $('#mainwp_consumer_secret_clipboard_button').attr('data-clipboard-text', '<?php echo esc_html( $consumer_secret ); ?>');

@@ -1298,7 +1298,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 return false;
             } );
 
-            jQuery(document).ready(function ($) {
+            jQuery(function($) {
                 mainwp_master_checkbox_init($);
                 mainwp_get_icon_start();
                 mainwp_show_hide_install_to_selected_sites( 'theme' );
@@ -1595,7 +1595,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 return false;
             } );
 
-            jQuery(document).ready(function ($) {
+            jQuery(function($) {
                 $('.lastest-version-hidden').each(function(){
                     $(this).closest('.mainwp-manage-theme-item').find('.lastest-version-info').html($(this).attr('lastest-version'));
                 });

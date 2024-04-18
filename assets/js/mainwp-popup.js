@@ -2,7 +2,7 @@
 (function ($) {
     if (!window.mainwpPopup) {
         mainwpPopup = function (selector) {
-            var popup = mainwpListPopups.getItem(selector);
+            let popup = mainwpListPopups.getItem(selector);
             if (popup === null) {
                 popup = new mainwpInstancePopup();
                 popup.initWrapper(selector);
@@ -22,17 +22,17 @@
                 return false;
             },
             getItem: function (id) {
-                var values = $.grep(this.popupsQueue, function (val) {
+                let values = $.grep(this.popupsQueue, function (val) {
                     return val.overlayId == id;
                 });
-                var val = null;
+                let val = null;
                 if (values.length > 0)
                     val = values[0];
                 return val;
             }
         };
         mainwpInstancePopup = function () {
-            var _instancePopup = {
+            let _instancePopup = {
                 overlayId: null,
                 $overlayElementId: null,
                 actionsCloseCallback: null,
@@ -50,7 +50,7 @@
                         this.actionsCloseCallback = data.callback;
                         delete data.callback;
                     }
-                    var defaultVal = {
+                    let defaultVal = {
                         totalSites: 0,
                         progressMax: 0,
                         progressInit: 0,
@@ -70,7 +70,7 @@
                     this.$overlayElementId = $(this.overlayId);
                 },
                 initProgress: function () {
-                    var pData = {
+                    let pData = {
                         value: this.progressInit,
                         total: this.progressMax,
                     };
@@ -93,7 +93,7 @@
                         this.$overlayElementId.find('.mainwp-modal-progress').hide(); // hide status and progress.
                     else
                         this.$overlayElementId.find('.mainwp-modal-progress').show();
-                    var self = this;
+                    let self = this;
                     this.$overlayElementId.modal({
                         onHide: function () {
                             self.onHideModal();
@@ -107,8 +107,8 @@
                     }
                 },
                 bindEvents: function () {
-                    var self = this;
-                    var closebuttonEl = this.$overlayElementId.find('.mainwp-modal-close');
+                    let self = this;
+                    let closebuttonEl = this.$overlayElementId.find('.mainwp-modal-close');
                     if (closebuttonEl.length > 0) {
                         $(closebuttonEl).on('click', function () {
                             self.close(true);
@@ -130,7 +130,7 @@
                 },
                 setProgressSite: function (value) {
                     // progress label.
-                    var lb = value + ' / ' + this.totalSites + ' ' + this.statusText;
+                    let lb = value + ' / ' + this.totalSites + ' ' + this.statusText;
                     this.setStatusText(lb);
                     pVal = this.getProgressValue();
                     pVal += 1;
@@ -140,7 +140,7 @@
                     if (this.$overlayElementId == null)
                         this.$overlayElementId;
 
-                    var row = '<div class="item">';
+                    let row = '<div class="item">';
                     row += '<div class="right floated content">';
                     row += right;
                     row += '</div>';

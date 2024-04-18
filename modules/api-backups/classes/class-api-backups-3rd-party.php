@@ -448,7 +448,7 @@ class Api_Backups_3rd_Party {
                             .nodes()
                             .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
                         }
-                    }).on( 'columns-reordered', function ( e, settings, details ) {
+                    }).on( 'columns-reordered', function () {
                         console.log('columns-reordered');
                         setTimeout(() => {
                             jQuery( '#mainwp-3rd-party-backups-table .ui.dropdown' ).dropdown();
@@ -1512,7 +1512,7 @@ class Api_Backups_3rd_Party {
                                 .nodes()
                                 .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
                             }
-                        }).on( 'columns-reordered', function ( e, settings, details ) {
+                        }).on( 'columns-reordered', function () {
                             console.log('columns-reordered');
                             setTimeout(() => {
                                 jQuery( '.mainwp-api-backup-table .ui.dropdown' ).dropdown();

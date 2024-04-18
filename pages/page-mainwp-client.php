@@ -1716,28 +1716,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         if (mainwpParams.use_wp_datepicker == 1) {
                             jQuery('#mainwp-add-new-client-form .ui.calendar input[type=text]').datepicker({ dateFormat: "yy-mm-dd" });
                         } else {
-                            jQuery('#mainwp-add-new-client-form .ui.calendar').calendar({
-                                type: 'date',
-                                monthFirst: false,
-                                today: true,
-                                touchReadonly: false,
-                                formatter: {
-                                    date: function (date) {
-                                        if (!date) return '';
-                                        var day = date.getDate();
-                                        var month = date.getMonth() + 1;
-                                        var year = date.getFullYear();
-
-                                        if (month < 10) {
-                                            month = '0' + month;
-                                        }
-                                        if (day < 10) {
-                                            day = '0' + day;
-                                        }
-                                        return year + '-' + month + '-' + day;
-                                    }
-                                }
-                            });
+							mainwp_init_ui_calendar( '#mainwp-add-new-client-form .ui.calendar' );
                         }
                     }
 

@@ -10,7 +10,7 @@
 
 /* eslint complexity: ["error", 100] */
 
-jQuery(document).ready(function () {
+jQuery(function(){
 
     /********************************************************
      * Ajax Event Hooks.
@@ -149,7 +149,7 @@ jQuery(document).ready(function () {
 
     // Trigger action_delete_backup.
     jQuery('#mainwp_3rd_party_api_linode_action_cancel_backups').on('click', function (event) {
-        var confirmMsg = __('Are you sure you want to Disable and Delete all existing backups from this Linode?');
+        let confirmMsg = __('Are you sure you want to Disable and Delete all existing backups from this Linode?');
         mainwp_confirm(confirmMsg, function () {
             linode_action_cancel_backups(this, event);
         });
@@ -200,7 +200,7 @@ jQuery(document).ready(function () {
 
     // Trigger action_restore_backup.
     jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_backup', function (event) {
-        var confirmMsg = __('Are you sure you want to Restore this backup?');
+        let confirmMsg = __('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
             cPanel_action_restore_backup(this, event);
         });
@@ -208,8 +208,8 @@ jQuery(document).ready(function () {
 
     // Trigger action_restore_database_backup.
     jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_database_backup', function (event) {
-        var confirmMsg = __('Are you sure you want to Restore this backup?');
-        var btObj = this;
+        let confirmMsg = __('Are you sure you want to Restore this backup?');
+        let btObj = this;
         mainwp_confirm(confirmMsg, function () {
             cpanel_action_restore_database_backup(btObj, event);
         });
@@ -217,7 +217,7 @@ jQuery(document).ready(function () {
 
     // Trigger action_restore_manual_backup.
     jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_manual_backup', function (event) {
-        var confirmMsg = __('Are you sure you want to Restore this backup?');
+        let confirmMsg = __('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
             cpanel_action_restore_manual_backup(this, event);
         });
@@ -250,7 +250,7 @@ jQuery(document).ready(function () {
 
     // Trigger action_restore_wptk_backup.
     jQuery('.mainwp_3rd_party_api_cpanel_action_restore_wptk_backup').on('click', function (event) {
-        var confirmMsg = __('Are you sure you want to Restore this backup?');
+        let confirmMsg = __('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
             cpanel_action_restore_wptk_backup(this, event);
         });
@@ -258,7 +258,7 @@ jQuery(document).ready(function () {
 
     // Trigger action_delete_wptk_backup.
     jQuery('.mainwp_3rd_party_api_cpanel_action_delete_wptk_backup').on('click', function (event) {
-        var confirmMsg = __('Are you sure you want to Delete this backup?');
+        let confirmMsg = __('Are you sure you want to Delete this backup?');
         mainwp_confirm(confirmMsg, function () {
             cpanel_action_delete_wptk_backup(this, event);
         });
@@ -290,7 +290,7 @@ jQuery(document).ready(function () {
 
     // Trigger action_restore_backup.
     jQuery(document).on('click', '.mainwp_3rd_party_api_plesk_action_restore_backup', function (event) {
-        var confirmMsg = __('Are you sure you want to Restore this backup?');
+        let confirmMsg = __('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
             plesk_action_restore_backup(this, event);
         });
@@ -298,7 +298,7 @@ jQuery(document).ready(function () {
 
     // Trigger action_delete_backup.
     jQuery(document).on('click', '.mainwp_3rd_party_api_plesk_action_delete_backup', function (event) {
-        var confirmMsg = __('Are you sure you want to Delete this backup?');
+        let confirmMsg = __('Are you sure you want to Delete this backup?');
         mainwp_confirm(confirmMsg, function () {
             plesk_action_delete_backup(this, event);
         });
@@ -338,7 +338,7 @@ jQuery(document).ready(function () {
      *  Handle switching TAB Buttons.
      *  Check if cPanel or Plesk is selected TAB when page loads & display the correct content.
       */
-    var ref_this = jQuery('#mainwp_api_cpanel_backup_tabs div.active');
+    let ref_this = jQuery('#mainwp_api_cpanel_backup_tabs div.active');
     if (ref_this.data('tab') === 'cpanel-native') {
         jQuery('#mainwp_3rd_party_api_cpanel_action_create_full_backup').show();
         jQuery('#mainwp_3rd_party_api_cpanel_action_create_wptk_backup').hide();
@@ -367,7 +367,7 @@ action_backup_selected_sites = function (pObj) {
  */
 action_check_tab = function () {
 
-    var ref_this = jQuery('#mainwp_api_cpanel_backup_tabs div.active');
+    let ref_this = jQuery('#mainwp_api_cpanel_backup_tabs div.active');
     if (ref_this.data('tab') === 'cpanel-native') {
         jQuery('#mainwp_3rd_party_api_cpanel_action_create_full_backup').show();
         jQuery('#mainwp_3rd_party_api_cpanel_action_create_wptk_backup').hide();
@@ -385,11 +385,11 @@ action_check_tab = function () {
 cloudways_action_backup = function (pObj) {
 
     jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
-    var lastBackup = jQuery(pObj).closest('td').prev();
-    var websiteId = jQuery(pObj).attr('website_id');
+    let button = jQuery(pObj).closest('td');
+    let lastBackup = jQuery(pObj).closest('td').prev();
+    let websiteId = jQuery(pObj).attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'cloudways_action_backup',
         website_id: websiteId,
         backup_api: 'cloudways'
@@ -434,9 +434,9 @@ cloudways_action_backup = function (pObj) {
 cloudways_action_update_ids = function (pObj) {
 
     jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
+    let button = jQuery(pObj).closest('td');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'cloudways_action_update_ids'
     });
 
@@ -458,7 +458,7 @@ cloudways_action_update_ids = function (pObj) {
 // Refresh Available Backup.
 cloudways_action_refresh_available_backups = function (pObj) {
 
-    var websiteId = jQuery(pObj).attr('website_id');
+    let websiteId = jQuery(pObj).attr('website_id');
 
     // Start button animation.
     jQuery(pObj).addClass('disabled loading');
@@ -466,7 +466,7 @@ cloudways_action_refresh_available_backups = function (pObj) {
     // Prepare the data to send.
     // The "action" is the name of the action hook to trigger.
     // Anything else is data that we want to pass to the PHP function.
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'cloudways_action_refresh_available_backups',
         website_id: websiteId,
         backup_api: 'cloudways'
@@ -509,11 +509,11 @@ cloudways_action_refresh_available_backups = function (pObj) {
 
 // Restore backups.
 cloudways_action_restore_backup = function (pObj) {
-    var button = jQuery(pObj);
-    var websiteId = jQuery(pObj).attr('website_id');
-    var backupDate = jQuery(pObj).attr('backup_date');
+    let button = jQuery(pObj);
+    let websiteId = jQuery(pObj).attr('website_id');
+    let backupDate = jQuery(pObj).attr('backup_date');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'cloudways_action_restore_backup',
         website_id: websiteId,
         backup_date: backupDate,
@@ -556,11 +556,11 @@ cloudways_action_restore_backup = function (pObj) {
 cloudways_action_delete_backup = function (pObj) {
 
     jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
+    let button = jQuery(pObj).closest('td');
 
-    var websiteId = jQuery(pObj).attr('website_id');
+    let websiteId = jQuery(pObj).attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'cloudways_action_delete_backup',
         website_id: websiteId,
         backup_api: 'cloudways'
@@ -608,9 +608,9 @@ cloudways_action_delete_backup = function (pObj) {
 // Assign Instances to Child Sites.
 vultr_action_update_ids = function (pObj) {
     jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
+    let button = jQuery(pObj).closest('td');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'vultr_action_update_ids'
     });
 
@@ -653,11 +653,11 @@ vultr_action_update_ids = function (pObj) {
 vultr_action_create_snapshot = function (pObj) {
 
     jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
-    var lastBackup = jQuery(pObj).closest('td').prev();
-    var websiteId = jQuery(pObj).attr('website_id');
+    let button = jQuery(pObj).closest('td');
+    let lastBackup = jQuery(pObj).closest('td').prev();
+    let websiteId = jQuery(pObj).attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'vultr_action_create_snapshot',
         website_id: websiteId,
         backup_api: 'vultr'
@@ -679,7 +679,7 @@ vultr_action_create_snapshot = function (pObj) {
 			}, 5000);
 
         } else {
-            var err_message = '' !== response ? response : 'There was an issue while requesting your backup. Please check that your ID and API Key are correct.';
+            let err_message = '' !== response ? response : 'There was an issue while requesting your backup. Please check that your ID and API Key are correct.';
 
 			// Show message.
 			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
@@ -696,9 +696,9 @@ vultr_action_create_snapshot = function (pObj) {
 // Refresh Available Backup.
 vultr_action_refresh_available_backups = function (pObj) {
 
-    var websiteId = jQuery(pObj).attr('website_id');
+    let websiteId = jQuery(pObj).attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'vultr_action_refresh_available_backups',
         website_id: websiteId,
         backup_api: 'vultr'
@@ -740,11 +740,11 @@ vultr_action_refresh_available_backups = function (pObj) {
 // Restore Backup.
 vultr_action_restore_backup = function (pObj) {
 
-    var button = jQuery(pObj);
-    var websiteId = jQuery(pObj).attr('website_id');
-    var snapshotID = jQuery(pObj).attr('snapshot_id');
+    let button = jQuery(pObj);
+    let websiteId = jQuery(pObj).attr('website_id');
+    let snapshotID = jQuery(pObj).attr('snapshot_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'vultr_action_restore_backup',
         website_id: websiteId,
         backup_api: 'vultr',
@@ -787,11 +787,11 @@ vultr_action_restore_backup = function (pObj) {
 // Delete Backup.
 vultr_action_delete_backup = function (pObj) {
 
-    var button = jQuery(pObj);
-    var websiteId = jQuery(pObj).attr('website_id');
-    var snapshotID = jQuery(pObj).attr('snapshot_id');
+    let button = jQuery(pObj);
+    let websiteId = jQuery(pObj).attr('website_id');
+    let snapshotID = jQuery(pObj).attr('snapshot_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'vultr_action_delete_backup',
         website_id: websiteId,
         backup_api: 'vultr',
@@ -838,9 +838,9 @@ vultr_action_delete_backup = function (pObj) {
 // Assign Site ID's to Child Sites.
 gridpane_action_update_ids = function (pObj) {
     jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
+    let button = jQuery(pObj).closest('td');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'gridpane_action_update_ids'
     });
 
@@ -862,11 +862,11 @@ gridpane_action_update_ids = function (pObj) {
 gridpane_action_create_backup = function (pObj) {
 
     jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
-    var lastBackup = jQuery(pObj).closest('td').prev();
-    var websiteId = jQuery(pObj).attr('website_id');
+    let button = jQuery(pObj).closest('td');
+    let lastBackup = jQuery(pObj).closest('td').prev();
+    let websiteId = jQuery(pObj).attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'gridpane_action_create_backup',
         website_id: websiteId,
         backup_api: 'gridpane'
@@ -910,9 +910,9 @@ gridpane_action_create_backup = function (pObj) {
 // Refresh Available Backup.
 gridpane_action_refresh_available_backups = function (pObj) {
 
-    var websiteId = jQuery(pObj).attr('website_id');
+    let websiteId = jQuery(pObj).attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'gridpane_action_refresh_available_backups',
         website_id: websiteId,
         backup_api: 'gridpane'
@@ -955,12 +955,12 @@ gridpane_action_refresh_available_backups = function (pObj) {
 // Restore Backup.
 gridpane_action_restore_backup = function (pObj) {
 
-    var button = jQuery(pObj);
-    var websiteId = jQuery(pObj).attr('website_id');
-    var backupType = jQuery(pObj).attr('backup_type');
-    var backupName = jQuery(pObj).attr('backup_name');
+    let button = jQuery(pObj);
+    let websiteId = jQuery(pObj).attr('website_id');
+    let backupType = jQuery(pObj).attr('backup_type');
+    let backupName = jQuery(pObj).attr('backup_name');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'gridpane_action_restore_backup',
         website_id: websiteId,
         backup_api: 'gridpane',
@@ -1003,13 +1003,13 @@ gridpane_action_restore_backup = function (pObj) {
 // Delete Backup.
 gridpane_action_delete_backup = function (pObj) {
 
-    var button = jQuery(pObj);
+    let button = jQuery(pObj);
 
-    var websiteId = jQuery(pObj).attr('website_id');
-    var backupType = jQuery(pObj).attr('backup_type');
-    var backupName = jQuery(pObj).attr('backup_name');
+    let websiteId = jQuery(pObj).attr('website_id');
+    let backupType = jQuery(pObj).attr('backup_type');
+    let backupName = jQuery(pObj).attr('backup_name');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'gridpane_action_delete_backup',
         website_id: websiteId,
         backup_api: 'gridpane',
@@ -1056,9 +1056,9 @@ gridpane_action_delete_backup = function (pObj) {
 // Assign Site ID's to Child Sites.
 linode_action_update_ids = function (pObj) {
     jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
+    let button = jQuery(pObj).closest('td');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'linode_action_update_ids'
     });
 
@@ -1079,11 +1079,11 @@ linode_action_update_ids = function (pObj) {
 linode_action_create_backup = function (pObj) {
 
     jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
-    var lastBackup = jQuery(pObj).closest('td').prev();
-    var websiteId = jQuery(pObj).attr('website_id');
+    let button = jQuery(pObj).closest('td');
+    let lastBackup = jQuery(pObj).closest('td').prev();
+    let websiteId = jQuery(pObj).attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'linode_action_create_backup',
         website_id: websiteId,
         backup_api: 'linode'
@@ -1126,9 +1126,9 @@ linode_action_create_backup = function (pObj) {
 // Refresh Available Backup.
 linode_action_refresh_available_backups = function (pObj) {
 
-    var websiteId = jQuery(pObj).attr('website_id');
+    let websiteId = jQuery(pObj).attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'linode_action_refresh_available_backups',
         website_id: websiteId,
         backup_api: 'linode'
@@ -1172,12 +1172,12 @@ linode_action_refresh_available_backups = function (pObj) {
 linode_action_restore_backup = function (pObj) {
 
     jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
-    var backupStatus = jQuery(pObj).closest('td').prev();
-    var websiteId = jQuery(pObj).attr('website_id');
-    var backupId = jQuery(pObj).attr('backup_id');
+    let button = jQuery(pObj).closest('td');
+    let backupStatus = jQuery(pObj).closest('td').prev();
+    let websiteId = jQuery(pObj).attr('website_id');
+    let backupId = jQuery(pObj).attr('backup_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'linode_action_restore_backup',
         website_id: websiteId,
         backup_api: 'linode',
@@ -1220,9 +1220,9 @@ linode_action_restore_backup = function (pObj) {
 // Cancel Backup.
 linode_action_cancel_backups = function (pObj) {
 
-    var websiteId = jQuery(pObj).attr('website_id');
+    let websiteId = jQuery(pObj).attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'linode_action_cancel_backups',
         website_id: websiteId,
         backup_api: 'linode'
@@ -1267,9 +1267,9 @@ linode_action_cancel_backups = function (pObj) {
 // Assign Site ID's to Child Sites.
 digitalocean_action_update_ids = function (pObj) {
     jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
+    let button = jQuery(pObj).closest('td');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'digitalocean_action_update_ids'
     });
 
@@ -1291,11 +1291,11 @@ digitalocean_action_update_ids = function (pObj) {
 digitalocean_action_create_backup = function (pObj) {
 
     jQuery(pObj).attr('disabled', 'true');
-    var button = jQuery(pObj).closest('td');
-    var lastBackup = jQuery(pObj).closest('td').prev();
-    var websiteId = jQuery(pObj).attr('website_id');
+    let button = jQuery(pObj).closest('td');
+    let lastBackup = jQuery(pObj).closest('td').prev();
+    let websiteId = jQuery(pObj).attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'digitalocean_action_create_backup',
         website_id: websiteId,
         backup_api: 'digitalocean'
@@ -1337,9 +1337,9 @@ digitalocean_action_create_backup = function (pObj) {
 // Refresh Available Backups.
 digitalocean_action_refresh_available_backups = function (pObj) {
 
-    var websiteId = jQuery(pObj).attr('website_id');
+    let websiteId = jQuery(pObj).attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'digitalocean_action_refresh_available_backups',
         website_id: websiteId,
         backup_api: 'digitalocean'
@@ -1382,12 +1382,12 @@ digitalocean_action_refresh_available_backups = function (pObj) {
 // restore Backup.
 digitalocean_action_restore_backup = function (pObj) {
 
-    var button = jQuery(pObj);
-    var lastBackup = jQuery(pObj).closest('td').prev();
-    var websiteId = jQuery(pObj).attr('website_id');
-    var snapshotId = jQuery(pObj).attr('snapshot_id');
+    let button = jQuery(pObj);
+    let lastBackup = jQuery(pObj).closest('td').prev();
+    let websiteId = jQuery(pObj).attr('website_id');
+    let snapshotId = jQuery(pObj).attr('snapshot_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'digitalocean_action_restore_backup',
         website_id: websiteId,
         backup_api: 'digitalocean',
@@ -1431,11 +1431,11 @@ digitalocean_action_restore_backup = function (pObj) {
 // Delete Backup.
 digitalocean_action_delete_backup = function (pObj) {
 
-    var button = jQuery(pObj);
+    let button = jQuery(pObj);
 
-    var snapshotId = jQuery(pObj).attr('snapshot_id');
+    let snapshotId = jQuery(pObj).attr('snapshot_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'digitalocean_action_delete_backup',
         snapshot_id: snapshotId
     });
@@ -1478,9 +1478,9 @@ digitalocean_action_delete_backup = function (pObj) {
 
 cpanel_action_create_wptk_backup = function (pObj) {
 
-    var websiteId = jQuery(pObj).attr('website_id');
+    let websiteId = jQuery(pObj).attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'cpanel_action_create_wptk_backup',
         website_id: websiteId,
         backup_api: 'cpanel',
@@ -1525,10 +1525,10 @@ cpanel_action_restore_wptk_backup = function (pObj) {
     // Disable link.
     jQuery(pObj).attr('disabled', 'true');
 
-    var backupName = jQuery('.mainwp_3rd_party_api_cpanel_action_restore_wptk_backup').attr('backup_name');
-    var websiteId = jQuery('.mainwp_3rd_party_api_cpanel_action_restore_wptk_backup').attr('website_id');
+    let backupName = jQuery('.mainwp_3rd_party_api_cpanel_action_restore_wptk_backup').attr('backup_name');
+    let websiteId = jQuery('.mainwp_3rd_party_api_cpanel_action_restore_wptk_backup').attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'cpanel_action_restore_wptk_backup',
         website_id: websiteId,
         backup_api: 'cpanel',
@@ -1573,10 +1573,10 @@ cpanel_action_delete_wptk_backup = function (pObj) {
     // Disable link.
     jQuery(pObj).attr('disabled', 'true');
 
-    var backupName = jQuery('.mainwp_3rd_party_api_cpanel_action_delete_wptk_backup').attr('backup_name');
-    var websiteId = jQuery('.mainwp_3rd_party_api_cpanel_action_delete_wptk_backup').attr('website_id');
+    let backupName = jQuery('.mainwp_3rd_party_api_cpanel_action_delete_wptk_backup').attr('backup_name');
+    let websiteId = jQuery('.mainwp_3rd_party_api_cpanel_action_delete_wptk_backup').attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'cpanel_action_delete_wptk_backup',
         website_id: websiteId,
         backup_api: 'cpanel',
@@ -1618,16 +1618,16 @@ cpanel_action_delete_wptk_backup = function (pObj) {
 // Download Backup.
 cpanel_action_download_wptk_backup = function () {
 
-    var href = jQuery('.mainwp_3rd_party_api_cpanel_action_download_wptk_backup').attr('href');
+    let href = jQuery('.mainwp_3rd_party_api_cpanel_action_download_wptk_backup').attr('href');
     window.open(href, '_blank');
 
 };
 
 cpanel_action_create_backup = function (pObj) {
 
-    var websiteId = jQuery(pObj).attr('website_id');
+    let websiteId = jQuery(pObj).attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'cpanel_action_create_manual_backup',
         website_id: websiteId,
         backup_api: 'cpanel'
@@ -1668,9 +1668,9 @@ cpanel_action_create_backup = function (pObj) {
 // Refresh Available Backups.
 cpanel_action_refresh_available_backups = function (pObj) {
 
-    var websiteId = jQuery(pObj).attr('website_id');
+    let websiteId = jQuery(pObj).attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'cpanel_action_refresh_available_backups',
         website_id: websiteId,
         backup_api: 'cPanel'
@@ -1716,11 +1716,11 @@ cPanel_action_restore_backup = function (pObj) {
     // Disable link.
     jQuery(pObj).attr('disabled', 'true');
 
-    var websiteId = jQuery('#cpanel_automatic_backup_button').attr('website_id');
-    var backupID = jQuery('#cpanel_automatic_backup_button').attr('backup_name');
-    var backupPath = jQuery('#cpanel_automatic_backup_button').attr('backup_path');
+    let websiteId = jQuery('#cpanel_automatic_backup_button').attr('website_id');
+    let backupID = jQuery('#cpanel_automatic_backup_button').attr('backup_name');
+    let backupPath = jQuery('#cpanel_automatic_backup_button').attr('backup_path');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'cpanel_action_restore_backup',
         website_id: websiteId,
         backup_api: 'cpanel',
@@ -1763,11 +1763,11 @@ cPanel_action_restore_backup = function (pObj) {
 // restore Backup.
 cpanel_action_restore_database_backup = function (btObj) {
 
-    var websiteId = jQuery(btObj).attr('website_id');
-    var backupID = jQuery(btObj).attr('backup_name');
-    var backupPath = jQuery(btObj).attr('backup_path');
+    let websiteId = jQuery(btObj).attr('website_id');
+    let backupID = jQuery(btObj).attr('backup_name');
+    let backupPath = jQuery(btObj).attr('backup_path');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'cpanel_action_restore_database_backup',
         website_id: websiteId,
         backup_api: 'cpanel',
@@ -1810,11 +1810,11 @@ cpanel_action_restore_database_backup = function (btObj) {
 // restore Backup.
 cpanel_action_restore_manual_backup = function () {
 
-    var websiteId = jQuery('#cpanel_automatic_backup_button').attr('website_id');
-    var backupID = jQuery('#database_backup_button').attr('backup_name');
-    var backupPath = jQuery('#database_backup_button').attr('backup_path');
+    let websiteId = jQuery('#cpanel_automatic_backup_button').attr('website_id');
+    let backupID = jQuery('#database_backup_button').attr('backup_name');
+    let backupPath = jQuery('#database_backup_button').attr('backup_path');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'cpanel_action_restore_manual_backup',
         website_id: websiteId,
         backup_api: 'cpanel',
@@ -1857,10 +1857,10 @@ cpanel_action_restore_manual_backup = function () {
 cpanel_action_create_database_backup = function (pObj) {
 
     // Grab the website ID.
-    var websiteId = jQuery(pObj).attr('website_id');
+    let websiteId = jQuery(pObj).attr('website_id');
 
     // Build the data object.
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'cpanel_action_create_database_backup',
         website_id: websiteId,
     });
@@ -1902,10 +1902,10 @@ cpanel_action_create_database_backup = function (pObj) {
 cpanel_action_create_full_backup = function (pObj) {
 
     // Grab the website ID.
-    var websiteId = jQuery(pObj).attr('website_id');
+    let websiteId = jQuery(pObj).attr('website_id');
 
     // Build the data object.
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'cpanel_action_create_full_backup',
         website_id: websiteId,
         backup_api: 'cpanel',
@@ -1954,9 +1954,9 @@ cpanel_action_create_full_backup = function (pObj) {
 // Refresh Available Backups.
 plesk_action_refresh_available_backups = function (pObj) {
 
-    var websiteId = jQuery(pObj).attr('website_id');
+    let websiteId = jQuery(pObj).attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'plesk_action_refresh_available_backups',
         website_id: websiteId,
         backup_api: 'Plesk'
@@ -1998,9 +1998,9 @@ plesk_action_refresh_available_backups = function (pObj) {
 
 plesk_action_create_backup = function (pObj) {
 
-    var websiteId = jQuery(pObj).attr('website_id');
+    let websiteId = jQuery(pObj).attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'plesk_action_create_backup',
         website_id: websiteId,
         backup_api: 'plesk'
@@ -2042,13 +2042,13 @@ plesk_action_create_backup = function (pObj) {
 plesk_action_restore_backup = function () {
 
     //jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').attr('disabled', 'true');
-    var button = jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').closest('td');
+    let button = jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').closest('td');
 
-    var installationId = jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').attr('installation_id');
-    var backupName = jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').attr('backup_name');
-    var websiteId = jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').attr('website_id');
+    let installationId = jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').attr('installation_id');
+    let backupName = jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').attr('backup_name');
+    let websiteId = jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'plesk_action_restore_backup',
         installation_id: installationId,
         backup_name: backupName,
@@ -2090,13 +2090,13 @@ plesk_action_restore_backup = function () {
 // Delete backups.
 plesk_action_delete_backup = function () {
     jQuery('.mainwp_3rd_party_api_plesk_action_delete_backup').attr('disabled', 'true');
-    var button = jQuery('.mainwp_3rd_party_api_plesk_action_delete_backup').closest('td');
+    let button = jQuery('.mainwp_3rd_party_api_plesk_action_delete_backup').closest('td');
 
-    var installationId = jQuery('.mainwp_3rd_party_api_plesk_action_delete_backup').attr('installation_id');
-    var backupName = jQuery('.mainwp_3rd_party_api_plesk_action_delete_backup').attr('backup_name');
-    var websiteId = jQuery('.mainwp_3rd_party_api_plesk_action_delete_backup').attr('website_id');
+    let installationId = jQuery('.mainwp_3rd_party_api_plesk_action_delete_backup').attr('installation_id');
+    let backupName = jQuery('.mainwp_3rd_party_api_plesk_action_delete_backup').attr('backup_name');
+    let websiteId = jQuery('.mainwp_3rd_party_api_plesk_action_delete_backup').attr('website_id');
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'plesk_action_delete_backup',
         installation_id: installationId,
         backup_name: backupName,

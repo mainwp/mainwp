@@ -3,16 +3,16 @@
  */
 
 
-jQuery(document).ready(function () {
+jQuery(function () {
 
   // Delete single client.
   jQuery(document).on('click', '.client_deleteitem', function () {
-    var confirmation = confirm('Are you sure you want to proceed?');
+    let confirmation = confirm('Are you sure you want to proceed?');
     if (confirmation == true) {
-      var parent = jQuery(this).closest('div.menu');
-      var rowElement = jQuery(this).parents('tr');
-      var clientid = parent.attr('clientid');
-      var data = mainwp_secure_data({
+      let parent = jQuery(this).closest('div.menu');
+      let rowElement = jQuery(this).parents('tr');
+      let clientid = parent.attr('clientid');
+      let data = mainwp_secure_data({
         action: 'mainwp_clients_delete_client',
         clientid: clientid,
       });
@@ -27,11 +27,11 @@ jQuery(document).ready(function () {
   });
 
   jQuery(document).on('click', '.client-suspend-unsuspend-sites', function () {
-    var new_status = jQuery(this).attr('suspend-status') == '0' ? 1 : 0;
-    var clientid = jQuery(this).closest('.mainwp-widget-footer').attr('client-id');
-    var bt = this;
+    let new_status = jQuery(this).attr('suspend-status') == '0' ? 1 : 0;
+    let clientid = jQuery(this).closest('.mainwp-widget-footer').attr('client-id');
+    let bt = this;
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
       action: 'mainwp_clients_suspend_client',
       clientid: clientid,
       suspend_status: new_status
@@ -54,8 +54,8 @@ jQuery(document).ready(function () {
 
   jQuery('.mainwp-edit-clients-select-contact-icon').dropdown({
     onChange: function (val) {
-      var parent = jQuery(this).closest('.mainwp_edit_clients_contact_icon_wrapper');
-      var inname = parent.attr('input-name');
+      let parent = jQuery(this).closest('.mainwp_edit_clients_contact_icon_wrapper');
+      let inname = parent.attr('input-name');
       if (undefined !== inname) {
         jQuery(parent).find('#client_fields\\[' + inname + '\\]\\[selected_icon\\]\\[\\]').val(val);
       }
@@ -63,13 +63,13 @@ jQuery(document).ready(function () {
   });
 
   jQuery(document).on('click', '.mainwp-client-add-contact', function () {
-    var templ = jQuery(this).attr('add-contact-temp');
+    let templ = jQuery(this).attr('add-contact-temp');
     jQuery('.after-add-contact-field').after(templ);
-    var justAdded = jQuery('.after-add-contact-field').next().next().next().next().next();
+    let justAdded = jQuery('.after-add-contact-field').next().next().next().next().next();
     jQuery(justAdded).find('.mainwp-edit-clients-select-contact-icon').dropdown({
       onChange: function (val) {
-        var parent = jQuery(this).closest('.mainwp_edit_clients_contact_icon_wrapper');
-        var inname = parent.attr('input-name');
+        let parent = jQuery(this).closest('.mainwp_edit_clients_contact_icon_wrapper');
+        let inname = parent.attr('input-name');
         if (undefined !== inname) {
           jQuery(parent).find('#client_fields\\[' + inname + '\\]\\[selected_icon\\]\\[\\]').val(val);
         }
@@ -83,8 +83,8 @@ jQuery(document).ready(function () {
       jQuery('.after-add-contact-field').before('<input type="hidden" value="' + jQuery(this).attr('contact-id') + '" name="client_fields[delele_contacts][]">'); // to delete contact when submit the client.
     }
 
-    var parent = jQuery(this).closest('.remove-contact-field-parent');
-    var limit = 0;
+    let parent = jQuery(this).closest('.remove-contact-field-parent');
+    let limit = 0;
     while (!parent.prev().hasClass('top-contact-fields')) {
       limit++;
       parent.prev().remove(); // prev contact field.
@@ -111,7 +111,7 @@ bulkManageClientsTaskRunning = false;
 
 // Trigger Manage Bulk Actions
 jQuery(document).on('click', '#mainwp-do-clients-bulk-actions', function () {
-  var action = jQuery("#mainwp-clients-bulk-actions-menu").dropdown("get value");
+  let action = jQuery("#mainwp-clients-bulk-actions-menu").dropdown("get value");
   if (action == '')
     return false;
   mainwp_manageclients_doaction(action);
@@ -125,7 +125,7 @@ mainwp_manageclients_doaction = function (action) {
 
     if (bulkManageClientsTaskRunning)
       return false;
-    var confirmMsg = '';
+    let confirmMsg = '';
 
     switch (action) {
       case 'delete':
@@ -172,14 +172,14 @@ mainwp_manageclients_bulk_remove_next = function () {
 mainwp_manageclients_bulk_remove_specific = function (pCheckedBox) {
 
   pCheckedBox.attr('status', 'running');
-  var rowObj = pCheckedBox.closest('tr');
+  let rowObj = pCheckedBox.closest('tr');
   bulkManageClientsCurrentThreads++;
 
-  var id = rowObj.attr('clientid');
+  let id = rowObj.attr('clientid');
 
   rowObj.html('<td colspan="999"><i class="notched circle loading icon"></i> ' + 'Removing ...' + '</td>');
 
-  var data = mainwp_secure_data({
+  let data = mainwp_secure_data({
     action: 'mainwp_clients_delete_client',
     clientid: id
   });
@@ -187,8 +187,8 @@ mainwp_manageclients_bulk_remove_specific = function (pCheckedBox) {
     bulkManageClientsCurrentThreads--;
     bulkManageClientsFinished++;
     rowObj.html('<td colspan="999"></td>');
-    var result = '';
-    var error = '';
+    let result = '';
+    let error = '';
     if (response.error != undefined) {
       error = response.error;
     } else if (response.success == 'SUCCESS') {
@@ -224,7 +224,7 @@ manageclients_bulk_init = function () {
 
 
 jQuery(document).on('click', '#bulk_add_createclient', function () {
-  var currPage = jQuery(this).attr('current-page');
+  let currPage = jQuery(this).attr('current-page');
   mainwp_createclient(currPage);
 });
 
@@ -234,7 +234,7 @@ mainwp_createclient = function (currPage) {
     return;
   }
 
-  var valid_contact = true;
+  let valid_contact = true;
   jQuery('input[name="client_fields[new_contacts_field][client.contact.name][]"]').each(function () {
     if (jQuery(this).val() == '') {
       valid_contact = false;
@@ -264,35 +264,35 @@ mainwp_createclient = function (currPage) {
     return;
   }
 
-  var selected_sites = [];
+  let selected_sites = [];
   jQuery("input[name='selected_sites[]']:checked").each(function () {
     selected_sites.push(jQuery(this).val());
   });
 
   if (jQuery('#select_by').val() == 'site') {
-    var selected_sites = [];
+    let selected_sites = [];
     jQuery("input[name='selected_sites[]']:checked").each(function () {
       selected_sites.push(jQuery(this).val());
     });
   }
 
-  var is_first_client = false;
+  let is_first_client = false;
   if (jQuery("input[name=selected_first_site]").length > 0) {
     selected_sites.push(jQuery("input[name=selected_first_site]").val());
     is_first_client = true;
   }
 
   jQuery('#mainwp-message-zone-client').removeClass('red green yellow');
-  var msg = __('Creating the client. Please wait...');
+  let msg = __('Creating the client. Please wait...');
   if (jQuery('input[name="client_fields[client_id]"]').val() != 0) {
-    var msg = __('Updating the client. Please wait...');
+    let msg = __('Updating the client. Please wait...');
   }
   jQuery('#mainwp-message-zone-client').html('<i class="notched circle loading icon"></i> ' + msg);
   jQuery('#mainwp-message-zone-client').show();
   jQuery('#bulk_add_createclient').attr('disabled', 'disabled');
 
   //Add user via ajax!!
-  var formdata = new FormData(jQuery('#createclient_form')[0]);
+  let formdata = new FormData(jQuery('#createclient_form')[0]);
   formdata.append("action", 'mainwp_clients_add_client');
   formdata.append("select_by", jQuery('#select_by').val());
   formdata.append("selected_sites[]", selected_sites);
@@ -333,7 +333,7 @@ mainwp_createclient = function (currPage) {
 
 // Trigger new client fields modal
 jQuery(document).on('click', '#mainwp-clients-new-custom-field-button', function () {
-  var parent = jQuery(this).parents('#mainwp-clients-custom-field-modal');
+  let parent = jQuery(this).parents('#mainwp-clients-custom-field-modal');
   jQuery(parent).find('input[name="field-name"]').val('');
   jQuery(parent).find('input[name="field-description"]').val('');
   jQuery(parent).find('input[name="field-id"]').val(0);
@@ -344,10 +344,10 @@ jQuery(document).on('click', '#mainwp-clients-new-custom-field-button', function
 
 // Edit client custom fields.
 jQuery(document).on('click', '#mainwp-clients-edit-custom-field', function () {
-  var parent = jQuery(this).closest('.mainwp-field');
-  var field_name = parent.find('.field-name').html();
-  var field_desc = parent.find('.field-description').html();
-  var field_id = parent.attr('field-id');
+  let parent = jQuery(this).closest('.mainwp-field');
+  let field_name = parent.find('.field-name').html();
+  let field_desc = parent.find('.field-description').html();
+  let field_id = parent.attr('field-id');
 
   field_name = field_name.replace(/\[|\]/gi, "");
 
@@ -368,9 +368,9 @@ jQuery(document).on('click', '#mainwp-clients-save-new-custom-field', function (
 });
 
 mainwp_clients_update_custom_field = function (me) {
-  var parent = jQuery(me).parents('#mainwp-clients-custom-field-modal');
-  var errors = [];
-  var client_id = jQuery(me).attr('client-id');
+  let parent = jQuery(me).parents('#mainwp-clients-custom-field-modal');
+  let errors = [];
+  let client_id = jQuery(me).attr('client-id');
 
   if (parent.find('input[name="field-name"]').val().trim() == '') {
     errors.push('Field name is required.');
@@ -385,7 +385,7 @@ mainwp_clients_update_custom_field = function (me) {
     return false;
   }
 
-  var fields = mainwp_secure_data({
+  let fields = mainwp_secure_data({
     field_name: parent.find('input[name="field-name"]').val(),
     field_desc: parent.find('input[name="field-description"]').val(),
     field_id: parent.find('input[name="field-id"]').val(),
@@ -416,7 +416,7 @@ mainwp_clients_update_custom_field = function (me) {
 jQuery(document).on('click', '#mainwp-clients-delete-general-field', function () {
   if (confirm(__('Are you sure you want to delete this field?'))) {
 
-    var parent = jQuery(this).closest('.mainwp-field');
+    let parent = jQuery(this).closest('.mainwp-field');
     jQuery.post(ajaxurl, mainwp_secure_data({
       action: 'mainwp_clients_delete_general_field',
       field_id: parent.attr('field-id'),
@@ -437,7 +437,7 @@ jQuery(document).on('click', '#mainwp-clients-delete-general-field', function ()
 jQuery(document).on('click', '#mainwp-clients-delete-individual-field', function () {
   if (confirm(__('Are you sure you want to delete this field?'))) {
 
-    var parent = jQuery(this).closest('.mainwp-field');
+    let parent = jQuery(this).closest('.mainwp-field');
 
     jQuery.post(ajaxurl, mainwp_secure_data({
       action: 'mainwp_clients_delete_field',
@@ -457,8 +457,8 @@ jQuery(document).on('click', '#mainwp-clients-delete-individual-field', function
 
 
 jQuery(document).on('click', '.mainwp-edit-client-note', function () {
-  var id = jQuery(this).attr('id').substr(13);
-  var note = jQuery('#mainwp-notes-' + id + '-note').html();
+  let id = jQuery(this).attr('id').substr(13);
+  let note = jQuery('#mainwp-notes-' + id + '-note').html();
   jQuery('#mainwp-notes-html').html(note == '' ? __('No saved notes. Click the Edit button to edit site notes.') : note);
   jQuery('#mainwp-notes-note').val(note);
   jQuery('#mainwp-notes-itemid').val(id);
@@ -469,10 +469,10 @@ jQuery(document).on('click', '.mainwp-edit-client-note', function () {
 
 
 mainwp_notes_client_save = function () {
-  var normalid = jQuery('#mainwp-notes-itemid').val();
-  var newnote = jQuery('#mainwp-notes-note').val();
+  let normalid = jQuery('#mainwp-notes-itemid').val();
+  let newnote = jQuery('#mainwp-notes-note').val();
   newnote = newnote.replace(/(?:\r\n|\r|\n)/g, '<br>');
-  var data = mainwp_secure_data({
+  let data = mainwp_secure_data({
     action: 'mainwp_clients_notes_save',
     clientid: normalid,
     note: newnote

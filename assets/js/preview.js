@@ -11,17 +11,17 @@
  *
  */
 
-jQuery(document).ready(function ($) {
+jQuery(function($) {
 
 	/**
 	 * Init site preview function.
 	 */
 	mainwp_preview_init_event = function () {
-		var mshotRemovalTimer = null;
-		var mshotSecondTryTimer = null
-		var mshotThirdTryTimer = null
+		let mshotRemovalTimer = null;
+		let mshotSecondTryTimer = null
+		let mshotThirdTryTimer = null
 
-		var mshotEnabledLinkSelector = 'td span.mainwp-preview-item';
+		let mshotEnabledLinkSelector = 'td span.mainwp-preview-item';
 
 		// Show a preview image of the hovered URL.
 		$('.mainwp-with-preview-table').on('click', mshotEnabledLinkSelector, function () {
@@ -41,12 +41,12 @@ jQuery(document).ready(function ($) {
 			clearTimeout(mshotSecondTryTimer);
 			clearTimeout(mshotThirdTryTimer);
 
-			var thisHref = $(this).attr('preview-site-url');
+			let thisHref = $(this).attr('preview-site-url');
 
-			var mShot = $('<div class="mainwp-preview-mshot mshot-container"><div class="mshot-arrow"></div><img src="' + mainwp_preview_mshot_url(thisHref) + '" width="450" height="338" class="mshot-image" /></div>');
+			let mShot = $('<div class="mainwp-preview-mshot mshot-container"><div class="mshot-arrow"></div><img src="' + mainwp_preview_mshot_url(thisHref) + '" width="450" height="338" class="mshot-image" /></div>');
 			mShot.data('link', this);
 
-			var offset = $(this).offset();
+			let offset = $(this).offset();
 
 			mShot.offset({
 				left: Math.min($(window).width() - 475, offset.left + $(this).width() + 10), // Keep it on the screen if the link is near the edge of the window.
@@ -67,7 +67,7 @@ jQuery(document).ready(function ($) {
 			$('body').append(mShot);
 		}).on('mouseover', 'tr', function () {
 			// When the mouse hovers over a row, begin preloading mshots for links.
-			var linksToPreloadMshotsFor = $(this).find(mshotEnabledLinkSelector);
+			let linksToPreloadMshotsFor = $(this).find(mshotEnabledLinkSelector);
 
 			linksToPreloadMshotsFor.each(function () {
 				// Don't attempt to preload an mshot for a single link twice. Browser caching should cover this, but in case of
@@ -101,7 +101,7 @@ jQuery(document).ready(function ($) {
 	 * @return string The mShot URL;
 	 */
 	function mainwp_preview_mshot_url(linkUrl, retry) {
-		var mshotUrl = '//s0.wordpress.com/mshots/v1/' + encodeURIComponent(linkUrl) + '?w=900';
+		let mshotUrl = '//s0.wordpress.com/mshots/v1/' + encodeURIComponent(linkUrl) + '?w=900';
 
 		if (retry) {
 			mshotUrl += '&r=' + encodeURIComponent(retry);
@@ -116,7 +116,7 @@ jQuery(document).ready(function ($) {
 	 * @param string linkUrl
 	 */
 	function mainwp_preview_preload_mshot(linkUrl) {
-		var img = new Image();
+		let img = new Image();
 		img.src = mainwp_preview_mshot_url(linkUrl);
 	}
 });

@@ -12,14 +12,14 @@ mainwp_api_backups_do_backups = function (pObj) {
 
 	// Add loading icon to all selected sites.
 	jQuery('#mainwp-3rd-party-backups-table tbody td.check-column INPUT[type=checkbox]:checked').each(function () {
-		var parent = jQuery(this).closest('tr');
-		var statusEl = parent.find('.running');
+		let parent = jQuery(this).closest('tr');
+		let statusEl = parent.find('.running');
 		statusEl.html('<i class="clock outline icon"></i>');
 	});
 
 	// Get selected sites.
-	var selector = '#mainwp-3rd-party-backups-table tbody td.check-column INPUT[type=checkbox]:checked[status=queue]';
-	var selectedIds = jQuery.map(jQuery(selector), function (el) {
+	let selector = '#mainwp-3rd-party-backups-table tbody td.check-column INPUT[type=checkbox]:checked[status=queue]';
+	let selectedIds = jQuery.map(jQuery(selector), function (el) {
 		return jQuery(el).val();
 	});
 
@@ -75,11 +75,11 @@ mainwp_api_backups_do_backups_specific_next = function (selector) {
  * & fires off ajax_backups_selected_websites() function also defined in assets/classes/class-api-backups-handler.php
  */
 mainwp_api_backups_do_backups_specific = function (pObj, bulk, selector) {
-	var parent = pObj.closest('tr');
-	var statusEl = parent.find('.running');
-	var providerName = parent.attr('provider-name');
+	let parent = pObj.closest('tr');
+	let statusEl = parent.find('.running');
+	let providerName = parent.attr('provider-name');
 
-	var data = mainwp_secure_data({
+	let data = mainwp_secure_data({
 		action: 'mainwp_api_backups_selected_websites',
 		websiteId: parent.attr('website-id'),
 		bulk_backups: 1,
@@ -94,9 +94,9 @@ mainwp_api_backups_do_backups_specific = function (pObj, bulk, selector) {
 
 	jQuery.post(ajaxurl, data, function (response) {
 		statusEl.html('');
-		var err_msg = '';
-		var succ_msg = '';
-		var rsp = '';
+		let err_msg = '';
+		let succ_msg = '';
+		let rsp = '';
 
 		//console.log ( response );
 

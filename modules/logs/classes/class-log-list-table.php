@@ -528,7 +528,7 @@ class Log_List_Table {
                                 jQuery( row ).find('.mainwp-date-cell').attr('data-sort', data.created_sort );
                                 jQuery( row ).find('.mainwp-state-cell').attr('data-sort', data.state_sort );
                             }
-                        } ).on( 'columns-reordered', function ( e, settings, details ) {
+                        } ).on( 'columns-reordered', function () {
                             setTimeout(() => {
                                 $( '#mainwp-module-log-records-table .ui.dropdown' ).dropdown();
                                 $( '#mainwp-module-log-records-table .ui.checkbox' ).checkbox();

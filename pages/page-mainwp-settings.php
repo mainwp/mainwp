@@ -1041,7 +1041,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         </div>
     </div>
     <script type="text/javascript">
-            jQuery(document).ready( function($) {
+            jQu function($) {
                 $( 'input[name="date_format"]' ).on( 'click', function() {
                     if ( 'date_format_custom_radio' !== $( this ).attr( 'id' ) )
                         $( 'input[name="date_format_custom"]' ).val( $( this ).val() ).closest( '.fieldset-wrapper' ).find( '.example' ).text( $( this ).parent( 'label' ).children( '.format-i18n' ).text() );

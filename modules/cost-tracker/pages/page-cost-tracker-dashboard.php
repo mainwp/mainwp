@@ -653,7 +653,7 @@ class Cost_Tracker_Dashboard {
                                 .nodes()
                                 .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
                             }
-                        }).on( 'columns-reordered', function ( e, settings, details ) {
+                        }).on( 'columns-reordered', function () {
                             console.log('columns-reordered');
                             setTimeout(() => {
                                 $( '#mainwp-module-cost-tracker-sites-table .ui.dropdown' ).dropdown();

@@ -288,7 +288,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 mainwp_manage_clients_filter = function() {
                     var group = jQuery( "#mainwp-filter-clients-group" ).dropdown( "get value" );
                     var isNot = jQuery( "#mainwp-is-not-client" ).dropdown( "get value" );
-                    var params = '';                        
+                    var params = '';
                         params += '&tags=' + group;
 
                     window.location = 'admin.php?page=ManageClients' + params;
@@ -495,7 +495,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                             style: 'multi+shift',
                             selector: 'tr>td:not(.not-selectable)'
                         }
-                    } ).on( 'columns-reordered', function ( e, settings, details ) {
+                    } ).on( 'columns-reordered', function () {
                         console.log('columns-reorderede');
                         setTimeout(() => {
                             $( '#mainwp-manage-clients-table .ui.dropdown' ).dropdown();

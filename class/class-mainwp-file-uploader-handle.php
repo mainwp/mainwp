@@ -65,11 +65,11 @@ class MainWP_File_Uploader_Handle { // phpcs:ignore Generic.Classes.OpeningBrace
 
     /** Get the File Name. */
     public function get_name() {
-        return isset( $_FILES['qqfile']['name'] ) ? sanitize_text_field( wp_unslash( $_FILES['qqfile']['name'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Missing -- verify in caller.
+        return isset( $_FILES['qqfile']['name'] ) ? $_FILES['qqfile']['name'] : ''; //phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- global variable.
     }
 
     /** Get the File Size. */
     public function get_size() {
-        return isset( $_FILES['qqfile']['size'] ) ? sanitize_text_field( wp_unslash( $_FILES['qqfile']['size'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Missing -- verify in caller.
+        return isset( $_FILES['qqfile']['size'] ) ? $_FILES['qqfile']['size'] : ''; //phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- global variable.
     }
 }

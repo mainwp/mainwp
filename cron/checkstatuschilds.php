@@ -11,6 +11,6 @@
 require_once 'bootstrap.php';
 
 if ( isset( $mainWP ) ) {
-	// fire off mainWP->mainwp_croncheckstatus_action.
-	$mainWP->mainwp_croncheckstatus_action();
+    // fire off mainWP->mainwp_croncheckstatus_action.
+    $mainWP->mainwp_croncheckstatus_action();
 }

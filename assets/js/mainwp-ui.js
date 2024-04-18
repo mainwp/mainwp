@@ -424,7 +424,7 @@ mainwp_newpost_updateCategories = function () {
 
         jQuery.post(ajaxurl, data, function (pSelectedCategories) {
             return function (response) {
-                if (response && undefined !== response.content){
+                if (response && undefined !== response.content) {
                     catsSelection.dropdown('remove selected');
                     catsSelection.find('.menu').html(response.content);
                     catsSelection.dropdown('refresh');

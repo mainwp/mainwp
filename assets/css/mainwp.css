@@ -1543,25 +1543,28 @@ th .down.icon {
     border: 5px dashed #999999 !important;
     display: none;
 }
+
 .mainwp-ui .qq-upload-drop-area.active-area {
     display: inline-block !important;
 }
+
 .mainwp-get-started-widget-check-lists .item .content {
     width: auto !important;
 }
 
 #mainw_managesites_add_edit_site_upload_custom_icon,
 #mainwp_add_edit_client_upload_custom_icon,
-.mainwp_add_edit_contact_upload_custom_icon{
+.mainwp_add_edit_contact_upload_custom_icon {
     margin-left: 30px !important;
 }
 
 .qq-upload-completed .qq-upload-cancel,
-.qq-upload-completed .qq-upload-percent{
+.qq-upload-completed .qq-upload-percent {
     display: none !important;
 }
 
 #mainwp-install-themes .qq-upload-success .qq-upload-add-to-favorites,
-#mainwp-install-plugins .qq-upload-success .qq-upload-add-to-favorites{
-    display: inline-block !important; /* display on those pages, hide on other extension pages. */
+#mainwp-install-plugins .qq-upload-success .qq-upload-add-to-favorites {
+    display: inline-block !important;
+    /* display on those pages, hide on other extension pages. */
 }

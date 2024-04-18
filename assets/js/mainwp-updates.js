@@ -1796,7 +1796,7 @@ updatesoverview_upgrade_int_flow = function (pWebsiteId, pThemeSlugToUpgrade, pP
                                 pErrorMessage = result;
                             }
                         }
-                       
+
                     }
                     updatesoverview_upgrade_all_update_site_bold(pWebsiteId, 'theme');
 

@@ -27,7 +27,7 @@ jQuery(document).ready(function ($) {
 
 mainwp_restapi_remove_key_confirm = function (pCheckedBox) {
     confirmMsg = __("You are about to delete the selected REST API Key?");
-    mainwp_confirm(confirmMsg, _callback = function () {mainwp_restapi_bulk_remove_specific(pCheckedBox); });
+    mainwp_confirm(confirmMsg, _callback = function () { mainwp_restapi_bulk_remove_specific(pCheckedBox); });
 }
 
 mainwp_restapi_bulk_remove_keys_confirm = function () {

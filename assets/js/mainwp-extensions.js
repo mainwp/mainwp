@@ -2,7 +2,7 @@
 jQuery(document).on('click', '.item.extension-inactive', function () {
     jQuery('#mainwp-install-extensions-promo-modal').modal('show');
     return false;
-} );
+});
 
 jQuery(document).on('click', '.mainwp-extensions-add-menu', function () {
     var extensionSlug = jQuery(this).parents('.plugin-card').attr('extension_slug');
@@ -353,11 +353,11 @@ function mainwp_extensions_savelogin(pObj, retring) {
         saveLogin: jQuery('#extensions_api_savemylogin_chk').is(':checked') ? 1 : 0
     });
 
-    if ( retring == true ) {
-        statusEl.find( '.text' ).html(__("Connection error detected. The Verify Certificate option has been switched to NO. Retrying...")).fadeIn();
+    if (retring == true) {
+        statusEl.find('.text').html(__("Connection error detected. The Verify Certificate option has been switched to NO. Retrying...")).fadeIn();
     } else {
-        
-        statusEl.find( '.text' ).html( __( 'Validating...' ) );
+
+        statusEl.find('.text').html(__('Validating...'));
     }
 
     statusEl.show();
@@ -366,11 +366,11 @@ function mainwp_extensions_savelogin(pObj, retring) {
         var undefError = false;
         if (response) {
             if (response.saved) {
-                statusEl.find( '.text' ).html( 'Your API license key has been successfully saved!' );
+                statusEl.find('.text').html('Your API license key has been successfully saved!');
             } else if (response.result == 'SUCCESS') {
-                statusEl.find( '.text' ).html('API license key verification successful!');
-            } else if ( response.error ) {
-                statusEl.find( '.text' ).html(response.error);
+                statusEl.find('.text').html('API license key verification successful!');
+            } else if (response.error) {
+                statusEl.find('.text').html(response.error);
             } else if (response.retry_action && response.retry_action == 1) {
                 jQuery("#mainwp_api_sslVerifyCertificate").val(0);
                 statusEl.fadeOut();
@@ -384,11 +384,11 @@ function mainwp_extensions_savelogin(pObj, retring) {
         }
 
         if (undefError) {
-            statusEl.find( '.text' ).html( __( 'Undefined error. Please try again.' ) );
+            statusEl.find('.text').html(__('Undefined error. Please try again.'));
         }
-        setTimeout( function () {
+        setTimeout(function () {
             statusEl.fadeOut();
-        }, 3000 );
+        }, 3000);
 
     }, 'json');
     return false;
@@ -428,7 +428,7 @@ function mainwp_extensions_grabkeys(retring) {
             statusEl.removeClass('red');
             statusEl.removeClass('yellow');
             statusEl.removeClass('green');
-            statusEl.find('.text').html( __('Validating. Please wait...')).show();
+            statusEl.find('.text').html(__('Validating. Please wait...')).show();
         }
         statusEl.show();
         jQuery.post(ajaxurl, data, function (response) {
@@ -453,7 +453,7 @@ function mainwp_extensions_grabkeys(retring) {
                     return false;
                 } else {
                     undefError = true;
-                }                
+                }
             } else {
                 undefError = true;
             }
@@ -466,7 +466,7 @@ function mainwp_extensions_grabkeys(retring) {
                 statusEl.fadeOut();
             }, 3000);
         }, 'json');
-    }  
+    }
     return false;
 }
 
@@ -571,22 +571,22 @@ mainwp_extension_grab_purchased = function (pObj, retring) {
         api_key: api_key
     });
 
-    
-    if ( api_key == '' ) {        
-        statusEl.find('.text').html( __( "Main API Key is required." ) );
+
+    if (api_key == '') {
+        statusEl.find('.text').html(__("Main API Key is required."));
         statusEl.show();
         setTimeout(function () {
             statusEl.fadeOut();
         }, 3000);
     } else {
-        if ( retring == true ) {
-            statusEl.find('.text').html( __( "Connection error detected. The Verify Certificate option has been switched to NO. Retrying..." ) );
+        if (retring == true) {
+            statusEl.find('.text').html(__("Connection error detected. The Verify Certificate option has been switched to NO. Retrying..."));
             setTimeout(function () {
                 statusEl.fadeOut();
             }, 3000);
         } else {
             statusEl.show();
-            statusEl.find( '.text' ).html( __( 'Loading extensions info...' ) );
+            statusEl.find('.text').html(__('Loading extensions info...'));
             jQuery.post(ajaxurl, data, function (response) {
                 var undefError = false;
                 if (response) {
@@ -604,7 +604,7 @@ mainwp_extension_grab_purchased = function (pObj, retring) {
                             mainwp_extension_select_to_install();
                         }
                     } else if (response.error) {
-                        statusEl.find( '.text' ).html(response.error);
+                        statusEl.find('.text').html(response.error);
                     } else if (response.retry_action && response.retry_action == 1) {
                         jQuery("#mainwp_api_sslVerifyCertificate").val(0);
                         statusEl.fadeOut();
@@ -616,8 +616,8 @@ mainwp_extension_grab_purchased = function (pObj, retring) {
                 } else {
                     undefError = true;
                 }
-                if ( undefError ) {
-                    statusEl.find( '.text' ).html( __( 'Undefined error occurred. Please try again.' ) );
+                if (undefError) {
+                    statusEl.find('.text').html(__('Undefined error occurred. Please try again.'));
                 }
                 setTimeout(function () {
                     statusEl.fadeOut();
@@ -652,7 +652,7 @@ mainwp_extension_grab_org_extensions = function () {
     statusEl.removeClass('green');
     statusEl.removeClass('yellow');
     statusEl.show();
-    statusEl.find('.text').html( __('Running. Please wait...'));
+    statusEl.find('.text').html(__('Running. Please wait...'));
     jQuery.post(ajaxurl, data, function (response) {
         var undefError = false;
         if (response) {

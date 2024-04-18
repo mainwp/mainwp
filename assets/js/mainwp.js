@@ -2468,6 +2468,7 @@ mainwp_install_bulk = function (type, slug, name) {
       installQueueContent += '</div>';
 
       jQuery('#plugintheme-installation-queue').html(installQueueContent);
+      jQuery('#plugintheme-installation-queue').attr('filenames', response.files.join(','));
       jQuery('#plugintheme-installation-progress-modal .mainwp-modal-progress').progress({ value: 0, total: bulkInstallTotal });
       mainwp_install_bulk_start_next(type, response.url, activatePlugin, overwrite, slug, response);
     }
@@ -2756,7 +2757,8 @@ mainwp_upload_bulk_start_next = function (type, urls, activatePlugin, overwrite)
 
   if ((siteToInstall.length == 0) && (bulkInstallCurrentThreads == 0)) {
     var data = mainwp_secure_data({
-      action: 'mainwp_cleanbulkuploadplugintheme'
+      action: 'mainwp_cleanbulkuploadplugintheme',
+      files: jQuery('#plugintheme-installation-queue').attr('filenames')
     });
     jQuery.post(ajaxurl, data, function () { });
     var msg = mainwp_install_bulk_you_know_msg(type, jQuery('#bulk_upload_info').attr('number-files'));

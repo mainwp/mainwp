@@ -1764,7 +1764,7 @@ jQuery(document).ready(function ($) {
         }
     };
 
-    $(window).on('resize',function () {
+    $(window).on('resize', function () {
         tb_position();
     });
 });

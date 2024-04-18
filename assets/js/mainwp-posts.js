@@ -202,7 +202,7 @@ mainwp_fetch_pages = function () {
         jQuery("#mainwp-pages-table").DataTable().destroy();
         jQuery('#mainwp-pages-table').DataTable({
             "responsive": true,
-            "colReorder": {columns:":not(.check-column):not(:last-child)"},
+            "colReorder": { columns: ":not(.check-column):not(:last-child)" },
             "stateSave": true,
             "pagingType": "full_numbers",
             "scrollX": true,
@@ -215,8 +215,8 @@ mainwp_fetch_pages = function () {
             "preDrawCallback": function () {
                 console.log('preDrawCallback js');
                 setTimeout(() => {
-                    jQuery( '#mainwp-pages-table .ui.dropdown' ).dropdown();
-                    jQuery( '#mainwp-pages-table .ui.checkbox' ).checkbox();
+                    jQuery('#mainwp-pages-table .ui.dropdown').dropdown();
+                    jQuery('#mainwp-pages-table .ui.checkbox').checkbox();
                     mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
                     mainwp_datatable_fix_menu_overflow();
                 }, 1000);
@@ -227,22 +227,22 @@ mainwp_fetch_pages = function () {
                 selector: 'tr>td:not(.not-selectable)'
             }
         }).on('select', function (e, dt, type, indexes) {
-            if( 'row' == type ){
+            if ('row' == type) {
                 dt.rows(indexes)
-                .nodes()
-                .to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
+                    .nodes()
+                    .to$().find('td.check-column .ui.checkbox').checkbox('set checked');
             }
         }).on('deselect', function (e, dt, type, indexes) {
-            if( 'row' == type ){
+            if ('row' == type) {
                 dt.rows(indexes)
-                .nodes()
-                .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
+                    .nodes()
+                    .to$().find('td.check-column .ui.checkbox').checkbox('set unchecked');
             }
-        }).on( 'columns-reordered', function ( e, settings, details ) {
+        }).on('columns-reordered', function (e, settings, details) {
             console.log('columns-reordered');
             setTimeout(() => {
-                jQuery( '#mainwp-pages-table .ui.dropdown' ).dropdown();
-                jQuery( '#mainwp-pages-table .ui.checkbox' ).checkbox();
+                jQuery('#mainwp-pages-table .ui.dropdown').dropdown();
+                jQuery('#mainwp-pages-table .ui.checkbox').checkbox();
                 mainwp_datatable_fix_menu_overflow();
                 mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
             }, 1000);
@@ -549,7 +549,7 @@ mainwp_fetch_posts_done = function () {
     jQuery("#mainwp-posts-table").DataTable().destroy();
     jQuery('#mainwp-posts-table').DataTable({
         "responsive": responsive,
-        "colReorder": {columns:":not(.check-column):not(:last-child)"},
+        "colReorder": { columns: ":not(.check-column):not(:last-child)" },
         "stateSave": true,
         "pagingType": "full_numbers",
         "order": [],
@@ -574,22 +574,22 @@ mainwp_fetch_posts_done = function () {
             selector: 'tr>td:not(.not-selectable)'
         }
     }).on('select', function (e, dt, type, indexes) {
-        if( 'row' == type ){
+        if ('row' == type) {
             dt.rows(indexes)
-            .nodes()
-            .to$().find('td.check-column .ui.checkbox' ).checkbox('set checked');
+                .nodes()
+                .to$().find('td.check-column .ui.checkbox').checkbox('set checked');
         }
     }).on('deselect', function (e, dt, type, indexes) {
-        if( 'row' == type ){
+        if ('row' == type) {
             dt.rows(indexes)
-            .nodes()
-            .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
+                .nodes()
+                .to$().find('td.check-column .ui.checkbox').checkbox('set unchecked');
         }
-    }).on( 'columns-reordered', function ( e, settings, details ) {
+    }).on('columns-reordered', function (e, settings, details) {
         console.log('columns-reordered');
         setTimeout(() => {
-            jQuery( '#mainwp-posts-table-wrapper table .ui.dropdown' ).dropdown();
-            jQuery( '#mainwp-posts-table-wrapper table .ui.checkbox' ).checkbox();
+            jQuery('#mainwp-posts-table-wrapper table .ui.dropdown').dropdown();
+            jQuery('#mainwp-posts-table-wrapper table .ui.checkbox').checkbox();
             mainwp_datatable_fix_menu_overflow();
             mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
         }, 1000);

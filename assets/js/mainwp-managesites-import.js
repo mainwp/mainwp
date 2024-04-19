@@ -44,7 +44,7 @@ jQuery(function(){
     }
 });
 
-mainwp_managesites_import_sites = function () {
+let mainwp_managesites_import_sites = function () {
     if (import_stop_by_user == true)
         return;
 

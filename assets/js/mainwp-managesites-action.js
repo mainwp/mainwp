@@ -16,7 +16,7 @@ jQuery(document).on('click', '#mainwp-manage-sites-filter-toggle-button', functi
 
 // Manage Sites Bulk Actions
 /* eslint-disable complexity */
-mainwp_managesites_doaction = function (action) {
+let mainwp_managesites_doaction = function (action) {
 
   if (action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'refresh_favico' || action == 'checknow' || action == 'update_everything' || action == 'check_abandoned_plugin' || action == 'check_abandoned_theme' || action == 'suspend' || action == 'unsuspend') {
 
@@ -94,7 +94,7 @@ mainwp_managesites_doaction = function (action) {
 };
 /* eslint-enable complexity */
 
-mainwp_managesites_doaction_open = function (action) {
+let mainwp_managesites_doaction_open = function (action) {
   jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked').each(function () {
     let row = jQuery(this).closest('tr');
     let url = '';
@@ -111,7 +111,7 @@ mainwp_managesites_doaction_open = function (action) {
   });
 }
 
-mainwp_managesites_doaction_process = function (action) {
+let mainwp_managesites_doaction_process = function (action) {
 
   managesites_bulk_init();
 
@@ -186,7 +186,7 @@ jQuery(document).on('change', '#mainwp-add-new-button', function () {
   return false;
 });
 
-mainwp_managesites_bulk_reconnect_next = function () {
+let mainwp_managesites_bulk_reconnect_next = function () {
   while ((checkedBox = jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulkManageSitesCurrentThreads < bulkManageSitesMaxThreads)) {
     mainwp_managesites_bulk_reconnect_specific(checkedBox);
   }
@@ -199,7 +199,7 @@ mainwp_managesites_bulk_reconnect_next = function () {
   }
 }
 
-mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
+let mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
 
   pCheckedBox.attr('status', 'running');
   let rowObj = pCheckedBox.closest('tr');
@@ -258,11 +258,12 @@ mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
   return;
 };
 
-managesites_bulk_done = function () {
+//global.
+window.managesites_bulk_done = function () {
   bulkManageSitesTaskRunning = false;
 };
 
-mainwp_managesites_bulk_remove_next = function () {
+let mainwp_managesites_bulk_remove_next = function () {
   while ((checkedBox = jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulkManageSitesCurrentThreads < bulkManageSitesMaxThreads)) {
     mainwp_managesites_bulk_remove_specific(checkedBox);
   }
@@ -275,7 +276,7 @@ mainwp_managesites_bulk_remove_next = function () {
   }
 }
 
-mainwp_managesites_bulk_remove_specific = function (pCheckedBox) {
+let mainwp_managesites_bulk_remove_specific = function (pCheckedBox) {
   pCheckedBox.attr('status', 'running');
   let rowObj = pCheckedBox.closest('tr');
   bulkManageSitesCurrentThreads++;
@@ -318,14 +319,14 @@ mainwp_managesites_bulk_remove_specific = function (pCheckedBox) {
 };
 
 
-bulkManageSitesMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
-bulkManageSitesCurrentThreads = 0;
-bulkManageSitesTotal = 0;
-bulkManageSitesFinished = 0;
-bulkManageSitesTaskRunning = false;
+let bulkManageSitesMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
+let bulkManageSitesCurrentThreads = 0;
+let bulkManageSitesTotal = 0;
+let bulkManageSitesFinished = 0;
+let bulkManageSitesTaskRunning = false;
 
 
-managesites_bulk_init = function () {
+let managesites_bulk_init = function () {
   jQuery('#mainwp-message-zone').hide();
   if (bulkManageSitesTaskRunning == false) {
     bulkManageSitesMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
@@ -339,7 +340,7 @@ managesites_bulk_init = function () {
 };
 
 
-mainwp_managesites_bulk_refresh_favico = function (siteIds) {
+let mainwp_managesites_bulk_refresh_favico = function (siteIds) {
   let allWebsiteIds = jQuery('.dashboard_wp_id').map(function (indx, el) {
     return jQuery(el).val();
   });
@@ -353,7 +354,7 @@ mainwp_managesites_bulk_refresh_favico = function (siteIds) {
         excludeIds.push(el);
       }
     });
-    for (let id of excludeIds ) {
+    for (let id of excludeIds) {
       dashboard_update_site_hide(id);
     }
     allWebsiteIds = selectedIds;
@@ -366,7 +367,7 @@ mainwp_managesites_bulk_refresh_favico = function (siteIds) {
 
   let siteNames = {};
 
-  for (let id of allWebsiteIds ) {
+  for (let id of allWebsiteIds) {
     dashboard_update_site_status(id, '<i class="clock outline icon"></i>');
     siteNames[id] = jQuery('.sync-site-status[siteid="' + id + '"]').attr('niceurl');
   }
@@ -384,7 +385,7 @@ mainwp_managesites_bulk_refresh_favico = function (siteIds) {
   mainwp_managesites_refresh_favico_all_int(allWebsiteIds);
 };
 
-mainwp_managesites_refresh_favico_all_int = function (websiteIds) {
+let mainwp_managesites_refresh_favico_all_int = function (websiteIds) {
   websitesToUpgrade = websiteIds;
   currentWebsite = 0;
   websitesDone = 0;
@@ -394,12 +395,13 @@ mainwp_managesites_refresh_favico_all_int = function (websiteIds) {
   mainwp_managesites_refresh_favico_all_loop_next();
 };
 
-mainwp_managesites_refresh_favico_all_loop_next = function () {
+let mainwp_managesites_refresh_favico_all_loop_next = function () {
   while (bulkTaskRunning && (currentThreads < maxThreads) && (websitesLeft > 0)) {
     mainwp_managesites_refresh_favico_all_upgrade_next();
   }
 };
-mainwp_managesites_refresh_favico_all_upgrade_next = function () {
+
+let mainwp_managesites_refresh_favico_all_upgrade_next = function () {
   currentThreads++;
   websitesLeft--;
 
@@ -409,7 +411,7 @@ mainwp_managesites_refresh_favico_all_upgrade_next = function () {
   mainwp_managesites_refresh_favico_int(websiteId);
 };
 
-mainwp_managesites_refresh_favico_int = function (siteid) {
+let mainwp_managesites_refresh_favico_int = function (siteid) {
 
   let data = mainwp_secure_data({
     action: 'mainwp_get_site_icon',
@@ -442,7 +444,7 @@ mainwp_managesites_refresh_favico_int = function (siteid) {
 
 
 /* Suspend sites */
-mainwp_managesites_bulk_suspend_status = function (siteIds, status) {
+let mainwp_managesites_bulk_suspend_status = function (siteIds, status) {
 
   let allWebsiteIds = jQuery('.dashboard_wp_id').map(function (indx, el) {
     return jQuery(el).val();
@@ -488,7 +490,7 @@ mainwp_managesites_bulk_suspend_status = function (siteIds, status) {
   mainwp_managesites_suspend_status_all_int(allWebsiteIds, status);
 };
 
-mainwp_managesites_suspend_status_all_int = function (websiteIds, status) {
+let mainwp_managesites_suspend_status_all_int = function (websiteIds, status) {
   websitesToUpgrade = websiteIds;
   currentWebsite = 0;
   websitesDone = 0;
@@ -498,12 +500,12 @@ mainwp_managesites_suspend_status_all_int = function (websiteIds, status) {
   mainwp_managesites_suspend_status_all_loop_next(status);
 };
 
-mainwp_managesites_suspend_status_all_loop_next = function (status) {
+let mainwp_managesites_suspend_status_all_loop_next = function (status) {
   while (bulkTaskRunning && (currentThreads < maxThreads) && (websitesLeft > 0)) {
     mainwp_managesites_suspend_status_all_upgrade_next(status);
   }
 };
-mainwp_managesites_suspend_status_all_upgrade_next = function (status) {
+let mainwp_managesites_suspend_status_all_upgrade_next = function (status) {
   currentThreads++;
   websitesLeft--;
 
@@ -513,7 +515,7 @@ mainwp_managesites_suspend_status_all_upgrade_next = function (status) {
   mainwp_managesites_suspend_status_int(websiteId, status);
 };
 
-mainwp_managesites_suspend_status_int = function (siteid, status) {
+let mainwp_managesites_suspend_status_int = function (siteid, status) {
   let data = mainwp_secure_data({
     action: 'mainwp_manage_sites_suspend_site',
     suspended: (status == 'suspend') ? 1 : 0,

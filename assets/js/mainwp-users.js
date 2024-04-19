@@ -3,6 +3,14 @@
  */
 let userCountSent = 0;
 let userCountReceived = 0;
+
+
+let import_user_stop_by_user = false;
+let import_user_current_line_number = 0;
+let import_user_total_import = 0;
+let import_user_count_created_users = 0;
+let import_user_count_create_fails = 0;
+
 jQuery(function(){
 
     // Fetch users
@@ -215,7 +223,7 @@ mainwpuser_postAction = function (elem, what) {
 };
 
 // Fetch users from child sites
-mainwp_fetch_users = function () {
+let mainwp_fetch_users = function () {
     let errors = [];
     let selected_sites = [];
     let selected_groups = [];
@@ -335,16 +343,9 @@ mainwp_fetch_users = function () {
 
 
 
-
 /**
  * Bulk upload new user
  */
-let import_user_stop_by_user = false;
-let import_user_current_line_number = 0;
-let import_user_total_import = 0;
-let import_user_count_created_users = 0;
-let import_user_count_create_fails = 0;
-
 jQuery(function(){
     import_user_total_import = jQuery('#import_user_total_import').val();
 
@@ -386,7 +387,7 @@ jQuery(function(){
 });
 
 
-mainwp_bulkupload_users = function () {
+window.mainwp_bulkupload_users = function () {
     if (jQuery('#import_user_file_bulkupload').val() == '') {
         feedback('mainwp-message-zone', __('Please enter CSV file for upload.'), 'yellow');
         jQuery('#import_user_file_bulkupload').parent().parent().addClass('form-invalid');
@@ -395,7 +396,7 @@ mainwp_bulkupload_users = function () {
     }
 };
 
-mainwp_import_users_next = function () {
+let mainwp_import_users_next = function () {
 
     if (import_user_stop_by_user == true)
         return;
@@ -455,7 +456,7 @@ mainwp_import_users_next = function () {
 };
 
 /* eslint-disable complexity */
-mainwp_import_users_valid_data = function (decoded_data) {
+let mainwp_import_users_valid_data = function (decoded_data) {
 
     let errors = []; // array.
     let val_data = {}; // object.
@@ -514,7 +515,7 @@ mainwp_import_users_valid_data = function (decoded_data) {
 };
 /* eslint-enable complexity */
 
-mainwp_import_users_response = function (response_data) {
+let mainwp_import_users_response = function (response_data) {
     let line_num = response_data.line_number;
     let okList = response_data.ok_list;
     let errorList = response_data.error_list;
@@ -536,7 +537,7 @@ mainwp_import_users_response = function (response_data) {
     jQuery('#import_user_import_logging').scrollTop(jQuery('#import_user_import_logging .log').height());
 };
 
-mainwp_import_users_finished = function () {
+let mainwp_import_users_finished = function () {
     jQuery('#import_user_btn_import').val('Finished').attr('disabled', 'true');
     jQuery('#MainWPBulkUploadUserLoading').hide();
     jQuery('#import_user_import_logging .log').append('\n' + __('Number of users to import: %1 Created users: %2 Failed: %3', import_user_total_import, import_user_count_created_users, import_user_count_create_fails) + '\n');

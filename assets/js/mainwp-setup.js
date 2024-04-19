@@ -66,7 +66,7 @@ jQuery(function () {
 });
 
 // Connect a new website
-mainwp_setup_managesites_add = function () {
+let mainwp_setup_managesites_add = function () {
 
   jQuery('#mainwp-message-zone').hide();
 
@@ -239,7 +239,7 @@ function isUrl(url) {
   }
 }
 
-mainwp_setup_secure_data = function (data) {
+let mainwp_setup_secure_data = function (data) {
   if (data['action'] == undefined)
     return data;
 

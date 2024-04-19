@@ -2,6 +2,10 @@
 /**
  * MainWP_Page.page
  */
+
+let countSent = 0;
+let countReceived = 0;
+
 jQuery(function(){
 
     // to fix issue not loaded calendar js library
@@ -64,7 +68,7 @@ jQuery(function(){
 });
 
 
-mainwppage_postAction = function (elem, what) {
+let mainwppage_postAction = function (elem, what) {
     let rowElement = jQuery(elem).closest('tr');
     let pageId = rowElement.find('.pageId').val();
     let websiteId = rowElement.find('.websiteId').val();
@@ -112,7 +116,7 @@ mainwppage_postAction = function (elem, what) {
     return false;
 };
 
-mainwp_fetch_pages = function () {
+let mainwp_fetch_pages = function () {
     let errors = [];
     let selected_sites = [];
     let selected_groups = [];
@@ -232,8 +236,7 @@ mainwp_fetch_pages = function () {
 /**
  * MainWP_Post.page
  */
-let countSent = 0;
-let countReceived = 0;
+
 jQuery(function(){
     jQuery(document).on('click', '#mainwp_show_posts', function () {
         mainwp_fetch_posts();
@@ -303,7 +306,7 @@ jQuery(function(){
     });
 });
 
-mainwppost_postAction = function (elem, what, postType) {
+let mainwppost_postAction = function (elem, what, postType) {
     let rowElement = jQuery(elem).closest('tr');
     let postId = rowElement.find('.postId').val();
     let websiteId = rowElement.find('.websiteId').val();
@@ -368,14 +371,14 @@ mainwppost_postAction = function (elem, what, postType) {
     return false;
 };
 
-mainwp_show_post = function (siteId, postId, userId) {
+let mainwp_show_post = function (siteId, postId, userId) {
     let siteElement = jQuery('input[name="selected_sites[]"][siteid="' + siteId + '"]');
     siteElement.prop('checked', true);
     siteElement.trigger("change");
     mainwp_fetch_posts(postId, userId);
 };
 /* eslint-disable complexity */
-mainwp_fetch_posts = function (postId, userId, start_sites) {
+let mainwp_fetch_posts = function (postId, userId, start_sites) {
     let errors = [];
     let selected_sites = [];
     let selected_groups = [];
@@ -517,7 +520,7 @@ mainwp_fetch_posts = function (postId, userId, start_sites) {
 };
 /* eslint-enable complexity */
 
-mainwp_fetch_posts_done = function () {
+let mainwp_fetch_posts_done = function () {
     jQuery('#mainwp-loading-posts-row').hide();
     jQuery('#mainwp_posts_main').show();
     let responsive = true;

@@ -75,30 +75,7 @@ class Log_Events_Filter_Segment {
                     
         <script type="text/javascript">
             jQuery( document ).ready( function( $ ) {
-
-                jQuery('#mainwp-module-log-filter-save-segment-button').on( 'click', function () {
-                    jQuery( '#mainwp-common-filter-segment-modal > div.header' ).html(__('Save Segment'));
-                    jQuery( '#mainwp-common-filter-segment-edit-fields' ).show();
-                    jQuery( '#mainwp-common-filter-edit-segment-save' ).show();
-                    jQuery( '#mainwp-common-filter-segment-select-fields' ).hide();
-                    jQuery( '#mainwp-common-filter-select-segment-choose-button' ).hide();
-                    jQuery( '#mainwp-common-filter-select-segment-delete-button' ).hide();
-                    jQuery('#mainwp-common-filter-edit-segment-name').val(jQuery(this).attr('selected-segment-name'));
-                    mainwp_common_filter_show_segments_modal();
-                } );
-
-                jQuery('.mainwp_module_log_filter_choose_segment').on( 'click', function () {
-                    jQuery( '#mainwp-common-filter-segment-edit-fields' ).hide();
-                    jQuery( '#mainwp-common-filter-edit-segment-save' ).hide();
-                    jQuery( '#mainwp-common-filter-segment-modal > div.header' ).html(__('Load a Segment'));
-                    jQuery( '#mainwp-common-filter-segment-select-fields' ).show();
-                    jQuery( '#mainwp-common-filter-select-segment-choose-button' ).show();
-                    jQuery( '#mainwp-common-filter-select-segment-delete-button' ).show();
-                    mainwp_common_filter_show_segments_modal(true);
-                } );
-                        
-
-                mainwp_common_filter_load_segments = function () {
+                mainwp_load_logs_filter_segments = function () {
                     jQuery('#mainwp-common-filter-segment-select-fields').hide();
                     var data = mainwp_secure_data({
                         action: 'mainwp_module_log_filter_load_segments',
@@ -117,6 +94,13 @@ class Log_Events_Filter_Segment {
                         }
                     }, 'json');
                 };
+
+                jQuery('#mainwp-module-log-filter-save-segment-button').on( 'click', function () {
+                    mainwpSegmentModalUiHandle.showSegment();
+                } );
+                jQuery('.mainwp_module_log_filter_choose_segment').on( 'click', function () {
+                    mainwpSegmentModalUiHandle.loadSegment( mainwp_load_logs_filter_segments );
+                } );
                 
                 jQuery('#mainwp-common-filter-edit-segment-save').on( 'click', function () {
 

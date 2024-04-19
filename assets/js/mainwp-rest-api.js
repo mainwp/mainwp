@@ -25,17 +25,17 @@ jQuery(function($) {
 
 });
 
-mainwp_restapi_remove_key_confirm = function (pCheckedBox) {
+let mainwp_restapi_remove_key_confirm = function (pCheckedBox) {
     confirmMsg = __("You are about to delete the selected REST API Key?");
     mainwp_confirm(confirmMsg, _callback = function () { mainwp_restapi_bulk_remove_specific(pCheckedBox); });
 }
 
-mainwp_restapi_bulk_remove_keys_confirm = function () {
+let mainwp_restapi_bulk_remove_keys_confirm = function () {
     confirmMsg = __("You are about to delete the selected REST API Key(s)?");
     mainwp_confirm(confirmMsg, _callback = function () { mainwp_restapi_bulk_init(); mainwp_restapi_remove_keys_next(); });
 }
 
-mainwp_restapi_bulk_init = function () {
+let mainwp_restapi_bulk_init = function () {
     jQuery('#mainwp-message-zone-apikeys').hide();
     if (bulk_RestAPITaskRunning == false) {
         bulk_RestAPICurrentThreads = 0;
@@ -48,8 +48,8 @@ mainwp_restapi_bulk_init = function () {
 };
 
 
-mainwp_restapi_remove_keys_next = function () {
-    while ((checkedBox = jQuery('#mainwp-rest-api-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulk_RestAPICurrentThreads < bulk_RestAPIMaxThreads)) {
+let mainwp_restapi_remove_keys_next = function () {
+    while ((checkedBox = jQuery('#mainwp-rest-api-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulk_RestAPICurrentThreads < bulk_RestAPIMaxThreads)) { // NOSONAR - variables modified in other functions.
         mainwp_restapi_bulk_remove_specific(checkedBox);
     }
     if ((bulk_RestAPITotal > 0) && (bulk_RestAPIFinished == bulk_RestAPITotal)) {
@@ -60,7 +60,7 @@ mainwp_restapi_remove_keys_next = function () {
     }
 }
 
-mainwp_restapi_bulk_remove_specific = function (pCheckedBox) {
+let mainwp_restapi_bulk_remove_specific = function (pCheckedBox) {
     pCheckedBox.attr('status', 'running');
     let rowObj = pCheckedBox.closest('tr');
     bulk_RestAPICurrentThreads++;

@@ -3212,7 +3212,7 @@ mainwp_uid = function () {
   let idstr = String.fromCharCode(Math.floor((Math.random() * 25) + 65)); // NOSONAR - it's id.
   do {
     // between numbers and characters (48 is 0 and 90 is Z (42-48 = 90)
-    let ascicode = Math.floor((Math.random() * 42) + 48); //NOSONAR - it's id.
+    let ascicode = Math.floor((Math.random() * 42) + 48); // NOSONAR - it's id.
     if (ascicode < 58 || ascicode > 64) {
       // exclude all chars between : (58) and @ (64)
       idstr += String.fromCharCode(ascicode);
@@ -4263,13 +4263,13 @@ jQuery(function(){
 mainwp_common_filter_hide_segments_message = function () {
   jQuery('#mainwp-common-filter-edit-segment-status').removeClass('red green').hide();
 };
-mainwp_common_filter_show_segments_modal = function (loadSeg) {
+mainwp_common_filter_show_segments_modal = function ( loadCallback ) {
   mainwp_common_filter_hide_segments_message();
   jQuery('#mainwp-common-filter-segment-modal').modal({
     allowMultiple: false,
     onShow: function () {
-      if (typeof loadSeg !== "undefined" && loadSeg) {
-        mainwp_common_filter_load_segments();
+      if (typeof loadCallback == 'function') {
+        loadCallback();
       }
     }
   }).modal('show');

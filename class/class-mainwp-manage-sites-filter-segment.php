@@ -80,29 +80,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                     
         <script type="text/javascript">
             jQuery( document ).ready( function( $ ) {
-
-                jQuery('#mainwp-manage-sites-filter-save-segment-button').on( 'click', function () {
-                    jQuery( '#mainwp-common-filter-segment-modal > div.header' ).html(__('Save Segment'));
-                    jQuery( '#mainwp-common-filter-segment-edit-fields' ).show();
-                    jQuery( '#mainwp-common-filter-edit-segment-save' ).show();
-                    jQuery( '#mainwp-common-filter-segment-select-fields' ).hide();
-                    jQuery( '#mainwp-common-filter-select-segment-choose-button' ).hide();
-                    jQuery( '#mainwp-common-filter-select-segment-delete-button' ).hide();
-                    jQuery('#mainwp-common-filter-edit-segment-name').val(jQuery(this).attr('selected-segment-name'));
-                    mainwp_common_filter_show_segments_modal();
-                } );
-
-                jQuery('.mainwp_manage_sites_filter_choose_segment').on( 'click', function () {
-                    jQuery( '#mainwp-common-filter-segment-edit-fields' ).hide();
-                    jQuery( '#mainwp-common-filter-edit-segment-save' ).hide();
-                    jQuery( '#mainwp-common-filter-segment-modal > div.header' ).html(__('Load a Segment'));
-                    jQuery( '#mainwp-common-filter-segment-select-fields' ).show();
-                    jQuery( '#mainwp-common-filter-select-segment-choose-button' ).show();
-                    jQuery( '#mainwp-common-filter-select-segment-delete-button' ).show();
-                    mainwp_common_filter_show_segments_modal(true);
-                } );
-
-                mainwp_common_filter_load_segments = function () {
+                mainwp_load_sites_filter_segments = function () {
                     jQuery('#mainwp-common-filter-segment-select-fields').hide();
                     let data = mainwp_secure_data({
                         action: 'mainwp_manage_sites_filter_load_segments',
@@ -121,6 +99,13 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                         }
                     }, 'json');
                 };
+
+                jQuery('#mainwp-manage-sites-filter-save-segment-button').on( 'click', function () {
+                    mainwpSegmentModalUiHandle.showSegment();
+                } );
+                jQuery('.mainwp_manage_sites_filter_choose_segment').on( 'click', function () {
+                    mainwpSegmentModalUiHandle.loadSegment(mainwp_load_sites_filter_segments);
+                } );
                 
                 jQuery('#mainwp-common-filter-edit-segment-save').on( 'click', function () {
 

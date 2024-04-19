@@ -1,4 +1,6 @@
 /* eslint complexity: ["error", 100] */
+
+
 //Ignore plugin
 jQuery(function(){
     jQuery(document).on('click', 'input[name="plugins"]', function () {
@@ -76,6 +78,78 @@ jQuery(function(){
         return false;
     });
 });
+
+
+// Manage Plugins -- Fetch plugins
+window.mainwp_fetch_plugins = function () {
+    let errors = [];
+    let selected_sites = [];
+    let selected_groups = [];
+    let selected_clients = [];
+
+    if (jQuery('#select_by').val() == 'site') {
+        jQuery("input[name='selected_sites[]']:checked").each(function () {
+            selected_sites.push(jQuery(this).val());
+        });
+        if (selected_sites.length == 0) {
+            errors.push(__('Please select at least one website or group or client.'));
+        }
+    } else if (jQuery('#select_by').val() == 'client') {
+        jQuery("input[name='selected_clients[]']:checked").each(function () {
+            selected_clients.push(jQuery(this).val());
+        });
+        if (selected_clients.length == 0) {
+            errors.push(__('Please select at least one website or group or client.'));
+        }
+    } else {
+        jQuery("input[name='selected_groups[]']:checked").each(function () {
+            selected_groups.push(jQuery(this).val());
+        });
+        if (selected_groups.length == 0) {
+            errors.push(__('Please select at least one website or group or client.'));
+        }
+    }
+
+
+    let _status = jQuery("#mainwp_plugins_search_by_status").dropdown("get value");
+
+    if (_status == null) {
+        errors.push(__('Please select at least one plugin status.'));
+    }
+
+    if (errors.length > 0) {
+        jQuery('#mainwp-message-zone').html(errors.join('<br />'));
+        jQuery('#mainwp-message-zone').addClass('yellow');
+        jQuery('#mainwp-message-zone').show();
+        return;
+    } else {
+        jQuery('#mainwp-message-zone').html('');
+        jQuery('#mainwp-message-zone').removeClass('yellow');
+        jQuery('#mainwp-message-zone').hide();
+    }
+    let data = mainwp_secure_data({
+        action: 'mainwp_plugins_search',
+        keyword: jQuery('#mainwp_plugin_search_by_keyword').val(),
+        status: _status,
+        not_criteria: jQuery('#display_sites_not_meeting_criteria').is(':checked'),
+        'groups[]': selected_groups,
+        'sites[]': selected_sites,
+        'clients[]': selected_clients
+    });
+
+    jQuery('#mainwp-loading-plugins-row').show();
+
+    jQuery.post(ajaxurl, data, function (response) {
+        jQuery('#mainwp-loading-plugins-row').hide();
+        jQuery('#mainwp-plugins-main-content').show();
+
+        if (response && response.result) {
+            jQuery('#mainwp-plugins-content').html(response.result);
+            jQuery('#mainwp-plugins-bulk-actions-wapper').html(response.bulk_actions);
+            jQuery('#mainwp-plugins-bulk-actions-wapper .ui.dropdown').dropdown();
+        }
+    }, 'json');
+};
 
 
 /**
@@ -310,7 +384,7 @@ jQuery(function(){
     }
 });
 
-mainwp_show_hide_install_to_selected_sites = function (what) {
+window.mainwp_show_hide_install_to_selected_sites = function (what) {
     if ('plugin' == what) {
         jQuery('#mainwp-plugins-content .checkbox').on('click', function () {
             if (jQuery('.mainwp-manage-plugin-item-website .checkbox.checked').length > 0) {
@@ -330,79 +404,8 @@ mainwp_show_hide_install_to_selected_sites = function (what) {
     }
 }
 
-// Manage Plugins -- Fetch plugins
-mainwp_fetch_plugins = function () {
-    let errors = [];
-    let selected_sites = [];
-    let selected_groups = [];
-    let selected_clients = [];
-
-    if (jQuery('#select_by').val() == 'site') {
-        jQuery("input[name='selected_sites[]']:checked").each(function () {
-            selected_sites.push(jQuery(this).val());
-        });
-        if (selected_sites.length == 0) {
-            errors.push(__('Please select at least one website or group or client.'));
-        }
-    } else if (jQuery('#select_by').val() == 'client') {
-        jQuery("input[name='selected_clients[]']:checked").each(function () {
-            selected_clients.push(jQuery(this).val());
-        });
-        if (selected_clients.length == 0) {
-            errors.push(__('Please select at least one website or group or client.'));
-        }
-    } else {
-        jQuery("input[name='selected_groups[]']:checked").each(function () {
-            selected_groups.push(jQuery(this).val());
-        });
-        if (selected_groups.length == 0) {
-            errors.push(__('Please select at least one website or group or client.'));
-        }
-    }
-
-
-    let _status = jQuery("#mainwp_plugins_search_by_status").dropdown("get value");
-
-    if (_status == null) {
-        errors.push(__('Please select at least one plugin status.'));
-    }
-
-    if (errors.length > 0) {
-        jQuery('#mainwp-message-zone').html(errors.join('<br />'));
-        jQuery('#mainwp-message-zone').addClass('yellow');
-        jQuery('#mainwp-message-zone').show();
-        return;
-    } else {
-        jQuery('#mainwp-message-zone').html('');
-        jQuery('#mainwp-message-zone').removeClass('yellow');
-        jQuery('#mainwp-message-zone').hide();
-    }
-    let data = mainwp_secure_data({
-        action: 'mainwp_plugins_search',
-        keyword: jQuery('#mainwp_plugin_search_by_keyword').val(),
-        status: _status,
-        not_criteria: jQuery('#display_sites_not_meeting_criteria').is(':checked'),
-        'groups[]': selected_groups,
-        'sites[]': selected_sites,
-        'clients[]': selected_clients
-    });
-
-    jQuery('#mainwp-loading-plugins-row').show();
-
-    jQuery.post(ajaxurl, data, function (response) {
-        jQuery('#mainwp-loading-plugins-row').hide();
-        jQuery('#mainwp-plugins-main-content').show();
-
-        if (response && response.result) {
-            jQuery('#mainwp-plugins-content').html(response.result);
-            jQuery('#mainwp-plugins-bulk-actions-wapper').html(response.bulk_actions);
-            jQuery('#mainwp-plugins-bulk-actions-wapper .ui.dropdown').dropdown();
-        }
-    }, 'json');
-};
-
 // Fetch plugins for the Auto Update feature
-mainwp_fetch_all_active_plugins = function () {
+let mainwp_fetch_all_active_plugins = function () {
     let data = mainwp_secure_data({
         action: 'mainwp_plugins_search_all_active',
         keyword: jQuery("#mainwp_au_plugin_keyword").val(),
@@ -420,7 +423,7 @@ mainwp_fetch_all_active_plugins = function () {
 };
 
 // Fetch themes for the Auto Update feature
-mainwp_fetch_all_themes = function () {
+let mainwp_fetch_all_themes = function () {
     let data = mainwp_secure_data({
         action: 'mainwp_themes_search_all',
         keyword: jQuery("#mainwp_au_theme_keyword").val(),
@@ -435,8 +438,6 @@ mainwp_fetch_all_themes = function () {
         jQuery('#mainwp-auto-updates-themes-table-wrapper').html(response);
     });
 };
-
-
 
 /**
  * MainWP_Themes.page
@@ -621,7 +622,7 @@ jQuery(function () {
 
 
 // Manage Themes -- Fetch themes from child sites
-mainwp_fetch_themes = function () {
+window.mainwp_fetch_themes = function () {
     let errors = [];
     let selected_sites = [];
     let selected_groups = [];
@@ -707,7 +708,7 @@ jQuery(function () {
     });
 });
 
-manage_plugin_Action = function (elem, what) {
+let manage_plugin_Action = function (elem, what) {
     let rowElement = jQuery(elem).closest('.mainwp-manage-plugin-item-website');
     let plugin = rowElement.attr('plugin-slug');
     let websiteId = rowElement.attr('site-id');
@@ -745,7 +746,7 @@ manage_plugin_Action = function (elem, what) {
 };
 
 
-manage_plugins_upgrade = function (slug, websiteid) {
+let manage_plugins_upgrade = function (slug, websiteid) {
     let msg = __('Are you sure you want to update the plugin on the selected site?');
     mainwp_confirm(msg, function () {
         return manage_plugins_upgrade_int(slug, websiteid);
@@ -753,11 +754,11 @@ manage_plugins_upgrade = function (slug, websiteid) {
 };
 
 
-manage_plugins_upgrade_int = function (slug, websiteId) {
+let manage_plugins_upgrade_int = function (slug, websiteId) {
     let websiteHolder = jQuery('.mainwp-manage-plugin-item-website[plugin-slug="' + slug + '"][site-id="' + websiteId + '"]');
     websiteHolder.find('.column.update-column').html('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
 
-    manage_plugins_upgrade_continueAfterBackup = function () {
+    let manage_plugins_upgrade_continueAfterBackup = function () {
         console.log('plugin upgrade continue');
         return function () {
             let data = mainwp_secure_data({
@@ -856,7 +857,7 @@ jQuery(function () {
     });
 });
 
-manages_themeAction = function (elem, what) {
+let manages_themeAction = function (elem, what) {
     let rowElement = jQuery(elem).closest('.mainwp-manage-theme-item-website');
     let theme = rowElement.attr('theme-slug');
     let websiteId = rowElement.attr('site-id');
@@ -896,7 +897,7 @@ manages_themeAction = function (elem, what) {
 };
 
 
-manage_themes_upgrade_theme = function (slug, websiteid) {
+let manage_themes_upgrade_theme = function (slug, websiteid) {
     let msg = __('Are you sure you want to update the theme on the selected site?');
     mainwp_confirm(msg, function () {
         return manage_themes_upgrade_int(slug, websiteid);
@@ -904,7 +905,7 @@ manage_themes_upgrade_theme = function (slug, websiteid) {
 };
 
 
-manage_themes_upgrade_int = function (slug, websiteId) {
+let manage_themes_upgrade_int = function (slug, websiteId) {
     let websiteHolder = jQuery('.mainwp-manage-theme-item-website[theme-slug="' + slug + '"][site-id="' + websiteId + '"]');
     websiteHolder.find('.column.update-column').html('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
     manage_themes_upgrade_continueAfterBackup = function () {
@@ -990,7 +991,7 @@ manage_themes_upgrade_int = function (slug, websiteId) {
 /**
  * Check Backups.
  */
-mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAfterBackup) {
+let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAfterBackup) {
     managesitesShowBusyFunction = function () {
         let output = __('Checking if a backup is required for the selected updates...');
         mainwpPopup('#managesites-backup-box').getContentEl().html(output);

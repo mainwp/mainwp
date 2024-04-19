@@ -102,11 +102,11 @@ jQuery(function () {
 });
 
 
-bulkManageClientsMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
-bulkManageClientsCurrentThreads = 0;
-bulkManageClientsTotal = 0;
-bulkManageClientsFinished = 0;
-bulkManageClientsTaskRunning = false;
+let bulkManageClientsMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
+let bulkManageClientsCurrentThreads = 0;
+let bulkManageClientsTotal = 0;
+let bulkManageClientsFinished = 0;
+let bulkManageClientsTaskRunning = false;
 
 
 // Trigger Manage Bulk Actions
@@ -119,7 +119,7 @@ jQuery(document).on('click', '#mainwp-do-clients-bulk-actions', function () {
 });
 
 
-mainwp_manageclients_doaction = function (action) {
+let mainwp_manageclients_doaction = function (action) {
 
   if (action == 'delete') {
 
@@ -141,7 +141,7 @@ mainwp_manageclients_doaction = function (action) {
 
 
 
-mainwp_manageclients_doaction_process = function (action) {
+let mainwp_manageclients_doaction_process = function (action) {
 
   manageclients_bulk_init();
 
@@ -156,7 +156,7 @@ mainwp_manageclients_doaction_process = function (action) {
 
 
 
-mainwp_manageclients_bulk_remove_next = function () {
+let mainwp_manageclients_bulk_remove_next = function () {
   while ((checkedBox = jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulkManageClientsCurrentThreads < bulkManageClientsMaxThreads)) {
     mainwp_manageclients_bulk_remove_specific(checkedBox);
   }
@@ -169,7 +169,7 @@ mainwp_manageclients_bulk_remove_next = function () {
   }
 }
 
-mainwp_manageclients_bulk_remove_specific = function (pCheckedBox) {
+let mainwp_manageclients_bulk_remove_specific = function (pCheckedBox) {
 
   pCheckedBox.attr('status', 'running');
   let rowObj = pCheckedBox.closest('tr');
@@ -208,7 +208,7 @@ mainwp_manageclients_bulk_remove_specific = function (pCheckedBox) {
   }, 'json');
 };
 
-manageclients_bulk_init = function () {
+let manageclients_bulk_init = function () {
   jQuery('#mainwp-message-zone-client').hide();
   if (bulkManageClientsTaskRunning == false) {
     bulkManageClientsMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
@@ -228,7 +228,7 @@ jQuery(document).on('click', '#bulk_add_createclient', function () {
   mainwp_createclient(currPage);
 });
 
-mainwp_createclient = function (currPage) {
+let mainwp_createclient = function (currPage) {
   if (jQuery('input[name="client_fields[default_field][client.name]"]').val() == '') {
     feedback('mainwp-message-zone-client', __('Client name field is required! Please enter a Client name.'), 'yellow');
     return;
@@ -468,7 +468,7 @@ jQuery(document).on('click', '.mainwp-edit-client-note', function () {
 });
 
 
-mainwp_notes_client_save = function () {
+let mainwp_notes_client_save = function () {
   let normalid = jQuery('#mainwp-notes-itemid').val();
   let newnote = jQuery('#mainwp-notes-note').val();
   newnote = newnote.replace(/(?:\r\n|\r|\n)/g, '<br>');

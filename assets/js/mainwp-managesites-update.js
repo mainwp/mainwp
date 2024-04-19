@@ -1,9 +1,15 @@
 /* eslint complexity: ["error", 100] */
 // current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-ugradingWebsiteAll = false;
-ugradingAllCurrentStep = '';
-managesites_update_all_next_step = function () {
+let ugradingWebsiteAll = false;
+let ugradingAllCurrentStep = '';
+let managesitesContinueAfterBackup = undefined;
+
+let managesitesBackupSites;
+let managesitesBackupError;
+let managesitesBackupDownloadRunning;
+
+let managesites_update_all_next_step = function () {
     let next = '';
     if ('wpcore' == ugradingAllCurrentStep) {
         next = 'plugin';
@@ -16,7 +22,7 @@ managesites_update_all_next_step = function () {
     return ugradingAllCurrentStep;
 }
 
-mainwp_update_get_selected_sitesids = function( selectedSitesIds, allSitesIds ){
+let mainwp_update_get_selected_sitesids = function( selectedSitesIds, allSitesIds ){
     let selectedIds = [], excludeIds = [];
     if (selectedSitesIds instanceof Array) {
         jQuery.grep(allSitesIds, function (el) {
@@ -33,8 +39,8 @@ mainwp_update_get_selected_sitesids = function( selectedSitesIds, allSitesIds ){
     }
     return allSitesIds;    
 }
-
-mainwp_update_pluginsthemes = function (updateType, updateSiteIds) {
+// global variable.
+window.mainwp_update_pluginsthemes = function (updateType, updateSiteIds) {
     let allWebsiteIds = jQuery('.dashboard_wp_id').map(function (indx, el) {
         return jQuery(el).val();
     });
@@ -98,7 +104,7 @@ mainwp_update_pluginsthemes = function (updateType, updateSiteIds) {
 
 };
 
-managesites_update_pluginsthemes = function (pType, websiteIds) {
+let managesites_update_pluginsthemes = function (pType, websiteIds) {
     websitesToUpdate = websiteIds;
     currentWebsite = 0;
     websitesDone = 0;
@@ -115,13 +121,13 @@ managesites_update_pluginsthemes = function (pType, websiteIds) {
     }
 };
 
-managesites_loop_pluginsthemes_next = function (pType) {
+let managesites_loop_pluginsthemes_next = function (pType) {
     while (bulkManageSitesTaskRunning && (currentThreads < maxThreads) && (websitesLeft > 0)) {
         managesites_update_pluginsthemes_next(pType);
     }
 };
 
-managesites_update_pluginsthemes_done = function (pType) {
+let managesites_update_pluginsthemes_done = function (pType) {
     currentThreads--;
     if (!bulkManageSitesTaskRunning)
         return;
@@ -161,20 +167,9 @@ managesites_update_pluginsthemes_done = function (pType) {
 
     managesites_loop_pluginsthemes_next(pType);
 };
-managesites_update_pluginsthemes_next = function (pType) {
-    currentThreads++;
-    websitesLeft--;
-    let websiteId = websitesToUpdate[currentWebsite++];
-    dashboard_update_site_status(websiteId, __('<i class="sync alternate loading icon"></i>'));
-    let data = mainwp_secure_data({
-        action: 'mainwp_upgradeplugintheme',
-        websiteId: websiteId,
-        type: pType
-    });
-    managesites_update_pluginsthemes_next_int(websiteId, data, 0);
-};
 
-managesites_update_pluginsthemes_next_int = function (websiteId, data, errors) {
+
+let managesites_update_pluginsthemes_next_int = function (websiteId, data, errors) {
     // to enable chunk update, for manage sites page only
     data['chunk_support'] = 1;
 
@@ -231,7 +226,21 @@ managesites_update_pluginsthemes_next_int = function (websiteId, data, errors) {
     });
 };
 
-let managesitesContinueAfterBackup = undefined;
+
+let managesites_update_pluginsthemes_next = function (pType) {
+    currentThreads++;
+    websitesLeft--;
+    let websiteId = websitesToUpdate[currentWebsite++];
+    dashboard_update_site_status(websiteId, __('<i class="sync alternate loading icon"></i>'));
+    let data = mainwp_secure_data({
+        action: 'mainwp_upgradeplugintheme',
+        websiteId: websiteId,
+        type: pType
+    });
+    managesites_update_pluginsthemes_next_int(websiteId, data, 0);
+};
+
+
 jQuery(document).on('click', '#managesites-backup-ignore', function () {
     console.log(typeof managesitesContinueAfterBackup);
     if (managesitesContinueAfterBackup != undefined) {
@@ -244,7 +253,7 @@ jQuery(document).on('click', '#managesites-backup-ignore', function () {
 let managesitesShowBusyFunction;
 let managesitesShowBusyTimeout;
 
-mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
+let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
     if (mainwpParams['backup_before_upgrade'] == false) {
         if (managesitesContinueAfterBackup != undefined)
             managesitesContinueAfterBackup();
@@ -342,7 +351,7 @@ mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
     return false;
 };
 
-mainwp_get_primaryBackup_link = function (what) {
+let mainwp_get_primaryBackup_link = function (what) {
     let slug = '';
     switch (what) {
         case 'backupbuddy':
@@ -401,18 +410,15 @@ jQuery(document).on('click', '#managesites-backup-all', function () {
     managesites_backup_run();
 });
 
-let managesitesBackupSites;
-let managesitesBackupError;
-let managesitesBackupDownloadRunning;
 
-managesites_backup_run = function () {
+let managesites_backup_run = function () {
     mainwpPopup('#managesites-backup-box').getContentEl().html(dateToHMS(new Date()) + ' ' + __('Starting required backup(s)...'));
     jQuery('#managesites-backupnow-close').prop('value', __('Cancel'));
     jQuery('#managesites-backupnow-close').prop('cancel', '1');
     managesites_backup_run_next();
 };
 
-managesites_backup_run_next = function () {
+let managesites_backup_run_next = function () {
     let backupContentEl = mainwpPopup('#managesites-backup-box').getContentEl();
     if (managesitesBackupSites.length == 0) {
         appendToDiv(backupContentEl, __('Required backup(s) completed') + (managesitesBackupError ? ' <span class="mainwp-red">' + __('with errors') + '</span>' : '') + '.');
@@ -453,7 +459,7 @@ managesites_backup_run_next = function () {
     }(siteId, siteName), 'json');
 };
 
-managesites_backupnow_download_file = function (pSiteId, pSiteName, type, url, file, regexfile, size, subfolder) {
+let managesites_backupnow_download_file = function (pSiteId, pSiteName, type, url, file, regexfile, size, subfolder) {
     let backupContentEl = mainwpPopup('#managesites-backup-box').getContentEl();
     appendToDiv(backupContentEl, '[' + pSiteName + '] Downloading the file. <div id="managesites-backupnow-status-progress" siteId="' + pSiteId + '" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
     jQuery('#managesites-backupnow-status-progress[siteId="' + pSiteId + '"]').progress({ value: 0, total: size });
@@ -520,7 +526,7 @@ managesites_wordpress_global_upgrade_all = function (updateSiteIds, updateEveryt
         return jQuery(el).val();
     });
     allWebsiteIds = mainwp_update_get_selected_sitesids( updateSiteIds, allWebsiteIds);
-    
+
     let nrOfWebsites = allWebsiteIds.length;
 
     if (nrOfWebsites == 0)
@@ -563,7 +569,7 @@ managesites_wordpress_global_upgrade_all = function (updateSiteIds, updateEveryt
     return mainwp_managesites_checkBackups(allWebsiteIds, siteNames);
 };
 
-managesites_wordpress_upgrade_all_int = function (websiteIds) {
+let managesites_wordpress_upgrade_all_int = function (websiteIds) {
     websitesToUpgrade = websiteIds;
     currentWebsite = 0;
     websitesDone = 0;
@@ -571,12 +577,12 @@ managesites_wordpress_upgrade_all_int = function (websiteIds) {
 
     bulkManageSitesTaskRunning = true;
 };
-managesites_wordpress_upgrade_all_loop_next = function () {
+let managesites_wordpress_upgrade_all_loop_next = function () {
     while (bulkManageSitesTaskRunning && (currentThreads < maxThreads) && (websitesLeft > 0)) {
         managesites_wordpress_upgrade_all_upgrade_next();
     }
 };
-managesites_wordpress_upgrade_all_upgrade_next = function () {
+let managesites_wordpress_upgrade_all_upgrade_next = function () {
     currentThreads++;
     websitesLeft--;
 
@@ -585,7 +591,7 @@ managesites_wordpress_upgrade_all_upgrade_next = function () {
 
     managesites_wordpress_upgrade_int(websiteId);
 };
-managesites_wordpress_upgrade_all_update_done = function () {
+let managesites_wordpress_upgrade_all_update_done = function () {
     currentThreads--;
     if (!bulkManageSitesTaskRunning)
         return;
@@ -614,7 +620,7 @@ managesites_wordpress_upgrade_all_update_done = function () {
 
     managesites_wordpress_upgrade_all_loop_next();
 };
-managesites_wordpress_upgrade_int = function (websiteId) {
+let managesites_wordpress_upgrade_int = function (websiteId) {
     let data = mainwp_secure_data({
         action: 'mainwp_upgradewp',
         id: websiteId

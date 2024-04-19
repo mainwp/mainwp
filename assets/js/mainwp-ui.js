@@ -1,6 +1,9 @@
 
 /* eslint complexity: ["error", 100] */
 
+let executingUpdateCategories = false;
+let queueUpdateCategories = 0;
+
 function reload_init() {
     read_current_url();
     if (typeof wpOnload == 'function')
@@ -135,12 +138,12 @@ function stick_element_reset() {
     stick_element_init();
     scroll_element();
 }
-jQuery(function(){
+jQuery(function () {
     jQuery(window).trigger('scroll', scroll_element).trigger('resize', stick_element_reset);
     stick_element_init();
 });
 
-mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, updateType, multiple, extra) {    // updateType: 1 single update, 2 multi update
+window.mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, updateType, multiple, extra) {    // updateType: 1 single update, 2 multi update
     if (jQuery('#mainwp-disable-update-confirmations').length > 0) {
         let confVal = jQuery('#mainwp-disable-update-confirmations').val();
         if (typeof updateType !== 'undefined' && updateType !== false && (confVal == 2 || (confVal == 1 && updateType == 1))) {
@@ -198,7 +201,7 @@ mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, updateTy
 /**
  * Select sites
  */
-jQuery(function(){
+jQuery(function () {
     jQuery('.mainwp_selected_sites_item input:checkbox').on('change', function () {
         if (jQuery(this).is(':checked'))
             jQuery(this).parent().addClass('selected_sites_item_checked');
@@ -244,17 +247,17 @@ jQuery(function(){
 
 });
 
-mainwp_site_select = function () {
+let mainwp_site_select = function () {
     mainwp_newpost_updateCategories();
 };
-mainwp_group_select = function () {
+let mainwp_group_select = function () {
     mainwp_newpost_updateCategories();
 };
-mainwp_client_select = function () {
+let mainwp_client_select = function () {
     mainwp_newpost_updateCategories();
 };
 
-mainwp_ss_select = function (me, val) {
+let mainwp_ss_select = function (me, val) {
     let parent = jQuery(me).closest('.mainwp_select_sites_wrapper');
     let tab = parent.find('#select_sites_tab').val();
     if (tab == 'site') {
@@ -311,7 +314,7 @@ mainwp_ss_select = function (me, val) {
 };
 
 
-mainwp_ss_select_disconnected = function (me, val) {
+let mainwp_ss_select_disconnected = function (me, val) {
     let parent = jQuery(me).closest('.mainwp_select_sites_wrapper');
     let tab = parent.find('#select_sites_tab').val();
     if (tab == 'site') {
@@ -336,7 +339,7 @@ mainwp_ss_select_disconnected = function (me, val) {
     return false;
 };
 
-mainwp_sites_selection_onvisible_callback = function (me) {
+let mainwp_sites_selection_onvisible_callback = function (me) {
     let selected_tab = jQuery(me).attr('select-by');
     let select_by = 'site';
     let parent = jQuery(me).closest('.mainwp_select_sites_wrapper');
@@ -374,9 +377,7 @@ mainwp_sites_selection_onvisible_callback = function (me) {
 }
 
 
-let executingUpdateCategories = false;
-let queueUpdateCategories = 0;
-mainwp_newpost_updateCategories = function () {
+let mainwp_newpost_updateCategories = function () {
     if (executingUpdateCategories) {
         queueUpdateCategories++;
         return;
@@ -439,7 +440,7 @@ mainwp_newpost_updateCategories = function () {
         updateCategoriesPostFunc();
     }
 };
-updateCategoriesPostFunc = function () {
+let updateCategoriesPostFunc = function () {
     if (queueUpdateCategories > 0) {
         queueUpdateCategories--;
         executingUpdateCategories = false;
@@ -497,7 +498,7 @@ jQuery(document).on('keyup', '#mainwp-sites-menu-filter', function () {
 });
 
 // Accordion initialization on pre-existing markup
-jQuery(function(){
+jQuery(function () {
     if (jQuery('.mainwp-sidebar-accordion').length > 0) {
         jQuery('.mainwp-sidebar-accordion').accordion({
             "onOpening": function () {
@@ -515,14 +516,14 @@ jQuery(function(){
     }
 });
 
-mainwp_accordion_on_collapse = function (ident, val) {
+let mainwp_accordion_on_collapse = function (ident, val) {
     if (typeof (Storage) !== 'undefined') {
         if (typeof (pagenow) !== 'undefined') {
             localStorage.setItem('mainwp-accordion[' + pagenow + '][' + ident + ']', val);
         }
     }
 };
-mainwp_accordion_init_collapse = function () {
+let mainwp_accordion_init_collapse = function () {
     jQuery('.mainwp-sidebar-accordion .title').addClass('active');
     jQuery('.mainwp-sidebar-accordion .content').addClass('active');
 
@@ -538,13 +539,13 @@ mainwp_accordion_init_collapse = function () {
     });
 };
 
-mainwp_ui_state_save = function (ident, val) {
+window.mainwp_ui_state_save = function (ident, val) {
     if (typeof (Storage) !== 'undefined') {
         localStorage.setItem('mainwp-dashboard[' + ident + ']', val);
     }
 };
 
-mainwp_ui_state_load = function (ident) {
+window.mainwp_ui_state_load = function (ident) {
     if (typeof (Storage) !== 'undefined') {
         return localStorage.getItem('mainwp-dashboard[' + ident + ']');
     }
@@ -577,7 +578,7 @@ jQuery(document).on('keyup', '#mainwp-screenshots-sites-filter', function () {
     }
 });
 
-mainwp_get_icon_start = function () {
+window.mainwp_get_icon_start = function () {
     jQuery('.cached-icon-expired').attr('queue', 1);
     bulkInstallTotal = jQuery('.cached-icon-expired[queue="1"]').length;
     console.log(bulkInstallTotal + ': expired cached icons');
@@ -587,7 +588,7 @@ mainwp_get_icon_start = function () {
     mainwp_get_icon_start_next();
 }
 
-mainwp_get_icon_start_next = function () {
+let mainwp_get_icon_start_next = function () {
     itemIconProcess = jQuery('.cached-icon-expired[queue="1"]:first');
     if (itemIconProcess.length > 0) {
         mainwp_get_icon_start_specific(itemIconProcess);
@@ -596,7 +597,7 @@ mainwp_get_icon_start_next = function () {
     }
 };
 
-mainwp_get_icon_start_specific = function (itemIconProcess) {
+let mainwp_get_icon_start_specific = function (itemIconProcess) {
     itemIconProcess.attr('queue', '0');
     let type = itemIconProcess.attr('icon-type');
     if (type == 'plugin' || type == 'theme') {
@@ -620,7 +621,7 @@ mainwp_get_icon_start_specific = function (itemIconProcess) {
     });
 }
 
-jQuery(function(){
+jQuery(function () {
     jQuery(document).on('click', '.cached-icon-customable', function () {
         let iconObj = jQuery(this);
         jQuery('#mainwp_delete_image_field').hide();
@@ -652,7 +653,7 @@ jQuery(function(){
 });
 
 
-mainwp_upload_custom_icon = function (iconObj) {
+let mainwp_upload_custom_icon = function (iconObj) {
 
     let type = iconObj.attr('icon-type');
 
@@ -721,7 +722,7 @@ mainwp_upload_custom_icon = function (iconObj) {
 
 };
 
-mainwp_upload_custom_types_icon = function (iconObj, uploadAct, iconItemId, iconFileSlug, deleteIcon, callback_uploaded) {
+let mainwp_upload_custom_types_icon = function (iconObj, uploadAct, iconItemId, iconFileSlug, deleteIcon, callback_uploaded) {
     jQuery('#mainwp-message-zone-upload').removeClass('red green yellow');
     let msg = __('Updating the icon. Please wait...');
 
@@ -765,7 +766,7 @@ mainwp_upload_custom_types_icon = function (iconObj, uploadAct, iconItemId, icon
 
 };
 
-mainwp_guidedtours_onchange = function (me) {
+let mainwp_guidedtours_onchange = function (me) {
     let data = mainwp_secure_data({
         action: 'mainwp_guided_tours_option_update',
         enable: jQuery(me).is(":checked") ? 1 : 0,
@@ -774,3 +775,44 @@ mainwp_guidedtours_onchange = function (me) {
         window.location.href = location.href;
     });
 }
+
+
+jQuery(function ($) {
+    if (!window.mainwpSegmentModalUiHandle) {
+        mainwpSegmentModalUiHandle = (function () {
+            let _instance = {
+                loadingStatus: function () {
+                    $('#mainwp-common-filter-edit-segment-status').html('<i class="notched circle loading icon"></i> ' + __('Loading segments. Please wait...')).show();
+                },
+                savingStatus: function () {
+                    $('#mainwp-common-filter-edit-segment-status').html('<i class="notched circle loading icon"></i> ' + __('Saving segment. Please wait...')).show();
+                },
+                deletingStatus: function () {
+                    $('#mainwp-common-filter-edit-segment-status').html('<i class="notched circle loading icon"></i> ' + __('Deleting segment. Please wait...')).show();
+
+                },
+                showSegment: function(){
+                    jQuery( '#mainwp-common-filter-segment-modal > div.header' ).html(__('Save Segment'));
+                    jQuery( '#mainwp-common-filter-segment-edit-fields' ).show();
+                    jQuery( '#mainwp-common-filter-edit-segment-save' ).show();
+                    jQuery( '#mainwp-common-filter-segment-select-fields' ).hide();
+                    jQuery( '#mainwp-common-filter-select-segment-choose-button' ).hide();
+                    jQuery( '#mainwp-common-filter-select-segment-delete-button' ).hide();
+                    jQuery('#mainwp-common-filter-edit-segment-name').val(jQuery(this).attr('selected-segment-name'));
+                    mainwp_common_filter_show_segments_modal();
+                },
+                loadSegment: function( loadCallback ){
+                    jQuery( '#mainwp-common-filter-segment-edit-fields' ).hide();
+                    jQuery( '#mainwp-common-filter-edit-segment-save' ).hide();
+                    jQuery( '#mainwp-common-filter-segment-modal > div.header' ).html(__('Load a Segment'));
+                    jQuery( '#mainwp-common-filter-segment-select-fields' ).show();
+                    jQuery( '#mainwp-common-filter-select-segment-choose-button' ).show();
+                    jQuery( '#mainwp-common-filter-select-segment-delete-button' ).show();
+                    mainwp_common_filter_show_segments_modal( loadCallback );
+                }
+            }
+            return _instance;
+        })();
+    }
+});
+

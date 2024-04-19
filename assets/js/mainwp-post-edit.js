@@ -8,7 +8,7 @@
 // Make sure the wp object exists.
 window.wp = window.wp || {};
 
-mainwp_post_newmeta_submit = function (action, me) {
+let mainwp_post_newmeta_submit = function (action, me) {
 
 	if (action != 'add' && action != 'delete' && action != 'update')
 		return false;

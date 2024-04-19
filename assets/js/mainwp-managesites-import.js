@@ -3,11 +3,11 @@
  * Bulk upload sites
  */
 
-var import_current = 0;
-var import_stop_by_user = false;
-var import_total = 0;
-var import_count_success = 0;
-var import_count_fails = 0;
+let import_current = 0;
+let import_stop_by_user = false;
+let import_total = 0;
+let import_count_success = 0;
+let import_count_fails = 0;
 
 jQuery(function(){
     import_total = jQuery('#mainwp_managesites_total_import').val();

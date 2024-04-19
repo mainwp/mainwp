@@ -2359,7 +2359,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $table_features = apply_filters( 'mainwp_theme_auto_updates_table_fatures', $table_features );
         ?>
         <script type="text/javascript">
-        var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
+        let responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
             if( jQuery( window ).width() > 1140 ) {
                 responsive = false;
             }

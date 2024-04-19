@@ -286,9 +286,9 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
         <script type="text/javascript">
             jQuery( document ).ready( function () {
                 mainwp_manage_clients_filter = function() {
-                    var group = jQuery( "#mainwp-filter-clients-group" ).dropdown( "get value" );
-                    var isNot = jQuery( "#mainwp-is-not-client" ).dropdown( "get value" );
-                    var params = '';
+                    let group = jQuery( "#mainwp-filter-clients-group" ).dropdown( "get value" );
+                    let isNot = jQuery( "#mainwp-is-not-client" ).dropdown( "get value" );
+                    let params = '';
                         params += '&tags=' + group;
 
                     window.location = 'admin.php?page=ManageClients' + params;
@@ -440,8 +440,8 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                     jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( {
                         allowMultiple: true,
                         onHide: function () {
-                            var val = jQuery( '#mainwp_default_manage_clients_per_page' ).val();
-                            var saved = jQuery( '#mainwp_default_manage_clients_per_page' ).attr( 'saved-value' );
+                            let val = jQuery( '#mainwp_default_manage_clients_per_page' ).val();
+                            let saved = jQuery( '#mainwp_default_manage_clients_per_page' ).attr( 'saved-value' );
                             if ( saved != val ) {
                                 jQuery( '#mainwp-manage-clients-table' ).DataTable().page.len( val );
                                 jQuery( '#mainwp-manage-clients-table' ).DataTable().state.save();
@@ -458,7 +458,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                     return false;
                 };
 
-                var responsive = <?php echo esc_js( $table_features['responsive'] ); ?>;
+                let responsive = <?php echo esc_js( $table_features['responsive'] ); ?>;
                 if( jQuery( window ).width() > 1140 ) {
                     responsive = false;
                 }
@@ -521,7 +521,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 mainwp_datatable_fix_menu_overflow();
                 _init_manage_sites_screen = function() {
                     jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
-                        var col_id = jQuery( this ).attr( 'id' );
+                        let col_id = jQuery( this ).attr( 'id' );
                         col_id = col_id.replace( "mainwp_show_column_", "" );
                         try {   
                             $manage_sites_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
@@ -555,26 +555,26 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
         $def_columns                   = $this->get_default_columns();
         $def_columns['client_actions'] = '';
 
-        foreach ( $columns as $column_key => $column_display_name ) {
+        foreach ( $columns as $column_client_key => $column_display_name ) {
 
-            $class = array( 'manage-' . $column_key . '-column' );
+            $class = array( 'manage-' . $column_client_key . '-column' );
             $attr  = '';
-            if ( ! isset( $def_columns[ $column_key ] ) ) {
+            if ( ! isset( $def_columns[ $column_client_key ] ) ) {
                 $class[] = 'extra-column';
 
             }
 
-            if ( 'cb' === $column_key ) {
+            if ( 'cb' === $column_client_key ) {
                 $class[] = 'check-column';
                 $class[] = 'collapsing';
             }
 
-            if ( ! isset( $sortable[ $column_key ] ) ) {
+            if ( ! isset( $sortable[ $column_client_key ] ) ) {
                 $class[] = 'no-sort';
             }
 
             $tag = 'th';
-            $id  = "id='$column_key'";
+            $id  = "id='$column_client_key'";
 
             if ( ! empty( $class ) ) {
                 $class = "class='" . join( ' ', $class ) . "'";

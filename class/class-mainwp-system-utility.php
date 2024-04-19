@@ -357,7 +357,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $sig   = rawurldecode( $sig );
         $value = json_decode( $sig, true );
 
-        if ( ! is_array( $value ) || empty( $value['key_value'] ) || empty( $value['sig'] ) || md5( filesize( $file ) ) !== $value['sig'] ) {
+        if ( ! is_array( $value ) || empty( $value['key_value'] ) || empty( $value['sig'] ) || md5( filesize( $file ) ) !== $value['sig'] ) { // NOSONAR - it's safe for size matching, file in uploads folder.
             return false;
         }
 

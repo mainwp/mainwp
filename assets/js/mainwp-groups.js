@@ -169,7 +169,7 @@ jQuery(function () {
   });
 
   // Load group sites
-  var show_group_items = function (group) {
+  let show_group_items = function (group) {
     let groupID = jQuery(group).attr('id');
     let data = mainwp_secure_data({
       action: 'mainwp_group_getsites',
@@ -185,9 +185,9 @@ jQuery(function () {
       jQuery('input.mainwp-site-checkbox').prop('checked', false);
       jQuery('input.mainwp-site-checkbox').closest('tr').removeClass('active');
       let sites = JSON.parse(response);
-      for (let i = 0; i < sites.length; i++) {
-        jQuery('input[value="' + sites[i] + '"].mainwp-site-checkbox').prop('checked', true);
-        jQuery('input[value="' + sites[i] + '"].mainwp-site-checkbox').closest('tr').addClass('active');
+      for (let id of sites) {
+        jQuery('input[value="' + id + '"].mainwp-site-checkbox').prop('checked', true);
+        jQuery('input[value="' + id + '"].mainwp-site-checkbox').closest('tr').addClass('active');
       }
     });
     return false;

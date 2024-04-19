@@ -2,10 +2,10 @@
 /**
  * Backup
  */
-var backupDownloadRunning = false;
-var backupError = false;
-var backupContinueRetries = 0;
-var backupContinueRetriesUnique = [];
+let backupDownloadRunning = false;
+let backupError = false;
+let backupContinueRetries = 0;
+let backupContinueRetriesUnique = [];
 
 jQuery(function () {
     jQuery('#backup_btnSubmit').on('click', function () {
@@ -356,7 +356,7 @@ backup_download_file = function (pSiteId, type, url, file, regexfile, size, subf
     });
 };
 
-var backupUploadRunning = [];
+let backupUploadRunning = [];
 backup_upload_file = function (pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pType, pSize) {
     let backsprocessContentEl = mainwpPopup('#managesite-backup-status-box').getContentEl();
     if (pRemoteDestinations.length > 0) {
@@ -613,11 +613,11 @@ managebackups_exclude_folder = function (pElement) {
     jQuery('#excluded_folders_list').val(jQuery('#excluded_folders_list').val() + folder);
 };
 
-var manageBackupsError = false;
-var manageBackupsTaskRemoteDestinations;
-var manageBackupsTaskId;
-var manageBackupsTaskType;
-var manageBackupsTaskError;
+let manageBackupsError = false;
+let manageBackupsTaskRemoteDestinations;
+let manageBackupsTaskId;
+let manageBackupsTaskType;
+let manageBackupsTaskError;
 managebackups_run_now = function (el) {
     el = jQuery(el);
     el.hide();
@@ -1290,8 +1290,8 @@ jQuery(document).on('click', '#updatesoverview-backup-ignore', function () {
     }
 });
 
-var updatesoverviewShowBusyFunction;
-var updatesoverviewShowBusyTimeout;
+let updatesoverviewShowBusyFunction;
+let updatesoverviewShowBusyTimeout;
 mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNamesx) {
     if (mainwpParams['disable_checkBackupBeforeUpgrade'] == true) {
         if (updatesoverviewContinueAfterBackup != undefined) {
@@ -1362,12 +1362,12 @@ mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNamesx) {
                     let output = '<span class="mainwp-red">' + __('A full backup has not been taken in the last days for the following sites:') + '</span><br /><br />';
 
                     if (backupPrimary == '') { // default backup feature
-                        for (let j = 0; j < siteFeedback.length; j++) {
-                            output += '<span class="updatesoverview-backup-site" siteid="' + siteFeedback[j] + '">' + decodeURIComponent(pSiteNames[siteFeedback[j]]) + '</span><br />';
+                        for (let id of siteFeedback ) {
+                            output += '<span class="updatesoverview-backup-site" siteid="' + id + '">' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
                         }
                     } else {
-                        for (let j = 0; j < siteFeedback.length; j++) {
-                            output += '<span>' + decodeURIComponent(pSiteNames[siteFeedback[j]]) + '</span><br />';
+                        for (let id of siteFeedback ) {
+                            output += '<span>' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
                         }
                     }
 
@@ -1425,18 +1425,18 @@ jQuery(document).on('click', '#updatesoverview-backup-all', function () {
 
     let sitesToBackup = jQuery('.updatesoverview-backup-site');
     updatesoverviewBackupSites = [];
-    for (let i = 0; i < sitesToBackup.length; i++) {
+    for (let id of sitesToBackup) {
         let currentSite = [];
-        currentSite['id'] = jQuery(sitesToBackup[i]).attr('siteid');
-        currentSite['name'] = jQuery(sitesToBackup[i]).text();
+        currentSite['id'] = jQuery(id).attr('siteid');
+        currentSite['name'] = jQuery(id).text();
         updatesoverviewBackupSites.push(currentSite);
     }
     updatesoverview_backup_run();
 });
 
-var updatesoverviewBackupSites;
-var updatesoverviewBackupError;
-var updatesoverviewBackupDownloadRunning;
+let updatesoverviewBackupSites;
+let updatesoverviewBackupError;
+let updatesoverviewBackupDownloadRunning;
 
 updatesoverview_backup_run = function () {
     mainwpPopup('#updatesoverview-backup-box').getContentEl().html(dateToHMS(new Date()) + ' ' + __('Starting required backup(s)...'));

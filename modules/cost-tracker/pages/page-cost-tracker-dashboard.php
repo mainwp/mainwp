@@ -548,7 +548,7 @@ class Cost_Tracker_Dashboard {
 
         ?>
         <script type="text/javascript">
-            var responsive = <?php echo esc_js( $table_features['responsive'] ); ?>;
+            let responsive = <?php echo esc_js( $table_features['responsive'] ); ?>;
             if( jQuery( window ).width() > 1140 ) {
                 responsive = false;
             }
@@ -573,7 +573,7 @@ class Cost_Tracker_Dashboard {
                         $subscription_sites_table = jQuery( '#mainwp-module-cost-tracker-sites-table' ).on( 'processing.dt', function ( e, settings, processing ) {
                             jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
                             if (!processing) {
-                                var tb = jQuery( '#mainwp-module-cost-tracker-sites-table' );
+                                let tb = jQuery( '#mainwp-module-cost-tracker-sites-table' );
                                 $( '#mainwp-module-cost-tracker-sites-table .ui.dropdown' ).dropdown();
                                 $( '#mainwp-module-cost-tracker-sites-table .ui.checkbox' ).checkbox();
                             }
@@ -582,7 +582,7 @@ class Cost_Tracker_Dashboard {
                                 "url": ajaxurl,
                                 "type": "POST",
                                 "data":  function ( d ) {
-                                    var data = mainwp_secure_data( {
+                                    let data = mainwp_secure_data( {
                                         action: 'mainwp_module_cost_tracker_lists_display_rows',
                                         sites: $( '#mainwp-module-cost-tracker-costs-filter-sites').dropdown('get value'),
                                         prods_types: $( '#mainwp-module-cost-tracker-costs-filter-cats').dropdown('get value'),
@@ -598,7 +598,7 @@ class Cost_Tracker_Dashboard {
                                     return $.extend( {}, d, data );
                                 },
                                 "dataSrc": function ( json ) {
-                                    for ( var i=0, ien=json.data.length ; i < ien ; i++ ) {
+                                    for ( let i=0, ien=json.data.length ; i < ien ; i++ ) {
                                         json.data[i].rowClass = json.rowsInfo[i].rowClass;
                                         json.data[i].cost_id = json.rowsInfo[i].cost_id;
                                     }
@@ -670,7 +670,7 @@ class Cost_Tracker_Dashboard {
 
             mainwp_module_cost_tracker_manage_costs_filter = function() {
                 try {
-                    var emptyFilter =  ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-sites').dropdown('get value') ) && 
+                    let emptyFilter =  ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-sites').dropdown('get value') ) && 
                     ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-cats').dropdown('get value') ) &&
                     ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-status').dropdown('get value') ) &&
                     ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-license-types').dropdown('get value') ) &&
@@ -717,7 +717,7 @@ class Cost_Tracker_Dashboard {
 
             _init_cost_tracker_sites_screen = function() {
                 jQuery( '#mainwp-module-cost-tracker-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
-                    var check_id = jQuery( this ).attr( 'id' );
+                    let check_id = jQuery( this ).attr( 'id' );
                     col_id = check_id.replace( "mainwp_show_column_", "" );
                     try {
                         $subscription_sites_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
@@ -1491,7 +1491,7 @@ class Cost_Tracker_Dashboard {
 
                 mainwp_module_cost_tracker_load_segments = function () {
                     jQuery('#mainwp-cost-tracker-segment-select-fields').hide();
-                    var data = mainwp_secure_data({
+                    let data = mainwp_secure_data({
                         action: 'mainwp_module_cost_tracker_filter_load_segments',
                     });
                     jQuery('#mainwp-cost-tracker-edit-segment-status').html('<i class="notched circle loading icon"></i> ' + __('Loading segments. Please wait...')).show();
@@ -1513,14 +1513,14 @@ class Cost_Tracker_Dashboard {
 
                     mainwp_module_cost_tracker_hide_segments_message();
 
-                    var seg_name = jQuery('#mainwp-cost-tracker-edit-segment-name').val().trim();
+                    let seg_name = jQuery('#mainwp-cost-tracker-edit-segment-name').val().trim();
                     
                     if('' == seg_name){
                         jQuery('#mainwp-cost-tracker-edit-segment-status').html(__('Please enter segment name.')).addClass('red').show();
                         return false;
                     }
 
-                    var data = mainwp_secure_data({
+                    let data = mainwp_secure_data({
                         action: 'mainwp_module_cost_tracker_filter_save_segment',
                         name: seg_name,
                         seg_sites: $( '#mainwp-module-cost-tracker-costs-filter-sites').dropdown('get value'),
@@ -1558,16 +1558,16 @@ class Cost_Tracker_Dashboard {
 
                 jQuery('#mainwp-cost-tracker-select-segment-choose-button').on( 'click', function () {
                     mainwp_module_cost_tracker_hide_segments_message();
-                    var seg_id = jQuery( '#mainwp-cost-tracker-segment-select-fields .ui.dropdown').dropdown('get value');
-                    var seg_values = '';
+                    let seg_id = jQuery( '#mainwp-cost-tracker-segment-select-fields .ui.dropdown').dropdown('get value');
+                    let seg_values = '';
                     if('' != seg_id ) {
                         seg_values = jQuery( '#mainwp-cost-tracker-segment-select-fields select > option[value="' +seg_id+ '"]').attr('segment-filters');
                     }
                     
-                    var valErr = true;
-                    var arrVal = '';
+                    let valErr = true;
+                    let arrVal = '';
 
-                    var fieldsAllows = [                        
+                    let fieldsAllows = [                        
                         'seg_sites',
                         'seg_clients',
                         'seg_prods_types',
@@ -1616,8 +1616,8 @@ class Cost_Tracker_Dashboard {
 
                 jQuery('#mainwp-cost-tracker-select-segment-delete-button').on( 'click', function () {
                     mainwp_module_cost_tracker_hide_segments_message();
-                    var delBtn = this;
-                    var seg_id = jQuery( '#mainwp-cost-tracker-segment-select-fields .ui.dropdown').dropdown('get value');
+                    let delBtn = this;
+                    let seg_id = jQuery( '#mainwp-cost-tracker-segment-select-fields .ui.dropdown').dropdown('get value');
                     if('' == seg_id){
                         return false;
                     }
@@ -1627,7 +1627,7 @@ class Cost_Tracker_Dashboard {
                     }
 
                     jQuery(seg_id).attr('running', 'yes');
-                    var data = mainwp_secure_data({
+                    let data = mainwp_secure_data({
                         action: 'mainwp_module_cost_tracker_filter_delete_segment',
                         seg_id: seg_id,
                     });
@@ -1831,7 +1831,7 @@ class Cost_Tracker_Dashboard {
                     mainwp_confirm(__( 'Are you sure.' ), function(){
                         jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
                         //default columns
-                        var cols = ['name','type','product_type','price','cost_status','license_type','last_renewal','next_renewal','payment_method','sites','actions'];
+                        let cols = ['name','type','product_type','price','cost_status','license_type','last_renewal','next_renewal','payment_method','sites','actions'];
                         jQuery.each( cols, function ( index, value ) {
                             jQuery('.mainwp_hide_wpmenu_checkboxes input[id="mainwp_show_column_' + value + '"]').prop( 'checked', true );
                         } );

@@ -633,7 +633,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     $content = MainWP_Connect::get_file_content( $information['faviIconUrl'] );
                     if ( ! empty( $content ) ) {
 
-                        $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+                        MainWP_System_Utility::get_wp_file_system();
 
                         /**
                          * WordPress files system object.

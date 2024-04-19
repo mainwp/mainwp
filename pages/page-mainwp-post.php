@@ -984,7 +984,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         if ( $cached ) {
             ?>
             <script type="text/javascript">
-            var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
+            let responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
             if( jQuery( window ).width() > 1140 ) {
                 responsive = false;
             }
@@ -1047,7 +1047,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
                 _init_manage_sites_screen = function() {
                     jQuery( '#mainwp-overview-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
-                        var col_id = jQuery( this ).attr( 'id' );
+                        let col_id = jQuery( this ).attr( 'id' );
                         col_id = col_id.replace( "mainwp_show_column_", "" );
                         try {   
                             $manage_posts_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );

@@ -1825,11 +1825,11 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             <script type="text/javascript">
                                 jQuery( document ).ready(function () {
                                     jQuery( '#mainwp-search-plugins-form-field' ).on( 'keypress', function(e) {
-                                        var search = jQuery( '#mainwp-search-plugins-form-field' ).val();
-                                        var sel_ids = jQuery( '#plugin_install_selected_sites' ).val();                                     
+                                        let search = jQuery( '#mainwp-search-plugins-form-field' ).val();
+                                        let sel_ids = jQuery( '#plugin_install_selected_sites' ).val();                                     
                                         if ( '' != sel_ids )
                                             sel_ids = '&selected_sites=' + sel_ids;
-                                        var origin   = '<?php echo esc_url( get_admin_url() ); ?>';
+                                        let origin   = '<?php echo esc_url( get_admin_url() ); ?>';
                                         if ( 13 === e.which ) {
                                             location.href = origin + 'admin.php?page=PluginsInstall&tab=search&s=' + encodeURIComponent(search) + sel_ids;
                                         }
@@ -2397,7 +2397,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $table_features = apply_filters( 'mainwp_plugin_auto_updates_table_fatures', $table_features );
         ?>
         <script type="text/javascript">
-        var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
+        let responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
             if( jQuery( window ).width() > 1140 ) {
                 responsive = false;
             }

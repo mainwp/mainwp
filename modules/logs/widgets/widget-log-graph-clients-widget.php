@@ -116,7 +116,7 @@ class Log_Graph_Clients_Widget {
         <div id="mainwp-module-log-chart-clients-wrapper" ></div>
         <script type="text/javascript">
             jQuery( document ).ready( function() {
-                var options = {
+                let options = {
                     chart: { 
                         type: 'bar',
                     },
@@ -150,7 +150,7 @@ class Log_Graph_Clients_Widget {
                         ]
                     } ],
                 }
-                var clients = new ApexCharts(document.querySelector("#mainwp-module-log-chart-clients-wrapper"), options);
+                let clients = new ApexCharts(document.querySelector("#mainwp-module-log-chart-clients-wrapper"), options);
                 setTimeout(() => {
                     clients.render();
                 }, 1000);

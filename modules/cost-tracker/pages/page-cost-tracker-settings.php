@@ -338,14 +338,14 @@ class Cost_Tracker_Settings {
                     jQuery( document ).ready( function() {
                         jQuery( '.mainwp-module-cost-tracker-select-default-icons' ).dropdown( {                            
                             onChange: function( val ) {
-                                var parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
+                                let parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
                                 jQuery(parent).find('input[name="cost_tracker_default_product_types[icon][]"]' ).val('deficon:' + val);
                             }
                         } );
 
                         jQuery( '.mainwp-module-cost-tracker-select-custom-product-types-icons' ).dropdown( {                           
                             onChange: function( val ) {
-                                var parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
+                                let parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
                                 jQuery(parent).find('input[name="cost_tracker_custom_product_types[icon][]"]' ).val('deficon:' + val);
                             }
                         } );

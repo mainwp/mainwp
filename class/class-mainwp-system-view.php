@@ -341,8 +341,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             jQuery( document ).ready( function() {
                 jQuery( '#mainwp-v5-update-notice-modal' ).modal({
                     onHidden: function () {
-                        var notice_id = jQuery( '#mainwp-v5-update-notice-modal' ).find('.mainwp-notice-dismiss').attr('notice-id');
-                        var data = {
+                        let notice_id = jQuery( '#mainwp-v5-update-notice-modal' ).find('.mainwp-notice-dismiss').attr('notice-id');
+                        let data = {
                             action: 'mainwp_notice_status_update'
                         };
                         data['notice_id'] = notice_id;
@@ -383,8 +383,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             jQuery( document ).ready( function() {
                 jQuery( '#mainwp-v502-update-notice-modal' ).modal({
                     onHidden: function () {
-                        var notice_id = jQuery( '#mainwp-v502-update-notice-modal' ).find('.mainwp-notice-dismiss').attr('notice-id');
-                        var data = {
+                        let notice_id = jQuery( '#mainwp-v502-update-notice-modal' ).find('.mainwp-notice-dismiss').attr('notice-id');
+                        let data = {
                             action: 'mainwp_notice_status_update'
                         };
                         data['notice_id'] = notice_id;
@@ -795,9 +795,9 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 } );
 
                 function mainwp_open_hide_referrer( url ) {
-                    var ran = Math.floor( Math.random() * 100 ) + 1;
-                    var site = window.open( "", "mainwp_hide_referrer_" + ran );
-                    var meta = site.document.createElement( 'meta' );
+                    let ran = Math.floor( Math.random() * 100 ) + 1;
+                    let site = window.open( "", "mainwp_hide_referrer_" + ran );
+                    let meta = site.document.createElement( 'meta' );
                     meta.name = "referrer";
                     meta.content = "no-referrer";
                     site.document.getElementsByTagName( 'head' )[0].appendChild( meta );
@@ -874,7 +874,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
     /** Render Admin Header */
     public static function admin_head() {
         ?>
-        <script type="text/javascript">var mainwp_ajax_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_ajax' ) ); ?>", mainwp_js_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_nonce' ) ); ?>";</script>
+        <script type="text/javascript">let mainwp_ajax_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_ajax' ) ); ?>", mainwp_js_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_nonce' ) ); ?>";</script>
         <?php
         if ( MainWP_System::is_mainwp_pages() || ( isset( $_GET['page'] ) && 'mainwp-setup' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             if ( get_option( 'mainwp_enable_guided_tours', 0 ) ) {
@@ -890,8 +890,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         echo "
 		<script>
 	(function (w, d, s) {
-		var a = d.getElementsByTagName('head')[0];
-		var r = d.createElement('script');
+		let a = d.getElementsByTagName('head')[0];
+		let r = d.createElement('script');
 		r.async = 1;
 		r.src = s;
 		r.setAttribute('id', 'usetifulScript');
@@ -1271,7 +1271,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     allowMultiple: false,
                     closable: false,
                     onHide: function () {
-                        var noti_id = jQuery('#mainwp-install-check-modal').attr('noti-slug');
+                        let noti_id = jQuery('#mainwp-install-check-modal').attr('noti-slug');
                         mainwp_notice_dismiss(noti_id, 1);
                         setTimeout(function () {
                             window.location.href = location.href;

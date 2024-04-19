@@ -996,8 +996,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         if(jQuery('body').hasClass('toplevel_page_mainwp_tab')){
                             return; // hide always.
                         }
-                        var lbar = jQuery( '#mainwp-collapse-second-level-navigation' );
-                        var show = ( 0 != mainwp_ui_state_load( 'showmenu' ) ) ? true : false;
+                        let lbar = jQuery( '#mainwp-collapse-second-level-navigation' );
+                        let show = ( 0 != mainwp_ui_state_load( 'showmenu' ) ) ? true : false;
                         mainwp_left_bar_showhide( lbar, show);
                     }
                     mainwp_left_bar_showhide = function( lbar, show ){
@@ -1026,7 +1026,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     }
 
                     jQuery( '#mainwp-collapse-second-level-navigation' ).on( 'click', function() {
-                        var show = jQuery( this ).hasClass( 'collapsed' ) ? true : false;
+                        let show = jQuery( this ).hasClass( 'collapsed' ) ? true : false;
                         mainwp_left_bar_showhide( this, show);
                         return false;
                     } );
@@ -1034,9 +1034,9 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
                     // click on menu with-sub icon.
                     jQuery( '#mainwp-main-navigation-container #mainwp-main-menu a.title.with-sub .icon' ).on( "click", function ( event ) {
-                        var pr = jQuery( this ).closest( '.item' );
-                        var title = jQuery( this ).closest( '.title' );
-                        var active = jQuery( title ).hasClass( 'active' );
+                        let pr = jQuery( this ).closest( '.item' );
+                        let title = jQuery( this ).closest( '.title' );
+                        let active = jQuery( title ).hasClass( 'active' );
 
                         // remove current active.
                         mainwp_menu_collapse();
@@ -1051,8 +1051,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     } );
 
                     jQuery( '#mainwp-main-navigation-container #mainwp-main-menu a.title.with-sub' ).on( "click", function ( event ) {
-                        var pr = jQuery( this ).closest( '.item' );
-                        var active = jQuery( this ).hasClass( 'active' );
+                        let pr = jQuery( this ).closest( '.item' );
+                        let active = jQuery( this ).hasClass( 'active' );
 
                         // remove current active.
                         mainwp_menu_collapse();

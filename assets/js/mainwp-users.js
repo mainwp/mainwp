@@ -1,8 +1,8 @@
 /**
  * MainWP_User.page
  */
-var userCountSent = 0;
-var userCountReceived = 0;
+let userCountSent = 0;
+let userCountReceived = 0;
 jQuery(function(){
 
     // Fetch users
@@ -339,11 +339,11 @@ mainwp_fetch_users = function () {
 /**
  * Bulk upload new user
  */
-var import_user_stop_by_user = false;
-var import_user_current_line_number = 0;
-var import_user_total_import = 0;
-var import_user_count_created_users = 0;
-var import_user_count_create_fails = 0;
+let import_user_stop_by_user = false;
+let import_user_current_line_number = 0;
+let import_user_total_import = 0;
+let import_user_count_created_users = 0;
+let import_user_count_create_fails = 0;
 
 jQuery(function(){
     import_user_total_import = jQuery('#import_user_total_import').val();
@@ -519,15 +519,15 @@ mainwp_import_users_response = function (response_data) {
     let okList = response_data.ok_list;
     let errorList = response_data.error_list;
     if (okList != undefined)
-        for (let i = 0; i < okList.length; i++) {
+        for (let iok of okList) {
             import_user_count_created_users++;
-            jQuery('#import_user_import_logging .log').append('[' + line_num + ']>> ' + okList[i] + '\n');
+            jQuery('#import_user_import_logging .log').append('[' + line_num + ']>> ' + iok + '\n');
         }
 
     if (errorList != undefined)
-        for (let i = 0; i < errorList.length; i++) {
+        for (let ie of errorList) {
             import_user_count_create_fails++;
-            jQuery('#import_user_import_logging .log').append('[' + line_num + ']>> ' + errorList[i] + '\n');
+            jQuery('#import_user_import_logging .log').append('[' + line_num + ']>> ' + ie + '\n');
         }
 
     if (response_data.failed_logging != '' && response_data.failed_logging != undefined) {

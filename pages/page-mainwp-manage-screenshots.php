@@ -150,11 +150,11 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
         </div>
         <script type="text/javascript">
                 mainwp_screenshots_sites_filter = function() {
-                    var group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
-                    var status = jQuery( "#mainwp-filter-sites-status" ).dropdown( "get value" );
-                    var isNot = jQuery("#mainwp_is_not_site").dropdown("get value");
-                    var client = jQuery("#mainwp-filter-clients").dropdown("get value");
-                    var params = '';                        
+                    let group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
+                    let status = jQuery( "#mainwp-filter-sites-status" ).dropdown( "get value" );
+                    let isNot = jQuery("#mainwp_is_not_site").dropdown("get value");
+                    let client = jQuery("#mainwp-filter-clients").dropdown("get value");
+                    let params = '';                        
                     params += '&g=' + group;                        
                     params += '&client=' + client;                      
                     if ( status != '' ) {
@@ -174,12 +174,12 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 };  
 
                 jQuery( document ).on( 'keyup', '#mainwp-screenshots-sites-filter', function () {
-                    var filter = jQuery(this).val().toLowerCase();
-                    var siteItems =  jQuery('#mainwp-sites-previews').find( '.card' );
-                    for ( var i = 0; i < siteItems.length; i++ ) {
-                        var currentElement = jQuery( siteItems[i] );
-                        var valueurl = jQuery(currentElement).attr('site-url').toLowerCase();
-                        var valuename = currentElement.find('.ui.header').text().toLowerCase();
+                    let filter = jQuery(this).val().toLowerCase();
+                    let siteItems =  jQuery('#mainwp-sites-previews').find( '.card' );
+                    for ( let i = 0; i < siteItems.length; i++ ) {
+                        let currentElement = jQuery( siteItems[i] );
+                        let valueurl = jQuery(currentElement).attr('site-url').toLowerCase();
+                        let valuename = currentElement.find('.ui.header').text().toLowerCase();
                         if ( valueurl.indexOf( filter ) > -1 || valuename.indexOf( filter ) > -1 ) {
                             currentElement.show();
                         } else {

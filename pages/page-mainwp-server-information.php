@@ -550,7 +550,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         </div>
 
         <script type="text/javascript">
-        var responsive = true;
+        let responsive = true;
         if( jQuery( window ).width() > 1140 ) {
             responsive = false;
         }
@@ -1110,7 +1110,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $table_features = apply_filters( 'mainwp_cron_jobs_table_features', $table_features );
         ?>
         <script type="text/javascript">
-        var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
+        let responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
         if( jQuery( window ).width() > 1140 ) {
             responsive = false;
         }
@@ -1417,19 +1417,19 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             </tbody>
         </table>
         <script type="text/javascript">
-        var responsive = true;
-        if( jQuery( window ).width() > 1140 ) {
-            responsive = false;
-        }
-        jQuery( document ).ready( function() {
-            jQuery( '#mainwp-error-log-table' ).DataTable( {
-                "responsive": responsive,
-                "ordering": false,
-                "stateSave": true,
-                "stateDuration": 0,
-                "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+            let responsive = true;
+            if( jQuery( window ).width() > 1140 ) {
+                responsive = false;
+            }
+            jQuery( document ).ready( function() {
+                jQuery( '#mainwp-error-log-table' ).DataTable( {
+                    "responsive": responsive,
+                    "ordering": false,
+                    "stateSave": true,
+                    "stateDuration": 0,
+                    "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+                } );
             } );
-        } );
         </script>
         </div>
         <?php

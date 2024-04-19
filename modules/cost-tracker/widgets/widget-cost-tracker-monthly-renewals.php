@@ -83,13 +83,13 @@ class Cost_Tracker_Monthly_Renewals {
 
         <script type="text/javascript">
             jQuery( document ).ready( function () {
-                var $topSelect = jQuery( '#cost-tracker-widget-monthly-renewals-top-select' ).dropdown( {
+                let $topSelect = jQuery( '#cost-tracker-widget-monthly-renewals-top-select' ).dropdown( {
                     onChange: function( value ) {
                         mainwp_ui_state_save('cost-widget-monthly-renewals', value);
                     }
                 } );
 
-                var curTab = mainwp_ui_state_load('cost-widget-monthly-renewals');
+                let curTab = mainwp_ui_state_load('cost-widget-monthly-renewals');
                 if(  curTab != '' && curTab != null ){
                     $topSelect.dropdown( 'set selected', curTab );
                     jQuery( '.cost_tracker_monthly_renewals').removeClass('active'); //to fix preset.

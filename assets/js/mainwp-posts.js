@@ -232,8 +232,8 @@ mainwp_fetch_pages = function () {
 /**
  * MainWP_Post.page
  */
-var countSent = 0;
-var countReceived = 0;
+let countSent = 0;
+let countReceived = 0;
 jQuery(function(){
     jQuery(document).on('click', '#mainwp_show_posts', function () {
         mainwp_fetch_posts();

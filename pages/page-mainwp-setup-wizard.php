@@ -223,8 +223,8 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 }
                 ?>
                 <?php do_action( 'admin_print_styles' ); ?>
-                <script type="text/javascript"> var ajaxurl = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';</script>
-                <script type="text/javascript">var mainwp_ajax_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_ajax' ) ); ?>", mainwp_js_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_nonce' ) ); ?>";</script>
+                <script type="text/javascript"> let ajaxurl = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';</script>
+                <script type="text/javascript">let mainwp_ajax_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_ajax' ) ); ?>", mainwp_js_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_nonce' ) ); ?>";</script>
             </head>
             <body class="mainwp-ui <?php echo ! empty( $selected_theme ) ? 'mainwp-custom-theme' : ''; ?> mainwp-ui-setup">
                 <div class="ui hidden divider"></div>
@@ -901,8 +901,8 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         echo "
 		<script>
 	(function (w, d, s) {
-		var a = d.getElementsByTagName('head')[0];
-		var r = d.createElement('script');
+		let a = d.getElementsByTagName('head')[0];
+		let r = d.createElement('script');
 		r.async = 1;
 		r.src = s;
 		r.setAttribute('id', 'usetifulScript');

@@ -291,17 +291,17 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             } );
             // Create a new group (Select Sites UI)
             jQuery( document ).on( 'click', '#mainwp-save-new-tag-button', function () {
-                var newName = jQuery( '#mainwp-create-group-sites-modal' ).find( '#mainwp-group-name' ).val().trim();
-                var newColor = jQuery( '#mainwp-create-group-sites-modal' ).find( '#mainwp-group-color' ).val();
+                let newName = jQuery( '#mainwp-create-group-sites-modal' ).find( '#mainwp-group-name' ).val().trim();
+                let newColor = jQuery( '#mainwp-create-group-sites-modal' ).find( '#mainwp-group-color' ).val();
                 if('' == newName ){
                     return false;
                 }
                 jQuery(this).attr('disabled', 'disabled');
-                var selected_sites = [ ];
+                let selected_sites = [ ];
                 jQuery( "input[name='selected_sites[]']:checked" ).each( function () {
                     selected_sites.push( jQuery( this ).val() );
                 } );
-                var data = mainwp_secure_data( {
+                let data = mainwp_secure_data( {
                     action: 'mainwp_group_sites_add',
                     selected_sites: selected_sites,
                     newName: newName,

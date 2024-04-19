@@ -184,7 +184,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <script type="text/javascript">
                         document.addEventListener("DOMContentLoaded", (event) => {
                             Dropzone.autoDiscover = false;
-                            var dropzone = new Dropzone('#mainwp-dropzone-upload', {
+                            let dropzone = new Dropzone('#mainwp-dropzone-upload', {
                                 url: function(){
                                     return 'admin.php?page=<?php echo isset( $_GET['page'] ) ? esc_js( sanitize_text_field( wp_unslash( $_GET['page'] ) ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified. ?>';
                                 },
@@ -201,7 +201,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 maxFilesize: 150,
                                 filesizeBase: 1000,
                                 init: function() {
-                                    var self = this;
+                                    let self = this;
                                     this.on("addedfile", file => {
                                         jQuery(file.previewElement).find('.qq-upload-cancel').on('click',function(){
                                             self.removeFile(file); // Remove the specific file from Dropzone

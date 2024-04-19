@@ -700,11 +700,11 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
         $html .= '<script type="text/javascript">
 		jQuery( document ).ready( function () {
 			jQuery( "#mainwp-search-extensions-install-input" ).on( "keyup", function () {
-				var searchQuery = jQuery( this ).val().toLowerCase();
-				var extensions = jQuery( "#mainwp-extensions-to-install-list" ).find( ".item.extension" );
-				for ( var i = 0; i < extensions.length; i++ ) {
-					var currentExtension = jQuery( extensions[i] );
-					var extensionTitle = jQuery( currentExtension ).attr( "product-id" ).toLowerCase();
+				let searchQuery = jQuery( this ).val().toLowerCase();
+				let extensions = jQuery( "#mainwp-extensions-to-install-list" ).find( ".item.extension" );
+				for ( let i = 0; i < extensions.length; i++ ) {
+					let currentExtension = jQuery( extensions[i] );
+					let extensionTitle = jQuery( currentExtension ).attr( "product-id" ).toLowerCase();
 					if ( extensionTitle.indexOf( searchQuery ) > -1 ) {
 						currentExtension.show();
 					} else {

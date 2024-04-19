@@ -101,28 +101,28 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
             $columns['cb'] = '<div class="ui checkbox"><input id="' . ( $top ? 'cb-select-all-top' : 'cb-select-all-bottom' ) . '" type="checkbox" /></div>';
         }
 
-        foreach ( $columns as $column_key => $column_display_name ) {
+        foreach ( $columns as $column_non_key => $column_display_name ) {
 
-            $class = array( 'manage-' . $column_key . '-column' );
+            $class = array( 'manage-' . $column_non_key . '-column' );
             $attr  = '';
-            if ( ! isset( $def_columns[ $column_key ] ) ) {
+            if ( ! isset( $def_columns[ $column_non_key ] ) ) {
                 $class[] = 'extra-column';
                 if ( $optimize ) {
-                    $attr = 'cell-cls="' . esc_html( "collapsing $column_key column-$column_key" ) . '"';
+                    $attr = 'cell-cls="' . esc_html( "collapsing $column_non_key column-$column_non_key" ) . '"';
                 }
             }
 
-            if ( 'cb' === $column_key ) {
+            if ( 'cb' === $column_non_key ) {
                 $class[] = 'check-column';
                 $class[] = 'collapsing';
             }
 
-            if ( ! isset( $sortable[ $column_key ] ) ) {
+            if ( ! isset( $sortable[ $column_non_key ] ) ) {
                 $class[] = 'no-sort';
             }
 
             $tag = 'th';
-            $id  = "id='$column_key'";
+            $id  = "id='$column_non_key'";
 
             if ( ! empty( $class ) ) {
                 $class = "class='" . join( ' ', $class ) . "'";
@@ -453,7 +453,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
         ?>
 
     <script type="text/javascript">
-            var responsive = <?php echo esc_js( $table_features['responsive'] ); ?>;
+            let responsive = <?php echo esc_js( $table_features['responsive'] ); ?>;
             if( jQuery( window ).width() > 1140 ) {
                 responsive = false;
             }
@@ -464,10 +464,10 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
                         $manage_sites_table = jQuery( '#mainwp-manage-non-mainwp-actions-table' ).on( 'processing.dt', function ( e, settings, processing ) {
                             jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
                             if (!processing) {
-                                var tb = jQuery( '#mainwp-manage-non-mainwp-actions-table' );
+                                let tb = jQuery( '#mainwp-manage-non-mainwp-actions-table' );
                                 tb.find( 'th[cell-cls]' ).each( function(){
-                                    var ceIdx = this.cellIndex;
-                                    var cls = jQuery( this ).attr( 'cell-cls' );
+                                    let ceIdx = this.cellIndex;
+                                    let cls = jQuery( this ).attr( 'cell-cls' );
                                     jQuery( '#mainwp-manage-non-mainwp-actions-table tr' ).each(function(){
                                         jQuery(this).find( 'td:eq(' + ceIdx + ')' ).addClass(cls);
                                     } );
@@ -486,7 +486,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
                                 );
                                 },
                                 "dataSrc": function ( json ) {
-                                    for ( var i=0, ien=json.data.length ; i < ien ; i++ ) {
+                                    for ( let i=0, ien=json.data.length ; i < ien ; i++ ) {
                                         json.data[i].rowClass = json.rowsInfo[i].rowClass;
                                         json.data[i].siteID = json.rowsInfo[i].siteID;
                                         json.data[i].siteUrl = json.rowsInfo[i].siteUrl;

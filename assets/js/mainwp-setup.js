@@ -230,9 +230,13 @@ mainwp_setup_managesites_add = function () {
 };
 
 // Check if the URL field is valid value
-function isUrl(s) {
-  let regexp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-/]))?/;
-  return regexp.test(s);
+function isUrl(url) {
+  try {
+    new URL(url);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 mainwp_setup_secure_data = function (data) {

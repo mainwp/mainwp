@@ -152,7 +152,7 @@ class Log_Users_Widget {
                 <div id="mainwp-module-log-chart-users-management-wrapper" ></div>
                 <script type="text/javascript">
                     jQuery( document ).ready( function() {
-                        var options = {
+                        let options = {
                             chart: { 
                                 type: 'bar',
                                 height: 350,
@@ -190,7 +190,7 @@ class Log_Users_Widget {
                                 theme: 'dark'
                             },
                         }
-                        var clients = new ApexCharts(document.querySelector("#mainwp-module-log-chart-users-management-wrapper"), options);
+                        let clients = new ApexCharts(document.querySelector("#mainwp-module-log-chart-users-management-wrapper"), options);
                         setTimeout(() => {
                             clients.render();
                         }, 1000);

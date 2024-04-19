@@ -449,7 +449,7 @@ class Log_List_Table {
         ?>
 
     <script type="text/javascript">
-            var responsive = <?php echo esc_js( $table_features['responsive'] ); ?>;
+            let responsive = <?php echo esc_js( $table_features['responsive'] ); ?>;
             if( jQuery( window ).width() > 1140 ) {
                 responsive = false;
             }
@@ -459,10 +459,10 @@ class Log_List_Table {
                         $module_log_table = jQuery( '#mainwp-module-log-records-table' ).on( 'processing.dt', function ( e, settings, processing ) {
                             jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
                             if (!processing) {
-                                var tb = jQuery( '#mainwp-module-log-records-table' );
+                                let tb = jQuery( '#mainwp-module-log-records-table' );
                                 tb.find( 'th[cell-cls]' ).each( function(){
-                                    var ceIdx = this.cellIndex;
-                                    var cls = jQuery( this ).attr( 'cell-cls' );
+                                    let ceIdx = this.cellIndex;
+                                    let cls = jQuery( this ).attr( 'cell-cls' );
                                     jQuery( '#mainwp-module-log-records-table tr' ).each(function(){
                                         jQuery(this).find( 'td:eq(' + ceIdx + ')' ).addClass(cls);
                                     } );
@@ -481,7 +481,7 @@ class Log_List_Table {
                                 );
                                 },
                                 "dataSrc": function ( json ) {
-                                    for ( var i=0, ien=json.data.length ; i < ien ; i++ ) {
+                                    for ( let i=0, ien=json.data.length ; i < ien ; i++ ) {
                                         json.data[i].rowClass = json.rowsInfo[i].rowClass;
                                         json.data[i].log_id = json.rowsInfo[i].log_id;
                                         json.data[i].created_sort = json.rowsInfo[i].created;
@@ -570,21 +570,21 @@ class Log_List_Table {
         $def_columns                 = $this->get_default_columns();
         $def_columns['site_actions'] = '';
 
-        foreach ( $columns as $column_key => $column_display_name ) {
+        foreach ( $columns as $column_log_key => $column_display_name ) {
 
-            $class = array( 'manage-' . $column_key . '-column' );
+            $class = array( 'manage-' . $column_log_key . '-column' );
             $attr  = '';
-            if ( ! isset( $def_columns[ $column_key ] ) ) {
+            if ( ! isset( $def_columns[ $column_log_key ] ) ) {
                 $class[]  = 'extra-column';
-                    $attr = 'cell-cls="' . esc_html( "collapsing $column_key column-$column_key" ) . '"';
+                    $attr = 'cell-cls="' . esc_html( "collapsing $column_log_key column-$column_log_key" ) . '"';
             }
 
-            if ( ! isset( $sortable[ $column_key ] ) ) {
+            if ( ! isset( $sortable[ $column_log_key ] ) ) {
                 $class[] = 'no-sort';
             }
 
             $tag = 'th';
-            $id  = "id='$column_key'";
+            $id  = "id='$column_log_key'";
 
             if ( ! empty( $class ) ) {
                 $class = "class='" . join( ' ', $class ) . "'";

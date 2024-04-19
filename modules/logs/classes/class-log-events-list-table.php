@@ -524,16 +524,16 @@ class Log_Events_List_Table {
                 responsive = false;
             }
             jQuery( document ).ready( function( $ ) {
-                    var $module_log_table = null;
+                    let $module_log_table = null;
                     try {
                         jQuery( '#mainwp-sites-table-loader' ).hide();
                         $module_log_table = jQuery( '#mainwp-module-log-records-table' ).on( 'processing.dt', function ( e, settings, processing ) {
                             jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
                             if (!processing) {
-                                var tb = jQuery( '#mainwp-module-log-records-table' );
+                                let tb = jQuery( '#mainwp-module-log-records-table' );
                                 tb.find( 'th[cell-cls]' ).each( function(){
-                                    var ceIdx = this.cellIndex;
-                                    var cls = jQuery( this ).attr( 'cell-cls' );
+                                    let ceIdx = this.cellIndex;
+                                    let cls = jQuery( this ).attr( 'cell-cls' );
                                     jQuery( '#mainwp-module-log-records-table tr' ).each(function(){
                                         jQuery(this).find( 'td:eq(' + ceIdx + ')' ).addClass(cls);
                                     } );
@@ -546,7 +546,7 @@ class Log_Events_List_Table {
                                 "url": ajaxurl,
                                 "type": "POST",
                                 "data":  function ( d ) {
-                                    var data = mainwp_secure_data( {
+                                    let data = mainwp_secure_data( {
                                         action: 'mainwp_module_log_events_display_rows',
                                         range: $( '#mainwp-module-log-filter-ranges').dropdown('get value'),
                                         group: $( '#mainwp-module-log-filter-groups').dropdown('get value'),
@@ -559,7 +559,7 @@ class Log_Events_List_Table {
                                     return $.extend( {}, d, data );
                                 },
                                 "dataSrc": function ( json ) {
-                                    for ( var i=0, ien=json.data.length ; i < ien ; i++ ) {
+                                    for ( let i=0, ien=json.data.length ; i < ien ; i++ ) {
                                         json.data[i].rowClass = json.rowsInfo[i].rowClass;
                                         json.data[i].log_id = json.rowsInfo[i].log_id;
                                         json.data[i].created_sort = json.rowsInfo[i].created;
@@ -621,13 +621,13 @@ class Log_Events_List_Table {
                         }
                     };  
                     mainwp_module_log_overview_content_filter = function() {
-                        var range = jQuery( '#mainwp-module-log-filter-ranges').dropdown('get value');
-                        var group = jQuery( '#mainwp-module-log-filter-groups').dropdown('get value');
-                        var client = jQuery( '#mainwp-module-log-filter-clients').dropdown('get value');
-                        var user = jQuery( '#mainwp-module-log-filter-users').dropdown('get value');
-                        var dtsstart = jQuery('#mainwp-module-log-filter-dtsstart input[type=text]').val();
-                        var dtsstop = jQuery('#mainwp-module-log-filter-dtsstop input[type=text]').val();
-                        var params = '';    
+                        let range = jQuery( '#mainwp-module-log-filter-ranges').dropdown('get value');
+                        let group = jQuery( '#mainwp-module-log-filter-groups').dropdown('get value');
+                        let client = jQuery( '#mainwp-module-log-filter-clients').dropdown('get value');
+                        let user = jQuery( '#mainwp-module-log-filter-users').dropdown('get value');
+                        let dtsstart = jQuery('#mainwp-module-log-filter-dtsstart input[type=text]').val();
+                        let dtsstop = jQuery('#mainwp-module-log-filter-dtsstop input[type=text]').val();
+                        let params = '';    
                         params += '&range=' + encodeURIComponent( range );                      
                         params += '&group=' + encodeURIComponent( group );
                         params += '&client=' + encodeURIComponent( client );
@@ -640,12 +640,12 @@ class Log_Events_List_Table {
                     };
                     mainwp_module_log_overview_content_reset_filters = function(resetObj) {
                         try {
-                            var range = jQuery( '#mainwp-module-log-filter-ranges').dropdown('set selected', 'thismonth');
-                            var group = jQuery( '#mainwp-module-log-filter-groups').dropdown('clear');
-                            var client = jQuery( '#mainwp-module-log-filter-clients').dropdown('clear');
-                            var user = jQuery( '#mainwp-module-log-filter-users').dropdown('clear');
-                            var dtsstart = jQuery('#mainwp-module-log-filter-dtsstart input[type=text]').val('');
-                            var dtsstop = jQuery('#mainwp-module-log-filter-dtsstop input[type=text]').val('');
+                            let range = jQuery( '#mainwp-module-log-filter-ranges').dropdown('set selected', 'thismonth');
+                            let group = jQuery( '#mainwp-module-log-filter-groups').dropdown('clear');
+                            let client = jQuery( '#mainwp-module-log-filter-clients').dropdown('clear');
+                            let user = jQuery( '#mainwp-module-log-filter-users').dropdown('clear');
+                            let dtsstart = jQuery('#mainwp-module-log-filter-dtsstart input[type=text]').val('');
+                            let dtsstop = jQuery('#mainwp-module-log-filter-dtsstop input[type=text]').val('');
                             jQuery(resetObj).attr('disabled', 'disabled');
                             mainwp_module_log_overview_content_filter();
                         } catch(err) {
@@ -679,21 +679,21 @@ class Log_Events_List_Table {
         $def_columns                 = $this->get_default_columns();
         $def_columns['site_actions'] = '';
 
-        foreach ( $columns as $column_key => $column_display_name ) {
+        foreach ( $columns as $column_event_key => $column_display_name ) {
 
-            $class = array( 'manage-' . $column_key . '-column' );
+            $class = array( 'manage-' . $column_event_key . '-column' );
             $attr  = '';
-            if ( ! isset( $def_columns[ $column_key ] ) ) {
+            if ( ! isset( $def_columns[ $column_event_key ] ) ) {
                 $class[]  = 'extra-column';
-                    $attr = 'cell-cls="' . esc_html( "collapsing $column_key column-$column_key" ) . '"';
+                    $attr = 'cell-cls="' . esc_html( "collapsing $column_event_key column-$column_event_key" ) . '"';
             }
 
-            if ( ! isset( $sortable[ $column_key ] ) ) {
+            if ( ! isset( $sortable[ $column_event_key ] ) ) {
                 $class[] = 'no-sort';
             }
 
             $tag = 'th';
-            $id  = "id='$column_key'";
+            $id  = "id='$column_event_key'";
 
             if ( ! empty( $class ) ) {
                 $class = "class='" . join( ' ', $class ) . "'";

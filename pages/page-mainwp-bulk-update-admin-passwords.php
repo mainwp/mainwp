@@ -332,7 +332,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                         $table_features = apply_filters( 'mainwp_admin_users_table_fatures', $table_features );
                         ?>
                         <script type="text/javascript">
-                        var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
+                        let responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
                         if( jQuery( window ).width() > 1140 ) {
                             responsive = false;
                         }

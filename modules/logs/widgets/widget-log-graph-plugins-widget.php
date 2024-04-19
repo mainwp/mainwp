@@ -136,7 +136,7 @@ class Log_Graph_Plugins_Widget {
 
         <script type="text/javascript">
             jQuery( document ).ready( function() {
-                var options = {
+                let options = {
                     chart: { 
                         type: 'bar',
                         stacked: true
@@ -187,7 +187,7 @@ class Log_Graph_Plugins_Widget {
                         theme: 'dark'
                     },
                 }
-                var plugin = new ApexCharts(document.querySelector("#mainwp-module-log-chart-plugins-wrapper"), options);
+                let plugin = new ApexCharts(document.querySelector("#mainwp-module-log-chart-plugins-wrapper"), options);
                 setTimeout(() => {
                     plugin.render();
                 }, 1000);

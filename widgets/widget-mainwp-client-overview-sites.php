@@ -203,7 +203,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
 
             <script type="text/javascript">
                 jQuery( document ).ready( function( $ ) {
-                    var responsive = true;
+                    let responsive = true;
                     if( jQuery( window ).width() > 1140 ) {
                         responsive = false;
                     }
@@ -318,20 +318,20 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
         $def_columns                 = $columns;
         $def_columns['site_actions'] = '';
 
-        foreach ( $columns as $column_key => $column_display_name ) {
+        foreach ( $columns as $column_overview_key => $column_display_name ) {
 
-            $class = array( 'manage-' . $column_key . '-column' );
+            $class = array( 'manage-' . $column_overview_key . '-column' );
             $attr  = '';
-            if ( ! isset( $def_columns[ $column_key ] ) ) {
+            if ( ! isset( $def_columns[ $column_overview_key ] ) ) {
                 $class[] = 'extra-column';
             }
 
-            if ( ! isset( $sortable[ $column_key ] ) ) {
+            if ( ! isset( $sortable[ $column_overview_key ] ) ) {
                 $class[] = 'no-sort';
             }
 
             $tag = 'th';
-            $id  = "id='$column_key'";
+            $id  = "id='$column_overview_key'";
 
             if ( ! empty( $class ) ) {
                 $class = "class='" . join( ' ', $class ) . "'";

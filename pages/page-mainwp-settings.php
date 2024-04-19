@@ -391,7 +391,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         ?>
 
         <script type="text/javascript">
-			var mainwp_settings_saved_menu_indicator_status = '<?php echo !empty($saved_status) ? wp_json_encode( $saved_status ) : ''; //phpcs:ignore -- ok.  ?>';
+			let mainwp_settings_saved_menu_indicator_status = '<?php echo !empty($saved_status) ? wp_json_encode( $saved_status ) : ''; //phpcs:ignore -- ok.  ?>';
         </script>
         <?php
     }
@@ -1061,7 +1061,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 } );
 
                 $( 'input[name="date_format_custom"], input[name="time_format_custom"]' ).on( 'input', function() {
-                    var format = $( this ),
+                    let format = $( this ),
                         fieldset = format.closest( '.fieldset-wrapper' ),
                         example = fieldset.find( '.example' ),
                         spinner = fieldset.find( '.spinner' );

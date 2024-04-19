@@ -394,11 +394,11 @@ function mainwp_extensions_savelogin(pObj, retring) {
     return false;
 }
 
-var maxActivateThreads = 8;
-var totalActivateThreads = 0;
-var currentActivateThreads = 0;
-var finishedActivateThreads = 0;
-var countSuccessActivation = 0;
+let maxActivateThreads = 8;
+let totalActivateThreads = 0;
+let currentActivateThreads = 0;
+let finishedActivateThreads = 0;
+let countSuccessActivation = 0;
 
 // Bulk grab API keys
 jQuery(document).on('click', '#mainwp-extensions-grabkeys', function () {
@@ -470,7 +470,7 @@ function mainwp_extensions_grabkeys(retring) {
     return false;
 }
 
-var extensions_loop_next = function () {
+let extensions_loop_next = function () {
     while ((extToActivate = jQuery('#mainwp-extensions-list .card[status="queue"]:first')) && (extToActivate.length > 0) && (currentActivateThreads < maxActivateThreads)) {
         extensions_activate_next(extToActivate, true);
     }
@@ -481,7 +481,7 @@ var extensions_loop_next = function () {
     }
 };
 
-var extensions_activate_next = function (pObj, bulkAct) {
+let extensions_activate_next = function (pObj, bulkAct) {
 
     let grabingEl = jQuery("#mainwp-extensions-api-fields");
     let apiEl = pObj;

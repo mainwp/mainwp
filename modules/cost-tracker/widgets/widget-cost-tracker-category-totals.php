@@ -164,10 +164,10 @@ class Cost_Tracker_Category_Totals {
         <script type="text/javascript">
             jQuery( document ).ready( function() {
 
-				var cost_chart_colors = <?php echo wp_json_encode($chart_data['colors'], true ); //phpcs:ignore -- ok. ?>;
-				var cost_chart_currency_format = '<?php echo esc_js($chart_data['currency_format']); //phpcs:ignore -- ok. ?>';
+				let cost_chart_colors = <?php echo wp_json_encode($chart_data['colors'], true ); //phpcs:ignore -- ok. ?>;
+				let cost_chart_currency_format = '<?php echo esc_js($chart_data['currency_format']); //phpcs:ignore -- ok. ?>';
                 
-                var options = {
+                let options = {
 					series: <?php echo wp_json_encode($chart_data['series'], true ); //phpcs:ignore -- ok. ?>,
                     chart: {
                         height: '95%',
@@ -221,7 +221,7 @@ class Cost_Tracker_Category_Totals {
                     },
                 };
         
-                var cost_chart = new ApexCharts(document.querySelector("#mainwp-module-cost-tracker-category-totals-wrapper"), options);
+                let cost_chart = new ApexCharts(document.querySelector("#mainwp-module-cost-tracker-category-totals-wrapper"), options);
                 setTimeout(() => {
                     cost_chart.render();
                 }, 1000);

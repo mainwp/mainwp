@@ -192,10 +192,10 @@ mainwp_module_cost_tracker_notes_save = function () {
 
 };
 
-var mod_costtracker_bulkMaxThreads = 4;
-var mod_costtracker_bulkTotalThreads = 0;
-var mod_costtracker_bulkCurrentThreads = 0;
-var mod_costtracker_bulkFinishedThreads = 0;
+let mod_costtracker_bulkMaxThreads = 4;
+let mod_costtracker_bulkTotalThreads = 0;
+let mod_costtracker_bulkCurrentThreads = 0;
+let mod_costtracker_bulkFinishedThreads = 0;
 
 // Manage Bulk Actions
 mainwp_module_cost_tracker_table_bulk_action = function (act) {

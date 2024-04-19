@@ -1,8 +1,8 @@
 /* eslint complexity: ["error", 100] */
-var apibackups_bulkMaxThreads = 1; // rate limiting.
-var apibackups_bulkTotalThreads = 0;
-var apibackups_bulkCurrentThreads = 0;
-var apibackups_bulkFinishedThreads = 0;
+let apibackups_bulkMaxThreads = 1; // rate limiting.
+let apibackups_bulkTotalThreads = 0;
+let apibackups_bulkCurrentThreads = 0;
+let apibackups_bulkFinishedThreads = 0;
 
 mainwp_api_backups_do_backups = function (pObj) {
 	// init queue status.

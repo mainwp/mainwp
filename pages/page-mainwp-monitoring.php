@@ -228,7 +228,7 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             jQuery( document ).ready( function () {
                 jQuery( '.ui.checkbox.not-auto-init.site_preview' ).checkbox( {
                     onChecked   : function() {
-                        var $chk = jQuery( this );
+                        let $chk = jQuery( this );
                         jQuery( '#mainwp-monitoring-sites-site-preview-screen-options-modal' ).modal( {
                             allowMultiple: true, // multiple modals.
                             width: 100,
@@ -243,7 +243,7 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                         jQuery('input[name=mainwp_default_monitoring_sites_per_page]').val(25);
                         jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
                         //default columns: Site, Open Admin, URL, Site Health, Status Code and Actions.
-                        var cols = ['site','login','url','site_health','status_code','site_actions'];
+                        let cols = ['site','login','url','site_health','status_code','site_actions'];
                         jQuery.each( cols, function ( index, value ) {
                             jQuery('.mainwp_hide_wpmenu_checkboxes input[id="mainwp_show_column_' + value + '"]').prop( 'checked', true );
                         } );

@@ -1,9 +1,9 @@
 
-var bulk_RestAPIMaxThreads = 1;
-var bulk_RestAPICurrentThreads = 0;
-var bulk_RestAPITotal = 0;
-var bulk_RestAPIFinished = 0;
-var bulk_RestAPITaskRunning = false;
+let bulk_RestAPIMaxThreads = 1;
+let bulk_RestAPICurrentThreads = 0;
+let bulk_RestAPITotal = 0;
+let bulk_RestAPIFinished = 0;
+let bulk_RestAPITaskRunning = false;
 
 jQuery(function($) {
     $('body').on('click', '.copy-to-clipboard', function () {

@@ -328,7 +328,7 @@ themeAction = function (elem, what) {
   };
 }(jQuery));
 
-var hidingSubMenuTimers = {};
+let hidingSubMenuTimers = {};
 jQuery(function(){
   jQuery('.mainwp-submenu-wrapper').on({
     mouseenter: function () {
@@ -486,7 +486,7 @@ jQuery(function(){
  * Security Issues
  */
 
-var securityIssues_fixes = ['listing', 'wp_version', 'rsd', 'wlw', 'core_updates', 'plugin_updates', 'theme_updates', 'db_reporting', 'php_reporting', 'versions', 'registered_versions', 'admin', 'readme', 'wp_uptodate', 'phpversion_matched', 'sslprotocol', 'debug_disabled'];
+let securityIssues_fixes = ['listing', 'wp_version', 'rsd', 'wlw', 'core_updates', 'plugin_updates', 'theme_updates', 'db_reporting', 'php_reporting', 'versions', 'registered_versions', 'admin', 'readme', 'wp_uptodate', 'phpversion_matched', 'sslprotocol', 'debug_disabled'];
 jQuery(function(){
   let securityIssueSite = jQuery('#securityIssueSite');
   if ((securityIssueSite.val() != null) && (securityIssueSite.val() != "")) {
@@ -495,48 +495,48 @@ jQuery(function(){
     });
 
     jQuery(document).on('click', '#securityIssues_refresh', function () {
-      for (let i = 0; i < securityIssues_fixes.length; i++) {
-        let securityIssueCurrentIssue = jQuery('#' + securityIssues_fixes[i] + '_fix');
+      for (let ise of securityIssues_fixes) {
+        let securityIssueCurrentIssue = jQuery('#' + ise + '_fix');
         if (securityIssueCurrentIssue) {
           securityIssueCurrentIssue.hide();
         }
-        jQuery('#' + securityIssues_fixes[i] + '_extra').hide();
-        jQuery('#' + securityIssues_fixes[i] + '_ok').hide();
-        jQuery('#' + securityIssues_fixes[i] + '_nok').hide();
-        jQuery('#' + securityIssues_fixes[i] + '_loading').show();
+        jQuery('#' + ise + '_extra').hide();
+        jQuery('#' + ise + '_ok').hide();
+        jQuery('#' + ise + '_nok').hide();
+        jQuery('#' + ise + '_loading').show();
       }
       securityIssues_request(jQuery('#securityIssueSite').val());
     });
 
-    for (let i = 0; i < securityIssues_fixes.length; i++) {
-      jQuery('#' + securityIssues_fixes[i] + '_fix').on('click', function (what) {
+    for (let ise of securityIssues_fixes) {
+      jQuery('#' + ise + '_fix').on('click', function (what) {
         return function () {
           securityIssues_fix(what);
           return false;
         }
-      }(securityIssues_fixes[i]));
+      }(ise));
 
-      jQuery('#' + securityIssues_fixes[i] + '_unfix').on('click', function (what) {
+      jQuery('#' + ise + '_unfix').on('click', function (what) {
         return function () {
           securityIssues_unfix(what);
           return false;
         }
-      }(securityIssues_fixes[i]));
+      }(ise));
     }
     securityIssues_request(securityIssueSite.val());
   }
 });
 securityIssues_fix = function (feature) {
   if (feature == 'all') {
-    for (let i = 0; i < securityIssues_fixes.length; i++) {
-      if (jQuery('#' + securityIssues_fixes[i] + '_nok').css('display') != 'none') {
-        if (jQuery('#' + securityIssues_fixes[i] + '_fix')) {
-          jQuery('#' + securityIssues_fixes[i] + '_fix').hide();
+    for (let ise of securityIssues_fixes) {
+      if (jQuery('#' + ise + '_nok').css('display') != 'none') {
+        if (jQuery('#' + ise + '_fix')) {
+          jQuery('#' + ise + '_fix').hide();
         }
-        jQuery('#' + securityIssues_fixes[i] + '_extra').hide();
-        jQuery('#' + securityIssues_fixes[i] + '_ok').hide();
-        jQuery('#' + securityIssues_fixes[i] + '_nok').hide();
-        jQuery('#' + securityIssues_fixes[i] + '_loading').show();
+        jQuery('#' + ise + '_extra').hide();
+        jQuery('#' + ise + '_ok').hide();
+        jQuery('#' + ise + '_nok').hide();
+        jQuery('#' + ise + '_loading').show();
       }
     }
   } else {
@@ -793,8 +793,8 @@ mainwp_managesites_bulk_check_abandoned = function (siteIds, which) {
         excludeIds.push(el);
       }
     });
-    for (let i = 0; i < excludeIds.length; i++) {
-      dashboard_update_site_hide(excludeIds[i]);
+    for (let id of excludeIds) {
+      dashboard_update_site_hide(id);
     }
     allWebsiteIds = selectedIds;
     //jQuery('#refresh-status-total').text(allWebsiteIds.length);
@@ -807,9 +807,9 @@ mainwp_managesites_bulk_check_abandoned = function (siteIds, which) {
 
   let siteNames = {};
 
-  for (let i = 0; i < allWebsiteIds.length; i++) {
-    dashboard_update_site_status(allWebsiteIds[i], '<i class="clock outline icon"></i>');
-    siteNames[allWebsiteIds[i]] = jQuery('.sync-site-status[siteid="' + allWebsiteIds[i] + '"]').attr('niceurl');
+  for (let id of allWebsiteIds) {
+    dashboard_update_site_status(id, '<i class="clock outline icon"></i>');
+    siteNames[id] = jQuery('.sync-site-status[siteid="' + id + '"]').attr('niceurl');
   }
   let initData = {
     progressMax: nrOfWebsites,
@@ -939,15 +939,15 @@ mainwp_sync_sites_data = function (syncSiteIds, pAction) {
         excludeIds.push(el);
       }
     });
-    for (let i = 0; i < excludeIds.length; i++) {
-      dashboard_update_site_hide(excludeIds[i]);
+    for (let id of excludeIds) {
+      dashboard_update_site_hide(id);
     }
     allWebsiteIds = selectedIds;
     globalSync = false;
   }
 
-  for (let i = 0; i < allWebsiteIds.length; i++) {
-    dashboard_update_site_status(allWebsiteIds[i], '<span data-inverted="" data-position="left center" data-tooltip="' + __('Pending', 'mainwp') + '"><i class="clock outline icon"></i></span>');
+  for (let id of allWebsiteIds) {
+    dashboard_update_site_status(id, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Pending', 'mainwp') + '"><i class="clock outline icon"></i></span>');
   }
 
   let nrOfWebsites = allWebsiteIds.length;
@@ -983,15 +983,15 @@ mainwp_sync_sites_data = function (syncSiteIds, pAction) {
   }
 };
 
-var websitesToUpdate = [];
-var websitesTotal = 0;
-var websitesLeft = 0;
-var websitesDone = 0;
-var currentWebsite = 0;
-var bulkTaskRunning = false;
-var currentThreads = 0;
-var maxThreads = mainwpParams['maximumSyncRequests'] == undefined ? 8 : mainwpParams['maximumSyncRequests'];
-var globalSync = true;
+let websitesToUpdate = [];
+let websitesTotal = 0;
+let websitesLeft = 0;
+let websitesDone = 0;
+let currentWebsite = 0;
+let bulkTaskRunning = false;
+let currentThreads = 0;
+let maxThreads = mainwpParams['maximumSyncRequests'] == undefined ? 8 : mainwpParams['maximumSyncRequests'];
+let globalSync = true;
 
 dashboard_update = function (websiteIds, isGlobalSync, pAction) {
   websitesToUpdate = websiteIds;
@@ -1118,14 +1118,14 @@ mainwp_delete_nonmainwp_data_start = function (syncSiteIds) {
         excludeIds.push(el);
       }
     });
-    for (let i = 0; i < excludeIds.length; i++) {
-      dashboard_update_site_hide(excludeIds[i]);
+    for (let id of excludeIds) {
+      dashboard_update_site_hide(id);
     }
     allWebsiteIds = selectedIds;
   }
 
-  for (let i = 0; i < allWebsiteIds.length; i++) {
-    dashboard_update_site_status(allWebsiteIds[i], '<span data-inverted="" data-position="left center" data-tooltip="' + __('Pending', 'mainwp') + '"><i class="clock outline icon"></i></span>');
+  for (let id of allWebsiteIds) {
+    dashboard_update_site_status(id, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Pending', 'mainwp') + '"><i class="clock outline icon"></i></span>');
   }
 
   let nrOfWebsites = allWebsiteIds.length;
@@ -1244,8 +1244,8 @@ mainwp_tool_disconnect_sites = function () {
       return jQuery(el).val();
     });
 
-    for (let i = 0; i < allWebsiteIds.length; i++) {
-      dashboard_update_site_status(allWebsiteIds[i], '<i class="clock outline icon"></i>');
+    for (let id of allWebsiteIds) {
+      dashboard_update_site_status(id, '<i class="clock outline icon"></i>');
     }
 
     let nrOfWebsites = allWebsiteIds.length;
@@ -2247,10 +2247,11 @@ mainwp_createuser = function () {
         if (responseObj.error == undefined) {
           let errorMessageList = responseObj[1];
           let errorMessage = '';
-          for (let i = 0; i < errorMessageList.length; i++) {
-            if (errorMessage != '')
+          for (let iem of errorMessageList) {
+            if (errorMessage != ''){
               errorMessage = errorMessage + "<br />";
-            errorMessage = errorMessage + errorMessageList[i];
+            }
+             errorMessage = errorMessage + iem;
           }
           if (errorMessage != '') {
             feedback('mainwp-message-zone', errorMessage, 'red');
@@ -2940,15 +2941,15 @@ mainwp_install_check_plugin_start_specific = function (url, siteToInstall) {
   }(url, siteToInstall), 'json');
 };
 
-
-
-/**
- * Utility
- */
-function isUrl(s) {
-  let regexp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-/]))?/;
-  return regexp.test(s);
+function isUrl(url) {
+  try {
+    new URL(url);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
+
 function setVisible(what, vis) {
   if (vis) {
     jQuery(what).show();
@@ -3208,10 +3209,10 @@ mainwp_secure_data = function (data, includeDts) {
 
 mainwp_uid = function () {
   // always start with a letter (for DOM friendlyness)
-  let idstr = String.fromCharCode(Math.floor((Math.random() * 25) + 65));
+  let idstr = String.fromCharCode(Math.floor((Math.random() * 25) + 65)); // NOSONAR - it's id.
   do {
     // between numbers and characters (48 is 0 and 90 is Z (42-48 = 90)
-    let ascicode = Math.floor((Math.random() * 42) + 48);
+    let ascicode = Math.floor((Math.random() * 42) + 48); //NOSONAR - it's id.
     if (ascicode < 58 || ascicode > 64) {
       // exclude all chars between : (58) and @ (64)
       idstr += String.fromCharCode(ascicode);
@@ -3237,8 +3238,7 @@ jQuery(function(){
   jQuery('#backup_filename').on('change', function () {
     let value = jQuery(this).val();
     let notAllowed = ['$', '^', '&', '*', '/'];
-    for (let i = 0; i < notAllowed.length; i++) {
-      let char = notAllowed[i];
+    for (let char of notAllowed) {
       if (value.indexOf(char) >= 0) {
         value = value.replace(new RegExp('\\' + char, 'g'), '');
         jQuery(this).val(value);
@@ -3478,10 +3478,11 @@ mainwp_managesites_update_childsite_value = function (siteId, uniqueId) {
 jQuery(document).on('keyup', '#managegroups-filter', function () {
   let filter = jQuery(this).val();
   let groupItems = jQuery(this).parent().parent().find('li.managegroups-listitem');
-  for (let i = 0; i < groupItems.length; i++) {
-    let currentElement = jQuery(groupItems[i]);
-    if (currentElement.hasClass('managegroups-group-add'))
+  for (let igr of groupItems) {
+    let currentElement = jQuery(igr);
+    if (currentElement.hasClass('managegroups-group-add')){
       continue;
+    }
     let value = currentElement.find('span.text').text();
     if (value.indexOf(filter) > -1) {
       currentElement.show();
@@ -4275,7 +4276,7 @@ mainwp_common_filter_show_segments_modal = function (loadSeg) {
 };
 
 
-var mainwp_init_ui_calendar = ($selectors) => {
+let mainwp_init_ui_calendar = ($selectors) => {
   jQuery($selectors).calendar({
     type: 'date',
     monthFirst: false,

@@ -1803,7 +1803,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         console.log('visible ' + jQuery(this).attr('id'));
                         jQuery(this).css( 'display', 'table' );
                         jQuery(this).DataTable().destroy();                     
-                        var tb = jQuery(this).DataTable({
+                        let tb = jQuery(this).DataTable({
                             "paging":false,
                             "info": false,
                             "searching": false,
@@ -2182,7 +2182,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $table_features = apply_filters( 'mainwp_updates_http_responses_datatable_features', $table_features );
             ?>
             <script>
-            var responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
+            let responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
             if( jQuery( window ).width() > 1140 ) {
                 responsive = false;
             }

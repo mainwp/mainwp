@@ -179,9 +179,9 @@ jQuery(function(){
             if ((action == 'activate') || (action == 'delete') || (action == 'deactivate') || (action == 'ignore_updates')) {
                 let pluginsToSend = [];
                 let namesToSend = [];
-                for (let i = 0; i < selectedPlugins.length; i++) {
-                    pluginsToSend.push(jQuery(selectedPlugins[i]).attr('plugin-slug'));
-                    namesToSend.push(jQuery(selectedPlugins[i]).attr('plugin-name'));
+                for (let ss of selectedPlugins) {
+                    pluginsToSend.push(jQuery(ss).attr('plugin-slug'));
+                    namesToSend.push(jQuery(ss).attr('plugin-name'));
                 }
 
                 let data = mainwp_secure_data({
@@ -547,9 +547,9 @@ jQuery(function () {
                 });
 
                 if (action == 'ignore_updates') {
-                    for (let i = 0; i < selectedThemes.length; i++) {
-                        themesToSend.push(jQuery(selectedThemes[i]).attr('theme-slug'));
-                        namesToSend.push(jQuery(selectedThemes[i]).attr('theme-name'));
+                    for (let ss of selectedThemes) {
+                        themesToSend.push(jQuery(ss).attr('theme-slug'));
+                        namesToSend.push(jQuery(ss).attr('theme-name'));
                     }
                     data['themes'] = themesToSend;
                     data['names'] = namesToSend;
@@ -570,12 +570,12 @@ jQuery(function () {
                 });
             } else if (action == 'delete') {
                 let themesToDelete = [];
-                for (let i = 0; i < selectedThemes.length; i++) {
-                    if (jQuery(selectedThemes[i]).attr('not-delete') == 1) {
-                        jQuery(selectedThemes[i]).find('.mainwp-selected-theme-site').attr('checked', false);
+                for (let ss of selectedThemes) {
+                    if (jQuery(ss).attr('not-delete') == 1) {
+                        jQuery(ss).find('.mainwp-selected-theme-site').attr('checked', false);
                         continue;
                     }
-                    themesToDelete.push(jQuery(selectedThemes[i]).attr('theme-slug'));
+                    themesToDelete.push(jQuery(ss).attr('theme-slug'));
                 }
                 if (themesToDelete.length == 0) {
                     return;
@@ -1051,12 +1051,12 @@ mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAfterB
 
                     let output = '<span class="mainwp-red">' + __('A full backup has not been taken in the last days for the following sites:') + '</span><br /><br />';
                     if (backupPrimary == '') { // default backup feature
-                        for (let j = 0; j < siteFeedback.length; j++) {
-                            output += '<span class="managesites-backup-site" siteid="' + siteFeedback[j] + '">' + decodeURIComponent(pSiteNames[siteFeedback[j]]) + '</span><br />';
+                        for (let id of siteFeedback) {
+                            output += '<span class="managesites-backup-site" siteid="' + id + '">' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
                         }
                     } else {
-                        for (let j = 0; j < siteFeedback.length; j++) {
-                            output += '<span>' + decodeURIComponent(pSiteNames[siteFeedback[j]]) + '</span><br />';
+                        for (let id of siteFeedback) {
+                            output += '<span>' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
                         }
                     }
                     mainwpPopup('#managesites-backup-box').getContentEl().html(output);

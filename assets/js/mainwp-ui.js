@@ -16,7 +16,7 @@ function reload_init() {
 }
 
 /** AJAX page load **/
-var mainwp_current_url = '';
+let mainwp_current_url = '';
 function read_current_url() {
     mainwp_current_url = document.location.href.replace(/^.*?\/([^/]*?)\/?$/i, '$1');
     return mainwp_current_url;
@@ -374,8 +374,8 @@ mainwp_sites_selection_onvisible_callback = function (me) {
 }
 
 
-var executingUpdateCategories = false;
-var queueUpdateCategories = 0;
+let executingUpdateCategories = false;
+let queueUpdateCategories = 0;
 mainwp_newpost_updateCategories = function () {
     if (executingUpdateCategories) {
         queueUpdateCategories++;
@@ -466,8 +466,8 @@ jQuery(document).on('keyup', '#mainwp-select-sites-filter', function () {
         siteItems = parent.find('.mainwp_selected_sites_item');
     }
 
-    for (let i = 0; i < siteItems.length; i++) {
-        let currentElement = jQuery(siteItems[i]);
+    for (let id of siteItems) {
+        let currentElement = jQuery(id);
         let value = currentElement.find('label').text().toLowerCase();
         if (value.indexOf(filter) > -1) {
             currentElement.removeClass('no-select').show();
@@ -485,8 +485,8 @@ jQuery(document).on('keyup', '#mainwp-sites-menu-filter', function () {
     let parent = jQuery('#mainwp-sites-sidebar-menu');
     let siteItems = parent.find('.mainwp-site-menu-item');
 
-    for (let i = 0; i < siteItems.length; i++) {
-        let currentElement = jQuery(siteItems[i]);
+    for (let ss of siteItems) {
+        let currentElement = jQuery(ss);
         let value = currentElement.find('label').text().toLowerCase();
         if (value.indexOf(filter) > -1) {
             currentElement.show();
@@ -563,8 +563,8 @@ jQuery(document).on('keyup', '#mainwp-screenshots-sites-filter', function () {
         siteItems = parent.find('.mainwp_selected_sites_item');
     }
 
-    for (let i = 0; i < siteItems.length; i++) {
-        let currentElement = jQuery(siteItems[i]);
+    for (let id of siteItems) {
+        let currentElement = jQuery(id);
         let value = currentElement.find('label').text().toLowerCase();
         if (value.indexOf(filter) > -1) {
             currentElement.removeClass('no-select').show();
@@ -729,7 +729,7 @@ mainwp_upload_custom_types_icon = function (iconObj, uploadAct, iconItemId, icon
     jQuery('#mainwp-message-zone-upload').show();
     jQuery('#update_custom_icon_btn').attr('disabled', 'disabled');
 
-    let upload_act = typeof uploadAct !== "undefined" & '' != uploadAct ? uploadAct : 'mainwp_upload_custom_types_icon';
+    let upload_act = typeof uploadAct !== "undefined" && '' != uploadAct ? uploadAct : 'mainwp_upload_custom_types_icon';
     let elemid = undefined !== jQuery(iconObj).attr('data-element-id') ? jQuery(iconObj).attr('data-element-id') : '';
     //Add via ajax!!
     let formdata = new FormData(jQuery('#uploadicon_form')[0]);

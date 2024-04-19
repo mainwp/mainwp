@@ -82,12 +82,12 @@ class Cost_Tracker_Upcoming_Renewals {
         </div>
         <script type="text/javascript">
             jQuery( document ).ready( function () {
-                var $topSelect = jQuery( '#cost-tracker-widget-upcoming-renewals-top-select' ).dropdown( {
+                let $topSelect = jQuery( '#cost-tracker-widget-upcoming-renewals-top-select' ).dropdown( {
                     onChange: function( value ) {
                         mainwp_ui_state_save('cost-widget-upcoming-renewals', value);
                     }
                 } );
-                var curTab = mainwp_ui_state_load('cost-widget-upcoming-renewals');
+                let curTab = mainwp_ui_state_load('cost-widget-upcoming-renewals');
                 if(  curTab != '' && curTab != null ){
                     $topSelect.dropdown( 'set selected', curTab );
                     jQuery( '.cost_tracker_upcoming_renewals').removeClass('active'); //to fix preset.

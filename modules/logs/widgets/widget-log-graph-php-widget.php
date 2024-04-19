@@ -131,7 +131,7 @@ class Log_Graph_Php_Widget {
         <div id="mainwp-module-log-chart-php-wrapper" ></div>
         <script type="text/javascript">
             jQuery( document ).ready( function() {
-                var options = {
+                let options = {
                     chart: { 
                         type: 'bar'
                     },
@@ -165,7 +165,7 @@ class Log_Graph_Php_Widget {
                         theme: 'dark'
                     },
                 }
-                var php = new ApexCharts(document.querySelector("#mainwp-module-log-chart-php-wrapper"), options);
+                let php = new ApexCharts(document.querySelector("#mainwp-module-log-chart-php-wrapper"), options);
                 setTimeout(() => {
                     php.render();
                 }, 1000);

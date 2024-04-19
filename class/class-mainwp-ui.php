@@ -968,7 +968,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <script type="text/javascript">
                     jQuery( document ).ready( function() {
                         jQuery( '#mainwp-start-page-tour-button' ).on( 'click', function() {
-                            var tourId = jQuery( this ).attr( 'tour-id' );
+                            let tourId = jQuery( this ).attr( 'tour-id' );
                             jQuery( '#mainwp-documentation-sidebar' ).sidebar( 'toggle' );
                             window.USETIFUL.tour.start( parseInt( tourId ) );
                         } );
@@ -984,7 +984,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             if ( isset( $_GET['message'] ) && ( 'qsw-import' === $_GET['message'] || 'enable-demo-mode' === $_GET['message'] ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
                 ?>
                 <script type= 'text/javascript'>
-                    var _count_retry         = 0;
+                    let _count_retry         = 0;
                     _try_start_usetiful_tour = function () {
                         setTimeout(
                             function () {
@@ -1015,7 +1015,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             jQuery( document ).ready( function () {
 
                 jQuery( '#mainwp-jump-to-site-overview-dropdown' ).on( 'change', function() {
-                    var site_id = jQuery( this ).val();
+                    let site_id = jQuery( this ).val();
                     window.location.href = 'admin.php?page=managesites&dashboard=' + site_id;
                 } );
 
@@ -1234,11 +1234,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         </div>
         <script type="text/javascript">
             jQuery( document ).on( 'change', '#mainwp_top_quick_jump_group', function () {
-                var jumpid = jQuery( this ).val();
+                let jumpid = jQuery( this ).val();
                 window.location = 'admin.php?page=managesites&g='  + jumpid;
             } );
             jQuery( document ).on( 'change', '#mainwp_top_quick_jump_page', function () {
-                var jumpid = jQuery( this ).val();
+                let jumpid = jQuery( this ).val();
                 if ( jumpid == -1 )
                     window.location = 'admin.php?page=managesites&s='  + jumpid;
                 else
@@ -1653,14 +1653,14 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 $breakpoint = apply_filters( 'mainwp_flexible_widgets_breakpoint', 1367 );
         ?>
         <script type="text/javascript">
-            var is_mobile = false;
+            let is_mobile = false;
             if( jQuery( window ).width() < <?php echo intval( $breakpoint ); ?> ) {
                 is_mobile = true;
             }
             if ( ! is_mobile ) {
-                var page_sortablewidgets = '<?php echo esc_js( $page ); ?>';
+                let page_sortablewidgets = '<?php echo esc_js( $page ); ?>';
                 jQuery( document ).ready( function( $ ) {
-                    var wgIds = [];
+                    let wgIds = [];
                     jQuery( ".mainwp-widget" ).each( function () {
                         wgIds.push( jQuery( this ).attr('id') );
                     } );
@@ -1697,8 +1697,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     } ).data('gridster');
 
                     mainwp_overview_gridster_reorder = function( $gridObj ){
-                        var orders = $gridObj.serialize();
-                        var postVars = {
+                        let orders = $gridObj.serialize();
+                        let postVars = {
                             action:'mainwp_widgets_order',
                             page: page_sortablewidgets,
                             order:JSON.stringify(orders),

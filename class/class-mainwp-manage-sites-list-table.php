@@ -1071,8 +1071,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( {
                     allowMultiple: true,
                     onHide: function () {
-                        var val = jQuery( '#mainwp_default_sites_per_page' ).val();
-                        var saved = jQuery( '#mainwp_default_sites_per_page' ).attr( 'saved-value' );
+                        let val = jQuery( '#mainwp_default_sites_per_page' ).val();
+                        let saved = jQuery( '#mainwp_default_sites_per_page' ).attr( 'saved-value' );
                         if ( saved != val ) {
                             jQuery( '#mainwp-manage-sites-table' ).DataTable().page.len( val );
                             jQuery( '#mainwp-manage-sites-table' ).DataTable().state.save();
@@ -1089,7 +1089,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 return false;
             };
 
-            var responsive = <?php echo esc_js( $table_features['responsive'] ); ?>;
+            let responsive = <?php echo esc_js( $table_features['responsive'] ); ?>;
             if( jQuery( window ).width() > 1140 ) {
                 responsive = false;
             }
@@ -1152,10 +1152,10 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         $manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).on( 'processing.dt', function ( e, settings, processing ) {
                             jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
                             if (!processing) {
-                                var tb = jQuery( '#mainwp-manage-sites-table' );
+                                let tb = jQuery( '#mainwp-manage-sites-table' );
                                 tb.find( 'th[cell-cls]' ).each( function(){
-                                    var ceIdx = this.cellIndex;
-                                    var cls = jQuery( this ).attr( 'cell-cls' );
+                                    let ceIdx = this.cellIndex;
+                                    let cls = jQuery( this ).attr( 'cell-cls' );
                                     jQuery( '#mainwp-manage-sites-table tr' ).each(function(){
                                         jQuery(this).find( 'td:eq(' + ceIdx + ')' ).addClass(cls);
                                     } );
@@ -1178,7 +1178,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 );
                                 },
                                 "dataSrc": function ( json ) {
-                                    for ( var i=0, ien=json.data.length ; i < ien ; i++ ) {
+                                    for ( let i=0, ien=json.data.length ; i < ien ; i++ ) {
                                         json.data[i].syncError = json.rowsInfo[i].syncError ? json.rowsInfo[i].syncError : false;
                                         json.data[i].rowClass = json.rowsInfo[i].rowClass;
                                         json.data[i].siteID = json.rowsInfo[i].siteID;
@@ -1264,7 +1264,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         if ( empty( $count ) ) {
                             ?>
                             jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
-                                var col_id = jQuery( this ).attr( 'id' );
+                                let col_id = jQuery( this ).attr( 'id' );
                                 col_id = col_id.replace( "mainwp_show_column_", "" );
                                 try {   
                                     $manage_sites_table.column( '#' + col_id ).visible( false );
@@ -1274,7 +1274,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             } );
 
                             //default columns: Site, Open Admin, URL, Updates, Site Health, Last Sync and Actions.
-                            var cols = ['site','login','url','update','site_health','last_sync','site_actions'];
+                            let cols = ['site','login','url','update','site_health','last_sync','site_actions'];
                             jQuery.each( cols, function ( index, value ) {
                                 try {   
                                     $manage_sites_table.column( '#' + value ).visible( true );
@@ -1286,7 +1286,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         } else {
                             ?>
                             jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
-                                var col_id = jQuery( this ).attr( 'id' );
+                                let col_id = jQuery( this ).attr( 'id' );
                                 col_id = col_id.replace( "mainwp_show_column_", "" );
                                 try {   
                                     $manage_sites_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
@@ -1301,11 +1301,11 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
                 mainwp_manage_sites_filter = function() {
                     <?php if ( ! $optimize ) { ?>
-                        var group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
-                        var status = jQuery( "#mainwp-filter-sites-status" ).dropdown( "get value" );
-                        var isNot = jQuery("#mainwp_is_not_site").dropdown("get value");
-                        var client = jQuery("#mainwp-filter-clients").dropdown("get value");
-                        var params = '';                        
+                        let group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
+                        let status = jQuery( "#mainwp-filter-sites-status" ).dropdown( "get value" );
+                        let isNot = jQuery("#mainwp_is_not_site").dropdown("get value");
+                        let client = jQuery("#mainwp-filter-clients").dropdown("get value");
+                        let params = '';                        
                         params += '&g=' + group;                        
                         params += '&client=' + client;                      
                         if ( status != '' ) {
@@ -1318,7 +1318,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         return false;
                     <?php } else { ?>
                         try {
-                            var defaultFilter = (jQuery( "#mainwp-filter-sites-group" ).dropdown('get value') ==  ''
+                            let defaultFilter = (jQuery( "#mainwp-filter-sites-group" ).dropdown('get value') ==  ''
                             && jQuery("#mainwp-filter-clients").dropdown('get value') == ''
                             && jQuery("#mainwp-filter-sites-status").dropdown('get value') == 'all'
                             && jQuery("#mainwp_is_not_site").dropdown('get value') == '');

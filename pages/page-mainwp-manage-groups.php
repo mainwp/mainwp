@@ -337,7 +337,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     <?php endif; ?>
                 </div>
                 <script type="text/javascript">
-                var responsive = true;
+                let responsive = true;
                 if( jQuery( window ).width() > 1140 ) {
                     responsive = false;
                 }

@@ -773,7 +773,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             jQuery( document ).ready( function () {
                 jQuery( '.ui.checkbox.not-auto-init.site_preview' ).checkbox( {
                     onChecked   : function() {
-                        var $chk = jQuery( this );
+                        let $chk = jQuery( this );
                         jQuery( '#mainwp-monitoring-sites-site-preview-screen-options-modal' ).modal( {
                             allowMultiple: true, // multiple modals.
                             width: 100,
@@ -788,7 +788,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         jQuery('input[name=mainwp_default_manage_clients_per_page]').val(25);
                         jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
                         //default columns.
-                        var cols = ['name','email','phone','websites'];
+                        let cols = ['name','email','phone','websites'];
                         jQuery.each( cols, function ( index, value ) {
                             jQuery('.mainwp_hide_wpmenu_checkboxes input[id="mainwp_show_column_' + value + '"]').prop( 'checked', true );
                         } );
@@ -1720,7 +1720,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         }
                     }
 
-                    var current_iconObj;
+                    let current_iconObj;
 
                     jQuery(document).on('click', '.mainwp-add-edit-client-icon-customable', function () {
                         current_iconObj = jQuery(this);
@@ -1768,9 +1768,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     });
 
                     mainwp_update_custom_icon_client = function( iconObj ){
-                        var deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
-                        var iconItemId = iconObj.attr('iconItemId');
-                        var iconFileSlug = iconObj.attr('iconFileSlug'); // to support delete file when iconItemId = 0.
+                        let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
+                        let iconItemId = iconObj.attr('iconItemId');
+                        let iconFileSlug = iconObj.attr('iconFileSlug'); // to support delete file when iconItemId = 0.
 
                         // upload/delete lient icon action. 
                         mainwp_upload_custom_types_icon(iconObj, 'mainwp_add_edit_client_upload_client_icon', iconItemId, iconFileSlug, deleteIcon, function(response){
@@ -1781,13 +1781,13 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                     jQuery('#mainwp_add_edit_client_uploaded_icon_hidden').val('');
                                 }
                             }
-                            var deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false; // to delete.
+                            let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false; // to delete.
                             if(deleteIcon){
                                 jQuery('#mainwp_add_edit_client_upload_custom_icon').hide();
                             } else if (jQuery('#mainwp_add_edit_client_upload_custom_icon').length > 0) {
                                 if (typeof response.iconfile !== undefined) {
-                                    var icon_img = typeof response.iconimg !== undefined ? response.iconimg : '';
-                                    var icon_src = typeof response.iconsrc !== undefined ? response.iconsrc : '';
+                                    let icon_img = typeof response.iconimg !== undefined ? response.iconimg : '';
+                                    let icon_src = typeof response.iconsrc !== undefined ? response.iconsrc : '';
                                     iconObj.attr('icon-src', icon_src);
                                     iconObj.attr('iconFileSlug', response.iconfile); // to support delete file when iconItemId = 0.
                                     jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', icon_src);
@@ -1804,13 +1804,13 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     }
 
                     mainwp_update_custom_icon_contact = function( iconObj ){
-                        var deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
-                        var iconItemId = iconObj.attr('iconItemId');
-                        var iconFileSlug = iconObj.attr('iconFileSlug'); // to support delete file when iconItemId = 0.
+                        let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
+                        let iconItemId = iconObj.attr('iconItemId');
+                        let iconFileSlug = iconObj.attr('iconFileSlug'); // to support delete file when iconItemId = 0.
 
                         // upload/delete lient icon action. 
                         mainwp_upload_custom_types_icon(iconObj, 'mainwp_add_edit_contact_upload_contact_icon', iconItemId, iconFileSlug, deleteIcon, function(response){
-                            var parent = jQuery(iconObj).closest('.mainwp_edit_clients_contact_uploaded_icon_wrapper');
+                            let parent = jQuery(iconObj).closest('.mainwp_edit_clients_contact_uploaded_icon_wrapper');
 
                             if (jQuery('#mainwp_add_edit_client_uploaded_icon_hidden').length > 0) {
                                 if (typeof response.iconfile !== undefined) {
@@ -1819,13 +1819,13 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                     jQuery(parent).find('.mainwp_add_edit_contact_uploaded_icon_hidden').val('');
                                 }
                             }
-                            var deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false; // to delete.
+                            let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false; // to delete.
                             if(deleteIcon){
                                 jQuery(parent).find('.mainwp_add_edit_contact_upload_custom_icon').hide();
                             } else if (jQuery(parent).find('.mainwp_add_edit_contact_upload_custom_icon').length > 0) {
                                 if (typeof response.iconfile !== undefined) {
-                                    var icon_img = typeof response.iconimg !== undefined ? response.iconimg : '';
-                                    var icon_src = typeof response.iconsrc !== undefined ? response.iconsrc : '';
+                                    let icon_img = typeof response.iconimg !== undefined ? response.iconimg : '';
+                                    let icon_src = typeof response.iconsrc !== undefined ? response.iconsrc : '';
                                     iconObj.attr('icon-src', icon_src);
                                     iconObj.attr('iconFileSlug', response.iconfile); // to support delete file when iconItemId = 0.
                                     jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', icon_src);

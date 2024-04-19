@@ -104,7 +104,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
 
                 mainwp_common_filter_load_segments = function () {
                     jQuery('#mainwp-common-filter-segment-select-fields').hide();
-                    var data = mainwp_secure_data({
+                    let data = mainwp_secure_data({
                         action: 'mainwp_manage_sites_filter_load_segments',
                     });
                     jQuery('#mainwp-common-filter-edit-segment-status').html('<i class="notched circle loading icon"></i> ' + __('Loading segments. Please wait...')).show();
@@ -126,14 +126,14 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
 
                     mainwp_common_filter_hide_segments_message();
 
-                    var seg_name = jQuery('#mainwp-common-filter-edit-segment-name').val().trim();
+                    let seg_name = jQuery('#mainwp-common-filter-edit-segment-name').val().trim();
                     
                     if('' == seg_name){
                         jQuery('#mainwp-common-filter-edit-segment-status').html(__('Please enter segment name.')).addClass('red').show();
                         return false;
                     }
 
-                    var data = mainwp_secure_data({
+                    let data = mainwp_secure_data({
                         action: 'mainwp_manage_sites_filter_save_segment',
                         name: seg_name,
                         seg_is_not: $( '#mainwp-sites-filters-row #mainwp_is_not_site').dropdown('get value'),
@@ -163,14 +163,14 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
 
                 jQuery('#mainwp-common-filter-select-segment-choose-button').on( 'click', function () {
                     mainwp_common_filter_hide_segments_message();
-                    var seg_id = jQuery( '#mainwp-common-filter-segment-select-fields .ui.dropdown').dropdown('get value');
-                    var seg_values = '';
+                    let seg_id = jQuery( '#mainwp-common-filter-segment-select-fields .ui.dropdown').dropdown('get value');
+                    let seg_values = '';
                     if('' != seg_id ) {
                         seg_values = jQuery( '#mainwp-common-filter-segment-select-fields select > option[value="' +seg_id+ '"]').attr('segment-filters');
                     }
-                    var valErr = true;
-                    var arrVal = '';
-                    var fieldsAllows = [                        
+                    let valErr = true;
+                    let arrVal = '';
+                    let fieldsAllows = [                        
                         'seg_is_not',
                         'seg_site_tags',
                         'seg_site_status',
@@ -216,8 +216,8 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
 
                 jQuery('#mainwp-common-filter-select-segment-delete-button').on( 'click', function () {
                     mainwp_common_filter_hide_segments_message();
-                    var delBtn = this;
-                    var seg_id = jQuery( '#mainwp-common-filter-segment-select-fields .ui.dropdown').dropdown('get value');
+                    let delBtn = this;
+                    let seg_id = jQuery( '#mainwp-common-filter-segment-select-fields .ui.dropdown').dropdown('get value');
                     if('' == seg_id){
                         return false;
                     }
@@ -227,7 +227,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                     }
 
                     jQuery(seg_id).attr('running', 'yes');
-                    var data = mainwp_secure_data({
+                    let data = mainwp_secure_data({
                         action: 'mainwp_manage_sites_filter_delete_segment',
                         seg_id: seg_id,
                     });

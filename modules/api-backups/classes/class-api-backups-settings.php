@@ -1120,7 +1120,7 @@ class Api_Backups_Settings {
             jQuery( document ).ready( function() {
 
                 // Check if cPanel or Plesk is selected when page loads.
-                var dropdown_selection = jQuery("#mainwp_managesites_edit_module_api_backups_provider" ).val();
+                let dropdown_selection = jQuery("#mainwp_managesites_edit_module_api_backups_provider" ).val();
                 if ( dropdown_selection === '4' ) {
                     jQuery('.mainwp_cpanel_menu_container').show();
                     jQuery('.mainwp_plesk_menu_container').hide();
@@ -1146,7 +1146,7 @@ class Api_Backups_Settings {
                 // Check if cPanel is selected when using dropdown.
                 jQuery( "#mainwp_managesites_edit_module_api_backups_provider" ).on( "change", function() {
 
-                    var selected = jQuery(this).val();
+                    let selected = jQuery(this).val();
 
                     if ( selected === '4') {
                         jQuery( '.mainwp_cpanel_menu_container').show();

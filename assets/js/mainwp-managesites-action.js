@@ -97,9 +97,10 @@ mainwp_managesites_doaction = function (action) {
 mainwp_managesites_doaction_open = function (action) {
   jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked').each(function () {
     let row = jQuery(this).closest('tr');
+    let url = '';
     switch (action) {
       case 'open_wpadmin':
-        let url = row.find('a.open_newwindow_wpadmin').attr('href');
+        url = row.find('a.open_newwindow_wpadmin').attr('href');
         window.open(url, '_blank');
         break;
       case 'open_frontpage':
@@ -352,11 +353,10 @@ mainwp_managesites_bulk_refresh_favico = function (siteIds) {
         excludeIds.push(el);
       }
     });
-    for (let i = 0; i < excludeIds.length; i++) {
-      dashboard_update_site_hide(excludeIds[i]);
+    for (let id of excludeIds ) {
+      dashboard_update_site_hide(id);
     }
     allWebsiteIds = selectedIds;
-    //jQuery('#refresh-status-total').text(allWebsiteIds.length);
   }
 
   let nrOfWebsites = allWebsiteIds.length;
@@ -366,9 +366,9 @@ mainwp_managesites_bulk_refresh_favico = function (siteIds) {
 
   let siteNames = {};
 
-  for (let i = 0; i < allWebsiteIds.length; i++) {
-    dashboard_update_site_status(allWebsiteIds[i], '<i class="clock outline icon"></i>');
-    siteNames[allWebsiteIds[i]] = jQuery('.sync-site-status[siteid="' + allWebsiteIds[i] + '"]').attr('niceurl');
+  for (let id of allWebsiteIds ) {
+    dashboard_update_site_status(id, '<i class="clock outline icon"></i>');
+    siteNames[id] = jQuery('.sync-site-status[siteid="' + id + '"]').attr('niceurl');
   }
   let initData = {
     progressMax: nrOfWebsites,
@@ -457,8 +457,8 @@ mainwp_managesites_bulk_suspend_status = function (siteIds, status) {
         excludeIds.push(el);
       }
     });
-    for (let i = 0; i < excludeIds.length; i++) {
-      dashboard_update_site_hide(excludeIds[i]);
+    for (let id of excludeIds) {
+      dashboard_update_site_hide(id);
     }
     allWebsiteIds = selectedIds;
   }
@@ -470,9 +470,9 @@ mainwp_managesites_bulk_suspend_status = function (siteIds, status) {
 
   let siteNames = {};
 
-  for (let i = 0; i < allWebsiteIds.length; i++) {
-    dashboard_update_site_status(allWebsiteIds[i], '<i class="clock outline icon"></i>');
-    siteNames[allWebsiteIds[i]] = jQuery('.sync-site-status[siteid="' + allWebsiteIds[i] + '"]').attr('niceurl');
+  for (let id of allWebsiteIds) {
+    dashboard_update_site_status(id, '<i class="clock outline icon"></i>');
+    siteNames[id] = jQuery('.sync-site-status[siteid="' + id + '"]').attr('niceurl');
   }
   let initData = {
     progressMax: nrOfWebsites,

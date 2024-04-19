@@ -1741,7 +1741,7 @@ window.wp = window.wp || {};
 })(jQuery);
 
 // Align theme browser thickbox
-var tb_position;
+let tb_position;
 jQuery(function($) {
     tb_position = function () {
         let tbWindow = $('#TB_window'),

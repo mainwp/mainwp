@@ -132,7 +132,7 @@ class Log_Graph_Status_Widget {
         
         <script type="text/javascript">
             jQuery( document ).ready( function() {
-                var options = {
+                let options = {
                     chart: { 
                         type: 'bar'
                     },
@@ -163,7 +163,7 @@ class Log_Graph_Status_Widget {
                         theme: 'dark'
                     },
                 }
-                var status = new ApexCharts(document.querySelector("#mainwp-module-log-chart-status-wrapper"), options);
+                let status = new ApexCharts(document.querySelector("#mainwp-module-log-chart-status-wrapper"), options);
                 setTimeout(() => {
                     status.render();
                 }, 1000);

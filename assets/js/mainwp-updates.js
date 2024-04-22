@@ -1683,7 +1683,7 @@ let updatesoverview_upgrade_all_int = function (pSitesToUpdate, pSitesToUpgrade,
     updatesoverview_upgrade_all_loop_next();
 };
 
-;let updatesoverview_upgrade_all_loop_next = function () {
+let updatesoverview_upgrade_all_loop_next = function () {
     while (bulkTaskRunning && (currentThreads < maxThreads) && (websitesLeft > 0)) {
         updatesoverview_upgrade_all_upgrade_next();
     }

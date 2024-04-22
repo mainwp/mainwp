@@ -293,7 +293,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param array $print_cats categories to print.
      * @param array $check_printed_cats_names check printed cats slugs.
      */
-    public static function print_catergories_tree( $print_cats, &$check_printed_cats_names = array() ) {
+    public static function print_catergories_tree( $print_cats, &$check_printed_cats_names = array() ) { // phpcs:ignore Squiz.Functions.MultiLineFunctionDeclaration.ContentAfterBrace -- NOSONAR - complexity.
         foreach ( $print_cats as $item ) {
 
             $level   = isset( $item['level'] ) ? $item['level'] : 0;
@@ -1326,7 +1326,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $temporary_file = download_url( $img_url );
 
         if ( is_wp_error( $temporary_file ) ) {
-            throw new \Exception( 'Error: ' . $temporary_file->get_error_message() );  //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw new MainWP_Exception( 'Error: ' . $temporary_file->get_error_message() );  //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         } else {
             $upload_dir     = wp_upload_dir();
             $local_img_path = $upload_dir['path'] . DIRECTORY_SEPARATOR . basename( $img_url );

@@ -863,9 +863,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                         let status = jQuery( "#mainwp-filter-sites-status" ).dropdown( "get value" );
                         let client = jQuery("#mainwp-filter-clients").dropdown("get value");
 
-                        let params = '';                        
-                        params += '&g=' + group;                        
-                        params += '&client=' + client;                      
+                        let params = '';
+                        params += '&g=' + group;
+                        params += '&client=' + client;
                         if ( status != '' )
                             params += '&status=' + status;
 

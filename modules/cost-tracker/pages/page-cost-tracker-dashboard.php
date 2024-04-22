@@ -670,7 +670,7 @@ class Cost_Tracker_Dashboard {
 
             mainwp_module_cost_tracker_manage_costs_filter = function() {
                 try {
-                    let emptyFilter =  ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-sites').dropdown('get value') ) && 
+                    let emptyFilter =  ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-sites').dropdown('get value') ) &&
                     ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-cats').dropdown('get value') ) &&
                     ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-status').dropdown('get value') ) &&
                     ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-license-types').dropdown('get value') ) &&
@@ -1567,7 +1567,7 @@ class Cost_Tracker_Dashboard {
                     let valErr = true;
                     let arrVal = '';
 
-                    let fieldsAllows = [                        
+                    let fieldsAllows = [
                         'seg_sites',
                         'seg_clients',
                         'seg_prods_types',

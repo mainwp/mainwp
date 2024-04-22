@@ -202,7 +202,7 @@ mainwp_post_posting_start_specific = function (siteToPosting) {
     site_id: jQuery(siteToPosting).attr('site-id'),
     count: bulkInstallDone,
     total: bulkInstallTotal,
-    delete_bulkpost: (bulkInstallDone == bulkInstallTotal) ? true : false
+    delete_bulkpost: (bulkInstallDone == bulkInstallTotal)
   });
   siteToPosting.find('.progress').html('<i class="notched circle loading icon"></i>');
   jQuery.post(ajaxurl, data, function (response) {
@@ -806,7 +806,7 @@ mainwp_managesites_bulk_check_abandoned = function (siteIds, which) {
   let nrOfWebsites = allWebsiteIds.length;
 
   if (nrOfWebsites == 0)
-    return false;
+    return;
 
   let siteNames = {};
 
@@ -882,7 +882,6 @@ mainwp_managesites_check_abandoned_int = function (siteid, which) {
     }(siteid),
     dataType: 'json'
   });
-  return false;
 };
 
 /**
@@ -1788,9 +1787,9 @@ let mainwp_managesites_sync_extension_start_next = function (siteId) {
 
 let mainwp_managesites_sync_extension_start_specific = function (pPluginToInstall, pSiteId) {
   pPluginToInstall.attr('status', 'progress');
-  let syncGlobalSettings = pPluginToInstall.find(".sync-global-options input[type='checkbox']:checked").length > 0 ? true : false;
-  let install_plugin = pPluginToInstall.find(".sync-install-plugin input[type='checkbox']:checked").length > 0 ? true : false;
-  let apply_settings = pPluginToInstall.find(".sync-options input[type='checkbox']:checked").length > 0 ? true : false;
+  let syncGlobalSettings = pPluginToInstall.find(".sync-global-options input[type='checkbox']:checked").length > 0;
+  let install_plugin = pPluginToInstall.find(".sync-install-plugin input[type='checkbox']:checked").length > 0;
+  let apply_settings = pPluginToInstall.find(".sync-options input[type='checkbox']:checked").length > 0;
 
   if (syncGlobalSettings) {
     mainwp_extension_apply_plugin_settings(pPluginToInstall, pSiteId, true);
@@ -1844,7 +1843,7 @@ let mainwp_extension_prepareinstallplugin = function (pPluginToInstall, pSiteId)
         if ((response.ok != undefined) && (response.ok[pSiteId] != undefined)) {
           syc_msg = __('Installation successful!');
           statusEl.html(syc_msg);
-          apply_settings = pPluginToInstall.find(".sync-options input[type='checkbox']:checked").length > 0 ? true : false;
+          apply_settings = pPluginToInstall.find(".sync-options input[type='checkbox']:checked").length > 0;
           if (apply_settings) {
             mainwp_extension_apply_plugin_settings(pPluginToInstall, pSiteId, false);
           }
@@ -2135,8 +2134,8 @@ let managesites_remove = function (obj) {
 
 jQuery(function () {
 
-  jQuery(document).on('click', '#mainwp_managesites_add', function (event) {
-    mainwp_managesites_add(event);
+  jQuery(document).on('click', '#mainwp_managesites_add', function () {
+    mainwp_managesites_add();
   });
 
   jQuery(document).on('click', '#mainwp_managesites_bulkadd', function () {
@@ -2149,13 +2148,13 @@ jQuery(function () {
   });
 
   // Trigger Connection Test (Add Site Page)
-  jQuery(document).on('click', '#mainwp_managesites_test', function (event) {
-    mainwp_managesites_test(event);
+  jQuery(document).on('click', '#mainwp_managesites_test', function () {
+    mainwp_managesites_test();
   });
 
   // Trigger Connection Test (Edit Site Page)
-  jQuery(document).on('click', '#mainwp_managesites_edit_test', function (event) {
-    mainwp_managesites_edit_test(event);
+  jQuery(document).on('click', '#mainwp_managesites_edit_test', function () {
+    mainwp_managesites_edit_test();
   });
 
 });
@@ -2164,8 +2163,8 @@ jQuery(function () {
  * Add new user
  */
 jQuery(function () {
-  jQuery(document).on('click', '#bulk_add_createuser', function (event) {
-    mainwp_createuser(event);
+  jQuery(document).on('click', '#bulk_add_createuser', function () {
+    mainwp_createuser();
   });
   jQuery('#bulk_import_createuser').on('click', function () {
     mainwp_bulkupload_users();
@@ -2312,7 +2311,7 @@ jQuery(function () {
       } else {
         let selectedId = /^install-([^-]*)-(.*)$/.exec(selected.attr('id'));
         if (selectedId) {
-          mainwp_install_bulk('plugin', selectedId[2], selected.attr('plugin-name'), selected.attr('plugin-version'));
+          mainwp_install_bulk('plugin', selectedId[2], selected.attr('plugin-name'));
         }
       }
     } else if (act == 'upload') {
@@ -2331,7 +2330,7 @@ jQuery(function () {
       } else {
         let selectedId = /^install-([^-]*)-(.*)$/.exec(selected.attr('id'));
         if (selectedId)
-          mainwp_install_bulk('theme', selectedId[2], selected.attr('theme-name'), selected.attr('theme-version'));
+          mainwp_install_bulk('theme', selectedId[2], selected.attr('theme-name'));
       }
     } else if (act == 'upload') {
       mainwp_upload_bulk('themes');
@@ -3314,7 +3313,7 @@ jQuery(document).on('click', '#mainwp-copy-meta-system-report', function () {
   serverinfo_prepare_download_info(true);
   jQuery("#download-server-information").slideUp();
   try {
-    let successful = document.execCommand('copy');
+    let successful = document.execCommand('copy'); // NOSONAR - still work fine, no alternative.
     let msg = successful ? 'successful' : 'unsuccessful';
     console.log('Copying text command was ' + msg);
   } catch (err) {
@@ -3592,7 +3591,7 @@ let mainwp_non_mainwp_actions_table_bulk_action = function (act) {
     case 'dismiss':
       selector += '#mainwp-manage-non-mainwp-actions-table tbody tr';
       jQuery(selector).addClass('queue');
-      mainwp_non_mainwp_actions_dismiss_start_next(selector, true);
+      mainwp_non_mainwp_actions_dismiss_start_next(selector);
       break;
   }
 }
@@ -3610,10 +3609,9 @@ let mainwp_non_mainwp_actions_dismiss_start_next = function (selector) {
   }
 }
 
-let mainwp_non_mainwp_actions_dismiss_specific = function (pObj, selector, pBulk) {
+let mainwp_non_mainwp_actions_dismiss_specific = function (pObj, selector, bulk) {
   let row = pObj.closest('tr');
   let act_id = jQuery(row).attr('action-id');
-  let bulk = pBulk ? true : false;
 
   if (bulk) {
     bulkInstallCurrentThreads++;
@@ -4131,7 +4129,7 @@ let mainwp_tool_renew_connections_start_specific = function (siteItem) {
     if (response.error) {
       connection_renew_status(siteId, '<span data-inverted="" data-position="left center" data-tooltip="' + response.error + '"><i class="times red icon"></i></span>');
     } else if (response.result == 'success') {
-      connection_renew_status(siteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Renew connnection process completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>', true);
+      connection_renew_status(siteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Renew connnection process completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>');
     } else {
       connection_renew_status(siteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Undefined error.') + '"><i class="times red icon"></i></span>');
 
@@ -4188,7 +4186,7 @@ jQuery(document).on('click', '.mainwp-response-copy-button', function () {
   jQuery('body').append($temp_txtarea);
   $temp_txtarea.val(data).trigger("select");
   try {
-    let successful = document.execCommand('copy');
+    let successful = document.execCommand('copy'); // NOSONAR - still work fine, no alternative.
     let msg = successful ? 'successful' : 'unsuccessful';
     console.log('Copying text command was ' + msg);
   } catch (err) {

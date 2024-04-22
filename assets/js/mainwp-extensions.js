@@ -229,7 +229,7 @@ function mainwp_extensions_activate(pObj, retring) {
         loadingEl.find('.message').html(__('Already activated.'));
         return;
     }
-    
+
     let data = false;
 
     if (retring == true) {
@@ -757,12 +757,11 @@ let mainwp_extension_bulk_install_specific = function (pExtToInstall) {
 
                 statusEl.html('');
 
-                let reg = new RegExp('<mainwp>(.*)</mainwp>');
-                let matches = reg.exec(res_data);
+                let matches = res_data.match('<mainwp>(.*)</mainwp>');
                 let response = '';
 
                 if (matches) {
-                    response_json = matches[1];
+                    let response_json = matches[1];
                     response = JSON.parse(response_json);
                 }
 

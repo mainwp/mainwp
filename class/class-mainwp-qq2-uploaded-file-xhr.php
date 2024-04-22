@@ -52,19 +52,19 @@ class MainWP_QQ2_Uploaded_File_Xhr { // phpcs:ignore Generic.Classes.OpeningBrac
         if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
             if ( ! is_dir( dirname( dirname( dirname( $path ) ) ) ) ) {
                 if ( ! $wp_filesystem->mkdir( dirname( dirname( dirname( $path ) ) ), 0777 ) ) {
-                    throw new \Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
+                    throw new MainWP_Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
                 }
             }
 
             if ( ! is_dir( dirname( dirname( $path ) ) ) ) {
                 if ( ! $wp_filesystem->mkdir( dirname( dirname( $path ) ), 0777 ) ) {
-                    throw new \Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
+                    throw new MainWP_Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
                 }
             }
 
             if ( ! is_dir( dirname( $path ) ) ) {
                 if ( ! $wp_filesystem->mkdir( dirname( $path ), 0777 ) ) {
-                    throw new \Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
+                    throw new MainWP_Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
                 }
             }
 
@@ -84,7 +84,7 @@ class MainWP_QQ2_Uploaded_File_Xhr { // phpcs:ignore Generic.Classes.OpeningBrac
         }
 
         if ( ! file_exists( $path ) ) {
-            throw new \Exception( 'Unable to save the file to the MainWP upload directory, please check your system configuration.' );
+            throw new MainWP_Exception( 'Unable to save the file to the MainWP upload directory, please check your system configuration.' );
         }
 
         return true;
@@ -107,7 +107,7 @@ class MainWP_QQ2_Uploaded_File_Xhr { // phpcs:ignore Generic.Classes.OpeningBrac
         if ( isset( $_SERVER['CONTENT_LENGTH'] ) ) {
             return (int) $_SERVER['CONTENT_LENGTH'];
         } else {
-            throw new \Exception( 'Getting content length is not supported.' );
+            throw new MainWP_Exception( 'Getting content length is not supported.' );
         }
     }
 }

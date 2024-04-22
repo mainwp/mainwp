@@ -253,7 +253,7 @@ class MainWP_Bulk_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
 
         $queryable = true;
         if ( function_exists( 'is_plugin_active' ) ) {
-            $queryable = is_plugin_active( 'mainwp-post-plus-extension/mainwp-post-plus-extension.php' ) ? true : false;
+            $queryable = is_plugin_active( 'mainwp-post-plus-extension/mainwp-post-plus-extension.php' );
         }
 
         $labels = array(

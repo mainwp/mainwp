@@ -862,7 +862,9 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $table_features = apply_filters( 'mainwp_pages_table_fatures', $table_features );
         ?>
         <script type="text/javascript">
-        let responsive = <?php echo esc_html( $table_features['responsive'] ); ?>;
+        if(typeof responsive !== 'undefined' ){
+            let responsive = <?php echo esc_html( $table_features['responsive'] ); // to fix. ?>;
+        }
         if( jQuery( window ).width() > 1140 ) {
             responsive = false;
         }

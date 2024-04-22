@@ -76,12 +76,12 @@ class Log_Author {
             default:
                 if ( ! empty( $this->user ) && 0 !== $this->user->ID ) {
                     if ( is_null( $this->user->$name ) ) {
-                        throw new \Exception( "Unrecognized magic '$name'" ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                        throw new MainWP_Exception( "Unrecognized magic '$name'" ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                     }
                     return $this->user->$name;
                 }
 
-                throw new \Exception( 'User not found.' );
+                throw new MainWP_Exception( 'User not found.' );
         }
     }
 

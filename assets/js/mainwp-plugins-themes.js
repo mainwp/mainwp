@@ -753,82 +753,82 @@ let manage_plugins_upgrade = function (slug, websiteid) {
     }, false, 1);
 };
 
+let manage_plugins_upgrade_continueAfterBackup = function (slug, websiteId, websiteHolder) {
+    console.log('plugin upgrade continue');
+    return function () {
+        let data = mainwp_secure_data({
+            action: 'mainwp_upgradeplugintheme',
+            websiteId: websiteId,
+            type: 'plugin',
+            slug: slug
+        });
+        jQuery.ajax({
+            type: "POST",
+            url: ajaxurl,
+            data: data,
+            success: function (siteHolder) {
+                return function (response) {
+                    if (response.error) {
+                        let extErr = getErrorMessageInfo(response.error, 'ui')
+                        siteHolder.find('.column.update-column').html(extErr);
+                    } else {
+                        let res = response.result;
+                        let res_error = response.result_error;
+                        if (res[slug]) {
+                            siteHolder.attr('updated', 1);
+                            siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
+                        } else if (res_error[slug]) {
+                            siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + res_error[slug] + '"><i class="red times icon"></i></span>');
+                        } else {
+                            siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
+                        }
+                        setTimeout(function () {
+                            mainwp_fetch_plugins();
+                        }, 3000);
+                    }
+                }
+            }(websiteHolder),
+            tryCount: 0,
+            retryLimit: 3,
+            endError: function (siteHolder) {
+                return function () {
+                    siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
+                }
+            }(websiteHolder),
+            error: function (xhr) {
+                this.tryCount++;
+                if (this.tryCount >= this.retryLimit) {
+                    this.endError();
+                    return;
+                }
+
+                setTimeout((pRqst, pXhr) => {
+                    if (pXhr.status == 404) {
+                        //handle error
+                        jQuery.ajax(pRqst);
+                    } else if (pXhr.status == 500) {
+                        //handle error
+                    } else {
+                        //handle error
+                    }
+                }, 500, this, xhr);
+            },
+            dataType: 'json'
+        });
+    }();
+}
+
 
 let manage_plugins_upgrade_int = function (slug, websiteId) {
     let websiteHolder = jQuery('.mainwp-manage-plugin-item-website[plugin-slug="' + slug + '"][site-id="' + websiteId + '"]');
     websiteHolder.find('.column.update-column').html('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
 
-    let manage_plugins_upgrade_continueAfterBackup = function () {
-        console.log('plugin upgrade continue');
-        return function () {
-            let data = mainwp_secure_data({
-                action: 'mainwp_upgradeplugintheme',
-                websiteId: websiteId,
-                type: 'plugin',
-                slug: slug
-            });
-            jQuery.ajax({
-                type: "POST",
-                url: ajaxurl,
-                data: data,
-                success: function (siteHolder) {
-                    return function (response) {
-                        if (response.error) {
-                            let extErr = getErrorMessageInfo(response.error, 'ui')
-                            siteHolder.find('.column.update-column').html(extErr);
-                        } else {
-                            let res = response.result;
-                            let res_error = response.result_error;
-                            if (res[slug]) {
-                                siteHolder.attr('updated', 1);
-                                siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
-                            } else if (res_error[slug]) {
-                                siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + res_error[slug] + '"><i class="red times icon"></i></span>');
-                            } else {
-                                siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
-                            }
-                            setTimeout(function () {
-                                mainwp_fetch_plugins();
-                            }, 3000);
-                        }
-                    }
-                }(websiteHolder),
-                tryCount: 0,
-                retryLimit: 3,
-                endError: function (siteHolder) {
-                    return function () {
-                        siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
-                    }
-                }(websiteHolder),
-                error: function (xhr) {
-                    this.tryCount++;
-                    if (this.tryCount >= this.retryLimit) {
-                        this.endError();
-                        return;
-                    }
-
-                    setTimeout( (pRqst, pXhr) => {
-                        if (pXhr.status == 404) {
-                            //handle error
-                            jQuery.ajax(pRqst);
-                        } else if (pXhr.status == 500) {
-                            //handle error
-                        } else {
-                            //handle error
-                        }
-                    }, 500, this, xhr );
-                },
-                dataType: 'json'
-            });
-
-            manage_plugins_upgrade_continueAfterBackup = undefined;
-        }();
+    let _callbackAfterBackup = function () {
+        return manage_plugins_upgrade_continueAfterBackup(slug, websiteId, websiteHolder);
     };
 
     if (mainwpParams['disable_checkBackupBeforeUpgrade'] == true) {
-        if (manage_plugins_upgrade_continueAfterBackup != undefined) {
-            manage_plugins_upgrade_continueAfterBackup();
-        }
+        _callbackAfterBackup();
         return false;
     }
 
@@ -836,7 +836,7 @@ let manage_plugins_upgrade_int = function (slug, websiteId) {
     let siteNames = [];
     siteNames[websiteId] = jQuery(websiteHolder).attr('site-name');
 
-    return mainwp_manages_checkBackups(sitesToUpdate, siteNames, manage_plugins_upgrade_continueAfterBackup);
+    return mainwp_manages_checkBackups(sitesToUpdate, siteNames, _callbackAfterBackup);
 };
 
 
@@ -901,76 +901,75 @@ let manage_themes_upgrade_theme = function (slug, websiteid) {
     }, false, 1);
 };
 
+let manage_themes_upgrade_continueAfterBackup = function( slug, websiteId, websiteHolder ){
+    console.log('theme upgrade continue');
+    return function () {
+        let data = mainwp_secure_data({
+            action: 'mainwp_upgradeplugintheme',
+            websiteId: websiteId,
+            type: 'theme',
+            slug: slug
+        });
+        jQuery.ajax({
+            type: "POST",
+            url: ajaxurl,
+            data: data,
+            success: function (pSlug, siteHolder) {
+                return function (response) {
+                    if (response.error) {
+                        let extErr = getErrorMessageInfo(response.error, 'ui')
+                        siteHolder.find('.column.update-column').html(extErr);
+                    } else {
+                        let res = response.result;
+                        if (res[pSlug]) {
+                            siteHolder.attr('updated', 1);
+                            siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
+                        } else {
+                            siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
+                        }
+                        setTimeout(function () {
+                            mainwp_fetch_themes();
+                        }, 3000);
+                    }
+                }
+            }(slug, websiteHolder),
+            tryCount: 0,
+            retryLimit: 3,
+            endError: function (siteHolder) {
+                return function () {
+                    siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
+                }
+            }(websiteHolder),
+            error: function (xhr) {
+                this.tryCount++;
+                if (this.tryCount >= this.retryLimit) {
+                    this.endError();
+                    return;
+                }
+                setTimeout((pRqst, pXhr) => {
+                    if (pXhr.status == 404) {
+                        //handle error
+                        jQuery.ajax(pRqst);
+                    } else if (pXhr.status == 500) {
+                        //handle error
+                    } else {
+                        //handle error
+                    }
+                }, 500, this, xhr);
+            },
+            dataType: 'json'
+        });
+    }();
+}
 
 let manage_themes_upgrade_int = function (slug, websiteId) {
     let websiteHolder = jQuery('.mainwp-manage-theme-item-website[theme-slug="' + slug + '"][site-id="' + websiteId + '"]');
     websiteHolder.find('.column.update-column').html('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
-    manage_themes_upgrade_continueAfterBackup = function () {
-        console.log('theme upgrade continue');
-        return function () {
-            let data = mainwp_secure_data({
-                action: 'mainwp_upgradeplugintheme',
-                websiteId: websiteId,
-                type: 'theme',
-                slug: slug
-            });
-            jQuery.ajax({
-                type: "POST",
-                url: ajaxurl,
-                data: data,
-                success: function (pSlug, siteHolder) {
-                    return function (response) {
-                        if (response.error) {
-                            let extErr = getErrorMessageInfo(response.error, 'ui')
-                            siteHolder.find('.column.update-column').html(extErr);
-                        } else {
-                            let res = response.result;
-                            if (res[pSlug]) {
-                                siteHolder.attr('updated', 1);
-                                siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
-                            } else {
-                                siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
-                            }
-                            setTimeout(function () {
-                                mainwp_fetch_themes();
-                            }, 3000);
-                        }
-                    }
-                }(slug, websiteHolder),
-                tryCount: 0,
-                retryLimit: 3,
-                endError: function (siteHolder) {
-                    return function () {
-                        siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
-                    }
-                }(websiteHolder),
-                error: function (xhr) {
-                    this.tryCount++;
-                    if (this.tryCount >= this.retryLimit) {
-                        this.endError();
-                        return;
-                    }
-                    setTimeout( (pRqst, pXhr) => {
-                        if (pXhr.status == 404) {
-                            //handle error
-                            jQuery.ajax(pRqst);
-                        } else if (pXhr.status == 500) {
-                            //handle error
-                        } else {
-                            //handle error
-                        }
-                    }, 500, this, xhr);
-                },
-                dataType: 'json'
-            });
-            manage_themes_upgrade_continueAfterBackup = undefined;
-        }();
-    };
+    
+    let _callbackAfterBackup = manage_themes_upgrade_continueAfterBackup( slug, websiteId, websiteHolder );
 
     if (mainwpParams['disable_checkBackupBeforeUpgrade'] == true) {
-        if (manage_themes_upgrade_continueAfterBackup != undefined) {
-            manage_themes_upgrade_continueAfterBackup();
-        }
+        _callbackAfterBackup();
         return false;
     }
 
@@ -978,7 +977,7 @@ let manage_themes_upgrade_int = function (slug, websiteId) {
     let siteNames = [];
     siteNames[websiteId] = jQuery(websiteHolder).attr('site-name');
 
-    return mainwp_manages_checkBackups(sitesToUpdate, siteNames, manage_themes_upgrade_continueAfterBackup);
+    return mainwp_manages_checkBackups(sitesToUpdate, siteNames, _callbackAfterBackup);
 };
 
 

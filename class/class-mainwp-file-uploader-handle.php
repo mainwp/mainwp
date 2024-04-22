@@ -39,10 +39,8 @@ class MainWP_File_Uploader_Handle { // phpcs:ignore Generic.Classes.OpeningBrace
             mkdir( dirname( $path ), 0777, true );
         }
 
-        if ( empty( $_REQUEST['dzchunkbyteoffset'] ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified.
-            if ( file_exists( $path ) ) {
-                unlink( $path ); // first chuck, delete file if existed, to create new file.
-            }
+        if ( empty( $_REQUEST['dzchunkbyteoffset'] ) && file_exists( $path ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified.
+            unlink( $path ); // first chuck, delete file if existed, to create new file.
         }
 
         // to append to file, wp_filesystem put_contents does not support.
@@ -51,7 +49,7 @@ class MainWP_File_Uploader_Handle { // phpcs:ignore Generic.Classes.OpeningBrace
         $moved = file_put_contents( $path, $str, FILE_APPEND );
 
         if ( ! file_exists( $path ) ) {
-            throw new \Exception( 'Unable to save the file to the MainWP upload directory, please check your system configuration.' );
+            throw new MainWP_Exception( 'Unable to save the file to the MainWP upload directory, please check your system configuration.' );
         }
 
 		//phpcs:enable WordPress.WP.AlternativeFunctions

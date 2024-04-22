@@ -627,12 +627,12 @@ class Log_Events_List_Table {
                         let user = jQuery( '#mainwp-module-log-filter-users').dropdown('get value');
                         let dtsstart = jQuery('#mainwp-module-log-filter-dtsstart input[type=text]').val();
                         let dtsstop = jQuery('#mainwp-module-log-filter-dtsstop input[type=text]').val();
-                        let params = '';    
-                        params += '&range=' + encodeURIComponent( range );                      
+                        let params = '';
+                        params += '&range=' + encodeURIComponent( range );
                         params += '&group=' + encodeURIComponent( group );
                         params += '&client=' + encodeURIComponent( client );
                         params += '&user=' + encodeURIComponent( user );
-                        params += '&dtsstart=' + encodeURIComponent( dtsstart );    
+                        params += '&dtsstart=' + encodeURIComponent( dtsstart );
                         params += '&dtsstop=' + encodeURIComponent( dtsstop );
                         params += '&_insights_opennonce=' + mainwpParams._wpnonce;
                         window.location = 'admin.php?page=InsightsOverview' + params;

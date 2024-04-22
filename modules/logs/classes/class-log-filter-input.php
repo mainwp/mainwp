@@ -72,7 +72,7 @@ class Log_Filter_Input {
 		// @codingStandardsIgnoreEnd
 
         if ( is_null( $super ) ) {
-            throw new \Exception( esc_html__( 'Invalid use, type must be one of INPUT_* family.', 'mainwp' ) );
+            throw new MainWP_Exception( esc_html__( 'Invalid use, type must be one of INPUT_* family.', 'mainwp' ) );
         }
 
         $var = isset( $super[ $variable_name ] ) ? $super[ $variable_name ] : null;
@@ -97,7 +97,7 @@ class Log_Filter_Input {
         // Only filter value if it is not null.
         if ( isset( $var_value ) && $filter && FILTER_DEFAULT !== $filter ) {
             if ( ! isset( self::$filter_callbacks[ $filter ] ) ) {
-                throw new \Exception( esc_html__( 'Filter not supported.', 'mainwp' ) );
+                throw new MainWP_Exception( esc_html__( 'Filter not supported.', 'mainwp' ) );
             }
 
             $filter_callback = self::$filter_callbacks[ $filter ];

@@ -304,7 +304,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         try {
             if ( ! isset( $_POST['siteId'] ) ) {
-                throw new \Exception( esc_html__( 'No site selected!', 'mainwp' ) );
+                throw new MainWP_Exception( esc_html__( 'No site selected!', 'mainwp' ) );
             }
             $siteId      = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : '';
             $fileName    = isset( $_POST['fileName'] ) ? sanitize_text_field( wp_unslash( $_POST['fileName'] ) ) : '';
@@ -313,7 +313,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
             $website = MainWP_DB::instance()->get_website_by_id( $siteId );
             if ( ! $website ) {
-                throw new \Exception( esc_html__( 'No site selected!', 'mainwp' ) );
+                throw new MainWP_Exception( esc_html__( 'No site selected!', 'mainwp' ) );
             }
 
             MainWP_Utility::end_session();
@@ -329,7 +329,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             );
 
             if ( ! isset( $result['size'] ) ) {
-                throw new \Exception( esc_html__( 'Invalid response!', 'mainwp' ) );
+                throw new MainWP_Exception( esc_html__( 'Invalid response!', 'mainwp' ) );
             }
 
             if ( MainWP_Utility::ctype_digit( $result['size'] ) ) {

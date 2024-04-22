@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  *
  * Displays the Client info.
  */
-class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace  -- // NOSONAR.
+class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace  -- NOSONAR - complexity.
 
     /**
      * Method get_class_name()

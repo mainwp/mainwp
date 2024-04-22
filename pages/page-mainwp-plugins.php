@@ -1826,7 +1826,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 jQuery( document ).ready(function () {
                                     jQuery( '#mainwp-search-plugins-form-field' ).on( 'keypress', function(e) {
                                         let search = jQuery( '#mainwp-search-plugins-form-field' ).val();
-                                        let sel_ids = jQuery( '#plugin_install_selected_sites' ).val();                                     
+                                        let sel_ids = jQuery( '#plugin_install_selected_sites' ).val();
                                         if ( '' != sel_ids )
                                             sel_ids = '&selected_sites=' + sel_ids;
                                         let origin   = '<?php echo esc_url( get_admin_url() ); ?>';

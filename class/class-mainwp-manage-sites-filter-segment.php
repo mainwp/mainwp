@@ -155,7 +155,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                     }
                     let valErr = true;
                     let arrVal = '';
-                    let fieldsAllows = [                        
+                    let fieldsAllows = [
                         'seg_is_not',
                         'seg_site_tags',
                         'seg_site_status',

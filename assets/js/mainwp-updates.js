@@ -946,116 +946,122 @@ let updatesoverview_plugins_upgrade_all_update_done = function () {
 
     updatesoverview_plugins_upgrade_all_loop_next();
 };
-let updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noCheck) {
-    updatesoverviewContinueAfterBackup = function (pSlug, pWebsiteId, pBulkMode) {
-        return function () {
-            let slugParts = pSlug.split(',');
-            for (let sid of slugParts) {
-                let websiteHolder = jQuery('.plugins-bulk-updates[plugin_slug="' + sid + '"] tr[site_id="' + pWebsiteId + '"]');
-                if (!websiteHolder.exists()) {
-                    websiteHolder = jQuery('.plugins-bulk-updates[site_id="' + pWebsiteId + '"] tr[plugin_slug="' + sid + '"]');
-                }
-                websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ' + __('Updating. Please wait...'));
+
+let updatesoverview_plugins_upgrade_int_after_backup = function( pSlug, pWebsiteId, pBulkMode ){
+    return function () {
+        let slugParts = pSlug.split(',');
+        for (let sid of slugParts) {
+            let websiteHolder = jQuery('.plugins-bulk-updates[plugin_slug="' + sid + '"] tr[site_id="' + pWebsiteId + '"]');
+            if (!websiteHolder.exists()) {
+                websiteHolder = jQuery('.plugins-bulk-updates[site_id="' + pWebsiteId + '"] tr[plugin_slug="' + sid + '"]');
             }
-
-            let data = mainwp_secure_data({
-                action: 'mainwp_upgradeplugintheme',
-                websiteId: pWebsiteId,
-                type: 'plugin',
-                slug: pSlug
-            });
-            jQuery.ajax({
-                type: "POST",
-                url: ajaxurl,
-                data: data,
-                success: function (pSlug, pWebsiteId, pBulkMode) {
-                    return function (response) {
-                        let slugParts = pSlug.split(',');
-                        let done = false;
-                        for (let sid of slugParts) {
-                            let websiteHolder = jQuery('.plugins-bulk-updates[plugin_slug="' + sid + '"] tr[site_id="' + pWebsiteId + '"]');
-                            if (!websiteHolder.exists()) {
-                                websiteHolder = jQuery('.plugins-bulk-updates[site_id="' + pWebsiteId + '"] tr[plugin_slug="' + sid + '"]');
-                            }
-
-                            if (response.error || response.notices) {
-                                let extErr = getErrorMessageInfo(response.error, 'ui')
-                                if (!done && pBulkMode)
-                                    updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, extErr);
-                                websiteHolder.find('td:last-child').html(extErr);
-                            } else {
-                                let res = response.result;
-                                let res_error = response.result_error;
-                                if (res[sid]) {
-                                    if (!done && pBulkMode)
-                                        updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
-                                    websiteHolder.attr('updated', 1);
-                                    websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
-                                } else if (res_error[sid]) {
-                                    if (!done && pBulkMode)
-                                        updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + res_error[sid] + '"><i class="red times icon"></i></span>');
-                                    websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + res_error[sid] + '"><i class="red times icon"></i></span>');
-                                } else {
-                                    if (!done && pBulkMode)
-                                        updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
-                                    websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
-                                }
-                            }
-                            if (!done && pBulkMode) {
-                                updatesoverview_plugins_upgrade_all_update_done();
-                                done = true;
-                            }
-                        }
-                    }
-                }(pSlug, pWebsiteId, pBulkMode),
-                tryCount: 0,
-                retryLimit: 3,
-                endError: function (pSlug, pWebsiteId, pBulkMode) {
-                    return function () {
-                        let slugParts = pSlug.split(',');
-                        let done = false;
-                        for (let sid of slugParts) {
-                            //Siteview
-                            let websiteHolder = jQuery('div[plugin_slug="' + sid + '"] div[site_id="' + pWebsiteId + '"]');
-                            if (!websiteHolder.exists()) {
-                                websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[plugin_slug="' + sid + '"]');
-                            }
-
-                            if (!done && pBulkMode) {
-                                updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
-                                updatesoverview_plugins_upgrade_all_update_done();
-                                done = true;
-                            }
-                            websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
-                        }
-                    }
-                }(pSlug, pWebsiteId, pBulkMode),
-                error: function (xhr) {
-                    this.tryCount++;
-                    if (this.tryCount >= this.retryLimit) {
-                        this.endError();
-                        return;
-                    }
-
-                    let fnc = function (pRqst, pXhr) {
-                        return function () {
-                            if (pXhr.status == 404) {
-                                //handle error
-                                jQuery.ajax(pRqst);
-                            } else if (pXhr.status == 500) {
-                                //handle error
-                            } else {
-                                //handle error
-                            }
-                        }
-                    }(this, xhr);
-                    setTimeout(fnc, 500);
-                },
-                dataType: 'json'
-            });
-
-            updatesoverviewContinueAfterBackup = undefined;
+            websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ' + __('Updating. Please wait...'));
         }
+
+        let data = mainwp_secure_data({
+            action: 'mainwp_upgradeplugintheme',
+            websiteId: pWebsiteId,
+            type: 'plugin',
+            slug: pSlug
+        });
+        jQuery.ajax({
+            type: "POST",
+            url: ajaxurl,
+            data: data,
+            success: function (pSlug, pWebsiteId, pBulkMode) {
+                return function (response) {
+                    let slugParts = pSlug.split(',');
+                    let done = false;
+                    for (let sid of slugParts) {
+                        let websiteHolder = jQuery('.plugins-bulk-updates[plugin_slug="' + sid + '"] tr[site_id="' + pWebsiteId + '"]');
+                        if (!websiteHolder.exists()) {
+                            websiteHolder = jQuery('.plugins-bulk-updates[site_id="' + pWebsiteId + '"] tr[plugin_slug="' + sid + '"]');
+                        }
+
+                        if (response.error || response.notices) {
+                            let extErr = getErrorMessageInfo(response.error, 'ui')
+                            if (!done && pBulkMode)
+                                updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, extErr);
+                            websiteHolder.find('td:last-child').html(extErr);
+                        } else {
+                            let res = response.result;
+                            let res_error = response.result_error;
+                            if (res[sid]) {
+                                if (!done && pBulkMode)
+                                    updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
+                                websiteHolder.attr('updated', 1);
+                                websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
+                            } else if (res_error[sid]) {
+                                if (!done && pBulkMode)
+                                    updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + res_error[sid] + '"><i class="red times icon"></i></span>');
+                                websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + res_error[sid] + '"><i class="red times icon"></i></span>');
+                            } else {
+                                if (!done && pBulkMode)
+                                    updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
+                                websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
+                            }
+                        }
+                        if (!done && pBulkMode) {
+                            updatesoverview_plugins_upgrade_all_update_done();
+                            done = true;
+                        }
+                    }
+                }
+            }(pSlug, pWebsiteId, pBulkMode),
+            tryCount: 0,
+            retryLimit: 3,
+            endError: function (pSlug, pWebsiteId, pBulkMode) {
+                return function () {
+                    let slugParts = pSlug.split(',');
+                    let done = false;
+                    for (let sid of slugParts) {
+                        //Siteview
+                        let websiteHolder = jQuery('div[plugin_slug="' + sid + '"] div[site_id="' + pWebsiteId + '"]');
+                        if (!websiteHolder.exists()) {
+                            websiteHolder = jQuery('div[site_id="' + pWebsiteId + '"] div[plugin_slug="' + sid + '"]');
+                        }
+
+                        if (!done && pBulkMode) {
+                            updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
+                            updatesoverview_plugins_upgrade_all_update_done();
+                            done = true;
+                        }
+                        websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
+                    }
+                }
+            }(pSlug, pWebsiteId, pBulkMode),
+            error: function (xhr) {
+                this.tryCount++;
+                if (this.tryCount >= this.retryLimit) {
+                    this.endError();
+                    return;
+                }
+
+                let fnc = function (pRqst, pXhr) {
+                    return function () {
+                        if (pXhr.status == 404) {
+                            //handle error
+                            jQuery.ajax(pRqst);
+                        } else if (pXhr.status == 500) {
+                            //handle error
+                        } else {
+                            //handle error
+                        }
+                    }
+                }(this, xhr);
+                setTimeout(fnc, 500);
+            },
+            dataType: 'json'
+        });
+
+        updatesoverviewContinueAfterBackup = undefined;
+    }
+}
+
+let updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, noCheck) {
+
+    updatesoverviewContinueAfterBackup = function (pSlug, pWebsiteId, pBulkMode) {
+        return updatesoverview_plugins_upgrade_int_after_backup( pSlug, pWebsiteId, pBulkMode );
     }(slug, websiteId, bulkMode);
 
     if (noCheck) {

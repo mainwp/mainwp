@@ -1373,7 +1373,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         if (mainwpParams.use_wp_datepicker == 1) {
                             jQuery('#mainwp-edit-site .ui.calendar input[type=text]').datepicker({ dateFormat: "yy-mm-dd" });
                         } else {
-                            mainwp_init_ui_calendar( '#mainwp-edit-site .ui.calendar' );                            
+                            mainwp_init_ui_calendar( '#mainwp-edit-site .ui.calendar' );
                         }
                     }
                 
@@ -1896,10 +1896,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             }
 
             if ( ! empty( $_error ) ) {
-                throw new \Exception( $_error ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                throw new MainWP_Exception( $_error ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
         } else {
-            throw new \Exception( esc_html__( 'This operation is not allowed!', 'mainwp' ) );
+            throw new MainWP_Exception( esc_html__( 'This operation is not allowed!', 'mainwp' ) );
         }
 
         return false;

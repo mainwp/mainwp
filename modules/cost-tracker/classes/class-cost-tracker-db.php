@@ -218,7 +218,7 @@ PRIMARY KEY  (`id`)  '; }
                         if ( 'theme' === $update['product_type'] ) {
                             $error = esc_html__( 'A cost tracker for this theme already exists.', 'mainwp' );
                         }
-                        throw new \Exception( esc_html( $error ) );
+                        throw new MainWP_Exception( esc_html( $error ) );
                     }
                 }
             }

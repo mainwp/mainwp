@@ -789,7 +789,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function esc_mixed_content( $data, $depth, $more_allowed = array() ) {
         if ( $depth < 0 ) {
-            throw new \Exception( 'Reached depth limit' );
+            throw new MainWP_Exception( 'Reached depth limit' );
         }
 
         if ( is_array( $data ) ) {

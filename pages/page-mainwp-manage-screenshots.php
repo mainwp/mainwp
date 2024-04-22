@@ -154,9 +154,9 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     let status = jQuery( "#mainwp-filter-sites-status" ).dropdown( "get value" );
                     let isNot = jQuery("#mainwp_is_not_site").dropdown("get value");
                     let client = jQuery("#mainwp-filter-clients").dropdown("get value");
-                    let params = '';                        
-                    params += '&g=' + group;                        
-                    params += '&client=' + client;                      
+                    let params = '';
+                    params += '&g=' + group;
+                    params += '&client=' + client;
                     if ( status != '' ) {
                         params += '&status=' + status;
                     }

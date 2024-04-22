@@ -155,7 +155,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 <div class="four column row">
                                     <div class="left aligned middle aligned column dz-filename"><span class="qq-upload-file" filename="" data-dz-name=""></span></div>
                                     <div class="middle aligned column">
-                                        <span class="qq-upload-percent"></span> 
+                                        <span class="qq-upload-percent"></span>
                                         <span class="qq-upload-size dz-size" data-dz-size=""></span>
                                     </div>
                                     <div class="middle aligned column ">
@@ -165,8 +165,8 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                         </span>
                                     </div>
                                     <div class="right aligned middle aligned column">
-                                        <a class="ui mini button basic red qq-upload-cancel" href="#">Cancel Upload</a> 
-                                    <?php echo $favorites_enabled ? '<span class="qq-upload-add-to-favorites" style="display:none;"><a class="ui mini button basic" href="#">Add to Favorites</a></span>' : ''; ?> 
+                                        <a class="ui mini button basic red qq-upload-cancel" href="#">Cancel Upload</a>
+                                    <?php echo $favorites_enabled ? '<span class="qq-upload-add-to-favorites" style="display:none;"><a class="ui mini button basic" href="#">Add to Favorites</a></span>' : ''; ?>
                                         <a class="ui mini button basic red qq-upload-cancel-install" style="display:none;" href="#">Remove Item</a>
                                     </div>
                                 </div>
@@ -513,7 +513,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @param array $output selected sites output.
      */
-    public static function get_selected_sites( &$output ) {
+    public static function get_selected_sites( &$output ) {  //phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace  -- NOSONAR - complexity.
 
         $data_fields = array(
             'id',

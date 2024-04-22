@@ -48,7 +48,7 @@ window.mainwp_update_pluginsthemes = function (updateType, updateSiteIds) {
     let nrOfWebsites = allWebsiteIds.length;
 
     if (nrOfWebsites == 0)
-        return false;
+        return;
 
     let siteNames = {};
 
@@ -98,10 +98,7 @@ window.mainwp_update_pluginsthemes = function (updateType, updateSiteIds) {
             managesitesContinueAfterBackup = undefined;
         }
     }(updateType, nrOfWebsites, allWebsiteIds);
-
-    console.log(typeof managesitesContinueAfterBackup);
-    return mainwp_managesites_checkBackups(allWebsiteIds, siteNames);
-
+    mainwp_managesites_checkBackups(allWebsiteIds, siteNames);
 };
 
 let managesites_update_pluginsthemes = function (pType, websiteIds) {
@@ -257,7 +254,7 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
     if (mainwpParams['backup_before_upgrade'] == false) {
         if (managesitesContinueAfterBackup != undefined)
             managesitesContinueAfterBackup();
-        return false;
+        return;
     }
     managesitesShowBusyFunction = function () {
         let output = __('Checking if a backup is required for the selected updates...');
@@ -328,7 +325,6 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
                         }
                     }
                     mainwpPopup('#managesites-backup-box').getContentEl().html(output);
-                    console.log(typeof managesitesContinueAfterBackup);
                     mainwpPopup('#managesites-backup-box').init({
                         title: __("Full backup required!"), callback: function () {
                             managesitesContinueAfterBackup = undefined;
@@ -336,7 +332,7 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
                         }
                     });
 
-                    return false;
+                    return;
                 }
                 if (managesitesContinueAfterBackup != undefined)
                     managesitesContinueAfterBackup();
@@ -347,8 +343,6 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
         },
         dataType: 'json'
     });
-
-    return 0;
 };
 
 let mainwp_get_primaryBackup_link = function (what) {
@@ -446,7 +440,7 @@ let managesites_backup_run_next = function () {
             } else {
                 appendToDiv(backupContentEl, '[' + pSiteName + '] ' + __('Backup file created successfully!'));
 
-                managesites_backupnow_download_file({ 'id' : pSiteId, 'name' : pSiteName }, pSiteName, response.result.type, response.result.url, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder);
+                managesites_backupnow_download_file({ 'id' : pSiteId, 'name' : pSiteName }, response.result.type, response.result.url, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder);
             }
 
         }
@@ -526,7 +520,7 @@ managesites_wordpress_global_upgrade_all = function (updateSiteIds, updateEveryt
     let nrOfWebsites = allWebsiteIds.length;
 
     if (nrOfWebsites == 0)
-        return false;
+        return;
 
     let progressLen = nrOfWebsites;
     let title = __("Updating WordPress");
@@ -562,7 +556,7 @@ managesites_wordpress_global_upgrade_all = function (updateSiteIds, updateEveryt
             managesitesContinueAfterBackup = undefined;
         }
     }(nrOfWebsites, allWebsiteIds);
-    return mainwp_managesites_checkBackups(allWebsiteIds, siteNames);
+    mainwp_managesites_checkBackups(allWebsiteIds, siteNames);
 };
 
 let managesites_wordpress_upgrade_all_int = function (websiteIds) {

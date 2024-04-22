@@ -166,7 +166,7 @@
                 },
                 // close modal with executing callback or not executing callback.
                 close: function (execCallback) {
-                    this.doCloseCallback = typeof execCallback !== 'undefined' && execCallback ? true : false; // do not do callback.
+                    this.doCloseCallback = typeof execCallback !== 'undefined' && execCallback; // do not do callback.
                     this.closePopup();
                 },
                 closePopup: function () {

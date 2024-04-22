@@ -363,7 +363,7 @@ let mainwp_managesites_bulk_refresh_favico = function (siteIds) {
   let nrOfWebsites = allWebsiteIds.length;
 
   if (nrOfWebsites == 0)
-    return false;
+    return;
 
   let siteNames = {};
 
@@ -468,7 +468,7 @@ let mainwp_managesites_bulk_suspend_status = function (siteIds, status) {
   let nrOfWebsites = allWebsiteIds.length;
 
   if (nrOfWebsites == 0)
-    return false;
+    return;
 
   let siteNames = {};
 

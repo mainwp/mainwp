@@ -151,7 +151,7 @@ class Log_Events_Filter_Segment {
                     }
                     var valErr = true;
                     var arrVal = '';
-                    var fieldsAllows = [                        
+                    var fieldsAllows = [
                         'seg_ranges',
                         'seg_dtsstart',
                         'seg_dtsstop',
@@ -171,7 +171,7 @@ class Log_Events_Filter_Segment {
                                         if(fieldsAllows.includes(key)){
                                             if( 'seg_dtsstart' !== key && 'seg_dtsstop' !== key ){
                                                 if('seg_ranges' != key){ // to fix onChange filter-ranges issue.
-                                                    jQuery( '#mainwp-module-log-filters-row .ui.dropdown.' + key ).dropdown('clear'); 
+                                                    jQuery( '#mainwp-module-log-filters-row .ui.dropdown.' + key ).dropdown('clear');
                                                 }
                                                 arrVal = value.split(",");
                                                 jQuery( '#mainwp-module-log-filters-row .ui.dropdown.' + key ).dropdown('set selected', arrVal);

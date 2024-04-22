@@ -104,7 +104,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                 $website = MainWP_DB::instance()->get_website_by_id( $siteId );
                 MainWP_Manage_Sites_View::m_reconnect_site( $website );
             } else {
-                throw new \Exception( esc_html__( 'Site could not be connected. Please check the Status page and be sure that all system requirments pass.', 'mainwp' ) );
+                throw new MainWP_Exception( esc_html__( 'Site could not be connected. Please check the Status page and be sure that all system requirments pass.', 'mainwp' ) );
             }
         } catch ( \Exception $e ) {
             $msg     = $e->getMessage();

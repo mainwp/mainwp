@@ -520,7 +520,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                     $demo_tip     = MainWP_Demo_Handle::get_instance()->get_demo_tooltip();
                     $selected_act = '<span data-tooltip="' . esc_html( $demo_tip ) . '" data-inverted="" data-position="top right"><a href="javascript:void(0)" class="ui mini green basic button disabled" >' . esc_html__( 'Update Selected' ) . '</a></span>';
                 } else {
-                    $selected_act = '<a href="javascript:void(0)" data-tooltip="' . esc_html__( 'Update Selected Plugins.', 'mainwp' ) . '" onClick="return updatesoverview_plugins_global_upgrade_all( false, true );" class="ui mini green basic button" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>';
+                    $selected_act = '<a href="javascript:void(0)" data-tooltip="' . esc_html__( 'Update Selected Plugins.', 'mainwp' ) . '" onClick="updatesoverview_plugins_global_upgrade_all( false, true ); return false;" class="ui mini green basic button" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>';
                 }
                 $column_display_name .= $selected_act;
             } elseif ( 'title' === $column_key ) {
@@ -546,7 +546,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                 if ( $is_demo ) {
                     $selected_act = MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green basic button disabled" disabled="disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>', false );
                 } else {
-                    $selected_act = '<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all( false, true );" class="ui mini green basic button" data-tooltip="' . esc_html__( 'Update Selected Themes.', 'mainwp' ) . '" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>';
+                    $selected_act = '<a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all( false, true );return false;" class="ui mini green basic button" data-tooltip="' . esc_html__( 'Update Selected Themes.', 'mainwp' ) . '" data-inverted="" data-position="top right">' . esc_html__( 'Update Selected' ) . '</a>';
                 }
                 $column_display_name .= $selected_act;
             } elseif ( 'title' === $column_key ) {

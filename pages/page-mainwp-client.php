@@ -1768,7 +1768,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     });
 
                     mainwp_update_custom_icon_client = function( iconObj ){
-                        let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
+                        let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked');
                         let iconItemId = iconObj.attr('iconItemId');
                         let iconFileSlug = iconObj.attr('iconFileSlug'); // to support delete file when iconItemId = 0.
 
@@ -1781,7 +1781,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                     jQuery('#mainwp_add_edit_client_uploaded_icon_hidden').val('');
                                 }
                             }
-                            let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false; // to delete.
+                            let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked'); // to delete.
                             if(deleteIcon){
                                 jQuery('#mainwp_add_edit_client_upload_custom_icon').hide();
                             } else if (jQuery('#mainwp_add_edit_client_upload_custom_icon').length > 0) {
@@ -1804,7 +1804,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     }
 
                     mainwp_update_custom_icon_contact = function( iconObj ){
-                        let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
+                        let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked');
                         let iconItemId = iconObj.attr('iconItemId');
                         let iconFileSlug = iconObj.attr('iconFileSlug'); // to support delete file when iconItemId = 0.
 
@@ -1819,7 +1819,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                     jQuery(parent).find('.mainwp_add_edit_contact_uploaded_icon_hidden').val('');
                                 }
                             }
-                            let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false; // to delete.
+                            let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked'); // to delete.
                             if(deleteIcon){
                                 jQuery(parent).find('.mainwp_add_edit_contact_upload_custom_icon').hide();
                             } else if (jQuery(parent).find('.mainwp_add_edit_contact_upload_custom_icon').length > 0) {

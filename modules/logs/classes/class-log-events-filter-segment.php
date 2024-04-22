@@ -104,7 +104,7 @@ class Log_Events_Filter_Segment {
                 
                 jQuery('#mainwp-common-filter-edit-segment-save').on( 'click', function () {
 
-                    mainwp_common_filter_hide_segments_message();
+                    mainwpSegmentModalUiHandle.hideSegmentStatus();
 
                     var seg_name = jQuery('#mainwp-common-filter-edit-segment-name').val().trim();
                     
@@ -143,7 +143,7 @@ class Log_Events_Filter_Segment {
                 });
 
                 jQuery('#mainwp-common-filter-select-segment-choose-button').on( 'click', function () {
-                    mainwp_common_filter_hide_segments_message();
+                    mainwpSegmentModalUiHandle.hideSegmentStatus();
                     var seg_id = jQuery( '#mainwp-common-filter-segment-select-fields .ui.dropdown').dropdown('get value');
                     var seg_values = '';
                     if('' != seg_id ) {
@@ -198,7 +198,7 @@ class Log_Events_Filter_Segment {
 
 
                 jQuery('#mainwp-common-filter-select-segment-delete-button').on( 'click', function () {
-                    mainwp_common_filter_hide_segments_message();
+                    mainwpSegmentModalUiHandle.hideSegmentStatus();
                     var delBtn = this;
                     var seg_id = jQuery( '#mainwp-common-filter-segment-select-fields .ui.dropdown').dropdown('get value');
                     if('' == seg_id){

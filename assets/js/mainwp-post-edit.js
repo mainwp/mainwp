@@ -14,10 +14,12 @@ let mainwp_post_newmeta_submit = function (action, me) {
 		return false;
 
 	let data;
+	let newkey;
 
 	if (action == 'add') {
 
-		let metakey = jQuery('#metakeyselect').val(), newkey = false;
+		let metakey = jQuery('#metakeyselect').val();
+		newkey = false;
 		if (jQuery('#metakeyinput').is(':visible')) {
 			metakey = '#NONE#';
 			newkey = true;
@@ -86,7 +88,7 @@ let mainwp_post_newmeta_submit = function (action, me) {
 /**
  * All post and postbox controls and functionality.
  */
-jQuery(function($) {
+jQuery(function ($) {
 	let updateText,
 		$textarea = $('#content'),
 		$document = $(document),
@@ -343,7 +345,7 @@ jQuery(function($) {
 		$('#page_template').on('change.set-editor-class', function () {
 			let editor, body, pageTemplate = $(this).val() || '';
 
-			pageTemplate = pageTemplate.substr(pageTemplate.lastIndexOf('/') + 1, pageTemplate.length)
+			pageTemplate = pageTemplate.substring(pageTemplate.lastIndexOf('/') + 1)
 				.replace(/\.php$/, '')
 				.replace(/\./g, '-');
 

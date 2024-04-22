@@ -109,7 +109,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                 
                 jQuery('#mainwp-common-filter-edit-segment-save').on( 'click', function () {
 
-                    mainwp_common_filter_hide_segments_message();
+                    mainwpSegmentModalUiHandle.hideSegmentStatus();
 
                     let seg_name = jQuery('#mainwp-common-filter-edit-segment-name').val().trim();
                     
@@ -147,7 +147,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                 });
 
                 jQuery('#mainwp-common-filter-select-segment-choose-button').on( 'click', function () {
-                    mainwp_common_filter_hide_segments_message();
+                    mainwpSegmentModalUiHandle.hideSegmentStatus();
                     let seg_id = jQuery( '#mainwp-common-filter-segment-select-fields .ui.dropdown').dropdown('get value');
                     let seg_values = '';
                     if('' != seg_id ) {
@@ -200,7 +200,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
 
 
                 jQuery('#mainwp-common-filter-select-segment-delete-button').on( 'click', function () {
-                    mainwp_common_filter_hide_segments_message();
+                    mainwpSegmentModalUiHandle.hideSegmentStatus();
                     let delBtn = this;
                     let seg_id = jQuery( '#mainwp-common-filter-segment-select-fields .ui.dropdown').dropdown('get value');
                     if('' == seg_id){

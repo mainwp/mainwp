@@ -2,7 +2,7 @@
 
 
 //Ignore plugin
-jQuery(function(){
+jQuery(function () {
     jQuery(document).on('click', 'input[name="plugins"]', function () {
         if (jQuery(this).is(':checked')) {
             jQuery('input[name="plugins"]').attr('checked', 'checked');
@@ -155,7 +155,7 @@ window.mainwp_fetch_plugins = function () {
 /**
  * MainWP_Plugins.page
  */
-jQuery(function(){
+jQuery(function () {
     jQuery(document).on('click', '#mainwp-show-plugins', function () {
         mainwp_fetch_plugins();
     });
@@ -807,19 +807,16 @@ let manage_plugins_upgrade_int = function (slug, websiteId) {
                         return;
                     }
 
-                    let fnc = function (pRqst, pXhr) {
-                        return function () {
-                            if (pXhr.status == 404) {
-                                //handle error
-                                jQuery.ajax(pRqst);
-                            } else if (pXhr.status == 500) {
-                                //handle error
-                            } else {
-                                //handle error
-                            }
+                    setTimeout( (pRqst, pXhr) => {
+                        if (pXhr.status == 404) {
+                            //handle error
+                            jQuery.ajax(pRqst);
+                        } else if (pXhr.status == 500) {
+                            //handle error
+                        } else {
+                            //handle error
                         }
-                    }(this, xhr);
-                    setTimeout(fnc, 500);
+                    }, 500, this, xhr );
                 },
                 dataType: 'json'
             });
@@ -953,19 +950,16 @@ let manage_themes_upgrade_int = function (slug, websiteId) {
                         this.endError();
                         return;
                     }
-                    let fnc = function (pRqst, pXhr) {
-                        return function () {
-                            if (pXhr.status == 404) {
-                                //handle error
-                                jQuery.ajax(pRqst);
-                            } else if (pXhr.status == 500) {
-                                //handle error
-                            } else {
-                                //handle error
-                            }
+                    setTimeout( (pRqst, pXhr) => {
+                        if (pXhr.status == 404) {
+                            //handle error
+                            jQuery.ajax(pRqst);
+                        } else if (pXhr.status == 500) {
+                            //handle error
+                        } else {
+                            //handle error
                         }
-                    }(this, xhr);
-                    setTimeout(fnc, 500);
+                    }, 500, this, xhr);
                 },
                 dataType: 'json'
             });
@@ -1023,7 +1017,7 @@ let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAf
                 clearTimeout(managesitesShowBusyTimeout);
 
                 mainwpPopup('#managesites-backup-box').close();
-                let siteFeedback = undefined;
+                let siteFeedback;
 
                 if (response['result'] && response['result']['sites'] != undefined) {
                     siteFeedback = [];

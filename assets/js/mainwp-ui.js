@@ -25,7 +25,7 @@ function read_current_url() {
     return mainwp_current_url;
 }
 function load_url(href, obj, e) {
-    let page = href.match(/page=/i) ? href.replace(/^.*?page=([^&]+).*?$/i, '$1') : '';
+    let page = href.match(/page=/i) ? href.replace(/^.*\?page=([^&]+).*?$/i, '$1') : ''; // NOSONAR - safe with run time error. 
     if (page || href == 'index.php') {
         if (!jQuery('body').hasClass('mainwp-ui-page')) {
             return;
@@ -144,14 +144,15 @@ jQuery(function () {
 });
 
 window.mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, updateType, multiple, extra) {    // updateType: 1 single update, 2 multi update
+    let confVal;
     if (jQuery('#mainwp-disable-update-confirmations').length > 0) {
-        let confVal = jQuery('#mainwp-disable-update-confirmations').val();
-        if (typeof updateType !== 'undefined' && updateType !== false && (confVal == 2 || (confVal == 1 && updateType == 1))) {
-            if (confirmed_callback && typeof confirmed_callback == 'function')
-                confirmed_callback();
-            return false;
-        }
+        confVal = jQuery('#mainwp-disable-update-confirmations').val();
     }
+    if (jQuery('#mainwp-disable-update-confirmations').length > 0 && typeof updateType !== 'undefined' && updateType !== false && (confVal == 2 || (confVal == 1 && updateType == 1)) && confirmed_callback && typeof confirmed_callback == 'function') {
+        confirmed_callback();
+        return false;
+    }
+
 
     jQuery('#mainwp-modal-confirm .content-massage').html(msg);
 
@@ -549,7 +550,7 @@ window.mainwp_ui_state_load = function (ident) {
     if (typeof (Storage) !== 'undefined') {
         return localStorage.getItem('mainwp-dashboard[' + ident + ']');
     }
-    return 1; // show if Storage undefined.
+    return '1'; // show if Storage undefined.
 };
 
 jQuery(document).on('keyup', '#mainwp-screenshots-sites-filter', function () {
@@ -599,9 +600,10 @@ let mainwp_get_icon_start_next = function () {
 
 let mainwp_get_icon_start_specific = function (itemIconProcess) {
     itemIconProcess.attr('queue', '0');
+    let slug;
     let type = itemIconProcess.attr('icon-type');
     if (type == 'plugin' || type == 'theme') {
-        let slug = jQuery(itemIconProcess).attr('item-slug');
+        slug = jQuery(itemIconProcess).attr('item-slug');
     } else {
         return;
     }
@@ -663,7 +665,7 @@ let mainwp_upload_custom_icon = function (iconObj) {
 
     let slug = jQuery(iconObj).attr('item-slug');
 
-    let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
+    let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked');
 
     jQuery('#mainwp-message-zone-upload').removeClass('red green yellow');
     let msg = __('Updating the icon. Please wait...');
@@ -775,44 +777,4 @@ let mainwp_guidedtours_onchange = function (me) {
         window.location.href = location.href;
     });
 }
-
-
-jQuery(function ($) {
-    if (!window.mainwpSegmentModalUiHandle) {
-        mainwpSegmentModalUiHandle = (function () {
-            let _instance = {
-                loadingStatus: function () {
-                    $('#mainwp-common-filter-edit-segment-status').html('<i class="notched circle loading icon"></i> ' + __('Loading segments. Please wait...')).show();
-                },
-                savingStatus: function () {
-                    $('#mainwp-common-filter-edit-segment-status').html('<i class="notched circle loading icon"></i> ' + __('Saving segment. Please wait...')).show();
-                },
-                deletingStatus: function () {
-                    $('#mainwp-common-filter-edit-segment-status').html('<i class="notched circle loading icon"></i> ' + __('Deleting segment. Please wait...')).show();
-
-                },
-                showSegment: function(){
-                    jQuery( '#mainwp-common-filter-segment-modal > div.header' ).html(__('Save Segment'));
-                    jQuery( '#mainwp-common-filter-segment-edit-fields' ).show();
-                    jQuery( '#mainwp-common-filter-edit-segment-save' ).show();
-                    jQuery( '#mainwp-common-filter-segment-select-fields' ).hide();
-                    jQuery( '#mainwp-common-filter-select-segment-choose-button' ).hide();
-                    jQuery( '#mainwp-common-filter-select-segment-delete-button' ).hide();
-                    jQuery('#mainwp-common-filter-edit-segment-name').val(jQuery(this).attr('selected-segment-name'));
-                    mainwp_common_filter_show_segments_modal();
-                },
-                loadSegment: function( loadCallback ){
-                    jQuery( '#mainwp-common-filter-segment-edit-fields' ).hide();
-                    jQuery( '#mainwp-common-filter-edit-segment-save' ).hide();
-                    jQuery( '#mainwp-common-filter-segment-modal > div.header' ).html(__('Load a Segment'));
-                    jQuery( '#mainwp-common-filter-segment-select-fields' ).show();
-                    jQuery( '#mainwp-common-filter-select-segment-choose-button' ).show();
-                    jQuery( '#mainwp-common-filter-select-segment-delete-button' ).show();
-                    mainwp_common_filter_show_segments_modal( loadCallback );
-                }
-            }
-            return _instance;
-        })();
-    }
-});
 

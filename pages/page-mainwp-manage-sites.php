@@ -931,7 +931,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     }
 
                     jQuery(document).on('click', '#update_custom_icon_btn', function () {
-                            let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
+                            let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked');
                             let iconItemId = iconObj.attr('iconItemId');
                             let iconFileSlug = iconObj.attr('iconFileSlug'); // to support delete file when iconItemId = 0.
 
@@ -944,7 +944,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                         jQuery('#mainwp_managesites_add_site_uploaded_icon_hidden').val('');
                                     }
                                 }
-                                let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false; // to delete.
+                                let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked'); // to delete.
                                 if(deleteIcon){
                                     jQuery('#mainw_managesites_add_edit_site_upload_custom_icon').hide();
                                 } else if (jQuery('#mainw_managesites_add_edit_site_upload_custom_icon').length > 0) {

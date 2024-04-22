@@ -63,8 +63,8 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                     MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled mainwp-update-all-button" disabled="disabled">' . esc_html__( 'Update All Sites', 'mainwp' ) . '</a>' );
                                 } else {
                                     ?>
-                                    <a class="mainwp-update-selected-button ui green mini basic button" onclick="event.stopPropagation(); return updatesoverview_wordpress_global_upgrade_all( false, true );" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on selected child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update Selected Sites', 'mainwp' ); ?></a>
-                                    <a class="mainwp-update-all-button ui green mini button" onclick="return updatesoverview_wordpress_global_upgrade_all();" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
+                                    <a class="mainwp-update-selected-button ui green mini basic button" onclick="event.stopPropagation(); updatesoverview_wordpress_global_upgrade_all( false, true ); return false;" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on selected child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update Selected Sites', 'mainwp' ); ?></a>
+                                    <a class="mainwp-update-all-button ui green mini button" onclick="updatesoverview_wordpress_global_upgrade_all(); return false;" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
                                     <?php
                                 }
                             }
@@ -198,8 +198,8 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                     MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui mini green button disabled mainwp-update-all-button">' . esc_html__( 'Update All Sites', 'mainwp' ) . '</a>' );
                                 } else {
                                     ?>
-                                <a href="javascript:void(0)" data-tooltip="<?php esc_html_e( 'Update Selected Plugins.', 'mainwp' ); ?>" onClick="return updatesoverview_plugins_global_upgrade_all( false, true );" class="mainwp-update-selected-button ui mini green basic button" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Plugins' ); ?></a>
-                                <a href="javascript:void(0)" data-tooltip="<?php esc_html_e( 'Update all plugins.', 'mainwp' ); ?>" onClick="return updatesoverview_plugins_global_upgrade_all();" class="mainwp-update-all-button ui mini green button" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites' ); ?></a>
+                                <a href="javascript:void(0)" data-tooltip="<?php esc_html_e( 'Update Selected Plugins.', 'mainwp' ); ?>" onClick="updatesoverview_plugins_global_upgrade_all( false, true ); return false;" class="mainwp-update-selected-button ui mini green basic button" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Plugins' ); ?></a>
+                                <a href="javascript:void(0)" data-tooltip="<?php esc_html_e( 'Update all plugins.', 'mainwp' ); ?>" onClick="updatesoverview_plugins_global_upgrade_all(); return false;" class="mainwp-update-all-button ui mini green button" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites' ); ?></a>
                                     <?php
                                 }
                             }
@@ -401,8 +401,8 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                     MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green button disabled mainwp-update-all-button" disabled="disabled">' . esc_html__( 'Update All Sites', 'mainwp' ) . '</a>' );
                                 } else {
                                     ?>
-                                    <a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all( false, true );" class="mainwp-update-selected-button ui mini green basic button" data-tooltip="<?php esc_html_e( 'Update all themes.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Sites' ); ?></a>
-                                    <a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="mainwp-update-all-button ui mini green button" data-tooltip="<?php esc_html_e( 'Update all themes.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites' ); ?></a>
+                                    <a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all( false, true ); return false;" class="mainwp-update-selected-button ui mini green basic button" data-tooltip="<?php esc_html_e( 'Update all themes.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Sites' ); ?></a>
+                                    <a href="javascript:void(0)" onClick="updatesoverview_themes_global_upgrade_all();return false;" class="mainwp-update-all-button ui mini green button" data-tooltip="<?php esc_html_e( 'Update all themes.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites' ); ?></a>
                                     <?php
                                 }
                             }
@@ -583,8 +583,8 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         <?php MainWP_UI::render_show_all_updates_button(); ?>
                         <?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
                             <?php if ( 0 < $total_translation_upgrades ) : ?>
-                                <a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all( false, true );" class="mainwp-update-selected-button ui button mini basic green" data-tooltip="<?php esc_html_e( 'Update selected translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Sites', 'mainwp' ); ?></a>
-                                <a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all();" class="mainwp-update-all-button ui button mini green" data-tooltip="<?php esc_html_e( 'Update all translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
+                                <a href="javascript:void(0)" onClick="updatesoverview_translations_global_upgrade_all( false, true ); return false;" class="mainwp-update-selected-button ui button mini basic green" data-tooltip="<?php esc_html_e( 'Update selected translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Sites', 'mainwp' ); ?></a>
+                                <a href="javascript:void(0)" onClick="updatesoverview_translations_global_upgrade_all(); return false;" class="mainwp-update-all-button ui button mini green" data-tooltip="<?php esc_html_e( 'Update all translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
                             <?php endif; ?>
                         <?php endif; ?>
                     </th>

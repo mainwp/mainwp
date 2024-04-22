@@ -52,7 +52,7 @@ let mainwp_restapi_remove_keys_next = function () {
     while ((checkedBox = jQuery('#mainwp-rest-api-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulk_RestAPICurrentThreads < bulk_RestAPIMaxThreads)) { // NOSONAR - variables modified in other functions.
         mainwp_restapi_bulk_remove_specific(checkedBox);
     }
-    if ((bulk_RestAPITotal > 0) && (bulk_RestAPIFinished == bulk_RestAPITotal)) {
+    if ((bulk_RestAPITotal > 0) && (bulk_RestAPIFinished == bulk_RestAPITotal)) { // NOSONAR - modified outside the function.
         setHtml('#mainwp-message-zone-apikeys', __("Process completed. Reloading page..."));
         setTimeout(function () {
             window.location.href = location.href;

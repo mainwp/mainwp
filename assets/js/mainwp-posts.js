@@ -6,14 +6,14 @@
 let countSent = 0;
 let countReceived = 0;
 
-jQuery(function(){
+jQuery(function () {
 
     // to fix issue not loaded calendar js library
     if (jQuery('.ui.calendar').length > 0) {
         if (mainwpParams.use_wp_datepicker == 1) {
             jQuery('#mainwp-manage-pages .ui.calendar input[type=text],#mainwp-manage-posts .ui.calendar input[type=text]').datepicker({ dateFormat: "yy-mm-dd" });
         } else {
-            mainwp_init_ui_calendar( '#mainwp-manage-pages .ui.calendar, #mainwp-manage-posts .ui.calendar' );           
+            mainwp_init_ui_calendar('#mainwp-manage-pages .ui.calendar, #mainwp-manage-posts .ui.calendar');
         }
     }
 
@@ -237,7 +237,7 @@ let mainwp_fetch_pages = function () {
  * MainWP_Post.page
  */
 
-jQuery(function(){
+jQuery(function () {
     jQuery(document).on('click', '#mainwp_show_posts', function () {
         mainwp_fetch_posts();
     });
@@ -388,12 +388,13 @@ let mainwp_fetch_posts = function (postId, userId, start_sites) {
     let num_sites = jQuery('#search-bulk-sites').attr('number-sites');
     num_sites = parseInt(num_sites);
 
-    let bulk_search = num_sites > 0 ? true : false;
+    let bulk_search = num_sites > 0;
+
+    if (jQuery('#select_by').val() == 'site' && start_sites == undefined) {
+        start_sites = 0;
+    };
 
     if (jQuery('#select_by').val() == 'site') {
-        if (start_sites == undefined) {
-            start_sites = 0;
-        }
         jQuery("input[name='selected_sites[]']:checked").each(function () {
             if (bulk_search) {
                 if (i >= start_sites && i < start_sites + num_sites) {
@@ -404,10 +405,9 @@ let mainwp_fetch_posts = function (postId, userId, start_sites) {
                 selected_sites.push(jQuery(this).val());
             }
         });
-        if (selected_sites.length == 0) {
-            if (!bulk_search || (bulk_search && start_sites == 0)) {
-                errors.push('<div class="ui yellow message">' + __('Please select at least one website or group or client.') + '</div>');
-            }
+
+        if (selected_sites.length == 0 && (!bulk_search || (bulk_search && start_sites == 0))) {
+            errors.push('<div class="ui yellow message">' + __('Please select at least one website or group or client.') + '</div>');
         }
 
     } else if (jQuery('#select_by').val() == 'client') {
@@ -422,33 +422,33 @@ let mainwp_fetch_posts = function (postId, userId, start_sites) {
         jQuery("input[name='selected_groups[]']:checked").each(function () {
             selected_groups.push(jQuery(this).val());
         });
+
         if (selected_groups.length == 0) {
             errors.push('<div class="ui yellow message">' + __('Please select at least one website or group or client.') + '</div>');
-        } else if (bulk_search) {
+        } else if (bulk_search && start_sites == undefined) {
+            console.log(num_sites);
+            start_sites = 0;
+            // get sites of groups.
+            let data = mainwp_secure_data({
+                action: 'mainwp_get_sites_of_groups',
+                'groups[]': selected_groups
+            });
+            jQuery('#mainwp-loading-posts-row').show();
+            jQuery.post(ajaxurl, data, function (response) {
+                let site_ids = response;
+                console.log(site_ids);
+                if (site_ids) {
+                    jQuery("input[name='selected_sites[]'][bulk-search=true]").attr('bulk-search', false);
+                    jQuery.each(site_ids, function (index, value) {
+                        jQuery("input[name='selected_sites[]'][value=" + value + "]").attr('bulk-search', true);
+                    });
+                }
+                mainwp_fetch_posts(postId, userId, start_sites);
+            }, 'json');
+            return;
+        }
 
-            if (start_sites == undefined) {
-                console.log(num_sites);
-                start_sites = 0;
-                // get sites of groups.
-                let data = mainwp_secure_data({
-                    action: 'mainwp_get_sites_of_groups',
-                    'groups[]': selected_groups
-                });
-                jQuery('#mainwp-loading-posts-row').show();
-                jQuery.post(ajaxurl, data, function (response) {
-                    let site_ids = response;
-                    console.log(site_ids);
-                    if (site_ids) {
-                        jQuery("input[name='selected_sites[]'][bulk-search=true]").attr('bulk-search', false);
-                        jQuery.each(site_ids, function (index, value) {
-                            jQuery("input[name='selected_sites[]'][value=" + value + "]").attr('bulk-search', true);
-                        });
-                    }
-                    mainwp_fetch_posts(postId, userId, start_sites);
-                }, 'json');
-                return;
-            }
-
+        if (selected_groups.length > 0 && bulk_search) {
             jQuery("input[name='selected_sites[]'][bulk-search=true]").each(function () {
                 if (i >= start_sites && i < start_sites + num_sites) {
                     selected_sites.push(jQuery(this).val());
@@ -456,6 +456,7 @@ let mainwp_fetch_posts = function (postId, userId, start_sites) {
                 i++;
             });
         }
+
     }
     let _status = '';
     let statuses = jQuery("#mainwp_post_search_type").dropdown("get value");
@@ -490,14 +491,13 @@ let mainwp_fetch_posts = function (postId, userId, start_sites) {
         search_on: jQuery("#mainwp_post_search_on").val()
     });
 
-    if (bulk_search) {
-        if (start_sites > 0) {
-            data.table_content = 1;
-        }
-        if (selected_sites.length == 0) {
-            mainwp_fetch_posts_done();
-            return;
-        }
+    if (bulk_search && start_sites > 0) {
+        data.table_content = 1;
+    }
+
+    if (bulk_search && selected_sites.length == 0) {
+        mainwp_fetch_posts_done();
+        return;
     }
 
     jQuery('#mainwp-loading-posts-row').show();
@@ -515,7 +515,6 @@ let mainwp_fetch_posts = function (postId, userId, start_sites) {
         } else {
             mainwp_fetch_posts_done();
         }
-
     });
 };
 /* eslint-enable complexity */

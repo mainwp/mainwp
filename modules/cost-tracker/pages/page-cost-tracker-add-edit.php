@@ -583,7 +583,7 @@ class Cost_Tracker_Add_Edit {
                     }
 
                     jQuery(document).on('click', '#update_custom_icon_btn', function () {
-                            let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false;
+                            let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked');
                             let iconItemId = iconObj.attr('iconItemId');
                             let iconFileSlug = iconObj.attr('iconFileSlug'); // to support delete file when iconItemId = 0.
 
@@ -596,7 +596,7 @@ class Cost_Tracker_Add_Edit {
                                         jQuery('#mainwp_module_cost_tracker_edit_icon_hidden').val('');
                                     }
                                 }
-                                let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked') ? true : false; // to delete.
+                                let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked'); // to delete.
                                 if(deleteIcon){
                                     jQuery('#module_cost_tracker_upload_custom_icon_img_display').hide();
                                 } else if (jQuery('#module_cost_tracker_upload_custom_icon_img_display').length > 0) {

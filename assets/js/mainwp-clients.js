@@ -157,10 +157,10 @@ let mainwp_manageclients_doaction_process = function (action) {
 
 
 let mainwp_manageclients_bulk_remove_next = function () {
-  while ((checkedBox = jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulkManageClientsCurrentThreads < bulkManageClientsMaxThreads)) {
+  while ((checkedBox = jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulkManageClientsCurrentThreads < bulkManageClientsMaxThreads)) { // NOSONAR -- modified out side the function.  
     mainwp_manageclients_bulk_remove_specific(checkedBox);
   }
-  if ((bulkManageClientsTotal > 0) && (bulkManageClientsFinished == bulkManageClientsTotal)) {
+  if ((bulkManageClientsTotal > 0) && (bulkManageClientsFinished == bulkManageClientsTotal)) { // NOSONAR -- modified out side the function.
     managesites_bulk_done();
     setHtml('#mainwp-message-zone-client', __("Process completed. Reloading page..."));
     setTimeout(function () {
@@ -270,7 +270,7 @@ let mainwp_createclient = function (currPage) {
   });
 
   if (jQuery('#select_by').val() == 'site') {
-    let selected_sites = [];
+    selected_sites = [];
     jQuery("input[name='selected_sites[]']:checked").each(function () {
       selected_sites.push(jQuery(this).val());
     });
@@ -285,7 +285,7 @@ let mainwp_createclient = function (currPage) {
   jQuery('#mainwp-message-zone-client').removeClass('red green yellow');
   let msg = __('Creating the client. Please wait...');
   if (jQuery('input[name="client_fields[client_id]"]').val() != 0) {
-    let msg = __('Updating the client. Please wait...');
+    msg = __('Updating the client. Please wait...');
   }
   jQuery('#mainwp-message-zone-client').html('<i class="notched circle loading icon"></i> ' + msg);
   jQuery('#mainwp-message-zone-client').show();
@@ -457,7 +457,7 @@ jQuery(document).on('click', '#mainwp-clients-delete-individual-field', function
 
 
 jQuery(document).on('click', '.mainwp-edit-client-note', function () {
-  let id = jQuery(this).attr('id').substr(13);
+  let id = jQuery(this).attr('id').substring(13);
   let note = jQuery('#mainwp-notes-' + id + '-note').html();
   jQuery('#mainwp-notes-html').html(note == '' ? __('No saved notes. Click the Edit button to edit site notes.') : note);
   jQuery('#mainwp-notes-note').val(note);

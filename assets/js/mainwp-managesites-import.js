@@ -128,10 +128,10 @@ let mainwp_managesites_import_sites = function () {
 
         response = response.trim();
         let url = import_wpurl;
-        if (url.substr(0, 4) != 'http') {
+        if (url.substring(0, 4) != 'http') {
             url = 'http://' + url;
         }
-        if (url.substr(-1) != '/') {
+        if (url.slice(-1) != '/') {
             url += '/';
         }
         url = url.replace(/"/g, '&quot;');
@@ -140,11 +140,11 @@ let mainwp_managesites_import_sites = function () {
             errors.push(check_result + __('HTTP error: website does not exist!'));
         } else if (response == 'NOMAINWP') {
             errors.push(check_result + __('MainWP Child plugin not detected! First install and activate the MainWP Child plugin and add your site to MainWP afterwards. Click <a href="%1" target="_blank">here</a> to install <a href="%2" target="_blank">MainWP</a> plugin (do not forget to activate it after installation)', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins'));
-        } else if (response.substr(0, 5) == 'ERROR') {
+        } else if (response.substring(0, 5) == 'ERROR') {
             if (response.length == 5) {
                 errors.push(check_result + __('Undefined error!'));
             } else {
-                errors.push(check_result + 'ERROR: ' + response.substr(6));
+                errors.push(check_result + 'ERROR: ' + response.substring(6));
             }
         } else if (response == 'OK') {
             let groupids = [];
@@ -172,9 +172,9 @@ let mainwp_managesites_import_sites = function () {
 
                 response = response.trim();
 
-                if (response.substr(0, 5) == 'ERROR') {
+                if (response.substring(0, 5) == 'ERROR') {
                     jQuery('#mainwp_managesites_import_fail_logging').append('<span>' + import_line_orig + '</span>');
-                    jQuery('#mainwp_managesites_import_logging .log').append(add_result + response.substr(6) + "\n");
+                    jQuery('#mainwp_managesites_import_logging .log').append(add_result + response.substring(6) + "\n");
                     import_count_fails++;
                 } else {
                     //Message the WP was added

@@ -229,6 +229,8 @@ function mainwp_extensions_activate(pObj, retring) {
         loadingEl.find('.message').html(__('Already activated.'));
         return;
     }
+    
+    let data = false;
 
     if (retring == true) {
         loadingEl.show();
@@ -241,7 +243,7 @@ function mainwp_extensions_activate(pObj, retring) {
         if (key == '')
             return;
 
-        let data = mainwp_secure_data({
+        data = mainwp_secure_data({
             action: 'mainwp_extension_api_activate',
             slug: extensionSlug,
             key: key,
@@ -554,7 +556,7 @@ jQuery(document).on('click', '#mainwp-extensions-bulkinstall', function () {
     let grabingEl = jQuery("#mainwp-extensions-api-fields");
     let api_key = grabingEl.find('#mainwp_com_api_key').val().trim();
     if (api_key == '') {
-        mainwp_extension_grab_org_extensions(this);
+        mainwp_extension_grab_org_extensions();
     } else {
         mainwp_extension_grab_purchased(this, false);
     }
@@ -720,11 +722,11 @@ let mainwp_extension_bulk_install = function () {
 }
 
 let mainwp_extension_bulk_install_next = function () {
-    while ((extToInstall = jQuery('.mainwp-installing-extensions input[type="checkbox"][status="queue"]:checked:first').closest('.extension-to-install')) && (extToInstall.length > 0) && (bulkExtensionsCurrentThreads < bulkExtensionsMaxThreads)) {
+    while ((extToInstall = jQuery('.mainwp-installing-extensions input[type="checkbox"][status="queue"]:checked:first').closest('.extension-to-install')) && (extToInstall.length > 0) && (bulkExtensionsCurrentThreads < bulkExtensionsMaxThreads)) { // NOSONAR -- modified out side the function.
         mainwp_extension_bulk_install_specific(extToInstall);
     }
 
-    if ((bulkExtensionsTotal > 0) && (bulkExtensionsFinished == bulkExtensionsTotal)) {
+    if ((bulkExtensionsTotal > 0) && (bulkExtensionsFinished == bulkExtensionsTotal)) { // NOSONAR -- modified out side the function.
         mainwp_extension_bulk_activate();
     }
 }

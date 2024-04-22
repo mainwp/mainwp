@@ -997,7 +997,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             return; // hide always.
                         }
                         let lbar = jQuery( '#mainwp-collapse-second-level-navigation' );
-                        let show = ( 0 != mainwp_ui_state_load( 'showmenu' ) ) ? true : false;
+                        let show = 0 != mainwp_ui_state_load( 'showmenu' );
                         mainwp_left_bar_showhide( lbar, show);
                     }
                     mainwp_left_bar_showhide = function( lbar, show ){

@@ -73,7 +73,7 @@ let updatesoverview_upgrade = function (id, obj) {
 /** Update bulk **/
 
 let websitesToUpgrade = [];
-let updatesoverviewContinueAfterBackup = undefined;
+let updatesoverviewContinueAfterBackup;
 let limitUpdateAll = 0;
 let continueUpdatesAll = '', continueUpdatesSlug = '';
 let continueUpdating = false;
@@ -91,47 +91,15 @@ let updatesoverview_update_popup_init = function (data) {
 // Update Group
 let updatesoverview_wordpress_global_upgrade_all = function (groupId, updatesSelected) {
     if (bulkTaskRunning)
-        return false;
+        return;
 
     //Step 1: build form
     let sitesToUpdate = [];
     let siteNames = {};
-    let foundChildren = [];
-
-    if (typeof updatesSelected !== 'undefined' && updatesSelected) {
-        if (typeof groupId !== 'undefined' && false !== groupId) {
-            jQuery('#update_wrapper_wp_upgrades_group_' + groupId).find('tr.mainwp-wordpress-update[updated="0"]').each(
-                function () {
-                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
-                        foundChildren.push(this);
-                    }
-                }
-            );
-        } else {
-            jQuery('tr.mainwp-wordpress-update[updated="0"]').each(
-                function () {
-                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
-                        foundChildren.push(this);
-                    }
-                }
-            );
-        }
-        if (foundChildren.length == 0) {
-            updates_please_select_items_notice();
-            return false;
-        }
-    } else {
-        if (typeof groupId !== 'undefined' && false !== groupId) {
-            // groups selector is only one for each screen.
-            foundChildren = jQuery('#update_wrapper_wp_upgrades_group_' + groupId).find('tr.mainwp-wordpress-update[updated="0"]');
-        } else {
-            // childs selector is only one for each screen.
-            foundChildren = jQuery('tr.mainwp-wordpress-update[updated="0"]');
-        }
-    }
+    let foundChildren = updatesoverview_wordpress_get_global_upgrade_all(groupId, updatesSelected);
 
     if (foundChildren.length == 0)
-        return false;
+        return;
 
     let sitesCount = 0;
 
@@ -190,11 +158,46 @@ let updatesoverview_wordpress_global_upgrade_all = function (groupId, updatesSel
             let confirmMsg = __('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', __('WordPress Core'), sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
-        return false;
+        return;
     }
     _callback();
-    return false;
 };
+
+let updatesoverview_wordpress_get_global_upgrade_all = function (groupId, updatesSelected) {
+    let foundChildren = [];
+    if (typeof updatesSelected !== 'undefined' && updatesSelected) {
+        if (typeof groupId !== 'undefined' && false !== groupId) {
+            jQuery('#update_wrapper_wp_upgrades_group_' + groupId).find('tr.mainwp-wordpress-update[updated="0"]').each(
+                function () {
+                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
+                        foundChildren.push(this);
+                    }
+                }
+            );
+        } else {
+            jQuery('tr.mainwp-wordpress-update[updated="0"]').each(
+                function () {
+                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
+                        foundChildren.push(this);
+                    }
+                }
+            );
+        }
+        if (foundChildren.length == 0) {
+            updates_please_select_items_notice();
+            return false;
+        }
+    } else {
+        if (typeof groupId !== 'undefined' && false !== groupId) {
+            // groups selector is only one for each screen.
+            foundChildren = jQuery('#update_wrapper_wp_upgrades_group_' + groupId).find('tr.mainwp-wordpress-update[updated="0"]');
+        } else {
+            // childs selector is only one for each screen.
+            foundChildren = jQuery('tr.mainwp-wordpress-update[updated="0"]');
+        }
+    }
+    return foundChildren;
+}
 
 let updatesoverview_wordpress_upgrade_all_int = function (websiteIds) {
     websitesToUpgrade = websiteIds;
@@ -263,50 +266,19 @@ let updatesoverview_wordpress_upgrade_int = function (websiteId, bulkMode) {
     return false;
 };
 
-let currentTranslationSlugToUpgrade = undefined;
-let websitesTranslationSlugsToUpgrade = undefined;
+let currentTranslationSlugToUpgrade;
+let websitesTranslationSlugsToUpgrade;
 let updatesoverview_translations_global_upgrade_all = function (groupId, updatesSelected) {
     if (bulkTaskRunning)
-        return false;
+        return;
 
     //Step 1: build form
     let sitesToUpdate = [];
     let siteNames = {};
     let sitesTranslationSlugs = {};
-    let foundChildren = [];
-
-    if (typeof updatesSelected !== 'undefined' && updatesSelected) {
-        if (typeof groupId !== 'undefined' && false !== groupId) {
-            jQuery('#update_wrapper_translation_upgrades_group_' + groupId).find('tr.mainwp-translation-update[updated="0"]').each(
-                function () {
-                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
-                        foundChildren.push(this);
-                    }
-                }
-            );
-        } else {
-            jQuery('#translations-updates-global').find('table tr[updated="0"]').each(
-                function () {
-                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
-                        foundChildren.push(this);
-                    }
-                }
-            );
-        }
-        if (foundChildren.length == 0) {
-            updates_please_select_items_notice();
-            return false;
-        }
-    } else {
-        if (typeof groupId !== 'undefined' && false !== groupId) {
-            foundChildren = jQuery('#update_wrapper_translation_upgrades_group_' + groupId).find('tr.mainwp-translation-update[updated="0"]');
-        } else {
-            foundChildren = jQuery('#translations-updates-global').find('table tr[updated="0"]');
-        }
-    }
-
+    let foundChildren = updatesoverview_translations_get_global_upgrade_all(groupId, updatesSelected);
     if (foundChildren.length == 0)
-        return false;
+        return;
     let sitesCount = 0;
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
@@ -394,18 +366,51 @@ let updatesoverview_translations_global_upgrade_all = function (groupId, updates
         return false;
     }
     _callback();
-    return false;
+    return;
 };
+
+let updatesoverview_translations_get_global_upgrade_all = function( groupId, updatesSelected ){
+    let foundChildren = [];
+    if (typeof updatesSelected !== 'undefined' && updatesSelected) {
+        if (typeof groupId !== 'undefined' && false !== groupId) {
+            jQuery('#update_wrapper_translation_upgrades_group_' + groupId).find('tr.mainwp-translation-update[updated="0"]').each(
+                function () {
+                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
+                        foundChildren.push(this);
+                    }
+                }
+            );
+        } else {
+            jQuery('#translations-updates-global').find('table tr[updated="0"]').each(
+                function () {
+                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
+                        foundChildren.push(this);
+                    }
+                }
+            );
+        }
+        if (foundChildren.length == 0) {
+            updates_please_select_items_notice();
+            return;
+        }
+    } else if (typeof groupId !== 'undefined' && false !== groupId) {
+        foundChildren = jQuery('#update_wrapper_translation_upgrades_group_' + groupId).find('tr.mainwp-translation-update[updated="0"]');
+    } else {
+        foundChildren = jQuery('#translations-updates-global').find('table tr[updated="0"]');
+    }
+    return foundChildren;
+}
+
 let updatesoverview_translations_upgrade_all = function (slug, translationName) {
     if (bulkTaskRunning)
-        return false;
+        return;
     //Step 1: build form
     let sitesToUpdate = [];
     let siteNames = [];
     let foundChildren = jQuery('.translations-bulk-updates[translation_slug="' + slug + '"]').find('tr[updated="0"]');
 
     if (foundChildren.length == 0)
-        return false;
+        return;
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
 
@@ -464,11 +469,10 @@ let updatesoverview_translations_upgrade_all = function (slug, translationName) 
             let confirmMsg = __('You are about to update the %1 translation on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', translationName, sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
-        return false;
+        return;
     }
 
     _callback();
-    return false;
 };
 let updatesoverview_translations_upgrade_all_int = function (slug, websiteIds, sitesTranslationSlugs) {
     currentTranslationSlugToUpgrade = slug;
@@ -641,50 +645,21 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
 
     return mainwp_updatesoverview_checkBackups(sitesToUpdate, siteNames);
 };
-let currentPluginSlugToUpgrade = undefined;
-let websitesPluginSlugsToUpgrade = undefined;
+let currentPluginSlugToUpgrade;
+let websitesPluginSlugsToUpgrade;
 let updatesoverview_plugins_global_upgrade_all = function (groupId, updatesSelected) {
     if (bulkTaskRunning)
-        return false;
+        return;
 
     //Step 1: build form
     let sitesToUpdate = [];
     let siteNames = {};
     let sitesPluginSlugs = {};
-    let foundChildren = [];
-
-    if (typeof updatesSelected !== 'undefined' && updatesSelected) {
-        if (typeof groupId !== 'undefined' && false !== groupId) {
-            jQuery('#update_wrapper_plugin_upgrades_group_' + groupId).find('tr.mainwp-plugin-update[updated="0"]').each(
-                function () {
-                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
-                        foundChildren.push(this);
-                    }
-                }
-            );
-        } else {
-            jQuery('#plugins-updates-global').find('table tr[updated="0"]').each(
-                function () {
-                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
-                        foundChildren.push(this);
-                    }
-                }
-            );
-        }
-        if (foundChildren.length == 0) {
-            updates_please_select_items_notice();
-            return false;
-        }
-    } else {
-        if (typeof groupId !== 'undefined' && false !== groupId) {
-            foundChildren = jQuery('#update_wrapper_plugin_upgrades_group_' + groupId).find('tr.mainwp-plugin-update[updated="0"]');
-        } else {
-            foundChildren = jQuery('#plugins-updates-global').find('table tr[updated="0"]');
-        }
-    }
+    
+    let foundChildren = updatesoverview_plugins_get_global_upgrade_all( groupId, updatesSelected );
 
     if (foundChildren.length == 0)
-        return false;
+        return;
     let sitesCount = 0;
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
@@ -768,38 +743,56 @@ let updatesoverview_plugins_global_upgrade_all = function (groupId, updatesSelec
             let confirmMsg = __('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', __('plugins'), sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
-        return false;
+        return;
     }
     _callback();
-    return false;
 };
+
+let updatesoverview_plugins_get_global_upgrade_all = function (groupId, updatesSelected) {
+    let foundChildren = [];
+    if (typeof updatesSelected !== 'undefined' && updatesSelected) {
+        if (typeof groupId !== 'undefined' && false !== groupId) {
+            jQuery('#update_wrapper_plugin_upgrades_group_' + groupId).find('tr.mainwp-plugin-update[updated="0"]').each(
+                function () {
+                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
+                        foundChildren.push(this);
+                    }
+                }
+            );
+        } else {
+            jQuery('#plugins-updates-global').find('table tr[updated="0"]').each(
+                function () {
+                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
+                        foundChildren.push(this);
+                    }
+                }
+            );
+        }
+        if (foundChildren.length == 0) {
+            updates_please_select_items_notice();
+            return;
+        }
+    } else {
+        if (typeof groupId !== 'undefined' && false !== groupId) {
+            foundChildren = jQuery('#update_wrapper_plugin_upgrades_group_' + groupId).find('tr.mainwp-plugin-update[updated="0"]');
+        } else {
+            foundChildren = jQuery('#plugins-updates-global').find('table tr[updated="0"]');
+        }
+    }
+    return foundChildren;
+}
+
 let updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSelected) {
     if (bulkTaskRunning)
-        return false;
+        return;
 
     //Step 1: build form
     let sitesToUpdate = [];
     let siteNames = [];
-    let foundChildren = [];
-
-    if (typeof updatesSelected !== 'undefined' && updatesSelected) {
-        jQuery('tr[plugin_slug="' + slug + '"]').find('table tr[updated="0"]').each(
-            function () {
-                if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
-                    foundChildren.push(this);
-                }
-            }
-        );
-        if (foundChildren.length == 0) {
-            updates_please_select_items_notice();
-            return false;
-        }
-    } else {
-        foundChildren = jQuery('tr[plugin_slug="' + slug + '"]').find('table tr[updated="0"]');
-    }
+    let foundChildren = updatesoverview_plugins_get_upgrade_all(slug, updatesSelected);
 
     if (foundChildren.length == 0)
-        return false;
+        return;
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
 
     for (let i = 0; i < foundChildren.length; i++) {
@@ -857,12 +850,31 @@ let updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSel
             let confirmMsg = __('You are about to update the %1 plugin on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', pluginName, sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
-        return false;
+        return;
     }
     _callback();
-    return false;
-
 };
+
+let updatesoverview_plugins_get_upgrade_all = function (slug, updatesSelected) {
+    let foundChildren = [];
+    if (typeof updatesSelected !== 'undefined' && updatesSelected) {
+        jQuery('tr[plugin_slug="' + slug + '"]').find('table tr[updated="0"]').each(
+            function () {
+                if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
+                    foundChildren.push(this);
+                }
+            }
+        );
+        if (foundChildren.length == 0) {
+            updates_please_select_items_notice();
+            return false;
+        }
+    } else {
+        foundChildren = jQuery('tr[plugin_slug="' + slug + '"]').find('table tr[updated="0"]');
+    }
+    return foundChildren;
+}
+
 let updatesoverview_plugins_upgrade_all_int = function (slug, websiteIds, sitesPluginSlugs) {
     currentPluginSlugToUpgrade = slug;
     websitesPluginSlugsToUpgrade = sitesPluginSlugs;
@@ -960,8 +972,6 @@ let updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, n
                     return function (response) {
                         let slugParts = pSlug.split(',');
                         let done = false;
-                        let success = false;
-                        let error = '';
                         for (let sid of slugParts) {
                             let websiteHolder = jQuery('.plugins-bulk-updates[plugin_slug="' + sid + '"] tr[site_id="' + pWebsiteId + '"]');
                             if (!websiteHolder.exists()) {
@@ -973,9 +983,6 @@ let updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, n
                                 if (!done && pBulkMode)
                                     updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, extErr);
                                 websiteHolder.find('td:last-child').html(extErr);
-                                if (response.error) {
-                                    error = response.error;
-                                }
                             } else {
                                 let res = response.result;
                                 let res_error = response.result_error;
@@ -984,17 +991,14 @@ let updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, n
                                         updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
                                     websiteHolder.attr('updated', 1);
                                     websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
-                                    success = true;
                                 } else if (res_error[sid]) {
                                     if (!done && pBulkMode)
                                         updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + res_error[sid] + '"><i class="red times icon"></i></span>');
                                     websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + res_error[sid] + '"><i class="red times icon"></i></span>');
-                                    error = res_error[sid];
                                 } else {
                                     if (!done && pBulkMode)
                                         updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, '<i class="red times icon"></i>');
                                     websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
-                                    error = _('Undefined error');
                                 }
                             }
                             if (!done && pBulkMode) {
@@ -1066,50 +1070,19 @@ let updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, n
     return mainwp_updatesoverview_checkBackups(sitesToUpdate, siteNames);
 };
 
-let currentThemeSlugToUpgrade = undefined;
-let websitesThemeSlugsToUpgrade = undefined;
+let currentThemeSlugToUpgrade;
+let websitesThemeSlugsToUpgrade;
 let updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelected) {
     if (bulkTaskRunning)
-        return false;
+        return;
 
     //Step 1: build form
     let sitesToUpdate = [];
     let siteNames = {};
     let sitesPluginSlugs = {};
-    let foundChildren = [];
-
-    if (typeof updatesSelected !== 'undefined' && updatesSelected) {
-        if (typeof groupId !== 'undefined' && false !== groupId) {
-            jQuery('#update_wrapper_theme_upgrades_group_' + groupId).find('tr.mainwp-theme-update[updated="0"]').each(
-                function () {
-                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
-                        foundChildren.push(this);
-                    }
-                }
-            );
-        } else {
-            jQuery('#themes-updates-global').find('table tr[updated="0"]').each(
-                function () {
-                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
-                        foundChildren.push(this);
-                    }
-                }
-            );
-        }
-        if (foundChildren.length == 0) {
-            updates_please_select_items_notice();
-            return false;
-        }
-    } else {
-        if (typeof groupId !== 'undefined' && false !== groupId) {
-            foundChildren = jQuery('#update_wrapper_theme_upgrades_group_' + groupId).find('tr.mainwp-theme-update[updated="0"]');
-        } else {
-            foundChildren = jQuery('#themes-updates-global').find('table tr[updated="0"]');
-        }
-    }
-
+    let foundChildren = updatesoverview_themes_get_global_upgrade_all(groupId, updatesSelected);
     if (foundChildren.length == 0)
-        return false;
+        return;
     let sitesCount = 0;
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
@@ -1192,11 +1165,44 @@ let updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelect
             let confirmMsg = __('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', __('themes'), sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
-        return false;
+        return;
     }
     _callback();
-    return false;
 };
+
+let updatesoverview_themes_get_global_upgrade_all = function (groupId, updatesSelected) {
+    let foundChildren = [];
+    if (typeof updatesSelected !== 'undefined' && updatesSelected) {
+        if (typeof groupId !== 'undefined' && false !== groupId) {
+            jQuery('#update_wrapper_theme_upgrades_group_' + groupId).find('tr.mainwp-theme-update[updated="0"]').each(
+                function () {
+                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
+                        foundChildren.push(this);
+                    }
+                }
+            );
+        } else {
+            jQuery('#themes-updates-global').find('table tr[updated="0"]').each(
+                function () {
+                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
+                        foundChildren.push(this);
+                    }
+                }
+            );
+        }
+        if (foundChildren.length == 0) {
+            updates_please_select_items_notice();
+            return false;
+        }
+    } else {
+        if (typeof groupId !== 'undefined' && false !== groupId) {
+            foundChildren = jQuery('#update_wrapper_theme_upgrades_group_' + groupId).find('tr.mainwp-theme-update[updated="0"]');
+        } else {
+            foundChildren = jQuery('#themes-updates-global').find('table tr[updated="0"]');
+        }
+    }
+    return foundChildren;
+}
 
 let updates_please_select_items_notice = function () {
     let msg = __('Please, select items to update.');
@@ -1207,31 +1213,15 @@ let updates_please_select_items_notice = function () {
 
 let updatesoverview_themes_upgrade_all = function (slug, themeName, updatesSelected) {
     if (bulkTaskRunning)
-        return false;
+        return;
 
     //Step 1: build form
     let sitesToUpdate = [];
     let siteNames = [];
-    let foundChildren = [];
-    if (typeof updatesSelected !== 'undefined' && updatesSelected) {
-        jQuery('tr[theme_slug="' + slug + '"]').find('table tr[updated="0"]').each(
-            function () {
-                if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
-                    foundChildren.push(this);
-                }
-            }
-        );
-        if (foundChildren.length == 0) {
-            updates_please_select_items_notice();
-            return false;
-        }
-    } else {
-        foundChildren = jQuery('tr[theme_slug="' + slug + '"]').find('table tr[updated="0"]');
-    }
+    let foundChildren = updatesoverview_themes_get_upgrade_all(slug, updatesSelected);
 
     if (foundChildren.length == 0)
-        return false;
-
+        return;
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
 
@@ -1287,11 +1277,32 @@ let updatesoverview_themes_upgrade_all = function (slug, themeName, updatesSelec
             let confirmMsg = __('You are about to update the %1 theme on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', themeName, sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
-        return false;
+        return;
     }
     _callback();
-    return false;
 };
+
+let updatesoverview_themes_get_upgrade_all = function (slug, updatesSelected) {
+    let foundChildren = [];
+    if (typeof updatesSelected !== 'undefined' && updatesSelected) {
+        jQuery('tr[theme_slug="' + slug + '"]').find('table tr[updated="0"]').each(
+            function () {
+                if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
+                    foundChildren.push(this);
+                }
+            }
+        );
+        if (foundChildren.length == 0) {
+            updates_please_select_items_notice();
+            return false;
+        }
+    } else {
+        foundChildren = jQuery('tr[theme_slug="' + slug + '"]').find('table tr[updated="0"]');
+    }
+
+    return foundChildren;
+}
+
 let updatesoverview_themes_upgrade_all_int = function (slug, websiteIds, sitesThemeSlugs) {
     currentThemeSlugToUpgrade = slug;
     websitesThemeSlugsToUpgrade = sitesThemeSlugs;
@@ -1455,7 +1466,7 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode) {
 let updatesoverview_global_upgrade_all = function (which) {
 
     if (bulkTaskRunning)
-        return false;
+        return;
 
     //Step 1: build form
     let sitesToUpdate = [];
@@ -1468,7 +1479,7 @@ let updatesoverview_global_upgrade_all = function (which) {
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
 
     let sitesCount = 0;
-    let foundChildren = undefined;
+    let foundChildren;
 
     if (which == 'all' || which == 'wp') {
         //Find wordpress to update
@@ -1644,11 +1655,8 @@ let updatesoverview_global_upgrade_all = function (which) {
         let confirmMsg = __('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', whichUpdates, sitesList.join('<br />'));
 
         mainwp_confirm(confirmMsg, _callback, false, 2);
-        return false;
-    } else {
-        return false;
+        return;
     }
-
 };
 /* eslint-enable complexity */
 

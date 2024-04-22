@@ -39,8 +39,8 @@ jQuery(function () {
     }
   });
 
-  jQuery(document).on('click', '#mainwp_managesites_add', function (event) {
-    mainwp_setup_managesites_add(event);
+  jQuery(document).on('click', '#mainwp_managesites_add', function () {
+    mainwp_setup_managesites_add();
   });
 
   jQuery(document).on('change', '#mainwp_managesites_add_wpurl', function () {
@@ -80,7 +80,7 @@ let mainwp_setup_managesites_add = function () {
     errors.push('Please enter a valid URL for the site.');
   } else {
     let url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
-    if (url.substr(-1) != '/') {
+    if (url.slice(-1) != '/') {
       url += '/';
     }
 
@@ -103,7 +103,7 @@ let mainwp_setup_managesites_add = function () {
 
     let url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
 
-    if (url.substr(-1) != '/') {
+    if (url.slice(-1) != '/') {
       url += '/';
     }
 
@@ -122,7 +122,7 @@ let mainwp_setup_managesites_add = function () {
       response = response.trim();
 
       let url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
-      if (url.substr(-1) != '/') {
+      if (url.slice(-1) != '/') {
         url += '/';
       }
 
@@ -132,11 +132,11 @@ let mainwp_setup_managesites_add = function () {
         errors.push('This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, please review <a href="https://kb.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.');
       } else if (response == 'NOMAINWP') {
         errors.push(mainwp_js_get_error_not_detected_connect());
-      } else if (response.substr(0, 5) == 'ERROR') {
+      } else if (response.substring(0, 5) == 'ERROR') {
         if (response.length == 5) {
           errors.push('Undefined error occurred. Please try again. If the issue does not resolve, please review <a href="https://kb.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.');
         } else {
-          let error = response.substr(6);
+          let error = response.substring(6);
           let err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', false, true); // return text error.
           if (false === err) {
             errors.push(error); // it is not json string error.
@@ -187,9 +187,9 @@ let mainwp_setup_managesites_add = function () {
           jQuery('#mainwp-message-zone').hide();
           jQuery('#mainwp-info-zone').hide();
 
-          if (response.substr(0, 5) == 'ERROR') {
+          if (response.substring(0, 5) == 'ERROR') {
             jQuery('#mainwp-message-zone').removeClass('green yellow green');
-            jQuery('#mainwp-message-zone').html(response.substr(6)).addClass('red').show();
+            jQuery('#mainwp-message-zone').html(response.substring(6)).addClass('red').show();
           } else {
             //Message the WP was added
             jQuery('#mainwp-message-zone').removeClass('green yellow green');

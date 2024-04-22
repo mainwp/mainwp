@@ -187,7 +187,7 @@ jQuery(document).on('change', '#mainwp-add-new-button', function () {
 });
 
 let mainwp_managesites_bulk_reconnect_next = function () {
-  while ((checkedBox = jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulkManageSitesCurrentThreads < bulkManageSitesMaxThreads)) {
+  while ((checkedBox = jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulkManageSitesCurrentThreads < bulkManageSitesMaxThreads)) { // NOSONAR -- modified out side the function.
     mainwp_managesites_bulk_reconnect_specific(checkedBox);
   }
   if ((bulkManageSitesTotal > 0) && (bulkManageSitesFinished == bulkManageSitesTotal)) {
@@ -230,12 +230,12 @@ let mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
 
     response = response.trim();
     let msg = '', error = '';
-    if (response.substr(0, 5) == 'ERROR') {
+    if (response.substring(0, 5) == 'ERROR') {
       if (response.length == 5) {
         error = __('Undefined error occured. Please try again.');
         error = siteUrl + ' - ' + error;
       } else {
-        error = response.substr(6);
+        error = response.substring(6);
         let err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', false, true);
         if (true !== err && '' != err) {
           error = err; // decoded error.
@@ -264,10 +264,10 @@ window.managesites_bulk_done = function () {
 };
 
 let mainwp_managesites_bulk_remove_next = function () {
-  while ((checkedBox = jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulkManageSitesCurrentThreads < bulkManageSitesMaxThreads)) {
+  while ((checkedBox = jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulkManageSitesCurrentThreads < bulkManageSitesMaxThreads)) { // NOSONAR -- modified out side the function.
     mainwp_managesites_bulk_remove_specific(checkedBox);
   }
-  if ((bulkManageSitesTotal > 0) && (bulkManageSitesFinished == bulkManageSitesTotal)) {
+  if ((bulkManageSitesTotal > 0) && (bulkManageSitesFinished == bulkManageSitesTotal)) { // NOSONAR - modified outside the function.
     managesites_bulk_done();
     setHtml('#mainwp-message-zone', __("Process completed. Reloading page..."));
     setTimeout(function () {

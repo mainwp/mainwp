@@ -392,7 +392,7 @@ let mainwp_fetch_posts = function (postId, userId, start_sites) {
 
     if (jQuery('#select_by').val() == 'site' && start_sites == undefined) {
         start_sites = 0;
-    };
+    }
 
     if (jQuery('#select_by').val() == 'site') {
         jQuery("input[name='selected_sites[]']:checked").each(function () {

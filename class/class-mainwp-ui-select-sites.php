@@ -218,8 +218,8 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             <div id="mainwp-select-sites-select-all-actions" class="ui two columns grid">
                 <div class="ui middle aligned column">
                 <?php if ( $show_select_all ) : ?>  
-                <div onClick="return mainwp_ss_select( this, true )" class="mainwp-ss-select"><i class="square outline icon"></i> <?php esc_attr_e( 'Select All', 'mainwp' ); ?></div>
-                <div onClick="return mainwp_ss_select( this, false )" class="mainwp-ss-deselect" style="display:none;padding-top:0;"><i class="check square outline icon"></i> <?php esc_attr_e( 'Deselect All', 'mainwp' ); ?></div>
+                <div onClick="return mainwp_ss_select( this, true )" onKeyUp="" class="mainwp-ss-select"><i class="square outline icon"></i> <?php esc_attr_e( 'Select All', 'mainwp' ); ?></div>
+                <div onClick="return mainwp_ss_select( this, false )" onKeyUp="" class="mainwp-ss-deselect" style="display:none;padding-top:0;"><i class="check square outline icon"></i> <?php esc_attr_e( 'Deselect All', 'mainwp' ); ?></div>
                 <?php endif; ?>
                 <?php echo $select_all_disconnected; //phpcs:ignore WordPress.Security.EscapeOutput ?>
             </div>

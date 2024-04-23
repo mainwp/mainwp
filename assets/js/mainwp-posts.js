@@ -200,7 +200,7 @@ let mainwp_fetch_pages = function () {
     });
 };
 
-let mainwp_fetch_pages_prepare = function () {
+let mainwp_fetch_pages_prepare = function () { // NOSONAR - complexity 19/15.
     
     let errors = [];
     let selected_sites = [];

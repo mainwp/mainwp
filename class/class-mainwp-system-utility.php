@@ -477,7 +477,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     public static function get_mainwp_dir_allow_access( $sub_dir ) {
         $dirs = static::get_mainwp_dir( $sub_dir, false );
         if ( $dirs ) {
-            $hasWPFileSystem = static::get_wp_file_system();
+            static::get_wp_file_system();
             global $wp_filesystem;
             if ( $wp_filesystem ) {
                 // to fix issue of do not allow access.

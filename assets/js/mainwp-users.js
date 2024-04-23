@@ -456,7 +456,7 @@ let mainwp_import_users_next = function () {
 };
 
 /* eslint-disable complexity */
-let mainwp_import_users_valid_data = function (decoded_data) {
+let mainwp_import_users_valid_data = function (decoded_data) { // NOSONAR  - complexity, multi user's fields.
 
     let errors = []; // array.
     let val_data = {}; // object.

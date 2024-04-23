@@ -36,10 +36,10 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return MainWP_DB_Client
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -170,12 +170,12 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         if ( ! $convert_pro_reports_dt && ! $convert_client_reports_dt ) {
             $rslt = $this->query( "SHOW TABLES LIKE '" . $this->table_name( 'pro_reports_token' ) . "'" );
-            if ( self::num_rows( $rslt ) ) {
+            if ( static::num_rows( $rslt ) ) {
                 $convert_pro_reports_dt = true;
             }
 
             $rslt = $this->query( "SHOW TABLES LIKE '" . $this->table_name( 'client_report_token' ) . "'" );
-            if ( self::num_rows( $rslt ) ) {
+            if ( static::num_rows( $rslt ) ) {
                 $convert_client_reports_dt = true;
             }
         }

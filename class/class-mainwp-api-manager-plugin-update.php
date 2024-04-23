@@ -40,11 +40,11 @@ class MainWP_Api_Manager_Plugin_Update { // phpcs:ignore Generic.Classes.Opening
      * @return class instance
      */
     public static function instance() {
-        if ( is_null( self::$instance ) ) {
-            self::$instance = new self();
+        if ( is_null( static::$instance ) ) {
+            static::$instance = new self();
         }
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**

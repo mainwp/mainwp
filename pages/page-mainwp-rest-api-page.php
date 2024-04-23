@@ -46,10 +46,10 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @return mixed $instance The single instance of the class.
      */
     public static function get_instance() {
-        if ( is_null( self::$instance ) ) {
-            self::$instance = new self();
+        if ( is_null( static::$instance ) ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /** Instantiate Hooks for the REST API Page. */
@@ -59,16 +59,16 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
          *
          * This hook is normally used in the same context of 'mainwp_getsubpages_restapi'
          */
-        add_action( 'mainwp-pageheader-restapi', array( self::get_class_name(), 'render_header' ) );
+        add_action( 'mainwp-pageheader-restapi', array( static::get_class_name(), 'render_header' ) );
 
         /**
          * This hook allows you to render the REST API page footer via the 'mainwp-pagefooter-restapi' action.
          *
          * This hook is normally used in the same context of 'mainwp-getsubpages-restapi'
          */
-        add_action( 'mainwp-pagefooter-restapi', array( self::get_class_name(), 'render_footer' ) );
+        add_action( 'mainwp-pagefooter-restapi', array( static::get_class_name(), 'render_footer' ) );
 
-        add_action( 'admin_init', array( self::get_instance(), 'admin_init' ) );
+        add_action( 'admin_init', array( static::get_instance(), 'admin_init' ) );
     }
 
     /** Run the export_sites method that exports the Child Sites .csv file */
@@ -92,7 +92,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             'read',
             'RESTAPI',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render_all_api_keys',
             )
         );
@@ -105,7 +105,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 'read',
                 'AddApiKeys',
                 array(
-                    self::get_class_name(),
+                    static::get_class_name(),
                     'render_rest_api_setings',
                 )
             );
@@ -118,10 +118,10 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
          *
          * @since Unknown
          */
-        self::$subPages = apply_filters( 'mainwp_getsubpages_restapi', array() );
+        static::$subPages = apply_filters( 'mainwp_getsubpages_restapi', array() );
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'RESTAPI' . $subPage['slug'] ) ) {
                     continue;
                 }
@@ -129,7 +129,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             }
         }
 
-        self::init_left_menu( self::$subPages );
+        static::init_left_menu( static::$subPages );
     }
 
     /**
@@ -145,8 +145,8 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     <div class="mainwp_boxoutin"></div>
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=RESTAPI' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'REST API', 'mainwp' ); ?></a>
                     <?php
-                    if ( isset( self::$subPages ) && is_array( self::$subPages ) && ( count( self::$subPages ) > 0 ) ) {
-                        foreach ( self::$subPages as $subPage ) {
+                    if ( isset( static::$subPages ) && is_array( static::$subPages ) && ( count( static::$subPages ) > 0 ) ) {
+                        foreach ( static::$subPages as $subPage ) {
                             if ( MainWP_Menu::is_disable_menu_item( 3, 'RESTAPI' . $subPage['slug'] ) ) {
                                 continue;
                             }
@@ -219,7 +219,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_POST['submit'] ) && isset( $_GET['page'] ) && 'AddApiKeys' === $_GET['page'] ) {
             if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) {
-                $all_keys = self::check_rest_api_updates();
+                $all_keys = static::check_rest_api_updates();
 
                 if ( ! is_array( $all_keys ) ) {
                     $all_keys = array();
@@ -368,8 +368,8 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             );
         }
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'RESTAPI' . $subPage['slug'] ) ) {
                     continue;
                 }
@@ -398,14 +398,14 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             return;
         }
 
-        $all_keys = self::check_rest_api_updates();
+        $all_keys = static::check_rest_api_updates();
 
         if ( ! is_array( $all_keys ) ) {
             $all_keys = array();
         }
-        self::render_header();
-        self::render_table_top();
-        if ( ! self::check_rest_api_enabled() ) {
+        static::render_header();
+        static::render_table_top();
+        if ( ! static::check_rest_api_enabled() ) {
             ?>
             <div class="ui message yellow"><?php printf( esc_html__( 'It seems the WordPress REST API is currently disabled on your site. MainWP REST API requires the WordPress REST API to function properly. Please enable it to ensure smooth operation. Need help? %sClick here for a guide%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/wordpress-rest-api-does-not-respond/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
             <?php
@@ -414,7 +414,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         ?>
         <div id="mainwp-rest-api-keys" class="ui segment">
             <div class="ui message" id="mainwp-message-zone-apikeys" style="display:none;"></div>
-            <?php self::show_messages(); ?>
+            <?php static::show_messages(); ?>
             <table id="mainwp-rest-api-keys-table" class="ui unstackable table">
                 <thead>
                     <tr>
@@ -513,7 +513,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         </script>   
 
         <?php
-        self::render_footer();
+        static::render_footer();
     }
 
 
@@ -616,15 +616,15 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         }
 
         if ( false !== $edit_key && ! empty( $edit_item ) ) {
-            self::render_rest_api_edit( $edit_key, $edit_item );
+            static::render_rest_api_edit( $edit_key, $edit_item );
             return;
         }
 
         // we need to generate a consumer key and secret and return the result and save it into the database.
-        $consumer_key    = 'ck_' . self::mainwp_generate_rand_hash();
-        $consumer_secret = 'cs_' . self::mainwp_generate_rand_hash();
+        $consumer_key    = 'ck_' . static::mainwp_generate_rand_hash();
+        $consumer_secret = 'cs_' . static::mainwp_generate_rand_hash();
 
-        self::render_header( 'Settings' );
+        static::render_header( 'Settings' );
 
         ?>
         <div id="rest-api-settings" class="ui segment">
@@ -634,7 +634,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     <?php printf( esc_html__( 'Enable the MainWP REST API functionality and generate API credentials.  Check this %1$shelp document%2$s to see all available endpoints.', 'mainwp' ), '<a href="https://mainwp.dev/rest-api/" target="_blank">', '</a>' ); ?>
                 </div>
             <?php endif; ?>
-                <?php self::show_messages(); ?>
+                <?php static::show_messages(); ?>
                 <div id="api-credentials-created" class="ui green message"><?php esc_html_e( 'API credentials have been successfully generated. Please copy the consumer key and secret now as after you leave this page the credentials will no longer be accessible. Use the Description field for easier Key management when needed.', 'mainwp' ); ?></div>
                 <div class="ui form">
                     <form method="POST" action="">
@@ -730,7 +730,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             </script>
         <?php
 
-        self::render_footer( 'Settings' );
+        static::render_footer( 'Settings' );
     }
 
     /**
@@ -771,7 +771,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
         $item_pers = is_string( $init_pers ) ? explode( ',', $init_pers ) : array();
 
-        self::render_header( 'Edit' );
+        static::render_header( 'Edit' );
         ?>
         <div id="rest-api-settings" class="ui segment">
             <div class="ui form">
@@ -849,7 +849,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
         </div>
         <?php
-        self::render_footer( 'Edit' );
+        static::render_footer( 'Edit' );
     }
 
     /**
@@ -898,7 +898,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         if ( is_array( $data ) & isset( $data['routes'] ) && ! empty( $data['routes'] ) ) {
             return true;
         } elseif ( ! $check_logged_in ) {
-            return self::check_rest_api_enabled( true );
+            return static::check_rest_api_enabled( true );
         }
         return false;
     }

@@ -27,7 +27,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Instantiate action hooks.
      */
     public static function init() {
-        add_action( 'mainwp_admin_menu', array( self::get_class_name(), 'init_extensions_menu' ), 10, 2 );
+        add_action( 'mainwp_admin_menu', array( static::get_class_name(), 'init_extensions_menu' ), 10, 2 );
     }
 
     /**
@@ -44,7 +44,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'read',
             'Extensions-Mainwp-Backups',
             array(
-                self::class,
+                static::class,
                 'render_extensions_groups',
             )
         );
@@ -56,7 +56,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'read',
             'Extensions-Mainwp-Security',
             array(
-                self::class,
+                static::class,
                 'render_extensions_groups',
             )
         );
@@ -68,7 +68,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'read',
             'Extensions-Mainwp-Monitoring',
             array(
-                self::class,
+                static::class,
                 'render_extensions_groups',
             )
         );
@@ -80,7 +80,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'read',
             'Extensions-Mainwp-Analytics',
             array(
-                self::class,
+                static::class,
                 'render_extensions_groups',
             )
         );
@@ -92,7 +92,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'read',
             'Extensions-Mainwp-Performance',
             array(
-                self::class,
+                static::class,
                 'render_extensions_groups',
             )
         );
@@ -104,7 +104,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'read',
             'Extensions-Mainwp-Development',
             array(
-                self::class,
+                static::class,
                 'render_extensions_groups',
             )
         );
@@ -116,7 +116,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'read',
             'Extensions-Mainwp-Agency',
             array(
-                self::class,
+                static::class,
                 'render_extensions_groups',
             )
         );
@@ -128,7 +128,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'read',
             'Extensions-Mainwp-Administrative',
             array(
-                self::class,
+                static::class,
                 'render_extensions_groups',
             )
         );
@@ -146,7 +146,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
         );
 
         if ( defined( 'MAINWP_MODULE_API_BACKUPS_ENABLED' ) && MAINWP_MODULE_API_BACKUPS_ENABLED ) {
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'API Backups', 'mainwp' ),
                     'slug'                 => 'mainwp-api-backpus',
@@ -159,7 +159,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             );
         }
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'BackWPup', 'mainwp' ),
                     'slug'                 => 'mainwp-backwpup-extension/mainwp-backwpup-extension.php',
@@ -171,7 +171,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'UpdraftPlus', 'mainwp' ),
                     'slug'                 => 'mainwp-updraftplus-extension/mainwp-updraftplus-extension.php',
@@ -183,7 +183,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'MainWP Buddy', 'mainwp' ),
                     'slug'                 => 'mainwp-buddy-extension/mainwp-buddy-extension.php',
@@ -195,7 +195,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Time Capsule', 'mainwp' ),
                     'slug'                 => 'mainwp-timecapsule-extension/mainwp-timecapsule-extension.php',
@@ -207,7 +207,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'WPvivid Backup', 'mainwp' ),
                     'slug'                 => 'wpvivid-backup-mainwp/wpvivid-backup-mainwp.php',
@@ -231,7 +231,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             1
         );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Activity Log for MainWP', 'mainwp' ),
                     'slug'                 => 'activity-log-mainwp/activity-log-mainwp.php',
@@ -243,7 +243,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Dashboard Lock', 'mainwp' ),
                     'slug'                 => 'mainwp-clean-and-lock-extension/mainwp-clean-and-lock-extension.php',
@@ -255,7 +255,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Jetpack Scan', 'mainwp' ),
                     'slug'                 => 'mainwp-jetpack-scan-extension/mainwp-jetpack-scan-extension.php',
@@ -267,7 +267,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Jetpack Protect', 'mainwp' ),
                     'slug'                 => 'mainwp-jetpack-protect-extension/mainwp-jetpack-protect-extension.php',
@@ -279,7 +279,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Security Ninja', 'mainwp' ),
                     'slug'                 => 'security-ninja-for-mainwp/security-ninja-mainwp.php',
@@ -291,7 +291,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Sucuri', 'mainwp' ),
                     'slug'                 => 'mainwp-sucuri-extension/mainwp-sucuri-extension.php',
@@ -303,7 +303,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'iThemes Security', 'mainwp' ),
                     'slug'                 => 'mainwp-ithemes-security-extension/mainwp-ithemes-security-extension.php',
@@ -315,7 +315,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Virusdie', 'mainwp' ),
                     'slug'                 => 'mainwp-virusdie-extension/mainwp-virusdie-extension.php',
@@ -327,7 +327,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Vulnerability Checker', 'mainwp' ),
                     'slug'                 => 'mainwp-vulnerability-checker-extension/mainwp-vulnerability-checker-extension.php',
@@ -339,7 +339,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Wordfence', 'mainwp' ),
                     'slug'                 => 'mainwp-wordfence-extension/mainwp-wordfence-extension.php',
@@ -363,7 +363,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             1
         );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Google Analytics', 'mainwp' ),
                     'slug'                 => 'mainwp-google-analytics-extension/mainwp-google-analytics-extension.php',
@@ -375,7 +375,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Fathom', 'mainwp' ),
                     'slug'                 => 'mainwp-fathom-extension/mainwp-fathom-extension.php',
@@ -387,7 +387,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Matomo', 'mainwp' ),
                     'slug'                 => 'mainwp-piwik-extension/mainwp-piwik-extension.php',
@@ -422,7 +422,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 2
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Advanced Uptime Monitor', 'mainwp' ),
                     'slug'                 => 'advanced-uptime-monitor-extension/advanced-uptime-monitor-extension.php',
@@ -434,7 +434,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'SSL Monitor', 'mainwp' ),
                     'slug'                 => 'mainwp-ssl-monitor-extension/mainwp-ssl-monitor-extension.php',
@@ -446,7 +446,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Domain Monitor', 'mainwp' ),
                     'slug'                 => 'mainwp-domain-monitor-extension/mainwp-domain-monitor-extension.php',
@@ -458,7 +458,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Lighthouse', 'mainwp' ),
                     'slug'                 => 'mainwp-lighthouse-extension/mainwp-lighthouse-extension.php',
@@ -482,7 +482,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             1
         );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'White Label', 'mainwp' ),
                     'slug'                 => 'mainwp-branding-extension/mainwp-branding-extension.php',
@@ -494,7 +494,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Team Control', 'mainwp' ),
                     'slug'                 => 'mainwp-team-control/mainwp-team-control.php',
@@ -518,7 +518,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             1
         );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'WooCommerce Shortcuts', 'mainwp' ),
                     'slug'                 => 'mainwp-woocommerce-shortcuts-extension/mainwp-woocommerce-shortcuts-extension.php',
@@ -530,7 +530,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'WooCommerce Status', 'mainwp' ),
                     'slug'                 => 'mainwp-woocommerce-status-extension/mainwp-woocommerce-status-extension.php',
@@ -554,7 +554,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             1
         );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Atarim', 'mainwp' ),
                     'slug'                 => 'mainwp-atarim-extension/mainwp-atarim-extension.php',
@@ -566,7 +566,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Bulk Settings Manager', 'mainwp' ),
                     'slug'                 => 'mainwp-bulk-settings-manager/mainwp-bulk-settings-manager.php',
@@ -578,7 +578,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Code Snippets', 'mainwp' ),
                     'slug'                 => 'mainwp-code-snippets-extension/mainwp-code-snippets-extension.php',
@@ -590,7 +590,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Custom Dashboard', 'mainwp' ),
                     'slug'                 => 'mainwp-custom-dashboard-extension/mainwp-custom-dashboard-extension.php',
@@ -602,7 +602,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Custom Post Type', 'mainwp' ),
                     'slug'                 => 'mainwp-custom-post-types/mainwp-custom-post-types.php',
@@ -614,7 +614,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'File Uploader', 'mainwp' ),
                     'slug'                 => 'mainwp-file-uploader-extension/mainwp-file-uploader-extension.php',
@@ -626,7 +626,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Pressable', 'mainwp' ),
                     'slug'                 => 'mainwp-pressable-extension/mainwp-pressable-extension.php',
@@ -638,7 +638,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Staging', 'mainwp' ),
                     'slug'                 => 'mainwp-staging-extension/mainwp-staging-extension.php',
@@ -650,7 +650,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'URL Extractor', 'mainwp' ),
                     'slug'                 => 'mainwp-url-extractor-extension/mainwp-url-extractor-extension.php',
@@ -674,7 +674,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             1
         );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Cache Control', 'mainwp' ),
                     'slug'                 => 'mainwp-cache-control-extension/mainwp-cache-control-extension.php',
@@ -686,7 +686,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Maintenance', 'mainwp' ),
                     'slug'                 => 'mainwp-maintenance-extension/mainwp-maintenance-extension.php',
@@ -698,7 +698,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Rocket', 'mainwp' ),
                     'slug'                 => 'mainwp-rocket-extension/mainwp-rocket-extension.php',
@@ -710,7 +710,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'WP Compress', 'mainwp' ),
                     'slug'                 => 'wp-compress-mainwp/wp-compress-main-wp.php',
@@ -722,7 +722,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ),
             );
 
-        self::add_extension_menu(
+        static::add_extension_menu(
             array(
                 'title'                => esc_html__( 'Comments', 'mainwp' ),
                 'slug'                 => 'mainwp-comments-extension/mainwp-comments-extension.php',
@@ -734,7 +734,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ),
         );
 
-        self::add_extension_menu(
+        static::add_extension_menu(
             array(
                 'title'                => esc_html__( 'Comments', 'mainwp' ),
                 'slug'                 => 'mainwp-comments-extension/mainwp-comments-extension.php',
@@ -746,7 +746,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ),
         );
 
-        self::add_extension_menu(
+        static::add_extension_menu(
             array(
                 'title'                => esc_html__( 'Clone', 'mainwp' ),
                 'slug'                 => 'mainwp-clone-extension/mainwp-clone-extension.php',
@@ -758,7 +758,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ),
         );
 
-        self::add_extension_menu(
+        static::add_extension_menu(
             array(
                 'title'                => esc_html__( 'Article Uploader', 'mainwp' ),
                 'slug'                 => 'mainwp-article-uploader-extension/mainwp-article-uploader-extension.php',
@@ -770,7 +770,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ),
         );
 
-        self::add_extension_menu(
+        static::add_extension_menu(
             array(
                 'title'                => esc_html__( 'Post Dripper', 'mainwp' ),
                 'slug'                 => 'mainwp-post-dripper-extension/mainwp-post-dripper-extension.php',
@@ -782,7 +782,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ),
         );
 
-        self::add_extension_menu(
+        static::add_extension_menu(
             array(
                 'title'                => esc_html__( 'Post Plus', 'mainwp' ),
                 'slug'                 => 'mainwp-post-plus-extension/mainwp-post-plus-extension.php',
@@ -794,7 +794,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ),
         );
 
-        self::add_extension_menu(
+        static::add_extension_menu(
             array(
                 'title'                => esc_html__( 'Post Dripper', 'mainwp' ),
                 'slug'                 => 'mainwp-post-dripper-extension/mainwp-post-dripper-extension.php',
@@ -806,7 +806,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ),
         );
 
-        self::add_extension_menu(
+        static::add_extension_menu(
             array(
                 'title'                => esc_html__( 'Post Plus', 'mainwp' ),
                 'slug'                 => 'mainwp-post-plus-extension/mainwp-post-plus-extension.php',
@@ -818,7 +818,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ),
         );
 
-        self::add_extension_menu(
+        static::add_extension_menu(
             array(
                 'title'                => esc_html__( 'Pro Reports', 'mainwp' ),
                 'slug'                 => 'mainwp-pro-reports-extension/mainwp-pro-reports-extension.php',
@@ -831,7 +831,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
         );
 
         if ( defined( 'MAINWP_MODULE_COST_TRACKER_ENABLED' ) && MAINWP_MODULE_COST_TRACKER_ENABLED ) {
-            self::add_extension_menu(
+            static::add_extension_menu(
                 array(
                     'title'                => esc_html__( 'Cost Tracker Assistant', 'mainwp' ),
                     'slug'                 => 'mainwp-cost-tracker-assistant-extension/mainwp-cost-tracker-assistant-extension.php',
@@ -843,7 +843,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             );
         }
 
-        self::add_extension_menu(
+        static::add_extension_menu(
             array(
                 'title'                => esc_html__( 'WordPress SEO', 'mainwp' ),
                 'slug'                 => 'wordpress-seo-extension/wordpress-seo-extension.php',
@@ -855,7 +855,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ),
         );
 
-        self::add_extension_menu(
+        static::add_extension_menu(
             array(
                 'title'                => esc_html__( 'WordPress SEO', 'mainwp' ),
                 'slug'                 => 'wordpress-seo-extension/wordpress-seo-extension.php',
@@ -867,7 +867,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ),
         );
 
-        self::add_extension_menu(
+        static::add_extension_menu(
             array(
                 'title'                => esc_html__( 'SEOPress', 'mainwp' ),
                 'slug'                 => 'seopress-for-mainwp/wp-seopress-mainwp.php',
@@ -879,7 +879,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ),
         );
 
-        self::add_extension_menu(
+        static::add_extension_menu(
             array(
                 'title'                => esc_html__( 'SEOPress', 'mainwp' ),
                 'slug'                 => 'seopress-for-mainwp/seopress-for-mainwp.php',
@@ -948,7 +948,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $href = '#';
 				//phpcs:disable Squiz.PHP.CommentedOutCode.Found 
                 // $href = 'admin.php?page=Extensions';
-                // if ( ! self::extension_is_installed( $plugin_slug ) ) {
+                // if ( ! static::extension_is_installed( $plugin_slug ) ) {
                 // $href .= '&message=install-ext-' . dirname( $plugin_slug );
                 // }
 				//phpcs:enable

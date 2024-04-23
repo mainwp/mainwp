@@ -31,7 +31,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * Fire off render_widget().
      */
     public static function render() {
-        self::render_widget();
+        static::render_widget();
     }
 
 
@@ -68,7 +68,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             MainWP_DB::free_result( $websites );
         }
 
-        self::render_html_widget( $website, $allThemes );
+        static::render_html_widget( $website, $allThemes );
     }
 
     /**
@@ -266,7 +266,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * Fire off Action activate & display result
      */
     public static function activate_theme() {
-        self::action( 'activate' );
+        static::action( 'activate' );
         die( wp_json_encode( array( 'result' => esc_html__( 'Theme has been activated!', 'mainwp' ) ) ) );
     }
 
@@ -276,7 +276,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * Fire off action deactivate & display result
      */
     public static function delete_theme() {
-        self::action( 'delete' );
+        static::action( 'delete' );
         die( wp_json_encode( array( 'result' => esc_html__( 'Theme has been permanently deleted!', 'mainwp' ) ) ) );
     }
 
@@ -287,7 +287,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      *
      * @param mixed $action Theme Action.
      *
-     * @throws \Exception Error message.
+     * @throws \MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()

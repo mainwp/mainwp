@@ -45,10 +45,10 @@ class Cost_Tracker_DB extends MainWP_Install {
      * @return Cost_Tracker_DB
      */
     public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -67,7 +67,7 @@ class Cost_Tracker_DB extends MainWP_Install {
         $currentVersion = get_site_option( 'mainwp_module_cost_tracker_db_version' );
 
         $rslt = $this->query( "SHOW TABLES LIKE '" . $this->table_name( 'cost_tracker' ) . "'" );
-        if ( empty( self::num_rows( $rslt ) ) ) {
+        if ( empty( static::num_rows( $rslt ) ) ) {
             $currentVersion = false;
         }
 
@@ -173,7 +173,7 @@ PRIMARY KEY  (`id`)  '; }
      *
      * @param array $update Cost tracker array data.
      *
-     * @throws \Exception Existed cost tracker error.
+     * @throws \MainWP_Exception Existed cost tracker error.
      * @return mixed Result
      */
 	public function update_cost_tracker( $update ) { //phpcs:ignore -- complex.
@@ -278,7 +278,7 @@ PRIMARY KEY  (`id`)  '; }
         }
 
         if ( ! empty( $obj_name ) ) {
-            self::get_instance()->update_lookup_cost( $item_id, $obj_name, $new_obj_ids );
+            static::get_instance()->update_lookup_cost( $item_id, $obj_name, $new_obj_ids );
         } else {
             // to support saving cost without selected sites, tags, clients.
             MainWP_DB::instance()->delete_lookup_items(

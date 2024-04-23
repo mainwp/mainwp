@@ -218,7 +218,7 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( ! function_exists( '\mysqli_connect' ) ) {
             return false;
         }
-        return ( self::$instance->wpdb->dbh instanceof \mysqli );
+        return self::$instance->wpdb->dbh instanceof \mysqli;
     }
 
     /**
@@ -382,7 +382,7 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( self::use_mysqli() ) {
-            return ( $result instanceof \mysqli_result );
+            return $result instanceof \mysqli_result;
         } else {
             return is_resource( $result );
         }

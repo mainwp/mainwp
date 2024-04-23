@@ -48,10 +48,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * @return mixed $instance The single instance of the class.
      */
     public static function get_instance() {
-        if ( is_null( self::$instance ) ) {
-            self::$instance = new self();
+        if ( is_null( static::$instance ) ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /** Instantiate Hooks for the Settings Page. */
@@ -63,9 +63,9 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
          *
          * @see \MainWP_Settings::render_header
          */
-        add_action( 'mainwp-pageheader-settings', array( self::get_class_name(), 'render_header' ) );  // deprecated, use mainwp_pageheader_settings.
+        add_action( 'mainwp-pageheader-settings', array( static::get_class_name(), 'render_header' ) );  // deprecated, use mainwp_pageheader_settings.
 
-        add_action( 'mainwp_pageheader_settings', array( self::get_class_name(), 'render_header' ) );
+        add_action( 'mainwp_pageheader_settings', array( static::get_class_name(), 'render_header' ) );
 
         /**
          * This hook allows you to render the Settings page footer via the 'mainwp-pagefooter-settings' action.
@@ -74,18 +74,18 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
          *
          * @see \MainWP_Settings::render_footer
          */
-        add_action( 'mainwp-pagefooter-settings', array( self::get_class_name(), 'render_footer' ) ); // deprecated, use mainwp_pagefooter_settings.
+        add_action( 'mainwp-pagefooter-settings', array( static::get_class_name(), 'render_footer' ) ); // deprecated, use mainwp_pagefooter_settings.
 
-        add_action( 'mainwp_pagefooter_settings', array( self::get_class_name(), 'render_footer' ) );
+        add_action( 'mainwp_pagefooter_settings', array( static::get_class_name(), 'render_footer' ) );
 
-        add_action( 'admin_init', array( self::get_class_name(), 'admin_init' ) );
+        add_action( 'admin_init', array( static::get_class_name(), 'admin_init' ) );
 
-        add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
+        add_action( 'mainwp_help_sidebar_content', array( static::get_class_name(), 'mainwp_help_content' ) );
     }
 
     /** Run the export_sites method that exports the Child Sites .csv file */
     public static function admin_init() {
-        self::export_sites();
+        static::export_sites();
         if ( isset( $_GET['clearActivationData'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'clear_activation_data' ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             delete_option( 'mainwp_extensions_api_username' );
             delete_option( 'mainwp_extensions_api_password' );
@@ -145,7 +145,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             'read',
             'Settings',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render',
             )
         );
@@ -158,7 +158,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 'read',
                 'MainWPTools',
                 array(
-                    self::get_class_name(),
+                    static::get_class_name(),
                     'render_mainwp_tools',
                 )
             );
@@ -172,7 +172,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 'read',
                 'SettingsAdvanced',
                 array(
-                    self::get_class_name(),
+                    static::get_class_name(),
                     'render_advanced',
                 )
             );
@@ -186,7 +186,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 'read',
                 'SettingsEmail',
                 array(
-                    self::get_class_name(),
+                    static::get_class_name(),
                     'render_email_settings',
                 )
             );
@@ -199,11 +199,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
          *
          * @since Unknown
          */
-        $sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-settings', array( array() ), '4.0.7.2', 'mainwp_getsubpages_settings' );  // @deprecated Use 'mainwp_getsubpages_settings' instead.
-        self::$subPages = apply_filters( 'mainwp_getsubpages_settings', $sub_pages );
+        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-settings', array( array() ), '4.0.7.2', 'mainwp_getsubpages_settings' );  // @deprecated Use 'mainwp_getsubpages_settings' instead.
+        static::$subPages = apply_filters( 'mainwp_getsubpages_settings', $sub_pages );
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'Settings' . $subPage['slug'] ) ) {
                     continue;
                 }
@@ -234,8 +234,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=MainWPTools' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Tools', 'mainwp' ); ?></a>
                     <?php } ?>              
                     <?php
-                    if ( isset( self::$subPages ) && is_array( self::$subPages ) && ( count( self::$subPages ) > 0 ) ) {
-                        foreach ( self::$subPages as $subPage ) {
+                    if ( isset( static::$subPages ) && is_array( static::$subPages ) && ( count( static::$subPages ) > 0 ) ) {
+                        foreach ( static::$subPages as $subPage ) {
                             if ( MainWP_Menu::is_disable_menu_item( 3, 'Settings' . $subPage['slug'] ) ) {
                                 continue;
                             }
@@ -364,8 +364,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             );
         }
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'Settings' . $subPage['slug'] ) ) {
                     continue;
                 }
@@ -556,7 +556,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             return;
         }
 
-        self::render_header( '' );
+        static::render_header( '' );
         ?>
         <div id="mainwp-general-settings" class="ui segment">
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-general-settings-info-message' ) ) : ?>
@@ -646,8 +646,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </div>
 
                         <?php
-                        self::render_timezone_settings();
-                        self::render_datetime_settings();
+                        static::render_timezone_settings();
+                        static::render_datetime_settings();
 
                         $sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
                         if ( false === $sidebarPosition ) {
@@ -686,7 +686,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
                         $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
 
-                        $update_time         = self::get_websites_automatic_update_time();
+                        $update_time         = static::get_websites_automatic_update_time();
                         $lastAutomaticUpdate = $update_time['last'];
                         $nextAutomaticUpdate = $update_time['next'];
 
@@ -877,7 +877,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 </div>
             </div>
         <?php
-        self::render_footer( '' );
+        static::render_footer( '' );
     }
 
     /**
@@ -1196,7 +1196,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             */
             do_action( 'mainwp_after_save_advanced_settings', $_POST );
         }
-        self::render_header( 'Advanced' );
+        static::render_header( 'Advanced' );
         ?>
 
         <div id="mainwp-advanced-settings" class="ui segment">
@@ -1224,7 +1224,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                          */
                         do_action( 'mainwp_advanced_settings_form_top' );
 
-                        if ( self::show_openssl_lib_config() ) {
+                        if ( static::show_openssl_lib_config() ) {
                             $openssl_loc = MainWP_System_Utility::get_openssl_conf();
                             ?>
                             <h3 class="ui dividing header">
@@ -1433,7 +1433,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 </div>
             </div>
         <?php
-        self::render_footer( 'Advanced' );
+        static::render_footer( 'Advanced' );
     }
 
     /**
@@ -1447,7 +1447,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
             return;
         }
-        self::render_header( 'MainWPTools' );
+        static::render_header( 'MainWPTools' );
         $is_demo = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <div id="mainwp-tools-settings" class="ui segment">
@@ -1490,7 +1490,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
                         $show_qsw = apply_filters( 'mainwp_show_qsw', true );
 
-                        self::get_instance()->render_select_custom_themes();
+                        static::get_instance()->render_select_custom_themes();
 
                         ?>
                         <div class="ui grid field settings-field-indicator-tools">
@@ -1607,7 +1607,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 jQuery( '#mainwp-clear-activation-data' ).popup();
             </script>
         <?php
-        self::render_footer( 'MainWPTools' );
+        static::render_footer( 'MainWPTools' );
         MainWP_Connect_Helper::render_renew_connections_modal();
     }
 
@@ -1626,7 +1626,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 $custom_theme = $compat_theme;
             }
         }
-        $themes_files = self::get_instance()->get_custom_themes_files();
+        $themes_files = static::get_instance()->get_custom_themes_files();
         if ( empty( $themes_files ) ) {
             $themes_files = array();
         }
@@ -1803,7 +1803,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      */
     public static function render_email_settings() {
         $notification_emails = MainWP_Notification_Settings::get_notification_types();
-        self::render_header( 'Emails' );
+        static::render_header( 'Emails' );
         $edit_email = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! empty( $edit_email ) && isset( $notification_emails[ $edit_email ] ) ) {
             $updated_templ = MainWP_Notification_Template::instance()->handle_template_file_action();
@@ -1812,7 +1812,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             $updated = MainWP_Notification_Settings::emails_general_settings_handle();
             MainWP_Notification_Settings::instance()->render_all_settings( $updated );
         }
-        self::render_footer( 'Emails' );
+        static::render_footer( 'Emails' );
     }
 
     /**

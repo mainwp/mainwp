@@ -86,11 +86,11 @@ class MainWP_Deprecated_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @return class instance
      */
     public static function instance() {
-        if ( is_null( self::$instance ) ) {
-            self::$instance = new self();
+        if ( is_null( static::$instance ) ) {
+            static::$instance = new self();
         }
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -143,9 +143,9 @@ class MainWP_Deprecated_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSame
      */
     public static function maybe_handle_deprecated_hook() {
         $current_hook = current_filter();
-        $new_hook     = self::instance()->get_replacement_hooks( $current_hook );
+        $new_hook     = static::instance()->get_replacement_hooks( $current_hook );
         if ( false !== $new_hook ) {
-            self::instance()->deprecated_message( $current_hook, $new_hook );
+            static::instance()->deprecated_message( $current_hook, $new_hook );
         }
     }
 

@@ -90,7 +90,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
      *
      * Try to reconnect to Child Site.
      *
-     * @throws \Exception Error message.
+     * @throws \MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_Manage_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::m_reconnect_site()
@@ -270,7 +270,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_POST['id'] ) ) {
 
-            $result = self::remove_website( intval( $_POST['id'] ) );
+            $result = static::remove_website( intval( $_POST['id'] ) );
             $error  = is_array( $result ) && isset( $result['error'] ) ? $result['error'] : '';
 
             if ( 'NOMAINWP' === $error ) {
@@ -299,7 +299,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
      * @param object|int $site object or Child site ID.
      *
      * @return mixed|false result
-     * @throws \Exception Error message.
+     * @throws \MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()

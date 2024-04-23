@@ -214,7 +214,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
          */
         do_action( 'mainwp_pageheader_sites', 'managesites' );
 
-        $websites = self::prepare_items();
+        $websites = static::prepare_items();
 
         MainWP_DB::data_seek( $websites, 0 );
 
@@ -453,7 +453,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
         </script>
         <?php
         MainWP_DB::free_result( $websites );
-        self::render_screen_options();
+        static::render_screen_options();
         /**
          * Sites Page Footer
          *

@@ -93,7 +93,7 @@ class MainWP_Themes_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function activate_theme() {
         $theme = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        self::action( 'activate', $theme );
+        static::action( 'activate', $theme );
         die( 'SUCCESS' );
     }
 
@@ -102,7 +102,7 @@ class MainWP_Themes_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function delete_themes() {
         $themes = isset( $_POST['themes'] ) ? wp_unslash( $_POST['themes'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        self::action( 'delete', implode( '||', $themes ) );
+        static::action( 'delete', implode( '||', $themes ) );
         die( 'SUCCESS' );
     }
 
@@ -112,7 +112,7 @@ class MainWP_Themes_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param mixed $pAction Action to perform.
      * @param mixed $theme   Theme to perform action on.
      *
-     * @throws \Exception Error message.
+     * @throws \MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_Exception

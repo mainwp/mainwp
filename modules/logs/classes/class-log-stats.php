@@ -97,19 +97,19 @@ class Log_Stats {
      * @param array  $data_prev Data Stats previous array.
      */
     public static function render_stats_info( $data, $action, $title, $data_prev ) {
-        $count      = self::get_stats_count( $data, $action );
-        $prev_count = self::get_stats_count( $data_prev, $action );
+        $count      = static::get_stats_count( $data, $action );
+        $prev_count = static::get_stats_count( $data_prev, $action );
         ?>
         <div class="center aligned middle aligned column">
             <div class="ui mini vertical statistic">
                 <div class="value">
-                    <?php self::render_stats_compare( $count, $prev_count ); ?> <?php echo intval( $count ); ?>
+                    <?php static::render_stats_compare( $count, $prev_count ); ?> <?php echo intval( $count ); ?>
                 </div>
                 <div class="label">
                     <?php echo esc_html( $title ); ?>   
                 </div>
                 <span class="ui small text">
-                    <?php self::render_stats_duration_time( $data, $action ); ?>
+                    <?php static::render_stats_duration_time( $data, $action ); ?>
                 </span>
             </div>
         </div>
@@ -150,8 +150,8 @@ class Log_Stats {
      * @param array  $data_prev Stats previous data.
      */
     public static function render_chart_series( $data, $action, $title, $data_prev ) {
-        $count      = self::get_stats_count( $data, $action );
-        $prev_count = self::get_stats_count( $data_prev, $action );
+        $count      = static::get_stats_count( $data, $action );
+        $prev_count = static::get_stats_count( $data_prev, $action );
         echo '
 			{ 
 			x: "' . esc_html( $title ) . '",

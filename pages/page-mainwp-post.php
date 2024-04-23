@@ -54,8 +54,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          *
          * @see \MainWP_Post::render_header
          */
-        add_action( 'mainwp-pageheader-post', array( self::get_class_name(), 'render_header' ) ); // @deprecated Use 'mainwp_pageheader_post' instead.
-        add_action( 'mainwp_pageheader_post', array( self::get_class_name(), 'render_header' ) );
+        add_action( 'mainwp-pageheader-post', array( static::get_class_name(), 'render_header' ) ); // @deprecated Use 'mainwp_pageheader_post' instead.
+        add_action( 'mainwp_pageheader_post', array( static::get_class_name(), 'render_header' ) );
 
         /**
          * This hook allows you to render the Post page footer via the 'mainwp-pagefooter-post' action.
@@ -67,12 +67,12 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          *
          * @see \MainWP_Post::render_footer
          */
-        add_action( 'mainwp-pagefooter-post', array( self::get_class_name(), 'render_footer' ) );
-        add_action( 'mainwp_pagefooter_post', array( self::get_class_name(), 'render_footer' ) );
+        add_action( 'mainwp-pagefooter-post', array( static::get_class_name(), 'render_footer' ) );
+        add_action( 'mainwp_pagefooter_post', array( static::get_class_name(), 'render_footer' ) );
 
-        add_filter( 'admin_post_thumbnail_html', array( self::get_class_name(), 'admin_post_thumbnail_html' ), 10, 3 );
+        add_filter( 'admin_post_thumbnail_html', array( static::get_class_name(), 'admin_post_thumbnail_html' ), 10, 3 );
 
-        add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
+        add_action( 'mainwp_help_sidebar_content', array( static::get_class_name(), 'mainwp_help_content' ) );
     }
 
     /**
@@ -86,18 +86,18 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::get_class_name()
      */
     public static function init_menu() {
-        $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . esc_html__( 'Posts', 'mainwp' ) . '</span>', 'read', 'PostBulkManage', array( self::get_class_name(), 'render' ) );
-        add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_page' ) );
-        add_filter( 'manage_' . $_page . '_columns', array( self::get_class_name(), 'get_manage_columns' ) );
+        $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . esc_html__( 'Posts', 'mainwp' ) . '</span>', 'read', 'PostBulkManage', array( static::get_class_name(), 'render' ) );
+        add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_page' ) );
+        add_filter( 'manage_' . $_page . '_columns', array( static::get_class_name(), 'get_manage_columns' ) );
 
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkAdd' ) ) {
-            $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'read', 'PostBulkAdd', array( self::get_class_name(), 'render_bulk_add' ) );
-            add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
+            $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'read', 'PostBulkAdd', array( static::get_class_name(), 'render_bulk_add' ) );
+            add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_add_edit' ) );
         }
 
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkEdit' ) ) {
-            $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Edit Post', 'mainwp' ) . '</div>', 'read', 'PostBulkEdit', array( self::get_class_name(), 'render_bulk_edit' ) );
-            add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
+            $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Edit Post', 'mainwp' ) . '</div>', 'read', 'PostBulkEdit', array( static::get_class_name(), 'render_bulk_edit' ) );
+            add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_add_edit' ) );
         }
 
         add_submenu_page(
@@ -119,19 +119,19 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          *
          * @since Unknown
          */
-        $sub_pages      = array();
-        $sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-post', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_post' );  // @deprecated Use 'mainwp_getsubpages_post' instead.
-        self::$subPages = apply_filters( 'mainwp_getsubpages_post', $sub_pages );
+        $sub_pages        = array();
+        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-post', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_post' );  // @deprecated Use 'mainwp_getsubpages_post' instead.
+        static::$subPages = apply_filters( 'mainwp_getsubpages_post', $sub_pages );
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'Post' . $subPage['slug'] ) ) {
                     continue;
                 }
                 add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Post' . $subPage['slug'], $subPage['callback'] );
             }
         }
-        self::init_left_menu( self::$subPages );
+        static::init_left_menu( static::$subPages );
     }
 
     /**
@@ -143,9 +143,9 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @return void
      */
     public static function on_load_page() {
-        add_action( 'admin_head', array( self::get_class_name(), 'admin_head' ) );
-        add_filter( 'hidden_columns', array( self::get_class_name(), 'get_hidden_columns' ), 10, 3 );
-        add_action( 'mainwp_screen_options_modal_bottom', array( self::get_class_name(), 'hook_screen_options_modal_bottom' ), 10, 2 );
+        add_action( 'admin_head', array( static::get_class_name(), 'admin_head' ) );
+        add_filter( 'hidden_columns', array( static::get_class_name(), 'get_hidden_columns' ), 10, 3 );
+        add_action( 'mainwp_screen_options_modal_bottom', array( static::get_class_name(), 'hook_screen_options_modal_bottom' ), 10, 2 );
     }
 
     /**
@@ -154,7 +154,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * Get the post ID,
      * pass it to method on_load_bulkpost().
      *
-     * @return void self::on_load_bulkpost( $post_id ).
+     * @return void static::on_load_bulkpost( $post_id ).
      */
     public static function on_load_add_edit() {
         global $_mainwp_menu_active_slugs;
@@ -179,7 +179,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             wp_die( esc_html__( 'Invalid post.', 'mainwp' ) );
         }
 
-        self::on_load_bulkpost( $post_id );
+        static::on_load_bulkpost( $post_id );
     }
 
     /**
@@ -309,7 +309,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $show_columns = array();
             }
 
-            $cols = self::get_manage_columns();
+            $cols = static::get_manage_columns();
             MainWP_UI::render_showhide_columns_settings( $cols, $show_columns, 'post' );
         }
     }
@@ -336,8 +336,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <?php } ?>
                     <?php } ?>
                     <?php
-                    if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-                        foreach ( self::$subPages as $subPage ) {
+                    if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+                        foreach ( static::$subPages as $subPage ) {
                             if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && true !== $subPage['menu_hidden'] ) ) {
                                 if ( MainWP_Menu::is_disable_menu_item( 3, 'Post' . $subPage['slug'] ) ) {
                                     continue;
@@ -432,7 +432,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             return $content;
         }
 
-        return self::wp_post_thumbnail_html( $thumbnail_id, $post_id );
+        return static::wp_post_thumbnail_html( $thumbnail_id, $post_id );
     }
 
     /**
@@ -475,8 +475,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
         }
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'Post' . $subPage['slug'] ) ) {
                     continue;
                 }
@@ -538,7 +538,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
         }
 
-        self::render_header( 'BulkManage' );
+        static::render_header( 'BulkManage' );
 
         ?>
         <div class="ui alt mainwp-posts segment" id="mainwp-manage-posts">
@@ -603,7 +603,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <?php printf( esc_html__( 'Manage existing posts on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                         </div>
                     <?php endif; ?>
-                    <?php self::render_table( true ); ?>
+                    <?php static::render_table( true ); ?>
                 </div>
             </div>
             <div class="mainwp-side-content mainwp-no-padding">
@@ -685,7 +685,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 <div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
                     <div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
                     <div class="content active">
-                    <?php self::render_search_options(); ?>
+                    <?php static::render_search_options(); ?>
                     <?php
                     /**
                      * Action: mainwp_manage_posts_after_search_options
@@ -774,7 +774,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <?php
         }
 
-        self::render_footer( 'BulkManage' );
+        static::render_footer( 'BulkManage' );
     }
 
     /**
@@ -947,7 +947,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             MainWP_Cache::echo_body( 'Post' );
         } else {
             MainWP_Cache::init_cache( 'Post' );
-            self::render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type, $search_on, false, $clients );
+            static::render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type, $search_on, false, $clients );
         }
         ?>
             </tbody>
@@ -1196,7 +1196,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 'get_all_posts',
                 $post_data,
                 array(
-                    self::get_class_name(),
+                    static::get_class_name(),
                     'posts_search_handler',
                 ),
                 $output
@@ -1364,7 +1364,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
                     <td class="date column-date" data-order="<?php echo esc_attr( $raw_dts ); ?>"><abbr raw_value="<?php echo esc_attr( $raw_dts ); ?>" title="<?php echo esc_attr( $post['dts'] ); ?>"><?php echo esc_html( $post['dts'] ); ?></abbr></td>
 
-                    <td class="status column-status <?php echo 'trash' === $post['status'] ? 'post-trash' : ''; ?>"><?php echo esc_html( self::get_status( $post['status'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+                    <td class="status column-status <?php echo 'trash' === $post['status'] ? 'post-trash' : ''; ?>"><?php echo esc_html( static::get_status( $post['status'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
 
                     <?php
                     if ( MainWP_Utility::enabled_wp_seo() ) :
@@ -1634,11 +1634,11 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $count = 0;
             if ( $metadata ) {
                 foreach ( $metadata as $entry ) {
-                    echo self::list_meta_row( $entry, $count ); // phpcs:ignore WordPress.Security.EscapeOutput
+                    echo static::list_meta_row( $entry, $count ); // phpcs:ignore WordPress.Security.EscapeOutput
                 }
             }
 
-            self::meta_form( $post );
+            static::meta_form( $post );
             ?>
             </div>
         </div>
@@ -1747,7 +1747,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      */
     public static function post_thumbnail_meta_box( $pos ) {
         $thumbnail_id = get_post_meta( $pos->ID, '_thumbnail_id', true );
-        echo self::wp_post_thumbnail_html( $thumbnail_id, $pos->ID ); // phpcs:ignore WordPress.Security.EscapeOutput
+        echo static::wp_post_thumbnail_html( $thumbnail_id, $pos->ID ); // phpcs:ignore WordPress.Security.EscapeOutput
     }
 
     /**
@@ -2181,7 +2181,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     </div>
                     <?php } ?>
                     <div class="field">
-                <?php self::post_custom_meta_box( $post ); ?>
+                <?php static::post_custom_meta_box( $post ); ?>
                 </div>
 
                 <div class="field postbox-container">
@@ -2197,9 +2197,9 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                  */
                 do_action( 'mainwp_bulkpost_edit', $post, $post_type );
 
-                self::do_meta_boxes( null, 'normal', $post );
+                static::do_meta_boxes( null, 'normal', $post );
 
-                self::do_meta_boxes( null, 'advanced', $post );
+                static::do_meta_boxes( null, 'advanced', $post );
 
                 /**
                  * Edit bulkpost metaboxes
@@ -2213,7 +2213,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                  */
                 do_action( 'add_meta_boxes', $post_type, $post );
 
-                self::do_meta_boxes( $post_type, 'normal', $post );
+                static::do_meta_boxes( $post_type, 'normal', $post );
 
                 ?>
                 </div>
@@ -2265,11 +2265,11 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <div class="ui fitted divider"></div>
                     <?php
                     if ( 'bulkpost' === $post_type ) {
-                        self::render_categories_list( $post );
+                        static::render_categories_list( $post );
                     }
-                    self::render_post_fields( $post, $post_type );
+                    static::render_post_fields( $post, $post_type );
                     ?>
-                    <?php self::do_meta_boxes( $post_type, 'side', $post ); ?>
+                    <?php static::do_meta_boxes( $post_type, 'side', $post ); ?>
                     <div class="ui fitted divider"></div>
                     <?php
                     /**
@@ -2319,7 +2319,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <div class="ui clearing hidden divider"></div>
         </div>
         <?php
-        self::render_footer( 'BulkAdd' );
+        static::render_footer( 'BulkAdd' );
     }
 
     /**
@@ -2499,7 +2499,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         ?>
         <div class="mainwp-search-options mainwp-post-featured-image" id="postimagediv">
                 <?php echo '<div class="inside">'; ?>
-            <?php self::post_thumbnail_meta_box( $post ); ?>
+            <?php static::post_thumbnail_meta_box( $post ); ?>
                 <?php echo '</div>'; ?>
             </div>
             <div class="ui fitted divider"></div>
@@ -2598,7 +2598,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 </div>              
             </div>
             <div style="display:none" id="timestampdiv">
-                    <?php self::touch_time( $post ); ?>
+                    <?php static::touch_time( $post ); ?>
                     </div>
                 </div>
             <?php
@@ -2626,7 +2626,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         global $_mainwp_default_post_to_edit;
 
         $post_id = $_mainwp_default_post_to_edit ? $_mainwp_default_post_to_edit->ID : 0;
-        self::render_addedit( $post_id, 'BulkAdd' );
+        static::render_addedit( $post_id, 'BulkAdd' );
     }
 
     /**
@@ -2645,7 +2645,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0;
 		// phpcs:enable
-        self::render_addedit( $post_id, 'BulkEdit' );
+        static::render_addedit( $post_id, 'BulkEdit' );
     }
 
     /**
@@ -2657,9 +2657,9 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @param mixed $what what tab is active.
      */
     public static function render_addedit( $post_id, $what ) {
-        self::render_header( $what, $post_id );
-        self::render_bulkpost( $post_id, 'bulkpost' );
-        self::render_footer( $what );
+        static::render_header( $what, $post_id );
+        static::render_bulkpost( $post_id, 'bulkpost' );
+        static::render_footer( $what );
     }
 
     /**

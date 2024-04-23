@@ -80,7 +80,7 @@ let mainwp_setup_managesites_add = function () {
     errors.push('Please enter a valid URL for the site.');
   } else {
     let url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
-    if (url.slice(-1) != '/') {
+    if (!url.endsWith('/')) {
       url += '/';
     }
 
@@ -103,7 +103,7 @@ let mainwp_setup_managesites_add = function () {
 
     let url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
 
-    if (url.slice(-1) != '/') {
+    if (!url.endsWith('/')) {
       url += '/';
     }
 
@@ -122,7 +122,7 @@ let mainwp_setup_managesites_add = function () {
       response = response.trim();
 
       let url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
-      if (url.slice(-1) != '/') {
+      if (!url.endsWith('/')) {
         url += '/';
       }
 

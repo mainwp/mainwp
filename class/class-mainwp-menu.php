@@ -290,7 +290,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 'init_menu_callback' => array( MainWP_Monitoring::class, 'init_menu' ),
             );
 
-            self::init_mainwp_menu_items( $menus_items, 'first' ); // do NOT change 'first', it related other hooks.
+            static::init_mainwp_menu_items( $menus_items, 'first' ); // do NOT change 'first', it related other hooks.
 
             /**
              * Action: mainwp_admin_menu
@@ -316,7 +316,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 'leftbar_order'      => 6,
             );
 
-            self::init_mainwp_menu_items( $menus_items_low, 'second' );
+            static::init_mainwp_menu_items( $menus_items_low, 'second' );
 
         }
     }
@@ -343,7 +343,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 continue;
             }
             if ( ! empty( $item['slug'] ) && ! empty( $item['menu_level'] ) && ! empty( $item['init_menu_callback'] ) ) {
-                if ( ! self::is_disable_menu_item( intval( $item['menu_level'] ), $item['slug'] ) ) {
+                if ( ! static::is_disable_menu_item( intval( $item['menu_level'] ), $item['slug'] ) ) {
                     if ( is_callable( $item['init_menu_callback'] ) ) {
                         $accessable = false;
                         if ( isset( $item['menu_rights'] ) ) {
@@ -395,45 +395,45 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      */
     public static function init_sub_pages() {
 
-        if ( ! self::is_disable_menu_item( 2, 'PostBulkManage' ) ) {
+        if ( ! static::is_disable_menu_item( 2, 'PostBulkManage' ) ) {
             MainWP_Post::init_subpages_menu();
         }
-        if ( ! self::is_disable_menu_item( 2, 'managesites' ) ) {
+        if ( ! static::is_disable_menu_item( 2, 'managesites' ) ) {
             MainWP_Manage_Sites::init_subpages_menu();
         }
 
-        if ( ! self::is_disable_menu_item( 2, 'RESTAPI' ) ) {
+        if ( ! static::is_disable_menu_item( 2, 'RESTAPI' ) ) {
             MainWP_Rest_Api_Page::init_subpages_menu();
         }
 
-        if ( ! self::is_disable_menu_item( 2, 'Settings' ) ) {
+        if ( ! static::is_disable_menu_item( 2, 'Settings' ) ) {
             MainWP_Settings::init_subpages_menu();
         }
 
-        if ( ! self::is_disable_menu_item( 2, 'Extensions' ) ) {
+        if ( ! static::is_disable_menu_item( 2, 'Extensions' ) ) {
             MainWP_Extensions::init_subpages_menu();
         }
-        if ( ! self::is_disable_menu_item( 2, 'PageBulkManage' ) ) {
+        if ( ! static::is_disable_menu_item( 2, 'PageBulkManage' ) ) {
             MainWP_Page::init_subpages_menu();
         }
-        if ( ! self::is_disable_menu_item( 2, 'ThemesManage' ) ) {
+        if ( ! static::is_disable_menu_item( 2, 'ThemesManage' ) ) {
             MainWP_Themes::init_subpages_menu();
         }
-        if ( ! self::is_disable_menu_item( 2, 'PluginsManage' ) ) {
+        if ( ! static::is_disable_menu_item( 2, 'PluginsManage' ) ) {
             MainWP_Plugins::init_subpages_menu();
         }
-        if ( ! self::is_disable_menu_item( 2, 'UserBulkManage' ) ) {
+        if ( ! static::is_disable_menu_item( 2, 'UserBulkManage' ) ) {
             MainWP_User::init_subpages_menu();
         }
-        if ( ! self::is_disable_menu_item( 2, 'ManageClients' ) ) {
+        if ( ! static::is_disable_menu_item( 2, 'ManageClients' ) ) {
             MainWP_Client::init_subpages_menu();
         }
         if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-            if ( ! self::is_disable_menu_item( 2, 'ManageBackups' ) ) {
+            if ( ! static::is_disable_menu_item( 2, 'ManageBackups' ) ) {
                 MainWP_Manage_Backups::init_subpages_menu();
             }
         }
-        if ( ! self::is_disable_menu_item( 2, 'Settings' ) ) {
+        if ( ! static::is_disable_menu_item( 2, 'Settings' ) ) {
             MainWP_Settings::init_subpages_menu();
         }
 
@@ -446,7 +446,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          */
         do_action( 'mainwp_admin_menu_sub' );
 
-        if ( ! self::is_disable_menu_item( 2, 'ServerInformation' ) ) {
+        if ( ! static::is_disable_menu_item( 2, 'ServerInformation' ) ) {
             MainWP_Server_Information::init_subpages_menu();
         }
     }
@@ -891,7 +891,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             echo '<div ' . $id_attr . " class=\"item $active_item\">";
                             echo "<a class=\"title with-sub $active_item\" href=\"$href\">$title <i class=\"dropdown icon\"></i></a>";
                             echo "<div class=\"content menu $active_item\">";
-                            self::render_sub_item( $item_key );
+                            static::render_sub_item( $item_key );
                             echo '</div>';
                             echo '</div>';
                         } else {
@@ -959,7 +959,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                     echo '<div ' . $id_attr . " class=\"item $active_item $item_classes\">";
                                     echo "<a class=\"title with-sub $active_item\" href=\"$href\">$title <i class=\"dropdown icon\"></i></a>";
                                     echo "<div class=\"content menu $active_item\">";
-                                    self::render_sub_item( $item_key );
+                                    static::render_sub_item( $item_key );
                                     echo '</div>';
                                     echo '</div>';
                                 } else {
@@ -1387,7 +1387,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $level2_active = false;
 
             if ( ! $set_actived ) {
-                $level2_active = self::is_level2_menu_item_active( $href ) ? true : false;
+                $level2_active = static::is_level2_menu_item_active( $href ) ? true : false;
                 if ( is_array( $active_path ) && ! empty( $active_path ) ) {
                     reset( $active_path );
                     $item = key( $active_path );

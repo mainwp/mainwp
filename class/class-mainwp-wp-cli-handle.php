@@ -39,10 +39,10 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      * @return self $instance
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -127,7 +127,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      * @return string $callback Callback method.
      */
     public static function get_assoc_args_commands( $cli_com, $assoc_args ) {
-        $commands = self::get_assoc_handle_commands( $cli_com );
+        $commands = static::get_assoc_handle_commands( $cli_com );
         if ( empty( $commands ) ) {
             return false;
         }
@@ -150,9 +150,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      * @return bool True on success, false or error.
      */
     public static function handle_cli_callback( $cli_com, $args, $assoc_args ) {
-        $callback = self::get_assoc_args_commands( $cli_com, $assoc_args );
+        $callback = static::get_assoc_args_commands( $cli_com, $assoc_args );
         if ( ! empty( $callback ) ) {
-            if ( method_exists( self::class, 'callback_' . $cli_com . '_' . $callback ) ) {
+            if ( method_exists( static::class, 'callback_' . $cli_com . '_' . $callback ) ) {
                 $website = false;
 
                 $requires_site_id = false;
@@ -167,7 +167,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
                 }
 
                 if ( $requires_site_id ) {
-                    $site_id = self::get_cli_params( $args, $assoc_args, 'site_id' );
+                    $site_id = static::get_cli_params( $args, $assoc_args, 'site_id' );
                     if ( empty( $site_id ) ) {
                         \WP_CLI::error( 'Empty site id.' );
                         return false;
@@ -184,7 +184,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
                         return false;
                     }
                 }
-                call_user_func_array( array( self::class, 'callback_' . $cli_com . '_' . $callback ), array( $args, $assoc_args, $website ) );
+                call_user_func_array( array( static::class, 'callback_' . $cli_com . '_' . $callback ), array( $args, $assoc_args, $website ) );
                 return true;
             }
         }
@@ -241,7 +241,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
                     'admin',
                 );
 
-                $data = self::map_assoc_args( $assoc_args, $allow_fields, $required_fields );
+                $data = static::map_assoc_args( $assoc_args, $allow_fields, $required_fields );
                 if ( isset( $data['site-url'] ) ) {
                     $data['url'] = $data['site-url'];
                     unset( $data['site-url'] );
@@ -257,11 +257,11 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
                     'uniqueid',
                 );
                 $required_fields = array(); // required_fields.
-                return self::map_assoc_args( $assoc_args, $allow_fields, $required_fields );
+                return static::map_assoc_args( $assoc_args, $allow_fields, $required_fields );
             }
         } elseif ( is_array( $what ) && ! empty( $what ) ) {
             $map_fields = $what;
-            return self::map_assoc_args( $assoc_args, $map_fields );
+            return static::map_assoc_args( $assoc_args, $map_fields );
         }
 
         return false;
@@ -302,7 +302,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         if ( empty( $data ) ) {
             \WP_CLI::line( esc_html__( 'No child sites added to your MainWP Dashboard.', 'mainwp' ) );
         } else {
-            self::print_sites( $data, true );
+            static::print_sites( $data, true );
         }
     }
 
@@ -331,7 +331,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         if ( empty( $data ) ) {
             \WP_CLI::line( esc_html__( 'No connected child sites fount.', 'mainwp' ) );
         } else {
-            self::print_sites( $data );
+            static::print_sites( $data );
         }
     }
 
@@ -355,7 +355,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         if ( empty( $data ) ) {
             \WP_CLI::line( esc_html__( 'No disconnected child sites found.', 'mainwp' ) );
         } else {
-            self::print_sites( $data );
+            static::print_sites( $data );
         }
     }
 
@@ -377,7 +377,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      * @uses handle_sync_sites();
      */
     public static function callback_sites_sync_sites() {
-        self::handle_sync_sites();
+        static::handle_sync_sites();
     }
 
     /**
@@ -390,7 +390,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      */
     public static function callback_sites_check_sites( $args, $assoc_args ) {
 
-        $sites = self::get_cli_params( $args, $assoc_args, 'sites' );
+        $sites = static::get_cli_params( $args, $assoc_args, 'sites' );
 
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
         \WP_CLI::line( '' );
@@ -427,7 +427,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      */
     public static function callback_sites_disconnect_sites( $args = array(), $assoc_args = false ) {
 
-        $sites = self::get_cli_params( $args, $assoc_args, 'sites' );
+        $sites = static::get_cli_params( $args, $assoc_args, 'sites' );
 
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
         \WP_CLI::line( 'Disconnect started' );
@@ -1125,7 +1125,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      * @param object $website    Object containing child site data.
      */
     public static function callback_site_add_site( $args = array(), $assoc_args = array(), $website = false ) {
-        $fields = self::get_cli_params( $args, $assoc_args, 'add-site' );
+        $fields = static::get_cli_params( $args, $assoc_args, 'add-site' );
         $data   = MainWP_Manage_Sites_Handler::rest_api_add_site( $fields );
         if ( is_array( $data ) && ! empty( $data['siteid'] ) ) {
 			\WP_CLI::success( '  -> Add site result: ' . print_r( $data, true ) ); // phpcs:ignore -- for cli result. 
@@ -1144,7 +1144,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      * @param object $website    Object containing child site data.
      */
     public static function callback_site_edit_site( $args = array(), $assoc_args = array(), $website = false ) {
-        $fields  = self::get_cli_params( $args, $assoc_args, 'edit-site' );
+        $fields  = static::get_cli_params( $args, $assoc_args, 'edit-site' );
         $data    = MainWP_DB_Common::instance()->rest_api_update_website( $website->id, $fields );
         $website = MainWP_DB::instance()->get_website_by_id( $website->id );
         \WP_CLI::line( '  -> ' . $website->name . ' (' . $website->url . ')' );
@@ -1400,7 +1400,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      */
     public static function callback_site_site_update_item( $args = array(), $assoc_args = array(), $website = false ) {
 
-        $params = self::get_cli_params( $args, $assoc_args, array( 'type', 'slug' ) );
+        $params = static::get_cli_params( $args, $assoc_args, array( 'type', 'slug' ) );
 
         $type = $params['type'];
         $slug = $params['slug'];
@@ -1438,7 +1438,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
     public static function callback_site_site_manage_plugin( $args = array(), $assoc_args = array(), $website = false ) {
         \WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
 
-        $params = self::get_cli_params( $args, $assoc_args, array( 'plugin', 'action' ) );
+        $params = static::get_cli_params( $args, $assoc_args, array( 'plugin', 'action' ) );
         $plugin = $params['plugin'];
         $action = $params['action'];
 
@@ -1473,7 +1473,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
     public static function callback_site_site_manage_theme( $args = array(), $assoc_args = array(), $website = false ) {
         \WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
 
-        $params = self::get_cli_params( $args, $assoc_args, array( 'theme', 'action' ) );
+        $params = static::get_cli_params( $args, $assoc_args, array( 'theme', 'action' ) );
         $theme  = $params['theme'];
         $action = $params['action'];
 
@@ -1760,7 +1760,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      */
     public static function callback_updates_ignore_updates( $args = array(), $assoc_args = array(), $website = false ) {
 
-        $params = self::get_cli_params( $args, $assoc_args, array( 'type', 'slug', 'name' ) );
+        $params = static::get_cli_params( $args, $assoc_args, array( 'type', 'slug', 'name' ) );
 
         $type = $params['type'];
         $slug = $params['slug'];
@@ -1785,7 +1785,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      */
     public static function callback_updates_ignore_update( $args = array(), $assoc_args = array(), $website = false ) {
 
-        $params = self::get_cli_params( $args, $assoc_args, array( 'type', 'slug', 'name' ) );
+        $params = static::get_cli_params( $args, $assoc_args, array( 'type', 'slug', 'name' ) );
         $type   = $params['type'];
         $slug   = $params['slug'];
         $name   = $params['name'];
@@ -1808,7 +1808,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      */
     public static function callback_updates_unignore_updates( $args = array(), $assoc_args = array(), $website = false ) {
 
-        $params = self::get_cli_params( $args, $assoc_args, array( 'type', 'slug' ) );
+        $params = static::get_cli_params( $args, $assoc_args, array( 'type', 'slug' ) );
         $type   = $params['type'];
         $slug   = $params['slug'];
 
@@ -1831,7 +1831,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      */
     public static function callback_updates_unignore_update( $args = array(), $assoc_args = array(), $website = false ) {
 
-        $params = self::get_cli_params( $args, $assoc_args, array( 'type', 'slug' ) );
+        $params = static::get_cli_params( $args, $assoc_args, array( 'type', 'slug' ) );
         $type   = $params['type'];
         $slug   = $params['slug'];
 
@@ -1852,7 +1852,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      */
     public static function handle_sync_sites( $args = array(), $assoc_args = false ) {
 
-        $sites    = self::get_cli_params( $args, $assoc_args, 'sites' );
+        $sites    = static::get_cli_params( $args, $assoc_args, 'sites' );
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
 
         $warnings = 0;

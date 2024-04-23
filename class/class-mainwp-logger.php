@@ -109,10 +109,10 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_Logger
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -164,7 +164,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             } elseif ( get_transient( 'mainwp_transient_action_logs' ) ) {
                 $enabled = self::DEBUG;
             } else {
-                $enabled = self::DISABLED;
+                $enabled = static::DISABLED;
             }
         }
         return $enabled;
@@ -195,17 +195,17 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public function get_log_type_info( $type, $logcolor ) {
         $currentColor = '';
         $prefix       = '';
-        if ( self::DEBUG === $type || self::DEBUG === $logcolor ) {
-            $currentColor = self::DEBUG_COLOR;
+        if ( static::DEBUG === $type || static::DEBUG === $logcolor ) {
+            $currentColor = static::DEBUG_COLOR;
             $prefix       = '[DEBUG]';
-        } elseif ( self::INFO === $type || self::INFO === $logcolor ) {
-            $currentColor = self::INFO_COLOR;
+        } elseif ( static::INFO === $type || static::INFO === $logcolor ) {
+            $currentColor = static::INFO_COLOR;
             $prefix       = '[INFO]';
-        } elseif ( self::WARNING === $type || self::WARNING === $logcolor ) {
-            $currentColor = self::WARNING_COLOR;
+        } elseif ( static::WARNING === $type || static::WARNING === $logcolor ) {
+            $currentColor = static::WARNING_COLOR;
             $prefix       = '[WARNING]';
-        } elseif ( self::LOG === $type || self::LOG === $logcolor ) {
-            $currentColor = self::LOG_COLOR;
+        } elseif ( static::LOG === $type || static::LOG === $logcolor ) {
+            $currentColor = static::LOG_COLOR;
             $prefix       = '[LOG]';
         }
         return array(
@@ -224,7 +224,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return string Log debug message.
      */
     public function debug( $text ) {
-        return $this->log( $text, self::DEBUG );
+        return $this->log( $text, static::DEBUG );
     }
 
     /**
@@ -237,7 +237,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return string Log info message.
      */
     public function info( $text ) {
-        return $this->log( $text, self::INFO );
+        return $this->log( $text, static::INFO );
     }
 
     /**
@@ -250,7 +250,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return string Log warning message.
      */
     public function warning( $text ) {
-        return $this->log( $text, self::WARNING );
+        return $this->log( $text, static::WARNING );
     }
 
     /**
@@ -276,7 +276,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param string $text Log update check.
      */
     public function log_update_check( $text = '' ) {
-        $this->log_action( $text, self::UPDATE_CHECK_LOG_PRIORITY );
+        $this->log_action( $text, static::UPDATE_CHECK_LOG_PRIORITY );
     }
 
     /**
@@ -294,10 +294,10 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function debug_for_website( $website, $action, $message ) {
         if ( empty( $website ) ) {
-            return $this->log( '[-] [-]  ::' . $action . ':: ' . $message, self::DEBUG );
+            return $this->log( '[-] [-]  ::' . $action . ':: ' . $message, static::DEBUG );
         }
 
-        return $this->log( '[' . $website->name . '] [' . MainWP_Utility::get_nice_url( $website->url ) . ']  ::' . $action . ':: ' . $message, self::DEBUG, 0, false, $website );
+        return $this->log( '[' . $website->name . '] [' . MainWP_Utility::get_nice_url( $website->url ) . ']  ::' . $action . ':: ' . $message, static::DEBUG, 0, false, $website );
     }
 
     /**
@@ -315,10 +315,10 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function info_for_website( $website, $action, $message ) {
         if ( empty( $website ) ) {
-            return $this->log( '[-] [-]  ::' . $action . ':: ' . $message, self::INFO );
+            return $this->log( '[-] [-]  ::' . $action . ':: ' . $message, static::INFO );
         }
 
-        return $this->log( '[' . $website->name . '] [' . MainWP_Utility::get_nice_url( $website->url ) . ']  ::' . $action . ':: ' . $message, self::INFO );
+        return $this->log( '[' . $website->name . '] [' . MainWP_Utility::get_nice_url( $website->url ) . ']  ::' . $action . ':: ' . $message, static::INFO );
     }
 
     /**
@@ -342,10 +342,10 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $stackTrace = "\n" . ob_get_clean();
         }
         if ( empty( $website ) ) {
-            return $this->log( '[-] [-]  :: ' . $action . ' :: ' . $message . $stackTrace, self::WARNING );
+            return $this->log( '[-] [-]  :: ' . $action . ' :: ' . $message . $stackTrace, static::WARNING );
         }
 
-        return $this->log( '[' . $website->name . '] [' . MainWP_Utility::get_nice_url( $website->url ) . ']  ::' . $action . ':: ' . $message . $stackTrace, self::WARNING );
+        return $this->log( '[' . $website->name . '] [' . MainWP_Utility::get_nice_url( $website->url ) . ']  ::' . $action . ':: ' . $message . $stackTrace, static::WARNING );
     }
 
     /**
@@ -363,7 +363,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     private function log_to_db( $text, $priority, $log_color = 0, $forced = false, $website = false ) {
 
-        if ( self::DISABLED === $this->logPriority ) {
+        if ( static::DISABLED === $this->logPriority ) {
             return;
         }
 
@@ -441,7 +441,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
 	private function log( $text, $priority,  $log_color = 0, $forced = false, $website = false ) { // phpcs:ignore -- complex function.
 
-        if ( self::DISABLED === $this->logPriority ) {
+        if ( static::DISABLED === $this->logPriority ) {
             return;
         }
 
@@ -576,14 +576,14 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * Init execution time start value.
      */
     public function init_execution_time( $time_index = '' ) {
-        if ( null === self::$time_start || ! is_array( self::$time_start ) ) {
-            self::$time_start = array( 'start' => microtime( true ) );
-            $this->log_action( 'execution time :: init :: [start]', self::EXECUTION_TIME_LOG_PRIORITY );
+        if ( null === static::$time_start || ! is_array( static::$time_start ) ) {
+            static::$time_start = array( 'start' => microtime( true ) );
+            $this->log_action( 'execution time :: init :: [start]', static::EXECUTION_TIME_LOG_PRIORITY );
         }
 
         if ( ! empty( $time_index ) && is_string( $time_index ) && 'start' !== $time_index ) {
-            self::$time_start[ $time_index ] = microtime( true );
-            $this->log_action( 'execution time :: init :: [' . $time_index . ']', self::EXECUTION_TIME_LOG_PRIORITY );
+            static::$time_start[ $time_index ] = microtime( true );
+            $this->log_action( 'execution time :: init :: [' . $time_index . ']', static::EXECUTION_TIME_LOG_PRIORITY );
         }
     }
 
@@ -596,7 +596,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function log_execution_time( $text = '' ) {
         $exec_time = $this->get_execution_time();
-        $this->log_action( 'execution time :: ' . ( ! empty( $text ) ? (string) $text : '<empty>' ) . ' :: [time=' . round( $exec_time, 4 ) . '](seconds)', self::EXECUTION_TIME_LOG_PRIORITY );
+        $this->log_action( 'execution time :: ' . ( ! empty( $text ) ? (string) $text : '<empty>' ) . ' :: [time=' . round( $exec_time, 4 ) . '](seconds)', static::EXECUTION_TIME_LOG_PRIORITY );
     }
 
 
@@ -611,17 +611,17 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     private function get_execution_time( $time_index = '' ) {
 
-        if ( empty( self::$time_start ) ) {
+        if ( empty( static::$time_start ) ) {
             return 0;
         }
 
         $start = 0;
         if ( ! empty( $time_index ) ) {
-            $start = is_array( self::$time_start ) && isset( self::$time_start[ $time_index ] ) ? self::$time_start[ $time_index ] : 0;
+            $start = is_array( static::$time_start ) && isset( static::$time_start[ $time_index ] ) ? static::$time_start[ $time_index ] : 0;
         }
 
         if ( empty( $start ) ) {
-            $start = is_array( self::$time_start ) && isset( self::$time_start['start'] ) ? self::$time_start['start'] : 0;
+            $start = is_array( static::$time_start ) && isset( static::$time_start['start'] ) ? static::$time_start['start'] : 0;
         }
 
         if ( empty( $start ) ) {
@@ -656,13 +656,13 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function get_log_text( $priority ) {
         switch ( $priority ) {
-            case self::DISABLED:
+            case static::DISABLED:
                 return 'DISABLED';
-            case self::DEBUG:
+            case static::DEBUG:
                 return 'DEBUG';
-            case self::INFO:
+            case static::INFO:
                 return 'INFO';
-            case self::WARNING:
+            case static::WARNING:
                 return 'WARNING';
             default:
                 return 'SPEC LOG';
@@ -691,7 +691,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             if ( false === $enabled_time ) {
                 MainWP_Utility::update_option( 'mainwp_actionlogs_enabled_timestamp', time() );
             } elseif ( $enabled_time + $num_days * DAY_IN_SECONDS < time() ) {
-                MainWP_Utility::update_option( 'mainwp_actionlogs', self::DISABLED );
+                MainWP_Utility::update_option( 'mainwp_actionlogs', static::DISABLED );
             }
         }
     }
@@ -808,16 +808,16 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         while ( false !== ( $line = fgets( $fh ) ) ) {
             $currentColor = $previousColor;
             if ( stristr( $line, '[DEBUG]' ) ) {
-                $currentColor    = self::DEBUG_COLOR;
+                $currentColor    = static::DEBUG_COLOR;
                 $firstLinePassed = true;
             } elseif ( stristr( $line, '[INFO]' ) ) {
-                $currentColor    = self::INFO_COLOR;
+                $currentColor    = static::INFO_COLOR;
                 $firstLinePassed = true;
             } elseif ( stristr( $line, '[WARNING]' ) ) {
-                $currentColor    = self::WARNING_COLOR;
+                $currentColor    = static::WARNING_COLOR;
                 $firstLinePassed = true;
             } elseif ( stristr( $line, '[LOG]' ) ) {
-                $currentColor    = self::LOG_COLOR;
+                $currentColor    = static::LOG_COLOR;
                 $firstLinePassed = true;
             } else {
                 $firstLinePassed = false;

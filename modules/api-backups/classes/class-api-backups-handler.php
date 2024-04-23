@@ -34,10 +34,10 @@ class Api_Backups_Handler {
      * @return instance.
      */
     public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
 
@@ -67,7 +67,7 @@ class Api_Backups_Handler {
      */
     public function ajax_backups_selected_websites() {
         Api_Backups_Helper::security_nonce( 'mainwp_api_backups_selected_websites' );
-        self::backups_selected_site( true );
+        static::backups_selected_site( true );
         wp_die( esc_html__( 'Error: backup', 'mainwp' ) );
     }
 
@@ -117,9 +117,9 @@ class Api_Backups_Handler {
                     // Store Last Backup timestamp.
                     if ( empty( $snapshot_response ) ) {
                         $error = new WP_Error( '400', __( 'There was an issue with creating your backup.', 'mainwp' ) );
-                        self::send_backups_response( false, $error );
+                        static::send_backups_response( false, $error );
                     } else {
-                        self::send_backups_response();
+                        static::send_backups_response();
                     }
                 }
                 break;
@@ -129,12 +129,12 @@ class Api_Backups_Handler {
                     $api_response = $result;
                     if ( is_array( $api_response ) ) {
                         if ( 'true' === $api_response['status'] ) {
-                            self::send_backups_response();
+                            static::send_backups_response();
                         } else {
-                            self::send_backups_response( false );
+                            static::send_backups_response( false );
                         }
                     }
-                    self::send_bulk_backups_error( false, esc_html__( 'Error: DigitalOcean Backup', 'mainwp' ) );
+                    static::send_bulk_backups_error( false, esc_html__( 'Error: DigitalOcean Backup', 'mainwp' ) );
                 }
                 break;
             case 'linode':
@@ -145,13 +145,13 @@ class Api_Backups_Handler {
                         // Handle response.
                         if ( isset( $linode_response->errors ) ) {
                             $error = new WP_Error( '400', __( $linode_response->errors['0']->reason, 'Some information' ) );
-                            self::send_backups_response( false, $error );
+                            static::send_backups_response( false, $error );
                         } else {
-                            self::send_backups_response();
+                            static::send_backups_response();
                         }
                     }
                 }
-                self::send_bulk_backups_error( false, esc_html__( 'Error: Linode Backup', 'mainwp' ) );
+                static::send_bulk_backups_error( false, esc_html__( 'Error: Linode Backup', 'mainwp' ) );
                 break;
             case 'gridpane':
                 $result = Api_Backups_3rd_Party::gridpane_action_create_backup( $website_id, $return );
@@ -160,11 +160,11 @@ class Api_Backups_Handler {
                     if ( array_key_exists( 'error', $backup_status ) ) {
                         $error = new WP_Error( $backup_status['error']->code, __( $backup_status['error']->message, 'mainwp' ) );
                         if ( is_wp_error( $error ) ) {
-                            self::send_backups_response( false, $error->get_error_message() );
+                            static::send_backups_response( false, $error->get_error_message() );
                         }
                     }
-                    self::send_backups_response();
-                    self::send_bulk_backups_error( false, esc_html__( 'Error: GridPane Backup', 'mainwp' ) );
+                    static::send_backups_response();
+                    static::send_bulk_backups_error( false, esc_html__( 'Error: GridPane Backup', 'mainwp' ) );
                 }
 
                 break;
@@ -174,13 +174,13 @@ class Api_Backups_Handler {
                     $api_response = $result;
                     if ( is_array( $api_response ) ) {
                         if ( $api_response['status'] ) {
-                            self::send_backups_response( false );
+                            static::send_backups_response( false );
                         } else {
                             // Return success.
-                            self::send_backups_response();
+                            static::send_backups_response();
                         }
                     }
-                    self::send_bulk_backups_error( false, esc_html__( 'Error: Cloudways Backup', 'mainwp' ) );
+                    static::send_bulk_backups_error( false, esc_html__( 'Error: Cloudways Backup', 'mainwp' ) );
                 }
                 break;
             case 'cpanel':
@@ -193,20 +193,20 @@ class Api_Backups_Handler {
                         // Handle response.
                         if ( isset( $response_decoded->errors ) ) {
                             $error = $response_decoded->errors['0'];
-                            self::send_backups_response( false, $error );
+                            static::send_backups_response( false, $error );
                         } else {
                             $database_backup_response = Api_Backups_3rd_Party::ajax_cpanel_action_create_database_backup( true, $website_id );
 
                             // If no errors, return true.
                             if ( 'GOOD' === $database_backup_response['result'] ) {
-                                self::send_backups_response();
+                                static::send_backups_response();
                             } else {
                                 $error = 'There was an issue while creating the Database backup. Please check logs and try again.' . $database_backup_response['output'];
-                                self::send_backups_response( false, $error );
+                                static::send_backups_response( false, $error );
                             }
                         }
                     }
-                    self::send_bulk_backups_error( false, esc_html__( 'Error: cPanel Backup', 'mainwp' ) );
+                    static::send_bulk_backups_error( false, esc_html__( 'Error: cPanel Backup', 'mainwp' ) );
                 }
                 break;
             case 'plesk':
@@ -218,13 +218,13 @@ class Api_Backups_Handler {
                         if ( 'true' !== $api_response['status'] ) {
                             $response_decoded = is_array( $api_response ) && ! empty( $api_response['response'] ) ? json_decode( $api_response['response'] ) : '';
                             $errors           = ! empty( $response_decoded ) && ! empty( $response_decoded->task->errors ) ? $response_decoded->task->errors : '';
-                            self::send_backups_response( false, $errors );
+                            static::send_backups_response( false, $errors );
                         } else {
                             // Return success.
-                            self::send_backups_response();
+                            static::send_backups_response();
                         }
                     }
-                    self::send_bulk_backups_error( false, esc_html__( 'Error: Plesk Backup', 'mainwp' ) );
+                    static::send_bulk_backups_error( false, esc_html__( 'Error: Plesk Backup', 'mainwp' ) );
                 }
                 break;
         }

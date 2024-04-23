@@ -35,10 +35,10 @@ class MainWP_Reports_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return self $instance
      */
     public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -64,22 +64,22 @@ class MainWP_Reports_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $values = array();
         }
 
-        if ( ! isset( self::$reports_sites_values[ $site_id ] ) ) {
-            self::$reports_sites_values[ $site_id ] = $this->get_group_reports_data_of_site( $site_id );
+        if ( ! isset( static::$reports_sites_values[ $site_id ] ) ) {
+            static::$reports_sites_values[ $site_id ] = $this->get_group_reports_data_of_site( $site_id );
         }
 
         if ( empty( $group ) && empty( $types ) ) {
-            return isset( self::$reports_sites_values[ $site_id ] ) ? self::$reports_sites_values[ $site_id ] : array();
+            return isset( static::$reports_sites_values[ $site_id ] ) ? static::$reports_sites_values[ $site_id ] : array();
         }
 
         if ( ! empty( $group ) && empty( $types ) ) {
-            $values[ $group ] = isset( self::$reports_sites_values[ $site_id ][ $group ] ) ? self::$reports_sites_values[ $site_id ][ $group ] : array();
+            $values[ $group ] = isset( static::$reports_sites_values[ $site_id ][ $group ] ) ? static::$reports_sites_values[ $site_id ][ $group ] : array();
             return $values;
         }
 
         if ( ! empty( $group ) && is_array( $types ) ) {
             foreach ( $types as $type ) {
-                $values[ $group ][ $type ] = isset( self::$reports_sites_values[ $site_id ][ $group ][ $type ] ) ? self::$reports_sites_values[ $site_id ][ $group ][ $type ] : array();
+                $values[ $group ][ $type ] = isset( static::$reports_sites_values[ $site_id ][ $group ][ $type ] ) ? static::$reports_sites_values[ $site_id ][ $group ][ $type ] : array();
             }
         }
 

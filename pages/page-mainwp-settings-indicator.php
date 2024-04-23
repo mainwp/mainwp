@@ -36,10 +36,10 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return mixed $instance The single instance of the class.
      */
     public static function get_instance() {
-        if ( is_null( self::$instance ) ) {
-            self::$instance = new self();
+        if ( is_null( static::$instance ) ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
 
@@ -69,10 +69,10 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param bool   $render_indi to render indication.
      */
     public static function render_not_default_indicator( $field, $current_value, $render_indi = true ) {
-        $def  = self::get_defaults_value( $field );
+        $def  = static::get_defaults_value( $field );
         $indi = '';
         if ( ( 'none_preset_value' !== $field && $current_value !== $def ) || ( 'none_preset_value' === $field && ! empty( $current_value ) ) ) {
-            $indi = self::get_indicator();
+            $indi = static::get_indicator();
         }
         $indi = apply_filters( 'mainwp_default_settings_indicator', $indi, $field, $def, $current_value, $render_indi );
         if ( $render_indi ) {
@@ -91,10 +91,10 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param bool   $render_indi to render indication.
      */
     public static function render_not_default_email_settings_indicator( $type, $field, $current_value, $general = true, $render_indi = true ) {
-        $def  = self::get_defaults_email_settings_value( $type, $field, $general );
+        $def  = static::get_defaults_email_settings_value( $type, $field, $general );
         $indi = '';
         if ( null !== $def && $current_value !== $def ) {
-            $indi = self::get_indicator();
+            $indi = static::get_indicator();
         }
         $indi = apply_filters( 'mainwp_default_settings_indicator', $indi, $field, $def, $current_value, $render_indi, $type );
         if ( $render_indi ) {
@@ -256,15 +256,15 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public function get_saved_indicator_status() {
 
-        if ( null === self::$saved_indicator_status ) {
+        if ( null === static::$saved_indicator_status ) {
             $values         = get_option( 'mainwp_status_saved_values' );
             $current_values = is_array( $values ) && isset( $values['save_indicator_values'] ) && ! empty( $values['save_indicator_values'] ) ? json_decode( $values['save_indicator_values'], true ) : array();
             if ( ! is_array( $current_values ) ) {
                 $current_values = array();
             }
-            self::$saved_indicator_status = $current_values;
+            static::$saved_indicator_status = $current_values;
         }
 
-        return self::$saved_indicator_status;
+        return static::$saved_indicator_status;
     }
 }

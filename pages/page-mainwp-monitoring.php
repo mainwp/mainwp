@@ -52,18 +52,18 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      * Add Monitoring Sub Menu.
      */
     public static function init_menu() {
-        self::$page = add_submenu_page(
+        static::$page = add_submenu_page(
             'mainwp_tab',
             __( 'Monitoring', 'mainwp' ),
             '<div class="mainwp-hidden">' . esc_html__( 'Monitoring', 'mainwp' ) . '</div>',
             'read',
             'MonitoringSites',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render_all_sites',
             )
         );
-        add_action( 'load-' . self::$page, array( self::get_class_name(), 'on_load_page' ) );
+        add_action( 'load-' . static::$page, array( static::get_class_name(), 'on_load_page' ) );
     }
 
 
@@ -75,8 +75,8 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      * @uses \MainWP\Dashboard\MainWP_Monitoring_Sites_List_Table
      */
     public static function on_load_page() {
-        add_filter( 'mainwp_header_actions_right', array( self::get_class_name(), 'screen_options' ), 10, 2 );
-        self::$sitesTable = new MainWP_Monitoring_Sites_List_Table();
+        add_filter( 'mainwp_header_actions_right', array( static::get_class_name(), 'screen_options' ), 10, 2 );
+        static::$sitesTable = new MainWP_Monitoring_Sites_List_Table();
     }
 
     /**
@@ -102,7 +102,7 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      */
 	public static function render_screen_options() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-        $columns = self::$sitesTable->get_columns();
+        $columns = static::$sitesTable->get_columns();
 
         if ( isset( $columns['cb'] ) ) {
             unset( $columns['cb'] );
@@ -273,7 +273,7 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
         $optimize_for_sites_table = apply_filters( 'mainwp_manage_sites_optimize_loading', 1, 'monitor-sites' ); // use ajax to load sites table .
 
         if ( ! $optimize_for_sites_table ) {
-            self::$sitesTable->prepare_items( false );
+            static::$sitesTable->prepare_items( false );
         }
 
         /** This action is documented in ../pages/page-mainwp-manage-sites.php */
@@ -284,13 +284,13 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             <form method="post" class="mainwp-table-container">
                 <?php
                 wp_nonce_field( 'mainwp-admin-nonce' );
-                self::$sitesTable->display( $optimize_for_sites_table );
-                self::$sitesTable->clear_items();
+                static::$sitesTable->display( $optimize_for_sites_table );
+                static::$sitesTable->clear_items();
                 ?>
             </form>
         </div>      
         <?php
-        self::render_screen_options();
+        static::render_screen_options();
         /** This action is documented in ../pages/page-mainwp-manage-sites.php */
         do_action( 'mainwp_pagefooter_sites', 'MonitoringSites' );
     }
@@ -304,10 +304,10 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      * @uses \MainWP\Dashboard\MainWP_Monitoring_Sites_List_Table
      */
     public static function ajax_optimize_display_rows() {
-        self::$sitesTable = new MainWP_Monitoring_Sites_List_Table();
-        self::$sitesTable->prepare_items( true );
-        $output = self::$sitesTable->ajax_get_datatable_rows();
-        self::$sitesTable->clear_items();
+        static::$sitesTable = new MainWP_Monitoring_Sites_List_Table();
+        static::$sitesTable->prepare_items( true );
+        $output = static::$sitesTable->ajax_get_datatable_rows();
+        static::$sitesTable->clear_items();
         wp_send_json( $output );
     }
 }

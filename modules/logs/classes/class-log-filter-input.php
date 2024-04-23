@@ -45,7 +45,7 @@ class Log_Filter_Input {
      * @param string $variable_name  Variable key.
      * @param int    $filter         Filter callback.
      * @param array  $options        Filter callback parameters.
-     * @throws \Exception  Invalid input type provided.
+     * @throws \MainWP_Exception  Invalid input type provided.
      * @return mixed
      */
     public static function super( $type, $variable_name, $filter = null, $options = array() ) {
@@ -76,7 +76,7 @@ class Log_Filter_Input {
         }
 
         $var = isset( $super[ $variable_name ] ) ? $super[ $variable_name ] : null;
-        $var = self::filter( $var, $filter, $options );
+        $var = static::filter( $var, $filter, $options );
 
         return $var;
     }
@@ -87,7 +87,7 @@ class Log_Filter_Input {
      * @param mixed $var_value      Raw input.
      * @param int   $filter   Filter callback.
      * @param array $options  Filter callback parameters.
-     * @throws \Exception Unsupported filter provided.
+     * @throws \MainWP_Exception Unsupported filter provided.
      * @return mixed
      */
     public static function filter( $var_value, $filter = null, $options = array() ) {
@@ -96,11 +96,11 @@ class Log_Filter_Input {
 
         // Only filter value if it is not null.
         if ( isset( $var_value ) && $filter && FILTER_DEFAULT !== $filter ) {
-            if ( ! isset( self::$filter_callbacks[ $filter ] ) ) {
+            if ( ! isset( static::$filter_callbacks[ $filter ] ) ) {
                 throw new MainWP_Exception( esc_html__( 'Filter not supported.', 'mainwp' ) );
             }
 
-            $filter_callback = self::$filter_callbacks[ $filter ];
+            $filter_callback = static::$filter_callbacks[ $filter ];
             $result          = call_user_func( $filter_callback, $var_value );
 
             /**

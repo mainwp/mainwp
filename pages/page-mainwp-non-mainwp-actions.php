@@ -34,10 +34,10 @@ class MainWP_Non_MainWP_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return MainWP_Non_MainWP_Actions
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -87,7 +87,7 @@ class MainWP_Non_MainWP_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'render_actions_list',
             )
         );
-        self::init_left_menu();
+        static::init_left_menu();
     }
 
     /**
@@ -119,7 +119,7 @@ class MainWP_Non_MainWP_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
 
         $actionsTable = new MainWP_Manage_Non_MainWP_Changes_List_Table();
-        self::render_header();
+        static::render_header();
         ?>
         <?php $this->render_actions_bar(); ?>
         <div class="ui segment" id="mainwp-non-mainwp-mananage-actions-overview">

@@ -57,7 +57,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Utility::remove_preslash_spaces()
      * @uses \MainWP\Dashboard\MainWP_Utility::normalize_filename()
      * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
-     * @uses \MainWP\Dashboard\self::get_real_extension()
+     * @uses \MainWP\Dashboard\static::get_real_extension()
      */
     public static function backup_site( $siteid, $pTask, $subfolder ) {
         // phpcs: ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
@@ -107,9 +107,9 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         );
 
         if ( 'db' === $type ) {
-            $ext = '.sql.' . self::get_current_archive_extension( $website, $pTask );
+            $ext = '.sql.' . static::get_current_archive_extension( $website, $pTask );
         } else {
-            $ext = '.' . self::get_current_archive_extension( $website, $pTask );
+            $ext = '.' . static::get_current_archive_extension( $website, $pTask );
         }
 
         $file = str_replace(
@@ -198,7 +198,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     'excludecache'          => $excludecache,
                     'excludenonwp'          => $excludenonwp,
                     'excludezip'            => $excludezip,
-                    'ext'                   => self::get_current_archive_extension( $website, $pTask ),
+                    'ext'                   => static::get_current_archive_extension( $website, $pTask ),
                     'file_descriptors_auto' => $maximumFileDescriptorsAuto,
                     'file_descriptors'      => $maximumFileDescriptors,
                     'loadFilesBeforeZip'    => $loadFilesBeforeZip,
@@ -261,7 +261,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                                     'excludecache'       => $excludecache,
                                     'excludenonwp'       => $excludenonwp,
                                     'excludezip'         => $excludezip,
-                                    'ext'                => self::get_current_archive_extension( $website, $pTask ),
+                                    'ext'                => static::get_current_archive_extension( $website, $pTask ),
                                     'file_descriptors_auto' => $maximumFileDescriptorsAuto,
                                     'file_descriptors'   => $maximumFileDescriptors,
                                     'loadFilesBeforeZip' => $loadFilesBeforeZip,
@@ -360,11 +360,11 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         while ( false !== ( $file = readdir( $dh ) ) ) {
                             if ( '.' !== $file && '..' !== $file ) {
                                 $theFile = $dir . $file;
-                                if ( $information['db'] && self::is_sql_file( $file ) ) {
+                                if ( $information['db'] && static::is_sql_file( $file ) ) {
                                     $dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
                                 }
 
-                                if ( $information['full'] && self::is_archive( $file ) && ! self::is_sql_archive( $file ) ) {
+                                if ( $information['full'] && static::is_archive( $file ) && ! static::is_sql_archive( $file ) ) {
                                     $fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
                                 }
                             }
@@ -428,7 +428,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         $filename        = str_replace( '%', '', $filename );
                         $localBackupFile = $dir . $filename;
                     }
-                    $localBackupFile .= self::get_real_extension( $information['db'] );
+                    $localBackupFile .= static::get_real_extension( $information['db'] );
 
                     $localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
 
@@ -444,7 +444,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             }
 
             if ( $information['full'] ) {
-                $realExt         = self::get_real_extension( $information['full'] );
+                $realExt         = static::get_real_extension( $information['full'] );
                 $what            = 'full';
                 $regexBackupFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
                 if ( '' === $backupTaskProgress->downloadedFULL ) {
@@ -571,11 +571,11 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 while ( false !== ( $file = readdir( $dh ) ) ) {
                     if ( '.' !== $file && '..' !== $file ) {
                         $theFile = $dir . $file;
-                        if ( 'db' === $pType && self::is_sql_file( $file ) ) {
+                        if ( 'db' === $pType && static::is_sql_file( $file ) ) {
                             $dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
                         }
 
-                        if ( 'full' === $pType && self::is_archive( $file ) && ! self::is_sql_archive( $file ) ) {
+                        if ( 'full' === $pType && static::is_archive( $file ) && ! static::is_sql_archive( $file ) ) {
                             $fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
                         }
                     }
@@ -649,7 +649,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param mixed $pFilename Backups filename.
      *
      * @return array $status, $result.
-     * @throws \Exception Error message.
+     * @throws \MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
@@ -660,7 +660,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Utility::remove_preslash_spaces()
      * @uses \MainWP\Dashboard\MainWP_Utility::normalize_filename()
      * @uses \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
-     * @uses \MainWP\Dashboard\self::get_real_extension()
+     * @uses \MainWP\Dashboard\static::get_real_extension()
      */
     public static function backup_check_pid( $pSiteId, $pid, $type, $subfolder, $pFilename ) {
         $website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
@@ -706,10 +706,10 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
 
             if ( 'db' === $type ) {
-                $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . self::get_real_extension( $information['file'] );
+                $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . static::get_real_extension( $information['file'] );
                 $localRegexFile  = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
             } else {
-                $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . self::get_real_extension( $information['file'] );
+                $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . static::get_real_extension( $information['file'] );
                 $localRegexFile  = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
             }
 
@@ -736,9 +736,9 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
 
                 if ( 'db' === $type ) {
-                    $localBackupFile .= self::get_real_extension( $information['file'] );
+                    $localBackupFile .= static::get_real_extension( $information['file'] );
                 } else {
-                    $localBackupFile .= self::get_real_extension( $information['file'] );
+                    $localBackupFile .= static::get_real_extension( $information['file'] );
                 }
             }
 
@@ -791,7 +791,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
      * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
      * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
-     * @uses \MainWP\Dashboard\self::get_real_extension()
+     * @uses \MainWP\Dashboard\static::get_real_extension()
      */
     public static function backup(
         $pSiteId,
@@ -907,9 +907,9 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         // Normal flow: check site settings & fallback to global.
         if ( false === $pArchiveFormat ) {
-            $archiveFormat = self::get_current_archive_extension( $website );
+            $archiveFormat = static::get_current_archive_extension( $website );
         } elseif ( 'global' === $pArchiveFormat ) {
-            $archiveFormat = self::get_current_archive_extension();
+            $archiveFormat = static::get_current_archive_extension();
         } else {
             $archiveFormat = $pArchiveFormat;
         }
@@ -964,10 +964,10 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
 
             if ( 'db' === $pType ) {
-                $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . self::get_real_extension( $information['db'] );
+                $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . static::get_real_extension( $information['db'] );
                 $localRegexFile  = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
             } else {
-                $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . self::get_real_extension( $information['full'] );
+                $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . static::get_real_extension( $information['full'] );
                 $localRegexFile  = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
             }
 
@@ -994,9 +994,9 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
 
                 if ( 'db' === $pType ) {
-                    $localBackupFile .= self::get_real_extension( $information['db'] );
+                    $localBackupFile .= static::get_real_extension( $information['db'] );
                 } else {
-                    $localBackupFile .= self::get_real_extension( $information['full'] );
+                    $localBackupFile .= static::get_real_extension( $information['full'] );
                 }
             }
 
@@ -1034,7 +1034,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return mixed SQL Files.
      */
     public static function is_sql_file( $pFileName ) {
-        return preg_match( '/(.*).sql$/', $pFileName ) || self::is_sql_archive( $pFileName );
+        return preg_match( '/(.*).sql$/', $pFileName ) || static::is_sql_archive( $pFileName );
     }
 
     /**

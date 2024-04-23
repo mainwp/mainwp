@@ -31,7 +31,7 @@ class MainWP_Site_Info { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
      * @return mixed render_site_info()
      */
     public static function render() {
-        self::render_site_info();
+        static::render_site_info();
     }
 
     /**
@@ -88,7 +88,7 @@ class MainWP_Site_Info { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
          */
         $child_site_info = apply_filters( 'mainwp_child_site_info_widget_content', $child_site_info );
 
-        self::render_info( $website, $website_info, $child_site_info );
+        static::render_info( $website, $website_info, $child_site_info );
     }
 
     /**

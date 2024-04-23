@@ -33,10 +33,10 @@ class Cost_Tracker_Category_Totals {
      * @return mixed $instance The single instance of the class.
      */
     public static function instance() {
-        if ( is_null( self::$instance ) ) {
-            self::$instance = new self();
+        if ( is_null( static::$instance ) ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -158,7 +158,7 @@ class Cost_Tracker_Category_Totals {
      */
     public function render_widget_content() {
         $costs_data = Cost_Tracker_DB::get_instance()->get_summary_data( array( 'sum_data' => 'all' ) );
-        $chart_data = self::get_costs_widgets_data( $costs_data );
+        $chart_data = static::get_costs_widgets_data( $costs_data );
         ?>
         <div id="mainwp-module-cost-tracker-category-totals-wrapper"></div>
         <script type="text/javascript">

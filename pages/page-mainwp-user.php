@@ -48,7 +48,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          *
          * @see \MainWP_User::render_header
          */
-        add_action( 'mainwp-pageheader-user', array( self::get_class_name(), 'render_header' ) );
+        add_action( 'mainwp-pageheader-user', array( static::get_class_name(), 'render_header' ) );
 
         /**
          * This hook allows you to render the User page footer via the 'mainwp-pagefooter-user' action.
@@ -60,9 +60,9 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          *
          * @see \MainWP_User::render_footer
          */
-        add_action( 'mainwp-pagefooter-user', array( self::get_class_name(), 'render_footer' ) );
+        add_action( 'mainwp-pagefooter-user', array( static::get_class_name(), 'render_footer' ) );
 
-        add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
+        add_action( 'mainwp_help_sidebar_content', array( static::get_class_name(), 'mainwp_help_content' ) );
     }
 
     /**
@@ -80,12 +80,12 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             'read',
             'UserBulkManage',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render',
             )
         );
 
-        add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_page' ) );
+        add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_page' ) );
 
         add_submenu_page(
             'mainwp_tab',
@@ -94,7 +94,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             'read',
             'UserBulkAdd',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render_bulk_add',
             )
         );
@@ -106,7 +106,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             'read',
             'BulkImportUsers',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render_bulk_import_users',
             )
         );
@@ -116,11 +116,11 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          *
          * @link http://codex.mainwp.com/#mainwp-getsubpages-user
          */
-        $sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-user', array( array() ), '4.0.7.2', 'mainwp_getsubpages_user' );  // @deprecated Use 'mainwp_getsubpages_user' instead.
-        self::$subPages = apply_filters( 'mainwp_getsubpages_user', $sub_pages );
+        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-user', array( array() ), '4.0.7.2', 'mainwp_getsubpages_user' );  // @deprecated Use 'mainwp_getsubpages_user' instead.
+        static::$subPages = apply_filters( 'mainwp_getsubpages_user', $sub_pages );
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'UserBulk' . $subPage['slug'] ) ) {
                     continue;
                 }
@@ -128,7 +128,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
         }
 
-        self::init_left_menu( self::$subPages );
+        static::init_left_menu( static::$subPages );
     }
 
     /**
@@ -155,8 +155,8 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=UpdateAdminPasswords' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Admin Passwords', 'mainwp' ); ?></a>
                     <?php } ?>
                     <?php
-                    if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-                        foreach ( self::$subPages as $subPage ) {
+                    if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+                        foreach ( static::$subPages as $subPage ) {
                             if ( MainWP_Menu::is_disable_menu_item( 3, 'UserBulk' . $subPage['slug'] ) ) {
                                 continue;
                             }
@@ -202,7 +202,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @return void
      */
     public static function on_load_page() {
-        add_action( 'mainwp_screen_options_modal_bottom', array( self::get_class_name(), 'hook_screen_options_modal_bottom' ), 10, 2 );
+        add_action( 'mainwp_screen_options_modal_bottom', array( static::get_class_name(), 'hook_screen_options_modal_bottom' ), 10, 2 );
     }
 
     /**
@@ -220,7 +220,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $show_columns = array();
             }
 
-            $cols = self::get_manage_columns();
+            $cols = static::get_manage_columns();
             MainWP_UI::render_showhide_columns_settings( $cols, $show_columns, 'user' );
         }
     }
@@ -340,8 +340,8 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             );
         }
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'UserBulk' . $subPage['slug'] ) ) {
                     continue;
                 }
@@ -396,7 +396,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
         }
 
-        self::render_header( '' );
+        static::render_header( '' );
         ?>
         <div id="mainwp-manage-users" class="ui alt segment">
             <div class="mainwp-main-content">
@@ -464,10 +464,10 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         </div>
                     <?php endif; ?>
                     <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
-                    <?php self::render_table( true ); ?>
+                    <?php static::render_table( true ); ?>
                 </div>
                 <div id="mainwp-update-users-box" class="ui segment">
-                    <?php self::render_update_users(); ?>
+                    <?php static::render_update_users(); ?>
                 </div>
             </div>
             <div class="mainwp-side-content mainwp-no-padding">
@@ -577,7 +577,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 <div class="ui fitted divider"></div>
                 <div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
                     <div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
-                    <div class="content active"><?php self::render_search_options(); ?></div>
+                    <div class="content active"><?php static::render_search_options(); ?></div>
                 </div>
                 <div class="ui fitted divider"></div>
                 <div class="mainwp-search-submit">
@@ -617,7 +617,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <div class="ui hidden clearing divider"></div>
         </div>
         <?php
-        self::render_footer( '' );
+        static::render_footer( '' );
     }
 
     /**
@@ -845,7 +845,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             if ( $cached ) {
                 MainWP_Cache::echo_body( 'Users' );
             } else {
-                self::render_table_body( $role, $groups, $sites, $search, $clients );
+                static::render_table_body( $role, $groups, $sites, $search, $clients );
             }
             ?>
             </tbody>
@@ -1073,7 +1073,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         }
 
                         $tmpUsers       = array( $user );
-                        $output->users += self::users_search_handler_renderer( $tmpUsers, $website );
+                        $output->users += static::users_search_handler_renderer( $tmpUsers, $website );
                     }
                 }
             }
@@ -1141,7 +1141,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 'search_users',
                 $post_data,
                 array(
-                    self::get_class_name(),
+                    static::get_class_name(),
                     'users_search_handler',
                 ),
                 $output
@@ -1163,7 +1163,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         // Sort if required.
 
         if ( empty( $output->users ) ) {
-            self::render_cache_not_found();
+            static::render_cache_not_found();
             return;
         }
     }
@@ -1233,7 +1233,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 </td>
                 <td class="username column-username"><strong><abbr title="<?php echo esc_attr( $user['login'] ); ?>"><?php echo esc_html( $user['login'] ); ?></abbr></strong></td>
                 <td class="email column-email"><a href="mailto:<?php echo esc_attr( $user['email'] ); ?>"><?php echo esc_html( $user['email'] ); ?></a></td>
-                <td class="role column-role"><?php echo self::get_role( $user['role'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+                <td class="role column-role"><?php echo static::get_role( $user['role'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
                 <td class="posts column-posts"><a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkManage&siteid=' . intval( $website->id ) ) . '&userid=' . $user['id'] ); ?>"><?php echo esc_html( $user['post_count'] ); ?></a></td>
                 <td class="website column-website"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
                 <td class="right aligned not-selectable">
@@ -1289,7 +1289,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * @param mixed $data Search data.
      * @param mixed $website Child Site.
-     * @param mixed $output Output to pass to self::users_search_handler_renderer().
+     * @param mixed $output Output to pass to static::users_search_handler_renderer().
      *
      * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
      * @uses \MainWP\Dashboard\MainWP_Exception
@@ -1303,7 +1303,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $result = $results[1];
             $users  = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
             unset( $results );
-            $output->users += self::users_search_handler_renderer( $users, $website );
+            $output->users += static::users_search_handler_renderer( $users, $website );
             unset( $users );
         } else {
             $output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
@@ -1314,7 +1314,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * Deletes user.
      */
     public static function delete() {
-        self::action( 'delete' );
+        static::action( 'delete' );
         die( wp_json_encode( array( 'result' => esc_html__( 'User has been deleted', 'mainwp' ) ) ) );
     }
 
@@ -1322,7 +1322,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * Edits user.
      */
     public static function edit() {
-        $information = self::action( 'edit' );
+        $information = static::action( 'edit' );
         wp_send_json( $information );
     }
 
@@ -1330,7 +1330,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * Updates user.
      */
     public static function update_user() {
-        self::action( 'update_user' );
+        static::action( 'update_user' );
         die( wp_json_encode( array( 'result' => esc_html__( 'User has been updated', 'mainwp' ) ) ) );
     }
 
@@ -1338,7 +1338,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * Updates users password.
      */
     public static function update_password() {
-        self::action( 'update_password' );
+        static::action( 'update_password' );
         die( wp_json_encode( array( 'result' => esc_html__( 'User password has been updated', 'mainwp' ) ) ) );
     }
 
@@ -1349,7 +1349,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @param string $extra   Additional Roles to add if any.
      *
      * @return mixed $information User update info that is returned.
-     * @throws \Exception Error message.
+     * @throws \MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
@@ -1499,7 +1499,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          * Since 4.1
          */
         $pass_complexity = apply_filters( 'mainwp_new_user_password_complexity', '24' );
-        self::render_header( 'Add' );
+        static::render_header( 'Add' );
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         ?>
         <div class="ui alt segment" id="mainwp-add-users">
@@ -1736,7 +1736,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         <?php
 		// phpcs:enable
 
-        self::render_footer( 'Add' );
+        static::render_footer( 'Add' );
     }
 
     /**
@@ -1746,19 +1746,19 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      */
     public static function render_bulk_import_users() {
         if ( isset( $_FILES['import_user_file_bulkupload'] ) && isset( $_FILES['import_user_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['import_user_file_bulkupload']['error'] ) { //phpcs:ignore WordPress.Security.NonceVerification.Missing
-            self::render_bulk_upload();
+            static::render_bulk_upload();
             return;
         }
         ?>
-        <?php self::render_header( 'Import' ); ?>
+        <?php static::render_header( 'Import' ); ?>
         <div id="MainWP_Bulk_AddUser">
             <form action="" method="post" name="createuser" id="createuser" class="add:users: validate" enctype="multipart/form-data">
                 <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-                <?php self::render_import_users(); ?>
+                <?php static::render_import_users(); ?>
             </form>
         </div>
         <?php
-        self::render_footer( 'Import' );
+        static::render_footer( 'Import' );
     }
 
     /**
@@ -1996,7 +1996,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     ++$countRealItems;
                 }
             }
-            self::render_bulk_add_modal( $dbwebsites, $output );
+            static::render_bulk_add_modal( $dbwebsites, $output );
         } else {
             echo wp_json_encode( array( $errorFields, $errors ) );
         }
@@ -2039,7 +2039,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Utility::starts_with()
      */
     public static function render_bulk_upload() {
-        self::render_header( 'Import' );
+        static::render_header( 'Import' );
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $errors = array();
         if ( isset( $_FILES['import_user_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['import_user_file_bulkupload']['error'] ) {
@@ -2164,7 +2164,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $errors[] = esc_html__( 'File could not be uploaded. Please try again. If process keeps failing, please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', 'mainwp' );
         }
 
-        if ( 0 < count( $errors ) ) {
+        if ( ! empty( $errors ) ) {
             ?>
                 <?php foreach ( $errors as $error ) { ?>
                 <div class="ui error message"><?php echo esc_html( $error ); ?></div>
@@ -2175,7 +2175,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <?php
         }
 
-        self::render_footer( 'Import' );
+        static::render_footer( 'Import' );
     }
 
     /**

@@ -35,10 +35,10 @@ class Cost_Tracker_Manager {
      * @return Cost_Tracker_Manager
      */
     public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -49,7 +49,7 @@ class Cost_Tracker_Manager {
     public function __construct() {
         spl_autoload_register( array( $this, 'autoload' ) );
         Cost_Tracker_Admin::get_instance();
-        $base_dir = self::get_location_path();
+        $base_dir = static::get_location_path();
         // includes rest api work.
         require $base_dir . 'classes/class-cost-tracker-rest-api.php';
         Rest_Api::instance()->init();
@@ -77,7 +77,7 @@ class Cost_Tracker_Manager {
         }
 
         $autoload_name = $matches['autoload'];
-        $autoload_dir  = self::get_location_path();
+        $autoload_dir  = static::get_location_path();
 
         $load_dirs = array(
             'classes' => 'class',

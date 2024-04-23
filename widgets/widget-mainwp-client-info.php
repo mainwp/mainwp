@@ -31,7 +31,7 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      * @return mixed render_site_info()
      */
     public static function render() {
-        self::render_site_info();
+        static::render_site_info();
     }
 
     /**
@@ -52,7 +52,7 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
         $website = MainWP_DB::instance()->get_website_by_id( $current_wpid, true );
 
-        self::render_info( $website );
+        static::render_info( $website );
     }
 
     /**

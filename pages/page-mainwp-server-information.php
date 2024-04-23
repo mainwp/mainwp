@@ -43,8 +43,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public static function init_menu() {
 
-        add_action( 'mainwp_pageheader_infor', array( self::get_class_name(), 'render_header' ) );
-        add_action( 'mainwp_pagefooter_infor', array( self::get_class_name(), 'render_footer' ) );
+        add_action( 'mainwp_pageheader_infor', array( static::get_class_name(), 'render_header' ) );
+        add_action( 'mainwp_pagefooter_infor', array( static::get_class_name(), 'render_footer' ) );
 
         add_submenu_page(
             'mainwp_tab',
@@ -53,7 +53,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'read',
             'ServerInformation',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render',
             )
         );
@@ -65,7 +65,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'read',
                 'ServerInformationCron',
                 array(
-                    self::get_class_name(),
+                    static::get_class_name(),
                     'render_cron',
                 )
             );
@@ -79,7 +79,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'read',
                 'ErrorLog',
                 array(
-                    self::get_class_name(),
+                    static::get_class_name(),
                     'render_error_log_page',
                 )
             );
@@ -92,7 +92,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'read',
                 'WPConfig',
                 array(
-                    self::get_class_name(),
+                    static::get_class_name(),
                     'render_wp_config',
                 )
             );
@@ -106,7 +106,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     'read',
                     '.htaccess',
                     array(
-                        self::get_class_name(),
+                        static::get_class_name(),
                         'render_htaccess',
                     )
                 );
@@ -120,7 +120,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'read',
                 'ActionLogs',
                 array(
-                    self::get_class_name(),
+                    static::get_class_name(),
                     'render_action_logs',
                 )
             );
@@ -134,7 +134,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'read',
                 'PluginPrivacy',
                 array(
-                    self::get_class_name(),
+                    static::get_class_name(),
                     'render_plugin_privacy_page',
                 )
             );
@@ -147,11 +147,11 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
          *
          * @since Unknown
          */
-        $sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-server', array( array() ), '4.0.7.2', 'mainwp_getsubpages_server' );
-        self::$subPages = apply_filters( 'mainwp_getsubpages_server', $sub_pages );
+        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-server', array( array() ), '4.0.7.2', 'mainwp_getsubpages_server' );
+        static::$subPages = apply_filters( 'mainwp_getsubpages_server', $sub_pages );
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( ! isset( $subPage['slug'] ) ) {
                     continue;
                 }
@@ -195,8 +195,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     }
                     ?>
                     <?php
-                    if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-                        foreach ( self::$subPages as $subPage ) {
+                    if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+                        foreach ( static::$subPages as $subPage ) {
                             if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && true !== $subPage['menu_hidden'] ) ) {
                                 if ( MainWP_Menu::is_disable_menu_item( 3, 'Server' . $subPage['slug'] ) ) {
                                     continue;
@@ -351,7 +351,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
             MainWP_UI::render_page_navigation( $renderItems );
 
-            self::render_actions_bar();
+            static::render_actions_bar();
 
             echo '<div>';
     }
@@ -427,7 +427,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             mainwp_do_not_have_permissions( 'server information', 'mainwp' );
             return;
         }
-        self::render_header( '' );
+        static::render_header( '' );
 
         /**
          * Action: mainwp_before_server_info_table
@@ -462,7 +462,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     </tr>
                 </thead>
                 <tbody>
-                <?php self::render_wordpress_check_tbody(); ?>
+                <?php static::render_wordpress_check_tbody(); ?>
             </tbody>
         </table>
 
@@ -476,7 +476,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 </tr>
             </thead>
             <tbody>
-                <?php self::render_php_check_tbody(); ?>
+                <?php static::render_php_check_tbody(); ?>
             </tbody>
         </table>
 
@@ -490,7 +490,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 </tr>
             </thead>
             <tbody>
-                <?php self::render_mysql_check_tbody(); ?>
+                <?php static::render_mysql_check_tbody(); ?>
             </tbody>
         </table>
 
@@ -502,7 +502,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 </tr>
             </thead>
             <tbody>
-                <?php self::render_server_check_tbody(); ?>
+                <?php static::render_server_check_tbody(); ?>
             </tbody>
         </table>
 
@@ -514,7 +514,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     </tr>
             </thead>
             <tbody>
-                <?php self::render_dashboard_check_tbody(); ?>
+                <?php static::render_dashboard_check_tbody(); ?>
             </tbody>
         </table>
 
@@ -528,7 +528,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     </tr>
             </thead>
             <tbody>
-                <?php self::render_extensions_license_check_tbody(); ?>
+                <?php static::render_extensions_license_check_tbody(); ?>
             </tbody>
         </table>
 
@@ -541,12 +541,12 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         </tr>
             </thead>
             <tbody>
-                <?php self::render_plugins_check_tbody(); ?>
+                <?php static::render_plugins_check_tbody(); ?>
             </tbody>
         </table>
 
         <div id="download-server-information" style="opacity:0">
-            <textarea readonly="readonly" wrap="off"></textarea>
+            <textarea readonly="readonly" contenteditable="true" wrap="off"></textarea>
         </div>
 
         <script type="text/javascript">
@@ -576,7 +576,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
          */
         do_action( 'mainwp_after_server_info_table' );
 
-        self::render_footer( '' );
+        static::render_footer( '' );
     }
 
     /**
@@ -585,15 +585,15 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return void
      */
     public static function render_wordpress_check_tbody() {
-        self::render_row( 'WordPress Version', '>=', '6.2', 'get_wordpress_version', '', '', null, null, self::ERROR );
-        self::render_row( 'WordPress Memory Limit', '>=', '64M', 'get_wordpress_memory_limit', '', '', null );
-        self::render_row( 'MultiSite Disabled', '=', true, 'check_if_multisite', '', '', null );
+        static::render_row( 'WordPress Version', '>=', '6.2', 'get_wordpress_version', '', '', null, null, static::ERROR );
+        static::render_row( 'WordPress Memory Limit', '>=', '64M', 'get_wordpress_memory_limit', '', '', null );
+        static::render_row( 'MultiSite Disabled', '=', true, 'check_if_multisite', '', '', null );
         ?>
         <tr>
             <td><?php esc_html_e( 'FileSystem Method', 'mainwp' ); ?></td>
             <td><?php echo esc_html( '= direct' ); ?></td>
             <td><?php echo MainWP_Server_Information_Handler::get_file_system_method(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-            <td class="right aligned"><?php echo self::get_file_system_method_check(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+            <td class="right aligned"><?php echo static::get_file_system_method_check(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
         </tr>
         <?php
     }
@@ -604,26 +604,26 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return void
      */
     public static function render_php_check_tbody() {
-        self::render_row( 'PHP Version', '>=', '7.4', 'get_php_version', '', '', null, null, self::ERROR );
-        self::render_row( 'PHP Safe Mode Disabled', '=', true, 'get_php_safe_mode', '', '', null );
-        self::render_row( 'PHP Max Execution Time', '>=', '30', 'get_max_execution_time', 'seconds', '=', '0' );
-        self::render_row( 'PHP Max Input Time', '>=', '30', 'get_max_input_time', 'seconds', '=', '0' );
-        self::render_row( 'PHP Memory Limit', '>=', '256M', 'get_php_memory_limit', '', '', null, 'filesize' );
-        self::render_row( 'PCRE Backtracking Limit', '>=', '10000', 'get_output_buffer_size', '', '', null );
-        self::render_row( 'PHP Upload Max Filesize', '>=', '2M', 'get_upload_max_filesize', '', '', null, 'filesize' );
-        self::render_row( 'PHP Post Max Size', '>=', '2M', 'get_post_max_size', '', '', null, 'filesize' );
-        self::render_row( 'SSL Extension Enabled', '=', true, 'get_ssl_support', '', '', null );
-        self::render_row( 'SSL Warnings', '=', '', 'get_ssl_warning', 'empty', '', null );
-        self::render_row( 'cURL Extension Enabled', '=', true, 'get_curl_support', '', '', null, null, self::ERROR );
-        self::render_row( 'cURL Timeout', '>=', '300', 'get_curl_timeout', 'seconds', '=', '0' );
+        static::render_row( 'PHP Version', '>=', '7.4', 'get_php_version', '', '', null, null, static::ERROR );
+        static::render_row( 'PHP Safe Mode Disabled', '=', true, 'get_php_safe_mode', '', '', null );
+        static::render_row( 'PHP Max Execution Time', '>=', '30', 'get_max_execution_time', 'seconds', '=', '0' );
+        static::render_row( 'PHP Max Input Time', '>=', '30', 'get_max_input_time', 'seconds', '=', '0' );
+        static::render_row( 'PHP Memory Limit', '>=', '256M', 'get_php_memory_limit', '', '', null, 'filesize' );
+        static::render_row( 'PCRE Backtracking Limit', '>=', '10000', 'get_output_buffer_size', '', '', null );
+        static::render_row( 'PHP Upload Max Filesize', '>=', '2M', 'get_upload_max_filesize', '', '', null, 'filesize' );
+        static::render_row( 'PHP Post Max Size', '>=', '2M', 'get_post_max_size', '', '', null, 'filesize' );
+        static::render_row( 'SSL Extension Enabled', '=', true, 'get_ssl_support', '', '', null );
+        static::render_row( 'SSL Warnings', '=', '', 'get_ssl_warning', 'empty', '', null );
+        static::render_row( 'cURL Extension Enabled', '=', true, 'get_curl_support', '', '', null, null, static::ERROR );
+        static::render_row( 'cURL Timeout', '>=', '300', 'get_curl_timeout', 'seconds', '=', '0' );
         if ( function_exists( 'curl_version' ) ) {
             $reuire_curl = '7.18.1';
             if ( version_compare( MainWP_Server_Information_Handler::get_php_version(), '8.0.0' ) >= 0 ) {
                 $reuire_curl = '7.29.0';
             }
-            self::render_row( 'cURL Version', '>=', $reuire_curl, 'get_curl_version', '', '', null );
+            static::render_row( 'cURL Version', '>=', $reuire_curl, 'get_curl_version', '', '', null );
             $openssl_version = 'OpenSSL/1.1.0';
-            self::render_row(
+            static::render_row(
                 'OpenSSL Version',
                 '>=',
                 $openssl_version,
@@ -640,7 +640,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 <td>OpenSSL Working Status</td>
                 <td>Yes</td>
                 <td><?php echo( $wk ? 'Yes' : 'No' ); ?></td>
-                <td class="right aligned"><?php echo ( $wk ? self::get_pass_html() : self::get_warning_html() ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+                <td class="right aligned"><?php echo ( $wk ? static::get_pass_html() : static::get_warning_html() ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
             </tr>
             <?php
 
@@ -673,7 +673,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         <tr>
             <td><?php esc_html_e( 'PHP Disabled Functions', 'mainwp' ); ?></td>
             <td><?php esc_html_e( 'N/A', 'mainwp' ); ?></td>
-            <td><?php self::php_disabled_functions(); ?></td>
+            <td><?php static::php_disabled_functions(); ?></td>
             <td></td>
         </tr>
         <tr>
@@ -691,7 +691,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return void
      */
     public static function render_mysql_check_tbody() {
-        self::render_row( 'MySQL Version', '>=', '5.0', 'get_mysql_version', '', '', null, null, self::ERROR );
+        static::render_row( 'MySQL Version', '>=', '5.0', 'get_mysql_version', '', '', null, null, static::ERROR );
         ?>
                     <tr>
             <td><?php esc_html_e( 'MySQL Mode', 'mainwp' ); ?></td>
@@ -819,11 +819,11 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         ?>
         <tr>
             <td><?php esc_html_e( 'MainWP Dashboard Version', 'mainwp' ); ?></td>
-            <td><?php echo 'Latest: ' . MainWP_Server_Information_Handler::get_mainwp_version(); ?> | <?php echo 'Detected: ' . MainWP_Server_Information_Handler::get_current_version(); ?> <?php echo self::get_mainwp_version_check(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+            <td><?php echo 'Latest: ' . MainWP_Server_Information_Handler::get_mainwp_version(); ?> | <?php echo 'Detected: ' . MainWP_Server_Information_Handler::get_current_version(); ?> <?php echo static::get_mainwp_version_check(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
         </tr>
         <?php
-        self::check_directory_mainwp_directory();
-        self::display_mainwp_options();
+        static::check_directory_mainwp_directory();
+        static::display_mainwp_options();
     }
 
     /**
@@ -847,7 +847,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 if ( isset( $extension['mainwp'] ) && $extension['mainwp'] ) {
                     ?>
                     <td><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); ?></td>
-                    <td class="right aligned"><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? self::get_pass_html() : self::get_warning_html( self::WARNING ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+                    <td class="right aligned"><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? static::get_pass_html() : static::get_warning_html( static::WARNING ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
                     <?php
                 } else {
                     ?>
@@ -909,11 +909,11 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             </thead>
             <tbody>
                 <?php
-                self::render_row_with_description( esc_html__( 'PHP Version', 'mainwp' ), '>=', '7.4', 'get_php_version', '', '', null );
-                self::render_row_with_description( esc_html__( 'SSL Extension Enabled', 'mainwp' ), '=', true, 'get_ssl_support', '', '', null );
-                self::render_row_with_description( esc_html__( 'cURL Extension Enabled', 'mainwp' ), '=', true, 'get_curl_support', '', '', null );
+                static::render_row_with_description( esc_html__( 'PHP Version', 'mainwp' ), '>=', '7.4', 'get_php_version', '', '', null );
+                static::render_row_with_description( esc_html__( 'SSL Extension Enabled', 'mainwp' ), '=', true, 'get_ssl_support', '', '', null );
+                static::render_row_with_description( esc_html__( 'cURL Extension Enabled', 'mainwp' ), '=', true, 'get_curl_support', '', '', null );
                 $openssl_version = 'OpenSSL/1.1.0';
-                self::render_row_with_description(
+                static::render_row_with_description(
                     'cURL SSL Version',
                     '>=',
                     $openssl_version,
@@ -927,7 +927,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 if ( ! MainWP_Server_Information_Handler::curlssl_compare( $openssl_version, '>=' ) ) {
                     echo "<tr class='warning'><td colspan='4'><i class='attention icon'></i>" . sprintf( esc_html__( 'Your host needs to update OpenSSL to at least version 1.1.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://community.letsencrypt.org/t/openssl-client-compatibility-changes-for-let-s-encrypt-certificates/143816" target="_blank">', '</a>' ) . '</td></tr>';
                 }
-                self::render_row_with_description( esc_html__( 'MySQL Version', 'mainwp' ), '>=', '5.0', 'get_mysql_version', '', '', null );
+                static::render_row_with_description( esc_html__( 'MySQL Version', 'mainwp' ), '>=', '5.0', 'get_mysql_version', '', '', null );
                 ?>
             </tbody>
         </table>
@@ -945,7 +945,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Compares the detected MainWP Dashboard version agains the verion in WP.org.
      *
-     * @return mixed Pass|self::get_warning_html().
+     * @return mixed Pass|static::get_warning_html().
      *
      * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_mainwp_version()
      */
@@ -953,9 +953,9 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $current = get_option( 'mainwp_plugin_version' );
         $latest  = MainWP_Server_Information_Handler::get_mainwp_version();
         if ( $current === $latest ) {
-            return self::get_pass_html();
+            return static::get_pass_html();
         } else {
-            return self::get_warning_html();
+            return static::get_warning_html();
         }
     }
 
@@ -973,7 +973,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return;
         }
 
-        self::render_header( 'ServerInformationCron' );
+        static::render_header( 'ServerInformationCron' );
 
         $local_timestamp = MainWP_Utility::get_timestamp();
 
@@ -981,7 +981,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         if ( $freq <= 0 ) {
             $freq = 1;
         }
-        $auto_update_text = self::get_schedule_auto_update_label( $freq );
+        $auto_update_text = static::get_schedule_auto_update_label( $freq );
 
         $cron_jobs = array(
             'Check for available updates' => array( 'mainwp_updatescheck_start_last_timestamp', 'mainwp_cronupdatescheck_action', $auto_update_text ),
@@ -1062,7 +1062,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     }
 
                     if ( empty( $next_run ) || ( ! $useWPCron && ! $is_auto_update_job && isset( $hook[3] ) ) ) {
-                        $nexttime_run = self::get_schedule_next_time_to_show( $hook[3], $lasttime_run, $local_timestamp );
+                        $nexttime_run = static::get_schedule_next_time_to_show( $hook[3], $lasttime_run, $local_timestamp );
                         if ( $nexttime_run < $local_timestamp + 3 * MINUTE_IN_SECONDS ) {
                             $next_run = esc_html__( 'Any minute', 'mainwp' );
                         } else {
@@ -1135,7 +1135,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
          */
         do_action( 'mainwp_after_cron_jobs_table' );
 
-        self::render_footer( 'ServerInformationCron' );
+        static::render_footer( 'ServerInformationCron' );
     }
 
     /**
@@ -1268,7 +1268,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             <td><?php echo esc_html( $name ); ?></td>
             <td><?php echo esc_html( $check ); ?></td>
             <td><?php echo esc_html( $result ); ?></td>
-            <td class="right aligned"><?php echo ( $passed ? self::get_pass_html() : self::get_warning_html( self::ERROR ) ); ?></td>
+            <td class="right aligned"><?php echo ( $passed ? static::get_pass_html() : static::get_warning_html( static::ERROR ) ); ?></td>
         </tr>
         <?php
 		 // phpcs:enable
@@ -1286,7 +1286,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param null   $extraCompare extra compare.
      * @param null   $extraVersion extra version.
      * @param null   $whatType comparison type.
-     * @param int    $errorType global variable self::WARNING = 1.
+     * @param int    $errorType global variable static::WARNING = 1.
      *
      * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::filesize_compare()
      * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::curlssl_compare()
@@ -1301,13 +1301,13 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             <td><?php echo esc_html( $compare ); ?><?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html( $version ) ) ) . ' ' . $extraText; ?></td>
             <td><?php echo( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
             <?php if ( 'filesize' === $whatType ) { ?>
-                <td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
+                <td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? static::get_pass_html() : static::get_warning_html( $errorType ) ); ?></td>
             <?php } elseif ( 'get_curl_ssl_version' === $getter ) { ?>
-                <td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
+                <td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? static::get_pass_html() : static::get_warning_html( $errorType ) ); ?></td>
             <?php } elseif ( ( 'get_max_input_time' === $getter || 'get_max_execution_time' === $getter ) && -1 === (int) $currentVersion ) { ?>
-                <td class="right aligned"><?php echo self::get_pass_html(); ?></td>
+                <td class="right aligned"><?php echo static::get_pass_html(); ?></td>
             <?php } else { ?>
-                <td class="right aligned"><?php echo ( version_compare( $currentVersion, $version, $compare ) || ( ! empty( $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
+                <td class="right aligned"><?php echo ( version_compare( $currentVersion, $version, $compare ) || ( ! empty( $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? static::get_pass_html() : static::get_warning_html( $errorType ) ); ?></td>
         <?php } ?>
         </tr>
         <?php
@@ -1325,7 +1325,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param null   $extraCompare extra compare.
      * @param null   $extraVersion extra version.
      * @param null   $whatType comparison type.
-     * @param int    $errorType global variable self::WARNING = 1.
+     * @param int    $errorType global variable static::WARNING = 1.
      *
      * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_class_name()
      * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::filesize_compare()
@@ -1340,13 +1340,13 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             <td><?php echo esc_html( $compare ); ?>  <?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html( $version ) ) ) . ' ' . $extraText; ?></td>
             <td><?php echo ( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
             <?php if ( 'filesize' === $whatType ) { ?>
-            <td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
+            <td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? static::get_pass_html() : static::get_warning_html( $errorType ) ); ?></td>
             <?php } elseif ( 'get_curl_ssl_version' === $getter ) { ?>
-            <td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
+            <td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? static::get_pass_html() : static::get_warning_html( $errorType ) ); ?></td>
             <?php } elseif ( 'get_max_input_time' === $getter && -1 === (int) $currentVersion ) { ?>
-            <td class="right aligned"><?php echo self::get_pass_html(); ?></td>
+            <td class="right aligned"><?php echo static::get_pass_html(); ?></td>
             <?php } else { ?>
-            <td class="right aligned"><?php echo( version_compare( $currentVersion, $version, $compare ) || ( ! empty( $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? self::get_pass_html() : self::get_warning_html( $errorType ) ); ?></td>
+            <td class="right aligned"><?php echo( version_compare( $currentVersion, $version, $compare ) || ( ! empty( $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? static::get_pass_html() : static::get_warning_html( $errorType ) ); ?></td>
             <?php } ?>
         </tr>
         <?php
@@ -1356,16 +1356,16 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Checks if file system method is direct.
      *
-     * @return mixed html|self::get_warning_html().
+     * @return mixed html|static::get_warning_html().
      *
      * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_file_system_method()
      */
     public static function get_file_system_method_check() {
         $fsmethod = MainWP_Server_Information_Handler::get_file_system_method();
         if ( 'direct' === $fsmethod ) {
-            return self::get_pass_html();
+            return static::get_pass_html();
         } else {
-            return self::get_warning_html();
+            return static::get_warning_html();
         }
     }
 
@@ -1387,7 +1387,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             mainwp_do_not_have_permissions( 'error log', 'mainwp' );
             return;
         }
-        self::render_header( 'ErrorLog' );
+        static::render_header( 'ErrorLog' );
 
         /**
          * Action: mainwp_before_error_log_table
@@ -1413,7 +1413,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 </tr>
             </thead>
             <tbody>
-                <?php self::render_error_log(); ?>
+                <?php static::render_error_log(); ?>
             </tbody>
         </table>
         <script type="text/javascript">
@@ -1442,7 +1442,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
          */
         do_action( 'mainwp_after_error_log_table' );
 
-        self::render_footer( 'ErrorLog' );
+        static::render_footer( 'ErrorLog' );
     }
 
     /**
@@ -1537,7 +1537,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return;
         }
 
-        self::render_header( 'WPConfig' );
+        static::render_header( 'WPConfig' );
         /**
          * Action: mainwp_before_wp_config_section
          *
@@ -1585,7 +1585,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
          */
         do_action( 'mainwp_after_wp_config_section' );
 
-        self::render_footer( 'WPConfig' );
+        static::render_footer( 'WPConfig' );
     }
 
     /**
@@ -1596,7 +1596,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
 	public static function render_action_logs() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-        self::render_header( 'ActionLogs' );
+        static::render_header( 'ActionLogs' );
 
         if ( isset( $_REQUEST['actionlogs_status'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $act_log  = isset( $_REQUEST['actionlogs_status'] ) ? wp_unslash( $_REQUEST['actionlogs_status'] ) : MainWP_Logger::DISABLED; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1700,7 +1700,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         ?>
         </div>
         <?php
-        self::render_footer( 'ActionLogs' );
+        static::render_footer( 'ActionLogs' );
     }
 
     /**
@@ -1710,7 +1710,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public static function render_plugin_privacy_page() {
 
-        self::render_header( 'PluginPrivacy' );
+        static::render_header( 'PluginPrivacy' );
         /**
          * Action: mainwp_before_plugin_privacy_section
          *
@@ -1785,7 +1785,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
          */
         do_action( 'mainwp_after_plugin_privacy_section' );
 
-        self::render_footer( 'PluginPrivacy' );
+        static::render_footer( 'PluginPrivacy' );
     }
 
     /**
@@ -1798,7 +1798,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             mainwp_do_not_have_permissions( '.htaccess', 'mainwp' );
             return;
         }
-        self::render_header( '.htaccess' );
+        static::render_header( '.htaccess' );
         /**
          * Action: mainwp_before_htaccess_section
          *
@@ -1830,7 +1830,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
          * @since 4.1
          */
         do_action( 'mainwp_after_htaccess_section' );
-        self::render_footer( '.htaccess' );
+        static::render_footer( '.htaccess' );
     }
 
     /**
@@ -1871,12 +1871,12 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Renders PHP Warning HTML.
      *
-     * @param int $errorType Global variable self::WARNING = 1.
+     * @param int $errorType Global variable static::WARNING = 1.
      *
      * @return string PHP Warning html.
      */
     private static function get_warning_html( $errorType = self::WARNING ) {
-        if ( self::WARNING === $errorType ) {
+        if ( static::WARNING === $errorType ) {
             return '<i class="large yellow exclamation icon"></i><span style="display:none">' . esc_html__( 'Warning', 'mainwp' ) . '</span>';
         }
         return '<i class="large red times icon"></i><span style="display:none">' . esc_html__( 'Fail', 'mainwp' ) . '</span>';

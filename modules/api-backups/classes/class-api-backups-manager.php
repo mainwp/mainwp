@@ -33,10 +33,10 @@ class Api_Backups_Manager {
      * @return Api_Backups_Manager
      */
     public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -71,7 +71,7 @@ class Api_Backups_Manager {
         }
 
         $autoload_name = $matches['autoload'];
-        $autoload_dir  = self::get_location_path();
+        $autoload_dir  = static::get_location_path();
 
         $load_dirs = array(
             'classes' => 'class',

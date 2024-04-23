@@ -67,16 +67,16 @@ class Cost_Tracker_Summary {
      * Check if there is a session,
      * if there isn't one create it.
      *
-     *  @return self::singlton Overview Page Session.
+     *  @return static::singlton Overview Page Session.
      *
      * @uses \MainWP\Dashboard\MainWP_Overview
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -144,7 +144,7 @@ class Cost_Tracker_Summary {
      */
     public function on_load_page( $page ) {
 
-        self::$page = $page;
+        static::$page = $page;
 
         $val = get_user_option( 'screen_layout_' . $page );
         if ( ! $val ) {
@@ -158,7 +158,7 @@ class Cost_Tracker_Summary {
         wp_enqueue_script( 'dashboard' );
         wp_enqueue_script( 'widgets' );
 
-        self::add_meta_boxes( $page );
+        static::add_meta_boxes( $page );
 
         add_filter( 'mainwp_header_actions_right', array( $this, 'screen_options' ), 10, 2 );
         add_filter( 'mainwp_widget_boxes_show_widgets', array( $this, 'hook_show_widgets' ), 10, 2 );
@@ -191,7 +191,7 @@ class Cost_Tracker_Summary {
      * @return array $values Show widgets settings.
      */
     public function hook_show_widgets( $values, $page ) {
-        if ( strtolower( $page ) === strtolower( self::$page ) ) {
+        if ( strtolower( $page ) === strtolower( static::$page ) ) {
             return get_user_option( 'mainwp_module_cost_tracker_summary_show_widgets' );
         }
         return $values;
@@ -227,10 +227,10 @@ class Cost_Tracker_Summary {
 
         foreach ( $extMetaBoxs as $box ) {
             if ( isset( $box['plugin'] ) ) {
-                $name                          = basename( $box['plugin'], '.php' );
-                self::$enable_widgets[ $name ] = true;
+                $name                            = basename( $box['plugin'], '.php' );
+                static::$enable_widgets[ $name ] = true;
             } elseif ( ! empty( $box['widget_id'] ) ) {
-                self::$enable_widgets[ $box['widget_id'] ] = true;
+                static::$enable_widgets[ $box['widget_id'] ] = true;
             }
         }
 
@@ -244,15 +244,15 @@ class Cost_Tracker_Summary {
          *
          * @since 4.6
          */
-        $values               = apply_filters( 'mainwp_module_cost_tracker_summary_enabled_widgets', self::$enable_widgets, null );
-        self::$enable_widgets = array_merge( self::$enable_widgets, $values );
+        $values                 = apply_filters( 'mainwp_module_cost_tracker_summary_enabled_widgets', static::$enable_widgets, null );
+        static::$enable_widgets = array_merge( static::$enable_widgets, $values );
 
         $i = 1;
         foreach ( $extMetaBoxs as $metaBox ) {
             $enabled = true;
             if ( isset( $metaBox['plugin'] ) ) {
                 $name = basename( $metaBox['plugin'], '.php' );
-                if ( isset( self::$enable_widgets[ $name ] ) && ! self::$enable_widgets[ $name ] ) {
+                if ( isset( static::$enable_widgets[ $name ] ) && ! static::$enable_widgets[ $name ] ) {
                     $enabled = false;
                 }
             }
@@ -268,32 +268,32 @@ class Cost_Tracker_Summary {
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['cost_yearly_renewals'] ) ) {
+        if ( ! empty( static::$enable_widgets['cost_yearly_renewals'] ) ) {
             MainWP_UI::add_widget_box( 'cost_yearly_renewals', array( Cost_Tracker_Yearly_Renewals::instance(), 'render' ), $page, array( 1, 1, 6, 13 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['cost_monthly_renewals'] ) ) {
+        if ( ! empty( static::$enable_widgets['cost_monthly_renewals'] ) ) {
             MainWP_UI::add_widget_box( 'cost_monthly_renewals', array( Cost_Tracker_Monthly_Renewals::instance(), 'render' ), $page, array( 1, 1, 6, 13 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['cost_upcomming_renewals'] ) ) {
+        if ( ! empty( static::$enable_widgets['cost_upcomming_renewals'] ) ) {
             MainWP_UI::add_widget_box( 'cost_upcomming_renewals', array( Cost_Tracker_Upcoming_Renewals::instance(), 'render' ), $page, array( 1, 1, 6, 13 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['cost_category_totals'] ) ) {
+        if ( ! empty( static::$enable_widgets['cost_category_totals'] ) ) {
             MainWP_UI::add_widget_box( 'cost_category_totals', array( Cost_Tracker_Category_Totals::instance(), 'render' ), $page, array( 1, 1, 6, 13 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['cost_monthly_totals'] ) ) {
+        if ( ! empty( static::$enable_widgets['cost_monthly_totals'] ) ) {
             MainWP_UI::add_widget_box( 'cost_monthly_totals', array( Cost_Tracker_Monthly_Totals::instance(), 'render' ), $page, array( 1, 1, 6, 13 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['cost_payments_left_this_month'] ) ) {
+        if ( ! empty( static::$enable_widgets['cost_payments_left_this_month'] ) ) {
             MainWP_UI::add_widget_box( 'cost_payments_left_this_month', array( Cost_Tracker_Payment_Left_This_Month::instance(), 'render' ), $page, array( 1, 1, 6, 13 ) );
         }
     }
@@ -339,8 +339,8 @@ class Cost_Tracker_Summary {
      * When the page loads render the body content.
      */
     public function on_show_page() {
-        self::render_header( 'cost_summary' );
-        self::render_summary_body();
+        static::render_header( 'cost_summary' );
+        static::render_summary_body();
     }
 
     /**
@@ -454,7 +454,7 @@ class Cost_Tracker_Summary {
                     <form method="POST" action="" name="mainwp_module_cost_tracker_summary_screen_options_form" id="mainwp-module-log-overview-screen-options-form">
                         <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                         <input type="hidden" name="module_cost_tracker_summay_options_nonce" value="<?php echo esc_attr( wp_create_nonce( 'module_cost_tracker_summay_options_nonce' ) ); ?>" />
-                        <?php self::render_screen_options( false ); ?>
+                        <?php static::render_screen_options( false ); ?>
                         <?php
                         /**
                          * Action: mainwp_module_cost_tracker_summary_screen_options_bottom

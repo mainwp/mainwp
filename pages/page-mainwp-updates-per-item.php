@@ -588,7 +588,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @param array  $allPluginsOutdate       all abandoned plugins.
      * @param array  $decodedDismissedPlugins all dismissed abandoned plugins.
      *
-     * @throws \Exception Error message.
+     * @throws \MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()

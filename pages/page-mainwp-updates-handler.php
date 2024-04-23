@@ -48,7 +48,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 throw new MainWP_Exception( 'ERROR', '<i class="pause circular yellow inverted icon"></i> ' . esc_html__( 'Suspended site.', 'mainwp' ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
 
-            $information = self::upgrade_website( $website );
+            $information = static::upgrade_website( $website );
 
             if ( is_array( $information ) ) {
                 if ( isset( $information['upgrade'] ) && ( 'SUCCESS' === $information['upgrade'] ) ) {
@@ -690,7 +690,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
                 throw new MainWP_Exception( 'ERROR', esc_html__( 'Suspended site.', 'mainwp' ), 'SUSPENDED_SITE' );
             }
-            $result = self::update_plugin_theme_translation( $website, $type, $list_items );
+            $result = static::update_plugin_theme_translation( $website, $type, $list_items );
             if ( is_array( $result ) ) {
 
                 $return_results = array();
@@ -789,7 +789,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @param array  $list_items    List of theme or plugin names seperated by comma.
      *
      * @return array|false update result or false.
-     * @throws \Exception Error message.
+     * @throws \MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()

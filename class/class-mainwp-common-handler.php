@@ -29,13 +29,13 @@ class MainWP_Common_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Create public static instance.
      *
      * @static
-     * @return self::$instance
+     * @return static::$instance
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**

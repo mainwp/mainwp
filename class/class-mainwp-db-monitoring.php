@@ -36,10 +36,10 @@ class MainWP_DB_Monitoring extends MainWP_DB { // phpcs:ignore Generic.Classes.O
      * @return MainWP_DB_Common
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**

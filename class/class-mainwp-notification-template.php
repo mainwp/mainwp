@@ -52,13 +52,13 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
     /**
      * Create a new Self Instance.
      *
-     * @return mixed self::$instance
+     * @return mixed static::$instance
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -283,7 +283,7 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
      * @return bool True|False
      */
     public function is_overrided_template( $type ) {
-        $templ = self::get_template_name_by_notification_type( $type );
+        $templ = static::get_template_name_by_notification_type( $type );
         if ( file_exists( $this->template_custom_path . $templ ) ) {
             return true;
         }
@@ -337,7 +337,7 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
         global $wp_filesystem;
 
         $type            = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : '';
-        $templ_base_name = ! empty( $type ) ? self::get_template_name_by_notification_type( $type ) : '';
+        $templ_base_name = ! empty( $type ) ? static::get_template_name_by_notification_type( $type ) : '';
 
         if ( ! empty( $templ_base_name ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'delete-email-template' ) ) {
             if ( $hasWPFileSystem ) {

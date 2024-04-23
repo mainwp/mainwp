@@ -755,6 +755,7 @@ let manage_plugins_upgrade = function (slug, websiteid) {
 
 let manage_plugins_upgrade_continueAfterBackup = function (slug, websiteId, websiteHolder) {
     console.log('plugin upgrade continue');
+    let siteHolder = websiteHolder;
     return function () {
         let data = mainwp_secure_data({
             action: 'mainwp_upgradeplugintheme',
@@ -766,35 +767,31 @@ let manage_plugins_upgrade_continueAfterBackup = function (slug, websiteId, webs
             type: "POST",
             url: ajaxurl,
             data: data,
-            success: function (siteHolder) {
-                return function (response) {
-                    if (response.error) {
-                        let extErr = getErrorMessageInfo(response.error, 'ui')
-                        siteHolder.find('.column.update-column').html(extErr);
+            success: function (response) {
+                if (response.error) {
+                    let extErr = getErrorMessageInfo(response.error, 'ui')
+                    siteHolder.find('.column.update-column').html(extErr);
+                } else {
+                    let res = response.result;
+                    let res_error = response.result_error;
+                    if (res[slug]) {
+                        siteHolder.attr('updated', 1);
+                        siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
+                    } else if (res_error[slug]) {
+                        siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + res_error[slug] + '"><i class="red times icon"></i></span>');
                     } else {
-                        let res = response.result;
-                        let res_error = response.result_error;
-                        if (res[slug]) {
-                            siteHolder.attr('updated', 1);
-                            siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
-                        } else if (res_error[slug]) {
-                            siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + res_error[slug] + '"><i class="red times icon"></i></span>');
-                        } else {
-                            siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
-                        }
-                        setTimeout(function () {
-                            mainwp_fetch_plugins();
-                        }, 3000);
+                        siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
                     }
+                    setTimeout(function () {
+                        mainwp_fetch_plugins();
+                    }, 3000);
                 }
-            }(websiteHolder),
+            },
             tryCount: 0,
             retryLimit: 3,
-            endError: function (siteHolder) {
-                return function () {
-                    siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
-                }
-            }(websiteHolder),
+            endError: function () {
+                siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
+            },
             error: function (xhr) {
                 this.tryCount++;
                 if (this.tryCount >= this.retryLimit) {
@@ -903,6 +900,8 @@ let manage_themes_upgrade_theme = function (slug, websiteid) {
 
 let manage_themes_upgrade_continueAfterBackup = function( slug, websiteId, websiteHolder ){
     console.log('theme upgrade continue');
+    let siteHolder = websiteHolder;
+    let pSlug = slug;
     return function () {
         let data = mainwp_secure_data({
             action: 'mainwp_upgradeplugintheme',
@@ -914,32 +913,28 @@ let manage_themes_upgrade_continueAfterBackup = function( slug, websiteId, websi
             type: "POST",
             url: ajaxurl,
             data: data,
-            success: function (pSlug, siteHolder) {
-                return function (response) {
-                    if (response.error) {
-                        let extErr = getErrorMessageInfo(response.error, 'ui')
-                        siteHolder.find('.column.update-column').html(extErr);
+            success: function (response) {
+                if (response.error) {
+                    let extErr = getErrorMessageInfo(response.error, 'ui')
+                    siteHolder.find('.column.update-column').html(extErr);
+                } else {
+                    let res = response.result;
+                    if (res[pSlug]) {
+                        siteHolder.attr('updated', 1);
+                        siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
                     } else {
-                        let res = response.result;
-                        if (res[pSlug]) {
-                            siteHolder.attr('updated', 1);
-                            siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
-                        } else {
-                            siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
-                        }
-                        setTimeout(function () {
-                            mainwp_fetch_themes();
-                        }, 3000);
+                        siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
                     }
+                    setTimeout(function () {
+                        mainwp_fetch_themes();
+                    }, 3000);
                 }
-            }(slug, websiteHolder),
+            },
             tryCount: 0,
             retryLimit: 3,
-            endError: function (siteHolder) {
-                return function () {
-                    siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
-                }
-            }(websiteHolder),
+            endError: function () {
+                siteHolder.find('.column.update-column').html('<i class="red times icon"></i>');
+            },
             error: function (xhr) {
                 this.tryCount++;
                 if (this.tryCount >= this.retryLimit) {

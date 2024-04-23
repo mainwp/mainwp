@@ -50,10 +50,10 @@ class Log_Install extends MainWP_Install {
      * @return instance of class.
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -74,7 +74,7 @@ class Log_Install extends MainWP_Install {
         $currentVersion = get_site_option( $this->log_db_option_key );
 
         $rslt = $this->query( "SHOW TABLES LIKE '" . $this->table_name( 'wp_logs' ) . "'" );
-        if ( empty( self::num_rows( $rslt ) ) ) {
+        if ( empty( static::num_rows( $rslt ) ) ) {
             $currentVersion = false;
         }
 

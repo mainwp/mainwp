@@ -48,7 +48,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          *
          * @see \MainWP_Themes::render_header
          */
-        add_action( 'mainwp-pageheader-themes', array( self::get_class_name(), 'render_header' ) );
+        add_action( 'mainwp-pageheader-themes', array( static::get_class_name(), 'render_header' ) );
 
         /**
          * This hook allows you to render the Themes page footer via the 'mainwp-pagefooter-themes' action.
@@ -60,9 +60,9 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          *
          * @see \MainWP_Themes::render_footer
          */
-        add_action( 'mainwp-pagefooter-themes', array( self::get_class_name(), 'render_footer' ) );
+        add_action( 'mainwp-pagefooter-themes', array( static::get_class_name(), 'render_footer' ) );
 
-        add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
+        add_action( 'mainwp_help_sidebar_content', array( static::get_class_name(), 'mainwp_help_content' ) );
     }
 
     /**
@@ -81,7 +81,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'read',
             'ThemesManage',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render',
             )
         );
@@ -93,7 +93,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'read',
             'ThemesInstall',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render_install',
             )
         );
@@ -104,7 +104,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'read',
             'ThemesAutoUpdate',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render_auto_update',
             )
         );
@@ -115,7 +115,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'read',
             'ThemesIgnore',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render_ignore',
             )
         );
@@ -126,7 +126,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'read',
             'ThemesIgnoredAbandoned',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render_ignored_abandoned',
             )
         );
@@ -138,17 +138,17 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          *
          * @since Unknown
          */
-        $sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-themes', array( array() ), '4.0.7.2', 'mainwp_getsubpages_themes' );  // @deprecated Use 'mainwp_getsubpages_themes' instead.
-        self::$subPages = apply_filters( 'mainwp_getsubpages_themes', $sub_pages );
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-themes', array( array() ), '4.0.7.2', 'mainwp_getsubpages_themes' );  // @deprecated Use 'mainwp_getsubpages_themes' instead.
+        static::$subPages = apply_filters( 'mainwp_getsubpages_themes', $sub_pages );
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'Themes' . $subPage['slug'] ) ) {
                     continue;
                 }
                 add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Themes' . $subPage['slug'], $subPage['callback'] );
             }
         }
-        self::init_left_menu( self::$subPages );
+        static::init_left_menu( static::$subPages );
     }
 
     /**
@@ -182,8 +182,8 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=ThemesIgnoredAbandoned' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Ignored Abandoned', 'mainwp' ); ?></a>
                     <?php } ?>
                     <?php
-                    if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-                        foreach ( self::$subPages as $subPage ) {
+                    if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+                        foreach ( static::$subPages as $subPage ) {
                             if ( MainWP_Menu::is_disable_menu_item( 3, 'Themes' . $subPage['slug'] ) ) {
                                 continue;
                             }
@@ -340,8 +340,8 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 );
             }
 
-            if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-                foreach ( self::$subPages as $subPage ) {
+            if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+                foreach ( static::$subPages as $subPage ) {
                     if ( MainWP_Menu::is_disable_menu_item( 3, 'Themes' . $subPage['slug'] ) ) {
                         continue;
                     }
@@ -397,7 +397,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             }
         }
 
-        self::render_header( 'Manage' );
+        static::render_header( 'Manage' );
         ?>
 
         <div id="mainwp-manage-themes" class="ui alt segment">
@@ -563,7 +563,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 </div>
                 </div>
                 <div class="ui fitted divider"></div>
-                <?php self::render_search_options(); ?>             
+                <?php static::render_search_options(); ?>             
                 <div class="ui fitted divider"></div>
                 <div class="mainwp-search-submit">
                     <?php
@@ -602,7 +602,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <div style="clear:both"></div>
         </div>
         <?php
-        self::render_footer( 'Manage' );
+        static::render_footer( 'Manage' );
     }
 
     /**
@@ -967,7 +967,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $view_mode = MainWP_Plugins::get_manage_view( 'theme' );
 
-        $bulkActions = self::render_bulk_actions( $status );
+        $bulkActions = static::render_bulk_actions( $status );
         ob_start();
 
         if ( ! empty( $error_results ) ) {
@@ -1032,9 +1032,9 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             ksort( $themesNameSites, SORT_STRING );
 
             if ( MAINWP_VIEW_PER_PLUGIN_THEME === (int) $view_mode ) {
-                self::render_manage_table( $sites, $themesName, $siteThemes, $themesSlug, $themesNameSites, $themesRealVersion );
+                static::render_manage_table( $sites, $themesName, $siteThemes, $themesSlug, $themesNameSites, $themesRealVersion );
             } else {
-                self::render_manage_per_site_table( $sites, $themesName, $siteThemes, $themesSlug, $themesNameSites, $themesRealVersion );
+                static::render_manage_per_site_table( $sites, $themesName, $siteThemes, $themesSlug, $themesNameSites, $themesRealVersion );
             }
             MainWP_UI::render_modal_upload_icon();
         }
@@ -1707,9 +1707,9 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'installedThemes' => array(),
             )
         );
-        self::render_header( 'Install' );
-        self::render_themes_table();
-        self::render_footer( 'Install' );
+        static::render_header( 'Install' );
+        static::render_themes_table();
+        static::render_footer( 'Install' );
     }
 
     /**
@@ -1969,7 +1969,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $cachedThemesSearch = $_SESSION['SNThemesAllStatus']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         }
 
-        self::render_header( 'AutoUpdate' );
+        static::render_header( 'AutoUpdate' );
 
         if ( ! mainwp_current_user_have_right( 'dashboard', 'trust_untrust_updates' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'trust/untrust updates', 'mainwp' ) );
@@ -2035,7 +2035,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <div id="mainwp-auto-updates-themes-table-wrapper">
                             <?php
                             if ( isset( $_SESSION['SNThemesAll'] ) ) {
-                                self::render_all_themes_table( $_SESSION['SNThemesAll'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                                static::render_all_themes_table( $_SESSION['SNThemesAll'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                             }
                             ?>
                         </div>
@@ -2092,7 +2092,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <?php
         }
         MainWP_UI::render_modal_edit_notes( 'theme' );
-        self::render_footer( 'AutoUpdate' );
+        static::render_footer( 'AutoUpdate' );
     }
 
     /**
@@ -2237,7 +2237,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( ! is_array( $trustedThemesNotes ) ) {
             $trustedThemesNotes = array();
         }
-        self::render_all_themes_html( $themes, $search_status, $trustedThemes, $trustedThemesNotes, $decodedIgnoredThemes );
+        static::render_all_themes_html( $themes, $search_status, $trustedThemes, $trustedThemesNotes, $decodedIgnoredThemes );
     }
 
     /**
@@ -2412,7 +2412,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             ++$cnt;
         }
 
-        self::render_header( 'Ignore' );
+        static::render_header( 'Ignore' );
         ?>
         <div id="mainwp-ignored-plugins" class="ui segment">
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-themes-info-message' ) ) : ?>
@@ -2435,13 +2435,13 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <?php esc_html_e( 'Globally Ignored Themes', 'mainwp' ); ?>
                 <div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore updates on global level and not notify you about pending updates.', 'mainwp' ); ?></div>
             </h3>
-            <?php self::render_global_ignored( $ignoredThemes, $decodedIgnoredThemes ); ?>
+            <?php static::render_global_ignored( $ignoredThemes, $decodedIgnoredThemes ); ?>
             <div class="ui hidden divider"></div>
             <h3 class="ui header">
             <?php esc_html_e( 'Per Site Ignored Themes', 'mainwp' ); ?>
             <div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore updates per site level and not notify you about pending updates.', 'mainwp' ); ?></div>
         </h3>
-        <?php self::render_sites_ignored( $cnt, $websites ); ?>
+        <?php static::render_sites_ignored( $cnt, $websites ); ?>
         <?php
         /**
          * Action: mainwp_themes_after_ignored_updates
@@ -2455,7 +2455,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         </div>
         <?php
         MainWP_Updates::render_plugin_details_modal();
-        self::render_footer( 'Ignore' );
+        static::render_footer( 'Ignore' );
     }
 
     /**
@@ -2636,7 +2636,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             ++$cnt;
         }
 
-        self::render_header( 'IgnoreAbandoned' );
+        static::render_header( 'IgnoreAbandoned' );
         ?>
         <div id="mainwp-ignored-abandoned-themes" class="ui segment">
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-abandoned-themes-info-message' ) ) : ?>
@@ -2659,13 +2659,13 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <?php esc_html_e( 'Globally Ignored Abandoned Themes', 'mainwp' ); ?>
                 <div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore on global level even though they have passed your Abandoned Themes Tolerance date', 'mainwp' ); ?></div>
             </h3>
-            <?php self::render_global_ignored_abandoned( $ignoredThemes, $decodedIgnoredThemes ); ?>
+            <?php static::render_global_ignored_abandoned( $ignoredThemes, $decodedIgnoredThemes ); ?>
         <div class="ui hidden divider"></div>
         <h3 class="ui header">
             <?php esc_html_e( 'Per Site Ignored Abandoned Themes', 'mainwp' ); ?>
             <div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore per site level even though they have passed your Abandoned Theme Tolerance date', 'mainwp' ); ?></div>
         </h3>
-            <?php self::render_sites_ignored_abandoned( $cnt, $websites ); ?>
+            <?php static::render_sites_ignored_abandoned( $cnt, $websites ); ?>
             <?php
             /**
              * Action: mainwp_themes_after_ignored_abandoned
@@ -2678,7 +2678,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             ?>
         </div>
         <?php
-        self::render_footer( 'IgnoreAbandoned' );
+        static::render_footer( 'IgnoreAbandoned' );
     }
 
     /**

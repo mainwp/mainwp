@@ -181,18 +181,18 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 }
             }
 
-            if ( self::check_premium_updates( $check_premi_plugins, 'plugin' ) ) {
-                self::try_to_detect_premiums_update( $website, 'plugin' );
+            if ( static::check_premium_updates( $check_premi_plugins, 'plugin' ) ) {
+                static::try_to_detect_premiums_update( $website, 'plugin' );
             }
 
-            if ( self::check_premium_updates( $check_premi_themes, 'theme' ) ) {
-                self::try_to_detect_premiums_update( $website, 'theme' );
+            if ( static::check_premium_updates( $check_premi_themes, 'theme' ) ) {
+                static::try_to_detect_premiums_update( $website, 'theme' );
             }
 
             if ( 'upgradeplugintheme' === $what ) {
                 if ( 'plugin' === $update_type || 'theme' === $update_type ) {
-                    if ( self::check_request_update_premium( $params['list'], $update_type ) ) {
-                        self::request_premiums_update( $website, $update_type, $params['list'] );
+                    if ( static::check_request_update_premium( $params['list'], $update_type ) ) {
+                        static::request_premiums_update( $website, $update_type, $params['list'] );
                         $request_update = true;
                     }
                 }
@@ -325,7 +325,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         } else {
             return null;
         }
-        self::redirect_request_site( $website, $where_url );
+        static::redirect_request_site( $website, $where_url );
         return true;
     }
 
@@ -337,7 +337,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param mixed $website Child Site.
      * @param mixed $type Type of update, plugin|theme.
      *
-     * @return mixed false|self::redirect_request_site()
+     * @return mixed false|static::redirect_request_site()
      */
     public static function try_to_detect_premiums_update( $website, $type ) {
         if ( 'plugin' === $type ) {
@@ -347,6 +347,6 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         } else {
             return false;
         }
-        self::redirect_request_site( $website, $where_url );
+        static::redirect_request_site( $website, $where_url );
     }
 }

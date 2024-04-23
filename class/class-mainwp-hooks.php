@@ -294,7 +294,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      *
      * @return array $ret data fields: response, siteid.
      *
-     * @throws \Exception Exception message.
+     * @throws \MainWP_Exception Exception message.
      *
      * @since 3.2.2
      *
@@ -446,7 +446,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      *
      * @return array $ret Child site ID.
      *
-     * @throws \Exception Exception message.
+     * @throws \MainWP_Exception Exception message.
      *
      * @since 3.2.2
      *
@@ -886,7 +886,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @param array $more_allowed input allowed tags - option.
      *
      * @return mixed $response valid response data.
-     * @throws \Exception Exception message.
+     * @throws \MainWP_Exception Exception message.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
      * @uses \MainWP\Dashboard\MainWP_Utility::esc_mixed_content()
@@ -929,7 +929,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @param array  $more_allowed input allowed tags - option.
      *
      * @return mixed $response valid response data.
-     * @throws \Exception Exception message.
+     * @throws \MainWP_Exception Exception message.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
      */

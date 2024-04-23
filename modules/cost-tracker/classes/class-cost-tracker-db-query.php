@@ -38,10 +38,10 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
      * @return instance of class.
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**

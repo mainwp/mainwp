@@ -30,7 +30,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Fire off render_widget().
      */
     public static function render() {
-        self::render_widget();
+        static::render_widget();
     }
 
     /**
@@ -96,7 +96,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             MainWP_DB::free_result( $websites );
         }
 
-        self::render_html_widget( $website, $allPlugins );
+        static::render_html_widget( $website, $allPlugins );
     }
 
     /**
@@ -299,7 +299,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Fire off Action activate & display result
      */
     public static function activate_plugin() {
-        self::action( 'activate' );
+        static::action( 'activate' );
         die( wp_json_encode( array( 'result' => esc_html__( 'Plugin has been activated!', 'mainwp' ) ) ) );
     }
 
@@ -309,7 +309,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Fire off action deactivate & display result
      */
     public static function deactivate_plugin() {
-        self::action( 'deactivate' );
+        static::action( 'deactivate' );
         die( wp_json_encode( array( 'result' => esc_html__( 'Plugin has been deactivated!', 'mainwp' ) ) ) );
     }
 
@@ -319,7 +319,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Fire off action delete & display result
      */
     public static function delete_plugin() {
-        self::action( 'delete' );
+        static::action( 'delete' );
         die( wp_json_encode( array( 'result' => esc_html__( 'Plugin has been permanently deleted!', 'mainwp' ) ) ) );
     }
 
@@ -330,7 +330,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @param mixed $action Plugin Action.
      *
-     * @throws \Exception Error message.
+     * @throws \MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()

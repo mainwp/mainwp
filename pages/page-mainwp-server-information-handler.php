@@ -107,7 +107,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      */
     public static function curlssl_compare( $version, $operator ) {
         if ( function_exists( 'curl_version' ) ) {
-            $ver = self::get_curl_ssl_version();
+            $ver = static::get_curl_ssl_version();
             return version_compare( $ver, $version, $operator );
         }
         return false;
@@ -283,7 +283,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * @return boolean true|false.
      */
     public static function is_openssl_config_warning() {
-        $ssl_warning = self::get_ssl_warning();
+        $ssl_warning = static::get_ssl_warning();
         if ( '' !== $ssl_warning ) {
             if ( false !== stristr( $ssl_warning, 'No such file or directory found', 'mainwp' ) || false !== stristr( $ssl_warning, 'No such process', 'mainwp' ) || false !== stristr( $ssl_warning, 'no such file', 'mainwp' ) ) {
                 return true;
@@ -455,7 +455,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * @return bool true|false.
      */
     public static function get_php_safe_mode() {
-        if ( version_compare( self::get_php_version(), '5.3.0' ) >= 0 ) {
+        if ( version_compare( static::get_php_version(), '5.3.0' ) >= 0 ) {
             return true;
         }
 
@@ -607,7 +607,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * @return bool True|false.
      */
     public static function is_apache_server_software() {
-        $server = self::get_server_software( true );
+        $server = static::get_server_software( true );
         return ( false !== stripos( $server, 'apache' ) ) ? true : false;
     }
 

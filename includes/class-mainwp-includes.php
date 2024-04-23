@@ -34,14 +34,14 @@ class MainWP_Includes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * Load files.
      */
     private function includes() {
-        if ( file_exists( self::$plugin_basedir . 'modules/common/class-module-log.php' ) ) {
-            require_once self::$plugin_basedir . 'modules/common/class-module-log.php';
+        if ( file_exists( static::$plugin_basedir . 'modules/common/class-module-log.php' ) ) {
+            require_once static::$plugin_basedir . 'modules/common/class-module-log.php';
         }
-        if ( file_exists( self::$plugin_basedir . 'modules/common/class-module-cost-tracker.php' ) ) {
-            require_once self::$plugin_basedir . 'modules/common/class-module-cost-tracker.php';
+        if ( file_exists( static::$plugin_basedir . 'modules/common/class-module-cost-tracker.php' ) ) {
+            require_once static::$plugin_basedir . 'modules/common/class-module-cost-tracker.php';
         }
-        if ( file_exists( self::$plugin_basedir . 'modules/common/class-module-api-backups.php' ) ) {
-            require_once self::$plugin_basedir . 'modules/common/class-module-api-backups.php';
+        if ( file_exists( static::$plugin_basedir . 'modules/common/class-module-api-backups.php' ) ) {
+            require_once static::$plugin_basedir . 'modules/common/class-module-api-backups.php';
         }
     }
 }

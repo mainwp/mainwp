@@ -38,7 +38,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
             'read',
             'UpdateAdminPasswords',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render',
             )
         );
@@ -170,9 +170,9 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
 
         MainWP_User::render_header( 'UpdateAdminPasswords' );
         if ( ! $show_form ) {
-            self::render_modal( $dbwebsites, $output );
+            static::render_modal( $dbwebsites, $output );
         }
-        self::render_bulk_form( $websites );
+        static::render_bulk_form( $websites );
         MainWP_User::render_footer( 'UpdateAdminPasswords' );
     }
 

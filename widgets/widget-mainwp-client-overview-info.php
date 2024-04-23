@@ -35,7 +35,7 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
         if ( empty( $client_id ) ) {
             return;
         }
-        self::render_client_overview( $client_id );
+        static::render_client_overview( $client_id );
     }
 
 

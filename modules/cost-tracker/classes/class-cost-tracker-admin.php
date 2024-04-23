@@ -66,10 +66,10 @@ class Cost_Tracker_Admin {
      * @return Cost_Tracker_Admin
      */
     public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -188,7 +188,7 @@ class Cost_Tracker_Admin {
                     'manage_cost_tracker',
                 ),
             ),
-            'init_menu_callback' => array( self::class, 'init_menu' ),
+            'init_menu_callback' => array( static::class, 'init_menu' ),
             'leftbar_order'      => 2.8,
         );
         return $items;
@@ -204,7 +204,7 @@ class Cost_Tracker_Admin {
      */
     public function hook_get_default_cost_fields( $def_val = null, $field = 'all' ) {
         unset( $def_val );
-        return self::get_default_fields_values( $field );
+        return static::get_default_fields_values( $field );
     }
 
     /**
@@ -223,14 +223,14 @@ class Cost_Tracker_Admin {
             'single_site' => esc_html__( 'Single-Site License', 'mainwp' ),
             'multi_site'  => esc_html__( 'Multiple-Site License', 'mainwp' ),
         );
-        $product_types     = self::get_product_types();
+        $product_types     = static::get_product_types();
         $payment_types     = array(
             'subscription' => esc_html__( 'Subscription', 'mainwp' ),
             'lifetime'     => esc_html__( 'Lifetime', 'mainwp' ),
         );
-        $payment_methods   = self::get_payment_methods();
-        $renewal_frequency = self::get_renewal_frequency();
-        $cost_status       = self::get_cost_status();
+        $payment_methods   = static::get_payment_methods();
+        $renewal_frequency = static::get_renewal_frequency();
+        $cost_status       = static::get_cost_status();
 
         $all_defaults = array(
             'license_types'     => $license_types,
@@ -255,7 +255,7 @@ class Cost_Tracker_Admin {
      */
     public static function init_menu() {
 
-        self::$page = add_submenu_page(
+        static::$page = add_submenu_page(
             'mainwp_tab',
             esc_html__( 'Cost Tracker', 'mainwp' ),
             '<span id="mainwp-cost-tracker-summary">' . esc_html__( 'Cost Tracker', 'mainwp' ) . '</span>',
@@ -306,10 +306,10 @@ class Cost_Tracker_Admin {
         /**
          * This hook allows you to add extra sub pages to the client page via the 'mainwp_getsubpages_cost_tracker' filter.
          */
-        self::$subPages = apply_filters( 'mainwp_getsubpages_cost_tracker', array() );
+        static::$subPages = apply_filters( 'mainwp_getsubpages_cost_tracker', array() );
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( empty( $subPage['slug'] ) || empty( $subPage['callback'] ) ) {
                     continue;
                 }
@@ -319,13 +319,13 @@ class Cost_Tracker_Admin {
                 add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . esc_html( $subPage['title'] ) . '</div>', 'read', 'ManageCostTracker' . $subPage['slug'], $subPage['callback'] );
             }
         }
-        add_action( 'load-' . self::$page, array( self::class, 'on_load_summary_page' ) );
+        add_action( 'load-' . static::$page, array( static::class, 'on_load_summary_page' ) );
 
         if ( isset( $_GET['page'] ) && 'CostSummary' === $_GET['page'] ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended
             add_filter( 'mainwp_enqueue_script_gridster', '__return_true' );
         }
 
-        self::init_left_menu( self::$subPages );
+        static::init_left_menu( static::$subPages );
     }
 
     /**
@@ -334,7 +334,7 @@ class Cost_Tracker_Admin {
      * Run on page load.
      */
     public static function on_load_summary_page() {
-        Cost_Tracker_Summary::instance()->on_load_page( self::$page );
+        Cost_Tracker_Summary::instance()->on_load_page( static::$page );
     }
 
     /**
@@ -448,8 +448,8 @@ class Cost_Tracker_Admin {
                 'active' => ( 'settings' === $shownPage ) ? true : false,
             );
         }
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageCostTracker' . $subPage['slug'] ) ) {
                     continue;
                 }
@@ -497,7 +497,7 @@ class Cost_Tracker_Admin {
         $update['renewal_type'] = $renewal_fequency;
         $update['last_renewal'] = $last_renewal; // labeled Purchase date.
 
-        $next_renewal           = self::get_next_renewal( $last_renewal, $renewal_fequency );
+        $next_renewal           = static::get_next_renewal( $last_renewal, $renewal_fequency );
         $update['next_renewal'] = $next_renewal;
 
         $note           = isset( $_POST['mainwp_module_cost_tracker_edit_note'] ) ? wp_unslash( $_POST['mainwp_module_cost_tracker_edit_note'] ) : '';
@@ -590,14 +590,14 @@ class Cost_Tracker_Admin {
 
         // first.
         $cust_product_types = isset( $_POST['cost_tracker_custom_product_types'] ) ? wp_unslash( $_POST['cost_tracker_custom_product_types'] ) : array(); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $cust_product_types = self::validate_custom_settings_text_fields( $cust_product_types, $product_types_colors, $product_types_icons );
+        $cust_product_types = static::validate_custom_settings_text_fields( $cust_product_types, $product_types_colors, $product_types_icons );
 
         // second.
         $default_product_colors = isset( $_POST['cost_tracker_default_product_types'] ) ? wp_unslash( $_POST['cost_tracker_default_product_types'] ) : array(); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        self::validate_custom_settings_text_fields( $default_product_colors, $product_types_colors, $product_types_icons );
+        static::validate_custom_settings_text_fields( $default_product_colors, $product_types_colors, $product_types_icons );
 
         $cust_payment_methods = isset( $_POST['cost_tracker_custom_payment_methods'] ) ? wp_unslash( $_POST['cost_tracker_custom_payment_methods'] ) : array(); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $cust_payment_methods = self::validate_custom_settings_text_fields( $cust_payment_methods );
+        $cust_payment_methods = static::validate_custom_settings_text_fields( $cust_payment_methods );
 
         $all_opts['currency']               = $currency;
         $all_opts['currency_format']        = $currency_format;
@@ -664,7 +664,7 @@ class Cost_Tracker_Admin {
      */
     public function hook_get_next_renewal( $filter_input, $previous_renewal, $renewal_type ) {
         unset( $filter_input );
-        return self::get_next_renewal( $previous_renewal, $renewal_type );
+        return static::get_next_renewal( $previous_renewal, $renewal_type );
     }
 
     /**
@@ -702,7 +702,7 @@ class Cost_Tracker_Admin {
             $today_time = strtotime( gmdate( 'Y-m-d 00:00:00' ) );
 
             if ( $get_real_renewal && $next_renewal < $today_time ) {
-                $next_renewal = self::get_next_renewal( $next_renewal, $renewal_type, $get_real_renewal );
+                $next_renewal = static::get_next_renewal( $next_renewal, $renewal_type, $get_real_renewal );
             }
         }
         return $next_renewal;
@@ -740,7 +740,7 @@ class Cost_Tracker_Admin {
      * @param string $type Product type.
      */
     public static function get_product_colors( $type = false ) {
-        $defaults = self::get_default_product_type_colors();
+        $defaults = static::get_default_product_type_colors();
 
         $product_colors = Cost_Tracker_Utility::get_instance()->get_option( 'product_types_colors', array(), true );
         if ( is_array( $product_colors ) && ! empty( $product_colors ) ) {
@@ -789,7 +789,7 @@ class Cost_Tracker_Admin {
      * Method get_product_types().
      */
     public static function get_product_types() {
-        $product_types      = self::get_default_product_types();
+        $product_types      = static::get_default_product_types();
         $cust_product_types = Cost_Tracker_Utility::get_instance()->get_option( 'custom_product_types', array(), true );
         if ( ! empty( $cust_product_types ) ) {
             $product_types = array_replace( $product_types, $cust_product_types ); // to fix: array merge with keys.

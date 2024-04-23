@@ -61,7 +61,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          *
          * @see \MainWP_client::render_header
          */
-        add_action( 'mainwp_pageheader_client', array( self::get_class_name(), 'render_header' ) );
+        add_action( 'mainwp_pageheader_client', array( static::get_class_name(), 'render_header' ) );
 
         /**
          * This hook allows you to render the client page footer via the 'mainwp_pagefooter_client' action.
@@ -70,11 +70,11 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          *
          * @see \MainWP_client::render_footer
          */
-        add_action( 'mainwp_pagefooter_client', array( self::get_class_name(), 'render_footer' ) );
+        add_action( 'mainwp_pagefooter_client', array( static::get_class_name(), 'render_footer' ) );
 
-        add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_add_edit_client_upload_client_icon', array( self::class, 'ajax_upload_client_icon' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_add_edit_contact_upload_contact_icon', array( self::class, 'ajax_upload_contact_icon' ) );
+        add_action( 'mainwp_help_sidebar_content', array( static::get_class_name(), 'mainwp_help_content' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_add_edit_client_upload_client_icon', array( static::class, 'ajax_upload_client_icon' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_add_edit_contact_upload_contact_icon', array( static::class, 'ajax_upload_contact_icon' ) );
     }
 
     /**
@@ -85,14 +85,14 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
     public static function init_menu() {
-        self::$page = add_submenu_page(
+        static::$page = add_submenu_page(
             'mainwp_tab',
             esc_html__( 'Clients', 'mainwp' ),
             '<span id="mainwp-clients">' . esc_html__( 'Clients', 'mainwp' ) . '</span>',
             'read',
             'ManageClients',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render_manage_clients',
             )
         );
@@ -104,7 +104,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'read',
             'ClientAddNew',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render_add_client',
             )
         );
@@ -116,7 +116,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'read',
             'ClientAddField',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render_client_fields',
             )
         );
@@ -126,11 +126,11 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          *
          * @link http://codex.mainwp.com/#mainwp-getsubpages-client
          */
-        $sub_pages      = array();
-        self::$subPages = apply_filters( 'mainwp_getsubpages_client', $sub_pages );
+        $sub_pages        = array();
+        static::$subPages = apply_filters( 'mainwp_getsubpages_client', $sub_pages );
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageClients' . $subPage['slug'] ) ) {
                     continue;
                 }
@@ -138,9 +138,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             }
         }
 
-        self::init_left_menu( self::$subPages );
+        static::init_left_menu( static::$subPages );
 
-        add_action( 'load-' . self::$page, array( self::get_class_name(), 'on_load_page' ) );
+        add_action( 'load-' . static::$page, array( static::get_class_name(), 'on_load_page' ) );
     }
 
     /**
@@ -151,13 +151,13 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public static function on_load_page() {
 
         if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            MainWP_Client_Overview::instance()->on_load_page( self::$page );
+            MainWP_Client_Overview::instance()->on_load_page( static::$page );
             return;
         }
 
-        add_filter( 'mainwp_header_actions_right', array( self::get_class_name(), 'screen_options' ), 10, 2 );
+        add_filter( 'mainwp_header_actions_right', array( static::get_class_name(), 'screen_options' ), 10, 2 );
 
-        self::$itemsTable = new MainWP_Client_List_Table();
+        static::$itemsTable = new MainWP_Client_List_Table();
     }
 
     /**
@@ -197,8 +197,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=ClientAddField' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Client Properties', 'mainwp' ); ?></a>
                     <?php } ?>
                     <?php
-                    if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-                        foreach ( self::$subPages as $subPage ) {
+                    if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+                        foreach ( static::$subPages as $subPage ) {
                             if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageClients' . $subPage['slug'] ) ) {
                                 continue;
                             }
@@ -453,8 +453,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             );
         }
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageClients' . $subPage['slug'] ) ) {
                     continue;
                 }
@@ -501,10 +501,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             return;
         }
 
-        self::$itemsTable->prepare_items();
+        static::$itemsTable->prepare_items();
 
-        self::render_header( '' );
-        self::render_second_top_header();
+        static::render_header( '' );
+        static::render_second_top_header();
 
         ?>
         <div id="mainwp-manage-sites-content" class="ui segment">
@@ -512,14 +512,14 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <form method="post" class="mainwp-table-container">
                 <?php
                 wp_nonce_field( 'mainwp-admin-nonce' );
-                self::$itemsTable->display();
-                self::$itemsTable->clear_items();
+                static::$itemsTable->display();
+                static::$itemsTable->clear_items();
                 ?>
             </form>
         </div>
         <?php
-        self::render_footer( '' );
-        self::render_screen_options();
+        static::render_footer( '' );
+        static::render_screen_options();
     }
 
     /**
@@ -654,7 +654,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
 	public static function render_screen_options() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-        $columns = self::$itemsTable->get_columns();
+        $columns = static::$itemsTable->get_columns();
 
         if ( isset( $columns['cb'] ) ) {
             unset( $columns['cb'] );
@@ -812,9 +812,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
 	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
         if ( empty( $output->clients ) ) {
-            self::render_not_found();
+            static::render_not_found();
         } else {
-            self::clients_search_handler_renderer( $clients, $website );
+            static::clients_search_handler_renderer( $clients, $website );
         }
     }
 
@@ -925,7 +925,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             }
         }
 
-        self::render_header( $show );
+        static::render_header( $show );
         ?>
         <div class="ui alt segment" id="mainwp-add-clients">
             <form action="" method="post" enctype="multipart/form-data" name="createclient_form" id="createclient_form" class="add:clients: validate">
@@ -941,7 +941,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
                     <div id="mainwp-add-new-client-form" >                      
                         <?php
-                        self::render_add_client_content( $edit_client );
+                        static::render_add_client_content( $edit_client );
                         ?>
                     </div>
                 </div>
@@ -998,8 +998,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         </div>
         <?php
-        self::render_footer( $show );
-        self::render_add_field_modal( $client_id );
+        static::render_footer( $show );
+        static::render_add_field_modal( $client_id );
         MainWP_UI::render_modal_upload_icon();
     }
 
@@ -1009,7 +1009,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public static function render_client_fields() {
 
-        self::render_header( 'AddField' );
+        static::render_header( 'AddField' );
         ?>
         <div class="ui segment" id="mainwp-add-client-fields">
         <?php
@@ -1077,8 +1077,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         </div>
 
             <?php
-            self::render_add_field_modal();
-            self::render_footer( 'AddField' );
+            static::render_add_field_modal();
+            static::render_footer( 'AddField' );
     }
 
         /**
@@ -1418,7 +1418,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <div class="scrolling content mainwp-modal-content">                
                     <form action="" method="post" enctype="multipart/form-data" name="createclient_form" id="createclient_form" class="add:clients: validate">
                 <?php
-                    self::render_add_client_content();
+                    static::render_add_client_content();
                 ?>
                     </form>
                 </div>
@@ -1569,8 +1569,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
                             $icon_info = $edit_client ? $edit_client->selected_icon_info : '';
                             if ( ! empty( $icon_info ) ) {
-                                $selected_icon  = self::get_cust_client_icon( $icon_info, 'selected' );
-                                $selected_color = self::get_cust_client_icon( $icon_info, 'color' );
+                                $selected_icon  = static::get_cust_client_icon( $icon_info, 'selected' );
+                                $selected_color = static::get_cust_client_icon( $icon_info, 'color' );
                             }
 
 							if ( 'wordpress' !== $selected_icon ) { //phpcs:ignore -- WP icon.
@@ -1688,12 +1688,12 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 }
             }
 
-            $temp = self::get_add_contact_temp( false, false );
+            $temp = static::get_add_contact_temp( false, false );
 
             if ( $client_id ) {
                 if ( $client_contacts ) {
                     foreach ( $client_contacts as $client_contact ) {
-                        self::get_add_contact_temp( $client_contact, true );
+                        static::get_add_contact_temp( $client_contact, true );
                     }
                 }
             }
@@ -1990,8 +1990,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 $icon_info      = $edit_contact ? $edit_contact->contact_icon_info : '';
 
                                 if ( ! empty( $icon_info ) ) {
-                                    $selected_icon  = self::get_cust_client_icon( $icon_info, 'selected' );
-                                    $selected_color = self::get_cust_client_icon( $icon_info, 'color' );
+                                    $selected_icon  = static::get_cust_client_icon( $icon_info, 'selected' );
+                                    $selected_color = static::get_cust_client_icon( $icon_info, 'color' );
                                 }
 								if ( 'wordpress' !== $selected_icon ) { //phpcs:ignore -- WP icon.
                                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', 1 );

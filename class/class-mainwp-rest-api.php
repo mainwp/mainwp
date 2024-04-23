@@ -48,13 +48,13 @@ class Rest_Api {
      * Create public static instance.
      *
      * @static
-     * @return self::$instance
+     * @return static::$instance
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -79,10 +79,10 @@ class Rest_Api {
      * Check if Enabled the REST API.
      */
     public function is_rest_api_enabled() {
-        if ( null === self::$enabled_api ) {
-            self::$enabled_api = $this->enabled_rest_api();
+        if ( null === static::$enabled_api ) {
+            static::$enabled_api = $this->enabled_rest_api();
         }
-        return self::$enabled_api;
+        return static::$enabled_api;
     }
 
     /**
@@ -583,7 +583,7 @@ class Rest_Api {
      * @param array $item API Keys using.
      *
      * @return bool Whether the api permissions are valid.
-     * @throws \Exception Request permissions check.
+     * @throws \MainWP_Exception Request permissions check.
      */
     public function mainwp_permission_check_request( $request, $item ) {
 

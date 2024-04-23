@@ -37,7 +37,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
 
 
     /**
-     * MainWP_Manage_Sites_List_Table constructor.
+     * MainWP_Manage_Non_MainWP_Changes_List_Table constructor.
      *
      * Run each time the class is called.
      * Add action to generate tabletop.

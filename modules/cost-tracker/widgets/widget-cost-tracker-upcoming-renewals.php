@@ -33,10 +33,10 @@ class Cost_Tracker_Upcoming_Renewals {
      * @return mixed $instance The single instance of the class.
      */
     public static function instance() {
-        if ( is_null( self::$instance ) ) {
-            self::$instance = new self();
+        if ( is_null( static::$instance ) ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
 
@@ -109,7 +109,7 @@ class Cost_Tracker_Upcoming_Renewals {
         if ( ! is_array( $costs_data ) ) {
             $costs_data = array();
         }
-        self::render_top_grid();
+        static::render_top_grid();
         ?>
         <div class="mainwp-scrolly-overflow">
         <?php
@@ -178,7 +178,7 @@ class Cost_Tracker_Upcoming_Renewals {
      * @param array  $cost_data     Cost data.
      */
     public static function render_renewals_tab( $tab, $cost_data ) {
-        $lists = self::get_costs_widgets_data( $tab, $cost_data );
+        $lists = static::get_costs_widgets_data( $tab, $cost_data );
         ?>
         <div class="cost_tracker_upcoming_renewals ui middle aligned tab <?php echo 'month' === $tab ? 'active' : ''; ?>" data-tab="renewals-<?php echo esc_attr( $tab ); ?>">
             <?php

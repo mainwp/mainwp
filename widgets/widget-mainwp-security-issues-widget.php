@@ -58,7 +58,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
             }
         }
 
-        self::render_issues( $websites, $total_securityIssues );
+        static::render_issues( $websites, $total_securityIssues );
     }
 
     /**

@@ -59,8 +59,8 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          *
          * @see \MainWP_Page::render_header
          */
-        add_action( 'mainwp-pageheader-page', array( self::get_class_name(), 'render_header' ) ); // @deprecated Use 'mainwp_pageheader_page' instead.
-        add_action( 'mainwp_pageheader_page', array( self::get_class_name(), 'render_header' ) );
+        add_action( 'mainwp-pageheader-page', array( static::get_class_name(), 'render_header' ) ); // @deprecated Use 'mainwp_pageheader_page' instead.
+        add_action( 'mainwp_pageheader_page', array( static::get_class_name(), 'render_header' ) );
 
         /**
          * This hook allows you to render the Page page footer via the 'mainwp-pagefooter-page' action.
@@ -72,10 +72,10 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          *
          * @see \MainWP_Page::render_footer
          */
-        add_action( 'mainwp-pagefooter-page', array( self::get_class_name(), 'render_footer' ) );
-        add_action( 'mainwp_pagefooter_page', array( self::get_class_name(), 'render_footer' ) );
+        add_action( 'mainwp-pagefooter-page', array( static::get_class_name(), 'render_footer' ) );
+        add_action( 'mainwp_pagefooter_page', array( static::get_class_name(), 'render_footer' ) );
 
-        add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content.
+        add_action( 'mainwp_help_sidebar_content', array( static::get_class_name(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content.
     }
 
     /**
@@ -88,17 +88,17 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
     public static function init_menu() {
-        $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Pages', 'mainwp' ), '<span id="mainwp-Pages">' . esc_html__( 'Pages', 'mainwp' ) . '</span>', 'read', 'PageBulkManage', array( self::get_class_name(), 'render' ) );
-        add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_page' ) );
-        add_filter( 'manage_' . $_page . '_columns', array( self::get_class_name(), 'get_manage_columns' ) );
+        $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Pages', 'mainwp' ), '<span id="mainwp-Pages">' . esc_html__( 'Pages', 'mainwp' ) . '</span>', 'read', 'PageBulkManage', array( static::get_class_name(), 'render' ) );
+        add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_page' ) );
+        add_filter( 'manage_' . $_page . '_columns', array( static::get_class_name(), 'get_manage_columns' ) );
 
-        $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'read', 'PageBulkAdd', array( self::get_class_name(), 'render_bulk_add' ) );
-        add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
+        $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'read', 'PageBulkAdd', array( static::get_class_name(), 'render_bulk_add' ) );
+        add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_add_edit' ) );
 
-        $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Edit Page', 'mainwp' ) . '</div>', 'read', 'PageBulkEdit', array( self::get_class_name(), 'render_bulk_edit' ) );
-        add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
+        $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Edit Page', 'mainwp' ) . '</div>', 'read', 'PageBulkEdit', array( static::get_class_name(), 'render_bulk_edit' ) );
+        add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_add_edit' ) );
 
-        add_submenu_page( 'mainwp_tab', esc_html__( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New Page', 'mainwp' ) . '</div>', 'read', 'PostingBulkPage', array( self::get_class_name(), 'posting' ) ); // removed from menu afterwards.
+        add_submenu_page( 'mainwp_tab', esc_html__( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New Page', 'mainwp' ) . '</div>', 'read', 'PostingBulkPage', array( static::get_class_name(), 'posting' ) ); // removed from menu afterwards.
 
         /**
          * Pages Subpages
@@ -107,12 +107,12 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          *
          * @since Unknown
          */
-        $sub_pages      = array();
-        $sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-page', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_page' );  // @deprecated Use 'mainwp_getsubpages_page' instead.
-        self::$subPages = apply_filters( 'mainwp_getsubpages_page', $sub_pages );
+        $sub_pages        = array();
+        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-page', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_page' );  // @deprecated Use 'mainwp_getsubpages_page' instead.
+        static::$subPages = apply_filters( 'mainwp_getsubpages_page', $sub_pages );
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( isset( $subPage['no_page'] ) && $subPage['no_page'] ) {
                     continue;
                 }
@@ -122,7 +122,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Page' . $subPage['slug'], $subPage['callback'] );
             }
         }
-        self::init_left_menu( self::$subPages );
+        static::init_left_menu( static::$subPages );
     }
 
     /**
@@ -182,8 +182,8 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <?php } ?>
                     <?php } ?>
                     <?php
-                    if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-                        foreach ( self::$subPages as $subPage ) {
+                    if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+                        foreach ( static::$subPages as $subPage ) {
                             if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && true !== $subPage['menu_hidden'] ) ) {
                                 if ( MainWP_Menu::is_disable_menu_item( 3, 'Page' . $subPage['slug'] ) ) {
                                     continue;
@@ -259,9 +259,9 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * On page load.
      */
     public static function on_load_page() {
-        add_action( 'admin_head', array( self::get_class_name(), 'admin_head' ) );
-        add_filter( 'hidden_columns', array( self::get_class_name(), 'get_hidden_columns' ), 10, 3 );
-        add_action( 'mainwp_screen_options_modal_bottom', array( self::get_class_name(), 'hook_screen_options_modal_bottom' ), 10, 2 );
+        add_action( 'admin_head', array( static::get_class_name(), 'admin_head' ) );
+        add_filter( 'hidden_columns', array( static::get_class_name(), 'get_hidden_columns' ), 10, 3 );
+        add_action( 'mainwp_screen_options_modal_bottom', array( static::get_class_name(), 'hook_screen_options_modal_bottom' ), 10, 2 );
     }
 
     /**
@@ -350,7 +350,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $show_columns = array();
             }
 
-            $cols = self::get_manage_columns();
+            $cols = static::get_manage_columns();
 
             MainWP_UI::render_showhide_columns_settings( $cols, $show_columns, 'page' );
         }
@@ -400,8 +400,8 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
         }
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'Page' . $subPage['slug'] ) ) {
                     continue;
                 }
@@ -461,7 +461,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         }
 
         ?>
-        <?php self::render_header( 'BulkManage' ); ?>
+        <?php static::render_header( 'BulkManage' ); ?>
 
         <div id="mainwp-manage-pages"  class="ui alt segment">
             <div class="mainwp-main-content">
@@ -523,7 +523,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <?php printf( esc_html__( 'Manage existing pages on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
                         </div>
                     <?php endif; ?>
-                    <?php self::render_table( true ); ?>
+                    <?php static::render_table( true ); ?>
                 </div>
             </div>
             <div class="mainwp-side-content mainwp-no-padding">
@@ -605,7 +605,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 <div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
                     <div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
                     <div class="content active">
-                    <?php self::render_search_options(); ?>
+                    <?php static::render_search_options(); ?>
                     <?php
                     /**
                      * Action: mainwp_manage_pages_after_search_options
@@ -826,7 +826,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 if ( $cached ) {
                     MainWP_Cache::echo_body( 'Page' );
                 } else {
-                    self::render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on, $clients );
+                    static::render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on, $clients );
                 }
                 ?>
             </tbody>
@@ -1047,7 +1047,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
              * @since 3.4
              */
             $post_data = apply_filters( 'mainwp_get_all_pages_data', $post_data );
-            MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_pages', $post_data, array( self::get_class_name(), 'pages_search_handler' ), $output );
+            MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_pages', $post_data, array( static::get_class_name(), 'pages_search_handler' ), $output );
         }
 
         MainWP_Cache::add_context(
@@ -1176,7 +1176,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <td class="date" data-order="<?php echo esc_attr( $raw_dts ); ?>">
                         <abbr raw_value="<?php echo esc_attr( $raw_dts ); ?>" title="<?php echo esc_attr( $page['dts'] ); ?>"><?php echo esc_html( $page['dts'] ); ?></abbr>
                     </td>
-                    <td class="status column-status <?php echo 'trash' === $page['status'] ? 'post-trash' : ''; ?>"><?php echo esc_html( self::get_status( $page['status'] ) ); ?>
+                    <td class="status column-status <?php echo 'trash' === $page['status'] ? 'post-trash' : ''; ?>"><?php echo esc_html( static::get_status( $page['status'] ) ); ?>
                     </td>
                     <?php
                     if ( MainWP_Utility::enabled_wp_seo() ) {
@@ -1339,7 +1339,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         global $_mainwp_default_post_to_edit;
 
         $post_id = $_mainwp_default_post_to_edit ? $_mainwp_default_post_to_edit->ID : 0;
-        self::render_addedit( $post_id, 'BulkAdd' );
+        static::render_addedit( $post_id, 'BulkAdd' );
     }
 
     /**
@@ -1357,7 +1357,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         }
 
         $post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        self::render_addedit( $post_id, 'BulkEdit' );
+        static::render_addedit( $post_id, 'BulkEdit' );
     }
 
     /**
@@ -1373,9 +1373,9 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Post::render_bulkpost()
      */
     public static function render_addedit( $post_id, $what ) {
-        self::render_header( $what, $post_id );
+        static::render_header( $what, $post_id );
         MainWP_Post::render_bulkpost( $post_id, 'bulkpage' );
-        self::render_footer( $what );
+        static::render_footer( $what );
     }
 
     /**

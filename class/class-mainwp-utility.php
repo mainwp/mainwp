@@ -70,11 +70,11 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return MainWP_Utility
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -107,7 +107,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return true;
         }
 
-        return ( substr( $haystack, - $length ) === $needle );
+        return substr( $haystack, - $length ) === $needle;
     }
 
     /**
@@ -123,11 +123,11 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     public static function get_nice_url( $pUrl, $showHttp = false ) {
         $url = $pUrl;
 
-        if ( self::starts_with( $url, 'http://' ) ) {
+        if ( static::starts_with( $url, 'http://' ) ) {
             if ( ! $showHttp ) {
                 $url = substr( $url, 7 );
             }
-        } elseif ( self::starts_with( $pUrl, 'https://' ) ) {
+        } elseif ( static::starts_with( $pUrl, 'https://' ) ) {
             if ( ! $showHttp ) {
                 $url = substr( $url, 8 );
             }
@@ -135,7 +135,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $url = 'http://' . $url;
         }
 
-        if ( self::ends_with( $url, '/' ) ) {
+        if ( static::ends_with( $url, '/' ) ) {
             if ( ! $showHttp ) {
                 $url = substr( $url, 0, strlen( $url ) - 1 );
             }
@@ -326,7 +326,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
         $gmtOffset = get_option( 'gmt_offset' );
 
-        return ( $gmtOffset ? ( $gmtOffset * HOUR_IN_SECONDS ) + $timestamp : $timestamp );
+        return $gmtOffset ? ( $gmtOffset * HOUR_IN_SECONDS ) + $timestamp : $timestamp;
     }
 
     /**
@@ -340,7 +340,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function date( $format ) {
 		// phpcs:ignore -- use local date function.
-		return date( $format, self::get_timestamp() );
+		return date( $format, static::get_timestamp() );
     }
 
     /**
@@ -423,7 +423,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return mixed Mapped data.
      */
     public static function map_fields( &$data, $keys, $object_output = true ) {
-        return self::map_site( $data, $keys, $object_output );
+        return static::map_site( $data, $keys, $object_output );
     }
 
     /**
@@ -579,8 +579,8 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return string Cleaned URL.
      */
     public static function remove_http_www_prefix( $pUrl ) {
-        $pUrl = self::remove_http_prefix( $pUrl, true );
-        if ( self::starts_with( strtolower( $pUrl ), 'www.' ) ) {
+        $pUrl = static::remove_http_prefix( $pUrl, true );
+        if ( static::starts_with( strtolower( $pUrl ), 'www.' ) ) {
             $pUrl = substr( $pUrl, 4 );
         }
                 return $pUrl;
@@ -783,7 +783,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param string $depth Maximum depth to walk through $data. Must be greater than 0.
      * @param mixed  $more_allowed input allowed tags - options.
      *
-     * @throws \Exception Excetpion message.
+     * @throws \MainWP_Exception Excetpion message.
      *
      * @return string Filtered content containing only the allowed HTML.
      */
@@ -797,16 +797,16 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             foreach ( $data as $id => $el ) {
                 // Don't forget to sanitize the ID!
                 if ( is_string( $id ) ) {
-                    $clean_id = self::esc_content( $id, 'mixed', $more_allowed );
+                    $clean_id = static::esc_content( $id, 'mixed', $more_allowed );
                 } else {
                     $clean_id = $id;
                 }
 
                 // Check the element type, so that we're only recursing if we really have to.
                 if ( is_array( $el ) || is_object( $el ) ) {
-                    $output[ $clean_id ] = self::esc_mixed_content( $el, $depth - 1 );
+                    $output[ $clean_id ] = static::esc_mixed_content( $el, $depth - 1 );
                 } elseif ( is_string( $el ) ) {
-                    $output[ $clean_id ] = self::esc_content( $el, 'mixed', $more_allowed );
+                    $output[ $clean_id ] = static::esc_content( $el, 'mixed', $more_allowed );
                 } else {
                     $output[ $clean_id ] = $el;
                 }
@@ -815,21 +815,21 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $output = new stdClass();
             foreach ( $data as $id => $el ) {
                 if ( is_string( $id ) ) {
-                    $clean_id = self::esc_content( $id, 'mixed', $more_allowed );
+                    $clean_id = static::esc_content( $id, 'mixed', $more_allowed );
                 } else {
                     $clean_id = $id;
                 }
 
                 if ( is_array( $el ) || is_object( $el ) ) {
-                    $output->$clean_id = self::esc_mixed_content( $el, $depth - 1, $more_allowed );
+                    $output->$clean_id = static::esc_mixed_content( $el, $depth - 1, $more_allowed );
                 } elseif ( is_string( $el ) ) {
-                    $output->$clean_id = self::esc_content( $el, 'mixed', $more_allowed );
+                    $output->$clean_id = static::esc_content( $el, 'mixed', $more_allowed );
                 } else {
                     $output->$clean_id = $el;
                 }
             }
         } elseif ( is_string( $data ) ) {
-            return self::esc_content( $data, 'mixed', $more_allowed );
+            return static::esc_content( $data, 'mixed', $more_allowed );
         } else {
             return $data;
         }
@@ -928,7 +928,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $content = $flash_messages[ $message_id ];
         if ( $delete ) {
             unset( $flash_messages[ $message_id ] );
-            self::update_user_option( 'mainwp_flash_messages', $flash_messages );
+            static::update_user_option( 'mainwp_flash_messages', $flash_messages );
         }
         return $content;
     }
@@ -955,7 +955,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $current .= '|' . $content;
         }
         $flash_messages[ $message_id ] = $current;
-        return self::update_user_option( 'mainwp_flash_messages', $flash_messages );
+        return static::update_user_option( 'mainwp_flash_messages', $flash_messages );
     }
 
     /**
@@ -1055,10 +1055,10 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return boolean true|false.
      */
     public static function enabled_wp_seo() {
-        if ( null === self::$enabled_wp_seo ) {
-            self::$enabled_wp_seo = is_plugin_active( 'wordpress-seo-extension/wordpress-seo-extension.php' );
+        if ( null === static::$enabled_wp_seo ) {
+            static::$enabled_wp_seo = is_plugin_active( 'wordpress-seo-extension/wordpress-seo-extension.php' );
         }
-        return self::$enabled_wp_seo;
+        return static::$enabled_wp_seo;
     }
 
     /**
@@ -1240,10 +1240,10 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param string $which to check plugin/theme.
      *
      * @return array result error or success
-     * @throws \Exception Error message.
+     * @throws \MainWP_Exception Error message.
      */
     public static function check_abandoned( $siteId = null, $which = '' ) {
-        if ( self::ctype_digit( $siteId ) ) {
+        if ( static::ctype_digit( $siteId ) ) {
             $website = MainWP_DB::instance()->get_website_by_id( $siteId );
             if ( MainWP_System_Utility::can_edit_website( $website ) ) {
                 $error = '';
@@ -1342,10 +1342,10 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return string
      */
     public function get_disable_functions() {
-        if ( null === self::$disabled_functions ) {
-            self::$disabled_functions = ini_get( 'disable_functions' );
+        if ( null === static::$disabled_functions ) {
+            static::$disabled_functions = ini_get( 'disable_functions' );
         }
-        return self::$disabled_functions;
+        return static::$disabled_functions;
     }
 
     /**
@@ -1379,7 +1379,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function hook_verify_ping_nonce( $input_value, $nonce = '', $siteid = false ) {
         $action = 'pingnonce';
-        return self::verify_site_nonce( $nonce, $action, $siteid );
+        return static::verify_site_nonce( $nonce, $action, $siteid );
     }
 
     /**

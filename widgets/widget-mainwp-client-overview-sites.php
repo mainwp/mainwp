@@ -66,16 +66,16 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
      * Check if there is a session,
      * if there isn't one create it.
      *
-     *  @return self::singlton Overview Page Session.
+     *  @return static::singlton Overview Page Session.
      *
      * @uses \MainWP\Dashboard\MainWP_Overview
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -88,7 +88,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
         if ( empty( $client_id ) ) {
             return;
         }
-        self::instance()->render_websites( $client_id );
+        static::instance()->render_websites( $client_id );
     }
 
 

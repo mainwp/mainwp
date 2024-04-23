@@ -131,10 +131,10 @@ abstract class MainWP_Post_Base_Handler { // phpcs:ignore Generic.Classes.Openin
      * @param string $action Action to perform.
      */
     public function add_action_nonce( $action ) {
-        if ( ! is_array( self::$security_names ) ) {
-            self::$security_names = array();
+        if ( ! is_array( static::$security_names ) ) {
+            static::$security_names = array();
         }
-        self::$security_names[] = $action;
+        static::$security_names[] = $action;
     }
 
     /**
@@ -144,19 +144,19 @@ abstract class MainWP_Post_Base_Handler { // phpcs:ignore Generic.Classes.Openin
      */
     public function create_security_nonces() {
 
-        if ( ! is_array( self::$security_nonces ) ) {
-            self::$security_nonces = array();
+        if ( ! is_array( static::$security_nonces ) ) {
+            static::$security_nonces = array();
         }
-        self::$security_names = apply_filters( 'mainwp_create_security_nonces', self::$security_names );
-        if ( ! empty( self::$security_names ) ) {
+        static::$security_names = apply_filters( 'mainwp_create_security_nonces', static::$security_names );
+        if ( ! empty( static::$security_names ) ) {
             if ( ! function_exists( 'wp_create_nonce' ) ) {
                 include_once ABSPATH . WPINC . '/pluggable.php';
             }
-            foreach ( self::$security_names as $action ) {
-                self::$security_nonces[ $action ] = wp_create_nonce( $action );
+            foreach ( static::$security_names as $action ) {
+                static::$security_nonces[ $action ] = wp_create_nonce( $action );
             }
         }
 
-        return self::$security_nonces;
+        return static::$security_nonces;
     }
 }

@@ -295,7 +295,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $manage_sites = true;
         }
 
-        self::render_managesites_header( $site_pages, $managesites_pages, $subPages, $site_id, $shownPage );
+        static::render_managesites_header( $site_pages, $managesites_pages, $subPages, $site_id, $shownPage );
 
         if ( $manage_sites ) {
             $which = strtolower( $shownPage );
@@ -1579,7 +1579,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             </form>
         </div>
         </div>      
-        <?php self::render_edit_template( $type, $siteid ); ?>
+        <?php static::render_edit_template( $type, $siteid ); ?>
         <?php
     }
 
@@ -1786,7 +1786,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param bool   $sync_first True try to sync before reconnect.
      *
      * @return boolean true|false.
-     * @throws \Exception Exception On errors.
+     * @throws \MainWP_Exception Exception On errors.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
      * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
@@ -1938,7 +1938,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
 		// phpcs:enable
 
-        return self::add_wp_site( $website, $params, $output );
+        return static::add_wp_site( $website, $params, $output );
     }
 
     /**
@@ -2153,7 +2153,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param mixed $params Udate parameters.
      *
      * @return int Child Site ID on success and return 0 on failure.
-     * @throws \Exception Error message.
+     * @throws \MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()

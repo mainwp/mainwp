@@ -24,7 +24,7 @@ class MainWP_QQ2_Uploaded_File_Xhr { // phpcs:ignore Generic.Classes.OpeningBrac
      *
      * @param string $path Path to File.
      *
-     * @throws \Exception Error messages.
+     * @throws \MainWP_Exception Error messages.
      *
      * @return boolean true|false.
      *
@@ -100,7 +100,7 @@ class MainWP_QQ2_Uploaded_File_Xhr { // phpcs:ignore Generic.Classes.OpeningBrac
      *
      * Get content length.
      *
-     * @throws \Exception Error message.
+     * @throws \MainWP_Exception Error message.
      * @return int Content lenght.
      */
     public function get_size() {

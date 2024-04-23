@@ -53,7 +53,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          *
          * @see \MainWP_Plugins::render_header
          */
-        add_action( 'mainwp-pageheader-plugins', array( self::get_class_name(), 'render_header' ) );
+        add_action( 'mainwp-pageheader-plugins', array( static::get_class_name(), 'render_header' ) );
 
         /**
          * This hook allows you to render the Plugins page footer via the 'mainwp-pagefooter-plugins' action.
@@ -65,9 +65,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          *
          * @see \MainWP_Plugins::render_footer
          */
-        add_action( 'mainwp-pagefooter-plugins', array( self::get_class_name(), 'render_footer' ) );
+        add_action( 'mainwp-pagefooter-plugins', array( static::get_class_name(), 'render_footer' ) );
 
-        add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
+        add_action( 'mainwp_help_sidebar_content', array( static::get_class_name(), 'mainwp_help_content' ) );
     }
 
     /**
@@ -83,7 +83,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             'read',
             'PluginsManage',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render',
             )
         );
@@ -95,12 +95,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 'read',
                 'PluginsInstall',
                 array(
-                    self::get_class_name(),
+                    static::get_class_name(),
                     'render_install',
                 )
             );
 
-            add_action( 'load-' . $page, array( self::get_class_name(), 'load_page' ) );
+            add_action( 'load-' . $page, array( static::get_class_name(), 'load_page' ) );
         }
         add_submenu_page(
             'mainwp_tab',
@@ -109,7 +109,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             'read',
             'PluginsAutoUpdate',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render_auto_update',
             )
         );
@@ -120,7 +120,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             'read',
             'PluginsIgnore',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render_ignore',
             )
         );
@@ -131,7 +131,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             'read',
             'PluginsIgnoredAbandoned',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render_ignored_abandoned',
             )
         );
@@ -143,18 +143,18 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          *
          * @since Unknown
          */
-        $sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-plugins', array( array() ), '4.0.7.2', 'mainwp_getsubpages_plugins' );  // @deprecated Use 'mainwp_getsubpages_plugins' instead.
-        self::$subPages = apply_filters( 'mainwp_getsubpages_plugins', $sub_pages );
+        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-plugins', array( array() ), '4.0.7.2', 'mainwp_getsubpages_plugins' );  // @deprecated Use 'mainwp_getsubpages_plugins' instead.
+        static::$subPages = apply_filters( 'mainwp_getsubpages_plugins', $sub_pages );
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'Plugins' . $subPage['slug'] ) ) {
                     continue;
                 }
                 add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Plugins' . $subPage['slug'], $subPage['callback'] );
             }
         }
-        self::init_left_menu( self::$subPages );
+        static::init_left_menu( static::$subPages );
     }
 
     /**
@@ -163,12 +163,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Plugins_Install_List_Table
      */
     public static function load_page() {
-        self::$pluginsTable = new MainWP_Plugins_Install_List_Table();
-        $pagenum            = self::$pluginsTable->get_pagenum();
+        static::$pluginsTable = new MainWP_Plugins_Install_List_Table();
+        $pagenum              = static::$pluginsTable->get_pagenum();
 
-        self::$pluginsTable->prepare_items();
+        static::$pluginsTable->prepare_items();
 
-        $total_pages = self::$pluginsTable->get_pagination_arg( 'total_pages' );
+        $total_pages = static::$pluginsTable->get_pagination_arg( 'total_pages' );
 
         if ( $pagenum > $total_pages && 0 < $total_pages ) {
             wp_safe_redirect( esc_url_raw( add_query_arg( 'paged', $total_pages ) ) );
@@ -203,8 +203,8 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 <a href="<?php echo esc_url( admin_url( 'admin.php?page=PluginsIgnoredAbandoned' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Ignored Abandoned', 'mainwp' ); ?></a>
                             <?php endif; ?>
                             <?php
-                            if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-                                foreach ( self::$subPages as $subPage ) {
+                            if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+                                foreach ( static::$subPages as $subPage ) {
                                     if ( MainWP_Menu::is_disable_menu_item( 3, 'Plugins' . $subPage['slug'] ) ) {
                                         continue;
                                     }
@@ -363,8 +363,8 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             );
         }
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'Plugins' . $subPage['slug'] ) ) {
                     continue;
                 }
@@ -419,7 +419,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         }
 
-        self::render_header( 'Manage' );
+        static::render_header( 'Manage' );
         ?>
 
         <div id="mainwp-manage-plugins" class="ui alt segment">
@@ -450,7 +450,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             </div>
                             <div class="right aligned column" >
                                 <?php
-                                self::render_select_manage_view();
+                                static::render_select_manage_view();
                                 ?>
                             </div>
                             <div class="right aligned column">
@@ -587,7 +587,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 </div>
                     </div>
                 <div class="ui fitted divider"></div>
-                <?php self::render_search_options(); ?>
+                <?php static::render_search_options(); ?>
                 <div class="ui fitted divider"></div>
                     <div class="mainwp-search-submit">
                     <?php
@@ -626,7 +626,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <div style="clear:both"></div>
         </div>
         <?php
-        self::render_footer( 'Manage' );
+        static::render_footer( 'Manage' );
     }
 
     /**
@@ -997,9 +997,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             )
         );
 
-        $view_mode = self::get_manage_view();
+        $view_mode = static::get_manage_view();
 
-        $bulkActions = self::render_bulk_actions( $status );
+        $bulkActions = static::render_bulk_actions( $status );
 
         $plugins_list = array();
 
@@ -1067,9 +1067,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             ksort( $pluginsNameSites, SORT_STRING );
 
             if ( MAINWP_VIEW_PER_PLUGIN_THEME === (int) $view_mode ) {
-                self::render_manage_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion );
+                static::render_manage_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion );
             } else {
-                self::render_manage_per_site_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion );
+                static::render_manage_per_site_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion );
             }
             MainWP_Updates::render_plugin_details_modal();
             MainWP_UI::render_modal_upload_icon();
@@ -1171,7 +1171,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function render_select_manage_view( $which = 'plugin' ) {
 
-        $view_mode = self::get_manage_view( $which );
+        $view_mode = static::get_manage_view( $which );
 
         $hide_show_updates_per = apply_filters( 'mainwp_manage_plugin_theme_hide_show_updates_per', false, $which );
 
@@ -1781,9 +1781,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
     /** Render Install Subpage. */
     public static function render_install() {
-        self::render_header( 'Install' );
-        self::render_plugins_table();
-        self::render_footer( 'Install' );
+        static::render_header( 'Install' );
+        static::render_plugins_table();
+        static::render_footer( 'Install' );
     }
 
 
@@ -1881,7 +1881,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <div class="mainwp-browse-plugins">
                 <form id="plugin-filter" method="post">
                     <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-                    <?php self::$pluginsTable->display(); ?>
+                    <?php static::$pluginsTable->display(); ?>
                 </form>
             </div>
             <?php
@@ -1980,7 +1980,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $cachedAUSearch = isset( $_SESSION['MainWP_PluginsActiveStatus'] ) ? $_SESSION['MainWP_PluginsActiveStatus'] : null; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized --- ok.
 
-        self::render_header( 'AutoUpdate' );
+        static::render_header( 'AutoUpdate' );
 
         if ( ! mainwp_current_user_have_right( 'dashboard', 'trust_untrust_updates' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'trust/untrust updates', 'mainwp' ) );
@@ -2046,7 +2046,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <div id="mainwp-auto-updates-plugins-table-wrapper">
                         <?php
                         if ( isset( $_SESSION['MainWP_PluginsActive'] ) ) {
-                            self::render_all_active_table( $_SESSION['MainWP_PluginsActive'] ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                            static::render_all_active_table( $_SESSION['MainWP_PluginsActive'] ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                         }
                         ?>
                     </div>
@@ -2103,7 +2103,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <?php
             MainWP_UI::render_modal_edit_notes( 'plugin' );
         }
-        self::render_footer( 'AutoUpdate' );
+        static::render_footer( 'AutoUpdate' );
     }
 
     /**
@@ -2266,7 +2266,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( ! is_array( $trustedPluginsNotes ) ) {
             $trustedPluginsNotes = array();
         }
-        self::render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes );
+        static::render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes );
         MainWP_UI::render_modal_upload_icon();
     }
 
@@ -2453,7 +2453,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             ++$cnt;
         }
 
-        self::render_header( 'Ignore' );
+        static::render_header( 'Ignore' );
         ?>
         <div id="mainwp-ignored-plugins" class="ui segment">
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-plugins-info-message' ) ) : ?>
@@ -2476,13 +2476,13 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 <?php esc_html_e( 'Globally Ignored Plugins', 'mainwp' ); ?>
                 <div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore updates on global level and not notify you about pending updates.', 'mainwp' ); ?></div>
             </h3>
-            <?php self::render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins ); ?>
+            <?php static::render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins ); ?>
             <div class="ui hidden divider"></div>
             <h3 class="ui header">
                 <?php esc_html_e( 'Per Site Ignored Plugins' ); ?>
                 <div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore updates per site level and not notify you about pending updates.', 'mainwp' ); ?></div>
             </h3>
-            <?php self::render_sites_ignored( $cnt, $websites ); ?>
+            <?php static::render_sites_ignored( $cnt, $websites ); ?>
             <?php
             /**
              * Action: mainwp_plugins_after_ignored_updates
@@ -2496,7 +2496,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         </div>
         <?php
         MainWP_Updates::render_plugin_details_modal();
-        self::render_footer( 'Ignore' );
+        static::render_footer( 'Ignore' );
     }
 
     /**
@@ -2696,7 +2696,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             ++$cnt;
         }
 
-        self::render_header( 'IgnoreAbandoned' );
+        static::render_header( 'IgnoreAbandoned' );
         ?>
         <div id="mainwp-ignored-abandoned-plugins" class="ui segment">
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-abandoned-plugins-info-message' ) ) : ?>
@@ -2719,13 +2719,13 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 <?php esc_html_e( 'Globally Ignored Abandoned Plugins' ); ?>
                 <div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore on global level even though they have passed your Abandoned Plugin Tolerance date', 'mainwp' ); ?></div>
             </h3>
-            <?php self::render_global_ignored_abandoned( $ignoredPlugins, $decodedIgnoredPlugins ); ?>
+            <?php static::render_global_ignored_abandoned( $ignoredPlugins, $decodedIgnoredPlugins ); ?>
             <div class="ui hidden divider"></div>
             <h3 class="ui header">
                 <?php esc_html_e( 'Per Site Ignored Abandoned Plugins' ); ?>
                 <div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore per site level even though they have passed your Abandoned Plugin Tolerance date', 'mainwp' ); ?></div>
             </h3>
-            <?php self::render_sites_ignored_abandoned( $cnt, $websites ); ?>
+            <?php static::render_sites_ignored_abandoned( $cnt, $websites ); ?>
             <?php
             /**
              * Action: mainwp_plugins_after_ignored_abandoned
@@ -2738,7 +2738,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             ?>
         </div>
         <?php
-        self::render_footer( 'IgnoreAbandoned' );
+        static::render_footer( 'IgnoreAbandoned' );
     }
 
     /**

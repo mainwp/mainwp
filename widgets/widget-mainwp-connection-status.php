@@ -31,7 +31,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return mixed render_sites()
      */
     public static function render() {
-        self::render_sites();
+        static::render_sites();
     }
 
     /**
@@ -104,11 +104,11 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ob_start();
 
                 if ( $j === $ALL ) {
-                    self::render_all_item( $website, $lastSyncTime, $hasSyncErrors );
+                    static::render_all_item( $website, $lastSyncTime, $hasSyncErrors );
                 } elseif ( $j === $UP ) {
-                    self::render_up_item( $website, $lastSyncTime );
+                    static::render_up_item( $website, $lastSyncTime );
                 } else {
-                    self::render_down_item( $website, $lastSyncTime );
+                    static::render_down_item( $website, $lastSyncTime );
                 }
 
                 /**
@@ -137,18 +137,18 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         MainWP_DB::free_result( $websites );
 
-        self::render_status( $current_wpid );
+        static::render_status( $current_wpid );
 
         if ( empty( $current_wpid ) ) {
 
-            self::render_multi_status( $count_connected, $count_disconnected );
+            static::render_multi_status( $count_connected, $count_disconnected );
         } else {
             // Get site by ID $current_wpid.
             $site = MainWP_DB::instance()->get_website_by_id( $current_wpid );
-            self::render_current_status( $site, $count_connected );
+            static::render_current_status( $site, $count_connected );
         }
 
-        self::render_details( $html_all_sites, $html_online_sites, $html_other_sites );
+        static::render_details( $html_all_sites, $html_online_sites, $html_other_sites );
     }
 
     /**

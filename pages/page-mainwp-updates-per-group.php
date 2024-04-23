@@ -938,7 +938,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param int    $site_offset_for_groups  offset value.
      * @param array  $decodedDismissedPlugins all dismissed plugins.
      *
-     * @throws \Exception Error message.
+     * @throws \MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
@@ -1097,7 +1097,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param int    $site_offset_for_groups offset value.
      * @param array  $decodedDismissedThemes all dismissed themes.
      *
-     * @throws \Exception Error message.
+     * @throws \MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()

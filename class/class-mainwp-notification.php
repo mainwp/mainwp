@@ -39,7 +39,7 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function send_notify_user( $userId, $subject, $content ) {
         $content_type = 'content-type: text/html';
-        self::send_wp_mail(
+        static::send_wp_mail(
             MainWP_DB_Common::instance()->get_user_notification_email( $userId ),
             $subject,
             $content,
@@ -91,7 +91,7 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         if ( ! empty( $email ) ) {
             MainWP_Logger::instance()->debug( 'http check :: send mail ::' );
-            self::send_wp_mail(
+            static::send_wp_mail(
                 $email,
                 $subject,
                 $formated_content,
@@ -144,7 +144,7 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         if ( ! empty( $email ) ) {
             MainWP_Logger::instance()->debug( 'license deactivated alert:: send mail ::' );
-            self::send_wp_mail(
+            static::send_wp_mail(
                 $email,
                 $subject,
                 $formated_content,
@@ -230,7 +230,7 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         );
 
         $subject = $email_settings['subject'];
-        $sent    = self::send_wp_mail(
+        $sent    = static::send_wp_mail(
             $email,
             $subject,
             $formated_content,
@@ -267,7 +267,7 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         if ( ! empty( $emails ) && ! empty( $mail_content ) ) {
             MainWP_Logger::instance()->debug( 'sites status :: send mail ::' );
-            self::send_wp_mail(
+            static::send_wp_mail(
                 $emails,
                 $subject,
                 $mail_content,
@@ -298,7 +298,7 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         if ( ! empty( $email ) && ! empty( $mail_content ) ) {
             MainWP_Logger::instance()->debug( 'sites health :: send mail ::' );
-            self::send_wp_mail(
+            static::send_wp_mail(
                 $email,
                 $subject,
                 $mail_content,

@@ -36,7 +36,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
      */
     public static function render() {
 
-        self::verify_open_nonce();
+        static::verify_open_nonce();
 
         if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'WP-Admin on child sites', 'mainwp' ) );
@@ -61,7 +61,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
         }
 
         if ( isset( $_GET['openUrl'] ) && 'yes' === $_GET['openUrl'] ) {
-            self::open_site_location( $website, $location );
+            static::open_site_location( $website, $location );
         } else {
             $allow_params = array();
 
@@ -77,7 +77,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
                     }
                 }
             }
-            self::open_site( $website, $location, $allow_params );
+            static::open_site( $website, $location, $allow_params );
         }
 		// phpcs:enable
     }
@@ -129,7 +129,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
      */
     public static function render_restore() {
 
-        self::verify_open_nonce();
+        static::verify_open_nonce();
 
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! isset( $_GET['websiteid'] ) ) {
@@ -151,7 +151,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
         $site = isset( $_GET['size'] ) ? esc_html( wp_unslash( $_GET['size'] ) ) : '';
 		// phpcs:enable
 
-        self::open_site_restore( $website, $file, $site );
+        static::open_site_restore( $website, $file, $site );
     }
 
     /**

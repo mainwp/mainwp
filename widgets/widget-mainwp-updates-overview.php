@@ -93,7 +93,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * Check if $_GET['dashboard'] then run render_sites().
      */
     public static function render() {
-        self::render_sites();
+        static::render_sites();
     }
 
     /**
@@ -392,13 +392,13 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         $can_total_update = ( $user_can_update_wordpress && $user_can_update_plugins && $user_can_update_themes && $user_can_update_translation ) ? true : false;
 
-        self::render_total_update( $total_upgrades, $lastSyncMsg, $can_total_update, $limit_updates_all );
+        static::render_total_update( $total_upgrades, $lastSyncMsg, $can_total_update, $limit_updates_all );
         echo '<div class="mainwp-scrolly-overflow">';
-        self::render_wordpress_update( $user_can_update_wordpress, $total_wp_upgrades, $globalView, $current_wpid );
-        self::render_plugins_update( $user_can_update_plugins, $total_plugin_upgrades, $globalView, $current_wpid );
-        self::render_themes_update( $user_can_update_themes, $total_theme_upgrades, $globalView, $current_wpid );
+        static::render_wordpress_update( $user_can_update_wordpress, $total_wp_upgrades, $globalView, $current_wpid );
+        static::render_plugins_update( $user_can_update_plugins, $total_plugin_upgrades, $globalView, $current_wpid );
+        static::render_themes_update( $user_can_update_themes, $total_theme_upgrades, $globalView, $current_wpid );
         if ( 1 === (int) $mainwp_show_language_updates ) {
-            self::render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid );
+            static::render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid );
         }
 
         /**
@@ -410,10 +410,10 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
          */
         do_action( 'mainwp_updates_overview_after_update_details', $currentSite, $globalView, $userExtension );
 
-        self::render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid );
-        self::render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid );
+        static::render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid );
+        static::render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid );
 
-        self::render_global_update(
+        static::render_global_update(
             $user_can_update_wordpress,
             $total_wp_upgrades,
             $all_wp_updates,
@@ -428,7 +428,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $total_translation_upgrades,
             $all_translations_updates
         );
-        self::render_bottom( $websites, $globalView );
+        static::render_bottom( $websites, $globalView );
         echo '</div>';
         echo '<div class="ui stackable grid mainwp-widget-footer">';
         echo '<div class="eight wide column"></div>';

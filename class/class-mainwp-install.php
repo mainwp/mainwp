@@ -52,13 +52,13 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      * @return MainWP_DB
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
 
-        self::$instance->test_connection();
+        static::$instance->test_connection();
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -85,8 +85,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             MainWP_Utility::update_option( 'mainwp_selected_theme', 'default' );
         }
 
-        $rslt = self::instance()->query( "SHOW TABLES LIKE '" . $this->table_name( 'wp' ) . "'" );
-        if ( empty( self::num_rows( $rslt ) ) ) {
+        $rslt = static::instance()->query( "SHOW TABLES LIKE '" . $this->table_name( 'wp' ) . "'" );
+        if ( empty( static::num_rows( $rslt ) ) ) {
             $currentVersion = false;
         }
 
@@ -593,7 +593,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 }
 
                 foreach ( $rslts as $rslt ) {
-                    self::update_website_option( (object) $rslt, $optionColumn, $rslt[ $optionColumn ] );
+                    static::update_website_option( (object) $rslt, $optionColumn, $rslt[ $optionColumn ] );
                 }
 
                 $suppress = $this->wpdb->suppress_errors();

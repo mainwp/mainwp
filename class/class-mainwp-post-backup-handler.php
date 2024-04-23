@@ -32,10 +32,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      * @return self $instance MainWP_Post_Backup_Handler.
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -291,7 +291,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      *
      * Get create backup file size.
      *
-     * @throws \Exception On errors.
+     * @throws \MainWP_Exception On errors.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
@@ -604,7 +604,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      *
      * Check backup status.
      *
-     * @throws \Exception On errors.
+     * @throws \MainWP_Exception On errors.
      *
      * @uses \MainWP\Dashboard\MainWP_Updates_Overview::check_backups()
      */

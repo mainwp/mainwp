@@ -35,10 +35,10 @@ class Api_Backups_Hooks {
      * @return Api_Backups_Hooks
      */
     public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**

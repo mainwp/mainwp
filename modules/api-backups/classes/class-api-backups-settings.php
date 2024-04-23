@@ -39,10 +39,10 @@ class Api_Backups_Settings {
      * @return Api_Backups_Settings
      */
     public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -118,7 +118,7 @@ class Api_Backups_Settings {
      * @param bool $individual Individual settings True|False.
      */
     public function render_settings_content( $individual = false ) {
-        self::render_3rd_party_api_manager( $individual );
+        static::render_3rd_party_api_manager( $individual );
     }
 
     /**

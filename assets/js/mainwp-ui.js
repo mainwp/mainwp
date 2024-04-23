@@ -150,7 +150,7 @@ window.mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, u
     }
     if (jQuery('#mainwp-disable-update-confirmations').length > 0 && typeof updateType !== 'undefined' && updateType !== false && (confVal == 2 || (confVal == 1 && updateType == 1)) && confirmed_callback && typeof confirmed_callback == 'function') {
         confirmed_callback();
-        return false;
+        return;
     }
 
 
@@ -170,7 +170,7 @@ window.mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, u
                         confirmed_callback();
                     } else {
                         jQuery('#mainwp-confirm-input').val('').trigger('focus').transition('shake');
-                        return false;
+                        return;
                     }
                 }
             } else {
@@ -194,8 +194,6 @@ window.mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, u
     if (typeof updateType !== 'undefined' && updateType !== false && (updateType == 1 || updateType == 2)) {
         jQuery('#mainwp-modal-confirm .update-confirm-notice ').show();
     }
-
-    return false;
 }
 
 

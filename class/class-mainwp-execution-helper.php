@@ -40,10 +40,10 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Logger
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -52,8 +52,8 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * Run each time the class is called.
      */
     public function __construct() {
-        if ( null === self::$exec_start ) {
-            self::$exec_start = microtime( true );
+        if ( null === static::$exec_start ) {
+            static::$exec_start = microtime( true );
         }
     }
 
@@ -63,11 +63,11 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * Init execution time start value.
      */
     public function init_exec_time() {
-        if ( null === self::$exec_start ) {
-            self::$exec_start = microtime( true );
+        if ( null === static::$exec_start ) {
+            static::$exec_start = microtime( true );
         }
         MainWP_Logger::instance()->init_execution_time(); // compatible.
-        return self::$exec_start;
+        return static::$exec_start;
     }
 
     /**
@@ -76,11 +76,11 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * Get execution time start value.
      */
     public function get_exec_time() {
-        if ( null === self::$exec_start ) {
-            self::$exec_start = microtime( true );
+        if ( null === static::$exec_start ) {
+            static::$exec_start = microtime( true );
         }
 
-        $sec = microtime( true ) - self::$exec_start; // seconds.
+        $sec = microtime( true ) - static::$exec_start; // seconds.
         MainWP_Logger::instance()->log_action( 'execution time :: [value=' . round( $sec, 4 ) . '](seconds)', MainWP_Logger::EXECUTION_TIME_LOG_PRIORITY );
         return $sec;
     }

@@ -79,7 +79,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         do_action( 'mainwp_before_seclect_sites' );
         ?>
         <div id="mainwp-select-sites" class="mainwp_select_sites_wrapper">
-        <?php self::select_sites_box_body( $selected_websites, $selected_groups, $type, $show_group, $show_select_all, false, $enableOfflineSites, $postId ); ?>
+        <?php static::select_sites_box_body( $selected_websites, $selected_groups, $type, $show_group, $show_select_all, false, $enableOfflineSites, $postId ); ?>
     </div>
         <?php
         /**
@@ -144,17 +144,17 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         // to fix layout with multi sites selector.
         $tab_id = wp_rand();
 
-        self::render_select_sites_header( $tab_id, $staging_enabled, $selectedby, $show_group );
+        static::render_select_sites_header( $tab_id, $staging_enabled, $selectedby, $show_group );
         ?>
         <div class="ui tab <?php echo 'site' === $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-sites-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-sites">
         <?php
-        self::render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all );
+        static::render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all );
         ?>
         </div>
         <?php if ( $staging_enabled ) { ?>
         <div class="ui tab <?php echo 'staging' === $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-staging-sites-<?php echo esc_attr( $tab_id ); ?>">
             <?php
-            self::render_select_sites_staging( $selected_websites, $edit_site_id, $type );
+            static::render_select_sites_staging( $selected_websites, $edit_site_id, $type );
             ?>
         </div>
             <?php
@@ -163,7 +163,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             ?>
             <div class="ui tab <?php echo 'group' === $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-groups-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-groups">
             <?php
-            self::render_select_sites_group( $groups, $selected_groups, $type );
+            static::render_select_sites_group( $groups, $selected_groups, $type );
             ?>
             </div>
             <?php
@@ -270,7 +270,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <div class="ui relaxed divided list" id="mainwp-select-sites-list">
                     <?php if ( ! $websites ) : ?>
                         <div id="mainwp-select-sites-placeholder" class="ui segment">
-                            <?php self::render_empty_element_placeholder( __( 'No sites connected.', 'mainwp' ) ); ?>
+                            <?php static::render_empty_element_placeholder( __( 'No sites connected.', 'mainwp' ) ); ?>
                         </div>
                         <?php
                         else :
@@ -544,7 +544,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
          */
         $left = apply_filters( 'mainwp_header_left', $title, $params );
 
-        $right = self::render_header_actions();
+        $right = static::render_header_actions();
 
         /**
          * Filter: mainwp_header_right
@@ -572,7 +572,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( empty( $count_sites ) ) {
             if ( ! isset( $_GET['do'] ) ) {
-                self::render_modal_no_sites_note();
+                static::render_modal_no_sites_note();
             }
         }
 
@@ -872,7 +872,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <form method="POST" action="" name="mainwp_overview_screen_options_form" id="mainwp-overview-screen-options-form">
                     <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                     <input type="hidden" name="wp_nonce" value="<?php echo esc_html( wp_create_nonce( 'MainWPScrOptions' ) ); ?>" />
-                    <?php self::render_screen_options( false ); ?>
+                    <?php static::render_screen_options( false ); ?>
                     <?php
                     /**
                      * Action: mainwp_overview_screen_options_bottom
@@ -1144,7 +1144,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     ?>
                 <div class="ui stackable grid">
                     <div class="column full">
-                        <?php self::gen_groups_sites_selection(); ?>
+                        <?php static::gen_groups_sites_selection(); ?>
                     </div>
                 </div>
                     <?php
@@ -1495,7 +1495,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
              * @return void Render page title and hidden divider html.
              */
     public static function render_header( $title = '' ) {
-        self::render_top_header( array( 'title' => $title ) );
+        static::render_top_header( array( 'title' => $title ) );
         echo '<div class="ui hidden clearing fitted divider"></div>';
         echo '<div class="wrap">';
     }

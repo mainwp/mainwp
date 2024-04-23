@@ -41,10 +41,10 @@ class Api_Backups_3rd_Party {
      * @return Api_Backups_3rd_Party
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
 
@@ -176,7 +176,7 @@ class Api_Backups_3rd_Party {
         $url = preg_replace( '#^[^:/.]*[:/]+#i', '', preg_replace( '{/$}', '', $website->url ) );
 
         // Fetch Cloudways Server List.
-        $server_list = self::fetch_cloudways_server_list();
+        $server_list = static::fetch_cloudways_server_list();
 
         /**
          * Search $server_list for Child Site app ID & server ID.
@@ -231,7 +231,7 @@ class Api_Backups_3rd_Party {
         $clean_url       = preg_replace( '/^www\./', '', $strip_protocall );
 
         // Get Sites list.
-        $gridpane_list = self::gridpane_get_sites_list( 200 );
+        $gridpane_list = static::gridpane_get_sites_list( 200 );
 
         // Check for Child Site IP @ each instance. Add to Child Site Options Table.
         if ( is_array( $gridpane_list ) ) {
@@ -287,8 +287,8 @@ class Api_Backups_3rd_Party {
                         <div><?php esc_html_e( 'This page will list the last backups created by the API Backups Extension for each Child Site that is setup with an API provider.', 'mainwp' ); ?></div>
                     </div>
                 <?php endif; ?>
-            <?php self::action_notifications(); ?>
-            <?php self::render_api_backups_table( '3rd-party-api-backups' ); ?>
+            <?php static::action_notifications(); ?>
+            <?php static::render_api_backups_table( '3rd-party-api-backups' ); ?>
 
             </div>
             <?php
@@ -746,7 +746,7 @@ class Api_Backups_3rd_Party {
                                              * Grab installation domain & build path to download.
                                              * Eg.: /var/www/vhosts/example.com/wordpress-backups/
                                              */
-                                            $installation_domain = self::get_plesk_home_dir();
+                                            $installation_domain = static::get_plesk_home_dir();
                                             $dirdl               = '/var/www/vhosts/' . $installation_domain . '/wordpress-backups/';
                                         ?>
 
@@ -1057,7 +1057,7 @@ class Api_Backups_3rd_Party {
                                                      * Grab home directory & build download directory.
                                                      * Eg.: /home/cpanel_username/wordpress-backups/
                                                      */
-                                                    $home_dir = self::cpanel_action_get_home_directory();
+                                                    $home_dir = static::cpanel_action_get_home_directory();
                                                     $dirdl    = $home_dir . '/wordpress-backups/';
                                                 ?>
                                                 <button class="ui mini icon button mainwp_3rd_party_api_<?php echo esc_attr( $backup_api ); ?>_action_download_wptk_backup item"
@@ -1590,10 +1590,10 @@ class Api_Backups_3rd_Party {
      */
     public static function fetch_cloudways_access_token() {
         $account_email = get_option( 'mainwp_cloudways_api_account_email' );
-        $api_key       = self::get_cloudways_api_key();
+        $api_key       = static::get_cloudways_api_key();
 
         // Fetch Access Token.
-        $tokenResponse = self::call_cloudways_api(
+        $tokenResponse = static::call_cloudways_api(
             'POST',
             '/oauth/access_token',
             null,
@@ -1615,10 +1615,10 @@ class Api_Backups_3rd_Party {
      */
     public static function fetch_cloudways_server_list() {
         // Grab access token.
-        $accessToken = self::fetch_cloudways_access_token();
+        $accessToken = static::fetch_cloudways_access_token();
 
         // Fetch Server List.
-        $serverList = (array) self::call_cloudways_api( 'GET', '/server', $accessToken );
+        $serverList = (array) static::call_cloudways_api( 'GET', '/server', $accessToken );
         if ( ! array_key_exists( 'servers', $serverList ) ) {
             return;
         }
@@ -1637,7 +1637,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_cloudways_action_update_ids() {
         Api_Backups_Helper::security_nonce( 'cloudways_action_update_ids' );
-        self::cloudways_action_update_ids();
+        static::cloudways_action_update_ids();
     }
 
     /**
@@ -1657,7 +1657,7 @@ class Api_Backups_3rd_Party {
         }
 
         // Fetch Cloudways Server List.
-        $server_list = self::fetch_cloudways_server_list();
+        $server_list = static::fetch_cloudways_server_list();
 
         /**
          * Search $server_list for Child Site app ID & server ID.
@@ -1697,7 +1697,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_cloudways_action_individual_backup() {
         Api_Backups_Helper::security_nonce( 'cloudways_action_individual_backup' );
-        self::cloudways_action_backup();
+        static::cloudways_action_backup();
     }
 
     /**
@@ -1709,7 +1709,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_cloudways_action_backup() {
         Api_Backups_Helper::security_nonce( 'cloudways_action_backup' );
-        self::cloudways_action_create_backup();
+        static::cloudways_action_create_backup();
     }
 
     /**
@@ -1737,10 +1737,10 @@ class Api_Backups_3rd_Party {
         );
 
         // Grab Cloudways access token.
-        $accessToken = self::fetch_cloudways_access_token();
+        $accessToken = static::fetch_cloudways_access_token();
 
         // Send Payload & create backup.
-        $api_response = (array) self::call_cloudways_api( 'POST', '/app/manage/takeBackup', $accessToken, $data );
+        $api_response = (array) static::call_cloudways_api( 'POST', '/app/manage/takeBackup', $accessToken, $data );
 
         $success = true;
 
@@ -1748,7 +1748,7 @@ class Api_Backups_3rd_Party {
             $success = false;
         } else {
             // Save current backup operation.
-            $backup_operation = (array) self::call_cloudways_api( 'GET', '/operation/' . $api_response['operation_id'], $accessToken );
+            $backup_operation = (array) static::call_cloudways_api( 'GET', '/operation/' . $api_response['operation_id'], $accessToken );
             $backup_operation = wp_json_encode( $backup_operation['operation'] );
             Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_cloudways_backup_operation', $backup_operation );
 
@@ -1757,7 +1757,7 @@ class Api_Backups_3rd_Party {
             $current_time = $local_time->getTimestamp() + $local_time->getOffset();
             Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_cloudways_last_backup', $current_time );
             // Poll operations endpoint for backup status.
-            // self::cloudways_action_poll_backup_operation( $website_id  );.
+            // static::cloudways_action_poll_backup_operation( $website_id  );.
         }
 
         if ( $ret_val ) {
@@ -1770,7 +1770,7 @@ class Api_Backups_3rd_Party {
             // Return success.
             wp_send_json( 'true' );
             // Poll operations endpoint for backup status.
-            // self::cloudways_action_poll_backup_operation( $website_id  );.
+            // static::cloudways_action_poll_backup_operation( $website_id  );.
         }
     }
 
@@ -1800,17 +1800,17 @@ class Api_Backups_3rd_Party {
         $operation_id     = json_decode( $backup_operation, true )['id'];
 
         // Grab Cloudways access token.
-        $accessToken = self::fetch_cloudways_access_token();
+        $accessToken = static::fetch_cloudways_access_token();
 
         // Send Payload & list backups. https://api.cloudways.com/api/v1/operation/{id}.
-        $operation_polling       = self::call_cloudways_api( 'GET', '/operation/' . $operation_id, $accessToken );
+        $operation_polling       = static::call_cloudways_api( 'GET', '/operation/' . $operation_id, $accessToken );
         $backup_polling_response = $operation_polling->operation;
 
         // If backup has not been completed yet, sleep for 30 seconds and check again.
         // If backup has been completed, save the backup operation results.
         if ( true !== $backup_polling_response->is_completed ) {
             sleep( 30 );
-            self::cloudways_action_poll_backup_operation( $website_id );
+            static::cloudways_action_poll_backup_operation( $website_id );
         } else {
             // Save current backup operation.
             Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_cloudways_backup_operation', wp_json_encode( $backup_polling_response ) );
@@ -1842,7 +1842,7 @@ class Api_Backups_3rd_Party {
         }
 
         // Grab Cloudways access token.
-        $accessToken = self::fetch_cloudways_access_token();
+        $accessToken = static::fetch_cloudways_access_token();
 
         // Grab needed site options from WP_MAINWP_WP_OPTIONS table.
         $site_options = Api_Backups_Helper::get_website_options(
@@ -1856,13 +1856,13 @@ class Api_Backups_3rd_Party {
         $app_id       = isset( $site_options['mainwp_3rd_party_app_id'] ) ? $site_options['mainwp_3rd_party_app_id'] : null;
 
         // Grab Backup operation from API.
-        $backup_operation = self::call_cloudways_api( 'GET', '/app/manage/backup?server_id=' . $server_id . '&app_id=' . $app_id, $accessToken );
+        $backup_operation = static::call_cloudways_api( 'GET', '/app/manage/backup?server_id=' . $server_id . '&app_id=' . $app_id, $accessToken );
         $operation_id     = $backup_operation->operation_id;
 
         sleep( 3 ); // REQUIRED! Wait 3 seconds for cURL connection to be closed before opening a new one.
 
         // Send Payload & list backups. https://api.cloudways.com/api/v1/operation/{id}.
-        $operation_polling = self::call_cloudways_api( 'GET', '/operation/' . $operation_id, $accessToken );
+        $operation_polling = static::call_cloudways_api( 'GET', '/operation/' . $operation_id, $accessToken );
         $operation         = $operation_polling->operation;
 
         // Save backup operation.
@@ -1915,10 +1915,10 @@ class Api_Backups_3rd_Party {
         );
 
         // Grab Cloudways access token.
-        $accessToken = self::fetch_cloudways_access_token();
+        $accessToken = static::fetch_cloudways_access_token();
 
         // Send Payload & create backup.
-        $api_response = self::call_cloudways_api( 'POST', '/app/manage/restore', $accessToken, $data );
+        $api_response = static::call_cloudways_api( 'POST', '/app/manage/restore', $accessToken, $data );
 
         // Handle API response.
         if ( 1 !== (int) $api_response->status ) {
@@ -1953,10 +1953,10 @@ class Api_Backups_3rd_Party {
         );
 
         // Grab Cloudways access token.
-        $accessToken = self::fetch_cloudways_access_token();
+        $accessToken = static::fetch_cloudways_access_token();
 
         // Send Payload & create backup.
-        $api_response = self::call_cloudways_api( 'DELETE', '/app/manage/backup', $accessToken, $data );
+        $api_response = static::call_cloudways_api( 'DELETE', '/app/manage/backup', $accessToken, $data );
 
         if ( 1 !== (int) $api_response->status ) {
             wp_die( 'false' );
@@ -2056,7 +2056,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_vultr_action_individual_create_snapshot() {
         Api_Backups_Helper::security_nonce( 'vultr_action_individual_create_snapshot' );
-        self::vultr_action_create_snapshot();
+        static::vultr_action_create_snapshot();
     }
 
     /**
@@ -2072,7 +2072,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_vultr_action_create_snapshot() {
         Api_Backups_Helper::security_nonce( 'vultr_action_create_snapshot' );
-        self::vultr_action_create_snapshot();
+        static::vultr_action_create_snapshot();
     }
 
     /**
@@ -2153,7 +2153,7 @@ class Api_Backups_3rd_Party {
         $snapshot_list = isset( $site_options['mainwp_3rd_party_vultr_snapshot_list'] ) ? $site_options['mainwp_3rd_party_vultr_snapshot_list'] : null;
 
         // Grab Vultr Access token.
-        $accessToken = self::get_vultr_api_key();
+        $accessToken = static::get_vultr_api_key();
 
         // Remove http://, www., and slash(/) from the URL.
         $url       = ! empty( $website['url'] ) ? rawurlencode( $website['url'] ) : '';
@@ -2167,7 +2167,7 @@ class Api_Backups_3rd_Party {
         $snapshot_data = wp_json_encode( $snapshot_data );
 
         // Send Payload & create backup.
-        $snapshot_response = self::call_vultr_api( 'POST', '/snapshots', $accessToken, $snapshot_data );
+        $snapshot_response = static::call_vultr_api( 'POST', '/snapshots', $accessToken, $snapshot_data );
         $snapshot_id       = $snapshot_response['response']->snapshot->id;
 
         $snapshot_list   = json_decode( $snapshot_list );
@@ -2229,7 +2229,7 @@ class Api_Backups_3rd_Party {
         $snapshot_list = isset( $site_options['mainwp_3rd_party_vultr_snapshot_list'] ) ? json_decode( $site_options['mainwp_3rd_party_vultr_snapshot_list'] ) : null;
 
         // Grab Vultr Access token.
-        $accessToken = self::get_vultr_api_key();
+        $accessToken = static::get_vultr_api_key();
 
         $success   = false;
         $die_error = false;
@@ -2237,14 +2237,14 @@ class Api_Backups_3rd_Party {
         // Build available backups array.
         $available_backups = array();
         foreach ( $snapshot_list as $snapshot ) {
-            $api_response                   = self::call_vultr_api( 'GET', '/snapshots/' . $snapshot, $accessToken, null, $die_error );
+            $api_response                   = static::call_vultr_api( 'GET', '/snapshots/' . $snapshot, $accessToken, null, $die_error );
             $snapshot                       = $api_response['response'];
             $available_backups['snapshots'] = $snapshot;
             if ( is_array( $api_response ) && ! empty( $api_response['status'] ) ) {
                 $success = true;
             }
         }
-        $automatic_backups            = self::call_vultr_api( 'GET', '/backups?instance_id=' . $instance_id, $accessToken, null, $die_error );
+        $automatic_backups            = static::call_vultr_api( 'GET', '/backups?instance_id=' . $instance_id, $accessToken, null, $die_error );
         $automatic_backups            = $automatic_backups['response']->backups;
         $available_backups['backups'] = $automatic_backups;
         $available_backups            = wp_json_encode( $available_backups );
@@ -2280,7 +2280,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_vultr_action_restore_backup() {
         Api_Backups_Helper::security_nonce( 'vultr_action_restore_backup' );
-        self::vultr_action_restore_backup();
+        static::vultr_action_restore_backup();
     }
 
     /**
@@ -2300,7 +2300,7 @@ class Api_Backups_3rd_Party {
         $instance_id  = isset( $site_options['mainwp_3rd_party_instance_id'] ) ? $site_options['mainwp_3rd_party_instance_id'] : null;
 
         // Grab Access token.
-        $accessToken = self::get_vultr_api_key();
+        $accessToken = static::get_vultr_api_key();
         // Set which Backup to restore to.
         $backup_data = array(
             'snapshot_id' => $snapshot_id,
@@ -2308,7 +2308,7 @@ class Api_Backups_3rd_Party {
         $backup_data = wp_json_encode( $backup_data );
 
         // Send Payload & list backups. backups/restore/1038'.
-        $api_response = (object) self::call_vultr_api( 'POST', '/instances/' . $instance_id . '/restore', $accessToken, $backup_data );
+        $api_response = (object) static::call_vultr_api( 'POST', '/instances/' . $instance_id . '/restore', $accessToken, $backup_data );
 
         // Return AJAX.
         if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
@@ -2337,10 +2337,10 @@ class Api_Backups_3rd_Party {
         // $snapshot_id acecab84-7404-4193-bc9f-88e29956362f;
 
         // Grab Vultr Access token.
-        $accessToken = self::get_vultr_api_key();
+        $accessToken = static::get_vultr_api_key();
 
         // Send Payload & delete backup.
-        $api_response = (object) self::call_vultr_api( 'DELETE', '/snapshots/' . $snapshot_id, $accessToken );
+        $api_response = (object) static::call_vultr_api( 'DELETE', '/snapshots/' . $snapshot_id, $accessToken );
 
         // Remove backup from snapshot list.
         $site_options  = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_3rd_party_vultr_snapshot_list' ) );
@@ -2423,10 +2423,10 @@ class Api_Backups_3rd_Party {
     public static function gridpane_get_sites_list( $sites_count ) {
 
         // Grab Vultr Access token.
-        $accessToken = self::get_gridpane_api_key();
+        $accessToken = static::get_gridpane_api_key();
 
         // Grab Sites List.
-        $grid_response         = (array) self::call_gridpane_api( 'GET', '/site?per_page=' . $sites_count, $accessToken );
+        $grid_response         = (array) static::call_gridpane_api( 'GET', '/site?per_page=' . $sites_count, $accessToken );
         $grid_response_decoded = json_decode( $grid_response[0] );
         if ( is_object( $grid_response_decoded ) && property_exists( $grid_response_decoded, 'data' ) ) {
             return $grid_response_decoded->data;
@@ -2444,10 +2444,10 @@ class Api_Backups_3rd_Party {
     public static function gridpane_get_domain_list() {
 
         // Grab Vultr Access token.
-        $accessToken = self::get_gridpane_api_key();
+        $accessToken = static::get_gridpane_api_key();
 
         // Grab Sites List.
-        $grid_response         = (array) self::call_gridpane_api( 'GET', '/domain', $accessToken );
+        $grid_response         = (array) static::call_gridpane_api( 'GET', '/domain', $accessToken );
         $grid_response_decoded = json_decode( $grid_response[0] );
         if ( is_object( $grid_response_decoded ) && property_exists( $grid_response_decoded, 'data' ) ) {
             return $grid_response_decoded->data;
@@ -2467,7 +2467,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_gridpane_action_update_ids() {
         Api_Backups_Helper::security_nonce( 'gridpane_action_update_ids' );
-        self::gridpane_action_update_ids();
+        static::gridpane_action_update_ids();
     }
 
     /**
@@ -2495,7 +2495,7 @@ class Api_Backups_3rd_Party {
         }
 
         // Get GP Sites list.
-        $sites_list = self::gridpane_get_sites_list( 99999 ); // 99999 to pull all sites. High number at least for now.
+        $sites_list = static::gridpane_get_sites_list( 99999 ); // 99999 to pull all sites. High number at least for now.
 
         // Loop through Child Sites.
         while ( $websites && ( $website = Api_Backups_Helper::fetch_object( $websites ) ) ) {
@@ -2551,7 +2551,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_gridpane_action_individual_create_backup() {
         Api_Backups_Helper::security_nonce( 'gridpane_action_individual_create_backup' );
-        self::gridpane_action_create_backup();
+        static::gridpane_action_create_backup();
     }
 
     /**
@@ -2564,7 +2564,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_gridpane_action_create_backup() {
         Api_Backups_Helper::security_nonce( 'gridpane_action_create_backup' );
-        self::gridpane_action_create_backup();
+        static::gridpane_action_create_backup();
     }
 
     /**
@@ -2585,7 +2585,7 @@ class Api_Backups_3rd_Party {
         $site_id      = isset( $site_options['mainwp_3rd_party_instance_id'] ) ? $site_options['mainwp_3rd_party_instance_id'] : null;
 
         // Grab Gridpane Access token.
-        $accessToken = self::get_gridpane_api_key();
+        $accessToken = static::get_gridpane_api_key();
 
         // Set Backup `type` & `tag`.
         $backup_data = array(
@@ -2595,7 +2595,7 @@ class Api_Backups_3rd_Party {
         $backup_data = wp_json_encode( $backup_data );
 
         // Send Payload & create backup.
-        $backup_response = self::call_gridpane_api( 'POST', '/backups/' . $site_id, $accessToken, $backup_data );
+        $backup_response = static::call_gridpane_api( 'POST', '/backups/' . $site_id, $accessToken, $backup_data );
         $backup_status   = json_decode( $backup_response );
 
         // DON'T REMOVE THIS LINE - for debugging.
@@ -2651,13 +2651,13 @@ class Api_Backups_3rd_Party {
         $site_id      = isset( $site_options['mainwp_3rd_party_instance_id'] ) ? $site_options['mainwp_3rd_party_instance_id'] : null;
 
         // Grab Gridpane Access token.
-        $accessToken = self::get_gridpane_api_key();
+        $accessToken = static::get_gridpane_api_key();
 
         // Refresh backups.
-        self::call_gridpane_api( 'GET', '/backups/refresh/' . $site_id, $accessToken );
+        static::call_gridpane_api( 'GET', '/backups/refresh/' . $site_id, $accessToken );
 
         // Send Payload & grab backup list.
-        $api_response = json_decode( self::call_gridpane_api( 'GET', '/backups/original/' . $site_id, $accessToken ) );
+        $api_response = json_decode( static::call_gridpane_api( 'GET', '/backups/original/' . $site_id, $accessToken ) );
 
         $available_backups = '';
         if ( $api_response && ! empty( $api_response->backups ) && ! empty( $api_response->backups->local ) ) {
@@ -2701,7 +2701,7 @@ class Api_Backups_3rd_Party {
         $site_id      = isset( $site_options['mainwp_3rd_party_instance_id'] ) ? $site_options['mainwp_3rd_party_instance_id'] : null;
 
         // Grab Gridpane Access token.
-        $accessToken = self::get_gridpane_api_key();
+        $accessToken = static::get_gridpane_api_key();
 
         // Set which Backup to restore to.
         $backup_data = array(
@@ -2713,7 +2713,7 @@ class Api_Backups_3rd_Party {
         $backup_data = wp_json_encode( $backup_data );
 
         // Send Payload & list backups. backups/restore/1038'.
-        $api_response = json_decode( self::call_gridpane_api( 'POST', '/backups/restore/' . $site_id, $accessToken, $backup_data ) );
+        $api_response = json_decode( static::call_gridpane_api( 'POST', '/backups/restore/' . $site_id, $accessToken, $backup_data ) );
 
         // Return AJAX.
         if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
@@ -2746,7 +2746,7 @@ class Api_Backups_3rd_Party {
         $site_id      = isset( $site_options['mainwp_3rd_party_instance_id'] ) ? $site_options['mainwp_3rd_party_instance_id'] : null;
 
         // Grab Gridpane Access token.
-        $accessToken = self::get_gridpane_api_key();
+        $accessToken = static::get_gridpane_api_key();
 
         // Set which Backup to restore to.
         $backup_data = array(
@@ -2757,7 +2757,7 @@ class Api_Backups_3rd_Party {
         $backup_data = wp_json_encode( $backup_data );
 
         // Send Payload & delete backup.
-        $api_response = json_decode( self::call_gridpane_api( 'PUT', '/backups/purge/' . $site_id, $accessToken, $backup_data ) );
+        $api_response = json_decode( static::call_gridpane_api( 'PUT', '/backups/purge/' . $site_id, $accessToken, $backup_data ) );
 
         // Return AJAX.
         if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
@@ -2825,7 +2825,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_linode_action_individual_create_backup() {
         Api_Backups_Helper::security_nonce( 'linode_action_individual_create_backup' );
-        self::linode_action_create_backup();
+        static::linode_action_create_backup();
         die();
     }
 
@@ -2838,7 +2838,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_linode_action_create_backup() {
         Api_Backups_Helper::security_nonce( 'linode_action_create_backup' );
-        self::linode_action_create_backup();
+        static::linode_action_create_backup();
         die();
     }
 
@@ -2861,10 +2861,10 @@ class Api_Backups_3rd_Party {
         $instance_id  = isset( $site_options['mainwp_3rd_party_instance_id'] ) ? $site_options['mainwp_3rd_party_instance_id'] : null;
 
         // Grab Linode Access token.
-        $accessToken = self::get_linode_api_key();
+        $accessToken = static::get_linode_api_key();
 
         // Send Payload & create backup.
-        $linode_response = (array) self::call_linode_api( 'POST', '/instances/' . $instance_id . '/backups', $accessToken );
+        $linode_response = (array) static::call_linode_api( 'POST', '/instances/' . $instance_id . '/backups', $accessToken );
         $linode_response = json_decode( $linode_response[0] );
 
         $success = true;
@@ -2920,10 +2920,10 @@ class Api_Backups_3rd_Party {
         $instance_id  = isset( $site_options['mainwp_3rd_party_instance_id'] ) ? $site_options['mainwp_3rd_party_instance_id'] : null;
 
         // Grab Vultr Access token.
-        $accessToken = self::get_linode_api_key();
+        $accessToken = static::get_linode_api_key();
 
         // Send Payload & create backup.  https://api.linode.com/v4/linode/instances/{linodeId}/backups.
-        $api_response = (object) self::call_linode_api( 'GET', '/instances/' . $instance_id . '/backups', $accessToken );
+        $api_response = (object) static::call_linode_api( 'GET', '/instances/' . $instance_id . '/backups', $accessToken );
         $all_backups  = $api_response->scalar;
 
         // Grab Site options then update Child Site options.
@@ -2962,7 +2962,7 @@ class Api_Backups_3rd_Party {
         $instance_id  = isset( $site_options['mainwp_3rd_party_instance_id'] ) ? $site_options['mainwp_3rd_party_instance_id'] : null;
 
         // Grab Linode Access token.
-        $accessToken = self::get_linode_api_key();
+        $accessToken = static::get_linode_api_key();
 
         // Set which Backup to restore to.
         $backup_data = array(
@@ -2972,11 +2972,11 @@ class Api_Backups_3rd_Party {
         $backup_data = wp_json_encode( $backup_data );
 
         // Send Payload & create backup. https://api.linode.com/v4/linode/instances/{linodeId}/backups/{backupId}/restore.
-        $restore_response = (array) self::call_linode_api( 'POST', '/instances/' . $instance_id . '/backups/' . $backup_id . '/restore', $accessToken, $backup_data );
+        $restore_response = (array) static::call_linode_api( 'POST', '/instances/' . $instance_id . '/backups/' . $backup_id . '/restore', $accessToken, $backup_data );
         $restore_response = (array) json_decode( $restore_response['0'] );
 
         sleep( 20 );
-        self::linode_action_linode_status( $website_id );
+        static::linode_action_linode_status( $website_id );
     }
 
     /**
@@ -2995,10 +2995,10 @@ class Api_Backups_3rd_Party {
         $instance_id  = isset( $site_options['mainwp_3rd_party_instance_id'] ) ? $site_options['mainwp_3rd_party_instance_id'] : null;
 
         // Grab Linode Access token.
-        $accessToken = self::get_linode_api_key();
+        $accessToken = static::get_linode_api_key();
 
         // Send Payload & grab instance status. https://api.linode.com/v4/linode/instances/{linodeId}.
-        $linode_instance_response = (array) self::call_linode_api( 'GET', '/instances/' . $instance_id, $accessToken );
+        $linode_instance_response = (array) static::call_linode_api( 'GET', '/instances/' . $instance_id, $accessToken );
         $linode_instance_response = json_decode( $linode_instance_response['0'] );
         $linode_instance_status   = $linode_instance_response->status;
 
@@ -3010,11 +3010,11 @@ class Api_Backups_3rd_Party {
             case 'Linode Busy.':
                 // Re-Check status.
                 sleep( 1 );
-                self::linode_action_linode_status( $website_id );
+                static::linode_action_linode_status( $website_id );
                 break;
             case 'offline':
                 // Starting server.
-                self::linode_action_linode_start( $instance_id );
+                static::linode_action_linode_start( $instance_id );
                 break;
         }
     }
@@ -3029,10 +3029,10 @@ class Api_Backups_3rd_Party {
     public static function linode_action_linode_start( $instance_id ) {
         sleep( 10 );
         // Grab Linode Access token.
-        $accessToken = self::get_linode_api_key();
+        $accessToken = static::get_linode_api_key();
 
         // Send Payload & create backup. https://api.linode.com/v4/linode/instances/{linodeId}/boot.
-        $linode_boot_response = (array) self::call_linode_api( 'POST', '/instances/' . $instance_id . '/boot', $accessToken );
+        $linode_boot_response = (array) static::call_linode_api( 'POST', '/instances/' . $instance_id . '/boot', $accessToken );
         $linode_boot_response = (array) json_decode( $linode_boot_response['0'] );
 
         wp_send_json( 'true' );
@@ -3058,10 +3058,10 @@ class Api_Backups_3rd_Party {
         $instance_id  = isset( $site_options['mainwp_3rd_party_instance_id'] ) ? $site_options['mainwp_3rd_party_instance_id'] : null;
 
         // Grab Vultr Access token.
-        $accessToken = self::get_linode_api_key();
+        $accessToken = static::get_linode_api_key();
 
         // Send Payload & create backup. https://api.linode.com/v4/linode/instances/{linodeId}/backups/cancel.
-        $api_response = (object) self::call_linode_api( 'POST', '/instances/' . $instance_id . '/backups/cancel', $accessToken );
+        $api_response = (object) static::call_linode_api( 'POST', '/instances/' . $instance_id . '/backups/cancel', $accessToken );
 
         // Return AJAX.
         if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
@@ -3140,7 +3140,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_digitalocean_action_create_backup() {
         Api_Backups_Helper::security_nonce( 'digitalocean_action_create_backup' );
-        self::digitalocean_action_create_backup();
+        static::digitalocean_action_create_backup();
     }
 
     /**
@@ -3152,7 +3152,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_digitalocean_action_individual_create_backup() {
         Api_Backups_Helper::security_nonce( 'digitalocean_action_individual_create_backup' );
-        self::digitalocean_action_create_backup();
+        static::digitalocean_action_create_backup();
     }
 
     /**
@@ -3178,7 +3178,7 @@ class Api_Backups_3rd_Party {
         $droplet_id   = isset( $site_options['mainwp_3rd_party_instance_id'] ) ? $site_options['mainwp_3rd_party_instance_id'] : null;
 
         // Grab Access token.
-        $accessToken = self::get_digitalocean_api_key();
+        $accessToken = static::get_digitalocean_api_key();
 
         // Set backup type and name.
         $backup_data = array(
@@ -3188,7 +3188,7 @@ class Api_Backups_3rd_Party {
         $backup_data = wp_json_encode( $backup_data );
 
         // Send Payload & create backup.
-        $api_response = self::call_digitalocean_api( 'POST', '/droplets/' . $droplet_id . '/actions', $accessToken, $backup_data );
+        $api_response = static::call_digitalocean_api( 'POST', '/droplets/' . $droplet_id . '/actions', $accessToken, $backup_data );
 
         $success = true;
 
@@ -3243,10 +3243,10 @@ class Api_Backups_3rd_Party {
         $droplet_id   = isset( $site_options['mainwp_3rd_party_instance_id'] ) ? $site_options['mainwp_3rd_party_instance_id'] : null;
 
         // Grab Vultr Access token.
-        $accessToken = self::get_digitalocean_api_key();
+        $accessToken = static::get_digitalocean_api_key();
 
         // Send Payload & create backup.
-        $api_response = self::call_digitalocean_api( 'GET', '/droplets/' . $droplet_id . '/snapshots', $accessToken );
+        $api_response = static::call_digitalocean_api( 'GET', '/droplets/' . $droplet_id . '/snapshots', $accessToken );
         $all_backups  = $api_response['response'];
 
         // Grab Site options then update Child Site options.
@@ -3284,7 +3284,7 @@ class Api_Backups_3rd_Party {
         $droplet_id   = isset( $site_options['mainwp_3rd_party_instance_id'] ) ? $site_options['mainwp_3rd_party_instance_id'] : null;
 
         // Grab Access token.
-        $accessToken = self::get_digitalocean_api_key();
+        $accessToken = static::get_digitalocean_api_key();
 
         // Set backup type and name.
         $backup_data = array(
@@ -3294,7 +3294,7 @@ class Api_Backups_3rd_Party {
         $backup_data = wp_json_encode( $backup_data );
 
         // Send Payload & create backup.
-        $api_response = self::call_digitalocean_api( 'POST', '/droplets/' . $droplet_id . '/actions', $accessToken, $backup_data );
+        $api_response = static::call_digitalocean_api( 'POST', '/droplets/' . $droplet_id . '/actions', $accessToken, $backup_data );
 
         // Return AJAX.
         if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
@@ -3322,10 +3322,10 @@ class Api_Backups_3rd_Party {
         $snapshot_id = isset( $_POST['snapshot_id'] ) ? wp_unslash( $_POST['snapshot_id'] ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         // Grab Access token.
-        $accessToken = self::get_digitalocean_api_key();
+        $accessToken = static::get_digitalocean_api_key();
 
         // Send Payload.
-        $api_response = self::call_digitalocean_api( 'DELETE', '/snapshots/' . $snapshot_id, $accessToken );
+        $api_response = static::call_digitalocean_api( 'DELETE', '/snapshots/' . $snapshot_id, $accessToken );
 
         // Return AJAX.
         if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
@@ -3400,13 +3400,13 @@ class Api_Backups_3rd_Party {
      */
     public static function get_plesk_home_dir() {
         // Authenticate plesk account.
-        $plesk_authentication_credentials = self::get_plesk_authentication_credentials();
+        $plesk_authentication_credentials = static::get_plesk_authentication_credentials();
         $plesk_baseurl                    = $plesk_authentication_credentials[0]['plesk_baseurl'];
         $plesk_api_key                    = $plesk_authentication_credentials[0]['plesk_api_key'];
         $plesk_installation_id            = $plesk_authentication_credentials[0]['plesk_installation_id'];
         $website_id                       = $plesk_authentication_credentials[0]['website_id'];
 
-        $api_response = self::call_plesk_api( 'GET', '/api/modules/wp-toolkit/v1/installations?installationsIds%5B%5D=' . $plesk_installation_id, $plesk_baseurl, $plesk_api_key );
+        $api_response = static::call_plesk_api( 'GET', '/api/modules/wp-toolkit/v1/installations?installationsIds%5B%5D=' . $plesk_installation_id, $plesk_baseurl, $plesk_api_key );
 
         $response_decoded = ! empty( $api_response['response'] ) ? json_decode( $api_response['response'] ) : '';
         return is_array( $response_decoded ) && ! empty( $response_decoded[0] ) && ! empty( $response_decoded['0']->domain->name ) ? $response_decoded['0']->domain->name : false;
@@ -3462,7 +3462,7 @@ class Api_Backups_3rd_Party {
             $plesk_baseurl = ( false === get_option( 'mainwp_plesk_api_url' ) ) ? null : get_option( 'mainwp_plesk_api_url' );
 
             // Grab Plesk password.
-            $plesk_api_key = self::get_plesk_api_key();
+            $plesk_api_key = static::get_plesk_api_key();
 
             // Grab Plesk Installation ID.
             $site_path             = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_plesk_installation_id' ) );
@@ -3489,7 +3489,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_plesk_action_refresh_available_backups() {
         Api_Backups_Helper::security_nonce( 'plesk_action_refresh_available_backups' );
-        self::plesk_action_refresh_available_backups();
+        static::plesk_action_refresh_available_backups();
         die();
     }
 
@@ -3502,7 +3502,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_plesk_action_create_backup() {
         Api_Backups_Helper::security_nonce( 'plesk_action_create_backup' );
-        self::plesk_action_create_backup();
+        static::plesk_action_create_backup();
         die();
     }
 
@@ -3515,7 +3515,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_plesk_action_restore_backup() {
         Api_Backups_Helper::security_nonce( 'plesk_action_restore_backup' );
-        self::plesk_action_restore_backup();
+        static::plesk_action_restore_backup();
         die();
     }
 
@@ -3528,7 +3528,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_plesk_action_delete_backup() {
         Api_Backups_Helper::security_nonce( 'plesk_action_delete_backup' );
-        self::plesk_action_delete_backup();
+        static::plesk_action_delete_backup();
         die();
     }
 
@@ -3543,14 +3543,14 @@ class Api_Backups_3rd_Party {
     public static function plesk_action_refresh_available_backups() {
 
         // Authenticate plesk account.
-        $plesk_authentication_credentials = self::get_plesk_authentication_credentials();
+        $plesk_authentication_credentials = static::get_plesk_authentication_credentials();
         $plesk_baseurl                    = $plesk_authentication_credentials[0]['plesk_baseurl'];
         $plesk_api_key                    = $plesk_authentication_credentials[0]['plesk_api_key'];
         $plesk_installation_id            = $plesk_authentication_credentials[0]['plesk_installation_id'];
         $website_id                       = $plesk_authentication_credentials[0]['website_id'];
 
         // Grab backup meta.
-        $api_response = self::call_plesk_api( 'GET', '/api/modules/wp-toolkit/v1/installations/' . $plesk_installation_id . '/backups/meta', $plesk_baseurl, $plesk_api_key );
+        $api_response = static::call_plesk_api( 'GET', '/api/modules/wp-toolkit/v1/installations/' . $plesk_installation_id . '/backups/meta', $plesk_baseurl, $plesk_api_key );
 
         $all_backups = $api_response['response'];
         Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_plesk_available_backups', $all_backups );
@@ -3581,7 +3581,7 @@ class Api_Backups_3rd_Party {
     public static function plesk_action_create_backup( $ret_val = false, $website_id = null ) {
 
         // Authenticate plesk account.
-        $plesk_authentication_credentials = self::get_plesk_authentication_credentials( $website_id );
+        $plesk_authentication_credentials = static::get_plesk_authentication_credentials( $website_id );
         $plesk_baseurl                    = $plesk_authentication_credentials[0]['plesk_baseurl'];
         $plesk_api_key                    = $plesk_authentication_credentials[0]['plesk_api_key'];
         $plesk_installation_id            = $plesk_authentication_credentials[0]['plesk_installation_id'];
@@ -3593,7 +3593,7 @@ class Api_Backups_3rd_Party {
         $backup_data = wp_json_encode( $backup_data );
 
         // Send Payload & create backup. https://{your_plesk_url}/api/modules/wp-toolkit/v1/features/backups/creator.
-        $api_response = self::call_plesk_api( 'POST', '/api/modules/wp-toolkit/v1/features/backups/creator', $plesk_baseurl, $plesk_api_key, $backup_data );
+        $api_response = static::call_plesk_api( 'POST', '/api/modules/wp-toolkit/v1/features/backups/creator', $plesk_baseurl, $plesk_api_key, $backup_data );
 
         $response_decoded = is_array( $api_response ) && ! empty( $api_response['response'] ) ? json_decode( $api_response['response'] ) : '';
         $errors           = ! empty( $response_decoded ) && ! empty( $response_decoded->task->errors ) ? $response_decoded->task->errors : '';
@@ -3644,7 +3644,7 @@ class Api_Backups_3rd_Party {
         }
 
         // Authenticate plesk account.
-        $plesk_authentication_credentials = self::get_plesk_authentication_credentials( $website_id );
+        $plesk_authentication_credentials = static::get_plesk_authentication_credentials( $website_id );
         $plesk_baseurl                    = $plesk_authentication_credentials[0]['plesk_baseurl'];
         $plesk_api_key                    = $plesk_authentication_credentials[0]['plesk_api_key'];
         $plesk_installation_id            = $plesk_authentication_credentials[0]['plesk_installation_id'];
@@ -3659,7 +3659,7 @@ class Api_Backups_3rd_Party {
         $backup_data = wp_json_encode( $backup_data );
 
         // Send Payload & create backup. https://{your_plesk_url}/api/modules/wp-toolkit/v1/features/backups/restorer.
-        $api_response = self::call_plesk_api( 'POST', '/api/modules/wp-toolkit/v1/features/backups/restorer', $plesk_baseurl, $plesk_api_key, $backup_data );
+        $api_response = static::call_plesk_api( 'POST', '/api/modules/wp-toolkit/v1/features/backups/restorer', $plesk_baseurl, $plesk_api_key, $backup_data );
 
         $response_decoded = is_array( $api_response ) && ! empty( $api_response['response'] ) ? json_decode( $api_response['response'] ) : '';
         $errors           = ! empty( $response_decoded ) && ! empty( $response_decoded->task->errors ) ? $response_decoded->task->errors : '';
@@ -3691,7 +3691,7 @@ class Api_Backups_3rd_Party {
         }
 
         // Authenticate plesk account.
-        $plesk_authentication_credentials = self::get_plesk_authentication_credentials( $website_id );
+        $plesk_authentication_credentials = static::get_plesk_authentication_credentials( $website_id );
         $plesk_baseurl                    = $plesk_authentication_credentials[0]['plesk_baseurl'];
         $plesk_api_key                    = $plesk_authentication_credentials[0]['plesk_api_key'];
         $plesk_installation_id            = $plesk_authentication_credentials[0]['plesk_installation_id'];
@@ -3712,7 +3712,7 @@ class Api_Backups_3rd_Party {
         $payload = '/api/modules/wp-toolkit/v1/installations/' . $plesk_installation_id . '/backups?files%5B%5D=' . rawurlencode( $backup_name );
 
         // Send Payload & create backup.
-        $api_response = self::call_plesk_api( 'DELETE', $payload, $plesk_baseurl, $plesk_api_key, $backup_data );
+        $api_response = static::call_plesk_api( 'DELETE', $payload, $plesk_baseurl, $plesk_api_key, $backup_data );
 
         $response_decoded = ! empty( $api_response['response'] ) ? json_decode( $api_response['response'] ) : '';
         $errors           = ! empty( $response_decoded ) && ! empty( $response_decoded->task->errors ) ? $response_decoded->task->errors : '';
@@ -3886,7 +3886,7 @@ class Api_Backups_3rd_Party {
             // Grab cPanel username.
             $cpanel_username = get_option( 'mainwp_cpanel_account_username' ); // Fixing when mergeing ???.
             // Grab cPanel password.
-            $cpanel_password = self::get_cpanel_account_password();
+            $cpanel_password = static::get_cpanel_account_password();
 
             // Grab cPanel site path.
             $cpanel_site_path = ( false === get_option( 'mainwp_cpanel_site_path' ) ) ? null : get_option( 'mainwp_cpanel_site_path' );
@@ -3915,13 +3915,13 @@ class Api_Backups_3rd_Party {
     public static function cpanel_action_get_home_directory() {
 
         // Authenticate cPanel account.
-        $cpanel_authentication_credentials = self::get_cpanel_authentication_credentials();
+        $cpanel_authentication_credentials = static::get_cpanel_authentication_credentials();
         $cpanel_baseurl                    = $cpanel_authentication_credentials[0]['cpanel_baseurl'];
         $cpanel_username                   = $cpanel_authentication_credentials[0]['cpanel_username'];
         $cpanel_password                   = $cpanel_authentication_credentials[0]['cpanel_password'];
 
         // Send Payload.
-        $api_response         = self::call_cpanel_api( 'GET', '/execute/Variables/get_user_information', $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $api_response         = static::call_cpanel_api( 'GET', '/execute/Variables/get_user_information', $cpanel_baseurl, $cpanel_username, $cpanel_password );
         $api_response_decoded = json_decode( $api_response['response'] );
 
         if ( is_object( $api_response_decoded ) && isset( $api_response_decoded->data->home ) ) {
@@ -3944,13 +3944,13 @@ class Api_Backups_3rd_Party {
         $manual_backups = array();
 
         // Authenticate cPanel account.
-        $cpanel_authentication_credentials = self::get_cpanel_authentication_credentials();
+        $cpanel_authentication_credentials = static::get_cpanel_authentication_credentials();
         $cpanel_baseurl                    = $cpanel_authentication_credentials[0]['cpanel_baseurl'];
         $cpanel_username                   = $cpanel_authentication_credentials[0]['cpanel_username'];
         $cpanel_password                   = $cpanel_authentication_credentials[0]['cpanel_password'];
 
         // Send Payload.
-        $api_response         = self::call_cpanel_api( 'GET', '/execute/Fileman/list_files?dir=/&include_mime=1&types=file', $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $api_response         = static::call_cpanel_api( 'GET', '/execute/Fileman/list_files?dir=/&include_mime=1&types=file', $cpanel_baseurl, $cpanel_username, $cpanel_password );
         $api_response_decoded = json_decode( $api_response['response'] );
 
         // Build list.
@@ -3992,7 +3992,7 @@ class Api_Backups_3rd_Party {
         $website = Api_Backups_Helper::get_website_by_id( $website_id );
 
         // Authenticate cPanel account.
-        $cpanel_authentication_credentials = self::get_cpanel_authentication_credentials();
+        $cpanel_authentication_credentials = static::get_cpanel_authentication_credentials();
         $cpanel_baseurl                    = $cpanel_authentication_credentials[0]['cpanel_baseurl'];
         $cpanel_username                   = $cpanel_authentication_credentials[0]['cpanel_username'];
         $cpanel_password                   = $cpanel_authentication_credentials[0]['cpanel_password'];
@@ -4001,7 +4001,7 @@ class Api_Backups_3rd_Party {
         $cpanel_db_backups_path = $cpanel_authentication_credentials[0]['cpanel_site_path'] . '/wp-content/uploads/mainwp/api_db_backups';
 
         // Send Payload.
-        $api_response         = self::call_cpanel_api( 'GET', '/execute/Fileman/list_files?dir=' . $cpanel_db_backups_path . '&include_mime=1&types=file', $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $api_response         = static::call_cpanel_api( 'GET', '/execute/Fileman/list_files?dir=' . $cpanel_db_backups_path . '&include_mime=1&types=file', $cpanel_baseurl, $cpanel_username, $cpanel_password );
         $api_response_decoded = json_decode( $api_response['response'] );
 
         // Build list.
@@ -4043,7 +4043,7 @@ class Api_Backups_3rd_Party {
         $website_url = trim( $website['url'], '/' );
 
         // Authenticate cPanel account.
-        $cpanel_authentication_credentials = self::get_cpanel_authentication_credentials();
+        $cpanel_authentication_credentials = static::get_cpanel_authentication_credentials();
         $cpanel_baseurl                    = $cpanel_authentication_credentials[0]['cpanel_baseurl'];
         $cpanel_username                   = $cpanel_authentication_credentials[0]['cpanel_username'];
         $cpanel_password                   = $cpanel_authentication_credentials[0]['cpanel_password'];
@@ -4051,7 +4051,7 @@ class Api_Backups_3rd_Party {
         $wp_toolkit_installation_id = '';
 
         // Grab list of WP Toolkit installations.
-        $wp_toolkit_installation_list         = self::call_cpanel_api( 'GET', '/3rdparty/wpt/index.php/v1/installations?sortBy=title&sortOrder=asc', $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $wp_toolkit_installation_list         = static::call_cpanel_api( 'GET', '/3rdparty/wpt/index.php/v1/installations?sortBy=title&sortOrder=asc', $cpanel_baseurl, $cpanel_username, $cpanel_password );
         $wp_toolkit_installation_list_decoded = json_decode( $wp_toolkit_installation_list['response'] );
 
         // Search for website url in list of WP Toolkit installations & grab Site ID.
@@ -4064,7 +4064,7 @@ class Api_Backups_3rd_Party {
         }
 
         // Grab backup meta for found Site ID.
-        $wp_toolkit_backups = self::call_cpanel_api( 'GET', '/3rdparty/wpt/index.php/v1/installations/' . $wp_toolkit_installation_id . '/backups/meta', $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $wp_toolkit_backups = static::call_cpanel_api( 'GET', '/3rdparty/wpt/index.php/v1/installations/' . $wp_toolkit_installation_id . '/backups/meta', $cpanel_baseurl, $cpanel_username, $cpanel_password );
         if ( 'true' === $wp_toolkit_backups['status'] ) {
             return $wp_toolkit_backups['response'];
         } else {
@@ -4081,7 +4081,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_cpanel_action_restore_backup() {
         Api_Backups_Helper::security_nonce( 'cpanel_action_restore_backup' );
-        self::cpanel_action_restore_backup();
+        static::cpanel_action_restore_backup();
         die();
     }
 
@@ -4094,7 +4094,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_cpanel_action_restore_database_backup() {
         Api_Backups_Helper::security_nonce( 'cpanel_action_restore_database_backup' );
-        self::cpanel_action_restore_database_backup();
+        static::cpanel_action_restore_database_backup();
         die();
     }
 
@@ -4107,7 +4107,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_cpanel_action_restore_manual_backup() {
         Api_Backups_Helper::security_nonce( 'cpanel_action_restore_manual_backup' );
-        self::cpanel_action_restore_manual_backup();
+        static::cpanel_action_restore_manual_backup();
         die();
     }
 
@@ -4120,7 +4120,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_cpanel_action_refresh_available_backups() {
         Api_Backups_Helper::security_nonce( 'cpanel_action_refresh_available_backups' );
-        self::cpanel_action_refresh_available_backups();
+        static::cpanel_action_refresh_available_backups();
         die();
     }
 
@@ -4133,7 +4133,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_cpanel_action_create_manual_backup() {
         Api_Backups_Helper::security_nonce( 'cpanel_action_create_manual_backup' );
-        self::cpanel_action_create_manual_backup();
+        static::cpanel_action_create_manual_backup();
         die();
     }
 
@@ -4146,7 +4146,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_cpanel_action_create_wptk_backup() {
         Api_Backups_Helper::security_nonce( 'cpanel_action_create_wptk_backup' );
-        self::cpanel_action_create_wptk_backup();
+        static::cpanel_action_create_wptk_backup();
         die();
     }
 
@@ -4159,7 +4159,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_cpanel_action_restore_wptk_backup() {
         Api_Backups_Helper::security_nonce( 'cpanel_action_restore_wptk_backup' );
-        self::cpanel_action_restore_wptk_backup();
+        static::cpanel_action_restore_wptk_backup();
         die();
     }
 
@@ -4172,7 +4172,7 @@ class Api_Backups_3rd_Party {
      */
     public function ajax_cpanel_action_delete_wptk_backup() {
         Api_Backups_Helper::security_nonce( 'cpanel_action_delete_wptk_backup' );
-        self::cpanel_action_delete_wptk_backup();
+        static::cpanel_action_delete_wptk_backup();
         die();
     }
 
@@ -4204,7 +4204,7 @@ class Api_Backups_3rd_Party {
             }
 
             // Create file backup.
-            $file_backup_response = self::cpanel_action_create_manual_backup( true );
+            $file_backup_response = static::cpanel_action_create_manual_backup( true );
             $response_decoded     = json_decode( $file_backup_response['response'] );
             $errors               = $response_decoded->errors['0'];
 
@@ -4212,13 +4212,13 @@ class Api_Backups_3rd_Party {
             if ( empty( $errors ) ) {
 
                 // If no errors, create database backup.
-                $database_backup_response = self::ajax_cpanel_action_create_database_backup( true, $website_id );
+                $database_backup_response = static::ajax_cpanel_action_create_database_backup( true, $website_id );
 
                 // If no errors, & WP-Toolikit is enabled create WP-Toolkit backup or return true.
                 if ( 'GOOD' === $database_backup_response['result'] ) {
                         // If WP Toolkit is enabled, create WP Toolkit backup.
                     if ( 'on' === $mainwp_enable_wp_toolkit ) {
-                        $cpanel_wptk_backup_response = self::cpanel_action_create_wptk_backup( true );
+                        $cpanel_wptk_backup_response = static::cpanel_action_create_wptk_backup( true );
                         if ( '201' !== $cpanel_wptk_backup_response['httpCode'] && '200' !== $cpanel_wptk_backup_response['httpCode'] && '204' !== $cpanel_wptk_backup_response['httpCode'] ) {
                             wp_die( 'There was an issue while creating the Database backup. Please check logs and try again.' );
                         } else {
@@ -4296,11 +4296,11 @@ class Api_Backups_3rd_Party {
     public static function cpanel_action_create_manual_backup( $ret_val = false, $website_id = null ) {
 
         // Authenticate cPanel account.
-        $cpanel_authentication_credentials = self::get_cpanel_authentication_credentials( $website_id );
+        $cpanel_authentication_credentials = static::get_cpanel_authentication_credentials( $website_id );
         $website_id                        = $cpanel_authentication_credentials[0]['website_id'];
 
         // Send Payload & create backup.
-        $api_response     = self::call_cpanel_api( 'GET', '/execute/Backup/fullbackup_to_homedir', $cpanel_authentication_credentials[0]['cpanel_baseurl'], $cpanel_authentication_credentials[0]['cpanel_username'], $cpanel_authentication_credentials[0]['cpanel_password'] );
+        $api_response     = static::call_cpanel_api( 'GET', '/execute/Backup/fullbackup_to_homedir', $cpanel_authentication_credentials[0]['cpanel_baseurl'], $cpanel_authentication_credentials[0]['cpanel_username'], $cpanel_authentication_credentials[0]['cpanel_password'] );
         $response_decoded = is_array( $api_response ) && ! empty( $api_response['response'] ) ? json_decode( $api_response['response'] ) : '';
         $errors           = ! empty( $response_decoded ) && is_object( $response_decoded ) && ! empty( $response_decoded->errors ) ? $response_decoded->errors['0'] : '';
 
@@ -4344,7 +4344,7 @@ class Api_Backups_3rd_Party {
     public static function cpanel_action_create_wptk_backup( $ret_val = false ) {
 
         // Authenticate cPanel account.
-        $cpanel_authentication_credentials = self::get_cpanel_authentication_credentials();
+        $cpanel_authentication_credentials = static::get_cpanel_authentication_credentials();
         $cpanel_baseurl                    = $cpanel_authentication_credentials[0]['cpanel_baseurl'];
         $cpanel_username                   = $cpanel_authentication_credentials[0]['cpanel_username'];
         $cpanel_password                   = $cpanel_authentication_credentials[0]['cpanel_password'];
@@ -4357,7 +4357,7 @@ class Api_Backups_3rd_Party {
         $website_url = trim( $website['url'], '/' );
 
         // Grab list of WP Toolkit installations.
-        $wp_toolkit_installation_list         = self::call_cpanel_api( 'GET', '/3rdparty/wpt/index.php/v1/installations?sortBy=title&sortOrder=asc', $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $wp_toolkit_installation_list         = static::call_cpanel_api( 'GET', '/3rdparty/wpt/index.php/v1/installations?sortBy=title&sortOrder=asc', $cpanel_baseurl, $cpanel_username, $cpanel_password );
         $wp_toolkit_installation_list_decoded = json_decode( $wp_toolkit_installation_list['response'] );
 
         if ( '201' !== $wp_toolkit_installation_list['httpCode'] && '200' !== $wp_toolkit_installation_list['httpCode'] && '204' !== $wp_toolkit_installation_list['httpCode'] ) {
@@ -4380,7 +4380,7 @@ class Api_Backups_3rd_Party {
         $backup_data = wp_json_encode( $backup_data );
 
         // Grab list of WP Toolkit installations.
-        $wp_toolkit_backup_response         = self::call_cpanel_api_json( 'POST', '/3rdparty/wpt/index.php/v1/features/backups/creator', $cpanel_baseurl, $cpanel_username, $cpanel_password, $backup_data );
+        $wp_toolkit_backup_response         = static::call_cpanel_api_json( 'POST', '/3rdparty/wpt/index.php/v1/features/backups/creator', $cpanel_baseurl, $cpanel_username, $cpanel_password, $backup_data );
         $wp_toolkit_backup_response_decoded = is_array( $wp_toolkit_backup_response ) && ! empty( $wp_toolkit_backup_response['response'] ) ? json_decode( $wp_toolkit_backup_response['response'] ) : '';
 
         $error = '';
@@ -4421,7 +4421,7 @@ class Api_Backups_3rd_Party {
     public static function cpanel_action_restore_wptk_backup( $ret_val = false ) {
 
         // Authenticate cPanel account.
-        $cpanel_authentication_credentials = self::get_cpanel_authentication_credentials();
+        $cpanel_authentication_credentials = static::get_cpanel_authentication_credentials();
         $cpanel_baseurl                    = $cpanel_authentication_credentials[0]['cpanel_baseurl'];
         $cpanel_username                   = $cpanel_authentication_credentials[0]['cpanel_username'];
         $cpanel_password                   = $cpanel_authentication_credentials[0]['cpanel_password'];
@@ -4434,7 +4434,7 @@ class Api_Backups_3rd_Party {
         $website_url = trim( $website['url'], '/' );
 
         // Grab list of WP Toolkit installations.
-        $wp_toolkit_installation_list         = self::call_cpanel_api( 'GET', '/3rdparty/wpt/index.php/v1/installations?sortBy=title&sortOrder=asc', $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $wp_toolkit_installation_list         = static::call_cpanel_api( 'GET', '/3rdparty/wpt/index.php/v1/installations?sortBy=title&sortOrder=asc', $cpanel_baseurl, $cpanel_username, $cpanel_password );
         $wp_toolkit_installation_list_decoded = json_decode( $wp_toolkit_installation_list['response'] );
 
         if ( '201' !== $wp_toolkit_installation_list['httpCode'] && '200' !== $wp_toolkit_installation_list['httpCode'] && '204' !== $wp_toolkit_installation_list['httpCode'] ) {
@@ -4461,7 +4461,7 @@ class Api_Backups_3rd_Party {
         $backup_data = wp_json_encode( $backup_data );
 
         // Grab list of WP Toolkit installations.
-        $wp_toolkit_backup_response         = self::call_cpanel_api_json( 'POST', '/3rdparty/wpt/index.php/v1/features/backups/restorer', $cpanel_baseurl, $cpanel_username, $cpanel_password, $backup_data );
+        $wp_toolkit_backup_response         = static::call_cpanel_api_json( 'POST', '/3rdparty/wpt/index.php/v1/features/backups/restorer', $cpanel_baseurl, $cpanel_username, $cpanel_password, $backup_data );
         $wp_toolkit_backup_response_decoded = json_decode( $wp_toolkit_backup_response['response'] );
 
         if ( '201' !== $wp_toolkit_backup_response['httpCode'] && '200' !== $wp_toolkit_backup_response['httpCode'] && '204' !== $wp_toolkit_backup_response['httpCode'] ) {
@@ -4494,7 +4494,7 @@ class Api_Backups_3rd_Party {
         }
 
         // Authenticate cPanel account.
-        $cpanel_authentication_credentials = self::get_cpanel_authentication_credentials();
+        $cpanel_authentication_credentials = static::get_cpanel_authentication_credentials();
         $cpanel_baseurl                    = $cpanel_authentication_credentials[0]['cpanel_baseurl'];
         $cpanel_username                   = $cpanel_authentication_credentials[0]['cpanel_username'];
         $cpanel_password                   = $cpanel_authentication_credentials[0]['cpanel_password'];
@@ -4508,7 +4508,7 @@ class Api_Backups_3rd_Party {
         $wp_toolkit_installation_id = '';
 
         // Grab list of WP Toolkit installations.
-        $wp_toolkit_installation_list         = self::call_cpanel_api( 'GET', '/3rdparty/wpt/index.php/v1/installations?sortBy=title&sortOrder=asc', $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $wp_toolkit_installation_list         = static::call_cpanel_api( 'GET', '/3rdparty/wpt/index.php/v1/installations?sortBy=title&sortOrder=asc', $cpanel_baseurl, $cpanel_username, $cpanel_password );
         $wp_toolkit_installation_list_decoded = json_decode( $wp_toolkit_installation_list['response'] );
 
         if ( '201' !== $wp_toolkit_installation_list['httpCode'] && '200' !== $wp_toolkit_installation_list['httpCode'] && '204' !== $wp_toolkit_installation_list['httpCode'] ) {
@@ -4539,7 +4539,7 @@ class Api_Backups_3rd_Party {
         $payload = '/3rdparty/wpt/index.php/v1/installations/' . $wp_toolkit_installation_id . '/backups?files%5B%5D=' . rawurlencode( $backup_name );
 
         // Send Payload & create backup.
-        $api_response     = self::call_cpanel_api_json( 'DELETE', $payload, $cpanel_baseurl, $cpanel_username, $cpanel_password, $backup_data );
+        $api_response     = static::call_cpanel_api_json( 'DELETE', $payload, $cpanel_baseurl, $cpanel_username, $cpanel_password, $backup_data );
         $response_decoded = json_decode( $api_response['response'] );
         $errors           = $response_decoded->task->errors;
 
@@ -4565,7 +4565,7 @@ class Api_Backups_3rd_Party {
     public function cpanel_action_refresh_available_backups() {
 
         // Authenticate cPanel account.
-        $cpanel_authentication_credentials = self::get_cpanel_authentication_credentials();
+        $cpanel_authentication_credentials = static::get_cpanel_authentication_credentials();
         $cpanel_baseurl                    = $cpanel_authentication_credentials[0]['cpanel_baseurl'];
         $cpanel_username                   = $cpanel_authentication_credentials[0]['cpanel_username'];
         $cpanel_password                   = $cpanel_authentication_credentials[0]['cpanel_password'];
@@ -4573,27 +4573,27 @@ class Api_Backups_3rd_Party {
         $website_id                        = $cpanel_authentication_credentials[0]['website_id'];
 
         // Grab automatic WHM backups.
-        $api_response = self::call_cpanel_api( 'GET', '/execute/Restore/query_file_info?path=' . $cpanel_site_path . '&exists=1', $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $api_response = static::call_cpanel_api( 'GET', '/execute/Restore/query_file_info?path=' . $cpanel_site_path . '&exists=1', $cpanel_baseurl, $cpanel_username, $cpanel_password );
         $all_backups  = $api_response['response'];
 
         Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_cpanel_available_backups', $all_backups );
         Api_Backups_Utility::save_lasttime_backup( $website_id, $all_backups, 'cpanel_auto' );
 
         // Grab manual account backups.
-        $manual_backups = self::get_cpanel_manual_account_backups();
+        $manual_backups = static::get_cpanel_manual_account_backups();
         Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_cpanel_manual_backups', $manual_backups );
 
         Api_Backups_Utility::save_lasttime_backup( $website_id, $manual_backups, 'cpanel_manual' );
 
         // Grab manual DB backups.
-        $database_backups = self::get_cpanel_manual_database_backups( $website_id );
+        $database_backups = static::get_cpanel_manual_database_backups( $website_id );
         Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_cpanel_manual_database_backups', $database_backups );
 
         // Grab WP-Toolkit backups.
         $wp_toolkit_enabled = Api_Backups_Helper::get_website_options( $website_id, array( 'mainwp_enable_wp_toolkit' ) );
         $wp_toolkit_enabled = isset( $wp_toolkit_enabled['mainwp_enable_wp_toolkit'] ) ? strtolower( $wp_toolkit_enabled['mainwp_enable_wp_toolkit'] ) : 0;
         if ( $wp_toolkit_enabled ) {
-            $wp_toolkit_backups = self::get_cpanel_wp_toolkit_backups( $website_id );
+            $wp_toolkit_backups = static::get_cpanel_wp_toolkit_backups( $website_id );
             if ( $wp_toolkit_backups ) {
                 Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_cpanel_wp_toolkit_backups', $wp_toolkit_backups );
                 Api_Backups_Utility::save_lasttime_backup( $website_id, $wp_toolkit_backups, 'cpanel_wp_toolkit' );
@@ -4622,7 +4622,7 @@ class Api_Backups_3rd_Party {
         Api_Backups_Helper::security_nonce( 'cpanel_action_restore_backup' );
 
         // Authenticate cPanel account.
-        $cpanel_authentication_credentials = self::get_cpanel_authentication_credentials();
+        $cpanel_authentication_credentials = static::get_cpanel_authentication_credentials();
         $cpanel_baseurl                    = $cpanel_authentication_credentials[0]['cpanel_baseurl'];
         $cpanel_username                   = $cpanel_authentication_credentials[0]['cpanel_username'];
         $cpanel_password                   = $cpanel_authentication_credentials[0]['cpanel_password'];
@@ -4636,7 +4636,7 @@ class Api_Backups_3rd_Party {
         }
 
         // Send Payload & create backup.
-        $api_response = self::call_cpanel_api( 'GET', '/execute/Restore/restore_file?backupID=' . $backup_id . '&path=' . $cpanel_site_path . '&overwrite=1', $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $api_response = static::call_cpanel_api( 'GET', '/execute/Restore/restore_file?backupID=' . $backup_id . '&path=' . $cpanel_site_path . '&overwrite=1', $cpanel_baseurl, $cpanel_username, $cpanel_password );
 
         // Return AJAX.
         if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
@@ -4658,7 +4658,7 @@ class Api_Backups_3rd_Party {
     public function cpanel_action_restore_database_backup() {
 
         // Authenticate cPanel account.
-        $cpanel_authentication_credentials = self::get_cpanel_authentication_credentials();
+        $cpanel_authentication_credentials = static::get_cpanel_authentication_credentials();
 
         $cpanel_baseurl   = $cpanel_authentication_credentials[0]['cpanel_baseurl'];
         $cpanel_username  = $cpanel_authentication_credentials[0]['cpanel_username'];
@@ -4676,7 +4676,7 @@ class Api_Backups_3rd_Party {
         $backup_full_path = $backup_path . '/' . $backup_id;
 
         // Send Payload & create backup. https://{host}:{port}/execute/Backup/restore_databases?backup=database_file_name.sql.gz.
-        $api_response = self::call_cpanel_api( 'POST', '/execute/Backup/restore_databases?backup=' . $backup_full_path, $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $api_response = static::call_cpanel_api( 'POST', '/execute/Backup/restore_databases?backup=' . $backup_full_path, $cpanel_baseurl, $cpanel_username, $cpanel_password );
         // Return AJAX.
         if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
             // Store Last Backup timestamp.
@@ -4697,7 +4697,7 @@ class Api_Backups_3rd_Party {
     public function cpanel_action_restore_manual_backup() {
 
         // Authenticate cPanel account.
-        $cpanel_authentication_credentials = self::get_cpanel_authentication_credentials();
+        $cpanel_authentication_credentials = static::get_cpanel_authentication_credentials();
 
         $cpanel_baseurl   = $cpanel_authentication_credentials[0]['cpanel_baseurl'];
         $cpanel_username  = $cpanel_authentication_credentials[0]['cpanel_username'];
@@ -4725,7 +4725,7 @@ class Api_Backups_3rd_Party {
         $directory        = $backup_path;
 
         // Send Payload & create backup.
-        $api_response     = self::call_cpanel_api( 'POST', '/execute/Backup/restore_files?backup=' . $backup_full_path . '&directory=' . $directory, $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $api_response     = static::call_cpanel_api( 'POST', '/execute/Backup/restore_files?backup=' . $backup_full_path . '&directory=' . $directory, $cpanel_baseurl, $cpanel_username, $cpanel_password );
         $response_decoded = json_decode( $api_response['response'] );
         $errors           = $response_decoded->errors['0'];
 

@@ -88,7 +88,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             if ( isset( $_POST['metakeyselect'] ) && '#NONE#' === $_POST['metakeyselect'] && empty( $_POST['metakeyinput'] ) ) {
                 wp_die( 1 );
             }
-            $mid = self::add_meta( $pid );
+            $mid = static::add_meta( $pid );
             if ( ! $mid ) {
                 wp_send_json( array( 'error' => esc_html__( 'Please provide a custom field value.', 'mainwp' ) ) );
             }
@@ -241,7 +241,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     if ( is_array( $new_cats ) && ( 0 < count( $new_cats ) ) ) {
                         $current = current( $new_cats );
                         if ( is_array( $current ) && ! empty( $current ) ) { // new site's category format data.
-                            self::arrange_categories_list( $new_cats, $allCategories_new_tree );
+                            static::arrange_categories_list( $new_cats, $allCategories_new_tree );
                         } elseif ( is_string( $current ) ) { // old format.
                             $allCategories = array_unique( array_merge( $allCategories, $new_cats ) );
                         }
@@ -249,7 +249,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 } else {
                     $custom_categories = apply_filters( 'mainwp_edit_post_get_categories', false, $website, $_REQUEST );
                     if ( is_array( $custom_categories ) && ! empty( $custom_categories ) ) {
-                        self::arrange_categories_list( $custom_categories, $allCategories_new_tree );
+                        static::arrange_categories_list( $custom_categories, $allCategories_new_tree );
                     }
                 }
             }
@@ -267,7 +267,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
             if ( ! empty( $allCategories_new_tree ) ) {
                 // print new casts list.
-                self::print_catergories_tree( $allCategories_new_tree, $check_printed_cats_names );
+                static::print_catergories_tree( $allCategories_new_tree, $check_printed_cats_names );
             }
 
             if ( ! $is_cpt && 0 < count( $allCategories ) ) {
@@ -330,7 +330,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             }
 
             if ( ! empty( $item['children'] ) ) {
-                self::print_catergories_tree( $item['children'], $check_printed_cats_names );
+                static::print_catergories_tree( $item['children'], $check_printed_cats_names );
             }
         }
     }
@@ -416,9 +416,9 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         <input type="hidden" name="bulk_posting_id" id="bulk_posting_id" value="<?php echo intval( $p_id ); ?>"/>                       
         <?php
         if ( ! $posting_bulk_sites ) {
-            self::posting( $p_id );
+            static::posting( $p_id );
         } else {
-            self::posting_prepare( $p_id );
+            static::posting_prepare( $p_id );
         }
     }
 
@@ -471,7 +471,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                 if ( ! $skip_post ) {
                     if ( $p_id ) {
-                        self::posting_posts( $p_id, 'posting' );
+                        static::posting_posts( $p_id, 'posting' );
                     } else {
                         ?>
                     <div class="error">
@@ -522,7 +522,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <div class="scrolling content">
                 <?php
                 if ( $post_id ) {
-                    self::posting_posts( $post_id, 'preparing' );
+                    static::posting_posts( $post_id, 'preparing' );
                 } else {
                     ?>
                     <div class="error">
@@ -567,7 +567,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_post_postingbulk' );
         $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : false;
         if ( $post_id ) {
-            self::posting_posts( $post_id, 'ajax_posting' );
+            static::posting_posts( $post_id, 'ajax_posting' );
         }
 		 // phpcs:enable
         die();
@@ -1004,7 +1004,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
             die( wp_json_encode( array( 'error' => 'Unexpected error.' ) ) );
         } else {
-            $ret = self::new_post( $information['my_post'], $replaceadvImg, $website );
+            $ret = static::new_post( $information['my_post'], $replaceadvImg, $website );
             if ( is_array( $ret ) && isset( $ret['id'] ) ) {
                 // to support edit post.
                 update_post_meta( $ret['id'], '_selected_sites', array( $websiteId ) );
@@ -1035,7 +1035,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $post_gallery_images = base64_decode( $post_data['post_gallery_images'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
         $upload_dir          = json_decode( base64_decode( $post_data['child_upload_dir'] ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
         $post_gallery_images = base64_decode( $post_data['post_gallery_images'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-        return self::create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images, $replaceadvImg, $website );
+        return static::create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images, $replaceadvImg, $website );
     }
 
     /**
@@ -1092,7 +1092,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
 
                 try {
-                    $downloadfile = self::upload_image( $originalImgUrl );
+                    $downloadfile = static::upload_image( $originalImgUrl );
                     $localUrl     = $downloadfile['url'];
 
                     $linkToReplaceWith = dirname( $localUrl );
@@ -1123,7 +1123,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     foreach ( $post_gallery_images as $gallery ) {
                         if ( isset( $gallery['src'] ) ) {
                             try {
-                                $upload = self::upload_image( $gallery['src'], $gallery, true );
+                                $upload = static::upload_image( $gallery['src'], $gallery, true );
                                 if ( null !== $upload ) {
                                     $replaceAttachedIds[ $gallery['id'] ] = $upload['id'];
                                 }
@@ -1153,8 +1153,8 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
 
         if ( $replaceadvImg && $website ) {
-            $new_post['post_content'] = self::replace_advanced_image( $new_post['post_content'], $upload_dir, $website );
-            $new_post['post_content'] = self::replace_advanced_image( $new_post['post_content'], $upload_dir, $website, true ); // to fix images url with slashes.
+            $new_post['post_content'] = static::replace_advanced_image( $new_post['post_content'], $upload_dir, $website );
+            $new_post['post_content'] = static::replace_advanced_image( $new_post['post_content'], $upload_dir, $website, true ); // to fix images url with slashes.
         }
 
         $is_sticky = false;
@@ -1211,7 +1211,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         if ( null !== $post_featured_image && ! empty( $post_featured_image ) ) {
             try {
-                $upload = self::upload_image( $post_featured_image );
+                $upload = static::upload_image( $post_featured_image );
 
                 if ( null !== $upload ) {
                     update_post_meta( $new_post_id, '_thumbnail_id', $upload['id'] );
@@ -1283,7 +1283,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
 
                 try {
-                    $downloadfile      = self::upload_image( wp_unslash( $originalImgUrl ) );
+                    $downloadfile      = static::upload_image( wp_unslash( $originalImgUrl ) );
                     $localUrl          = $downloadfile['url'];
                     $linkToReplaceWith = dirname( $localUrl );
                     $lnkToReplace      = dirname( $imgUrl );
@@ -1308,7 +1308,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * Handle upload image.
      *
-     * @throws \Exception Error upload file.
+     * @throws \MainWP_Exception Error upload file.
      *
      * @param string $img_url URL for the image.
      * @param array  $img_data Array of image data.

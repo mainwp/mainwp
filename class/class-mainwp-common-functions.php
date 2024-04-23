@@ -48,10 +48,10 @@ class MainWP_Common_Functions { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @return MainWP_DB_Common
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -60,7 +60,7 @@ class MainWP_Common_Functions { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * Runs any time class is called.
      */
     public function __construct() {
-        self::$instance = $this;
+        static::$instance = $this;
         if ( null === $this->userExtension ) {
             $this->userExtension = MainWP_DB_Common::instance()->get_user_extension();
         }

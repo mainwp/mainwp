@@ -36,10 +36,10 @@ class Api_Backups_Overview {
      * @return Api_Backups_Overview
      */
     public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
 
@@ -88,7 +88,7 @@ class Api_Backups_Overview {
         ?>
         <div>
         <?php
-        if ( self::is_managesites_page() ) {
+        if ( static::is_managesites_page() ) {
             $site_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
             $website = Api_Backups_Helper::get_website_by_id( $site_id );
             if ( empty( $site_id ) || empty( $website ) ) {

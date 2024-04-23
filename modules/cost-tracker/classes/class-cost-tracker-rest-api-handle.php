@@ -29,13 +29,13 @@ class Cost_Tracker_Rest_Api_Handle {
      * Create public static instance.
      *
      * @static
-     * @return self::$instance
+     * @return static::$instance
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**

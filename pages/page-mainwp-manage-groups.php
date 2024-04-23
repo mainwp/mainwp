@@ -46,7 +46,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
          *
          * @see \MainWP_Manage_Groups::render_header
          */
-        add_action( 'mainwp_pageheader_tags', array( self::get_class_name(), 'render_header' ) );
+        add_action( 'mainwp_pageheader_tags', array( static::get_class_name(), 'render_header' ) );
 
         /**
          * This hook allows you to render the Tags page footer via the 'mainwp_pagefooter_tags' action.
@@ -58,9 +58,9 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
          *
          * @see \MainWP_Manage_Groups::render_footer
          */
-        add_action( 'mainwp_pagefooter_tags', array( self::get_class_name(), 'render_footer' ) );
+        add_action( 'mainwp_pagefooter_tags', array( static::get_class_name(), 'render_footer' ) );
 
-        add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
+        add_action( 'mainwp_help_sidebar_content', array( static::get_class_name(), 'mainwp_help_content' ) );
     }
 
 
@@ -77,7 +77,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             'read',
             'ManageGroups',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render_all_groups',
             )
         );
@@ -87,9 +87,9 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
          *
          * @link http://codex.mainwp.com/#mainwp-getsubpages-tags
          */
-        self::$subPages = apply_filters( 'mainwp_getsubpages_tags', self::$subPages );
+        static::$subPages = apply_filters( 'mainwp_getsubpages_tags', static::$subPages );
 
-        self::init_left_menu( self::$subPages );
+        static::init_left_menu( static::$subPages );
     }
 
     /**
@@ -162,8 +162,8 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             );
         }
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageGroups' . $subPage['slug'] ) ) {
                     continue;
                 }
@@ -200,7 +200,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         $groups = MainWP_DB_Common::instance()->get_groups_and_count();
 
         foreach ( $groups as $group ) {
-            self::create_group_item( $group );
+            static::create_group_item( $group );
         }
     }
 
@@ -324,16 +324,16 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             <div class="ui stackable grid">
                 <div class="<?php echo 1 === (int) $sidebarPosition ? 'twelve' : 'four'; ?> wide column">
                     <?php if ( 1 === (int) $sidebarPosition ) : ?>
-                        <?php self::render_groups_sites_table_element(); ?>
+                        <?php static::render_groups_sites_table_element(); ?>
                     <?php else : ?>
-                        <?php self::render_groups_menu_element(); ?>
+                        <?php static::render_groups_menu_element(); ?>
                     <?php endif; ?>
                 </div>
                 <div class="<?php echo 1 === (int) $sidebarPosition ? 'four' : 'twelve'; ?> wide column">
                     <?php if ( 1 === (int) $sidebarPosition ) : ?>
-                        <?php self::render_groups_menu_element(); ?>
+                        <?php static::render_groups_menu_element(); ?>
                     <?php else : ?>
-                        <?php self::render_groups_sites_table_element(); ?>
+                        <?php static::render_groups_sites_table_element(); ?>
                     <?php endif; ?>
                 </div>
                 <script type="text/javascript">
@@ -469,7 +469,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         ?>
         <div class="ui fluid <?php echo 1 === (int) $sidebarPosition ? 'right' : ''; ?> pointing vertical menu sticky" id="mainwp-groups-menu" style="margin-top:52px">
             <h4 class="item ui header"><?php esc_html_e( 'Tags', 'mainwp' ); ?></h4>
-        <?php self::get_group_list_content(); ?>
+        <?php static::get_group_list_content(); ?>
             <div class="item">
                 <div class="ui two columns stackable grid">
                     <div class="left aligned column">
@@ -505,7 +505,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 </tr>
             </thead>
             <tbody>
-            <?php self::get_website_list_content(); ?>
+            <?php static::get_website_list_content(); ?>
             </tbody>
             <tfoot>
                 <tr>
@@ -540,7 +540,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     $name = $group->name;
                 }
 
-                $name = self::check_group_name( $name, $group->id );
+                $name = static::check_group_name( $name, $group->id );
 
                 if ( isset( $_POST['newColor'] ) && ! empty( $_POST['newColor'] ) ) {
                     $color = sanitize_hex_color( wp_unslash( $_POST['newColor'] ) );
@@ -672,7 +672,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 		//phpcs:enable
 
         if ( ! empty( $newName ) ) {
-            $groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( $newName ), $newColor );
+            $groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, static::check_group_name( $newName ), $newColor );
 
             /**
              * New Group Added
@@ -683,7 +683,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
              */
             do_action( 'mainwp_added_new_group', $groupId );
             $group = MainWP_DB_Common::instance()->get_group_by_id( $groupId );
-            self::create_group_item( $group );
+            static::create_group_item( $group );
             die();
         }
         die( wp_json_encode( array( 'error' => 1 ) ) );
@@ -706,7 +706,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
          */
         global $current_user;
 
-        $groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( $gname ), $gcolor );
+        $groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, static::check_group_name( $gname ), $gcolor );
 
         if ( $groupId ) {
             $group = MainWP_DB_Common::instance()->get_group_by_id( $groupId );

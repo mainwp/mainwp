@@ -40,7 +40,7 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * Method render()
      */
     public static function render() {
-        self::render_content();
+        static::render_content();
     }
 
     /**

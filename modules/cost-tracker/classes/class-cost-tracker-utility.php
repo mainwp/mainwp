@@ -49,10 +49,10 @@ class Cost_Tracker_Utility {
      * @return Cost_Tracker_Utility
      */
     public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -170,13 +170,13 @@ class Cost_Tracker_Utility {
         $get_formated_number = ! empty( $params['get_formated_number'] ) ? true : false;
         $get_decimals        = ! empty( $params['get_decimals'] ) ? true : false;
 
-        $currency = self::get_instance()->get_option( 'currency' );
-        $settings = self::get_instance()->get_option( 'currency_format' );
+        $currency = static::get_instance()->get_option( 'currency' );
+        $settings = static::get_instance()->get_option( 'currency_format' );
 
         if ( ! is_array( $settings ) ) {
             $settings = array();
         }
-        $default = self::default_currency_settings();
+        $default = static::default_currency_settings();
         $args    = array_merge( $default, $settings );
 
         $original_price = $price;
@@ -223,12 +223,12 @@ class Cost_Tracker_Utility {
 
         if ( $get_currency_format ) {
             return array(
-                'format'   => sprintf( $format, esc_html( self::get_currency_symbol( $currency ) ), '%1' ), // %1 for price holder.
+                'format'   => sprintf( $format, esc_html( static::get_currency_symbol( $currency ) ), '%1' ), // %1 for price holder.
                 'decimals' => $args['decimals'],
             );
         }
 
-        $formatted_price = ( $negative ? '-' : '' ) . sprintf( $format, '<span class="cost-tracker-currency-symbol">' . esc_html( self::get_currency_symbol( $currency ) ) . '</span>', esc_html( $price ) );
+        $formatted_price = ( $negative ? '-' : '' ) . sprintf( $format, '<span class="cost-tracker-currency-symbol">' . esc_html( static::get_currency_symbol( $currency ) ) . '</span>', esc_html( $price ) );
         $value           = '<span class="cost-tracker-currency-amount"><bdi>' . $formatted_price . '</bdi></span>';
 
         if ( $ret ) {
@@ -258,14 +258,14 @@ class Cost_Tracker_Utility {
         if ( is_array( $group_prices ) ) {
             foreach ( $grouped as $idx => $char ) {
                 if ( ! empty( $group_prices[ $idx ] ) ) {
-                    $formated_prices[ $idx ] = self::cost_tracker_format_price( $group_prices[ $idx ], true ) . '/' . $char;
+                    $formated_prices[ $idx ] = static::cost_tracker_format_price( $group_prices[ $idx ], true ) . '/' . $char;
                 }
             }
         }
         if ( ! empty( $formated_prices ) ) {
             return implode( '|', $formated_prices );
         }
-        return self::cost_tracker_format_price( 0, true );
+        return static::cost_tracker_format_price( 0, true );
     }
 
     /**
@@ -279,7 +279,7 @@ class Cost_Tracker_Utility {
         if ( ! is_string( $currency ) ) {
             return '';
         }
-        $all_curs = self::get_all_currency_symbols();
+        $all_curs = static::get_all_currency_symbols();
         return isset( $all_curs[ $currency ]['symbol'] ) ? $all_curs[ $currency ]['symbol'] : '';
     }
 
@@ -986,7 +986,7 @@ class Cost_Tracker_Utility {
      * @param array $settings Settings value.
      */
     public static function validate_currency_settings( $settings ) {
-        $default        = self::default_currency_settings();
+        $default        = static::default_currency_settings();
         $valid_settings = array();
 
         $valid_settings['currency_position'] = isset( $settings['currency_position'] ) ? sanitize_text_field( wp_unslash( $settings['currency_position'] ) ) : 'left';

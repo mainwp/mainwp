@@ -129,7 +129,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             update_option( 'mainwp_api_sslVerifyCertificate', 0 );
         }
 
-        $all_available_extensions = self::get_available_extensions( 'all' );
+        $all_available_extensions = static::get_available_extensions( 'all' );
 
         $extensions_disabled = MainWP_Extensions_Handler::get_extensions_disabled();
 
@@ -145,7 +145,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             </div>
             <div class="mainwp-main-content">
                 <?php
-                self::render_incompatible_notice();
+                static::render_incompatible_notice();
                 if ( $is_demo ) {
                     ?>
                     <div class="ui yellow message">
@@ -156,7 +156,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
                 ?>
                 <?php if ( 0 === count( $extensions ) && empty( $extensions_disabled ) ) { ?>
-                    <?php self::render_intro_notice(); ?>
+                    <?php static::render_intro_notice(); ?>
                     <?php
                 } else {
                     ?>
@@ -189,7 +189,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                                         $img_url = MAINWP_PLUGIN_URL . 'assets/images/extensions/placeholder.png';
                                     }
 
-                                    self::render_extension_card( $extension, $extension_update, $img_url );
+                                    static::render_extension_card( $extension, $extension_update, $img_url );
                                     ?>
 
                             <?php } ?>
@@ -216,7 +216,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                                             $img_url = MAINWP_PLUGIN_URL . 'assets/images/extensions/placeholder.png';
                                         }
 
-                                        self::render_extension_card( $extension, $extension_update, $img_url, true );
+                                        static::render_extension_card( $extension, $extension_update, $img_url, true );
                                         ?>
 
                             <?php } ?>
@@ -224,16 +224,16 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         <?php } ?>
             </div>
                     <?php } ?>
-                <?php self::render_purchase_notice(); ?>
+                <?php static::render_purchase_notice(); ?>
             </div>
             <div class="mainwp-side-content mainwp-no-padding">
                     <?php if ( 0 !== count( $extensions ) || 0 !== count( $extensions_disabled ) ) { ?>
-                        <?php self::render_search_box(); ?>
+                        <?php static::render_search_box(); ?>
                 <?php } ?>
-                    <?php self::render_side_box( $mainwp_api_key ); ?>
+                    <?php static::render_side_box( $mainwp_api_key ); ?>
             </div>
             <div id="mainwp-extensions-privacy-info">
-                <?php $priv_extensions = self::get_available_extensions( 'all' ); ?>
+                <?php $priv_extensions = static::get_available_extensions( 'all' ); ?>
                 <?php
                 foreach ( $priv_extensions as $priv_extension ) {
                     $item_slug = MainWP_Utility::get_dir_slug( $priv_extension['slug'] );
@@ -437,7 +437,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $queue_status = 'queue';
         }
 
-        $all_available_extensions = self::get_available_extensions( 'all' );
+        $all_available_extensions = static::get_available_extensions( 'all' );
         $extensions_data          = isset( $all_available_extensions[ dirname( $extension['slug'] ) ] ) ? $all_available_extensions[ dirname( $extension['slug'] ) ] : array();
 
         $privacy_class = '';

@@ -30,10 +30,10 @@ class MainWP_Actions_Handler { //phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return MainWP_Actions_Handler
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**

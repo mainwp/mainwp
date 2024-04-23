@@ -36,8 +36,8 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
          *
          * @see \MainWP_Extensions::render_header
          */
-        add_action( 'mainwp-pageheader-extensions', array( self::get_class_name(), 'render_header' ) ); // @deprecated Use 'mainwp_pageheader_extensions' instead.
-        add_action( 'mainwp_pageheader_extensions', array( self::get_class_name(), 'render_header' ) );
+        add_action( 'mainwp-pageheader-extensions', array( static::get_class_name(), 'render_header' ) ); // @deprecated Use 'mainwp_pageheader_extensions' instead.
+        add_action( 'mainwp_pageheader_extensions', array( static::get_class_name(), 'render_header' ) );
 
         /**
          * This hook allows you to render the Extensions page footer via the 'mainwp-pagefooter-extensions' action.
@@ -46,10 +46,10 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
          *
          * @see \MainWP_Extensions::render_footer
          */
-        add_action( 'mainwp-pagefooter-extensions', array( self::get_class_name(), 'render_footer' ) ); // @deprecated Use 'mainwp_pagefooter_extensions' instead.
-        add_action( 'mainwp_pagefooter_extensions', array( self::get_class_name(), 'render_footer' ) );
+        add_action( 'mainwp-pagefooter-extensions', array( static::get_class_name(), 'render_footer' ) ); // @deprecated Use 'mainwp_pagefooter_extensions' instead.
+        add_action( 'mainwp_pagefooter_extensions', array( static::get_class_name(), 'render_footer' ) );
 
-        add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
+        add_action( 'mainwp_help_sidebar_content', array( static::get_class_name(), 'mainwp_help_content' ) );
 
         add_filter( 'mainwp-extensions-apigeneratepassword', array( MainWP_Extensions_Handler::get_class_name(), 'gen_api_password' ), 10, 3 );
         add_filter( 'mainwp_extensions_apigeneratepassword', array( MainWP_Extensions_Handler::get_class_name(), 'gen_api_password' ), 10, 3 );
@@ -249,7 +249,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
         if ( ! $is_cached ) {
             update_option( 'mainwp_extensions_all_activation_cached', $activations_cached );
         }
-        self::init_left_menu( $extsPages );
+        static::init_left_menu( $extsPages );
     }
 
     /**

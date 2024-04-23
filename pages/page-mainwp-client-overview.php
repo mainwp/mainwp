@@ -57,16 +57,16 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * Check if there is a session,
      * if there isn't one create it.
      *
-     *  @return self::singlton Overview Page Session.
+     *  @return static::singlton Overview Page Session.
      *
      * @uses \MainWP\Dashboard\MainWP_Overview
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -88,8 +88,8 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @return int $columns Number of desired page columns.
      */
     public function on_screen_layout_columns( $columns, $screen ) {
-        if ( $screen === self::$page ) {
-            $columns[ self::$page ] = 3;
+        if ( $screen === static::$page ) {
+            $columns[ static::$page ] = 3;
         }
 
         return $columns;
@@ -105,7 +105,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     public static function on_load_page( $page ) {
 
-        self::$page = $page;
+        static::$page = $page;
 
         $val = get_user_option( 'screen_layout_' . $page );
         if ( ! $val ) {
@@ -119,9 +119,9 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         wp_enqueue_script( 'dashboard' );
         wp_enqueue_script( 'widgets' );
 
-        self::add_meta_boxes( $page );
+        static::add_meta_boxes( $page );
 
-        add_filter( 'mainwp_header_actions_right', array( self::get_class_name(), 'screen_options' ), 10, 2 );
+        add_filter( 'mainwp_header_actions_right', array( static::get_class_name(), 'screen_options' ), 10, 2 );
     }
 
     /**
@@ -169,10 +169,10 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $extMetaBoxs = apply_filters( 'mainwp_clients_getmetaboxes', $extMetaBoxs );
         foreach ( $extMetaBoxs as $box ) {
             if ( isset( $box['plugin'] ) ) {
-                $name                          = basename( $box['plugin'], '.php' );
-                self::$enable_widgets[ $name ] = true;
+                $name                            = basename( $box['plugin'], '.php' );
+                static::$enable_widgets[ $name ] = true;
             } elseif ( ! empty( $box['widget_id'] ) ) {
-                self::$enable_widgets[ $box['widget_id'] ] = true;
+                static::$enable_widgets[ $box['widget_id'] ] = true;
             }
         }
 
@@ -183,10 +183,10 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         if ( is_array( $client_contacts ) ) {
             foreach ( $client_contacts as $contact ) {
-                self::$enable_widgets[ 'contact_' . $contact['contact_id'] ] = true;
+                static::$enable_widgets[ 'contact_' . $contact['contact_id'] ] = true;
             }
         }
-        $values = self::$enable_widgets;
+        $values = static::$enable_widgets;
 
         /**
          * Unset unwanted Widgets
@@ -198,15 +198,15 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
          *
          * @since 4.3
          */
-        $values               = apply_filters( 'mainwp_clients_overview_enabled_widgets', $values, null );
-        self::$enable_widgets = array_merge( self::$enable_widgets, $values );
+        $values                 = apply_filters( 'mainwp_clients_overview_enabled_widgets', $values, null );
+        static::$enable_widgets = array_merge( static::$enable_widgets, $values );
 
         $i = 1;
         foreach ( $extMetaBoxs as $metaBox ) {
             $enabled = true;
             if ( isset( $metaBox['plugin'] ) ) {
                 $name = basename( $metaBox['plugin'], '.php' );
-                if ( isset( self::$enable_widgets[ $name ] ) && ! self::$enable_widgets[ $name ] ) {
+                if ( isset( static::$enable_widgets[ $name ] ) && ! static::$enable_widgets[ $name ] ) {
                     $enabled = false;
                 }
             }
@@ -222,28 +222,28 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         // Load the Non-MainWP Changes widget.
-        if ( self::$enable_widgets['non_mainwp_changes'] ) {
+        if ( static::$enable_widgets['non_mainwp_changes'] ) {
             MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
         }
 
         // Load the Recent Pages widget.
-        if ( self::$enable_widgets['recent_pages'] ) {
+        if ( static::$enable_widgets['recent_pages'] ) {
             MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
         }
 
         // Load the Recent Posts widget.
-        if ( self::$enable_widgets['recent_posts'] ) {
+        if ( static::$enable_widgets['recent_posts'] ) {
             MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
         }
 
         // Load the Notes widget.
-        if ( self::$enable_widgets['note'] ) {
+        if ( static::$enable_widgets['note'] ) {
             MainWP_UI::add_widget_box( 'note', array( MainWP_Client_Overview_Note::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
         }
 
         if ( is_array( $client_contacts ) ) {
             foreach ( $client_contacts as $contact ) {
-                if ( isset( self::$enable_widgets[ 'contact_' . $contact['contact_id'] ] ) && self::$enable_widgets[ 'contact_' . $contact['contact_id'] ] ) {
+                if ( isset( static::$enable_widgets[ 'contact_' . $contact['contact_id'] ] ) && static::$enable_widgets[ 'contact_' . $contact['contact_id'] ] ) {
                     $contact_widget          = new MainWP_Client_Overview_Contacts();
                     $contact_widget->contact = $contact;
                     MainWP_UI::add_widget_box( 'contact_' . $contact['contact_id'], array( $contact_widget, 'render' ), $page, array( 1, 1, 4, 9 ) );
@@ -252,17 +252,17 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         // Load the Websites widget.
-        if ( self::$enable_widgets['websites'] ) {
+        if ( static::$enable_widgets['websites'] ) {
             MainWP_UI::add_widget_box( 'websites', array( MainWP_Client_Overview_Sites::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
         }
 
         // Load the Info widget.
-        if ( self::$enable_widgets['fields_info'] ) {
+        if ( static::$enable_widgets['fields_info'] ) {
             MainWP_UI::add_widget_box( 'fields_info', array( MainWP_Client_Overview_Custom_Info::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
         }
 
         // Load the Overview widget.
-        if ( self::$enable_widgets['overview'] ) {
+        if ( static::$enable_widgets['overview'] ) {
             MainWP_UI::add_widget_box( 'overview', array( MainWP_Client_Overview_Info::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
         }
     }
@@ -287,7 +287,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         MainWP_Client::render_header( 'overview' );
 
-        self::render_dashboard_body();
+        static::render_dashboard_body();
         ?>
         </div>
         <?php
@@ -373,7 +373,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 <form method="POST" action="" name="mainwp_clients_overview_screen_options_form" id="mainwp-clients-overview-screen-options-form">
                     <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                     <input type="hidden" name="wp_scr_options_nonce" value="<?php echo esc_attr( wp_create_nonce( 'MainWPClientsScrOptions' ) ); ?>" />
-                    <?php self::render_screen_options( false ); ?>
+                    <?php static::render_screen_options( false ); ?>
                     <?php
                     /**
                      * Action: mainwp_clients_overview_screen_options_bottom

@@ -115,7 +115,7 @@ class Log_Settings {
                     'access_insights_dashboard',
                 ),
             ),
-            'init_menu_callback' => array( self::class, 'init_menu' ),
+            'init_menu_callback' => array( static::class, 'init_menu' ),
             'leftbar_order'      => 2.9,
         );
         return $items;
@@ -128,7 +128,7 @@ class Log_Settings {
      */
     public static function init_menu() {
 
-        self::$page = add_submenu_page(
+        static::$page = add_submenu_page(
             'mainwp_tab',
             esc_html__( 'Insights', 'mainwp' ),
             '<span id="mainwp-insights">' . esc_html__( 'Insights', 'mainwp' ) . '</span>',
@@ -146,7 +146,7 @@ class Log_Settings {
             add_filter( 'mainwp_enqueue_script_gridster', '__return_true' );
         }
 
-        add_action( 'load-' . self::$page, array( self::class, 'on_load_page' ) );
+        add_action( 'load-' . static::$page, array( static::class, 'on_load_page' ) );
     }
 
     /**
@@ -155,7 +155,7 @@ class Log_Settings {
      * Run on page load.
      */
     public static function on_load_page() {
-        Log_Insights_Page::instance()->on_load_page( self::$page );
+        Log_Insights_Page::instance()->on_load_page( static::$page );
     }
 
     /**

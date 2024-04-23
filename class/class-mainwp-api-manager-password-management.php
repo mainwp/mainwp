@@ -68,7 +68,7 @@ class MainWP_Api_Manager_Password_Management { // phpcs:ignore Generic.Classes.O
      * @return string Encrypted string.
      */
     public static function encrypt_string( $str ) {
-        return self::encrypt( $str, self::$ENCRYPT );
+        return static::encrypt( $str, static::$ENCRYPT );
     }
 
     /**
@@ -79,7 +79,7 @@ class MainWP_Api_Manager_Password_Management { // phpcs:ignore Generic.Classes.O
      * @return string Decrypted string.
      */
     public static function decrypt_string( $encrypted ) {
-        return self::decrypt( $encrypted, self::$ENCRYPT );
+        return static::decrypt( $encrypted, static::$ENCRYPT );
     }
 
 

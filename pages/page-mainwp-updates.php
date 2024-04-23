@@ -118,7 +118,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          */
         add_action( 'mainwp-pagefooter-updates', array( MainWP_Post::get_class_name(), 'render_footer' ) );
 
-        add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
+        add_action( 'mainwp_help_sidebar_content', array( static::get_class_name(), 'mainwp_help_content' ) );
     }
 
     /**
@@ -127,8 +127,8 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
      */
     public static function init_menu() {
-        self::init_left_menu( self::$subPages );
-        add_action( 'load-' . self::$page, array( self::get_class_name(), 'on_load_page' ) );
+        static::init_left_menu( static::$subPages );
+        add_action( 'load-' . static::$page, array( static::get_class_name(), 'on_load_page' ) );
     }
 
     /**
@@ -141,14 +141,14 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
     public static function init_left_menu( $subPages = array() ) {
-        self::$page = add_submenu_page(
+        static::$page = add_submenu_page(
             'mainwp_tab',
             __( 'Updates', 'mainwp' ),
             '<span id="mainwp-Updates">' . esc_html__( 'Updates', 'mainwp' ) . '</span>',
             'read',
             'UpdatesManage',
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'render',
             )
         );
@@ -273,7 +273,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * Run on page load.
      */
     public static function on_load_page() {
-        add_filter( 'mainwp_header_actions_right', array( self::get_class_name(), 'screen_options' ), 10, 2 );
+        add_filter( 'mainwp_header_actions_right', array( static::get_class_name(), 'screen_options' ), 10, 2 );
     }
 
     /**
@@ -336,10 +336,10 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return bool Whether user can ignore updates or not.
      */
     public static function user_can_ignore_updates() {
-        if ( null === self::$user_can_ignore_updates ) {
-            self::$user_can_ignore_updates = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
+        if ( null === static::$user_can_ignore_updates ) {
+            static::$user_can_ignore_updates = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
         }
-        return self::$user_can_ignore_updates;
+        return static::$user_can_ignore_updates;
     }
 
     /**
@@ -348,10 +348,10 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return bool Whether user can update translations or not.
      */
     public static function user_can_update_trans() {
-        if ( null === self::$user_can_update_trans ) {
-            self::$user_can_update_trans = mainwp_current_user_have_right( 'dashboard', 'update_translations' );
+        if ( null === static::$user_can_update_trans ) {
+            static::$user_can_update_trans = mainwp_current_user_have_right( 'dashboard', 'update_translations' );
         }
-        return self::$user_can_update_trans;
+        return static::$user_can_update_trans;
     }
 
     /**
@@ -360,10 +360,10 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return bool Whether user can update WordPress or not.
      */
     public static function user_can_update_wp() {
-        if ( null === self::$user_can_update_wp ) {
-            self::$user_can_update_wp = mainwp_current_user_have_right( 'dashboard', 'update_wordpress' );
+        if ( null === static::$user_can_update_wp ) {
+            static::$user_can_update_wp = mainwp_current_user_have_right( 'dashboard', 'update_wordpress' );
         }
-        return self::$user_can_update_wp;
+        return static::$user_can_update_wp;
     }
 
     /**
@@ -372,10 +372,10 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return bool Whether user can update themes or not.
      */
     public static function user_can_update_themes() {
-        if ( null === self::$user_can_update_themes ) {
-            self::$user_can_update_themes = mainwp_current_user_have_right( 'dashboard', 'update_themes' );
+        if ( null === static::$user_can_update_themes ) {
+            static::$user_can_update_themes = mainwp_current_user_have_right( 'dashboard', 'update_themes' );
         }
-        return self::$user_can_update_themes;
+        return static::$user_can_update_themes;
     }
 
     /**
@@ -384,10 +384,10 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return bool Whether user can update plugins or not.
      */
     public static function user_can_update_plugins() {
-        if ( null === self::$user_can_update_plugins ) {
-            self::$user_can_update_plugins = mainwp_current_user_have_right( 'dashboard', 'update_plugins' );
+        if ( null === static::$user_can_update_plugins ) {
+            static::$user_can_update_plugins = mainwp_current_user_have_right( 'dashboard', 'update_plugins' );
         }
-        return self::$user_can_update_plugins;
+        return static::$user_can_update_plugins;
     }
 
     /**
@@ -402,7 +402,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Utility::array_sort()
      */
     public static function render() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- current complexity is the only way to achieve desired results, pull request solutions appreciated.
-        $websites      = self::get_sites_for_current_user();
+        $websites      = static::get_sites_for_current_user();
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
         $site_view     = (int) $userExtension->site_view;
 
@@ -754,10 +754,10 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( 0 < $limit_updates_all ) {
             if ( isset( $_GET['continue_update'] ) && '' !== $_GET['continue_update'] ) {
-                self::$continue_update = sanitize_text_field( wp_unslash( $_GET['continue_update'] ) );
-                if ( 'plugins_upgrade_all' === self::$continue_update || 'themes_upgrade_all' === self::$continue_update || 'translations_upgrade_all' === self::$continue_update ) {
+                static::$continue_update = sanitize_text_field( wp_unslash( $_GET['continue_update'] ) );
+                if ( 'plugins_upgrade_all' === static::$continue_update || 'themes_upgrade_all' === static::$continue_update || 'translations_upgrade_all' === static::$continue_update ) {
                     if ( isset( $_GET['slug'] ) && '' !== $_GET['slug'] ) {
-                        self::$continue_update_slug = wp_unslash( $_GET['slug'] );
+                        static::$continue_update_slug = wp_unslash( $_GET['slug'] );
                     }
                 }
             }
@@ -774,9 +774,9 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $current_tab = 'plugins-updates';
         }
 		// phpcs:enable
-        self::render_header( 'UpdatesManage' );
+        static::render_header( 'UpdatesManage' );
 
-        self::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view );
+        static::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view );
 
         ?>
         <div class="ui segment" id="mainwp-manage-updates">
@@ -793,30 +793,30 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         if ( false === $hooks_tabs ) {
             if ( 'wordpress-updates' === $current_tab ) {
-                self::render_wp_update_tab( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups, $site_view );
+                static::render_wp_update_tab( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups, $site_view );
             } elseif ( 'plugins-updates' === $current_tab ) {
-                self::render_plugins_update_tab( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups, $site_view );
+                static::render_plugins_update_tab( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups, $site_view );
             } elseif ( 'themes-updates' === $current_tab ) {
-                self::render_themes_update_tab( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups, $site_view );
+                static::render_themes_update_tab( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups, $site_view );
             } elseif ( 'translations-updates' === $current_tab ) {
-                self::render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups, $site_view );
+                static::render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups, $site_view );
             } elseif ( 'abandoned-plugins' === $current_tab ) {
-                self::render_abandoned_plugins_tab( $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups, $site_view );
+                static::render_abandoned_plugins_tab( $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups, $site_view );
             } elseif ( 'abandoned-themes' === $current_tab ) {
-                self::render_abandoned_themes_tab( $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups, $site_view );
+                static::render_abandoned_themes_tab( $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups, $site_view );
             }
             ?>
             </div>
             <?php
-            self::render_js_updates( $site_view );
+            static::render_js_updates( $site_view );
         }
 
-        self::render_updates_modal();
+        static::render_updates_modal();
 
-        self::render_plugin_details_modal();
+        static::render_plugin_details_modal();
         MainWP_UI::render_modal_upload_icon();
-        self::render_screen_options_modal();
-        self::render_footer();
+        static::render_screen_options_modal();
+        static::render_footer();
         ?>
         <script type="text/javascript">
         mainwp_manage_updates_screen_options = function () {
@@ -2118,14 +2118,14 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     if ( ! empty( $restorePageSlug ) ) {
                         if ( $enable_legacy_backup ) {
                             $restoreSlug = $restorePageSlug . '&backupid=' . intval( $website->id );
-                        } elseif ( self::activated_primary_backup_plugin( $mainwp_primaryBackup, $website ) ) {
+                        } elseif ( static::activated_primary_backup_plugin( $mainwp_primaryBackup, $website ) ) {
                             $restoreSlug = $restorePageSlug . '&id=' . intval( $website->id );
                         }
                     }
                     ?>
                     <tr id="child-site-<?php echo intval( $website->id ); ?>" class="child-site mainwp-child-site-<?php echo intval( $website->id ); ?>" siteid="<?php echo intval( $website->id ); ?>" site-url="<?php echo esc_url( $website->url ); ?>">
                         <td>
-                            <?php self::render_site_link_dashboard( $website ); ?>
+                            <?php static::render_site_link_dashboard( $website ); ?>
                         </td>
                         <td id="wp_http_response_code_<?php echo esc_attr( $website->id ); ?>">
                             <label class="ui red label http-code"><?php echo 'HTTP ' . esc_html( $website->http_response_code ); ?></label>
@@ -2254,13 +2254,13 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $check_slug = true;
         if ( ! empty( $slug ) ) {
-            $check_slug = ( $slug === self::$continue_update_slug ) ? true : false;
+            $check_slug = ( $slug === static::$continue_update_slug ) ? true : false;
         }
 
-        if ( $check_slug && $current_update === self::$continue_update ) {
-            self::$continue_selector = 'updatesoverview_continue_update_me';
+        if ( $check_slug && $current_update === static::$continue_update ) {
+            static::$continue_selector = 'updatesoverview_continue_update_me';
         } else {
-            self::$continue_selector = '';
+            static::$continue_selector = '';
         }
     }
 
@@ -2270,7 +2270,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return void.
      */
     public static function get_continue_update_selector() {
-        echo esc_attr( self::$continue_selector );
+        echo esc_attr( static::$continue_selector );
     }
 
     /**

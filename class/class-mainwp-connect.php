@@ -107,7 +107,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         $headers           = array( 'X-Requested-With' => 'XMLHttpRequest' );
-        $headers['Expect'] = self::get_expect_header( $postdata );
+        $headers['Expect'] = static::get_expect_header( $postdata );
 
         if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
             $headers = \WpOrg\Requests\Requests::flatten( $headers );
@@ -305,7 +305,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         $noBody = false;
-        return self::try_visit( $url, $ssl_verifyhost, $http_user, $http_pass, $sslVersion, $forceUseIPv4, $noBody );
+        return static::try_visit( $url, $ssl_verifyhost, $http_user, $http_pass, $sslVersion, $forceUseIPv4, $noBody );
     }
 
     /**
@@ -345,7 +345,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $use_seclib   = true;
             } elseif ( function_exists( 'openssl_verify' ) ) {
                 $alg          = MainWP_System_Utility::get_connect_sign_algorithm( $website );
-                $sign_success = self::connect_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+                $sign_success = static::connect_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
                 if ( false !== $alg ) {
                     $data['sign_algo'] = $alg;
                 }
@@ -440,11 +440,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $use_seclib   = true;
             } elseif ( function_exists( 'openssl_verify' ) ) {
                 $alg          = MainWP_System_Utility::get_connect_sign_algorithm( $website );
-                $sign_success = self::connect_sign( $compat_what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for keys encoding.
+                $sign_success = static::connect_sign( $compat_what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for keys encoding.
                 if ( empty( $sign_success ) ) { // error from openssl, openssl_sign().
                     $alg = defined( 'OPENSSL_ALGO_SHA1' ) ? OPENSSL_ALGO_SHA1 : false; // to set default SHA1, to disconnect.
                     MainWP_Logger::instance()->debug_for_website( $website, 'get_renew_post_data_authed', '[' . $website->url . '] :: [openssl_sign:failed] :: Set sign_algo=SHA1' );
-                    $sign_success = self::connect_sign( $compat_what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for keys encoding.
+                    $sign_success = static::connect_sign( $compat_what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for keys encoding.
                 }
 
                 if ( false !== $alg ) {
@@ -500,7 +500,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $use_seclib   = true;
             } elseif ( function_exists( 'openssl_verify' ) ) {
                 $alg          = MainWP_System_Utility::get_connect_sign_algorithm( $website );
-                $sign_success = self::connect_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ), $alg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+                $sign_success = static::connect_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ), $alg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
             }
 
             $signature = ! empty( $signature ) ? base64_encode( $signature ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
@@ -653,7 +653,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $loops = ceil( $total / $chunkSize );
             for ( $i = 0; $i < $loops; $i++ ) {
                 $newSites = array_slice( $websites, $i * $chunkSize, $chunkSize, true );
-                self::fetch_urls_authed( $newSites, $what, $params, $handler, $output, $whatPage, $others );
+                static::fetch_urls_authed( $newSites, $what, $params, $handler, $output, $whatPage, $others );
                 sleep( 5 );
             }
 
@@ -673,7 +673,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $dirs      = MainWP_System_Utility::get_mainwp_dir();
         $cookieDir = $dirs[0] . 'cookies';
 
-        self::init_cookiesdir( $cookieDir );
+        static::init_cookiesdir( $cookieDir );
 
         $_org_params = null;
 
@@ -787,7 +787,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
             curl_setopt( $ch, CURLOPT_POST, true );
 
-            $postdata = self::get_post_data_authed( $website, $what, $params );
+            $postdata = static::get_post_data_authed( $website, $what, $params );
             curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
             curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
             curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
@@ -841,9 +841,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 @curl_multi_add_handle( $mh, $ch );
             }
 
-            $handleToWebsite[ self::get_resource_id( $ch ) ] = $website;
-            $requestUrls[ self::get_resource_id( $ch ) ]     = $website->url;
-            $requestHandles[ self::get_resource_id( $ch ) ]  = $ch;
+            $handleToWebsite[ static::get_resource_id( $ch ) ] = $website;
+            $requestUrls[ static::get_resource_id( $ch ) ]     = $website->url;
+            $requestHandles[ static::get_resource_id( $ch ) ]  = $ch;
 
             if ( null !== $_org_params ) {
                 $params = $_org_params;
@@ -864,20 +864,20 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     $contains = ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) );
                     curl_multi_remove_handle( $mh, $info['handle'] );
 
-                    if ( ! $contains && isset( $requestUrls[ self::get_resource_id( $info['handle'] ) ] ) ) {
-                        curl_setopt( $info['handle'], CURLOPT_URL, $requestUrls[ self::get_resource_id( $info['handle'] ) ] );
+                    if ( ! $contains && isset( $requestUrls[ static::get_resource_id( $info['handle'] ) ] ) ) {
+                        curl_setopt( $info['handle'], CURLOPT_URL, $requestUrls[ static::get_resource_id( $info['handle'] ) ] );
                         curl_multi_add_handle( $mh, $info['handle'] );
-                        unset( $requestUrls[ self::get_resource_id( $info['handle'] ) ] );
+                        unset( $requestUrls[ static::get_resource_id( $info['handle'] ) ] );
                         ++$running;
                         continue;
                     }
 
                     if ( null !== $handler ) {
-                        $site = &$handleToWebsite[ self::get_resource_id( $info['handle'] ) ];
+                        $site = &$handleToWebsite[ static::get_resource_id( $info['handle'] ) ];
                         call_user_func_array( $handler, array( $data, $site, &$output, $params ) );
                     }
 
-                    unset( $handleToWebsite[ self::get_resource_id( $info['handle'] ) ] );
+                    unset( $handleToWebsite[ static::get_resource_id( $info['handle'] ) ] );
                     if ( 'resource' === gettype( $info['handle'] ) ) {
                         curl_close( $info['handle'] );
                     }
@@ -894,7 +894,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $data = curl_exec( $ch );
 
                 if ( null !== $handler ) {
-                    $site = &$handleToWebsite[ self::get_resource_id( $ch ) ];
+                    $site = &$handleToWebsite[ static::get_resource_id( $ch ) ];
                     call_user_func_array( $handler, array( $data, $site, &$output, $params ) );
                 }
             }
@@ -1121,9 +1121,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( 'renew' === $what ) {
-            $postdata = self::get_renew_post_data_authed( $website, $what );
+            $postdata = static::get_renew_post_data_authed( $website, $what );
         } else {
-            $postdata = self::get_post_data_authed( $website, $what, $params );
+            $postdata = static::get_post_data_authed( $website, $what, $params );
 
         }
         $others['function'] = $what;
@@ -1131,7 +1131,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $information = array();
 
         if ( ! $request_update ) {
-            $information = self::fetch_url( $website, $website->url, $postdata, $checkConstraints, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others );
+            $information = static::fetch_url( $website, $website->url, $postdata, $checkConstraints, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others );
             /**
              * Fires immediately after fetch url action.
              *
@@ -1193,7 +1193,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param array   $others Other functions to perform.
      * @param array   $output Output values.
      *
-     * @return mixed self::fetch_url() Fetch URL.
+     * @return mixed static::fetch_url() Fetch URL.
      */
     public static function fetch_url_not_authed(
         $url,
@@ -1213,11 +1213,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $params = array();
         }
 
-        $postdata = self::get_post_data_not_authed( $url, $admin, $what, $params );
+        $postdata = static::get_post_data_not_authed( $url, $admin, $what, $params );
         $website  = null;
 
         $others['function'] = $what;
-        return self::fetch_url( $website, $url, $postdata, false, $verifyCertificate, true, $http_user, $http_pass, $sslVersion, $others, $output );
+        return static::fetch_url( $website, $url, $postdata, false, $verifyCertificate, true, $http_user, $http_pass, $sslVersion, $others, $output );
     }
 
     /**
@@ -1239,7 +1239,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @throws \Exception Exception message.
      *
-     * @return mixed self::fetch_url_site()
+     * @return mixed static::fetch_url_site()
      */
     public static function fetch_url(
         &$website,
@@ -1267,14 +1267,14 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $tmpUrl .= 'wp-admin/admin-ajax.php';
             }
 
-            return self::fetch_url_site( $website, $tmpUrl, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others, $output );
+            return static::fetch_url_site( $website, $tmpUrl, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others, $output );
         } catch ( \Exception $e ) {
             if ( ! $pRetryFailed || ( 30 < ( time() - $start ) ) ) {
                 throw $e;
             }
 
             try {
-                return self::fetch_url_site( $website, $url, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others, $output );
+                return static::fetch_url_site( $website, $url, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others, $output );
             } catch ( \Exception $ex ) {
                 throw $e;
             }
@@ -1330,7 +1330,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $identifier = null;
         if ( $checkConstraints ) {
-            self::check_constraints( $identifier, $website );
+            static::check_constraints( $identifier, $website );
         }
 
         if ( null !== $website ) {
@@ -1338,13 +1338,13 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( null !== $identifier ) {
-            self::release( $identifier );
+            static::release( $identifier );
         }
 
         $dirs      = MainWP_System_Utility::get_mainwp_dir();
         $cookieDir = $dirs[0] . 'cookies';
 
-        self::init_cookiesdir( $cookieDir );
+        static::init_cookiesdir( $cookieDir );
 
         $ch = curl_init();
 
@@ -1429,7 +1429,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         $headers           = array( 'X-Requested-With' => 'XMLHttpRequest' );
-        $headers['Expect'] = self::get_expect_header( $postdata );
+        $headers['Expect'] = static::get_expect_header( $postdata );
 
         if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
             $headers = \WpOrg\Requests\Requests::flatten( $headers );
@@ -1570,7 +1570,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
 	private static function check_constraints( &$identifier, $website ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $semLock      = '103218';
-        $identifier   = self::get_lock_identifier( $semLock );
+        $identifier   = static::get_lock_identifier( $semLock );
         $minimumDelay = ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) );
         if ( 0 < $minimumDelay ) {
             $minimumDelay = $minimumDelay / 1000;
@@ -1583,15 +1583,15 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         MainWP_Utility::end_session();
         $delay = true;
         while ( $delay ) {
-            self::lock( $identifier );
-            if ( 0 < $minimumDelay && self::check_constraints_last_request( $identifier, $minimumDelay ) ) {
+            static::lock( $identifier );
+            if ( 0 < $minimumDelay && static::check_constraints_last_request( $identifier, $minimumDelay ) ) {
                 continue;
             }
 
             if ( 0 < $minimumIPDelay && null !== $website ) {
                 $ip = MainWP_DB::instance()->get_wp_ip( $website->id );
                 if ( null !== $ip && '' !== $ip ) {
-                    if ( self::check_constraints_last_request( $identifier, $minimumIPDelay, $ip ) ) {
+                    if ( static::check_constraints_last_request( $identifier, $minimumIPDelay, $ip ) ) {
                         continue;
                     }
                 }
@@ -1606,21 +1606,21 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $delay = true;
         while ( $delay ) {
             if ( ! $first ) {
-                self::lock( $identifier );
+                static::lock( $identifier );
             } else {
                 $first = false;
             }
 
             MainWP_DB_Common::instance()->close_open_requests();
 
-            if ( 0 < $maximumRequests && self::check_constraints_open_requests( $identifier, $maximumRequests ) ) {
+            if ( 0 < $maximumRequests && static::check_constraints_open_requests( $identifier, $maximumRequests ) ) {
                 continue;
             }
 
             if ( 0 < $maximumIPRequests && null !== $website ) {
                 $ip = MainWP_DB::instance()->get_wp_ip( $website->id );
                 if ( null !== $ip && '' !== $ip ) {
-                    if ( self::check_constraints_open_requests( $identifier, $maximumIPRequests, $ip ) ) {
+                    if ( static::check_constraints_open_requests( $identifier, $maximumIPRequests, $ip ) ) {
                         continue;
                     }
                 }
@@ -1643,7 +1643,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     private static function check_constraints_last_request( $identifier, $minimumDelay, $ip = null ) {
         $lastRequest = MainWP_DB_Common::instance()->get_last_request_timestamp( $ip );
         if ( $lastRequest > ( ( microtime( true ) ) - $minimumDelay ) ) {
-            self::release( $identifier );
+            static::release( $identifier );
             $sleep = ( $minimumDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000;
             $sleep = intval( $sleep );
             usleep( $sleep );
@@ -1666,7 +1666,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     private static function check_constraints_open_requests( $identifier, $maximumRequests, $ip = null ) {
         $nrOfOpenRequests = MainWP_DB_Common::instance()->get_nrof_open_requests( $ip );
         if ( $nrOfOpenRequests >= $maximumRequests ) {
-            self::release( $identifier );
+            static::release( $identifier );
             usleep( 200000 );
             return true;
         }

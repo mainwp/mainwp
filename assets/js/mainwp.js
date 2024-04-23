@@ -247,20 +247,7 @@ pluginAction = function (elem, what) {
     plugin: plugin,
     websiteId: websiteId
   });
-  rowElement.children().hide();
-  rowElement.children('.mainwp-row-actions-working').show();
-  jQuery.post(ajaxurl, data, function (response) {
-    if (response && response.error) {
-      rowElement.children().show();
-      rowElement.html(response.error);
-    } else if (response && response.result) {
-      rowElement.children().show();
-      rowElement.html(response.result);
-    } else {
-      rowElement.children('.mainwp-row-actions-working').hide();
-    }
-  }, 'json');
-
+  plugin_theme_doAction(data, rowElement);
   return false;
 };
 
@@ -282,12 +269,16 @@ themeAction = function (elem, what) {
   let rowElement = jQuery(elem).parent().parent();
   let theme = rowElement.children('.themeSlug').val();
   let websiteId = rowElement.children('.websiteId').val();
-
   let data = mainwp_secure_data({
     action: 'mainwp_widget_theme_' + what,
     theme: theme,
     websiteId: websiteId
   });
+  plugin_theme_doAction(data, rowElement);
+  return false;
+};
+
+let plugin_theme_doAction = function (data, rowElement) {
   rowElement.children().hide();
   rowElement.children('.mainwp-row-actions-working').show();
   jQuery.post(ajaxurl, data, function (response) {
@@ -301,9 +292,8 @@ themeAction = function (elem, what) {
       rowElement.children('.mainwp-row-actions-working').hide();
     }
   }, 'json');
-
-  return false;
 };
+
 
 // offsetRelative (or, if you prefer, positionRelative)
 (function ($) {
@@ -329,7 +319,7 @@ themeAction = function (elem, what) {
   $.fn.positionRelative = function (top) {
     return $(this).offsetRelative(top);
   };
-}(jQuery));
+})(jQuery);
 
 let hidingSubMenuTimers = {};
 jQuery(function () {
@@ -750,6 +740,7 @@ securityIssues_handle = function (response) {
       if (unSetFeatures != '') {
         unSetFeatures = unSetFeatures.split(',');
         if (unSetFeatures.length > 0) {
+          let issue;
           for (let ival in unSetFeatures) {
             issue = unSetFeatures[ival];
             console.log(res[issue]);
@@ -1601,7 +1592,7 @@ let mainwp_managesites_add = function () {
     errors.push(__('Please enter a valid URL for your site.'));
   } else {
     let url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
-    if (url.slice(-1) != '/') {
+    if (!url.endsWith('/')) {
       url += '/';
     }
 
@@ -1624,7 +1615,7 @@ let mainwp_managesites_add = function () {
 
     //Check if valid user & rulewp is installed?
     let url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
-    if (url.slice(-1) != '/') {
+    if (!url.endsWith('/')) {
       url += '/';
     }
 
@@ -1646,7 +1637,7 @@ let mainwp_managesites_add = function () {
       response = res_things.response;
       response = response.trim();
       let url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
-      if (url.slice(-1) != '/') {
+      if (!url.endsWith('/')) {
         url += '/';
       }
 
@@ -1776,7 +1767,8 @@ let mainwp_managesites_add = function () {
 };
 
 let mainwp_managesites_sync_extension_start_next = function (siteId) {
-  while ((pluginToInstall = jQuery('.sync-ext-row[status="queue"]:first')) && (pluginToInstall.length > 0) && (bulkInstallCurrentThreads < 1)) {  // bulkInstallMaxThreads - to fix install plugins and apply settings failed issue -- NOSONAR - modified outside the function.
+  let pluginToInstall = [];
+  while ((pluginToInstall = jQuery('.sync-ext-row[status="queue"]:first')) && (pluginToInstall.length > 0) && (bulkInstallCurrentThreads < 1)) {  // bulkInstallMaxThreads - to fix install plugins and apply settings failed issue -- // NOSONAR - modified outside the function.
     mainwp_managesites_sync_extension_start_specific(pluginToInstall, siteId);
   }
 
@@ -1950,7 +1942,7 @@ let mainwp_managesites_test = function () {
     let clean_url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
     let protocol = jQuery('#mainwp_managesites_add_wpurl_protocol').val();
     url = protocol + '://' + clean_url;
-    if (url.slice(-1) != '/') {
+    if (!url.endsWith('/')) {
       url += '/';
     }
 
@@ -1970,7 +1962,7 @@ let mainwp_managesites_test = function () {
     let protocol = jQuery('#mainwp_managesites_add_wpurl_protocol').val();
     url = protocol + '://' + clean_url;
 
-    if (url.slice(-1) != '/') {
+    if (!url.endsWith('/')) {
       url += '/';
     }
 
@@ -2030,7 +2022,7 @@ let mainwp_managesites_edit_test = function () {
 
   url = protocol + '://' + clean_url;
 
-  if (url.slice(-1) != '/') {
+  if (!url.endsWith('/')) {
     url += '/';
   }
 
@@ -3308,17 +3300,32 @@ jQuery(document).on('click', '#mainwp-download-system-report', function () {
   return false;
 });
 
-jQuery(document).on('click', '#mainwp-copy-meta-system-report', function () {
+// Copies a string to the clipboard. Must be called from within an
+// event handler such as click.
+let mainwp_copy_to_clipboard = function (text, event) {
+  let clipboardDT = event.clipboardData || window.clipboardData || event.originalEvent.clipboardData; // NOSONAR - to compatible.
+  console.log(clipboardDT);
+  if (clipboardDT && clipboardDT.setData) {  // NOSONAR - to compatible.
+    console.warn("Copy to clipboard.");
+    return clipboardDT.setData("Text", text);
+  } else {
+    try {
+      if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
+        console.warn("Copy to clipboard exec.");
+        return document.execCommand("copy");  // NOSONAR - to compatible, security exception may be thrown by some browsers.
+      }
+    } catch (ex) {
+      console.warn("Copy to clipboard failed.", ex);
+    }
+  }
+  return;
+}
+
+jQuery(document).on('click', '#mainwp-copy-meta-system-report', function (event) {
   jQuery("#download-server-information").slideDown(); // to able to select and copy
   serverinfo_prepare_download_info(true);
-  jQuery("#download-server-information").slideUp();
-  try {
-    let successful = document.execCommand('copy'); // NOSONAR - still work fine, no alternative.
-    let msg = successful ? 'successful' : 'unsuccessful';
-    console.log('Copying text command was ' + msg);
-  } catch (err) {
-    console.log('Oops, unable to copy');
-  }
+  jQuery("#download-server-information").slideUp(); // to support 'copy' method.
+  mainwp_copy_to_clipboard(jQuery("#download-server-information").val(), event);
   return false;
 });
 
@@ -4179,19 +4186,13 @@ jQuery(document).on('click', '.mainwp-show-response', function () {
 });
 
 // Copy to clipboard for response modals.
-jQuery(document).on('click', '.mainwp-response-copy-button', function () {
+jQuery(document).on('click', '.mainwp-response-copy-button', function (event) {
   let modal = jQuery(this).closest('.ui.modal');
   let data = jQuery(modal).find('.content.content-response').text();
   let $temp_txtarea = jQuery('<textarea style="opacity:0">');
   jQuery('body').append($temp_txtarea);
-  $temp_txtarea.val(data).trigger("select");
-  try {
-    let successful = document.execCommand('copy'); // NOSONAR - still work fine, no alternative.
-    let msg = successful ? 'successful' : 'unsuccessful';
-    console.log('Copying text command was ' + msg);
-  } catch (err) {
-    console.log('Oops, unable to copy');
-  }
+  $temp_txtarea.val(data).trigger("select"); // to support 'copy' method.
+  mainwp_copy_to_clipboard(data, event);
   $temp_txtarea.remove();
   return false;
 });
@@ -4264,6 +4265,12 @@ jQuery(function ($) {
           $('#mainwp-common-filter-edit-segment-status').html('<i class="notched circle loading icon"></i> ' + __('Deleting segment. Please wait...')).show();
 
         },
+        showStatus: function (status, addClass) {
+          if (addClass) {
+            $('#mainwp-common-filter-edit-segment-status').addClass(addClass);
+          }
+          $('#mainwp-common-filter-edit-segment-status').html(status).show();
+        },
         hideSegmentStatus: function () {
           $('#mainwp-common-filter-edit-segment-status').removeClass('red green').hide();
         },
@@ -4275,7 +4282,7 @@ jQuery(function ($) {
           jQuery('#mainwp-common-filter-select-segment-choose-button').hide();
           jQuery('#mainwp-common-filter-select-segment-delete-button').hide();
           jQuery('#mainwp-common-filter-edit-segment-name').val(jQuery(this).attr('selected-segment-name'));
-          $(this).hideSegmentStatus();
+          this.hideSegmentStatus();
           mainwp_common_filter_show_segments_modal();
         },
         loadSegment: function (loadCallback) {
@@ -4285,8 +4292,14 @@ jQuery(function ($) {
           jQuery('#mainwp-common-filter-segment-select-fields').show();
           jQuery('#mainwp-common-filter-select-segment-choose-button').show();
           jQuery('#mainwp-common-filter-select-segment-delete-button').show();
-          $(this).hideSegmentStatus();
+          this.hideSegmentStatus();
           mainwp_common_filter_show_segments_modal(loadCallback);
+        },
+        showResults: function (result) {
+          jQuery('#mainwp-common-filter-edit-segment-status').hide();
+          jQuery('#mainwp-common-filter-segments-lists-wrapper').html(result);
+          jQuery('#mainwp-common-filter-segments-lists-wrapper .ui.dropdown').dropdown();
+          jQuery('#mainwp-common-filter-segment-select-fields').show();
         }
       }
       return _instance;

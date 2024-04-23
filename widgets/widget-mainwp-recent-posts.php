@@ -31,7 +31,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Fire off render_sites().
      */
     public static function render() {
-        self::render_sites();
+        static::render_sites();
     }
 
     /**
@@ -120,7 +120,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             }
         }
 
-        self::render_top_grid();
+        static::render_top_grid();
 
         /**
          * Action: mainwp_recent_posts_widget_top
@@ -133,11 +133,11 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ?>
         <div class="mainwp-scrolly-overflow">
         <?php
-        self::render_published_posts( $allPosts, $recent_number, $individual );
-        self::render_draft_posts( $allPosts, $recent_number, $individual );
-        self::render_pending_posts( $allPosts, $recent_number, $individual );
-        self::render_future_posts( $allPosts, $recent_number, $individual );
-        self::render_trash_posts( $allPosts, $recent_number, $individual );
+        static::render_published_posts( $allPosts, $recent_number, $individual );
+        static::render_draft_posts( $allPosts, $recent_number, $individual );
+        static::render_pending_posts( $allPosts, $recent_number, $individual );
+        static::render_future_posts( $allPosts, $recent_number, $individual );
+        static::render_trash_posts( $allPosts, $recent_number, $individual );
         ?>
         </div>
         <?php
@@ -686,7 +686,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Publish Post.
      */
     public static function publish() {
-        self::action( 'publish' );
+        static::action( 'publish' );
         die( wp_json_encode( array( 'result' => esc_html__( 'The post has been published.', 'mainwp' ) ) ) );
     }
 
@@ -696,7 +696,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Approve Post.
      */
     public static function approve() {
-        self::action( 'publish' );
+        static::action( 'publish' );
         die( wp_json_encode( array( 'result' => esc_html__( 'The post has been approved.', 'mainwp' ) ) ) );
     }
 
@@ -706,7 +706,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Unpublish Post.
      */
     public static function unpublish() {
-        self::action( 'unpublish' );
+        static::action( 'unpublish' );
         die( wp_json_encode( array( 'result' => esc_html__( 'The post has been unpublished.', 'mainwp' ) ) ) );
     }
 
@@ -716,7 +716,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Trash Post.
      */
     public static function trash() {
-        self::action( 'trash' );
+        static::action( 'trash' );
         die( wp_json_encode( array( 'result' => esc_html__( 'The post has been moved to the trash.', 'mainwp' ) ) ) );
     }
 
@@ -726,7 +726,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Delete Post.
      */
     public static function delete() {
-        self::action( 'delete' );
+        static::action( 'delete' );
         die( wp_json_encode( array( 'result' => esc_html__( 'The post has been permanently deleted.', 'mainwp' ) ) ) );
     }
 
@@ -736,7 +736,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Restore Post.
      */
     public static function restore() {
-        self::action( 'restore' );
+        static::action( 'restore' );
         die( wp_json_encode( array( 'result' => esc_html__( 'The post has been restored.', 'mainwp' ) ) ) );
     }
 
@@ -748,7 +748,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param string $pAction Post Action.
      * @param string $type    Post type.
      *
-     * @throws \Exception Error message.
+     * @throws \MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()

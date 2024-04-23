@@ -27,11 +27,11 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @return self $instance.
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -123,7 +123,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
          */
         global $current_user;
 
-        return ( $task->userid === $current_user->ID );
+        return $task->userid === $current_user->ID;
     }
 
     /**
@@ -152,7 +152,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $backupId = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
         $task     = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupId );
 
-        if ( ! self::can_edit_backuptask( $task ) ) {
+        if ( ! static::can_edit_backuptask( $task ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) ) ) );
         }
 
@@ -573,7 +573,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     public static function remove_backup() {
         if ( isset( $_POST['id'] ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Missing
             $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( intval( $_POST['id'] ) ); //phpcs:ignore WordPress.Security.NonceVerification.Missing
-            if ( self::can_edit_backuptask( $task ) ) {
+            if ( static::can_edit_backuptask( $task ) ) {
                 MainWP_DB_Backup::instance()->remove_backup_task( $task->id );
                 die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
             }
@@ -591,7 +591,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false; //phpcs:ignore WordPress.Security.NonceVerification.Missing
         if ( $id ) {
             $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
-            if ( self::can_edit_backuptask( $task ) ) {
+            if ( static::can_edit_backuptask( $task ) ) {
                 MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'paused' => 0 ) );
                 die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
             }
@@ -609,7 +609,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false; //phpcs:ignore WordPress.Security.NonceVerification.Missing
         if ( $id ) {
             $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
-            if ( self::can_edit_backuptask( $task ) ) {
+            if ( static::can_edit_backuptask( $task ) ) {
                 MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'paused' => 1 ) );
                 die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
             }

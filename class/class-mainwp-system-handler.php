@@ -41,11 +41,11 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return MainWP_System
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -84,7 +84,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         add_filter( 'mainwp_getgroups', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_groups' ), 10, 4 );
         add_action( 'mainwp_fetchurlsauthed', array( &$this, 'filter_fetch_urls_authed' ), 10, 7 );
         add_filter( 'mainwp_fetchurlauthed', array( &$this, 'filter_fetch_url_authed' ), 10, 6 );
-        add_filter( 'mainwp_getsqlwebsites_for_current_user', array( self::class, 'hook_get_sql_websites_for_current_user' ), 10, 4 );
+        add_filter( 'mainwp_getsqlwebsites_for_current_user', array( static::class, 'hook_get_sql_websites_for_current_user' ), 10, 4 );
         add_filter( 'mainwp_fetchurlverifyaction', array( &$this, 'hook_fetch_url_verify_action' ), 10, 4 );
 
         add_filter(
@@ -815,7 +815,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     $rslt     = MainWP_API_Handler::get_upgrade_information( $api_slug );
 
                     if ( ! empty( $rslt ) && is_object( $rslt ) && property_exists( $rslt, 'new_version' ) && ! empty( $rslt->new_version ) && version_compare( $rslt->new_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
-                        $transient->response[ $plugin_slug ] = self::map_rslt_obj( $rslt );
+                        $transient->response[ $plugin_slug ] = static::map_rslt_obj( $rslt );
                     }
 
                     return $transient;
@@ -841,7 +841,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         $rslt     = MainWP_API_Handler::get_upgrade_information( $api_slug );
                         if ( ! empty( $rslt ) && is_object( $rslt ) && property_exists( $rslt, 'new_version' ) && ! empty( $rslt->new_version ) && version_compare( $rslt->new_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
                             $this->upgradeVersionInfo->result[ $api_slug ] = $rslt;
-                            $transient->response[ $plugin_slug ]           = self::map_rslt_obj( $rslt );
+                            $transient->response[ $plugin_slug ]           = static::map_rslt_obj( $rslt );
                             $updated                                       = true;
                         }
                     }
@@ -866,7 +866,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
                 $plugin_slug = MainWP_Extensions_Handler::get_extension_slug( $rslt->slug );
                 if ( isset( $transient->checked[ $plugin_slug ] ) && property_exists( $rslt, 'new_version' ) && ! empty( $rslt->new_version ) && version_compare( $rslt->new_version, $transient->checked[ $plugin_slug ], '>' ) ) {
-                    $transient->response[ $plugin_slug ] = self::map_rslt_obj( $rslt );
+                    $transient->response[ $plugin_slug ] = static::map_rslt_obj( $rslt );
                 }
             }
         }
@@ -944,7 +944,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             foreach ( $this->upgradeVersionInfo->result as $rslt ) {
                 $plugin_slug = MainWP_Extensions_Handler::get_extension_slug( $rslt->slug );
                 if ( isset( $extensions[ $plugin_slug ] ) && property_exists( $rslt, 'new_version' ) && ! empty( $rslt->new_version ) && version_compare( $rslt->new_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
-                    $transient->response[ $plugin_slug ] = self::map_rslt_obj( $rslt );
+                    $transient->response[ $plugin_slug ] = static::map_rslt_obj( $rslt );
                 }
             }
         }

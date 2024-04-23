@@ -45,15 +45,15 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     /**
      * Create a new Self Instance.
      *
-     * @return mixed self::$instance
+     * @return mixed static::$instance
      */
     public static function instance() {
 
-        if ( is_null( self::$instance ) ) {
-            self::$instance = new self();
+        if ( is_null( static::$instance ) ) {
+            static::$instance = new self();
         }
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -63,7 +63,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * Validate SSL certificate.
      */
     public function __construct() {
-        self::$apisslverify = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( 1 === (int) get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
+        static::$apisslverify = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( 1 === (int) get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
     }
 
     /**
@@ -91,7 +91,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             array(
                 'body'      => $args,
                 'timeout'   => 50,
-                'sslverify' => self::$apisslverify,
+                'sslverify' => static::$apisslverify,
             )
         );
 
@@ -130,7 +130,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             array(
                 'body'      => $args,
                 'timeout'   => 50,
-                'sslverify' => self::$apisslverify,
+                'sslverify' => static::$apisslverify,
             )
         );
 
@@ -169,7 +169,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             array(
                 'body'      => $args,
                 'timeout'   => 50,
-                'sslverify' => self::$apisslverify,
+                'sslverify' => static::$apisslverify,
             )
         );
 
@@ -192,7 +192,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @return array Request response.
      *
-     * @throws \Exception Request error codes.
+     * @throws \MainWP_Exception Request error codes.
      *
      * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_upgrade_url()
      * @uses \MainWP\Dashboard\MainWP_Logger::debug()
@@ -212,12 +212,12 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             array(
                 'body'      => $args,
                 'timeout'   => 50,
-                'sslverify' => self::$apisslverify,
+                'sslverify' => static::$apisslverify,
             )
         );
 
         if ( is_wp_error( $request ) ) {
-            if ( 1 === (int) self::$apisslverify ) {
+            if ( 1 === (int) static::$apisslverify ) {
                 MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', 0 );
 
                 return array( 'retry_action' => 1 );
@@ -261,7 +261,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             array(
                 'body'      => $args,
                 'timeout'   => 200,
-                'sslverify' => self::$apisslverify,
+                'sslverify' => static::$apisslverify,
             )
         );
 
@@ -297,7 +297,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             array(
                 'body'      => $args,
                 'timeout'   => 50,
-                'sslverify' => self::$apisslverify,
+                'sslverify' => static::$apisslverify,
             )
         );
 

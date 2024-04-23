@@ -35,7 +35,7 @@ class MainWP_Client_Overview_Custom_Info { // phpcs:ignore Generic.Classes.Openi
         if ( empty( $client_id ) ) {
             return;
         }
-        self::render_addition_info( $client_id );
+        static::render_addition_info( $client_id );
     }
 
 

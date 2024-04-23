@@ -30,7 +30,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
         }
 
         $website_id = $website->id;
-        self::render_individual_updates( $website_id );
+        static::render_individual_updates( $website_id );
     }
 
     /**
@@ -98,16 +98,16 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                 </div>
             <?php endif; ?>
             <?php
-            self::render_wpcore_updates( $website, $active_tab );
-            self::render_plugins_updates( $website, $active_tab, $userExtension );
-            self::render_themes_updates( $website, $active_tab, $userExtension );
+            static::render_wpcore_updates( $website, $active_tab );
+            static::render_plugins_updates( $website, $active_tab, $userExtension );
+            static::render_themes_updates( $website, $active_tab, $userExtension );
 
             if ( $mainwp_show_language_updates ) :
-                self::render_language_updates( $website, $active_tab );
+                static::render_language_updates( $website, $active_tab );
             endif;
 
-            self::render_abandoned_plugins( $website, $active_tab, $userExtension );
-            self::render_abandoned_themes( $website, $active_tab, $userExtension );
+            static::render_abandoned_plugins( $website, $active_tab, $userExtension );
+            static::render_abandoned_themes( $website, $active_tab, $userExtension );
             ?>
         </div>
         <script type="text/javascript">
@@ -441,7 +441,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
 
                 $updates_table_helper = new MainWP_Updates_Table_Helper( MAINWP_VIEW_PER_SITE, 'plugin', array( 'show_select' => true ) );
 
-                add_filter( 'mainwp_updates_table_header_content', array( self::class, 'hook_table_update_plugins_header_content' ), 10, 4 );
+                add_filter( 'mainwp_updates_table_header_content', array( static::class, 'hook_table_update_plugins_header_content' ), 10, 4 );
 
                 ?>
                 <table id="mainwp-updates-plugins-table" class="ui tablet stackable table mainwp-updates-list mainwp-manage-updates-table">
@@ -498,7 +498,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
             <?php endif; ?>
             </div>
         <?php
-        remove_filter( 'mainwp_updates_table_header_content', array( self::class, 'hook_table_update_plugins_header_content' ), 10, 4 );
+        remove_filter( 'mainwp_updates_table_header_content', array( static::class, 'hook_table_update_plugins_header_content' ), 10, 4 );
 
         MainWP_Updates::render_updates_modal();
         MainWP_Updates::render_plugin_details_modal();
@@ -616,7 +616,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
 
                 $updates_table_helper = new MainWP_Updates_Table_Helper( MAINWP_VIEW_PER_SITE, 'theme', array( 'show_select' => true ) );
 
-                add_filter( 'mainwp_updates_table_header_content', array( self::class, 'hook_table_update_themes_header_content' ), 10, 4 );
+                add_filter( 'mainwp_updates_table_header_content', array( static::class, 'hook_table_update_themes_header_content' ), 10, 4 );
 
                 ?>
                 <table id="mainwp-updates-themes-table" class="ui tablet stackable table mainwp-updates-list mainwp-manage-updates-table">
@@ -671,7 +671,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
             <?php endif; ?>
             </div>
         <?php
-        remove_filter( 'mainwp_updates_table_header_content', array( self::class, 'hook_table_update_themes_header_content' ), 10, 4 );
+        remove_filter( 'mainwp_updates_table_header_content', array( static::class, 'hook_table_update_themes_header_content' ), 10, 4 );
     }
 
     /**

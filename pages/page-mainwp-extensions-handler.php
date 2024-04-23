@@ -47,7 +47,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return string Extensions Slug.
      */
     public static function get_extension_slug( $slug ) {
-        $currentExtensions = self::get_extensions();
+        $currentExtensions = static::get_extensions();
         if ( ! is_array( $currentExtensions ) || empty( $currentExtensions ) ) {
             return $slug;
         }
@@ -67,7 +67,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return array am_slugs|slugs.
      */
     public static function get_slugs() {
-        $currentExtensions = self::get_extensions();
+        $currentExtensions = static::get_extensions();
 
         if ( empty( $currentExtensions ) ) {
             return array(
@@ -112,7 +112,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public static function polish_ext_name( $extension, $forced = false ) {
         if ( $forced || ( isset( $extension['mainwp'] ) && $extension['mainwp'] ) ) {
-            $menu_name = self::polish_string_name( $extension['name'] );
+            $menu_name = static::polish_string_name( $extension['name'] );
         } else {
             $menu_name = $extension['name'];
         }
@@ -153,21 +153,21 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return array Array of loaded Extensions.
      */
     public static function get_extensions( $forced = false ) {
-        if ( ! isset( self::$extensions ) || $forced ) {
-            self::$extensions = array();
-            $extensions       = get_option( 'mainwp_extensions', array() );
+        if ( ! isset( static::$extensions ) || $forced ) {
+            static::$extensions = array();
+            $extensions         = get_option( 'mainwp_extensions', array() );
             foreach ( $extensions as $extension ) {
                 $slug = $extension['slug'];
                 if ( function_exists( 'mainwp_current_user_have_right' ) ) { // to fix later init, it's ok to check user have right.
                     if ( mainwp_current_user_have_right( 'extension', dirname( $slug ) ) ) {
-                        self::$extensions[] = $extension;
+                        static::$extensions[] = $extension;
                     }
                 } else {
-                    self::$extensions[] = $extension;
+                    static::$extensions[] = $extension;
                 }
             }
         }
-        return self::$extensions;
+        return static::$extensions;
     }
 
 
@@ -179,10 +179,10 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return array Array of disabled Extensions.
      */
     public static function get_extensions_disabled( $compatible_api_response = false ) {
-        if ( ! isset( self::$extensions_disabled ) || $compatible_api_response ) {
-            self::$extensions_disabled = array();
-            $all_available_extensions  = MainWP_Extensions_View::get_available_extensions( 'all' );
-            $all_plugins               = get_plugins();
+        if ( ! isset( static::$extensions_disabled ) || $compatible_api_response ) {
+            static::$extensions_disabled = array();
+            $all_available_extensions    = MainWP_Extensions_View::get_available_extensions( 'all' );
+            $all_plugins                 = get_plugins();
 
             $exts_disabled = array();
 
@@ -230,10 +230,10 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             if ( $compatible_api_response ) {
                 return $exts_disabled;
             } else {
-                self::$extensions_disabled = $exts_disabled;
+                static::$extensions_disabled = $exts_disabled;
             }
         }
-        return self::$extensions_disabled;
+        return static::$extensions_disabled;
     }
 
     /**
@@ -281,7 +281,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         if ( ! is_array( $args ) ) {
             $args = array();
         }
-        $extensions = self::get_extensions();
+        $extensions = static::get_extensions();
         $return     = array();
         foreach ( $extensions as $extension ) {
             if ( isset( $args['activated'] ) && ! empty( $args['activated'] ) ) {
@@ -440,10 +440,10 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $ssl_api_verifyhost = ( ( false === get_option( 'mainwp_api_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
 
         if ( empty( $ssl_api_verifyhost ) ) {
-            add_filter( 'http_request_args', array( self::get_class_name(), 'no_ssl_filter_function' ), 99, 2 );
+            add_filter( 'http_request_args', array( static::get_class_name(), 'no_ssl_filter_function' ), 99, 2 );
         }
 
-        add_filter( 'http_request_args', array( self::get_class_name(), 'http_request_reject_unsafe_urls' ), 99, 2 );
+        add_filter( 'http_request_args', array( static::get_class_name(), 'http_request_reject_unsafe_urls' ), 99, 2 );
 
         $result = $installer->run(
             array(
@@ -455,10 +455,10 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             )
         );
 
-        remove_filter( 'http_request_args', array( self::get_class_name(), 'http_request_reject_unsafe_urls' ), 99, 2 );
+        remove_filter( 'http_request_args', array( static::get_class_name(), 'http_request_reject_unsafe_urls' ), 99, 2 );
 
         if ( '0' === $ssl_verifyhost ) {
-            remove_filter( 'http_request_args', array( self::get_class_name(), 'no_ssl_filter_function' ), 99 );
+            remove_filter( 'http_request_args', array( static::get_class_name(), 'no_ssl_filter_function' ), 99 );
         }
 
         $error       = null;
@@ -484,7 +484,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 $thePlugin = get_plugin_data( $path . $srcFile );
 
                 if ( null !== $thePlugin && '' !== $thePlugin && '' !== $thePlugin['Name'] ) {
-                    $the_name    = self::polish_string_name( $thePlugin['Name'] );
+                    $the_name    = static::polish_string_name( $thePlugin['Name'] );
                     $output     .= esc_html( $the_name ) . ' ' . esc_html__( 'installed successfully. Do not forget to activate the extension API license.', 'mainwp' );
                     $plugin_slug = $result['destination_name'] . '/' . $srcFile;
 
@@ -529,7 +529,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 
-        $extensions = self::get_extensions();
+        $extensions = static::get_extensions();
         if ( isset( $extensions ) && is_array( $extensions ) ) {
             foreach ( $extensions as $extension ) {
                 $slug = dirname( $extension['slug'] );
@@ -576,7 +576,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return boolean true|false.
      */
     public static function is_extension_activated( $plugin_slug ) {
-        $extensions = self::get_indexed_extensions_infor( array( 'activated' => true ) );
+        $extensions = static::get_indexed_extensions_infor( array( 'activated' => true ) );
         return isset( $extensions[ $plugin_slug ] ) ? true : false;
     }
 
@@ -589,7 +589,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return mixed md5( $pluginFile . '-SNNonceAdder' ) === $key
      */
     public static function hook_verify( $pluginFile, $key ) {
-        return ( md5( $pluginFile . '-SNNonceAdder' ) === $key );
+        return md5( $pluginFile . '-SNNonceAdder' ) === $key;
     }
 
     /**
@@ -603,7 +603,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
      */
     public static function hook_get_dashboard_sites( $pluginFile, $key ) {
-        if ( ! self::hook_verify( $pluginFile, $key ) ) {
+        if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return null;
         }
 
@@ -634,7 +634,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return mixed false|MainWP_Connect::fetch_urls_authed()
      */
     public static function hook_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
-        if ( ! self::hook_verify( $pluginFile, $key ) ) {
+        if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return false;
         }
 
@@ -657,10 +657,10 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
     public static function hook_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $rawResponse = null ) {
-        if ( ! self::hook_verify( $pluginFile, $key ) ) {
+        if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return false;
         }
-        return self::fetch_url_authed( $websiteId, $what, $params, $rawResponse );
+        return static::fetch_url_authed( $websiteId, $what, $params, $rawResponse );
     }
 
     /**
@@ -707,7 +707,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
      */
     public static function hook_get_db_sites( $pluginFile, $key, $sites, $groups = '', $options = false ) {
-        if ( ! self::hook_verify( $pluginFile, $key ) ) {
+        if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return false;
         }
 
@@ -732,7 +732,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return array $dbwebsites.
      */
     public static function hook_get_db_websites( $pluginFile, $key, $params = array() ) {
-        if ( ! self::hook_verify( $pluginFile, $key ) ) {
+        if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return false;
         }
 
@@ -758,7 +758,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      */
 	public static function hook_get_sites( $pluginFile, $key, $websiteid = null, $for_manager = false, $others = array() ) { // phpcs:ignore -- not quite complex function.
-        if ( ! self::hook_verify( $pluginFile, $key ) ) {
+        if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return false;
         }
 
@@ -783,7 +783,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return array|bool $output|false An array of arrays, the inner-array contains the id/name/array of site ids for the supplied groupid/all groups. False when something goes wrong.
      */
     public static function hook_get_groups( $pluginFile, $key, $groupid, $for_manager = false ) {
-        if ( ! self::hook_verify( $pluginFile, $key ) ) {
+        if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return false;
         }
 
@@ -863,7 +863,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_www_prefix()
      */
     public static function hook_clone_site( $pluginFile, $key, $websiteid, $cloneID, $clone_url, $force_update = false ) {
-        if ( ! self::hook_verify( $pluginFile, $key ) ) {
+        if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return false;
         }
 
@@ -963,7 +963,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_icons_dir()
      */
     public static function hook_delete_clone_site( $pluginFile, $key, $clone_url = '', $clone_site_id = false ) {
-        if ( ! self::hook_verify( $pluginFile, $key ) ) {
+        if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return false;
         }
 
@@ -1036,7 +1036,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public static function hook_add_group( $pluginFile, $key, $newName ) {
 
-        if ( ! self::hook_verify( $pluginFile, $key ) ) {
+        if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return false;
         }
 

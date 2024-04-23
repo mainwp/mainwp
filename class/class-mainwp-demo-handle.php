@@ -47,20 +47,20 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @return mixed $instance The single instance of the class.
      */
     public static function get_instance() {
-        if ( is_null( self::$instance ) ) {
-            self::$instance = new self();
+        if ( is_null( static::$instance ) ) {
+            static::$instance = new self();
         }
-        if ( empty( self::$demo_website_ids ) ) {
+        if ( empty( static::$demo_website_ids ) ) {
             $added_demo = get_option( 'mainwp_demo_mode_added_ids', array() );
             if ( is_array( $added_demo ) && ! empty( $added_demo['sites_ids'] ) ) {
-                self::$demo_website_ids = $added_demo['sites_ids'];
+                static::$demo_website_ids = $added_demo['sites_ids'];
             }
 
-            if ( empty( self::$demo_website_ids ) || ! array( self::$demo_website_ids ) ) {
-                self::$demo_website_ids = array( -1 ); // for single assign.
+            if ( empty( static::$demo_website_ids ) || ! array( static::$demo_website_ids ) ) {
+                static::$demo_website_ids = array( -1 ); // for single assign.
             }
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -446,10 +446,10 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      */
     public function is_demo_website( $website ) {
         if ( is_numeric( $website ) ) {
-            if ( in_array( $website, self::$demo_website_ids ) ) {
+            if ( in_array( $website, static::$demo_website_ids ) ) {
                 return true;
             }
-        } elseif ( is_object( $website ) && property_exists( $website, 'id' ) && in_array( $website->id, self::$demo_website_ids ) ) {
+        } elseif ( is_object( $website ) && property_exists( $website, 'id' ) && in_array( $website->id, static::$demo_website_ids ) ) {
             return true;
         }
         return false;

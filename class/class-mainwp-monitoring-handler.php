@@ -84,8 +84,8 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $online_detected = MainWP_Connect::check_ignored_http_code( $new_code );
         $time            = time();
         // Computes duration before update website checking values.
-        $duration    = self::get_duration_for_status( $website, $time );
-        $new_noticed = self::get_http_noticed_status_value( $website, $new_code );
+        $duration    = static::get_duration_for_status( $website, $time );
+        $new_noticed = static::get_http_noticed_status_value( $website, $new_code );
 
         // Save last status.
         MainWP_DB::instance()->update_website_values(
@@ -104,7 +104,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'wpid'            => $website->id,
                 'event_timestamp' => $time,
                 'http_code'       => $new_code,
-                'status'          => self::get_site_checking_status( $new_code ),
+                'status'          => static::get_site_checking_status( $new_code ),
                 'duration'        => $duration,
             )
         );
@@ -207,7 +207,8 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param int $http_code HTTP code.
      */
     public static function get_site_checking_status( $http_code ) {
-        return ( empty( $http_code ) ) ? 0 : ( 200 === (int) $http_code ? 1 : 0 );
+        $code200 = 200 === (int) $http_code ? 1 : 0;
+        return empty( $http_code ) ? 0 : $code200;
     }
 
 
@@ -228,7 +229,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
 
         MainWP_Utility::end_session();
-        $result = self::handle_check_website( $website );
+        $result = static::handle_check_website( $website );
         MainWP_Utility::end_session();
 
         if ( is_array( $result ) ) {

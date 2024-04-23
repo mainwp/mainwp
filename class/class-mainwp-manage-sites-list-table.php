@@ -493,7 +493,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 </div>
 
                 <div class="eight wide right aligned middle aligned column">
-                    <?php self::render_page_navigation_left_items(); ?>
+                    <?php static::render_page_navigation_left_items(); ?>
                 </div>
             </div>
             <div class="row ui mini form" id="mainwp-sites-filters-row" style="<?php echo esc_attr( $filters_row_style ); ?>">

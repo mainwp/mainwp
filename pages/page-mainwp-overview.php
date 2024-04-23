@@ -58,16 +58,16 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * Check if there is a session,
      * if there isn't one create it.
      *
-     *  @return self::singlton Overview Page Session.
+     *  @return static::singlton Overview Page Session.
      *
      * @uses \MainWP\Dashboard\MainWP_Overview
      */
     public static function get() {
-        if ( null === self::$instance ) {
-            self::$instance = new MainWP_Overview();
+        if ( null === static::$instance ) {
+            static::$instance = new MainWP_Overview();
         }
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -152,7 +152,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 update_user_option( $current_user->ID, 'screen_layout_' . $this->dashBoard, 2, true );
             }
             add_action( 'load-' . $this->dashBoard, array( &$this, 'on_load_page' ) );
-            self::init_left_menu();
+            static::init_left_menu();
 
         }
     }
@@ -187,7 +187,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         wp_enqueue_script( 'dashboard' );
         wp_enqueue_script( 'widgets' );
 
-        self::add_meta_boxes( $this->dashBoard );
+        static::add_meta_boxes( $this->dashBoard );
     }
 
     /**
@@ -220,12 +220,12 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
         foreach ( $extMetaBoxs as $box ) {
             if ( isset( $box['plugin'] ) ) {
-                $name                          = basename( $box['plugin'], '.php' );
-                self::$enable_widgets[ $name ] = true;
+                $name                            = basename( $box['plugin'], '.php' );
+                static::$enable_widgets[ $name ] = true;
             }
         }
 
-        $values = self::$enable_widgets;
+        $values = static::$enable_widgets;
 
         /**
          * Unset unwanted Widgets
@@ -237,15 +237,15 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
          *
          * @since 4.0
          */
-        $values               = apply_filters( 'mainwp_overview_enabled_widgets', $values, null );
-        self::$enable_widgets = array_merge( self::$enable_widgets, $values );
+        $values                 = apply_filters( 'mainwp_overview_enabled_widgets', $values, null );
+        static::$enable_widgets = array_merge( static::$enable_widgets, $values );
 
         $i = 1;
         foreach ( $extMetaBoxs as $metaBox ) {
             $enabled = true;
             if ( isset( $metaBox['plugin'] ) ) {
                 $name = basename( $metaBox['plugin'], '.php' );
-                if ( isset( self::$enable_widgets[ $name ] ) && ! self::$enable_widgets[ $name ] ) {
+                if ( isset( static::$enable_widgets[ $name ] ) && ! static::$enable_widgets[ $name ] ) {
                     $enabled = false;
                 }
             }
@@ -263,50 +263,50 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         }
 
         // Load the Updates Overview widget.
-        if ( self::$enable_widgets['get-started'] ) {
+        if ( static::$enable_widgets['get-started'] ) {
             MainWP_UI::add_widget_box( 'get-started', array( MainWP_Get_Started::get_class_name(), 'render' ), $page, array( 1, 1, 4, 11 ) );
         }
 
         // Load the Recent Posts widget.
         if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
-            if ( self::$enable_widgets['recent_posts'] ) {
+            if ( static::$enable_widgets['recent_posts'] ) {
                 MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( 1, 1, 6, 11 ) );
             }
         }
 
         // Load the Recent Pages widget.
         if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
-            if ( self::$enable_widgets['recent_pages'] ) {
+            if ( static::$enable_widgets['recent_pages'] ) {
                 MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( 1, 1, 6, 11 ) );
             }
         }
 
         // Load the Security Issues widget.
         if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
-            if ( self::$enable_widgets['security_issues'] ) {
+            if ( static::$enable_widgets['security_issues'] ) {
                 MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), $page, array( 1, 1, 4, 4 ) );
             }
         }
 
         // Load the Connection Status widget.
         if ( ! MainWP_System_Utility::get_current_wpid() ) {
-            if ( self::$enable_widgets['connection_status'] ) {
+            if ( static::$enable_widgets['connection_status'] ) {
                 MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, array( 1, 1, 4, 5 ) );
             }
         }
 
         // Load the Non-MainWP Changes widget.
-        if ( self::$enable_widgets['non_mainwp_changes'] ) {
+        if ( static::$enable_widgets['non_mainwp_changes'] ) {
             MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), $page, array( 1, 1, 4, 18 ) );
         }
 
         // Load the Clients widget.
-        if ( self::$enable_widgets['clients'] ) {
+        if ( static::$enable_widgets['clients'] ) {
             MainWP_UI::add_widget_box( 'clients', array( MainWP_Clients::get_class_name(), 'render' ), $page, array( 1, 1, 4, 9 ) );
         }
 
         // Load the Updates Overview widget.
-        if ( self::$enable_widgets['overview'] ) {
+        if ( static::$enable_widgets['overview'] ) {
             MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), $page, array( 1, 1, 4, 18 ) );
         }
     }
@@ -340,7 +340,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
         MainWP_UI::render_second_top_header();
 
-        self::render_dashboard_body();
+        static::render_dashboard_body();
         ?>
         </div>
         <?php

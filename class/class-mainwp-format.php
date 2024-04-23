@@ -149,11 +149,11 @@ class MainWP_Format { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $items = array();
         if ( 'plugin' === $what ) {
-            $items = self::get_update_plugins_items();
+            $items = static::get_update_plugins_items();
         } elseif ( 'theme' === $what ) {
-            $items = self::get_update_themes_items();
+            $items = static::get_update_themes_items();
         } elseif ( 'wpcore' === $what ) {
-            $items = self::get_update_wp_items();
+            $items = static::get_update_wp_items();
         }
 
         $filters = array();

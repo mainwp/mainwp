@@ -121,7 +121,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         );
         ?>
         <div id="mainwp-select-sites" class="mainwp_select_sites_wrapper">
-        <?php self::select_sites_box_body( $params ); ?>
+        <?php static::select_sites_box_body( $params ); ?>
     </div>
         <?php
         /**
@@ -268,14 +268,14 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             ?>
             <div class="ui tab <?php echo 'client' === $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-clients-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-clients">
             <?php
-            self::render_select_clients( $params );
+            static::render_select_clients( $params );
             ?>
             </div>
             <?php
         }
 
         if ( $show_new_tag ) {
-            self::render_create_tag_modal();
+            static::render_create_tag_modal();
         }
         ?>
         <script type="text/javascript">

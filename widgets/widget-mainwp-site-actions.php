@@ -67,7 +67,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             );
             $actions_info = MainWP_DB_Site_Actions::instance()->get_wp_actions( $params );
         }
-        self::render_info( $actions_info, $website );
+        static::render_info( $actions_info, $website );
     }
 
     /**

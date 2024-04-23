@@ -29,11 +29,11 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @return self $instance
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -241,7 +241,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      */
     public static function get_next_time_automatic_update_to_show() {
         // to calculate next_time.
-        self::check_conds_to_run_auto_update( $next_time, $run_timestamp, $frequence_period_in_seconds );
+        static::check_conds_to_run_auto_update( $next_time, $run_timestamp, $frequence_period_in_seconds );
         return $next_time;
     }
 
@@ -264,7 +264,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $timeDailyUpdate = get_option( 'mainwp_timeDailyUpdate' );
 
         if ( ! empty( $timeDailyUpdate ) ) {
-            $run_timestamp = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
+            $run_timestamp = static::get_timestamp_from_hh_mm( $timeDailyUpdate );
         } else {
             $run_timestamp = $today_0h; // midnight.
         }
@@ -381,7 +381,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $time_to_noti   = false;
         $time_notice_at = false;
         if ( ! empty( $send_noti_at ) ) {
-            $send_timestamp = self::get_timestamp_from_hh_mm( $send_noti_at, $lasttimeDailyDigest );
+            $send_timestamp = static::get_timestamp_from_hh_mm( $send_noti_at, $lasttimeDailyDigest );
             $time_notice_at = $local_timestamp > $send_timestamp ? true : false;
         } elseif ( 1 < $frequencyDailyUpdate ) {
                 $time_to_noti = ( $today_m_y !== $mainwpLastDailydigest ) ? true : false;
@@ -446,7 +446,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $this->refresh_saved_fields();
         }
 
-        $valid_to_run = self::check_conds_to_run_auto_update( $next_time, $run_timestamp, $frequence_period_in_seconds );
+        $valid_to_run = static::check_conds_to_run_auto_update( $next_time, $run_timestamp, $frequence_period_in_seconds );
 
         $mainwpAutomaticDailyUpdate = get_option( 'mainwp_automaticDailyUpdate' );
 

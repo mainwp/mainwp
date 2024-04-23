@@ -34,10 +34,10 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return MainWP_Client_Handler
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
 
@@ -469,11 +469,11 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $client_tokens['client.site.name'] = $website->name;
 
         // init values.
-        $default_client_fields = self::get_default_client_fields();
+        $default_client_fields = static::get_default_client_fields();
         foreach ( $default_client_fields as $tok_name => $field ) {
             $client_tokens[ $tok_name ] = '';  // the tokens with empty value will be removed from the report.
         }
-        $contact_fields = self::get_default_contact_fields();
+        $contact_fields = static::get_default_contact_fields();
         if ( ! empty( $contact_fields ) && is_array( $contact_fields ) ) {
             foreach ( $contact_fields as $tok_name => $field ) {
                 $client_tokens[ $tok_name ] = ''; // the tokens with empty value will be removed from the report.

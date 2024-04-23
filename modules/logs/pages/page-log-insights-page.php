@@ -84,16 +84,16 @@ class Log_Insights_Page {
      * Check if there is a session,
      * if there isn't one create it.
      *
-     *  @return self::singlton Overview Page Session.
+     *  @return static::singlton Overview Page Session.
      *
      * @uses \MainWP\Dashboard\MainWP_Overview
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -161,7 +161,7 @@ class Log_Insights_Page {
      */
     public function on_load_page( $page ) {
 
-        self::$page = $page;
+        static::$page = $page;
 
         $val = get_user_option( 'screen_layout_' . $page );
         if ( ! $val ) {
@@ -175,7 +175,7 @@ class Log_Insights_Page {
         wp_enqueue_script( 'dashboard' );
         wp_enqueue_script( 'widgets' );
 
-        self::add_meta_boxes( $page );
+        static::add_meta_boxes( $page );
 
         add_filter( 'mainwp_header_actions_right', array( $this, 'screen_options' ), 10, 2 );
         add_filter( 'mainwp_widget_boxes_show_widgets', array( $this, 'hook_show_widgets' ), 10, 2 );
@@ -209,7 +209,7 @@ class Log_Insights_Page {
      * @return array $values Show widgets settings.
      */
     public function hook_show_widgets( $values, $page ) {
-        if ( strtolower( $page ) === strtolower( self::$page ) ) {
+        if ( strtolower( $page ) === strtolower( static::$page ) ) {
             return get_user_option( 'mainwp_module_log_overview_show_widgets' );
         }
         return $values;
@@ -274,10 +274,10 @@ class Log_Insights_Page {
 
         foreach ( $extMetaBoxs as $box ) {
             if ( isset( $box['plugin'] ) ) {
-                $name                          = basename( $box['plugin'], '.php' );
-                self::$enable_widgets[ $name ] = true;
+                $name                            = basename( $box['plugin'], '.php' );
+                static::$enable_widgets[ $name ] = true;
             } elseif ( ! empty( $box['widget_id'] ) ) {
-                self::$enable_widgets[ $box['widget_id'] ] = true;
+                static::$enable_widgets[ $box['widget_id'] ] = true;
             }
         }
 
@@ -291,15 +291,15 @@ class Log_Insights_Page {
          *
          * @since 4.6
          */
-        $values               = apply_filters( 'mainwp_module_log_overview_enabled_widgets', self::$enable_widgets, null );
-        self::$enable_widgets = array_merge( self::$enable_widgets, $values );
+        $values                 = apply_filters( 'mainwp_module_log_overview_enabled_widgets', static::$enable_widgets, null );
+        static::$enable_widgets = array_merge( static::$enable_widgets, $values );
 
         $i = 1;
         foreach ( $extMetaBoxs as $metaBox ) {
             $enabled = true;
             if ( isset( $metaBox['plugin'] ) ) {
                 $name = basename( $metaBox['plugin'], '.php' );
-                if ( isset( self::$enable_widgets[ $name ] ) && ! self::$enable_widgets[ $name ] ) {
+                if ( isset( static::$enable_widgets[ $name ] ) && ! static::$enable_widgets[ $name ] ) {
                     $enabled = false;
                 }
             }
@@ -315,77 +315,77 @@ class Log_Insights_Page {
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['recent_events'] ) ) {
+        if ( ! empty( static::$enable_widgets['recent_events'] ) ) {
             MainWP_UI::add_widget_box( 'recent_events', array( Log_Recent_Events_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['log_users'] ) ) {
+        if ( ! empty( static::$enable_widgets['log_users'] ) ) {
             MainWP_UI::add_widget_box( 'log_users', array( Log_Users_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['log_graph_plugins'] ) ) {
+        if ( ! empty( static::$enable_widgets['log_graph_plugins'] ) ) {
             MainWP_UI::add_widget_box( 'log_graph_plugins', array( Log_Graph_Plugins_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['log_graph_php'] ) ) {
+        if ( ! empty( static::$enable_widgets['log_graph_php'] ) ) {
             MainWP_UI::add_widget_box( 'log_graph_php', array( Log_Graph_Php_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['log_graph_wp'] ) ) {
+        if ( ! empty( static::$enable_widgets['log_graph_wp'] ) ) {
             MainWP_UI::add_widget_box( 'log_graph_wp', array( Log_Graph_WP_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['log_graph_themes'] ) ) {
+        if ( ! empty( static::$enable_widgets['log_graph_themes'] ) ) {
             MainWP_UI::add_widget_box( 'log_graph_themes', array( Log_Graph_Themes_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['log_graph_status'] ) ) {
+        if ( ! empty( static::$enable_widgets['log_graph_status'] ) ) {
             MainWP_UI::add_widget_box( 'log_graph_status', array( Log_Graph_Status_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['log_graph_tags'] ) ) {
+        if ( ! empty( static::$enable_widgets['log_graph_tags'] ) ) {
             MainWP_UI::add_widget_box( 'log_graph_tags', array( Log_Graph_Tags_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['log_graph_clients'] ) ) {
+        if ( ! empty( static::$enable_widgets['log_graph_clients'] ) ) {
             MainWP_UI::add_widget_box( 'log_graph_clients', array( Log_Graph_Clients_Widget::instance(), 'render' ), $page, array( 1, 1, 4, 13 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['log_plugins'] ) ) {
+        if ( ! empty( static::$enable_widgets['log_plugins'] ) ) {
             MainWP_UI::add_widget_box( 'log_plugins', array( Log_Plugins_Widget::instance(), 'render' ), $page, array( 1, 1, 6, 14 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['log_themes'] ) ) {
+        if ( ! empty( static::$enable_widgets['log_themes'] ) ) {
             MainWP_UI::add_widget_box( 'log_themes', array( Log_Themes_Widget::instance(), 'render' ), $page, array( 1, 1, 6, 14 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['log_posts'] ) ) {
+        if ( ! empty( static::$enable_widgets['log_posts'] ) ) {
             MainWP_UI::add_widget_box( 'log_posts', array( Log_Posts_Widget::instance(), 'render' ), $page, array( 1, 1, 6, 14 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['log_pages'] ) ) {
+        if ( ! empty( static::$enable_widgets['log_pages'] ) ) {
             MainWP_UI::add_widget_box( 'log_pages', array( Log_Pages_Widget::instance(), 'render' ), $page, array( 1, 1, 6, 14 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['log_clients'] ) ) {
+        if ( ! empty( static::$enable_widgets['log_clients'] ) ) {
             MainWP_UI::add_widget_box( 'log_clients', array( Log_Clients_Widget::instance(), 'render' ), $page, array( 1, 1, 12, 14 ) );
         }
 
         // Load the widget.
-        if ( ! empty( self::$enable_widgets['log_sites'] ) ) {
+        if ( ! empty( static::$enable_widgets['log_sites'] ) ) {
             MainWP_UI::add_widget_box( 'log_sites', array( Log_Sites_Widget::instance(), 'render' ), $page, array( 1, 1, 12, 14 ) );
         }
     }
@@ -431,15 +431,15 @@ class Log_Insights_Page {
      * When the page loads render the body content.
      */
     public function on_show_page() {
-        self::render_header( 'overview' );
+        static::render_header( 'overview' );
         $insights_filters = $this->get_insights_filters( true );
-        self::render_logs_overview_top( $insights_filters );
+        static::render_logs_overview_top( $insights_filters );
         $this->load_events_list_table();
         $this->list_events_table->prepare_items( true, $insights_filters );
         $items      = $this->list_events_table->items;
         $items_prev = ! empty( $this->list_events_table->items_prev ) ? $this->list_events_table->items_prev : array();
 
-        self::render_dashboard_body( $items, $items_prev, $insights_filters );
+        static::render_dashboard_body( $items, $items_prev, $insights_filters );
     }
 
     /**
@@ -476,7 +476,7 @@ class Log_Insights_Page {
         if ( $get_saved ) {
             $filters_saved = get_user_option( 'mainwp_module_logs_overview_filters_saved' );
             if ( ! is_array( $filters_saved ) ) {
-                $filters_saved = self::get_default_filters();
+                $filters_saved = static::get_default_filters();
             }
             $filter_ranges     = isset( $filters_saved['ranges'] ) && ! empty( $filters_saved['ranges'] ) ? $filters_saved['ranges'] : false;
             $filter_groups_ids = isset( $filters_saved['groups_ids'] ) && ! empty( $filters_saved['groups_ids'] ) ? $filters_saved['groups_ids'] : '';
@@ -918,7 +918,7 @@ class Log_Insights_Page {
                     <form method="POST" action="" name="mainwp_module_log_overview_screen_options_form" id="mainwp-module-log-overview-screen-options-form">
                         <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                         <input type="hidden" name="module_log_overview_options_nonce" value="<?php echo esc_attr( wp_create_nonce( 'module_log_overview_options_nonce' ) ); ?>" />
-                        <?php self::render_screen_options( false ); ?>
+                        <?php static::render_screen_options( false ); ?>
                         <?php
                         /**
                          * Action: mainwp_module_log_overview_screen_options_bottom

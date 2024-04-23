@@ -44,10 +44,10 @@ class Cost_Tracker_Add_Edit {
      * @return Cost_Tracker_Add_Edit
      */
     public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**

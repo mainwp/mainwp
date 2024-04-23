@@ -42,7 +42,7 @@ class MainWP_Client_Overview_Contacts { // phpcs:ignore Generic.Classes.OpeningB
         if ( empty( $this->contact ) ) {
             return;
         }
-        self::render_contact( $this->contact );
+        static::render_contact( $this->contact );
     }
 
 

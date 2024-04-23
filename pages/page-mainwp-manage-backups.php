@@ -53,11 +53,11 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Manage_Backups
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new MainWP_Manage_Backups();
+        if ( null === static::$instance ) {
+            static::$instance = new MainWP_Manage_Backups();
         }
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /** Instantiate Hooks. */
@@ -72,7 +72,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          *
          * @see \MainWP_Manage_Backups::render_header
          */
-        add_action( 'mainwp-pageheader-backups', array( self::get_class_name(), 'render_header' ) );
+        add_action( 'mainwp-pageheader-backups', array( static::get_class_name(), 'render_header' ) );
 
         /**
          * This hook allows you to render the Backups page footer via the 'mainwp-pagefooter-backups' action.
@@ -84,7 +84,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          *
          * @see \MainWP_Manage_Backups::render_footer
          */
-        add_action( 'mainwp-pagefooter-backups', array( self::get_class_name(), 'render_footer' ) );
+        add_action( 'mainwp-pagefooter-backups', array( static::get_class_name(), 'render_footer' ) );
     }
 
     /**
@@ -110,7 +110,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $customPage = apply_filters( 'mainwp_getcustompage_backups', $customPage );
 
         if ( is_array( $customPage ) && isset( $customPage['slug'] ) && ! empty( $mainwp_primaryBackup ) ) {
-            self::$hideSubmenuBackups = true;
+            static::$hideSubmenuBackups = true;
             add_submenu_page( 'mainwp_tab', $customPage['title'], '<span id="mainwp-Backups">' . $customPage['title'] . '</span>', 'read', 'ManageBackups' . $customPage['slug'], $customPage['callback'] );
             MainWP_Menu::add_left_menu(
                 array(
@@ -124,10 +124,10 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             );
 
         } elseif ( $enable_legacy_backup ) {
-                    add_submenu_page( 'mainwp_tab', esc_html__( 'Backups', 'mainwp' ), '<span id="mainwp-Backups">' . esc_html__( 'Backups', 'mainwp' ) . '</span>', 'read', 'ManageBackups', array( self::get_class_name(), 'render_manager' ) );
+                    add_submenu_page( 'mainwp_tab', esc_html__( 'Backups', 'mainwp' ), '<span id="mainwp-Backups">' . esc_html__( 'Backups', 'mainwp' ) . '</span>', 'read', 'ManageBackups', array( static::get_class_name(), 'render_manager' ) );
             if ( mainwp_current_user_have_right( 'dashboard', 'add_backup_tasks' ) ) {
                 if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsAddNew' ) ) {
-                    add_submenu_page( 'mainwp_tab', esc_html__( 'Add New Schedule', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'read', 'ManageBackupsAddNew', array( self::get_class_name(), 'render_new' ) );
+                    add_submenu_page( 'mainwp_tab', esc_html__( 'Add New Schedule', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'read', 'ManageBackupsAddNew', array( static::get_class_name(), 'render_new' ) );
                 }
             }
         } else {
@@ -140,18 +140,18 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          * @link http://codex.mainwp.com/#mainwp-getsubpages-backups
          */
 
-        $sub_pages      = array();
-        $sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-backups', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_backups' );  // @deprecated Use 'mainwp_getsubpages_backups' instead.
-        self::$subPages = apply_filters( 'mainwp_getsubpages_backups', $sub_pages );
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        $sub_pages        = array();
+        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-backups', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_backups' );  // @deprecated Use 'mainwp_getsubpages_backups' instead.
+        static::$subPages = apply_filters( 'mainwp_getsubpages_backups', $sub_pages );
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageBackups' . $subPage['slug'] ) ) {
                     continue;
                 }
                 add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'ManageBackups' . $subPage['slug'], $subPage['callback'] );
             }
         }
-        self::init_left_menu( self::$subPages, $enable_legacy_backup );
+        static::init_left_menu( static::$subPages, $enable_legacy_backup );
     }
 
     /**
@@ -160,7 +160,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
     public static function init_subpages_menu() {
-        if ( self::$hideSubmenuBackups && ( empty( self::$subPages ) || ! is_array( self::$subPages ) ) ) {
+        if ( static::$hideSubmenuBackups && ( empty( static::$subPages ) || ! is_array( static::$subPages ) ) ) {
             return;
         }
         ?>
@@ -168,7 +168,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             <div class="wp-submenu sub-open" style="">
                 <div class="mainwp_boxout">
                     <?php
-                    if ( ! self::$hideSubmenuBackups ) {
+                    if ( ! static::$hideSubmenuBackups ) {
                         ?>
                         <div class="mainwp_boxoutin"></div>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackups' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Backups', 'mainwp' ); ?></a>
@@ -179,8 +179,8 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         <?php } ?>
                     <?php } ?>
                     <?php
-                    if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-                        foreach ( self::$subPages as $subPage ) {
+                    if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+                        foreach ( static::$subPages as $subPage ) {
                             if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageBackups' . $subPage['slug'] ) ) {
                                     continue;
                             }
@@ -207,7 +207,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
     public static function init_left_menu( $subPages = array(), $enableLegacyBackup = true ) {
-        if ( ! self::$hideSubmenuBackups && $enableLegacyBackup ) {
+        if ( ! static::$hideSubmenuBackups && $enableLegacyBackup ) {
             MainWP_Menu::add_left_menu(
                 array(
                     'title'      => esc_html__( 'Backups', 'mainwp' ),
@@ -293,8 +293,8 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             }
         }
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageBackups' . $subPage['slug'] ) ) {
                         continue;
                 }
@@ -363,7 +363,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $backup_items = MainWP_DB_Backup::instance()->get_backup_tasks_for_user();
             }
 
-            self::render_header( '' );
+            static::render_header( '' );
             ?>
             <?php if ( 0 === count( $primaryBackupMethods ) ) { ?>
                 <div class="mainwp-notice mainwp-notice-blue"><?php printf( esc_html__( 'Did you know that MainWP has extensions for working with popular backup plugins? Visit the %1$sextensions site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
@@ -389,7 +389,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                     <?php
                     MainWP_UI::render_modal_edit_notes();
-                    self::instance()->display( $backup_items );
+                    static::instance()->display( $backup_items );
                     ?>
                 </form>
             </div>
@@ -402,9 +402,9 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     </div>
                 </div>
             <?php
-            self::render_footer( '' );
+            static::render_footer( '' );
         } else {
-            self::render_edit( $backupTask );
+            static::render_edit( $backupTask );
         }
 		//phpcs:enable 
     }
@@ -586,7 +586,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return string Action content.
      */
     public function column_type( $item ) {
-        return ( 'db' === $item->type ? esc_html__( 'DATABASE BACKUP', 'mainwp' ) : esc_html__( 'FULL BACKUP', 'mainwp' ) );
+        return 'db' === $item->type ? esc_html__( 'DATABASE BACKUP', 'mainwp' ) : esc_html__( 'FULL BACKUP', 'mainwp' );
     }
 
     /**
@@ -676,7 +676,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param mixed $task Task to edit.
      */
     public static function render_edit( $task ) {
-        self::render_header( 'ManageBackupsEdit' );
+        static::render_header( 'ManageBackupsEdit' );
         ?>
         <div class="ui alt segment">
             <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
@@ -684,12 +684,12 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                 <input type="hidden" name="mainwp_managebackups_edit_id" id="mainwp_managebackups_edit_id" value="<?php echo esc_attr( $task->id ); ?>"/>
                 <?php
-                self::render_new_edit( $task );
+                static::render_new_edit( $task );
                 ?>
             </form>
         </div>
         <?php
-        self::render_footer( 'ManageBackupsEdit' );
+        static::render_footer( 'ManageBackupsEdit' );
     }
 
     /** Render New Task Form. */
@@ -698,17 +698,17 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             mainwp_do_not_have_permissions( esc_html__( 'add backup tasks', 'mainwp' ) );
             return;
         }
-        self::render_header( 'AddNew' );
+        static::render_header( 'AddNew' );
         ?>
         <div class="ui alt segment">
             <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
             <form method="POST" action="" id="mainwp-backup-task-form" class="ui form">
                 <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-                <?php self::render_new_edit( null ); ?>
+                <?php static::render_new_edit( null ); ?>
             </form>
         </div>
         <?php
-        self::render_footer( 'AddNew' );
+        static::render_footer( 'AddNew' );
     }
 
     /**
@@ -730,7 +730,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         ?>
 
         <div class="mainwp-main-content">
-            <?php self::render_schedule_backup(); ?>
+            <?php static::render_schedule_backup(); ?>
         </div>
         <div class="mainwp-side-content mainwp-no-padding">
             <div class="mainwp-select-sites">
@@ -818,7 +818,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $useGlobal     = ( 'global' === $archiveFormat );
         $useSite       = ( empty( $archiveFormat ) || 'site' === $archiveFormat );
 
-        self::render_task_details( $task, $globalArchiveFormatText, $archiveFormat, $useGlobal, $useSite );
+        static::render_task_details( $task, $globalArchiveFormatText, $archiveFormat, $useGlobal, $useSite );
     }
 
     /**

@@ -31,7 +31,7 @@ class MainWP_Error_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( $pException->getMessage() === 'HTTPERROR' ) {
             $error = 'HTTP error' . ( ! empty( $pException->get_message_extra() ) ? ' - ' . $pException->get_message_extra() : '' );
         } elseif ( $pException->getMessage() === 'NOMAINWP' ) {
-            $error = self::get_error_not_detected_connect();
+            $error = static::get_error_not_detected_connect();
         }
 
         return $error;
@@ -52,7 +52,7 @@ class MainWP_Error_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( $pException->getMessage() === 'HTTPERROR' ) {
             $error = 'HTTP error' . ( ! empty( $pException->get_message_extra() ) ? ' - ' . $pException->get_message_extra() : '' );
         } elseif ( $pException->getMessage() === 'NOMAINWP' ) {
-            $error = self::get_error_not_detected_connect();
+            $error = static::get_error_not_detected_connect();
         } elseif ( $pException->getMessage() !== 'WPERROR' && ! empty( $pException->get_message_extra() ) ) {
             $error .= ' - ' . $pException->get_message_extra();
         }

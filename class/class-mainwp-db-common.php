@@ -36,10 +36,10 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return MainWP_DB_Common
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -68,8 +68,8 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $total_sites  = 0;
         $synced_sites = 0;
         $last_sync    = 0;
-        self::data_seek( $websites, 0 );
-        while ( $websites && ( $website      = self::fetch_object( $websites ) ) ) {
+        static::data_seek( $websites, 0 );
+        while ( $websites && ( $website      = static::fetch_object( $websites ) ) ) {
             if ( empty( $website ) || '' !== $website->sync_errors ) {
                 continue;
             }

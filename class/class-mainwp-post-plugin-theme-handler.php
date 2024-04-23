@@ -32,10 +32,10 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      * @return MainWP_Post_Plugin_Theme_Handler
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**

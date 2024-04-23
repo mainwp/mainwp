@@ -33,10 +33,10 @@ class Log_Graph_Clients_Widget {
      * @return mixed $instance The single instance of the class.
      */
     public static function instance() {
-        if ( is_null( self::$instance ) ) {
-            self::$instance = new self();
+        if ( is_null( static::$instance ) ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
 

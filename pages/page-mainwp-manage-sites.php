@@ -31,13 +31,13 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     /**
      * Get instance.
      *
-     *  @return self::singlton
+     *  @return static::singlton
      */
     public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -52,13 +52,13 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     /**
      * Get instance.
      *
-     *  @return self::singlton
+     *  @return static::singlton
      */
     public static function get_total_sites() {
-        if ( null === self::$total_sites ) {
-            self::$total_sites = MainWP_DB::instance()->get_websites_count();
+        if ( null === static::$total_sites ) {
+            static::$total_sites = MainWP_DB::instance()->get_websites_count();
         }
-        return self::$total_sites;
+        return static::$total_sites;
     }
 
     /**
@@ -132,8 +132,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          *
          * @see \MainWP_Manage_Sites::render_header
          */
-        add_action( 'mainwp-pageheader-sites', array( self::get_class_name(), 'render_header' ) ); // @deprecated Use 'mainwp_pageheader_sites' instead.
-        add_action( 'mainwp_pageheader_sites', array( self::get_class_name(), 'render_header' ) );
+        add_action( 'mainwp-pageheader-sites', array( static::get_class_name(), 'render_header' ) ); // @deprecated Use 'mainwp_pageheader_sites' instead.
+        add_action( 'mainwp_pageheader_sites', array( static::get_class_name(), 'render_header' ) );
 
         /**
          * This hook allows you to render the Sites page footer via the 'mainwp-pagefooter-sites' action.
@@ -145,15 +145,15 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          *
          * @see \MainWP_Manage_Sites::render_footer
          */
-        add_action( 'mainwp-pagefooter-sites', array( self::get_class_name(), 'render_footer' ) ); // @deprecated Use 'mainwp_pagefooter_sites' instead.
-        add_action( 'mainwp_pagefooter_sites', array( self::get_class_name(), 'render_footer' ) );
+        add_action( 'mainwp-pagefooter-sites', array( static::get_class_name(), 'render_footer' ) ); // @deprecated Use 'mainwp_pagefooter_sites' instead.
+        add_action( 'mainwp_pagefooter_sites', array( static::get_class_name(), 'render_footer' ) );
 
         add_action( 'mainwp_securityissues_sites', array( MainWP_Security_Issues::get_class_name(), 'render' ) );
-        add_action( 'mainwp_manage_sites_edit', array( self::get_class_name(), 'on_edit_site' ) );
+        add_action( 'mainwp_manage_sites_edit', array( static::get_class_name(), 'on_edit_site' ) );
 
         // Hook the Help Sidebar content.
-        add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_managesites_add_edit_site_upload_site_icon', array( self::class, 'ajax_upload_icon' ) );
+        add_action( 'mainwp_help_sidebar_content', array( static::get_class_name(), 'mainwp_help_content' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_managesites_add_edit_site_upload_site_icon', array( static::class, 'ajax_upload_icon' ) );
     }
 
     /**
@@ -167,8 +167,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return array $columns
      */
     public static function on_screen_layout_columns( $columns, $screen ) {
-        if ( $screen === self::$page ) {
-            $columns[ self::$page ] = 3;
+        if ( $screen === static::$page ) {
+            $columns[ static::$page ] = 3;
         }
 
         return $columns;
@@ -184,8 +184,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
     public static function init_menu() {
-        self::$page = MainWP_Manage_Sites_View::init_menu();
-        add_action( 'load-' . self::$page, array( self::get_class_name(), 'on_load_page' ) );
+        static::$page = MainWP_Manage_Sites_View::init_menu();
+        add_action( 'load-' . static::$page, array( static::get_class_name(), 'on_load_page' ) );
 
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_REQUEST['dashboard'] ) ) {
@@ -198,12 +198,12 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             global $current_user;
 
             delete_user_option( $current_user->ID, 'screen_layout_toplevel_page_managesites' );
-            add_filter( 'screen_layout_columns', array( self::get_class_name(), 'on_screen_layout_columns' ), 10, 2 );
+            add_filter( 'screen_layout_columns', array( static::get_class_name(), 'on_screen_layout_columns' ), 10, 2 );
 
-            $val = get_user_option( 'screen_layout_' . self::$page );
+            $val = get_user_option( 'screen_layout_' . static::$page );
             if ( ! MainWP_Utility::ctype_digit( $val ) ) {
                 global $current_user;
-                update_user_option( $current_user->ID, 'screen_layout_' . self::$page, 2, true );
+                update_user_option( $current_user->ID, 'screen_layout_' . static::$page, 2, true );
             }
         }
         add_submenu_page(
@@ -236,12 +236,12 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          *
          * @since Unknown
          */
-        $sub_pages      = array();
-        $sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-sites', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_sites' ); // @deprecated Use 'mainwp_getsubpages_sites' instead.
-        self::$subPages = apply_filters( 'mainwp_getsubpages_sites', $sub_pages );
+        $sub_pages        = array();
+        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-sites', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_sites' ); // @deprecated Use 'mainwp_getsubpages_sites' instead.
+        static::$subPages = apply_filters( 'mainwp_getsubpages_sites', $sub_pages );
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( ! empty( $subPage['no_submenu_page'] ) ) {
                     continue;
                 }
@@ -252,14 +252,14 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     continue;
                 }
                 $_page = add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'ManageSites' . $subPage['slug'], $subPage['callback'] );
-                add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_subpages' ), 9 );
+                add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_subpages' ), 9 );
                 if ( isset( $subPage['on_load_callback'] ) && ! empty( $subPage['on_load_callback'] ) ) {
                     add_action( 'load-' . $_page, $subPage['on_load_callback'] );
                 }
             }
         }
 
-        MainWP_Manage_Sites_View::init_left_menu( self::$subPages );
+        MainWP_Manage_Sites_View::init_left_menu( static::$subPages );
     }
 
     /**
@@ -268,7 +268,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::init_subpages_menu()
      */
     public static function init_subpages_menu() {
-        MainWP_Manage_Sites_View::init_subpages_menu( self::$subPages );
+        MainWP_Manage_Sites_View::init_subpages_menu( static::$subPages );
     }
 
     /**
@@ -283,7 +283,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_REQUEST['dashboard'] ) ) {
-            self::on_load_page_dashboard();
+            static::on_load_page_dashboard();
             return;
         }
 
@@ -301,9 +301,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         $sitesViewMode = MainWP_Utility::get_siteview_mode();
 
-        add_filter( 'mainwp_header_actions_right', array( self::get_class_name(), 'screen_options' ), 10, 2 );
+        add_filter( 'mainwp_header_actions_right', array( static::get_class_name(), 'screen_options' ), 10, 2 );
         if ( 'grid' !== $sitesViewMode ) {
-            self::load_sites_table();
+            static::load_sites_table();
         } else {
             new MainWP_Manage_Screenshots(); // to init hooks.
         }
@@ -316,8 +316,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Load sites table.
      */
     public static function load_sites_table() {
-        if ( empty( self::$sitesTable ) ) {
-            self::$sitesTable = new MainWP_Manage_Sites_List_Table();
+        if ( empty( static::$sitesTable ) ) {
+            static::$sitesTable = new MainWP_Manage_Sites_List_Table();
         }
     }
 
@@ -347,7 +347,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function render_header( $shownPage = '' ) {
         MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
-        MainWP_Manage_Sites_View::render_header( $shownPage, self::$subPages );
+        MainWP_Manage_Sites_View::render_header( $shownPage, static::$subPages );
     }
 
     /**
@@ -382,7 +382,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
 	public static function render_screen_options() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-        $columns = self::$sitesTable->get_columns();
+        $columns = static::$sitesTable->get_columns();
 
         if ( isset( $columns['cb'] ) ) {
             unset( $columns['cb'] );
@@ -596,10 +596,10 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites_List_Table
      */
     public static function ajax_optimize_display_rows() {
-        self::load_sites_table();
-        self::$sitesTable->prepare_items( true );
-        $output = self::$sitesTable->ajax_get_datatable_rows();
-        self::$sitesTable->clear_items();
+        static::load_sites_table();
+        static::$sitesTable->prepare_items( true );
+        $output = static::$sitesTable->ajax_get_datatable_rows();
+        static::$sitesTable->clear_items();
 
         MainWP_Logger::instance()->log_execution_time( 'ajax_optimize_display_rows()' );
 
@@ -622,7 +622,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 
         $showpage = 'AddNew';
-        self::render_header( $showpage );
+        static::render_header( $showpage );
 
         if ( ! mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'add sites', 'mainwp' ) );
@@ -971,7 +971,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         </script>
             <?php
         }
-        self::render_footer( $showpage );
+        static::render_footer( $showpage );
         MainWP_UI::render_modal_upload_icon();
     }
 
@@ -990,7 +990,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             if ( $site_id ) {
                 $website = MainWP_DB::instance()->get_website_by_id( $site_id );
                 if ( $website && ! empty( $website->cust_site_icon_info ) ) {
-                    $uploaded_site_icon = self::get_instance()->get_cust_site_icon( $website->cust_site_icon_info, 'uploaded' );
+                    $uploaded_site_icon = static::get_instance()->get_cust_site_icon( $website->cust_site_icon_info, 'uploaded' );
                     if ( ! empty( $uploaded_site_icon ) ) {
                         $tmp      = explode( ';', $website->cust_site_icon_info );
                         $new_info = 'uploaded:;' . $tmp[1] . ';' . $tmp[2];
@@ -1132,7 +1132,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function render_bulk_new_site() {
         $showpage = 'BulkAddNew';
-        self::render_header( $showpage );
+        static::render_header( $showpage );
         if ( ! mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'add sites', 'mainwp' ) );
             return;
@@ -1198,7 +1198,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <?php
 
         }
-        self::render_footer( $showpage );
+        static::render_footer( $showpage );
     }
 
     /**
@@ -1245,14 +1245,14 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             }
 
             if ( isset( $box['plugin'] ) ) {
-                $name                          = basename( $box['plugin'], '.php' );
-                self::$enable_widgets[ $name ] = true;
+                $name                            = basename( $box['plugin'], '.php' );
+                static::$enable_widgets[ $name ] = true;
             } elseif ( isset( $box['widget_id'] ) ) {
-                self::$enable_widgets[ $box['widget_id'] ] = true;
+                static::$enable_widgets[ $box['widget_id'] ] = true;
             }
         }
 
-        $values = self::$enable_widgets;
+        $values = static::$enable_widgets;
 
         /**
          * Unset unwanted Widgets
@@ -1264,15 +1264,15 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          *
          * @since 4.0
          */
-        $values               = apply_filters( 'mainwp_overview_enabled_widgets', $values, $dashboard_siteid );
-        self::$enable_widgets = array_merge( self::$enable_widgets, $values );
+        $values                 = apply_filters( 'mainwp_overview_enabled_widgets', $values, $dashboard_siteid );
+        static::$enable_widgets = array_merge( static::$enable_widgets, $values );
 
         $i = 0;
         foreach ( $extMetaBoxs as $metaBox ) {
             $enabled = true;
             if ( isset( $metaBox['plugin'] ) ) {
                 $name = basename( $metaBox['plugin'], '.php' );
-                if ( isset( self::$enable_widgets[ $name ] ) && ! self::$enable_widgets[ $name ] ) {
+                if ( isset( static::$enable_widgets[ $name ] ) && ! static::$enable_widgets[ $name ] ) {
                     $enabled = false;
                 }
             }
@@ -1286,62 +1286,62 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     $layout = array( 1, 1, 4, 15 );
                 }
                 $layout = ! empty( $metaBox['layout'] ) && is_array( $metaBox['layout'] ) ? $metaBox['layout'] : $layout;
-                MainWP_UI::add_widget_box( $id, $metaBox['callback'], self::$page, $layout );
+                MainWP_UI::add_widget_box( $id, $metaBox['callback'], static::$page, $layout );
             }
         }
 
         // Load the Notes widget.
-        if ( self::$enable_widgets['notes'] ) {
-            MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::get_class_name(), 'render' ), self::$page, array( 1, 1, 4, 11 ) );
+        if ( static::$enable_widgets['notes'] ) {
+            MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::get_class_name(), 'render' ), static::$page, array( 1, 1, 4, 11 ) );
         }
 
         // Load the Client widget.
-        if ( self::$enable_widgets['client_info'] ) {
-            MainWP_UI::add_widget_box( 'client_info', array( MainWP_Client_Info::get_class_name(), 'render' ), self::$page, array( 1, 1, 4, 11 ) );
+        if ( static::$enable_widgets['client_info'] ) {
+            MainWP_UI::add_widget_box( 'client_info', array( MainWP_Client_Info::get_class_name(), 'render' ), static::$page, array( 1, 1, 4, 11 ) );
         }
 
         // Load the Recent Pages widget.
         if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
-            if ( self::$enable_widgets['recent_pages'] ) {
-                MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), self::$page, array( 1, 1, 6, 11 ) );
+            if ( static::$enable_widgets['recent_pages'] ) {
+                MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), static::$page, array( 1, 1, 6, 11 ) );
             }
         }
 
         // Load the Recent Posts widget.
         if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
-            if ( self::$enable_widgets['recent_posts'] ) {
-                MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), self::$page, array( 1, 1, 6, 11 ) );
+            if ( static::$enable_widgets['recent_posts'] ) {
+                MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), static::$page, array( 1, 1, 6, 11 ) );
             }
         }
 
         // Load the Themes widget.
-        if ( self::$enable_widgets['themes'] ) {
-            MainWP_UI::add_widget_box( 'themes', array( MainWP_Widget_Themes::get_class_name(), 'render' ), self::$page, array( 1, 1, 6, 11 ) );
+        if ( static::$enable_widgets['themes'] ) {
+            MainWP_UI::add_widget_box( 'themes', array( MainWP_Widget_Themes::get_class_name(), 'render' ), static::$page, array( 1, 1, 6, 11 ) );
         }
 
         // Load the Pluins widget.
-        if ( self::$enable_widgets['plugins'] ) {
-            MainWP_UI::add_widget_box( 'plugins', array( MainWP_Widget_Plugins::get_class_name(), 'render' ), self::$page, array( 1, 1, 6, 11 ) );
+        if ( static::$enable_widgets['plugins'] ) {
+            MainWP_UI::add_widget_box( 'plugins', array( MainWP_Widget_Plugins::get_class_name(), 'render' ), static::$page, array( 1, 1, 6, 11 ) );
         }
 
         // Load the Non-MainWP Changes widget.
-        if ( self::$enable_widgets['non_mainwp_changes'] ) {
-            MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), self::$page, array( 1, 1, 4, 10 ) );
+        if ( static::$enable_widgets['non_mainwp_changes'] ) {
+            MainWP_UI::add_widget_box( 'non_mainwp_changes', array( MainWP_Site_Actions::get_class_name(), 'render' ), static::$page, array( 1, 1, 4, 10 ) );
         }
 
         // Load the Site Info widget.
-        MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), self::$page, array( 1, 1, 4, 18 ) );
+        MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), static::$page, array( 1, 1, 4, 18 ) );
 
         // Load the Securtiy Issues widget.
         if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
-            if ( self::$enable_widgets['security_issues'] ) {
-                MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), self::$page, array( 1, 1, 4, 8 ) );
+            if ( static::$enable_widgets['security_issues'] ) {
+                MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), static::$page, array( 1, 1, 4, 8 ) );
             }
         }
 
         // Load the Updates Overview widget.
-        if ( self::$enable_widgets['overview'] ) {
-            MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), self::$page, array( 1, 1, 4, 18 ) );
+        if ( static::$enable_widgets['overview'] ) {
+            MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), static::$page, array( 1, 1, 4, 18 ) );
         }
     }
 
@@ -1357,9 +1357,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function render_updates( $website ) {
         MainWP_System_Utility::set_current_wpid( $website->id );
-        self::render_header( 'ManageSitesUpdates' );
+        static::render_header( 'ManageSitesUpdates' );
         MainWP_Manage_Sites_Update_View::render_updates( $website );
-        self::render_footer( 'ManageSitesUpdates' );
+        static::render_footer( 'ManageSitesUpdates' );
     }
 
     /**
@@ -1393,13 +1393,13 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 		// phpcs:enable
 
-        self::render_header( 'ManageSitesEmailSettings' );
+        static::render_header( 'ManageSitesEmailSettings' );
         if ( $edit ) {
             MainWP_Manage_Sites_View::render_site_edit_email_settings( $website, $email_type, $updated_templ );
         } else {
             MainWP_Manage_Sites_View::render_edit_site_email_settings( $website, $updated );
         }
-        self::render_footer( 'ManageSitesEmailSettings' );
+        static::render_footer( 'ManageSitesEmailSettings' );
     }
 
     /**
@@ -1414,9 +1414,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function render_dashboard( $website ) {
         MainWP_System_Utility::set_current_wpid( $website->id );
-        self::render_header( 'ManageSitesDashboard' );
+        static::render_header( 'ManageSitesDashboard' );
         MainWP_Manage_Sites_View::render_dashboard( $website );
-        self::render_footer( 'ManageSitesDashboard' );
+        static::render_footer( 'ManageSitesDashboard' );
     }
 
     /**
@@ -1431,9 +1431,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function render_backup_site( $website ) {
         MainWP_System_Utility::set_current_wpid( $website->id );
-        self::render_header( 'ManageSitesBackups' );
+        static::render_header( 'ManageSitesBackups' );
         MainWP_Manage_Sites_Backup_View::render_backup_site( $website );
-        self::render_footer( 'ManageSitesBackups' );
+        static::render_footer( 'ManageSitesBackups' );
     }
 
     /**
@@ -1448,9 +1448,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function render_scan_site( $website ) {
         MainWP_System_Utility::set_current_wpid( $website->id );
-        self::render_header( 'SecurityScan' );
+        static::render_header( 'SecurityScan' );
         MainWP_Manage_Sites_View::render_scan_site( $website );
-        self::render_footer( 'SecurityScan' );
+        static::render_footer( 'SecurityScan' );
     }
 
     /**
@@ -1503,15 +1503,15 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function render_all_sites() {
 
-        self::load_sites_table();// to fix loading.
+        static::load_sites_table();// to fix loading.
 
         $optimize_for_sites_table = apply_filters( 'mainwp_manage_sites_optimize_loading', 1, 'manage-sites' ); // use ajax to load sites table .
 
         if ( ! $optimize_for_sites_table ) {
-            self::$sitesTable->prepare_items( false );
+            static::$sitesTable->prepare_items( false );
         }
 
-        self::render_header( '' );
+        static::render_header( '' );
 
         $hide_loading = apply_filters( 'mainwp_manage_sites_hide_loading', false );
         ?>
@@ -1523,8 +1523,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <form method="post" class="mainwp-table-container">
                 <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                 <?php
-                self::$sitesTable->display( $optimize_for_sites_table );
-                self::$sitesTable->clear_items();
+                static::$sitesTable->display( $optimize_for_sites_table );
+                static::$sitesTable->clear_items();
                 ?>
             </form>
         </div>
@@ -1539,8 +1539,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </div>
         </div>
         <?php
-        self::render_screen_options();
-        self::render_footer( '' );
+        static::render_screen_options();
+        static::render_footer( '' );
     }
 
     /**
@@ -1564,9 +1564,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_REQUEST['do'] ) ) {
             if ( 'new' === $_REQUEST['do'] ) {
-                self::render_new_site();
+                static::render_new_site();
             } elseif ( 'bulknew' === $_REQUEST['do'] ) {
-                self::render_bulk_new_site();
+                static::render_bulk_new_site();
             }
 
             return;
@@ -1578,7 +1578,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
                 $backupwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
                 if ( MainWP_System_Utility::can_edit_website( $backupwebsite ) ) {
-                    self::render_backup_site( $backupwebsite );
+                    static::render_backup_site( $backupwebsite );
 
                     return;
                 }
@@ -1590,7 +1590,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
             $scanwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
             if ( MainWP_System_Utility::can_edit_website( $scanwebsite ) ) {
-                self::render_scan_site( $scanwebsite );
+                static::render_scan_site( $scanwebsite );
 
                 return;
             }
@@ -1601,7 +1601,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
             $dashboardWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
             if ( MainWP_System_Utility::can_edit_website( $dashboardWebsite ) ) {
-                self::render_dashboard( $dashboardWebsite );
+                static::render_dashboard( $dashboardWebsite );
 
                 return;
             }
@@ -1611,7 +1611,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $websiteid      = intval( $_GET['updateid'] );
             $updatesWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
             if ( MainWP_System_Utility::can_edit_website( $updatesWebsite ) ) {
-                self::render_updates( $updatesWebsite );
+                static::render_updates( $updatesWebsite );
                 return;
             }
         }
@@ -1621,9 +1621,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $website   = MainWP_DB::instance()->get_website_by_id( $websiteid, false, array( 'settings_notification_emails' ) );
             if ( MainWP_System_Utility::can_edit_website( $website ) ) {
                 // Edit email settings.
-                $updated       = self::update_site_emails_settings_handle( $website );
+                $updated       = static::update_site_emails_settings_handle( $website );
                 $updated_templ = MainWP_Notification_Template::instance()->handle_template_file_action();
-                self::render_email_settings( $website, $updated, $updated_templ );
+                static::render_email_settings( $website, $updated, $updated_templ );
                 return;
             }
         }
@@ -1633,8 +1633,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
             if ( MainWP_System_Utility::can_edit_website( $website ) ) {
                 // Edit website.
-                $updated = self::update_site_handle( $website );
-                self::render_edit_site( $websiteid, $updated );
+                $updated = static::update_site_handle( $website );
+                static::render_edit_site( $websiteid, $updated );
                 return;
             }
         }
@@ -1644,7 +1644,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( 'grid' === $sitesViewMode ) {
             MainWP_Manage_Screenshots::render_all_sites();
         } else {
-            self::render_all_sites();
+            static::render_all_sites();
         }
         MainWP_Logger::instance()->log_execution_time( 'render_manage_sites()' );
     }
@@ -1854,7 +1854,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 MainWP_DB::instance()->update_website_option( $website, 'cust_site_icon_info', $icon_info );
 
                 if ( ! empty( $website->cust_site_icon_info ) ) {
-                    $current_uploaded = self::get_instance()->get_cust_site_icon( $website->cust_site_icon_info, 'uploaded' );
+                    $current_uploaded = static::get_instance()->get_cust_site_icon( $website->cust_site_icon_info, 'uploaded' );
                     if ( ! empty( $current_uploaded ) && $current_uploaded !== $uploaded_site_icon ) {
                         MainWP_Utility::instance()->delete_uploaded_icon_file( 'site-icons', $current_uploaded ); // delete old icon.
                     }
@@ -1905,9 +1905,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( $websiteid ) {
             MainWP_System_Utility::set_current_wpid( $websiteid );
         }
-        self::render_header( 'ManageSitesEdit' );
+        static::render_header( 'ManageSitesEdit' );
         MainWP_Manage_Sites_View::render_edit_site( $websiteid, $updated );
-        self::render_footer( 'ManageSitesEdit' );
+        static::render_footer( 'ManageSitesEdit' );
     }
 
     /**

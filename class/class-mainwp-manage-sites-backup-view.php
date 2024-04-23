@@ -94,8 +94,8 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
             <div class="mainwp-main-content">
             <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
             <?php
-            self::render_backup_details( $website->id );
-            self::render_backup_options( $website->id );
+            static::render_backup_details( $website->id );
+            static::render_backup_options( $website->id );
             ?>
             </div>
         </div>

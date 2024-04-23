@@ -35,10 +35,10 @@ class MainWP_Connect_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return MainWP_Connect_Helper
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**

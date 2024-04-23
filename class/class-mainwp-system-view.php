@@ -433,31 +433,31 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             $current_options = array();
         }
 
-        self::render_notice_version();
+        static::render_notice_version();
 
-        self::render_notice_config_warning();
+        static::render_notice_config_warning();
 
         if ( is_multisite() && ( ! isset( $current_options['hide_multi_site_notice'] ) || empty( $current_options['hide_multi_site_notice'] ) ) ) {
-            self::render_notice_multi_sites();
+            static::render_notice_multi_sites();
         }
 
         if ( ! isset( $current_options['trust_child'] ) || empty( $current_options['trust_child'] ) ) {
             if ( MainWP_System::is_mainwp_pages() ) {
                 if ( ! MainWP_Plugins_Handler::check_auto_update_plugin( 'mainwp-child/mainwp-child.php' ) ) {
-                    self::render_notice_trust_update();
+                    static::render_notice_trust_update();
                 }
             }
         }
 
-        self::render_trours_notice();
+        static::render_trours_notice();
 
-        self::check_rating_notice( $current_options );
+        static::check_rating_notice( $current_options );
 
-        self::render_wp_mail_warning();
+        static::render_wp_mail_warning();
 
-        self::render_browser_extensions_notice();
+        static::render_browser_extensions_notice();
 
-        self::mainwp_tmpfile_check();
+        static::mainwp_tmpfile_check();
     }
 
     /**
@@ -651,9 +651,9 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         }
 
         if ( $display_request1 ) {
-            self::render_rating_notice_1();
+            static::render_rating_notice_1();
         } elseif ( $display_request2 ) {
-            self::render_rating_notice_2();
+            static::render_rating_notice_2();
         }
     }
 
@@ -878,7 +878,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         <?php
         if ( MainWP_System::is_mainwp_pages() || ( isset( $_GET['page'] ) && 'mainwp-setup' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             if ( get_option( 'mainwp_enable_guided_tours', 0 ) ) {
-                self::mainwp_usetiful_tours();
+                static::mainwp_usetiful_tours();
             }
         }
     }
@@ -1045,7 +1045,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 </div>
             </div>
         </div>
-        <input type="hidden" id="sync_selected_site_ids" value="" />        
+        <input type="hidden" id="sync_selected_site_ids" value="" />
         <div class="ui tiny modal" id="mainwp-modal-confirm-select">
         <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Confirmation', 'mainwp' ); ?></div>
@@ -1056,7 +1056,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             </div>
         </div>
         <?php
-        self::render_comfirm_modal();
+        static::render_comfirm_modal();
     }
 
     /**
@@ -1159,7 +1159,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
         $install_check = get_option( 'mainwp_hide_plugins_install_check_notice', 0 );
 
-        $plugins_to_checks = self::get_plugins_install_check();
+        $plugins_to_checks = static::get_plugins_install_check();
 
         $page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 

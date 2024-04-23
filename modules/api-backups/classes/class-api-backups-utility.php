@@ -34,10 +34,10 @@ class Api_Backups_Utility {
      * @return Api_Backups_Utility
      */
     public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -75,7 +75,7 @@ class Api_Backups_Utility {
         }
         $gmtOffset = get_option( 'gmt_offset' );
 
-        return ( $gmtOffset ? ( $gmtOffset * HOUR_IN_SECONDS ) + $timestamp : $timestamp );
+        return $gmtOffset ? ( $gmtOffset * HOUR_IN_SECONDS ) + $timestamp : $timestamp;
     }
 
     /**
@@ -167,7 +167,7 @@ class Api_Backups_Utility {
      * @param string $message Log info message.
      */
     public static function log_info( $message ) {
-        self::log_debug( $message, 2 );
+        static::log_debug( $message, 2 );
     }
 
     /**
@@ -203,7 +203,7 @@ class Api_Backups_Utility {
      */
 	public static function save_lasttime_backup( $site_id, $available_backups, $backup_api ) { //phpcs:ignore -- complex method.
 
-        self::log_debug( 'save backup time :: [available backups=' . ( is_string( $available_backups ) ? $available_backups : 'is not string' ) . ']' );
+        static::log_debug( 'save backup time :: [available backups=' . ( is_string( $available_backups ) ? $available_backups : 'is not string' ) . ']' );
 
         if ( empty( $available_backups ) ) {
             return;
@@ -408,7 +408,7 @@ class Api_Backups_Utility {
         if ( ! empty( $lastBackup ) && $lastBackup > $lasttime_backup ) {
             return;
         }
-        self::log_debug( 'save backup time :: [site-id=' . $site_id . '] :: [backup time=' . gmdate( 'Y-m-d H:i:s', $lasttime_backup ) . '] :: [api-backups=' . $backup_api . ']' );
+        static::log_debug( 'save backup time :: [site-id=' . $site_id . '] :: [backup time=' . gmdate( 'Y-m-d H:i:s', $lasttime_backup ) . '] :: [api-backups=' . $backup_api . ']' );
         $site     = new \stdClass();
         $site->id = $site_id;
         MainWP_DB::instance()->update_website_option( $site, 'primary_lasttime_backup', $lasttime_backup );

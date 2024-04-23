@@ -22,7 +22,7 @@ class MainWP_File_Uploader_Handle { // phpcs:ignore Generic.Classes.OpeningBrace
      * Save the file to the specified path.
      *
      * @param string $path Path to save file to.
-     * @throws \Exception Exception object.
+     * @throws \MainWP_Exception Exception object.
      *
      * @return boolean TRUE on success|false on failure.
      *

@@ -90,17 +90,17 @@ class MainWP_Plugins_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
     /** Activate Plugin. */
     public static function activate_plugins() {
-        self::action( 'activate' );
+        static::action( 'activate' );
     }
 
     /** Deactivate Plugin */
     public static function deactivate_plugins() {
-        self::action( 'deactivate' );
+        static::action( 'deactivate' );
     }
 
     /** Delete Plugin. */
     public static function delete_plugins() {
-        self::action( 'delete' );
+        static::action( 'delete' );
     }
 
     /**

@@ -74,7 +74,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return MainWP_System
      */
     public static function instance() {
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -114,7 +114,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public function __construct( $mainwp_plugin_file ) {
-        self::$instance = $this;
+        static::$instance = $this;
 
         MainWP_Execution_Helper::instance()->init_exec_time();
 
@@ -286,7 +286,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return string $version Version.
      */
     public function get_dashboard_version() {
-        return self::$version;
+        return static::$version;
     }
 
     /**
@@ -922,7 +922,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( ( defined( 'DOING_CRON' ) && DOING_CRON ) || defined( 'DOING_AJAX' ) ) {
             return;
         }
-        if ( self::is_mainwp_pages() ) {
+        if ( static::is_mainwp_pages() ) {
             $quick_setup = get_option( 'mainwp_run_quick_setup', false );
             if ( 'yes' === $quick_setup ) {
                 delete_option( 'mainwp_run_quick_setup' );
@@ -935,7 +935,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             return;
         }
 
-        if ( self::is_mainwp_pages() ) {
+        if ( static::is_mainwp_pages() ) {
             if ( 'yes' === get_option( 'mainwp_activated' ) ) {
                 delete_option( 'mainwp_activated' );
                 wp_cache_delete( 'mainwp_activated', 'options' );
@@ -1037,7 +1037,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $load_cust_scripts = true;
         }
 
-        if ( self::is_mainwp_pages() ) {
+        if ( static::is_mainwp_pages() ) {
             wp_enqueue_script( 'jquery-migrate' );
             wp_enqueue_script( 'mainwp-updates', MAINWP_PLUGIN_URL . 'assets/js/mainwp-updates.js', array(), $this->current_version, true );
             wp_enqueue_script( 'mainwp-managesites-action', MAINWP_PLUGIN_URL . 'assets/js/mainwp-managesites-action.js', array(), $this->current_version, true );
@@ -1101,7 +1101,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * Enqueue Admin Scripts fix conflict.
      */
     public function admin_enqueue_scripts_fix_conflict() {
-        if ( self::is_mainwp_pages() ) {
+        if ( static::is_mainwp_pages() ) {
             // to fix conflict with the SVG Support plugin.
             remove_action( 'admin_enqueue_scripts', 'bodhi_svgs_admin_multiselect' );
         }
@@ -1133,7 +1133,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $load_cust_scripts = true;
         }
 
-        if ( self::is_mainwp_pages() ) {
+        if ( static::is_mainwp_pages() ) {
             wp_enqueue_style( 'mainwp-fonts', MAINWP_PLUGIN_URL . 'assets/css/mainwp-fonts.css', array(), $this->current_version );
             wp_enqueue_style( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.css', array(), $this->current_version );
             wp_enqueue_style( 'mainwp-fomantic', MAINWP_PLUGIN_URL . 'assets/css/mainwp-fomantic.css', array(), $this->current_version );
@@ -1221,7 +1221,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_System_View::admin_footer()
      */
     public function admin_footer() {
-        if ( ! self::is_mainwp_pages() ) {
+        if ( ! static::is_mainwp_pages() ) {
             return;
         }
 
@@ -1233,7 +1233,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <div class="ui info message"><?php esc_html_e( 'To see the response in a more readable way, you can copy it and paste it into some HTML render tool, such as Codepen.io.', 'mainwp' ); ?>
                 </div>
             </div>
-            <div class="scrolling content content-response"></div>
+            <div class="scrolling content content-response" contenteditable="true"></div>
             <div class="actions">
                 <button class="ui green button mainwp-response-copy-button"><?php esc_html_e( 'Copy Response', 'mainwp' ); ?></button>
             </div>

@@ -21,7 +21,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @return string __CLASS__
      *
-     * @uses self::init()
+     * @uses static::init()
      */
     public static function get_class_name() {
         return __CLASS__;
@@ -36,7 +36,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * adds handling for the main page.
      */
     public static function init() {
-        add_action( 'admin_init', array( self::get_class_name(), 'admin_init' ) );
+        add_action( 'admin_init', array( static::get_class_name(), 'admin_init' ) );
     }
 
     /**
@@ -394,7 +394,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          * @deprecated From.
          * @since 3.5.6.
          */
-        self::addition_post_data( $post_data );
+        static::addition_post_data( $post_data );
 
         $site_id = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : 0;
         $website = MainWP_DB::instance()->get_website_by_id( $site_id );
@@ -440,7 +440,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             'installplugintheme',
             $post_data,
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'install_plugin_theme_handler',
             ),
             $output,
@@ -616,7 +616,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         // deprecated from 3.5.6.
-        self::addition_post_data( $post_data );
+        static::addition_post_data( $post_data );
 
         /** This filter is documented in pages/page-mainwp-install-bulk.php */
         $post_data = apply_filters( 'mainwp_perform_install_data', $post_data );
@@ -654,7 +654,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             'installplugintheme',
             $post_data,
             array(
-                self::get_class_name(),
+                static::get_class_name(),
                 'install_plugin_theme_handler',
             ),
             $output,

@@ -31,7 +31,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Fire off Method render_sites().
      */
     public static function render() {
-        self::render_sites();
+        static::render_sites();
     }
 
     /**
@@ -114,7 +114,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             }
         }
 
-        self::render_top_grid();
+        static::render_top_grid();
 
         /**
          * Action: mainwp_recent_pages_widget_top
@@ -128,11 +128,11 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ?>
         <div class="mainwp-scrolly-overflow">
         <?php
-        self::render_published_posts( $allPages, $recent_number, $individual );
-        self::render_draft_posts( $allPages, $recent_number, $individual );
-        self::render_pending_posts( $allPages, $recent_number, $individual );
-        self::render_future_posts( $allPages, $recent_number, $individual );
-        self::render_trash_posts( $allPages, $recent_number, $individual );
+        static::render_published_posts( $allPages, $recent_number, $individual );
+        static::render_draft_posts( $allPages, $recent_number, $individual );
+        static::render_pending_posts( $allPages, $recent_number, $individual );
+        static::render_future_posts( $allPages, $recent_number, $individual );
+        static::render_trash_posts( $allPages, $recent_number, $individual );
         ?>
         </div>
         <?php

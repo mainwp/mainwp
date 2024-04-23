@@ -36,13 +36,13 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
     /**
      * Create a new self instance.
      *
-     * @return mixed self::$instance
+     * @return mixed static::$instance
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -118,7 +118,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
         }
 
         $email_description   = '';
-        $notification_emails = self::get_notification_types();
+        $notification_emails = static::get_notification_types();
         $emails_settings     = get_option( 'mainwp_settings_notification_emails' );
         if ( ! is_array( $emails_settings ) ) {
             $emails_settings = array();
@@ -146,10 +146,10 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                     <?php foreach ( $notification_emails as $type => $name ) : ?>
                         <?php
                         $options = isset( $emails_settings[ $type ] ) ? $emails_settings[ $type ] : array();
-                        $default = self::get_default_emails_fields( $type, '', true );
+                        $default = static::get_default_emails_fields( $type, '', true );
                         $options = array_merge( $default, $options );
 
-                        $email_description = self::get_settings_desc( $type );
+                        $email_description = static::get_settings_desc( $type );
                         ?>
                         <tr>
                             <td><?php echo ( ! $options['disable'] ) ? '<span data-tooltip="Enabled." data-position="right center" data-inverted=""><i class="circular green check inverted icon"></i></span>' : '<span data-tooltip="Disabled." data-position="right center" data-inverted=""><i class="circular x icon inverted disabled"></i></span>'; ?></td>
@@ -232,16 +232,16 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
 
         $options = isset( $emails_settings[ $type ] ) ? $emails_settings[ $type ] : array();
 
-        $default = self::get_default_emails_fields( $type, '', true );
+        $default = static::get_default_emails_fields( $type, '', true );
         $options = array_merge( $default, $options );
 
-        $title = self::get_notification_types( $type );
+        $title = static::get_notification_types( $type );
 
-        $email_description = self::get_settings_desc( $type );
+        $email_description = static::get_settings_desc( $type );
 
         ?>
         <div id="mainwp-emails-settings" class="ui segment">
-            <?php self::render_update_template_message( $updated_templ ); ?>
+            <?php static::render_update_template_message( $updated_templ ); ?>
             <div class="ui form">
                 <form method="POST" action="admin.php?page=SettingsEmail">
                     <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'SettingsEmail' ) ); ?>" />
@@ -459,7 +459,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
         }
 
         $options = isset( $settings[ $type ] ) ? $settings[ $type ] : array();
-        $default = self::get_default_emails_fields( $type, '', true );
+        $default = static::get_default_emails_fields( $type, '', true );
         return array_merge( $default, $options );
     }
 
@@ -469,7 +469,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
      * @return string|empty recipients.
      */
     public static function get_general_email() {
-        $gen_email_settings = self::get_general_email_settings( 'daily_digest' );
+        $gen_email_settings = static::get_general_email_settings( 'daily_digest' );
         return isset( $gen_email_settings['recipients'] ) ? $gen_email_settings['recipients'] : '';
     }
 
@@ -517,7 +517,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
         }
 
         $options = isset( $settings[ $type ] ) ? $settings[ $type ] : array();
-        $default = self::get_default_emails_fields( $type );
+        $default = static::get_default_emails_fields( $type );
         $options = array_merge( $default, $options );
 
         if ( preg_match( '/\[[^\]]+\]/is', $options['subject'] . $options['heading'], $matches ) ) {
@@ -529,7 +529,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
         if ( preg_match( '/\[[^\]]+\]/is', $options['recipients'] . $options['subject'] . $options['heading'], $matches ) ) {
             // support boilerplate and reports tokens.
             $fields  = array( 'recipients', 'subject', 'heading' );
-            $options = self::replace_tokens_for_settings( $options, $fields, $website );
+            $options = static::replace_tokens_for_settings( $options, $fields, $website );
         }
 
         return $options;

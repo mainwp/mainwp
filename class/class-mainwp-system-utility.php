@@ -34,10 +34,10 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return MainWP_Post_Handler
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
 
@@ -71,7 +71,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return false;
         }
 
-        if ( ( property_exists( $current_user, 'wp_user_level' ) && 10 === (int) $current_user->wp_user_level ) || ( isset( $current_user->user_level ) && 10 === (int) $current_user->user_level ) || self::current_user_has_role( 'administrator' ) ) {
+        if ( ( property_exists( $current_user, 'wp_user_level' ) && 10 === (int) $current_user->wp_user_level ) || ( isset( $current_user->user_level ) && 10 === (int) $current_user->user_level ) || static::current_user_has_role( 'administrator' ) ) {
             return true;
         }
 
@@ -163,7 +163,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return array $dir, $url
      */
     public static function get_icons_dir() {
-        $hasWPFileSystem = self::get_wp_file_system();
+        $hasWPFileSystem = static::get_wp_file_system();
 
         /**
          * WordPress files system object.
@@ -172,7 +172,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          */
         global $wp_filesystem;
 
-        $dirs = self::get_mainwp_dir();
+        $dirs = static::get_mainwp_dir();
         $dir  = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
         $url  = $dirs[1] . 'icons/';
         if ( ! $wp_filesystem->exists( $dir ) ) {
@@ -192,7 +192,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param string $filename File name.
      */
     public static function touch( $filename ) {
-        $hasWPFileSystem = self::get_wp_file_system();
+        $hasWPFileSystem = static::get_wp_file_system();
         /**
          * WordPress files system object.
          *
@@ -214,7 +214,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param string $file The file.
      */
     public static function is_writable( $file ) {
-        $hasWPFileSystem = self::get_wp_file_system();
+        $hasWPFileSystem = static::get_wp_file_system();
         /**
          * WordPress files system object.
          *
@@ -245,7 +245,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return array $dir, $url
      */
     public static function get_mainwp_dir( $subdir = null, $direct_access = false ) {
-        $hasWPFileSystem = self::get_wp_file_system();
+        $hasWPFileSystem = static::get_wp_file_system();
 
         /**
          * WordPress files system object.
@@ -300,7 +300,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return string $dir mainwp sub-directory.
      */
     public static function get_mainwp_sub_dir( $subdir = null, $direct_access = false ) {
-        $dirs = self::get_mainwp_dir( $subdir, $direct_access );
+        $dirs = static::get_mainwp_dir( $subdir, $direct_access );
         return $dirs[0];
     }
 
@@ -313,12 +313,12 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return string Download URL.
      */
     public static function get_download_url( $what, $filename ) {
-        $specificDir = self::get_mainwp_specific_dir( $what );
-        $mwpDir      = self::get_mainwp_dir();
+        $specificDir = static::get_mainwp_specific_dir( $what );
+        $mwpDir      = static::get_mainwp_dir();
         $mwpDir      = $mwpDir[0];
         $fullFile    = $specificDir . $filename;
 
-        $download_url = admin_url( '?sig=' . self::get_download_sig( $fullFile ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $fullFile ) ) );
+        $download_url = admin_url( '?sig=' . static::get_download_sig( $fullFile ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $fullFile ) ) );
 
         return $download_url;
     }
@@ -398,11 +398,11 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $userid = $current_user->ID;
         }
 
-        $hasWPFileSystem = self::get_wp_file_system();
+        $hasWPFileSystem = static::get_wp_file_system();
 
         global $wp_filesystem;
 
-        $dirs = self::get_mainwp_dir();
+        $dirs = static::get_mainwp_dir();
 
         $newdir = $dirs[0] . $userid;
         if ( '/' === $dir || null === $dir ) {
@@ -462,7 +462,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
             $userid = $current_user->ID;
         }
-        $dirs = self::get_mainwp_dir();
+        $dirs = static::get_mainwp_dir();
 
         return $dirs[1] . $userid . '/' . $dir . '/';
     }
@@ -475,9 +475,9 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param mixed $sub_dir MainWP Sub Directory.
      */
     public static function get_mainwp_dir_allow_access( $sub_dir ) {
-        $dirs = self::get_mainwp_dir( $sub_dir, false );
+        $dirs = static::get_mainwp_dir( $sub_dir, false );
         if ( $dirs ) {
-            $hasWPFileSystem = self::get_wp_file_system();
+            $hasWPFileSystem = static::get_wp_file_system();
             global $wp_filesystem;
             if ( $wp_filesystem ) {
                 // to fix issue of do not allow access.
@@ -576,7 +576,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          */
         global $current_user;
 
-        return ( $website->userid === $current_user->ID );
+        return $website->userid === $current_user->ID;
     }
 
     /**
@@ -604,7 +604,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( isset( $item['wpgroups'] ) && ! empty( $item['wpgroups'] ) ) {
 
             if ( $client_tag ) {
-                $tags_filter = self::client_tags_filter( $item );
+                $tags_filter = static::client_tags_filter( $item );
                 $tags        = $tags_filter['wpgroups'];
                 $tags_ids    = $tags_filter['wpgroupids'];
             } else {
@@ -674,19 +674,19 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return true; // empty so return as suspended.
         }
         if ( is_array( $website ) ) {
-            return ( '1' === $website['suspended'] );
+            return '1' === $website['suspended'];
         } elseif ( is_object( $website ) ) {
             if ( ! property_exists( $website, 'suspended' ) && property_exists( $website, 'id' ) ) {
                 $website = MainWP_DB::instance()->get_website_by_id( $website->id );
             }
             if ( property_exists( $website, 'suspended' ) ) {
-                return ( '1' === $website->suspended );
+                return '1' === $website->suspended;
             }
         } elseif ( is_numeric( $website ) ) {
             $siteId  = $website;
             $website = MainWP_DB::instance()->get_website_by_id( $siteId );
             if ( $website ) {
-                return self::is_suspended_site( $website );
+                return static::is_suspended_site( $website );
             }
         }
         return false;
@@ -1026,7 +1026,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $icon = '';
         if ( 'theme' === $type ) {
             // with $fields empty to get screenshot_url of theme.
-            $info = self::get_plugin_theme_info(
+            $info = static::get_plugin_theme_info(
                 $type,
                 array(
                     'slug'    => $slug,
@@ -1042,7 +1042,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( ! empty( $icon ) ) {
             $option_name = 'themes_icons';
         } else {
-            $info        = self::get_plugin_theme_info(
+            $info        = static::get_plugin_theme_info(
                 $type,
                 array(
                     'slug'    => $slug,
@@ -1079,7 +1079,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             }
         }
 
-        self::update_cached_icons( $fetched_icon, $slug, $type );
+        static::update_cached_icons( $fetched_icon, $slug, $type );
 
         if ( '' !== $icon ) {
             return $icon;
@@ -1098,7 +1098,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return false;
         }
         if ( 'plugin' === $type || 'theme' === $type ) {
-            return self::fetch_wp_org_icons( $slug, $type );
+            return static::fetch_wp_org_icons( $slug, $type );
         }
         return '';
     }
@@ -1121,7 +1121,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $forced_get = apply_filters( 'mainwp_forced_get_plugin_theme_icon', $forced_get, $slug, 'plugin' );
 
         if ( $forced_get ) {
-            $fet_icon = self::fetch_wp_org_icons( $slug, 'plugin' );
+            $fet_icon = static::fetch_wp_org_icons( $slug, 'plugin' );
             if ( false !== $fet_icon ) {
                 $scr  = MainWP_Utility::remove_http_prefix( $fet_icon );
                 $icon = '<img style="display:inline-block" class="ui mini circular image" updated-icon="true" src="' . esc_attr( $scr ) . '" />';
@@ -1151,7 +1151,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             }
         }
 
-        return self::get_plugin_theme_icon( $slug, 'plugin' );
+        return static::get_plugin_theme_icon( $slug, 'plugin' );
     }
 
     /**
@@ -1171,7 +1171,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $forced_get = apply_filters( 'mainwp_forced_get_plugin_theme_icon', $forced_get, $slug, 'theme' );
 
         if ( $forced_get ) {
-            $fet_icon = self::fetch_wp_org_icons( $slug, 'theme' );
+            $fet_icon = static::fetch_wp_org_icons( $slug, 'theme' );
             if ( false !== $fet_icon ) {
                 $scr  = MainWP_Utility::remove_http_prefix( $fet_icon );
                 $icon = '<img style="display:inline-block" class="ui mini circular image" updated-icon="true" src="' . esc_attr( $scr ) . '" />';
@@ -1200,7 +1200,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             }
         }
 
-        return self::get_plugin_theme_icon( $slug, 'theme' );
+        return static::get_plugin_theme_icon( $slug, 'theme' );
     }
 
 
@@ -1235,9 +1235,9 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $is_custom_icon = false;
             if ( ! empty( $cached_icons[ $slug ]['path_custom'] ) ) {
                 if ( 'plugin' === $type ) {
-                    $dirs = self::get_mainwp_dir( 'plugin-icons', true );
+                    $dirs = static::get_mainwp_dir( 'plugin-icons', true );
                 } elseif ( 'theme' === $type ) {
-                    $dirs = self::get_mainwp_dir( 'theme-icons', true );
+                    $dirs = static::get_mainwp_dir( 'theme-icons', true );
                 }
                 $scr            = $dirs[1] . rawurldecode( $cached_icons[ $slug ]['path_custom'] );
                 $is_custom_icon = true; // custom icons will not expired.
@@ -1290,7 +1290,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
 	public static function handle_upload_image( $sub_folder, $file_uploader, $file_index = 0, $file_subindex = false, $max_width = 300, $max_height = 300 ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-        $dirs     = self::get_mainwp_dir( $sub_folder, true );
+        $dirs     = static::get_mainwp_dir( $sub_folder, true );
         $base_dir = $dirs[0];
         $base_url = $dirs[1];
 
@@ -1398,7 +1398,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param string $website The website.
      */
     public static function disabled_wpcore_update_by( $website ) {
-        $by = self::get_disabled_wpcore_update_host( $website );
+        $by = static::get_disabled_wpcore_update_host( $website );
         if ( 'flywheel' === $by ) {
             return esc_html__( 'FlyWheel disables WP core updates. For more information contact FlyWheel support.', 'mainwp' );
         } elseif ( 'pressable' === $by ) {
@@ -1469,7 +1469,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             }
         }
 
-        if ( ! self::is_valid_supported_sign_alg( $alg ) ) {
+        if ( ! static::is_valid_supported_sign_alg( $alg ) ) {
             $alg = false;
         }
 

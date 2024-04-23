@@ -41,11 +41,11 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return Instance class.
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        self::auto_load_files(); // to fix.
-        return self::$instance;
+        static::auto_load_files(); // to fix.
+        return static::$instance;
     }
 
     /**
@@ -98,7 +98,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return string Decrypt value.
      */
     public function update_key_value( $option_name, $value = false, $prefix = 'dash_' ) {
-        self::init_keys_dir();
+        static::init_keys_dir();
 
         if ( false === $value || '' === $value ) {
             $opt = get_option( $option_name );
@@ -144,7 +144,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return string Deleted.
      */
     public function delete_key_file( $file_key ) {
-        $key_dir   = self::get_keys_dir();
+        $key_dir   = static::get_keys_dir();
         $file_path = $key_dir . $file_key;
         MainWP_Utility::delete_file( $file_path ); // delete file content key.
         return true;
@@ -233,8 +233,8 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return mixed Result.
      */
     private function save_key_file( $key_file, $key_val ) {
-        self::init_keys_dir();
-        $key_dir   = self::get_keys_dir();
+        static::init_keys_dir();
+        $key_dir   = static::get_keys_dir();
         $file_path = $key_dir . $key_file;
 		$saved     = file_put_contents( $file_path, $key_val ); //phpcs:ignore
         return false === $saved ? false : true;
@@ -250,7 +250,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return string Decrypt value.
      */
     public function get_key_val( $key_file ) {
-        $key_dir = self::get_keys_dir();
+        $key_dir = static::get_keys_dir();
         $path    = $key_dir . $key_file;
         if ( file_exists( $path ) ) {
             return file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- private key files.
@@ -352,7 +352,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public static function init_keys_dir( $keysDir = '' ) {
 
         if ( '' === $keysDir ) {
-            $keysDir = self::get_keys_dir();
+            $keysDir = static::get_keys_dir();
         }
 
         if ( ! is_string( $keysDir ) || stristr( $keysDir, '..' ) ) {

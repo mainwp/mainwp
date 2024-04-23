@@ -32,7 +32,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             return false;
         }
         MainWP_DB::instance()->update_website_sync_values( $website->id, array( 'dtsSyncStart' => time() ) );
-        return self::sync_site( $website, false, true, $clear_session );
+        return static::sync_site( $website, false, true, $clear_session );
     }
 
     /**
@@ -153,7 +153,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 true,
                 $pForceFetch
             );
-            $return      = self::sync_information_array( $pWebsite, $information, '', 1, false, $pAllowDisconnect );
+            $return      = static::sync_information_array( $pWebsite, $information, '', 1, false, $pAllowDisconnect );
             MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );
             return $return;
         } catch ( MainWP_Exception $e ) {
@@ -169,7 +169,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
 
             MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );
-            return self::sync_information_array( $pWebsite, $information, $sync_errors, $check_result, true, $pAllowDisconnect );
+            return static::sync_information_array( $pWebsite, $information, $sync_errors, $check_result, true, $pAllowDisconnect );
         }
     }
 
@@ -602,7 +602,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @param mixed $siteId site's id.
      *
      * @return array result error or success
-     * @throws \Exception Error message.
+     * @throws \MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
      * @uses \MainWP\Dashboard\MainWP_Connect::get_file_content()

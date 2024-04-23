@@ -70,10 +70,10 @@ class Api_Backups_Admin {
      * @return Api_Backups_Admin
      */
     public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -221,7 +221,7 @@ class Api_Backups_Admin {
      * Add Insights Overview sub menu "Insights".
      */
     public static function init_menu() {
-        self::$page = add_submenu_page(
+        static::$page = add_submenu_page(
             'mainwp_tab',
             esc_html__( 'API Backups', 'mainwp' ),
             '<div class="mainwp-hidden" id="mainwp-api-backups">' . esc_html__( 'API Backups', 'mainwp' ) . '</div>',
@@ -236,10 +236,10 @@ class Api_Backups_Admin {
         /**
          * This hook allows you to add extra sub pages to the client page via the 'mainwp_getsubpages_cost_tracker' filter.
          */
-        self::$subPages = apply_filters( 'mainwp_getsubpages_api_backups', array() );
+        static::$subPages = apply_filters( 'mainwp_getsubpages_api_backups', array() );
 
-        if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-            foreach ( self::$subPages as $subPage ) {
+        if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
+            foreach ( static::$subPages as $subPage ) {
                 if ( empty( $subPage['slug'] ) || empty( $subPage['callback'] ) ) {
                     continue;
                 }
@@ -250,7 +250,7 @@ class Api_Backups_Admin {
             }
         }
 
-        self::init_left_menu( self::$subPages );
+        static::init_left_menu( static::$subPages );
     }
 
 

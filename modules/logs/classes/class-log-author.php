@@ -60,7 +60,7 @@ class Log_Author {
      *
      * @param string $name User meta key.
      *
-     * @throws \Exception Meta not found | User not found.
+     * @throws \MainWP_Exception Meta not found | User not found.
      *
      * @return string
      */
@@ -180,7 +180,7 @@ class Log_Author {
      * @return bool
      */
     public function is_deleted() {
-        return ( 0 !== $this->id && empty( $this->user->ID ) );
+        return 0 !== $this->id && empty( $this->user->ID );
     }
 
     /**
@@ -189,7 +189,7 @@ class Log_Author {
      * @return bool
      */
     public function is_wp_cli() {
-        return ( 'wp_cli' === $this->get_agent() );
+        return 'wp_cli' === $this->get_agent();
     }
 
     /**
@@ -204,7 +204,7 @@ class Log_Author {
      * @return bool
      */
     public function is_doing_wp_cron() {
-        return ( defined( 'DOING_CRON' ) && DOING_CRON );
+        return defined( 'DOING_CRON' ) && DOING_CRON;
     }
 
     /**

@@ -31,7 +31,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      * Initiate the MainWP CLI after all Plugins have loaded.
      */
     public static function init() {
-        add_action( 'plugins_loaded', array( self::class, 'init_wpcli_commands' ), 99999 );
+        add_action( 'plugins_loaded', array( static::class, 'init_wpcli_commands' ), 99999 );
     }
 
     /**
@@ -40,7 +40,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      * Adds the MainWP WP CLI Commands via WP_CLI::add_command
      */
     public static function init_wpcli_commands() {
-        \WP_CLI::add_command( 'mainwp', self::class );
+        \WP_CLI::add_command( 'mainwp', static::class );
     }
 
     /**

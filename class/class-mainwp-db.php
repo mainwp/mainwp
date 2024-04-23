@@ -69,13 +69,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @return MainWP_DB
      */
     public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
 
-        self::$instance->test_connection();
+        static::$instance->test_connection();
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -425,17 +425,17 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     private function get_general_website_option( $option ) {
 
-        if ( null !== self::$general_options ) {
-            if ( isset( self::$general_options[ $option ] ) ) {
-                return self::$general_options[ $option ];
+        if ( null !== static::$general_options ) {
+            if ( isset( static::$general_options[ $option ] ) ) {
+                return static::$general_options[ $option ];
             }
         } else {
-            self::$general_options[] = array();
+            static::$general_options[] = array();
         }
 
         $val = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT value FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', 0 ) );
 
-        self::$general_options[ $option ] = $val;
+        static::$general_options[ $option ] = $val;
         return $val;
     }
 
@@ -453,14 +453,14 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
 
         $return_options = array();
-        if ( null !== self::$general_options ) {
-            foreach ( self::$general_options as $opt => $val ) {
+        if ( null !== static::$general_options ) {
+            foreach ( static::$general_options as $opt => $val ) {
                 if ( in_array( $opt, $options ) ) {
                     $return_options[ $opt ] = $val;
                 }
             }
         } else {
-            self::$general_options[] = array();
+            static::$general_options[] = array();
         }
 
         $diff_options = array();
@@ -476,8 +476,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $options_db = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name, value FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name IN (' . $options_name . ')', 0 ) );
 
         foreach ( (array) $options_db as $o ) {
-            $return_options[ $o->name ]        = $o->value;
-            self::$general_options[ $o->name ] = $o->value;
+            $return_options[ $o->name ]          = $o->value;
+            static::$general_options[ $o->name ] = $o->value;
         }
         return $return_options;
     }
@@ -500,10 +500,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $value = wp_json_encode( $value );
         }
 
-        if ( null === self::$general_options ) {
-            self::$general_options[] = array();
+        if ( null === static::$general_options ) {
+            static::$general_options[] = array();
         }
-        self::$general_options[ $option ] = $value;
+        static::$general_options[ $option ] = $value;
 
         $rslt = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', 0 ) );
 
@@ -1085,7 +1085,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         $dbwebsites = array();
         $websites   = $this->query( $this->get_sql_websites_for_current_user( $selectgroups, $search_site, $orderBy, $offset, $rowcount, $extraWhere, $for_manager, $extra_view, $is_staging ) );
-        while ( $websites && ( $website = self::fetch_object( $websites ) ) ) {
+        while ( $websites && ( $website = static::fetch_object( $websites ) ) ) {
             $obj_data = MainWP_Utility::map_site( $website, $data );
 
             if ( $full_data ) {
@@ -1119,7 +1119,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $dbwebsites[ $website->id ] = $obj_data;
             }
         }
-        self::free_result( $websites );
+        static::free_result( $websites );
         return $dbwebsites;
     }
 
@@ -2289,7 +2289,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     $get_field = $field_indx;
                 }
 
-                if ( in_array( $get_field, self::$possible_options ) ) {
+                if ( in_array( $get_field, static::$possible_options ) ) {
                     if ( ! in_array( $get_field, $data_fields ) ) {
                         $data_fields[] = $get_field;
                     }
@@ -2300,7 +2300,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( ! empty( $sites ) ) {
             foreach ( $sites as $k => $v ) {
                 if ( MainWP_Utility::ctype_digit( $v ) ) {
-                    $website = self::instance()->get_website_by_id( $v );
+                    $website = static::instance()->get_website_by_id( $v );
                     if ( empty( $website ) ) {
                         continue;
                     }
@@ -2312,11 +2312,11 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( ! empty( $groups ) ) {
             foreach ( $groups as $k => $v ) {
                 if ( MainWP_Utility::ctype_digit( $v ) ) {
-                    $websites = self::instance()->query( self::instance()->get_sql_websites_by_group_id( $v ) );
-                    while ( $websites && ( $website = self::fetch_object( $websites ) ) ) {
+                    $websites = static::instance()->query( static::instance()->get_sql_websites_by_group_id( $v ) );
+                    while ( $websites && ( $website = static::fetch_object( $websites ) ) ) {
                         $dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
                     }
-                    self::free_result( $websites );
+                    static::free_result( $websites );
                 }
             }
         }
@@ -2358,7 +2358,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $extraWhere  = null;
 
         if ( isset( $websiteid ) && ( null !== $websiteid ) ) {
-            $website = self::instance()->get_website_by_id( $websiteid );
+            $website = static::instance()->get_website_by_id( $websiteid );
 
             if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
                 return false;
@@ -2414,12 +2414,12 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $totalRecords = '';
 
         if ( isset( $others['per_page'] ) && ! empty( $others['per_page'] ) ) {
-            $sql            = self::instance()->get_sql_websites_for_current_user( false, $search_site, $orderBy, false, false, $extraWhere, $for_manager );
-            $websites_total = self::instance()->query( $sql );
-            $totalRecords   = ( $websites_total ? self::num_rows( $websites_total ) : 0 );
+            $sql            = static::instance()->get_sql_websites_for_current_user( false, $search_site, $orderBy, false, false, $extraWhere, $for_manager );
+            $websites_total = static::instance()->query( $sql );
+            $totalRecords   = ( $websites_total ? static::num_rows( $websites_total ) : 0 );
 
             if ( $websites_total ) {
-                self::free_result( $websites_total );
+                static::free_result( $websites_total );
             }
 
             $rowcount = absint( $others['per_page'] );
@@ -2432,11 +2432,11 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         }
 
-        $sql      = self::instance()->get_sql_websites_for_current_user( false, $search_site, $orderBy, $offset, $rowcount, $extraWhere, $for_manager );
-        $websites = self::instance()->query( $sql );
+        $sql      = static::instance()->get_sql_websites_for_current_user( false, $search_site, $orderBy, $offset, $rowcount, $extraWhere, $for_manager );
+        $websites = static::instance()->query( $sql );
 
         $output = array();
-        while ( $websites && ( $website = self::fetch_object( $websites ) ) ) {
+        while ( $websites && ( $website = static::fetch_object( $websites ) ) ) {
             $re = array(
                 'id'          => $website->id,
                 'url'         => MainWP_Utility::get_nice_url( $website->url, true ),
@@ -2453,7 +2453,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
             $output[] = $re;
         }
-        self::free_result( $websites );
+        static::free_result( $websites );
 
         return $output;
     }

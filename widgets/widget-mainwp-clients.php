@@ -32,7 +32,7 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function render() {
         $clients = MainWP_DB_Client::instance()->get_wp_clients();
-        self::render_clients( $clients );
+        static::render_clients( $clients );
     }
 
     /**

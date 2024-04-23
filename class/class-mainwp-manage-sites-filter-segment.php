@@ -36,9 +36,9 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
      * Method admin_init().
      */
     public function admin_init() {
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_manage_sites_filter_save_segment', array( $this, 'ajax_filter_save_segment' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_manage_sites_filter_load_segments', array( $this, 'ajax_filter_load_segments' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_manage_sites_filter_delete_segment', array( $this, 'ajax_filter_delete_segment' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_manage_sites_filter_save_segment', array( $this, 'ajax_sites_filter_save_segment' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_manage_sites_filter_load_segments', array( $this, 'ajax_sites_filter_load_segments' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_manage_sites_filter_delete_segment', array( $this, 'ajax_sites_filter_delete_segment' ) );
     }
 
     /**
@@ -49,10 +49,10 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
      * @return instance.
      */
     public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -85,17 +85,14 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                     let data = mainwp_secure_data({
                         action: 'mainwp_manage_sites_filter_load_segments',
                     });
-                    jQuery('#mainwp-common-filter-edit-segment-status').html('<i class="notched circle loading icon"></i> ' + __('Loading segments. Please wait...')).show();
+                    mainwpSegmentModalUiHandle.showStatus('<i class="notched circle loading icon"></i> ' + __('Loading segments. Please wait...'));
                     jQuery.post(ajaxurl, data, function (response) {
                         if (response.error != undefined) {
-                            jQuery('#mainwp-common-filter-edit-segment-status').html(response.error).addClass('red');
+                            mainwpSegmentModalUiHandle.showStatus(response.error, 'red');
                         } else if (response.result) {
-                            jQuery('#mainwp-common-filter-edit-segment-status').hide();
-                            jQuery('#mainwp-common-filter-segments-lists-wrapper').html(response.result);
-                            jQuery( '#mainwp-common-filter-segments-lists-wrapper .ui.dropdown' ).dropdown();
-                            jQuery('#mainwp-common-filter-segment-select-fields').show();
+                            mainwpSegmentModalUiHandle.showResults(response.result);
                         } else {
-                            jQuery('#mainwp-common-filter-edit-segment-status').html(__('No saved segments.')).addClass('red');
+                            mainwpSegmentModalUiHandle.showStatus(__('No saved segments.'), 'red');
                         }
                     }, 'json');
                 };
@@ -268,11 +265,11 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
 
 
     /**
-     * Method ajax_filter_save_segment()
+     * Method ajax_sites_filter_save_segment()
      *
      * Post handler for save segment.
      */
-    public function ajax_filter_save_segment() {
+    public function ajax_sites_filter_save_segment() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_manage_sites_filter_save_segment' );
 		//phpcs:disable WordPress.Security.NonceVerification.Missing
 
@@ -316,11 +313,11 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
 
 
     /**
-     * Method ajax_filter_load_segments()
+     * Method ajax_sites_filter_load_segments()
      *
      * Post handler for save segment.
      */
-    public function ajax_filter_load_segments() {
+    public function ajax_sites_filter_load_segments() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_manage_sites_filter_load_segments' );
         $saved_segments = $this->set_get_manage_sites_filter_segments();
         $list_segs      = '';
@@ -339,11 +336,11 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
-     * Method ajax_filter_delete_segment()
+     * Method ajax_sites_filter_delete_segment()
      *
      * Post handler for save segment.
      */
-    public function ajax_filter_delete_segment() {
+    public function ajax_sites_filter_delete_segment() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_manage_sites_filter_delete_segment' );
 		$seg_id = ! empty( $_POST['seg_id'] ) ? sanitize_text_field( wp_unslash( $_POST['seg_id'] ) ) : 0; //phpcs:ignore -- ok.
 

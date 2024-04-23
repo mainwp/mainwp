@@ -153,7 +153,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ?>
         <?php
         if ( get_option( 'mainwp_enable_guided_tours', 0 ) ) {
-            self::mainwp_usetiful_tours();
+            static::mainwp_usetiful_tours();
         }
         exit;
     }

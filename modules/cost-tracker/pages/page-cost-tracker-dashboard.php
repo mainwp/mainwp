@@ -67,10 +67,10 @@ class Cost_Tracker_Dashboard {
      * @return Cost_Tracker_Dashboard
      */
     public static function get_instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
+        if ( null === static::$instance ) {
+            static::$instance = new self();
         }
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -91,9 +91,9 @@ class Cost_Tracker_Dashboard {
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_notes_save', array( $this, 'ajax_notes_save' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_delete', array( $this, 'ajax_cost_tracker_delete' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_lists_display_rows', array( $this, 'ajax_display_rows' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_filter_save_segment', array( $this, 'ajax_filter_save_segment' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_filter_load_segments', array( $this, 'ajax_filter_load_segments' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_filter_delete_segment', array( $this, 'ajax_filter_delete_segment' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_filter_save_segment', array( $this, 'ajax_costs_filter_save_segment' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_filter_load_segments', array( $this, 'ajax_costs_filter_load_segments' ) );
+        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_cost_tracker_filter_delete_segment', array( $this, 'ajax_costs_filter_delete_segment' ) );
     }
 
 
@@ -212,7 +212,7 @@ class Cost_Tracker_Dashboard {
         Cost_Tracker_Admin::render_header();
         ?>
         <div id="mainwp-module-cost-tracker-dashboard-tab">
-            <?php self::render_manage_tasks_table_top( $sel_ids ); ?>
+            <?php static::render_manage_tasks_table_top( $sel_ids ); ?>
             <?php $this->render_actions_bar(); ?>
                 <div class="ui segment">                    
                 <?php $this->render_dashboard_body(); ?>
@@ -249,7 +249,7 @@ class Cost_Tracker_Dashboard {
 
         $search = isset( $_REQUEST['search']['value'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['search']['value'] ) ) : '';
 
-        $filters = self::get_cost_filter_params();
+        $filters = static::get_cost_filter_params();
 
         $get_saved = true;
         foreach ( $filters as $filter ) {
@@ -441,9 +441,9 @@ class Cost_Tracker_Dashboard {
         $_orderby = 'name';
         $_order   = 'desc';
 
-        self::$order   = $_order;
-        self::$orderby = $_orderby;
-        $output        = array();
+        static::$order   = $_order;
+        static::$orderby = $_orderby;
+        $output          = array();
 
         $filtered = false;
 		if ( isset( $_GET['selected_ids'] ) && ! empty( $_GET['selected_ids'] ) ) { //phpcs:ignore -- ok.
@@ -506,8 +506,8 @@ class Cost_Tracker_Dashboard {
         $monthly_costs  = isset( $output['monthly_costs'] ) ? (float) $output['monthly_costs'] : 0;
         $yearly_costs   = isset( $output['yearly_costs'] ) ? (float) $output['yearly_costs'] : 0;
 
-        self::render_modal_edit_notes();
-        self::render_screen_options();
+        static::render_modal_edit_notes();
+        static::render_screen_options();
 
         $sites_per_page = get_option( 'mainwp_default_sites_per_page', 25 );
 
@@ -1014,11 +1014,11 @@ class Cost_Tracker_Dashboard {
     }
 
     /**
-     * Method ajax_filter_save_segment()
+     * Method ajax_costs_filter_save_segment()
      *
      * Post handler for save segment.
      */
-    public function ajax_filter_save_segment() {
+    public function ajax_costs_filter_save_segment() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_cost_tracker_filter_save_segment' );
 		//phpcs:disable WordPress.Security.NonceVerification.Missing
 
@@ -1093,11 +1093,11 @@ class Cost_Tracker_Dashboard {
     }
 
     /**
-     * Method ajax_filter_load_segments()
+     * Method ajax_costs_filter_load_segments()
      *
      * Post handler for save segment.
      */
-    public function ajax_filter_load_segments() {
+    public function ajax_costs_filter_load_segments() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_cost_tracker_filter_load_segments' );
         $saved_segments = $this->set_get_cost_filter_segments();
         $list_segs      = '';
@@ -1116,11 +1116,11 @@ class Cost_Tracker_Dashboard {
     }
 
     /**
-     * Method ajax_filter_delete_segment()
+     * Method ajax_costs_filter_delete_segment()
      *
      * Post handler for save segment.
      */
-    public function ajax_filter_delete_segment() {
+    public function ajax_costs_filter_delete_segment() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_cost_tracker_filter_delete_segment' );
 		$seg_id = ! empty( $_POST['seg_id'] ) ? sanitize_text_field( wp_unslash( $_POST['seg_id'] ) ) : 0; //phpcs:ignore -- ok.
 
@@ -1204,7 +1204,7 @@ class Cost_Tracker_Dashboard {
      */
 	public static function render_manage_tasks_table_top( $sel_one_time_ids = false ) { //phpcs:ignore -- complex.
 
-        $filters = self::get_cost_filter_params();
+        $filters = static::get_cost_filter_params();
 
         $get_saved = true;
         foreach ( $filters as $filter ) {
@@ -1276,7 +1276,7 @@ class Cost_Tracker_Dashboard {
         $renewal_frequency = $all_defaults['renewal_frequency'];
         $payment_methods   = $all_defaults['payment_methods'];
 
-        $saved_segments = self::get_instance()->set_get_cost_filter_segments();
+        $saved_segments = static::get_instance()->set_get_cost_filter_segments();
 
         $filters_row_style = 'display:none';
 
@@ -1655,7 +1655,7 @@ class Cost_Tracker_Dashboard {
             } );
         </script>
         <?php
-        self::render_modal_save_segment();
+        static::render_modal_save_segment();
     }
 
 
@@ -1755,7 +1755,7 @@ class Cost_Tracker_Dashboard {
      */
     public static function render_screen_options() {
 
-        $columns = self::get_columns();
+        $columns = static::get_columns();
 
         $show_cols = get_user_option( 'mainwp_module_costs_tracker_manage_showhide_columns' );
 

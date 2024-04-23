@@ -377,6 +377,10 @@ action_check_tab = function () {
     }
 }
 
+let module_api_backups_prepare_working_status = function(button){
+    jQuery(button).html('<i class="notched circle loading icon"></i>');
+}
+
 /********************************************************
  * Cloudways Functions.
  */
@@ -395,7 +399,7 @@ cloudways_action_backup = function (pObj) {
         backup_api: 'cloudways'
     });
 
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
     jQuery(lastBackup).html('Requesting Backup...');
 
     jQuery.post(ajaxurl, data, function (response) {
@@ -440,7 +444,7 @@ cloudways_action_update_ids = function (pObj) {
         action: 'cloudways_action_update_ids'
     });
 
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -521,7 +525,7 @@ cloudways_action_restore_backup = function (pObj) {
     });
 
     // Start button animation.
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -663,7 +667,7 @@ vultr_action_create_snapshot = function (pObj) {
         backup_api: 'vultr'
     });
 
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
     jQuery(lastBackup).html('Requesting Backup...');
 
     jQuery.post(ajaxurl, data, function (response) {
@@ -752,7 +756,7 @@ vultr_action_restore_backup = function (pObj) {
     });
 
     // Start button animation.
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -799,7 +803,7 @@ vultr_action_delete_backup = function (pObj) {
     });
 
     // Start button animation.
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -844,7 +848,7 @@ gridpane_action_update_ids = function (pObj) {
         action: 'gridpane_action_update_ids'
     });
 
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -872,7 +876,7 @@ gridpane_action_create_backup = function (pObj) {
         backup_api: 'gridpane'
     });
 
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
 
     jQuery(lastBackup).html('Requesting Backup...');
 
@@ -969,7 +973,7 @@ gridpane_action_restore_backup = function (pObj) {
     });
 
     // Start button animation.
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -1018,7 +1022,7 @@ gridpane_action_delete_backup = function (pObj) {
     });
 
     // Start button animation.
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -1062,7 +1066,7 @@ linode_action_update_ids = function (pObj) {
         action: 'linode_action_update_ids'
     });
 
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -1089,7 +1093,7 @@ linode_action_create_backup = function (pObj) {
         backup_api: 'linode'
     });
 
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
 
     jQuery(lastBackup).html('Requesting Backup...');
 
@@ -1185,7 +1189,7 @@ linode_action_restore_backup = function (pObj) {
     });
 
     // Start button animation.
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
     jQuery(backupStatus).html('Restoring Backup...');
 
     jQuery.post(ajaxurl, data, function (response) {
@@ -1273,7 +1277,7 @@ digitalocean_action_update_ids = function (pObj) {
         action: 'digitalocean_action_update_ids'
     });
 
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -1301,7 +1305,7 @@ digitalocean_action_create_backup = function (pObj) {
         backup_api: 'digitalocean'
     });
 
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
 
     jQuery(lastBackup).html('Requesting Backup...');
 
@@ -1395,7 +1399,7 @@ digitalocean_action_restore_backup = function (pObj) {
     });
 
     // Start button animation.
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);
@@ -1441,7 +1445,7 @@ digitalocean_action_delete_backup = function (pObj) {
     });
 
     // Start button animation.
-    jQuery(button).html('<i class="notched circle loading icon"></i>');
+    module_api_backups_prepare_working_status(button);
 
     jQuery.post(ajaxurl, data, function (response) {
         response = jQuery.trim(response);

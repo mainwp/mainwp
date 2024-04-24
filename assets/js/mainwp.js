@@ -3330,7 +3330,6 @@ let mainwp_copy_to_clipboard = function (text, event) {
       console.warn("Copy to clipboard failed.", ex);
     }
   }
-  return;
 }
 
 jQuery(document).on('click', '#mainwp-copy-meta-system-report', function (event) {

@@ -380,12 +380,9 @@ class Log_Events_List_Table {
 
 		// phpcs:disable WordPress.Security.NonceVerification
         if ( isset( $_REQUEST['order'] ) ) {
-            $columns = isset( $_REQUEST['columns'] ) ? wp_unslash( $_REQUEST['columns'] ) : array(); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $ord_col = isset( $_REQUEST['order'][0]['column'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['order'][0]['column'] ) ) : '';
-            if ( isset( $columns[ $ord_col ] ) ) {
-                $req_orderby = isset( $columns[ $ord_col ]['data'] ) ? sanitize_text_field( wp_unslash( $columns[ $ord_col ]['data'] ) ) : '';
-                $req_order   = isset( $_REQUEST['order'][0]['dir'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['order'][0]['dir'] ) ) : '';
-            }
+            $order_values = MainWP_Utility::instance()->get_table_orders( $_REQUEST );
+            $req_orderby  = $order_values['orderby'];
+            $req_order    = $order_values['order'];
         }
 
         $search = isset( $_REQUEST['search']['value'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['search']['value'] ) ) : '';

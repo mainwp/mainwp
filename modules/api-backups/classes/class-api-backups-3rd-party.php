@@ -54,11 +54,6 @@ class Api_Backups_3rd_Party {
     const DROPLETS = '/droplets/'; // to clean code.
 
     /**
-     * Public static variable.
-     */
-    const THIRD_PARTY = '/3rdparty/wpt/index.php/v1/installations'; // to clean code.
-
-    /**
      * Method instance()
      *
      * Create a public static instance.
@@ -4052,6 +4047,22 @@ class Api_Backups_3rd_Party {
 
     /**
      *
+     * Method get_3rdparty_installation_path().
+     *
+     * @param string $what what to get path.
+     *
+     * @return string api path.
+     */
+    public static function get_3rdparty_installation_path( $what = '' ) {
+        $path = '/3rdparty/wpt/index.php/v1/installations/';
+        if ( 'with_sort' === $what ) {
+            $path .= '?sortBy=title&sortOrder=asc';
+        }
+        return $path;
+    }
+
+    /**
+     *
      * CPanel: Action refresh available WP-Toolit backups.
      *
      * Save backups to DB for the selected server.
@@ -4077,7 +4088,7 @@ class Api_Backups_3rd_Party {
         $wp_toolkit_installation_id = '';
 
         // Grab list of WP Toolkit installations.
-        $wp_toolkit_installation_list         = static::call_cpanel_api( 'GET', static::THIRD_PARTY . '?sortBy=title&sortOrder=asc', $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $wp_toolkit_installation_list         = static::call_cpanel_api( 'GET', $this->get_3rdparty_installation_path( 'with_sort' ), $cpanel_baseurl, $cpanel_username, $cpanel_password );
         $wp_toolkit_installation_list_decoded = json_decode( $wp_toolkit_installation_list['response'] );
 
         // Search for website url in list of WP Toolkit installations & grab Site ID.
@@ -4090,7 +4101,7 @@ class Api_Backups_3rd_Party {
         }
 
         // Grab backup meta for found Site ID.
-        $wp_toolkit_backups = static::call_cpanel_api( 'GET', static::THIRD_PARTY . '/' . $wp_toolkit_installation_id . '/backups/meta', $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $wp_toolkit_backups = static::call_cpanel_api( 'GET', static::get_3rdparty_installation_path() . $wp_toolkit_installation_id . '/backups/meta', $cpanel_baseurl, $cpanel_username, $cpanel_password );
         if ( 'true' === $wp_toolkit_backups['status'] ) {
             return $wp_toolkit_backups['response'];
         } else {
@@ -4383,7 +4394,7 @@ class Api_Backups_3rd_Party {
         $website_url = trim( $website['url'], '/' );
 
         // Grab list of WP Toolkit installations.
-        $wp_toolkit_installation_list         = static::call_cpanel_api( 'GET', static::THIRD_PARTY . '?sortBy=title&sortOrder=asc', $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $wp_toolkit_installation_list         = static::call_cpanel_api( 'GET', static::get_3rdparty_installation_path( 'with_sort' ), $cpanel_baseurl, $cpanel_username, $cpanel_password );
         $wp_toolkit_installation_list_decoded = json_decode( $wp_toolkit_installation_list['response'] );
 
         if ( '201' !== $wp_toolkit_installation_list['httpCode'] && '200' !== $wp_toolkit_installation_list['httpCode'] && '204' !== $wp_toolkit_installation_list['httpCode'] ) {
@@ -4460,7 +4471,7 @@ class Api_Backups_3rd_Party {
         $website_url = trim( $website['url'], '/' );
 
         // Grab list of WP Toolkit installations.
-        $wp_toolkit_installation_list         = static::call_cpanel_api( 'GET', static::THIRD_PARTY . '?sortBy=title&sortOrder=asc', $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $wp_toolkit_installation_list         = static::call_cpanel_api( 'GET', static::get_3rdparty_installation_path( 'with_sort' ), $cpanel_baseurl, $cpanel_username, $cpanel_password );
         $wp_toolkit_installation_list_decoded = json_decode( $wp_toolkit_installation_list['response'] );
 
         if ( '201' !== $wp_toolkit_installation_list['httpCode'] && '200' !== $wp_toolkit_installation_list['httpCode'] && '204' !== $wp_toolkit_installation_list['httpCode'] ) {
@@ -4534,7 +4545,7 @@ class Api_Backups_3rd_Party {
         $wp_toolkit_installation_id = '';
 
         // Grab list of WP Toolkit installations.
-        $wp_toolkit_installation_list         = static::call_cpanel_api( 'GET', static::THIRD_PARTY . '?sortBy=title&sortOrder=asc', $cpanel_baseurl, $cpanel_username, $cpanel_password );
+        $wp_toolkit_installation_list         = static::call_cpanel_api( 'GET', static::get_3rdparty_installation_path( 'with_sort' ), $cpanel_baseurl, $cpanel_username, $cpanel_password );
         $wp_toolkit_installation_list_decoded = json_decode( $wp_toolkit_installation_list['response'] );
 
         if ( '201' !== $wp_toolkit_installation_list['httpCode'] && '200' !== $wp_toolkit_installation_list['httpCode'] && '204' !== $wp_toolkit_installation_list['httpCode'] ) {
@@ -4562,7 +4573,7 @@ class Api_Backups_3rd_Party {
          *
          * /v1/installations/{installationId}/backups
          */
-        $payload = static::THIRD_PARTY . '/' . $wp_toolkit_installation_id . '/backups?files%5B%5D=' . rawurlencode( $backup_name );
+        $payload = static::get_3rdparty_installation_path() . $wp_toolkit_installation_id . '/backups?files%5B%5D=' . rawurlencode( $backup_name );
 
         // Send Payload & create backup.
         $api_response     = static::call_cpanel_api_json( 'DELETE', $payload, $cpanel_baseurl, $cpanel_username, $cpanel_password, $backup_data );

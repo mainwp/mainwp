@@ -492,6 +492,8 @@ let mainwp_fetch_posts_prepare = function (postId, userId, start_sites) {
 
     let bulk_search = num_sites > 0;
 
+    let need_selected_sites = true;
+
     if (jQuery('#select_by').val() == 'site' && start_sites == undefined) {
         start_sites = 0;
     }
@@ -507,27 +509,19 @@ let mainwp_fetch_posts_prepare = function (postId, userId, start_sites) {
                 selected_sites.push(jQuery(this).val());
             }
         });
-
         if (selected_sites.length == 0 && (!bulk_search || (bulk_search && start_sites == 0))) {
-            errors.push('<div class="ui yellow message">' + __('Please select at least one website or group or client.') + '</div>');
+            need_selected_sites = false;
         }
-
     } else if (jQuery('#select_by').val() == 'client') {
         jQuery("input[name='selected_clients[]']:checked").each(function () {
             selected_clients.push(jQuery(this).val());
         });
-        if (selected_clients.length == 0) {
-            errors.push('<div class="ui yellow message">' + __('Please select at least one client or website, group.') + '</div>');
-        }
-
     } else if (jQuery('#select_by').val() == 'group') {
         jQuery("input[name='selected_groups[]']:checked").each(function () {
             selected_groups.push(jQuery(this).val());
         });
 
-        if (selected_groups.length == 0) {
-            errors.push('<div class="ui yellow message">' + __('Please select at least one website or group or client.') + '</div>');
-        } else if (bulk_search && start_sites == undefined) {
+        if (selected_groups.length > 0 && bulk_search && start_sites == undefined) {
             console.log(num_sites);
             start_sites = 0;
             // get sites of groups.
@@ -558,6 +552,11 @@ let mainwp_fetch_posts_prepare = function (postId, userId, start_sites) {
             });
         }
     }
+
+    if( need_selected_sites && selected_clients.length == 0 && selected_groups.length == 0 ){
+        errors.push('<div class="ui yellow message">' + __('Please select at least one website or group or client.') + '</div>');
+    }
+
     return {
         'errors': errors,
         'selected_sites': selected_sites,

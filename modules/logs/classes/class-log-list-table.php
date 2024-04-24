@@ -346,12 +346,9 @@ class Log_List_Table {
 
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_REQUEST['order'] ) ) {
-            $columns = isset( $_REQUEST['columns'] ) ? wp_unslash( $_REQUEST['columns'] ) : array();
-            $ord_col = isset( $_REQUEST['order'][0]['column'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['order'][0]['column'] ) ) : '';
-            if ( isset( $columns[ $ord_col ] ) ) {
-                $req_orderby = isset( $columns[ $ord_col ]['data'] ) ? sanitize_text_field( wp_unslash( $columns[ $ord_col ]['data'] ) ) : '';
-                $req_order   = isset( $_REQUEST['order'][0]['dir'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['order'][0]['dir'] ) ) : '';
-            }
+            $order_values = MainWP_Utility::instance()->get_table_orders( $_REQUEST );
+            $req_orderby  = $order_values['orderby'];
+            $req_order    = $order_values['order'];
         }
 
 		// phpcs:enable

@@ -1614,4 +1614,31 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         }
     }
+
+    /**
+     * Method get_table_orders().
+     *
+     * @param array $data table data.
+     */
+    public function get_table_orders( $data ) {
+
+        $values = array(
+            'orderby' => null,
+            'order' => null,
+        );
+
+        if ( isset( $data['order'] ) ) {
+            $columns = isset( $data['columns'] ) ? wp_unslash( $data['columns'] ) : array();
+            $ord_col = isset( $data['order'][0]['column'] ) ? sanitize_text_field( wp_unslash( $data['order'][0]['column'] ) ) : '';
+            if ( isset( $columns[ $ord_col ] ) ) {
+                $values = array(
+                    'orderby' => isset( $columns[ $ord_col ]['data'] ) ? sanitize_text_field( wp_unslash( $columns[ $ord_col ]['data'] ) ) : '',
+                    'order' => isset( $data['order'][0]['dir'] ) ? sanitize_text_field( wp_unslash( $data['order'][0]['dir'] ) ) : '',
+                );
+            }
+        }
+
+        return $values;
+    }
+
 }

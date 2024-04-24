@@ -74,7 +74,7 @@ class Log_Events_List_Table {
         return 'name';
     }
 
-    // NO_SONAR_START - duplicated issue.
+    // @NO_SONAR_START@ - duplicated issue.
     /**
      * Get sortable columns.
      *
@@ -159,7 +159,7 @@ class Log_Events_List_Table {
         );
         return $defines;
     }
-    // NO_SONAR_END .
+    // @NO_SONAR_END@  .
 
     /**
      * Returns the column content for the provided item and column.

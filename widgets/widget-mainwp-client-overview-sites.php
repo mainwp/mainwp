@@ -163,7 +163,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
             </div>
 
             <?php
-            // NO_SONAR_START - duplicated issue.
+            // @NO_SONAR_START@ - duplicated issue.
 
                 $sites_per_page = get_option( 'mainwp_default_sites_per_page', 25 );
 
@@ -259,7 +259,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                 });
             </script>
             <?php
-            // NO_SONAR_END .
+            // @NO_SONAR_END@  .
     }
 
 
@@ -483,7 +483,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
      */
 	protected function single_row_columns( $website ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-        // NO_SONAR_START - duplicated issue.
+        // @NO_SONAR_START@ - duplicated issue.
         $total_wp_upgrades     = 0;
         $total_plugin_upgrades = 0;
         $total_theme_upgrades  = 0;
@@ -576,7 +576,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
 
         $hasSyncErrors = ( '' !== $website['sync_errors'] );
 
-        // NO_SONAR_END .
+        // @NO_SONAR_END@  .
 
         if ( $hasSyncErrors ) {
             $a_color = '';
@@ -630,7 +630,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                 <td class="collapsing center aligned"><span data-tooltip="<?php esc_attr_e( 'Number of available updates. Click to see details.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><a class="ui mini compact button <?php echo esc_attr( $a_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>"><?php echo intval( $total_updates ); ?></a></span></td>
                 <?php
             } elseif ( 'site_actions' === $column_name ) {
-                // NO_SONAR_START - duplicated issue.
+                // @NO_SONAR_START@ - duplicated issue.
                 ?>
                     <td class="collapsing not-selectable">
                         <div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999;">
@@ -651,7 +651,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                         </div>
                     </td>
                 <?php
-                // NO_SONAR_END .
+                // @NO_SONAR_END@  .
             } elseif ( method_exists( $this, 'column_' . $column_name ) ) {
                 echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
                 echo call_user_func( array( $this, 'column_' . $column_name ), $website ); // phpcs:ignore WordPress.Security.EscapeOutput

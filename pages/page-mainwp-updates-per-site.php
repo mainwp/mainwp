@@ -55,7 +55,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <th class="indicator-accordion-sorting handle-accordion-sorting"><?php echo esc_html__( 'Client', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
                     <th class="no-sort right aligned">
                         <?php
-                        // NO_SONAR_START - duplicated issue.
+                        // @NO_SONAR_START@ - duplicated issue.
                         if ( MainWP_Updates::user_can_update_wp() ) {
                             if ( 0 < $total_wp_upgrades ) {
                                 MainWP_Updates::set_continue_update_html_selector( 'wpcore_global_upgrade_all' );
@@ -70,7 +70,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                 }
                             }
                         }
-                        // NO_SONAR_END .
+                        // @NO_SONAR_END@  .
                         ?>
                     </th>
                 </tr>
@@ -107,7 +107,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     </td>
                     <td>
                         <?php
-                        // NO_SONAR_START - duplicated issue.
+                        // @NO_SONAR_START@ - duplicated issue.
                         if ( ! empty( $wp_upgrades ) ) :
                             ?>
                             <?php echo esc_html( $wp_upgrades['new'] ); ?>
@@ -135,7 +135,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     </td>
                 </tr>
                     <?php
-                    // NO_SONAR_END .
+                    // @NO_SONAR_END@  .
                 }
                 ?>
             </tbody>

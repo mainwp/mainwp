@@ -57,7 +57,7 @@ class Log_Events_Filter_Segment {
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_filter_delete_segment', array( $this, 'ajax_log_filter_delete_segment' ) );
     }
 
-    // NO_SONAR_START - duplicated issue.
+    // @NO_SONAR_START@ - duplicated issue.
     /**
      * Method render_filters_segment().
      */
@@ -352,5 +352,5 @@ class Log_Events_Filter_Segment {
         }
 		die( wp_json_encode( array( 'error' => esc_html__( 'Segment not found. Please try again.', 'mainwp' ) ) ) ); //phpcs:ignore -- ok.
     }
-    // NO_SONAR_END .
+    // @NO_SONAR_END@  .
 }

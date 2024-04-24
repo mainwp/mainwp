@@ -837,7 +837,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 MainWP_Menu::add_left_menu( $item, $level );
             }
         }
-        // NO_SONAR_END.
+        // NO_SONAR_END .
         global $_mainwp_menu_active_slugs;
 
         $active_slugs = array(

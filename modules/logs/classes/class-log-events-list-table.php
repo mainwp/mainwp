@@ -159,7 +159,7 @@ class Log_Events_List_Table {
         );
         return $defines;
     }
-    // NO_SONAR_END.
+    // NO_SONAR_END .
 
     /**
      * Returns the column content for the provided item and column.

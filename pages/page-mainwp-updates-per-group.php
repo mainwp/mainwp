@@ -150,7 +150,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                     <div class="ui child checkbox">
                                                         <input type="checkbox" name=""><label><?php MainWP_Updates::render_site_link_dashboard( $website ); ?></label>
                                                     </div>
-                                                    <input type="hidden" id="wp-updated-<?php echo esc_attr( $website->id ); ?>" value="<?php echo ( ! empty( $wp_upgrades ) ? '0' : '1' ); ?>" />
+                                                    <input type="hidden" id="wp-updated-<?php echo esc_attr( $website->id ); ?>" value="<?php echo ! empty( $wp_upgrades ) ? '0' : '1'; ?>" />
                                                 </td>
                                                 <td>
                                                     <?php if ( ! empty( $wp_upgrades ) ) : ?>

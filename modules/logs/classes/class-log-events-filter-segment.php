@@ -352,5 +352,5 @@ class Log_Events_Filter_Segment {
         }
 		die( wp_json_encode( array( 'error' => esc_html__( 'Segment not found. Please try again.', 'mainwp' ) ) ) ); //phpcs:ignore -- ok.
     }
-    // NO_SONAR_END.
+    // NO_SONAR_END .
 }

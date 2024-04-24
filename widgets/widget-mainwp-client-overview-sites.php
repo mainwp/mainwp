@@ -259,7 +259,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                 });
             </script>
             <?php
-            // NO_SONAR_END.
+            // NO_SONAR_END .
     }
 
 
@@ -576,7 +576,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
 
         $hasSyncErrors = ( '' !== $website['sync_errors'] );
 
-        // NO_SONAR_END.
+        // NO_SONAR_END .
 
         if ( $hasSyncErrors ) {
             $a_color = '';
@@ -651,7 +651,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                         </div>
                     </td>
                 <?php
-                // NO_SONAR_END.
+                // NO_SONAR_END .
             } elseif ( method_exists( $this, 'column_' . $column_name ) ) {
                 echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
                 echo call_user_func( array( $this, 'column_' . $column_name ), $website ); // phpcs:ignore WordPress.Security.EscapeOutput

@@ -70,7 +70,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                 }
                             }
                         }
-                        // NO_SONAR_END.
+                        // NO_SONAR_END .
                         ?>
                     </th>
                 </tr>
@@ -135,7 +135,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     </td>
                 </tr>
                     <?php
-                    // NO_SONAR_END.
+                    // NO_SONAR_END .
                 }
                 ?>
             </tbody>

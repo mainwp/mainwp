@@ -118,14 +118,10 @@ window.mainwp_fetch_plugins = function () {
     }
 
     if (errors.length > 0) {
-        jQuery('#mainwp-message-zone').html(errors.join('<br />'));
-        jQuery('#mainwp-message-zone').addClass('yellow');
-        jQuery('#mainwp-message-zone').show();
+        mainwp_set_message_zone('#mainwp-message-zone', errors.join('<br />'), 'yellow');
         return;
     } else {
-        jQuery('#mainwp-message-zone').html('');
-        jQuery('#mainwp-message-zone').removeClass('yellow');
-        jQuery('#mainwp-message-zone').hide();
+        mainwp_set_message_zone('#mainwp-message-zone');
     }
     let data = mainwp_secure_data({
         action: 'mainwp_plugins_search',
@@ -657,14 +653,10 @@ window.mainwp_fetch_themes = function () {
     }
 
     if (errors.length > 0) {
-        jQuery('#mainwp-message-zone').html(errors.join('<br />'));
-        jQuery('#mainwp-message-zone').addClass('yellow');
-        jQuery('#mainwp-message-zone').show();
+        mainwp_set_message_zone('#mainwp-message-zone', errors.join('<br />'), 'yellow');
         return;
     } else {
-        jQuery('#mainwp-message-zone').html('');
-        jQuery('#mainwp-message-zone').removeClass('yellow');
-        jQuery('#mainwp-message-zone').hide();
+        mainwp_set_message_zone('#mainwp-message-zone');
     }
 
     let data = mainwp_secure_data({

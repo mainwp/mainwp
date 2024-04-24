@@ -11,7 +11,7 @@ let import_user_total_import = 0;
 let import_user_count_created_users = 0;
 let import_user_count_create_fails = 0;
 
-jQuery(function(){
+jQuery(function () {
 
     // Fetch users
     jQuery(document).on('click', '#mainwp_show_users', function () {
@@ -259,15 +259,11 @@ let mainwp_fetch_users = function () {
     }
 
     if (errors.length > 0) {
-        jQuery('#mainwp-message-zone').html(errors.join('<br />'));
-        jQuery('#mainwp-message-zone').show();
-        jQuery('#mainwp-message-zone').addClass('yellow ');
+        mainwp_set_message_zone('#mainwp-message-zone', errors.join('<br />'), 'yellow');
         jQuery('#mainwp_users_loading_info').hide();
         return;
     } else {
-        jQuery('#mainwp-message-zone').html("");
-        jQuery('#mainwp-message-zone').removeClass('yellow ');
-        jQuery('#mainwp-message-zone').hide();
+        mainwp_set_message_zone('#mainwp-message-zone');
     }
 
     let name = jQuery('#mainwp_search_users').val();
@@ -346,7 +342,7 @@ let mainwp_fetch_users = function () {
 /**
  * Bulk upload new user
  */
-jQuery(function(){
+jQuery(function () {
     import_user_total_import = jQuery('#import_user_total_import').val();
 
     jQuery('#import_user_btn_import').on('click', function () {

@@ -93,6 +93,29 @@ jQuery(function ($) {
 
 });
 
+if (!window.mainwp_set_message_zone) {
+  window.mainwp_set_message_zone = function (zone_selector, msg_html, colors, show) {
+    if (msg_html) {
+      jQuery(zone_selector).html(msg_html);
+    } else if (msg_html === '' || msg_html === undefined) {
+      jQuery(zone_selector).html('');
+    }
+
+    if (colors) {
+      jQuery(zone_selector).removeClass('green yellow green');
+      jQuery(zone_selector).addClass(colors);
+    } else if (colors === '' || colors === undefined) {
+      jQuery(zone_selector).removeClass('green yellow green');
+    }
+
+    if (true === show) {
+      jQuery(zone_selector).show();
+    } else {
+      jQuery(zone_selector).hide();
+    }
+  }
+}
+
 let bulkInstallMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
 let bulkInstallCurrentThreads = 0;
 
@@ -1469,7 +1492,7 @@ jQuery(document).on('change', '#mainwp_managesites_verify_installed_child', func
 });
 
 window.managesites_init = function () {
-  jQuery('#mainwp-message-zone').hide();
+  mainwp_set_message_zone('#mainwp-message-zone');
   jQuery('.sync-ext-row span.status').html('');
   jQuery('.sync-ext-row span.status').css('color', '#0073aa');
 };
@@ -1589,7 +1612,7 @@ let mainwp_managesites_add = function () {
 
   //Check if valid user & rulewp is installed?
   let url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
-  
+
   if (!url.endsWith('/')) {
     url += '/';
   }
@@ -1692,11 +1715,10 @@ let mainwp_managesites_add = function () {
         jQuery('#mainwp-response-data-container').attr('resp-data', resp_data);
 
         if (response.substring(0, 5) == 'ERROR') {
-          jQuery('#mainwp-message-zone').removeClass('green');
+          mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
           feedback('mainwp-message-zone', response.substring(6) + (resp_data != '' ? '<br>' + show_resp : ''), 'red');
         } else {
-          //Message the WP was added
-          jQuery('#mainwp-message-zone').removeClass('red');
+          mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
           feedback('mainwp-message-zone', response, 'green');
 
           if (site_id > 0) {
@@ -1729,7 +1751,7 @@ let mainwp_managesites_add = function () {
       }, 'json');
     }
     if (errors.length > 0) {
-      jQuery('#mainwp-message-zone').removeClass('green');
+      mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
       managesites_init();
       jQuery('#mainwp_managesites_add').prop("disabled", false); //Enable add button
       if (resp_data != '') {
@@ -1784,7 +1806,7 @@ let mainwp_managesites_add_valid = function () {
 let mainwp_managesites_sync_extension_start_next = function (siteId) {
   let pluginToInstall = jQuery('.sync-ext-row[status="queue"]:first')
   while (pluginToInstall && (pluginToInstall.length > 0) && (bulkInstallCurrentThreads < 1)) {  // NOSONAR - modified outside the function, bulkInstallMaxThreads - to fix install plugins and apply settings failed issue.
-    pluginToInstall.attr('status', 'progress');    
+    pluginToInstall.attr('status', 'progress');
     mainwp_managesites_sync_extension_start_specific(pluginToInstall, siteId);
     pluginToInstall = jQuery('.sync-ext-row[status="queue"]:first');
   }
@@ -2226,9 +2248,7 @@ let mainwp_createuser = function () {
   }
 
   if (cont) {
-    jQuery('#mainwp-message-zone').removeClass('red green yellow');
-    jQuery('#mainwp-message-zone').html('<i class="notched circle loading icon"></i> ' + __('Creating the user. Please wait...'));
-    jQuery('#mainwp-message-zone').show();
+    mainwp_set_message_zone('#mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + __('Creating the user. Please wait...'), '', true);
     jQuery('#bulk_add_createuser').attr('disabled', 'disabled');
     //Add user via ajax!!
     let data = mainwp_secure_data({
@@ -2250,7 +2270,7 @@ let mainwp_createuser = function () {
 
     jQuery.post(ajaxurl, data, function (response) {
       response = response.trim();
-      jQuery('#mainwp-message-zone').hide();
+      mainwp_set_message_zone('#mainwp-message-zone');
       jQuery('#bulk_add_createuser').prop("disabled", false);
       if (response.substring(0, 5) == 'ERROR') {
         let responseObj = JSON.parse(response.substring(6));
@@ -2885,13 +2905,13 @@ mainwp_install_check_plugin_prepare = function (slug) {
     });
   }
   jQuery('#mainwp-install-check-btn').addClass('disabled');
-  jQuery('#mainwp-message-zone-install').html('<i class="notched circle loading icon"></i> ').show();
+  mainwp_set_message_zone('#mainwp-message-zone-install', '<i class="notched circle loading icon"></i> ', false, true ); // false: not change the color class.
   let data = mainwp_secure_data({
     action: 'mainwp_preparebulkinstallcheckplugin',
     slug: slug,
   });
   jQuery.post(ajaxurl, data, function (response) {
-    jQuery('#mainwp-message-zone-install').html('').hide();
+    mainwp_set_message_zone('#mainwp-message-zone-install');
     mainwp_install_check_plugin_start_next(response.url);
   }, 'json');
 };
@@ -4057,8 +4077,7 @@ let mainwp_tool_prepare_renew_connections = function (objBtn) {
 
   let errors = [];
   let selected_sites = [];
-
-  jQuery('#mainwp-message-zone-modal').removeClass('yellow ').hide();
+  mainwp_set_message_zone('#mainwp-message-zone-modal');
 
   jQuery("input[name='selected_sites[]']:checked").each(function () {
     selected_sites.push(jQuery(this).val());
@@ -4068,12 +4087,10 @@ let mainwp_tool_prepare_renew_connections = function (objBtn) {
   }
 
   if (errors.length > 0) {
-    jQuery('#mainwp-message-zone-modal').html(errors.join('<br />'));
-    jQuery('#mainwp-message-zone-modal').addClass('yellow ').show();
+    mainwp_set_message_zone('#mainwp-message-zone-modal', errors.join('<br />'), 'yellow');
     return;
   } else {
-    jQuery('#mainwp-message-zone-modal').html("");
-    jQuery('#mainwp-message-zone-modal').removeClass('yellow ').hide();
+    mainwp_set_message_zone('#mainwp-message-zone-modal');
   }
 
   let confirmation = __("This process will create a new OpenSSL Key Pair on your MainWP Dashboard and Set the new Public Key to your Child site(s). Are you sure you want to proceed?");

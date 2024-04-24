@@ -209,7 +209,7 @@ let mainwp_manageclients_bulk_remove_specific = function (pCheckedBox) {
 };
 
 let manageclients_bulk_init = function () {
-  jQuery('#mainwp-message-zone-client').hide();
+  mainwp_set_message_zone('#mainwp-message-zone-client');
   if (bulkManageClientsTaskRunning == false) {
     bulkManageClientsMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
     bulkManageClientsCurrentThreads = 0;
@@ -282,13 +282,12 @@ let mainwp_createclient = function (currPage) {
     is_first_client = true;
   }
 
-  jQuery('#mainwp-message-zone-client').removeClass('red green yellow');
+  mainwp_set_message_zone('#mainwp-message-zone-client');
   let msg = __('Creating the client. Please wait...');
   if (jQuery('input[name="client_fields[client_id]"]').val() != 0) {
     msg = __('Updating the client. Please wait...');
   }
-  jQuery('#mainwp-message-zone-client').html('<i class="notched circle loading icon"></i> ' + msg);
-  jQuery('#mainwp-message-zone-client').show();
+  mainwp_set_message_zone('#mainwp-message-zone-client', '<i class="notched circle loading icon"></i> ' + msg);
   jQuery('#bulk_add_createclient').attr('disabled', 'disabled');
 
   //Add user via ajax!!
@@ -304,7 +303,7 @@ let mainwp_createclient = function (currPage) {
     url: ajaxurl,
     data: formdata,
     success: function (response) {
-      jQuery('#mainwp-message-zone-client').hide();
+      mainwp_set_message_zone('#mainwp-message-zone-client');
       jQuery('#bulk_add_createclient').prop("disabled", false);
       if (response && response.success) {
         if ('add-new' == currPage) {
@@ -421,11 +420,11 @@ jQuery(document).on('click', '#mainwp-clients-delete-general-field', function ()
       action: 'mainwp_clients_delete_general_field',
       field_id: parent.attr('field-id'),
     }), function (data) {
-      jQuery('#mainwp-message-zone-client').hide();
+      mainwp_set_message_zone('#mainwp-message-zone-client');
       if (data && data.success) {
         parent.html('<td colspan="3"><i class="green check icon"></i> ' + __('Field has been deleted successfully.') + '</td>').fadeOut(3000);
       } else {
-        jQuery('#mainwp-message-zone-client').html(__('Field can not be deleted.')).addClass('red').show();
+        mainwp_set_message_zone('#mainwp-message-zone-client', __('Field can not be deleted.'), 'red' );
       }
     }, 'json');
     return false;
@@ -447,7 +446,7 @@ jQuery(document).on('click', '#mainwp-clients-delete-individual-field', function
       if (data && data.success) {
         parent.html('<td colspan="3"><i class="green check icon"></i> ' + __('Field has been deleted successfully.') + '</td>').fadeOut(3000);
       } else {
-        jQuery('#mainwp-message-zone-client').html(__('Field can not be deleted.')).addClass('red').show();
+        mainwp_set_message_zone('#mainwp-message-zone-client', __('Field can not be deleted.'), 'red' );
       }
     }, 'json');
     return false;

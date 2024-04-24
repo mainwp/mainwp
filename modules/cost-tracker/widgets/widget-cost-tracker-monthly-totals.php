@@ -43,13 +43,6 @@ class Cost_Tracker_Monthly_Totals {
      * Handle render costs widget.
      */
     public function render() {
-        $args       = func_get_args();
-        $data       = is_array( $args ) && ! empty( $args[1][0] ) && is_array( $args[1][0] ) ? $args[1][0] : array();
-        $costs_data = is_array( $data ) && ! empty( $data['costs_data'] ) ? $data['costs_data'] : array();
-
-        if ( ! is_array( $costs_data ) ) {
-            $costs_data = array();
-        }
         $this->render_widget();
     }
 

@@ -327,7 +327,7 @@ let bulkManageSitesTaskRunning = false;
 
 
 let managesites_bulk_init = function () {
-  jQuery('#mainwp-message-zone').hide();
+  mainwp_set_message_zone('#mainwp-message-zone-client');
   if (bulkManageSitesTaskRunning == false) {
     bulkManageSitesMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
     bulkManageSitesCurrentThreads = 0;

@@ -36,12 +36,14 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Initiate left Extensions menus.
      */
     public static function init_extensions_menu() {
+        
+        $end_div = '</div>';
 
         $submenu_pages = array(
             array(
                 'parent_slug' => 'mainwp_tab',
                 'page_title'  => esc_html__( 'Backups', 'mainwp' ),
-                'menu_title'  => '<div class="mainwp-hidden" id="mainwp-extensions-backups">' . esc_html__( 'Backups', 'mainwp' ) . '</div>',
+                'menu_title'  => '<div class="mainwp-hidden" id="mainwp-extensions-backups">' . esc_html__( 'Backups', 'mainwp' ) . $end_div,
                 'capability'  => 'read',
                 'menu_slug'   => 'Extensions-Mainwp-Backups',
                 'callback'    => array(
@@ -52,7 +54,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             array(
                 'parent_slug' => 'mainwp_tab',
                 'page_title'  => esc_html__( 'Security', 'mainwp' ),
-                'menu_title'  => '<div class="mainwp-hidden" id="mainwp-extensions-security">' . esc_html__( 'Security', 'mainwp' ) . '</div>',
+                'menu_title'  => '<div class="mainwp-hidden" id="mainwp-extensions-security">' . esc_html__( 'Security', 'mainwp' ) . $end_div,
                 'capability'  => 'read',
                 'menu_slug'   => 'Extensions-Mainwp-Security',
                 'callback'    => array(
@@ -63,7 +65,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             array(
                 'parent_slug' => 'mainwp_tab',
                 'page_title'  => esc_html__( 'Monitoring', 'mainwp' ),
-                'menu_title'  => '<div class="mainwp-hidden" id="mainwp-extensions-monitoring">' . esc_html__( 'Monitoring', 'mainwp' ) . '</div>',
+                'menu_title'  => '<div class="mainwp-hidden" id="mainwp-extensions-monitoring">' . esc_html__( 'Monitoring', 'mainwp' ) . $end_div,
                 'capability'  => 'read',
                 'menu_slug'   => 'Extensions-Mainwp-Monitoring',
                 'callback'    => array(
@@ -74,7 +76,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             array(
                 'parent_slug' => 'mainwp_tab',
                 'page_title'  => esc_html__( 'Analytics', 'mainwp' ),
-                'menu_title'  => '<div class="mainwp-hidden" id="mainwp-extensions-analytics">' . esc_html__( 'Analytics', 'mainwp' ) . '</div>',
+                'menu_title'  => '<div class="mainwp-hidden" id="mainwp-extensions-analytics">' . esc_html__( 'Analytics', 'mainwp' ) . $end_div,
                 'capability'  => 'read',
                 'menu_slug'   => 'Extensions-Mainwp-Analytics',
                 'callback'    => array(
@@ -85,7 +87,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             array(
                 'parent_slug' => 'mainwp_tab',
                 'page_title'  => esc_html__( 'Performance', 'mainwp' ),
-                'menu_title'  => '<div class="mainwp-hidden" id="mainwp-extensions-performance">' . esc_html__( 'Performance', 'mainwp' ) . '</div>',
+                'menu_title'  => '<div class="mainwp-hidden" id="mainwp-extensions-performance">' . esc_html__( 'Performance', 'mainwp' ) . $end_div,
                 'capability'  => 'read',
                 'menu_slug'   => 'Extensions-Mainwp-Performance',
                 'callback'    => array(
@@ -96,7 +98,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             array(
                 'parent_slug' => 'mainwp_tab',
                 'page_title'  => esc_html__( 'Development', 'mainwp' ),
-                'menu_title'  => '<div class="mainwp-hidden" id="mainwp-extensions-development">' . esc_html__( 'Development', 'mainwp' ) . '</div>',
+                'menu_title'  => '<div class="mainwp-hidden" id="mainwp-extensions-development">' . esc_html__( 'Development', 'mainwp' ) . $end_div,
                 'capability'  => 'read',
                 'menu_slug'   => 'Extensions-Mainwp-Development',
                 'callback'    => array(
@@ -107,7 +109,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             array(
                 'parent_slug' => 'mainwp_tab',
                 'page_title'  => esc_html__( 'Agency', 'mainwp' ),
-                'menu_title'  => '<div class="mainwp-hidden" id="mainwp-extensions-agency">' . esc_html__( 'Agency', 'mainwp' ) . '</div>',
+                'menu_title'  => '<div class="mainwp-hidden" id="mainwp-extensions-agency">' . esc_html__( 'Agency', 'mainwp' ) . $end_div,
                 'capability'  => 'read',
                 'menu_slug'   => 'Extensions-Mainwp-Agency',
                 'callback'    => array(
@@ -118,7 +120,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             array(
                 'parent_slug' => 'mainwp_tab',
                 'page_title'  => esc_html__( 'Administrative', 'mainwp' ),
-                'menu_title'  => '<div class="mainwp-hidden" id="mainwp-extensions-administrative">' . esc_html__( 'Administrative', 'mainwp' ) . '</div>',
+                'menu_title'  => '<div class="mainwp-hidden" id="mainwp-extensions-administrative">' . esc_html__( 'Administrative', 'mainwp' ) . $end_div,
                 'capability'  => 'read',
                 'menu_slug'   => 'Extensions-Mainwp-Administrative',
                 'callback'    => array(

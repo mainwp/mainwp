@@ -425,12 +425,10 @@ let mainwp_fetch_posts = function (postId, userId, start_sites) {
     }
 
     if (errors.length > 0) {
-        jQuery('#mainwp-message-zone').html(errors);
-        jQuery('#mainwp-message-zone').show();
+        mainwp_set_message_zone('#mainwp-message-zone', errors, 'red');
         return;
     } else {
-        jQuery('#mainwp-message-zone').html("");
-        jQuery('#mainwp-message-zone').hide();
+        mainwp_set_message_zone('#mainwp-message-zone');
     }
 
     if (bulk_search && selected_sites.length == 0) {
@@ -479,7 +477,7 @@ let mainwp_fetch_posts = function (postId, userId, start_sites) {
 
 };
 
-let mainwp_fetch_posts_prepare = function (postId, userId, start_sites) {
+let mainwp_fetch_posts_prepare = function (postId, userId, start_sites) { // NOSONAR - complexity.
 
     let errors = [];
     let selected_sites = [];

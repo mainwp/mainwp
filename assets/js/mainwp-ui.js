@@ -664,12 +664,9 @@ let mainwp_upload_custom_icon = function (iconObj) {
     let slug = jQuery(iconObj).attr('item-slug');
 
     let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked');
-
-    jQuery('#mainwp-message-zone-upload').removeClass('red green yellow');
+    
     let msg = __('Updating the icon. Please wait...');
-
-    jQuery('#mainwp-message-zone-upload').html('<i class="notched circle loading icon"></i> ' + msg);
-    jQuery('#mainwp-message-zone-upload').show();
+    mainwp_set_message_zone('#mainwp-message-zone-upload', '<i class="notched circle loading icon"></i> ' + msg, '');
     jQuery('#update_custom_icon_btn').attr('disabled', 'disabled');
 
     //Add via ajax!!
@@ -700,9 +697,9 @@ let mainwp_upload_custom_icon = function (iconObj) {
                     }
                 }
                 if (msg !== '') {
-                    jQuery('#mainwp-message-zone-upload').html('<i class="notched circle loading icon"></i> ' + __('Loading...'));
+                    mainwp_set_message_zone('#mainwp-message-zone-upload', '<i class="notched circle loading icon"></i> ' + __('Loading...'), '');
                 } else {
-                    jQuery('#mainwp-message-zone-upload').hide();
+                    mainwp_set_message_zone('#mainwp-message-zone-upload');
                 }
                 setTimeout(function () {
                     window.location.href = location.href;
@@ -723,11 +720,8 @@ let mainwp_upload_custom_icon = function (iconObj) {
 };
 
 let mainwp_upload_custom_types_icon = function (iconObj, uploadAct, iconItemId, iconFileSlug, deleteIcon, callback_uploaded) {
-    jQuery('#mainwp-message-zone-upload').removeClass('red green yellow');
     let msg = __('Updating the icon. Please wait...');
-
-    jQuery('#mainwp-message-zone-upload').html('<i class="notched circle loading icon"></i> ' + msg);
-    jQuery('#mainwp-message-zone-upload').show();
+    mainwp_set_message_zone('#mainwp-message-zone-upload', '<i class="notched circle loading icon"></i> ' + msg, '');
     jQuery('#update_custom_icon_btn').attr('disabled', 'disabled');
 
     let upload_act = typeof uploadAct !== "undefined" && '' != uploadAct ? uploadAct : 'mainwp_upload_custom_types_icon';
@@ -747,7 +741,7 @@ let mainwp_upload_custom_types_icon = function (iconObj, uploadAct, iconItemId, 
         success: function (response) {
             jQuery('#update_custom_icon_btn').removeAttr('disabled');
             if (response && response.result == 'success') {
-                jQuery('#mainwp-message-zone-upload').hide();
+                mainwp_set_message_zone('#mainwp-message-zone-upload');
                 if (typeof callback_uploaded == 'function') {
                     callback_uploaded(response);
                 }

@@ -496,13 +496,6 @@ class Log_Insights_Page {
             $update_filter = true;
         }
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        if ( isset( $_REQUEST['order'] ) ) {
-            $order_values = MainWP_Utility::instance()->get_table_orders( $_REQUEST );
-            $req_orderby  = $order_values['orderby'];
-            $req_order    = $order_values['order'];
-        }
-
         // validate requests.
         if ( ! empty( $filter_client_ids ) ) {
             $array_clients_ids = explode( ',', $filter_client_ids ); // convert to array.

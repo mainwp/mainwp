@@ -67,9 +67,7 @@ jQuery(function () {
 
 // Connect a new website
 let mainwp_setup_managesites_add = function () {
-
-  jQuery('#mainwp-message-zone').hide();
-
+  mainwp_set_message_zone('#mainwp-message-zone');
   let errors = [];
 
   if (jQuery('#mainwp_managesites_add_wpname').val().trim() == '') {
@@ -96,9 +94,9 @@ let mainwp_setup_managesites_add = function () {
   }
 
   if (errors.length > 0) {
-    jQuery('#mainwp-message-zone').html(errors.join('<br />')).addClass('yellow').show();
+    mainwp_set_message_zone('#mainwp-message-zone', errors.join('<br />'), 'yellow');
   } else {
-    jQuery('#mainwp-message-zone').html('Adding the site to your MainWP Dashboard. Please wait...').removeClass('green red yellow').show();
+    mainwp_set_message_zone('#mainwp-message-zone', 'Adding the site to your MainWP Dashboard. Please wait...', '');
     jQuery('#mainwp_managesites_add').attr('disabled', 'true'); //disable button to add..
 
     let url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
@@ -184,16 +182,14 @@ let mainwp_setup_managesites_add = function () {
 
           response = response.trim();
 
-          jQuery('#mainwp-message-zone').hide();
+          mainwp_set_message_zone('#mainwp-message-zone');
           jQuery('#mainwp-info-zone').hide();
 
           if (response.substring(0, 5) == 'ERROR') {
-            jQuery('#mainwp-message-zone').removeClass('green yellow green');
-            jQuery('#mainwp-message-zone').html(response.substring(6)).addClass('red').show();
+            mainwp_set_message_zone('#mainwp-message-zone', response.substring(6), 'red');
           } else {
             //Message the WP was added
-            jQuery('#mainwp-message-zone').removeClass('green yellow green');
-            jQuery('#mainwp-message-zone').html(response).addClass('green').show();
+            mainwp_set_message_zone('#mainwp-message-zone', response, 'green');
 
             //Reset fields
             jQuery('#mainwp_managesites_add_wpname').val('');
@@ -220,10 +216,8 @@ let mainwp_setup_managesites_add = function () {
         }, 'json');
       }
       if (errors.length > 0) {
-        jQuery('#mainwp-message-zone').removeClass('green yellow green');
-        jQuery('#mainwp-message-zone').hide();
+        mainwp_set_message_zone('#mainwp-message-zone', errors.join('<br />'), 'red');
         jQuery('#mainwp_managesites_add').prop("disabled", false);
-        jQuery('#mainwp-message-zone').html(errors.join('<br />')).addClass('red').show();
       }
     }, 'json');
   }

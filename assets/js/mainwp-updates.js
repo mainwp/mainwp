@@ -1052,7 +1052,7 @@ let updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, n
 
 let currentThemeSlugToUpgrade;
 let websitesThemeSlugsToUpgrade;
-let updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelected) {
+let updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelected) { // NOSONAR - complexity. 
     if (bulkTaskRunning)
         return;
 

@@ -572,7 +572,7 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         $img = '';
-        
+
         if ( ! empty( $image_path ) && file_exists( $dirs[0] . $image_path ) ) {
             $full_url = $dirs[1] . $image_path;
             $img      = '<img ' . $icon_wrapper_attr . ' src="' . esc_attr( $full_url ) . '">';

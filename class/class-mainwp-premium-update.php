@@ -105,7 +105,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
              */
             $premiums = apply_filters( 'mainwp_detect_premium_plugins_update', $premiums );
 
-            if ( is_array( $premiums ) && 0 < count( $premiums ) ) {
+            if ( is_array( $premiums ) && ! empty( $premiums ) ) {
                 foreach ( $updates as $info ) {
                     if ( isset( $info['slug'] ) ) {
                         if ( in_array( $info['slug'], $premiums ) ) {
@@ -129,7 +129,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
              */
             $premiums = apply_filters( 'mainwp_detect_premium_themes_update', $premiums );
 
-            if ( is_array( $premiums ) && 0 < count( $premiums ) ) {
+            if ( is_array( $premiums ) && ! empty( $premiums ) ) {
                 foreach ( $updates as $info ) {
                     if ( isset( $info['slug'] ) ) {
                         if ( in_array( $info['slug'], $premiums ) ) {
@@ -239,7 +239,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
              */
             $update_premiums = apply_filters( 'mainwp_request_update_premium_plugins', $update_premiums );
 
-            if ( is_array( $update_premiums ) && 0 < count( $update_premiums ) ) {
+            if ( is_array( $update_premiums ) && ! empty( $update_premiums ) ) {
                 foreach ( $updates as $slug ) {
                     if ( ! empty( $slug ) ) {
                         if ( in_array( $slug, $update_premiums ) ) {
@@ -260,7 +260,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
              * @since Unknown
              */
             $update_premiums = apply_filters( 'mainwp_request_update_premium_themes', $update_premiums );
-            if ( is_array( $update_premiums ) && 0 < count( $update_premiums ) ) {
+            if ( is_array( $update_premiums ) && ! empty( $update_premiums ) ) {
                 foreach ( $themes as $slug ) {
                     if ( ! empty( $slug ) ) {
                         if ( in_array( $slug, $update_premiums ) ) {

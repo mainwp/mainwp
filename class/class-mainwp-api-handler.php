@@ -65,7 +65,7 @@ class MainWP_API_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             ++$count;
             if ( $count === $max_check || $i === $total_check ) {
                 $results = MainWP_Api_Manager_Plugin_Update::instance()->bulk_update_check( $bulk_checks ); // bulk check response array of info.
-                if ( is_array( $results ) && 0 < count( $results ) ) {
+                if ( is_array( $results ) && ! empty( $results ) ) {
                     foreach ( $results as $slug => $response ) {
                         if ( ! is_array( $response ) || ! isset( $response['new_version'] ) ) {
                             continue;

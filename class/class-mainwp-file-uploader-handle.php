@@ -1,4 +1,4 @@
-<?php // NOSONAR - untab.
+<?php
 /**
  * MainWP_File_Uploader_Handle
  *

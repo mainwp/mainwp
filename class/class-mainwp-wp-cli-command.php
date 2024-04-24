@@ -266,7 +266,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      */
     public function reconnect( $args, $assoc_args ) {
         $sites = array();
-        if ( 0 < count( $args ) ) {
+        if ( ! empty( $args ) ) {
             $args_exploded = explode( ',', $args[0] );
             foreach ( $args_exploded as $arg ) {
                 if ( ! is_numeric( trim( $arg ) ) ) {
@@ -286,7 +286,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
         $warnings = 0;
         $errors   = 0;
         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-            if ( ( 0 < count( $sites ) ) && ( ! in_array( $website->id, $sites, true ) ) ) {
+            if ( ( ! empty( $sites ) ) && ( ! in_array( $website->id, $sites, true ) ) ) {
                 continue;
             }
             \WP_CLI::line( '  -> ' . $website->name . ' (' . $website->url . ')' );
@@ -356,7 +356,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      */
 	public function plugin( $args, $assoc_args ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $sites = array();
-        if ( 0 < count( $args ) ) {
+        if ( ! empty( $args ) ) {
             $args_exploded = explode( ',', $args[0] );
             foreach ( $args_exploded as $arg ) {
                 if ( ! is_numeric( trim( $arg ) ) ) {
@@ -460,7 +460,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
             $userExtension    = MainWP_DB_Common::instance()->get_user_extension();
             $websites_to_list = array();
             while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
-                if ( ( 0 < count( $sites ) ) && ( ! in_array( $website->id, $sites, true ) ) ) {
+                if ( ( ! empty( $sites ) ) && ( ! in_array( $website->id, $sites, true ) ) ) {
                     continue;
                 }
 

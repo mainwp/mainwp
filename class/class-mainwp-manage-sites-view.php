@@ -422,7 +422,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'ssl_version'        => 'auto',
                 );
 
-                if ( is_array( $lines ) && ( 0 < count( $lines ) ) ) {
+                if ( is_array( $lines ) && ( ! empty( $lines ) ) ) {
                     $row         = 0;
                     $header_line = null;
 
@@ -492,7 +492,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $errors[] = esc_html__( 'Upload failed. Please, try again.', 'mainwp' ) . '<br />';
         }
 
-        if ( 0 < count( $errors ) ) {
+        if ( ! empty( $errors ) ) {
             ?>
             <div class="error below-h2">
                 <?php
@@ -519,7 +519,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         $working_extensions  = MainWP_Extensions_Handler::get_indexed_extensions_infor();
         $available_exts_data = MainWP_Extensions_View::get_available_extensions();
-        if ( 0 < count( $working_extensions ) && 0 < count( $sync_extensions_options ) ) {
+        if ( ! empty( $working_extensions ) && ! empty( $sync_extensions_options ) ) {
             ?>
 
             <h3 class="ui dividing header">

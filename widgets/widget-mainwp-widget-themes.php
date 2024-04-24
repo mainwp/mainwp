@@ -59,7 +59,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             $website = MainWP_DB::fetch_object( $websites );
             if ( $website && '' !== $website->themes ) {
                 $themes = json_decode( $website->themes, 1 );
-                if ( is_array( $themes ) && 0 !== count( $themes ) ) {
+                if ( is_array( $themes ) && ! empty( $themes ) ) {
                     foreach ( $themes as $theme ) {
                         $allThemes[] = $theme;
                     }

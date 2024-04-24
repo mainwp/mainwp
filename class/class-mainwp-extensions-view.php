@@ -227,7 +227,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 <?php static::render_purchase_notice(); ?>
             </div>
             <div class="mainwp-side-content mainwp-no-padding">
-                    <?php if ( 0 !== count( $extensions ) || 0 !== count( $extensions_disabled ) ) { ?>
+                    <?php if ( ! empty( $extensions ) || ! empty( $extensions_disabled ) ) { ?>
                         <?php static::render_search_box(); ?>
                 <?php } ?>
                     <?php static::render_side_box( $mainwp_api_key ); ?>
@@ -295,7 +295,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     public static function render_incompatible_notice() {
         $deactivated_exts = get_transient( 'mainwp_transient_deactivated_incomtible_exts' );
-        if ( $deactivated_exts && is_array( $deactivated_exts ) && 0 < count( $deactivated_exts ) ) {
+        if ( $deactivated_exts && is_array( $deactivated_exts ) && ! empty( $deactivated_exts ) ) {
             ?>
             <?php delete_transient( 'mainwp_transient_deactivated_incomtible_exts' ); ?>
             <div class="ui yellow message">

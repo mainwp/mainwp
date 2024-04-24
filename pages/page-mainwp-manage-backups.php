@@ -1022,7 +1022,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             <?php esc_html_e( 'Backup Settings', 'mainwp' ); ?>
             <div class="sub header"><?php printf( esc_html__( 'MainWP is actively moving away from further development of the native backups feature. The best long-term solution would be one of the %1$sBackup Extensions%2$s.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
         </h3>
-        <?php if ( 0 < count( $primaryBackupMethods ) ) : ?>
+        <?php if ( ! empty( $primaryBackupMethods ) ) : ?>
         <div class="ui grid field settings-field-indicator-backups">
             <label class="six wide column middle aligned"><?php esc_html_e( 'Select primary backup system', 'mainwp' ); ?></label>
             <div class="ten wide column">

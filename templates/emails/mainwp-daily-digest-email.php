@@ -64,7 +64,7 @@ if ( empty( $heading ) ) {
                                     <?php if ( $available_updates ) : ?>
                                     <h3 style="color:#7fb100;"><?php esc_html_e( 'Available Updates', 'mainwp' ); ?></h3>
                                     <p><?php esc_html_e( 'The following updates are available on your MainWP Dashboard.', 'mainwp' ); ?></p>
-                                        <?php if ( is_array( $wp_updates ) && 0 < count( $wp_updates ) ) : ?>
+                                        <?php if ( is_array( $wp_updates ) && ! empty( $wp_updates ) ) : ?>
                                             <h4 style="color:#444;"><?php esc_html_e( 'WordPress Core Updates', 'mainwp' ); ?></h4>
                                             <table border="0" cellpadding="0" cellspacing="0" align="left" width="100%" style="font-size:11px; margin-bottom:30px;">
                                                 <thead style="background: #eee">
@@ -87,7 +87,7 @@ if ( empty( $heading ) ) {
                                                 </tbody>
                                             </table>
                                         <?php endif; ?>
-                                        <?php if ( is_array( $plugin_updates ) && 0 < count( $plugin_updates ) ) : ?>
+                                        <?php if ( is_array( $plugin_updates ) && ! empty( $plugin_updates ) ) : ?>
                                             <h4 style="color:#444;"><?php esc_html_e( 'Plugins Updates', 'mainwp' ); ?></h4>
                                             <table border="0" cellpadding="0" cellspacing="0" align="left" width="100%" style="font-size:11px; margin-bottom:30px;">
                                                 <thead style="background: #eee">
@@ -112,7 +112,7 @@ if ( empty( $heading ) ) {
                                                 </tbody>
                                             </table>
                                         <?php endif; ?>
-                                        <?php if ( is_array( $theme_updates ) && 0 < count( $theme_updates ) ) : ?>
+                                        <?php if ( is_array( $theme_updates ) && ! empty( $theme_updates ) ) : ?>
                                             <h4 style="color:#444;"><?php esc_html_e( 'Themes Updates', 'mainwp' ); ?></h4>
                                             <table border="0" cellpadding="0" cellspacing="0" align="left" width="100%" style="font-size:11px; margin-bottom:30px;">
                                                 <thead style="background: #eee">
@@ -141,7 +141,7 @@ if ( empty( $heading ) ) {
                                     <?php else : ?>
                                     <p><?php esc_html_e( 'Congratulations! All your child sites are up to date!', 'mainwp' ); ?></p>
                                     <?php endif; ?>
-                                    <?php if ( is_array( $sites_disconnected ) && 0 < count( $sites_disconnected ) ) : ?>
+                                    <?php if ( is_array( $sites_disconnected ) && ! empty( $sites_disconnected ) ) : ?>
                                         <h3 style="color:#7fb100;"><?php esc_html_e( 'Disconnected Sites', 'mainwp' ); ?></h3>
                                         <p><?php esc_html_e( 'The following sites got disconnected from your MainWP Dashboard.', 'mainwp' ); ?></p>
                                         <table border="0" cellpadding="0" cellspacing="0" align="left" width="100%" style="font-size:11px; margin-bottom:30px;">

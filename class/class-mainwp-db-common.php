@@ -714,7 +714,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             }
         }
 
-        if ( 0 < count( $fields ) ) {
+        if ( ! empty( $fields ) ) {
             $this->wpdb->update( $this->table_name( 'users' ), $fields, array( 'userid' => $userid ) );
         }
 

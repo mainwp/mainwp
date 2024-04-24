@@ -398,7 +398,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
     public function bulk_activate() {
         $this->check_security( 'mainwp_extension_bulk_activate' );
         $plugins = isset( $_POST['plugins'] ) ? wp_unslash( $_POST['plugins'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        if ( is_array( $plugins ) && 0 < count( $plugins ) ) {
+        if ( is_array( $plugins ) && ! empty( $plugins ) ) {
             if ( current_user_can( 'activate_plugins' ) ) {
                 activate_plugins( $plugins );
                 die( 'SUCCESS' );

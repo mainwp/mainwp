@@ -654,7 +654,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                     $plugins_outdate = array();
                                 }
 
-                                if ( 0 < count( $plugins_outdate ) ) {
+                                if ( ! empty( $plugins_outdate ) ) {
                                     $pluginsOutdateDismissed = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
                                     $pluginsOutdateDismissed = ! empty( $pluginsOutdateDismissed ) ? json_decode( $pluginsOutdateDismissed, true ) : array();
 
@@ -783,7 +783,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                     $themes_outdate = array();
                                 }
 
-                                if ( 0 < count( $themes_outdate ) ) {
+                                if ( ! empty( $themes_outdate ) ) {
                                     $themesOutdateDismissed = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
                                     $themesOutdateDismissed = ! empty( $themesOutdateDismissed ) ? json_decode( $themesOutdateDismissed, true ) : array();
 

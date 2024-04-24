@@ -430,7 +430,7 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
         $extensions_disabled = MainWP_Extensions_Handler::get_extensions_disabled();
         $extensions          = MainWP_Extensions_Handler::get_extensions();
-        if ( 0 < count( $extensions ) && $extensions !== $extensions_disabled ) {
+        if ( ! empty( $extensions ) && $extensions !== $extensions_disabled ) {
             return false;
         }
 

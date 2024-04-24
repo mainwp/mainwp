@@ -187,7 +187,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function sortmulti( $arr, $index, $order, $natsort = false, $case_sensitive = false ) {
         $sorted = array();
-        if ( is_array( $arr ) && 0 < count( $arr ) ) {
+        if ( is_array( $arr ) && ! empty( $arr ) ) {
             foreach ( array_keys( $arr ) as $key ) {
                 $temp[ $key ] = $arr[ $key ][ $index ];
             }
@@ -234,7 +234,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function get_sub_array_having( $arr, $index, $value ) {
         $output = array();
-        if ( is_array( $arr ) && 0 < count( $arr ) ) {
+        if ( is_array( $arr ) && ! empty( $arr ) ) {
             foreach ( $arr as $arrvalue ) {
                 $existed = isset( $arrvalue[ $index ] ) ? $arrvalue[ $index ] : null;
                 if ( $existed === $value ) {

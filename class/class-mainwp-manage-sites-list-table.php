@@ -1525,7 +1525,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     $wp_upgrades = array();
                 }
 
-                if ( is_array( $wp_upgrades ) && 0 < count( $wp_upgrades ) ) {
+                if ( is_array( $wp_upgrades ) && ! empty( $wp_upgrades ) ) {
                     ++$total_wp_upgrades;
                 }
 
@@ -1884,7 +1884,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             $wp_upgrades = array();
         }
 
-        if ( is_array( $wp_upgrades ) && 0 < count( $wp_upgrades ) ) {
+        if ( is_array( $wp_upgrades ) && ! empty( $wp_upgrades ) ) {
             ++$total_wp_upgrades;
         }
 

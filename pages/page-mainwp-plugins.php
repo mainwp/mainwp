@@ -663,7 +663,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             </div>
         </div>
         <?php
-        if ( is_array( $statuses ) && 0 < count( $statuses ) ) {
+        if ( is_array( $statuses ) && ! empty( $statuses ) ) {
             $status = '';
             foreach ( $statuses as $st ) {
                 $status .= "'" . esc_html( $st ) . "',";
@@ -977,7 +977,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $post_data['not_criteria'] = $not_criteria ? true : false;
             MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( MainWP_Plugins_Handler::get_class_name(), 'plugins_search_handler' ), $output );
 			// phpcs:disable WordPress.Security.EscapeOutput
-            if ( 0 < count( $output->errors ) ) {
+            if ( ! empty( $output->errors ) ) {
                 foreach ( $output->errors as $siteid => $error ) {
                     $error_results .= MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ': ' . $error . ' <br/>';
                 }
@@ -2198,7 +2198,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $output->status = $search_plugin_status;
                 MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( MainWP_Plugins_Handler::get_class_name(), 'plugins_search_handler' ), $output );
 				// phpcs:disable WordPress.Security.EscapeOutput
-                if ( 0 < count( $output->errors ) ) {
+                if ( ! empty( $output->errors ) ) {
                     foreach ( $output->errors as $siteid => $error ) {
                         echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>';
 
@@ -2436,7 +2436,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
         $userExtension         = MainWP_DB_Common::instance()->get_user_extension();
         $decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
-        $ignoredPlugins        = ( is_array( $decodedIgnoredPlugins ) && ( 0 < count( $decodedIgnoredPlugins ) ) );
+        $ignoredPlugins        = is_array( $decodedIgnoredPlugins ) && ( ! empty( $decodedIgnoredPlugins ) );
 
         $cnt = 0;
 
@@ -2684,7 +2684,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
         $userExtension         = MainWP_DB_Common::instance()->get_user_extension();
         $decodedIgnoredPlugins = json_decode( $userExtension->dismissed_plugins, true );
-        $ignoredPlugins        = ( is_array( $decodedIgnoredPlugins ) && ( 0 < count( $decodedIgnoredPlugins ) ) );
+        $ignoredPlugins        = is_array( $decodedIgnoredPlugins ) && ( ! empty( $decodedIgnoredPlugins ) );
         $cnt                   = 0;
         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
             $tmpDecodedDismissedPlugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );

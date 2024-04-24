@@ -82,7 +82,7 @@ class MainWP_Meta_Boxes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             update_post_meta( $post_id, '_selected_clients', $selected_clients );
             update_post_meta( $post_id, '_selected_by', sanitize_text_field( wp_unslash( $_POST['select_by'] ) ) );
 
-            if ( ( 'group' === $_POST['select_by'] && 0 < count( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && 0 < count( $selected_wp ) ) || ( 'client' === $_POST['select_by'] && 0 < count( $selected_clients ) ) ) {
+            if ( ( 'group' === $_POST['select_by'] && ! empty( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && ! empty( $selected_wp ) ) || ( 'client' === $_POST['select_by'] && ! empty( $selected_clients ) ) ) {
                 return sanitize_text_field( wp_unslash( $_POST['select_by'] ) );
             }
         }

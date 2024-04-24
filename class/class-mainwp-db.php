@@ -1252,7 +1252,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     return 'nogroups' !== $e;
                 }
             );
-            if ( 0 < count( $group_ids ) ) {
+            if ( ! empty( $group_ids ) ) {
                 $groups = implode( ',', $group_ids );
                 if ( $is_not ) {
                     $where_group = ' AND wpgroup.groupid IS NOT NULL AND wpgroup.groupid NOT IN (' . $groups . ') ';
@@ -1267,7 +1267,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             } else {
                 $where_group = ' AND wpgroup.groupid IS NULL ';
             }
-        } elseif ( $group_ids && 0 < count( $group_ids ) ) {
+        } elseif ( $group_ids && ! empty( $group_ids ) ) {
             $groups = implode( ',', $group_ids );
             if ( $is_not ) {
                 $join_group  = ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
@@ -1292,7 +1292,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     return 'noclients' !== $e;
                 }
             );
-            if ( 0 < count( $client_ids ) ) {
+            if ( ! empty( $client_ids ) ) {
                 $clients = implode( ',', $client_ids );
                 if ( $is_not ) {
                     $where_client = ' AND wpclient.client_id IS NOT NULL AND wp.client_id NOT IN (' . $clients . ') ';
@@ -1304,7 +1304,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             } else {
                 $where_client = ' AND wpclient.client_id IS NULL ';
             }
-        } elseif ( $client_ids && 0 < count( $client_ids ) ) {
+        } elseif ( $client_ids && ! empty( $client_ids ) ) {
             $clients = implode( ',', $client_ids );
             if ( $is_not ) {
                 $join_client  = ' LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id ';
@@ -1410,7 +1410,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             return $_where;
         }
 
-        if ( is_array( $allowed_sites ) && 0 < count( $allowed_sites ) ) {
+        if ( is_array( $allowed_sites ) && ! empty( $allowed_sites ) ) {
             // valid group ids.
             $allowed_sites = array_filter(
                 $allowed_sites,
@@ -1481,7 +1481,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             return $_where;
         }
 
-        if ( is_array( $allowed_groups ) && 0 < count( $allowed_groups ) ) {
+        if ( is_array( $allowed_groups ) && ! empty( $allowed_groups ) ) {
 
             // valid group ids.
             $allowed_groups = array_filter(
@@ -1936,7 +1936,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @return int|boolean The number of rows updated, or false on error.
      */
     public function update_website_values( $websiteid, $fields ) {
-        if ( 0 < count( $fields ) ) {
+        if ( ! empty( $fields ) ) {
             return $this->wpdb->update( $this->table_name( 'wp' ), $fields, array( 'id' => $websiteid ) );
         }
 
@@ -1952,7 +1952,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @return int|boolean The number of rows updated, or false on error.
      */
     public function update_website_sync_values( $websiteid, $fields ) {
-        if ( 0 < count( $fields ) ) {
+        if ( ! empty( $fields ) ) {
             return $this->wpdb->update( $this->table_name( 'wp_sync' ), $fields, array( 'wpid' => $websiteid ) );
         }
 

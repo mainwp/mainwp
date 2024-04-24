@@ -738,7 +738,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             </div>
         </div>
         <?php
-        if ( is_array( $statuses ) && 0 < count( $statuses ) ) {
+        if ( is_array( $statuses ) && ! empty( $statuses ) ) {
             $status = '';
             foreach ( $statuses as $st ) {
                 $status .= "'" . esc_html( $st ) . "',";
@@ -1025,7 +1025,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $output->errors = array();
         $output->pages  = 0;
 
-        if ( 0 < count( $dbwebsites ) ) {
+        if ( ! empty( $dbwebsites ) ) {
             $post_data = array(
                 'keyword'    => $keyword,
                 'dtsstart'   => $dtsstart,
@@ -1569,7 +1569,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         $output->errors = array();
                         $startTime      = time();
 
-                        if ( 0 < count( $dbwebsites ) ) {
+                        if ( ! empty( $dbwebsites ) ) {
 
                             // prepare $post_custom values.
                             $new_post_custom = array();

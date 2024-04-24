@@ -693,7 +693,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                         return 'nogroups' !== $e;
                     }
                 );
-                if ( 0 < count( $group_ids ) ) {
+                if ( ! empty( $group_ids ) ) {
                     $groups      = implode( ',', $group_ids );
                     $where_group = ' AND ( wpgroup.groupid IS NULL OR wpgroup.groupid IN (' . $groups . ') ) ';
                 } else {

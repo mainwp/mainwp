@@ -626,7 +626,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
                 }
             }
 
-            if ( $chunk_support && ( 0 < count( $chunk_slugs ) ) ) {
+            if ( $chunk_support && ( ! empty( $chunk_slugs ) ) ) {
                 $info['chunk_slugs'] = implode( ',', $chunk_slugs );
             }
 

@@ -36,7 +36,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Initiate left Extensions menus.
      */
     public static function init_extensions_menu() {
-        
+        // NO_SONAR_START - duplicated issue.
         $end_div = '</div>';
 
         $submenu_pages = array(
@@ -836,7 +836,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 MainWP_Menu::add_left_menu( $item, $level );
             }
         }
-
+        // NO_SONAR_END.
         global $_mainwp_menu_active_slugs;
 
         $active_slugs = array(

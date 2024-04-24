@@ -276,7 +276,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                             $wp_upgrades = array();
                         }
 
-                        if ( is_array( $wp_upgrades ) && 0 < count( $wp_upgrades ) ) {
+                        if ( is_array( $wp_upgrades ) && ! empty( $wp_upgrades ) ) {
                             ++$total_wp_upgrades;
                         }
 

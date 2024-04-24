@@ -421,7 +421,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
             $to_admin_digestWebsites = array();
 
-            if ( is_array( $individual_digestWebsites ) && 0 < count( $individual_digestWebsites ) ) {
+            if ( is_array( $individual_digestWebsites ) && ! empty( $individual_digestWebsites ) ) {
                 // send individual site daily digests, one email for one site.
                 foreach ( $individual_digestWebsites as $siteid ) {
                     $website        = MainWP_DB::instance()->get_website_by_id( $siteid, false, array( 'settings_notification_emails' ) );
@@ -436,7 +436,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 }
             }
 
-            if ( 0 < count( $to_admin_digestWebsites ) ) {
+            if ( ! empty( $to_admin_digestWebsites ) ) {
                 $admin_email_settings               = MainWP_Notification_Settings::get_default_emails_fields( 'daily_digest', '', true ); // get default subject and heading only.
                 $admin_email_settings['disable']    = 0;
                 $admin_email_settings['recipients'] = MainWP_Notification_Settings::get_general_email(); // sent to general notification email only.
@@ -960,7 +960,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
             MainWP_Utility::update_option( 'mainwp_updatescheck_sites_icon', $updatescheckSitesIcon );
 
-            if ( 0 !== count( $individualDailyDigestWebsites ) ) {
+            if ( ! empty( $individualDailyDigestWebsites ) ) {
                 $individualDailyDigestWebsitesSaved = get_option( 'mainwp_updatescheck_individual_digest_websites' );
                 if ( ! is_array( $individualDailyDigestWebsitesSaved ) ) {
                     $individualDailyDigestWebsitesSaved = array();
@@ -1296,26 +1296,26 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $theme_updates  = array();
 
         $plugin_updates = MainWP_Format::get_site_updates_items( 'plugin', $sites_ids );
-        if ( 0 < count( $plugin_updates ) ) {
+        if ( ! empty( $plugin_updates ) ) {
             $sendMail       = true;
             $updateAvaiable = true;
         }
 
         $theme_updates = MainWP_Format::get_site_updates_items( 'theme', $sites_ids );
-        if ( 0 < count( $theme_updates ) ) {
+        if ( ! empty( $theme_updates ) ) {
             $sendMail       = true;
             $updateAvaiable = true;
         }
 
         $wp_updates = MainWP_Format::get_site_updates_items( 'wpcore', $sites_ids );
-        if ( 0 < count( $wp_updates ) ) {
+        if ( ! empty( $wp_updates ) ) {
             $sendMail       = true;
             $updateAvaiable = true;
         }
 
         $sites_disconnected = MainWP_DB::instance()->get_disconnected_websites( $sites_ids );
 
-        if ( 0 < count( $sites_disconnected ) ) {
+        if ( ! empty( $sites_disconnected ) ) {
             $sendMail = true;
         }
 
@@ -1436,7 +1436,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
 
         // send all individual notice to admin in one email.
-        if ( 0 < count( $to_admin_HttpCheckWebsites ) ) {
+        if ( ! empty( $to_admin_HttpCheckWebsites ) ) {
             $admin_email_settings               = MainWP_Notification_Settings::get_default_emails_fields( 'http_check', '', true ); // get default subject and heading only.
             $admin_email_settings['disable']    = 0;
             $admin_email_settings['recipients'] = ''; // sent to admin only.
@@ -1812,7 +1812,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             MainWP_Monitoring_Handler::notice_sites_uptime_monitoring( array( $site ), $admin_email, $email_settings, $plain_text );
         }
 
-        if ( 0 < count( $individual_admin_uptimeSites ) ) {
+        if ( ! empty( $individual_admin_uptimeSites ) ) {
             $admin_email_settings               = MainWP_Notification_Settings::get_default_emails_fields( 'uptime', '', true ); // get default subject and heading only.
             $admin_email_settings['disable']    = 0;
             $admin_email_settings['recipients'] = ''; // sent to admin only.
@@ -1893,7 +1893,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             MainWP_Monitoring_Handler::notice_site_health_threshold( $email_settings, array( $site ), '', $plain_text, false ); // do not send to admin for individual sending.
         }
 
-        if ( 0 < count( $to_admin_siteHealthWebsites ) ) {
+        if ( ! empty( $to_admin_siteHealthWebsites ) ) {
             $admin_email_settings               = MainWP_Notification_Settings::get_default_emails_fields( 'site_health', '', true ); // get default subject and heading only.
             $admin_email_settings['disable']    = 0;
             $admin_email_settings['recipients'] = ''; // sent to admin only.

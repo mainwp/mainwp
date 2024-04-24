@@ -296,7 +296,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 MainWP_Menu::add_left_menu( $item, 2 );
             }
 
-            if ( 0 < count( $extPages ) ) {
+            if ( ! empty( $extPages ) ) {
 
                 $init_sub_subleftmenu = array();
                 $slug                 = '';

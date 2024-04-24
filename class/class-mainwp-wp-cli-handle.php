@@ -205,7 +205,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         if ( is_string( $what ) ) {
             if ( 'sites' === $what ) {
                 $sites = array();
-                if ( 0 < count( $args ) ) {
+                if ( ! empty( $args ) ) {
                     $args_exploded = explode( ',', $args[0] );
                     foreach ( $args_exploded as $arg ) {
                         if ( ! is_numeric( trim( $arg ) ) ) {
@@ -828,7 +828,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         \WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Available Updates', 'mainwp' ) . '%n' ) );
         \WP_CLI::line( '' );
 
-        if ( 0 < count( $wp_upgrades ) ) {
+        if ( ! empty( $wp_upgrades ) ) {
             \WP_CLI::line( '' );
             \WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'WordPress Core', 'mainwp' ) . '%n' ) );
             \WP_CLI::line( '' );
@@ -837,7 +837,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
             \WP_CLI::line( \WP_CLI::colorize( '%gLatest:%n ' ) . $wp_upgrades['new'] );
         }
 
-        if ( 0 < count( $plugin_upgrades ) ) {
+        if ( ! empty( $plugin_upgrades ) ) {
             \WP_CLI::line( '' );
             \WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'Available Plugin Updates', 'mainwp' ) . '%n' ) );
             \WP_CLI::line( '' );
@@ -850,7 +850,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
             }
         }
 
-        if ( 0 < count( $theme_upgrades ) ) {
+        if ( ! empty( $theme_upgrades ) ) {
             \WP_CLI::line( '' );
             \WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'Available Theme Updates', 'mainwp' ) . '%n' ) );
             \WP_CLI::line( '' );
@@ -863,7 +863,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
             }
         }
 
-        if ( 0 < count( $translation_upgrades ) ) {
+        if ( ! empty( $translation_upgrades ) ) {
             \WP_CLI::line( '' );
             \WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'Available Translation Updates', 'mainwp' ) . '%n' ) );
             \WP_CLI::line( '' );
@@ -1567,7 +1567,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
             }
 
             \WP_CLI::line( \WP_CLI::colorize( '%B' . $website->name . ' (' . $website->url . ')%n' ) );
-            if ( 0 < count( $wp_upgrades ) ) {
+            if ( ! empty( $wp_upgrades ) ) {
                 \WP_CLI::line( '' );
                 \WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'WordPress Core', 'mainwp' ) . '%n' ) );
                 \WP_CLI::line( '' );
@@ -1576,7 +1576,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
                 \WP_CLI::line( \WP_CLI::colorize( '%gLatest:%n ' ) . $wp_upgrades['new'] );
             }
 
-            if ( 0 < count( $plugin_upgrades ) ) {
+            if ( ! empty( $plugin_upgrades ) ) {
                 \WP_CLI::line( '' );
                 \WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'Available Plugin Updates', 'mainwp' ) . '%n' ) );
                 \WP_CLI::line( '' );
@@ -1589,7 +1589,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
                 }
             }
 
-            if ( 0 < count( $theme_upgrades ) ) {
+            if ( ! empty( $theme_upgrades ) ) {
                 \WP_CLI::line( '' );
                 \WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'Available Theme Updates', 'mainwp' ) . '%n' ) );
                 \WP_CLI::line( '' );
@@ -1602,7 +1602,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
                 }
             }
 
-            if ( 0 < count( $translation_upgrades ) ) {
+            if ( ! empty( $translation_upgrades ) ) {
                 \WP_CLI::line( '' );
                 \WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'Available Translation Updates', 'mainwp' ) . '%n' ) );
                 \WP_CLI::line( '' );

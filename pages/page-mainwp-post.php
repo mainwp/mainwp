@@ -759,7 +759,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         // to fix issue js code display.
         $cachedSearch = MainWP_Cache::get_cached_context( 'Post' );
         $statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
-        if ( is_array( $statuses ) && 0 < count( $statuses ) ) {
+        if ( is_array( $statuses ) && ! empty( $statuses ) ) {
             $status = '';
             foreach ( $statuses as $st ) {
                 $status .= "'" . esc_html( $st ) . "',";
@@ -1156,7 +1156,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $output->posts      = 0;
         $output->table_rows = '';
 
-        if ( 0 < count( $dbwebsites ) ) {
+        if ( ! empty( $dbwebsites ) ) {
             $post_data = array(
                 'keyword'    => $keyword,
                 'dtsstart'   => $dtsstart,

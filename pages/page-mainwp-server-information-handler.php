@@ -951,7 +951,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             $primaryBackupMethods = array();
         }
 
-        if ( 0 < count( $primaryBackupMethods ) ) {
+        if ( ! empty( $primaryBackupMethods ) ) {
             $chk = false;
             foreach ( $primaryBackupMethods as $method ) {
                 if ( $primaryBackup === $method['value'] ) {

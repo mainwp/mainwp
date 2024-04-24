@@ -234,11 +234,11 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $allCategories_new_tree = array();
         $allCategories          = array( 'Uncategorized' );
 
-        if ( 0 < count( $websites ) ) {
+        if ( ! empty( $websites ) ) {
             foreach ( $websites as $website ) {
                 if ( ! $is_cpt ) {
                     $new_cats = json_decode( $website->categories, true );
-                    if ( is_array( $new_cats ) && ( 0 < count( $new_cats ) ) ) {
+                    if ( is_array( $new_cats ) && ! empty( $new_cats ) ) {
                         $current = current( $new_cats );
                         if ( is_array( $current ) && ! empty( $current ) ) { // new site's category format data.
                             static::arrange_categories_list( $new_cats, $allCategories_new_tree );
@@ -270,7 +270,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 static::print_catergories_tree( $allCategories_new_tree, $check_printed_cats_names );
             }
 
-            if ( ! $is_cpt && 0 < count( $allCategories ) ) {
+            if ( ! $is_cpt && ! empty( $allCategories ) ) {
                 echo '<div class="ui horizontal divider"></div>';
                 natcasesort( $allCategories );
                 foreach ( $allCategories as $category ) {
@@ -781,7 +781,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $output->ok     = array();
                 $output->errors = array();
 
-                if ( 0 < count( $dbwebsites ) ) {
+                if ( ! empty( $dbwebsites ) ) {
 
                     // prepare $post_custom values.
                     $new_post_custom = array();
@@ -1133,7 +1133,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         }
                     }
                 }
-                if ( 0 < count( $replaceAttachedIds ) ) {
+                if ( ! empty( $replaceAttachedIds ) ) {
                     foreach ( $matches as $match ) {
                         $idsToReplace     = $match[1];
                         $idsToReplaceWith = '';

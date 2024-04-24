@@ -84,7 +84,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $website = MainWP_DB::fetch_object( $websites );
             if ( $website && '' !== $website->plugins ) {
                 $plugins = json_decode( $website->plugins, 1 );
-                if ( is_array( $plugins ) && 0 !== count( $plugins ) ) {
+                if ( is_array( $plugins ) && ! empty( $plugins ) ) {
                     foreach ( $plugins as $plugin ) {
                         if ( isset( $plugin['mainwp'] ) && ( 'T' === $plugin['mainwp'] ) ) {
                             continue;

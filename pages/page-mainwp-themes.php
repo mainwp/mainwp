@@ -639,7 +639,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             </div>
         </div>      
         <?php
-        if ( is_array( $statuses ) && 0 < count( $statuses ) ) {
+        if ( is_array( $statuses ) && ! empty( $statuses ) ) {
             $status = '';
             foreach ( $statuses as $st ) {
                 $status .= "'" . esc_js( $st ) . "',";
@@ -946,7 +946,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $post_data['not_criteria'] = $not_criteria ? true : false;
             MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_themes', $post_data, array( MainWP_Themes_Handler::get_class_name(), 'themes_search_handler' ), $output );
 
-            if ( 0 < count( $output->errors ) ) {
+            if ( ! empty( $output->errors ) ) {
                 foreach ( $output->errors as $siteid => $error ) {
                     $error_results .= MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . '<br/>'; // phpcs:ignore WordPress.Security.EscapeOutput
                 }
@@ -2187,7 +2187,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
                 MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_themes', $post_data, array( MainWP_Themes_Handler::get_class_name(), 'themes_search_handler' ), $output );
 
-                if ( 0 < count( $output->errors ) ) {
+                if ( ! empty( $output->errors ) ) {
                     foreach ( $output->errors as $siteid => $error ) {
                         echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>'; // phpcs:ignore WordPress.Security.EscapeOutput
                     }
@@ -2394,7 +2394,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
         $userExtension        = MainWP_DB_Common::instance()->get_user_extension();
         $decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
-        $ignoredThemes        = ( is_array( $decodedIgnoredThemes ) && ( 0 < count( $decodedIgnoredThemes ) ) );
+        $ignoredThemes        = is_array( $decodedIgnoredThemes ) && ! empty( $decodedIgnoredThemes );
 
         $cnt = 0;
 
@@ -2624,7 +2624,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
         $userExtension        = MainWP_DB_Common::instance()->get_user_extension();
         $decodedIgnoredThemes = json_decode( $userExtension->dismissed_themes, true );
-        $ignoredThemes        = ( is_array( $decodedIgnoredThemes ) && ( 0 < count( $decodedIgnoredThemes ) ) );
+        $ignoredThemes        = is_array( $decodedIgnoredThemes ) && ! empty( $decodedIgnoredThemes );
         $cnt                  = 0;
         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
             $tmpDecodedIgnoredThemes = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );

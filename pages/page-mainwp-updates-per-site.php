@@ -55,6 +55,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <th class="indicator-accordion-sorting handle-accordion-sorting"><?php echo esc_html__( 'Client', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
                     <th class="no-sort right aligned">
                         <?php
+                        // NO_SONAR_START - duplicated issue.
                         if ( MainWP_Updates::user_can_update_wp() ) {
                             if ( 0 < $total_wp_upgrades ) {
                                 MainWP_Updates::set_continue_update_html_selector( 'wpcore_global_upgrade_all' );
@@ -69,6 +70,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                 }
                             }
                         }
+                        // NO_SONAR_END.
                         ?>
                     </th>
                 </tr>
@@ -90,21 +92,24 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     $wpcore_update_disabled_by = MainWP_System_Utility::disabled_wpcore_update_by( $website );
 
                     ?>
-                <tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) && empty( $wpcore_update_disabled_by ) ) ? '0' : '1'; ?>">
+                <tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="<?php echo ( ! empty( $wp_upgrades ) && empty( $wpcore_update_disabled_by ) ) ? '0' : '1'; ?>">
                     <td>
                         <div class="ui child checkbox">
                             <input type="checkbox" name=""><label><?php MainWP_Updates::render_site_link_dashboard( $website ); ?></label>
                         </div>                      
 
-                        <input type="hidden" id="wp-updated-<?php echo esc_attr( $website->id ); ?>" value="<?php echo ( 0 < count( $wp_upgrades ) ? '0' : '1' ); ?>" />
+                        <input type="hidden" id="wp-updated-<?php echo esc_attr( $website->id ); ?>" value="<?php echo ( ! empty( $wp_upgrades ) ? '0' : '1' ); ?>" />
                     </td>
                     <td>
-                        <?php if ( 0 < count( $wp_upgrades ) ) : ?>
+                        <?php if ( ! empty( $wp_upgrades ) ) : ?>
                             <?php echo esc_html( $wp_upgrades['current'] ); ?>
                         <?php endif; ?>
                     </td>
                     <td>
-                        <?php if ( 0 < count( $wp_upgrades ) ) : ?>
+                        <?php
+                        // NO_SONAR_START - duplicated issue.
+                        if ( ! empty( $wp_upgrades ) ) :
+                            ?>
                             <?php echo esc_html( $wp_upgrades['new'] ); ?>
                         <?php endif; ?>
                     </td>
@@ -112,7 +117,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <td class="right aligned">
                         <?php if ( MainWP_Updates::user_can_update_wp() ) : ?>
                             <?php
-                            if ( 0 < count( $wp_upgrades ) ) :
+                            if ( ! empty( $wp_upgrades ) ) :
                                 if ( ! empty( $wpcore_update_disabled_by ) ) {
                                     ?>
                                     <span data-tooltip="<?php echo esc_html( $wpcore_update_disabled_by ); ?>" data-inverted="" data-position="left center"><a href="javascript:void(0)" class="ui green button mini disabled"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a></span>
@@ -130,6 +135,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     </td>
                 </tr>
                     <?php
+                    // NO_SONAR_END.
                 }
                 ?>
             </tbody>
@@ -270,7 +276,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         if ( MainWP_Updates::user_can_update_plugins() ) :
                             ?>
                             <?php
-                            if ( 0 < count( $plugin_upgrades ) ) :
+                            if ( ! empty( $plugin_upgrades ) ) :
                                 if ( $is_demo ) {
                                     MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui mini green basic button disabled mainwp-update-selected-button">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>' );
                                     MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" disabled="disabled" class="ui mini green button disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
@@ -466,7 +472,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         <td class="right aligned">
                         <?php if ( MainWP_Updates::user_can_update_themes() ) : ?>
                             <?php
-                            if ( 0 < count( $theme_upgrades ) ) :
+                            if ( ! empty( $theme_upgrades ) ) :
                                 if ( $is_demo ) {
                                     MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green basic button disabled mainwp-update-selected-button" disabled="disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>' );
                                     MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green button disabled" disabled="disabled">' . esc_html__( 'Update Now', 'mainwp' ) . '</a>' );
@@ -613,7 +619,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         <td class="right aligned">
                         <?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
                             <?php
-                            if ( 0 < count( $translation_upgrades ) ) :
+                            if ( ! empty( $translation_upgrades ) ) :
                                 if ( $is_demo ) {
                                     MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green basic button disabled mainwp-update-selected-button" disabled="disabled">' . esc_html__( 'Update Selected', 'mainwp' ) . '</a>' );
                                     MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui mini green button disabled mainwp-update-all-button" disabled="disabled">' . esc_html__( 'Update All', 'mainwp' ) . '</a>' );

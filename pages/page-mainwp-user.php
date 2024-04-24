@@ -643,7 +643,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             </div>
         </div>
         <?php
-        if ( is_array( $statuses ) && 0 < count( $statuses ) ) {
+        if ( is_array( $statuses ) && ! empty( $statuses ) ) {
             $status = '';
             foreach ( $statuses as $st ) {
                 $status .= "'" . esc_html( $st ) . "',";
@@ -1875,7 +1875,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $cus_roles     = apply_filters_deprecated( 'mainwp-users-manage-roles', array( $cus_roles ), '4.0.7.2', 'mainwp_users_manage_roles' );  // @deprecated Use 'mainwp_users_manage_roles' instead.
         $cus_roles     = apply_filters( 'mainwp_users_manage_roles', $cus_roles );
 
-        if ( is_array( $cus_roles ) && 0 < count( $cus_roles ) ) {
+        if ( is_array( $cus_roles ) && ! empty( $cus_roles ) ) {
             $cus_roles     = array_keys( $cus_roles );
             $allowed_roles = array_merge( $allowed_roles, $cus_roles );
         }
@@ -1949,7 +1949,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
 
             $startTime = time();
-            if ( 0 < count( $dbwebsites ) ) {
+            if ( ! empty( $dbwebsites ) ) {
                 $post_data      = array(
                     'new_user'      => base64_encode( wp_json_encode( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
                     'send_password' => ( isset( $_POST['send_password'] ) ? intval( $_POST['send_password'] ) : '' ),
@@ -2057,7 +2057,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $content = $wp_filesystem->get_contents( $tmp_path );
                 $lines   = explode( "\r\n", $content );
 
-                if ( is_array( $lines ) && 0 < count( $lines ) ) {
+                if ( is_array( $lines ) && ! empty( $lines ) ) {
                     $i = 0;
 					// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                     if ( ! empty( $_POST['import_user_chk_header_first'] ) ) {
@@ -2275,7 +2275,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
         }
 
-        if ( 0 < count( $dbwebsites ) ) {
+        if ( ! empty( $dbwebsites ) ) {
             $post_data      = array(
                 'new_user'      => base64_encode( wp_json_encode( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
                 'send_password' => ( isset( $_POST['send_password'] ) ? intval( $_POST['send_password'] ) : '' ),

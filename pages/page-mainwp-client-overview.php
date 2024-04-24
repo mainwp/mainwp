@@ -442,7 +442,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
          */
         $custom_opts = apply_filters( 'mainwp_clients_widgets_screen_options', $custom_opts );
 
-        if ( is_array( $custom_opts ) && 0 < count( $custom_opts ) ) {
+        if ( is_array( $custom_opts ) && ! empty( $custom_opts ) ) {
             $default_widgets = array_merge( $default_widgets, $custom_opts );
         }
 

@@ -1624,7 +1624,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $values = array(
             'orderby' => null,
-            'order' => null,
+            'order'   => null,
         );
 
         if ( isset( $data['order'] ) ) {
@@ -1633,12 +1633,11 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( isset( $columns[ $ord_col ] ) ) {
                 $values = array(
                     'orderby' => isset( $columns[ $ord_col ]['data'] ) ? sanitize_text_field( wp_unslash( $columns[ $ord_col ]['data'] ) ) : '',
-                    'order' => isset( $data['order'][0]['dir'] ) ? sanitize_text_field( wp_unslash( $data['order'][0]['dir'] ) ) : '',
+                    'order'   => isset( $data['order'][0]['dir'] ) ? sanitize_text_field( wp_unslash( $data['order'][0]['dir'] ) ) : '',
                 );
             }
         }
 
         return $values;
     }
-
 }

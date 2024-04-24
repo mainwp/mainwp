@@ -106,7 +106,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             </a>
                         </td>
                         <td sort-value="<?php echo intval( $cnt ); ?>"><?php echo intval( $cnt ); ?> <?php echo esc_html( _n( 'Update', 'Updates', $cnt, 'mainwp' ) ); ?></td>
-                        <td sort-value="<?php echo esc_attr( $trusted ); ?>"><?php echo ( $trusted ? '<span class="ui tiny green label">Trusted</span>' : '<span class="ui tiny grey label">Not Trusted</span>' ); ?></td>
+                        <td sort-value="<?php echo esc_attr( $trusted ); ?>"><?php echo $trusted ? '<span class="ui tiny green label">Trusted</span>' : '<span class="ui tiny grey label">Not Trusted</span>'; ?></td>
                         <td class="right aligned">
                             <?php if ( MainWP_Updates::user_can_ignore_updates() ) { ?>
                                 <a href="javascript:void(0)" class="ui mini button mainwp-ignore-globally-button btn-update-click-accordion" onClick="return updatesoverview_plugins_ignore_all( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_attr( rawurlencode( $pluginsInfo[ $slug ]['name'] ) ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
@@ -312,7 +312,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         </div>
                         </td>
                         <td sort-value="<?php echo intval( $cnt ); ?>"><?php echo intval( $cnt ); ?> <?php echo esc_html( _n( 'Update', 'Updates', $cnt, 'mainwp' ) ); ?></td>
-                        <td sort-value="<?php echo esc_attr( $trusted ); ?>"><?php echo ( $trusted ? '<span class="ui tiny green label">Trusted</span>' : '<span class="ui tiny grey label">Not Trusted</span>' ); ?></td>
+                        <td sort-value="<?php echo esc_attr( $trusted ); ?>"><?php echo $trusted ? '<span class="ui tiny green label">Trusted</span>' : '<span class="ui tiny grey label">Not Trusted</span>'; ?></td>
                         <td class="right aligned">
                             <?php if ( MainWP_Updates::user_can_ignore_updates() ) { ?>
                                 <a href="javascript:void(0)" class="ui mini button mainwp-ignore-globally-button btn-update-click-accordion" onClick="return updatesoverview_themes_ignore_all( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $themesInfo[ $slug ]['name'] ) ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>

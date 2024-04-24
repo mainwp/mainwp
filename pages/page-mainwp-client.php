@@ -1505,10 +1505,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     } elseif ( 'client.suspended' === $field_name ) {
                         ?>
                             <select name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" id="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" class="ui dropdown">
-                                <option value="0" <?php echo ( '0' === $val ? 'selected' : '' ); ?>><?php esc_html_e( 'Active', 'mainwp' ); ?></option>
-                                <option value="1" <?php echo ( '1' === $val ? 'selected' : '' ); ?>><?php esc_html_e( 'Suspended', 'mainwp' ); ?></option>
-                                <option value="2" <?php echo ( '2' === $val ? 'selected' : '' ); ?>><?php esc_html_e( 'Lead', 'mainwp' ); ?></option>
-                                <option value="3" <?php echo ( '3' === $val ? 'selected' : '' ); ?>><?php esc_html_e( 'Lost', 'mainwp' ); ?></option>
+                                <option value="0" <?php echo '0' === $val ? 'selected' : ''; ?>><?php esc_html_e( 'Active', 'mainwp' ); ?></option>
+                                <option value="1" <?php echo '1' === $val ? 'selected' : ''; ?>><?php esc_html_e( 'Suspended', 'mainwp' ); ?></option>
+                                <option value="2" <?php echo '2' === $val ? 'selected' : ''; ?>><?php esc_html_e( 'Lead', 'mainwp' ); ?></option>
+                                <option value="3" <?php echo '3' === $val ? 'selected' : ''; ?>><?php esc_html_e( 'Lost', 'mainwp' ); ?></option>
                             </select>
                         <?php
                     } elseif ( $client_id && 'client.created' === $field_name ) {

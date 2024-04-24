@@ -476,7 +476,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @param string $parentKey Parent Menu Slug.
      * @param mixed  $slug SubPage Slug.
      */
-    public static function init_subpages_left_menu( $subPages, &$initSubpage, $parentKey, $slug ) {
+    public static function init_subpages_left_menu( $subPages, &$initSubpage, $parentKey, $slug ) { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
 
         if ( ! is_array( $subPages ) ) {
             $subPages = array();
@@ -1400,11 +1400,16 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 if ( false !== strpos( $href, 'admin.php?page=managesites' ) ) {
                     $page_name     = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
                     $level2_active = false;
+
                     if ( isset( $_GET['do'] ) && 'new' === $_GET['do'] && false !== strpos( $href, 'admin.php?page=managesites&do=new' ) ) {
                         $level2_active = true;
-                    } elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] && false !== strpos( $href, 'admin.php?page=managesites&do=bulknew' ) ) {
+                    }
+
+                    if ( ! $level2_active && isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] && false !== strpos( $href, 'admin.php?page=managesites&do=bulknew' ) ) {
                         $level2_active = true;
-                    } elseif ( ! isset( $_GET['do'] ) && 'NonMainWPChanges' !== $page_name && 'admin.php?page=managesites' === $href ) {
+                    }
+
+                    if ( ! $level2_active && ! isset( $_GET['do'] ) && 'NonMainWPChanges' !== $page_name && 'admin.php?page=managesites' === $href ) {
                         $level2_active = true;
                     }
                 }

@@ -897,6 +897,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *                              of possible values.
      */
     public function hook_plugin_action_links( $actions, $plugin_file, $plugin_data ) {
+        unset( $plugin_file ); // not use, compatible.
         if ( is_array( $plugin_data ) && ! empty( $plugin_data['slug'] ) && ! empty( $plugin_data['plugin'] ) && 'mainwp' === $plugin_data['slug'] && 'mainwp/mainwp.php' === $plugin_data['plugin'] ) {
             $tmp = array(
                 'mainwp-setup' => '<a href="admin.php?page=mainwp-setup" id="mainwp-setup" aria-label="' . esc_html__( 'MainWP Dashboard Setup Wizard', 'mainwp' ) . '">' . esc_html__( 'Setup Wizard', 'mainwp' ) . '</a>',
@@ -935,14 +936,12 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             return;
         }
 
-        if ( static::is_mainwp_pages() ) {
-            if ( 'yes' === get_option( 'mainwp_activated' ) ) {
-                delete_option( 'mainwp_activated' );
-                wp_cache_delete( 'mainwp_activated', 'options' );
-                wp_cache_delete( 'alloptions', 'options' );
-                wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
-                exit;
-            }
+        if ( static::is_mainwp_pages() && 'yes' === get_option( 'mainwp_activated' ) ) {
+            delete_option( 'mainwp_activated' );
+            wp_cache_delete( 'mainwp_activated', 'options' );
+            wp_cache_delete( 'alloptions', 'options' );
+            wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
+            exit;
         }
     }
 

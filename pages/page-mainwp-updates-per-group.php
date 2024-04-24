@@ -677,7 +677,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                                 'status'  => ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? true : false,
                                                             );
                                                             ?>
-                                                        <tr class="mainwp-theme-update" theme_slug="<?php echo esc_attr( $theme_name ); ?>" premium="<?php echo ( isset( $theme_upgrade['premium'] ) && ! empty( $theme_upgrade['premium'] ) ? 1 : 0 ); ?>" updated="0">
+                                                        <tr class="mainwp-theme-update" theme_slug="<?php echo esc_attr( $theme_name ); ?>" premium="<?php echo isset( $theme_upgrade['premium'] ) && ! empty( $theme_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
                                                             <?php
                                                             $row_columns     = $updates_table_helper->render_columns( $row_columns, $website );
                                                             $action_rendered = isset( $row_columns['action'] ) ? true : false;

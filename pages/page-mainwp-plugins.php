@@ -655,7 +655,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     <div class="ui hidden fitted divider"></div>
                     <div class="field">
                         <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Display sites not meeting the above search criteria.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
-                                <input type="checkbox" <?php echo $disabledNegative ? 'disabled' : ''; ?> <?php echo ( $checkedNegative ? 'checked="true"' : '' ); ?> value="1" id="display_sites_not_meeting_criteria" />
+                                <input type="checkbox" <?php echo $disabledNegative ? 'disabled' : ''; ?> <?php echo $checkedNegative ? 'checked="true"' : ''; ?> value="1" id="display_sites_not_meeting_criteria" />
                             <label for="display_sites_not_meeting_criteria"><?php esc_html_e( 'Exclude plugin', 'mainwp' ); ?></label>
                             </div>
                     </div>

@@ -639,8 +639,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             <tr>
                 <td>OpenSSL Working Status</td>
                 <td>Yes</td>
-                <td><?php echo( $wk ? 'Yes' : 'No' ); ?></td>
-                <td class="right aligned"><?php echo ( $wk ? static::get_pass_html() : static::get_warning_html() ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+                <td><?php echo $wk ? 'Yes' : 'No'; ?></td>
+                <td class="right aligned"><?php echo $wk ? static::get_pass_html() : static::get_warning_html(); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
             </tr>
             <?php
 
@@ -1268,7 +1268,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             <td><?php echo esc_html( $name ); ?></td>
             <td><?php echo esc_html( $check ); ?></td>
             <td><?php echo esc_html( $result ); ?></td>
-            <td class="right aligned"><?php echo ( $passed ? static::get_pass_html() : static::get_warning_html( static::ERROR ) ); ?></td>
+            <td class="right aligned"><?php echo $passed ? static::get_pass_html() : static::get_warning_html( static::ERROR ); ?></td>
         </tr>
         <?php
 		 // phpcs:enable
@@ -1299,15 +1299,15 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         <tr>
             <td><?php echo esc_html( $config ); ?></td>
             <td><?php echo esc_html( $compare ); ?><?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html( $version ) ) ) . ' ' . $extraText; ?></td>
-            <td><?php echo( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
+            <td><?php echo true === $currentVersion ? 'true' : $currentVersion; ?></td>
             <?php if ( 'filesize' === $whatType ) { ?>
-                <td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? static::get_pass_html() : static::get_warning_html( $errorType ) ); ?></td>
+                <td class="right aligned"><?php echo MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? static::get_pass_html() : static::get_warning_html( $errorType ); ?></td>
             <?php } elseif ( 'get_curl_ssl_version' === $getter ) { ?>
-                <td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? static::get_pass_html() : static::get_warning_html( $errorType ) ); ?></td>
+                <td class="right aligned"><?php echo MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? static::get_pass_html() : static::get_warning_html( $errorType ); ?></td>
             <?php } elseif ( ( 'get_max_input_time' === $getter || 'get_max_execution_time' === $getter ) && -1 === (int) $currentVersion ) { ?>
                 <td class="right aligned"><?php echo static::get_pass_html(); ?></td>
             <?php } else { ?>
-                <td class="right aligned"><?php echo ( version_compare( $currentVersion, $version, $compare ) || ( ! empty( $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? static::get_pass_html() : static::get_warning_html( $errorType ) ); ?></td>
+                <td class="right aligned"><?php echo version_compare( $currentVersion, $version, $compare ) || ( ! empty( $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? static::get_pass_html() : static::get_warning_html( $errorType ); ?></td>
         <?php } ?>
         </tr>
         <?php
@@ -1338,15 +1338,15 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         <tr>
             <td><?php echo esc_html( $config ); ?></td>
             <td><?php echo esc_html( $compare ); ?>  <?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html( $version ) ) ) . ' ' . $extraText; ?></td>
-            <td><?php echo ( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
+            <td><?php echo true === $currentVersion ? 'true' : $currentVersion; ?></td>
             <?php if ( 'filesize' === $whatType ) { ?>
-            <td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? static::get_pass_html() : static::get_warning_html( $errorType ) ); ?></td>
+            <td class="right aligned"><?php echo MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? static::get_pass_html() : static::get_warning_html( $errorType ); ?></td>
             <?php } elseif ( 'get_curl_ssl_version' === $getter ) { ?>
-            <td class="right aligned"><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? static::get_pass_html() : static::get_warning_html( $errorType ) ); ?></td>
+            <td class="right aligned"><?php echo MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? static::get_pass_html() : static::get_warning_html( $errorType ); ?></td>
             <?php } elseif ( 'get_max_input_time' === $getter && -1 === (int) $currentVersion ) { ?>
             <td class="right aligned"><?php echo static::get_pass_html(); ?></td>
             <?php } else { ?>
-            <td class="right aligned"><?php echo( version_compare( $currentVersion, $version, $compare ) || ( ! empty( $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? static::get_pass_html() : static::get_warning_html( $errorType ) ); ?></td>
+            <td class="right aligned"><?php echo version_compare( $currentVersion, $version, $compare ) || ( ! empty( $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? static::get_pass_html() : static::get_warning_html( $errorType ); ?></td>
             <?php } ?>
         </tr>
         <?php
@@ -1646,16 +1646,16 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					<?php // phpcs:disable WordPress.Security.EscapeOutput ?>
                         <select name="actionlogs_status" class="ui mini dropdown">
-                        <option value="<?php echo MainWP_Logger::DISABLED; ?>" <?php echo ( MainWP_Logger::DISABLED === $enabled ? 'selected' : '' ); ?>>
+                        <option value="<?php echo MainWP_Logger::DISABLED; ?>" <?php echo MainWP_Logger::DISABLED === $enabled ? 'selected' : ''; ?>>
                             <?php esc_html_e( 'Disabled', 'mainwp' ); ?>
                         </option>
-                            <option value="<?php echo MainWP_Logger::INFO; ?>" <?php echo ( MainWP_Logger::INFO === $enabled ? 'selected' : '' ); ?>>
+                            <option value="<?php echo MainWP_Logger::INFO; ?>" <?php echo MainWP_Logger::INFO === $enabled ? 'selected' : ''; ?>>
                                 <?php esc_html_e( 'Info', 'mainwp' ); ?>
                             </option>
-                        <option value="<?php echo MainWP_Logger::WARNING; ?>" <?php echo ( MainWP_Logger::WARNING === $enabled ? 'selected' : '' ); ?>>
+                        <option value="<?php echo MainWP_Logger::WARNING; ?>" <?php echo MainWP_Logger::WARNING === $enabled ? 'selected' : ''; ?>>
                             <?php esc_html_e( 'Warning', 'mainwp' ); ?>
                         </option>
-                        <option value="<?php echo MainWP_Logger::DEBUG; ?>" <?php echo ( MainWP_Logger::DEBUG === $enabled ? 'selected' : '' ); ?>>
+                        <option value="<?php echo MainWP_Logger::DEBUG; ?>" <?php echo MainWP_Logger::DEBUG === $enabled ? 'selected' : ''; ?>>
                             <?php esc_html_e( 'Debug', 'mainwp' ); ?>
                         </option>
                         <?php
@@ -1663,7 +1663,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         if ( is_array( $specific_logs ) && ! empty( $specific_logs ) ) {
                             foreach ( $specific_logs as $spec_log => $spec_title ) {
                                 ?>
-                            <option value="specific_<?php echo intval( $spec_log ); ?>" <?php echo ( (int) $spec_log === (int) $enabled ? 'selected' : '' ); ?>>
+                            <option value="specific_<?php echo intval( $spec_log ); ?>" <?php echo (int) $spec_log === (int) $enabled ? 'selected' : ''; ?>>
                                 <?php echo esc_html( $spec_title ); ?>
                             </option>
                                 <?php

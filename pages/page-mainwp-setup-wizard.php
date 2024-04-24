@@ -796,14 +796,14 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <label class="six wide column middle aligned"><?php esc_html_e( 'Check interval', 'mainwp' ); ?></label>
                 <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Select preferred checking interval.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                     <select name="mainwp_setup_frequency_sitesChecking" id="mainwp_setup_frequency_sitesChecking" class="ui dropdown">
-                        <option value="5" <?php echo ( 5 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 5 minutes', 'mainwp' ); ?></option>
-                        <option value="10" <?php echo ( 10 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 10 minutes', 'mainwp' ); ?></option>
-                        <option value="30" <?php echo ( 30 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 30 minutes', 'mainwp' ); ?></option>
-                        <option value="60" <?php echo ( 60 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every hour', 'mainwp' ); ?></option>
-                        <option value="180" <?php echo ( 180 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 3 hours', 'mainwp' ); ?></option>
-                        <option value="360" <?php echo ( 360 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 6 hours', 'mainwp' ); ?></option>
-                        <option value="720" <?php echo ( 720 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Twice a day', 'mainwp' ); ?></option>
-                        <option value="1440" <?php echo ( 1440 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Once a day', 'mainwp' ); ?></option>
+                        <option value="5" <?php echo 5 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 5 minutes', 'mainwp' ); ?></option>
+                        <option value="10" <?php echo 10 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 10 minutes', 'mainwp' ); ?></option>
+                        <option value="30" <?php echo 30 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 30 minutes', 'mainwp' ); ?></option>
+                        <option value="60" <?php echo 60 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every hour', 'mainwp' ); ?></option>
+                        <option value="180" <?php echo 180 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 3 hours', 'mainwp' ); ?></option>
+                        <option value="360" <?php echo 360 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 6 hours', 'mainwp' ); ?></option>
+                        <option value="720" <?php echo 720 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Twice a day', 'mainwp' ); ?></option>
+                        <option value="1440" <?php echo 1440 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Once a day', 'mainwp' ); ?></option>
                     </select>
                 </div>
             </div>
@@ -834,8 +834,8 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </label>
                 <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set preferred site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                     <select name="mainwp_setup_site_healthThreshold" id="mainwp_setup_site_healthThreshold" class="ui dropdown">
-                        <option value="80" <?php echo ( ( 80 === $sitehealthThreshold || 0 === $sitehealthThreshold ) ? 'selected' : '' ); ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
-                        <option value="100" <?php echo ( 100 === $sitehealthThreshold ? 'selected' : '' ); ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
+                        <option value="80" <?php echo 80 === $sitehealthThreshold || 0 === $sitehealthThreshold ? 'selected' : ''; ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
+                        <option value="100" <?php echo 100 === $sitehealthThreshold ? 'selected' : ''; ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
                     </select>
                 </div>
             </div>

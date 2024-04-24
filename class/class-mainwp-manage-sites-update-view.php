@@ -464,7 +464,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                             'status'  => ( isset( $plugin_upgrade['active'] ) && $plugin_upgrade['active'] ) ? true : false,
                         );
                         ?>
-                        <tr plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" premium="<?php echo ( isset( $plugin_upgrade['premium'] ) && ! empty( $plugin_upgrade['premium'] ) ) ? 1 : 0; ?>" updated="0">
+                        <tr plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" premium="<?php echo isset( $plugin_upgrade['premium'] ) && ! empty( $plugin_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
                             <?php
                             $row_columns     = $updates_table_helper->render_columns( $row_columns, $website );
                             $action_rendered = isset( $row_columns['action'] ) ? true : false;
@@ -638,7 +638,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                 'status'  => ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? true : false,
                             );
                             ?>
-                            <tr theme_slug="<?php echo esc_attr( $theme_name ); ?>" premium="<?php echo ( isset( $theme_upgrade['premium'] ) && ! empty( $theme_upgrade['premium'] ) ? 1 : 0 ); ?>" updated="0">
+                            <tr theme_slug="<?php echo esc_attr( $theme_name ); ?>" premium="<?php echo isset( $theme_upgrade['premium'] ) && ! empty( $theme_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
                                 <?php
                                 $row_columns     = $updates_table_helper->render_columns( $row_columns, $website );
                                 $action_rendered = isset( $row_columns['action'] ) ? true : false;

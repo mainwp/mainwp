@@ -134,7 +134,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
             </div>
             <table class="ui unstackable table" id="mainwp-emails-settings-table">
                 <thead>
-                    <tr>                        
+                    <tr>
                         <th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
                         <th data-priority="1"><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
                         <th><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
@@ -253,7 +253,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                         </div>
                     <?php endif; ?>
                     <h3 class="ui header">
-                    <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-email-' . esc_attr( $type ), 'email-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>    
+                    <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-email-' . esc_attr( $type ), 'email-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                     <?php echo esc_html( $title ); ?></h3>
                     <div class="sub header"><?php echo esc_html( $email_description ); ?></h3></div>
                     <div class="ui divider"></div>
@@ -333,9 +333,9 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                         }
                         echo $copy_message; // phpcs:ignore WordPress.Security.EscapeOutput
                         ?>
-                        </div>      
+                        </div>
                     </div>
-                    <div class="ui grid field settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" >                
+                    <div class="ui grid field settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" >
                         <label class="six wide column middle aligned"></label>
                         <div class="ui ten wide column" data-tooltip="<?php esc_attr_e( 'Manage the email HTML template.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <?php if ( $overrided ) : ?>
@@ -348,7 +348,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                         <?php else : ?>
                         <a href="javascript:void(0)" class="ui button" onclick="mainwp_view_template('<?php echo esc_js( $type ); ?>', true ); return false;"><?php esc_html_e( 'View Template', 'mainwp' ); ?></a>
                         <?php endif; ?>
-                        </div>      
+                        </div>
                     </div>
                     <div class="ui divider"></div>
                     <a href="admin.php?page=SettingsEmail" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>

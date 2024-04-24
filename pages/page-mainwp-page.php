@@ -1204,7 +1204,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     </td>
                     <td class="right aligned  not-selectable">
                         <input class="pageId" type="hidden" name="id" value="<?php echo intval( $page['id'] ); ?>"/>
-                        <input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'trash' === $page['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' === $page['status'] || 'draft' === $page['status'] ) ? 'publish|' : ''; ?>" />
+                        <input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo 'trash' === $page['status'] ? 'restore|' : ''; ?><?php echo 'future' === $page['status'] || 'draft' === $page['status'] ? 'publish|' : ''; ?>" />
                         <input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
                         <div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999">
                             <a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
@@ -1660,7 +1660,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <div class="ui relaxed list">
                                 <?php foreach ( $dbwebsites as $website ) { ?>
                                     <div class="item"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
-                                        : <?php echo ( isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ? esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '"  class="mainwp-may-hide-referrer" target="_blank">View Page</a>' : 'ERROR: ' . $output->errors[ $website->id ] ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                                        : <?php echo isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ? esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '"  class="mainwp-may-hide-referrer" target="_blank">View Page</a>' : 'ERROR: ' . $output->errors[ $website->id ]; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                                     </div>
                                 <?php } ?>
                             </div>

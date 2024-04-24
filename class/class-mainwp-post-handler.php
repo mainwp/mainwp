@@ -533,7 +533,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
      *
      * Save last_sync_sites time() or mainwp_status_saved_values.
      */
-    public function mainwp_status_saving() {
+    public function mainwp_status_saving() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
         $this->secure_request( 'mainwp_status_saving' );
         $values = get_option( 'mainwp_status_saved_values' );
 

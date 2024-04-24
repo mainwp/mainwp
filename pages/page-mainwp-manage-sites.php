@@ -452,8 +452,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 <div><?php echo esc_html__( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you a preview of URLs.', 'mainwp' ); ?></div>
                             </div>
                             <select name="mainwp_sitesviewmode" id="mainwp_sitesviewmode" class="ui dropdown">
-                                <option value="table" <?php echo ( 'table' === $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Table', 'mainwp' ); ?></option>
-                                <option value="grid" <?php echo ( 'grid' === $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Grid', 'mainwp' ); ?></option>
+                                <option value="table" <?php echo 'table' === $siteViewMode ? 'selected' : ''; ?>><?php esc_html_e( 'Table', 'mainwp' ); ?></option>
+                                <option value="grid" <?php echo 'grid' === $siteViewMode ? 'selected' : ''; ?>><?php esc_html_e( 'Grid', 'mainwp' ); ?></option>
                             </select>
                         </div>
                     </div>
@@ -509,7 +509,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Optimize for shared hosting or big networks', 'mainwp' ); ?></label>
                         <div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will cache updates for faster loading.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                            <input type="checkbox" name="mainwp_optimize" id="mainwp_optimize" <?php echo ( ( 1 === (int) get_option( 'mainwp_optimize', 1 ) ) ? 'checked="true"' : '' ); ?> /><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
+                            <input type="checkbox" name="mainwp_optimize" id="mainwp_optimize" <?php echo 1 === (int) get_option( 'mainwp_optimize', 1 ) ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
                         </div>
                     </div>
                     <div class="ui grid field">

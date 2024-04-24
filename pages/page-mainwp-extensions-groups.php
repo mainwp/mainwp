@@ -36,6 +36,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Initiate left Extensions menus.
      */
     public static function init_extensions_menu() {
+
         // NO_SONAR_START - duplicated issue.
         $end_div = '</div>';
 

@@ -36,7 +36,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Initiate left Extensions menus.
      */
     public static function init_extensions_menu() {
-        
+
         $end_div = '</div>';
 
         $submenu_pages = array(

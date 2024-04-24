@@ -766,7 +766,7 @@ class Log_Insights_Page {
      * Method verify_open_nonce()
      */
     public static function verify_open_nonce() {
-        if ( isset( $_REQUEST['_insights_opennonce'] ) && wp_verify_nonce( wp_unslash( $_REQUEST['_insights_opennonce'] ), 'mainwp-admin-nonce' ) ) {
+        if ( isset( $_REQUEST['_insights_opennonce'] ) && wp_verify_nonce( wp_unslash( $_REQUEST['_insights_opennonce'] ), 'mainwp-admin-nonce' ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             return true;
         }
         return false;

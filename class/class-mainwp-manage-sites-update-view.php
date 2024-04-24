@@ -335,7 +335,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                         }
                         ?>
                         <?php if ( ( ! empty( $wp_upgrades ) ) && ! ( '' !== $website->sync_errors ) ) : ?>
-                        <tr class="mainwp-wordpress-update" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="<?php echo ( ! empty( $wp_upgrades ) && empty( $wpcore_update_disabled_by ) ) ? '0' : '1'; ?>">
+                        <tr class="mainwp-wordpress-update" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="<?php echo ! empty( $wp_upgrades ) && empty( $wpcore_update_disabled_by ) ? '0' : '1'; ?>">
                             <td>
                                 <?php if ( ! empty( $wp_upgrades ) ) : ?>
                                     <?php echo esc_html( $wp_upgrades['current'] ); ?>
@@ -363,7 +363,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                                 <?php
                                             }
                                             ?>
-                                            <input type="hidden" id="wp-updated-<?php echo intval( $website->id ); ?>" value="<?php echo ( ! empty( $wp_upgrades ) ? '0' : '1' ); ?>" />
+                                            <input type="hidden" id="wp-updated-<?php echo intval( $website->id ); ?>" value="<?php echo ! empty( $wp_upgrades ) ? '0' : '1'; ?>" />
                                             <?php
                                         }
                                         endif;

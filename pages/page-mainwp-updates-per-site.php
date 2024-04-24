@@ -92,13 +92,13 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     $wpcore_update_disabled_by = MainWP_System_Utility::disabled_wpcore_update_by( $website );
 
                     ?>
-                <tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="<?php echo ( ! empty( $wp_upgrades ) && empty( $wpcore_update_disabled_by ) ) ? '0' : '1'; ?>">
+                <tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="<?php echo ! empty( $wp_upgrades ) && empty( $wpcore_update_disabled_by ) ? '0' : '1'; ?>">
                     <td>
                         <div class="ui child checkbox">
                             <input type="checkbox" name=""><label><?php MainWP_Updates::render_site_link_dashboard( $website ); ?></label>
                         </div>                      
 
-                        <input type="hidden" id="wp-updated-<?php echo esc_attr( $website->id ); ?>" value="<?php echo ( ! empty( $wp_upgrades ) ? '0' : '1' ); ?>" />
+                        <input type="hidden" id="wp-updated-<?php echo esc_attr( $website->id ); ?>" value="<?php echo ! empty( $wp_upgrades ) ? '0' : '1'; ?>" />
                     </td>
                     <td>
                         <?php if ( ! empty( $wp_upgrades ) ) : ?>

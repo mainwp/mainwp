@@ -18,73 +18,73 @@ use MainWP\Dashboard\MainWP_Utility;
  */
 class Log_Install extends MainWP_Install {
 
-	/**
-	 * Protected variable to hold the database version info.
-	 *
-	 * @var string DB version info.
-	 */
-	protected $log_db_version = '1.0.1.2';
+    /**
+     * Protected variable to hold the database version info.
+     *
+     * @var string DB version info.
+     */
+    protected $log_db_version = '1.0.1.2';
 
-	/**
-	 * Protected variable to hold the database option name.
-	 *
-	 * @var string DB version info.
-	 */
-	protected $log_db_option_key = 'mainwp_module_log_db_version';
+    /**
+     * Protected variable to hold the database option name.
+     *
+     * @var string DB version info.
+     */
+    protected $log_db_option_key = 'mainwp_module_log_db_version';
 
-	/**
-	 * Private static variable to hold the single instance of the class.
-	 *
-	 * @static
-	 *
-	 * @var mixed Default null
-	 */
-	private static $instance = null;
+    /**
+     * Private static variable to hold the single instance of the class.
+     *
+     * @static
+     *
+     * @var mixed Default null
+     */
+    private static $instance = null;
 
-	/**
-	 * Method instance()
-	 *
-	 * Return public static instance.
-	 *
-	 * @static
-	 * @return instance of class.
-	 */
-	public static function instance() {
-		if ( null === self::$instance ) {
-			self::$instance = new self();
-		}
-		return self::$instance;
-	}
+    /**
+     * Method instance()
+     *
+     * Return public static instance.
+     *
+     * @static
+     * @return instance of class.
+     */
+    public static function instance() {
+        if ( null === static::$instance ) {
+            static::$instance = new self();
+        }
+        return static::$instance;
+    }
 
-	/**
-	 * Class constructor
-	 */
+    /**
+     * Class constructor
+     */
 	public function __construct() { // phpcs:ignore -- overrided.
-		parent::__construct();
-	}
+        parent::__construct();
+    }
 
-	/**
-	 * Method handle to install module log tables.
-	 */
-	public function install() {
+    /**
+     * Method handle to install module log tables.
+     */
+    public function install() {
 
-		global $wpdb;
+        global $wpdb;
 
-		// get_site_option is multisite aware!
-		$currentVersion = get_site_option( $this->log_db_option_key );
+        // get_site_option is multisite aware!
+        $currentVersion = get_site_option( $this->log_db_option_key );
 
-		$rslt = $this->query( "SHOW TABLES LIKE '" . $this->table_name( 'wp_logs' ) . "'" );
-		if ( empty( self::num_rows( $rslt ) ) ) {
-			$currentVersion = false;
-		}
+        $rslt = $this->query( "SHOW TABLES LIKE '" . $this->table_name( 'wp_logs' ) . "'" );
+        if ( empty( static::num_rows( $rslt ) ) ) {
+            $currentVersion = false;
+        }
 
-		if ( $currentVersion === $this->log_db_version ) {
-			return;
-		}
+        if ( $currentVersion === $this->log_db_version ) {
+            return;
+        }
 
-		$charset_collate = $wpdb->get_charset_collate();
+        $charset_collate = $wpdb->get_charset_collate();
 
-		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_logs' ) . " (
+        $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_logs' ) . " (
 	log_id bigint(20) NOT NULL auto_increment,
 	site_id bigint(20) unsigned NULL,
 	item text NOT NULL,
@@ -104,14 +104,14 @@ class Log_Install extends MainWP_Install {
 	KEY action (action),
 	KEY state (state)";
 
-		if ( empty( $currentVersion ) ) {
-			$tbl .= ',
+        if ( empty( $currentVersion ) ) {
+            $tbl .= ',
 		PRIMARY KEY (log_id)';
-		}
-		$tbl  .= ') ' . $charset_collate;
-		$sql[] = $tbl;
+        }
+        $tbl  .= ') ' . $charset_collate;
+        $sql[] = $tbl;
 
-		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_logs_meta' ) . ' (
+        $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_logs_meta' ) . ' (
 	meta_id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 	meta_log_id bigint(20) unsigned NOT NULL,
 	meta_key varchar(200) NOT NULL,
@@ -119,42 +119,42 @@ class Log_Install extends MainWP_Install {
 	KEY meta_log_id (meta_log_id),
 	KEY meta_key (meta_key(191))';
 
-		if ( empty( $currentVersion ) ) {
-			$tbl .= ',
+        if ( empty( $currentVersion ) ) {
+            $tbl .= ',
 		PRIMARY KEY  (`meta_id`)  ';
-		}
+        }
 
-		$tbl  .= ') ' . $charset_collate;
-		$sql[] = $tbl;
+        $tbl  .= ') ' . $charset_collate;
+        $sql[] = $tbl;
 
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-		global $wpdb;
+        global $wpdb;
 
-		if ( MainWP_Utility::instance()->is_disabled_functions( 'error_log' ) || ! function_exists( '\error_log' ) ) {
+        if ( MainWP_Utility::instance()->is_disabled_functions( 'error_log' ) || ! function_exists( '\error_log' ) ) {
 			error_reporting(0); // phpcs:ignore -- try to disabled the error_log somewhere in WP.
-		}
+        }
 
-		$this->update_check_modify( $currentVersion );
+        $this->update_check_modify( $currentVersion );
 
-		$suppress = $wpdb->suppress_errors();
-		foreach ( $sql as $query ) {
-			dbDelta( $query );
-		}
-		$wpdb->suppress_errors( $suppress );
+        $suppress = $wpdb->suppress_errors();
+        foreach ( $sql as $query ) {
+            dbDelta( $query );
+        }
+        $wpdb->suppress_errors( $suppress );
 
-		MainWP_Utility::update_option( $this->log_db_option_key, $this->log_db_version );
-	}
+        MainWP_Utility::update_option( $this->log_db_option_key, $this->log_db_version );
+    }
 
-	/**
-	 * Method handle update db tables and data.
-	 *
-	 * @param string $currentVersion current version.
-	 */
-	public function update_check_modify( $currentVersion ) {
+    /**
+     * Method handle update db tables and data.
+     *
+     * @param string $currentVersion current version.
+     */
+    public function update_check_modify( $currentVersion ) {
 
-		if ( empty( $currentVersion ) ) {
-			return;
-		}
-	}
+        if ( empty( $currentVersion ) ) {
+            return;
+        }
+    }
 }

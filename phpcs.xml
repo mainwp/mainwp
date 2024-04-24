@@ -45,7 +45,19 @@
 		<exclude name="Generic.CodeAnalysis.EmptyStatement.DetectedCatch" />
 	</rule>
 
+	<rule ref="WordPress">
+		<exclude name="Generic.WhiteSpace.DisallowSpaceIndent" />
+	</rule>
 	
+	<rule ref="Generic.WhiteSpace.ScopeIndent">
+		<properties>
+			<property name="indent" value="4"/>
+			<property name="tabIndent" value="false"/>
+		</properties>
+	</rule>
+
+	<rule ref="Generic.WhiteSpace.DisallowTabIndent" />
+				
 	<rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
 		<exclude-pattern>/cron/backups_continue\.php$</exclude-pattern>
 	</rule>

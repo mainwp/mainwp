@@ -277,7 +277,7 @@
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.message .header {
-  color: var( --font-color );
+  color: var(--font-color);
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.green.mini.message:before {
@@ -430,8 +430,8 @@
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
 }
 
-.mainwp-ui.mainwp-custom-theme .dataTables_scroll {
-  box-shadow: 0 1px 2px 0 rgba( 0, 0, 0, .1 );
+.mainwp-ui.mainwp-custom-theme .dt-scroll {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
 }
 
 .mainwp-ui.mainwp-custom-theme .ui.table>tbody>tr.odd>* {

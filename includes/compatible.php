@@ -12,7 +12,7 @@ if ( ! class_exists( 'MainWP_DB' ) ) {
 	/**
 	 * MainWP Database Compatible class.
 	 */
-	class MainWP_DB {
+	class MainWP_DB { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
 		/**
 		 * Private static variable to hold the single instance of the class.
@@ -27,10 +27,10 @@ if ( ! class_exists( 'MainWP_DB' ) ) {
 		 * @return MainWP_DB
 		 */
 		public static function instance() {
-			if ( null === self::$instance ) {
-				self::$instance = new self();
+			if ( null === static::$instance ) {
+				static::$instance = new self();
 			}
-			return self::$instance;
+			return static::$instance;
 		}
 
 		/**
@@ -127,7 +127,7 @@ if ( ! class_exists( 'MainWP_System' ) ) {
 	 *
 	 * @internal
 	 */
-	class MainWP_System {
+	class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
 		/**
 		 * Public static variable to hold the current plugin version.
@@ -154,7 +154,7 @@ if ( ! class_exists( 'MainWP_Extensions_View' ) ) {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
 	 */
-	class MainWP_Extensions_View {
+	class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
 		/**
 		 * Get all available extensions.
@@ -181,4 +181,3 @@ if ( ! function_exists( 'array_key_first' ) ) {
 		return null;
 	}
 }
-

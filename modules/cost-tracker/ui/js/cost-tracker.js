@@ -1,8 +1,8 @@
 mainwp_module_cost_tracker_valid_input_data = function () {
-	var errors = [];
-	var selected_sites = [];
-	var selected_groups = [];
-	var selected_clients = [];
+	let errors = [];
+	let selected_sites = [];
+	let selected_groups = [];
+	let selected_clients = [];
 
 	if (jQuery.trim(jQuery('#mainwp_module_cost_tracker_edit_name').val()) == '') {
 		errors.push('Title is required.');
@@ -49,10 +49,10 @@ jQuery(document).on('click', '#mainwp-module-cost-tracker-save-tracker-button', 
 	}
 });
 
-jQuery(document).ready(function ($) {
+jQuery(function($) {
 	// Check all checkboxes
 	jQuery('#mainwp-module-cost-tracker-sites-table th input[type="checkbox"]').change(function () {
-		var checkboxes = jQuery('#mainwp-module-cost-tracker-sites-table').find(':checkbox');
+		let checkboxes = jQuery('#mainwp-module-cost-tracker-sites-table').find(':checkbox');
 		if (jQuery(this).prop('checked')) {
 			checkboxes.prop('checked', true);
 		} else {
@@ -63,7 +63,7 @@ jQuery(document).ready(function ($) {
 	jQuery('.mainwp-module-cost-tracker-score.label').tab();
 
 	jQuery( document ).on( 'click', '.subscription_menu_item_delete', function () {
-		var objDel = jQuery(this);
+		let objDel = jQuery(this);
 		mainwp_confirm(__('Are you sure.'), function () {
 			mainwp_module_cost_tracker_delete_start_specific(objDel, '', false);
 		}, false, false, true);
@@ -71,7 +71,7 @@ jQuery(document).ready(function ($) {
 
 	// Trigger the bulk actions
 	jQuery('#mainwp_module_cost_tracker_action_btn').on('click', function () {
-		var bulk_act = jQuery('#mwp_cost_tracker_bulk_action').dropdown("get value");
+		let bulk_act = jQuery('#mwp_cost_tracker_bulk_action').dropdown("get value");
 		mainwp_module_cost_tracker_table_bulk_action(bulk_act);
 	});
 
@@ -81,9 +81,9 @@ jQuery(document).ready(function ($) {
 		formatter: {
 			date: function (date) {
 				if (!date) return '';
-				var day = date.getDate();
-				var month = date.getMonth() + 1;
-				var year = date.getFullYear();
+				let day = date.getDate();
+				let month = date.getMonth() + 1;
+				let year = date.getFullYear();
 
 				if (month < 10) {
 					month = '0' + month;
@@ -97,9 +97,9 @@ jQuery(document).ready(function ($) {
 	});
 
 	jQuery(document).on('click', '.mainwp-edit-sub-note', function () {
-		var parent = jQuery(this).closest('tr');
-		var id = jQuery(parent).attr('item-id');
-		var note = jQuery('#sub-notes-' + id + '-note').html();
+		let parent = jQuery(this).closest('tr');
+		let id = jQuery(parent).attr('item-id');
+		let note = jQuery('#sub-notes-' + id + '-note').html();
 		jQuery('#mainwp-notes-subs-html').html(note == '' ? __('No saved notes. Click the Edit button to edit site notes.') : note);
 		jQuery('#mainwp-notes-subs-note').val(note);
 		jQuery('#mainwp-notes-subs-subid').val(id);
@@ -109,10 +109,10 @@ jQuery(document).ready(function ($) {
 
 	$(document).on('click', '.module-cost-tracker-add-custom-product-types', function () {
 		jQuery('.cost-tracker-product-types-bottom').before(jQuery(this).attr('add-custom-product-types-tmpl'));
-		var justAdded = jQuery(this).prev().prev();
+		let justAdded = jQuery(this).prev().prev();
 		jQuery(justAdded).find('.mainwp-module-cost-tracker-select-custom-product-types-icons').dropdown( {							
 			onChange: function( val ) {
-				var parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
+				let parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
 				jQuery(parent).find('input[name="cost_tracker_custom_product_types[icon][]"]' ).val('deficon:' + val);
 			}
 		} );
@@ -131,9 +131,9 @@ jQuery(document).on('click', '#mainwp-notes-subs-cancel', function () {
 });
 
 jQuery(document).on('click', '#mainwp-notes-subs-save', function () {
-	var which = jQuery('#mainwp-which-note').val();
+	let which = jQuery('#mainwp-which-note').val();
 	mainwp_module_cost_tracker_notes_save();
-	var newnote = jQuery('#mainwp-notes-subs-note').val();
+	let newnote = jQuery('#mainwp-notes-subs-note').val();
 	jQuery('#mainwp-notes-subs-html').html(newnote);
 	return false;
 });
@@ -157,10 +157,10 @@ jQuery(document).on('click', '#mainwp-notes-subs-edit', function () {
 });
 
 mainwp_module_cost_tracker_notes_save = function () {
-	var normalid = jQuery('#mainwp-notes-subs-subid').val();
-	var newnote = jQuery('#mainwp-notes-subs-note').val();
+	let normalid = jQuery('#mainwp-notes-subs-subid').val();
+	let newnote = jQuery('#mainwp-notes-subs-note').val();
 	newnote = newnote.replace(/(?:\r\n|\r|\n)/g, '<br>');
-	var data = mainwp_secure_data({
+	let data = mainwp_secure_data({
 		action: 'mainwp_module_cost_tracker_notes_save',
 		subid: normalid,
 		note: newnote,
@@ -192,14 +192,14 @@ mainwp_module_cost_tracker_notes_save = function () {
 
 };
 
-var mod_costtracker_bulkMaxThreads = 4;
-var mod_costtracker_bulkTotalThreads = 0;
-var mod_costtracker_bulkCurrentThreads = 0;
-var mod_costtracker_bulkFinishedThreads = 0;
+let mod_costtracker_bulkMaxThreads = 4;
+let mod_costtracker_bulkTotalThreads = 0;
+let mod_costtracker_bulkCurrentThreads = 0;
+let mod_costtracker_bulkFinishedThreads = 0;
 
 // Manage Bulk Actions
 mainwp_module_cost_tracker_table_bulk_action = function (act) {
-	var selector = '';
+	let selector = '';
 	switch (act) {
 		case 'delete-sub':
 			selector += '#mainwp-module-cost-tracker-sites-table tbody tr';
@@ -223,15 +223,15 @@ mainwp_module_cost_tracker_delete_start_next = function (selector) {
 }
 
 mainwp_module_cost_tracker_delete_start_specific = function (pObj, selector, pBulk) {
-	var row = pObj.closest('tr');
-	var subid = jQuery(row).attr('item-id');
-	var bulk = pBulk ? true : false;
+	let row = pObj.closest('tr');
+	let subid = jQuery(row).attr('item-id');
+	let bulk = pBulk ? true : false;
 
 	if (bulk) {
 		mod_costtracker_bulkCurrentThreads++;
 	}
 
-	var data = mainwp_secure_data({
+	let data = mainwp_secure_data({
 		action: 'mainwp_module_cost_tracker_delete',
 		sub_id: subid,
 	});

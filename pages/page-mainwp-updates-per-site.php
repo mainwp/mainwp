@@ -143,7 +143,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 <tr>
                     <th scope="col" >
                         <div class="ui main-master checkbox">
-                          <input type="checkbox" name=""><label><?php esc_html_e( 'Website', 'mainwp' ); ?></label>
+                            <input type="checkbox" name=""><label><?php esc_html_e( 'Website', 'mainwp' ); ?></label>
                         </div>
                     </th>
                     <th scope="col" ><?php esc_html_e( 'Current Version', 'mainwp' ); ?></th>

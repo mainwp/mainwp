@@ -37,7 +37,7 @@ let mainwp_restapi_bulk_remove_keys_confirm = function () {
 
 let mainwp_restapi_bulk_init = function () {
     jQuery('#mainwp-message-zone-apikeys').hide();
-    if (bulk_RestAPITaskRunning == false) {
+    if (!bulk_RestAPITaskRunning) {
         bulk_RestAPICurrentThreads = 0;
         bulk_RestAPITotal = 0;
         bulk_RestAPIFinished = 0;

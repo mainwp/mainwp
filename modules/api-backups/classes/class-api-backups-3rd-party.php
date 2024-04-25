@@ -862,7 +862,7 @@ class Api_Backups_3rd_Party {
                             <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
                                 <thead>
                                 <tr>
-                                    <th colspan="4">
+                                    <th scope="col" colspan="4">
                                         <?php esc_html_e( 'Automatic Host Backups', 'mainwp' ); ?>
                                     </th>
                                 </tr>
@@ -908,7 +908,7 @@ class Api_Backups_3rd_Party {
                         <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
                                 <thead>
                                 <tr>
-                                    <th colspan="3">
+                                    <th scope="col" colspan="3">
                                         <div class="ui equal width grid">
                                             <div class="left aligned middle aligned column">
                                                 <?php esc_html_e( 'Manual Account Backups', 'mainwp' ); ?>
@@ -1042,7 +1042,7 @@ class Api_Backups_3rd_Party {
                                 <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-wptk-table" class="ui mainwp-api-backup-table table" style="width:100%">
                                     <thead>
                                     <tr>
-                                        <th colspan="4">
+                                        <th scope="col" colspan="4">
                                             <?php esc_html_e( 'WP Toolkit Backups', 'mainwp' ); ?>
                                         </th>
                                     </tr>
@@ -2012,11 +2012,11 @@ class Api_Backups_3rd_Party {
      */
     public static function call_vultr_api( $method, $url, $accessToken, $data = null, $die_error = true ) {
 
-        $Baseurl = 'https://api.vultr.com/v2';
+        $baseurl = 'https://api.vultr.com/v2';
 
-        $curl = curl_init( $Baseurl . $url );
+        $curl = curl_init( $baseurl . $url );
         curl_setopt( $curl, CURLOPT_CUSTOMREQUEST, $method );
-        curl_setopt( $curl, CURLOPT_URL, $Baseurl . $url );
+        curl_setopt( $curl, CURLOPT_URL, $baseurl . $url );
         curl_setopt( $curl, CURLOPT_POST, true );
         curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
 
@@ -2412,12 +2412,12 @@ class Api_Backups_3rd_Party {
      */
     public static function call_gridpane_api( $method, $url, $accessToken, $backup_data = array() ) {
 
-        $Baseurl = 'https://my.gridpane.com/oauth/api/v1';
+        $baseurl = 'https://my.gridpane.com/oauth/api/v1';
         $curl    = curl_init();
         curl_setopt_array(
             $curl,
             array(
-                CURLOPT_URL            => $Baseurl . $url,
+                CURLOPT_URL            => $baseurl . $url,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING       => '',
                 CURLOPT_MAXREDIRS      => 10,
@@ -2814,12 +2814,12 @@ class Api_Backups_3rd_Party {
      */
     public static function call_linode_api( $method, $url, $accessToken, $backup_data = array() ) {
 
-        $Baseurl = 'https://api.linode.com/v4/linode';
+        $baseurl = 'https://api.linode.com/v4/linode';
         $curl    = curl_init();
         curl_setopt_array(
             $curl,
             array(
-                CURLOPT_URL            => $Baseurl . $url,
+                CURLOPT_URL            => $baseurl . $url,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING       => '',
                 CURLOPT_MAXREDIRS      => 10,
@@ -3118,13 +3118,13 @@ class Api_Backups_3rd_Party {
      */
     public static function call_digitalocean_api( $method, $url, $accessToken, $backup_data = array() ) {
 
-        $Baseurl = 'https://api.digitalocean.com/v2';
+        $baseurl = 'https://api.digitalocean.com/v2';
 
         $curl = curl_init();
         curl_setopt_array(
             $curl,
             array(
-                CURLOPT_URL            => $Baseurl . $url,
+                CURLOPT_URL            => $baseurl . $url,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING       => '',
                 CURLOPT_MAXREDIRS      => 10,

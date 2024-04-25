@@ -848,7 +848,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                 <div class="default text"><?php esc_html_e( 'www', 'mainwp' ); ?></div>
                                 <div class="menu">
                                     <div class="item" data-value="www"><?php esc_html_e( 'www', 'mainwp' ); ?></div>
-                                    <div class="item" data-value="none-www"><strike><?php esc_html_e( 'www', 'mainwp' ); ?></strike></div>
+                                    <div class="item" data-value="none-www"><del><?php esc_html_e( 'www', 'mainwp' ); ?></del></div>
                                 </div>
                             </div>
                             <input type="text" id="mainwp_managesites_edit_siteurl" disabled="disabled" name="mainwp_managesites_edit_siteurl" value="<?php echo esc_html( $website_url ); ?>" />
@@ -1652,7 +1652,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                 <div class="editor">
                                     <textarea class="code" readonly="readonly" disabled="disabled" cols="25" rows="20"><?php echo esc_html( file_get_contents( $template_file ) );  // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- required to achieven desired results. Pull requests are welcome. ?></textarea>
                                 </div>
-                                                        <?php
+                                <?php
                             } else {
                                 ?>
                                 <p><?php esc_html_e( 'File was not found.', 'mainwp' ); ?></p>

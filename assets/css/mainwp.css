@@ -1567,3 +1567,11 @@ th .down.icon {
     display: inline-block !important;
     /* display on those pages, hide on other extension pages. */
 }
+.mainwp-sites-select-deselect-button{
+    border: none !important;
+    box-shadow: none !important;
+    background-color: inherit !important;
+}
+.mainwp-sites-select-deselect-button:hover{
+    background-color: inherit !important;
+}

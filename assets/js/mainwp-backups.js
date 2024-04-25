@@ -1291,7 +1291,7 @@ jQuery(document).on('click', '#updatesoverview-backup-ignore', function () {
 let updatesoverviewShowBusyFunction;
 let updatesoverviewShowBusyTimeout;
 mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNamesx) {
-    if (mainwpParams['disable_checkBackupBeforeUpgrade'] == true) {
+    if (mainwpParams['disable_checkBackupBeforeUpgrade']) {
         if (updatesoverviewContinueAfterBackup != undefined) {
             updatesoverviewContinueAfterBackup();
         }
@@ -1335,7 +1335,7 @@ mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNamesx) {
                 if (response['result'] && response['result']['sites'] != undefined) {
                     siteFeedback = [];
                     for (let currSiteId in response['result']['sites']) {
-                        if (response['result']['sites'][currSiteId] == false) {
+                        if (!response['result']['sites'][currSiteId]) {
                             siteFeedback.push(currSiteId);
                         }
                     }

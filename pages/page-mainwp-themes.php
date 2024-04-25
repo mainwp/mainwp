@@ -2493,7 +2493,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <?php if ( $ignoredThemes ) : ?>
                     <tfoot class="full-width">
                         <tr>
-                            <th colspan="3">
+                            <th scope="col" colspan="3">
                                 <a class="ui right floated small green labeled icon button" onClick="return updatesoverview_themes_unignore_globally_all();" id="mainwp-unignore-globally-all">
                                     <i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
                                 </a>
@@ -2585,7 +2585,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <?php if ( 0 < $cnt ) : ?>
                 <tfoot class="full-width">
                 <tr>
-                    <th colspan="4">
+                    <th scope="col" colspan="4">
                         <a class="ui right floated small green labeled icon button" onClick="return updatesoverview_themes_unignore_detail_all();" id="mainwp-unignore-detail-all">
                             <i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
                         </a>
@@ -2716,7 +2716,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <?php if ( $ignoredThemes ) : ?>
                     <tfoot class="full-width">
                         <tr>
-                            <th colspan="3">
+                            <th scope="col" colspan="3">
                                 <a class="ui right floated small green labeled icon button" onClick="return updatesoverview_themes_abandoned_unignore_globally_all();" id="mainwp-unignore-globally-all">
                                     <i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
                                 </a>
@@ -2808,7 +2808,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <?php if ( 0 < $cnt ) : ?>
                 <tfoot class="full-width">
                     <tr>
-                        <th colspan="4">
+                        <th scope="col" colspan="4">
                             <a class="ui right floated small green labeled icon button" onClick="return updatesoverview_themes_unignore_abandoned_detail_all();" id="mainwp-unignore-detail-all">
                                 <i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
                             </a>

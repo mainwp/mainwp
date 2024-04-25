@@ -22,7 +22,7 @@ jQuery(function () {
     jQuery(document).on('click', '.user_submitdelete', function () {
         let confirmation = confirm('Are you sure you want to proceed?');
 
-        if (confirmation == true) {
+        if (confirmation) {
             mainwpuser_postAction(jQuery(this), 'delete');
             return;
         }
@@ -346,7 +346,7 @@ jQuery(function () {
     import_user_total_import = jQuery('#import_user_total_import').val();
 
     jQuery('#import_user_btn_import').on('click', function () {
-        if (import_user_stop_by_user == false) {
+        if (!import_user_stop_by_user) {
             import_user_stop_by_user = true;
             jQuery('#import_user_import_logging .log').append(_('Paused import by user.') + "\n");
             jQuery('#import_user_btn_import').val(__('Continue'));
@@ -394,7 +394,7 @@ window.mainwp_bulkupload_users = function () {
 
 let mainwp_import_users_next = function () {
 
-    if (import_user_stop_by_user == true)
+    if (import_user_stop_by_user)
         return;
 
     import_user_current_line_number++;
@@ -418,7 +418,7 @@ let mainwp_import_users_next = function () {
         errors.push(__('Invalid import data.'));
     }
 
-    if (false != decoded_data) {
+    if (decoded_data) {
         jQuery('#import_user_import_logging .log').append('[' + import_user_current_line_number + '] ' + original_line + '\n');
         let valid = mainwp_import_users_valid_data(decoded_data);
         pos_data = valid.data;

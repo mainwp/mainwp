@@ -443,7 +443,7 @@ window.wp = window.wp || {};
         expand: function (event) {
             let self = this;
 
-            event = event || window.event;
+            event = event || window.event; // NOSONAR - compatible.
 
             // 'enter' and 'space' keys expand the details view when a theme is :focused
             if (event.type === 'keydown' && (event.which !== 13 && event.which !== 32)) {
@@ -504,7 +504,7 @@ window.wp = window.wp || {};
 
             event.preventDefault();
 
-            event = event || window.event;
+            event = event || window.event; // NOSONAR - compatible.
 
             // Set focus to current theme.
             themes.focusedTheme = this.$el;
@@ -680,7 +680,7 @@ window.wp = window.wp || {};
             let self = this,
                 scroll;
 
-            event = event || window.event;
+            event = event || window.event; // NOSONAR - compatible.
 
             // Prevent collapsing detailed view when there is only one theme available
             if (themes.data.themes.length === 1) {

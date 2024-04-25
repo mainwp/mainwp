@@ -2541,7 +2541,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     <?php if ( $ignoredPlugins ) : ?>
                         <tfoot class="full-width">
                             <tr>
-                                <th colspan="4">
+                                <th scope="col" colspan="4">
                                     <a class="ui right floated small green labeled icon button" onClick="return updatesoverview_plugins_unignore_globally_all();" id="mainwp-unignore-globally-all">
                                         <i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
                                     </a>
@@ -2641,7 +2641,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 <?php if ( 0 < $cnt ) : ?>
                     <tfoot class="full-width">
                         <tr>
-                            <th colspan="5">
+                            <th scope="col" colspan="5">
                                 <a class="ui right floated small green labeled icon button" onClick="return updatesoverview_plugins_unignore_detail_all();" id="mainwp-unignore-detail-all">
                                     <i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
                                 </a>
@@ -2785,7 +2785,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 <?php if ( $ignoredPlugins ) : ?>
                     <tfoot class="full-width">
                         <tr>
-                            <th colspan="4">
+                            <th scope="col" colspan="4">
                                 <a class="ui right floated small green labeled icon button" onClick="return updatesoverview_plugins_abandoned_unignore_globally_all();" id="mainwp-unignore-globally-all">
                                     <i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
                                 </a>
@@ -2882,7 +2882,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <?php if ( 0 < $cnt ) : ?>
                 <tfoot class="full-width">
                     <tr>
-                        <th colspan="5">
+                        <th scope="col" colspan="5">
                             <a class="ui right floated small green labeled icon button" onClick="return updatesoverview_plugins_unignore_abandoned_detail_all();" id="mainwp-unignore-detail-all">
                                 <i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
                             </a>

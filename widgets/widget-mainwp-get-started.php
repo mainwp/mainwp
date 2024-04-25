@@ -84,16 +84,14 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             $started_done = false;
         }
 
-        if ( $started_done ) {
-            if ( MainWP_Utility::show_mainwp_message( 'notice', 'get-started' ) ) {
-                ?>
+        if ( $started_done && MainWP_Utility::show_mainwp_message( 'notice', 'get-started' ) ) {
+            ?>
             <div class="ui green message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="get-started"></i>
                 <div class="header"><?php esc_html_e( 'Congratulations!', 'mainwp' ); ?></div>
                 <?php esc_html_e( 'You can now use this widget as a handy list of shortcuts. If you prefer, you can also hide this widget by accessing the Page Settings.', 'mainwp' ); ?>
             </div>
-                <?php
-            }
+            <?php
         }
 
         /**

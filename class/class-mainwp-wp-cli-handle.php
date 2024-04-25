@@ -889,7 +889,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      * @param array  $assoc_args Arguments.
      * @param object $website    Object containing child site data.
      */
-    public static function callback_site_site_available_updates_count( $args = array(), $assoc_args = array(), $website = false ) {
+    public static function callback_site_site_available_updates_count( $args = array(), $assoc_args = array(), $website = false ) { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
         $plugin_upgrades = json_decode( $website->plugin_upgrades, true );
         $theme_upgrades  = json_decode( $website->theme_upgrades, true );
 

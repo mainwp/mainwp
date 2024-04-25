@@ -854,13 +854,12 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $link = $link_array[1];
             }
             if ( ! empty( $link ) ) {
-                $arr_msg = array(
+                return array(
                     'el_before' => esc_html( $output_array[1] ),
                     'el_link'   => esc_html( $link ),
                     'el_text'   => esc_html( $output_array[3] ),
                     'el_after'  => esc_html( $output_array[5] ),
                 );
-                return $arr_msg;
             }
         }
         return $error_msg;

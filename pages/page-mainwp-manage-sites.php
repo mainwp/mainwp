@@ -935,7 +935,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             let iconItemId = iconObj.attr('iconItemId');
                             let iconFileSlug = iconObj.attr('iconFileSlug'); // to support delete file when iconItemId = 0.
 
-                            // upload/delete icon action. 
+                            // upload/delete icon action.
                             mainwp_upload_custom_types_icon(iconObj, 'mainwp_managesites_add_edit_site_upload_site_icon', iconItemId, iconFileSlug, deleteIcon, function(response){
                                 if (jQuery('#mainwp_managesites_add_site_uploaded_icon_hidden').length > 0) {
                                     if (typeof response.iconfile !== undefined) {
@@ -978,7 +978,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     /**
      * Method ajax_upload_icon()
      */
-    public static function ajax_upload_icon() {
+    public static function ajax_upload_icon() { //phpcs:ignore -- NOSONAR - complex.
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_managesites_add_edit_site_upload_site_icon' );
 
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1039,28 +1039,32 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param string $favi_url favico url.
      */
     public function get_site_icon_display( $icon_data, $favi_url ) {
-
+        $output = '';
         // 1 priority.
         if ( ! empty( $icon_data ) ) {
             $uploaded = $this->get_cust_site_icon( $icon_data, 'uploaded' );
             if ( ! empty( $uploaded ) ) {
-                return $this->get_cust_site_icon( $icon_data, 'display' );
+                $output = $this->get_cust_site_icon( $icon_data, 'display' );
             }
         }
 
         // 2 priority.
-        if ( ! empty( $favi_url ) ) {
-            return '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" />';
+        if ( empty( $output ) && ! empty( $favi_url ) ) {
+            $output = '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" />';
         }
 
         // 3 priority.
         $selected = $this->get_cust_site_icon( $icon_data, 'selected' );
-        if ( ! empty( $selected ) ) {
-            return $this->get_cust_site_icon( $icon_data, 'display_selected' );
+        if ( empty( $output ) && ! empty( $selected ) ) {
+            $output = $this->get_cust_site_icon( $icon_data, 'display_selected' );
+        }
+
+        if ( empty( $output ) ) {
+            $output = '<i class="icon big wordpress" style="width:28px;height:28px;"></i> '; // phpcs:ignore -- WP icon.
         }
 
         // last default.
-		return'<i class="icon big wordpress" style="width:28px;height:28px;"></i> '; // phpcs:ignore -- WP icon.
+        return $output;
     }
 
     /**
@@ -1071,7 +1075,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param string $icon_data icon data.
      * @param string $type Type: uploaded|selected|color|display.
      */
-    public function get_cust_site_icon( $icon_data, $type = 'display' ) {
+    public function get_cust_site_icon( $icon_data, $type = 'display' ) { //phpcs:ignore -- NOSONAR - complex.
 
         if ( empty( $icon_data ) ) {
             return '';
@@ -1093,18 +1097,15 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             return '<span style="color:' . esc_attr( $color ) . '" ><i class="' . esc_attr( $selected ) . ' big icon"></i></span>';
         }
 
+        $output = '';
         if ( 'uploaded' === $type ) {
-            return $uploaded;
+            $output = $uploaded;
         } elseif ( 'selected' === $type ) {
-            return $selected;
+            $output = $selected;
         } elseif ( 'color' === $type ) {
-            return $color;
+            $output = $color;
         } elseif ( 'display' === $type || 'display_edit' === $type ) {
             $style       = 'width:32px;height:auto;display:inline-block;';
-            $color_style = '';
-            if ( empty( $uploaded ) ) {
-                $color_style = 'color:' . esc_attr( $color ) . ';';
-            }
             $default_cls = 'mainw_site_custom_icon_display';
             $icon        = '';
             if ( ! empty( $uploaded ) ) {
@@ -1117,9 +1118,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 }
                 $icon = '<div style="display:inline-block;" ' . $icon_wrapper_attr . '><img style="' . $style . '" src="' . esc_attr( $scr ) . '"/></div>';
             }
-            return $icon;
+            $output = $icon;
         }
-        return '';
+        return $output;
     }
 
 

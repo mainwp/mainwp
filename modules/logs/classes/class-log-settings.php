@@ -85,7 +85,6 @@ class Log_Settings {
      * @action init
      */
     public function add_subpage_menu_settings( $subpages = array() ) {
-        $active     = isset( $_GET['page'] ) && 'SettingsInsights' === $_GET['page'] ? true : false; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
         $subpages[] = array(
             'title'    => esc_html__( 'Dashboard Insights', 'mainwp' ),
             'slug'     => 'Insights',

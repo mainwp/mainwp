@@ -2105,9 +2105,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <?php
             $indi_val = 'all';
             foreach ( $default_widgets as $name => $title ) {
-                $_selected = '';
                 if ( ! isset( $show_widgets[ $name ] ) || 1 === (int) $show_widgets[ $name ] ) {
-                    $_selected = 'checked';
                     continue;
                 }
                 $indi_val = '';
@@ -2323,8 +2321,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * @return array icons.
      */
-    public static function get_default_icons() {
-        $icons = array(
+    public static function get_default_icons() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - compatible phpcs's line breaks.  
+        return array(
 			'wordpress', //phpcs:ignore -- WP icon.
             'ambulance',
             'anchor',
@@ -2592,6 +2590,5 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             'server',
             'tint',
         );
-        return $icons;
     }
 }

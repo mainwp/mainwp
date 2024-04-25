@@ -691,8 +691,7 @@ class Log_Insights_Page {
                 <div class="three wide middle aligned left aligned column">
                     <button onclick="mainwp_module_log_overview_content_filter()" class="ui mini basic button"><?php esc_html_e( 'Filter Data', 'mainwp' ); ?></button>
                     <button onclick="mainwp_module_log_overview_content_reset_filters(this)" class="ui mini green button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
-                    
-                </div>              
+                </div>
             </div>
             <?php Log_Events_Filter_Segment::get_instance()->render_filters_segment(); ?>
         </div>
@@ -827,7 +826,7 @@ class Log_Insights_Page {
         $stats_prev_data = ! empty( $items_prev ) ? Log_Stats::get_stats_data( $items_prev ) : array();
         ?>
         <div class="mainwp-primary-content-wrap">
-        <div class="ui segment" style="padding-top:0;padding-bottom:0;">    
+        <div class="ui segment" style="padding-top:0;padding-bottom:0;">
             <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'insights-widgets' ) ) : ?>
                     <div class="ui info message">

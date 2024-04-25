@@ -996,7 +996,7 @@ class Cost_Tracker_Admin {
      * @param string $img_id_attr img id attr.
      * @param bool   $with_color with color.
      */
-    public function get_product_icon_display( $product = false, $img_id_attr = '', $with_color = true ) {
+    public function get_product_icon_display( $product = false, $img_id_attr = '', $with_color = true ) { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
 
         $prod_icon  = '';
         $prod_color = '';
@@ -1005,9 +1005,6 @@ class Cost_Tracker_Admin {
             $prod_icon  = $product->cost_icon;
             $prod_color = $product->cost_color;
         }
-
-        $dirs      = MainWP_System_Utility::get_mainwp_dir( Cost_Tracker_Settings::$icon_sub_dir, true );
-        $icon_base = $dirs[1];
 
         if ( empty( $prod_icon ) || false !== strpos( $prod_icon, 'deficon:' ) ) {
             $upload_icon = '';

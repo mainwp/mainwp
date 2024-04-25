@@ -164,7 +164,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_ids()
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-	public static function ajax_handle_get_categories() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function ajax_handle_get_categories() { // phpcs:ignore -- NOSONAR - complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $websites = array();
         if ( isset( $_REQUEST['sites'] ) && ( '' !== $_REQUEST['sites'] ) ) {
@@ -219,7 +219,6 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
 
         $selectedCategories  = array();
-        $selectedCategories2 = array();
 
         $is_cpt = isset( $_POST['custom_post_type'] ) && ! empty( $_POST['custom_post_type'] ) ? true : false;
 
@@ -343,7 +342,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param array $categories categories.
      * @param array $save_all_cats_tree all categories tree.
      */
-    public static function arrange_categories_list( $categories, &$save_all_cats_tree ) {
+    public static function arrange_categories_list( $categories, &$save_all_cats_tree ) { //phpcs:ignore -- NOSONAR - complex.
 
         if ( ! is_array( $save_all_cats_tree ) ) {
             $save_all_cats_tree = array();

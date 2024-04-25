@@ -173,9 +173,10 @@ class Api_Backups_3rd_Party {
      * @return void
      */
     public function hook_added_new_site( $id, $website ) {
-        $success = $this->fetch_cloudways_settings_for_site( $id, $website );
+        unset( $id );
+        $success = $this->fetch_cloudways_settings_for_site( $website );
         if ( ! $success ) {
-            $this->fetch_gridpane_settings_for_site( $id, $website );
+            $this->fetch_gridpane_settings_for_site( $website );
         }
     }
 
@@ -183,12 +184,11 @@ class Api_Backups_3rd_Party {
     /**
      * Hook after new site added.
      *
-     * @param int    $id Site id just added.
      * @param object $website Site data just added.
      *
      * @return bool result.
      */
-    public function fetch_cloudways_settings_for_site( $id, $website ) {
+    public function fetch_cloudways_settings_for_site( $website ) {
 
         if ( empty( $website ) || empty( $website->id ) || empty( $website->url ) ) {
             return false;
@@ -213,17 +213,8 @@ class Api_Backups_3rd_Party {
 
         foreach ( $server_list as $server ) {
             foreach ( $server->apps as $app ) {
-                if ( $app->cname === $url ) {
-                    // Update Child Site options table.
-                    Api_Backups_Helper::update_website_option( $found_child_site_id, 'mainwp_3rd_party_app_id', $app->id );
-                    Api_Backups_Helper::update_website_option( $found_child_site_id, 'mainwp_3rd_party_instance_id', $app->server_id );
-                    Api_Backups_Helper::update_website_option( $found_child_site_id, 'mainwp_3rd_party_api', 'Cloudways' );
-                    return true;
-                } elseif ( $app->app_fqdn === $url ) { // Check if app fqdn name matches any Child Site domain name, if so, save the server & app ID to that Child Site's options table.
-                    // Update Child Site options table.
-                    Api_Backups_Helper::update_website_option( $found_child_site_id, 'mainwp_3rd_party_app_id', $app->id );
-                    Api_Backups_Helper::update_website_option( $found_child_site_id, 'mainwp_3rd_party_instance_id', $app->server_id );
-                    Api_Backups_Helper::update_website_option( $found_child_site_id, 'mainwp_3rd_party_api', 'Cloudways' );
+                if ( $app->cname === $url || $app->app_fqdn === $url ) { // Check if app fqdn name matches any Child Site domain name, if so, save the server & app ID to that Child Site's options table.
+                    $this->update_3rd_party_cloudways_data( $found_child_site_id, $app );
                     return true;
                 }
             }
@@ -232,16 +223,29 @@ class Api_Backups_3rd_Party {
         return false;
     }
 
+    /**
+     * Method update_3rd_party_data().
+     *
+     * @param int    $site_id site id.
+     * @param object $app app data.
+     *
+     * @return bool result.
+     */
+    public function update_3rd_party_cloudways_data( $site_id, $app ) {
+        Api_Backups_Helper::update_website_option( $site_id, 'mainwp_3rd_party_app_id', $app->id );
+        Api_Backups_Helper::update_website_option( $site_id, 'mainwp_3rd_party_instance_id', $app->server_id );
+        Api_Backups_Helper::update_website_option( $site_id, 'mainwp_3rd_party_api', 'Cloudways' );
+    }
+
 
     /**
      * Hook after new site added.
      *
-     * @param int    $id Site id just added.
      * @param object $website Site data just added.
      *
      * @return bool result.
      */
-    public function fetch_gridpane_settings_for_site( $id, $website ) {
+    public function fetch_gridpane_settings_for_site( $website ) {
 
         if ( empty( $website ) || empty( $website->id ) || empty( $website->url ) ) {
             return false;
@@ -2500,7 +2504,7 @@ class Api_Backups_3rd_Party {
      *
      * @return void True|False Return True on success & False on failure
      */
-    public static function gridpane_action_update_ids() {
+    public static function gridpane_action_update_ids() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
 
         // Get child_sites list from MainWP.
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_wp_for_current_user() );

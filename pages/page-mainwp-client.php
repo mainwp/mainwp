@@ -276,7 +276,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     /**
      * Method ajax_upload_client_icon()
      */
-    public static function ajax_upload_client_icon() {
+    public static function ajax_upload_client_icon() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_add_edit_client_upload_client_icon' );
 
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -331,7 +331,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     /**
      * Method ajax_upload_contact_icon()
      */
-    public static function ajax_upload_contact_icon() {
+    public static function ajax_upload_contact_icon() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_add_edit_contact_upload_contact_icon' );
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $iconfile_slug = isset( $_POST['iconFileSlug'] ) ? sanitize_text_field( wp_unslash( $_POST['iconFileSlug'] ) ) : '';
@@ -939,7 +939,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     </div>
                 <?php endif; ?>
                     <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
-                    <div id="mainwp-add-new-client-form" >                      
+                    <div id="mainwp-add-new-client-form" >
                         <?php
                         static::render_add_client_content( $edit_client );
                         ?>
@@ -972,7 +972,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <?php endif; ?>
 
                     <div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
-                        <div class="title active"><i class="dropdown icon"></i> 
+                        <div class="title active"><i class="dropdown icon"></i>
                         <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
                         <div class="content active">
                             <?php
@@ -1772,7 +1772,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         let iconItemId = iconObj.attr('iconItemId');
                         let iconFileSlug = iconObj.attr('iconFileSlug'); // to support delete file when iconItemId = 0.
 
-                        // upload/delete lient icon action. 
+                        // upload/delete lient icon action.
                         mainwp_upload_custom_types_icon(iconObj, 'mainwp_add_edit_client_upload_client_icon', iconItemId, iconFileSlug, deleteIcon, function(response){
                             if (jQuery('#mainwp_add_edit_client_uploaded_icon_hidden').length > 0) {
                                 if (typeof response.iconfile !== undefined) {
@@ -1808,7 +1808,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         let iconItemId = iconObj.attr('iconItemId');
                         let iconFileSlug = iconObj.attr('iconFileSlug'); // to support delete file when iconItemId = 0.
 
-                        // upload/delete lient icon action. 
+                        // upload/delete lient icon action.
                         mainwp_upload_custom_types_icon(iconObj, 'mainwp_add_edit_contact_upload_contact_icon', iconItemId, iconFileSlug, deleteIcon, function(response){
                             let parent = jQuery(iconObj).closest('.mainwp_edit_clients_contact_uploaded_icon_wrapper');
 
@@ -1871,10 +1871,11 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $icon_cls = 'icon huge custom-icon';
         }
 
+        $output = '';
         if ( 'selected' === $type ) {
-            return $selected_icon;
+            $output = $selected_icon;
         } elseif ( 'color' === $type ) {
-            return $color;
+            $output = $color;
         } elseif ( 'display' === $type || 'display_edit' === $what ) {
             $color_style = '';
             if ( ! empty( $color ) ) {
@@ -1884,10 +1885,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             if ( 'display_edit' === $what ) {
                 $icon_wrapper_attr = ' id="mainwp_add_edit_client_upload_custom_icon" ' . $icon_wrapper_attr;
             }
-            $icon = '<div style="display:inline-block;' . $color_style . '" ' . $icon_wrapper_attr . ' ><i class="' . esc_attr( $selected_icon ) . ' ' . $icon_cls . '" ></i></div>';
-            return $icon;
+            $output = '<div style="display:inline-block;' . $color_style . '" ' . $icon_wrapper_attr . ' ><i class="' . esc_attr( $selected_icon ) . ' ' . $icon_cls . '" ></i></div>';
         }
-        return '';
+        return $output;
     }
 
     /**
@@ -1898,7 +1898,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param mixed $edit_contact The contact data to edit.
      * @param bool  $echo_out Echo template or not.
      */
-	public static function get_add_contact_temp( $edit_contact = false, $echo_out = false ) { //phpcs:ignore -- complex.
+	public static function get_add_contact_temp( $edit_contact = false, $echo_out = false ) { //phpcs:ignore -- NOSONAR - complex. 
 
         $input_name    = 'new_contacts_field';
         $contact_id    = 0;
@@ -1950,12 +1950,12 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <div class="ui six wide column">
                         <div class="ui left labeled input">
                             <input type="text" value="<?php echo esc_attr( $val ); ?>" class="regular-text" name="client_fields[<?php echo esc_attr( $input_name ); ?>][<?php echo esc_attr( $field_name ); ?>][]"/>
-                        </div>                                          
+                        </div>
                     </div>
                     <?php if ( $edit_contact ) : ?>
                     <div class="ui four wide middle aligned hidden token column" style="display:none">
                         [<?php echo esc_html( $field_name ); ?>]
-                    </div>  
+                    </div>
                     <?php endif; ?>
                 </div>
                 <?php

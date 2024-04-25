@@ -166,12 +166,12 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     console.log(params);
                     window.location = 'admin.php?page=managesites' + params;
                     return false;
-                };  
+                };
 
                 mainwp_screenshots_sites_reset_filters = function() {
                     window.location = 'admin.php?page=managesites&reset=yes'
                     return false;
-                };  
+                };
 
                 jQuery( document ).on( 'keyup', '#mainwp-screenshots-sites-filter', function () {
                     let filter = jQuery(this).val().toLowerCase();

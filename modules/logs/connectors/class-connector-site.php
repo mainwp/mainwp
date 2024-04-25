@@ -129,7 +129,7 @@ class Connector_Site extends Log_Connector {
     public function callback_mainwp_site_sync( $website, $information, $success, $sync_error = '', $post_data = array() ) {
 
         if ( empty( $website ) ) {
-            return;
+            return false;
         }
 
         $action = 'sync';

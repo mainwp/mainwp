@@ -756,7 +756,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @param string $keyid Key ID edit.
      * @param array  $item The Key edit.
      */
-	public static function render_rest_api_edit( $keyid, $item ) { //phpcs:ignore -- complex.
+	public static function render_rest_api_edit( $keyid, $item ) { //phpcs:ignore -- NOSONAR - complex.
 
         $edit_desc = is_array( $item ) && isset( $item['desc'] ) ? $item['desc'] : '';
         $enabled   = is_array( $item ) && isset( $item['enabled'] ) && ! empty( $item['enabled'] ) ? true : false;

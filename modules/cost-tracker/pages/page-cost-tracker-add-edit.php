@@ -524,7 +524,7 @@ class Cost_Tracker_Add_Edit {
             }
             ?>
             <div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
-                <div class="title active"><i class="dropdown icon"></i> 
+                <div class="title active"><i class="dropdown icon"></i>
                 <?php echo esc_html__( 'Select Sites', 'mainwp' ); ?></div>
                 <div class="content active">
                     <?php
@@ -587,7 +587,7 @@ class Cost_Tracker_Add_Edit {
                             let iconItemId = iconObj.attr('iconItemId');
                             let iconFileSlug = iconObj.attr('iconFileSlug'); // to support delete file when iconItemId = 0.
 
-                            // upload/delete icon action. 
+                            // upload/delete icon action.
                             mainwp_upload_custom_types_icon(iconObj, 'mainwp_module_cost_tracker_upload_product_icon', iconItemId, iconFileSlug, deleteIcon, function(response){
                                 if (jQuery('#mainwp_module_cost_tracker_edit_icon_hidden').length > 0) {
                                     if (typeof response.iconfile !== undefined) {
@@ -626,7 +626,7 @@ class Cost_Tracker_Add_Edit {
     /**
      * Method ajax_upload_product_icon()
      */
-    public function ajax_upload_product_icon() {
+    public function ajax_upload_product_icon() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_module_cost_tracker_upload_product_icon' );
 
 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

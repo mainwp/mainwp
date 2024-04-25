@@ -218,7 +218,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             );
         }
 
-        $selectedCategories  = array();
+        $selectedCategories = array();
 
         $is_cpt = isset( $_POST['custom_post_type'] ) && ! empty( $_POST['custom_post_type'] ) ? true : false;
 

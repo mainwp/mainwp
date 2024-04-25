@@ -253,7 +253,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      */
-	public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false, $show_select_all_disc = false ) { // phpcs:ignore
+    public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false, $show_select_all_disc = false ) { // phpcs:ignore
         /**
          * Action: mainwp_before_select_sites_list
          *
@@ -330,7 +330,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     endif;
                         ?>
                 </div>
-            </div>              
+            </div>
             <?php
             /**
              * Action: mainwp_after_select_sites_list
@@ -485,7 +485,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
      * @uses \MainWP\Dashboard\MainWP_Menu::render_left_menu()
      */
-	public static function render_top_header( $params = array() ) { // phpcs:ignore -- complex.
+    public static function render_top_header( $params = array() ) { // phpcs:ignore -- complex.
 
         $before_title = isset( $params['before_title'] ) ? $params['before_title'] . ' ' : '';
         $title        = isset( $params['title'] ) ? $params['title'] : '';
@@ -501,37 +501,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
          */
         $title = apply_filters( 'mainwp_header_title', $title );
 
-        $show_menu      = true;
-        $show_new_items = true;
+        $show_menu = true;
 
         if ( isset( $params['show_menu'] ) ) {
             $show_menu = $params['show_menu'];
         }
-
-        $more_tags = array(
-            'img' => array(
-                'src'    => array(),
-                'width'  => array(),
-                'height' => array(),
-                'class'  => array(),
-            ),
-            'div' => array(
-                'class' => array(),
-            ),
-            'a'   => array(
-                'href'    => array(),
-                'class'   => array(),
-                'target'  => array(),
-                'style'   => array(),
-                'site-id' => array(),
-                'siteid'  => array(),
-            ),
-            'i'   => array(
-                'class'  => array(),
-                'target' => array(),
-                'style'  => array(),
-            ),
-        );
 
         $title = $before_title . $title;
 
@@ -569,7 +543,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
         $count_sites = MainWP_DB::instance()->get_websites_count();
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( empty( $count_sites ) ) {
             if ( ! isset( $_GET['do'] ) ) {
                 static::render_modal_no_sites_note();
@@ -719,7 +693,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         } elseif ( 'Extensions-Mainwp-Domain-Monitor-Extension' === $page ) {
             $tour_id = '33300';
         }
-		// phpcs:enable
+        // phpcs:enable
         ?>
         <div class="ui segment right sites sidebar" style="padding:0px" id="mainwp-sites-menu-sidebar">
             <div class="ui segment" style="margin-bottom:0px">
@@ -958,7 +932,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             <?php echo $left; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                         </h4>
                     </div>
-                    
+
                     <div class="ten wide right aligned column"><?php echo $right; ?></div> <?php // phpcs:ignore WordPress.Security.EscapeOutput ?>
 
                 </div>
@@ -1023,7 +997,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 jQuery( '#mainwp-documentation-sidebar' ).prependTo( 'body' );
                 jQuery( 'body > div#wpwrap' ).addClass( 'pusher' );
 
-                jQuery( '.ui.sticky' ).sticky( { 
+                jQuery( '.ui.sticky' ).sticky( {
                     pushing: false,
                 } ).sticky();
 
@@ -1259,14 +1233,14 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
      */
-	public static function render_header_actions() { //phpcs:ignore -- complex method.
+    public static function render_header_actions() { //phpcs:ignore -- complex method.
         $sites_count   = MainWP_DB::instance()->get_websites_count();
         $website_id    = '';
         $sidebar_pages = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
         $sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
         $sidebar_pages = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $page = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
         ob_start();
         if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) :
@@ -1328,7 +1302,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <?php else : ?>
                 <?php $website_id = intval( $_GET['id'] ); ?>
             <?php endif; ?>
-            
+
         <?php endif; ?>
                         <?php if ( ( 'mainwp_tab' === $page ) || isset( $_GET['dashboard'] ) || in_array( $page, $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended ?>
         <a id="mainwp-screen-options-button" class="ui button basic icon" onclick="jQuery( '#mainwp-overview-screen-options-modal' ).modal({allowMultiple:true}).modal( 'show' ); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_html_e( 'Page Settings', 'mainwp' ); ?>">
@@ -1336,7 +1310,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         </a>
         <?php endif; ?>
                         <?php
-						// phpcs:enable
+                        // phpcs:enable
                         /**
                          * Filter: mainwp_header_actions_right
                          *
@@ -1376,9 +1350,9 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     <i class="circle info icon"></i> <?php esc_html_e( 'Info', 'mainwp' ); ?></span>
                 </a>
                 <a class="item" id="mainwp-wp-admin-menu-item" href="<?php echo esc_url( admin_url( 'index.php' ) ); ?>" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>">
-					<i class="wordpress icon"></i> <?php //phpcs:ignore -- ignore wordpress icon. ?> <?php esc_html_e( 'WP Admin', 'mainwp' ); ?></span>
+                    <i class="wordpress icon"></i> <?php //phpcs:ignore -- ignore wordpress icon. ?> <?php esc_html_e( 'WP Admin', 'mainwp' ); ?></span>
                 </a>
-                <a class="item" href="<?php echo wp_logout_url(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Log out of your MainWP Dashboard', 'mainwp' ); ?>"> 
+                <a class="item" href="<?php echo wp_logout_url(); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Log out of your MainWP Dashboard', 'mainwp' ); ?>">
                     <i class="sign out icon"></i> <?php esc_html_e( 'Log Out', 'mainwp' ); ?></span>
                 </a>
                 <a id="mainwp-help-sidebar" class="item" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_attr_e( 'Need help?', 'mainwp' ); ?>">
@@ -1397,7 +1371,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 $( '#mainwp-help-menu-icon-button' ).dropdown();
             } );
         </script>
-        
+
         <?php
 
         $all_updates = wp_get_update_data();
@@ -1432,7 +1406,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $subitems = apply_filters( 'mainwp_page_navigation', $subitems, $name_caller );
         ?>
         <div id="mainwp-page-navigation-wrapper">
-            
+
             <div class="ui vertical menu mainwp-page-navigation">
                 <?php
 
@@ -1462,7 +1436,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         }
 
                         ?>
-                        
+
                         <a class="<?php echo esc_attr( $class ); ?> item" style="<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $item['href'] ); ?>">
                         <?php echo isset( $item['before_title'] ) ? $item['before_title'] : ''; ?> <?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                         </a>
@@ -1473,7 +1447,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 do_action( 'mainwp_page_navigation_menu' );
                 ?>
             </div>
-            
+
         </div>
         <?php
         $is_site = MainWP_System::is_mainwp_site_page();
@@ -1481,7 +1455,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             ?>
             <div id="mainwp-site-mode-wrap">
         <?php } ?>
-        
+
         <?php
     }
 
@@ -1571,7 +1545,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
      */
-	public static function do_widget_boxes( $screen_id, ...$args ) { // phpcs:ignore -- complex.
+    public static function do_widget_boxes( $screen_id, ...$args ) { // phpcs:ignore -- complex.
         global $mainwp_widget_boxes;
         $page = MainWP_System_Utility::get_page_id( $screen_id );
         if ( empty( $page ) ) {
@@ -1643,7 +1617,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     );
                 }
                 $layout_attrs_escaped = ' data-row="' . ( isset( $layout['row'] ) ? esc_attr( $layout['row'] ) : '' ) . '" data-col="' . ( isset( $layout['col'] ) ? esc_attr( $layout['col'] ) : '' ) . '" data-sizex="' . ( isset( $layout['size_x'] ) ? esc_attr( $layout['size_x'] ) : '' ) . '" data-sizey="' . ( isset( $layout['size_y'] ) ? esc_attr( $layout['size_y'] ) : '' ) . '" ';
-				echo '<div id="widget-' . esc_html( $box['id'] ) . '" class="ui segment mainwp-widget" ' . $layout_attrs_escaped . '>' . "\n"; //phpcs:ignore -- escaped.
+                echo '<div id="widget-' . esc_html( $box['id'] ) . '" class="ui segment mainwp-widget" ' . $layout_attrs_escaped . '>' . "\n"; //phpcs:ignore -- escaped.
                 call_user_func( $box['callback'], $screen_id, $args );
                 echo '<span class="mainwp-resize-handle"></span>' . "\n";
                 echo "</div>\n";
@@ -2013,7 +1987,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * @return void  Render modal window for Page Settings html.
      */
-	public static function render_screen_options( $setting_page = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_screen_options( $setting_page = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
                 $default_widgets = array(
                     'overview'           => esc_html__( 'Updates Overview', 'mainwp' ),
@@ -2145,7 +2119,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <?php
         endif;
         ?>
-        <input type="hidden" name="reset_overview_which_settings" value="<?php echo esc_html( $which_settings ); ?>" />         
+        <input type="hidden" name="reset_overview_which_settings" value="<?php echo esc_html( $which_settings ); ?>" />
         <?php
         /**
          * Action: mainwp_screen_options_modal_bottom
@@ -2201,7 +2175,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <div class="actions">
             <div class="ui two columns grid">
                 <div class="left aligned column">
-                    
+
                 </div>
                 <div class="ui right aligned column">
                 <input type="submit" class="ui green button" id="submit-select-mainwp-themes" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
@@ -2258,7 +2232,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <div class="middle aligned center aligned column">
                 <img src="<?php echo esc_url( MAINWP_PLUGIN_URL ); ?>assets/images/mainwp-widget-placeholder.png" style="max-width:200px" class="mainwp-no-results-placeholder ui middle aligned image"/>
             <?php if ( '' !== $placeholder ) : ?>
-					<p><?php echo $placeholder; //phpcs:ignore -- requires escaped. ?></p>
+                    <p><?php echo $placeholder; //phpcs:ignore -- requires escaped. ?></p>
                 <?php else : ?>
                     <p><?php echo esc_html__( 'Nothing to show here, check back later!', 'mainwp' ); ?></p>
                 <?php endif; ?>
@@ -2306,7 +2280,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         <input type="button" class="ui basic button" id="mainwp-common-filter-select-segment-delete-button" value="<?php esc_attr_e( 'Delete', 'mainwp' ); ?>" style="display:none;"/>
                     </div>
                     <div class="eight wide column">
-                        
+
                     </div>
                 </div>
             </div>
@@ -2321,9 +2295,9 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * @return array icons.
      */
-    public static function get_default_icons() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - compatible phpcs's line breaks.  
+    public static function get_default_icons() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - compatible phpcs's line breaks.
         return array(
-			'wordpress', //phpcs:ignore -- WP icon.
+            'wordpress', //phpcs:ignore -- WP icon.
             'ambulance',
             'anchor',
             'archive',

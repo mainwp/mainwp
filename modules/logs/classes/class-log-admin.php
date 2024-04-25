@@ -125,7 +125,7 @@ class Log_Admin {
                     ?>
                 </form>
             </div>
-        </div>      
+        </div>
         <?php
         /** This action is documented in ../pages/page-mainwp-manage-sites.php */
         do_action( 'mainwp_pagefooter_settings', 'DashboardInsights' );
@@ -307,12 +307,12 @@ class Log_Admin {
         global $wpdb;
         $sql = $wpdb->prepare(
             'SELECT
-		ROUND(SUM(DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024, 2)
-		FROM INFORMATION_SCHEMA.TABLES
-		WHERE
-		TABLE_SCHEMA = %s
-		AND table_name = %s 
-		OR table_name = %s',
+        ROUND(SUM(DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024, 2)
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE
+        TABLE_SCHEMA = %s
+        AND table_name = %s
+        OR table_name = %s',
             $wpdb->dbname,
             $wpdb->mainwp_tbl_logs,
             $wpdb->mainwp_tbl_logs_meta

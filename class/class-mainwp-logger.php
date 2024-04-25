@@ -16,7 +16,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-	// phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write logging file.
+    // phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write logging file.
 
     const UPDATE_CHECK_LOG_PRIORITY    = 10;
     const EXECUTION_TIME_LOG_PRIORITY  = 15;
@@ -337,8 +337,8 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $stackTrace = '';
         if ( $addStackTrace ) {
             ob_start();
-			// phpcs:ignore -- for debugging.
-			debug_print_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS );
+            // phpcs:ignore -- for debugging.
+            debug_print_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS );
             $stackTrace = "\n" . ob_get_clean();
         }
         if ( empty( $website ) ) {
@@ -439,7 +439,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @return bool true|false Default is False.
      */
-	private function log( $text, $priority,  $log_color = 0, $forced = false, $website = false ) { // phpcs:ignore -- complex function.
+    private function log( $text, $priority,  $log_color = 0, $forced = false, $website = false ) { // phpcs:ignore -- complex function.
 
         if ( static::DISABLED === $this->logPriority ) {
             return;
@@ -680,7 +680,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             return;
         }
 
-		$today_m_y = date_i18n( 'd/m/Y' ); //phpcs:ignore -- local time.
+        $today_m_y = date_i18n( 'd/m/Y' ); //phpcs:ignore -- local time.
         // one time per day.
         if ( get_option( 'mainwp_logger_check_daily' ) !== $today_m_y ) {
             $num_days = apply_filters( 'mainwp_logger_keep_days', 7 );
@@ -728,7 +728,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public function show_log_db() {
 
         echo '<div class="ui hidden divider"></div>';
-		echo '<div class="ui divided padded relaxed list" local-datetime="' . date( 'Y-m-d H:i:s' ) . '">'; // phpcs:ignore -- local time.
+        echo '<div class="ui divided padded relaxed list" local-datetime="' . date( 'Y-m-d H:i:s' ) . '">'; // phpcs:ignore -- local time.
 
         $rows = MainWP_DB::instance()->query( MainWP_DB_Common::instance()->get_sql_log() );
 
@@ -777,7 +777,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             </div>
             <div class="scrolling content content-response"></div>
             <div class="actions">
-                <button class="ui green button mainwp-response-copy-button"><?php esc_html_e( 'Copy Response', 'mainwp' ); ?></button>              
+                <button class="ui green button mainwp-response-copy-button"><?php esc_html_e( 'Copy Response', 'mainwp' ); ?></button>
             </div>
         </div>
         <?php
@@ -857,7 +857,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             </div>
             <div class="scrolling content content-response"></div>
             <div class="actions">
-                <button class="ui green button mainwp-response-copy-button"><?php esc_html_e( 'Copy Response', 'mainwp' ); ?></button>              
+                <button class="ui green button mainwp-response-copy-button"><?php esc_html_e( 'Copy Response', 'mainwp' ); ?></button>
             </div>
         </div>
         <?php

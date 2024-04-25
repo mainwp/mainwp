@@ -76,7 +76,7 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
         $indi = apply_filters( 'mainwp_default_settings_indicator', $indi, $field, $def, $current_value, $render_indi );
         if ( $render_indi ) {
-			echo $indi; //phpcs:ignore -- ok.
+            echo $indi; //phpcs:ignore -- ok.
         }
         return $indi;
     }
@@ -98,7 +98,7 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
         $indi = apply_filters( 'mainwp_default_settings_indicator', $indi, $field, $def, $current_value, $render_indi, $type );
         if ( $render_indi ) {
-			echo $indi; //phpcs:ignore -- ok.
+            echo $indi; //phpcs:ignore -- ok.
         }
         return $indi;
     }

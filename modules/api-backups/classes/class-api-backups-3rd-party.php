@@ -23,7 +23,7 @@ use MainWP\Dashboard\MainWP_Extensions_Handler;
  */
 class Api_Backups_3rd_Party {
 
-	// phpcs:disable WordPress.DB.RestrictedFunctions, Generic.Metrics.CyclomaticComplexity, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
+    // phpcs:disable WordPress.DB.RestrictedFunctions, Generic.Metrics.CyclomaticComplexity, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
 
     /**
      * Public static variable to hold the single instance of the class.
@@ -492,7 +492,7 @@ class Api_Backups_3rd_Party {
      *
      * @param mixed $website The Child Site Object.
      */
-	public function render_api_backups_site( $website ) { //phpcs:ignore -- complex function.
+    public function render_api_backups_site( $website ) { //phpcs:ignore -- complex function.
 
         $available_backups = array();
 
@@ -569,7 +569,7 @@ class Api_Backups_3rd_Party {
                                     <?php if ( 'cpanel' === $backup_api ) : ?>
                                         <div id="mainwp_api_cpanel_backup_tabs" class="ui top attached tabular menu">
                                             <div class="active item" data-tab="cpanel-native"><i class="fitted cpanel big icon"></i></div>
-											<div class="item" data-tab="cpanel-wp-toolkit"><i class="fitted wordpress big icon"></i></div><?php //phpcs:ignore -- skip wordpress.?>
+                                            <div class="item" data-tab="cpanel-wp-toolkit"><i class="fitted wordpress big icon"></i></div><?php //phpcs:ignore -- skip wordpress.?>
                                         </div>
                                     <?php endif; ?>
                                 </div>
@@ -3770,7 +3770,7 @@ class Api_Backups_3rd_Party {
     public static function call_cpanel_api( $method, $url, $baseurl, $username, $password, $backup_data = array() ) {
 
         // base64encode cPanel Username & Password.
-		$base64encoded = base64_encode( $username . ':' . $password ); //phpcs:ignore -- base64 encode.
+        $base64encoded = base64_encode( $username . ':' . $password ); //phpcs:ignore -- base64 encode.
         $curl          = curl_init();
 
         curl_setopt_array(
@@ -3823,7 +3823,7 @@ class Api_Backups_3rd_Party {
     public static function call_cpanel_api_json( $method, $url, $baseurl, $username, $password, $backup_data = array() ) {
 
         // base64encode cPanel Username & Password.
-		$base64encoded = base64_encode( $username . ':' . $password ); //phpcs:ignore -- base64 encode.
+        $base64encoded = base64_encode( $username . ':' . $password ); //phpcs:ignore -- base64 encode.
         $curl          = curl_init();
 
         curl_setopt_array(

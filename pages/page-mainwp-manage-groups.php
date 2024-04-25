@@ -381,7 +381,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 <div class="actions">
                     <div class="ui two columns grid">
                         <div class="left aligned column">
-                            
+
                         </div>
                         <div class="right aligned column">
                         <a class="ui green button" id="mainwp-save-new-group-button" href="#"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></a>
@@ -417,7 +417,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 <div class="actions">
                     <div class="ui two columns stackable grid">
                         <div class="left aligned column">
-                            
+
                         </div>
                         <div class="right aligned column">
                         <a class="ui green button" id="mainwp-update-new-group-button" href="#"><?php echo esc_html__( 'Update Tag', 'mainwp' ); ?></a>
@@ -530,7 +530,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @uses \MainWP\Dashboard\MainWP_DB_Common::update_group()
      */
     public static function rename_group() {
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_POST['groupId'] ) ) {
             $group = MainWP_DB_Common::instance()->get_group_by_id( intval( $_POST['groupId'] ) );
             if ( ! empty( $group ) ) {
@@ -573,7 +573,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 die( wp_json_encode( array( 'result' => $group->name ) ) );
             }
         }
-		//phpcs:enable
+        //phpcs:enable
     }
 
     /**
@@ -585,9 +585,9 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @uses \MainWP\Dashboard\MainWP_DB_Common::remove_group()
      */
     public static function delete_group() {
-		//phpcs:disable WordPress.Security.NonceVerification.Missing
+        //phpcs:disable WordPress.Security.NonceVerification.Missing
         $groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;
-		//phpcs:enable
+        //phpcs:enable
         if ( $groupid ) {
             $group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
             if ( ! empty( $group ) ) {
@@ -666,10 +666,10 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
          */
         global $current_user;
 
-		//phpcs:disable WordPress.Security.NonceVerification.Missing
+        //phpcs:disable WordPress.Security.NonceVerification.Missing
         $newName  = isset( $_POST['newName'] ) ? sanitize_text_field( wp_unslash( $_POST['newName'] ) ) : '';
         $newColor = isset( $_POST['newColor'] ) ? sanitize_hex_color( wp_unslash( $_POST['newColor'] ) ) : '';
-		//phpcs:enable
+        //phpcs:enable
 
         if ( ! empty( $newName ) ) {
             $groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, static::check_group_name( $newName ), $newColor );
@@ -747,7 +747,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
     public static function update_group() {
- 		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;
         if ( $groupid ) {
             $group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
@@ -764,7 +764,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 die( wp_json_encode( array( 'result' => true ) ) );
             }
         }
-		// phpcs:enable
+        // phpcs:enable
 
         die( wp_json_encode( array( 'result' => false ) ) );
     }

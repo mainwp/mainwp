@@ -91,8 +91,8 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
     public static function screen_options( $input ) {
         return $input .
                 '<a class="ui button basic icon" onclick="mainwp_manage_sites_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Page Settings', 'mainwp' ) . '">
-					<i class="cog icon"></i>
-				</a>';
+                    <i class="cog icon"></i>
+                </a>';
     }
 
     /**
@@ -100,7 +100,7 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      *
      * Render Page Settings Modal.
      */
-	public static function render_screen_options() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_screen_options() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $columns = static::$sitesTable->get_columns();
 
@@ -207,7 +207,7 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                         </div>
                         <div class="ui right aligned column">
                     <input type="submit" class="ui green button" name="btnSubmit" id="submit-monitoringsites-settings" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
-                    
+
                 </div>
                     </div>
                 </div>
@@ -248,7 +248,7 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                             jQuery('.mainwp_hide_wpmenu_checkboxes input[id="mainwp_show_column_' + value + '"]').prop( 'checked', true );
                         } );
                         jQuery('input[name=reset_monitoringsites_columns_order]').attr('value',1);
-                        jQuery('#submit-monitoringsites-settings').click();                     
+                        jQuery('#submit-monitoringsites-settings').click();
                     }, false, false, true );
                     return false;
                 });
@@ -288,7 +288,7 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 static::$sitesTable->clear_items();
                 ?>
             </form>
-        </div>      
+        </div>
         <?php
         static::render_screen_options();
         /** This action is documented in ../pages/page-mainwp-manage-sites.php */

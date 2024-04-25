@@ -216,10 +216,10 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                             "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
                             "info" : <?php echo esc_js( $table_features['info'] ); ?>,
                             "scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
-							"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
+                            "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
                             "stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
                             "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
-							"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
+                            "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
                             "lengthMenu" : [ [<?php echo intval( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All" ] ],
                             "columnDefs": [
                                 {
@@ -481,7 +481,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
      * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
-	protected function single_row_columns( $website ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    protected function single_row_columns( $website ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         // @NO_SONAR_START@ - duplicated issue.
         $total_wp_upgrades     = 0;
@@ -673,7 +673,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
      *
      * @return string Column Name.
      */
-	public function column_default( $item, $column_name ) { 	// phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function column_default( $item, $column_name ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         switch ( $column_name ) {
             case 'status':

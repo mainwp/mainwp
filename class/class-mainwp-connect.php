@@ -16,7 +16,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-	// phpcs:disable WordPress.DB.RestrictedFunctions, Generic.Metrics.CyclomaticComplexity, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
+    // phpcs:disable WordPress.DB.RestrictedFunctions, Generic.Metrics.CyclomaticComplexity, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
 
     /**
      * Method get_class_name()
@@ -49,7 +49,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_http_codes()
      */
-	public static function try_visit( $url, $ssl_verifyhost = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null, $no_body = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function try_visit( $url, $ssl_verifyhost = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null, $no_body = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
         $postdata = array( 'test' => 'yes' );
@@ -319,7 +319,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return mixed null|http_build_query()
      */
-	public static function get_post_data_authed( &$website, $what, $params = null ) {  //phpcs:ignore -- complex method.
+    public static function get_post_data_authed( &$website, $what, $params = null ) {  //phpcs:ignore -- complex method.
         if ( $website && '' !== $what ) {
             $data             = array();
             $data['user']     = $website->adminname;
@@ -487,7 +487,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return string $url
      */
-	public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false, $other_params = array() ) { //phpcs:ignore -- complex method.
+    public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false, $other_params = array() ) { //phpcs:ignore -- complex method.
         $params = array();
         if ( $website && '' !== $paramValue ) {
 
@@ -1309,7 +1309,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
      * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
      */
-	public static function fetch_url_site( // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function fetch_url_site( // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         &$website,
         $url,
         $postdata,
@@ -1532,8 +1532,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $result      = $results[1];
             $information = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
             unset( $output['fetch_data'] ); // hide the data.
-			$data_log = is_array( $postdata ) ? print_r( $postdata, true ) : ( is_string( $postdata ) ? $postdata : '' );  //phpcs:ignore -- good.
-			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[' . $url . '] postdata [' . $data_log . '] information: [OK]' ); //phpcs:ignore -- ok.
+            $data_log = is_array( $postdata ) ? print_r( $postdata, true ) : ( is_string( $postdata ) ? $postdata : '' );  //phpcs:ignore -- good.
+            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[' . $url . '] postdata [' . $data_log . '] information: [OK]' ); //phpcs:ignore -- ok.
             return $information;
         } elseif ( 200 === (int) $http_status && ! empty( $err ) ) {
             $thr_error = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -1568,7 +1568,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_DB::get_wp_ip()
      * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
      */
-	private static function check_constraints( &$identifier, $website ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    private static function check_constraints( &$identifier, $website ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $semLock      = '103218';
         $identifier   = static::get_lock_identifier( $semLock );
         $minimumDelay = ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) );
@@ -1717,7 +1717,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( ! $wp_filesystem->is_writable( @dirname( $file ) ) ) {
                 throw new MainWP_Exception( esc_html__( 'MainWP upload directory is not writable.', 'mainwp' ) );
             }
-		} elseif ( ! is_writable( @dirname( $file ) ) ) { //phpcs:ignore -- ok.
+        } elseif ( ! is_writable( @dirname( $file ) ) ) { //phpcs:ignore -- ok.
             throw new MainWP_Exception( esc_html__( 'MainWP upload directory is not writable.', 'mainwp' ) );
         }
 

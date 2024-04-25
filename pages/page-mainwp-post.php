@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Current complexity required to achieve desired results. Pull request solutions appreciated.
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- Current complexity required to achieve desired results. Pull request solutions appreciated.
 
     /**
      * Method get_class_name()
@@ -212,8 +212,8 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         );
 
         $_post = get_post( $post_id );
-		// phpcs:ignore -- required for custom bulk posts/pages and support hooks.
-		$GLOBALS['post'] = $_post;
+        // phpcs:ignore -- required for custom bulk posts/pages and support hooks.
+        $GLOBALS['post'] = $_post;
     }
 
     /**
@@ -551,7 +551,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                     <option value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
                                     <option value="publish"><?php esc_html_e( 'Publish', 'mainwp' ); ?></option>
                                     <option value="unpublish"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></option>
-                                    <?php do_action( 'mainwp_manage_posts_bulk_action' ); ?>                                    
+                                    <?php do_action( 'mainwp_manage_posts_bulk_action' ); ?>
                                     <option value="trash"><?php esc_html_e( 'Trash', 'mainwp' ); ?></option>
                                     <option value="restore"><?php esc_html_e( 'Restore', 'mainwp' ); ?></option>
                                     <option value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
@@ -748,13 +748,13 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         <?php
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_REQUEST['siteid'] ) && isset( $_REQUEST['postid'] ) ) {
             echo '<script>jQuery(function(){ mainwp_show_post(  ' . intval( $_REQUEST['siteid'] ) . ', ' . intval( $_REQUEST['postid'] ) . ', undefined ) } );</script>';
         } elseif ( isset( $_REQUEST['siteid'] ) && isset( $_REQUEST['userid'] ) ) {
             echo '<script>jQuery(function(){ mainwp_show_post( ' . intval( $_REQUEST['siteid'] ) . ', undefined, ' . intval( $_REQUEST['userid'] ) . ' ) } );</script>';
         }
-		// phpcs:enable
+        // phpcs:enable
 
         // to fix issue js code display.
         $cachedSearch = MainWP_Cache::get_cached_context( 'Post' );
@@ -768,7 +768,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             ?>
             <script type="text/javascript">
                 jQuery( document ).ready( function () {
-					jQuery( '#mainwp_post_search_type' ).dropdown( 'set selected', [<?php echo $status; // phpcs:ignore -- safe output. ?>] );
+                    jQuery( '#mainwp_post_search_type' ).dropdown( 'set selected', [<?php echo $status; // phpcs:ignore -- safe output. ?>] );
                 } )
             </script>
             <?php
@@ -907,7 +907,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         <table id="mainwp-posts-table" class="ui unstackable single line table" style="width:100%">
             <thead class="full-width">
                 <tr>
-                    <th class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
+                    <th id="check-column-all" class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
                     <?php
                     /**
                      * Action: mainwp_posts_table_header
@@ -994,7 +994,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     $manage_posts_table = jQuery('#mainwp-posts-table').DataTable( {
                         "responsive" : responsive,
                         "searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
-						"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
+                        "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
                         "stateSave":  <?php echo esc_html( $table_features['stateSave'] ); ?>,
                         "paging": <?php echo esc_html( $table_features['paging'] ); ?>,
                         "info": <?php echo esc_html( $table_features['info'] ); ?>,
@@ -1049,7 +1049,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     jQuery( '#mainwp-overview-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
                         let col_id = jQuery( this ).attr( 'id' );
                         col_id = col_id.replace( "mainwp_show_column_", "" );
-                        try {   
+                        try {
                             $manage_posts_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
                         } catch(err) {
                             // to fix js error.
@@ -1097,7 +1097,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      * @uses \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
      */
-	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all', $table_content = false, $clients = '' ) { // phpcs:ignore -- complex function.
+    public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all', $table_content = false, $clients = '' ) { // phpcs:ignore -- complex function.
 
         $data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
@@ -1264,7 +1264,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
      */
-	public static function posts_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex method.
+    public static function posts_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex method.
         if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
             return;
         }
@@ -1415,10 +1415,10 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 <?php if ( 'trash' !== $post['status'] ) : ?>
                                     <?php if ( isset( $child_to_dash_array[ $post['id'] ] ) ) { ?>
                                         <a class="item" href="post.php?post=<?php echo (int) $child_to_dash_array[ $post['id'] ]; ?>&action=edit&select=<?php echo (int) $website->id; ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-                                    <?php } else { ?>                                       
+                                    <?php } else { ?>
                                         <a class="item post_getedit" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
                                     <?php } ?>
-                                    <?php do_action( 'mainwp_manage_posts_action_item', $post, $child_to_dash_array ); ?>                                                           
+                                    <?php do_action( 'mainwp_manage_posts_action_item', $post, $child_to_dash_array ); ?>
                                     <a class="item post_submitdelete" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
                                 <?php endif; ?>
                                     <a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . intval( $website->id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
@@ -1555,12 +1555,12 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
              */
             $limit = apply_filters( 'postmeta_form_limit', 30 );
             $sql   = "SELECT DISTINCT meta_key
-			FROM $wpdb->postmeta
-			WHERE meta_key NOT BETWEEN '_' AND '_z'
-			HAVING meta_key NOT LIKE %s
-			ORDER BY meta_key
-			LIMIT %d";
-			$keys  = $wpdb->get_col( $wpdb->prepare( $sql, $wpdb->esc_like( '_' ) . '%', $limit ) ); // phpcs:ignore -- unprepared SQL ok.
+            FROM $wpdb->postmeta
+            WHERE meta_key NOT BETWEEN '_' AND '_z'
+            HAVING meta_key NOT LIKE %s
+            ORDER BY meta_key
+            LIMIT %d";
+            $keys  = $wpdb->get_col( $wpdb->prepare( $sql, $wpdb->esc_like( '_' ) . '%', $limit ) ); // phpcs:ignore -- unprepared SQL ok.
         }
 
         if ( $keys ) {
@@ -1763,7 +1763,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * @return string Hidden time stamps html.
      */
-	public static function touch_time( $post, $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) { //phpcs:ignore -- complex method.
+    public static function touch_time( $post, $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) { //phpcs:ignore -- complex method.
 
         /**
          * WordPress Locale.
@@ -1852,7 +1852,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * @return string Metabox html
      */
-	public static function do_meta_boxes( $screen, $context, $input_obj ) { // phpcs:ignore -- current complexity required to achieve desired results. Purll Request solutions appreciated.
+    public static function do_meta_boxes( $screen, $context, $input_obj ) { // phpcs:ignore -- current complexity required to achieve desired results. Purll Request solutions appreciated.
 
         /**
          * WordPress Meta Boxes array.
@@ -1943,7 +1943,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         echo "<h2 class='hndle'><span>{" . esc_html( $box['title'] ) . "}</span></h2>\n";
                         echo '<div class="inside">' . "\n";
 
-						 // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                         if ( defined( 'WP_DEBUG' ) && WP_DEBUG && ! $block_compatible && 'edit' === $screen->parent_base && ! $screen->is_block_editor() && ! isset( $_GET['meta-box-loader'] ) ) {
                             $plugin = _get_plugin_from_callback( $box['callback'] );
                             if ( $plugin ) {
@@ -1958,7 +1958,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 <?php
                             }
                         }
-						 // phpcs:enable
+                         // phpcs:enable
                         call_user_func( $box['callback'], $input_obj, $box );
                         echo "</div>\n";
                         echo "</div>\n";
@@ -1984,7 +1984,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Meta_Boxes::add_tags()
      * @uses \MainWP\Dashboard\MainWP_UI
      */
-	public static function render_bulkpost( $post_id, $input_type ) { //phpcs:ignore -- complex method.
+    public static function render_bulkpost( $post_id, $input_type ) { //phpcs:ignore -- complex method.
         $post = get_post( $post_id );
 
         if ( $post ) {
@@ -2019,7 +2019,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         $referer = wp_get_referer();
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_GET['boilerplate'] ) ) {
             if ( 'auto-draft' === $post->post_status ) {
                 $note_title = ( 'bulkpost' === $post_type ) ? esc_html__( 'Create New Boilerplate Post', 'mainwp' ) : esc_html__( 'Create New Boilerplate Page', 'mainwp' );
@@ -2043,7 +2043,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
         }
 
-		 // phpcs:enable
+         // phpcs:enable
         ?>
         <div class="ui alt segment" id="mainwp-add-new-bulkpost">
             <form name="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" id="post" class="ui form">
@@ -2070,7 +2070,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <div class="ui yellow message"><?php echo esc_html( $message ); ?></div>
                         <?php
                     }
-					// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized 
+                    // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                     ?>
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_boilerplate_info_notice' ) ) : ?>
                         <?php if ( isset( $_GET['boilerplate'] ) ) : ?>
@@ -2095,7 +2095,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         </div>
                         <?php endif; ?>
                     <?php endif; ?>
-					<?php // phpcs:enable ?>
+                    <?php // phpcs:enable ?>
 
                     <h3 class="header" id="bulkpost-title"><?php echo esc_html( $note_title ); ?></h3>
 
@@ -2332,7 +2332,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         ?>
         <div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
             <div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Categories', 'mainwp' ); ?></div>
-        
+
         <?php
         $categories = array();
         if ( $post ) {
@@ -2367,7 +2367,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <?php if ( ! in_array( $uncat, $categories ) ) : ?>
                         <div class="item" data-value="<?php esc_attr_e( 'Uncategorized', 'mainwp' ); ?>" class="sitecategory-list"><?php esc_html_e( 'Uncategorized', 'mainwp' ); ?></div>
                         <?php endif; ?>
-                        
+
                         <?php foreach ( $categories as $cat ) : ?>
                             <?php
                             if ( empty( $cat ) ) {
@@ -2387,10 +2387,10 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 }
                 $init_cats = rtrim( $init_cats, ',' );
                 ?>
-                
+
                 <script type="text/javascript">
                     jQuery( document ).ready( function () {
-						jQuery( '#categorychecklist' ).dropdown( 'set selected', [<?php echo $init_cats; //phpcs:ignore -- safe. ?>] );
+                        jQuery( '#categorychecklist' ).dropdown( 'set selected', [<?php echo $init_cats; //phpcs:ignore -- safe. ?>] );
                     } );
                 </script>
 
@@ -2468,7 +2468,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 ?>
                 <script type="text/javascript">
                     jQuery( document ).ready( function () {
-						jQuery( '#categorychecklist' ).dropdown( 'set selected', [<?php echo $init_cats; //phpcs:ignore -- safe. ?>] );
+                        jQuery( '#categorychecklist' ).dropdown( 'set selected', [<?php echo $init_cats; //phpcs:ignore -- safe. ?>] );
                     } );
                 </script>
             </div>
@@ -2595,7 +2595,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <input type="text" autocomplete="off" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="post_timestamp_value" value="" />
                         </div>
                     </div>
-                </div>              
+                </div>
             </div>
             <div style="display:none" id="timestampdiv">
                     <?php static::touch_time( $post ); ?>
@@ -2642,9 +2642,9 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
             return;
         }
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0;
-		// phpcs:enable
+        // phpcs:enable
         static::render_addedit( $post_id, 'BulkEdit' );
     }
 
@@ -2689,7 +2689,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * Attatch MainWP help content.
      */
     public static function mainwp_help_content() {
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_GET['page'] ) && ( 'PostBulkManage' === $_GET['page'] || 'PostBulkAdd' === $_GET['page'] ) ) {
             ?>
             <p><?php esc_html_e( 'If you need help with managing posts, please review following help documents', 'mainwp' ); ?></p>
@@ -2717,6 +2717,6 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             </div>
             <?php
         }
-		// phpcs:enable
+        // phpcs:enable
     }
 }

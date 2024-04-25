@@ -49,7 +49,7 @@ abstract class Log_Connector {
     /**
      * Register all context hooks
      */
-	public function register() { //phpcs:ignore -- overrided.
+    public function register() { //phpcs:ignore -- overrided.
 
         if ( $this->is_registered ) {
             return;
@@ -158,10 +158,10 @@ abstract class Log_Connector {
         $result = array_filter(
             $result,
             function ( $value ) {
-				// @codingStandardsIgnoreStart
-				// check if is not valid number (is_int, is_numeric and ctype_digit are not enough)
-				return (string) (int) $value !== (string) $value;
-				// @codingStandardsIgnoreEnd
+                // @codingStandardsIgnoreStart
+                // check if is not valid number (is_int, is_numeric and ctype_digit are not enough)
+                return (string) (int) $value !== (string) $value;
+                // @codingStandardsIgnoreEnd
             }
         );
 

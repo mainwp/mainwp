@@ -161,15 +161,15 @@ class MainWP_Deprecated_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         $is_ajax = function_exists( 'wp_doing_ajax' ) ? wp_doing_ajax() : defined( 'DOING_AJAX' );
 
-		// @codingStandardsIgnoreStart
-		if ( $is_ajax ) {
-			do_action( 'deprecated_hook_run', $old_hook, $new_hook, $version, $message );
-			$log_string	 = "{$old_hook} is deprecated since version {$version}";
-			$log_string	 .= $new_hook ? "! Use {$new_hook} instead." : ' with no alternative available.';
-			error_log( $log_string );
-		} else {
-			_deprecated_hook( $old_hook, $version, $new_hook, $message );
-		}
-		// @codingStandardsIgnoreEnd
+        // @codingStandardsIgnoreStart
+        if ( $is_ajax ) {
+            do_action( 'deprecated_hook_run', $old_hook, $new_hook, $version, $message );
+            $log_string = "{$old_hook} is deprecated since version {$version}";
+            $log_string .= $new_hook ? "! Use {$new_hook} instead." : ' with no alternative available.';
+            error_log( $log_string );
+        } else {
+            _deprecated_hook( $old_hook, $version, $new_hook, $message );
+        }
+        // @codingStandardsIgnoreEnd
     }
 }

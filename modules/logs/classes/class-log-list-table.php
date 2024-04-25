@@ -147,7 +147,7 @@ class Log_List_Table {
 
             return wp_kses( $out, $allowed_tags );
         } else {
-			return $out; //phpcs:ignore -- escaped.
+            return $out; //phpcs:ignore -- escaped.
         }
     }
 
@@ -344,16 +344,16 @@ class Log_List_Table {
         $req_orderby = '';
         $req_order   = null;
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_REQUEST['order'] ) ) {
             $order_values = MainWP_Utility::instance()->get_table_orders( $_REQUEST );
             $req_orderby  = $order_values['orderby'];
             $req_order    = $order_values['order'];
         }
 
-		// phpcs:enable
+        // phpcs:enable
 
-		 // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $perPage = isset( $_REQUEST['length'] ) ? intval( $_REQUEST['length'] ) : 25;
         if ( -1 === (int) $perPage ) {
             $perPage = 9999;
@@ -362,7 +362,7 @@ class Log_List_Table {
 
         $search = isset( $_REQUEST['search']['value'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['search']['value'] ) ) : '';
 
-		// phpcs:enable
+        // phpcs:enable
 
         $args = array(
             'order'   => ( 'asc' === $req_order ) ? 'asc' : 'desc',
@@ -492,11 +492,11 @@ class Log_List_Table {
                             "paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
                             "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
                             "info" : <?php echo esc_js( $table_features['info'] ); ?>,
-							"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
+                            "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
                             "scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
                             "stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
                             "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
-							"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
+                            "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
                             "fixedColumns" : <?php echo ! empty( $table_features['fixedColumns'] ) ? esc_js( $table_features['fixedColumns'] ) : '""'; ?>,
                             "lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All"] ],
                             "serverSide": true,

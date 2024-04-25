@@ -60,7 +60,7 @@ class Cost_Tracker_Clients_Widget {
      * Handle callback render tasks client page widget.
      */
     public function callback_render_costs_widget() {
-		if ( ! isset( $_GET['page'] ) || 'ManageClients' !== $_GET['page'] || empty( $_GET['client_id'] ) ) { //phpcs:ignore -- ok.
+        if ( ! isset( $_GET['page'] ) || 'ManageClients' !== $_GET['page'] || empty( $_GET['client_id'] ) ) { //phpcs:ignore -- ok.
             return;
         }
 
@@ -89,7 +89,7 @@ class Cost_Tracker_Clients_Widget {
      * Method render_tasks_client_page_widget_content().
      */
     public function render_costs_tracker_widget_content() {
-		$client_id = intval( $_GET['client_id'] ); //phpcs:ignore -- ok.
+        $client_id = intval( $_GET['client_id'] ); //phpcs:ignore -- ok.
 
         $this->clients_sites = array();
         // get all sites of the $client_id.
@@ -117,7 +117,7 @@ class Cost_Tracker_Clients_Widget {
         <table class="ui table" id="mainwp-module-cost-tracker-costs-widget-table">
             <thead>
                 <tr>
-					<th scope="col" ><?php esc_html_e( 'Product', 'mainwp' ); ?></th>  <?php //phpcs:ignore -- to fix WordPress word. ?>
+                    <th scope="col" ><?php esc_html_e( 'Product', 'mainwp' ); ?></th>  <?php //phpcs:ignore -- to fix WordPress word. ?>
                     <th scope="col" class="collapsing center aligned"><?php esc_html_e( 'Client Sites', 'mainwp' ); ?></th>
                     <th scope="col" class="collapsing right aligned"><?php esc_html_e( 'Cost', 'mainwp' ); ?></th>
                     <th scope="col" class="no-sort collapsing"></th>
@@ -139,7 +139,7 @@ class Cost_Tracker_Clients_Widget {
                         <?php
                         foreach ( $columns as $col ) {
                             $row = $this->column_default( $item, $col, $client_id );
-							echo $row; // phpcs:ignore -- ok.
+                            echo $row; // phpcs:ignore -- ok.
                         }
                         ?>
                     </tr>
@@ -183,7 +183,7 @@ class Cost_Tracker_Clients_Widget {
      *
      * @return string $out Output.
      */
-	public function column_default( $item, $column_name, $client_id ) { //phpcs:ignore -- complex.
+    public function column_default( $item, $column_name, $client_id ) { //phpcs:ignore -- complex.
         $out = '';
 
         $order_val = 0;
@@ -233,8 +233,8 @@ class Cost_Tracker_Clients_Widget {
                         <i class="ellipsis horizontal icon"></i>
                         <div class="menu">
                             <a class="item widget-row-cost-tracker-edit-cost" href="admin.php?page=CostTrackerAdd&id=<?php echo intval( $item->id ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-                        </div>                                      
-                    </div>      
+                        </div>
+                    </div>
                 <?php
                 $out = ob_get_clean();
                 break;

@@ -187,9 +187,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         static::$page = MainWP_Manage_Sites_View::init_menu();
         add_action( 'load-' . static::$page, array( static::get_class_name(), 'on_load_page' ) );
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_REQUEST['dashboard'] ) ) {
- 		// phpcs:enable
+         // phpcs:enable
             /**
              * Current user global.
              *
@@ -281,7 +281,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function on_load_page() {
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_REQUEST['dashboard'] ) ) {
             static::on_load_page_dashboard();
             return;
@@ -297,7 +297,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         } elseif ( isset( $_GET['id'] ) || isset( $_GET['scanid'] ) || isset( $_GET['backupid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
             return;
         }
-		// phpcs:enable
+        // phpcs:enable
 
         $sitesViewMode = MainWP_Utility::get_siteview_mode();
 
@@ -371,8 +371,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public static function screen_options( $input ) {
         return $input .
                 '<a class="ui button basic icon" onclick="mainwp_manage_sites_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Page Settings', 'mainwp' ) . '">
-					<i class="cog icon"></i>
-				</a>';
+                    <i class="cog icon"></i>
+                </a>';
     }
 
     /**
@@ -380,7 +380,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * Render Page Settings Modal.
      */
-	public static function render_screen_options() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_screen_options() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $columns = static::$sitesTable->get_columns();
 
@@ -745,7 +745,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     ?>
                     </label>
                     <input type="hidden" name="mainwp_managesites_add_site_uploaded_icon_hidden" id="mainwp_managesites_add_site_uploaded_icon_hidden" value="">
-                    
+
                     <div class="three wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Upload the site icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
                         <div class="ui green button basic mainwp-managesites-add-site-icon-customable" iconItemId="" iconFileSlug="" icon-src=""><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
                         <div style="display:inline-block;" id="mainw_managesites_add_edit_site_upload_custom_icon"></div> <?php // used for icon holder. ?>
@@ -754,7 +754,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
                 <?php
                 $default_icons         = MainWP_UI::get_default_icons();
-				$selected_default_icon = 'wordpress'; //phpcs:ignore -- WP icon.
+                $selected_default_icon = 'wordpress'; //phpcs:ignore -- WP icon.
                 $selected_site_color   = '#34424D';
                 ?>
 
@@ -808,7 +808,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <div class="ui search selection dropdown" init-value="" id="mainwp_managesites_add_client_id">
                             <i class="dropdown icon"></i>
                             <div class="default text"></div>
-                            <div class="menu">                              
+                            <div class="menu">
                                 <div class="item" data-value="0"><?php esc_attr_e( 'Select client', 'mainwp' ); ?></div>
                                 <?php foreach ( $clients as $client ) { ?>
                                     <div class="item" data-value="<?php echo intval( $client->client_id ); ?>"><?php echo esc_html( $client->name ); ?></div>
@@ -861,7 +861,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         </div>
                     </div>
                 </div>
-            
+
                 <?php MainWP_Manage_Sites_View::render_sync_exts_settings(); ?>
                 </div>
 
@@ -909,13 +909,13 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             jQuery( document ).ready( function () {
                 jQuery( '#mainwp_managesites_add_addgroups' ).dropdown( {
                     allowAdditions: true
-                } );        
+                } );
                 jQuery( '#mainwp_manage_add_edit_site_icon_select' ).dropdown( {
                     onChange: function( val ) {
                         jQuery( '#mainwp_managesites_add_site_select_icon_hidden' ).val(val);
                     }
                 } );
-                
+
                 jQuery(document).on('click', '.mainwp-managesites-add-site-icon-customable', function () {
                     let iconObj = jQuery(this);
                     jQuery('#mainwp_delete_image_field').hide();
@@ -924,7 +924,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     jQuery('#update_custom_icon_btn').attr('uploading-icon', 'site');
                     jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconItemId', iconObj.attr('iconItemId') ); // @see used by mainwp_upload_custom_types_icon().
                     jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconFileSlug', iconObj.attr('iconFileSlug') ); // @see used by mainwp_upload_custom_types_icon().
-                    
+
                     if (iconObj.attr('icon-src') != '') {
                         jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', iconObj.attr('icon-src'));
                         jQuery('#mainwp_delete_image_field').show();
@@ -966,7 +966,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             return false;
                     });
                 });
-                
+
             } );
         </script>
             <?php
@@ -981,7 +981,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public static function ajax_upload_icon() { //phpcs:ignore -- NOSONAR - complex.
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_managesites_add_edit_site_upload_site_icon' );
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $iconfile_slug = isset( $_POST['iconFileSlug'] ) ? sanitize_text_field( wp_unslash( $_POST['iconFileSlug'] ) ) : '';
         $delete        = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0;
         $site_id       = isset( $_POST['iconItemId'] ) ? intval( $_POST['iconItemId'] ) : 0;
@@ -1005,7 +1005,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         $output = isset( $_FILES['mainwp_upload_icon_uploader'] ) ? MainWP_System_Utility::handle_upload_image( 'site-icons', $_FILES['mainwp_upload_icon_uploader'] ) : null;
-		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $uploaded_icon = 'NOTCHANGE';
         if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
@@ -1092,7 +1092,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         if ( 'display_selected' === $type ) {
             if ( empty( $selected ) ) {
-				$selected = 'wordpress'; // phpcs:ignore -- WP icon.
+                $selected = 'wordpress'; // phpcs:ignore -- WP icon.
             }
             return '<span style="color:' . esc_attr( $color ) . '" ><i class="' . esc_attr( $selected ) . ' big icon"></i></span>';
         }
@@ -1218,16 +1218,16 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Widget_Plugins::get_class_name()
      * @uses \MainWP\Dashboard\MainWP_Widget_Themes::get_class_name()
      */
-	public static function on_load_page_dashboard() { // phpcs:ignore -- current complexity is required to achieve desired results. Pull request solutions are welcome.
+    public static function on_load_page_dashboard() { // phpcs:ignore -- current complexity is required to achieve desired results. Pull request solutions are welcome.
         wp_enqueue_script( 'common' );
         wp_enqueue_script( 'wp-lists' );
         wp_enqueue_script( 'postbox' );
         wp_enqueue_script( 'dashboard' );
         wp_enqueue_script( 'widgets' );
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $dashboard_siteid = isset( $_GET['dashboard'] ) ? intval( $_GET['dashboard'] ) : null;
- 		// phpcs:enable
+         // phpcs:enable
 
         /**
          * Get getmetaboxes
@@ -1382,7 +1382,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         MainWP_System_Utility::set_current_wpid( $website->id );
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $edit       = false;
         $email_type = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : false;
 
@@ -1392,7 +1392,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 $edit = true;
             }
         }
-		// phpcs:enable
+        // phpcs:enable
 
         static::render_header( 'ManageSitesEmailSettings' );
         if ( $edit ) {
@@ -1553,7 +1553,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Notification_Template::handle_template_file_action()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
-	public static function render_manage_sites() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_manage_sites() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * Current user global.
@@ -1562,7 +1562,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          */
         global $current_user;
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_REQUEST['do'] ) ) {
             if ( 'new' === $_REQUEST['do'] ) {
                 static::render_new_site();
@@ -1639,7 +1639,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 return;
             }
         }
-		// phpcs:enable
+        // phpcs:enable
 
         $sitesViewMode = MainWP_Utility::get_siteview_mode();
         if ( 'grid' === $sitesViewMode ) {
@@ -1665,7 +1665,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses  \MainWP\Dashboard\MainWP_Utility::valid_input_emails()
      */
     private static function update_site_emails_settings_handle( $website ) {
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $updated = false;
         if ( isset( $_POST['submit'] ) && isset( $_GET['emailsettingsid'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsiteEmailSettings' . sanitize_text_field( wp_unslash( $_GET['emailsettingsid'] ) ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
             $settings_emails = MainWP_DB::instance()->get_website_option( $website, 'settings_notification_emails', '' );
@@ -1707,7 +1707,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
             }
         }
-		// phpcs:enable
+        // phpcs:enable
         return $updated;
     }
 
@@ -1726,7 +1726,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
      * @uses  \MainWP\Dashboard\MainWP_Utility::valid_input_emails()
      */
-	private static function update_site_handle( $website ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    private static function update_site_handle( $website ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * Current user global.
@@ -1735,7 +1735,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          */
         global $current_user;
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $updated = false;
         if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && isset( $_REQUEST['id'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsite' . sanitize_key( $_REQUEST['id'] ) ) ) {
             if ( mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
@@ -1887,7 +1887,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 $updated = true;
             }
         }
-		// phpcs:enable
+        // phpcs:enable
         return $updated;
     }
 

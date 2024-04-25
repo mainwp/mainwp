@@ -16,7 +16,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
+    // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -709,7 +709,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         $fields = array();
         foreach ( $userExtension as $field => $value ) {
-			if ( $value != $row->$field ) { //phpcs:ignore -- to valid.
+            if ( $value != $row->$field ) { //phpcs:ignore -- to valid.
                 $fields[ $field ] = $value;
             }
         }
@@ -754,7 +754,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @return bool true|false.
      */
-	public function rest_api_update_website( $websiteid, $data ) { // phpcs:ignore -- complex function.
+    public function rest_api_update_website( $websiteid, $data ) { // phpcs:ignore -- complex function.
 
         $website = MainWP_DB::instance()->get_website_by_id( $websiteid );
         if ( empty( $website ) ) {

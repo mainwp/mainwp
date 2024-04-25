@@ -1148,7 +1148,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      */
     public function hook_check_security_request( $input_value, $action = '', $query_arg = '' ) {
         if ( empty( $query_arg ) ) {
-			//phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+            //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
             // to do, $query_arg = 'security'.
             $query_arg = $action; // to check wp_verify_nonce - sanitize_key( $_REQUEST[ $query_arg ] ) - $action.
         }
@@ -1332,13 +1332,13 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      */
     public function upgrade_plugin_theme() {
         try {
-			// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : null;
             $type      = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : null;
             $slugs     = isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ? wp_unslash( $_POST['slugs'] ) : array();
             $error     = '';
             $erCode    = '';
-			// phpcs:enable
+            // phpcs:enable
 
             if ( 'plugin' === $type && ! mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) ) {
                 $error = mainwp_do_not_have_permissions( esc_html__( 'update plugins', 'mainwp' ), false );
@@ -1439,12 +1439,12 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::get_post()
      */
     public function hook_posts_bulk_posting() {
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $post_id = isset( $_POST['post_id'] ) && ! empty( $_POST['post_id'] ) ? intval( wp_unslash( $_POST['post_id'] ) ) : false;
         if ( $post_id ) {
             MainWP_Post_Page_Handler::posting_posts( $post_id, 'ajax_posting' );
         }
-		// phpcs:enable
+        // phpcs:enable
         die();
     }
 

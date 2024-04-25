@@ -288,8 +288,8 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     public static function screen_options( $input ) {
         return $input .
                 '<a class="ui button basic icon" onclick="mainwp_manage_updates_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Page Settings', 'mainwp' ) . '">
-					<i class="cog icon"></i>
-				</a>';
+                    <i class="cog icon"></i>
+                </a>';
     }
 
     /**
@@ -751,7 +751,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          * @since 4.0
          */
         $limit_updates_all = apply_filters( 'mainwp_limit_updates_all', 0 );
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( 0 < $limit_updates_all ) {
             if ( isset( $_GET['continue_update'] ) && '' !== $_GET['continue_update'] ) {
                 static::$continue_update = sanitize_text_field( wp_unslash( $_GET['continue_update'] ) );
@@ -773,7 +773,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         } else {
             $current_tab = 'plugins-updates';
         }
-		// phpcs:enable
+        // phpcs:enable
         static::render_header( 'UpdatesManage' );
 
         static::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view );
@@ -1797,19 +1797,19 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 } );
             } );
 
-            mainwp_datatable_init_and_fix_recalc = function(selector){ 
-                jQuery(selector).each( function(e) {                    
+            mainwp_datatable_init_and_fix_recalc = function(selector){
+                jQuery(selector).each( function(e) {
                     if(jQuery(this).is(":visible")){
                         console.log('visible ' + jQuery(this).attr('id'));
                         jQuery(this).css( 'display', 'table' );
-                        jQuery(this).DataTable().destroy();                     
+                        jQuery(this).DataTable().destroy();
                         let tb = jQuery(this).DataTable({
                             "paging":false,
                             "info": false,
                             "searching": false,
                             "ordering" : false,
                             "responsive": true
-                        });                 
+                        });
                         tb.columns.adjust();
                         tb.responsive.recalc();
                     }
@@ -1902,7 +1902,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param int    $total_themes_outdate total theme outdate.
      * @param string $site_view current site view.
      */
-	public static function render_header_tabs( $show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_header_tabs( $show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * Action: mainwp_updates_before_nav_tabs
@@ -2312,7 +2312,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * Renders Page Settings Modal.
      */
-	public static function render_screen_options_modal() { // phpcs:ignore -- complex method.
+    public static function render_screen_options_modal() { // phpcs:ignore -- complex method.
 
         $snAutomaticDailyUpdate       = (int) get_option( 'mainwp_automaticDailyUpdate' );
         $snPluginAutomaticDailyUpdate = (int) get_option( 'mainwp_pluginAutomaticDailyUpdate' );

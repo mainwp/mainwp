@@ -48,7 +48,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      * @uses \MainWP\Dashboard\MainWP_Updates::get_continue_update_selector()
      */
-	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
+    public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
         $is_demo = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-plugins-updates-table">
@@ -134,7 +134,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             <table id="mainwp-plugins-updates-sites-inner-table" class="ui mainwp-manage-updates-table table">
                                 <thead class="mainwp-768-hide">
                                     <tr>
-                                    <?php $updates_table_helper->print_column_headers(); ?>                                     
+                                    <?php $updates_table_helper->print_column_headers(); ?>
                                     </tr>
                                 </thead>
                                 <tbody plugin_slug="<?php echo esc_attr( $plugin_name ); ?>">
@@ -205,7 +205,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                                 <?php } ?>
                                             <?php } ?>
                                             </td>
-                                            <?php } ?>      
+                                            <?php } ?>
                                         </tr>
                                         <?php
                                         $first_wpplugin = false;
@@ -260,7 +260,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      * @uses \MainWP\Dashboard\MainWP_Updates::get_continue_update_selector()
      */
-	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
+    public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
         $updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view, 'theme' );
         $is_demo              = MainWP_Demo_Handle::is_demo_mode();
         ?>

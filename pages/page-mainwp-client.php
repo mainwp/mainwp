@@ -172,8 +172,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public static function screen_options( $input ) {
         return $input .
                 '<a class="ui button basic icon" onclick="mainwp_manage_clients_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Page Settings', 'mainwp' ) . '">
-					<i class="cog icon"></i>
-				</a>';
+                    <i class="cog icon"></i>
+                </a>';
     }
 
     /**
@@ -279,7 +279,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public static function ajax_upload_client_icon() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_add_edit_client_upload_client_icon' );
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $iconfile_slug = isset( $_POST['iconFileSlug'] ) ? sanitize_text_field( wp_unslash( $_POST['iconFileSlug'] ) ) : '';
         $delete        = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0;
         $client_id     = isset( $_POST['iconItemId'] ) ? intval( $_POST['iconItemId'] ) : 0;
@@ -302,7 +302,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         $output = isset( $_FILES['mainwp_upload_icon_uploader'] ) ? MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_upload_icon_uploader'] ) : null;
-		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $uploaded_icon = 'NOTCHANGE';
         if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
@@ -333,7 +333,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public static function ajax_upload_contact_icon() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_add_edit_contact_upload_contact_icon' );
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $iconfile_slug = isset( $_POST['iconFileSlug'] ) ? sanitize_text_field( wp_unslash( $_POST['iconFileSlug'] ) ) : '';
         $delete        = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0;
         $contact_id    = isset( $_POST['iconItemId'] ) ? intval( $_POST['iconItemId'] ) : 0;
@@ -356,7 +356,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         $output = isset( $_FILES['mainwp_upload_icon_uploader'] ) ? MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_upload_icon_uploader'] ) : null;
-		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $uploaded_icon = 'NOTCHANGE';
         if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
@@ -393,8 +393,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
      */
-	public static function render_header( $shownPage = '' ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+    public static function render_header( $shownPage = '' ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $params = array(
@@ -471,7 +471,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 $renderItems[]  = $item;
             }
         }
-		// phpcs:enable
+        // phpcs:enable
         MainWP_UI::render_page_navigation( $renderItems );
     }
 
@@ -652,7 +652,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * Render Page Settings Modal.
      */
-	public static function render_screen_options() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_screen_options() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $columns = static::$itemsTable->get_columns();
 
@@ -793,7 +793,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             jQuery('.mainwp_hide_wpmenu_checkboxes input[id="mainwp_show_column_' + value + '"]').prop( 'checked', true );
                         } );
                         jQuery('input[name=reset_manageclients_columns_order]').attr('value',1);
-                        jQuery('#submit-manageclients-settings').click();                       
+                        jQuery('#submit-manageclients-settings').click();
                     }, false, false, true );
                     return false;
                 });
@@ -810,7 +810,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param string $sites  Clients Sites.
      * @param string $search Search field.
      */
-	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
+    public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
         if ( empty( $output->clients ) ) {
             static::render_not_found();
         } else {
@@ -1117,7 +1117,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * Bulk client addition $_POST Handler.
      */
-	public static function add_client() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
+    public static function add_client() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 
         $selected_sites = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array(); //phpcs:ignore WordPress.Security.NonceVerification.Missing
         $client_fields  = isset( $_POST['client_fields'] ) ? wp_unslash( $_POST['client_fields'] ) : array(); //phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1193,7 +1193,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
              */
             do_action( 'mainwp_client_updated', $inserted, $add_new );
 
-			if ( ! $add_new && $new_suspended != $old_suspended ) { //phpcs:ignore -- to valid.
+            if ( ! $add_new && $new_suspended != $old_suspended ) { //phpcs:ignore -- to valid.
                 /**
                  * Fires immediately after update client suspend/unsuspend.
                  *
@@ -1223,12 +1223,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         // compatible with quick setup.
-        if ( isset( $_FILES['mainwp_client_image_uploader'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-            if ( isset( $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) { // phpcs:ignore WordPress.Security.NonceVerification
-                $output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'client_field' ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-                if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
-                    $client_image = $output['filename'];
-                }
+        if ( isset( $_FILES['mainwp_client_image_uploader'] ) && isset( $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+            $output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'client_field' ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
+                $client_image = $output['filename'];
             }
         }
 
@@ -1390,11 +1388,11 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             MainWP_DB_Client::instance()->update_client( $update );
         }
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_POST['is_first_client'] ) && ! empty( $_POST['is_first_client'] ) ) {
             delete_transient( 'mainwp_transient_just_connected_site_id' );
         }
-		//phpcs:enable
+        //phpcs:enable
 
         echo wp_json_encode(
             array(
@@ -1415,7 +1413,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             <i class="close icon"></i>
                 <div class="header"><?php esc_html_e( 'New client', 'mainwp' ); ?></div>
                 <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
-                <div class="scrolling content mainwp-modal-content">                
+                <div class="scrolling content mainwp-modal-content">
                     <form action="" method="post" enctype="multipart/form-data" name="createclient_form" id="createclient_form" class="add:clients: validate">
                 <?php
                     static::render_add_client_content();
@@ -1423,7 +1421,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     </form>
                 </div>
                 <div class="actions">
-                    <div class="ui button green" current-page="modal-add" id="bulk_add_createclient"><?php esc_html_e( 'Add Client', 'mainwp' ); ?></div>   
+                    <div class="ui button green" current-page="modal-add" id="bulk_add_createclient"><?php esc_html_e( 'Add Client', 'mainwp' ); ?></div>
                 </div>
             </div>
 
@@ -1445,7 +1443,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @param mixed $edit_client The client data.
      */
-	public static function render_add_client_content( $edit_client = false ) { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
+    public static function render_add_client_content( $edit_client = false ) { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
         $client_id             = $edit_client ? $edit_client->client_id : 0;
         $default_client_fields = MainWP_Client_Handler::get_default_client_fields();
         $custom_fields         = MainWP_DB_Client::instance()->get_client_fields( true, $client_id, true );
@@ -1517,7 +1515,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <div class="ui calendar mainwp_datepicker" >
                             <div class="ui input left icon">
                                 <i class="calendar icon"></i>
-								<input type="text" autocomplete="off" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" placeholder="<?php esc_attr_e( 'Added date', 'mainwp' ); ?>" id="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" value="<?php echo esc_attr( date( 'Y-m-d', $created ) ); // phpcs:ignore -- local time. ?>"/>
+                                <input type="text" autocomplete="off" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" placeholder="<?php esc_attr_e( 'Added date', 'mainwp' ); ?>" id="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" value="<?php echo esc_attr( date( 'Y-m-d', $created ) ); // phpcs:ignore -- local time. ?>"/>
                             </div>
                         </div>
                         <?php
@@ -1534,7 +1532,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <?php if ( 'client.suspended' !== $field_name ) { ?>
                         [<?php echo esc_html( $field_name ); ?>]
                     <?php } ?>
-                    </div>  
+                    </div>
                     <?php endif; ?>
                 </div>
                     <?php
@@ -1554,7 +1552,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Upload a client photo.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
                                 <div class="ui green button basic mainwp-add-edit-client-icon-customable" iconItemId="<?php echo intval( $client_id ); ?>" iconFileSlug="<?php echo esc_attr( $client_image ); ?>" icon-src="<?php echo esc_attr( $uploaded_icon_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
                                 <?php if ( ! empty( $client_image ) ) { ?>
-									<?php echo MainWP_Client_Handler::get_client_contact_image( $icon_info_array, 'client', 'display_edit' ); //phpcs:ignore --ok. ?>
+                                    <?php echo MainWP_Client_Handler::get_client_contact_image( $icon_info_array, 'client', 'display_edit' ); //phpcs:ignore --ok. ?>
                                 <?php } else { ?>
                                     <div style="display:inline-block;" id="mainwp_add_edit_client_upload_custom_icon"></div> <?php // used for icon holder. ?>
                                 <?php } ?>
@@ -1564,7 +1562,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             <label class="six wide column middle aligned">
                             <?php
                             $default_icons  = MainWP_UI::get_default_icons();
-							$selected_icon  = 'wordpress'; //phpcs:ignore -- WP icon.
+                            $selected_icon  = 'wordpress'; //phpcs:ignore -- WP icon.
                             $selected_color = '#34424D';
 
                             $icon_info = $edit_client ? $edit_client->selected_icon_info : '';
@@ -1573,7 +1571,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 $selected_color = static::get_cust_client_icon( $icon_info, 'color' );
                             }
 
-							if ( 'wordpress' !== $selected_icon ) { //phpcs:ignore -- WP icon.
+                            if ( 'wordpress' !== $selected_icon ) { //phpcs:ignore -- WP icon.
                                 MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', 1 );
                             }
                             esc_html_e( 'Select icon', 'mainwp' );
@@ -1630,10 +1628,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                     <?php endif; ?>
                                 </div>
                             </div>
-                        </div>                                          
+                        </div>
                     </div>
                     <div class="ui four wide column">
-                    </div>  
+                    </div>
                 </div>
                 <div class="ui section hidden divider"></div>
                 <?php
@@ -1682,7 +1680,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             </div>
                             <?php } ?>
                             <span class="field-name">[<?php echo esc_html( $field->field_name ); ?>]</span>
-                        </div>  
+                        </div>
                     </div>
                     <?php
                 }
@@ -1733,7 +1731,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         jQuery('#update_custom_icon_btn').removeAttr('disabled');
                         jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconItemId', current_iconObj.attr('iconItemId') ); // @see used by mainwp_upload_custom_types_icon().
                         jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconFileSlug', current_iconObj.attr('iconFileSlug') ); // @see used by mainwp_upload_custom_types_icon().
-                        
+
                         if (current_iconObj.attr('icon-src') != '') {
                             jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', current_iconObj.attr('icon-src'));
                             jQuery('#mainwp_delete_image_field').show();
@@ -1751,13 +1749,13 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         jQuery('#update_custom_icon_btn').removeAttr('disabled');
                         jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconItemId', current_iconObj.attr('iconItemId') ); // @see used by mainwp_upload_custom_types_icon().
                         jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconFileSlug', current_iconObj.attr('iconFileSlug') ); // @see used by mainwp_upload_custom_types_icon().
-                        
+
                         if (current_iconObj.attr('icon-src') != '') {
                             jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', current_iconObj.attr('icon-src'));
                             jQuery('#mainwp_delete_image_field').show();
                         }
                     });
-                    
+
                     // to fix conflict with other update custom icon click event.
                     jQuery(document).on('click', '#update_custom_icon_btn', function () {
                         if( 'client' === jQuery(this).attr( 'uploading-icon' ) ){
@@ -1839,7 +1837,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         });
                         return false;
                     }
-                    
+
                 } );
             </script>
         <?php
@@ -1898,7 +1896,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param mixed $edit_contact The contact data to edit.
      * @param bool  $echo_out Echo template or not.
      */
-	public static function get_add_contact_temp( $edit_contact = false, $echo_out = false ) { //phpcs:ignore -- NOSONAR - complex. 
+    public static function get_add_contact_temp( $edit_contact = false, $echo_out = false ) { //phpcs:ignore -- NOSONAR - complex.
 
         $input_name    = 'new_contacts_field';
         $contact_id    = 0;
@@ -1976,7 +1974,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <?php
                                 if ( ! empty( $contact_image ) ) {
                                     ?>
-									<?php echo MainWP_Client_Handler::get_client_contact_image( $icon_info_array, 'contact', 'display_edit' ); //phpcs:ignore --ok. ?>
+                                    <?php echo MainWP_Client_Handler::get_client_contact_image( $icon_info_array, 'contact', 'display_edit' ); //phpcs:ignore --ok. ?>
                                 <?php } else { ?>
                                     <div style="display:inline-block;" class="mainwp_add_edit_contact_upload_custom_icon"></div> <?php // used for icon holder. ?>
                                 <?php } ?>
@@ -1985,7 +1983,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <div class="ui grid field mainwp_edit_clients_contact_icon_wrapper" input-name="<?php echo esc_attr( $input_name ); ?>" >
                                 <label class="six wide column middle aligned">
                                 <?php
-								$selected_icon  = 'wordpress'; //phpcs:ignore -- WP icon.
+                                $selected_icon  = 'wordpress'; //phpcs:ignore -- WP icon.
                                 $selected_color = '#34424D';
                                 $icon_info      = $edit_contact ? $edit_contact->contact_icon_info : '';
 
@@ -1993,7 +1991,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                     $selected_icon  = static::get_cust_client_icon( $icon_info, 'selected' );
                                     $selected_color = static::get_cust_client_icon( $icon_info, 'color' );
                                 }
-								if ( 'wordpress' !== $selected_icon ) { //phpcs:ignore -- WP icon.
+                                if ( 'wordpress' !== $selected_icon ) { //phpcs:ignore -- WP icon.
                                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', 1 );
                                 }
                                 esc_html_e( 'Select icon', 'mainwp' );
@@ -2043,7 +2041,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $html = ob_get_clean();
 
             if ( $echo_out ) {
-				echo $html; //phpcs:ignore -- validated content.
+                echo $html; //phpcs:ignore -- validated content.
             }
 
             return $html;
@@ -2062,13 +2060,13 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'message' => '',
         );
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $client_id  = isset( $_POST['client_id'] ) ? intval( $_POST['client_id'] ) : 0; // 0 is global client's field.
         $field_id   = isset( $_POST['field_id'] ) ? intval( $_POST['field_id'] ) : 0;
         $field_desc = isset( $_POST['field_desc'] ) ? sanitize_text_field( wp_unslash( $_POST['field_desc'] ) ) : '';
         $field_name = isset( $_POST['field_name'] ) ? sanitize_text_field( wp_unslash( $_POST['field_name'] ) ) : '';
         $field_name = trim( $field_name, '[]' );
-		// phpcs:enable
+        // phpcs:enable
 
         // update general or individual client field.
         if ( $field_id ) {

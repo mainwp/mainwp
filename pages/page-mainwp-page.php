@@ -471,7 +471,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <div class="column">
                                 <select class="ui dropdown" id="mainwp-bulk-actions">
                                     <option value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
-                                    <?php do_action( 'mainwp_manage_pages_bulk_action' ); ?>    
+                                    <?php do_action( 'mainwp_manage_pages_bulk_action' ); ?>
                                     <option value="trash"><?php esc_html_e( 'Move to trash', 'mainwp' ); ?></option>
                                     <option value="restore"><?php esc_html_e( 'Restore', 'mainwp' ); ?></option>
                                     <option value="delete"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></option>
@@ -747,7 +747,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             ?>
             <script type="text/javascript">
                 jQuery( document ).ready( function () {
-					jQuery( '#mainwp_page_search_type' ).dropdown( 'set selected',[<?php echo $status; //phpcs:ignore -- safe output. ?>] );
+                    jQuery( '#mainwp_page_search_type' ).dropdown( 'set selected',[<?php echo $status; //phpcs:ignore -- safe output. ?>] );
                 } );
             </script>
             <?php
@@ -874,7 +874,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $manage_pages_table = jQuery( '#mainwp-pages-table' ).DataTable( {
                     "responsive" : responsive,
                     "searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
-					"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
+                    "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
                     "stateSave":  <?php echo esc_html( $table_features['stateSave'] ); ?>,
                     "paging": <?php echo esc_html( $table_features['paging'] ); ?>,
                     "info": <?php echo esc_html( $table_features['info'] ); ?>,
@@ -929,7 +929,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 jQuery( '#mainwp-overview-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
                     let col_id = jQuery( this ).attr( 'id' );
                     col_id = col_id.replace( "mainwp_show_column_", "" );
-                    try {   
+                    try {
                         $manage_pages_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
                     } catch(err) {
                         // to fix js error.
@@ -970,7 +970,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
      * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
      */
-	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all', $clients = '' ) { // phpcs:ignore -- complex function.
+    public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all', $clients = '' ) { // phpcs:ignore -- complex function.
 
         MainWP_Cache::init_cache( 'Page' );
 
@@ -1108,7 +1108,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
      * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
      */
-	public static function pages_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex function.
+    public static function pages_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex function.
         if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
             return;
         }
@@ -1219,7 +1219,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                     <?php endif; ?>
                                 <?php if ( 'publish' === $page['status'] ) { ?>
                                     <a class="item" href="<?php echo esc_html( $website->url ) . ( '/' !== substr( $website->url, -1 ) ? '/' : '' ) . '?p=' . intval( $page['id'] ); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
-                                <?php } ?>                              
+                                <?php } ?>
                                 <?php if ( 'trash' === $page['status'] ) { ?>
                                     <a class="item page_submitrestore" href="#"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
                                     <a class="item page_submitdelete_perm" href="#"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>
@@ -1395,7 +1395,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-	public static function posting() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
+    public static function posting() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
         $succes_message = '';
         $post_id        = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
@@ -1577,7 +1577,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 $new_meta_values = array();
                                 foreach ( $meta_values as $key_value => $meta_value ) {
                                     if ( is_serialized( $meta_value ) ) {
-										$meta_value = unserialize( $meta_value ); // phpcs:ignore -- internal value safe.
+                                        $meta_value = unserialize( $meta_value ); // phpcs:ignore -- internal value safe.
                                     }
                                     $new_meta_values[ $key_value ] = $meta_value;
                                 }

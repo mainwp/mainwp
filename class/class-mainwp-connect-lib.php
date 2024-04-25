@@ -69,8 +69,8 @@ class MainWP_Connect_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      */
     public function create_connect_keys() {
         try {
-			//phpcs:ignore -- note.
-			// RSA::useInternalEngine(); // to use PHP engine.
+            //phpcs:ignore -- note.
+            // RSA::useInternalEngine(); // to use PHP engine.
             $private     = RSA::createKey();
             $public      = $private->getPublicKey();
             $private_key = $private->toString( 'PKCS1' );

@@ -77,7 +77,7 @@ class Connector_Site extends Log_Connector {
     /**
      * Register log data.
      */
-	public function register() { //phpcs:ignore -- overrided.
+    public function register() { //phpcs:ignore -- overrided.
         parent::register();
     }
 

@@ -28,7 +28,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
     public static function show_backups( &$website, $fullBackups, $dbBackups ) {
         $mwpDir = MainWP_System_Utility::get_mainwp_dir();
         $mwpDir = $mwpDir[0];
-		// phpcs:disable WordPress.Security.EscapeOutput
+        // phpcs:disable WordPress.Security.EscapeOutput
         $output = '';
         foreach ( $fullBackups as $key => $fullBackup ) {
             $downloadLink = admin_url( '?sig=' . MainWP_System_Utility::get_download_sig( $fullBackup ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $fullBackup ) ) );
@@ -57,7 +57,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
         <h3 class="header"><?php echo '' === $output ? esc_html__( 'No database only backup has been taken yet', 'mainwp' ) : esc_html__( 'Last backups from your database', 'mainwp' ); ?></h3>
         <?php
         echo $output;
-		// phpcs:enable
+        // phpcs:enable
     }
 
     /**

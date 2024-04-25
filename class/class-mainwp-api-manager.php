@@ -414,7 +414,7 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      *
      * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::grab_api_key()
      */
-	public function grab_license_key( $api_slug, $master_api_key ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function grab_license_key( $api_slug, $master_api_key ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $options = $this->get_activation_info( $api_slug );
         if ( ! is_array( $options ) ) {

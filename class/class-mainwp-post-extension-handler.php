@@ -224,7 +224,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
      * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::encrypt_string()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-	public function save_extensions_api_login() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function save_extensions_api_login() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $this->check_security( 'mainwp_extension_saveextensionapilogin' );
         $api_login_history = isset( $_SESSION['api_login_history'] ) ? $_SESSION['api_login_history'] : array(); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- ok.
 
@@ -359,8 +359,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
      */
     public function download_and_install() {
         $this->check_security( 'mainwp_extension_downloadandinstall' );
-		// phpcs:ignore -- custom setting to install plugin.
-		ini_set( 'zlib.output_compression', 'Off' );
+        // phpcs:ignore -- custom setting to install plugin.
+        ini_set( 'zlib.output_compression', 'Off' );
         $download_link = isset( $_POST['download_link'] ) ? wp_unslash( $_POST['download_link'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $plugin_slug   = isset( $_POST['plugin_slug'] ) ? wp_unslash( $_POST['plugin_slug'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 

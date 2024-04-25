@@ -123,7 +123,7 @@ class MainWP_Non_MainWP_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSa
         ?>
         <?php $this->render_actions_bar(); ?>
         <div class="ui segment" id="mainwp-non-mainwp-mananage-actions-overview">
-            <div id="mainwp-message-zone" class="ui message"></div>         
+            <div id="mainwp-message-zone" class="ui message"></div>
             <div class="ui active inverted dimmer" style="display:none;" id="mainwp-sites-table-loader">
                 <div class="ui large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
             </div>
@@ -204,7 +204,7 @@ class MainWP_Non_MainWP_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public function ajax_delete_actions() {
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_non_mainwp_changes_delete_actions' );
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $act_id = isset( $_POST['act_id'] ) ? intval( $_POST['act_id'] ) : 0;
 
         $del_action = false;
@@ -216,7 +216,7 @@ class MainWP_Non_MainWP_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSa
             wp_die( wp_json_encode( array( 'error' => 'Invalid change ID or Change not found.' ) ) );
         }
 
-		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $website = MainWP_DB::instance()->get_website_by_id( $del_action->wpid );
         $success = false;
         $error   = '';
@@ -243,7 +243,7 @@ class MainWP_Non_MainWP_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public function ajax_dismiss_actions() {
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_non_mainwp_changes_dismiss_actions' );
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $act_id = isset( $_POST['act_id'] ) ? intval( $_POST['act_id'] ) : 0;
         $action = false;
         if ( ! empty( $act_id ) ) {

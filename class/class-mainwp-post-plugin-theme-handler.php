@@ -120,7 +120,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      */
     public function mainwp_themes_search() {
         $this->secure_request( 'mainwp_themes_search' );
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $keyword = isset( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : '';
         $status  = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
         $groups  = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : array();
@@ -128,7 +128,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $clients = isset( $_POST['clients'] ) && is_array( $_POST['clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['clients'] ) ) : array();
 
         $not_criteria = isset( $_POST['not_criteria'] ) && 'true' === $_POST['not_criteria'] ? true : false;
-		// phpcs:enable
+        // phpcs:enable
         MainWP_Cache::init_session();
         $result = MainWP_Themes::render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients );
         wp_send_json( $result );
@@ -216,14 +216,14 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      */
     public function mainwp_plugins_search() {
         $this->secure_request( 'mainwp_plugins_search' );
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $keyword      = isset( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : '';
         $status       = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
         $groups       = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
         $sites        = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
         $clients      = isset( $_POST['clients'] ) && is_array( $_POST['clients'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['clients'] ) ) : '';
         $not_criteria = isset( $_POST['not_criteria'] ) && 'true' === $_POST['not_criteria'] ? true : false;
-		// phpcs:enable
+        // phpcs:enable
         MainWP_Cache::init_session();
         $result = MainWP_Plugins::render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients );
         wp_send_json( $result );
@@ -530,9 +530,9 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      * @uses \MainWP\Dashboard\MainWP_Updates_Handler::get_plugin_theme_slugs()
      * @uses \MainWP\Dashboard\MainWP_Updates_Handler::upgrade_plugin_theme_translation()
      */
-	public function mainwp_upgrade_plugintheme() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function mainwp_upgrade_plugintheme() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! isset( $_POST['type'] ) ) {
             die( wp_json_encode( array( 'error' => '<i class="red times icon"></i> ' . esc_html__( 'Plugin or theme not specified. Please reload the page and try again.', 'mainwp' ) ) ) );
         }
@@ -587,7 +587,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
                 $slugs = MainWP_Updates_Handler::get_plugin_theme_slugs( $websiteId, sanitize_text_field( wp_unslash( $_POST['type'] ) ) );
             }
         }
-		// phpcs:enable
+        // phpcs:enable
 
         if ( MainWP_DB_Backup::instance()->backup_full_task_running( $websiteId ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Backup process in progress on the child site. Please, try again later.', 'mainwp' ) ) ) );
@@ -657,7 +657,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
     public function mainwp_ignoreplugintheme() {
         $this->secure_request( 'mainwp_ignoreplugintheme' );
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! isset( $_POST['id'] ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
         }
@@ -665,7 +665,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
         $id   = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
         $name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
-		// phpcs:enable
+        // phpcs:enable
         wp_send_json( array( 'result' => MainWP_Updates_Handler::ignore_plugin_theme( $type, $slug, $name, $id ) ) );
     }
 
@@ -680,7 +680,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
     public function mainwp_unignoreabandonedplugintheme() {
         $this->secure_request( 'mainwp_unignoreabandonedplugintheme' );
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! isset( $_POST['id'] ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
         }
@@ -688,7 +688,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
         $slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
         $id   = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : 0; // string|int.
-		// phpcs:enable
+        // phpcs:enable
         die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_abandoned_plugin_theme( $type, $slug, $id ) ) ) ); // ok.
     }
 
@@ -702,14 +702,14 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
     public function mainwp_unignoreabandonedpluginsthemes() {
         $this->secure_request( 'mainwp_unignoreabandonedpluginsthemes' );
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! isset( $_POST['slug'] ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
         }
 
         $type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
         $slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
-		// phpcs:enable
+        // phpcs:enable
         die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_abandoned_plugins_themes( $type, $slug ) ) ) );
     }
 
@@ -723,7 +723,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
     public function mainwp_dismissoutdateplugintheme() {
         $this->secure_request( 'mainwp_dismissoutdateplugintheme' );
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! isset( $_POST['id'] ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
         }
@@ -731,7 +731,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
         $name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
         $id   = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
-		// phpcs:enable
+        // phpcs:enable
         die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::dismiss_plugin_theme( $type, $slug, $name, $id ) ) ) );
     }
 
@@ -749,7 +749,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
             die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
         }
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! isset( $_POST['slug'] ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
         }
@@ -757,7 +757,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
         $slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
         $name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
-		// phpcs:enable
+        // phpcs:enable
 
         die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::dismiss_plugins_themes( $type, $slug, $name ) ) ) );
     }
@@ -772,14 +772,14 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
     public function mainwp_unignoreplugintheme() {
         $this->secure_request( 'mainwp_unignoreplugintheme' );
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! isset( $_POST['id'] ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
         }
         $type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
         $slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
         $id   = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : '';
-		// phpcs:enable
+        // phpcs:enable
         die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugin_theme( $type, $slug, $id ) ) ) );
     }
 
@@ -797,7 +797,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
             die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
         }
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! isset( $_POST['slug'] ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
         }
@@ -805,7 +805,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
         $slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
         $name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
-		// phpcs:enable
+        // phpcs:enable
         die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::ignore_plugins_themes( $type, $slug, $name ) ) ) );
     }
 
@@ -817,13 +817,13 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
     public function mainwp_unignorepluginsthemes() {
         $this->secure_request( 'mainwp_unignorepluginsthemes' );
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! isset( $_POST['slug'] ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
         }
         $type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
         $slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
-		// phpcs:enable
+        // phpcs:enable
         die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugins_themes( $type, $slug ) ) ) );
     }
 

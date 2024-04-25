@@ -94,7 +94,7 @@ class Cost_Tracker_Monthly_Totals {
      *
      * @param array $cost_data     Cost data.
      */
-	public static function get_costs_widgets_data( $cost_data ) { //phpcs:ignore -- complex.
+    public static function get_costs_widgets_data( $cost_data ) { //phpcs:ignore -- complex.
         $categories            = array();
         $series_data           = array();
         $series_products_price = array();
@@ -188,11 +188,11 @@ class Cost_Tracker_Monthly_Totals {
         <div id="mainwp-module-cost-tracker-monthly-totals-wrapper"></div>
         <script type="text/javascript">
             jQuery( document ).ready( function() {
-				let cost_chart_colors = <?php echo wp_json_encode($chart_data['colors'], true ); //phpcs:ignore -- ok. ?>;
-				let cost_chart_currency_format = '<?php echo esc_js($chart_data['currency_format']); //phpcs:ignore -- ok. ?>';
-                
+                let cost_chart_colors = <?php echo wp_json_encode($chart_data['colors'], true ); //phpcs:ignore -- ok. ?>;
+                let cost_chart_currency_format = '<?php echo esc_js($chart_data['currency_format']); //phpcs:ignore -- ok. ?>';
+
                 let options = {
-						series: <?php echo wp_json_encode($chart_data['series'], true ); //phpcs:ignore -- ok. ?>,
+                        series: <?php echo wp_json_encode($chart_data['series'], true ); //phpcs:ignore -- ok. ?>,
                         chart: {
                                 type: 'bar',
                                 height: '95%',
@@ -215,7 +215,7 @@ class Cost_Tracker_Monthly_Totals {
                         },
                         xaxis: {
                             type: 'string',
-							categories: <?php echo wp_json_encode($chart_data['categories'], true ); //phpcs:ignore -- ok. ?>,
+                            categories: <?php echo wp_json_encode($chart_data['categories'], true ); //phpcs:ignore -- ok. ?>,
                             labels: {
                                 style: {
                                     colors: '#999999',
@@ -248,9 +248,9 @@ class Cost_Tracker_Monthly_Totals {
                                     return "#5ec130";
                                 }
                             }
-                        ]                       
+                        ]
                     };
-        
+
                 let cost_chart = new ApexCharts(document.querySelector("#mainwp-module-cost-tracker-monthly-totals-wrapper"), options);
                 setTimeout(() => {
                     cost_chart.render();

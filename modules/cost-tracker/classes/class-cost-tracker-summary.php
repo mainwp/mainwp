@@ -176,8 +176,8 @@ class Cost_Tracker_Summary {
     public function screen_options( $input ) {
         return $input .
             '<a class="ui button basic icon" onclick="mainwp_module_cost_tracker_summary_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Page Settings', 'mainwp' ) . '">
-				<i class="cog icon"></i>
-			</a>';
+                <i class="cog icon"></i>
+            </a>';
     }
 
     /**
@@ -213,7 +213,7 @@ class Cost_Tracker_Summary {
      * @uses \MainWP\Dashboard\MainWP_Recent_Posts::get_class_name()
      * @uses \MainWP\Dashboard\MainWP_Security_Issues_Widget::get_class_name()
      */
-	public static function add_meta_boxes( $page ) { //phpcs:ignore -- complex method.
+    public static function add_meta_boxes( $page ) { //phpcs:ignore -- complex method.
 
         /**
          * Get getmetaboxes
@@ -426,7 +426,7 @@ class Cost_Tracker_Summary {
                         }, false, false, true);
                         return false;
                     });
-                    
+
                     jQuery( '#mainwp-upcoming-renewals-table-today' ).DataTable();
                     jQuery( '#mainwp-upcoming-renewals-table-tomorrow' ).DataTable();
                     jQuery( '#mainwp-upcoming-renewals-table-week' ).DataTable();

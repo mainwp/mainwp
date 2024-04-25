@@ -45,7 +45,7 @@ class MainWP_Common_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @return object $response An object that contains the return data and status of the API request.
      */
-	public function sites_available_updates_count() {  // phpcs:ignore -- complex function.
+    public function sites_available_updates_count() {  // phpcs:ignore -- complex function.
         $is_staging = 'no';
 
         $db_updater_count             = false;

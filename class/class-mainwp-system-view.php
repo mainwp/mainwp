@@ -303,7 +303,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                         <i class="sync alternate icon"></i>
                         <div class="content">
                             <?php echo esc_html__( 'Hard Refresh Required', 'mainwp' ); ?>
-                            
+
                         </div>
                     </h3>
                     <div class="ui hidden divider"></div>
@@ -322,14 +322,14 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                         <i class="linkify icon"></i>
                         <div class="content">
                             <?php echo esc_html__( 'Extensions License Reactivation Required', 'mainwp' ); ?>
-                            
+
                         </div>
                     </h3>
                     <div class="ui hidden divider"></div>
                     <div><?php echo esc_html__( 'As part of our upgrade to MainWP Dashboard version 5, we\'ve deactivated extension licenses to verify their validity and ensure everything is up to date.', 'mainwp' ); ?></div>
                     <br/>
                     <div><?php echo esc_html__( 'Simply click the "Activate Extensions" button on the Extensions page to reactivate all your Pro extension licenses in one go. It\'s quick and easy!', 'mainwp' ); ?></div>
-                    
+
                     <div class="ui divider"></div>
 
                     <div><?php echo esc_html__( 'We appreciate your understanding and cooperation in keeping your MainWP ecosystem secure and efficient. Need help? Reach out to our support team', 'mainwp' ); ?></div>
@@ -663,9 +663,9 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         if ( ! $is_demo ) {
             ?>
         <div class="ui blue message" style="margin-bottom: 0; border-radius: 0;">
-            <?php esc_html_e( 'Do you want MainWP Child to be updated automatically on your websites? This is highly recommended!', 'mainwp' ); ?> 
+            <?php esc_html_e( 'Do you want MainWP Child to be updated automatically on your websites? This is highly recommended!', 'mainwp' ); ?>
             <div class="ui hidden divider"></div>
-            <a id="mainwp_btn_autoupdate_and_trust" class="ui mini green button" href="#"><?php esc_html_e( 'Update MainWP Child Plugin Automatically', 'mainwp' ); ?></a>  
+            <a id="mainwp_btn_autoupdate_and_trust" class="ui mini green button" href="#"><?php esc_html_e( 'Update MainWP Child Plugin Automatically', 'mainwp' ); ?></a>
             <i class="close icon mainwp-events-notice-dismiss" notice="trust_child"></i>
         </div>
             <?php
@@ -888,17 +888,17 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      */
     public static function mainwp_usetiful_tours() {
         echo "
-		<script>
-	(function (w, d, s) {
-		let a = d.getElementsByTagName('head')[0];
-		let r = d.createElement('script');
-		r.async = 1;
-		r.src = s;
-		r.setAttribute('id', 'usetifulScript');
-		r.dataset.token = '480fa17b0507a1c60abba94bfdadd0a7';
-							a.appendChild(r);
-	  })(window, document, 'https://www.usetiful.com/dist/usetiful.js');</script>
-		";
+        <script>
+    (function (w, d, s) {
+        let a = d.getElementsByTagName('head')[0];
+        let r = d.createElement('script');
+        r.async = 1;
+        r.src = s;
+        r.setAttribute('id', 'usetifulScript');
+        r.dataset.token = '480fa17b0507a1c60abba94bfdadd0a7';
+                            a.appendChild(r);
+      })(window, document, 'https://www.usetiful.com/dist/usetiful.js');</script>
+        ";
     }
 
     /**
@@ -927,7 +927,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 $class_string .= ' mainwp-sites-table-view ';
             }
 
-			// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             if ( isset( $_GET['page'] ) && 'managesites' === $_GET['page'] ) {
                 if ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) {
                     $class_string .= ' mainwp-individual-site-overview ';
@@ -947,7 +947,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     $class_string .= ' mainwp-individual-site-view ';
                 }
             }
-			// phpcs:enable
+            // phpcs:enable
             $class_string = apply_filters( 'mainwp_page_admin_body_class', $class_string );
         }
         return $class_string;
@@ -965,7 +965,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      */
-	public static function render_footer_content( $websites, $current_wpid = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_footer_content( $websites, $current_wpid = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $cntr = 0;
         if ( is_array( $websites ) ) {
             $count = count( $websites );
@@ -1155,7 +1155,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * Render plugins install check modal.
      * for the exntesion overview page with the missing install plugin only.
      */
-	public static function render_plugins_install_check() { // phpcs:ignore -- complex function.
+    public static function render_plugins_install_check() { // phpcs:ignore -- complex function.
 
         $install_check = get_option( 'mainwp_hide_plugins_install_check_notice', 0 );
 
@@ -1256,10 +1256,10 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             <div class="actions mainwp-modal-actions">
                 <div class="ui two columns grid">
                     <div class="left aligned column">
-                        
+
                     </div>
                     <div class="ui right aligned column">
-                        <input type="button" class="ui green button" id="mainwp-install-check-btn" value="<?php esc_html_e( 'Install Plugin', 'mainwp' ); ?>">  
+                        <input type="button" class="ui green button" id="mainwp-install-check-btn" value="<?php esc_html_e( 'Install Plugin', 'mainwp' ); ?>">
                     </div>
                 </div>
 
@@ -1275,7 +1275,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                         mainwp_notice_dismiss(noti_id, 1);
                         setTimeout(function () {
                             window.location.href = location.href;
-                        }, 1000);                   
+                        }, 1000);
                     },
                 }).modal('show');
                 jQuery(document).on('click', '#mainwp-install-check-btn', function () {

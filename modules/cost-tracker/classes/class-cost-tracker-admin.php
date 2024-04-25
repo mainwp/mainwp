@@ -473,12 +473,12 @@ class Cost_Tracker_Admin {
      *
      * @return mixed Save output.
      */
-	public static function handle_edit_cost_tracker_post() { //phpcs:ignore -- complex method.
+    public static function handle_edit_cost_tracker_post() { //phpcs:ignore -- complex method.
 
         if ( ! isset( $_POST['mwp_cost_tracker_editing_submit'] ) || ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'module_cost_tracker_edit_nonce' ) ) {
             return;
         }
-		//phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotValidated,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotValidated,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $last_renewal             = isset( $_POST['mainwp_module_cost_tracker_edit_last_renewal'] ) ? strtotime( wp_unslash( $_POST['mainwp_module_cost_tracker_edit_last_renewal'] ) ) : 0;
         $update                   = array();
         $update['name']           = sanitize_text_field( wp_unslash( $_POST['mainwp_module_cost_tracker_edit_name'] ) );
@@ -538,7 +538,7 @@ class Cost_Tracker_Admin {
             $current      = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $update['id'] );
         }
 
-		//phpcs:enable
+        //phpcs:enable
         $err_msg = '';
         $output  = false;
         try {
@@ -944,7 +944,7 @@ class Cost_Tracker_Admin {
         } elseif ( $day2 <= $current_time && $current_time < $next_renewal ) {
             $renewal_html = '<strong><span data-tooltip="Renewal approaching soon. Please review your subscription details." data-inverted="" data-position="left center"><i class="orange bell icon"></i></span>' . esc_html( $renewal_html ) . '</strong>';
         }
-		echo $renewal_html; //phpcs:ignore -- ok.
+        echo $renewal_html; //phpcs:ignore -- ok.
     }
 
     /**

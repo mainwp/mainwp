@@ -119,7 +119,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
      */
     public function ajax_group_sites_add() {
         $this->secure_request( 'mainwp_group_sites_add' );
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $newName  = isset( $_POST['newName'] ) ? sanitize_text_field( wp_unslash( $_POST['newName'] ) ) : '';
         $newColor = isset( $_POST['newColor'] ) ? sanitize_hex_color( wp_unslash( $_POST['newColor'] ) ) : '';
         if ( empty( $newColor ) && ! empty( $tmp_color ) ) {
@@ -127,7 +127,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
         }
         $selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'intval', wp_unslash( $_POST['selected_sites'] ) ) : array();
         $selected_sites = array_filter( $selected_sites );
-		// phpcs:enable
+        // phpcs:enable
         $success = false;
         if ( ! empty( $newName ) ) {
             $success = MainWP_Manage_Groups::add_group_sites( $newName, $selected_sites, $newColor );
@@ -148,9 +148,9 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
     public function mainwp_group_getsites() {
 
         $this->secure_request( 'mainwp_group_getsites' );
-		//phpcs:disable WordPress.Security.NonceVerification.Missing
+        //phpcs:disable WordPress.Security.NonceVerification.Missing
         $groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		//phpcs:enable
+        //phpcs:enable
 
         if ( $groupid ) {
             $group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
@@ -242,7 +242,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
      */
-	public function mainwp_testwp() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function mainwp_testwp() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $this->secure_request( 'mainwp_testwp' );
 
         $url               = null;
@@ -252,7 +252,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
         $verifyCertificate = 1;
         $sslVersion        = 0;
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_POST['url'] ) ) {
             $url = sanitize_text_field( wp_unslash( $_POST['url'] ) );
             $url = urldecode( $url );
@@ -308,7 +308,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
                 $http_pass         = $website->http_pass;
             }
         }
-		// phpcs:enable
+        // phpcs:enable
 
         $ssl_verifyhost = false;
 
@@ -451,7 +451,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
 
         if ( $siteId ) {
             $website = MainWP_DB::instance()->get_website_by_id( $siteId );
-			if ( $website && $website->suspended != $suspended ) { //phpcs:ignore -- to valid.
+            if ( $website && $website->suspended != $suspended ) { //phpcs:ignore -- to valid.
                 MainWP_DB::instance()->update_website_values( $siteId, $newValues );
                 /**
                  * Fires immediately after website suspended/unsuspend.

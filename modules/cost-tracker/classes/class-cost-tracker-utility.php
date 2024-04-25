@@ -149,7 +149,7 @@ class Cost_Tracker_Utility {
         if ( $ret ) {
             return $imgfavi;
         }
-		echo $imgfavi;//phpcs:ignore -- ok.
+        echo $imgfavi;//phpcs:ignore -- ok.
     }
 
     /**
@@ -161,7 +161,7 @@ class Cost_Tracker_Utility {
      *
      * @return string
      */
-	public static function cost_tracker_format_price( $price, $ret = false, $params = array() ) { //phpcs:ignore -- complex.
+    public static function cost_tracker_format_price( $price, $ret = false, $params = array() ) { //phpcs:ignore -- complex.
         if ( ! is_array( $params ) ) {
             $params = array();
         }
@@ -234,7 +234,7 @@ class Cost_Tracker_Utility {
         if ( $ret ) {
             return $value;
         }
-		echo $value; // phpcs:ignore -- escaped.
+        echo $value; // phpcs:ignore -- escaped.
     }
 
     /**

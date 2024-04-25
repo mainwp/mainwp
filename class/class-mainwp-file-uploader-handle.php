@@ -30,11 +30,10 @@ class MainWP_File_Uploader_Handle { // phpcs:ignore Generic.Classes.OpeningBrace
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_base_dir()
      */
     public function save( $path ) {
-
         $moved    = false;
         $tmp_name = isset( $_FILES['qqfile']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['qqfile']['tmp_name'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Missing -- verify in caller.
 
-		//phpcs:disable WordPress.WP.AlternativeFunctions -- custom process.
+        //phpcs:disable WordPress.WP.AlternativeFunctions -- custom process.
         if ( ! is_dir( dirname( $path ) ) ) {
             mkdir( dirname( $path ), 0777, true );
         }
@@ -52,7 +51,7 @@ class MainWP_File_Uploader_Handle { // phpcs:ignore Generic.Classes.OpeningBrace
             throw new MainWP_Exception( 'Unable to save the file to the MainWP upload directory, please check your system configuration.' );
         }
 
-		//phpcs:enable WordPress.WP.AlternativeFunctions
+        //phpcs:enable WordPress.WP.AlternativeFunctions
 
         if ( ! $moved ) {
             return false;

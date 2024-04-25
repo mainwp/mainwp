@@ -167,11 +167,11 @@ class Cost_Tracker_Payment_Left_This_Month {
         <script type="text/javascript">
             jQuery( document ).ready( function() {
 
-				let cost_chart_colors = <?php echo wp_json_encode($chart_data['colors'], true ); //phpcs:ignore -- ok. ?>;
-				let cost_chart_currency_format = '<?php echo esc_js($chart_data['currency_format']); //phpcs:ignore -- ok. ?>';
-                
+                let cost_chart_colors = <?php echo wp_json_encode($chart_data['colors'], true ); //phpcs:ignore -- ok. ?>;
+                let cost_chart_currency_format = '<?php echo esc_js($chart_data['currency_format']); //phpcs:ignore -- ok. ?>';
+
                 let options = {
-							series: <?php echo wp_json_encode($chart_data['series'], true ); //phpcs:ignore -- ok. ?>,
+                            series: <?php echo wp_json_encode($chart_data['series'], true ); //phpcs:ignore -- ok. ?>,
                             chart: {
                                 type: 'bar',
                                 height: 350,
@@ -193,7 +193,7 @@ class Cost_Tracker_Payment_Left_This_Month {
                                 },
                             },
                             xaxis: {
-								categories: <?php echo wp_json_encode($chart_data['categories'], true ); //phpcs:ignore -- ok. ?>,
+                                categories: <?php echo wp_json_encode($chart_data['categories'], true ); //phpcs:ignore -- ok. ?>,
                                 labels: {
                                     formatter: function (value) {
                                         return isNaN(value) ? value : __(cost_chart_currency_format, value ); // to fix month name format.
@@ -213,7 +213,7 @@ class Cost_Tracker_Payment_Left_This_Month {
                                         colors: '#999999',
                                     },
                                 },
-                            },  
+                            },
                             fill: {
                                 opacity: 1
                             },
@@ -224,7 +224,7 @@ class Cost_Tracker_Payment_Left_This_Month {
                                 theme: 'dark'
                             },
                             colors: [
-                                function ( { value, seriesIndex, dataPointIndex, w } ) {                                    
+                                function ( { value, seriesIndex, dataPointIndex, w } ) {
                                     if (cost_chart_colors[seriesIndex] !== undefined) {
                                         return cost_chart_colors[seriesIndex];
                                     } else {
@@ -233,7 +233,7 @@ class Cost_Tracker_Payment_Left_This_Month {
                                 }
                             ],
                         };
-    
+
                 let cost_chart = new ApexCharts(document.querySelector("#mainwp-module-cost-tracker-payment-left-for-this-month-wrapper"), options);
                 setTimeout(() => {
                     cost_chart.render();

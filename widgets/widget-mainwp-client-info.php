@@ -60,7 +60,7 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      *
      * @param object $website Object containing the child site info.
      */
-	public static function render_info( $website ) { //phpcs:ignore -- complex.
+    public static function render_info( $website ) { //phpcs:ignore -- complex.
 
         $client_info = $website->client_id ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $website->client_id, ARRAY_A ) : false;
 
@@ -140,7 +140,7 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
                                 } elseif ( 'created' === $db_field ) {
                                     ?>
-									<?php echo MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( esc_html( $client_info['created'] ) ) ); //phpcs:ignore ?>
+                                    <?php echo MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( esc_html( $client_info['created'] ) ) ); //phpcs:ignore ?>
                                     <?php
 
                                 } elseif ( 'note' === $db_field ) {

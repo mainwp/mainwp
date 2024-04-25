@@ -16,7 +16,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared, Generic.Metrics.CyclomaticComplexity -- unprepared SQL ok, accessing the database directly to custom database functions.
+    // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared, Generic.Metrics.CyclomaticComplexity -- unprepared SQL ok, accessing the database directly to custom database functions.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -66,82 +66,82 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     public function hook_db_install_tables( $sql, $currentVersion, $charset_collate ) {
 
         $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_clients' ) . " (
-	client_id int(11) NOT NULL auto_increment,
-	image varchar(255) NOT NULL default '',	
-	name varchar(255) NOT NULL,
-	address_1 varchar(255) NOT NULL default '',
-	address_2 varchar(255) NOT NULL default '',
-	city varchar(100) NOT NULL default '',
-	zip varchar(32) NOT NULL default '',
-	state varchar(200) NOT NULL default '',
-	country varchar(200) NOT NULL default '',
-	note longtext NOT NULL default '',
-	selected_icon_info varchar(64) NOT NULL default '',
-	client_email varchar(191) NOT NULL,
-	client_phone varchar(100) NOT NULL default '',
-	client_facebook varchar(255) NOT NULL default '',
-	client_twitter varchar(255) NOT NULL default '',
-	client_instagram varchar(255) NOT NULL default '',
-	client_linkedin varchar(255) NOT NULL default '',
-	created int(11) NOT NULL DEFAULT 0,
-	`suspended` tinyint(1) NOT NULL DEFAULT 0,
-	primary_contact_id int(11) NOT NULL default 0";
+    client_id int(11) NOT NULL auto_increment,
+    image varchar(255) NOT NULL default '',
+    name varchar(255) NOT NULL,
+    address_1 varchar(255) NOT NULL default '',
+    address_2 varchar(255) NOT NULL default '',
+    city varchar(100) NOT NULL default '',
+    zip varchar(32) NOT NULL default '',
+    state varchar(200) NOT NULL default '',
+    country varchar(200) NOT NULL default '',
+    note longtext NOT NULL default '',
+    selected_icon_info varchar(64) NOT NULL default '',
+    client_email varchar(191) NOT NULL,
+    client_phone varchar(100) NOT NULL default '',
+    client_facebook varchar(255) NOT NULL default '',
+    client_twitter varchar(255) NOT NULL default '',
+    client_instagram varchar(255) NOT NULL default '',
+    client_linkedin varchar(255) NOT NULL default '',
+    created int(11) NOT NULL DEFAULT 0,
+    `suspended` tinyint(1) NOT NULL DEFAULT 0,
+    primary_contact_id int(11) NOT NULL default 0";
 
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.61', '<=' ) ) {
             $tbl .= ',
-		PRIMARY KEY (client_id)';
+        PRIMARY KEY (client_id)';
         }
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
 
         $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_clients_fields' ) . ' (
-	field_id int(11) NOT NULL auto_increment,
-	field_name varchar(191) NOT NULL DEFAULT "",
-	field_desc varchar(255) NOT NULL DEFAULT "",
-	client_id int(11) NOT NULL,
-	UNIQUE KEY client_id_field_name (client_id,field_name)';
+    field_id int(11) NOT NULL auto_increment,
+    field_name varchar(191) NOT NULL DEFAULT "",
+    field_desc varchar(255) NOT NULL DEFAULT "",
+    client_id int(11) NOT NULL,
+    UNIQUE KEY client_id_field_name (client_id,field_name)';
 
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.61', '<=' ) ) {
             $tbl .= ',
-		PRIMARY KEY  (`field_id`)  ';
+        PRIMARY KEY  (`field_id`)  ';
         }
 
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
 
         $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_clients_field_values' ) . ' (
-	value_id int(11) NOT NULL auto_increment,
-	field_id int(11) NOT NULL,
-	field_value longtext NOT NULL DEFAULT "",
-	value_client_id int(11) NOT NULL,
-	UNIQUE KEY value_client_id_field_id (value_client_id, field_id)';
+    value_id int(11) NOT NULL auto_increment,
+    field_id int(11) NOT NULL,
+    field_value longtext NOT NULL DEFAULT "",
+    value_client_id int(11) NOT NULL,
+    UNIQUE KEY value_client_id_field_id (value_client_id, field_id)';
 
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.61', '<=' ) ) {
             $tbl .= ',
-		PRIMARY KEY  (`value_id`) ';
+        PRIMARY KEY  (`value_id`) ';
         }
 
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
 
         $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_clients_contacts' ) . ' (
-	contact_id int(11) NOT NULL auto_increment,
-	contact_client_id int(11) NOT NULL,
-	contact_email varchar(191) NOT NULL,
-	contact_image varchar(255) NOT NULL default "",
-	contact_icon_info varchar(64) NOT NULL default "",
-	contact_name varchar(255) NOT NULL,
-	contact_phone varchar(100) NOT NULL default "",
-	contact_role varchar(255) NOT NULL default "",
-	facebook varchar(255) NOT NULL default "",
-	twitter varchar(255) NOT NULL default "",
-	instagram varchar(255) NOT NULL default "",
-	linkedin varchar(255) NOT NULL default "",
-	UNIQUE KEY contact_email(contact_email)';
+    contact_id int(11) NOT NULL auto_increment,
+    contact_client_id int(11) NOT NULL,
+    contact_email varchar(191) NOT NULL,
+    contact_image varchar(255) NOT NULL default "",
+    contact_icon_info varchar(64) NOT NULL default "",
+    contact_name varchar(255) NOT NULL,
+    contact_phone varchar(100) NOT NULL default "",
+    contact_role varchar(255) NOT NULL default "",
+    facebook varchar(255) NOT NULL default "",
+    twitter varchar(255) NOT NULL default "",
+    instagram varchar(255) NOT NULL default "",
+    linkedin varchar(255) NOT NULL default "",
+    UNIQUE KEY contact_email(contact_email)';
 
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.69', '<=' ) ) {
             $tbl .= ',
-		PRIMARY KEY (contact_id)';
+        PRIMARY KEY (contact_id)';
         }
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
@@ -294,7 +294,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @return void.
      */
-	public function reports_check_updates_861( $tokens, $sites_tokens_values ) { // phpcs:ignore -- complexex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function reports_check_updates_861( $tokens, $sites_tokens_values ) { // phpcs:ignore -- complexex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $default_client_fields  = MainWP_Client_Handler::get_default_client_fields();
         $default_contact_fields = MainWP_Client_Handler::get_default_contact_fields();
@@ -649,7 +649,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @return mixed $result results.
      */
-	public function get_wp_client_by( $by = 'client_id', $value = null, $obj = OBJECT, $params = array() ) { // phpcs:ignore -- complexex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function get_wp_client_by( $by = 'client_id', $value = null, $obj = OBJECT, $params = array() ) { // phpcs:ignore -- complexex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $with_selected_sites = isset( $params['with_selected_sites'] ) && $params['with_selected_sites'] ? true : false;
         $with_tags           = isset( $params['with_tags'] ) && $params['with_tags'] ? true : false;
@@ -1091,7 +1091,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( ! empty( $field_id ) ) {
             $row = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_clients_field_values' ) . ' WHERE field_id = %d AND value_client_id=%d ', $field_id, $client_id ) );
             if ( $row ) {
-				if ( $row->field_value != $value ) { //phpcs:ignore -- to valid.
+                if ( $row->field_value != $value ) { //phpcs:ignore -- to valid.
                     $this->wpdb->update( $this->table_name( 'wp_clients_field_values' ), array( 'field_value' => $value ), array( 'value_id' => $row->value_id ) );
                 }
                 return true;

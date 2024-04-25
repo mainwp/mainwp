@@ -95,7 +95,7 @@ class MainWP_Client_Overview_Contacts { // phpcs:ignore Generic.Classes.OpeningB
                                 <div class="four wide column">
                                 <?php
                                     $contact_display_image = MainWP_Client_Handler::get_client_contact_image( $contact_info, 'contact', 'card' );
-									echo $contact_display_image; //phpcs:ignore -- ok.
+                                    echo $contact_display_image; //phpcs:ignore -- ok.
                                 ?>
                                 </div>
                                 <div class="twelve wide middle aligned column">
@@ -144,7 +144,7 @@ class MainWP_Client_Overview_Contacts { // phpcs:ignore Generic.Classes.OpeningB
                                 jQuery( document ).ready( function ($) {
                                     new ClipboardJS('.copy-to-clipboard');
                                 });
-                        </script>                   
+                        </script>
                     <?php } ?>
                 <?php
                 /**

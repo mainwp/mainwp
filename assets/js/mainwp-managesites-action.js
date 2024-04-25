@@ -98,15 +98,12 @@ let mainwp_managesites_doaction_open = function (action) {
   jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked').each(function () {
     let row = jQuery(this).closest('tr');
     let url = '';
-    switch (action) {
-      case 'open_wpadmin':
-        url = row.find('a.open_newwindow_wpadmin').attr('href');
-        window.open(url, '_blank');
-        break;
-      case 'open_frontpage':
-        url = row.find('a.open_site_url').attr('href');
-        window.open(url, '_blank');
-        break;
+    if (action === 'open_wpadmin') {
+      url = row.find('a.open_newwindow_wpadmin').attr('href');
+      window.open(url, '_blank');
+    } else if (action === 'open_frontpage') {
+      url = row.find('a.open_site_url').attr('href');
+      window.open(url, '_blank');
     }
   });
 }

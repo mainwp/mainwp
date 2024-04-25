@@ -203,8 +203,8 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             if ( ! $wp_filesystem->exists( $filename ) ) {
                 $wp_filesystem->touch( $filename );
             }
-		} elseif ( ! file_exists( $filename ) ) { //phpcs:ignore -- ok.
-			touch( $filename ); //phpcs:ignore -- ok.
+        } elseif ( ! file_exists( $filename ) ) { //phpcs:ignore -- ok.
+            touch( $filename ); //phpcs:ignore -- ok.
         }
     }
 
@@ -227,7 +227,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             if ( ! $wp_filesystem->is_writable( $file ) ) {
                 $is_writable = false;
             }
-		} elseif ( ! is_writable( $file ) ) { //phpcs:ignore -- ok.
+        } elseif ( ! is_writable( $file ) ) { //phpcs:ignore -- ok.
             $is_writable = false;
         }
         return $is_writable;
@@ -817,11 +817,11 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( empty( $data ) || is_array( $data ) ) {
             return $data;
         } elseif ( is_serialized( $data ) ) {
-			// phpcs:ignore -- for compatability.
-			return maybe_unserialize( $data );
+            // phpcs:ignore -- for compatability.
+            return maybe_unserialize( $data );
         } else {
-			// phpcs:ignore -- for compatability.
-			return maybe_unserialize( base64_decode( $data ) );
+            // phpcs:ignore -- for compatability.
+            return maybe_unserialize( base64_decode( $data ) );
         }
     }
 
@@ -1210,7 +1210,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param string $slug Plugin|Theme slug.
      * @param string $type Type icon, plugin|theme.
      */
-	private static function get_plugin_theme_icon( $slug, $type ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    private static function get_plugin_theme_icon( $slug, $type ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         if ( 'plugin' === $type ) {
             $option_name = 'plugins_icons';
@@ -1288,7 +1288,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param int    $max_width max image width.
      * @param int    $max_height max image height.
      */
-	public static function handle_upload_image( $sub_folder, $file_uploader, $file_index = 0, $file_subindex = false, $max_width = 300, $max_height = 300 ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function handle_upload_image( $sub_folder, $file_uploader, $file_index = 0, $file_subindex = false, $max_width = 300, $max_height = 300 ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $dirs     = static::get_mainwp_dir( $sub_folder, true );
         $base_dir = $dirs[0];

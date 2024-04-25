@@ -196,7 +196,7 @@ class MainWP_Themes_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
      */
     public static function ignore_updates() {
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
         if ( empty( $websiteId ) ) {
@@ -210,7 +210,7 @@ class MainWP_Themes_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         $themes = isset( $_POST['themes'] ) ? wp_unslash( $_POST['themes'] ) : array();
         $names  = isset( $_POST['names'] ) ? wp_unslash( $_POST['names'] ) : array();
-		// phpcs:enable
+        // phpcs:enable
 
         $decodedIgnoredThemes = json_decode( $website->ignored_themes, true );
         if ( ! is_array( $decodedIgnoredThemes ) ) {
@@ -262,10 +262,10 @@ class MainWP_Themes_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( ! is_array( $trustedThemes ) ) {
             $trustedThemes = array();
         }
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $action = isset( $_POST['do'] ) ? sanitize_text_field( wp_unslash( $_POST['do'] ) ) : '';
         $slugs  = isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ? wp_unslash( $_POST['slugs'] ) : false;
-		// phpcs:enable
+        // phpcs:enable
         if ( ! is_array( $slugs ) ) {
             return;
         }
@@ -292,10 +292,10 @@ class MainWP_Themes_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
     /** This Method Saves a Trusted theme note. */
     public static function save_trusted_theme_note() {
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $slug = isset( $_POST['slug'] ) ? urldecode( sanitize_text_field( wp_unslash( $_POST['slug'] ) ) ) : '';
         $note = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : '';
-		// phpcs:enable
+        // phpcs:enable
         $esc_note           = MainWP_Utility::esc_content( $note );
         $userExtension      = MainWP_DB_Common::instance()->get_user_extension();
         $trustedThemesNotes = json_decode( $userExtension->trusted_themes_notes, true );

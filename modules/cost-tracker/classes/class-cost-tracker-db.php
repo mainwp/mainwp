@@ -17,7 +17,7 @@ use MainWP\Dashboard\MainWP_DB_Client;
  * Class Cost_Tracker_DB
  */
 class Cost_Tracker_DB extends MainWP_Install {
-	//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+    //phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
     /**
      * Variable to hold the db version.
      *
@@ -176,7 +176,7 @@ PRIMARY KEY  (`id`)  '; }
      * @throws \MainWP_Exception Existed cost tracker error.
      * @return mixed Result
      */
-	public function update_cost_tracker( $update ) { //phpcs:ignore -- complex.
+    public function update_cost_tracker( $update ) { //phpcs:ignore -- complex.
         /**
          * WP database.
          *
@@ -365,7 +365,7 @@ PRIMARY KEY  (`id`)  '; }
      *
      * @return mixed Result
      */
-	public function get_cost_tracker_by( $by = 'id', $value = null, $params = array() ) { //phpcs:ignore -- complex method.
+    public function get_cost_tracker_by( $by = 'id', $value = null, $params = array() ) { //phpcs:ignore -- complex method.
         global $wpdb;
 
         if ( ! is_array( $params ) ) {
@@ -386,7 +386,7 @@ PRIMARY KEY  (`id`)  '; }
             if ( ! empty( $selected_ids ) ) {
                 $where = ' AND id IN (' . implode( ',', $selected_ids ) . ') ';
             }
-			return $wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'cost_tracker' ) . ' WHERE 1 ' . $where ); //phpcs:ignore -- good.
+            return $wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'cost_tracker' ) . ' WHERE 1 ' . $where ); //phpcs:ignore -- good.
         }
 
         $sql = '';
@@ -501,7 +501,7 @@ PRIMARY KEY  (`id`)  '; }
      *
      * @return mixed Result
      */
-	public function get_all_cost_trackers_by_clients( $client_ids, $params = array() ) { //phpcs:ignore -- complex method.
+    public function get_all_cost_trackers_by_clients( $client_ids, $params = array() ) { //phpcs:ignore -- complex method.
 
         if ( is_string( $client_ids ) ) {
             $client_ids = explode( ',', $client_ids );
@@ -640,7 +640,7 @@ PRIMARY KEY  (`id`)  '; }
      *
      * @return mixed Result
      */
-	public function get_all_cost_trackers_by_sites( $sites_ids ) { //phpcs:ignore -- complex method.
+    public function get_all_cost_trackers_by_sites( $sites_ids ) { //phpcs:ignore -- complex method.
 
         if ( is_string( $sites_ids ) ) {
             $sites_ids = explode( ',', $sites_ids );
@@ -758,6 +758,6 @@ PRIMARY KEY  (`id`)  '; }
         } else {
             return false;
         }
-		return $wpdb->get_results( $sql ); //phpcs:ignore -- good.
+        return $wpdb->get_results( $sql ); //phpcs:ignore -- good.
     }
 }

@@ -36,14 +36,14 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
     public static function add_meta( $post_ID ) {
         $post_ID = (int) $post_ID;
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $metakeyselect = isset( $_POST['metakeyselect'] ) ? sanitize_text_field( wp_unslash( $_POST['metakeyselect'] ) ) : '';
         $metakeyinput  = isset( $_POST['metakeyinput'] ) ? sanitize_text_field( wp_unslash( $_POST['metakeyinput'] ) ) : '';
         $metavalue     = isset( $_POST['metavalue'] ) ? sanitize_text_field( wp_unslash( $_POST['metavalue'] ) ) : '';
         if ( is_string( $metavalue ) ) {
             $metavalue = trim( $metavalue );
         }
-		// phpcs:enable
+        // phpcs:enable
 
         if ( ( ( '#NONE#' !== $metakeyselect ) && ! empty( $metakeyselect ) ) || ! empty( $metakeyinput ) ) {
             if ( '#NONE#' !== $metakeyselect ) {
@@ -74,7 +74,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Post_Handler::secure_request()
      * @uses \MainWP\Dashboard\MainWP_Post::list_meta_row()
      */
-	public static function ajax_add_meta() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function ajax_add_meta() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_post_addmeta' );
 
@@ -164,8 +164,8 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_ids()
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-	public static function ajax_handle_get_categories() { // phpcs:ignore -- NOSONAR - complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+    public static function ajax_handle_get_categories() { // phpcs:ignore -- NOSONAR - complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $websites = array();
         if ( isset( $_REQUEST['sites'] ) && ( '' !== $_REQUEST['sites'] ) ) {
             $siteIds          = explode( ',', urldecode( wp_unslash( $_REQUEST['sites'] ) ) ); // do not sanitize encoded values.
@@ -280,7 +280,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
             }
         }
-		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $output = ob_get_clean();
         wp_die( wp_json_encode( array( 'content' => $output ) ) );
@@ -319,13 +319,13 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             'description' => esc_html( $item['description'] ),
                         )
                     );
-					$cat_val = ! empty( $cat_val ) ? '_custom_term_' . esc_attr( base64_encode( $cat_val ) ) : ''; //phpcs:ignore -- ok.
+                    $cat_val = ! empty( $cat_val ) ? '_custom_term_' . esc_attr( base64_encode( $cat_val ) ) : ''; //phpcs:ignore -- ok.
                 } else {
                     $cat_val = esc_attr( $item['name'] );
                 }
 
                 $title = ! empty( $term_pt ) ? '<strong>' . esc_html( $item['name'] ) . '</strong>' : esc_html( $item['name'] );
-				echo '<div class="item ' . esc_attr( $cls ) . '" data-value="' . $cat_val . '" data-slug="' . esc_attr( $item['slug'] ) . '" post-type="' . esc_attr( $term_pt ) . '"class="sitecategory-list">' . $title . '</div>'; //phpcs:ignore -- ok.
+                echo '<div class="item ' . esc_attr( $cls ) . '" data-value="' . $cat_val . '" data-slug="' . esc_attr( $item['slug'] ) . '" post-type="' . esc_attr( $term_pt ) . '"class="sitecategory-list">' . $title . '</div>'; //phpcs:ignore -- ok.
             }
 
             if ( ! empty( $item['children'] ) ) {
@@ -412,7 +412,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         $posting_bulk_sites = apply_filters( 'mainwp_posts_posting_bulk_sites', false );
         ?>
-        <input type="hidden" name="bulk_posting_id" id="bulk_posting_id" value="<?php echo intval( $p_id ); ?>"/>                       
+        <input type="hidden" name="bulk_posting_id" id="bulk_posting_id" value="<?php echo intval( $p_id ); ?>"/>
         <?php
         if ( ! $posting_bulk_sites ) {
             static::posting( $p_id );
@@ -438,7 +438,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-	public static function posting( $post_id ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function posting( $post_id ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $p_id = $post_id;
 
         $edit_id = get_post_meta( $post_id, '_mainwp_edit_post_id', true );
@@ -550,7 +550,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     }
                 } ).modal( 'show' );
                 mainwp_post_posting_start_next( true );
-            } );            
+            } );
         </script>
         <?php
     }
@@ -562,13 +562,13 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Ajax Posting posts.
      */
     public static function ajax_posting_posts() {
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_post_postingbulk' );
         $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : false;
         if ( $post_id ) {
             static::posting_posts( $post_id, 'ajax_posting' );
         }
-		 // phpcs:enable
+         // phpcs:enable
         die();
     }
 
@@ -578,11 +578,11 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Ajax Get sites of groups.
      */
     public static function ajax_get_sites_of_groups() {
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_get_sites_of_groups' );
         $groups   = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
         $websites = MainWP_DB::instance()->get_websites_by_group_ids( $groups );
-		 // phpcs:enable
+         // phpcs:enable
         $site_Ids = array();
         if ( $websites ) {
             foreach ( $websites as $website ) {
@@ -600,7 +600,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param int    $post_id Post or Page ID.
      * @param string $what What posting process.
      */
-	public static function posting_posts( $post_id, $what ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function posting_posts( $post_id, $what ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         if ( empty( $post_id ) ) {
             return false;
@@ -788,7 +788,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $new_meta_values = array();
                         foreach ( $meta_values as $key_value => $meta_value ) {
                             if ( is_serialized( $meta_value ) ) {
-								$meta_value = unserialize( $meta_value ); // phpcs:ignore -- internal value safe.
+                                $meta_value = unserialize( $meta_value ); // phpcs:ignore -- internal value safe.
                             }
                             $new_meta_values[ $key_value ] = $meta_value;
                         }
@@ -878,7 +878,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         foreach ( $dbwebsites as $website ) {
                             ?>
                             <div class="item"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
-                            : 
+                            :
                             <?php
                             if ( isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ) {
                                 echo esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>';
@@ -890,7 +890,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             </div>
                     <?php } ?>
                     </div>
-                <?php } ?>              
+                <?php } ?>
                     <?php
                 } else {
                     $posting_succeed = true;
@@ -911,11 +911,11 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                 $last_ajax_posting = false;
                 if ( 'ajax_posting' === $what ) {
-					// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                    // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                     $total           = isset( $_POST['total'] ) ? intval( $_POST['total'] ) : 0;
                     $count           = isset( $_POST['count'] ) ? intval( $_POST['count'] ) : 0;
                     $delete_bulkpost = isset( $_POST['delete_bulkpost'] ) && ! empty( $_POST['delete_bulkpost'] ) ? true : false;
-					// phpcs:enable
+                    // phpcs:enable
                     if ( $delete_bulkpost ) {
                         $last_ajax_posting = true;
                     }
@@ -966,12 +966,12 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
     public static function get_post() {
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $postId        = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
         $postType      = isset( $_POST['postType'] ) ? sanitize_text_field( wp_unslash( $_POST['postType'] ) ) : '';
         $websiteId     = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
         $replaceadvImg = isset( $_POST['replace_advance_img'] ) && ! empty( $_POST['replace_advance_img'] ) ? true : true;
-		// phpcs:enable
+        // phpcs:enable
         if ( empty( $postId ) || empty( $websiteId ) ) {
             die( wp_json_encode( array( 'error' => 'Post ID or site ID not found. Please, reload the page and try again.' ) ) );
         }
@@ -1054,7 +1054,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @return array result
      */
-	public static function create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images, $replaceadvImg = false, $website = false ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images, $replaceadvImg = false, $website = false ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * Current user global.
@@ -1253,7 +1253,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $dashboard_url   = str_replace( '/', '\/', $dashboard_url );
         }
 
-		$foundMatches = preg_match_all( '#(' . preg_quote( $site_url_source, null ) . ')[^\.]*(\.(png|gif|jpg|jpeg))#ix', $content, $matches, PREG_SET_ORDER ); // phpcs:ignore -- Current complexity.
+        $foundMatches = preg_match_all( '#(' . preg_quote( $site_url_source, null ) . ')[^\.]*(\.(png|gif|jpg|jpeg))#ix', $content, $matches, PREG_SET_ORDER ); // phpcs:ignore -- Current complexity.
 
         if ( 0 < $foundMatches ) {
 
@@ -1387,12 +1387,12 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function add_sticky_handle( $post_id ) {
         $_post = get_post( $post_id );
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( 'bulkpost' === $_post->post_type && isset( $_POST['sticky'] ) ) {
             update_post_meta( $post_id, '_sticky', base64_encode( sanitize_text_field( wp_unslash( $_POST['sticky'] ) ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
             return base64_encode( sanitize_text_field( wp_unslash( $_POST['sticky'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
         }
-		// phpcs:enable
+        // phpcs:enable
         return $post_id;
     }
 
@@ -1408,11 +1408,11 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function add_status_handle( $post_id ) {
         $_post = get_post( $post_id );
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ( 'bulkpage' === $_post->post_type || 'bulkpost' === $_post->post_type ) && isset( $_POST['mainwp_edit_post_status'] ) ) {
             update_post_meta( $post_id, '_edit_post_status', sanitize_text_field( wp_unslash( $_POST['mainwp_edit_post_status'] ) ) );
         }
-		// phpcs:enable
+        // phpcs:enable
         return $post_id;
     }
 }

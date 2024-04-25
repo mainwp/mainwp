@@ -159,7 +159,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         ?>
                         <tr>
                             <td data-order="<?php echo esc_attr( $data->created ); ?>">
-								<strong><?php echo isset( $meta_data->name ) && '' !== $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?></strong> <?php echo 'wordpress' !== $data->context ? esc_html( ucfirst( rtrim( $data->context, 's' ) ) ) : 'WordPress'; //phpcs:ignore -- text. ?><br/>
+                                <strong><?php echo isset( $meta_data->name ) && '' !== $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?></strong> <?php echo 'wordpress' !== $data->context ? esc_html( ucfirst( rtrim( $data->context, 's' ) ) ) : 'WordPress'; //phpcs:ignore -- text. ?><br/>
                                 <div><strong><span class="ui medium <?php echo esc_attr( $action_class ); ?> text"><?php echo esc_html( ucfirst( $data->action ) ); ?></span></strong></div>
                                 <span class="ui small text"><?php echo esc_html( MainWP_Utility::format_timestamp( $data->created ) ); ?></span>
                             </td>

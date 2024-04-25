@@ -71,7 +71,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
      * @global string $term
      * @global string $wp_version
      */
-	public function prepare_items() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function prepare_items() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         include ABSPATH . 'wp-admin/includes/plugin-install.php';
 
         global $tab; // required.
@@ -105,7 +105,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
         // If a non-valid menu tab has been selected, And it's not a non-menu action.
         if ( empty( $tab ) || ( ! isset( $tabs[ $tab ] ) && ! in_array( $tab, (array) $nonmenu_tabs ) ) ) {
 
-			$tab = key( $tabs ); // phpcs:ignore -- required for custom bulk install plugins.
+            $tab = key( $tabs ); // phpcs:ignore -- required for custom bulk install plugins.
         }
 
         $args = array(
@@ -432,7 +432,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
             }
 
             // Display the group heading if there is one.
-			if ( isset( $plugin['group'] ) && $plugin['group'] != $group ) { //phpcs:ignore -- to valid.
+            if ( isset( $plugin['group'] ) && $plugin['group'] != $group ) { //phpcs:ignore -- to valid.
                 if ( isset( $this->groups[ $plugin['group'] ] ) ) {
                     $group_name = $this->groups[ $plugin['group'] ];
                     if ( isset( $plugins_group_titles[ $group_name ] ) ) {

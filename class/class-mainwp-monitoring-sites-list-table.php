@@ -55,7 +55,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      *
      * @return string Column name.
      */
-	public function column_default( $item, $column_name ) { 	// phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function column_default( $item, $column_name ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * Filter: mainwp_monitoring_sitestable_item
@@ -242,11 +242,11 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
     public function render_manage_sites_table_top() {
         $items_bulk = $this->get_bulk_actions();
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $selected_status = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
         $selected_group  = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
         $selected_client = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
-		// phpcs:enable
+        // phpcs:enable
 
         if ( empty( $selected_status ) && empty( $selected_group ) && empty( $selected_client ) ) {
             $selected_status = get_option( 'mainwp_monitoringsites_filter_status' );
@@ -351,14 +351,14 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-	public function prepare_items( $optimize = true ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function prepare_items( $optimize = true ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $orderby = 'wp.url';
 
         $req_orderby = null;
         $req_order   = null;
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( $optimize ) {
 
             if ( isset( $_REQUEST['order'] ) ) {
@@ -373,11 +373,11 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                     $orderby = 'wp.url ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'status' === $req_orderby ) {
                     $orderby = 'CASE true
-								WHEN (offline_check_result = 1)
-									THEN 1
-								WHEN (offline_check_result <> 1)
-									THEN 2
-								END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+                                WHEN (offline_check_result = 1)
+                                    THEN 1
+                                WHEN (offline_check_result <> 1)
+                                    THEN 2
+                                END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'status_code' === $req_orderby ) {
                     $orderby = 'wp.http_response_code ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'last_check' === $req_orderby ) {
@@ -449,7 +449,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                 $client_ids = sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ); // may be multi groups.
             }
         }
-		// phpcs:enable
+        // phpcs:enable
 
         $where = null;
 
@@ -650,7 +650,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
          */
         $table_features = apply_filters( 'mainwp_monitoring_table_features', $table_features );
         ?>
-    <script type="text/javascript"> 
+    <script type="text/javascript">
             jQuery( document ).ready( function( $ ) {
 
                 mainwp_manage_sites_screen_options = function () {
@@ -669,7 +669,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                     jQuery( '#manage-sites-screen-options-form' ).submit( function() {
                         if ( jQuery('input[name=reset_monitoringsites_columns_order]').attr('value') == 1 ) {
                             $manage_sites_table.colReorder.reset();
-                        }                   
+                        }
                         jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( 'hide' );
                     } );
                     return false;
@@ -689,10 +689,10 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                         "paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
                         "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
                         "info" : <?php echo esc_js( $table_features['info'] ); ?>,
-						"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
+                        "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
                         "stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
                         "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
-						"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
+                        "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
                         "scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
                         "columnDefs": [
                             {
@@ -757,10 +757,10 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                         "paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
                         "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
                         "info" : <?php echo esc_js( $table_features['info'] ); ?>,
-						"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
+                        "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
                         "stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
                         "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
-						"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
+                        "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
                         "scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
                         "lengthMenu" : [ [<?php echo intval( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All"] ],
                         serverSide: true,
@@ -820,7 +820,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                             jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
                                 let col_id = jQuery( this ).attr( 'id' );
                                 col_id = col_id.replace( "mainwp_show_column_", "" );
-                                try {   
+                                try {
                                     $manage_sites_table.column( '#' + col_id ).visible( false );
                                 } catch(err) {
                                     // to fix js error.
@@ -830,7 +830,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                             //default columns: Site, Open Admin, URL, Updates, Site Health, Status Code and Actions.
                             let cols = ['site','login','url','site_health','status_code','site_actions'];
                             jQuery.each( cols, function ( index, value ) {
-                                try {   
+                                try {
                                     $manage_sites_table.column( '#' + value ).visible( true );
                                 } catch(err) {
                                     // to fix js error.
@@ -842,7 +842,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                             jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
                                 let col_id = jQuery( this ).attr( 'id' );
                                 col_id = col_id.replace( "mainwp_show_column_", "" );
-                                try {   
+                                try {
                                     $manage_sites_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
                                 } catch(err) {
                                     // to fix js error.
@@ -1022,7 +1022,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
-	protected function single_row_columns( $website, $good_health = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    protected function single_row_columns( $website, $good_health = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $statusUndefined = empty( $website['http_response_code'] );
         $statusOnline    = ( 1 === (int) $website['offline_check_result'] );
@@ -1054,7 +1054,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             if ( ! empty( $favi_url ) ) {
                 $imgfavi = '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" />';
             } else {
-				$imgfavi = '<i class="icon big wordpress" style="width:28px;height:28px;"></i> '; // phpcs:ignore -- Prevent modify WP icon.
+                $imgfavi = '<i class="icon big wordpress" style="width:28px;height:28px;"></i> '; // phpcs:ignore -- Prevent modify WP icon.
             }
         }
 
@@ -1151,7 +1151,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                             <i class="ellipsis horizontal icon"></i>
                             <div class="menu" siteid=<?php echo intval( $website['id'] ); ?>>
                             <a class="managesites_checknow item" href="#"><?php esc_html_e( 'Check Now', 'mainwp' ); ?></a>
-                    <?php if ( empty( $website['sync_errors'] ) ) : ?>                          
+                    <?php if ( empty( $website['sync_errors'] ) ) : ?>
                             <a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
                             <?php endif; ?>
                     <?php if ( mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) : ?>
@@ -1186,7 +1186,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
-	public function ajax_get_datatable_rows() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function ajax_get_datatable_rows() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $all_rows  = array();
         $info_rows = array();
 
@@ -1200,7 +1200,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             if ( ! empty( $favi_url ) ) {
                 $imgfavi = '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" />';
             } else {
-				$imgfavi = '<i class="icon big wordpress" style="width:28px;height:28px;"></i> '; // phpcs:ignore -- Prevent modify WP icon.
+                $imgfavi = '<i class="icon big wordpress" style="width:28px;height:28px;"></i> '; // phpcs:ignore -- Prevent modify WP icon.
             }
         }
         if ( $this->items ) {
@@ -1314,7 +1314,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                                         <i class="ellipsis horizontal icon"></i>
                                         <div class="menu" siteid="<?php echo intval( $website['id'] ); ?>">
                                             <a class="managesites_checknow item" href="#"><?php esc_html_e( 'Check Now', 'mainwp' ); ?></a>
-                                            <?php if ( empty( $website['sync_errors'] ) ) : ?>                                          
+                                            <?php if ( empty( $website['sync_errors'] ) ) : ?>
                                             <a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
                                             <?php endif; ?>
                                             <?php if ( mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) : ?>

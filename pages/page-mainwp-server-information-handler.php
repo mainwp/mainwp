@@ -12,7 +12,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-	// phpcs:disable WordPress.WP.AlternativeFunctions -- use system functions.
+    // phpcs:disable WordPress.WP.AlternativeFunctions -- use system functions.
 
     /**
      * Gets Class Name.
@@ -259,7 +259,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
 
             $res = openssl_pkey_new( $conf );
 
-			@openssl_pkey_export( $res, $privkey, null, $conf ); // phpcs:ignore -- prevent warning.
+            @openssl_pkey_export( $res, $privkey, null, $conf ); // phpcs:ignore -- prevent warning.
             $details = openssl_pkey_get_details( $res );
 
             if ( is_array( $details ) && isset( $details['key'] ) ) {
@@ -637,9 +637,9 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * Gets server accepted character set.
      */
     public static function get_server_accept_charset() {
-		// phpcs:disable WordPress.Security.EscapeOutput
+        // phpcs:disable WordPress.Security.EscapeOutput
         echo ( ! isset( $_SERVER['HTTP_ACCEPT_CHARSET'] ) || empty( $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) ? esc_html__( 'N/A', 'mainwp' ) : esc_html( sanitize_text_field( wp_unslash( $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) );
-		// phpcs:enable
+        // phpcs:enable
     }
 
     /**
@@ -801,7 +801,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * @return string Line Count.
      */
     public static function last_lines( $path, $line_count, $block_size = 512 ) {
-		//phpcs:disable WordPress.WP.AlternativeFunctions
+        //phpcs:disable WordPress.WP.AlternativeFunctions
         $lines    = array();
         $leftover = '';
         $fh       = fopen( $path, 'r' );
@@ -836,7 +836,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         }
 
         fclose( $fh );
-		//phpcs:enable
+        //phpcs:enable
 
         return array_slice( $lines, 0, $line_count );
     }
@@ -849,7 +849,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
      * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
      */
-	public static function mainwp_options() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreaciated.
+    public static function mainwp_options() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreaciated.
         $mainwp_options = array(
             'mainwp_number_of_child_sites'           => esc_html__( 'Number of connected sites', 'mainwp' ),
             'mainwp_wp_cron'                         => esc_html__( 'Use WP Cron', 'mainwp' ),

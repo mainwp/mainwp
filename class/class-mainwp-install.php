@@ -18,7 +18,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
+    // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
 
     /**
      * Private variable to hold the database version info.
@@ -70,7 +70,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-	public function install() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function install() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         // get_site_option is multisite aware!
         $currentVersion = get_site_option( $this->option_db_key );
 
@@ -111,13 +111,13 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   ga_id text NOT NULL,
   gas_id int(11) NOT NULL,
   offline_checks_last int(11) NOT NULL,
-  offline_check_result int(11) NOT NULL,  
+  offline_check_result int(11) NOT NULL,
   http_response_code int(11) NOT NULL DEFAULT 0,
   http_code_noticed tinyint(1) NOT NULL DEFAULT 1,
   disable_status_check tinyint(1) NOT NULL DEFAULT 0,
   disable_health_check tinyint(1) NOT NULL DEFAULT 0,
   status_check_interval tinyint(1) NOT NULL DEFAULT 0,
-  health_threshold int(11) NOT NULL DEFAULT 0,  
+  health_threshold int(11) NOT NULL DEFAULT 0,
   note text NOT NULL,
   statsUpdate int(11) NOT NULL,
   directories longtext NOT NULL,
@@ -183,7 +183,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         if ( empty( $currentVersion ) ) {
             $tbl .= ',
-	PRIMARY KEY  (sync_id)';
+    PRIMARY KEY  (sync_id)';
         }
 
         $tbl .= ') ' . $charset_collate;
@@ -199,7 +199,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         if ( empty( $currentVersion ) ) {
             $tbl .= ',
-	PRIMARY KEY  (opt_id)';
+    PRIMARY KEY  (opt_id)';
         }
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
@@ -212,7 +212,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         if ( empty( $currentVersion ) ) {
             $tbl .= ',
-	PRIMARY KEY  (set_id)';
+    PRIMARY KEY  (set_id)';
         }
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
@@ -238,15 +238,15 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $sql[] = $tbl;
 
         $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_status' ) . ' (
-	statusid bigint(20) unsigned NOT NULL auto_increment,
-	wpid int(11) NOT NULL,
-	http_code smallint NOT NULL DEFAULT 0,
-	status tinyint(1) NOT NULL DEFAULT 0,
-	event_timestamp int(11) NOT NULL,
-	duration int(11) NOT NULL DEFAULT 0';
+    statusid bigint(20) unsigned NOT NULL auto_increment,
+    wpid int(11) NOT NULL,
+    http_code smallint NOT NULL DEFAULT 0,
+    status tinyint(1) NOT NULL DEFAULT 0,
+    event_timestamp int(11) NOT NULL,
+    duration int(11) NOT NULL DEFAULT 0';
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.31', '<=' ) ) {
             $tbl .= ',
-			PRIMARY KEY  (statusid)  ';
+            PRIMARY KEY  (statusid)  ';
         }
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
@@ -277,17 +277,17 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $sql[] = $tbl;
 
         $tbl = 'CREATE TABLE ' . $this->table_name( 'lookup_item_objects' ) . ' (
-	lookup_id bigint(20) unsigned NOT NULL auto_increment,
-	item_id bigint(20) unsigned NOT NULL,
-	item_name varchar(32) NOT NULL,
-	object_id bigint(20) unsigned NOT NULL,
-	object_name varchar(32) NOT NULL,
-	KEY item_id (item_id),
-	KEY object_id (object_id)';
+    lookup_id bigint(20) unsigned NOT NULL auto_increment,
+    item_id bigint(20) unsigned NOT NULL,
+    item_name varchar(32) NOT NULL,
+    object_id bigint(20) unsigned NOT NULL,
+    object_name varchar(32) NOT NULL,
+    KEY item_id (item_id),
+    KEY object_id (object_id)';
 
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.0.5', '<' ) ) {
             $tbl .= ',
-	PRIMARY KEY  (lookup_id)  ';
+    PRIMARY KEY  (lookup_id)  ';
         }
         $tbl  .= ') ' . $charset_collate . ';';
         $sql[] = $tbl;
@@ -308,7 +308,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   KEY idx_task_id (task_id)";
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.53', '<=' ) ) {
             $tbl .= ',
-			UNIQUE (task_id)';
+            UNIQUE (task_id)';
         }
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
@@ -350,15 +350,15 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $sql[] = $tbl;
 
         $tbl = 'CREATE TABLE ' . $this->table_name( 'action_log' ) . " (
-	id int(11) NOT NULL auto_increment,
-	log_content mediumtext NOT NULL DEFAULT '',	
-	log_type tinyint(1) DEFAULT 0,
-	log_color tinyint(1) DEFAULT 0,	
-	log_user varchar(128) NOT NULL DEFAULT '',
-	log_timestamp int(11) NOT NULL DEFAULT 0";
+    id int(11) NOT NULL auto_increment,
+    log_content mediumtext NOT NULL DEFAULT '',
+    log_type tinyint(1) DEFAULT 0,
+    log_color tinyint(1) DEFAULT 0,
+    log_user varchar(128) NOT NULL DEFAULT '',
+    log_timestamp int(11) NOT NULL DEFAULT 0";
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.50', '<=' ) ) {
             $tbl .= ',
-	PRIMARY KEY  (id)  ';
+    PRIMARY KEY  (id)  ';
         }
             $tbl  .= ') ' . $charset_collate . ';';
             $sql[] = $tbl;
@@ -384,7 +384,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         global $wpdb;
 
         if ( MainWP_Utility::instance()->is_disabled_functions( 'error_log' ) || ! function_exists( '\error_log' ) ) {
-			error_reporting(0); // phpcs:ignore -- try to disabled the error_log somewhere in WP.
+            error_reporting(0); // phpcs:ignore -- try to disabled the error_log somewhere in WP.
         }
 
         $suppress = $wpdb->suppress_errors();

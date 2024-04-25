@@ -136,8 +136,8 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     public static function screen_options( $input ) {
         return $input .
                 '<a class="ui button basic icon" onclick="mainwp_clients_overview_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Page Settings', 'mainwp' ) . '">
-					<i class="cog icon"></i>
-				</a>';
+                    <i class="cog icon"></i>
+                </a>';
     }
 
     /**
@@ -156,7 +156,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_Security_Issues_Widget::get_class_name()
      * @uses \MainWP\Dashboard\MainWP_Updates_Overview::get_class_name()
      */
-	public static function add_meta_boxes( $page ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function add_meta_boxes( $page ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * Get getmetaboxes
@@ -410,7 +410,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @return void  Render Page Settings html.
      */
-	public static function render_screen_options() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_screen_options() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $default_widgets = array(
             'overview'           => esc_html__( 'Overview', 'mainwp' ),

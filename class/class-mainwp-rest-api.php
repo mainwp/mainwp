@@ -19,7 +19,7 @@ use Exception;
  */
 class Rest_Api {
 
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
     /**
      * Protected static variable to hold the single instance of the class.

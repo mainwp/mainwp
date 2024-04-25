@@ -407,27 +407,27 @@ cloudways_action_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html( 'A backup has been requested. Please allow some time for the backup to complete, then Refresh Available Backups.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html( 'A backup has been requested. Please allow some time for the backup to complete, then Refresh Available Backups.')
+            ;
 
-			setTimeout(function () {
-				location.reload();
-			}, 5000);
+            setTimeout(function () {
+                location.reload();
+            }, 5000);
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while requesting your backup. Please check that your ID and API Key are correct.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while requesting your backup. Please check that your ID and API Key are correct.')
+            ;
 
-			setTimeout(function () {
-				location.reload();
-			}, 5000);
+            setTimeout(function () {
+                location.reload();
+            }, 5000);
 
         }
     });
@@ -485,11 +485,11 @@ cloudways_action_refresh_available_backups = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html( 'Available backups have been refreshed.' )
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html( 'Available backups have been refreshed.' )
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -498,11 +498,11 @@ cloudways_action_refresh_available_backups = function (pObj) {
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html( 'There was an issue while refreshing available backups.' )
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html( 'There was an issue while refreshing available backups.' )
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -532,22 +532,22 @@ cloudways_action_restore_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html( 'Your application is in the process of restoring. This will take a few minuets...' )
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html( 'Your application is in the process of restoring. This will take a few minuets...' )
+            ;
 
             // Stop button animation.
             jQuery(button).html('<i class="undo icon"></i>');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html( 'There was an issue while attempting to restore your application...' )
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html( 'There was an issue while attempting to restore your application...' )
+            ;
 
             // Stop button animation.
             jQuery(button).html('<i class="undo icon"></i>');
@@ -579,11 +579,11 @@ cloudways_action_delete_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html( 'The local backups done before last restore have been deleted.' )
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html( 'The local backups done before last restore have been deleted.' )
+            ;
 
             // Stop button animation.
             jQuery(button).find('i.loading').css({ 'display': 'none' });
@@ -591,11 +591,11 @@ cloudways_action_delete_backup = function (pObj) {
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html( 'There was an issue while deleting your backups.' )
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html( 'There was an issue while deleting your backups.' )
+            ;
 
             // Stop button animation.
             jQuery(button).find('i.loading').css({ 'display': 'none' });
@@ -627,11 +627,11 @@ vultr_action_update_ids = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('Backup Stats have been refreshed.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('Backup Stats have been refreshed.')
+            ;
 
             // Stop button animation.
             jQuery(button).find('i.loading').css({ 'display': 'none' });
@@ -639,11 +639,11 @@ vultr_action_update_ids = function (pObj) {
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html( 'There was an issue refreshing the Backup Stats.' )
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html( 'There was an issue refreshing the Backup Stats.' )
+            ;
 
             // Stop button animation.
             jQuery(button).find('i.loading').css({ 'display': 'none' });
@@ -674,24 +674,24 @@ vultr_action_create_snapshot = function (pObj) {
         response = jQuery.trim(response);
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('A backup has been requested.');
-			setTimeout(function () {
-				location.reload();
-			}, 5000);
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('A backup has been requested.');
+            setTimeout(function () {
+                location.reload();
+            }, 5000);
 
         } else {
             let err_message = '' !== response ? response : 'There was an issue while requesting your backup. Please check that your ID and API Key are correct.';
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html( err_message );
-			setTimeout(function () {
-				location.reload();
-			}, 5000);
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html( err_message );
+            setTimeout(function () {
+                location.reload();
+            }, 5000);
 
         }
     });
@@ -716,11 +716,11 @@ vultr_action_refresh_available_backups = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('Available backups have been refreshed.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('Available backups have been refreshed.')
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -729,11 +729,11 @@ vultr_action_refresh_available_backups = function (pObj) {
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while refreshing available backups.' )
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while refreshing available backups.' )
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -763,22 +763,22 @@ vultr_action_restore_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('Backup restoration process has begun. Please wait a few moments and then check the site.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('Backup restoration process has begun. Please wait a few moments and then check the site.')
+            ;
 
             // Stop button animation.
             jQuery(button).html('<i class="undo icon"></i>');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while restoring your backup.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while restoring your backup.')
+            ;
 
             // Stop button animation.
             jQuery(button).html('<i class="undo icon"></i>');
@@ -810,22 +810,22 @@ vultr_action_delete_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('The selected backup has been deleted.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('The selected backup has been deleted.')
+            ;
 
             // Stop button animation.
             jQuery(button).html('<i class="undo icon"></i>');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while deleting the selected backup.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while deleting the selected backup.')
+            ;
 
             // Stop button animation.
             jQuery(button).html('<i class="undo icon"></i>');
@@ -885,11 +885,11 @@ gridpane_action_create_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('A backup has been requested.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('A backup has been requested.')
+            ;
 
             setTimeout(function () {
                 location.reload();
@@ -897,11 +897,11 @@ gridpane_action_create_backup = function (pObj) {
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while requesting your backup. Please check that your ID and API Key are correct.' )
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while requesting your backup. Please check that your ID and API Key are correct.' )
+            ;
 
             setTimeout(function () {
                 location.reload();
@@ -930,11 +930,11 @@ gridpane_action_refresh_available_backups = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('Available backups have been refreshed.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('Available backups have been refreshed.')
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -943,11 +943,11 @@ gridpane_action_refresh_available_backups = function (pObj) {
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while refreshing available backups.' )
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while refreshing available backups.' )
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -980,22 +980,22 @@ gridpane_action_restore_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('Backup restoration has begun. Please wait a few moments and then check the site.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('Backup restoration has begun. Please wait a few moments and then check the site.')
+            ;
 
             // Stop button animation.
             jQuery(button).html('<i class="undo icon"></i>');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while restoring your backup.' )
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while restoring your backup.' )
+            ;
 
             // Stop button animation.
             jQuery(button).html('<i class="undo icon"></i>');
@@ -1029,22 +1029,22 @@ gridpane_action_delete_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('The selected backup has been deleted.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('The selected backup has been deleted.')
+            ;
 
             // Stop button animation.
             jQuery(button).html('<i class="trash icon"></i>');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while deleting the selected backup.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while deleting the selected backup.')
+            ;
 
             // Stop button animation.
             jQuery(button).html('<i class="trash icon"></i>');
@@ -1102,11 +1102,11 @@ linode_action_create_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('A backup has been requested.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('A backup has been requested.')
+            ;
 
             setTimeout(function () {
                 location.reload();
@@ -1114,11 +1114,11 @@ linode_action_create_backup = function (pObj) {
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while requesting your backup. Please check that your backups are enabled & ID\'s are correct.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while requesting your backup. Please check that your backups are enabled & ID\'s are correct.')
+            ;
 
             setTimeout(function () {
                 location.reload();
@@ -1146,11 +1146,11 @@ linode_action_refresh_available_backups = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('Available backups have been refreshed.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('Available backups have been refreshed.')
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -1159,11 +1159,11 @@ linode_action_refresh_available_backups = function (pObj) {
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while refreshing available backups.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while refreshing available backups.')
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -1197,22 +1197,22 @@ linode_action_restore_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('The backup restoration was successful. Please check your Linode Server Status...')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('The backup restoration was successful. Please check your Linode Server Status...')
+            ;
 
             jQuery(backupStatus).html('Rebooting Server...');
             setInterval('location.reload()', 7000);// Using .reload() method.
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while restoring your backup.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while restoring your backup.')
+            ;
 
             // Stop button animation.
             setInterval('location.reload()', 7000); // Using .reload() method.
@@ -1240,22 +1240,22 @@ linode_action_cancel_backups = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('The backups associated with this Linode have been removed.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('The backups associated with this Linode have been removed.')
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while canceling your backup.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while canceling your backup.')
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -1314,22 +1314,22 @@ digitalocean_action_create_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('A backup has been requested.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('A backup has been requested.')
+            ;
 
             setTimeout(function () {
                 location.reload();
             }, 5000);
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while requesting your backup. Please check that your ID and API Key are correct.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while requesting your backup. Please check that your ID and API Key are correct.')
+            ;
 
             setTimeout(function () {
                 location.reload();
@@ -1357,11 +1357,11 @@ digitalocean_action_refresh_available_backups = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('Available backups have been refreshed.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('Available backups have been refreshed.')
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -1370,11 +1370,11 @@ digitalocean_action_refresh_available_backups = function (pObj) {
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while refreshing available backups.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while refreshing available backups.')
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -1408,22 +1408,22 @@ digitalocean_action_restore_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('Backup restoration has begun. Please wait a few moments and then check the site.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('Backup restoration has begun. Please wait a few moments and then check the site.')
+            ;
 
             // Stop button animation.
             jQuery(button).html('<i class="undo icon"></i>');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while restoring your backup.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while restoring your backup.')
+            ;
 
             // Stop button animation.
             jQuery(button).html('<i class="undo icon"></i>');
@@ -1452,22 +1452,22 @@ digitalocean_action_delete_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('The selected backup has been deleted.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('The selected backup has been deleted.')
+            ;
 
             // Stop button animation.
             jQuery(button).html('<i class="trash icon"></i>');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while deleting the selected backup.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while deleting the selected backup.')
+            ;
 
             // Stop button animation.
             jQuery(button).html('<i class="trash icon"></i>');
@@ -1488,7 +1488,7 @@ cpanel_action_create_wptk_backup = function (pObj) {
         action: 'cpanel_action_create_wptk_backup',
         website_id: websiteId,
         backup_api: 'cpanel',
-		backup: 'true'
+        backup: 'true'
     });
 
     // Start button animation.
@@ -1499,21 +1499,21 @@ cpanel_action_create_wptk_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html( 'A backup has been requested. Please allow some time for the backup to complete, then Refresh Available Backups.');
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html( 'A backup has been requested. Please allow some time for the backup to complete, then Refresh Available Backups.');
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html( response )
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html( response )
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -1547,22 +1547,22 @@ cpanel_action_restore_wptk_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('The backup restoration process has finished. Please wait a few moments and then check the site.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('The backup restoration process has finished. Please wait a few moments and then check the site.')
+            ;
 
             // Stop button animation. ( Using class so ALL buttons are animated not just the one clicked ).
             jQuery('.mainwp_3rd_party_api_cpanel_action_restore_wptk_backup').removeClass('disabled loading');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while restoring your backup.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while restoring your backup.')
+            ;
 
             // Stop button animation. ( Using class so ALL buttons are animated not just the one clicked ).
             jQuery('.mainwp_3rd_party_api_cpanel_action_restore_wptk_backup').removeClass('disabled loading');
@@ -1595,22 +1595,22 @@ cpanel_action_delete_wptk_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('The selected backup has been deleted.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('The selected backup has been deleted.')
+            ;
 
             // Stop button animation. ( Using class so ALL buttons are animated not just the one clicked ).
             jQuery('.mainwp_3rd_party_api_cpanel_action_delete_wptk_backup').removeClass('disabled loading');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while deleting your backup.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while deleting your backup.')
+            ;
 
             // Stop button animation. ( Using class so ALL buttons are animated not just the one clicked ).
             jQuery('.mainwp_3rd_party_api_cpanel_action_delete_wptk_backup').removeClass('disabled loading');
@@ -1645,22 +1645,22 @@ cpanel_action_create_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('A backup has been requested.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('A backup has been requested.')
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html( response )
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html( response )
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -1688,11 +1688,11 @@ cpanel_action_refresh_available_backups = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('Available backups have been refreshed.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('Available backups have been refreshed.')
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -1701,11 +1701,11 @@ cpanel_action_refresh_available_backups = function (pObj) {
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while refreshing available backups.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while refreshing available backups.')
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -1740,22 +1740,22 @@ cPanel_action_restore_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('The backup restoration process has finished. Please wait a few moments and then check the site.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('The backup restoration process has finished. Please wait a few moments and then check the site.')
+            ;
 
             // Stop button animation. ( Using class so ALL buttons are animated not just the one clicked ).
             jQuery('.mainwp_3rd_party_api_cpanel_action_restore_backup button').removeClass('disabled loading');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while restoring your backup.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while restoring your backup.')
+            ;
 
             // Stop button animation. ( Using class so ALL buttons are animated not just the one clicked ).
             jQuery('.mainwp_3rd_party_api_cpanel_action_restore_backup button').removeClass('disabled loading');
@@ -1787,22 +1787,22 @@ cpanel_action_restore_database_backup = function (btObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('The backup restoration process has finished. Please wait a few moments and then check the site.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('The backup restoration process has finished. Please wait a few moments and then check the site.')
+            ;
 
             // Stop button animation. ( Using class so ALL buttons are animated not just the one clicked ).
             jQuery('.mainwp_3rd_party_api_cpanel_action_restore_database_backup button').removeClass('disabled loading');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while restoring your backup.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while restoring your backup.')
+            ;
 
             // Stop button animation. ( Using class so ALL buttons are animated not just the one clicked ).
             jQuery('.mainwp_3rd_party_api_cpanel_action_restore_database_backup button').removeClass('disabled loading');
@@ -1834,22 +1834,22 @@ cpanel_action_restore_manual_backup = function () {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('The backup restoration process has finished. Please wait a few moments and then check the site.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('The backup restoration process has finished. Please wait a few moments and then check the site.')
+            ;
 
             // Stop button animation. ( Using class so ALL buttons are animated not just the one clicked ).
             jQuery('.mainwp_3rd_party_api_cpanel_action_restore_manual_backup button').removeClass('disabled loading');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while restoring your backup.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while restoring your backup.')
+            ;
 
             // Stop button animation. ( Using class so ALL buttons are animated not just the one clicked ).
             jQuery('.mainwp_3rd_party_api_cpanel_action_restore_database_backup button').removeClass('disabled loading');
@@ -1879,22 +1879,22 @@ cpanel_action_create_database_backup = function (pObj) {
         // Check & return the response.
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('The current database backup has finished. Please wait a few moments and then Refresh Available Backups.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('The current database backup has finished. Please wait a few moments and then Refresh Available Backups.')
+            ;
 
             // Start button animation.
             jQuery(pObj).removeClass('disabled loading');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while creating your backup.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while creating your backup.')
+            ;
 
             // Start button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -1913,7 +1913,7 @@ cpanel_action_create_full_backup = function (pObj) {
         action: 'cpanel_action_create_full_backup',
         website_id: websiteId,
         backup_api: 'cpanel',
-		backup: 'true'
+        backup: 'true'
     });
 
 
@@ -1927,22 +1927,22 @@ cpanel_action_create_full_backup = function (pObj) {
         // Check & return the response.
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('The current File & Database backup has finished. Please wait a few moments and then Refresh Available Backups.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('The current File & Database backup has finished. Please wait a few moments and then Refresh Available Backups.')
+            ;
 
             // Start button animation.
             jQuery(pObj).removeClass('disabled loading');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while creating your backups.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while creating your backups.')
+            ;
 
             // Start button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -1974,11 +1974,11 @@ plesk_action_refresh_available_backups = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('Available backups have been refreshed.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('Available backups have been refreshed.')
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -1987,11 +1987,11 @@ plesk_action_refresh_available_backups = function (pObj) {
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while refreshing available backups.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while refreshing available backups.')
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -2018,22 +2018,22 @@ plesk_action_create_backup = function (pObj) {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('A backup has been requested.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('A backup has been requested.')
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html( response )
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html( response )
+            ;
 
             // Stop button animation.
             jQuery(pObj).removeClass('disabled loading');
@@ -2068,22 +2068,22 @@ plesk_action_restore_backup = function () {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('Your application is in the process of restoring. This will take a few minuets...')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('Your application is in the process of restoring. This will take a few minuets...')
+            ;
 
             // Stop button animation.
             jQuery(button).removeClass('disabled loading');
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while attempting to restore your application...')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while attempting to restore your application...')
+            ;
 
             // Stop button animation.
             jQuery(button).removeClass('disabled loading');
@@ -2117,23 +2117,23 @@ plesk_action_delete_backup = function () {
 
         if (response === 'true') {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('The selected backup has been deleted.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('green').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('The selected backup has been deleted.')
+            ;
 
-			setInterval('location.reload()', 5000); // Using .reload() method.
+            setInterval('location.reload()', 5000); // Using .reload() method.
 
         } else {
 
-			// Show message.
-			jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
-			jQuery('#mainwp-api-backups-message-zone .content .message')
-				.html('There was an issue while deleting your backup.')
-			;
+            // Show message.
+            jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
+            jQuery('#mainwp-api-backups-message-zone .content .message')
+                .html('There was an issue while deleting your backup.')
+            ;
 
-			setInterval('location.reload()', 5000); // Using .reload() method.
+            setInterval('location.reload()', 5000); // Using .reload() method.
 
         }
     });

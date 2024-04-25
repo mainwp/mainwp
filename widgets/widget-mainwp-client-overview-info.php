@@ -44,7 +44,7 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
      *
      * @param object $client_id Client ID.
      */
-	public static function render_client_overview( $client_id ) {  // phpcs:ignore -- complex function.
+    public static function render_client_overview( $client_id ) {  // phpcs:ignore -- complex function.
         $params        = array(
             'with_selected_sites' => true,
             'with_tags'           => true,
@@ -63,7 +63,7 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
         ?>
         <div class="mainwp-widget-header">
             <h3 class="ui header handle-drag">
-				<?php echo esc_html( $client_info['name'] ); ?> <?php echo $client_status; //phpcs:ignore -- ok. ?>
+                <?php echo esc_html( $client_info['name'] ); ?> <?php echo $client_status; //phpcs:ignore -- ok. ?>
                 <div class="ui hidden divider"></div>
                 <div class="sub header">
                     <?php echo MainWP_System_Utility::get_site_tags( $client_info, true ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
@@ -92,7 +92,7 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
                         <div class="four wide middle aligned column">
                         <?php
                             $client_display_image = MainWP_Client_Handler::get_client_contact_image( $client_info, 'client', 'card' );
-							echo $client_display_image; //phpcs:ignore -- ok.
+                            echo $client_display_image; //phpcs:ignore -- ok.
                         ?>
                         </div>
                         <div class="twelve wide middle aligned column">
@@ -154,7 +154,7 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
                                             <?php endif; ?>
                                             <?php if ( isset( $client_info['country'] ) && '' !== $client_info['country'] ) : ?>
                                                 <?php echo esc_html( $client_info['country'] ); ?>
-                                <?php endif; ?>                             
+                                <?php endif; ?>
                                 </div>
                                 </div>
                                 <?php endif; ?>
@@ -171,7 +171,7 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
                             jQuery( document ).ready( function ($) {
                                 new ClipboardJS('.copy-to-clipboard');
                             } );
-                    </script>                   
+                    </script>
                 <?php } ?>
                 <?php
                 /**

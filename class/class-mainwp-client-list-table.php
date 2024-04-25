@@ -55,7 +55,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
      *
      * @return string Column name.
      */
-	public function column_default( $item, $column_name ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function column_default( $item, $column_name ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * Filter: mainwp_clients_sitestable_item
@@ -260,7 +260,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                     <button class="ui tiny basic button" id="mainwp-do-clients-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
                 </div>
                 <div class="right aligned middle aligned column">
-                <?php esc_html_e( 'Filter clients: ', 'mainwp' ); ?>                    
+                <?php esc_html_e( 'Filter clients: ', 'mainwp' ); ?>
                     <div id="mainwp-filter-clients-group" class="ui selection multiple dropdown" style="vertical-align:bottom">
                         <input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
                         <i class="dropdown icon"></i>
@@ -433,7 +433,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
          */
         $table_features = apply_filters( 'mainwp_clients_table_features', $table_features );
         ?>
-    <script type="text/javascript"> 
+    <script type="text/javascript">
             jQuery( document ).ready( function( $ ) {
                 let mainwp_manage_clients_screen_options = function () {
                     jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( {
@@ -469,10 +469,10 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                         "paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
                         "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
                         "info" : <?php echo esc_js( $table_features['info'] ); ?>,
-						"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
+                        "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
                         "stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
                         "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
-						"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
+                        "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
                         "scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
                         "columnDefs": [
                             {
@@ -522,7 +522,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                     jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
                         let col_id = jQuery( this ).attr( 'id' );
                         col_id = col_id.replace( "mainwp_show_column_", "" );
-                        try {   
+                        try {
                             $manage_sites_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
                         } catch(err) {
                             // to fix js error.
@@ -655,7 +655,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
      * @param mixed $item     Object containing the client info.
      * @param bool  $compatible to compatible param - DO NOT remove.
      */
-	protected function single_row_columns( $item, $compatible = true ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    protected function single_row_columns( $item, $compatible = true ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         list( $columns ) = $this->get_column_info();
 
@@ -697,7 +697,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
                 ?>
                 <?php $client_display_image = MainWP_Client_Handler::get_client_contact_image( $item ); ?>
-				<a class="item" href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php echo $client_display_image; //phpcs:ignore --- ok.?></a>
+                <a class="item" href="admin.php?page=ManageClients&client_id=<?php echo intval( $item['client_id'] ); ?>"><?php echo $client_display_image; //phpcs:ignore --- ok.?></a>
                 <?php
                 echo '</td>';
             } elseif ( 'name' === $column_name ) {
@@ -728,7 +728,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                     $client_status = '<span class="ui red mini fluid center aligned label">' . esc_html__( 'Lost', 'mainwp' ) . '</span>';
                 }
                 ?>
-				<td class="collapsing"><?php echo $client_status; //phpcs:ignore -- ok. ?></td>
+                <td class="collapsing"><?php echo $client_status; //phpcs:ignore -- ok. ?></td>
                 <?php
             } elseif ( 'websites' === $column_name ) {
                 $selected_sites = isset( $item['selected_sites'] ) ? trim( $item['selected_sites'] ) : '';

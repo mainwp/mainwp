@@ -67,7 +67,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
 
         $active_tab  = 'plugins';
         $active_text = esc_html__( 'Plugins Updates', 'mainwp' );
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_GET['tab'] ) ) {
             if ( 'wordpress-updates' === $_GET['tab'] ) {
                 $active_tab  = 'WordPress';
@@ -86,7 +86,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                 $active_text = esc_html__( 'Abandoned Themes', 'mainwp' );
             }
         }
-		// phpcs:enable
+        // phpcs:enable
         MainWP_Manage_Sites_View::render_header_tabs( $active_tab, $active_text, $mainwp_show_language_updates )
         ?>
         <div class="ui segment" id="mainwp-manage-<?php echo intval( $id ); ?>-updates">
@@ -134,7 +134,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      *
      * @param mixed $site_id Child Site id.
      */
-	public static function get_total_info( $site_id ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function get_total_info( $site_id ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
         $sql           = MainWP_DB::instance()->get_sql_website_by_id( $site_id, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
@@ -398,7 +398,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
      */
-	public static function render_plugins_updates( $website, $active_tab, $userExtension ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_plugins_updates( $website, $active_tab, $userExtension ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
         if ( ! is_array( $trustedPlugins ) ) {
@@ -447,7 +447,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                 <table id="mainwp-updates-plugins-table" class="ui tablet stackable table mainwp-updates-list mainwp-manage-updates-table">
                     <thead class="master-checkbox">
                         <tr>
-                        <?php $updates_table_helper->print_column_headers(); ?>                     
+                        <?php $updates_table_helper->print_column_headers(); ?>
                         </tr>
                     </thead>
                     <tbody class="plugins-bulk-updates child-checkbox" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>">
@@ -491,7 +491,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                     </tbody>
                     <tfoot>
                         <tr>
-                        <?php $updates_table_helper->print_column_headers( false ); ?>  
+                        <?php $updates_table_helper->print_column_headers( false ); ?>
                         </tr>
                     </tfoot>
                 </table>
@@ -568,7 +568,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
      */
-	public static function render_themes_updates( $website, $active_tab, $userExtension ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_themes_updates( $website, $active_tab, $userExtension ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $trustedThemes = json_decode( $userExtension->trusted_themes, true );
         if ( ! is_array( $trustedThemes ) ) {
@@ -794,7 +794,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
 
                         ?>
                         <tr dismissed="0">
-                            <td> <?php echo MainWP_System_Utility::get_plugin_icon( $item_slug ) . '&nbsp;'; // phpcs:ignore WordPress.Security.EscapeOutput ?>                         
+                            <td> <?php echo MainWP_System_Utility::get_plugin_icon( $item_slug ) . '&nbsp;'; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                                 <a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_html( dirname( $slug ) ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? esc_url( rawurlencode( $plugin_outdate['PluginURI'] ) ) : '' ) . '&name=' . esc_url( rawurlencode( $plugin_outdate['Name'] ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $plugin_outdate['Name'] ); ?></a>
                                 <input type="hidden" id="wp_dismissed_plugin_<?php echo intval( $website->id ); ?>_<?php echo esc_attr( $plugin_name ); ?>" value="0"/>
                             </td>

@@ -77,7 +77,7 @@ class Cost_Tracker_Add_Edit {
         $params = $edit_id ? '&id=' . $edit_id : '';
         ?>
         <div class="ui alt segment" id="mainwp-module-cost-tracker-add-edit-tab" style="margin-bottom:0px">
-			<form id="mainwp-module-cost-tracker-settings-form" method="post" action="admin.php?page=CostTrackerAdd<?php echo $params; //phpcs:ignore -- escaped. ?>" class="ui form">
+            <form id="mainwp-module-cost-tracker-settings-form" method="post" action="admin.php?page=CostTrackerAdd<?php echo $params; //phpcs:ignore -- escaped. ?>" class="ui form">
                 <?php $this->render_add_edit_content( $edit_id ); ?>
             </form>
             <div class="ui clearing hidden divider"></div>
@@ -93,7 +93,7 @@ class Cost_Tracker_Add_Edit {
      *
      * @param int $edit_id Cost Id to edit.
      */
-	public function render_add_edit_content( $edit_id ) { //phpcs:ignore -- complex method.
+    public function render_add_edit_content( $edit_id ) { //phpcs:ignore -- complex method.
 
         $edit_cost                    = false;
         $selected_payment_type        = '';
@@ -191,7 +191,7 @@ class Cost_Tracker_Add_Edit {
                 }
                 ?>
                 <div class="ui red message" id="mainwp-module-cost-tracker-error-zone" style="display:none">
-                    <div class="error-message"></div>           
+                    <div class="error-message"></div>
                     <i class="ui close icon"></i>
                 </div>
                 <?php if ( $edit_cost ) : ?>
@@ -241,12 +241,12 @@ class Cost_Tracker_Add_Edit {
                     </div>
                     <div class="one wide middle aligned center aligned column">
                         <?php if ( $edit_cost ) { ?>
-							<?php echo Cost_Tracker_Admin::get_instance()->get_product_icon_display( $edit_cost, 'module_cost_tracker_upload_custom_icon_img_display' ); //phpcs:ignore --ok. ?>
+                            <?php echo Cost_Tracker_Admin::get_instance()->get_product_icon_display( $edit_cost, 'module_cost_tracker_upload_custom_icon_img_display' ); //phpcs:ignore --ok. ?>
                         <?php } else { ?>
                             <div style="display:inline-block;" id="module_cost_tracker_upload_custom_icon_img_display"></div> <?php // used for icon holder. ?>
                         <?php } ?>
                     </div>
-                    
+
                 </div>
                 <div class="ui grid field settings-field-indicator-cost-add-edit">
                     <label class="six wide column middle aligned">
@@ -295,12 +295,12 @@ class Cost_Tracker_Add_Edit {
                                 echo '<option value="' . esc_attr( $key ) . '" ' . esc_attr( $_select ) . '>' . esc_html( $val ) . '</option>';
                                 ?>
                             <?php endforeach; ?>
-                        </select>                       
+                        </select>
                     </div>
                 </div>
 
                 <?php $lifetime_selected = ( 'lifetime' === $selected_payment_type ) ? true : false; ?>
-                
+
                 <div class="ui grid field settings-field-indicator-cost-add-edit hide-if-lifetime-subscription-selected" <?php echo $lifetime_selected ? 'style="display:none;"' : ''; ?>>
                     <label class="six wide column middle aligned">
                     <?php
@@ -371,7 +371,7 @@ class Cost_Tracker_Add_Edit {
                         MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', ( 'plugin' !== $selected_product_type ) );
                     }
                     ?>
-                        
+
                     <?php esc_html_e( 'Category', 'mainwp' ); ?></label>
                     <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select the category for this cost.', 'mainwp' ); ?>
                     " data-inverted="" data-position="left center">
@@ -483,7 +483,7 @@ class Cost_Tracker_Add_Edit {
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="ui grid field settings-field-indicator-cost-add-edit">
                     <label class="six wide column middle aligned">
                     <?php
@@ -576,7 +576,7 @@ class Cost_Tracker_Add_Edit {
                     jQuery('#update_custom_icon_btn').removeAttr('disabled');
                     jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconItemId', iconObj.attr('iconItemId') ); // @see used by mainwp_upload_custom_types_icon().
                     jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconFileSlug', iconObj.attr('iconFileSlug') ); // @see used by mainwp_upload_custom_types_icon().
-                    
+
                     if (iconObj.attr('icon-src') != '') {
                         jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', iconObj.attr('icon-src'));
                         jQuery('#mainwp_delete_image_field').show();
@@ -629,7 +629,7 @@ class Cost_Tracker_Add_Edit {
     public function ajax_upload_product_icon() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_module_cost_tracker_upload_product_icon' );
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $iconfile_slug   = isset( $_POST['iconFileSlug'] ) ? sanitize_text_field( wp_unslash( $_POST['iconFileSlug'] ) ) : '';
         $delete          = isset( $_POST['delete'] ) ? intval( $_POST['delete'] ) : 0;
         $icon_product_id = isset( $_POST['iconItemId'] ) ? intval( $_POST['iconItemId'] ) : 0;
@@ -652,7 +652,7 @@ class Cost_Tracker_Add_Edit {
         }
 
         $output = isset( $_FILES['mainwp_upload_icon_uploader'] ) ? MainWP_System_Utility::handle_upload_image( Cost_Tracker_Settings::$icon_sub_dir, $_FILES['mainwp_upload_icon_uploader'], 0 ) : null;
-		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $uploaded_icon = 'NOTCHANGE';
         if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {

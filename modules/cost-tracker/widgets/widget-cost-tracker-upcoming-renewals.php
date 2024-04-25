@@ -215,13 +215,13 @@ class Cost_Tracker_Upcoming_Renewals {
                     ?>
                     <tr>
                         <td><a href="admin.php?page=CostTrackerAdd&id=<?php echo intval( $item->id ); ?>"><?php echo esc_html( $item->name ); ?></a></td>
-						<td><?php echo MainWP_Utility::format_date( $next_renewal ); //phpcs:ignore -- ok. ?></td>
+                        <td><?php echo MainWP_Utility::format_date( $next_renewal ); //phpcs:ignore -- ok. ?></td>
                         <td class="right aligned"><?php Cost_Tracker_Utility::cost_tracker_format_price( $item->price ); ?></td>
                     </tr>
                     <?php
                 }
                 ?>
-                </table>                
+                </table>
                 <?php
             }
             /**

@@ -108,7 +108,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <div class="ui center aligned segment">
                         <div class="ui labeled icon massive green button disabled">
                             <i class="upload icon"></i>
-                            <?php esc_html_e( 'Upload Now', 'mainwp' ); ?> 
+                            <?php esc_html_e( 'Upload Now', 'mainwp' ); ?>
                         </div>
                     </div>
 
@@ -286,9 +286,9 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-	public static function prepare_install() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function prepare_install() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $type = 'theme';
         if ( isset( $_POST['type'] ) && 'plugin' === $_POST['type'] ) {
@@ -374,7 +374,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public static function perform_install() {
         MainWP_Utility::end_session();
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         // Fetch info.
         $type      = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
         $post_data = array(
@@ -425,7 +425,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $output->results    = array();
         $output->other_data = array();
 
-		// phpcs:enable
+        // phpcs:enable
         /**
         * Action: mainwp_before_plugin_theme_install
         *
@@ -477,7 +477,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-	public static function prepare_upload() { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function prepare_upload() { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
 
         $output          = array();
@@ -485,7 +485,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         static::get_selected_sites( $output );
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $output['urls']  = array();
         $output['files'] = array();
         $files           = isset( $_POST['files'] ) && is_array( $_POST['files'] ) ? wp_unslash( $_POST['files'] ) : array();
@@ -494,7 +494,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $output['files'][] = esc_html( $file );
         }
         $output['urls'] = implode( '||', $output['urls'] );
-		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         /**
          * Prepare upload
@@ -522,7 +522,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             'sync_errors',
         );
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_POST['selected_by'] ) && 'site' === $_POST['selected_by'] ) {
             $selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
             // Get sites.
@@ -588,7 +588,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 }
             }
         }
-		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
     }
 
     /**
@@ -602,7 +602,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function perform_upload() {
         MainWP_Utility::end_session();
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
         // Fetch info.
         $post_data = array(
@@ -626,7 +626,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $site_id          = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : 0;
         $website          = MainWP_DB::instance()->get_website_by_id( $site_id );
 
-		// phpcs:enable
+        // phpcs:enable
 
         // to support demo data.
         if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
@@ -741,7 +741,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 
             $result = $results[1];
-			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+            // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
             $information = MainWP_System_Utility::get_child_response( base64_decode( $result ) );
             if ( is_array( $information ) ) {
                 if ( isset( $information['other_data']['install_items'] ) ) {

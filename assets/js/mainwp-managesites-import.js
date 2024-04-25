@@ -13,7 +13,7 @@ jQuery(function(){
     import_total = jQuery('#mainwp_managesites_total_import').val();
 
     jQuery(document).on('click', '#mainwp_managesites_btn_import', function () {
-        if (import_stop_by_user == false) {
+        if (!import_stop_by_user) {
             import_stop_by_user = true;
             jQuery('#mainwp_managesites_import_logging .log').append(__('Paused import by user.') + "\n");
             jQuery('#mainwp_managesites_btn_import').val(__('Continue'));
@@ -45,7 +45,7 @@ jQuery(function(){
 });
 
 let mainwp_managesites_import_sites = function () {
-    if (import_stop_by_user == true)
+    if (import_stop_by_user)
         return;
 
     import_current++;

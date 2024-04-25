@@ -816,7 +816,7 @@ let manage_plugins_upgrade_int = function (slug, websiteId) {
         return manage_plugins_upgrade_continueAfterBackup(slug, websiteId, websiteHolder);
     };
 
-    if (mainwpParams['disable_checkBackupBeforeUpgrade'] == true) {
+    if (mainwpParams['disable_checkBackupBeforeUpgrade']) {
         _callbackAfterBackup();
         return false;
     }
@@ -952,10 +952,10 @@ let manage_themes_upgrade_continueAfterBackup = function( slug, websiteId, websi
 let manage_themes_upgrade_int = function (slug, websiteId) {
     let websiteHolder = jQuery('.mainwp-manage-theme-item-website[theme-slug="' + slug + '"][site-id="' + websiteId + '"]');
     websiteHolder.find('.column.update-column').html('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
-    
+
     let _callbackAfterBackup = manage_themes_upgrade_continueAfterBackup( slug, websiteId, websiteHolder );
 
-    if (mainwpParams['disable_checkBackupBeforeUpgrade'] == true) {
+    if (mainwpParams['disable_checkBackupBeforeUpgrade']) {
         _callbackAfterBackup();
         return false;
     }
@@ -1008,7 +1008,7 @@ let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAf
                 if (response['result'] && response['result']['sites'] != undefined) {
                     siteFeedback = [];
                     for (let currSiteId in response['result']['sites']) {
-                        if (response['result']['sites'][currSiteId] == false) {
+                        if (!response['result']['sites'][currSiteId]) {
                             siteFeedback.push(currSiteId);
                         }
                     }

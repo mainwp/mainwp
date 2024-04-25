@@ -386,26 +386,26 @@ class MainWP_Format { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
         </style>
     </head>
-    <body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0" style="-webkit-text-size-adjust: none;margin: 0;padding: 0;background-color: #FAFAFA;width: 100% !important;">
+    <body offset="0" style="-webkit-text-size-adjust: none;margin: 0;padding: 0;background-color: #FAFAFA;width: 100% !important;">
     <center>
-        <table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%" id="backgroundTable" style="margin: 0;padding:0;background-color: #FAFAFA;height: 100% !important;width: 100% !important;">
+        <table id="backgroundTable" style="margin 0;border-spacing:0;width:100%;height:100%;padding:0;background-color: #FAFAFA;height: 100% !important;width: 100% !important;">
             <tr>
-                <td align="center" valign="top" style="border-collapse: collapse;">
+                <td style="text-align:center;border-collapse: collapse;vertical-align:top;">
 
                         <!-- // Begin: Template Pre-header \\ -->
 
-                        <table border="0" cellpadding="10" cellspacing="0" width="600" id="templatePreheader" style="background-color: #FAFAFA;">
+                        <table id="templatePreheader" style="padding:10px;border-spacing:0;width:600px;background-color: #FAFAFA;">
                             <tr>
-                                <td valign="top" class="preheaderContent" style="border-collapse: collapse;">
+                                <td class="preheaderContent" style="border-collapse: collapse;vertical-align:top;">
 
                                 <!-- // Begin: Standard Preheader \ -->
 
-                                    <table border="0" cellpadding="10" cellspacing="0" width="100%">
+                                    <table style="border:0;padding:10px;border-spacing:0;width:100%">
                                         <tr>
-                                            <td valign="top" style="border-collapse: collapse;">
+                                            <td style="border-collapse: collapse;vertical-align:top;">
                                                 <div style="color: #505050;font-family: Arial;font-size: 10px;line-height: 100%;text-align: left;"></div>
                                             </td>
-                                            <td valign="top" width="190" style="border-collapse: collapse;">
+                                            <td style="border-collapse: collapse;vertical-align:top;width:190px;">
                                                 <div style="color: #505050;font-family: Arial;font-size: 10px;line-height: 100%;text-align: left;"></div>
                                             </td>
                                         </tr>
@@ -419,13 +419,13 @@ class MainWP_Format { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
                         <!-- // End: Template Preheader \\ -->
 
-                        <table border="0" cellpadding="0" cellspacing="0" width="600" id="templateContainer" style="border: 1px solid #DDDDDD;background-color: #FFFFFF;">
+                        <table id="templateContainer" style="width:600px;padding:0;border-spacing:0;border: 1px solid #DDDDDD;background-color: #FFFFFF;">
                             <tr>
-                                <td align="center" valign="top" style="border-collapse: collapse;">
+                                <td style="text-align:center;vertical-align:top;border-collapse: collapse;">
 
                                         <!-- // Begin: Template Header \\ -->
 
-                                        <table border="0" cellpadding="0" cellspacing="0" width="600" id="templateHeader" style="background-color: #FFFFFF;border-bottom: 0;">
+                                        <table id="templateHeader" style="width:600px;padding:0;border-spacing:0;background-color: #FFFFFF;border-bottom: 0;">
                                             <tr>
                                                 <td class="headerContent" style="border-collapse: collapse;color: #202020;font-family: Arial;font-size: 34px;font-weight: bold;line-height: 100%;padding: 0;text-align: center;vertical-align: middle;">
 
@@ -444,13 +444,13 @@ class MainWP_Format { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td align="center" valign="top" style="border-collapse: collapse;">
+                                    <td style="align:center;vertical-align:top;border-collapse: collapse;">
 
                                         <!-- // Begin: Template Body \\ -->
 
-                                        <table border="0" cellpadding="0" cellspacing="0" width="600" id="templateBody">
+                                        <tableid="templateBody" style="border:0;padding:0;border-spacing:0;width:600px;">
                                             <tr>
-                                                <td valign="top" class="bodyContent" style="border-collapse: collapse;background-color: #FFFFFF;">
+                                                <td class="bodyContent" style="vertical-align:top;border-collapse: collapse;background-color: #FFFFFF;">
 
                                                     <!-- // Begin: Standard Content \\ -->
 EOT;
@@ -458,9 +458,9 @@ EOT;
             $title_content = ! empty( $title ) ? '<b style="color: rgb(127, 177, 0); font-family: Helvetica, Sans; font-size: medium; line-height: normal;"> ' . $title . ' </b><br>' : '';
 
             $mail_send['body'] = <<<EOT
-                                                    <table border="0" cellpadding="20" cellspacing="0" width="100%">
+                                                    <table style="vertical-align:top;border:0;padding:20px;border-spacing:0;width:100%;">
                                                         <tr>
-                                                            <td valign="top" style="border-collapse: collapse;">
+                                                            <td style="vertical-align:top;border-collapse: collapse;">
                                                                 <div style="color: #505050;font-family: Arial;font-size: 14px;line-height: 150%;text-align: left;"> Hi, <br><br>
                                                                 {$title_content}
                                                                 <br>{$body}<br>
@@ -482,17 +482,17 @@ EOT;
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td align="center" valign="top" style="border-collapse: collapse;">
+                                    <td style="text-align:center;vertical-align:top;border-collapse: collapse;">
 
                                         <!-- // Begin: Template Footer \\ -->
 
-                                        <table border="0" cellpadding="10" cellspacing="0" width="600" id="templateFooter" style="background-color: #1d1b1c;border-top: 4px solid #7fb100;">
+                                        <table id="templateFooter" style="padding:10px;border-spacing:0;width:600px;background-color: #1d1b1c;border-top: 4px solid #7fb100;">
                                             <tr>
-                                                <td valign="top" class="footerContent" style="border-collapse: collapse;">
+                                                <td class="footerContent" style="vertical-align:top;border-collapse: collapse;">
 
                                                     <!-- // Begin: Standard Footer \\ -->
 
-                                                    <table border="0" cellpadding="10" cellspacing="0" width="100%">
+                                                    <table width="100%" style="border:0;padding:10px;border-spacing:0;width:100%;">
                                                         <tr>
                                                             <td valign="middle" id="social" style="border-collapse: collapse;background-color: #1d1b1c;border: 0;">
                                                                 <div style="color: #b8b8b8;font-family: Arial;font-size: 12px;line-height: 125%;text-align: center;">
@@ -511,7 +511,7 @@ EOT;
                                                             </td>
                                                         </tr>
                                                         <tr>
-                                                            <td valign="top" style="border-collapse: collapse;">
+                                                            <td style="vertical-align:top;border-collapse: collapse;">
                                                                 <div style="color: #b8b8b8;font-family: Arial;font-size: 12px;line-height: 125%;text-align: center;"><div style="text-align: left;color: #b8b8b8;font-family: Arial;font-size: 12px;line-height: 125%;"><em>Copyright &copy; {$current_year} MainWP, All rights reserved.</em><br></div></div>
                                                             </td>
                                                         </tr>

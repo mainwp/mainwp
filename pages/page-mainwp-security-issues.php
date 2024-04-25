@@ -164,13 +164,13 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         <span id="versions_loading"><i class="notched circle big loading icon"></i></span>
                         <span id="versions_ok" style="display: none;"><i class="big check circle green icon"></i></span>
                         <span id="versions_nok" style="display: none;"><i class="big times circle red icon"></i></span>
-                    </td>                   
+                    </td>
                     <td>
                         <strong id="versions-status-nok"><?php esc_html_e( 'Scripts and Stylesheets version information has not been removed from URLs', 'mainwp' ); ?></strong>
                         <strong id="versions-status-ok" style="display: none;"><?php esc_html_e( 'Scripts and Stylesheets version information has been removed from URLs', 'mainwp' ); ?></strong>
                         <br />
                         <em><?php esc_html_e( 'After fixing this issue, versions will be removed', 'mainwp' ); ?></em>
-                    </td>                   
+                    </td>
                     <td>
                         <span id="versions_fix" style="display: none"><a href="#" class="ui mini green fluid button"><?php esc_html_e( 'Fix', 'mainwp' ); ?></a></span>
                         <span id="versions_unfix" style="display: none"><a href="#" class="ui mini fluid button"><?php esc_html_e( 'Unfix', 'mainwp' ); ?></a></span>
@@ -181,13 +181,13 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         <span id="registered_versions_loading"><i class="notched circle big loading icon"></i></span>
                         <span id="registered_versions_ok" style="display: none;"><i class="big check circle green icon"></i></span>
                         <span id="registered_versions_nok" style="display: none;"><i class="big times circle red icon"></i></span>
-                    </td>                   
+                    </td>
                     <td>
                         <strong id="registered_versions-status-nok"><?php esc_html_e( 'Scripts and Stylesheets registered version information has not been removed from URLs', 'mainwp' ); ?></strong>
                         <strong id="registered_versions-status-ok" style="display: none;"><?php esc_html_e( 'Scripts and Stylesheets registered version information has been removed from URLs', 'mainwp' ); ?></strong>
                         <br />
                         <em><?php esc_html_e( 'After fixing this issue, registered versions will be removed', 'mainwp' ); ?></em>
-                    </td>                   
+                    </td>
                     <td>
                         <span id="registered_versions_fix" style="display: none"><a href="#" class="ui mini fluid green button"><?php esc_html_e( 'Fix', 'mainwp' ); ?></a></span>
                         <span id="registered_versions_unfix" style="display: none"><a href="#" class="ui mini fluid button"><?php esc_html_e( 'Unfix', 'mainwp' ); ?></a></span>
@@ -235,7 +235,7 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         <strong id="admin-status-ok" style="display: none;"><?php esc_html_e( 'Administrator username is not "admin"', 'mainwp' ); ?></strong>
                         <br />
                         <em><?php esc_html_e( 'You have to change this yourself. If this user was used as your MainWP Secure Link Admin, you will need to change your Administrator Username in the MainWP Dashboard for the site.', 'mainwp' ); ?></em>
-                    </td>                   
+                    </td>
                     <td></td>
                 </tr>
 
@@ -250,7 +250,7 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         <strong id="wp_uptodate-status-ok" style="display: none;"><?php esc_html_e( 'WordPress is up to date.', 'mainwp' ); ?></strong>
                         <br />
                         <em><?php esc_html_e( 'Checks if WP is up to date. You have to change this yourself.', 'mainwp' ); ?></em>
-                    </td>                   
+                    </td>
                     <td></td>
                 </tr>
                 <tr>
@@ -264,7 +264,7 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         <strong id="phpversion_matched-status-ok" style="display: none;"><?php esc_html_e( 'PHP version matches the WordPress requirement', 'mainwp' ); ?></strong>
                         <br />
                         <em><?php esc_html_e( 'Checks if PHP version matches the WP requirement. You have to change this yourself.', 'mainwp' ); ?></em>
-                    </td>                   
+                    </td>
                     <td></td>
                 </tr>
 
@@ -279,7 +279,7 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         <strong id="sslprotocol-status-ok" style="display: none;"><?php esc_html_e( 'SSL protocol is in place', 'mainwp' ); ?></strong>
                         <br />
                         <em><?php esc_html_e( 'Checks if SSL protocol is in place. You have to change this yourself.', 'mainwp' ); ?></em>
-                    </td>                   
+                    </td>
                     <td></td>
                 </tr>
 
@@ -294,7 +294,7 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         <strong id="debug_disabled-status-ok" style="display: none;"><?php esc_html_e( 'WP Config debugging is disabled', 'mainwp' ); ?></strong>
                         <br />
                         <em><?php esc_html_e( 'Checks if WP Config debugging is disabled. You have to change this yourself.', 'mainwp' ); ?></em>
-                    </td>                   
+                    </td>
                     <td></td>
                 </tr>
 
@@ -304,7 +304,7 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         ?>
             <tfoot class="full-width">
                 <tr>
-                <th colspan="3">
+                <th scope="col" colspan="3">
                     <?php if ( ! $is_demo ) : ?>
                             <input type="button" id="securityIssues_fixAll" class="ui green button right floated" value="<?php esc_html_e( 'Fix All', 'mainwp' ); ?>"/>
                             <input type="button" id="securityIssues_refresh" class="ui green basic button" value="<?php esc_html_e( 'Refresh', 'mainwp' ); ?>"/>
@@ -313,7 +313,7 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     </th>
                 </tr>
             </tfoot>
-        </table>        
+        </table>
         <?php
     }
 

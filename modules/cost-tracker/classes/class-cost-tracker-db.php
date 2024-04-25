@@ -102,7 +102,8 @@ class Cost_Tracker_DB extends MainWP_Install {
 
         if ( empty( $currentVersion ) ) {
             $tbl .= ',
-PRIMARY KEY  (`id`)  '; }
+PRIMARY KEY  (`id`)  ';
+        }
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
 

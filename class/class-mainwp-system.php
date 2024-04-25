@@ -130,7 +130,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         do_action( 'mainwp_system_init' );
 
         // includes rest api work.
-        require 'class-mainwp-rest-api.php';
+        require_once 'class-mainwp-rest-api.php';
         Rest_Api::instance()->init();
 
         if ( is_admin() ) {

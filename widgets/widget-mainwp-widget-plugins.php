@@ -39,7 +39,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Utilizes WP API to grab plugin icons, last_updated, active_installs
      */
     public function prepare_icons() {
-        include ABSPATH . 'wp-admin/includes/plugin-install.php';
+        include_once ABSPATH . 'wp-admin/includes/plugin-install.php';
 
         $args = array(
             'fields' => array(

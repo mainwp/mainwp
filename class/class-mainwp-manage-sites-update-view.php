@@ -334,7 +334,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                             $wpcore_update_disabled_by = MainWP_System_Utility::disabled_wpcore_update_by( $website );
                         }
                         ?>
-                        <?php if ( ( ! empty( $wp_upgrades ) ) && ! ( '' !== $website->sync_errors ) ) : ?>
+                        <?php if ( ( ! empty( $wp_upgrades ) ) && '' === $website->sync_errors ) : ?>
                         <tr class="mainwp-wordpress-update" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" updated="<?php echo ! empty( $wp_upgrades ) && empty( $wpcore_update_disabled_by ) ? '0' : '1'; ?>">
                             <td>
                                 <?php if ( ! empty( $wp_upgrades ) ) : ?>

@@ -251,7 +251,7 @@ let managesitesShowBusyFunction;
 let managesitesShowBusyTimeout;
 
 let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
-    if (mainwpParams['backup_before_upgrade'] == false) {
+    if (!mainwpParams['backup_before_upgrade']) {
         if (managesitesContinueAfterBackup != undefined)
             managesitesContinueAfterBackup();
         return;
@@ -292,7 +292,7 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
                 if (response['result'] && response['result']['sites'] != undefined) {
                     siteFeedback = [];
                     for (let currSiteId in response['result']['sites']) {
-                        if (response['result']['sites'][currSiteId] == false) {
+                        if (!response['result']['sites'][currSiteId]) {
                             siteFeedback.push(currSiteId);
                         }
                     }
@@ -598,7 +598,7 @@ let managesites_wordpress_upgrade_all_update_done = function () {
                 // start next update step.
                 mainwp_update_pluginsthemes(nextStep, selectedIds);
             }, 1000);
-            return; // do not close the popup.          
+            return; // do not close the popup.
         }
 
         setTimeout(function () {

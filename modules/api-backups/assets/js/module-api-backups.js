@@ -30,7 +30,7 @@ mainwp_api_backups_do_backups = function (pObj) {
         jQuery('#mainwp-api-backups-message-zone').addClass('red').show();
         jQuery('#mainwp-api-backups-message-zone .content .message')
             .html('Please select at least one website.')
-        ;
+            ;
         return;
     }
 
@@ -57,8 +57,8 @@ mainwp_api_backups_do_backups_specific_next = function (selector) {
         // Show message.
         jQuery('#mainwp-api-backups-message-zone').removeClass('red').addClass('green').show();
         jQuery('#mainwp-api-backups-message-zone .content .message')
-            .html( 'API Backup requests sent. Please allow some time for the backup to complete, then Refresh Available Backups.')
-        ;
+            .html('API Backup requests sent. Please allow some time for the backup to complete, then Refresh Available Backups.')
+            ;
     }
 
 
@@ -98,9 +98,7 @@ mainwp_api_backups_do_backups_specific = function (pObj, bulk, selector) {
         let succ_msg = '';
         let rsp = '';
 
-        //console.log ( response );
-
-        if (response && response.success == false) {
+        if (response && !response.success) {
             rsp = response.data;
             console.log(rsp);
             // Check for gridPane error..

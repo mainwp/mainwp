@@ -893,13 +893,12 @@ let updatesoverview_check_to_continue_updates = function () {
                 loc_href += '&slug=' + continueUpdatesSlug;
             }
         }
+    } else if (loc_href.indexOf("page=mainwp_tab") != -1) {
+        loc_href = 'admin.php?page=mainwp_tab';
     } else {
-        if (loc_href.indexOf("page=mainwp_tab") != -1) {
-            loc_href = 'admin.php?page=mainwp_tab';
-        } else {
-            loc_href = 'admin.php?page=UpdatesManage';
-        }
+        loc_href = 'admin.php?page=UpdatesManage';
     }
+
     setTimeout(function () {
         bulkTaskRunning = false;
         mainwpPopup('#mainwp-sync-sites-modal').close(true);
@@ -1052,7 +1051,7 @@ let updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, n
 
 let currentThemeSlugToUpgrade;
 let websitesThemeSlugsToUpgrade;
-let updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelected) { // NOSONAR - complexity. 
+let updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelected) { // NOSONAR - complexity.
     if (bulkTaskRunning)
         return;
 
@@ -1174,12 +1173,10 @@ let updatesoverview_themes_get_global_upgrade_all = function (groupId, updatesSe
             updates_please_select_items_notice();
             return false;
         }
+    } else if (typeof groupId !== 'undefined' && false !== groupId) {
+        foundChildren = jQuery('#update_wrapper_theme_upgrades_group_' + groupId).find('tr.mainwp-theme-update[updated="0"]');
     } else {
-        if (typeof groupId !== 'undefined' && false !== groupId) {
-            foundChildren = jQuery('#update_wrapper_theme_upgrades_group_' + groupId).find('tr.mainwp-theme-update[updated="0"]');
-        } else {
-            foundChildren = jQuery('#themes-updates-global').find('table tr[updated="0"]');
-        }
+        foundChildren = jQuery('#themes-updates-global').find('table tr[updated="0"]');
     }
     return foundChildren;
 }
@@ -1869,7 +1866,7 @@ let updatesoverview_upgrade_int_flow = function (params) {
                             pErrorMessage = result;
                         }
                         else {
-                            let res = response.result;   // result is an object     
+                            let res = response.result;   // result is an object
                             let res_error = response.result_error;
                             if (res[encodeURIComponent(sid)]) {
                                 websiteHolder.attr('updated', 1);
@@ -2871,19 +2868,15 @@ let updatesoverview_group_upgrade_plugintheme_all = function (what, id, noCheck,
             jQuery("#wp_" + pWhat + "_upgrades_" + pId + '_group_' + groupId + " tr[updated=0]").each(function () {
                 let slug = jQuery(this).attr(slug_att);
                 if (typeof updatesSelected !== 'undefined' && updatesSelected) {
-                    if (jQuery(this).find('.child.checkbox').checkbox('is checked')) {
-                        if (slug) {
-                            list.push(slug);
-                        }
+                    if (jQuery(this).find('.child.checkbox').checkbox('is checked') && slug ) {
+                        list.push(slug);
                     }
                     if (list.length == 0) {
                         updates_please_select_items_notice();
                         return false;
                     }
-                } else {
-                    if (slug) {
-                        list.push(slug);
-                    }
+                } else if (slug) {
+                    list.push(slug);
                 }
             });
 
@@ -3037,7 +3030,7 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
 
 // for semantic ui checkboxes
 jQuery(function () {
-    mainwp_table_check_columns_init(); // call as function to support tables with ajax, may check and call at extensions    
+    mainwp_table_check_columns_init(); // call as function to support tables with ajax, may check and call at extensions
     mainwp_master_checkbox_init(jQuery);
 });
 
@@ -3118,7 +3111,7 @@ window.mainwp_table_check_columns_init = function () {
         onChecked: function () {
             let $table = jQuery(this).closest('table');
             if ($table.parent().hasClass('dt-scroll-head')) {
-                $table = jQuery(this).closest('.dt-scroll'); // to compatible with datatable scroll            
+                $table = jQuery(this).closest('.dt-scroll'); // to compatible with datatable scroll
             }
 
             if ($table.length > 0) {

@@ -72,7 +72,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
      * @global string $wp_version
      */
     public function prepare_items() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-        include ABSPATH . 'wp-admin/includes/plugin-install.php';
+        include_once ABSPATH . 'wp-admin/includes/plugin-install.php';
 
         global $tab; // required.
 

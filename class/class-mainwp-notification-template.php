@@ -176,7 +176,7 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
          */
         do_action( 'mainwp_before_template_part', $template_name, $located, $args );
 
-        include $located;
+        include_once $located;
 
         /**
          * Action: mainwp_after_template_part

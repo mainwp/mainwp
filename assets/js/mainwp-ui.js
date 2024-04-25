@@ -25,7 +25,7 @@ function read_current_url() {
     return mainwp_current_url;
 }
 function load_url(href, obj, e) {
-    let page = href.match(/page=/i) ? href.replace(/^.*\?page=([^&]+).*?$/i, '$1') : ''; // NOSONAR - safe with run time error. 
+    let page = href.match(/page=/i) ? href.replace(/^.*\?page=([^&]+).*?$/i, '$1') : ''; // NOSONAR - safe with run time error.
     if (page || href == 'index.php') {
         if (!jQuery('body').hasClass('mainwp-ui-page')) {
             return;
@@ -173,9 +173,8 @@ window.mainwp_confirm = function (msg, confirmed_callback, cancelled_callback, u
                         return;
                     }
                 }
-            } else {
-                if (confirmed_callback && typeof confirmed_callback == 'function')
-                    confirmed_callback();
+            } else if (confirmed_callback && typeof confirmed_callback == 'function') {
+                confirmed_callback();
             }
         },
         onDeny() {
@@ -301,7 +300,7 @@ let mainwp_ss_select = function (me, val) {
             }
         });
     }
-    if (val == true) {
+    if (val) {
         jQuery('.mainwp-ss-select').hide();
         jQuery('.mainwp-ss-deselect').show();
     } else {
@@ -327,7 +326,7 @@ let mainwp_ss_select_disconnected = function (me, val) {
             }
         });
     }
-    if (val == true) {
+    if (val) {
         jQuery('.mainwp-ss-select-disconnected').hide();
         jQuery('.mainwp-ss-deselect-disconnected').show();
     } else {
@@ -664,7 +663,7 @@ let mainwp_upload_custom_icon = function (iconObj) {
     let slug = jQuery(iconObj).attr('item-slug');
 
     let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked');
-    
+
     let msg = __('Updating the icon. Please wait...');
     mainwp_set_message_zone('#mainwp-message-zone-upload', '<i class="notched circle loading icon"></i> ' + msg, '');
     jQuery('#update_custom_icon_btn').attr('disabled', 'disabled');
@@ -690,11 +689,9 @@ let mainwp_upload_custom_icon = function (iconObj) {
                         msg = __('Loading...');
                         mainwp_fetch_plugins();
                     }
-                } else {
-                    if (jQuery('#mainwp_show_themes').length > 0) {
-                        msg = __('Loading...');
-                        mainwp_fetch_themes();
-                    }
+                } else if (jQuery('#mainwp_show_themes').length > 0) {
+                    msg = __('Loading...');
+                    mainwp_fetch_themes();
                 }
                 if (msg !== '') {
                     mainwp_set_message_zone('#mainwp-message-zone-upload', '<i class="notched circle loading icon"></i> ' + __('Loading...'), '');

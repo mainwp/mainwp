@@ -8,7 +8,7 @@ jQuery(function () {
   // Delete single client.
   jQuery(document).on('click', '.client_deleteitem', function () {
     let confirmation = confirm('Are you sure you want to proceed?');
-    if (confirmation == true) {
+    if (confirmation) {
       let parent = jQuery(this).closest('div.menu');
       let rowElement = jQuery(this).parents('tr');
       let clientid = parent.attr('clientid');
@@ -155,7 +155,7 @@ let mainwp_manageclients_doaction_process = function (action) {
 
 
 let mainwp_manageclients_bulk_remove_next = function () {
-  while ((checkedBox = jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulkManageClientsCurrentThreads < bulkManageClientsMaxThreads)) { // NOSONAR -- modified out side the function.  
+  while ((checkedBox = jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulkManageClientsCurrentThreads < bulkManageClientsMaxThreads)) { // NOSONAR -- modified out side the function.
     mainwp_manageclients_bulk_remove_specific(checkedBox);
   }
   if ((bulkManageClientsTotal > 0) && (bulkManageClientsFinished == bulkManageClientsTotal)) { // NOSONAR -- modified out side the function.
@@ -208,7 +208,7 @@ let mainwp_manageclients_bulk_remove_specific = function (pCheckedBox) {
 
 let manageclients_bulk_init = function () {
   mainwp_set_message_zone('#mainwp-message-zone-client');
-  if (bulkManageClientsTaskRunning == false) {
+  if (!bulkManageClientsTaskRunning) {
     bulkManageClientsMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
     bulkManageClientsCurrentThreads = 0;
     bulkManageClientsTotal = 0;
@@ -396,12 +396,10 @@ mainwp_clients_update_custom_field = function (me) {
     if (response) {
       if (response.success) {
         window.location.href = location.href;
+      } else if (response.error) {
+        parent.find('.ui.message').html(response.error).show().removeClass('yellow').addClass('red');
       } else {
-        if (response.error) {
-          parent.find('.ui.message').html(response.error).show().removeClass('yellow').addClass('red');
-        } else {
-          parent.find('.ui.message').html('Undefined error occurred. Please try again.').show().removeClass('yellow').addClass('red');
-        }
+        parent.find('.ui.message').html('Undefined error occurred. Please try again.').show().removeClass('yellow').addClass('red');
       }
     } else {
       parent.find('.ui.message').html('Undefined error occurred. Please try again.').show().removeClass('yellow').addClass('red');

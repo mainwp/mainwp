@@ -1,16 +1,16 @@
 
 (function ($) {
     if (!window.mainwpPopup) {
-        mainwpPopup = function (selector) {
+        window.mainwpPopup = function (selector) {
             let popup = mainwpListPopups.getItem(selector);
             if (popup === null) {
-                popup = new mainwpInstancePopup();
+                popup = new Mainwp_InstancePopup();
                 popup.initWrapper(selector);
                 mainwpListPopups.pushItem(popup);
             }
             return popup;
         };
-        mainwpListPopups = {
+        let mainwpListPopups = {
             popupsQueue: [],
             pushItem: function (popup) {
                 if ('object' !== typeof popup)
@@ -31,7 +31,7 @@
                 return val;
             }
         };
-        mainwpInstancePopup = function () {
+        let Mainwp_InstancePopup = function () {
             let _instancePopup = {
                 overlayId: null,
                 $overlayElementId: null,

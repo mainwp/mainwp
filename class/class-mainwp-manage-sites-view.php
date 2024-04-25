@@ -806,6 +806,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         $website_url = MainWP_Utility::remove_http_www_prefix( $website->url, true );
 
+        $text_use_global = esc_html__( 'Use global setting', 'mainwp' );
+        $style_checked   = 'checked="true"';
         ?>
         <div class="ui segment mainwp-edit-site-<?php echo intval( $website->id ); ?>" id="mainwp-edit-site">
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-edit-site-info-message' ) ) { ?>
@@ -1044,7 +1046,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <select class="ui dropdown" id="mainwp_backup_before_upgrade" name="mainwp_backup_before_upgrade">
                             <option <?php echo 1 === (int) $website->backup_before_upgrade ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'Yes', 'mainwp' ); ?></option>
                             <option <?php echo 0 === (int) $website->backup_before_upgrade ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
-                            <option <?php echo 2 === (int) $website->backup_before_upgrade ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+                            <option <?php echo 2 === (int) $website->backup_before_upgrade ? 'selected' : ''; ?> value="2"><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
                         </select>
                     </div>
                 </div>
@@ -1056,7 +1058,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     ?>
                     </label>
                     <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want Suspend this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <input type="checkbox" name="mainwp_suspended_site" id="mainwp_suspended_site" <?php echo 1 === (int) $website->suspended ? 'checked="true"' : ''; ?>><label for="mainwp_suspended_site"></label>
+                        <input type="checkbox" name="mainwp_suspended_site" id="mainwp_suspended_site" <?php echo 1 === (int) $website->suspended ? $style_checked : ''; //phpcs:ignore -- ok. ?>><label for="mainwp_suspended_site"></label>
                     </div>
                 </div>
                 <div class="ui grid field settings-field-indicator-edit-site-general">
@@ -1067,7 +1069,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     ?>
                     </label>
                     <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want MainWP to automatically update WP Core on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <input type="checkbox" name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" <?php echo 1 === (int) $website->automatic_update ? 'checked="true"' : ''; ?>><label for="mainwp_automaticDailyUpdate"></label>
+                        <input type="checkbox" name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" <?php echo 1 === (int) $website->automatic_update ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_automaticDailyUpdate"></label>
                     </div>
                 </div>
                 <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
@@ -1079,7 +1081,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         ?>
                         </label>
                         <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore WP Core updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                            <input type="checkbox" name="mainwp_is_ignoreCoreUpdates" id="mainwp_is_ignoreCoreUpdates" <?php echo 1 === (int) $website->is_ignoreCoreUpdates ? 'checked="true"' : ''; ?>><label for="mainwp_is_ignoreCoreUpdates"></label>
+                            <input type="checkbox" name="mainwp_is_ignoreCoreUpdates" id="mainwp_is_ignoreCoreUpdates" <?php echo 1 === (int) $website->is_ignoreCoreUpdates ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_is_ignoreCoreUpdates"></label>
                         </div>
                     </div>
                     <div class="ui grid field settings-field-indicator-edit-site-general">
@@ -1090,7 +1092,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         ?>
                         </label>
                         <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore plugin updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                            <input type="checkbox" name="mainwp_is_ignorePluginUpdates" id="mainwp_is_ignorePluginUpdates" <?php echo 1 === (int) $website->is_ignorePluginUpdates ? 'checked="true"' : ''; ?>><label for="mainwp_is_ignorePluginUpdates"></label>
+                            <input type="checkbox" name="mainwp_is_ignorePluginUpdates" id="mainwp_is_ignorePluginUpdates" <?php echo 1 === (int) $website->is_ignorePluginUpdates ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_is_ignorePluginUpdates"></label>
                         </div>
                     </div>
                     <div class="ui grid field settings-field-indicator-edit-site-general">
@@ -1101,7 +1103,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         ?>
                         </label>
                         <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore theme updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                            <input type="checkbox" name="mainwp_is_ignoreThemeUpdates" id="mainwp_is_ignoreThemeUpdates" <?php echo 1 === (int) $website->is_ignoreThemeUpdates ? 'checked="true"' : ''; ?>><label for="mainwp_is_ignoreThemeUpdates"></label>
+                            <input type="checkbox" name="mainwp_is_ignoreThemeUpdates" id="mainwp_is_ignoreThemeUpdates" <?php echo 1 === (int) $website->is_ignoreThemeUpdates ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_is_ignoreThemeUpdates"></label>
                         </div>
                     </div>
                 <?php } ?>
@@ -1131,7 +1133,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     ?>
                     </label>
                     <div class="six wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring" data-tooltip="<?php esc_attr_e( 'Enable if you want to monitoring this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <input type="checkbox" name="mainwp_managesites_edit_disableChecking" id="mainwp_managesites_edit_disableChecking" <?php echo 0 === (int) $website->disable_status_check ? 'checked="true"' : ''; ?>><label for="mainwp_managesites_edit_disableChecking"></label>
+                        <input type="checkbox" name="mainwp_managesites_edit_disableChecking" id="mainwp_managesites_edit_disableChecking" <?php echo 0 === (int) $website->disable_status_check ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_managesites_edit_disableChecking"></label>
                     </div>
                 </div>
                 <?php
@@ -1155,10 +1157,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             <option value="360" <?php echo 360 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Every 6 hours', 'mainwp' ); ?></option>
                             <option value="720" <?php echo 720 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Twice a day', 'mainwp' ); ?></option>
                             <option value="1440" <?php echo 1440 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Once a day', 'mainwp' ); ?></option>
-                            <option value="0" <?php echo 0 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+                            <option value="0" <?php echo 0 === $check_interval ? 'selected' : ''; ?>><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
                         </select>
                     </div>
-                </div>              
+                </div>
                 <div class="ui grid field settings-field-indicator-edit-site-uptime" <?php echo 1 === (int) $website->disable_status_check ? $hide_style : ''; //phpcs:ignore -- ok.?> hide-element="monitoring">
                     <label class="six wide column middle aligned">
                     <?php
@@ -1181,9 +1183,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_disable_health_check', (int) $website->disable_health_check );
                     esc_html_e( 'Enable Child Site Health monitoring (optional)', 'mainwp' );
                     ?>
-                    </label>                    
+                    </label>
                     <div class="six wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="health-monitoring" data-tooltip="<?php esc_attr_e( 'Enable if you want to monitoring this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <input type="checkbox" name="mainwp_managesites_edit_disableSiteHealthMonitoring" id="mainwp_managesites_edit_disableSiteHealthMonitoring" <?php echo 0 === (int) $website->disable_health_check ? 'checked="true"' : ''; ?>><label for="mainwp_managesites_edit_disableSiteHealthMonitoring"></label>
+                        <input type="checkbox" name="mainwp_managesites_edit_disableSiteHealthMonitoring" id="mainwp_managesites_edit_disableSiteHealthMonitoring" <?php echo 0 === (int) $website->disable_health_check ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_managesites_edit_disableSiteHealthMonitoring"></label>
                     </div>
                 </div>
                 <?php
@@ -1200,7 +1202,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <select name="mainwp_managesites_edit_healthThreshold" id="mainwp_managesites_edit_healthThreshold" class="ui dropdown">
                             <option value="80" <?php echo 80 === $healthThreshold ? 'selected' : ''; ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
                             <option value="100" <?php echo 100 === $healthThreshold ? 'selected' : ''; ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
-                            <option value="0" <?php echo 0 === $healthThreshold ? 'selected' : ''; ?>><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+                            <option value="0" <?php echo 0 === $healthThreshold ? 'selected' : ''; ?>><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
                         </select>
                     </div>
                 </div>              
@@ -1218,7 +1220,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <select class="ui dropdown" id="mainwp_managesites_edit_verifycertificate" name="mainwp_managesites_edit_verifycertificate">
                         <option <?php echo 1 === (int) $website->verify_certificate ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'Yes', 'mainwp' ); ?></option>
                         <option <?php echo 0 === (int) $website->verify_certificate ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
-                        <option <?php echo 2 === (int) $website->verify_certificate ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+                        <option <?php echo 2 === (int) $website->verify_certificate ? 'selected' : ''; ?> value="2"><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
                         </select>
                     </div>
                 </div>
@@ -1259,7 +1261,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <select class="ui dropdown"id="mainwp_managesites_edit_verify_connection_method" name="mainwp_managesites_edit_verify_connection_method">
                             <option <?php echo 1 === (int) $verify_conn_method ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'OpenSSL (default)', 'mainwp' ); ?></option>
                             <option <?php echo 2 === (int) $verify_conn_method ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'PHPSECLIB (fallback)', 'mainwp' ); ?></option>
-                            <option <?php echo 3 === (int) $verify_conn_method ? 'selected' : ''; ?> value="3"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+                            <option <?php echo 3 === (int) $verify_conn_method ? 'selected' : ''; ?> value="3"><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
                         </select>
                     </div>
                 </div>
@@ -1288,7 +1290,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                 <?php
                             }
                             ?>
-                            <option <?php echo ( 9999 === $site_sign_algo ) ? 'selected' : ''; ?> value="9999"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+                            <option <?php echo ( 9999 === $site_sign_algo ) ? 'selected' : ''; ?> value="9999"><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
                         </select>
                         <div class="ui yellow message mainwp-hide-elemenent-sign-algo-note" <?php echo ( 1 === $site_sign_algo ) ? '' : 'style="display:none;"'; ?>><?php echo esc_html( $sign_note ); ?></div>
                     </div>
@@ -1305,7 +1307,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <select class="ui dropdown" id="mainwp_managesites_edit_forceuseipv4" name="mainwp_managesites_edit_forceuseipv4">
                             <option <?php echo ( 1 === (int) $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'Yes', 'mainwp' ); ?></option>
                             <option <?php echo ( 0 === (int) $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
-                            <option <?php echo ( 2 === (int) $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+                            <option <?php echo ( 2 === (int) $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="2"><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
                         </select>
                     </div>
                 </div>
@@ -1320,7 +1322,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     </label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP username here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <div class="ui left labeled input">
-                            <input type="text" id="mainwp_managesites_edit_http_user" name="mainwp_managesites_edit_http_user" value="<?php echo empty( $website->http_user ) ? '' : esc_attr( $website->http_user ); ?>" autocomplete="new-http-user" />
+                            <input type="text" id="mainwp_managesites_edit_http_user" name="mainwp_managesites_edit_http_user" value="<?php echo empty( $website->http_user ) ? '' : esc_attr( $website->http_user ); ?>" autocomplete="off" />
                         </div>
                     </div>
                 </div>
@@ -1483,9 +1485,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         $email_description = MainWP_Notification_Settings::get_settings_desc( $type );
         $text_recipients   = esc_html__( 'Recipient(s)', 'mainwp' );
+        $style_checked     = 'checked="true"';
         ?>
         <div class="ui segment">
-        <?php MainWP_Notification_Settings::render_update_template_message( $updated_templ ); ?>        
+        <?php MainWP_Notification_Settings::render_update_template_message( $updated_templ ); ?>
         <form method="POST" action="admin.php?page=managesites&emailsettingsid=<?php echo intval( $siteid ); ?>" class="ui form">
             <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'UpdateWebsiteEmailSettings' . $siteid ) ); ?>" />
             <input type="hidden" name="mainwp_managesites_setting_emails_type" value="<?php echo esc_html( $type ); ?>" />              
@@ -1506,7 +1509,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ?>
                 </label>
                 <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable this email notification.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                    <input type="checkbox" name="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][disable]" id="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][disable]" <?php echo ( 0 === $options['disable'] ) ? 'checked="true"' : ''; ?>/>
+                    <input type="checkbox" name="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][disable]" id="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][disable]" <?php echo ( 0 === $options['disable'] ) ? $style_checked : ''; //phpcs:ignore -- ok.  ?>/>
                 </div>
             </div>
             <div class="ui grid field" >
@@ -1715,11 +1718,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <table class="ui unstackable table" id="mainwp-emails-settings-table">
                 <thead>
                     <tr>
-                        <th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                        <th data-priority="1"><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
-                        <th><?php echo $text_recipients; //phpcs:ignore -- ok. ?></th>                       
-                        <th class="no-sort collapsing" data-priority="2" style="text-align:right">&nbsp;</th>
+                        <th scope="col" class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                        <th scope="col" data-priority="1"><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php echo $text_recipients; //phpcs:ignore -- ok. ?></th>
+                        <th scope="col" class="no-sort collapsing" data-priority="2" style="text-align:right">&nbsp;</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1741,11 +1744,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
-                        <th><?php echo $text_recipients; //phpcs:ignore -- ok. ?></th>
-                        <th>&nbsp;</th>
+                        <th scope="col" class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php echo $text_recipients; //phpcs:ignore -- ok. ?></th>
+                        <th scope="col" >&nbsp;</th>
                     </tr>
                 </tfoot>
             </table>

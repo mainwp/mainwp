@@ -2265,13 +2265,13 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <table class="ui unstackable table" id="mainwp-all-active-themes-table">
             <thead>
                 <tr>
-                    <th class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
-                    <th data-priority="1"><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                    <th  data-priority="2" class="collapsing"><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
-                    <th class="collapsing"></th>
-                    <th class="collapsing"><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
+                    <th scope="col"  class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
+                    <th scope="col" data-priority="1"><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                    <th scope="col"  data-priority="2" class="collapsing"><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
+                    <th scope="col" class="collapsing"></th>
+                    <th scope="col" class="collapsing"><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
                 </tr>
             </thead>
 
@@ -2318,13 +2318,13 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
             <tfoot>
                 <tr>
-                    <th class="no-sort check-column"><span class="ui checkbox"><input id="cb-select-all-bottom" type="checkbox" /></span></th>
-                    <th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
-                    <th class="collapsing"></th>
-                    <th><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort check-column"><span class="ui checkbox"><input id="cb-select-all-bottom" type="checkbox" /></span></th>
+                    <th scope="col" ><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
+                    <th scope="col" class="collapsing"></th>
+                    <th scope="col" ><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
                 </tr>
             </tfoot>
         </table>
@@ -2469,9 +2469,9 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <table id="mainwp-globally-ignored-themes" class="ui compact selectable table unstackable">
                 <thead>
                     <tr>
-                        <th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Theme slug', 'mainwp' ); ?></th>
-                        <th></th>
+                        <th scope="col" ><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'Theme slug', 'mainwp' ); ?></th>
+                        <th scope="col" ></th>
                     </tr>
                 </thead>
                 <tbody id="globally-ignored-themes-list">
@@ -2536,10 +2536,10 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <table id="mainwp-per-site-ignored-themes" class="ui compact selectable table unstackable">
             <thead>
                 <tr>
-                    <th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Theme slug', 'mainwp' ); ?></th>
-                    <th></th>
+                    <th scope="col" ><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Theme slug', 'mainwp' ); ?></th>
+                    <th scope="col" ></th>
                 </tr>
             </thead>
             <tbody id="ignored-themes-list">
@@ -2692,9 +2692,9 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <table id="mainwp-globally-ignored-abandoned-themes" class="ui compact selectable table unstackable">
             <thead>
                 <tr>
-                    <th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Theme slug', 'mainwp' ); ?></th>
-                    <th></th>
+                    <th scope="col" ><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Theme slug', 'mainwp' ); ?></th>
+                    <th scope="col" ></th>
                 </tr>
             </thead>
             <tbody id="globally-ignored-themes-list">
@@ -2761,10 +2761,10 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     <table id="mainwp-per-site-ignored-abandoned-themes" class="ui compact selectable table unstackable">
         <thead>
             <tr>
-                <th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-                <th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-                <th><?php esc_html_e( 'Theme slug', 'mainwp' ); ?></th>
-                <th></th>
+                <th scope="col" ><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+                <th scope="col" ><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+                <th scope="col" ><?php esc_html_e( 'Theme slug', 'mainwp' ); ?></th>
+                <th scope="col" ></th>
             </tr>
         </thead>
         <tbody id="ignored-abandoned-themes-list">

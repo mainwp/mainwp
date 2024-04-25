@@ -495,13 +495,13 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         <table class="ui very compact table mainwp-with-preview-table" id="mainwp-manage-groups-sites-table">
             <thead>
                 <tr>
-                    <th class="no-sort collapsing"><div class="ui checkbox" data-tooltip="<?php esc_attr_e( 'Click to select all sites.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><input type="checkbox" name="example"></div></th>
-                    <th><?php esc_html_e( 'Sites', 'mainwp' ); ?></th>
-                    <th class="no-sort collapsing"><i class="sign in icon"></i></th>
-                    <th><?php esc_html_e( 'URL', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
-                    <th class="no-sort collapsing"><i class="camera icon"></i></th>
-                    <th class="no-sort collapsing"><i class="sticky note outline icon"></i></th>
+                    <th scope="col" class="no-sort collapsing"><div class="ui checkbox" data-tooltip="<?php esc_attr_e( 'Click to select all sites.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><input type="checkbox" name="example"></div></th>
+                    <th scope="col" ><?php esc_html_e( 'Sites', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort collapsing"><i class="sign in icon"></i></th>
+                    <th scope="col" ><?php esc_html_e( 'URL', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort collapsing"><i class="camera icon"></i></th>
+                    <th scope="col" class="no-sort collapsing"><i class="sticky note outline icon"></i></th>
                 </tr>
             </thead>
             <tbody>
@@ -509,7 +509,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             </tbody>
             <tfoot>
                 <tr>
-                    <th colspan="7">
+                    <th scope="col"  colspan="7">
                         <a href="#" class="ui tiny green button" id="mainwp-save-sites-groups-selection-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Save the selected tag sites selection.', 'mainwp' ); ?>"><?php esc_html_e( 'Save Selection', 'mainwp' ); ?></a>
                     </th>
                 </tr>

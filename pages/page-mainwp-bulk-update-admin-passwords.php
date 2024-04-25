@@ -272,11 +272,11 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                         <table  id="mainwp-admin-users-table" class="ui single line unstackable table">
                             <thead>
                                 <tr>
-                                    <th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-                                    <th class="no-sort collapsing"><i class="sign in icon"></i></th>
-                                    <th><?php esc_html_e( 'Admin Username', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Admin Name', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Admin Email', 'mainwp' ); ?></th>
+                                    <th scope="col" ><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+                                    <th scope="col"  class="no-sort collapsing"><i class="sign in icon"></i></th>
+                                    <th scope="col" ><?php esc_html_e( 'Admin Username', 'mainwp' ); ?></th>
+                                    <th scope="col" ><?php esc_html_e( 'Admin Name', 'mainwp' ); ?></th>
+                                    <th scope="col" ><?php esc_html_e( 'Admin Email', 'mainwp' ); ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -296,11 +296,11 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-                                    <th><i class="sign in icon"></i></th>
-                                    <th><?php esc_html_e( 'Admin Username', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Admin Name', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Admin Email', 'mainwp' ); ?></th>
+                                    <th scope="col" ><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+                                    <th scope="col" ><i class="sign in icon"></i></th>
+                                    <th scope="col" ><?php esc_html_e( 'Admin Username', 'mainwp' ); ?></th>
+                                    <th scope="col" ><?php esc_html_e( 'Admin Name', 'mainwp' ); ?></th>
+                                    <th scope="col" ><?php esc_html_e( 'Admin Email', 'mainwp' ); ?></th>
                                 </tr>
                             </tfoot>
                         </table>

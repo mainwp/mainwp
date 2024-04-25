@@ -203,9 +203,9 @@ class Cost_Tracker_Upcoming_Renewals {
                 <table class="ui stacking table" id="mainwp-upcoming-renewals-table-<?php echo esc_attr( $tab ); ?>">
                     <thead>
                         <tr>
-                            <th><?php echo esc_html__( 'Name', 'mainwp' ); ?></a></th>
-                            <th><?php echo esc_html__( 'Renews at', 'mainwp' ); ?></th>
-                            <th class="collapsing right aligned"><?php echo esc_html__( 'Price', 'mainwp' ); ?></th>
+                            <th scope="col" ><?php echo esc_html__( 'Name', 'mainwp' ); ?></a></th>
+                            <th scope="col" ><?php echo esc_html__( 'Renews at', 'mainwp' ); ?></th>
+                            <th scope="col" class="collapsing right aligned"><?php echo esc_html__( 'Price', 'mainwp' ); ?></th>
                         </tr>
                     </thead>
                 <?php

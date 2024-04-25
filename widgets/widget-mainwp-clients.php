@@ -74,10 +74,10 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 <table class="ui table" id="mainwp-clients-widget-table">
                     <thead>
                         <tr>
-                            <th class="no-sort"><?php esc_html_e( '', 'mainwp' ); ?></th>
-                            <th><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
-                            <th><?php esc_html_e( 'Primary Contact', 'mainwp' ); ?></th>
-                            <th class="no-sort"></th>
+                            <th scope="col" class="no-sort"><?php esc_html_e( '', 'mainwp' ); ?></th>
+                            <th scope="col"><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
+                            <th scope="col"><?php esc_html_e( 'Primary Contact', 'mainwp' ); ?></th>
+                            <th scope="col" class="no-sort"></th>
                         </tr>
                     </thead>
                     <tbody>

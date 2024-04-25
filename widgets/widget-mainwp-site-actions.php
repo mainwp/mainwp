@@ -118,12 +118,12 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <table class="ui table" id="mainwp-non-mainwp-changes-table">
                     <thead>
                         <tr>
-                            <th><?php esc_html_e( 'Change', 'mainwp' ); ?></th>
+                            <th scope="col"><?php esc_html_e( 'Change', 'mainwp' ); ?></th>
                             <?php if ( empty( $website ) || isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
-                        <th class="collapsing"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
+                            <th scope="col" class="collapsing"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
                             <?php endif; ?>
-                        <th class="collapsing"><?php esc_html_e( 'User', 'mainwp' ); ?></th>
-                        <th class="collapsing no-sort"></th>
+                            <th scope="col" class="collapsing"><?php esc_html_e( 'User', 'mainwp' ); ?></th>
+                            <th scope="col" class="collapsing no-sort"></th>
                         </tr>
                     </thead>
                     <tbody>

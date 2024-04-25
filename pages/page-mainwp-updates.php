@@ -2100,9 +2100,9 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <th class="no-sort" colspan="3"><?php esc_html_e( 'HTTP Response Check Results', 'mainwp' ); ?></th>
                     </tr>
                     <tr>
-                        <th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'HTTP Code', 'mainwp' ); ?></th>
-                        <th class="collapsing no-sort"></th>
+                        <th scope="col"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
+                        <th scope="col"><?php esc_html_e( 'HTTP Code', 'mainwp' ); ?></th>
+                        <th scope="col" class="collapsing no-sort"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -2148,9 +2148,9 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'HTTP Code', 'mainwp' ); ?></th>
-                        <th class="collapsing no-sort"></th>
+                        <th scope="col" ><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'HTTP Code', 'mainwp' ); ?></th>
+                        <th scope="col" class="collapsing no-sort"></th>
                     </tr>
                 </tfoot>
             </table>

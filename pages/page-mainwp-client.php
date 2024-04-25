@@ -1023,9 +1023,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <table id="mainwp-clients-custom-fields-table" class="ui selectable compact table" style="width:100%">
             <thead>
                 <tr>
-                    <th><?php esc_html_e( 'Field Name', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Field Description', 'mainwp' ); ?></th>
-                    <th class="no-sort collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Field Name', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Field Description', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -1053,9 +1053,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             </tbody>
             <tfoot>
                 <tr>
-                    <th><a class="ui mini green button" href="javascript:void(0);" id="mainwp-clients-new-custom-field-button"><?php esc_html_e( 'New Field', 'mainwp' ); ?></a></th>
-                    <th><?php esc_html_e( '', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( '', 'mainwp' ); ?></th>
+                    <th scope="col" ><a class="ui mini green button" href="javascript:void(0);" id="mainwp-clients-new-custom-field-button"><?php esc_html_e( 'New Field', 'mainwp' ); ?></a></th>
+                    <th scope="col" ><?php esc_html_e( '', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( '', 'mainwp' ); ?></th>
                 </tr>
             </tfoot>
         </table>

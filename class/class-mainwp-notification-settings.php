@@ -135,11 +135,11 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
             <table class="ui unstackable table" id="mainwp-emails-settings-table">
                 <thead>
                     <tr>
-                        <th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                        <th data-priority="1"><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
-                        <th ><?php esc_html_e( 'Recipient(s)', 'mainwp' ); ?></th>
-                        <th class="no-sort collapsing" data-priority="2" style="text-align:right">&nbsp;</th>
+                        <th scope="col" class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                        <th scope="col" data-priority="1"><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
+                        <th scope="col"><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
+                        <th scope="col"><?php esc_html_e( 'Recipient(s)', 'mainwp' ); ?></th>
+                        <th scope="col" class="no-sort collapsing" data-priority="2" style="text-align:right">&nbsp;</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -162,11 +162,11 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Recipient(s)', 'mainwp' ); ?></th>
-                        <th>&nbsp;</th>
+                        <th scope="col" class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                        <th scope="col"><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
+                        <th scope="col"><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
+                        <th scope="col"><?php esc_html_e( 'Recipient(s)', 'mainwp' ); ?></th>
+                        <th scope="col">&nbsp;</th>
                     </tr>
                 </tfoot>
             </table>

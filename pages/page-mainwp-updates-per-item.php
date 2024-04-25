@@ -54,16 +54,16 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
         <table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-plugins-updates-table">
             <thead>
                 <tr>
-                    <th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-                    <th class="indicator-accordion-sorting handle-accordion-sorting">
+                    <th scope="col" class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
+                    <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting">
                     <div class="ui main-master checkbox ">
                         <input type="checkbox" name=""><label><?php esc_html_e( 'Plugin', 'mainwp' ); ?></label>
                     </div>
                     <?php MainWP_UI::render_sorting_icons(); ?>
                     </th>
-                    <th class="indicator-accordion-sorting handle-accordion-sorting"><?php echo intval( $total_plugin_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ) ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-                    <th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Trusted', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-                    <th class="no-sort right aligned">
+                    <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php echo intval( $total_plugin_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ) ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+                    <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Trusted', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+                    <th scope="col" class="no-sort right aligned">
                         <?php MainWP_UI::render_show_all_updates_button(); ?>
                         <?php
                         if ( MainWP_Updates::user_can_update_plugins() ) {
@@ -219,16 +219,16 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="collapsing no-sort"></th>
-                    <th>
+                    <th scope="col" class="collapsing no-sort"></th>
+                    <th scope="col" >
                     <div class="ui main-master checkbox ">
                         <input type="checkbox" name="">
                     </div>
                     <?php esc_html_e( 'Plugin', 'mainwp' ); ?>
                     </th>
-                    <th><?php echo intval( $total_plugin_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ) ); ?></th>
-                    <th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
-                    <th class="no-sort right aligned"></th>
+                    <th scope="col" ><?php echo intval( $total_plugin_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ) ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort right aligned"></th>
                 </tr>
             </tfoot>
         </table>
@@ -421,11 +421,11 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="collapsing no-sort"></th>
-                    <th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-                    <th><?php echo intval( $total_theme_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ) ); ?></th>
-                    <th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
-                    <th class="no-sort right aligned"></th>
+                    <th scope="col" class="collapsing no-sort"></th>
+                    <th scope="col" ><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php echo intval( $total_theme_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ) ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort right aligned"></th>
                 </tr>
             </tfoot>
         </table>
@@ -510,10 +510,10 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             <table class="ui table mainwp-manage-updates-table" id="mainwp-translations-sites-table">
                                 <thead class="mainwp-768-hide">
                                     <tr>
-                                        <th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-                                        <th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-                                        <th><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
-                                        <th class="collapsing no-sort"></th>
+                                        <th scope="col"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
+                                        <th scope="col"><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+                                        <th scope="col"><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
+                                        <th scope="col" class="collapsing no-sort"></th>
                                     </tr>
                                 </thead>
                                 <tbody class="translations-bulk-updates" translation_slug="<?php echo esc_attr( $slug ); ?>" translation_name="<?php echo esc_attr( rawurlencode( $translationsInfo[ $slug ]['name'] ) ); ?>">
@@ -564,15 +564,15 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="collapsing no-sort"></th>
-                    <th>
+                    <th scope="col" class="collapsing no-sort"></th>
+                    <th scope="col" >
                     <div class="ui main-master checkbox ">
                         <input type="checkbox" name=""><label><?php esc_html_e( 'Translation', 'mainwp' ); ?></label>
                     </div>
 
                     </th>
-                    <th><?php esc_html_e( 'Updates', 'mainwp' ); ?></th>
-                    <th class="right aligned"></th>
+                    <th scope="col" ><?php esc_html_e( 'Updates', 'mainwp' ); ?></th>
+                    <th scope="col" class="right aligned"></th>
                 </tr>
             </tfoot>
         </table>
@@ -635,11 +635,11 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         <table class="ui table mainwp-manage-updates-table" id="mainwp-abandoned-plugins-sites-table">
                             <thead class="mainwp-768-hide">
                                 <tr>
-                                    <th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
-                                    <th class="no-sort"></th>
+                                    <th scope="col"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
+                                    <th scope="col"><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+                                    <th scope="col"><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
+                                    <th scope="col"><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
+                                    <th scope="col" class="no-sort"></th>
                                 </tr>
                             </thead>
                             <tbody class="abandoned-plugins-ignore-global" plugin_slug="<?php echo esc_attr( rawurlencode( $slug ) ); ?>" plugin_name="<?php echo esc_attr( rawurlencode( $val['name'] ) ); ?>" dismissed="0">
@@ -765,11 +765,11 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         <table class="ui table mainwp-manage-updates-item-table" id="mainwp-abandoned-themes-sites-table">
                             <thead class="mainwp-768-hide">
                                 <tr>
-                                    <th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
-                                    <th class="no-sort"></th>
+                                    <th scope="col"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
+                                    <th scope="col"><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+                                    <th scope="col"><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
+                                    <th scope="col"><?php esc_html_e( 'Client', 'mainwp' ); ?></th>
+                                    <th scope="col" class="no-sort"></th>
                                 </tr>
                             </thead>
                             <tbody class="abandoned-themes-ignore-global" theme_slug="<?php echo esc_attr( $slug ); ?>" theme_name="<?php echo esc_attr( rawurlencode( $val['name'] ) ); ?>">
@@ -831,10 +831,10 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="collapsing no-sort"></th>
-                    <th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Abandoned', 'mainwp' ); ?></th>
-                    <th class="collapsing no-sort"></th>
+                    <th scope="col" class="collapsing no-sort"></th>
+                    <th scope="col" ><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Abandoned', 'mainwp' ); ?></th>
+                    <th scope="col" class="collapsing no-sort"></th>
                 </tr>
             </tfoot>
         </table>

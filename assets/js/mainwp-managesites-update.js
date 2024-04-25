@@ -301,30 +301,7 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
                 }
 
                 if (siteFeedback != undefined) {
-                    let backupPrimary = '';
-                    if (response['result']['primary_backup'] && response['result']['primary_backup'] != undefined)
-                        backupPrimary = response['result']['primary_backup'];
-
-                    if (backupPrimary == '') {
-                        jQuery('#managesites-backup-all').show();
-                        jQuery('#managesites-backup-ignore').show();
-                    } else {
-                        let backupLink = mainwp_get_primaryBackup_link(backupPrimary);
-                        jQuery('#managesites-backup-now').attr('href', backupLink).show();
-                        jQuery('#managesites-backup-ignore').val(__('Proceed with Updates')).show();
-                    }
-
-                    let output = '<span class="mainwp-red">' + __('A full backup has not been taken in the last days for the following sites:') + '</span><br /><br />';
-                    if (backupPrimary == '') { // default backup feature
-                        for (let id of siteFeedback) {
-                            output += '<span class="managesites-backup-site" siteid="' + id + '">' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
-                        }
-                    } else {
-                        for (let id of siteFeedback) {
-                            output += '<span>' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
-                        }
-                    }
-                    mainwpPopup('#managesites-backup-box').getContentEl().html(output);
+                    mainwp_managesites_prepare_backup_popup(response, pSiteNames, siteFeedback);
                     mainwpPopup('#managesites-backup-box').init({
                         title: __("Full backup required!"), callback: function () {
                             managesitesContinueAfterBackup = undefined;
@@ -630,3 +607,30 @@ let managesites_wordpress_upgrade_int = function (websiteId) {
 
     return false;
 };
+
+window.mainwp_managesites_prepare_backup_popup = function(response, pSiteNames, siteFeedback){
+    let backupPrimary = '';
+    if (response['result']['primary_backup'] && response['result']['primary_backup'] != undefined)
+        backupPrimary = response['result']['primary_backup'];
+
+    if (backupPrimary == '') {
+        jQuery('#managesites-backup-all').show();
+        jQuery('#managesites-backup-ignore').show();
+    } else {
+        let backupLink = mainwp_get_primaryBackup_link(backupPrimary);
+        jQuery('#managesites-backup-now').attr('href', backupLink).show();
+        jQuery('#managesites-backup-ignore').val(__('Proceed with Updates')).show();
+    }
+
+    let output = '<span class="mainwp-red">' + __('A full backup has not been taken in the last days for the following sites:') + '</span><br /><br />';
+    if (backupPrimary == '') { // default backup feature
+        for (let id of siteFeedback) {
+            output += '<span class="managesites-backup-site" siteid="' + id + '">' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
+        }
+    } else {
+        for (let id of siteFeedback) {
+            output += '<span>' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
+        }
+    }
+    mainwpPopup('#managesites-backup-box').getContentEl().html(output);
+}

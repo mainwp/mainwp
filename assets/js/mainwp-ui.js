@@ -453,32 +453,6 @@ jQuery(document).on('keydown', 'form[name="post"]', function (event) {
         event.preventDefault();
     }
 });
-jQuery(document).on('keyup', '#mainwp-select-sites-filter', function () {
-    let filter = jQuery(this).val().toLowerCase();
-    let parent = jQuery(this).closest('.mainwp_select_sites_wrapper');
-    let tab = jQuery('#select_sites_tab').val();
-    let siteItems = [];
-
-    if (tab == 'group') {
-        siteItems = parent.find('.mainwp_selected_groups_item');
-    } else if (tab == 'site' || tab == 'staging') {
-        siteItems = parent.find('.mainwp_selected_sites_item');
-    }
-
-    for (let id of siteItems) {
-        let currentElement = jQuery(id);
-        let value = currentElement.find('label').text().toLowerCase();
-        if (value.indexOf(filter) > -1) {
-            currentElement.removeClass('no-select').show();
-        } else {
-            currentElement.addClass('no-select').hide();
-        }
-    }
-    if (tab == 'site' || tab == 'staging') {
-        mainwp_newpost_updateCategories();
-    }
-});
-
 jQuery(document).on('keyup', '#mainwp-sites-menu-filter', function () {
     let filter = jQuery(this).val().toLowerCase();
     let parent = jQuery('#mainwp-sites-sidebar-menu');
@@ -550,7 +524,7 @@ window.mainwp_ui_state_load = function (ident) {
     return '1'; // show if Storage undefined.
 };
 
-jQuery(document).on('keyup', '#mainwp-screenshots-sites-filter', function () {
+let mainwp_sites_filter_select = function () {
     let filter = jQuery(this).val().toLowerCase();
     let parent = jQuery(this).closest('.mainwp_select_sites_wrapper');
     let tab = jQuery('#select_sites_tab').val();
@@ -574,6 +548,14 @@ jQuery(document).on('keyup', '#mainwp-screenshots-sites-filter', function () {
     if (tab == 'site' || tab == 'staging') {
         mainwp_newpost_updateCategories();
     }
+}
+
+jQuery(document).on('keyup', '#mainwp-select-sites-filter', function () {
+    mainwp_sites_filter_select();
+});
+
+jQuery(document).on('keyup', '#mainwp-screenshots-sites-filter', function () {
+    mainwp_sites_filter_select();
 });
 
 window.mainwp_get_icon_start = function () {

@@ -191,8 +191,8 @@ class MainWP_Updates_Table_Helper { // phpcs:ignore Generic.Classes.OpeningBrace
         $column_content = '';
         if ( 'title' === $column_name && ( empty( $current_wpid ) || $this->show_select ) ) {
             $column_content .= '<div class="ui child checkbox">
-			<input type="checkbox" name="">
-		  </div>';
+            <input type="checkbox" name="">
+          </div>';
         }
         $column_content .= $value;
 

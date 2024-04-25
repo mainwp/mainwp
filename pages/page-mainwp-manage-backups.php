@@ -328,7 +328,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function render_manager() {
         $backupTask = null;
-		//phpcs:disable WordPress.Security.NonceVerification.Recommended
+        //phpcs:disable WordPress.Security.NonceVerification.Recommended
         if ( isset( $_GET['id'] ) ) {
             if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_backup_tasks' ) ) {
                 mainwp_do_not_have_permissions( esc_html__( 'edit backup tasks', 'mainwp' ) );
@@ -406,7 +406,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         } else {
             static::render_edit( $backupTask );
         }
-		//phpcs:enable 
+        //phpcs:enable
     }
 
     /**
@@ -554,15 +554,15 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         $out = '<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
-						<i class="ellipsis horizontal icon"></i>
-						<div class="menu">
-						<div class="header">' . esc_html_e( 'Backup Actions', 'mainwp' ) . '</div>
-						<div class="divider"></div>';
+                        <i class="ellipsis horizontal icon"></i>
+                        <div class="menu">
+                        <div class="header">' . esc_html_e( 'Backup Actions', 'mainwp' ) . '</div>
+                        <div class="divider"></div>';
         foreach ( $actions as $action => $link ) {
             $out .= $link;
         }
         $out .= '</div>
-						</div>';
+                        </div>';
 
         return $out;
     }
@@ -907,7 +907,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             <?php
             $style = isset( $task ) && 'db' === $task->type ? 'style="display: none;"' : '';
             ?>
-			<div class="mainwp-backup-full-exclude" <?php echo $style; //phpcs:ignore -- ok. ?>>
+            <div class="mainwp-backup-full-exclude" <?php echo $style; //phpcs:ignore -- ok. ?>>
                 <h3 class="header"><?php esc_html_e( 'Backup Excludes', 'mainwp' ); ?></h3>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Known backup locations', 'mainwp' ); ?></label>
@@ -1035,7 +1035,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         echo '<option value="' . esc_attr( $method['value'] ) . '" ' . ( ( $primaryBackup === $method['value'] ) ? 'selected' : '' ) . '>' . esc_html( $method['title'] ) . '</option>';
                     }
                     ?>
-                    
+
                 </select>
             </div>
         </div>

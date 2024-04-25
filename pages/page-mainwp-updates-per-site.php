@@ -38,7 +38,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      */
-	public static function render_wpcore_updates( $websites, $total_wp_upgrades ) { //phpcs:ignore -- complex method.
+    public static function render_wpcore_updates( $websites, $total_wp_upgrades ) { //phpcs:ignore -- complex method.
         $is_demo = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-wordpress-updates-table">
@@ -96,7 +96,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <td>
                         <div class="ui child checkbox">
                             <input type="checkbox" name=""><label><?php MainWP_Updates::render_site_link_dashboard( $website ); ?></label>
-                        </div>                      
+                        </div>
 
                         <input type="hidden" id="wp-updated-<?php echo esc_attr( $website->id ); ?>" value="<?php echo ! empty( $wp_upgrades ) ? '0' : '1'; ?>" />
                     </td>
@@ -178,7 +178,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      */
-	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
+    public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
         $is_demo = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-plugins-updates-sites-table">
@@ -381,7 +381,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      */
-	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
+    public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
         $is_demo = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-themes-updates-sites-table">
@@ -762,7 +762,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
                     <tr class="title">
                         <td class="accordion-trigger"><i class="icon dropdown"></i></td>
-                        <td>                            
+                        <td>
                             <?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
                         </td>
                         <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
@@ -792,7 +792,7 @@ class MainWP_Updates_Per_Site { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                         ?>
                                         <tr dismissed="0">
                                             <td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( dirname( $slug ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-                                            <td>                                            
+                                            <td>
                                                 <strong class="mainwp-768-show"><?php esc_html_e( 'Plugin:', 'mainwp' ); ?></strong> <a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_html( dirname( $slug ) ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? rawurlencode( $plugin_outdate['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_outdate['Name'] ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $plugin_outdate['Name'] ); ?></a>
                                                 <input type="hidden" id="wp_dismissed_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo esc_attr( $plugin_name ); ?>" value="0"/>
                                             </td>

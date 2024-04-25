@@ -17,7 +17,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-	//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+    //phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 
     /**
      * Protected static variable to hold the single instance of the class.
@@ -102,7 +102,7 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      * @uses  \MainWP\Dashboard\MainWP_Utility::starts_with()
      */
-	public function import_data_demo() { //phpcs:ignore -- complex method.
+    public function import_data_demo() { //phpcs:ignore -- complex method.
 
         $errors = array();
 
@@ -499,7 +499,7 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
     public function render_demo_disable_button( $content, $echo_out = true ) {
         $button = '<div style="display:inline-block;" data-tooltip="' . $this->get_demo_tooltip() . '" data-inverted="" data-variation="mini" data-position="top right">' . $content . '</div>';
         if ( $echo_out ) {
-            echo $button; //phpcs:ignore WordPress.Security.EscapeOutput 
+            echo $button; //phpcs:ignore WordPress.Security.EscapeOutput
         }
         return $button;
     }

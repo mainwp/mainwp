@@ -84,16 +84,14 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             $started_done = false;
         }
 
-        if ( $started_done ) {
-            if ( MainWP_Utility::show_mainwp_message( 'notice', 'get-started' ) ) {
-                ?>
+        if ( $started_done && MainWP_Utility::show_mainwp_message( 'notice', 'get-started' ) ) {
+            ?>
             <div class="ui green message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="get-started"></i>
                 <div class="header"><?php esc_html_e( 'Congratulations!', 'mainwp' ); ?></div>
                 <?php esc_html_e( 'You can now use this widget as a handy list of shortcuts. If you prefer, you can also hide this widget by accessing the Page Settings.', 'mainwp' ); ?>
             </div>
-                <?php
-            }
+            <?php
         }
 
         /**
@@ -112,11 +110,11 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     $text = esc_html__( 'Add first site', 'mainwp' );
                     if ( empty( $count_sites ) ) {
                         ?>
-						<span style="min-width:45px;"><span class="circular ui large label" style="margin:0px 10px 0 5px">1</span></span> <a href="admin.php?page=managesites&do=new"><?php echo $text; //phpcs:ignore -- ok. ?></a>
+                        <span style="min-width:45px;"><span class="circular ui large label" style="margin:0px 10px 0 5px">1</span></span> <a href="admin.php?page=managesites&do=new"><?php echo $text; //phpcs:ignore -- ok. ?></a>
                         <?php
                     } else {
                         ?>
-						<i class="check circle green icon big" style="display:inline-block"></i> <a href="admin.php?page=managesites&do=new"><?php echo $text; //phpcs:ignore -- ok. ?></a>
+                        <i class="check circle green icon big" style="display:inline-block"></i> <a href="admin.php?page=managesites&do=new"><?php echo $text; //phpcs:ignore -- ok. ?></a>
                         <?php
                     }
                     ?>
@@ -127,11 +125,11 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     $text = esc_html__( 'Add first client', 'mainwp' );
                     if ( empty( $count_clients ) ) {
                         ?>
-						<span style="min-width:45px;"><span class="circular ui large label" style="margin:0px 10px 0 5px">2</span></span><a href="admin.php?page=ClientAddNew"><?php echo $text; //phpcs:ignore -- ok. ?></a>
+                        <span style="min-width:45px;"><span class="circular ui large label" style="margin:0px 10px 0 5px">2</span></span><a href="admin.php?page=ClientAddNew"><?php echo $text; //phpcs:ignore -- ok. ?></a>
                         <?php
                     } else {
                         ?>
-						<i class="check circle icon green big" style="display:inline-block"></i> <a href="admin.php?page=ClientAddNew"><?php echo $text; //phpcs:ignore -- ok. ?></a>
+                        <i class="check circle icon green big" style="display:inline-block"></i> <a href="admin.php?page=ClientAddNew"><?php echo $text; //phpcs:ignore -- ok. ?></a>
                         <?php
                     }
                     ?>
@@ -142,27 +140,27 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     $text = esc_html__( 'Add first thing to Cost Tracker', 'mainwp' );
                     if ( empty( $count_costs ) ) {
                         ?>
-						<span style="min-width:45px;"><span class="circular ui large label" style="margin:0px 10px 0 5px">3</span></span> <a href="admin.php?page=CostTrackerAdd"><?php echo $text; //phpcs:ignore -- ok. ?></a>
+                        <span style="min-width:45px;"><span class="circular ui large label" style="margin:0px 10px 0 5px">3</span></span> <a href="admin.php?page=CostTrackerAdd"><?php echo $text; //phpcs:ignore -- ok. ?></a>
                         <?php
 
                     } else {
                         ?>
-						<i class="check circle icon green big" style="display:inline-block"></i> <a href="admin.php?page=CostTrackerAdd"><?php echo $text; //phpcs:ignore -- ok. ?></a>
+                        <i class="check circle icon green big" style="display:inline-block"></i> <a href="admin.php?page=CostTrackerAdd"><?php echo $text; //phpcs:ignore -- ok. ?></a>
                         <?php
                     }
                     ?>
                 </div>
-                
+
                 <div class="item">
                     <?php
                     $text = esc_html__( 'Add first extension', 'mainwp' );
                     if ( empty( $count_extensions ) ) {
                         ?>
-						<span style="min-width:45px;"><span class="circular ui large label" style="margin:0px 10px 0 5px">4</span></span> <a href="admin.php?page=Extensions"><?php echo $text; //phpcs:ignore -- ok. ?></a>
+                        <span style="min-width:45px;"><span class="circular ui large label" style="margin:0px 10px 0 5px">4</span></span> <a href="admin.php?page=Extensions"><?php echo $text; //phpcs:ignore -- ok. ?></a>
                         <?php
                     } else {
                         ?>
-						<i class="check circle icon green big" style="display:inline-block"></i> <a href="admin.php?page=Extensions"><?php echo $text; //phpcs:ignore -- ok. ?></a>
+                        <i class="check circle icon green big" style="display:inline-block"></i> <a href="admin.php?page=Extensions"><?php echo $text; //phpcs:ignore -- ok. ?></a>
                         <?php
                     }
                     ?>

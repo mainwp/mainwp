@@ -68,7 +68,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-	public static function init_menu() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function init_menu() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
             MainWP_Extensions_View::init_menu();
         }
@@ -371,7 +371,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-	public static function ajax_get_purchased_extensions() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function ajax_get_purchased_extensions() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
 
@@ -524,14 +524,14 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                         $package_url = apply_filters( 'mainwp_api_manager_upgrade_package_url', $product_info['package'], $product_info );
 
                         $item_html = '
-									<div class="item extension extension-to-install ' . esc_attr( $integration_type ) . '" download-link="' . esc_url( $package_url ) . '" plugin-slug="" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
-										<div class="ui stackable grid">
-											<div class="two column row">
-												<div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $ext_source_label . '<strong><a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</strong></label></span></div>
-												<div class="right aligned column"><span class="installing-extension" status="queue"></span></div>
-											</div>
-										</div>
-									</div>';
+                                    <div class="item extension extension-to-install ' . esc_attr( $integration_type ) . '" download-link="' . esc_url( $package_url ) . '" plugin-slug="" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                                        <div class="ui stackable grid">
+                                            <div class="two column row">
+                                                <div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $ext_source_label . '<strong><a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</strong></label></span></div>
+                                                <div class="right aligned column"><span class="installing-extension" status="queue"></span></div>
+                                            </div>
+                                        </div>
+                                    </div>';
 
                     } elseif ( isset( $product_info['error'] ) && ! empty( $product_info['error'] ) ) {
                         $error = MainWP_Api_Manager::instance()->check_response_for_intall_errors( $product_info, $software_title );
@@ -541,58 +541,58 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
                     if ( ! empty( $error ) ) {
                         $item_html = '
-									<div class="item extension ' . esc_attr( $integration_type ) . '" product-id="' . esc_attr( $product_id ) . '">
-										<div class="ui stackable grid">
-											<div class="two column row">
-												<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</label></span></div>
-												<div class="right aligned column"><span data-tooltip="' . $error . '" data-inverted="" data-position="left center"><i class="times red icon"></i></span></div>
-											</div>
-										</div>
-									</div>';
+                                    <div class="item extension ' . esc_attr( $integration_type ) . '" product-id="' . esc_attr( $product_id ) . '">
+                                        <div class="ui stackable grid">
+                                            <div class="two column row">
+                                                <div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</label></span></div>
+                                                <div class="right aligned column"><span data-tooltip="' . $error . '" data-inverted="" data-position="left center"><i class="times red icon"></i></span></div>
+                                            </div>
+                                        </div>
+                                    </div>';
                     }
                 } elseif ( 'org' === $type ) {
                     $item_html = '
-								<div class="item extension extension-to-install ' . esc_attr( $integration_type ) . '" download-link="" plugin-slug="' . esc_attr( $ext['slug'] ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
-									<div class="ui stackable grid">
-										<div class="two column row">
-											<div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $ext_source_label . '<strong><a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</strong></label></span></div>
-											<div class="right aligned column"><span class="installing-extension" status="queue"></span></div>
-										</div>
-									</div>
-								</div>';
+                                <div class="item extension extension-to-install ' . esc_attr( $integration_type ) . '" download-link="" plugin-slug="' . esc_attr( $ext['slug'] ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                                    <div class="ui stackable grid">
+                                        <div class="two column row">
+                                            <div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $ext_source_label . '<strong><a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</strong></label></span></div>
+                                            <div class="right aligned column"><span class="installing-extension" status="queue"></span></div>
+                                        </div>
+                                    </div>
+                                </div>';
                 }
             } elseif ( isset( $not_purchased_exts[ $product_id ] ) ) {
                 if ( 'free' === $type || 'pro' === $type ) {
                     $item_html = '
-						<div class="item extension ' . esc_attr( $integration_type ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
-							<div class="ui stackable grid">
-								<div class="two column row">
-									<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</label></span></div>
-									<div class="right aligned column"><a href="' . $ext['link'] . '" target="_blank" data-tooltip="' . esc_html__( 'Extension not purchased. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
-								</div>
-							</div>
-						</div>';
+                        <div class="item extension ' . esc_attr( $integration_type ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                            <div class="ui stackable grid">
+                                <div class="two column row">
+                                    <div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</label></span></div>
+                                    <div class="right aligned column"><a href="' . $ext['link'] . '" target="_blank" data-tooltip="' . esc_html__( 'Extension not purchased. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
+                                </div>
+                            </div>
+                        </div>';
                 } elseif ( 'org' === $type ) {
                     $item_html = '
-							<div class="item extension ' . esc_attr( $integration_type ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
-								<div class="ui stackable grid">
-									<div class="two column row">
-										<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</label></span></div>
-										<div class="right aligned column"><a href="' . $ext['url'] . '" target="_blank" data-tooltip="' . esc_html__( 'Extension not installed. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
-									</div>
-								</div>
-							</div>';
+                            <div class="item extension ' . esc_attr( $integration_type ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                                <div class="ui stackable grid">
+                                    <div class="two column row">
+                                        <div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</label></span></div>
+                                        <div class="right aligned column"><a href="' . $ext['url'] . '" target="_blank" data-tooltip="' . esc_html__( 'Extension not installed. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
+                                    </div>
+                                </div>
+                            </div>';
                 }
             } elseif ( isset( $installed_softwares[ $product_id ] ) ) {
                 $item_html = '
-					<div class="item extension ' . esc_attr( $integration_type ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
-						<div class="ui stackable grid">
-							<div class="two column row">
-								<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a> ' . $notice . '</label></span>' . $privacy . ' ' . $new . '</div>
-								<div class="right aligned column">Installed</div>
-							</div>
-						</div>
-					</div>';
+                    <div class="item extension ' . esc_attr( $integration_type ) . '" product-id="' . esc_attr( $product_id ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
+                        <div class="ui stackable grid">
+                            <div class="two column row">
+                                <div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a> ' . $notice . '</label></span>' . $privacy . ' ' . $new . '</div>
+                                <div class="right aligned column">Installed</div>
+                            </div>
+                        </div>
+                    </div>';
             }
 
             $group_id = isset( $map_extensions_group[ $product_id ] ) ? $map_extensions_group[ $product_id ] : false;
@@ -669,11 +669,11 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             $html .= '<div class="ui tab" data-tab="search">';
             $html .= '<h3>Search Extensions</h3>';
             $html .= '<div id="mainwp-search-extensions-install" class="ui fluid search">
-						<div class="ui icon fluid input">
-							<input class="prompt" id="mainwp-search-extensions-install-input" type="text" placeholder="Find extension...">
-							<i class="search icon"></i>
-						</div>
-					</div>';
+                        <div class="ui icon fluid input">
+                            <input class="prompt" id="mainwp-search-extensions-install-input" type="text" placeholder="Find extension...">
+                            <i class="search icon"></i>
+                        </div>
+                    </div>';
             $html .= '<div class="ui relaxed divided list" id="mainwp-extensions-to-install-list">';
             $html .= $grouped_exts['all'];
             $html .= '</div>';
@@ -698,38 +698,38 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
         $html .= '<script>jQuery( "#mainwp-install-extensions-menu .item" ).tab();</script>';
         $html .= '<script type="text/javascript">
-		jQuery( document ).ready( function () {
-			jQuery( "#mainwp-search-extensions-install-input" ).on( "keyup", function () {
-				let searchQuery = jQuery( this ).val().toLowerCase();
-				let extensions = jQuery( "#mainwp-extensions-to-install-list" ).find( ".item.extension" );
-				for ( let i = 0; i < extensions.length; i++ ) {
-					let currentExtension = jQuery( extensions[i] );
-					let extensionTitle = jQuery( currentExtension ).attr( "product-id" ).toLowerCase();
-					if ( extensionTitle.indexOf( searchQuery ) > -1 ) {
-						currentExtension.show();
-					} else {
-						currentExtension.hide();
-					}
-				}
-			} );
-			jQuery( "#mainwp-standalone-extensions-filer" ).on( "change", function () {
-				jQuery( "#mainwp-get-purchased-extensions-modal .ui.relaxed.divided.list .item.extension.standalone-extension" ).toggle( 200 );
-			} );
-			jQuery( "#mainwp-api-extensions-filer" ).on( "change", function () {
-				jQuery( "#mainwp-get-purchased-extensions-modal .ui.relaxed.divided.list .item.extension.api-extension" ).toggle( 200 );
-			} );
-			jQuery( "#mainwp-plugin-extensions-filer" ).on( "change", function () {
-				jQuery( "#mainwp-get-purchased-extensions-modal .ui.relaxed.divided.list .item.extension.plugin-extension" ).toggle( 200 );
-			} );
-		} );
-		</script>';
+        jQuery( document ).ready( function () {
+            jQuery( "#mainwp-search-extensions-install-input" ).on( "keyup", function () {
+                let searchQuery = jQuery( this ).val().toLowerCase();
+                let extensions = jQuery( "#mainwp-extensions-to-install-list" ).find( ".item.extension" );
+                for ( let i = 0; i < extensions.length; i++ ) {
+                    let currentExtension = jQuery( extensions[i] );
+                    let extensionTitle = jQuery( currentExtension ).attr( "product-id" ).toLowerCase();
+                    if ( extensionTitle.indexOf( searchQuery ) > -1 ) {
+                        currentExtension.show();
+                    } else {
+                        currentExtension.hide();
+                    }
+                }
+            } );
+            jQuery( "#mainwp-standalone-extensions-filer" ).on( "change", function () {
+                jQuery( "#mainwp-get-purchased-extensions-modal .ui.relaxed.divided.list .item.extension.standalone-extension" ).toggle( 200 );
+            } );
+            jQuery( "#mainwp-api-extensions-filer" ).on( "change", function () {
+                jQuery( "#mainwp-get-purchased-extensions-modal .ui.relaxed.divided.list .item.extension.api-extension" ).toggle( 200 );
+            } );
+            jQuery( "#mainwp-plugin-extensions-filer" ).on( "change", function () {
+                jQuery( "#mainwp-get-purchased-extensions-modal .ui.relaxed.divided.list .item.extension.plugin-extension" ).toggle( 200 );
+            } );
+        } );
+        </script>';
 
         if ( ! empty( $installing_exts ) ) {
             $html .= '<p>
-				<span class="extension_api_loading">
-					<i class="ui active inline loader tiny" style="display: none;"></i><span class="status hidden"></span>
-				</span>
-			</p> ';
+                <span class="extension_api_loading">
+                    <i class="ui active inline loader tiny" style="display: none;"></i><span class="status hidden"></span>
+                </span>
+            </p> ';
         }
 
         $html  .= '</div>';

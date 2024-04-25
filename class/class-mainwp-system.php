@@ -372,8 +372,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 $query .= "'" . $option . "', ";
             }
             $query         = substr( $query, 0, strlen( $query ) - 2 );
-			$query .= ")"; // phpcs:ignore -- ignore double quotes auto-correction.
-			$alloptions_db	 = $wpdb->get_results( $query ); // phpcs:ignore -- unprepared SQL ok.
+            $query .= ")"; // phpcs:ignore -- ignore double quotes auto-correction.
+            $alloptions_db = $wpdb->get_results( $query ); // phpcs:ignore -- unprepared SQL ok.
             $wpdb->suppress_errors( $suppress );
             if ( ! is_array( $alloptions ) ) {
                 $alloptions = array();
@@ -553,7 +553,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return boolean ture|false.
      */
     public static function is_mainwp_site_page() {
-		//phpcs:disable WordPress.Security.NonceVerification.Recommended
+        //phpcs:disable WordPress.Security.NonceVerification.Recommended
         if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] ) {
             if ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) {
                 return true;
@@ -563,7 +563,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 return true;
             }
         }
-		//phpcs:enable
+        //phpcs:enable
         return false;
     }
 
@@ -652,7 +652,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_Setup_Wizard()
      */
     public function parse_init() {
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
             $mwpDir = MainWP_System_Utility::get_mainwp_dir();
             $mwpDir = $mwpDir[0];
@@ -675,7 +675,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $valid_sig = MainWP_System_Utility::valid_download_sig( $file, $sig_value );
 
             if ( ! $valid_sig ) {
-				MainWP_Logger::instance()->debug( ' :: download :: invalid sig :: ' . base64_decode( $sig_value ) ); // phpcs:ignore -- for debug logging.  
+                MainWP_Logger::instance()->debug( ' :: download :: invalid sig :: ' . base64_decode( $sig_value ) ); // phpcs:ignore -- for debug logging.
             }
 
             if ( $hasWPFileSystem && $wp_filesystem->exists( $file ) && $valid_sig ) {
@@ -691,7 +691,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 }
             }
         }
-		// phpcs:enable
+        // phpcs:enable
     }
 
     /**
@@ -725,7 +725,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 wp_unschedule_event( $sched, 'mainwp_cronstats_action' );
             }
             global $wpdb;
-			$wpdb->query( 'DELETE FROM ' . $wpdb->usermeta . ' WHERE meta_key = "mainwp_widgets_sorted_toplevel_page_mainwp_tab" OR meta_key="mainwp_settings_show_widgets"' );//phpcs:ignore -- safe.
+            $wpdb->query( 'DELETE FROM ' . $wpdb->usermeta . ' WHERE meta_key = "mainwp_widgets_sorted_toplevel_page_mainwp_tab" OR meta_key="mainwp_settings_show_widgets"' );//phpcs:ignore -- safe.
         }
 
         if ( version_compare( $saved_ver, '0.0.5', '<' ) ) {
@@ -759,7 +759,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_System_View::get_class_name()
      * @uses \MainWP\Dashboard\MainWP_System_View::get_mainwp_translations()
      */
-	public function admin_init() { // phpcs:ignore -- complex function.
+    public function admin_init() { // phpcs:ignore -- complex function.
 
         if ( ! MainWP_System_Utility::is_admin() ) {
             return;
@@ -853,7 +853,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $load_gridster = false;
 
-		// phpcs:disable WordPress.Security.NonceVerification
+        // phpcs:disable WordPress.Security.NonceVerification
         if ( isset( $_GET['page'] ) && ( 'mainwp_tab' === $_GET['page'] || ( 'managesites' === $_GET['page'] && isset( $_GET['dashboard'] ) ) ) ) {
             $load_gridster = true;
         } elseif ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) ) {
@@ -873,7 +873,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             wp_enqueue_script( 'preview', MAINWP_PLUGIN_URL . 'assets/js/preview.js', array(), $this->current_version, true );
             wp_enqueue_style( 'preview', MAINWP_PLUGIN_URL . 'assets/css/preview.css', array(), $this->current_version );
         }
-		// phpcs:enable
+        // phpcs:enable
 
         wp_enqueue_style( 'wp-color-picker' );
         wp_enqueue_script( 'wp-color-picker' );
@@ -1090,7 +1090,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'assets/js/mainwp-ui.js', array(), $this->current_version, true );
         wp_enqueue_script( 'mainwp-js-popup', MAINWP_PLUGIN_URL . 'assets/js/mainwp-popup.js', array(), $this->current_version, true );
         // to support extension uploader.
-		wp_enqueue_script( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'assets/js/fileuploader.js', array(), $this->current_version ); // phpcs:ignore -- fileuploader scripts need to load at header.
+        wp_enqueue_script( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'assets/js/fileuploader.js', array(), $this->current_version ); // phpcs:ignore -- fileuploader scripts need to load at header.
         wp_enqueue_script( 'mainwp-filesaver', MAINWP_PLUGIN_URL . 'assets/js/FileSaver.js', array(), $this->current_version, true );
     }
 

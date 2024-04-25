@@ -68,7 +68,7 @@ class Log_Settings {
      * Handle admin_init action.
      */
     public function admin_init() {
-		//phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_POST['mainwp_module_log_settings_nonce'] ) && wp_verify_nonce( wp_unslash( $_POST['mainwp_module_log_settings_nonce'] ), 'logs_settings_nonce' ) ) {
             $this->options['enabled']     = isset( $_POST['mainwp_module_log_enabled'] ) && ! empty( $_POST['mainwp_module_log_enabled'] ) ? 1 : 0;
             $this->options['auto_purge']  = isset( $_POST['mainwp_module_log_enable_auto_purge'] ) && ! empty( $_POST['mainwp_module_log_enable_auto_purge'] ) ? 1 : 0;
@@ -85,7 +85,6 @@ class Log_Settings {
      * @action init
      */
     public function add_subpage_menu_settings( $subpages = array() ) {
-        $active     = isset( $_GET['page'] ) && 'SettingsInsights' === $_GET['page'] ? true : false; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
         $subpages[] = array(
             'title'    => esc_html__( 'Dashboard Insights', 'mainwp' ),
             'slug'     => 'Insights',
@@ -203,7 +202,7 @@ class Log_Settings {
                                 <input type="number" name="mainwp_module_log_records_ttl" id="mainwp_module_log_records_ttl" class="small-text" placeholder="" min="1" max="999" step="1" value="<?php echo isset( $this->options['records_ttl'] ) ? intval( $this->options['records_ttl'] ) : 100; ?>">
                             </div>
                         </div>
-                        <h3 class="ui dividing header <?php echo esc_attr( $hide_field_class ); ?>"><?php esc_html_e( 'Dashboard Insights Tools', 'mainwp' ); ?></h3>                   
+                        <h3 class="ui dividing header <?php echo esc_attr( $hide_field_class ); ?>"><?php esc_html_e( 'Dashboard Insights Tools', 'mainwp' ); ?></h3>
                         <div class="ui grid field <?php echo esc_attr( $hide_field_class ); ?>">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Delete records', 'mainwp' ); ?></label>
                             <div class="ten wide column ui">
@@ -258,7 +257,7 @@ class Log_Settings {
                         <input type="hidden" name="mainwp_module_log_settings_nonce" value="<?php echo esc_attr( wp_create_nonce( 'logs_settings_nonce' ) ); ?>">
                 </div>
             </form>
-        </div>      
+        </div>
 
         <?php
         /** This action is documented in ../pages/page-mainwp-manage-sites.php */

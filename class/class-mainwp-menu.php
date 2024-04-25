@@ -92,7 +92,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Extensions::init_menu()
      * @uses \MainWP\Dashboard\MainWP_Bulk_Update_Admin_Passwords::init_menu()
      */
-	public static function init_mainwp_menus() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function init_mainwp_menus() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         if ( MainWP_System_Utility::is_admin() ) {
 
             $menus_items = array();
@@ -329,7 +329,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @param array  $menus_items menus items.
      * @param string $part menus part.
      */
-	public static function init_mainwp_menu_items( $menus_items, $part ) { //phpcs:ignore -- complex method.
+    public static function init_mainwp_menu_items( $menus_items, $part ) { //phpcs:ignore -- complex method.
         if ( ! is_array( $menus_items ) ) {
             return;
         }
@@ -554,7 +554,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * @return array $mainwp_leftmenu[] | $mainwp_sub_leftmenu[].
      */
-	public static function add_left_menu( $params = array(), $level = 1 ) { //phpcs:ignore -- complex method.
+    public static function add_left_menu( $params = array(), $level = 1 ) { //phpcs:ignore -- complex method.
 
         if ( empty( $params ) ) {
             return;
@@ -652,7 +652,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * Build Top Level Main Menu HTML & Render.
      */
-	public static function render_left_menu() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_left_menu() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * MainWP Left Menu, Sub Menu & Active menu slugs.
@@ -787,7 +787,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
                         $id_attr = ! empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
 
-						// phpcs:disable WordPress.Security.EscapeOutput
+                        // phpcs:disable WordPress.Security.EscapeOutput
                         if ( $has_sub ) {
                             echo '<a ' . $id_attr . ' title="' . esc_html( $title ) . "\" class=\"item $active_item\" href=\"$href\">";
                             echo ! empty( $item_icon ) ? $item_icon : '<i class="th large icon"></i>';
@@ -799,7 +799,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             echo '<span class="ui small text">' . esc_html( $title ) . '</span>';
                             echo '</a>';
                         }
-						// phpcs:enable
+                        // phpcs:enable
                     }
                 }
                 ?>
@@ -886,7 +886,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
                         $id_attr = ! empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
 
-						// phpcs:disable WordPress.Security.EscapeOutput
+                        // phpcs:disable WordPress.Security.EscapeOutput
                         if ( $has_sub ) {
                             echo '<div ' . $id_attr . " class=\"item $active_item\">";
                             echo "<a class=\"title with-sub $active_item\" href=\"$href\">$title <i class=\"dropdown icon\"></i></a>";
@@ -899,7 +899,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             echo "<a class='title $active_item' href=\"$href\">$title</a>";
                             echo '</div>';
                         }
-						// phpcs:enable
+                        // phpcs:enable
 
                         if ( is_array( $sub_bar_leftmenu ) && ! empty( $bar_active_item_key ) && isset( $sub_bar_leftmenu[ $bar_active_item_key ] ) && is_array( $sub_bar_leftmenu[ $bar_active_item_key ] ) ) {
                             $sub_bar_leftmenu_active_items = $sub_bar_leftmenu[ $bar_active_item_key ];
@@ -954,7 +954,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                     $hide_item = ' style="display:none"';
                                 }
 
-								// phpcs:disable WordPress.Security.EscapeOutput
+                                // phpcs:disable WordPress.Security.EscapeOutput
                                 if ( $has_sub ) {
                                     echo '<div ' . $id_attr . " class=\"item $active_item $item_classes\">";
                                     echo "<a class=\"title with-sub $active_item\" href=\"$href\">$title <i class=\"dropdown icon\"></i></a>";
@@ -967,7 +967,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                     echo "<a class='title $active_item' href=\"$href\">$title</a>";
                                     echo '</div>';
                                 }
-								// phpcs:enable
+                                // phpcs:enable
                             }
                         }
                     }
@@ -975,7 +975,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     </div>
                     </div>
                 </div>
-                
+
                 <?php
                 /**
                  * Action: after_mainwp_menu
@@ -1084,7 +1084,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * Renders the mobile menu.
      */
-	public static function render_mobile_menu() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_mobile_menu() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
         ?>
         <div class="mainwp-main-mobile-navigation-container">
@@ -1312,7 +1312,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         }
                         ?>
                     <div class="item item-wp-admin">
-						<a href="<?php echo esc_html( $link['url'] ); ?>" class="title" style="display:inline" data-position="top left" data-tooltip="<?php echo esc_html( $link['tip'] ); ?>"><b><i class="icon wordpress"></i> <?php echo esc_html( $link['text'] ); ?></b></a> <a class="ui small label" data-position="top right" data-tooltip="<?php esc_html_e( 'Logout', 'mainwp' ); ?>" href="<?php echo wp_logout_url(); ?>"><i class="sign out icon" style="margin:0"></i></a> <?php //phpcs:ignore -- to avoid auto fix icon wordpress ?>
+                        <a href="<?php echo esc_html( $link['url'] ); ?>" class="title" style="display:inline" data-position="top left" data-tooltip="<?php echo esc_html( $link['tip'] ); ?>"><b><i class="icon wordpress"></i> <?php echo esc_html( $link['text'] ); ?></b></a> <a class="ui small label" data-position="top right" data-tooltip="<?php esc_html_e( 'Logout', 'mainwp' ); ?>" href="<?php echo wp_logout_url(); ?>"><i class="sign out icon" style="margin:0"></i></a> <?php //phpcs:ignore -- to avoid auto fix icon wordpress ?>
                     </div>
                     <?php } ?>
                     <div class="hamburger">
@@ -1343,7 +1343,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * @param mixed $parent_key The parent key.
      */
-	public static function render_sub_item( $parent_key ) { //phpcs:ignore -- complex method.
+    public static function render_sub_item( $parent_key ) { //phpcs:ignore -- complex method.
         if ( empty( $parent_key ) ) {
             return;
         }
@@ -1396,7 +1396,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     }
                 }
                 // hard fix managesite menu items active status.
-				//phpcs:disable WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                //phpcs:disable WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 if ( false !== strpos( $href, 'admin.php?page=managesites' ) ) {
                     $page_name     = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
                     $level2_active = false;
@@ -1413,7 +1413,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         $level2_active = true;
                     }
                 }
-				//phpcs:enable WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                //phpcs:enable WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 if ( $level2_active ) {
                     $set_actived = true;
                 }
@@ -1429,9 +1429,9 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             if ( empty( $right ) || ( ! empty( $right ) && mainwp_current_user_have_right( $right_group, $right ) ) ) {
                 ?>
                 <a class="item <?php echo $level2_active ? 'active level-two-active' : ''; ?> <?php echo esc_attr( $item_classes ); ?>" href="<?php echo esc_url( $href ); ?>" id="<?php echo esc_attr( $slug ); ?>" <?php echo $_blank ? 'target="_blank"' : ''; ?>>
-					<?php echo $before_title . $title; //phpcs:ignore -- requires escaped. ?>
+                    <?php echo $before_title . $title; //phpcs:ignore -- requires escaped. ?>
                 </a>
-                
+
                 <?php
             }
         }

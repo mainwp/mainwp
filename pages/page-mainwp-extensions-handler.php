@@ -757,7 +757,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      */
-	public static function hook_get_sites( $pluginFile, $key, $websiteid = null, $for_manager = false, $others = array() ) { // phpcs:ignore -- not quite complex function.
+    public static function hook_get_sites( $pluginFile, $key, $websiteid = null, $for_manager = false, $others = array() ) { // phpcs:ignore -- not quite complex function.
         if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return false;
         }

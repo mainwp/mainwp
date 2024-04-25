@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-	// phpcs:disable WordPress.WP.AlternativeFunctions -- use system functions
+    // phpcs:disable WordPress.WP.AlternativeFunctions -- use system functions
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -227,7 +227,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Do nothing if current user is not an Admin.
      */
-	public function admin_init() { // phpcs:ignore -- complex function.
+    public function admin_init() { // phpcs:ignore -- complex function.
         if ( ! MainWP_System_Utility::is_admin() ) {
             return;
         }
@@ -267,7 +267,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Handle manage sites screen settings
      */
-	public function handle_manage_sites_screen_settings() { // phpcs:ignore -- required to achieve desired results, pull request solutions appreciated.
+    public function handle_manage_sites_screen_settings() { // phpcs:ignore -- required to achieve desired results, pull request solutions appreciated.
         if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'ManageSitesScrOptions' ) ) {
             $show_cols = array();
             foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST ) ) as $key => $val ) {
@@ -408,7 +408,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Twitter::clear_all_twitter_messages()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-	public function handle_mainwp_tools_settings() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function handle_mainwp_tools_settings() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $user = wp_get_current_user();
 
@@ -549,7 +549,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::handle_settings_post()
      * @uses \MainWP\Dashboard\MainWP_Settings::handle_settings_post()
      */
-	public function handle_settings_post() { // phpcs:ignore -- complex method.
+    public function handle_settings_post() { // phpcs:ignore -- complex method.
 
         if ( isset( $_GET['page'] ) && ( isset( $_POST['wp_nonce'] ) || isset( $_POST['wp_scr_options_nonce'] ) ) ) {
             $this->include_pluggable();
@@ -791,7 +791,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extension_slug()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-	public function check_update_custom( $transient ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function check_update_custom( $transient ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) && is_object( $transient ) && property_exists( $transient, 'response' ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $extensions = MainWP_Extensions_Handler::get_indexed_extensions_infor( array( 'activated' => true ) );
             if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && 'update-plugin' === $_POST['action'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

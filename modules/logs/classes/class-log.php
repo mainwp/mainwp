@@ -196,9 +196,9 @@ class Log {
         // Debug backtrace.
         ob_start();
 
-		// @codingStandardsIgnoreStart
-		debug_print_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ); // Option to ignore args requires PHP 5.3.6
-		// @codingStandardsIgnoreEnd
+        // @codingStandardsIgnoreStart
+        debug_print_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ); // Option to ignore args requires PHP 5.3.6
+        // @codingStandardsIgnoreEnd
 
         $backtrace = ob_get_clean();
         $backtrace = array_values( array_filter( explode( "\n", $backtrace ) ) );

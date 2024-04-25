@@ -194,8 +194,8 @@ class Log_Insights_Page {
     public function screen_options( $input ) {
         return $input .
             '<a class="ui button basic icon" onclick="mainwp_module_log_overview_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Page Settings', 'mainwp' ) . '">
-				<i class="cog icon"></i>
-			</a>';
+                <i class="cog icon"></i>
+            </a>';
     }
 
     /**
@@ -260,7 +260,7 @@ class Log_Insights_Page {
      * @uses \MainWP\Dashboard\MainWP_Recent_Posts::get_class_name()
      * @uses \MainWP\Dashboard\MainWP_Security_Issues_Widget::get_class_name()
      */
-	public static function add_meta_boxes( $page ) { //phpcs:ignore -- complex method.
+    public static function add_meta_boxes( $page ) { //phpcs:ignore -- complex method.
 
         /**
          * Get getmetaboxes
@@ -449,13 +449,13 @@ class Log_Insights_Page {
      *
      * @param bool $save_filter To save filter.
      */
-	public function get_insights_filters( $save_filter = false ) { //phpcs:ignore -- complex method.
+    public function get_insights_filters( $save_filter = false ) { //phpcs:ignore -- complex method.
 
         $filters = array( 'client', 'range', 'group', 'user', 'dtsstart', 'dtsstop' );
 
         $get_saved = true;
         foreach ( $filters as $filter ) {
-			if ( isset( $_REQUEST[ $filter ] ) ) { //phpcs:ignore -- safe. 
+            if ( isset( $_REQUEST[ $filter ] ) ) { //phpcs:ignore -- safe.
                 $get_saved = false;
                 break;
             }
@@ -485,14 +485,14 @@ class Log_Insights_Page {
             $filter_dtsstart   = isset( $filters_saved['dtsstart'] ) && ! empty( $filters_saved['dtsstart'] ) ? $filters_saved['dtsstart'] : '';
             $filter_dtsstop    = isset( $filters_saved['dtsstop'] ) && ! empty( $filters_saved['dtsstop'] ) ? $filters_saved['dtsstop'] : '';
         } else {
-			// phpcs:disable WordPress.Security.NonceVerification
+            // phpcs:disable WordPress.Security.NonceVerification
             $filter_ranges     = isset( $_REQUEST['range'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['range'] ) ) : '';
             $filter_groups_ids = isset( $_REQUEST['group'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['group'] ) ) : '';
             $filter_client_ids = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
             $filter_user_ids   = isset( $_REQUEST['user'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['user'] ) ) : '';
             $filter_dtsstart   = isset( $_REQUEST['dtsstart'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['dtsstart'] ) ) : '';
             $filter_dtsstop    = isset( $_REQUEST['dtsstop'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['dtsstop'] ) ) : '';
-			// phpcs:enable WordPress.Security.NonceVerification
+            // phpcs:enable WordPress.Security.NonceVerification
             $update_filter = true;
         }
 
@@ -575,7 +575,7 @@ class Log_Insights_Page {
         $array_groups_ids  = array();
         $array_users_ids   = array();
 
-		extract( $insights_filters ); //phpcs:ignore -- ok.
+        extract( $insights_filters ); //phpcs:ignore -- ok.
 
         $default_filter = false;
         // extracted values.
@@ -691,8 +691,7 @@ class Log_Insights_Page {
                 <div class="three wide middle aligned left aligned column">
                     <button onclick="mainwp_module_log_overview_content_filter()" class="ui mini basic button"><?php esc_html_e( 'Filter Data', 'mainwp' ); ?></button>
                     <button onclick="mainwp_module_log_overview_content_reset_filters(this)" class="ui mini green button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Reset Filters', 'mainwp' ); ?></button>
-                    
-                </div>              
+                </div>
             </div>
             <?php Log_Events_Filter_Segment::get_instance()->render_filters_segment(); ?>
         </div>
@@ -740,7 +739,7 @@ class Log_Insights_Page {
         ?>
         <script type="text/javascript">
             jQuery( document ).ready( function( $ ) {
-				var dateRanges = JSON.parse('<?php echo $ranges_values; //phpcs:ignore -- ok ?>');
+                var dateRanges = JSON.parse('<?php echo $ranges_values; //phpcs:ignore -- ok ?>');
                 $('#mainwp-module-log-filter-ranges').dropdown({
                     onChange: function (value, text, selected) {
                         if(value == 'custom'){
@@ -756,7 +755,7 @@ class Log_Insights_Page {
                 });
             });
         </script>
-                    
+
         <?php
     }
 
@@ -827,7 +826,7 @@ class Log_Insights_Page {
         $stats_prev_data = ! empty( $items_prev ) ? Log_Stats::get_stats_data( $items_prev ) : array();
         ?>
         <div class="mainwp-primary-content-wrap">
-        <div class="ui segment" style="padding-top:0;padding-bottom:0;">    
+        <div class="ui segment" style="padding-top:0;padding-bottom:0;">
             <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'insights-widgets' ) ) : ?>
                     <div class="ui info message">

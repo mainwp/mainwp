@@ -174,7 +174,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      *
      * @return string Column Name.
      */
-	public function column_default( $item, $column_name ) { 	// phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function column_default( $item, $column_name ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * Filter is being replaced with mainwp_sitestable_item
@@ -261,7 +261,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'tags'           => esc_html__( 'Tags', 'mainwp' ),
             'client_name'    => esc_html__( 'Client', 'mainwp' ),
             'update'         => '<i class="sync alternate icon"></i>',
-			'wpcore_update'  => '<i class="icon wordpress"></i>', // phpcs:ignore -- Prevent modify WP icon.
+            'wpcore_update'  => '<i class="icon wordpress"></i>', // phpcs:ignore -- Prevent modify WP icon.
             'plugin_update'  => '<i class="plug icon"></i>',
             'theme_update'   => '<i class="tint icon"></i>',
             'last_sync'      => esc_html__( 'Last Sync', 'mainwp' ),
@@ -449,14 +449,14 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $items_bulk        = $this->get_bulk_actions();
         $filters_row_style = 'display:none';
 
-		// phpcs:disable WordPress.Security.NonceVerification,Missing,Missing,Missing,Missing,Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,Missing,Missing,Missing,Missing,Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $selected_status           = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
         $selected_group            = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
         $selected_client           = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
         $is_not                    = isset( $_REQUEST['isnot'] ) && ( 'yes' === $_REQUEST['isnot'] ) ? true : false;
         $selected_one_time_siteids = isset( $_REQUEST['selected_sites'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['selected_sites'] ) ) : '';
         $reset_filter              = isset( $_REQUEST['reset'] ) && ( 'yes' === $_REQUEST['reset'] ) ? true : false;
-		// phpcs:enable WordPress.Security.NonceVerification,Missing,Missing,Missing,Missing,Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:enable WordPress.Security.NonceVerification,Missing,Missing,Missing,Missing,Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         if ( ! empty( $selected_one_time_siteids ) ) {
             MainWP_Utility::update_user_option( 'mainwp_managesites_filter_onetime_selected_siteids', $selected_one_time_siteids );
@@ -588,7 +588,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 <a href="#" class="ui icon basic button" id="mainwp-manage-sites-filter-toggle-button">
                     <i class="sliders horizontal icon"></i>
                 </a>
-            </div>      
+            </div>
         </div>
         <?php
     }
@@ -636,7 +636,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-	public function prepare_items( $optimize = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function prepare_items( $optimize = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         if ( null === $this->userExtension ) {
             $this->userExtension = MainWP_DB_Common::instance()->get_user_extension();
@@ -648,13 +648,13 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $req_order   = null;
 
         if ( $optimize ) {
-			// phpcs:disable WordPress.Security.NonceVerification,Missing,Missing,Missing,Missing,Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            // phpcs:disable WordPress.Security.NonceVerification,Missing,Missing,Missing,Missing,Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             if ( isset( $_REQUEST['order'] ) ) {
                 $order_values = MainWP_Utility::instance()->get_table_orders( $_REQUEST );
                 $req_orderby  = $order_values['orderby'];
                 $req_order    = $order_values['order'];
             }
-			// phpcs:enable
+            // phpcs:enable
             if ( isset( $req_orderby ) ) {
                 if ( 'site' === $req_orderby ) {
                     $orderby = 'wp.name ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
@@ -664,28 +664,28 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     $orderby = 'GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'update' === $req_orderby ) {
                     $orderby = 'CASE true
-											WHEN (offline_check_result = -1)
-												THEN 2
-											WHEN (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "")
-												THEN 3
-											ELSE 4
-												+ (CASE wp_upgrades WHEN "[]" THEN 0 ELSE 1 END)
-												+ (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
-												+ (CASE theme_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
-											END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+                                            WHEN (offline_check_result = -1)
+                                                THEN 2
+                                            WHEN (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "")
+                                                THEN 3
+                                            ELSE 4
+                                                + (CASE wp_upgrades WHEN "[]" THEN 0 ELSE 1 END)
+                                                + (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
+                                                + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
+                                            END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'phpversion' === $req_orderby ) {
                     $orderby = ' INET_ATON(SUBSTRING_INDEX(CONCAT(wp_optionview.phpversion,".0.0.0"),".",4)) ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'status' === $req_orderby ) {
                     $orderby = 'CASE true
-											WHEN (offline_check_result = -1)
-												THEN 2
-											WHEN (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "")
-												THEN 3
-											ELSE 4
-												+ (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
-												+ (CASE theme_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
-												+ (CASE wp_upgrades WHEN "[]" THEN 0 ELSE 1 END)
-											END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+                                            WHEN (offline_check_result = -1)
+                                                THEN 2
+                                            WHEN (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "")
+                                                THEN 3
+                                            ELSE 4
+                                                + (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
+                                                + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE 1 + LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
+                                                + (CASE wp_upgrades WHEN "[]" THEN 0 ELSE 1 END)
+                                            END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'last_post' === $req_orderby ) {
                     $orderby = 'wp_sync.last_post_gmt ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'status_code' === $req_orderby ) {
@@ -700,7 +700,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             }
         }
 
-		 // phpcs:disable WordPress.Security.NonceVerification,Missing,Missing,Missing,Missing,Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+         // phpcs:disable WordPress.Security.NonceVerification,Missing,Missing,Missing,Missing,Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! $optimize ) {
             $perPage = 9999;
             $start   = 0;
@@ -780,7 +780,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 $client_ids = sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ); // may be multi groups.
             }
         }
-		// phpcs:enable
+        // phpcs:enable
 
         $where = null;
 
@@ -1094,7 +1094,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             jQuery( document ).ready( function( $ ) {
 
             <?php if ( ! $optimize ) { ?>
-                        try {   
+                        try {
                             jQuery( '#mainwp-sites-table-loader' ).hide();
                             $manage_sites_table = jQuery( '#mainwp-manage-sites-table' )
                             .DataTable( {
@@ -1104,18 +1104,18 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
                                 "info" : <?php echo esc_js( $table_features['info'] ); ?>,
                                 "scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
-								"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
+                                "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
                                 "stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
                                 "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
-								"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
+                                "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
                                 <?php if ( isset( $table_features['fixedColumns'] ) && '' !== $table_features['fixedColumns'] ) : ?>
                                 "fixedColumns" : <?php echo esc_js( $table_features['fixedColumns'] ); ?>,
                                 <?php endif; ?>
                                 "lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All" ] ],
                                 "columnDefs": [
                                     {
-                                        "targets": 'no-sort', 
-                                        "orderable": false 
+                                        "targets": 'no-sort',
+                                        "orderable": false
                                     },
                                     {
                                         "targets": 'manage-site-column',
@@ -1189,11 +1189,11 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             "paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
                             "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
                             "info" : <?php echo esc_js( $table_features['info'] ); ?>,
-							"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
+                            "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
                             "scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
                             "stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
                             "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
-							"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
+                            "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
                             "fixedColumns" : <?php echo ! empty( $table_features['fixedColumns'] ) ? esc_js( $table_features['fixedColumns'] ) : '""'; ?>,
                             "lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All"] ],
                             serverSide: true,
@@ -1263,7 +1263,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
                                 let col_id = jQuery( this ).attr( 'id' );
                                 col_id = col_id.replace( "mainwp_show_column_", "" );
-                                try {   
+                                try {
                                     $manage_sites_table.column( '#' + col_id ).visible( false );
                                 } catch(err) {
                                     // to fix js error.
@@ -1273,7 +1273,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             //default columns: Site, Open Admin, URL, Updates, Site Health, Last Sync and Actions.
                             let cols = ['site','login','url','update','site_health','last_sync','site_actions'];
                             jQuery.each( cols, function ( index, value ) {
-                                try {   
+                                try {
                                     $manage_sites_table.column( '#' + value ).visible( true );
                                 } catch(err) {
                                     // to fix js error.
@@ -1285,7 +1285,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
                                 let col_id = jQuery( this ).attr( 'id' );
                                 col_id = col_id.replace( "mainwp_show_column_", "" );
-                                try {   
+                                try {
                                     $manage_sites_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
                                 } catch(err) {
                                     // to fix js error.
@@ -1331,7 +1331,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             // to fix js error.
                         }
                     <?php } ?>
-                };      
+                };
                 mainwp_manage_sites_reset_filters = function(resetObj) {
                     <?php if ( ! $optimize ) { ?>
                         window.location = 'admin.php?page=managesites&isnot=no';
@@ -1491,7 +1491,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
-	public function ajax_get_datatable_rows() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function ajax_get_datatable_rows() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $all_rows  = array();
         $info_rows = array();
         $use_favi  = get_option( 'mainwp_use_favicon', 1 );
@@ -1773,7 +1773,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                              */
                                             do_action( 'mainwp_manage_sites_action', $website );
                                             ?>
-                                        </div>                                      
+                                        </div>
                                     </div>
                                         <?php
                                 } elseif ( method_exists( $this, 'column_' . $column_name ) ) {
@@ -1871,7 +1871,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
-	protected function single_row_columns( $website, $good_health = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    protected function single_row_columns( $website, $good_health = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $total_wp_upgrades     = 0;
         $total_plugin_upgrades = 0;
@@ -2034,7 +2034,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             if ( ! empty( $favi_url ) ) {
                 $imgfavi = '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" />';
             } else {
-				$imgfavi = '<i class="icon big wordpress"></i> '; // phpcs:ignore -- Prevent modify WP icon.
+                $imgfavi = '<i class="icon big wordpress"></i> '; // phpcs:ignore -- Prevent modify WP icon.
             }
         }
 

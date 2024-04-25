@@ -56,7 +56,7 @@ if ( empty( $heading ) ) {
                             <tr>
                                 <td align="left" valign="top" style="padding:30px 30px 0 30px;">
                                     <br /><br />
-									<?php echo $content_text; //phpcs:ignore -- ok. ?>
+                                    <?php echo $content_text; //phpcs:ignore -- ok. ?>
                                 </td>
                             </tr>
                             <tr>

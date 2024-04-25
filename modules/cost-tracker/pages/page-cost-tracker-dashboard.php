@@ -19,7 +19,7 @@ use function MainWP\Dashboard\mainwp_do_not_have_permissions;
  * Class Cost_Tracker_Dashboard
  */
 class Cost_Tracker_Dashboard {
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
     /**
      * Variable to hold the items.
      *
@@ -199,7 +199,7 @@ class Cost_Tracker_Dashboard {
             return;
         }
 
-		$sel_ids = isset( $_GET['selected_ids'] ) ? $_GET['selected_ids'] : ''; //phpcs:ignore -- ok.
+        $sel_ids = isset( $_GET['selected_ids'] ) ? $_GET['selected_ids'] : ''; //phpcs:ignore -- ok.
         $sel_ids = explode( ',', $sel_ids );
 
         if ( ! empty( $sel_ids ) && is_array( $sel_ids ) ) {
@@ -214,7 +214,7 @@ class Cost_Tracker_Dashboard {
         <div id="mainwp-module-cost-tracker-dashboard-tab">
             <?php static::render_manage_tasks_table_top( $sel_ids ); ?>
             <?php $this->render_actions_bar(); ?>
-                <div class="ui segment">                    
+                <div class="ui segment">
                 <?php $this->render_dashboard_body(); ?>
                 </div>
             </div>
@@ -226,7 +226,7 @@ class Cost_Tracker_Dashboard {
      *
      * Handle display table rows.
      */
-	public function ajax_display_rows() { //phpcs:ignore -- complex.
+    public function ajax_display_rows() { //phpcs:ignore -- complex.
 
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_cost_tracker_lists_display_rows' );
         $filtered_one_time_ids = get_user_option( 'mainwp_module_cost_tracker_onetime_filters_saved' );
@@ -237,7 +237,7 @@ class Cost_Tracker_Dashboard {
         }
         $req_orderby = '';
         $req_order   = null;
-		// phpcs:disable WordPress.Security.NonceVerification
+        // phpcs:disable WordPress.Security.NonceVerification
         if ( isset( $_REQUEST['order'] ) ) {
             $order_values = MainWP_Utility::instance()->get_table_orders( $_REQUEST );
             $req_orderby  = $order_values['orderby'];
@@ -285,7 +285,7 @@ class Cost_Tracker_Dashboard {
             $filter_payment_method   = isset( $filters_saved['payment_methods'] ) && ! empty( $filters_saved['payment_methods'] ) ? $filters_saved['payment_methods'] : '';
 
         } else {
-			// phpcs:disable WordPress.Security.NonceVerification
+            // phpcs:disable WordPress.Security.NonceVerification
             $filter_sites_ids       = isset( $_REQUEST['sites'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['sites'] ) ) : '';
             $filter_client_ids      = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
             $filter_prod_type_slugs = isset( $_REQUEST['prods_types'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['prods_types'] ) ) : '';
@@ -297,7 +297,7 @@ class Cost_Tracker_Dashboard {
             $filter_sub_renewal_type = isset( $_REQUEST['renewal_frequency'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['renewal_frequency'] ) ) : '';
             $filter_payment_method   = isset( $_REQUEST['payment_methods'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['payment_methods'] ) ) : '';
 
-			// phpcs:enable WordPress.Security.NonceVerification
+            // phpcs:enable WordPress.Security.NonceVerification
         }
 
         $array_sites_ids        = array();
@@ -383,9 +383,9 @@ class Cost_Tracker_Dashboard {
             );
         }
 
-		// phpcs:enable
+        // phpcs:enable
 
-		 // phpcs:disable WordPress.Security.NonceVerification
+         // phpcs:disable WordPress.Security.NonceVerification
         $per_page = isset( $_REQUEST['length'] ) ? intval( $_REQUEST['length'] ) : 25;
 
         if ( -1 === $per_page ) {
@@ -395,7 +395,7 @@ class Cost_Tracker_Dashboard {
         $start  = isset( $_REQUEST['start'] ) ? intval( $_REQUEST['start'] ) : 0;
         $search = isset( $_REQUEST['search']['value'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['search']['value'] ) ) : '';
 
-		// phpcs:enable WordPress.Security.NonceVerification
+        // phpcs:enable WordPress.Security.NonceVerification
 
         $args = array(
             'order'                 => ( 'asc' === $req_order ) ? 'asc' : 'desc',
@@ -443,7 +443,7 @@ class Cost_Tracker_Dashboard {
         $output          = array();
 
         $filtered = false;
-		if ( isset( $_GET['selected_ids'] ) && ! empty( $_GET['selected_ids'] ) ) { //phpcs:ignore -- ok.
+        if ( isset( $_GET['selected_ids'] ) && ! empty( $_GET['selected_ids'] ) ) { //phpcs:ignore -- ok.
             $filtered = true;
         }
         ?>
@@ -472,7 +472,7 @@ class Cost_Tracker_Dashboard {
             </thead>
             <tfoot>
                 <tr>
-                    <th class="no-sort collapsing check-column column-check"><span class="ui checkbox"><input id="cb-select-all-bottom" type="checkbox"></span></th>
+                    <th scope="col" class="no-sort collapsing check-column column-check"><span class="ui checkbox"><input id="cb-select-all-bottom" type="checkbox"></span></th>
                     <th id="cost_status" class="collapsing column-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
                     <th id="icon" class="column-icon collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
                     <th id="name" class="column-name" ><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
@@ -607,11 +607,11 @@ class Cost_Tracker_Dashboard {
                             "paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
                             "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
                             "info" : <?php echo esc_js( $table_features['info'] ); ?>,
-							"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
+                            "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
                             "scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
                             "stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
                             "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
-							"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
+                            "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
                             "fixedColumns" : <?php echo ! empty( $table_features['fixedColumns'] ) ? esc_js( $table_features['fixedColumns'] ) : '""'; ?>,
                             "lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All"] ],
                             "serverSide": true,
@@ -631,7 +631,7 @@ class Cost_Tracker_Dashboard {
                                 jQuery( row ).addClass(data.rowClass);
                                 jQuery( row ).attr( 'id', "cost-row-" + data.cost_id );
                                 jQuery( row ).attr( 'item-id', data.cost_id );
-                                
+
                             },
                             'select': {
                                 items: 'row',
@@ -676,7 +676,7 @@ class Cost_Tracker_Dashboard {
                     ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-clients').dropdown('get value') ) &&
                     ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-dtsstart').dropdown('get value') ) &&
                     ( '' == jQuery( '#mainwp-module-cost-tracker-costs-filter-dtsstop').dropdown('get value') );
-                    
+
                     console.log('emptyFilter: ' + ( emptyFilter ? 'yes' : 'no' ) );
 
                     if(emptyFilter){
@@ -686,7 +686,7 @@ class Cost_Tracker_Dashboard {
                     }
 
                     $subscription_sites_table.ajax.reload();
-                    
+
                 } catch(err) {
                     // to fix js error.
                     console.log(err);
@@ -718,9 +718,9 @@ class Cost_Tracker_Dashboard {
                     col_id = check_id.replace( "mainwp_show_column_", "" );
                     try {
                         $subscription_sites_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
-                        if ( check_id.indexOf("mainwp_show_column_desktop") >= 0 ) {                            
+                        if ( check_id.indexOf("mainwp_show_column_desktop") >= 0 ) {
                             col_id = check_id.replace( "mainwp_show_column_desktop", "" );
-                            $subscription_sites_table.column( '#mobile' + col_id ).visible( jQuery(this).is( ':checked' ) ); // to set mobile columns.                      
+                            $subscription_sites_table.column( '#mobile' + col_id ).visible( jQuery(this).is( ':checked' ) ); // to set mobile columns.
                         }
                     } catch(err) {
                         // to fix js error.
@@ -739,7 +739,7 @@ class Cost_Tracker_Dashboard {
                 jQuery( '#subscription-sites-screen-options-form' ).submit( function() {
                     if ( jQuery('input[name=reset_subscriptionsites_columns_order]').attr('value') == 1 ) {
                         $subscription_sites_table.colReorder.reset();
-                    }                   
+                    }
                     jQuery( '#mainwp-module-cost-tracker-sites-screen-options-modal' ).modal( 'hide' );
                 } );
                 return false;
@@ -755,9 +755,9 @@ class Cost_Tracker_Dashboard {
      *
      * @return array Rows html.
      */
-	public function ajax_get_datatable_rows() { //phpcs:ignore -- complex.
+    public function ajax_get_datatable_rows() { //phpcs:ignore -- complex.
 
-		$sel_ids = isset( $_GET['selected_ids'] ) ? $_GET['selected_ids'] : ''; //phpcs:ignore -- ok.
+        $sel_ids = isset( $_GET['selected_ids'] ) ? $_GET['selected_ids'] : ''; //phpcs:ignore -- ok.
         $sel_ids = explode( ',', $sel_ids );
 
         $lifetime_costs = 0;
@@ -879,12 +879,12 @@ class Cost_Tracker_Dashboard {
                             break;
                         case 'cost_status':
                             ?>
-							<?php echo Cost_Tracker_Admin::get_cost_status_label( $subscription->cost_status ); //phpcs:ignore -- escaped. ?>
+                            <?php echo Cost_Tracker_Admin::get_cost_status_label( $subscription->cost_status ); //phpcs:ignore -- escaped. ?>
                             <?php
                             break;
                         case 'icon':
                             ?>
-							<?php echo Cost_Tracker_Admin::get_instance()->get_product_icon_display( $subscription ); //phpcs:ignore -- escaped.?>
+                            <?php echo Cost_Tracker_Admin::get_instance()->get_product_icon_display( $subscription ); //phpcs:ignore -- escaped.?>
                             <?php
                             break;
                         case 'name':
@@ -917,11 +917,11 @@ class Cost_Tracker_Dashboard {
                             <?php
                             break;
                         case 'price':
-							echo ! empty( $url_manage_sites ) ? '<a href="' . esc_url( $url_manage_sites ) . '">' . Cost_Tracker_Utility::cost_tracker_format_price( $subscription->price, true ) . '</a>' : Cost_Tracker_Utility::cost_tracker_format_price( $subscription->price ); //phpcs:ignore -- ok.
+                            echo ! empty( $url_manage_sites ) ? '<a href="' . esc_url( $url_manage_sites ) . '">' . Cost_Tracker_Utility::cost_tracker_format_price( $subscription->price, true ) . '</a>' : Cost_Tracker_Utility::cost_tracker_format_price( $subscription->price ); //phpcs:ignore -- ok.
                             break;
                         case 'license_type':
                             ?>
-							<?php echo isset( $license_types[ $subscription->license_type ] ) ? $license_types[ $subscription->license_type ] : ''; //phpcs:ignore -- ok. ?>
+                            <?php echo isset( $license_types[ $subscription->license_type ] ) ? $license_types[ $subscription->license_type ] : ''; //phpcs:ignore -- ok. ?>
                             <?php
                             break;
                         case 'type':
@@ -931,17 +931,17 @@ class Cost_Tracker_Dashboard {
                             break;
                         case 'product_type':
                             ?>
-							<?php echo isset( $product_types[ $subscription->product_type ] ) ? '<div class="ui label" style="color:#ffffff;background-color:' . esc_attr( $product_colors[ $subscription->product_type ] ) . '"><i class="' . str_replace( 'deficon:', '', esc_attr( $product_types_icons[ $subscription->product_type ] ) ) . ' icon"></i>' . esc_html( $product_types[ $subscription->product_type ] ) . '</div>' : ''; //phpcs:ignore -- ok. ?>
+                            <?php echo isset( $product_types[ $subscription->product_type ] ) ? '<div class="ui label" style="color:#ffffff;background-color:' . esc_attr( $product_colors[ $subscription->product_type ] ) . '"><i class="' . str_replace( 'deficon:', '', esc_attr( $product_types_icons[ $subscription->product_type ] ) ) . ' icon"></i>' . esc_html( $product_types[ $subscription->product_type ] ) . '</div>' : ''; //phpcs:ignore -- ok. ?>
                             <?php
                             break;
                         case 'last_renewal':
                             ?>
-							<?php echo $last_renewal ? '<em>' . MainWP_Utility::format_date( $last_renewal ) . '</em>': ''; //phpcs:ignore -- escaped. ?>
+                            <?php echo $last_renewal ? '<em>' . MainWP_Utility::format_date( $last_renewal ) . '</em>': ''; //phpcs:ignore -- escaped. ?>
                             <?php
                             break;
                         case 'payment_method':
                             ?>
-							<?php echo isset( $payment_methods[ $subscription->payment_method ] ) ? Cost_Tracker_Utility::get_payment_method_icon( $payment_methods[ $subscription->payment_method ] ) : ''; // phpcs:ignore -- ok.?>
+                            <?php echo isset( $payment_methods[ $subscription->payment_method ] ) ? Cost_Tracker_Utility::get_payment_method_icon( $payment_methods[ $subscription->payment_method ] ) : ''; // phpcs:ignore -- ok.?>
                             <?php
                             break;
                         case 'next_renewal':
@@ -950,7 +950,7 @@ class Cost_Tracker_Dashboard {
                             break;
                         case 'sites':
                             ?>
-							<?php echo ! empty( $url_manage_sites ) ? '<a href="' . esc_url( $url_manage_sites ) . '">' . '<div class="ui blue small label"><i class="wordpress icon"></i>' . count( $sub_sites ) . '</div>' . '</a>' : '<div class="ui small label"><i class="wordpress icon"></i> 0</div>'; //phpcs:ignore -- WP icon. ?>
+                            <?php echo ! empty( $url_manage_sites ) ? '<a href="' . esc_url( $url_manage_sites ) . '">' . '<div class="ui blue small label"><i class="wordpress icon"></i>' . count( $sub_sites ) . '</div>' . '</a>' : '<div class="ui small label"><i class="wordpress icon"></i> 0</div>'; //phpcs:ignore -- WP icon. ?>
                             <?php
                             break;
                         case 'actions':
@@ -964,7 +964,7 @@ class Cost_Tracker_Dashboard {
                                     <?php else : ?>
                                         <a href="javascript:void(0)" class="item mainwp-edit-sub-note" data-tooltip="<?php echo esc_attr( substr( wp_unslash( $strip_note ), 0, 100 ) ); ?>" data-position="left center" data-inverted=""><?php esc_html_e( 'View Notes', 'mainwp' ); ?></a>
                                     <?php endif; ?>
-									<span style="display: none" id="sub-notes-<?php echo intval( $subscription->id ); ?>-note"><?php echo wp_unslash( $esc_note ); //phpcs:ignore -- escaped. ?></span>
+                                    <span style="display: none" id="sub-notes-<?php echo intval( $subscription->id ); ?>-note"><?php echo wp_unslash( $esc_note ); //phpcs:ignore -- escaped. ?></span>
                                     <a class="item subscription_menu_item_delete" href="javascript:void(0)"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                                 </div>
                             </div>
@@ -992,7 +992,7 @@ class Cost_Tracker_Dashboard {
      */
     public function ajax_notes_save() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_cost_tracker_notes_save' );
-		//phpcs:disable WordPress.Security.NonceVerification.Missing
+        //phpcs:disable WordPress.Security.NonceVerification.Missing
         $sub_id = isset( $_POST['subid'] ) ? intval( $_POST['subid'] ) : 0;
         $sub    = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $sub_id );
         if ( $sub_id && $sub ) {
@@ -1007,7 +1007,7 @@ class Cost_Tracker_Dashboard {
         } else {
             die( wp_json_encode( array( 'error' => esc_html__( 'Invalid cost tracker ID or item not found.', 'mainwp' ) ) ) );
         }
-		//phpcs:enable
+        //phpcs:enable
     }
 
     /**
@@ -1017,7 +1017,7 @@ class Cost_Tracker_Dashboard {
      */
     public function ajax_costs_filter_save_segment() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_cost_tracker_filter_save_segment' );
-		//phpcs:disable WordPress.Security.NonceVerification.Missing
+        //phpcs:disable WordPress.Security.NonceVerification.Missing
 
         $not_filters = array(
             'seg_sites'             => 'nosites',
@@ -1055,7 +1055,7 @@ class Cost_Tracker_Dashboard {
         }
 
         $seg_id = ! empty( $_POST['seg_id'] ) ? sanitize_text_field( wp_unslash( $_POST['seg_id'] ) ) : time();
-		//phpcs:enable WordPress.Security.NonceVerification.Missing
+        //phpcs:enable WordPress.Security.NonceVerification.Missing
 
         $saved_segments = $this->set_get_cost_filter_segments();
         if ( ! is_array( $saved_segments ) ) {
@@ -1109,7 +1109,7 @@ class Cost_Tracker_Dashboard {
             }
             $list_segs .= '</select>';
         }
-		die( wp_json_encode( array( 'result' => $list_segs ) ) ); //phpcs:ignore -- ok.
+        die( wp_json_encode( array( 'result' => $list_segs ) ) ); //phpcs:ignore -- ok.
     }
 
     /**
@@ -1119,15 +1119,15 @@ class Cost_Tracker_Dashboard {
      */
     public function ajax_costs_filter_delete_segment() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_cost_tracker_filter_delete_segment' );
-		$seg_id = ! empty( $_POST['seg_id'] ) ? sanitize_text_field( wp_unslash( $_POST['seg_id'] ) ) : 0; //phpcs:ignore -- ok.
+        $seg_id = ! empty( $_POST['seg_id'] ) ? sanitize_text_field( wp_unslash( $_POST['seg_id'] ) ) : 0; //phpcs:ignore -- ok.
 
         $saved_segments = $this->set_get_cost_filter_segments();
         if ( ! empty( $seg_id ) && is_array( $saved_segments ) && isset( $saved_segments[ $seg_id ] ) ) {
             unset( $saved_segments[ $seg_id ] );
             $this->set_get_cost_filter_segments( true, $saved_segments );
-			die( wp_json_encode( array( 'result' =>'SUCCESS' ) ) ); //phpcs:ignore -- ok.
+            die( wp_json_encode( array( 'result' =>'SUCCESS' ) ) ); //phpcs:ignore -- ok.
         }
-		die( wp_json_encode( array( 'error' => esc_html__( 'Segment not found. Please try again.', 'mainwp' ) ) ) ); //phpcs:ignore -- ok.
+        die( wp_json_encode( array( 'error' => esc_html__( 'Segment not found. Please try again.', 'mainwp' ) ) ) ); //phpcs:ignore -- ok.
     }
 
 
@@ -1199,7 +1199,7 @@ class Cost_Tracker_Dashboard {
      *
      * @return void
      */
-	public static function render_manage_tasks_table_top( $sel_one_time_ids = false ) { //phpcs:ignore -- complex.
+    public static function render_manage_tasks_table_top( $sel_one_time_ids = false ) { //phpcs:ignore -- complex.
 
         $filters = static::get_cost_filter_params();
 
@@ -1222,7 +1222,7 @@ class Cost_Tracker_Dashboard {
         $filter_payment_method   = '';
         $filter_sub_renewal_type = '';
 
-		$redirect_site_id = isset( $_GET['site_id'] ) ? intval( $_GET['site_id'] ) : 0; //phpcs:ignore -- ok.
+        $redirect_site_id = isset( $_GET['site_id'] ) ? intval( $_GET['site_id'] ) : 0; //phpcs:ignore -- ok.
 
         if ( ! $sel_one_time_ids ) {
             if ( $get_saved ) {
@@ -1241,7 +1241,7 @@ class Cost_Tracker_Dashboard {
                 $filter_sub_renewal_type = isset( $filters_saved['renewal_frequency'] ) && ! empty( $filters_saved['renewal_frequency'] ) ? $filters_saved['renewal_frequency'] : '';
                 $filter_payment_method   = isset( $filters_saved['payment_methods'] ) && ! empty( $filters_saved['payment_methods'] ) ? $filters_saved['payment_methods'] : '';
             } else {
-				// phpcs:disable WordPress.Security.NonceVerification
+                // phpcs:disable WordPress.Security.NonceVerification
                 $filter_sites_ids       = isset( $_REQUEST['sites_ids'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['sites_ids'] ) ) : '';
                 $filter_client_ids      = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
                 $filter_prod_type_slugs = isset( $_REQUEST['prods_types'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['prods_types'] ) ) : '';
@@ -1252,7 +1252,7 @@ class Cost_Tracker_Dashboard {
                 $filter_license_type     = isset( $_REQUEST['license_types'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['license_types'] ) ) : '';
                 $filter_sub_renewal_type = isset( $_REQUEST['renewal_frequency'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['renewal_frequency'] ) ) : '';
                 $filter_payment_method   = isset( $_REQUEST['payment_methods'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['payment_methods'] ) ) : '';
-				// phpcs:enable WordPress.Security.NonceVerification
+                // phpcs:enable WordPress.Security.NonceVerification
             }
         } elseif ( $redirect_site_id ) {
             $filter_sites_ids = $redirect_site_id;
@@ -1441,12 +1441,12 @@ class Cost_Tracker_Dashboard {
                             <?php endif; ?>
                         </div>
                     </div>
-                    
+
                 </div>
             </div>
         </div>
         <style>
-            
+
         </style>
         <script type="text/javascript">
             jQuery( document ).ready( function( $ ) {
@@ -1505,13 +1505,13 @@ class Cost_Tracker_Dashboard {
                         }
                     }, 'json');
                 };
-                
+
                 jQuery('#mainwp-cost-tracker-edit-segment-save').on( 'click', function () {
 
                     mainwp_module_cost_tracker_hide_segments_message();
 
                     let seg_name = jQuery('#mainwp-cost-tracker-edit-segment-name').val().trim();
-                    
+
                     if('' == seg_name){
                         jQuery('#mainwp-cost-tracker-edit-segment-status').html(__('Please enter segment name.')).addClass('red').show();
                         return false;
@@ -1548,7 +1548,7 @@ class Cost_Tracker_Dashboard {
                         }
                     }, 'json');
 
-                    
+
 
                     return false;
                 });
@@ -1560,7 +1560,7 @@ class Cost_Tracker_Dashboard {
                     if('' != seg_id ) {
                         seg_values = jQuery( '#mainwp-cost-tracker-segment-select-fields select > option[value="' +seg_id+ '"]').attr('segment-filters');
                     }
-                    
+
                     let valErr = true;
                     let arrVal = '';
 
@@ -1581,7 +1581,7 @@ class Cost_Tracker_Dashboard {
                             if('' != seg_values){
                                 jQuery( '#module-cost-tracker-filter-save-segment-button' ).attr('selected-segment-id',seg_id);
                                 jQuery( '#module-cost-tracker-filter-save-segment-button' ).attr('selected-segment-name',seg_values.name);
-                                
+
                                 for (const [key, value] of Object.entries(seg_values)) {
                                     try {
                                         if(fieldsAllows.includes(key)){
@@ -1618,7 +1618,7 @@ class Cost_Tracker_Dashboard {
                     if('' == seg_id){
                         return false;
                     }
-                    
+
                     if('yes' === jQuery(delBtn).attr('running')){
                         return false;
                     }
@@ -1630,7 +1630,7 @@ class Cost_Tracker_Dashboard {
                     });
                     jQuery('#mainwp-cost-tracker-edit-segment-status').html('<i class="notched circle loading icon"></i> ' + __('Deleting segment. Please wait...')).show();
                     jQuery.post(ajaxurl, data, function (response) {
-                        
+
                         jQuery(delBtn).removeAttr('running');
 
                         if (response.error != undefined) {
@@ -1695,7 +1695,7 @@ class Cost_Tracker_Dashboard {
                         <input type="button" class="ui basic button" id="mainwp-cost-tracker-select-segment-delete-button" value="<?php esc_attr_e( 'Delete', 'mainwp' ); ?>" style="display:none;"/>
                     </div>
                     <div class="eight wide column">
-                        
+
                     </div>
                 </div>
             </div>
@@ -1787,7 +1787,7 @@ class Cost_Tracker_Dashboard {
                                             }
                                             ?>
                                                 id="mainwp_show_column_<?php echo esc_attr( $name ); ?>" name="mainwp_show_column_<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $name ); ?>">
-												<label for="mainwp_show_column_<?php echo esc_attr( $name ); ?>" ><?php echo $title; //phpcs:ignore ?></label>
+                                                <label for="mainwp_show_column_<?php echo esc_attr( $name ); ?>" ><?php echo $title; //phpcs:ignore ?></label>
                                                 <input type="hidden" value="<?php echo esc_attr( $name ); ?>" name="show_columns_name[]" />
                                             </div>
                                         </li>

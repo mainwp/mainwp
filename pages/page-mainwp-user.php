@@ -652,7 +652,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             ?>
             <script type="text/javascript">
             jQuery( document ).ready( function () {
-				jQuery( '#mainwp_user_roles' ).dropdown( 'set selected', [<?php echo $status; //phpcs:ignore -- safe output. ?>] );
+                jQuery( '#mainwp_user_roles' ).dropdown( 'set selected', [<?php echo $status; //phpcs:ignore -- safe output. ?>] );
             } );
             </script>
             <?php
@@ -890,7 +890,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $manage_users_table = jQuery( "#mainwp-users-table" ).DataTable( {
                     "responsive" : responsive,
                     "searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
-					"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
+                    "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
                     "stateSave":  <?php echo esc_html( $table_features['stateSave'] ); ?>,
                     "paging": <?php echo esc_html( $table_features['paging'] ); ?>,
                     "info": <?php echo esc_html( $table_features['info'] ); ?>,
@@ -945,7 +945,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 jQuery( '#mainwp-overview-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
                     let col_id = jQuery( this ).attr( 'id' );
                     col_id = col_id.replace( "mainwp_show_column_", "" );
-                    try {   
+                    try {
                         $manage_users_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
                     } catch(err) {
                         // to fix js error.
@@ -979,7 +979,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '', $clients = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
+    public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '', $clients = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
         MainWP_Cache::init_cache( 'Users' );
 
         $output         = new \stdClass();
@@ -1229,7 +1229,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 <td class="check-column"><span class="ui checkbox"><input type="checkbox" name="user[]" value="1"></span></td>
                 <?php do_action( 'mainwp_users_table_column', $user, $website ); ?>
                 <td class="name column-name">
-                    <?php echo ! empty( $user['display_name'] ) ? esc_html( $user['display_name'] ) : '&nbsp;'; ?>                  
+                    <?php echo ! empty( $user['display_name'] ) ? esc_html( $user['display_name'] ) : '&nbsp;'; ?>
                 </td>
                 <td class="username column-username"><strong><abbr title="<?php echo esc_attr( $user['login'] ); ?>"><?php echo esc_html( $user['login'] ); ?></abbr></strong></td>
                 <td class="email column-email"><a href="mailto:<?php echo esc_attr( $user['email'] ); ?>"><?php echo esc_html( $user['email'] ); ?></a></td>
@@ -1358,9 +1358,9 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
-	public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
+    public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $userId    = isset( $_POST['userId'] ) ? sanitize_text_field( wp_unslash( $_POST['userId'] ) ) : false;
         $userName  = isset( $_POST['userName'] ) ? sanitize_text_field( wp_unslash( $_POST['userName'] ) ) : '';
         $websiteId = isset( $_POST['websiteId'] ) ? sanitize_text_field( wp_unslash( $_POST['websiteId'] ) ) : false;
@@ -1412,7 +1412,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $extra['pass2'] = $pass;
             }
         }
-		// phpcs:enable
+        // phpcs:enable
 
         $optimize = ( 1 === (int) get_option( 'mainwp_optimize', 1 ) ) ? 1 : 0;
 
@@ -1500,7 +1500,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          */
         $pass_complexity = apply_filters( 'mainwp_new_user_password_complexity', '24' );
         static::render_header( 'Add' );
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         ?>
         <div class="ui alt segment" id="mainwp-add-users">
             <?php
@@ -1734,7 +1734,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             ?>
         </div>
         <?php
-		// phpcs:enable
+        // phpcs:enable
 
         static::render_footer( 'Add' );
     }
@@ -1813,7 +1813,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         } else {
                             ?>
                                 <input type="button" name="createuser" id="bulk_import_createuser" class="ui big green button" value="<?php esc_attr_e( 'Import Users', 'mainwp' ); ?>" />
-                            <?php } ?>  
+                            <?php } ?>
                             <a href="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/csv/sample_users.csv' ); ?>" class="ui big green basic right floated button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
                     </form>
                 </div>
@@ -1845,11 +1845,11 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-	public static function do_bulk_add() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
+    public static function do_bulk_add() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
         $errors      = array();
         $errorFields = array();
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_POST['select_by'] ) ) {
             $selected_sites   = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
             $selected_groups  = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
@@ -2000,7 +2000,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         } else {
             echo wp_json_encode( array( $errorFields, $errors ) );
         }
-		// phpcs:enable
+        // phpcs:enable
     }
 
     /**
@@ -2010,7 +2010,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @param mixed $output Modal window content.
      */
     public static function render_bulk_add_modal( $dbwebsites, $output ) {
-		// phpcs:disable WordPress.Security.EscapeOutput
+        // phpcs:disable WordPress.Security.EscapeOutput
         ?>
         <div id="mainwp-creating-new-user-modal" class="ui modal">
             <i class="close icon"></i>
@@ -2029,7 +2029,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 </div>
             </div>
         <?php
-		// phpcs:enable
+        // phpcs:enable
     }
 
     /**
@@ -2040,13 +2040,13 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      */
     public static function render_bulk_upload() {
         static::render_header( 'Import' );
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $errors = array();
         if ( isset( $_FILES['import_user_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['import_user_file_bulkupload']['error'] ) {
             if ( isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) {
                 $tmp_path     = isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) : '';
                 $wpFileSystem = MainWP_System_Utility::get_wp_file_system();
-				// phpcs:enable
+                // phpcs:enable
                 /**
                  * WordPress files system object.
                  *
@@ -2059,12 +2059,12 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
                 if ( is_array( $lines ) && ! empty( $lines ) ) {
                     $i = 0;
-					// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                    // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                     if ( ! empty( $_POST['import_user_chk_header_first'] ) ) {
                         $header_line = trim( $lines[0] ) . "\n";
                         unset( $lines[0] );
                     }
-					// phpcs:enable
+                    // phpcs:enable
 
                     foreach ( $lines as $originalLine ) {
 
@@ -2191,9 +2191,9 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-	public static function do_import() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
+    public static function do_import() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $selected_sites  = ( isset( $_POST['select_sites'] ) && is_array( $_POST['select_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_sites'] ) ) : array();
         $selected_groups = ( isset( $_POST['select_groups'] ) && is_array( $_POST['select_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_groups'] ) ) : array();
 
@@ -2345,7 +2345,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $ret['failed_logging'] = esc_html( $user_login . ',' . $email . ',' . $first_name . ',' . $last_name . ',' . $url . ',' . $pass1 . ',' . $send_password . ',' . $role . ',' . $error_sites . ',' );
         }
         $ret['line_number'] = isset( $_POST['line_number'] ) ? intval( $_POST['line_number'] ) : 0;
-		// phpcs:enable
+        // phpcs:enable
         die( wp_json_encode( $ret ) );
     }
 

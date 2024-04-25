@@ -51,25 +51,25 @@ class Log_Filter_Input {
     public static function super( $type, $variable_name, $filter = null, $options = array() ) {
         $super = null;
 
-		// @codingStandardsIgnoreStart
-		switch ( $type ) {
-			case INPUT_POST :
-				$super = $_POST;
-				break;
-			case INPUT_GET :
-				$super = $_GET;
-				break;
-			case INPUT_COOKIE :
-				$super = $_COOKIE;
-				break;
-			case INPUT_ENV :
-				$super = $_ENV;
-				break;
-			case INPUT_SERVER :
-				$super = $_SERVER;
-				break;
-		}
-		// @codingStandardsIgnoreEnd
+        // @codingStandardsIgnoreStart
+        switch ( $type ) {
+            case INPUT_POST :
+                $super = $_POST;
+                break;
+            case INPUT_GET :
+                $super = $_GET;
+                break;
+            case INPUT_COOKIE :
+                $super = $_COOKIE;
+                break;
+            case INPUT_ENV :
+                $super = $_ENV;
+                break;
+            case INPUT_SERVER :
+                $super = $_SERVER;
+                break;
+        }
+        // @codingStandardsIgnoreEnd
 
         if ( is_null( $super ) ) {
             throw new MainWP_Exception( esc_html__( 'Invalid use, type must be one of INPUT_* family.', 'mainwp' ) );
@@ -144,9 +144,9 @@ class Log_Filter_Input {
      * @return boolean
      */
     public static function is_regex( $var_value ) {
-		// @codingStandardsIgnoreStart
-		$test = @preg_match( $var_value, '' );
-		// @codingStandardsIgnoreEnd
+        // @codingStandardsIgnoreStart
+        $test = @preg_match( $var_value, '' );
+        // @codingStandardsIgnoreEnd
 
         return false !== $test;
     }

@@ -102,7 +102,6 @@ class Api_Backups_Hooks {
      * @action init
      */
     public function add_subpage_menu_settings( $subpages = array() ) {
-        $active     = isset( $_GET['page'] ) && 'SettingsApiBackups' === $_GET['page'] ? true : false; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
         $subpages[] = array(
             'title'    => esc_html__( 'API Backups', 'mainwp' ),
             'slug'     => 'ApiBackups',

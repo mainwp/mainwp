@@ -74,10 +74,10 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                         <?php endif; ?>
                     </div>
                 </div>
-                
+
             </div>
         </div>
-                    
+
         <script type="text/javascript">
             jQuery( document ).ready( function( $ ) {
                 mainwp_load_sites_filter_segments = function () {
@@ -103,13 +103,13 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                 jQuery('.mainwp_manage_sites_filter_choose_segment').on( 'click', function () {
                     mainwpSegmentModalUiHandle.loadSegment(mainwp_load_sites_filter_segments);
                 } );
-                
+
                 jQuery('#mainwp-common-filter-edit-segment-save').on( 'click', function () {
 
                     mainwpSegmentModalUiHandle.hideSegmentStatus();
 
                     let seg_name = jQuery('#mainwp-common-filter-edit-segment-name').val().trim();
-                    
+
                     if('' == seg_name){
                         jQuery('#mainwp-common-filter-edit-segment-status').html(__('Please enter segment name.')).addClass('red').show();
                         return false;
@@ -164,7 +164,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                             if('' != seg_values){
                                 jQuery( '#mainwp-manage-sites-filter-save-segment-button' ).attr('selected-segment-id',seg_id);
                                 jQuery( '#mainwp-manage-sites-filter-save-segment-button' ).attr('selected-segment-name',seg_values.name);
-                                
+
                                 for (const [key, value] of Object.entries(seg_values)) {
                                     try {
                                         if(fieldsAllows.includes(key)){
@@ -203,7 +203,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                     if('' == seg_id){
                         return false;
                     }
-                    
+
                     if('yes' === jQuery(delBtn).attr('running')){
                         return false;
                     }
@@ -215,7 +215,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                     });
                     jQuery('#mainwp-common-filter-edit-segment-status').html('<i class="notched circle loading icon"></i> ' + __('Deleting segment. Please wait...')).show();
                     jQuery.post(ajaxurl, data, function (response) {
-                        
+
                         jQuery(delBtn).removeAttr('running');
 
                         if (response.error != undefined) {
@@ -271,7 +271,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
      */
     public function ajax_sites_filter_save_segment() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_manage_sites_filter_save_segment' );
-		//phpcs:disable WordPress.Security.NonceVerification.Missing
+        //phpcs:disable WordPress.Security.NonceVerification.Missing
 
         $not_filters = array(
             'seg_site_tags'    => 'nogroups',
@@ -300,7 +300,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
         }
 
         $seg_id = ! empty( $_POST['seg_id'] ) ? sanitize_text_field( wp_unslash( $_POST['seg_id'] ) ) : time();
-		//phpcs:enable WordPress.Security.NonceVerification.Missing
+        //phpcs:enable WordPress.Security.NonceVerification.Missing
 
         $saved_segments = $this->set_get_manage_sites_filter_segments();
         if ( ! is_array( $saved_segments ) ) {
@@ -332,7 +332,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
             }
             $list_segs .= '</select>';
         }
-		die( wp_json_encode( array( 'result' => $list_segs ) ) ); //phpcs:ignore -- ok.
+        die( wp_json_encode( array( 'result' => $list_segs ) ) ); //phpcs:ignore -- ok.
     }
 
     /**
@@ -342,14 +342,14 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
      */
     public function ajax_sites_filter_delete_segment() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_manage_sites_filter_delete_segment' );
-		$seg_id = ! empty( $_POST['seg_id'] ) ? sanitize_text_field( wp_unslash( $_POST['seg_id'] ) ) : 0; //phpcs:ignore -- ok.
+        $seg_id = ! empty( $_POST['seg_id'] ) ? sanitize_text_field( wp_unslash( $_POST['seg_id'] ) ) : 0; //phpcs:ignore -- ok.
 
         $saved_segments = $this->set_get_manage_sites_filter_segments();
         if ( ! empty( $seg_id ) && is_array( $saved_segments ) && isset( $saved_segments[ $seg_id ] ) ) {
             unset( $saved_segments[ $seg_id ] );
             $this->set_get_manage_sites_filter_segments( true, $saved_segments );
-			die( wp_json_encode( array( 'result' =>'SUCCESS' ) ) ); //phpcs:ignore -- ok.
+            die( wp_json_encode( array( 'result' =>'SUCCESS' ) ) ); //phpcs:ignore -- ok.
         }
-		die( wp_json_encode( array( 'error' => esc_html__( 'Segment not found. Please try again.', 'mainwp' ) ) ) ); //phpcs:ignore -- ok.
+        die( wp_json_encode( array( 'error' => esc_html__( 'Segment not found. Please try again.', 'mainwp' ) ) ) ); //phpcs:ignore -- ok.
     }
 }

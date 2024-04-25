@@ -119,7 +119,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::added_on_menu()
      * @uses \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
      */
-	public static function render() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $mainwp_api_key = false;
         if ( get_option( 'mainwp_extensions_api_save_login' ) ) {
             $mainwp_api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
@@ -403,7 +403,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::is_extension_activated()
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::polish_ext_name()
      */
-	public static function render_extension_card( $extension, $extension_update, $img_url, $disabled = false, $simple = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_extension_card( $extension, $extension_update, $img_url, $disabled = false, $simple = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         if ( isset( $extension['href'] ) && ! empty( $extension['href'] ) ) {
             $extension_page_url = $extension['href'];
@@ -497,7 +497,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     <div class="meta">
                 <?php echo '<i class="code branch icon"></i>' . esc_html( $extension['version'] ); ?> <?php echo isset( $extension['DocumentationURI'] ) && ! empty( $extension['DocumentationURI'] ) ? ' - <a href="' . esc_url( str_replace( array( 'http:', 'https:' ), '', $extension['DocumentationURI'] ) ) . '" target="_blank">' . esc_html__( 'Documentation', 'mainwp' ) . '</a> <i class="external alternate icon"></i>' : ''; ?>
                 </div>
-                
+
                 <?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) { ?>
                     <?php if ( ! $active && ! $disabled ) { ?>
                         <span class="ui red ribbon label"><?php esc_html_e( 'License not activated', 'mainwp' ); ?></span>
@@ -598,7 +598,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 <div class="header">
                     <?php echo esc_html( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>
                 </div>
-                
+
                 <?php if ( $installed ) : ?>
                     <a href="admin.php?page=Extensions" class="ui black ribbon label"><?php echo esc_html__( 'Activate extension', 'mainwp' ); ?></a>
                 <?php else : ?>
@@ -683,7 +683,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             </div>
         </div>
         <div class="ui compact hidden divider"></div>
-        
+
         <input type="button" class="ui fluid button" id="mainwp-extensions-savelogin" value="<?php esc_attr_e( 'Validate my MainWP Main API Key', 'mainwp' ); ?>">
         <?php if ( ! $is_demo ) { ?>
         <div class="ui divider"></div>

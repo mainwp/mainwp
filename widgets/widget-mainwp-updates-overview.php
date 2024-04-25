@@ -62,7 +62,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             'timeout' => 15,
             'body'    => array(
                 'action'  => $action,
-				'request'    => serialize( $args ), // phpcs:ignore -- WP.org API params.
+                'request'    => serialize( $args ), // phpcs:ignore -- WP.org API params.
             ),
         );
         $request = wp_remote_post( $url, $args );
@@ -111,7 +111,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
      * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      */
-	public static function render_sites() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
+    public static function render_sites() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 
         $globalView = true;
 
@@ -481,9 +481,9 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             do_action( 'mainwp_updates_overview_before_total_updates' );
             ?>
             <div class="ui stackable grid">
-            
+
                 <div class="eight wide middle aligned column">
-                    
+
                         <div class="ui large statistic horizontal">
                             <div class="value">
                                 <?php echo intval( $total_upgrades ); ?>
@@ -621,10 +621,10 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         }
                         ?>
                     <?php else : ?>
-                        
+
                             <a href="<?php echo esc_url( $detail_wp_up ); ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
                             <a href="#" class="ui disabled green basic button mainwp-update-all-button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-                        
+
                     <?php endif; ?>
                 <?php endif; ?>
                 </div>

@@ -51,7 +51,7 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
      *
      * @return array Records
      */
-	public function query_costs( $args ) { //phpcs:ignore -- complex.
+    public function query_costs( $args ) { //phpcs:ignore -- complex.
         global $wpdb;
 
         $all_defaults = Cost_Tracker_Admin::get_default_fields_values();
@@ -268,28 +268,28 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
         /**
          * BUILD THE FINAL QUERY
          */
-        $query = "SELECT {$select} 
-		FROM " . $this->table_name( 'cost_tracker' ) . ' as co ' .
+        $query = "SELECT {$select}
+        FROM " . $this->table_name( 'cost_tracker' ) . ' as co ' .
         $join_lookup .
         " WHERE 1 {$where}
-		{$orderby}
-		{$limits}";
+        {$orderby}
+        {$limits}";
 
-		//phpcs:disable Squiz.PHP.CommentedOutCode.Found
+        //phpcs:disable Squiz.PHP.CommentedOutCode.Found
         // error_log( print_r( $args, true ) ); //.
         // error_log( $query ); //.
-		//phpcs:enable Squiz.PHP.CommentedOutCode.Found
+        //phpcs:enable Squiz.PHP.CommentedOutCode.Found
 
         // Build result count query.
         $count_query = 'SELECT COUNT(DISTINCT(co.id)) as found
-		FROM ' . $this->table_name( 'cost_tracker' ) . ' as co ' .
+        FROM ' . $this->table_name( 'cost_tracker' ) . ' as co ' .
         $join_lookup .
         " WHERE 1 {$where}";
 
         /**
          * QUERY THE DATABASE FOR RESULTS
          */
-		$items = $this->wpdb->get_results( $query );  // phpcs:ignore -- ok.
+        $items = $this->wpdb->get_results( $query );  // phpcs:ignore -- ok.
         $total = absint( $this->wpdb->get_var( $count_query ) );  // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
         $result = array(

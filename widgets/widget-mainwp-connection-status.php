@@ -51,7 +51,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
-	public static function render_sites() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
+    public static function render_sites() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
         $current_wpid = MainWP_System_Utility::get_current_wpid();
 
         if ( $current_wpid ) {
@@ -247,7 +247,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <?php } else { ?>
                         <i class="green check icon"></i>
                         <div class="content"><?php esc_html_e( 'Connected', 'mainwp' ); ?></div>
-                    <?php } ?>  
+                    <?php } ?>
                 </h2>
                 </div>
                 <div class="column two wide center aligned">

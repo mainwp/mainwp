@@ -893,12 +893,12 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $href = $ext_page;
             } else {
                 $href = '#';
-				//phpcs:disable Squiz.PHP.CommentedOutCode.Found 
+                //phpcs:disable Squiz.PHP.CommentedOutCode.Found
                 // $href = 'admin.php?page=Extensions';
                 // if ( ! static::extension_is_installed( $plugin_slug ) ) {
                 // $href .= '&message=install-ext-' . dirname( $plugin_slug );
                 // }
-				//phpcs:enable
+                //phpcs:enable
             }
         }
 
@@ -929,11 +929,11 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @return void
      */
-	public static function render_extensions_groups() { //phpcs:ignore -- complex method.
+    public static function render_extensions_groups() { //phpcs:ignore -- complex method.
 
         $get_ext_group = array();
 
-		//phpcs:disable WordPress.Security.NonceVerification.Recommended
+        //phpcs:disable WordPress.Security.NonceVerification.Recommended
         if ( isset( $_GET['page'] ) ) {
             if ( 'Extensions-Mainwp-Backups' === $_GET['page'] ) {
                 $get_ext_group[] = 'backup';
@@ -953,7 +953,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $get_ext_group[] = 'performance';
             }
         }
-		//phpcs:enable
+        //phpcs:enable
 
         if ( empty( $get_ext_group ) ) {
             return;
@@ -996,7 +996,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     </div>
                 <?php endif; ?>
         <?php if ( isset( $extensions ) && is_array( $extensions ) ) { ?>
-            
+
             <?php foreach ( $extensions as $extension ) { ?>
                     <?php
                     if ( ! mainwp_current_user_have_right( 'extension', dirname( $extension['slug'] ) ) ) {

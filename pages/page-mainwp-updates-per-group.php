@@ -44,7 +44,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      */
-	public static function render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $is_demo = MainWP_Demo_Handle::is_demo_mode();
         ?>
             <table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-wordpress-updates-groups-table"> <!-- Per Group table -->
@@ -232,7 +232,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      */
-	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
+    public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
         $updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view );
         $is_demo              = MainWP_Demo_Handle::is_demo_mode();
         ?>
@@ -315,7 +315,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                     </tr>
                                 </thead>
                                 <tbody  id="update_wrapper_plugin_upgrades_group_<?php echo esc_attr( $group_id ); ?>" >
-                                    <?php	foreach ( $site_ids as $site_id ) : ?>
+                                    <?php foreach ( $site_ids as $site_id ) : ?>
                                         <?php
                                         if ( ! isset( $site_offset_for_groups[ $site_id ] ) ) {
                                             continue;
@@ -441,7 +441,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                 </table>
                                             </td>
                                         </tr>
-                                    <?php	endforeach; ?>
+                                    <?php endforeach; ?>
                                 </tbody>
                                 <tfoot>
                                     <tr>
@@ -501,7 +501,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      */
-	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
+    public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
         $updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view, 'theme' );
         $is_demo              = MainWP_Demo_Handle::is_demo_mode();
         ?>
@@ -582,7 +582,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                     </tr>
                                 </thead>
                                 <tbody class="accordion" id="update_wrapper_theme_upgrades_group_<?php echo esc_attr( $group_id ); ?>">
-                                    <?php	foreach ( $site_ids as $site_id ) : ?>
+                                    <?php foreach ( $site_ids as $site_id ) : ?>
                                         <?php
                                         if ( ! isset( $site_offset_for_groups[ $site_id ] ) ) {
                                             continue;
@@ -635,7 +635,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                         ?>
                                         <tr class="ui title master-checkbox">
                                             <td class="accordion-trigger"><i class="icon dropdown"></i></td>
-                                            <td>                                            
+                                            <td>
                                                 <div class="ui master checkbox">
                                                     <input type="checkbox" name=""><label><?php MainWP_Updates::render_site_link_dashboard( $website ); ?></label>
                                                 </div>
@@ -704,7 +704,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                 </table>
                                             </td>
                                         </tr>
-                                    <?php	endforeach; ?>
+                                    <?php endforeach; ?>
                                 </tbody>
                                 <thead>
                                     <tr>
@@ -756,7 +756,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_update_trans()
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      */
-	public static function render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) { //phpcs:ignore -- complex method.
+    public static function render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) { //phpcs:ignore -- complex method.
         $is_demo = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-translations-groups-table">
@@ -1016,7 +1016,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                 <?php if ( ! empty( $plugins_outdate ) ) : ?>
                                 <tr class="ui title master-checkbox">
                                     <td class="accordion-trigger"><i class="dropdown icon"></i></td>
-                                    <td>                                        
+                                    <td>
                                         <strong class="mainwp-768-show"><?php esc_html_e( 'Website:', 'mainwp' ); ?></strong> <?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
                                     </td>
                                     <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>

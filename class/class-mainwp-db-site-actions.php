@@ -16,7 +16,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
+    // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -66,19 +66,19 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
      */
     public function hook_db_install_tables( $sql, $currentVersion, $charset_collate ) {
         $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_actions' ) . ' (
-	action_id int(11) NOT NULL auto_increment,
-	wpid int(11) NOT NULL,
-	object_id varchar(20) NOT NULL,
-	context varchar(20) NOT NULL,
-	action varchar(100) NOT NULL,
-	action_user text NOT NULL DEFAULT "",
-	created int(11) NOT NULL DEFAULT 0, 
-	meta_data text NOT NULL DEFAULT "",
-	dismiss tinyint(1) NOT NULL DEFAULT 0,
-	summary varchar(255) NOT NULL default ""';
+    action_id int(11) NOT NULL auto_increment,
+    wpid int(11) NOT NULL,
+    object_id varchar(20) NOT NULL,
+    context varchar(20) NOT NULL,
+    action varchar(100) NOT NULL,
+    action_user text NOT NULL DEFAULT "",
+    created int(11) NOT NULL DEFAULT 0,
+    meta_data text NOT NULL DEFAULT "",
+    dismiss tinyint(1) NOT NULL DEFAULT 0,
+    summary varchar(255) NOT NULL default ""';
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.89', '<=' ) ) {
             $tbl .= ',
-		PRIMARY KEY (action_id)';
+        PRIMARY KEY (action_id)';
         }
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
@@ -141,7 +141,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
 
             $sum                    = is_array( $meta_data ) && ! empty( $meta_data['name'] ) ? esc_html( $meta_data['name'] ) : 'WP Core';
             $sum                   .= ' ';
-			$sum .= 'wordpress' !== $data['context'] ? esc_html( ucfirst( rtrim( $data['context'], 's' ) ) ) : 'WordPress'; //phpcs:ignore -- wordpress text.
+            $sum .= 'wordpress' !== $data['context'] ? esc_html( ucfirst( rtrim( $data['context'], 's' ) ) ) : 'WordPress'; //phpcs:ignore -- wordpress text.
             $update_data['summary'] = $sum;
 
             if ( empty( $update_data['action_user'] ) ) {
@@ -294,7 +294,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
      *
      * @return mixed $result result.
      */
-	public function get_wp_actions( $params = array(), $obj = OBJECT ) { //phpcs:ignore -- complex.
+    public function get_wp_actions( $params = array(), $obj = OBJECT ) { //phpcs:ignore -- complex.
 
         $action_id     = isset( $params['action_id'] ) ? intval( $params['action_id'] ) : 0;
         $site_id       = isset( $params['wpid'] ) ? $params['wpid'] : 0;

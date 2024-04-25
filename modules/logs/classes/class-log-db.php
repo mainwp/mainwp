@@ -287,10 +287,10 @@ class Log_DB extends MainWP_DB {
 
         return $wpdb->query( //phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
             "DELETE `logs`, `meta`
-			FROM {$wpdb->mainwp_tbl_logs} AS `logs`
-			LEFT JOIN {$wpdb->mainwp_tbl_logs_meta} AS `meta`
-			ON `meta`.`meta_log_id` = `logs`.`log_id`
-			WHERE `logs`.`connector` != 'compact' " . $where // phpcs:ignore -- escaped.
+            FROM {$wpdb->mainwp_tbl_logs} AS `logs`
+            LEFT JOIN {$wpdb->mainwp_tbl_logs_meta} AS `meta`
+            ON `meta`.`meta_log_id` = `logs`.`log_id`
+            WHERE `logs`.`connector` != 'compact' " . $where // phpcs:ignore -- escaped.
         );
     }
 }

@@ -157,17 +157,17 @@ class Cost_Tracker_Category_Totals {
         <script type="text/javascript">
             jQuery( document ).ready( function() {
 
-				let cost_chart_colors = <?php echo wp_json_encode($chart_data['colors'], true ); //phpcs:ignore -- ok. ?>;
-				let cost_chart_currency_format = '<?php echo esc_js($chart_data['currency_format']); //phpcs:ignore -- ok. ?>';
-                
+                let cost_chart_colors = <?php echo wp_json_encode($chart_data['colors'], true ); //phpcs:ignore -- ok. ?>;
+                let cost_chart_currency_format = '<?php echo esc_js($chart_data['currency_format']); //phpcs:ignore -- ok. ?>';
+
                 let options = {
-					series: <?php echo wp_json_encode($chart_data['series'], true ); //phpcs:ignore -- ok. ?>,
+                    series: <?php echo wp_json_encode($chart_data['series'], true ); //phpcs:ignore -- ok. ?>,
                     chart: {
                         height: '95%',
                         type: 'donut',
                     },
-					labels: <?php echo wp_json_encode($chart_data['categories'], true ); //phpcs:ignore -- ok. ?>,
-                    legend: { 
+                    labels: <?php echo wp_json_encode($chart_data['categories'], true ); //phpcs:ignore -- ok. ?>,
+                    legend: {
                         show: true,
                         labels: {
                             colors: '#999999',
@@ -213,7 +213,7 @@ class Cost_Tracker_Category_Totals {
                         }
                     },
                 };
-        
+
                 let cost_chart = new ApexCharts(document.querySelector("#mainwp-module-cost-tracker-category-totals-wrapper"), options);
                 setTimeout(() => {
                     cost_chart.render();

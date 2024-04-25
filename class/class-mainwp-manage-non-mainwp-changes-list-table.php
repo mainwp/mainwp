@@ -228,14 +228,14 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
     /**
      * Prepare the items to be listed.
      */
-	public function prepare_items() { //phpcs:ignore -- complex method.
+    public function prepare_items() { //phpcs:ignore -- complex method.
 
         $orderby = '';
 
         $req_orderby = null;
         $req_order   = null;
 
-		// phpcs:disable WordPress.Security.NonceVerification,Missing,Missing,Missing,Missing,Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,Missing,Missing,Missing,Missing,Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_REQUEST['order'] ) ) {
             $order_values = MainWP_Utility::instance()->get_table_orders( $_REQUEST );
             $req_orderby  = $order_values['orderby'];
@@ -248,7 +248,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
         }
         $start  = isset( $_REQUEST['start'] ) ? intval( $_REQUEST['start'] ) : 0;
         $search = isset( $_REQUEST['search']['value'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['search']['value'] ) ) : '';
-		// phpcs:enable
+        // phpcs:enable
 
         if ( isset( $req_orderby ) ) {
             if ( 'name' === $req_orderby ) {
@@ -330,7 +330,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
                         }
                         ?>
                         <td class="collapsing">
-							<strong><?php echo isset( $meta_data->name ) && '' !== $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?></strong> <?php echo 'wordpress' !== $data->context ? esc_html( ucfirst( rtrim( $data->context, 's' ) ) ) : 'WordPress'; //phpcs:ignore -- text. ?><br/>
+                            <strong><?php echo isset( $meta_data->name ) && '' !== $meta_data->name ? esc_html( $meta_data->name ) : 'WP Core'; ?></strong> <?php echo 'wordpress' !== $data->context ? esc_html( ucfirst( rtrim( $data->context, 's' ) ) ) : 'WordPress'; //phpcs:ignore -- text. ?><br/>
                             <div><strong><span class="ui medium <?php echo esc_attr( $action_class ); ?> text"><?php echo esc_html( ucfirst( $data->action ) ); ?></span></strong></div>
                             <span class="ui small text"><?php echo esc_html( MainWP_Utility::format_timestamp( $data->created ) ); ?></span>
                         </td>
@@ -353,7 +353,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
                                     </div>
                                 </div>
                             </td>
-                            
+
                         <?php
                     }
                     $cols_data[ $column_name ] = ob_get_clean();
@@ -498,11 +498,11 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
                             "paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
                             "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
                             "info" : <?php echo esc_js( $table_features['info'] ); ?>,
-							"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
+                            "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
                             "scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
                             "stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
                             "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
-							"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
+                            "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
                             "fixedColumns" : <?php echo ! empty( $table_features['fixedColumns'] ) ? esc_js( $table_features['fixedColumns'] ) : '""'; ?>,
                             "lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All"] ],
                             serverSide: true,

@@ -215,7 +215,7 @@ class Log_Events_List_Table {
 
             return wp_kses( $out, $allowed_tags );
         } else {
-			return $out; //phpcs:ignore -- escaped.
+            return $out; //phpcs:ignore -- escaped.
         }
     }
 
@@ -373,12 +373,12 @@ class Log_Events_List_Table {
      * @param bool  $with_prev_data To get previous data.
      * @param array $insights_filters Insights filters.
      */
-	public function prepare_items( $with_prev_data = false, $insights_filters = array() ) { //phpcs:ignore -- complex method.
+    public function prepare_items( $with_prev_data = false, $insights_filters = array() ) { //phpcs:ignore -- complex method.
 
         $req_orderby = '';
         $req_order   = null;
 
-		// phpcs:disable WordPress.Security.NonceVerification
+        // phpcs:disable WordPress.Security.NonceVerification
         if ( isset( $_REQUEST['order'] ) ) {
             $order_values = MainWP_Utility::instance()->get_table_orders( $_REQUEST );
             $req_orderby  = $order_values['orderby'];
@@ -393,7 +393,7 @@ class Log_Events_List_Table {
         $array_groups_ids  = array();
         $array_users_ids   = array();
 
-		extract( $insights_filters ); //phpcs:ignore -- ok.
+        extract( $insights_filters ); //phpcs:ignore -- ok.
 
         if ( ! empty( $filter_dtsstart ) && ! empty( $filter_dtsstop ) && ! is_numeric( $filter_dtsstart ) && ! is_numeric( $filter_dtsstop ) ) { // after extract.
             // to fix string of date.
@@ -401,9 +401,9 @@ class Log_Events_List_Table {
             $filter_dtsstop  = gmdate( 'Y-m-d', strtotime( $filter_dtsstop ) );
         }
 
-		// phpcs:enable
+        // phpcs:enable
 
-		 // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $perPage = isset( $_REQUEST['length'] ) ? intval( $_REQUEST['length'] ) : false;
         if ( -1 === (int) $perPage || empty( $perPage ) ) {
             $perPage = 3999999;
@@ -414,7 +414,7 @@ class Log_Events_List_Table {
 
         $recent_number = isset( $_REQUEST['recent_number'] ) ? intval( $_REQUEST['recent_number'] ) : 0;
 
-		// phpcs:enable
+        // phpcs:enable
 
         $args = array(
             'order'         => ( 'asc' === $req_order ) ? 'asc' : 'desc',
@@ -433,7 +433,7 @@ class Log_Events_List_Table {
 
         $this->items = $this->manager->db->get_records( $args );
 
-		if ( isset( $_REQUEST['recent_number'] ) ) { //phpcs:ignore -- ok.
+        if ( isset( $_REQUEST['recent_number'] ) ) { //phpcs:ignore -- ok.
             $this->total_items = $this->manager->db->get_found_records_count(); // get this value for recent events request only.
         }
 
@@ -570,11 +570,11 @@ class Log_Events_List_Table {
                             "paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
                             "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
                             "info" : <?php echo esc_js( $table_features['info'] ); ?>,
-							"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
+                            "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
                             "scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
                             "stateSave" : <?php echo esc_js( $table_features['stateSave'] ); ?>,
                             "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
-							"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
+                            "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
                             "fixedColumns" : <?php echo ! empty( $table_features['fixedColumns'] ) ? esc_js( $table_features['fixedColumns'] ) : '""'; ?>,
                             "lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All"] ],
                             "serverSide": true,
@@ -608,7 +608,7 @@ class Log_Events_List_Table {
                         // to fix js error.
                         console.log(err);
                     }
-                    
+
                     mainwp_module_log_events_filter = function() {
                         try {
                             $module_log_table.ajax.reload();
@@ -616,7 +616,7 @@ class Log_Events_List_Table {
                             // to fix js error.
                             console.log(err);
                         }
-                    };  
+                    };
                     mainwp_module_log_overview_content_filter = function() {
                         let range = jQuery( '#mainwp-module-log-filter-ranges').dropdown('get value');
                         let group = jQuery( '#mainwp-module-log-filter-groups').dropdown('get value');
@@ -652,7 +652,7 @@ class Log_Events_List_Table {
                     };
 
             } );
-                    
+
         </script>
         <?php
     }

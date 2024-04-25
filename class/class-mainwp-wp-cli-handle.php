@@ -24,7 +24,7 @@ if ( ! defined( 'WP_CLI' ) ) {
  */
 class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
     /**
      * Singleton.
@@ -889,7 +889,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      * @param array  $assoc_args Arguments.
      * @param object $website    Object containing child site data.
      */
-    public static function callback_site_site_available_updates_count( $args = array(), $assoc_args = array(), $website = false ) {
+    public static function callback_site_site_available_updates_count( $args = array(), $assoc_args = array(), $website = false ) { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
         $plugin_upgrades = json_decode( $website->plugin_upgrades, true );
         $theme_upgrades  = json_decode( $website->theme_upgrades, true );
 
@@ -938,7 +938,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
             'total'        => count( $total ) + $wp,
             'wp'           => $wp,
             'plugins'      => count( $plugin_upgrades ),
-            'themes'       => count( $themes ),
+            'themes'       => count( $theme_upgrades ),
             'translations' => count( $translations ),
         );
 
@@ -976,7 +976,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
             \WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $plugin['Name'] );
             \WP_CLI::line( \WP_CLI::colorize( '%gURI:%n ' ) . $plugin['PluginURI'] );
             \WP_CLI::line( \WP_CLI::colorize( '%gVersion:%n ' ) . $plugin['Version'] );
-			\WP_CLI::line( \WP_CLI::colorize( '%gLatest Update:%n ' ) . date( 'F j, Y', $plugin['last_updated'] ) ); // phpcs:ignore -- local time.
+            \WP_CLI::line( \WP_CLI::colorize( '%gLatest Update:%n ' ) . date( 'F j, Y', $plugin['last_updated'] ) ); // phpcs:ignore -- local time.
             \WP_CLI::line( '' );
         }
     }
@@ -1019,7 +1019,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         foreach ( $themes as $theme ) {
             \WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $theme['Name'] );
             \WP_CLI::line( \WP_CLI::colorize( '%gVersion:%n ' ) . $theme['Version'] );
-			\WP_CLI::line( \WP_CLI::colorize( '%gLatest Update:%n ' ) . date( 'F j, Y', $theme['last_updated'] ) ); // phpcs:ignore -- local time.
+            \WP_CLI::line( \WP_CLI::colorize( '%gLatest Update:%n ' ) . date( 'F j, Y', $theme['last_updated'] ) ); // phpcs:ignore -- local time.
             \WP_CLI::line( '' );
         }
     }
@@ -1128,9 +1128,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         $fields = static::get_cli_params( $args, $assoc_args, 'add-site' );
         $data   = MainWP_Manage_Sites_Handler::rest_api_add_site( $fields );
         if ( is_array( $data ) && ! empty( $data['siteid'] ) ) {
-			\WP_CLI::success( '  -> Add site result: ' . print_r( $data, true ) ); // phpcs:ignore -- for cli result. 
+            \WP_CLI::success( '  -> Add site result: ' . print_r( $data, true ) ); // phpcs:ignore -- for cli result.
         } else {
-			\WP_CLI::error( '  -> Add site result: ' . print_r( $data, true ) ); // phpcs:ignore -- for cli result. 
+            \WP_CLI::error( '  -> Add site result: ' . print_r( $data, true ) ); // phpcs:ignore -- for cli result.
         }
     }
 

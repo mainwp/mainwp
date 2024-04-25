@@ -1070,7 +1070,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         }
                     }
 
-					// phpcs:disable WordPress.Security.EscapeOutput
+                    // phpcs:disable WordPress.Security.EscapeOutput
                     ?>
                     <tr>
                         <td><?php echo $cron_job; ?></td>
@@ -1080,7 +1080,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         <td><?php echo ! empty( $next_run ) ? esc_html( $next_run ) : ''; ?></td>
                     </tr>
                     <?php
-					// phpcs:enable
+                    // phpcs:enable
                 }
                 /**
                  * Action: mainwp_cron_jobs_list
@@ -1262,7 +1262,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return bool true.
      */
     public static function render_directory_row( $name, $check, $result, $passed ) {
-		 // phpcs:disable WordPress.Security.EscapeOutput
+         // phpcs:disable WordPress.Security.EscapeOutput
         ?>
         <tr>
             <td><?php echo esc_html( $name ); ?></td>
@@ -1271,7 +1271,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             <td class="right aligned"><?php echo $passed ? static::get_pass_html() : static::get_warning_html( static::ERROR ); ?></td>
         </tr>
         <?php
-		 // phpcs:enable
+         // phpcs:enable
         return true;
     }
 
@@ -1294,7 +1294,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public static function render_row( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) {
         $currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $getter ) );
-	 	// phpcs:disable WordPress.Security.EscapeOutput
+         // phpcs:disable WordPress.Security.EscapeOutput
         ?>
         <tr>
             <td><?php echo esc_html( $config ); ?></td>
@@ -1311,7 +1311,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         <?php } ?>
         </tr>
         <?php
-		 // phpcs:enable
+         // phpcs:enable
     }
 
     /**
@@ -1333,7 +1333,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public static function render_row_with_description( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) {
         $currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $getter ) );
-		// phpcs:disable WordPress.Security.EscapeOutput 
+        // phpcs:disable WordPress.Security.EscapeOutput
         ?>
         <tr>
             <td><?php echo esc_html( $config ); ?></td>
@@ -1350,7 +1350,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             <?php } ?>
         </tr>
         <?php
-		 // phpcs:enable 
+         // phpcs:enable
     }
 
     /**
@@ -1510,12 +1510,12 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
 
         if ( 1 < count( $lines ) ) {
-			// phpcs:ignore -- ok.
-			//uasort( $lines, array( MainWP_Server_Information_Handler::get_class_name(), 'time_compare' ) );
+            // phpcs:ignore -- ok.
+            //uasort( $lines, array( MainWP_Server_Information_Handler::get_class_name(), 'time_compare' ) );
             $lines = array_slice( $lines, 0, $count );
         }
 
-		// phpcs:disable WordPress.Security.EscapeOutput
+        // phpcs:disable WordPress.Security.EscapeOutput
         foreach ( $lines as $line ) {
             $error = esc_html( $line['error'] );
             $time  = esc_html( $line['time'] );
@@ -1523,7 +1523,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 echo '<tr><td>' . $time . '</td><td>' . $error . '</td></tr>';
             }
         }
-		// phpcs:enable
+        // phpcs:enable
     }
 
     /**
@@ -1595,7 +1595,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Logger::clear_log()
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-	public static function render_action_logs() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_action_logs() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         static::render_header( 'ActionLogs' );
 
         if ( isset( $_REQUEST['actionlogs_status'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1644,7 +1644,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 <div class="column">
                 <form method="POST" action="">
                     <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-					<?php // phpcs:disable WordPress.Security.EscapeOutput ?>
+                    <?php // phpcs:disable WordPress.Security.EscapeOutput ?>
                         <select name="actionlogs_status" class="ui mini dropdown">
                         <option value="<?php echo MainWP_Logger::DISABLED; ?>" <?php echo MainWP_Logger::DISABLED === $enabled ? 'selected' : ''; ?>>
                             <?php esc_html_e( 'Disabled', 'mainwp' ); ?>
@@ -1659,7 +1659,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                             <?php esc_html_e( 'Debug', 'mainwp' ); ?>
                         </option>
                         <?php
-						// phpcs:enable
+                        // phpcs:enable
                         if ( is_array( $specific_logs ) && ! empty( $specific_logs ) ) {
                             foreach ( $specific_logs as $spec_log => $spec_title ) {
                                 ?>
@@ -1771,7 +1771,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         </div>
                         <div class="ui divider"></div>
                     </div>
-                    
+
                     <a href="<?php echo esc_url( get_site_url() ) . '/wp-content/plugins/mainwp/privacy-policy.txt'; ?>" class="ui green basic button" target="_blank"><?php echo esc_html__( 'Download MainWP Dashboard Privacy Policy', 'mainwp' ); ?></a> <a href="<?php echo esc_url( get_site_url() ) . '/wp-content/plugins/mainwp/mainwp-child-privacy-policy.txt'; ?>" class="ui green basic button" target="_blank"><?php echo esc_html__( 'Download MainWP Child Privacy Policy', 'mainwp' ); ?></a>
         </div>
 
@@ -1861,11 +1861,11 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public static function display_mainwp_options() {
         $options = MainWP_Server_Information_Handler::mainwp_options();
-		// phpcs:disable WordPress.Security.EscapeOutput
+        // phpcs:disable WordPress.Security.EscapeOutput
         foreach ( $options as $option ) {
             echo '<tr><td>' . $option['label'] . '</td><td>' . $option['value'] . '</td></tr>';
         }
-		// phpcs:enable
+        // phpcs:enable
     }
 
     /**

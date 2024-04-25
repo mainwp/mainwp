@@ -43,7 +43,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
 
             return;
         }
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! isset( $_GET['websiteid'] ) ) {
             exit();
         }
@@ -73,13 +73,13 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
             if ( is_array( $allow_vars ) ) {
                 foreach ( $allow_vars as $var ) {
                     if ( is_string( $var ) && isset( $_GET[ $var ] ) ) {
-						$allow_params[ $var ] = $_GET[ $var ]; // phpcs:ignore -- ok.
+                        $allow_params[ $var ] = $_GET[ $var ]; // phpcs:ignore -- ok.
                     }
                 }
             }
             static::open_site( $website, $location, $allow_params );
         }
-		// phpcs:enable
+        // phpcs:enable
     }
 
     /**
@@ -98,7 +98,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
             $action = MainWP_Connect::get_get_data_authed( $website, ( null === $location || '' === $location ) ? 'index.php' : $location, 'where', false, $params );
         }
         $open_download = ! empty( $params['filedl'] ) ? true : false;
-		$close_window  = ! empty( $_GET['closeWindow'] ) ? true : false; //phpcs:ignore -- ok.
+        $close_window  = ! empty( $_GET['closeWindow'] ) ? true : false; //phpcs:ignore -- ok.
         ?>
         <div class="ui segment" style="padding: 25rem">
             <div class="ui active inverted dimmer <?php echo $open_download || $close_window ? 'open-site-close-window' : ''; ?>">
@@ -131,7 +131,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
 
         static::verify_open_nonce();
 
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! isset( $_GET['websiteid'] ) ) {
             exit();
         }
@@ -149,7 +149,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
         }
 
         $site = isset( $_GET['size'] ) ? esc_html( wp_unslash( $_GET['size'] ) ) : '';
-		// phpcs:enable
+        // phpcs:enable
 
         static::open_site_restore( $website, $file, $site );
     }

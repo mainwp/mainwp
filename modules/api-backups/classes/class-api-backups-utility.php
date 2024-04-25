@@ -180,7 +180,7 @@ class Api_Backups_Utility {
      */
     public static function log_debug( $message, $log_color = 3 ) {
         if ( is_array( $message ) || is_object( $message ) ) {
-			$message = print_r( $message, true ); //phpcs:ignore
+            $message = print_r( $message, true ); //phpcs:ignore
         } elseif ( ! is_string( $message ) ) {
             $message = 'undefined';
         }
@@ -201,7 +201,7 @@ class Api_Backups_Utility {
      *
      * @return mixed
      */
-	public static function save_lasttime_backup( $site_id, $available_backups, $backup_api ) { //phpcs:ignore -- complex method.
+    public static function save_lasttime_backup( $site_id, $available_backups, $backup_api ) { //phpcs:ignore -- complex method.
 
         static::log_debug( 'save backup time :: [available backups=' . ( is_string( $available_backups ) ? $available_backups : 'is not string' ) . ']' );
 
@@ -450,7 +450,7 @@ class Api_Backups_Utility {
         $size   = array( 'B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' );
         $factor = floor( ( strlen( $bytes ) - 1 ) / 3 );
 
-		return sprintf( "%.{$decimals}f", $bytes / pow( 1024, $factor ) ) . @$size[ $factor ]; //phpcs:ignore
+        return sprintf( "%.{$decimals}f", $bytes / pow( 1024, $factor ) ) . @$size[ $factor ]; //phpcs:ignore
     }
 
 

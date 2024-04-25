@@ -17,7 +17,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_QQ2_Uploaded_File_Xhr { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-	// phpcs:disable WordPress.WP.AlternativeFunctions -- use system functions
+    // phpcs:disable WordPress.WP.AlternativeFunctions -- use system functions
 
     /**
      * Save the file to the specified path
@@ -36,7 +36,7 @@ class MainWP_QQ2_Uploaded_File_Xhr { // phpcs:ignore Generic.Classes.OpeningBrac
         $realSize = stream_copy_to_stream( $input, $temp );
         fclose( $input );
 
-		if ( $realSize != $this->get_size() ) { //phpcs:ignore -- to valid.
+        if ( $realSize != $this->get_size() ) { //phpcs:ignore -- to valid.
             return false;
         }
 

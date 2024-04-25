@@ -41,7 +41,7 @@ class MainWP_QQ2_Uploaded_File_Form { // phpcs:ignore Generic.Classes.OpeningBra
         $tmp_name = isset( $_FILES['qqfile']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['qqfile']['tmp_name'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Missing -- verify in caller.
 
         if ( ! empty( $tmp_name ) ) {
-			if ( false != $wpFileSystem ) { //phpcs:ignore -- to valid.
+            if ( false != $wpFileSystem ) { //phpcs:ignore -- to valid.
                 $moved = $wp_filesystem->put_contents( $path, $wp_filesystem->get_contents( $tmp_name ) );
             } else {
                 $moved = move_uploaded_file( $tmp_name, $path );

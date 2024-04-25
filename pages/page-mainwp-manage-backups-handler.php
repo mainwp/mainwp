@@ -142,7 +142,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
          */
         global $current_user;
 
-		//phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified.
+        //phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified.
         $name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
 
         if ( '' === $name ) {
@@ -199,7 +199,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $excludenonwp  = isset( $_POST['excludenonwp'] ) ? sanitize_text_field( wp_unslash( $_POST['excludenonwp'] ) ) : '';
         $excludezip    = isset( $_POST['excludezip'] ) ? sanitize_text_field( wp_unslash( $_POST['excludezip'] ) ) : '';
 
-		//phpcs:enable.Missing
+        //phpcs:enable.Missing
 
         if ( MainWP_DB_Backup::instance()->update_backup_task( $task->id, $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, $subfolder, $filename, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip ) === false ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
@@ -218,7 +218,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
          */
         global $current_user;
 
-		//phpcs:disable WordPress.Security.NonceVerification -- ok.
+        //phpcs:disable WordPress.Security.NonceVerification -- ok.
         $name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
 
         if ( empty( $name ) ) {
@@ -266,7 +266,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $excludecache  = isset( $_POST['excludecache'] ) ? sanitize_text_field( wp_unslash( $_POST['excludecache'] ) ) : '';
         $excludenonwp  = isset( $_POST['excludenonwp'] ) ? sanitize_text_field( wp_unslash( $_POST['excludenonwp'] ) ) : '';
         $excludezip    = isset( $_POST['excludezip'] ) ? sanitize_text_field( wp_unslash( $_POST['excludezip'] ) ) : '';
-		//phpcs:enable
+        //phpcs:enable
 
         $task = MainWP_DB_Backup::instance()->add_backup_task( $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, $subfolder, $filename, 0, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip );
 
@@ -304,7 +304,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize()
      */
-	public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true ) { // phpcs:ignore -- not quite complex function.
+    public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true ) { // phpcs:ignore -- not quite complex function.
 
         if ( $updateRun ) {
             MainWP_DB_Backup::instance()->update_backup_run( $task->id );

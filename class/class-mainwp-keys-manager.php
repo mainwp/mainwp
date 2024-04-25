@@ -236,7 +236,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         static::init_keys_dir();
         $key_dir   = static::get_keys_dir();
         $file_path = $key_dir . $key_file;
-		$saved     = file_put_contents( $file_path, $key_val ); //phpcs:ignore
+        $saved     = file_put_contents( $file_path, $key_val ); //phpcs:ignore
         return false === $saved ? false : true;
     }
 
@@ -291,7 +291,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $encryptedValue = $iv . $ciphertext . $tag;
 
         // Encode the encrypted value using base64 for storage.
-		$encodedValue = base64_encode( $encryptedValue ); //phpcs:ignore
+        $encodedValue = base64_encode( $encryptedValue ); //phpcs:ignore
 
         return $encodedValue;
     }
@@ -312,7 +312,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
         try {
             // Decode the base64 encoded value.
-			$encryptedValue = base64_decode( $encodedValue ); //phpcs:ignore
+            $encryptedValue = base64_decode( $encodedValue ); //phpcs:ignore
 
             // Extract the IV, ciphertext, and tag.
             $iv         = substr( $encryptedValue, 0, 16 );
@@ -385,22 +385,22 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             }
         } else {
 
-			//phpcs:disable
-			if ( ! file_exists( $keysDir ) ) {
-				mkdir( $keysDir, 0777, true );
-			}
+            //phpcs:disable
+            if ( ! file_exists( $keysDir ) ) {
+                mkdir( $keysDir, 0777, true );
+            }
 
-			if ( ! file_exists( $keysDir . '.htaccess' ) ) {
-				$file_htaccess = @fopen( $keysDir . '.htaccess', 'w+' );
-				fwrite( $file_htaccess, 'deny from all' );
-				fclose( $file_htaccess );
-			}
+            if ( ! file_exists( $keysDir . '.htaccess' ) ) {
+                $file_htaccess = @fopen( $keysDir . '.htaccess', 'w+' );
+                fwrite( $file_htaccess, 'deny from all' );
+                fclose( $file_htaccess );
+            }
 
-			if ( ! file_exists( $keysDir . 'index.php' ) ) {
-				$file_index = @fopen( $keysDir . 'index.php', 'w+' );
-				fclose( $file_index );
-			}
-			// phpcs:enable
+            if ( ! file_exists( $keysDir . 'index.php' ) ) {
+                $file_index = @fopen( $keysDir . 'index.php', 'w+' );
+                fclose( $file_index );
+            }
+            // phpcs:enable
         }
     }
 

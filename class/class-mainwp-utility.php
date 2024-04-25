@@ -339,8 +339,8 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return string Date.
      */
     public static function date( $format ) {
-		// phpcs:ignore -- use local date function.
-		return date( $format, static::get_timestamp() );
+        // phpcs:ignore -- use local date function.
+        return date( $format, static::get_timestamp() );
     }
 
     /**
@@ -854,13 +854,12 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $link = $link_array[1];
             }
             if ( ! empty( $link ) ) {
-                $arr_msg = array(
+                return array(
                     'el_before' => esc_html( $output_array[1] ),
                     'el_link'   => esc_html( $link ),
                     'el_text'   => esc_html( $output_array[3] ),
                     'el_after'  => esc_html( $output_array[5] ),
                 );
-                return $arr_msg;
             }
         }
         return $error_msg;
@@ -1072,8 +1071,8 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function value_to_string( $var_value ) {
         if ( is_array( $var_value ) || is_object( $var_value ) ) {
-			//phpcs:ignore -- for debug only
-			return print_r( $var_value, true );
+            //phpcs:ignore -- for debug only
+            return print_r( $var_value, true );
         } elseif ( is_string( $var_value ) ) {
             return $var_value;
         }
@@ -1540,7 +1539,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     $filename = 'favi-' . $item_id . '.' . $favi_ext;
                 }
 
-				$size     = $wp_filesystem->put_contents( $iconsDir . $filename, $content ); // phpcs:ignore --
+                $size     = $wp_filesystem->put_contents( $iconsDir . $filename, $content ); // phpcs:ignore --
                 if ( $size ) {
                     MainWP_Logger::instance()->debug( 'Icon Cost Product size :: ' . $size );
                     return array(

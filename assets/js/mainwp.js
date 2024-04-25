@@ -2905,7 +2905,7 @@ mainwp_install_check_plugin_prepare = function (slug) {
     });
   }
   jQuery('#mainwp-install-check-btn').addClass('disabled');
-  mainwp_set_message_zone('#mainwp-message-zone-install', '<i class="notched circle loading icon"></i> ', false, true ); // false: not change the color class.
+  mainwp_set_message_zone('#mainwp-message-zone-install', '<i class="notched circle loading icon"></i> ', false, true); // false: not change the color class.
   let data = mainwp_secure_data({
     action: 'mainwp_preparebulkinstallcheckplugin',
     slug: slug,
@@ -3571,13 +3571,10 @@ jQuery(function ($) {
   $('#mainwp_non_mainwp_actions_action_btn').on('click', function () {
     let bulk_act = jQuery('#non_mainwp_actions_bulk_action').dropdown("get value");
     let confirmMsg = '';
-    switch (bulk_act) {
-      case 'delete':
-        confirmMsg = __("You are about to delete the selected changes?");
-        break;
-      case 'dismiss':
-        confirmMsg = __("You are about to dismiss the selected changes?");
-        break;
+    if ('delete' === bulk_act) {
+      confirmMsg = __("You are about to delete the selected changes?");
+    } else if ('dismiss' === bulk_act) {
+      confirmMsg = __("You are about to dismiss the selected changes?");
     }
     if (confirmMsg == '') {
       return false;
@@ -3625,12 +3622,10 @@ let mainwp_non_mainwp_actions_table_bulk_action = function (act) {
   bulkInstallCurrentThreads = 0;
   bulkInstallDone = 0;
   let selector = '';
-  switch (act) {
-    case 'dismiss':
-      selector += '#mainwp-manage-non-mainwp-actions-table tbody tr';
-      jQuery(selector).addClass('queue');
-      mainwp_non_mainwp_actions_dismiss_start_next(selector);
-      break;
+  if (act === 'dismiss') {
+    selector += '#mainwp-manage-non-mainwp-actions-table tbody tr';
+    jQuery(selector).addClass('queue');
+    mainwp_non_mainwp_actions_dismiss_start_next(selector);
   }
 }
 

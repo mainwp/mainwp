@@ -69,8 +69,8 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         add_action( 'mainwp_cronsitehealthcheck_action', array( $this, 'cron_check_websites_health' ) );
         add_action( 'mainwp_crondeactivatedlicensesalert_action', array( $this, 'cron_deactivated_licenses_alert' ) );
 
-		// phpcs:ignore -- required for dashboard's minutely scheduled jobs.
-		add_filter( 'cron_schedules', array( $this, 'get_cron_schedules' ), 9 );
+        // phpcs:ignore -- required for dashboard's minutely scheduled jobs.
+        add_filter( 'cron_schedules', array( $this, 'get_cron_schedules' ), 9 );
 
         $this->init_cron();
     }
@@ -224,12 +224,12 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $_mins = 0;
         }
         if ( ! empty( $time ) ) {
-			$str_date = date( 'Y-m-d', $time ); // phpcs:ignore -- check update at given time.
+            $str_date = date( 'Y-m-d', $time ); // phpcs:ignore -- check update at given time.
         } else {
             $lctime   = MainWP_Utility::get_timestamp();
-			$str_date = date( 'Y-m-d', $lctime ); // phpcs:ignore -- check update at local server time.
+            $str_date = date( 'Y-m-d', $lctime ); // phpcs:ignore -- check update at local server time.
         }
-		return strtotime( $str_date . ' ' . $_hour . ':' . $_mins . ':59' ); // phpcs:ignore -- check update at given time.
+        return strtotime( $str_date . ' ' . $_hour . ':' . $_mins . ':59' ); // phpcs:ignore -- check update at given time.
     }
 
     /**
@@ -258,8 +258,8 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      */
     public static function check_conds_to_run_auto_update( &$next_time, &$run_timestamp = false, &$frequence_in_seconds = false ) {
         $local_timestamp = MainWP_Utility::get_timestamp();
-		$today_0h = strtotime( date("Y-m-d 00:00:00", $local_timestamp) ); // phpcs:ignore -- to localtime.
-		$today_end   = strtotime( date("Y-m-d 23:59:59", $local_timestamp ) ) ; // phpcs:ignore -- to localtime.
+        $today_0h = strtotime( date("Y-m-d 00:00:00", $local_timestamp) ); // phpcs:ignore -- to localtime.
+        $today_end   = strtotime( date("Y-m-d 23:59:59", $local_timestamp ) ) ; // phpcs:ignore -- to localtime.
 
         $timeDailyUpdate = get_option( 'mainwp_timeDailyUpdate' );
 
@@ -362,7 +362,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $frequencyDailyUpdate = 1;
         }
 
-		$today_m_y = date( 'd/m/Y', $local_timestamp ); //phpcs:ignore -- local time.
+        $today_m_y = date( 'd/m/Y', $local_timestamp ); //phpcs:ignore -- local time.
 
         $lasttimeAutomaticUpdate      = get_option( 'mainwp_updatescheck_last_timestamp' );
         $lasttimeStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_timestamp' );
@@ -489,9 +489,9 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 if ( $last_wait + 15 * MINUTE_IN_SECONDS < $time ) {
                     $run_datetime  = MainWP_Utility::format_timestamp( $run_timestamp );
                     $next_datetime = MainWP_Utility::format_timestamp( $next_time );
-					MainWP_Utility::update_option( 'mainwp_log_wait_lasttime', $time ); //phpcs:ignore -- local time.
+                    MainWP_Utility::update_option( 'mainwp_log_wait_lasttime', $time ); //phpcs:ignore -- local time.
                     MainWP_Logger::instance()->log_update_check( 'updates check :: wait frequency today :: [frequencyDailyUpdate=' . $frequencyDailyUpdate . '] :: [run_timestamp=' . $run_datetime . ']' );
-					MainWP_Logger::instance()->log_update_check( 'updates check :: [frequence=' . gmdate( "H:i:s", $frequence_period_in_seconds ) . '] :: [local_timestamp=' . $loc_datetime . '] >>> [next_time=' . $next_datetime . ']'); //phpcs:ignore -- local time.
+                    MainWP_Logger::instance()->log_update_check( 'updates check :: [frequence=' . gmdate( "H:i:s", $frequence_period_in_seconds ) . '] :: [local_timestamp=' . $loc_datetime . '] >>> [next_time=' . $next_datetime . ']'); //phpcs:ignore -- local time.
                 }
                 return;
             } else {
@@ -517,7 +517,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 array_shift( $last_run );
             }
 
-			$last_run[] = date( 'Y-m-d H:i:s', $local_timestamp );  //phpcs:ignore -- local time.
+            $last_run[] = date( 'Y-m-d H:i:s', $local_timestamp );  //phpcs:ignore -- local time.
 
             MainWP_Utility::update_option( 'mainwp_updatescheck_last_run', wp_json_encode( $last_run ) );
 
@@ -1162,7 +1162,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
                         $upgrades = '';
                         if ( is_array( $information ) && isset( $information['upgrades'] ) && is_array( $information['upgrades'] ) ) {
-							$upgrades = print_r( $information['upgrades'], true ); // phpcs:ignore -- logging.
+                            $upgrades = print_r( $information['upgrades'], true ); // phpcs:ignore -- logging.
                         }
                         MainWP_Logger::instance()->log_update_check( 'auto update plugins [upgrades result=' . $upgrades . ']' );
 

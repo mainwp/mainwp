@@ -78,7 +78,7 @@ class Api_Backups_Handler {
      *
      * @return mixed
      */
-	public static function backups_selected_site( $die_output = true ) { //phpcs:ignore -- complex method.
+    public static function backups_selected_site( $die_output = true ) { //phpcs:ignore -- complex method.
         $website_id = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : 0; //phpcs:ignore WordPress.Security.NonceVerification.Missing
 
         if ( empty( $website_id ) ) {

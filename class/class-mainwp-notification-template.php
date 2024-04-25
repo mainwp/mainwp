@@ -159,7 +159,7 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
             return;
         }
 
-		extract( $args ); // @codingStandardsIgnoreLine
+        extract( $args ); // @codingStandardsIgnoreLine
 
         ob_start();
 
@@ -362,7 +362,7 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
         }
 
         if ( ! empty( $templ_base_name ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'save-email-template' ) ) {
-			$template_code = isset( $_POST[ 'edit_' . $type . '_code' ] ) ? wp_unslash( $_POST[ 'edit_' . $type . '_code' ] ) : ''; //phpcs:ignore -- saving template content.
+            $template_code = isset( $_POST[ 'edit_' . $type . '_code' ] ) ? wp_unslash( $_POST[ 'edit_' . $type . '_code' ] ) : ''; //phpcs:ignore -- saving template content.
             $updated       = $this->save_template( $template_code, $templ_base_name );
             if ( $updated ) {
                 $updated_templ = 3;
@@ -394,7 +394,7 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
             $code  = str_replace( PHP_EOL, '', $template_code ); // to fix issue create extra line breaks in custom template file.
 
             $is_writable = MainWP_System_Utility::is_writable( $file );
-			// phpcs:disable WordPress.WP.AlternativeFunctions
+            // phpcs:disable WordPress.WP.AlternativeFunctions
             if ( $is_writable ) {
                 $f = fopen( $file, 'w+' );
                 if ( false !== $f ) {
@@ -403,7 +403,7 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
                     $saved = true;
                 }
             }
-			//phpcs:enable
+            //phpcs:enable
 
             if ( $saved ) {
                 return true;

@@ -79,7 +79,7 @@ class Connector_Installer extends Log_Connector {
      *
      * @uses \MainWP\Dashboard\Module\Log\Log_Connector::register()
      */
-	public function register() { //phpcs:ignore -- overrided.
+    public function register() { //phpcs:ignore -- overrided.
         parent::register();
     }
 
@@ -96,7 +96,7 @@ class Connector_Installer extends Log_Connector {
      * @param mixed  $post_data post data (option).
      * @param bool   $upload true|false install by upload.
      */
-	public function callback_mainwp_install_update_actions( $website, $pAction, $data, $type, $post_data = array(), $upload = false ) { //phpcs:ignore -- complex method.
+    public function callback_mainwp_install_update_actions( $website, $pAction, $data, $type, $post_data = array(), $upload = false ) { //phpcs:ignore -- complex method.
 
         if ( empty( $website ) || empty( $pAction ) || ! is_string( $pAction ) || ! is_array( $data ) ) {
             return;

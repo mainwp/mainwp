@@ -128,7 +128,7 @@ class Api_Backups_Settings {
      *
      * @param bool $individual Individual settings True|False.
      */
-	public static function render_3rd_party_api_manager( $individual = false  ) { //phpcs:ignore -- complex method.
+    public static function render_3rd_party_api_manager( $individual = false  ) { //phpcs:ignore -- complex method.
         $_nonce_slug = $individual ? 'cloudways_api_form_individual' : 'cloudways_api_form_general';
         ?>
         <div id="3rd-party-api-manager">
@@ -167,8 +167,8 @@ class Api_Backups_Settings {
                                 <?php
                                 printf(
                                     esc_html__(
-                                        'These settings allow you to Enable 3rd-Party API functionality within your 
-									MainWP Dashboard. Check this %1$shelp document%2$s to see all available services & the endpoints that MainWP currently supports.',
+                                        'These settings allow you to Enable 3rd-Party API functionality within your
+                                    MainWP Dashboard. Check this %1$shelp document%2$s to see all available services & the endpoints that MainWP currently supports.',
                                         'mainwp'
                                     ),
                                     '<a href="https://kb.mainwp.com/docs/api-backups-extension/" target="_blank">',
@@ -180,7 +180,7 @@ class Api_Backups_Settings {
 
                         <?php
                         // Save CloudWays Data.
-						//phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                        //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                         ?>
                         <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_cloudways'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_cloudways'] ), 'cloudways_api_form_general' ) ) : ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_enable_cloudways_api', ( ! isset( $_POST['mainwp_enable_cloudways_api'] ) ? 0 : 1 ) ); ?>
@@ -242,7 +242,7 @@ class Api_Backups_Settings {
                             <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'API credentials have been successfully saved.', 'mainwp' ); ?></div>
                         <?php endif; ?>
                         <?php
-						//phpcs:enable
+                        //phpcs:enable
                         // END Save GridPane Data.
                         ?>
                         <div class="ui tab segment active" data-tab="cloudways">
@@ -781,14 +781,14 @@ class Api_Backups_Settings {
      *
      * @return void
      */
-	public function hook_mainwp_update_site( $website_id ) { //phpcs:ignore -- complex method.
+    public function hook_mainwp_update_site( $website_id ) { //phpcs:ignore -- complex method.
         /**
          * 3rd-Party Backup API Provider Settings.
          *
          * Update Backup API Provider Settings ( Individual Child Site Edit Page ),
          */
 
-		//phpcs:disable WordPress.Security.NonceVerification.Missing
+        //phpcs:disable WordPress.Security.NonceVerification.Missing
         if ( ! isset( $_POST['mainwp_managesites_edit_module_api_backups_provider'] ) ) {
             return;
         }
@@ -856,7 +856,7 @@ class Api_Backups_Settings {
         // Store Plesk Individual API Key.
         $plesk_api_key = isset( $_POST['mainwp_plesk_api_key'] ) ? wp_unslash( $_POST['mainwp_plesk_api_key'] ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         Api_Backups_Utility::get_instance()->update_child_api_key( $website_id, 'plesk', $plesk_api_key );
-		//phpcs:enable
+        //phpcs:enable
     }
 
     /**
@@ -865,7 +865,7 @@ class Api_Backups_Settings {
      * @param mixed $website Website.
      * @return mixed
      */
-	public function hook_render_mainwp_manage_sites_edit( $website ) { //phpcs:ignore -- complex method.
+    public function hook_render_mainwp_manage_sites_edit( $website ) { //phpcs:ignore -- complex method.
 
         if ( empty( $website ) ) {
             return;

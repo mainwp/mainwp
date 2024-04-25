@@ -48,7 +48,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
      */
-	public static function select_sites_box( $params = array() ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function select_sites_box( $params = array() ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $type                   = isset( $params['type'] ) ? $params['type'] : 'checkbox';
         $show_group             = isset( $params['show_group'] ) ? $params['show_group'] : true;
@@ -155,7 +155,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *  @type bool   $enable_suspended_clients (bool) True, if suspended clients is enabled. False if not.
      * }
      */
-	public static function select_sites_box_body( $params = array() ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function select_sites_box_body( $params = array() ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $type                   = isset( $params['type'] ) ? $params['type'] : 'checkbox';
         $show_group             = isset( $params['show_group'] ) ? $params['show_group'] : true;
@@ -217,7 +217,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             ?>
             <div id="mainwp-select-sites-select-all-actions" class="ui two columns grid">
                 <div class="ui middle aligned column">
-                <?php if ( $show_select_all ) : ?>  
+                <?php if ( $show_select_all ) : ?>
                 <div onClick="return mainwp_ss_select( this, true )" onKeyUp="" class="mainwp-ss-select"><i class="square outline icon"></i> <?php esc_attr_e( 'Select All', 'mainwp' ); ?></div>
                 <div onClick="return mainwp_ss_select( this, false )" onKeyUp="" class="mainwp-ss-deselect" style="display:none;padding-top:0;"><i class="check square outline icon"></i> <?php esc_attr_e( 'Deselect All', 'mainwp' ); ?></div>
                 <?php endif; ?>
@@ -431,7 +431,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 <div class="content">
                     <div id="mainwp-message-zone-tag" style="display: none;">
                         <div class="ui message red"></div>
-                    </div>                  
+                    </div>
                     <div class="ui form">
                         <div class="field">
                             <label><?php esc_html_e( 'Enter tag name', 'mainwp' ); ?></label>
@@ -446,7 +446,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 <div class="actions">
                     <div class="ui two columns grid">
                         <div class="left aligned column">
-                            
+
                         </div>
                         <div class="right aligned column">
                         <a class="ui green button" id="mainwp-save-new-tag-button" href="javascript:void(0);"><?php echo esc_html__( 'Create Tag', 'mainwp' ); ?></a>

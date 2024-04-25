@@ -127,10 +127,8 @@ let mainwp_manageclients_doaction = function (action) {
       return false;
     let confirmMsg = '';
 
-    switch (action) {
-      case 'delete':
-        confirmMsg = __("You are about to remove the selected clients from your MainWP Dashboard?");
-        break;
+    if (action === 'delete') {
+      confirmMsg = __("You are about to remove the selected clients from your MainWP Dashboard?");
     }
 
     mainwp_confirm(confirmMsg, _callback = function () { mainwp_manageclients_doaction_process(action); });
@@ -424,7 +422,7 @@ jQuery(document).on('click', '#mainwp-clients-delete-general-field', function ()
       if (data && data.success) {
         parent.html('<td colspan="3"><i class="green check icon"></i> ' + __('Field has been deleted successfully.') + '</td>').fadeOut(3000);
       } else {
-        mainwp_set_message_zone('#mainwp-message-zone-client', __('Field can not be deleted.'), 'red' );
+        mainwp_set_message_zone('#mainwp-message-zone-client', __('Field can not be deleted.'), 'red');
       }
     }, 'json');
     return false;
@@ -446,7 +444,7 @@ jQuery(document).on('click', '#mainwp-clients-delete-individual-field', function
       if (data && data.success) {
         parent.html('<td colspan="3"><i class="green check icon"></i> ' + __('Field has been deleted successfully.') + '</td>').fadeOut(3000);
       } else {
-        mainwp_set_message_zone('#mainwp-message-zone-client', __('Field can not be deleted.'), 'red' );
+        mainwp_set_message_zone('#mainwp-message-zone-client', __('Field can not be deleted.'), 'red');
       }
     }, 'json');
     return false;

@@ -86,7 +86,7 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <tr>
                             <td class="left aligned middle aligned">
                                 <a href="admin.php?page=ManageClients&client_id=<?php echo intval( $client['client_id'] ); ?>">
-									<?php echo $client_display_image; //phpcs:ignore -- ok. ?>
+                                    <?php echo $client_display_image; //phpcs:ignore -- ok. ?>
                                 </a>
                             </td>
                             <td class="left aligned middle aligned">

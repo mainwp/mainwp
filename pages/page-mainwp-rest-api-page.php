@@ -216,7 +216,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * Handle rest api settings
      */
     public function handle_rest_api_add_new() {
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_POST['submit'] ) && isset( $_GET['page'] ) && 'AddApiKeys' === $_GET['page'] ) {
             if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) {
                 $all_keys = static::check_rest_api_updates();
@@ -247,7 +247,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 exit();
             }
         }
-		// phpcs:enable
+        // phpcs:enable
     }
 
     /**
@@ -392,7 +392,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
     }
 
     /** Render REST API SubPage */
-	public static function render_all_api_keys() { // phpcs:ignore -- complex.
+    public static function render_all_api_keys() { // phpcs:ignore -- complex.
         if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_restapi' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'manage dashboard REST API', 'mainwp' ) );
             return;
@@ -468,8 +468,8 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                                 </div>
                             </td>
                             <td><?php echo $enabled ? '<span class="ui green fluid label">' . esc_html__( 'Enabled', 'mainwp' ) . '</span>' : '<span class="ui gray fluid label">' . esc_html__( 'Disabled', 'mainwp' ) . '</span>'; ?></td>
-                            <td><?php echo ! empty( $pers_names ) ? implode( ', ', $pers_names ) : 'N/A'; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>   
-                            <td><?php echo esc_html( $desc ); ?></td>                           
+                            <td><?php echo ! empty( $pers_names ) ? implode( ', ', $pers_names ) : 'N/A'; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+                            <td><?php echo esc_html( $desc ); ?></td>
                             <td><code><?php echo esc_html( '...' . $ending ); // phpcs:ignore WordPress.Security.EscapeOutput ?></code></td>
                             <td class="collapsing">
                                 <a class="ui green basic mini button" href="admin.php?page=AddApiKeys&editkey=<?php echo esc_html( $endcoded_ck ); ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
@@ -510,7 +510,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     // to fix js error.
                 }
             });
-        </script>   
+        </script>
 
         <?php
         static::render_footer();
@@ -661,7 +661,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             <div class="five wide column">
                                 <input type="text" name="mainwp_rest_add_api_key_desc" id="mainwp_rest_add_api_key_desc" value="" />
                             </div>
-                        </div>              
+                        </div>
                         <div class="ui grid field">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Consumer key', 'mainwp' ); ?></label>
 
@@ -724,7 +724,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     $('#mainwp_consumer_secret_clipboard_button').attr('data-clipboard-text', '<?php echo esc_html( $consumer_secret ); ?>');
                     //initiate clipboard
                     new ClipboardJS('.copy-to-clipboard');
-                    //show copy to clipboard buttons 
+                    //show copy to clipboard buttons
                     $('.copy-to-clipboard').show();
                 });
             </script>
@@ -745,7 +745,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             return sha1( wp_rand() );
         }
 
-		return bin2hex( openssl_random_pseudo_bytes( 20 ) ); // @codingStandardsIgnoreLine
+        return bin2hex( openssl_random_pseudo_bytes( 20 ) ); // @codingStandardsIgnoreLine
     }
 
     /**
@@ -756,7 +756,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @param string $keyid Key ID edit.
      * @param array  $item The Key edit.
      */
-	public static function render_rest_api_edit( $keyid, $item ) { //phpcs:ignore -- complex.
+    public static function render_rest_api_edit( $keyid, $item ) { //phpcs:ignore -- NOSONAR - complex.
 
         $edit_desc = is_array( $item ) && isset( $item['desc'] ) ? $item['desc'] : '';
         $enabled   = is_array( $item ) && isset( $item['enabled'] ) && ! empty( $item['enabled'] ) ? true : false;
@@ -864,7 +864,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         if ( $check_logged_in ) {
             if ( is_user_logged_in() && defined( 'LOGGED_IN_COOKIE' ) ) {
                 $cookies      = array();
-				$auth_cookies = wp_parse_auth_cookie( $_COOKIE[ LOGGED_IN_COOKIE ], 'logged_in' ); // phpcs:ignore -- ok.
+                $auth_cookies = wp_parse_auth_cookie( $_COOKIE[ LOGGED_IN_COOKIE ], 'logged_in' ); // phpcs:ignore -- ok.
                 if ( is_array( $auth_cookies ) ) {
                     foreach ( $auth_cookies as $name => $value ) {
                         $cookies[] = new \WP_Http_Cookie(

@@ -16,7 +16,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- This is the only way to achieve desired results, pull request solutions appreciated.
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- This is the only way to achieve desired results, pull request solutions appreciated.
 
     /**
      * Get Class Name.
@@ -649,7 +649,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 <div class="ui mini form">
                     <div class="field">
                         <div class="ui input fluid">
-							<input type="text" placeholder="<?php esc_attr_e( 'Plugin name', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value="<?php echo ( null !== $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; //phpcs:ignore -- escaped. ?>" />
+                            <input type="text" placeholder="<?php esc_attr_e( 'Plugin name', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value="<?php echo ( null !== $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; //phpcs:ignore -- escaped. ?>" />
                         </div>
                     </div>
                     <div class="ui hidden fitted divider"></div>
@@ -672,7 +672,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             ?>
             <script type="text/javascript">
                 jQuery( document ).ready( function () {
-					jQuery( '#mainwp_plugins_search_by_status' ).dropdown( 'set selected', [<?php echo $status; // phpcs:ignore -- safe output, to fix incorrect characters. ?>] );
+                    jQuery( '#mainwp_plugins_search_by_status' ).dropdown( 'set selected', [<?php echo $status; // phpcs:ignore -- safe output, to fix incorrect characters. ?>] );
                 } );
             </script>
             <?php
@@ -684,7 +684,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     jQuery( '#display_sites_not_meeting_criteria' ).prop("disabled", false);
                 } else {
                     jQuery( '#display_sites_not_meeting_criteria' ).closest('.checkbox').checkbox('set unchecked');
-                    jQuery( '#display_sites_not_meeting_criteria' ).attr('disabled', 'true');                   
+                    jQuery( '#display_sites_not_meeting_criteria' ).attr('disabled', 'true');
                 }
             });
         </script>
@@ -725,7 +725,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-	public static function render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients ) { // phpcs:ignore -- Current complexity required to achieve desired results. Pull request solutions appreciated.
+    public static function render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients ) { // phpcs:ignore -- Current complexity required to achieve desired results. Pull request solutions appreciated.
         $keyword = trim( $keyword );
         MainWP_Cache::init_cache( 'Plugins' );
 
@@ -976,13 +976,13 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
             $post_data['not_criteria'] = $not_criteria ? true : false;
             MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( MainWP_Plugins_Handler::get_class_name(), 'plugins_search_handler' ), $output );
-			// phpcs:disable WordPress.Security.EscapeOutput
+            // phpcs:disable WordPress.Security.EscapeOutput
             if ( ! empty( $output->errors ) ) {
                 foreach ( $output->errors as $siteid => $error ) {
                     $error_results .= MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ': ' . $error . ' <br/>';
                 }
             }
-			// phpcs:enable
+            // phpcs:enable
         }
 
         MainWP_Cache::add_context(
@@ -1006,11 +1006,11 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         ob_start();
 
         if ( ! empty( $error_results ) ) {
-			// phpcs:disable WordPress.Security.EscapeOutput
+            // phpcs:disable WordPress.Security.EscapeOutput
             ?>
             <div class="ui message yellow"><?php echo $error_results; ?></div>
             <?php
-			// phpcs:enable 
+            // phpcs:enable
         }
 
         if ( 'not_installed' === $status ) {
@@ -1206,7 +1206,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param array $pluginsNameSites Plugin names with Sites array.
      * @param array $pluginsRealVersion Latest plugin release version.
      */
-	public static function render_manage_per_site_table( $sites, $pluginsSlug = array(), $sitePlugins = array(), $pluginsMainWP = array(), $muPlugins = array(), $pluginsName = array(), $pluginsNameSites = array(), $pluginsRealVersion = array() ) { //phpcs:ignore -- complex method.
+    public static function render_manage_per_site_table( $sites, $pluginsSlug = array(), $sitePlugins = array(), $pluginsMainWP = array(), $muPlugins = array(), $pluginsName = array(), $pluginsNameSites = array(), $pluginsRealVersion = array() ) { //phpcs:ignore -- complex method.
 
         $userExtension         = MainWP_DB_Common::instance()->get_user_extension();
         $decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
@@ -1296,14 +1296,14 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $item_id       = $site_id;
             $count_plugins = count( $slugVersions );
 
-			// phpcs:disable WordPress.Security.EscapeOutput 
+            // phpcs:disable WordPress.Security.EscapeOutput
             ?>
             <div class="ui accordion mainwp-manage-plugin-accordion mainwp-manage-plugin-item main-child-checkbox"  id="<?php echo esc_html( $item_id ); ?>">
                 <div class="title master-checkbox">
                     <div class="ui stackable grid">
                         <div class="one wide center aligned middle aligned column"><i class="dropdown icon dropdown-trigger"></i></div>
                         <div class="one wide center aligned middle aligned column">
-                            <div class="ui checkbox master">    
+                            <div class="ui checkbox master">
                                 <input type="checkbox"/>
                                 <label></label>
                             </div>
@@ -1313,12 +1313,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <div class="two wide center aligned middle aligned column"></div>
                         <div class="two wide center aligned middle aligned column"></div>
                         <div class="two wide center aligned middle aligned column"></div>
-                        <div class="two wide center aligned middle aligned column"><div class="ui label"><i class="icon plug"></i> <?php echo intval( $count_plugins ); ?></div></div> 
+                        <div class="two wide center aligned middle aligned column"><div class="ui label"><i class="icon plug"></i> <?php echo intval( $count_plugins ); ?></div></div>
                     </div>
                 </div>
                 <div class="content child-checkbox">
                     <?php
-					// phpcs:enable
+                    // phpcs:enable
                     foreach ( $slugVersions as $slug_ver => $plugin ) :
 
                         $plugin_title = wp_strip_all_tags( $pluginsName[ $slug_ver ] );
@@ -1373,18 +1373,18 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             <div class="one wide center aligned middle aligned column"></div>
                                 <div class="one wide center aligned middle aligned column">
                                     <div class="ui checkbox child <?php echo 'mainwp-child' === $plugin_directory ? 'disabled' : ''; ?>">
-                                    <input type="checkbox" 
+                                    <input type="checkbox"
                                     <?php
                                         echo 'mainwp-child' === $plugin_directory ? 'disabled="disabled"' : 'class="mainwp-selected-plugin-site"';
                                     ?>
                                     ><label></label>
                                 </div>
                                 </div>
-								<?php // phpcs:disable WordPress.Security.EscapeOutput ?>
+                                <?php // phpcs:disable WordPress.Security.EscapeOutput ?>
                                 <div class="one wide center aligned middle aligned column"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></div>
-								<?php // phpcs:enable ?>
+                                <?php // phpcs:enable ?>
                                 <div class="three wide middle aligned column"><a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>" target="_blank" ><strong><?php echo esc_html( $plugin_title ); ?></strong></a></div>
-								<div class="one wide center aligned middle aligned column"><?php echo $plugin_status; //phpcs:ignore -- escaped. ?></div>
+                                <div class="one wide center aligned middle aligned column"><?php echo $plugin_status; //phpcs:ignore -- escaped. ?></div>
                                 <div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
                                 <div class="one wide center aligned middle aligned column"><?php echo $plugin_mu ? '<span class="ui small label"><i class="exclamation yellow triangle icon"></i> Must Use</span>' : ''; ?></div>
                                 <div class="two wide center aligned middle aligned column current-version">
@@ -1400,7 +1400,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 </div>
                             <div class="two wide center aligned middle aligned column column-actions">
                                 <?php if ( ! $child_plugin ) : ?>
-                                    <?php if ( $actived ) { ?>  
+                                    <?php if ( $actived ) { ?>
                                         <?php if ( ! $plugin_mu && mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
                                             <a href="#" class="mainwp-manage-plugin-deactivate ui mini fluid button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php esc_attr_e( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
                                     <?php } ?>
@@ -1431,7 +1431,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             jQuery( '.mainwp-manage-plugin-accordion' ).accordion( {
                 "selector": {
                     "trigger"   : '.dropdown-trigger',
-                } 
+                }
             } );
 
             jQuery( '.trigger-all-accordion' ).on( 'click', function() { // not use document here.
@@ -1488,7 +1488,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param array $pluginsNameSites Plugin names with Sites array.
      * @param array $pluginsRealVersion Latest plugin release version.
      */
-	public static function render_manage_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion ) { //phpcs:ignore -- complex method.
+    public static function render_manage_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion ) { //phpcs:ignore -- complex method.
 
         $userExtension         = MainWP_DB_Common::instance()->get_user_extension();
         $decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
@@ -1583,7 +1583,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
             $details_link    = self_admin_url( 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $first_siteid ) . '&plugin=' . rawurlencode( $plugin_directory ) . '&section=changelog' );
             $lastest_version = '';
-			// phpcs:disable WordPress.Security.EscapeOutput 
+            // phpcs:disable WordPress.Security.EscapeOutput
             ?>
             <div class="ui accordion mainwp-manage-plugin-accordion mainwp-manage-plugin-item main-child-checkbox"  id="<?php echo esc_html( $item_id ); ?>">
                 <div class="title master-checkbox">
@@ -1597,12 +1597,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <div class="two wide center aligned middle aligned column"></div>
                         <div class="two wide center aligned middle aligned column lastest-version-info"></div>
                         <div class="two wide center aligned middle aligned column"></div>
-						<div class="two wide center aligned middle aligned column"><div class="ui label"><i class="icon wordpress"></i> <?php echo intval( $count_sites ); // phpcs:ignore -- Prevent modify WP icon. ?></div></div> 
+                        <div class="two wide center aligned middle aligned column"><div class="ui label"><i class="icon wordpress"></i> <?php echo intval( $count_sites ); // phpcs:ignore -- Prevent modify WP icon. ?></div></div>
                     </div>
                 </div>
                 <div class="content child-checkbox">
                     <?php
-					// phpcs:enable 
+                    // phpcs:enable
                     foreach ( $pluginSites as $site_id => $slugVersions ) :
                         $site_name = $sites[ $site_id ]['websitename'];
 
@@ -1665,10 +1665,10 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <div class="ui stackable grid very compact mainwp-manage-plugin-item-website" plugin-slug="<?php echo esc_attr( rawurlencode( $plugin_slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $pluginsName[ $slug_ver ] ) ); ?>" site-id="<?php echo intval( $site_id ); ?>" site-name="<?php echo esc_html( $site_name ); ?>" id="<?php echo esc_html( $item_id ); ?>">
                             <div class="one wide center aligned middle aligned column"></div>
                                 <div class="one wide center aligned middle aligned column">
-                                        <?php if ( $child_plugin ) { ?> 
+                                        <?php if ( $child_plugin ) { ?>
                                             <div class="ui disabled checkbox"><input type="checkbox" disabled="disabled"><label></label></div>
                                     <?php } else { ?>
-                                        <div class="ui checkbox child"> 
+                                        <div class="ui checkbox child">
                                             <input type="checkbox" class="mainwp-selected-plugin-site" />
                                             <label></label>
                                         </div>
@@ -1678,7 +1678,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 </div>
                                     <div class="three wide middle aligned column"><a target="_blank" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $site_id ); ?>&_opennonce=<?php echo esc_html( wp_create_nonce( 'mainwp-admin-nonce' ) ); ?>"><i class="sign in icon"></i></a> <a href="admin.php?page=managesites&dashboard=<?php echo intval( $site_id ); ?>"><?php echo esc_html( $site_name ); ?></a></div>
                                     <div class="one wide middle aligned column"></div>
-								<div class="one wide center aligned middle aligned column"><?php echo $plugin_status; //phpcs:ignore -- escaped. ?></div>
+                                <div class="one wide center aligned middle aligned column"><?php echo $plugin_status; //phpcs:ignore -- escaped. ?></div>
                                     <div class="two wide center aligned middle aligned column"><?php echo $trusted ? '<span class="ui tiny basic green label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui tiny basic grey label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></div>
 
 
@@ -1697,7 +1697,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                     </div>
                                 <div class="two wide center aligned middle aligned column column-actions">
                                     <?php if ( ! $child_plugin ) : ?>
-                                        <?php if ( $actived ) { ?>  
+                                        <?php if ( $actived ) { ?>
                                             <?php if ( ! $plugin_mu && mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
                                                 <a href="#" class="mainwp-manage-plugin-deactivate ui mini fluid button <?php echo $is_demo ? 'disabled' : ''; ?>" data-position="top right" data-tooltip="<?php esc_attr_e( 'Deactivate ', 'mainwp' ) . esc_html( $plugin_title ) . esc_attr_e( ' plugin on this child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
                                         <?php } ?>
@@ -1732,7 +1732,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             jQuery( '.mainwp-manage-plugin-accordion' ).accordion( {
                 "selector": {
                     "trigger"   : '.dropdown-trigger',
-                } 
+                }
             } );
 
             jQuery( '.trigger-all-accordion' ).on( 'click', function() { // not use document here.
@@ -1976,7 +1976,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @uses \MainWP\Dashboard\MainWP_UI::render_modal_edit_notes()
      */
-	public static function render_auto_update() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_auto_update() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $cachedAUSearch = isset( $_SESSION['MainWP_PluginsActiveStatus'] ) ? $_SESSION['MainWP_PluginsActiveStatus'] : null; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized --- ok.
 
@@ -2125,18 +2125,18 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      */
-	public static function render_all_active_table( $output = null ) { // phpcs:ignore -- not quite complex function.
+    public static function render_all_active_table( $output = null ) { // phpcs:ignore -- not quite complex function.
         $keyword       = null;
         $search_status = 'all';
 
         $data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
         if ( null === $output ) {
-			// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $keyword              = isset( $_POST['keyword'] ) && ! empty( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : null;
             $search_status        = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : 'all';
             $search_plugin_status = isset( $_POST['plugin_status'] ) ? sanitize_text_field( wp_unslash( $_POST['plugin_status'] ) ) : 'all';
-			// phpcs:enable
+            // phpcs:enable
 
             $output                    = new \stdClass();
             $output->errors            = array();
@@ -2197,7 +2197,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 }
                 $output->status = $search_plugin_status;
                 MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( MainWP_Plugins_Handler::get_class_name(), 'plugins_search_handler' ), $output );
-				// phpcs:disable WordPress.Security.EscapeOutput
+                // phpcs:disable WordPress.Security.EscapeOutput
                 if ( ! empty( $output->errors ) ) {
                     foreach ( $output->errors as $siteid => $error ) {
                         echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>';
@@ -2215,7 +2215,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         return;
                     }
                 }
-				// phpcs:enable
+                // phpcs:enable
             }
 
             $_SESSION['MainWP_PluginsActive']       = $output;
@@ -2225,11 +2225,11 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 'plugin_status' => $search_plugin_status,
             );
         } elseif ( isset( $_SESSION['MainWP_PluginsActiveStatus'] ) ) {
-				//phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 $keyword              = isset( $_SESSION['MainWP_PluginsActiveStatus']['keyword'] ) ? $_SESSION['MainWP_PluginsActiveStatus']['keyword'] : null;
                 $search_status        = isset( $_SESSION['MainWP_PluginsActiveStatus']['status'] ) ? $_SESSION['MainWP_PluginsActiveStatus']['status'] : null;
                 $search_plugin_status = isset( $_SESSION['MainWP_PluginsActiveStatus']['plugin_status'] ) ? $_SESSION['MainWP_PluginsActiveStatus']['plugin_status'] : null;
-				//phpcs:enable
+                //phpcs:enable
         }
 
         if ( 'inactive' !== $search_plugin_status ) {
@@ -2332,12 +2332,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
                     $plugin_directory = dirname( $slug );
                     ?>
-					<?php // phpcs:disable WordPress.Security.EscapeOutput ?>
+                    <?php // phpcs:disable WordPress.Security.EscapeOutput ?>
                     <tr plugin-slug="<?php echo esc_attr( rawurlencode( $slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $name ) ); ?>">
                         <td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo esc_attr( rawurlencode( $slug ) ); ?>"></span></td>
                         <td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); ?></td>
                         <td><a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $wpid ) . '&plugin=' . rawurlencode( dirname( $slug ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $name ); ?></a></td>
-						<td><?php echo ( 1 === (int) $plugin['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); //phpcs:ignore -- escaped. ?></td>
+                        <td><?php echo ( 1 === (int) $plugin['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); //phpcs:ignore -- escaped. ?></td>
                         <td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
                         <td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
                         <td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span data-tooltip="Ignored plugins will not be automatically updated." data-inverted=""><i class="info red circle icon" ></i></span>' : ''; ?></td>
@@ -2345,12 +2345,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <?php if ( '' === $esc_note ) : ?>
                             <a href="javascript:void(0)" class="mainwp-edit-plugin-note" ><i class="sticky note outline icon"></i></a>
                         <?php else : ?>
-							<a href="javascript:void(0)" class="mainwp-edit-plugin-note" data-tooltip="<?php echo substr( $strip_note, 0, 100 ); //phpcs:ignore -- escaped. ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+                            <a href="javascript:void(0)" class="mainwp-edit-plugin-note" data-tooltip="<?php echo substr( $strip_note, 0, 100 ); //phpcs:ignore -- escaped. ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
                         <?php endif; ?>
-							<span style="display: none" class="esc-content-note"><?php echo $esc_note; //phpcs:ignore -- escaped. ?></span>
+                            <span style="display: none" class="esc-content-note"><?php echo $esc_note; //phpcs:ignore -- escaped. ?></span>
                         </td>
                     </tr>
-					<?php // phpcs:enable ?>
+                    <?php // phpcs:enable ?>
                 <?php endforeach; ?>
             </tbody>
             <tfoot>
@@ -2405,11 +2405,11 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             jQuery( '#mainwp-all-active-plugins-table' ).DataTable( {
                 "searching" : <?php echo esc_html( $table_features['searching'] ); ?>,
                 "stateSave" : <?php echo esc_html( $table_features['stateSave'] ); ?>,
-				"colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
+                "colReorder" : <?php echo $table_features['colReorder']; // phpcs:ignore -- specical chars. ?>,
                 "info" : <?php echo esc_html( $table_features['info'] ); ?>,
                 "paging" : <?php echo esc_html( $table_features['paging'] ); ?>,
                 "ordering" : <?php echo esc_html( $table_features['ordering'] ); ?>,
-				"order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
+                "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
                 "columnDefs": [ { "orderable": false, "targets": [ 0, 1, 6 ] } ],
                 "responsive": responsive,
             } );
@@ -2520,7 +2520,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 </thead>
                 <tbody id="globally-ignored-plugins-list">
                     <?php if ( $ignoredPlugins ) : ?>
-						<?php // phpcs:disable WordPress.Security.EscapeOutput ?>
+                        <?php // phpcs:disable WordPress.Security.EscapeOutput ?>
                         <?php foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) : ?>
                             <?php $plugin_directory = dirname( $ignoredPlugin ); ?>
                             <tr plugin-slug="<?php echo esc_attr( rawurlencode( $ignoredPlugin ) ); ?>">
@@ -2534,7 +2534,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 </td>
                             </tr>
                         <?php endforeach; ?>
-						<?php // phpcs:enable ?>
+                        <?php // phpcs:enable ?>
                     <?php endif; ?>
                 </tbody>
                 <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2610,7 +2610,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             continue;
                         }
                         $first = true;
-						 // phpcs:disable WordPress.Security.EscapeOutput 
+                         // phpcs:disable WordPress.Security.EscapeOutput
                         foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) {
                             $plugin_directory = MainWP_Utility::get_dir_slug( rawurldecode( $ignoredPlugin ) );
                             ?>
@@ -2630,7 +2630,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         </tr>
                             <?php
                         }
-						// phpcs:enable 
+                        // phpcs:enable
                     }
 
                     MainWP_DB::free_result( $websites );
@@ -2763,7 +2763,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <tbody id="ignored-globally-abandoned-plugins-list">
                 <?php if ( $ignoredPlugins ) : ?>
                     <?php
-					// phpcs:disable WordPress.Security.EscapeOutput 
+                    // phpcs:disable WordPress.Security.EscapeOutput
                     foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) :
                         $plugin_directory = MainWP_Utility::get_dir_slug( rawurldecode( $ignoredPlugin ) );
                         ?>
@@ -2778,7 +2778,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             </td>
                         </tr>
                     <?php endforeach; ?>
-					<?php // phpcs:enable ?>
+                    <?php // phpcs:enable ?>
                 <?php endif; ?>
             </tbody>
             <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
@@ -2852,7 +2852,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             continue;
                         }
                         $first = true;
-						// phpcs:disable WordPress.Security.EscapeOutput 
+                        // phpcs:disable WordPress.Security.EscapeOutput
                         foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) {
                             $plugin_directory = MainWP_Utility::get_dir_slug( rawurldecode( $ignoredPlugin ) );
                             ?>
@@ -2872,7 +2872,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             </tr>
                             <?php
                         }
-						// phpcs:enable 
+                        // phpcs:enable
                     }
                     MainWP_DB::free_result( $websites );
                     ?>
@@ -2916,7 +2916,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * Hooks the section help content to the Help Sidebar element.
      */
     public static function mainwp_help_content() {
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_GET['page'] ) && ( 'PluginsManage' === $_GET['page'] || 'PluginsInstall' === $_GET['page'] || 'PluginsAutoUpdate' === $_GET['page'] || 'PluginsIgnore' === $_GET['page'] || 'PluginsIgnoredAbandoned' === $_GET['page'] ) ) {
             ?>
             <p><?php esc_html_e( 'If you need help with managing plugins, please review following help documents', 'mainwp' ); ?></p>
@@ -2946,6 +2946,6 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             </div>
             <?php
         }
-		// phpcs:enable
+        // phpcs:enable
     }
 }

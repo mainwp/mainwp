@@ -18,7 +18,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared, Generic.Metrics.CyclomaticComplexity -- This is the only way to achieve desired results, pull request solutions appreciated.
+    // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared, Generic.Metrics.CyclomaticComplexity -- This is the only way to achieve desired results, pull request solutions appreciated.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -96,11 +96,11 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         if ( empty( $fields ) || $default_value ) {
             $view .= ',(SELECT recent_comments.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_comments WHERE  recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments" LIMIT 1) AS recent_comments,
-					(SELECT recent_posts.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_posts WHERE  recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts" LIMIT 1) AS recent_posts,
-					(SELECT recent_pages.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_pages WHERE  recent_pages.wpid = intwp.id AND recent_pages.name = "recent_pages" LIMIT 1) AS recent_pages,
-					(SELECT phpversion.value FROM ' . $this->table_name( 'wp_options' ) . ' phpversion WHERE  phpversion.wpid = intwp.id AND phpversion.name = "phpversion" LIMIT 1) AS phpversion,
-					(SELECT added_timestamp.value FROM ' . $this->table_name( 'wp_options' ) . ' added_timestamp WHERE  added_timestamp.wpid = intwp.id AND added_timestamp.name = "added_timestamp" LIMIT 1) AS added_timestamp,
-					(SELECT wp_upgrades.value FROM ' . $this->table_name( 'wp_options' ) . ' wp_upgrades WHERE  wp_upgrades.wpid = intwp.id AND wp_upgrades.name = "wp_upgrades" LIMIT 1) AS wp_upgrades ';
+                    (SELECT recent_posts.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_posts WHERE  recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts" LIMIT 1) AS recent_posts,
+                    (SELECT recent_pages.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_pages WHERE  recent_pages.wpid = intwp.id AND recent_pages.name = "recent_pages" LIMIT 1) AS recent_pages,
+                    (SELECT phpversion.value FROM ' . $this->table_name( 'wp_options' ) . ' phpversion WHERE  phpversion.wpid = intwp.id AND phpversion.name = "phpversion" LIMIT 1) AS phpversion,
+                    (SELECT added_timestamp.value FROM ' . $this->table_name( 'wp_options' ) . ' added_timestamp WHERE  added_timestamp.wpid = intwp.id AND added_timestamp.name = "added_timestamp" LIMIT 1) AS added_timestamp,
+                    (SELECT wp_upgrades.value FROM ' . $this->table_name( 'wp_options' ) . ' wp_upgrades WHERE  wp_upgrades.wpid = intwp.id AND wp_upgrades.name = "wp_upgrades" LIMIT 1) AS wp_upgrades ';
         }
 
         if ( ! in_array( 'signature_algo', $fields ) ) {
@@ -141,10 +141,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $where = $this->get_sql_where_allow_access_sites( 'wp' );
 
         $sql = 'SELECT wp.*,wp_sync.*
-				FROM ' . $this->table_name( 'wp' ) . ' wp
-				JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync
-				ON wp.id = wp_sync.wpid
-				WHERE (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors = "") ' .
+                FROM ' . $this->table_name( 'wp' ) . ' wp
+                JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync
+                ON wp.id = wp_sync.wpid
+                WHERE (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors = "") ' .
                 $where;
 
         $websites        = $this->wpdb->get_results( $sql );
@@ -180,10 +180,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $where = $this->get_sql_where_allow_access_sites( 'wp' );
 
         $sql = 'SELECT wp.*,wp_sync.*
-				FROM ' . $this->table_name( 'wp' ) . ' wp
-				JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync 
-				ON wp.id = wp_sync.wpid
-				WHERE (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "") ' .
+                FROM ' . $this->table_name( 'wp' ) . ' wp
+                JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync
+                ON wp.id = wp_sync.wpid
+                WHERE (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "") ' .
                 $where;
 
         $websites   = $this->wpdb->get_results( $sql );
@@ -272,7 +272,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $qry  = 'SELECT * FROM ' . $select_stats;
         $qry .= ' FROM ' . $this->table_name( 'wp' ) . ' wp ' . $where . ' ) as wp_stats ';
 
-		return $this->wpdb->get_row( $qry, ARRAY_A ); //phpcs:ignore -- ok.
+        return $this->wpdb->get_row( $qry, ARRAY_A ); //phpcs:ignore -- ok.
     }
 
     /**
@@ -590,10 +590,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     public function get_sql_websites_to_check_status( $last_check, $count = 20 ) {
         $where = $this->get_sql_where_allow_access_sites( 'wp' );
         $sql   = 'SELECT wp.*
-				FROM ' . $this->table_name( 'wp' ) . ' wp
-				WHERE wp.disable_status_check <> 1 AND ( wp.status_check_interval = 0 AND wp.offline_checks_last < ' . intval( $last_check ) . ' )' .
+                FROM ' . $this->table_name( 'wp' ) . ' wp
+                WHERE wp.disable_status_check <> 1 AND ( wp.status_check_interval = 0 AND wp.offline_checks_last < ' . intval( $last_check ) . ' )' .
                 $where . '
-				LIMIT ' . intval( $count );
+                LIMIT ' . intval( $count );
         return $sql;
     }
 
@@ -608,10 +608,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     public function get_sql_websites_to_check_individual_status( $count = 20 ) {
         $where = $this->get_sql_where_allow_access_sites( 'wp' );
         $sql   = 'SELECT wp.*
-				FROM ' . $this->table_name( 'wp' ) . ' wp
-				WHERE wp.disable_status_check <> 1 AND ( wp.status_check_interval <> 0 AND ( wp.offline_checks_last + wp.status_check_interval * 60 < UNIX_TIMESTAMP() ) )' .
+                FROM ' . $this->table_name( 'wp' ) . ' wp
+                WHERE wp.disable_status_check <> 1 AND ( wp.status_check_interval <> 0 AND ( wp.offline_checks_last + wp.status_check_interval * 60 < UNIX_TIMESTAMP() ) )' .
                 $where . '
-				LIMIT ' . intval( $count );
+                LIMIT ' . intval( $count );
         return $sql;
     }
 
@@ -751,20 +751,20 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             FROM ' . $this->table_name( 'wp' ) . ' wp
             LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
             LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
-			LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
+            LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where . $connected_sql . '
-            GROUP BY wp.id, wp_sync.sync_id 
+            GROUP BY wp.id, wp_sync.sync_id
             ORDER BY ' . $orderBy;
         } else {
             $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, wpclient.name as client_name
             FROM ' . $this->table_name( 'wp' ) . ' wp
-			LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
+            LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where . $connected_sql . '
-            GROUP BY wp.id, wp_sync.sync_id 
+            GROUP BY wp.id, wp_sync.sync_id
             ORDER BY ' . $orderBy;
         }
 
@@ -838,14 +838,14 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $select = ' COUNT(DISTINCT(wp.id)) ';
             } else {
                 $select = $select_wp_fields . '
-				' . $extra_select_sql_fields . '
-				,wp_sync.sync_errors,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, wpclient.name as client_name ';
+                ' . $extra_select_sql_fields . '
+                ,wp_sync.sync_errors,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, wpclient.name as client_name ';
             }
             $qry = 'SELECT ' . $select . '
             FROM ' . $this->table_name( 'wp' ) . ' wp
             LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
             LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
-			LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
+            LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid ' .
             $extra_join . '
@@ -859,12 +859,12 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $select = ' COUNT(DISTINCT(wp.id)) ';
             } else {
                 $select = $select_wp_fields . '
-				' . $extra_select_sql_fields . '
-				,wp_sync.sync_errors,wp_optionview.*, wpclient.name as client_name ';
+                ' . $extra_select_sql_fields . '
+                ,wp_sync.sync_errors,wp_optionview.*, wpclient.name as client_name ';
             }
             $qry = 'SELECT ' . $select . '
             FROM ' . $this->table_name( 'wp' ) . ' wp
-			LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
+            LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid ' .
             $extra_join . '
@@ -1325,16 +1325,16 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $join_group = ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
             }
 
-            $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, wpclient.name as client_name 
+            $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, wpclient.name as client_name
             FROM ' . $this->table_name( 'wp' ) . ' wp ' .
             $join_client . ' ' .
             $join_group . '
             LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgroup.groupid = gr.id
-			
+
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where . $where_group . $where_client . '
-			GROUP BY wp.id, wp_sync.sync_id ' .
+            GROUP BY wp.id, wp_sync.sync_id ' .
             $orderBy;
         } else {
             $qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, wpclient.name as client_name
@@ -1343,8 +1343,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $join_client . '
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-			WHERE 1 ' . $where . $where_group . $where_client . '
-			GROUP BY wp.id, wp_sync.sync_id ' .
+            WHERE 1 ' . $where . $where_group . $where_client . '
+            GROUP BY wp.id, wp_sync.sync_id ' .
             $orderBy;
         }
 
@@ -1695,7 +1695,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $qry = 'SELECT wp.*,wp_optionview.*, wp_sync.* FROM ' . $this->table_name( 'wp' ) . ' wp
                         JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid
                         JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-						JOIN ' . $this->get_option_view( array( 'site_info' ), false ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+                        JOIN ' . $this->get_option_view( array( 'site_info' ), false ) . ' wp_optionview ON wp.id = wp_optionview.wpid
                         WHERE wpgroup.groupid = ' . $id . ' ' . $where_allowed . $where_search .
                 ( empty( $where ) ? '' : ' AND ' . $where ) . ' ORDER BY ' . $orderBy;
             }
@@ -2198,10 +2198,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $extra_view = array( 'monitoring_notification_emails', 'settings_notification_emails' );
 
         return $this->wpdb->get_results(
-            'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp 
-			JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-			JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-			WHERE wp.disable_status_check <> 1 AND wp.offline_check_result <> 1 AND wp.offline_check_result <> 0 AND wp.http_code_noticed = 0' . // http_code_noticed = 0: not noticed yet.
+            'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp
+            JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
+            JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+            WHERE wp.disable_status_check <> 1 AND wp.offline_check_result <> 1 AND wp.offline_check_result <> 0 AND wp.http_code_noticed = 0' . // http_code_noticed = 0: not noticed yet.
             $where,
             OBJECT
         );
@@ -2232,10 +2232,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $where_site_threshold .= ' OR ( wp.health_threshold = 100 AND wp_sync.health_value >= 80 ) '; // good site health.
 
         return $this->wpdb->get_results(
-            'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp 
-			JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-			JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid			
-			WHERE wp.disable_health_check <> 1 AND wp.offline_check_result = 1 AND ( ' . $where_global_threshold . ' OR' . $where_site_threshold . ' ) AND wp_sync.health_site_noticed = 0 ' .
+            'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp
+            JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
+            JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+            WHERE wp.disable_health_check <> 1 AND wp.offline_check_result = 1 AND ( ' . $where_global_threshold . ' OR' . $where_site_threshold . ' ) AND wp_sync.health_site_noticed = 0 ' .
             $where,
             OBJECT
         );
@@ -2251,9 +2251,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $extra_view = array( 'settings_notification_emails' );
 
         return $this->wpdb->get_results(
-            'SELECT wp.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp 
-			JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-			WHERE wp.disable_status_check <> 1 AND wp.offline_check_result = -1' . // offline checked status.
+            'SELECT wp.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp
+            JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+            WHERE wp.disable_status_check <> 1 AND wp.offline_check_result = -1' . // offline checked status.
             $where,
             OBJECT
         );
@@ -2345,7 +2345,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      */
-	public function get_sites( $websiteid = null, $for_manager = false, $others = array() ) { // phpcs:ignore -- not quite complex function.
+    public function get_sites( $websiteid = null, $for_manager = false, $others = array() ) { // phpcs:ignore -- not quite complex function.
 
         if ( ! is_array( $others ) ) {
             $others = array();
@@ -2470,7 +2470,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @return mixed Result
      */
     public function get_lookup_items( $item_name, $item_id, $obj_name ) {
-		return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'lookup_item_objects' ) . ' WHERE item_name=%s AND item_id = %d AND object_name = %s', $item_name, $item_id, $obj_name ) ); //phpcs:ignore -- ok.
+        return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'lookup_item_objects' ) . ' WHERE item_name=%s AND item_id = %d AND object_name = %s', $item_name, $item_id, $obj_name ) ); //phpcs:ignore -- ok.
     }
 
     /**
@@ -2527,7 +2527,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
             $obj_names = $this->escape_array( $obj_names );
             if ( ! empty( $obj_names ) ) {
-				$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'lookup_item_objects' ) . ' WHERE item_name = %s AND item_id = %d AND object_name IN ("' . implode( '","', $obj_names ) . '") ', $item_name, $item_id ) );  //phpcs:ignore -- ok.
+                $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'lookup_item_objects' ) . ' WHERE item_name = %s AND item_id = %d AND object_name IN ("' . implode( '","', $obj_names ) . '") ', $item_name, $item_id ) );  //phpcs:ignore -- ok.
                 return true;
             }
         } elseif ( 'object_id' === $by ) {
@@ -2537,7 +2537,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
             $obj_names = $this->escape_array( $obj_names );
             if ( ! empty( $obj_names ) ) {
-				$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'lookup_item_objects' ) . ' WHERE item_name = %s AND object_id = %d AND object_name IN ("' . implode( '","', $obj_names ) . '") ', $item_name, $object_id ) );  //phpcs:ignore -- ok.
+                $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'lookup_item_objects' ) . ' WHERE item_name = %s AND object_id = %d AND object_name IN ("' . implode( '","', $obj_names ) . '") ', $item_name, $object_id ) );  //phpcs:ignore -- ok.
                 return true;
             }
         } elseif ( 'lookup_id' === $by ) {
@@ -2551,7 +2551,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             } else {
                 return false;
             }
-			$this->wpdb->query( 'DELETE FROM ' . $this->table_name( 'lookup_item_objects' ) . ' WHERE lookup_id IN (' . implode( ',', $lookup_ids ) . ') ' );  //phpcs:ignore -- ok.
+            $this->wpdb->query( 'DELETE FROM ' . $this->table_name( 'lookup_item_objects' ) . ' WHERE lookup_id IN (' . implode( ',', $lookup_ids ) . ') ' );  //phpcs:ignore -- ok.
             return true;
         }
         return false;

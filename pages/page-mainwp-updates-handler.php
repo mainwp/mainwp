@@ -684,7 +684,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_Exception
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-	public static function upgrade_plugin_theme_translation( $id, $type, $list_items ) { // phpcs:ignore -- complex method.
+    public static function upgrade_plugin_theme_translation( $id, $type, $list_items ) { // phpcs:ignore -- complex method.
         if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
             $website = MainWP_DB::instance()->get_website_by_id( $id, false, array( 'premium_upgrades' ) ); // to fix loading premium_upgrades.
             if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
@@ -842,7 +842,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      */
-	public static function get_plugin_theme_slugs( $id, $type ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function get_plugin_theme_slugs( $id, $type ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
         $sql           = MainWP_DB::instance()->get_sql_website_by_id( $id );

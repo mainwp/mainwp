@@ -77,7 +77,7 @@ class Connector_Site extends Log_Connector {
     /**
      * Register log data.
      */
-	public function register() { //phpcs:ignore -- overrided.
+    public function register() { //phpcs:ignore -- overrided.
         parent::register();
     }
 
@@ -129,7 +129,7 @@ class Connector_Site extends Log_Connector {
     public function callback_mainwp_site_sync( $website, $information, $success, $sync_error = '', $post_data = array() ) {
 
         if ( empty( $website ) ) {
-            return;
+            return false;
         }
 
         $action = 'sync';

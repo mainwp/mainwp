@@ -112,7 +112,7 @@ class Log_Graph_Tags_Widget {
     /**
      * Method render_widget_content()
      */
-	public function render_widget_content() { //phpcs:ignore -- complex method.
+    public function render_widget_content() { //phpcs:ignore -- complex method.
 
         $groups         = MainWP_DB_Common::instance()->get_groups_and_count();
         $groups_nrsites = array();
@@ -165,7 +165,7 @@ class Log_Graph_Tags_Widget {
         <script type="text/javascript">
             jQuery( document ).ready( function() {
                 let options = {
-                    chart: { 
+                    chart: {
                         type: 'bar'
                     },
                     series: [ {
@@ -173,7 +173,7 @@ class Log_Graph_Tags_Widget {
                         data: [
                             <?php foreach ( $groups_nrsites as $group => $nrsites ) : ?>
                                 <?php if ( 'Staging Sites' !== $group ) : ?>
-                                { 
+                                {
                                 x: '<?php echo esc_js( $group ); ?>',
                                 y: <?php echo intval( $nrsites ); ?>,
                                 fillColor: "#18a4e0",
@@ -186,7 +186,7 @@ class Log_Graph_Tags_Widget {
                         data: [
                             <?php foreach ( $tags_names as $tagid => $tagname ) : ?>
                                 <?php if ( 'Staging Sites' !== $tagname ) : ?>
-                                { 
+                                {
                                 x: '<?php echo esc_js( $tagname ); ?>',
                                 y: <?php echo isset( $tags_count[ $tagid ] ) ? intval( $tags_count[ $tagid ] ) : 0; ?>,
                                 fillColor: "#7fb100",

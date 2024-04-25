@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
     /**
      * Method init_menu()
      *
@@ -167,7 +167,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
 
         $site_id = 0;
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) {
             $site_id = intval( $_GET['id'] );
         } elseif ( isset( $_GET['backupid'] ) && ! empty( $_GET['backupid'] ) ) {
@@ -183,7 +183,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         } elseif ( isset( $_GET['cacheControlId'] ) && ! empty( $_GET['cacheControlId'] ) ) {
             $site_id = intval( $_GET['cacheControlId'] );
         }
-		// phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $managesites_pages = array(
             'ManageSites'     => array(
@@ -272,9 +272,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
                 $wp_admin_href = MainWP_Site_Open::get_open_site_url( $site_id, false, false );
                 $dropdown      = $reconnect . '
-				<a class="item mainwp-remove-site-button" site-id="' . intval( $site_id ) . '" id="mainwp-remove-site-button" href="#"><i class="trash alternate icon"></i> Remove Site</a>
-				<a id="mainwp-go-wp-admin-button" target="_blank" href="' . $wp_admin_href . '" class="item open_newwindow_wpadmin"><i class="sign in icon"></i> Go to WP Admin</a>
-				';
+                <a class="item mainwp-remove-site-button" site-id="' . intval( $site_id ) . '" id="mainwp-remove-site-button" href="#"><i class="trash alternate icon"></i> Remove Site</a>
+                <a id="mainwp-go-wp-admin-button" target="_blank" href="' . $wp_admin_href . '" class="item open_newwindow_wpadmin"><i class="sign in icon"></i> Go to WP Admin</a>
+                ';
                 $site_icon     = '';
                 if ( 1 === (int) get_option( 'mainwp_use_favicon', 1 ) ) {
                     $favi_url  = MainWP_Connect::get_favico_url( $website );
@@ -326,7 +326,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
      */
-	private static function render_managesites_header( $site_pages, $managesites_pages, $subPages, $site_id, $shownPage ) { //phpcs:ignore -- complex method.
+    private static function render_managesites_header( $site_pages, $managesites_pages, $subPages, $site_id, $shownPage ) { //phpcs:ignore -- complex method.
 
         $renderItems = array();
         if ( isset( $managesites_pages[ $shownPage ] ) ) {
@@ -382,19 +382,19 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      * @uses  \MainWP\Dashboard\MainWP_Utility::starts_with()
      */
-	public static function render_import_sites() { // phpcs:ignore -- complex.
+    public static function render_import_sites() { // phpcs:ignore -- complex.
         ?>
         <div id="mainwp-importing-sites" class="ui active inverted dimmer" style="display:none">
             <div class="ui medium text loader"><?php esc_html_e( 'Importing', 'mainwp' ); ?></div>
         </div>
         <?php
         $errors = array();
-		//phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
+        //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
         if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {
             if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
                 $tmp_path = isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) : '';
                 MainWP_System_Utility::get_wp_file_system();
-		//phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
+        //phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
 
                 /**
                  * WordPress files system object.
@@ -691,9 +691,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <?php } ?>
             <?php
             // Render security check issues.
-			//phpcs:disable WordPress.Security.NonceVerification.Recommended,WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            //phpcs:disable WordPress.Security.NonceVerification.Recommended,WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $websiteid = isset( $_GET['scanid'] ) ? intval( $_GET['scanid'] ) : null;
-			//phpcs:enable WordPress.Security.NonceVerification.Recommended,WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            //phpcs:enable WordPress.Security.NonceVerification.Recommended,WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
             $website = MainWP_DB::instance()->get_website_by_id( $websiteid );
             if ( empty( $website ) ) {
@@ -783,7 +783,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses  \MainWP\Dashboard\MainWP_Utility::starts_with()
      * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
      */
-	public static function render_edit_site( $websiteid, $updated ) { // phpcs:ignore -- complex.
+    public static function render_edit_site( $websiteid, $updated ) { // phpcs:ignore -- complex.
         if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'edit sites', 'mainwp' ) );
             return;
@@ -891,7 +891,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $website->uniqueId );
                     ?>
-                        
+
                     <?php esc_html_e( 'Unique security ID', 'mainwp' ); ?></label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If in use, enter the website Unique ID.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <div class="ui left labeled input">
@@ -899,7 +899,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         </div>
                     </div>
                 </div>
-                
+
                 <?php
                 $uploaded_site_icon  = MainWP_Manage_Sites::get_instance()->get_cust_site_icon( $website->cust_site_icon_info, 'uploaded' );
                 $selected_site_icon  = MainWP_Manage_Sites::get_instance()->get_cust_site_icon( $website->cust_site_icon_info, 'selected' );
@@ -913,7 +913,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
 
                 if ( empty( $selected_site_icon ) ) {
-					$selected_site_icon = 'wordpress'; //phpcs:ignore -- WP icon default.
+                    $selected_site_icon = 'wordpress'; //phpcs:ignore -- WP icon default.
                 }
 
                 if ( ! empty( $uploaded_site_icon ) ) {
@@ -939,7 +939,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <div class="three wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Upload the product icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
                         <div class="ui green button basic mainwp-managesites-edit-site-icon-customable" iconItemId="<?php echo intval( $website->id ); ?>" iconFileSlug="<?php echo esc_attr( $uploaded_site_icon ); ?>" icon-src="<?php echo esc_attr( $uploaded_icon_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
                         <?php if ( ! empty( $uploaded_site_icon ) ) { ?>
-							<?php echo MainWP_Manage_Sites::get_instance()->get_cust_site_icon( $website->cust_site_icon_info, 'display_edit' ); //phpcs:ignore --ok. ?>
+                            <?php echo MainWP_Manage_Sites::get_instance()->get_cust_site_icon( $website->cust_site_icon_info, 'display_edit' ); //phpcs:ignore --ok. ?>
                         <?php } else { ?>
                             <div style="display:inline-block;" id="mainw_managesites_add_edit_site_upload_custom_icon"></div> <?php // used for icon holder. ?>
                         <?php } ?>
@@ -949,7 +949,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <div class="ui grid field settings-field-indicator-edit-site-general">
                     <label class="six wide column middle aligned">
                     <?php
-					if ( 'wordpress' !== $selected_site_icon ) { //phpcs:ignore -- WP icon.
+                    if ( 'wordpress' !== $selected_site_icon ) { //phpcs:ignore -- WP icon.
                         MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', 1 );
                     }
                     esc_html_e( 'Select icon', 'mainwp' );
@@ -974,7 +974,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     </div>
                     <div class="one wide column"></div>
                 </div>
-                
+
                 <?php
                 $groupsSite  = MainWP_DB_Common::instance()->get_groups_by_website_id( $website->id );
                 $init_groups = '';
@@ -1115,7 +1115,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             <div class="ui calendar mainwp_datepicker" >
                                     <div class="ui input left icon">
                                         <i class="calendar icon"></i>
-										<input type="text" autocomplete="off" name="mainwp_managesites_edit_dt_added" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_managesites_edit_dt_added" value="<?php echo ! empty( $website->added_timestamp ) ? esc_attr( date( 'Y-m-d', $website->added_timestamp ) ) : ''; // phpcs:ignore -- local time works. ?>"/>
+                                        <input type="text" autocomplete="off" name="mainwp_managesites_edit_dt_added" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_managesites_edit_dt_added" value="<?php echo ! empty( $website->added_timestamp ) ? esc_attr( date( 'Y-m-d', $website->added_timestamp ) ) : ''; // phpcs:ignore -- local time works. ?>"/>
                                     </div>
                             </div>
                         </div>
@@ -1147,7 +1147,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     esc_html_e( 'Check interval (optional)', 'mainwp' );
                     ?>
                     </label>
-                    <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Check interval (optional)', 'mainwp' ); ?>" data-inverted="" data-position="top left">                 
+                    <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Check interval (optional)', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <select name="mainwp_managesites_edit_checkInterval" id="mainwp_managesites_edit_checkInterval" class="ui dropdown">
                             <option value="5" <?php echo 5 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Every 5 minutes', 'mainwp' ); ?></option>
                             <option value="10" <?php echo 10 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Every 10 minutes', 'mainwp' ); ?></option>
@@ -1168,7 +1168,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     esc_html_e( 'Additional notification emails (comma-separated)', 'mainwp' );
                     ?>
                     </label>
-                    <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Additional notification emails (comma-separated).', 'mainwp' ); ?>" data-inverted="" data-position="top left">                                     
+                    <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Additional notification emails (comma-separated).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <div class="ui left labeled input">
                             <input type="text" id="mainwp_managesites_edit_monitoringNotificationEmails" name="mainwp_managesites_edit_monitoringNotificationEmails" value="<?php echo ! empty( $website->monitoring_notification_emails ) ? esc_html( $website->monitoring_notification_emails ) : ''; ?>"/>
                         </div>
@@ -1205,7 +1205,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             <option value="0" <?php echo 0 === $healthThreshold ? 'selected' : ''; ?>><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
                         </select>
                     </div>
-                </div>              
+                </div>
                 <h3 class="ui dividing header">
                     <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-edit-site-advanced', 'edit-site' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                     <?php esc_html_e( 'Advanced Settings (Optional)', 'mainwp' ); ?></h3>
@@ -1242,7 +1242,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             <option <?php echo 5 === (int) $website->ssl_version ? 'selected' : ''; ?> value="5"><?php esc_html_e( 'TLS v1.1', 'mainwp' ); ?></option>
                         </select>
                     </div>
-                </div> 
+                </div>
                 <?php
                 if ( empty( $website->verify_method ) ) {
                     $verify_conn_method = 3;
@@ -1380,7 +1380,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             mainwp_init_ui_calendar( '#mainwp-edit-site .ui.calendar' );
                         }
                     }
-                
+
                     jQuery( '#mainwp_manage_add_edit_site_icon_select' ).dropdown( {
                         onChange: function( val ) {
                             jQuery( '#mainwp_managesites_edit_site_selected_icon_hidden' ).val(val);
@@ -1395,7 +1395,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             jQuery('#update_custom_icon_btn').attr('uploading-icon', 'site');
                             jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconItemId', iconObj.attr('iconItemId') ); // @see used by mainwp_upload_custom_types_icon().
                             jQuery('#mainwp_delete_image_field').find('#mainwp_delete_image_chk').attr('iconFileSlug', iconObj.attr('iconFileSlug') ); // @see used by mainwp_upload_custom_types_icon().
-                            
+
                             if (iconObj.attr('icon-src') != '') {
                                 jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', iconObj.attr('icon-src'));
                                 jQuery('#mainwp_delete_image_field').show();
@@ -1491,7 +1491,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         <?php MainWP_Notification_Settings::render_update_template_message( $updated_templ ); ?>
         <form method="POST" action="admin.php?page=managesites&emailsettingsid=<?php echo intval( $siteid ); ?>" class="ui form">
             <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'UpdateWebsiteEmailSettings' . $siteid ) ); ?>" />
-            <input type="hidden" name="mainwp_managesites_setting_emails_type" value="<?php echo esc_html( $type ); ?>" />              
+            <input type="hidden" name="mainwp_managesites_setting_emails_type" value="<?php echo esc_html( $type ); ?>" />
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-email-tokens-info-message' ) ) { ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-message"></i>
@@ -1629,9 +1629,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <i class="close icon"></i>
                 <div class="header"><?php esc_html_e( 'Edit Email Template', 'mainwp' ); ?></div>
                     <div class="scrolling header">
-                    <form method="POST" id="email-template-form" action="<?php echo esc_html( $localion ); ?>" class="ui form">     
+                    <form method="POST" id="email-template-form" action="<?php echo esc_html( $localion ); ?>" class="ui form">
                         <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'save-email-template' ) ); ?>" />
-                        <div class="template <?php echo esc_attr( $type ); ?>">     
+                        <div class="template <?php echo esc_attr( $type ); ?>">
                             <?php if ( file_exists( $custom_file ) ) { ?>
                                 <div class="editor">
                                     <textarea class="code" cols="80" rows="20"
@@ -1657,14 +1657,14 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                 ?>
                                 <p><?php esc_html_e( 'File was not found.', 'mainwp' ); ?></p>
                             <?php } ?>
-                        </div>  
-                    </form>         
+                        </div>
+                    </form>
                     </div>
                     <div class="actions">
                         <?php if ( $editable ) { ?>
                         <input type="submit" form="email-template-form" class="ui green button" value="<?php esc_attr_e( 'Save Changes', 'mainwp' ); ?>"/>
                         <?php } ?>
-                    </div>          
+                    </div>
                 </div>
             </div>
             <script type="text/javascript">
@@ -1804,7 +1804,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
      */
-	public static function m_reconnect_site( $website, $sync_first = true ) { //phpcs:ignore -- complex method.
+    public static function m_reconnect_site( $website, $sync_first = true ) { //phpcs:ignore -- complex method.
         if ( MainWP_System_Utility::can_edit_website( $website ) ) {
             $success = false;
             $_error  = '';
@@ -1839,7 +1839,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             $conf['config'] = $conf_loc;
                         }
                         $res = openssl_pkey_new( $conf );
-						@openssl_pkey_export( $res, $privkey, null, $conf ); // phpcs:ignore -- prevent warning.
+                        @openssl_pkey_export( $res, $privkey, null, $conf ); // phpcs:ignore -- prevent warning.
                         $details = openssl_pkey_get_details( $res );
                         $pubkey  = $details['key'];
                     } else {
@@ -1923,7 +1923,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return self add_wp_site()
      */
     public static function add_site( $website = false, &$output = array() ) { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $params['url']                = isset( $_POST['managesites_add_wpurl'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpurl'] ) ) : '';
         $params['name']               = isset( $_POST['managesites_add_wpname'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpname'] ) ) : '';
         $params['wpadmin']            = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : '';
@@ -1943,7 +1943,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( isset( $_POST['qsw_page'] ) ) {
             $params['qsw_page'] = sanitize_text_field( wp_unslash( $_POST['qsw_page'] ) );
         }
-		// phpcs:enable
+        // phpcs:enable
 
         return static::add_wp_site( $website, $params, $output );
     }
@@ -1968,7 +1968,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_openssl_conf()
      * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
      */
-	public static function add_wp_site( $website, $params = array(), &$output = array() ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function add_wp_site( $website, $params = array(), &$output = array() ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $error      = '';
         $message    = '';
         $id         = 0;
@@ -1994,7 +1994,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $conf['config'] = $conf_loc;
                     }
                     $res = openssl_pkey_new( $conf );
-					@openssl_pkey_export( $res, $privkey, null, $conf );  // phpcs:ignore -- prevent warning.
+                    @openssl_pkey_export( $res, $privkey, null, $conf );  // phpcs:ignore -- prevent warning.
                     $pubkey = openssl_pkey_get_details( $res );
                     $pubkey = $pubkey['key'];
                 } else {

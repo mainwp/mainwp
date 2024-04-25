@@ -29,7 +29,7 @@ class Log_Query {
      *
      * @return array Logs Records
      */
-	public function query( $args ) { //phpcs:ignore -- complex method.
+    public function query( $args ) { //phpcs:ignore -- complex method.
         global $wpdb;
 
         $join  = '';
@@ -41,7 +41,7 @@ class Log_Query {
             // Sanitize field.
             $allowed_fields = array( 'log_id', 'site_id', 'user_id', 'created', 'item', 'connector', 'context', 'action' );
             if ( in_array( $field, $allowed_fields, true ) ) {
-				$where .= $wpdb->prepare( " AND lg.{$field} LIKE %s", "%{$args['search']}%" ); // @codingStandardsIgnoreLine can't prepare column name
+                $where .= $wpdb->prepare( " AND lg.{$field} LIKE %s", "%{$args['search']}%" ); // @codingStandardsIgnoreLine can't prepare column name
             }
         }
 
@@ -80,7 +80,7 @@ class Log_Query {
                 }
                 unset( $client_sites );
                 if ( ! empty( $array_website_ids ) ) {
-					$where .= " AND lg.site_id IN ('" . implode("','",$array_website_ids) . "') "; // phpcs:ignore -- ok.
+                    $where .= " AND lg.site_id IN ('" . implode("','",$array_website_ids) . "') "; // phpcs:ignore -- ok.
                 } else {
                     $where .= ' AND false ';
                 }
@@ -90,7 +90,7 @@ class Log_Query {
         if ( ! empty( $args['user_ids'] ) && is_array( $args['user_ids'] ) ) {
             $array_users_ids = MainWP_Utility::array_numeric_filter( $args['user_ids'] );
             if ( ! empty( $array_users_ids ) ) {
-				$where .= " AND lg.user_id IN ('" . implode("','",$array_users_ids) . "') "; // phpcs:ignore -- ok.
+                $where .= " AND lg.user_id IN ('" . implode("','",$array_users_ids) . "') "; // phpcs:ignore -- ok.
             }
         }
 
@@ -156,33 +156,33 @@ class Log_Query {
          * BUILD THE FINAL QUERY
          */
         $query = "SELECT {$select}
-		FROM $wpdb->mainwp_tbl_logs as lg
-		{$join}
-		WHERE `lg`.`connector` != 'compact' {$where}
-		{$orderby}
-		{$limits}";
+        FROM $wpdb->mainwp_tbl_logs as lg
+        {$join}
+        WHERE `lg`.`connector` != 'compact' {$where}
+        {$orderby}
+        {$limits}";
 
         // Build result count query.
         $count_query = "SELECT COUNT(*) as found
-		FROM $wpdb->mainwp_tbl_logs as lg
-		{$join}
-		WHERE `lg`.`connector` != 'compact' {$where}
-		{$limits_recent_count}";
+        FROM $wpdb->mainwp_tbl_logs as lg
+        {$join}
+        WHERE `lg`.`connector` != 'compact' {$where}
+        {$limits_recent_count}";
 
-		//phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+        //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
         // error_log( print_r( $args, true ) );//.
 
-		//phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+        //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
         // error_log( $query );//.
 
-		//phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+        //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
         // error_log( $count_query );//.
 
         /**
          * QUERY THE DATABASE FOR RESULTS
          */
         $result = array(
-			'items' => $wpdb->get_results( $query ), // phpcs:ignore -- ok.
+            'items' => $wpdb->get_results( $query ), // phpcs:ignore -- ok.
             'count' => absint( $wpdb->get_var( $count_query ) ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         );
 
@@ -198,7 +198,7 @@ class Log_Query {
         global $wpdb;
         $view  = '(SELECT intlog.log_id AS view_log_id ';
         $view .= ',(SELECT site_name.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' site_name WHERE  site_name.meta_log_id = intlog.log_id AND site_name.meta_key = "site_name" LIMIT 1) AS log_site_name,
-		(SELECT siteurl.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' siteurl WHERE  siteurl.meta_log_id = intlog.log_id AND siteurl.meta_key = "siteurl" LIMIT 1) AS url,';
+        (SELECT siteurl.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' siteurl WHERE  siteurl.meta_log_id = intlog.log_id AND siteurl.meta_key = "siteurl" LIMIT 1) AS url,';
         $view .= '(SELECT extra_info.meta_value FROM ' . $wpdb->mainwp_tbl_logs_meta . ' extra_info WHERE  extra_info.meta_log_id = intlog.log_id AND extra_info.meta_key = "extra_info" LIMIT 1) AS extra_info ';
         $view .= ' FROM ' . $wpdb->mainwp_tbl_logs . ' intlog)';
         return $view;

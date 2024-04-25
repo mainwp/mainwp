@@ -142,7 +142,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         if ( MainWP_Utility::instance()->is_disabled_functions( 'error_log' ) || ! function_exists( '\error_log' ) ) {
-			error_reporting(0); // phpcs:ignore -- try to disabled the error_log somewhere in WP.
+            error_reporting(0); // phpcs:ignore -- try to disabled the error_log somewhere in WP.
         }
 
         ob_start();
@@ -373,7 +373,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <a href="<?php echo esc_url( admin_url( 'index.php' ) ); ?>" class="ui big button"><?php esc_html_e( 'Back to WP Admin', 'mainwp' ); ?></a>
             <a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>" class="ui big button"><?php esc_html_e( 'Not Right Now', 'mainwp' ); ?></a>
             <?php wp_nonce_field( 'mwp-setup' ); ?>
-        </form>     
+        </form>
         <?php
         MainWP_System_View::render_comfirm_modal();
     }
@@ -514,7 +514,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <?php wp_nonce_field( 'mwp-setup' ); ?>
                 <input type="hidden" id="nonce_secure_data" mainwp_addwp="<?php echo esc_js( wp_create_nonce( 'mainwp_addwp' ) ); ?>" mainwp_checkwp="<?php echo esc_attr( wp_create_nonce( 'mainwp_checkwp' ) ); ?>" />
             </form>
-        </div>  
+        </div>
         <?php
     }
 
@@ -641,7 +641,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <div class="">
                             <div class="ui hidden divider"></div>
                             <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
-                            <div id="mainwp-add-new-client-form" >                      
+                            <div id="mainwp-add-new-client-form" >
                             <?php $this->render_add_client_content( false, true ); ?>
                             </div>
                         </div>
@@ -656,7 +656,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <div class="ui hidden divider"></div>
         <input type="button" style="display:none" name="createclient" current-page="qsw-add" id="bulk_add_createclient" class="ui big green right floated button" value="<?php echo esc_attr__( 'Add Client', 'mainwp' ); ?> "/>
         <a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" id="mainwp_qsw_add_client_continue_button" class="ui big green right floated button"><?php esc_html_e( 'Continue', 'mainwp' ); ?></a>
-        <a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>  
+        <a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
         <?php
     }
 
@@ -751,7 +751,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <?php
             $html = ob_get_clean();
             if ( $echo_out ) {
-				echo $html; //phpcs:ignore -- validated content.
+                echo $html; //phpcs:ignore -- validated content.
             }
             return $html;
     }
@@ -843,7 +843,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div class="ui hidden divider"></div>
             <input type="submit" class="ui big green right floated button" value="<?php esc_attr_e( 'Continue', 'mainwp' ); ?>" name="save_step" />
             <a href="<?php echo esc_url( $this->get_next_step_link() ); ?>" class="ui big button"><?php esc_html_e( 'Skip', 'mainwp' ); ?></a>
-            <a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>              
+            <a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
 
             <?php wp_nonce_field( 'mwp-setup' ); ?>
         </form>
@@ -859,14 +859,14 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public function mwp_setup_monitoring_save() {
         check_admin_referer( 'mwp-setup' );
-		// phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         MainWP_Utility::update_option( 'mainwp_disableSitesChecking', ( ! isset( $_POST['mainwp_setup_disableSitesChecking'] ) ? 1 : 0 ) );
         $val = isset( $_POST['mainwp_setup_frequency_sitesChecking'] ) ? intval( $_POST['mainwp_setup_frequency_sitesChecking'] ) : 1440;
         MainWP_Utility::update_option( 'mainwp_frequencySitesChecking', $val );
         MainWP_Utility::update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_setup_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
         $val = isset( $_POST['mainwp_setup_site_healthThreshold'] ) ? intval( $_POST['mainwp_setup_site_healthThreshold'] ) : 80;
         MainWP_Utility::update_option( 'mainwp_sitehealthThreshold', $val );
-		// phpcs:enable
+        // phpcs:enable
         wp_safe_redirect( $this->get_next_step_link() );
         exit;
     }
@@ -899,16 +899,16 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public function mainwp_usetiful_tours() {
         echo "
-		<script>
-	(function (w, d, s) {
-		let a = d.getElementsByTagName('head')[0];
-		let r = d.createElement('script');
-		r.async = 1;
-		r.src = s;
-		r.setAttribute('id', 'usetifulScript');
-		r.dataset.token = '480fa17b0507a1c60abba94bfdadd0a7';
-							a.appendChild(r);
-	  })(window, document, 'https://www.usetiful.com/dist/usetiful.js');</script>
-		";
+        <script>
+    (function (w, d, s) {
+        let a = d.getElementsByTagName('head')[0];
+        let r = d.createElement('script');
+        r.async = 1;
+        r.src = s;
+        r.setAttribute('id', 'usetifulScript');
+        r.dataset.token = '480fa17b0507a1c60abba94bfdadd0a7';
+                            a.appendChild(r);
+      })(window, document, 'https://www.usetiful.com/dist/usetiful.js');</script>
+        ";
     }
 }

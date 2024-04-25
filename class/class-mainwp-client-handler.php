@@ -275,7 +275,7 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @throws \Exception Error message.
      * @return mixed Results.
      */
-	public static function rest_api_add_client( $data, $edit = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.  
+    public static function rest_api_add_client( $data, $edit = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $params = array();
 
@@ -454,7 +454,7 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @return mixed $result Result of tokens.
      */
-	public function get_website_client_tokens_data( $websiteid = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated. 
+    public function get_website_client_tokens_data( $websiteid = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         if ( empty( $websiteid ) ) {
             return false;
         }

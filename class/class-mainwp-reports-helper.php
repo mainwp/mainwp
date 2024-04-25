@@ -125,8 +125,8 @@ class MainWP_Reports_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 'abandoned' => $abandoned_themes,
                 'pending'   => $theme_upgrades,
             ),
-			'wordpress'  => array( // phpcs:ignore -- wordpress.
-				'pending' => array( 'wordpress' => $wp_upgrades ), // phpcs:ignore -- wordpress.
+            'wordpress'  => array( // phpcs:ignore -- wordpress.
+                'pending' => array( 'wordpress' => $wp_upgrades ), // phpcs:ignore -- wordpress.
             ),
             'translation' => array(
                 'pending' => $translation_upgrades,

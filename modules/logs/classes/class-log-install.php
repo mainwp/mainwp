@@ -59,7 +59,7 @@ class Log_Install extends MainWP_Install {
     /**
      * Class constructor
      */
-	public function __construct() { // phpcs:ignore -- overrided.
+    public function __construct() { // phpcs:ignore -- overrided.
         parent::__construct();
     }
 
@@ -85,43 +85,43 @@ class Log_Install extends MainWP_Install {
         $charset_collate = $wpdb->get_charset_collate();
 
         $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_logs' ) . " (
-	log_id bigint(20) NOT NULL auto_increment,
-	site_id bigint(20) unsigned NULL,
-	item text NOT NULL,
-	user_id int(11) unsigned NOT NULL DEFAULT '0',
-	action varchar(100) NOT NULL,
-	context varchar(100) NOT NULL,
-	connector varchar(100) NOT NULL,
-	state tinyint(1) unsigned NULL,
-	created int(11) NOT NULL DEFAULT 0,
-	duration float(11,4) NOT NULL DEFAULT '0',
-	KEY site_id (site_id),
-	KEY user_id (user_id),
-	KEY created (created),
-	KEY duration (duration),
-	KEY context (context),
-	KEY connector (connector),
-	KEY action (action),
-	KEY state (state)";
+    log_id bigint(20) NOT NULL auto_increment,
+    site_id bigint(20) unsigned NULL,
+    item text NOT NULL,
+    user_id int(11) unsigned NOT NULL DEFAULT '0',
+    action varchar(100) NOT NULL,
+    context varchar(100) NOT NULL,
+    connector varchar(100) NOT NULL,
+    state tinyint(1) unsigned NULL,
+    created int(11) NOT NULL DEFAULT 0,
+    duration float(11,4) NOT NULL DEFAULT '0',
+    KEY site_id (site_id),
+    KEY user_id (user_id),
+    KEY created (created),
+    KEY duration (duration),
+    KEY context (context),
+    KEY connector (connector),
+    KEY action (action),
+    KEY state (state)";
 
         if ( empty( $currentVersion ) ) {
             $tbl .= ',
-		PRIMARY KEY (log_id)';
+        PRIMARY KEY (log_id)';
         }
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
 
         $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_logs_meta' ) . ' (
-	meta_id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-	meta_log_id bigint(20) unsigned NOT NULL,
-	meta_key varchar(200) NOT NULL,
-	meta_value mediumtext NOT NULL,
-	KEY meta_log_id (meta_log_id),
-	KEY meta_key (meta_key(191))';
+    meta_id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+    meta_log_id bigint(20) unsigned NOT NULL,
+    meta_key varchar(200) NOT NULL,
+    meta_value mediumtext NOT NULL,
+    KEY meta_log_id (meta_log_id),
+    KEY meta_key (meta_key(191))';
 
         if ( empty( $currentVersion ) ) {
             $tbl .= ',
-		PRIMARY KEY  (`meta_id`)  ';
+        PRIMARY KEY  (`meta_id`)  ';
         }
 
         $tbl  .= ') ' . $charset_collate;
@@ -132,7 +132,7 @@ class Log_Install extends MainWP_Install {
         global $wpdb;
 
         if ( MainWP_Utility::instance()->is_disabled_functions( 'error_log' ) || ! function_exists( '\error_log' ) ) {
-			error_reporting(0); // phpcs:ignore -- try to disabled the error_log somewhere in WP.
+            error_reporting(0); // phpcs:ignore -- try to disabled the error_log somewhere in WP.
         }
 
         $this->update_check_modify( $currentVersion );

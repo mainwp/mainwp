@@ -76,8 +76,8 @@ class Cost_Tracker_Settings {
         Cost_Tracker_Admin::render_header( 'settings' );
 
         ?>
-    
-        <div class="ui segment" id="mainwp-module-cost-tracker-settings-tab">               
+
+        <div class="ui segment" id="mainwp-module-cost-tracker-settings-tab">
             <form id="mainwp-module-cost-tracker-settings-form" method="post" action="admin.php?page=CostTrackerSettings" class="ui form">
                 <?php $this->render_settings_content(); ?>
             </form>
@@ -91,7 +91,7 @@ class Cost_Tracker_Settings {
      *
      * Renders the extension settings page.
      */
-	public function render_settings_content() { //phpcs:ignore -- complex.
+    public function render_settings_content() { //phpcs:ignore -- complex.
 
         $currencies        = Cost_Tracker_Utility::get_all_currency_symbols();
         $selected_currency = Cost_Tracker_Utility::get_instance()->get_option( 'currency' );
@@ -183,7 +183,7 @@ class Cost_Tracker_Settings {
                 </div>
             </div>
         </div>
-            
+
         <div class="ui grid field settings-field-indicator-cost-settings">
             <label class="six wide column middle aligned">
             <?php
@@ -230,7 +230,7 @@ class Cost_Tracker_Settings {
                     foreach ( $default_product_types as $slug => $title ) {
                         ?>
                         <div class="cost-tracker-product-types-item">
-                            
+
                             <input type="hidden" value="<?php echo esc_attr( $slug ); ?>" name="cost_tracker_default_product_types[slug][]"/>
                             <input type="hidden" value="<?php echo esc_attr( $title ); ?>" name="cost_tracker_default_product_types[title][]"/>
 
@@ -253,11 +253,11 @@ class Cost_Tracker_Settings {
                                 <input type="text" style="width:200px;border-radius:0px" class="regular-text ui disabled input" readonly="readonly" value="<?php echo esc_attr( $title ); ?>"/>
                                 <input type="color" data-tooltip="Color will update on save" data-position="top center" data-inverted="" name="cost_tracker_default_product_types[color][]" class="mainwp-color-picker-input" id="cost_tracker_default_product_types[color][]"  value="<?php echo esc_attr( $selected_color ); ?>" />
                             </div>
-                        </div>  
+                        </div>
                         <?php
                     }
                     ?>
-                <?php } ?>  
+                <?php } ?>
             </div>
         </div>
         <div class="ui grid field">
@@ -289,14 +289,14 @@ class Cost_Tracker_Settings {
                             </div>
                             <input type="text" style="width:200px;border-radius:0px" class="regular-text" value="<?php echo esc_attr( $title ); ?>" name="cost_tracker_custom_product_types[title][]"/>
                             <input type="color" data-tooltip="Color will update on save" data-position="top center" data-inverted="" name="cost_tracker_custom_product_types[color][]" class="mainwp-color-picker-input" id="cost_tracker_custom_product_types[color][]"  value="<?php echo esc_attr( $selected_color ); ?>" />
-                        </div>                                  
-                    </div>                              
+                        </div>
+                    </div>
                     <?php
                 }
                 ?>
-                <div class="ui hidden divider cost-tracker-product-types-bottom"></div> 
+                <div class="ui hidden divider cost-tracker-product-types-bottom"></div>
                 <a href="javascript:void(0);" class="module-cost-tracker-add-custom-product-types" add-custom-product-types-tmpl="<?php echo esc_attr( $this->add_custom_product_types_tmpl( $product_default_icons ) ); ?>"><span class="ui green text "><?php esc_html_e( 'Add new', 'mainwp' ); ?></span></a>
-            
+
             </div>
         </div>
 
@@ -318,32 +318,32 @@ class Cost_Tracker_Settings {
                         <div class="ui column">
                             <input type="hidden" value="<?php echo esc_attr( $slug ); ?>" name="cost_tracker_custom_payment_methods[slug][]"/>
                             <input type="text" class="regular-text" value="<?php echo esc_attr( $title ); ?>" name="cost_tracker_custom_payment_methods[title][]" >
-                        </div>                                  
-                    </div>                              
+                        </div>
+                    </div>
                     <?php
                 }
                 ?>
-                <div class="ui hidden divider cost-tracker-payment-methods-bottom"></div>   
+                <div class="ui hidden divider cost-tracker-payment-methods-bottom"></div>
                 <a href="javascript:void(0);" class="module-cost-tracker-add-custom-payment-methods" add-custom-payment-methods-tmpl="<?php echo esc_attr( $this->add_custom_payment_methods_tmpl() ); ?>"><span class="ui green text "><?php esc_html_e( 'Add new', 'mainwp' ); ?></span></a>
             </div>
         </div>
-            
+
         <?php do_action( 'mainwp_module_cost_tracker_settings_bottom' ); ?>
-        
+
         <input type="hidden" name="nonce" value="<?php echo esc_html( wp_create_nonce( 'module_cost_tracker_settings_nonce' ) ); ?>">
         <input type="hidden" name="mwp_cost_tracker_settings_submit" value="1">
         <div class="ui divider"></div>
         <input type="submit" value="<?php esc_html_e( 'Save Settings', 'mainwp' ); ?>" class="ui green big button" id="mainwp-module-cost-tracker-manager-save-settings-button" <?php echo apply_filters( 'mainwp_module_cost_tracker_manager_check_status', false ) ? 'disabled' : ''; ?>>
         <script type="text/javascript">
                     jQuery( document ).ready( function() {
-                        jQuery( '.mainwp-module-cost-tracker-select-default-icons' ).dropdown( {                            
+                        jQuery( '.mainwp-module-cost-tracker-select-default-icons' ).dropdown( {
                             onChange: function( val ) {
                                 let parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
                                 jQuery(parent).find('input[name="cost_tracker_default_product_types[icon][]"]' ).val('deficon:' + val);
                             }
                         } );
 
-                        jQuery( '.mainwp-module-cost-tracker-select-custom-product-types-icons' ).dropdown( {                           
+                        jQuery( '.mainwp-module-cost-tracker-select-custom-product-types-icons' ).dropdown( {
                             onChange: function( val ) {
                                 let parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
                                 jQuery(parent).find('input[name="cost_tracker_custom_product_types[icon][]"]' ).val('deficon:' + val);
@@ -367,12 +367,12 @@ class Cost_Tracker_Settings {
         ?>
         <div class="ui four column selection search dropdown not-auto-init <?php echo esc_attr( $select_img_cls ); ?>" style="min-width:160px;">
             <div class="text">
-				<?php echo empty( $selected_def_icon ) ? esc_html_e( 'Select icon', 'mainwp' ) : '<i class="' . esc_attr( $selected_def_icon ) . ' icon card" ' . $color_style . ' ></i>'; //phpcs:ignore -- ok. ?>
+                <?php echo empty( $selected_def_icon ) ? esc_html_e( 'Select icon', 'mainwp' ) : '<i class="' . esc_attr( $selected_def_icon ) . ' icon card" ' . $color_style . ' ></i>'; //phpcs:ignore -- ok. ?>
             </div>
             <i class="dropdown icon"></i>
             <div class="menu">
                 <?php foreach ( $default_icons as $icon ) : ?>
-					<?php echo '<div class="item" data-value="' . esc_attr( $icon ) . '"><i class="' . esc_attr( $icon ) . ' icon card" ' . $color_style . '></i></div>'; //phpcs:ignore -- ok. ?>
+                    <?php echo '<div class="item" data-value="' . esc_attr( $icon ) . '"><i class="' . esc_attr( $icon ) . ' icon card" ' . $color_style . '></i></div>'; //phpcs:ignore -- ok. ?>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -399,8 +399,8 @@ class Cost_Tracker_Settings {
                 <input type="hidden" name="cost_tracker_custom_product_types[icon][]" id="cost_tracker_custom_product_types[icon][]"  value="<?php echo esc_attr( $selected_prod_icon ); ?>" />
             </div>
             <input type="text" style="width:200px;border-radius:0px" class="regular-text" value="" name="cost_tracker_custom_product_types[title][]"/>
-            <input type="color" data-tooltip="Color will update on save" data-position="top center" data-inverted="" name="cost_tracker_custom_product_types[color][]" class="mainwp-color-picker-input" id="cost_tracker_custom_product_types[color][]"  value="#ad0000" />                                
-        </div>      
+            <input type="color" data-tooltip="Color will update on save" data-position="top center" data-inverted="" name="cost_tracker_custom_product_types[color][]" class="mainwp-color-picker-input" id="cost_tracker_custom_product_types[color][]"  value="#ad0000" />
+        </div>
         <?php
         return ob_get_clean();
     }
@@ -415,8 +415,8 @@ class Cost_Tracker_Settings {
             <div class="ui column">
                 <input type="hidden" value="" name="cost_tracker_custom_payment_methods[slug][]"/>
                 <input type="text" class="regular-text" value="" placeholder="<?php esc_attr_e( 'Title', 'mainwp' ); ?>" name="cost_tracker_custom_payment_methods[title][]"/>
-            </div>                                  
-        </div>  
+            </div>
+        </div>
         <?php
         return ob_get_clean();
     }

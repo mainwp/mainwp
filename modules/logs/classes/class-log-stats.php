@@ -85,7 +85,7 @@ class Log_Stats {
      */
     public static function render_stats_duration_time( $data, $action ) {
         $dura_time = isset( $data[ $action ] ) && ! empty( $data[ $action ]['dura_time'] ) ? $data[ $action ]['dura_time'] : 0;
-		echo MainWP_Utility::format_duration_time( $dura_time ) ; //phpcs:ignore -- ok.
+        echo MainWP_Utility::format_duration_time( $dura_time ) ; //phpcs:ignore -- ok.
     }
 
     /**
@@ -106,7 +106,7 @@ class Log_Stats {
                     <?php static::render_stats_compare( $count, $prev_count ); ?> <?php echo intval( $count ); ?>
                 </div>
                 <div class="label">
-                    <?php echo esc_html( $title ); ?>   
+                    <?php echo esc_html( $title ); ?>
                 </div>
                 <span class="ui small text">
                     <?php static::render_stats_duration_time( $data, $action ); ?>
@@ -153,20 +153,20 @@ class Log_Stats {
         $count      = static::get_stats_count( $data, $action );
         $prev_count = static::get_stats_count( $data_prev, $action );
         echo '
-			{ 
-			x: "' . esc_html( $title ) . '",
-			y: "' . intval( $count ) . '",
-			goals: [
-				{
-				  name: "Previous",
-				  value: "' . intval( $prev_count ) . '",
-				  strokeHeight: 2,
-				  strokeColor: "#7fb100",
-				}
-			],
-			fillColor: "#18a4e0",
-			},
-			
-		';
+            {
+            x: "' . esc_html( $title ) . '",
+            y: "' . intval( $count ) . '",
+            goals: [
+                {
+                  name: "Previous",
+                  value: "' . intval( $prev_count ) . '",
+                  strokeHeight: 2,
+                  strokeColor: "#7fb100",
+                }
+            ],
+            fillColor: "#18a4e0",
+            },
+
+        ';
     }
 }

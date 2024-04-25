@@ -172,7 +172,7 @@ class MainWP_QQ2_File_Uploader { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @return array success'=>true|error'=>'error message'
      */
-	public function handleUpload( $uploadDirectory, $replaceOldFile = false ) { // phpcs:ignore -- for compatible
+    public function handleUpload( $uploadDirectory, $replaceOldFile = false ) { // phpcs:ignore -- for compatible
         return $this->handle_upload( $uploadDirectory, $replaceOldFile );
     }
 }

@@ -17,7 +17,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
     /**
      * Protected static variable to hold the single instance of the class.
@@ -232,7 +232,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     <?php } ?>
                     <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) { ?>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=MainWPTools' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Tools', 'mainwp' ); ?></a>
-                    <?php } ?>              
+                    <?php } ?>
                     <?php
                     if ( isset( static::$subPages ) && is_array( static::$subPages ) && ( count( static::$subPages ) > 0 ) ) {
                         foreach ( static::$subPages as $subPage ) {
@@ -391,7 +391,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         ?>
 
         <script type="text/javascript">
-			let mainwp_settings_saved_menu_indicator_status = '<?php echo !empty($saved_status) ? wp_json_encode( $saved_status ) : ''; //phpcs:ignore -- ok.  ?>';
+            let mainwp_settings_saved_menu_indicator_status = '<?php echo !empty($saved_status) ? wp_json_encode( $saved_status ) : ''; //phpcs:ignore -- ok.  ?>';
         </script>
         <?php
     }
@@ -483,7 +483,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 $actions_notification_enable = ( isset( $_POST['mainwp_site_actions_notification_enable'] ) ? 1 : 0 );
                 MainWP_Utility::update_option( 'mainwp_site_actions_notification_enable', $actions_notification_enable );
 
-				//phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 // Handle custom date/time formats.
                 if ( ! empty( $_POST['date_format'] ) && isset( $_POST['date_format_custom'] )
                     && '\c\u\s\t\o\m' === wp_unslash( $_POST['date_format'] )
@@ -523,7 +523,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         update_option( $option, $value );
                     }
                 }
-				//phpcs:enable
+                //phpcs:enable
 
                 MainWP_Utility::update_option( 'mainwp_use_favicon', 1 );
 
@@ -550,7 +550,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * @uses \MainWP\Dashboard\MainWP_Manage_Backups::render_settings()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_http_codes()
      */
-	public static function render() { //phpcs:ignore -- complex method.
+    public static function render() { //phpcs:ignore -- complex method.
         if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
             return;
@@ -603,7 +603,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 <div class="time-selector">
                                     <div class="ui input left icon">
                                         <i class="clock icon"></i>
-										<input type="text" current-utc-datetime="<?php echo date( 'Y-m-d H:i:s' ); ?>" sync-time-local-datetime="<?php echo date( 'Y-m-d H:i:s', $run_timestamp ); ?>" local-datetime="<?php echo date( 'Y-m-d H:i:s', MainWP_Utility::get_timestamp() ); // phpcs:ignore -- to get local time. ?>" name="mainwp_timeDailyUpdate" id="mainwp_timeDailyUpdate" value="<?php echo esc_attr( $timeDailyUpdate ); ?>" />
+                                        <input type="text" current-utc-datetime="<?php echo date( 'Y-m-d H:i:s' ); ?>" sync-time-local-datetime="<?php echo date( 'Y-m-d H:i:s', $run_timestamp ); ?>" local-datetime="<?php echo date( 'Y-m-d H:i:s', MainWP_Utility::get_timestamp() ); // phpcs:ignore -- to get local time. ?>" name="mainwp_timeDailyUpdate" id="mainwp_timeDailyUpdate" value="<?php echo esc_attr( $timeDailyUpdate ); ?>" />
                                     </div>
                                 </div>
                                 <script type="text/javascript">
@@ -670,7 +670,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </div>
                         </div>
                         <?php MainWP_UI::render_screen_options(); ?>
-                        
+
                         <h3 class="ui dividing header">
                         <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-updates', 'general-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                         <?php esc_html_e( 'Updates Settings', 'mainwp' ); ?></h3>
@@ -858,7 +858,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 <input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo false === get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ? 365 : intval( get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
                             </div>
                         </div>
-                        <?php MainWP_Monitoring_View::render_settings(); ?>                 
+                        <?php MainWP_Monitoring_View::render_settings(); ?>
                         <?php MainWP_Manage_Backups::render_settings(); ?>
                         <?php
                         /**
@@ -909,7 +909,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
         ?>
     <div class="ui grid field settings-field-indicator-general">
-            <label class="six wide column middle aligned"><?php esc_html_e( 'Timezone', 'mainwp' ); ?></label>          
+            <label class="six wide column middle aligned"><?php esc_html_e( 'Timezone', 'mainwp' ); ?></label>
             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Choose either a city in the same timezone as you or a %s (Coordinated Universal Time) time offset.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                 <select id="timezone_string" class="ui dropdown" name="timezone_string" aria-describedby="timezone-description">
                 <?php echo wp_timezone_choice( $tzstring, get_user_locale() ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
@@ -1152,7 +1152,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-	public static function render_advanced() { //phpcs:ignore -- complex method.
+    public static function render_advanced() { //phpcs:ignore -- complex method.
         if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
             return;
@@ -1518,7 +1518,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             } else {
                                 ?>
                                 <input type="button" name="" id="force-destroy-sessions-button"  data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Forces your dashboard to reconnect with your child sites. This feature will log out any currently logged in users on the Child sites and require them to re-log in. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>" class="ui green basic button" value="<?php esc_attr_e( 'Re-establish Connections', 'mainwp' ); ?>" />
-                            <?php } ?>  
+                            <?php } ?>
                             </div>
                         </div>
                         <div class="ui grid field">
@@ -1530,10 +1530,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             } else {
                                 ?>
                                     <a href="javascript:void(0)" onclick="mainwp_tool_renew_connections_show(); return false;" class="ui button green basic"><?php esc_html_e( 'Reset OpenSSL Key Pair', 'mainwp' ); ?></a>
-                                <?php } ?>  
+                                <?php } ?>
                             </div>
                         </div>
-                        <?php if ( $show_qsw ) { ?> 
+                        <?php if ( $show_qsw ) { ?>
                         <div class="ui grid field">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Start the MainWP Quick Setup Wizard', 'mainwp' ); ?></label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to start the Quick Setup Wizard', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=mainwp-setup" class="ui green button basic" ><?php esc_html_e( 'Start Quick Setup Wizard', 'mainwp' ); ?></a></div>

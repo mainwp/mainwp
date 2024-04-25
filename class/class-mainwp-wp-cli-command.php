@@ -354,7 +354,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      * @uses \MainWP\Dashboard\MainWP_Updates_Handler::upgrade_plugin_theme_translation()
      * @uses  \MainWP\Dashboard\MainWP_Utility::value_to_string()
      */
-	public function plugin( $args, $assoc_args ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function plugin( $args, $assoc_args ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $sites = array();
         if ( ! empty( $args ) ) {
             $args_exploded = explode( ',', $args[0] );
@@ -625,7 +625,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      * @uses \MainWP\Dashboard\MainWP_Updates_Handler::upgrade_plugin_theme_translation()
      * @uses  \MainWP\Dashboard\MainWP_Utility::value_to_string()
      */
-	public function theme( $args, $assoc_args ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function theme( $args, $assoc_args ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $sites = array();
         if ( count( $args ) > 0 ) {
             $args_exploded = explode( ',', $args[0] );

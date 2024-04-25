@@ -445,7 +445,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_for_manage_sites()
      */
-    public function render_manage_sites_table_top() {
+    public function render_manage_sites_table_top() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
         $items_bulk        = $this->get_bulk_actions();
         $filters_row_style = 'display:none';
 
@@ -507,7 +507,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 <div class="item" data-value=""><?php esc_html_e( 'Is', 'mainwp' ); ?></div>
                                 <div class="item" data-value="yes"><?php esc_html_e( 'Is not', 'mainwp' ); ?></div>
                             </div>
-                        </div>                                      
+                        </div>
                         <div id="mainwp-filter-sites-group" class="ui selection multiple dropdown seg_site_tags">
                             <input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
                             <i class="dropdown icon"></i>
@@ -962,7 +962,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      *
      * @param bool $optimize true|false Whether or not to optimize.
      */
-    public function display( $optimize = true ) {
+    public function display( $optimize = true ) { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
 
         $sites_per_page = get_option( 'mainwp_default_sites_per_page', 25 );
 

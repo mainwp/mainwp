@@ -450,7 +450,7 @@ class Cost_Tracker_Dashboard {
         <table class="ui single line table" id="mainwp-module-cost-tracker-sites-table" style="width:100%">
             <thead>
                 <tr>
-                    <th class="no-sort collapsing check-column column-check"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox"></span></th>
+                    <th scope="col" class="no-sort collapsing check-column column-check"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox"></span></th>
                     <th id="cost_status" class="collapsing column-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
                     <th id="icon" class="no-sort column-icon collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
                     <th id="name" class="column-name"><?php esc_html_e( 'Name', 'mainwp' ); ?></th>

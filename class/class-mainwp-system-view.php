@@ -566,7 +566,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 <div class="field">
                 <div class="ui hidden divider"></div>
                     <div class="ui toggle checkbox">
-                        <input type="checkbox" name="mainwp-select-guided-tours-option" onchange="mainwp_guidedtours_onchange(this);" id="mainwp-select-guided-tours-option" <?php echo ( ( 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ) ? 'checked="true"' : '' ); ?>>
+                        <input type="checkbox" name="mainwp-select-guided-tours-option" onchange="mainwp_guidedtours_onchange(this);" id="mainwp-select-guided-tours-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ? 'checked="true"' : ''; ?>>
                         <label for="mainwp-select-guided-tours-option"><?php esc_html_e( 'Select to enable the MainWP Guided Tours.', 'mainwp' ); ?></label>
                         </div>
                 </div>

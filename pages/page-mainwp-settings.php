@@ -629,18 +629,18 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set the frequency for automatic synchronization and updates throughout the day.', 'mainwp' ); ?>" data-inverted="" data-position="top left" >
                                 <select name="mainwp_frequencyDailyUpdate" id="mainwp_frequencyDailyUpdate" class="ui dropdown">
-                                    <option value="1" <?php echo ( 1 === $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Once per day', 'mainwp' ); ?></option>
-                                    <option value="2" <?php echo ( 2 === $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Twice per day', 'mainwp' ); ?></option>
-                                    <option value="3" <?php echo ( 3 === $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Three times per day', 'mainwp' ); ?></option>
-                                    <option value="4" <?php echo ( 4 === $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Four times per day', 'mainwp' ); ?></option>
-                                    <option value="5" <?php echo ( 5 === $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Five times per day', 'mainwp' ); ?></option>
-                                    <option value="6" <?php echo ( 6 === $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Six times per day', 'mainwp' ); ?></option>
-                                    <option value="7" <?php echo ( 7 === $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Seven times per day', 'mainwp' ); ?></option>
-                                    <option value="8" <?php echo ( 8 === $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Eight times per day', 'mainwp' ); ?></option>
-                                    <option value="9" <?php echo ( 9 === $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Nine times per day', 'mainwp' ); ?></option>
-                                    <option value="10" <?php echo ( 10 === $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Ten times per day', 'mainwp' ); ?></option>
-                                    <option value="11" <?php echo ( 11 === $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Eleven times per day', 'mainwp' ); ?></option>
-                                    <option value="12" <?php echo ( 12 === $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Twelve times per day', 'mainwp' ); ?></option>
+                                    <option value="1" <?php echo 1 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Once per day', 'mainwp' ); ?></option>
+                                    <option value="2" <?php echo 2 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Twice per day', 'mainwp' ); ?></option>
+                                    <option value="3" <?php echo 3 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Three times per day', 'mainwp' ); ?></option>
+                                    <option value="4" <?php echo 4 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Four times per day', 'mainwp' ); ?></option>
+                                    <option value="5" <?php echo 5 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Five times per day', 'mainwp' ); ?></option>
+                                    <option value="6" <?php echo 6 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Six times per day', 'mainwp' ); ?></option>
+                                    <option value="7" <?php echo 7 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Seven times per day', 'mainwp' ); ?></option>
+                                    <option value="8" <?php echo 8 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Eight times per day', 'mainwp' ); ?></option>
+                                    <option value="9" <?php echo 9 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Nine times per day', 'mainwp' ); ?></option>
+                                    <option value="10" <?php echo 10 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Ten times per day', 'mainwp' ); ?></option>
+                                    <option value="11" <?php echo 11 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Eleven times per day', 'mainwp' ); ?></option>
+                                    <option value="12" <?php echo 12 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Twelve times per day', 'mainwp' ); ?></option>
                                 </select>
                             </div>
                         </div>
@@ -664,8 +664,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Select if you want to show sidebar with option on left or right.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                                 <select name="mainwp_sidebarPosition" id="mainwp_sidebarPosition" class="ui dropdown">
-                                    <option value="1" <?php echo ( 1 === (int) $sidebarPosition ? 'selected' : '' ); ?>><?php esc_html_e( 'Right (default)', 'mainwp' ); ?></option>
-                                    <option value="0" <?php echo ( 0 === (int) $sidebarPosition ? 'selected' : '' ); ?>><?php esc_html_e( 'Left', 'mainwp' ); ?></option>
+                                    <option value="1" <?php echo 1 === (int) $sidebarPosition ? 'selected' : ''; ?>><?php esc_html_e( 'Right (default)', 'mainwp' ); ?></option>
+                                    <option value="0" <?php echo 0 === (int) $sidebarPosition ? 'selected' : ''; ?>><?php esc_html_e( 'Left', 'mainwp' ); ?></option>
                                 </select>
                             </div>
                         </div>
@@ -705,8 +705,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic plugins updates. If enabled, MainWP will update only plugins that you have marked as Trusted.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <select name="mainwp_pluginAutomaticDailyUpdate" id="mainwp_pluginAutomaticDailyUpdate" class="ui dropdown">
-                                    <option value="1" <?php echo ( 1 === $snPluginAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
-                                    <option value="0" <?php echo ( ( 0 === $snPluginAutomaticDailyUpdate ) || 2 === $snPluginAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
+                                    <option value="1" <?php echo 1 === $snPluginAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
+                                    <option value="0" <?php echo 0 === $snPluginAutomaticDailyUpdate || 2 === $snPluginAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
                                 </select>
                             </div>
                         </div>
@@ -719,8 +719,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic themes updates. If enabled, MainWP will update only themes that you have marked as Trusted.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <select name="mainwp_themeAutomaticDailyUpdate" id="mainwp_themeAutomaticDailyUpdate" class="ui dropdown">
-                                    <option value="1" <?php echo ( 1 === $snThemeAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
-                                    <option value="0" <?php echo ( 0 === $snThemeAutomaticDailyUpdate || 2 === $snThemeAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
+                                    <option value="1" <?php echo 1 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
+                                    <option value="0" <?php echo 0 === $snThemeAutomaticDailyUpdate || 2 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
                                 </select>
                             </div>
                         </div>
@@ -733,8 +733,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic WordPress core updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <select name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" class="ui dropdown">
-                                    <option value="1" <?php echo ( 1 === $snAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
-                                    <option value="0" <?php echo ( 0 === $snAutomaticDailyUpdate || 2 === (int) $snAutomaticDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
+                                    <option value="1" <?php echo 1 === $snAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
+                                    <option value="0" <?php echo 0 === $snAutomaticDailyUpdate || 2 === (int) $snAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
                                 </select>
                             </div>
                         </div>
@@ -747,16 +747,16 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </label>
                             <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'Set the number of days to delay automatic updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <select name="mainwp_delay_autoupdate" id="mainwp_delay_autoupdate" class="ui dropdown">
-                                    <option value="0" <?php echo ( 0 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Delay off', 'mainwp' ); ?></option>
-                                    <option value="1" <?php echo ( 1 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '1 day', 'mainwp' ); ?></option>
-                                    <option value="2" <?php echo ( 2 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '2 days', 'mainwp' ); ?></option>
-                                    <option value="3" <?php echo ( 3 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '3 days', 'mainwp' ); ?></option>
-                                    <option value="4" <?php echo ( 4 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '4 days', 'mainwp' ); ?></option>
-                                    <option value="5" <?php echo ( 5 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '5 days', 'mainwp' ); ?></option>
-                                    <option value="6" <?php echo ( 6 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '6 days', 'mainwp' ); ?></option>
-                                    <option value="7" <?php echo ( 7 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '7 days', 'mainwp' ); ?></option>
-                                    <option value="14" <?php echo ( 14 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '14 days', 'mainwp' ); ?></option>
-                                    <option value="30" <?php echo ( 30 === $delay_autoupdate ? 'selected' : '' ); ?>><?php esc_html_e( '30 days', 'mainwp' ); ?></option>
+                                    <option value="0" <?php echo 0 === $delay_autoupdate ? 'selected' : ''; ?>><?php esc_html_e( 'Delay off', 'mainwp' ); ?></option>
+                                    <option value="1" <?php echo 1 === $delay_autoupdate ? 'selected' : ''; ?>><?php esc_html_e( '1 day', 'mainwp' ); ?></option>
+                                    <option value="2" <?php echo 2 === $delay_autoupdate ? 'selected' : ''; ?>><?php esc_html_e( '2 days', 'mainwp' ); ?></option>
+                                    <option value="3" <?php echo 3 === $delay_autoupdate ? 'selected' : ''; ?>><?php esc_html_e( '3 days', 'mainwp' ); ?></option>
+                                    <option value="4" <?php echo 4 === $delay_autoupdate ? 'selected' : ''; ?>><?php esc_html_e( '4 days', 'mainwp' ); ?></option>
+                                    <option value="5" <?php echo 5 === $delay_autoupdate ? 'selected' : ''; ?>><?php esc_html_e( '5 days', 'mainwp' ); ?></option>
+                                    <option value="6" <?php echo 6 === $delay_autoupdate ? 'selected' : ''; ?>><?php esc_html_e( '6 days', 'mainwp' ); ?></option>
+                                    <option value="7" <?php echo 7 === $delay_autoupdate ? 'selected' : ''; ?>><?php esc_html_e( '7 days', 'mainwp' ); ?></option>
+                                    <option value="14" <?php echo 14 === $delay_autoupdate ? 'selected' : ''; ?>><?php esc_html_e( '14 days', 'mainwp' ); ?></option>
+                                    <option value="30" <?php echo 30 === $delay_autoupdate ? 'selected' : ''; ?>><?php esc_html_e( '30 days', 'mainwp' ); ?></option>
                                 </select>
                             </div>
                         </div>
@@ -768,7 +768,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to manage Translation updates', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="checkbox" name="mainwp_show_language_updates" id="mainwp_show_language_updates" <?php echo ( 1 === (int) $mainwp_show_language_updates ? 'checked="true"' : '' ); ?>/>
+                                <input type="checkbox" name="mainwp_show_language_updates" id="mainwp_show_language_updates" <?php echo 1 === (int) $mainwp_show_language_updates ? 'checked="true"' : ''; ?>/>
                             </div>
                         </div>
                         <div class="ui grid field settings-field-indicator-updates">
@@ -780,9 +780,9 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Choose if you want to disable the popup confirmations when performing updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                 <select name="mainwp_disable_update_confirmations" id="mainwp_disable_update_confirmations" class="ui dropdown">
-                                    <option value="0" <?php echo ( 0 === $disableUpdateConfirmations ? 'selected' : '' ); ?>><?php esc_html_e( 'Enable', 'mainwp' ); ?></option>
-                                    <option value="2" <?php echo ( 2 === $disableUpdateConfirmations ? 'selected' : '' ); ?>><?php esc_html_e( 'Disable', 'mainwp' ); ?></option>
-                                    <option value="1" <?php echo ( 1 === $disableUpdateConfirmations ? 'selected' : '' ); ?>><?php esc_html_e( 'Disable for single updates', 'mainwp' ); ?></option>
+                                    <option value="0" <?php echo 0 === $disableUpdateConfirmations ? 'selected' : ''; ?>><?php esc_html_e( 'Enable', 'mainwp' ); ?></option>
+                                    <option value="2" <?php echo 2 === $disableUpdateConfirmations ? 'selected' : ''; ?>><?php esc_html_e( 'Disable', 'mainwp' ); ?></option>
+                                    <option value="1" <?php echo 1 === $disableUpdateConfirmations ? 'selected' : ''; ?>><?php esc_html_e( 'Disable for single updates', 'mainwp' ); ?></option>
                                 </select>
                             </div>
                         </div>
@@ -794,7 +794,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want your MainWP Dashboard to check child site header response after updates.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" name="mainwp_check_http_response" id="mainwp_check_http_response" <?php echo ( ( 1 === (int) get_option( 'mainwp_check_http_response', 0 ) ) ? 'checked="true"' : '' ); ?>/>
+                                <input type="checkbox" name="mainwp_check_http_response" id="mainwp_check_http_response" <?php echo 1 === (int) get_option( 'mainwp_check_http_response', 0 ) ? 'checked="true"' : ''; ?>/>
                             </div>
                         </div>
                         <div class="ui grid field settings-field-indicator-updates">
@@ -830,10 +830,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will check if full backups exists before updating.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="checkbox" name="mainwp_backup_before_upgrade" id="mainwp_backup_before_upgrade" <?php echo ( 1 === (int) $backup_before_upgrade ? 'checked="true"' : '' ); ?>/>
+                                <input type="checkbox" name="mainwp_backup_before_upgrade" id="mainwp_backup_before_upgrade" <?php echo 1 === (int) $backup_before_upgrade ? 'checked="true"' : ''; ?>/>
                             </div>
                         </div>
-                        <div class="ui grid field mainwp-child-field settings-field-indicator-updates" <?php echo ( 1 === (int) $backup_before_upgrade ? '' : 'style="display:none"' ); ?> >
+                        <div class="ui grid field mainwp-child-field settings-field-indicator-updates" <?php echo 1 === (int) $backup_before_upgrade ? '' : 'style="display:none"'; ?> >
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backup_before_upgrade_days', (int) $mainwp_backup_before_upgrade_days );
@@ -855,7 +855,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set how many days without an update before plugin or theme will be considered as abandoned.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo ( ( false === get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ) ? 365 : intval( get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ) ); ?>"/>
+                                <input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo false === get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ? 365 : intval( get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
                             </div>
                         </div>
                         <?php MainWP_Monitoring_View::render_settings(); ?>                 
@@ -1253,7 +1253,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" name="mainwp_maximumRequests" id="mainwp_maximumRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumRequests' ) ) ? 4 : esc_attr( get_option( 'mainwp_maximumRequests' ) ) ); ?>"/>
+                                <input type="text" name="mainwp_maximumRequests" id="mainwp_maximumRequests" value="<?php echo false === get_option( 'mainwp_maximumRequests' ) ? 4 : esc_attr( get_option( 'mainwp_maximumRequests' ) ); ?>"/>
                             </div>
                         </div>
 
@@ -1265,7 +1265,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" name="mainwp_minimumDelay" id="mainwp_minimumDelay" value="<?php echo ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : esc_attr( get_option( 'mainwp_minimumDelay' ) ) ); ?>"/>
+                                <input type="text" name="mainwp_minimumDelay" id="mainwp_minimumDelay" value="<?php echo false === get_option( 'mainwp_minimumDelay' ) ? 200 : esc_attr( get_option( 'mainwp_minimumDelay' ) ); ?>"/>
                             </div>
                         </div>
 
@@ -1281,7 +1281,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui input"  data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" name="mainwp_maximumIPRequests" id="mainwp_maximumIPRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumIPRequests' ) ) ? 1 : esc_attr( get_option( 'mainwp_maximumIPRequests' ) ) ); ?>"/>
+                                <input type="text" name="mainwp_maximumIPRequests" id="mainwp_maximumIPRequests" value="<?php echo false === get_option( 'mainwp_maximumIPRequests' ) ? 1 : esc_attr( get_option( 'mainwp_maximumIPRequests' ) ); ?>"/>
                             </div>
                         </div>
 
@@ -1293,7 +1293,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" name="mainwp_minimumIPDelay" id="mainwp_minimumIPDelay" value="<?php echo ( ( false === get_option( 'mainwp_minimumIPDelay' ) ) ? 1000 : esc_attr( get_option( 'mainwp_minimumIPDelay' ) ) ); ?>"/>
+                                <input type="text" name="mainwp_minimumIPDelay" id="mainwp_minimumIPDelay" value="<?php echo false === get_option( 'mainwp_minimumIPDelay' ) ? 1000 : esc_attr( get_option( 'mainwp_minimumIPDelay' ) ); ?>"/>
                             </div>
                         </div>
 
@@ -1309,7 +1309,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control how many sites your MainWP Dashboard should sync at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" name="mainwp_maximumSyncRequests" id="mainwp_maximumSyncRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumSyncRequests' ) ) ? 8 : esc_attr( get_option( 'mainwp_maximumSyncRequests' ) ) ); ?>"/>
+                                <input type="text" name="mainwp_maximumSyncRequests" id="mainwp_maximumSyncRequests" value="<?php echo false === get_option( 'mainwp_maximumSyncRequests' ) ? 8 : esc_attr( get_option( 'mainwp_maximumSyncRequests' ) ); ?>"/>
                             </div>
                         </div>
 
@@ -1321,7 +1321,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui input"  data-tooltip="<?php esc_attr_e( 'This option allows you to control how many update and install requests your MainWP Dashboard should process at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ) ? 3 : esc_attr( get_option( 'mainwp_maximumInstallUpdateRequests' ) ) ); ?>"/>
+                                <input type="text" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ? 3 : esc_attr( get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/>
                             </div>
                         </div>
 
@@ -1336,7 +1336,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will cache updates for faster loading.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" name="mainwp_optimize" id="mainwp_optimize" <?php echo ( ( 1 === (int) get_option( 'mainwp_optimize', 1 ) ) ? 'checked="true"' : '' ); ?> /><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
+                                <input type="checkbox" name="mainwp_optimize" id="mainwp_optimize" <?php echo 1 === (int) get_option( 'mainwp_optimize', 1 ) ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
                             </div>
                         </div>
                         <div class="ui grid field settings-field-indicator-miscellaneous">
@@ -1347,13 +1347,13 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Disabling this option will disable the WP Cron so all scheduled events will stop working.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="checkbox" name="mainwp_options_wp_cron" id="mainwp_options_wp_cron" <?php echo ( ( 1 === (int) get_option( 'mainwp_wp_cron' ) ) || ( false === get_option( 'mainwp_wp_cron' ) ) ? 'checked="true"' : '' ); ?>/><label><?php esc_html_e( 'Default: On', 'mainwp' ); ?></label>
+                                <input type="checkbox" name="mainwp_options_wp_cron" id="mainwp_options_wp_cron" <?php echo 1 === (int) get_option( 'mainwp_wp_cron' ) || ( false === get_option( 'mainwp_wp_cron' ) ) ? 'checked="true"' : ''; ?>/><label><?php esc_html_e( 'Default: On', 'mainwp' ); ?></label>
                             </div>
                         </div>
                         <div class="ui grid field settings-field-indicator-miscellaneous" >
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Verify SSL certificate', 'mainwp' ); ?></label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will verify the SSL Certificate on your Child Site (if exists) while connecting the Child Site.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="checkbox" name="mainwp_sslVerifyCertificate" id="mainwp_sslVerifyCertificate" value="checked" <?php echo ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) ? 'checked="checked"' : ''; ?>/><label><?php esc_html_e( 'Default: On', 'mainwp' ); ?></label>
+                                <input type="checkbox" name="mainwp_sslVerifyCertificate" id="mainwp_sslVerifyCertificate" value="checked" <?php echo false === get_option( 'mainwp_sslVerifyCertificate' ) || 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ? 'checked="checked"' : ''; ?>/><label><?php esc_html_e( 'Default: On', 'mainwp' ); ?></label>
                             </div>
                         </div>
                         <?php
@@ -1505,7 +1505,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                     <?php printf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
                                 </div>
                                 <div class="ui toggle checkbox">
-                                    <input type="checkbox" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" <?php echo ( ( 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ) ? 'checked="true"' : '' ); ?> />
+                                    <input type="checkbox" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ? 'checked="true"' : ''; ?> />
                                 </div>
                             </div>
                         </div>

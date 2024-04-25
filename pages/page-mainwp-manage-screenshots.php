@@ -489,8 +489,8 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                                 <div><?php echo esc_html__( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you a preview of URLs.', 'mainwp' ); ?></div>
                             </div>
                             <select name="mainwp_sitesviewmode" id="mainwp_sitesviewmode" class="ui dropdown">
-                                <option value="table" <?php echo ( 'table' === $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Table', 'mainwp' ); ?></option>
-                                <option value="grid" <?php echo ( 'grid' === $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Grid', 'mainwp' ); ?></option>
+                                <option value="table" <?php echo 'table' === $siteViewMode ? 'selected' : ''; ?>><?php esc_html_e( 'Table', 'mainwp' ); ?></option>
+                                <option value="grid" <?php echo 'grid' === $siteViewMode ? 'selected' : ''; ?>><?php esc_html_e( 'Grid', 'mainwp' ); ?></option>
                             </select>
                         </div>
                     </div>

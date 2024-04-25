@@ -839,13 +839,13 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             <div class="ui grid field">
                 <label class="six wide column middle aligned"><?php esc_html_e( 'Backup task name', 'mainwp' ); ?></label>
                 <div class="ten wide column">
-                    <input type="text" id="mainwp_managebackups_add_name" name="mainwp_managebackups_add_name" value="<?php echo ( isset( $task ) ? esc_html( stripslashes( $task->name ) ) : '' ); ?>"/>
+                    <input type="text" id="mainwp_managebackups_add_name" name="mainwp_managebackups_add_name" value="<?php echo isset( $task ) ? esc_html( stripslashes( $task->name ) ) : ''; ?>"/>
                 </div>
             </div>
             <div class="ui grid field">
                 <label class="six wide column middle aligned"><?php esc_html_e( 'Backup file name', 'mainwp' ); ?></label>
                 <div class="ten wide column">
-                    <input type="text" id="backup_filename" name="backup_filename" value="<?php echo( isset( $task ) ? esc_html( stripslashes( $task->filename ) ) : '' ); ?>"/>
+                    <input type="text" id="backup_filename" name="backup_filename" value="<?php echo isset( $task ) ? esc_html( stripslashes( $task->filename ) ) : ''; ?>"/>
                 </div>
             </div>
             <div class="ui grid field">
@@ -1049,7 +1049,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             ?>
             </label>
             <div class="ten wide column ui toggle checkbox">
-                <input type="checkbox" name="mainwp_options_enableLegacyBackupFeature" id="mainwp_options_enableLegacyBackupFeature" <?php echo ( 0 === (int) $enableLegacyBackupFeature ? '' : 'checked="true"' ); ?>/>
+                <input type="checkbox" name="mainwp_options_enableLegacyBackupFeature" id="mainwp_options_enableLegacyBackupFeature" <?php echo 0 === (int) $enableLegacyBackupFeature ? '' : 'checked="true"'; ?>/>
             </div>
         </div>
 
@@ -1061,7 +1061,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             ?>
             </label>
             <div class="ten wide column">
-                <input type="text" name="mainwp_options_backupOnServer" value="<?php echo ( false === $backupsOnServer ? 1 : intval( $backupsOnServer ) ); ?>"/>
+                <input type="text" name="mainwp_options_backupOnServer" value="<?php echo false === $backupsOnServer ? 1 : intval( $backupsOnServer ); ?>"/>
             </div>
         </div>
 
@@ -1073,7 +1073,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             ?>
             </label>
             <div class="ten wide column">
-                <span data-tooltip="<?php esc_attr_e( 'The number of backups to keep on your external sources. This does not affect backups on the server. 0 sets unlimited.', 'mainwp' ); ?>" data-inverted=""><input type="text" name="mainwp_options_backupOnExternalSources" value="<?php echo ( false === $backupOnExternalSources ? 1 : intval( $backupOnExternalSources ) ); ?>"/>
+                <span data-tooltip="<?php esc_attr_e( 'The number of backups to keep on your external sources. This does not affect backups on the server. 0 sets unlimited.', 'mainwp' ); ?>" data-inverted=""><input type="text" name="mainwp_options_backupOnExternalSources" value="<?php echo false === $backupOnExternalSources ? 1 : intval( $backupOnExternalSources ); ?>"/>
             </div>
         </div>
 
@@ -1122,7 +1122,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             ?>
             </label>
             <div class="ten wide column ui toggle checkbox">
-                <input type="checkbox" name="mainwp_maximumFileDescriptorsAuto" id="mainwp_maximumFileDescriptorsAuto" value="1" <?php echo ( $maximumFileDescriptorsAuto ? 'checked="checked"' : '' ); ?>/>
+                <input type="checkbox" name="mainwp_maximumFileDescriptorsAuto" id="mainwp_maximumFileDescriptorsAuto" value="1" <?php echo $maximumFileDescriptorsAuto ? 'checked="checked"' : ''; ?>/>
             </div>
         </div>
 
@@ -1138,7 +1138,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             ?>
             </label>
             <div class="ten wide column">
-                <input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors" value="<?php echo ( false === $maximumFileDescriptors ? 150 : intval( $maximumFileDescriptors ) ); ?>"/>
+                <input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors" value="<?php echo false === $maximumFileDescriptors ? 150 : intval( $maximumFileDescriptors ); ?>"/>
             </div>
         </div>
 
@@ -1154,7 +1154,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             ?>
             </label>
             <div class="ten wide column ui toggle checkbox">
-                <input type="checkbox" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip" value="1" <?php echo ( $loadFilesBeforeZip ? 'checked="checked"' : '' ); ?>/>
+                <input type="checkbox" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip" value="1" <?php echo $loadFilesBeforeZip ? 'checked="checked"' : ''; ?>/>
             </div>
         </div>
 
@@ -1166,7 +1166,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             ?>
             </label>
             <div class="ten wide column ui toggle checkbox">
-                <input type="checkbox" name="mainwp_options_notificationOnBackupFail" id="mainwp_options_notificationOnBackupFail" value="1" <?php echo ( $notificationOnBackupFail ? 'checked="checked"' : '' ); ?>/>
+                <input type="checkbox" name="mainwp_options_notificationOnBackupFail" id="mainwp_options_notificationOnBackupFail" value="1" <?php echo $notificationOnBackupFail ? 'checked="checked"' : ''; ?>/>
             </div>
         </div>
 
@@ -1178,7 +1178,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             ?>
             </label>
             <div class="ten wide column ui toggle checkbox">
-                <input type="checkbox" name="mainwp_options_notificationOnBackupStart"  id="mainwp_options_notificationOnBackupStart" value="1" <?php echo ( $notificationOnBackupStart ? 'checked="checked"' : '' ); ?>/>
+                <input type="checkbox" name="mainwp_options_notificationOnBackupStart"  id="mainwp_options_notificationOnBackupStart" value="1" <?php echo $notificationOnBackupStart ? 'checked="checked"' : ''; ?>/>
             </div>
         </div>
 
@@ -1190,7 +1190,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             ?>
             </label>
             <div class="ten wide column ui toggle checkbox">
-                <input type="checkbox" name="mainwp_options_chunkedBackupTasks"  id="mainwp_options_chunkedBackupTasks" value="1" <?php echo ( $chunkedBackupTasks ? 'checked="checked"' : '' ); ?>/>
+                <input type="checkbox" name="mainwp_options_chunkedBackupTasks"  id="mainwp_options_chunkedBackupTasks" value="1" <?php echo $chunkedBackupTasks ? 'checked="checked"' : ''; ?>/>
             </div>
         </div>
         <?php

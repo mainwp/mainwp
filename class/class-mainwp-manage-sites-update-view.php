@@ -318,9 +318,9 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
             <table class="ui tablet stackable table" id="mainwp-wordpress-updates-table mainwp-manage-updates-table">
                     <thead>
                         <tr>
-                            <th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-                            <th><?php esc_html_e( 'New Version', 'mainwp' ); ?></th>
-                        <th></th>
+                            <th scope="col" ><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+                            <th scope="col" ><?php esc_html_e( 'New Version', 'mainwp' ); ?></th>
+                            <th scope="col" ></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -376,9 +376,9 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                     </tbody>
                     <thead>
                         <tr>
-                            <th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-                            <th><?php esc_html_e( 'New Version', 'mainwp' ); ?></th>
-                        <th></th>
+                            <th scope="col" ><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+                            <th scope="col" ><?php esc_html_e( 'New Version', 'mainwp' ); ?></th>
+                            <th scope="col" ></th>
                         </tr>
                     </thead>
                 </table>
@@ -464,7 +464,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                             'status'  => ( isset( $plugin_upgrade['active'] ) && $plugin_upgrade['active'] ) ? true : false,
                         );
                         ?>
-                        <tr plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" premium="<?php echo ( isset( $plugin_upgrade['premium'] ) && ! empty( $plugin_upgrade['premium'] ) ) ? 1 : 0; ?>" updated="0">
+                        <tr plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" premium="<?php echo isset( $plugin_upgrade['premium'] ) && ! empty( $plugin_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
                             <?php
                             $row_columns     = $updates_table_helper->render_columns( $row_columns, $website );
                             $action_rendered = isset( $row_columns['action'] ) ? true : false;
@@ -638,7 +638,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                                 'status'  => ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? true : false,
                             );
                             ?>
-                            <tr theme_slug="<?php echo esc_attr( $theme_name ); ?>" premium="<?php echo ( isset( $theme_upgrade['premium'] ) && ! empty( $theme_upgrade['premium'] ) ? 1 : 0 ); ?>" updated="0">
+                            <tr theme_slug="<?php echo esc_attr( $theme_name ); ?>" premium="<?php echo isset( $theme_upgrade['premium'] ) && ! empty( $theme_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
                                 <?php
                                 $row_columns     = $updates_table_helper->render_columns( $row_columns, $website );
                                 $action_rendered = isset( $row_columns['action'] ) ? true : false;
@@ -690,9 +690,9 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
             <table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-translations-table">
                 <thead>
                     <tr>
-                        <th><?php esc_html_e( 'Translation', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-                        <th class="collapsing no-sort"></th>
+                        <th scope="col" ><?php esc_html_e( 'Translation', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+                        <th scope="col" class="collapsing no-sort"></th>
                     </tr>
                 </thead>
                 <tbody class="translations-bulk-updates" id="wp_translation_upgrades_<?php echo intval( $website->id ); ?>" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>">
@@ -726,9 +726,9 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th><?php esc_html_e( 'Translation', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-                        <th class="collapsing no-sort"></th>
+                        <th scope="col" ><?php esc_html_e( 'Translation', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+                        <th scope="col" class="collapsing no-sort"></th>
                     </tr>
                 </tfoot>
             </table>
@@ -775,10 +775,10 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
             <table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-abandoned-plugins-table">
                 <thead>
                     <tr>
-                        <th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
-                        <th class="no-sort"></th>
+                        <th scope="col" ><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
+                        <th scope="col" class="no-sort"></th>
                     </tr>
                 </thead>
                 <tbody id="wp_plugins_outdate_<?php echo intval( $website->id ); ?>" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>">
@@ -810,10 +810,10 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
-                        <th class="no-sort"></th>
+                        <th scope="col" ><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
+                        <th scope="col" class="no-sort"></th>
                     </tr>
                 </tfoot>
             </table>
@@ -864,10 +864,10 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
             <table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-abandoned-themes-table">
                 <thead>
                     <tr>
-                        <th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
-                        <th class="no-sort"></th>
+                        <th scope="col"><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+                        <th scope="col"><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+                        <th scope="col"><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
+                        <th scope="col" class="no-sort"></th>
                     </tr>
                 </thead>
                 <tbody site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>">

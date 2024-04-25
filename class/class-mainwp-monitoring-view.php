@@ -39,7 +39,7 @@ class MainWP_Monitoring_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             ?>
             </label>
             <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring">
-                <input type="checkbox" name="mainwp_disableSitesChecking" id="mainwp_disableSitesChecking" <?php echo ( 1 === (int) $disableSitesMonitoring ? '' : 'checked="true"' ); ?>/>
+                <input type="checkbox" name="mainwp_disableSitesChecking" id="mainwp_disableSitesChecking" <?php echo 1 === (int) $disableSitesMonitoring ? '' : 'checked="true"'; ?>/>
             </div>
         </div>
 
@@ -52,14 +52,14 @@ class MainWP_Monitoring_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             </label>
             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Select preferred checking interval.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                 <select name="mainwp_frequency_sitesChecking" id="mainwp_frequency_sitesChecking" class="ui dropdown">
-                    <option value="5" <?php echo ( 5 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 5 minutes', 'mainwp' ); ?></option>
-                    <option value="10" <?php echo ( 10 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 10 minutes', 'mainwp' ); ?></option>
-                    <option value="30" <?php echo ( 30 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 30 minutes', 'mainwp' ); ?></option>
-                    <option value="60" <?php echo ( 60 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every hour', 'mainwp' ); ?></option>
-                    <option value="180" <?php echo ( 180 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 3 hours', 'mainwp' ); ?></option>
-                    <option value="360" <?php echo ( 360 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 6 hours', 'mainwp' ); ?></option>
-                    <option value="720" <?php echo ( 720 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Twice a day', 'mainwp' ); ?></option>
-                    <option value="1440" <?php echo ( 1440 === $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Once a day', 'mainwp' ); ?></option>
+                    <option value="5" <?php echo 5 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 5 minutes', 'mainwp' ); ?></option>
+                    <option value="10" <?php echo 10 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 10 minutes', 'mainwp' ); ?></option>
+                    <option value="30" <?php echo 30 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 30 minutes', 'mainwp' ); ?></option>
+                    <option value="60" <?php echo 60 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every hour', 'mainwp' ); ?></option>
+                    <option value="180" <?php echo 180 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 3 hours', 'mainwp' ); ?></option>
+                    <option value="360" <?php echo 360 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 6 hours', 'mainwp' ); ?></option>
+                    <option value="720" <?php echo 720 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Twice a day', 'mainwp' ); ?></option>
+                    <option value="1440" <?php echo 1440 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Once a day', 'mainwp' ); ?></option>
                 </select>
             </div>
         </div>
@@ -76,7 +76,7 @@ class MainWP_Monitoring_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             ?>
             </label>
             <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="health-monitoring">
-                <input type="checkbox" name="mainwp_disable_sitesHealthMonitoring" id="mainwp_disable_sitesHealthMonitoring" <?php echo ( 1 === (int) $disableSitesHealthMonitoring ? '' : 'checked="true"' ); ?>/>
+                <input type="checkbox" name="mainwp_disable_sitesHealthMonitoring" id="mainwp_disable_sitesHealthMonitoring" <?php echo 1 === (int) $disableSitesHealthMonitoring ? '' : 'checked="true"'; ?>/>
             </div>
         </div>
 
@@ -89,8 +89,8 @@ class MainWP_Monitoring_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             </label>
             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set preferred site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                 <select name="mainwp_site_healthThreshold" id="mainwp_site_healthThreshold" class="ui dropdown">
-                    <option value="80" <?php echo ( ( 80 === $sitehealthThreshold || 0 === $sitehealthThreshold ) ? 'selected' : '' ); ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
-                    <option value="100" <?php echo ( 100 === $sitehealthThreshold ? 'selected' : '' ); ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
+                    <option value="80" <?php echo ( 80 === $sitehealthThreshold || 0 === $sitehealthThreshold ) ? 'selected' : ''; ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
+                    <option value="100" <?php echo 100 === $sitehealthThreshold ? 'selected' : ''; ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
                 </select>
             </div>
         </div>

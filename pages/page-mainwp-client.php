@@ -1023,9 +1023,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <table id="mainwp-clients-custom-fields-table" class="ui selectable compact table" style="width:100%">
             <thead>
                 <tr>
-                    <th><?php esc_html_e( 'Field Name', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Field Description', 'mainwp' ); ?></th>
-                    <th class="no-sort collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Field Name', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Field Description', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -1053,9 +1053,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             </tbody>
             <tfoot>
                 <tr>
-                    <th><a class="ui mini green button" href="javascript:void(0);" id="mainwp-clients-new-custom-field-button"><?php esc_html_e( 'New Field', 'mainwp' ); ?></a></th>
-                    <th><?php esc_html_e( '', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( '', 'mainwp' ); ?></th>
+                    <th scope="col" ><a class="ui mini green button" href="javascript:void(0);" id="mainwp-clients-new-custom-field-button"><?php esc_html_e( 'New Field', 'mainwp' ); ?></a></th>
+                    <th scope="col" ><?php esc_html_e( '', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( '', 'mainwp' ); ?></th>
                 </tr>
             </tfoot>
         </table>
@@ -1505,10 +1505,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     } elseif ( 'client.suspended' === $field_name ) {
                         ?>
                             <select name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" id="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" class="ui dropdown">
-                                <option value="0" <?php echo ( '0' === $val ? 'selected' : '' ); ?>><?php esc_html_e( 'Active', 'mainwp' ); ?></option>
-                                <option value="1" <?php echo ( '1' === $val ? 'selected' : '' ); ?>><?php esc_html_e( 'Suspended', 'mainwp' ); ?></option>
-                                <option value="2" <?php echo ( '2' === $val ? 'selected' : '' ); ?>><?php esc_html_e( 'Lead', 'mainwp' ); ?></option>
-                                <option value="3" <?php echo ( '3' === $val ? 'selected' : '' ); ?>><?php esc_html_e( 'Lost', 'mainwp' ); ?></option>
+                                <option value="0" <?php echo '0' === $val ? 'selected' : ''; ?>><?php esc_html_e( 'Active', 'mainwp' ); ?></option>
+                                <option value="1" <?php echo '1' === $val ? 'selected' : ''; ?>><?php esc_html_e( 'Suspended', 'mainwp' ); ?></option>
+                                <option value="2" <?php echo '2' === $val ? 'selected' : ''; ?>><?php esc_html_e( 'Lead', 'mainwp' ); ?></option>
+                                <option value="3" <?php echo '3' === $val ? 'selected' : ''; ?>><?php esc_html_e( 'Lost', 'mainwp' ); ?></option>
                             </select>
                         <?php
                     } elseif ( $client_id && 'client.created' === $field_name ) {

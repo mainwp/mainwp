@@ -337,18 +337,18 @@ class Api_Backups_3rd_Party {
             <table id="mainwp-3rd-party-backups-table" class="ui mainwp-api-backup-table table" style="width:100%">
                 <thead>
                 <tr>
-                    <th class="no-sort collapsing check-column">
+                    <th scope="col" class="no-sort collapsing check-column">
                         <span class="ui checkbox">
                             <label for="cb-select-all-top"></label>
                             <input id="cb-select-all-top" type="checkbox"/>
                         </span>
                     </th>
-                    <th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-                    <th class="no-sort collapsing"><i class="sign in alternate icon"></i></th>
-                    <th><?php esc_html_e( 'URL', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Provider', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Last Manual Backup Date', 'mainwp' ); ?></th>
-                    <th class="no-sort collapsing"></th>
+                    <th scope="col"><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort collapsing"><i class="sign in alternate icon"></i></th>
+                    <th scope="col"><?php esc_html_e( 'URL', 'mainwp' ); ?></th>
+                    <th scope="col"><?php esc_html_e( 'Provider', 'mainwp' ); ?></th>
+                    <th scope="col"><?php esc_html_e( 'Last Manual Backup Date', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort collapsing"></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -726,10 +726,10 @@ class Api_Backups_3rd_Party {
                         <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
                             <thead>
                             <tr>
-                                <th><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                <th class="no-sort collapsing"></th>
-                                <th class="no-sort collapsing"></th>
+                                <th scope="col"><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
+                                <th scope="col"><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                <th scope="col" class="no-sort collapsing"></th>
+                                <th scope="col" class="no-sort collapsing"></th>
                             </tr>
                             </thead>
                             <tbody>
@@ -797,10 +797,10 @@ class Api_Backups_3rd_Party {
                             </tbody>
                             <tfoot>
                             <tr>
-                                <th><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                <th class="no-sort collapsing"></th>
-                                <th class="no-sort collapsing"></th>
+                                <th scope="col" ><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                <th scope="col" class="no-sort collapsing"></th>
+                                <th scope="col" class="no-sort collapsing"></th>
                             </tr>
                             </tfoot>
                         </table>
@@ -863,10 +863,10 @@ class Api_Backups_3rd_Party {
                                     </th>
                                 </tr>
                                 <tr>
-                                    <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Backup Type', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Site Path', 'mainwp' ); ?></th>
-                                    <th class="no-sort collapsing"></th>
+                                    <th scope="col"><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                    <th scope="col"><?php esc_html_e( 'Backup Type', 'mainwp' ); ?></th>
+                                    <th scope="col"><?php esc_html_e( 'Site Path', 'mainwp' ); ?></th>
+                                    <th scope="col" class="no-sort collapsing"></th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -893,10 +893,10 @@ class Api_Backups_3rd_Party {
                                 </tbody>
                                 <tfoot>
                                 <tr>
-                                    <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Backup Type', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Site Path', 'mainwp' ); ?></th>
-                                    <th class="no-sort collapsing"></th>
+                                    <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                    <th scope="col" ><?php esc_html_e( 'Backup Type', 'mainwp' ); ?></th>
+                                    <th scope="col" ><?php esc_html_e( 'Site Path', 'mainwp' ); ?></th>
+                                    <th scope="col" class="no-sort collapsing"></th>
                                 </tr>
                                 </tfoot>
                         </table>
@@ -916,9 +916,9 @@ class Api_Backups_3rd_Party {
                                     </th>
                                 </tr>
                                 <tr>
-                                    <th><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                    <th class="no-sort collapsing"></th>
+                                    <th scope="col" ><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
+                                    <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                    <th scope="col" ="no-sort collapsing"></th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -946,9 +946,9 @@ class Api_Backups_3rd_Party {
                                 </tbody>
                                 <tfoot>
                                 <tr>
-                                    <th><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                    <th class="no-sort collapsing"></th>
+                                    <th scope="col" ><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
+                                    <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                    <th scope="col" class="no-sort collapsing"></th>
                                 </tr>
                                 </tfoot>
                             </table>
@@ -956,7 +956,7 @@ class Api_Backups_3rd_Party {
                             <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
                                 <thead>
                                 <tr>
-                                    <th colspan="3">
+                                    <th scope="col" colspan="3">
                                         <div class="ui equal width grid">
                                             <div class="left aligned middle aligned column">
                                                 <?php esc_html_e( 'Manual Database Backups', 'mainwp' ); ?>
@@ -968,9 +968,9 @@ class Api_Backups_3rd_Party {
                                     </th>
                                 </tr>
                                 <tr>
-                                    <th><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                    <th class="no-sort collapsing"></th>
+                                    <th scope="col" ><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
+                                    <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                    <th scope="col" class="no-sort collapsing"></th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -999,9 +999,9 @@ class Api_Backups_3rd_Party {
                                 </tbody>
                                 <tfoot>
                                 <tr>
-                                    <th><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
-                                    <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                    <th class="no-sort collapsing"></th>
+                                    <th scope="col" ><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
+                                    <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                    <th scope="col" class="no-sort collapsing"></th>
                                 </tr>
                                 </tfoot>
                             </table>
@@ -1043,10 +1043,10 @@ class Api_Backups_3rd_Party {
                                         </th>
                                     </tr>
                                     <tr>
-                                        <th><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
-                                        <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                        <th class="no-sort collapsing"></th>
-                                        <th class="no-sort collapsing"></th>
+                                        <th scope="col" ><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
+                                        <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                        <th scope="col" class="no-sort collapsing"></th>
+                                        <th scope="col" class="no-sort collapsing"></th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -1104,10 +1104,10 @@ class Api_Backups_3rd_Party {
                                     </tbody>
                                     <tfoot>
                                     <tr>
-                                        <th><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
-                                        <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                        <th class="no-sort collapsing"></th>
-                                        <th class="no-sort collapsing"></th>
+                                        <th scope="col" ><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
+                                        <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                        <th scope="col" class="no-sort collapsing"></th>
+                                        <th scope="col" class="no-sort collapsing"></th>
                                     </tr>
                                     </tfoot>
                                 </table>
@@ -1157,10 +1157,10 @@ class Api_Backups_3rd_Party {
                         <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
                             <thead>
                             <tr>
-                                <th><?php esc_html_e( 'GridPane Backup Name', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
-                                <th class="no-sort collapsing"></th>
-                                <th class="no-sort collapsing"></th>
+                                <th scope="col" ><?php esc_html_e( 'GridPane Backup Name', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
+                                <th scope="col" class="no-sort collapsing"></th>
+                                <th scope="col" class="no-sort collapsing"></th>
                             </tr>
                             </thead>
                             <tbody>
@@ -1213,10 +1213,10 @@ class Api_Backups_3rd_Party {
                             </tbody>
                             <tfoot>
                             <tr>
-                                <th><?php esc_html_e( 'GridPane Backup Name', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
-                                <th class="no-sort collapsing"></th>
-                                <th class="no-sort collapsing"></th>
+                                <th scope="col" ><?php esc_html_e( 'GridPane Backup Name', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
+                                <th scope="col" class="no-sort collapsing"></th>
+                                <th scope="col" class="no-sort collapsing"></th>
                             </tr>
                             </tfoot>
                         </table>
@@ -1236,10 +1236,10 @@ class Api_Backups_3rd_Party {
                         <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
                             <thead>
                             <tr>
-                                <th><?php esc_html_e( 'Cloudways Backup Type', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                <th class="no-sort collapsing"></th>
-                                <th class="no-sort collapsing"></th>
+                                <th scope="col" ><?php esc_html_e( 'Cloudways Backup Type', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                <th scope="col" class="no-sort collapsing"></th>
+                                <th scope="col" class="no-sort collapsing"></th>
                             </tr>
                             </thead>
                             <tbody>
@@ -1256,10 +1256,10 @@ class Api_Backups_3rd_Party {
                             </tbody>
                             <tfoot>
                             <tr>
-                                <th><?php esc_html_e( 'Cloudways Backup Type', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                <th class="no-sort collapsing"></th>
-                                <th class="no-sort collapsing"></th>
+                                <th scope="col" ><?php esc_html_e( 'Cloudways Backup Type', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                <th scope="col" class="no-sort collapsing"></th>
+                                <th scope="col" class="no-sort collapsing"></th>
                             </tr>
                             </tfoot>
                         </table>
@@ -1281,13 +1281,13 @@ class Api_Backups_3rd_Party {
                         <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
                             <thead>
                             <tr>
-                                <th><?php esc_html_e( 'Vultr Backup Label', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Size', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Compressed Size', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                                <th class="no-sort collapsing"></th>
-                                <th class="no-sort collapsing"></th>
+                                <th scope="col" ><?php esc_html_e( 'Vultr Backup Label', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Size', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Compressed Size', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                                <th scope="col" class="no-sort collapsing"></th>
+                                <th scope="col" class="no-sort collapsing"></th>
                             </tr>
                             </thead>
                             <tbody>
@@ -1342,13 +1342,13 @@ class Api_Backups_3rd_Party {
                             </tbody>
                             <tfoot>
                             <tr>
-                                <th><?php esc_html_e( 'Vultr Backup Label', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Size', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Compressed Size', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                                <th class="no-sort collapsing"></th>
-                                <th class="no-sort collapsing"></th>
+                                <th scope="col" ><?php esc_html_e( 'Vultr Backup Label', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Size', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Compressed Size', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                                <th scope="col" class="no-sort collapsing"></th>
+                                <th scope="col" class="no-sort collapsing"></th>
                             </tr>
                             </tfoot>
                         </table>
@@ -1374,12 +1374,12 @@ class Api_Backups_3rd_Party {
                         <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
                             <thead>
                             <tr>
-                                <th><?php esc_html_e( 'Akamai (Linode) Backup Type', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                                <th class="no-sort collapsing"></th>
-                                <th class="no-sort collapsing"></th>
-                                <th class="no-sort collapsing"></th>
+                                <th scope="col" ><?php esc_html_e( 'Akamai (Linode) Backup Type', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                                <th scope="col" class="no-sort collapsing"></th>
+                                <th scope="col" class="no-sort collapsing"></th>
+                                <th scope="col" class="no-sort collapsing"></th>
                             </tr>
                             </thead>
                             <tbody>
@@ -1425,12 +1425,12 @@ class Api_Backups_3rd_Party {
                             </tbody>
                             <tfoot>
                             <tr>
-                                <th><?php esc_html_e( 'Akamai (Linode) Backup Type', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                                <th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                                <th class="no-sort collapsing"></th>
-                                <th class="no-sort collapsing"></th>
-                                <th class="no-sort collapsing"></th>
+                                <th scope="col" ><?php esc_html_e( 'Akamai (Linode) Backup Type', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                                <th scope="col" ><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                                <th scope="col" class="no-sort collapsing"></th>
+                                <th scope="col" class="no-sort collapsing"></th>
+                                <th scope="col" class="no-sort collapsing"></th>
                             </tr>
                             </tfoot>
                         </table>
@@ -1448,11 +1448,11 @@ class Api_Backups_3rd_Party {
                     <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
                         <thead>
                         <tr>
-                            <th><?php esc_html_e( 'DigitalOcean Backup Label', 'mainwp' ); ?></th>
-                            <th><?php esc_html_e( 'Size', 'mainwp' ); ?></th>
-                            <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                            <th class="no-sort collapsing"></th>
-                            <th class="no-sort collapsing"></th>
+                            <th scope="col" ><?php esc_html_e( 'DigitalOcean Backup Label', 'mainwp' ); ?></th>
+                            <th scope="col" ><?php esc_html_e( 'Size', 'mainwp' ); ?></th>
+                            <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                            <th scope="col" class="no-sort collapsing"></th>
+                            <th scope="col" class="no-sort collapsing"></th>
                         </tr>
                         </thead>
                         <tbody>
@@ -1481,11 +1481,11 @@ class Api_Backups_3rd_Party {
                         </tbody>
                         <tfoot>
                         <tr>
-                            <th><?php esc_html_e( 'DigitalOcean Backup Label', 'mainwp' ); ?></th>
-                            <th><?php esc_html_e( 'Size', 'mainwp' ); ?></th>
-                            <th><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
-                            <th class="no-sort collapsing"></th>
-                            <th class="no-sort collapsing"></th>
+                            <th scope="col" ><?php esc_html_e( 'DigitalOcean Backup Label', 'mainwp' ); ?></th>
+                            <th scope="col" ><?php esc_html_e( 'Size', 'mainwp' ); ?></th>
+                            <th scope="col" ><?php esc_html_e( 'Date Created', 'mainwp' ); ?></th>
+                            <th scope="col" class="no-sort collapsing"></th>
+                            <th scope="col" class="no-sort collapsing"></th>
                         </tr>
                         </tfoot>
                     </table>

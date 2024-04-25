@@ -380,7 +380,7 @@ subMenuOut = function (subName) {
   jQuery('#mainwp-' + subName).css('color', '');
 };
 
-mainwp_js_get_error_not_detected_connect = function (jsonStr, what, elemId, retErrText) {
+window.mainwp_js_get_error_not_detected_connect = function (jsonStr, what, elemId, retErrText) { // NOSONAR - complexity.
   if (undefined !== jsonStr && '' != jsonStr && undefined !== what && 'html_msg' === what) {
     try {
       let obj_err = JSON.parse(jsonStr);
@@ -470,7 +470,7 @@ feedback = function (id, text, type, append) {
   scrollElementTop(id);
 };
 
-feedback_scroll = function (id, color) {
+window.feedback_scroll = function (id, color) {
   jQuery('#' + id).removeClass('green red yellow');
   jQuery('#' + id).addClass(color);
   jQuery('#' + id).show();

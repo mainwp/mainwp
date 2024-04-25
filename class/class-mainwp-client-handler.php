@@ -571,13 +571,15 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             }
         }
 
+        $img = '';
+
         if ( ! empty( $image_path ) && file_exists( $dirs[0] . $image_path ) ) {
             $full_url = $dirs[1] . $image_path;
-            return '<img ' . $icon_wrapper_attr . ' src="' . esc_attr( $full_url ) . '">';
+            $img      = '<img ' . $icon_wrapper_attr . ' src="' . esc_attr( $full_url ) . '">';
         } elseif ( ! empty( $icon_info ) ) {
-            return MainWP_Client::get_cust_client_icon( $icon_info, 'display', $what );
+            $img = MainWP_Client::get_cust_client_icon( $icon_info, 'display', $what );
         }
-        return '';
+        return $img;
     }
 
 

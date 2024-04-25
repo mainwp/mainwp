@@ -138,7 +138,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
                     ?>
                     <table id="mainwp-manage-sites-monitor-table" style="width:100%" class="ui unstackable table mainwp-with-preview-table">
                         <thead>
-                            <th><?php $this->print_column_headers( true ); ?></th>
+                            <th scope="col"><?php $this->print_column_headers( true ); ?></th>
                             </thead>
                             <tbody id="mainwp-manage-sites-body-table">
                                 <?php $this->display_rows_or_placeholder(); ?>

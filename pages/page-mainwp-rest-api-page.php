@@ -418,12 +418,12 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             <table id="mainwp-rest-api-keys-table" class="ui unstackable table">
                 <thead>
                     <tr>
-                        <th  class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
-                        <th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Permissions', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
-                        <th class="no-sort collapsing"><?php esc_html_e( 'Consumer key ending in', 'mainwp' ); ?></th>
-                        <th class="no-sort"></th>
+                        <th scope="col" class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
+                        <th scope="col" class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'Permissions', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
+                        <th scope="col" class="no-sort collapsing"><?php esc_html_e( 'Consumer key ending in', 'mainwp' ); ?></th>
+                        <th scope="col" class="no-sort"></th>
                     </tr>
                 </thead>
                     <tbody id="mainwp-rest-api-body-table">

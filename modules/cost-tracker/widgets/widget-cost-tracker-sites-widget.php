@@ -88,9 +88,9 @@ class Cost_Tracker_Sites_Widget {
         <table class="ui table" id="mainwp-module-cost-tracker-costs-widget-table">
             <thead>
                 <tr>
-					<th><?php esc_html_e( 'Product', 'mainwp' ); ?></th>  <?php //phpcs:ignore -- to fix WordPress word. ?>
-                    <th class="collapsing right aligned"><?php esc_html_e( 'Site Cost', 'mainwp' ); ?></th>
-                    <th class="no-sort collapsing"></th>
+					<th scope="col" ><?php esc_html_e( 'Product', 'mainwp' ); ?></th>  <?php //phpcs:ignore -- to fix WordPress word. ?>
+                    <th scope="col" class="collapsing right aligned"><?php esc_html_e( 'Site Cost', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort collapsing"></th>
                 </tr>
             </thead>
             <tbody>

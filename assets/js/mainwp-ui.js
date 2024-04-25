@@ -428,7 +428,7 @@ let mainwp_newpost_updateCategories = function () {
                     catsSelection.dropdown('remove selected');
                     catsSelection.find('.menu').html(response.content);
                     catsSelection.dropdown('refresh');
-                    arrVal = pSelectedCategories.split(",");
+                    let arrVal = pSelectedCategories.split(",");
                     catsSelection.dropdown('set selected', arrVal);
                     console.log('re-selected: ' + pSelectedCategories);
                     updateCategoriesPostFunc();

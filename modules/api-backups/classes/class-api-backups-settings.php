@@ -276,7 +276,7 @@ class Api_Backups_Settings {
                                             <?php MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_enable_cloudways_api', 0 ) ); ?>
                                             <?php esc_html_e( 'Enable Cloudways API', 'mainwp' ); ?></label>
                                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Cloudways API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                            <input type="checkbox" name="mainwp_enable_cloudways_api" id="mainwp_enable_cloudways_api" <?php echo ( ( 1 === (int) get_option( 'mainwp_enable_cloudways_api', 0 ) ) ? 'checked="true"' : '' ); ?> />
+                                            <input type="checkbox" name="mainwp_enable_cloudways_api" id="mainwp_enable_cloudways_api" <?php echo 1 === (int) get_option( 'mainwp_enable_cloudways_api', 0 ) ? 'checked="true"' : ''; ?> />
                                         </div>
                                     </div>
                                     <div class="ui grid field settings-field-indicator-cloudways-settings">
@@ -288,7 +288,7 @@ class Api_Backups_Settings {
                                             </label>
 
                                         <div class="five wide column">
-                                            <input type="text" name="mainwp_cloudways_api_account_email" id="mainwp_cloudways_api_account_email" value="<?php echo ( ( false === get_option( 'mainwp_cloudways_api_account_email' ) ) ? '' : esc_attr( get_option( 'mainwp_cloudways_api_account_email' ) ) ); ?>"  />
+                                            <input type="text" name="mainwp_cloudways_api_account_email" id="mainwp_cloudways_api_account_email" value="<?php echo false === get_option( 'mainwp_cloudways_api_account_email' ) ? '' : esc_attr( get_option( 'mainwp_cloudways_api_account_email' ) ); ?>"  />
                                         </div>
                                     </div>
                                     <?php
@@ -356,7 +356,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the GridPane API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                            <input type="checkbox" name="mainwp_enable_gridpane_api" id="mainwp_enable_gridpane_api" <?php echo ( ( 1 === (int) get_option( 'mainwp_enable_gridpane_api', 0 ) ) ? 'checked="true"' : '' ); ?> />
+                                            <input type="checkbox" name="mainwp_enable_gridpane_api" id="mainwp_enable_gridpane_api" <?php echo 1 === (int) get_option( 'mainwp_enable_gridpane_api', 0 ) ? 'checked="true"' : ''; ?> />
                                         </div>
                                     </div>
                                     <div class="ui grid field settings-field-indicator-gridpane-settings">
@@ -423,7 +423,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Vultr API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                            <input type="checkbox" name="mainwp_enable_vultr_api" id="mainwp_enable_vultr_api" <?php echo ( ( 1 === (int) get_option( 'mainwp_enable_vultr_api', 0 ) ) ? 'checked="true"' : '' ); ?> />
+                                            <input type="checkbox" name="mainwp_enable_vultr_api" id="mainwp_enable_vultr_api" <?php echo 1 === (int) get_option( 'mainwp_enable_vultr_api', 0 ) ? 'checked="true"' : ''; ?> />
                                         </div>
                                     </div>
                                     <div class="ui grid field settings-field-indicator-vultr-settings">
@@ -489,7 +489,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Akamai (Linode) API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                            <input type="checkbox" name="mainwp_enable_linode_api" id="mainwp_enable_linode_api" <?php echo ( ( 1 === (int) get_option( 'mainwp_enable_linode_api', 0 ) ) ? 'checked="true"' : '' ); ?> />
+                                            <input type="checkbox" name="mainwp_enable_linode_api" id="mainwp_enable_linode_api" <?php echo 1 === (int) get_option( 'mainwp_enable_linode_api', 0 ) ? 'checked="true"' : ''; ?> />
                                         </div>
                                     </div>
                                     <?php
@@ -557,7 +557,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the DigitalOcean API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                            <input type="checkbox" name="mainwp_enable_digitalocean_api" id="mainwp_enable_digitalocean_api" <?php echo ( ( 1 === (int) get_option( 'mainwp_enable_digitalocean_api', 0 ) ) ? 'checked="true"' : '' ); ?> />
+                                            <input type="checkbox" name="mainwp_enable_digitalocean_api" id="mainwp_enable_digitalocean_api" <?php echo 1 === (int) get_option( 'mainwp_enable_digitalocean_api', 0 ) ? 'checked="true"' : ''; ?> />
                                         </div>
                                     </div>
                                     <?php
@@ -624,7 +624,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the cPanel API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                            <input type="checkbox" name="mainwp_enable_cpanel_api" id="mainwp_enable_cpanel_api" <?php echo ( ( 1 === (int) get_option( 'mainwp_enable_cpanel_api', 0 ) ) ? 'checked="true"' : '' ); ?> />
+                                            <input type="checkbox" name="mainwp_enable_cpanel_api" id="mainwp_enable_cpanel_api" <?php echo 1 === (int) get_option( 'mainwp_enable_cpanel_api', 0 ) ? 'checked="true"' : ''; ?> />
                                         </div>
                                     </div>
                                     <div class="ui grid field settings-field-indicator-cpanel-settings">
@@ -635,7 +635,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="text" name="mainwp_cpanel_url" id="mainwp_cpanel_url" value="<?php echo ( ( false === get_option( 'mainwp_cpanel_url' ) ) ? '' : esc_attr( get_option( 'mainwp_cpanel_url' ) ) ); ?>"  />
+                                            <input type="text" name="mainwp_cpanel_url" id="mainwp_cpanel_url" value="<?php echo false === get_option( 'mainwp_cpanel_url' ) ? '' : esc_attr( get_option( 'mainwp_cpanel_url' ) ); ?>"  />
                                         </div>
                                     </div>
                                     <div class="ui grid field settings-field-indicator-cpanel-settings">
@@ -647,7 +647,7 @@ class Api_Backups_Settings {
                                         </label>
 
                                         <div class="five wide column">
-                                            <input type="text" name="mainwp_cpanel_account_username" id="mainwp_cpanel_account_username" value="<?php echo ( ( false === get_option( 'mainwp_cpanel_account_username' ) ) ? '' : esc_attr( get_option( 'mainwp_cpanel_account_username' ) ) ); ?>"  />
+                                            <input type="text" name="mainwp_cpanel_account_username" id="mainwp_cpanel_account_username" value="<?php echo false === get_option( 'mainwp_cpanel_account_username' ) ? '' : esc_attr( get_option( 'mainwp_cpanel_account_username' ) ); ?>"  />
                                         </div>
                                     </div>
                                     <div class="ui grid field settings-field-indicator-cpanel-settings">
@@ -670,7 +670,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="text" name="mainwp_cpanel_site_path" id="mainwp_cpanel_site_path" value="<?php echo ( ( false === get_option( 'mainwp_cpanel_site_path' ) ) ? '' : esc_attr( get_option( 'mainwp_cpanel_site_path' ) ) ); ?>"  />
+                                            <input type="text" name="mainwp_cpanel_site_path" id="mainwp_cpanel_site_path" value="<?php echo false === get_option( 'mainwp_cpanel_site_path' ) ? '' : esc_attr( get_option( 'mainwp_cpanel_site_path' ) ); ?>"  />
                                         </div>
                                     </div>
                                     <?php
@@ -724,7 +724,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Plesk API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                            <input type="checkbox" name="mainwp_enable_plesk_api" id="mainwp_enable_plesk_api" <?php echo ( ( 1 === (int) get_option( 'mainwp_enable_plesk_api', 0 ) ) ? 'checked="true"' : '' ); ?> />
+                                            <input type="checkbox" name="mainwp_enable_plesk_api" id="mainwp_enable_plesk_api" <?php echo 1 === (int) get_option( 'mainwp_enable_plesk_api', 0 ) ? 'checked="true"' : ''; ?> />
                                         </div>
                                     </div>
                                     <div class="ui grid field settings-field-indicator-plesk-settings">
@@ -735,7 +735,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column" data-tooltip="<?php esc_attr_e( 'eg.: https://epic-snyder.123-111-123-143.plesk.page:8443', 'mainwp' ); ?>">
-                                            <input type="text" name="mainwp_plesk_api_url" id="mainwp_plesk_api_url" value="<?php echo ( ( false === get_option( 'mainwp_plesk_api_url' ) ) ? '' : esc_attr( get_option( 'mainwp_plesk_api_url' ) ) ); ?>"  />
+                                            <input type="text" name="mainwp_plesk_api_url" id="mainwp_plesk_api_url" value="<?php echo false === get_option( 'mainwp_plesk_api_url' ) ? '' : esc_attr( get_option( 'mainwp_plesk_api_url' ) ); ?>"  />
                                         </div>
                                     </div>
                                     <div class="ui grid field settings-field-indicator-plesk-settings">
@@ -945,13 +945,13 @@ class Api_Backups_Settings {
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Enable WP Toolkit API', 'mainwp' ); ?></label>
                     <div id="enable_wp_toolkit_check" class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the WP Toolkit API will also be active.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                        <input type="checkbox" name="mainwp_enable_wp_toolkit" id="mainwp_enable_wp_toolkit" <?php echo ( ( 'on' === $mainwp_enable_wp_toolkit ) ? 'checked="true"' : 'off' ); ?> />
+                        <input type="checkbox" name="mainwp_enable_wp_toolkit" id="mainwp_enable_wp_toolkit" <?php echo 'on' === $mainwp_enable_wp_toolkit ? 'checked="true"' : 'off'; ?> />
                     </div>
                 </div>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Overwrite cPanel Global Settings', 'mainwp' ); ?></label>
                     <div id="individual_settings_check" class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the cPanel Individual Settings will be used.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                        <input type="checkbox" name="mainwp_enable_cpanel_individual" id="mainwp_enable_cpanel_individual" <?php echo ( ( 'on' === $mainwp_enable_cpanel_individual ) ? 'checked="true"' : 'off' ); ?> />
+                        <input type="checkbox" name="mainwp_enable_cpanel_individual" id="mainwp_enable_cpanel_individual" <?php echo 'on' === $mainwp_enable_cpanel_individual ? 'checked="true"' : 'off'; ?> />
                     </div>
                 </div>
                 <div class="mainwp_cpanel_individual_container" style="display:none;">
@@ -959,7 +959,7 @@ class Api_Backups_Settings {
                         <label class="six wide column middle aligned"><?php esc_html_e( 'cPanel URL', 'mainwp' ); ?></label>
                         <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the cPanel API URL. eg.: https://yoursite.com:2083', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <div class="ui left labeled input">
-                                <input type="text" id="cpanel_api_url" name="cpanel_api_url" value="<?php echo ( empty( $mainwp_cpanel_api_url ) ? '' : esc_attr( $mainwp_cpanel_api_url ) ); ?>" />
+                                <input type="text" id="cpanel_api_url" name="cpanel_api_url" value="<?php echo empty( $mainwp_cpanel_api_url ) ? '' : esc_attr( $mainwp_cpanel_api_url ); ?>" />
                             </div>
                         </div>
                     </div>
@@ -967,7 +967,7 @@ class Api_Backups_Settings {
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Username', 'mainwp' ); ?></label>
                         <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the cPanel Account Username.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <div class="ui left labeled input">
-                                <input type="text" name="mainwp_cpanel_account_username" id="mainwp_cpanel_account_username" value="<?php echo ( empty( $mainwp_cpanel_account_username ) ? '' : esc_attr( $mainwp_cpanel_account_username ) ); ?>"  />
+                                <input type="text" name="mainwp_cpanel_account_username" id="mainwp_cpanel_account_username" value="<?php echo empty( $mainwp_cpanel_account_username ) ? '' : esc_attr( $mainwp_cpanel_account_username ); ?>"  />
                             </div>
                         </div>
                     </div>
@@ -986,7 +986,7 @@ class Api_Backups_Settings {
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Site Path', 'mainwp' ); ?></label>
                         <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the directory the site is installed. eg.: /public_html/child/', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <div class="ui left labeled input">
-                                <input type="text" id="cpanel_site_path" name="cpanel_site_path" value="<?php echo ( empty( $mainwp_cpanel_site_path ) ? '' : esc_attr( $mainwp_cpanel_site_path ) ); ?>" />
+                                <input type="text" id="cpanel_site_path" name="cpanel_site_path" value="<?php echo empty( $mainwp_cpanel_site_path ) ? '' : esc_attr( $mainwp_cpanel_site_path ); ?>" />
                             </div>
                         </div>
                     </div>
@@ -997,14 +997,14 @@ class Api_Backups_Settings {
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Installation ID', 'mainwp' ); ?></label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the Plesk Installation ID. eg.: "1"', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <div class="ui left labeled input">
-                            <input type="text" id="plesk_installation_id" name="plesk_installation_id" value="<?php echo ( empty( $mainwp_plesk_installation_id ) ? '' : esc_html( $mainwp_plesk_installation_id ) ); ?>" />
+                            <input type="text" id="plesk_installation_id" name="plesk_installation_id" value="<?php echo empty( $mainwp_plesk_installation_id ) ? '' : esc_html( $mainwp_plesk_installation_id ); ?>" />
                         </div>
                     </div>
                 </div>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Overwrite Global Settings', 'mainwp' ); ?></label>
                     <div id="individual_settings_check" class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Plesk (WP Toolkit) Individual Settings will be used.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                        <input type="checkbox" name="mainwp_enable_plesk_individual" id="mainwp_enable_plesk_individual" <?php echo ( ( 'on' === $mainwp_enable_plesk_individual ) ? 'checked="true"' : 'off' ); ?> />
+                        <input type="checkbox" name="mainwp_enable_plesk_individual" id="mainwp_enable_plesk_individual" <?php echo 'on' === $mainwp_enable_plesk_individual ? 'checked="true"' : 'off'; ?> />
                     </div>
                 </div>
                 <div class="mainwp_plesk_individual_container" style="display:none;">
@@ -1054,7 +1054,7 @@ class Api_Backups_Settings {
                 <label class="six wide column middle aligned"><?php esc_html_e( 'Instance ID', 'mainwp' ); ?></label>
                 <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the Instance ID (Droplet ID). This information is available in your provider account.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                     <div class="ui left labeled input">
-                        <input type="text" id="edit_site_module_api_backups_provider_instance_id" name="edit_site_module_api_backups_provider_instance_id" value="<?php echo ( empty( $instance_id ) ? '' : esc_attr( $instance_id ) ); ?>" />
+                        <input type="text" id="edit_site_module_api_backups_provider_instance_id" name="edit_site_module_api_backups_provider_instance_id" value="<?php echo empty( $instance_id ) ? '' : esc_attr( $instance_id ); ?>" />
                     </div>
                 </div>
             </div>

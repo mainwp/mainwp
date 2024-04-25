@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  *
  * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
-class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.nore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
+class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
      * Protected static variable to hold the single instance of the class.

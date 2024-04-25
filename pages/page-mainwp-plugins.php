@@ -655,7 +655,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     <div class="ui hidden fitted divider"></div>
                     <div class="field">
                         <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Display sites not meeting the above search criteria.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
-                                <input type="checkbox" <?php echo $disabledNegative ? 'disabled' : ''; ?> <?php echo ( $checkedNegative ? 'checked="true"' : '' ); ?> value="1" id="display_sites_not_meeting_criteria" />
+                                <input type="checkbox" <?php echo $disabledNegative ? 'disabled' : ''; ?> <?php echo $checkedNegative ? 'checked="true"' : ''; ?> value="1" id="display_sites_not_meeting_criteria" />
                             <label for="display_sites_not_meeting_criteria"><?php esc_html_e( 'Exclude plugin', 'mainwp' ); ?></label>
                             </div>
                     </div>
@@ -2298,14 +2298,14 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         <table class="ui unstackable table" id="mainwp-all-active-plugins-table">
             <thead>
                 <tr>
-                    <th class="no-sort check-column collapsing"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
-                    <th class="no-sort"><?php esc_html_e( '', 'mainwp' ); ?></th>
-                    <th data-priority="1"><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                    <th class="collapsing" data-priority="2"><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
-                    <th class="collapsing"></th>
-                    <th class="collapsing"><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort check-column collapsing"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
+                    <th scope="col" class="no-sort"><?php esc_html_e( '', 'mainwp' ); ?></th>
+                    <th scope="col" data-priority="1"><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                    <th scope="col" class="collapsing" data-priority="2"><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
+                    <th scope="col"><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
+                    <th scope="col" class="collapsing"></th>
+                    <th scope="col" class="collapsing"><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -2355,14 +2355,14 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="no-sort check-column"><span class="ui checkbox"><input id="cb-select-all-bottom" type="checkbox" /></span></th>
-                    <th></th>
-                    <th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
-                    <th class="collapsing"></th>
-                    <th><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort check-column"><span class="ui checkbox"><input id="cb-select-all-bottom" type="checkbox" /></span></th>
+                    <th scope="col" ></th>
+                    <th scope="col" ><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Trust Status', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Ignored Status', 'mainwp' ); ?></th>
+                    <th scope="col" class="collapsing"></th>
+                    <th scope="col" ><?php esc_html_e( 'Notes', 'mainwp' ); ?></th>
                 </tr>
             </tfoot>
         </table>
@@ -2512,10 +2512,10 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         <table id="mainwp-globally-ignored-plugins" class="ui compact selectable table unstackable">
                 <thead>
                     <tr>
-                        <th class="no-sort"></th>
-                        <th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
-                        <th></th>
+                        <th scope="col" class="no-sort"></th>
+                        <th scope="col" ><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+                        <th scope="col" ><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
+                        <th scope="col" ></th>
                     </tr>
                 </thead>
                 <tbody id="globally-ignored-plugins-list">
@@ -2588,11 +2588,11 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         <table id="mainwp-per-site-ignored-plugins" class="ui unstackable compact selectable table ">
             <thead>
                 <tr>
-                    <th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-                    <th class="no-sort"><?php esc_html_e( '', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
-                    <th></th>
+                    <th scope="col" ><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort"><?php esc_html_e( '', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
+                    <th scope="col" ></th>
                 </tr>
             </thead>
             <tbody id="ignored-plugins-list">
@@ -2754,10 +2754,10 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         <table id="mainwp-globally-ignored-abandoned-plugins" class="ui compact selectable table unstackable">
             <thead>
                 <tr>
-                    <th class="no-sort"><?php esc_html_e( ' ', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
-                    <th></th>
+                    <th scope="col" class="no-sort"><?php esc_html_e( ' ', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
+                    <th scope="col" ></th>
                 </tr>
             </thead>
             <tbody id="ignored-globally-abandoned-plugins-list">
@@ -2832,11 +2832,11 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         <table id="mainwp-per-site-ignored-abandoned-plugins" class="ui compact selectable table unstackable">
             <thead>
                 <tr>
-                    <th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-                    <th class="no-sort"><?php esc_html_e( ' ', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
-                    <th></th>
+                    <th scope="col" ><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+                    <th scope="col" class="no-sort"><?php esc_html_e( ' ', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
+                    <th scope="col" ></th>
                 </tr>
             </thead>
             <tbody id="ignored-abandoned-plugins-list">

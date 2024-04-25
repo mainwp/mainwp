@@ -1028,9 +1028,9 @@ mainwp_managebackups_update = function () {
     if (jQuery('#mainwp_managebackups_add_name').val() == '') {
         errors.push(__('Please enter a valid name for your backup task'));
     }
-
+    let selected_groups = [];
+    let selected_sites = [];
     if (jQuery('#select_by').val() == 'site') {
-        let selected_sites = [];
         jQuery("input[name='selected_sites[]']:checked").each(function () {
             selected_sites.push(jQuery(this).val());
         });
@@ -1038,7 +1038,6 @@ mainwp_managebackups_update = function () {
             errors.push(__('Please select websites or groups to add a backup task.'));
         }
     } else {
-        let selected_groups = [];
         jQuery("input[name='selected_groups[]']:checked").each(function () {
             selected_groups.push(jQuery(this).val());
         });
@@ -1098,9 +1097,9 @@ mainwp_managebackups_add = function () {
     if (jQuery('#mainwp_managebackups_add_name').val() == '') {
         errors.push(__('Please enter a valid name for your backup task'));
     }
-
+    let selected_sites = [];
+    let selected_groups = [];
     if (jQuery('#select_by').val() == 'site') {
-        let selected_sites = [];
         jQuery("input[name='selected_sites[]']:checked").each(function () {
             selected_sites.push(jQuery(this).val());
         });
@@ -1108,7 +1107,6 @@ mainwp_managebackups_add = function () {
             errors.push(__('Please select websites or groups.'));
         }
     } else {
-        let selected_groups = [];
         jQuery("input[name='selected_groups[]']:checked").each(function () {
             selected_groups.push(jQuery(this).val());
         });

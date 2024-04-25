@@ -51,9 +51,9 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         <table class="ui table" id="mainwp-security-issues-table" un-set="<?php echo $unset_scripts ? 'versions,registered_versions' : ''; ?>">
         <thead>
                 <tr>
-                    <th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                    <th><?php esc_html_e( 'Detected Issues', 'mainwp' ); ?></th>
-                    <th class="collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
+                    <th scope="col" class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                    <th scope="col" ><?php esc_html_e( 'Detected Issues', 'mainwp' ); ?></th>
+                    <th scope="col" class="collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
                 </tr>
         </thead>
         <tbody>

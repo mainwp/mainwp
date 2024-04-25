@@ -308,8 +308,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                         ++$count_disc;
                                     }
                                     ?>
-                                    <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui <?php echo esc_html( $type ); ?> item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?> <?php echo esc_html( $disconnected ? 'warning' : '' ); ?>">
-                                        <input <?php echo esc_html( $disabled ); ?> type="<?php echo esc_html( $type ); ?>" name="<?php echo ( 'radio' === $type ? 'selected_sites' : 'selected_sites[]' ); ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
+                                    <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui <?php echo esc_html( $type ); ?> item <?php echo $selected ? 'selected_sites_item_checked' : ''; ?> <?php echo esc_html( $disconnected ? 'warning' : '' ); ?>">
+                                        <input <?php echo esc_html( $disabled ); ?> type="<?php echo esc_html( $type ); ?>" name="<?php echo 'radio' === $type ? 'selected_sites' : 'selected_sites[]'; ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo $selected ? 'checked="true"' : ''; ?> />
                                         <label for="selected_sites_<?php echo intval( $website->id ); ?>">
                                             <?php echo esc_html( stripslashes( $website->name ) ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
                                         </label>
@@ -317,7 +317,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                     <?php
                                 } else {
                                     ?>
-                                <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui <?php echo esc_html( $type ); ?> <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
+                                <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui <?php echo esc_html( $type ); ?> <?php echo $selected ? 'selected_sites_item_checked' : ''; ?>">
                                     <input type="<?php echo esc_html( $type ); ?>" disabled="disabled"/>
                                     <label for="selected_sites_<?php echo intval( $website->id ); ?>">
                                         <?php echo esc_html( stripslashes( $website->name ) ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
@@ -385,8 +385,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                     }
                                 }
                                 ?>
-                                <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui <?php echo esc_html( $type ); ?> item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
-                                    <input <?php echo esc_html( $disabled ); ?> type="<?php echo esc_html( $type ); ?>" name="<?php echo ( 'radio' === $type ? 'selected_sites' : 'selected_sites[]' ); ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
+                                <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui <?php echo esc_html( $type ); ?> item <?php echo $selected ? 'selected_sites_item_checked' : ''; ?>">
+                                    <input <?php echo esc_html( $disabled ); ?> type="<?php echo esc_html( $type ); ?>" name="<?php echo 'radio' === $type ? 'selected_sites' : 'selected_sites[]'; ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo $selected ? 'checked="true"' : ''; ?> />
                                     <label for="selected_sites_<?php echo intval( $website->id ); ?>">
                                         <?php echo esc_html( stripslashes( $website->name ) ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
                                     </label>
@@ -394,7 +394,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                 <?php
                             } else {
                                 ?>
-                                <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui <?php echo esc_html( $type ); ?> <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
+                                <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui <?php echo esc_html( $type ); ?> <?php echo $selected ? 'selected_sites_item_checked' : ''; ?>">
                                     <input type="<?php echo esc_html( $type ); ?>" disabled="disabled"/>
                                     <label for="selected_sites_<?php echo intval( $website->id ); ?>">
                                         <?php echo esc_html( stripslashes( $website->name ) ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
@@ -450,8 +450,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 foreach ( $groups as $group ) {
                     $selected = in_array( $group->id, $selected_groups );
                     ?>
-                    <div class="mainwp_selected_groups_item ui item <?php echo esc_html( $type ); ?> <?php echo ( $selected ? 'selected_groups_item_checked' : '' ); ?>">
-                        <input type="<?php echo esc_html( $type ); ?>" name="<?php echo ( 'radio' === $type ? 'selected_groups' : 'selected_groups[]' ); ?>" value="<?php echo esc_attr( $group->id ); ?>" id="selected_groups_<?php echo esc_attr( $group->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
+                    <div class="mainwp_selected_groups_item ui item <?php echo esc_html( $type ); ?> <?php echo $selected ? 'selected_groups_item_checked' : ''; ?>">
+                        <input type="<?php echo esc_html( $type ); ?>" name="<?php echo 'radio' === $type ? 'selected_groups' : 'selected_groups[]'; ?>" value="<?php echo esc_attr( $group->id ); ?>" id="selected_groups_<?php echo esc_attr( $group->id ); ?>" <?php echo $selected ? 'checked="true"' : ''; ?> />
                         <label for="selected_groups_<?php echo esc_attr( $group->id ); ?>">
                             <?php echo esc_html( stripslashes( $group->name ) ); ?>
                         </label>
@@ -803,7 +803,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             </div>
             <div class="ui hidden divider"></div>
             <div class="ui toggle checkbox">
-                <input type="checkbox" id="mainwp-select-guided-tours-option" onchange="mainwp_guidedtours_onchange(this);"<?php echo ( ( 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ) ? 'checked="true"' : '' ); ?> /> <label><?php esc_html_e( 'Switch to enable or disable tours.', 'mainwp' ); ?></label>
+                <input type="checkbox" id="mainwp-select-guided-tours-option" onchange="mainwp_guidedtours_onchange(this);"<?php echo 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ? 'checked="true"' : ''; ?> /> <label><?php esc_html_e( 'Switch to enable or disable tours.', 'mainwp' ); ?></label>
             </div>
             <div class="ui hidden divider"></div>
             <?php if ( 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ) : ?>
@@ -1288,19 +1288,19 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <?php if ( $id && $website && '' !== $website->sync_errors ) : ?>
                 <a href="#" class="mainwp-updates-overview-reconnect-site ui green icon button" siteid="<?php echo intval( $website->id ); ?>" data-position="bottom right" data-tooltip="Reconnect <?php echo esc_html( stripslashes( $website->name ) ); ?>" data-inverted=""><i class="undo alternate icon"></i></a>
             <?php else : ?>
-                <a class="ui icon button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?>" id="mainwp-sync-sites" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?> data-inverted="" data-position="bottom right">
+                <a class="ui icon button green <?php echo 0 < $sites_count ? '' : 'disabled'; ?>" id="mainwp-sync-sites" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?> data-inverted="" data-position="bottom right">
                     <i class="sync icon"></i>
                 </a>
             <?php endif; ?>
         <?php else : ?>
             <span data-tooltip="<?php esc_attr_e( 'Click here to sync data now.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                <a class="ui icon button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?> " id="mainwp-sync-sites">
+                <a class="ui icon button green <?php echo 0 < $sites_count ? '' : 'disabled'; ?> " id="mainwp-sync-sites">
                     <i class="sync alternate icon"></i>
                 </a>
             </span>
         <?php endif; ?>
 
-        <div class="ui icon top left pointing dropdown <?php echo ( empty( $sites_count ) ? 'green' : '' ); ?> button" id="mainwp-add-new-buttons">
+        <div class="ui icon top left pointing dropdown <?php echo empty( $sites_count ) ? 'green' : ''; ?> button" id="mainwp-add-new-buttons">
             <i class="plus icon"></i>
             <div class="menu">
                 <a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Add a new Website to your MainWP Dashboard', 'mainwp' ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php esc_html_e( 'Add Website', 'mainwp' ); ?></a>
@@ -2080,15 +2080,15 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <label tabindex="0" class="six wide column middle aligned"><?php echo $manageGroupsPage ? esc_html__( 'Tags menu position', 'mainwp' ) : esc_html__( 'Sidebar position', 'mainwp' ); ?></label>
                 <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Select if you want to show the element on left or right.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                     <select name="mainwp_sidebarPosition" id="mainwp_sidebarPosition" class="ui dropdown">
-                        <option value="1" <?php echo ( 1 === $sidebarPosition ? 'selected' : '' ); ?>><?php esc_html_e( 'Right', 'mainwp' ); ?></option>
-                        <option value="0" <?php echo ( 0 === $sidebarPosition ? 'selected' : '' ); ?>><?php esc_html_e( 'Left', 'mainwp' ); ?></option>
+                        <option value="1" <?php echo 1 === $sidebarPosition ? 'selected' : ''; ?>><?php esc_html_e( 'Right', 'mainwp' ); ?></option>
+                        <option value="0" <?php echo 0 === $sidebarPosition ? 'selected' : ''; ?>><?php esc_html_e( 'Left', 'mainwp' ); ?></option>
                     </select>
                 </div>
             </div>
             <?php endif; ?>
         <?php endif; ?>
         <?php
-        if ( isset( $_GET['page'] ) && ! in_array( $_GET['page'], $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended 
+        if ( isset( $_GET['page'] ) && ! in_array( $_GET['page'], $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
             $hide_up_everything = (int) get_option( 'mainwp_hide_update_everything' );
             ?>
         <div class="ui grid field">
@@ -2099,7 +2099,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             ?>
             </label>
             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the "Update Everything" button will be hidden in the Updates Overview widget.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                <input type="checkbox" name="hide_update_everything" <?php echo ( ( 1 === $hide_up_everything ) ? 'checked="true"' : '' ); ?> />
+                <input type="checkbox" name="hide_update_everything" <?php echo 1 === $hide_up_everything ? 'checked="true"' : ''; ?> />
             </div>
         </div>
             <?php

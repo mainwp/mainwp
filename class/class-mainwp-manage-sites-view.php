@@ -2210,7 +2210,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         MainWP_DB::instance()->update_website_values( $website->id, $data );
         if ( null !== $uniqueId ) {
             try {
-               MainWP_Connect::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
+                MainWP_Connect::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
             } catch ( MainWP_Exception $e ) {
                 // error update unique id.
             }

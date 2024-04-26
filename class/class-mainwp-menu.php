@@ -864,14 +864,14 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         $active_item = '';
 
                         if ( ! $set_actived && isset( $_mainwp_menu_active_slugs['parent_slug'][ $plugin_page ] ) && $item_key === $_mainwp_menu_active_slugs['parent_slug'][ $plugin_page ] ) {
-                            $active_item     = 'active';
-                            $set_actived     = true;
+                            $active_item = 'active';
+                            $set_actived = true;
                         }
 
                         // to fix active menu.
                         if ( ! $set_actived && isset( $_mainwp_menu_active_slugs[ $plugin_page ] ) && $item_key === $_mainwp_menu_active_slugs[ $plugin_page ] ) {
-                            $active_item     = 'active';
-                            $set_actived     = true;
+                            $active_item = 'active';
+                            $set_actived = true;
                         }
 
                         $id_attr = ! empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
@@ -909,9 +909,9 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                     $has_sub = false;
                                 }
 
-                                $href        = $item[2];
-                                $item_id     = isset( $item[3] ) ? $item[3] : '';
-                                $ext_state   = isset( $item[5] ) ? $item[5] : '';
+                                $href      = $item[2];
+                                $item_id   = isset( $item[3] ) ? $item[3] : '';
+                                $ext_state = isset( $item[5] ) ? $item[5] : '';
 
                                 $item_classes = 'inactive' === $ext_state ? 'extension-inactive' : '';
 

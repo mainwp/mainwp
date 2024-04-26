@@ -108,9 +108,9 @@ mainwp_api_backups_do_backups_specific = function (pObj, bulk, selector) {
                 // Everything else. (API provided error message)
                 err_msg = rsp['0'].message;
             }
-        } else if (response && response.success) {
+        } else if (response?.success) {
             succ_msg = __('Successfull');
-        } else if (response && response.error) { // Check for cPanel error..
+        } else if (response?.error) { // Check for cPanel error..
             err_msg = __(response.error);
         } else {
             err_msg = _('Undefined error.');

@@ -230,7 +230,7 @@ mainwp_post_posting_start_specific = function (siteToPosting) {
   siteToPosting.find('.progress').html('<i class="notched circle loading icon"></i>');
   jQuery.post(ajaxurl, data, function (response) {
     bulkInstallCurrentThreads--;
-    if (response && response.result) {
+    if (response?.result) {
       siteToPosting.find('.progress').html(response.result);
       if (response.edit_link !== '') {
         siteToPosting.after(response.edit_link);
@@ -305,10 +305,10 @@ let plugin_theme_doAction = function (data, rowElement) {
   rowElement.children().hide();
   rowElement.children('.mainwp-row-actions-working').show();
   jQuery.post(ajaxurl, data, function (response) {
-    if (response && response.error) {
+    if (response?.error) {
       rowElement.children().show();
       rowElement.html(response.error);
-    } else if (response && response.result) {
+    } else if (response?.result) {
       rowElement.children().show();
       rowElement.html(response.result);
     } else {
@@ -385,7 +385,7 @@ window.mainwp_js_get_error_not_detected_connect = function (jsonStr, what, elemI
     try {
       let obj_err = JSON.parse(jsonStr);
       if (typeof obj_err === 'object') {
-        if (obj_err.el_before !== undefined && obj_err.el_link !== undefined && obj_err.el_text !== undefined) {
+        if (obj_err?.el_before && obj_err?.el_link && obj_err?.el_text) {
           let elafter = obj_err.el_after !== undefined ? obj_err.el_after : '';
           if (true === retErrText) {
             return obj_err.el_before + obj_err.el_text + elafter;
@@ -783,16 +783,16 @@ securityIssues_handle = function (response) {
   }
 };
 
-updatesoverview_bulk_check_abandoned = function (which) {
+window.updatesoverview_bulk_check_abandoned = function (which) {
   if ('plugin' == which) {
     confirmMsg = __("You are about to check abandoned plugins on the sites?");
   } else {
     confirmMsg = __("You are about to check abandoned themes on the sites?");
   }
-  mainwp_confirm(confirmMsg, _callback = function () { mainwp_managesites_bulk_check_abandoned('all', which); });
+  mainwp_confirm(confirmMsg, function () { mainwp_managesites_bulk_check_abandoned('all', which); });
 }
 
-mainwp_managesites_bulk_check_abandoned = function (siteIds, which) {
+window.mainwp_managesites_bulk_check_abandoned = function (siteIds, which) {
   let allWebsiteIds = jQuery('.dashboard_wp_id').map(function (indx, el) {
     return jQuery(el).val();
   });
@@ -814,7 +814,6 @@ mainwp_managesites_bulk_check_abandoned = function (siteIds, which) {
       dashboard_update_site_hide(id);
     }
     allWebsiteIds = selectedIds;
-    //jQuery('#refresh-status-total').text(allWebsiteIds.length);
   }
 
   let nrOfWebsites = allWebsiteIds.length;
@@ -833,7 +832,7 @@ mainwp_managesites_bulk_check_abandoned = function (siteIds, which) {
     title: 'Check abandoned ' + ('plugin' == which ? 'plugins' : 'themes'),
     statusText: __('started'),
     callback: function () {
-      bulkManageSitesTaskRunning = false;
+      window.bulkManageSitesTaskRunning = false;
       window.location.href = location.href;
     }
   };
@@ -842,7 +841,7 @@ mainwp_managesites_bulk_check_abandoned = function (siteIds, which) {
   mainwp_managesites_check_abandoned_all_int(allWebsiteIds, which);
 };
 
-mainwp_managesites_check_abandoned_all_int = function (websiteIds, which) {
+let mainwp_managesites_check_abandoned_all_int = function (websiteIds, which) {
   websitesToUpgrade = websiteIds;
   currentWebsite = 0;
   websitesDone = 0;
@@ -852,12 +851,12 @@ mainwp_managesites_check_abandoned_all_int = function (websiteIds, which) {
   mainwp_managesites_check_abandoned_all_loop_next(which);
 };
 
-mainwp_managesites_check_abandoned_all_loop_next = function (which) {
+let mainwp_managesites_check_abandoned_all_loop_next = function (which) {
   while (bulkTaskRunning && (currentThreads < maxThreads) && (websitesLeft > 0)) {
     mainwp_managesites_check_abandoned_all_upgrade_next(which);
   }
 };
-mainwp_managesites_check_abandoned_all_upgrade_next = function (which) {
+let mainwp_managesites_check_abandoned_all_upgrade_next = function (which) {
   currentThreads++;
   websitesLeft--;
 
@@ -867,7 +866,7 @@ mainwp_managesites_check_abandoned_all_upgrade_next = function (which) {
   mainwp_managesites_check_abandoned_int(websiteId, which);
 };
 
-mainwp_managesites_check_abandoned_int = function (siteid, which) {
+let mainwp_managesites_check_abandoned_int = function (siteid, which) {
 
   let data = mainwp_secure_data({
     action: 'mainwp_check_abandoned',
@@ -941,7 +940,7 @@ jQuery(function () {
   });
 });
 
-mainwp_sync_sites_data = function (syncSiteIds, pAction) {
+window.mainwp_sync_sites_data = function (syncSiteIds, pAction) {
   let allWebsiteIds = jQuery('.dashboard_wp_id').map(function (indx, el) {
     return jQuery(el).val();
   });
@@ -1328,7 +1327,7 @@ let mainwp_tool_disconnect_sites_next_int = function (websiteId, data, errors) {
     data: data,
     success: function (pWebsiteId) {
       return function (response) {
-        if (response && response.error) {
+        if (response?.error) {
           dashboard_update_site_status(pWebsiteId, response.error + '<i class="exclamation red icon"></i>');
         } else if (response && response.result == 'success') {
           dashboard_update_site_status(websiteId, '<i class="check green icon"></i>', true);
@@ -1854,7 +1853,7 @@ let mainwp_extension_prepareinstallplugin = function (pPluginToInstall, pSiteId)
 
   jQuery.post(ajaxurl, data, function (response) {
     workingEl.hide();
-    if (response.sites && response.sites[pSiteId]) {
+    if (response?.sites?.pSiteId) {
       statusEl.html(__('Installing...'));
       let data = mainwp_secure_data({
         action: 'mainwp_ext_performinstallplugintheme',
@@ -1870,7 +1869,7 @@ let mainwp_extension_prepareinstallplugin = function (pPluginToInstall, pSiteId)
         let apply_settings = false;
         let syc_msg = '';
         let _success = false;
-        if ((response.ok != undefined) && (response.ok[pSiteId] != undefined)) {
+        if ((response?.ok?.pSiteId)) {
           syc_msg = __('Installation successful!');
           statusEl.html(syc_msg);
           apply_settings = pPluginToInstall.find(".sync-options input[type='checkbox']:checked").length > 0;
@@ -1878,7 +1877,7 @@ let mainwp_extension_prepareinstallplugin = function (pPluginToInstall, pSiteId)
             mainwp_extension_apply_plugin_settings(pPluginToInstall, pSiteId, false);
           }
           _success = true;
-        } else if ((response.errors != undefined) && (response.errors[pSiteId] != undefined)) {
+        } else if (response?.errors?.pSiteId) {
           syc_msg = __('Installation failed!') + ': ' + response.errors[pSiteId][1];
           statusEl.html(syc_msg);
           statusEl.css('color', 'red');
@@ -2557,13 +2556,13 @@ mainwp_install_bulk_start_specific = function (type, url, activatePlugin, overwr
       if (response.error != undefined) {
         statusEl.html(response.error);
         statusEl.css('color', 'red');
-      } else if ((response.ok != undefined) && (response.ok[siteToInstall.attr('siteid')] != undefined)) {
+      } else if (response?.ok?.siteToInstall?.attr('siteid')) {
         statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Installation completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>');
         if (installResults.installed_sites == undefined) {
           installResults.installed_sites = [];
         }
         installResults.installed_sites.push(siteToInstall.attr('siteid'));
-      } else if ((response.errors != undefined) && (response.errors[siteToInstall.attr('siteid')] != undefined)) {
+      } else if (response?.errors?.siteToInstall?.attr('siteid')) {
         _error = response.errors[siteToInstall.attr('siteid')][1];
       } else {
         _error = __('Undefined error occurred. Please try again.', 'mainwp');
@@ -2592,7 +2591,7 @@ mainwp_install_bulk_you_know_msg = function (type, total) {
         msg = __('Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', '<a href="https://kb.mainwp.com/docs/bulk-settings-manager-extension/" target="_blank">', '</a>');
       else
         msg = __('Would you like to use the Bulk Settings Manager with these plugins? Check out the %1Documentation%2.', '<a href="https://kb.mainwp.com/docs/bulk-settings-manager-extension/" target="_blank">', '</a>');
-    } else if ( type == 'theme' ) {
+    } else if (type == 'theme') {
       if (total == 1)
         msg = __('Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', '<a href="https://kb.mainwp.com/docs/bulk-settings-manager-extension/" target="_blank">', '</a>');
       else
@@ -2604,7 +2603,7 @@ mainwp_install_bulk_you_know_msg = function (type, total) {
         msg = __('Did you know with the %1 you can control the settings of this plugin directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extension/bulk-settings-manager/" target="_blank">Bulk Settings Extension</a>');
       else
         msg = __('Did you know with the %1 you can control the settings of these plugins directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extension/bulk-settings-manager/" target="_blank">Bulk Settings Extension</a>');
-    } else if ( type == 'theme' ) {
+    } else if (type == 'theme') {
       if (total == 1)
         msg = __('Did you know with the %1 you can control the settings of this theme directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extension/bulk-settings-manager/" target="_blank">Bulk Settings Extension</a>');
       else
@@ -2832,10 +2831,10 @@ mainwp_upload_bulk_start_specific = function (type, urls, activatePlugin, overwr
       if (response.error != undefined) {
         statusEl.html(response.error);
         statusEl.css('color', 'red');
-      } else if ((response.ok != undefined) && (response.ok[siteid] != undefined)) {
+      } else if (response?.ok?.siteid) {
         let results = '';
-        if ((response.results != undefined) && (response.results[siteid] != undefined)) {
-          entries = Object.entries(response.results[siteid]);
+        if (response?.results?.siteid) {
+          let entries = Object.entries(response.results[siteid]);
           results += '<div class="ui tiny middle aligned selection list">';
           for (let entry of entries) {
             results += '<div class="item"><div class="right floated content">' + (entry[1] ? '<i class="check green icon"></i>' : '<i class="times red icon"></i>') + '</div><div class="content">' + entry[0] + '</div></div>';
@@ -2847,7 +2846,7 @@ mainwp_upload_bulk_start_specific = function (type, urls, activatePlugin, overwr
           jQuery('div[siteId="' + siteid + '"] .installation-entries').after(response.cost_tracker_installed_info);
         }
         statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Installation completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>');
-      } else if ((response.errors != undefined) && (response.errors[siteid] != undefined)) {
+      } else if (response?.errors?.siteid) {
         statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + response.errors[siteid][1] + '"><i class="times red icon"></i></span>');
       } else {
         statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Undefined error occurred. Please try again.', 'mainwp') + '"><i class="times red icon"></i></span>');
@@ -2948,9 +2947,9 @@ mainwp_install_check_plugin_start_specific = function (url, siteToInstall) {
       if (response.error != undefined) {
         statusEl.html(response.error);
         statusEl.css('color', 'red');
-      } else if ((response.ok != undefined) && (response.ok[siteToInstall.attr('siteid')] != undefined)) {
+      } else if (response?.ok?.siteToInstall?.attr('siteid')) {
         statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Installation completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>');
-      } else if ((response.errors != undefined) && (response.errors[siteToInstall.attr('siteid')] != undefined)) {
+      } else if (response?.errors?.siteToInstall?.attr('siteid')) {
         statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + response.errors[siteToInstall.attr('siteid')][1] + '"><i class="times red icon"></i></span>');
       } else {
         statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Undefined error occurred. Please try again.', 'mainwp') + '"><i class="times red icon"></i></span>');
@@ -3167,7 +3166,7 @@ getErrorMessageInfo = function (repError, outputType) {
 }
 
 dateToHMS = function (date) {
-  if (mainwpParams != undefined && mainwpParams['time_format'] != undefined) {
+  if (mainwpParams?.time_format) {
     let time = moment(date);
     let format = mainwpParams['time_format'];
     format = format.replace('g', 'h');
@@ -3702,7 +3701,7 @@ window.mainwp_datatable_fix_menu_overflow = function (pTableSelector, pTop, pRig
       mainwp_datatable_fix_child_menu_overflow(chilRow, fix_overflow);
     }
   });
-  let tblSelect = pTableSelector !== '' && pTableSelector !== undefined && pTableSelector !== false ? pTableSelector : 'table';
+  let tblSelect = pTableSelector??'table';
 
   console.log('mainwp_datatable_fix_menu_overflow :: ' + tblSelect);
 

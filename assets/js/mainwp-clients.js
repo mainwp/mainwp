@@ -112,27 +112,20 @@ let bulkManageClientsTaskRunning = false;
 // Trigger Manage Bulk Actions
 jQuery(document).on('click', '#mainwp-do-clients-bulk-actions', function () {
   let action = jQuery("#mainwp-clients-bulk-actions-menu").dropdown("get value");
-  if (action == '')
-    return false;
-  mainwp_manageclients_doaction(action);
+  if (action) {
+    mainwp_manageclients_doaction(action);
+  }
   return false;
 });
 
 
 let mainwp_manageclients_doaction = function (action) {
-
-  if (action == 'delete') {
-
-    if (bulkManageClientsTaskRunning)
-      return false;
+  if (action && !bulkManageClientsTaskRunning) {
     let confirmMsg = '';
-
     if (action === 'delete') {
       confirmMsg = __("You are about to remove the selected clients from your MainWP Dashboard?");
     }
-
-    mainwp_confirm(confirmMsg, _callback = function () { mainwp_manageclients_doaction_process(action); });
-    return false; // return those case
+    mainwp_confirm(confirmMsg, function () { mainwp_manageclients_doaction_process(action); });
   }
   return false;
 }
@@ -303,7 +296,7 @@ let mainwp_createclient = function (currPage) {
     success: function (response) {
       mainwp_set_message_zone('#mainwp-message-zone-client');
       jQuery('#bulk_add_createclient').prop("disabled", false);
-      if (response && response.success) {
+      if (response?.success) {
         if ('add-new' == currPage) {
           window.location.href = "admin.php?page=ManageClients";
         } else if ('qsw-add' == currPage) {
@@ -311,7 +304,7 @@ let mainwp_createclient = function (currPage) {
         } else {
           window.location.href = location.href;
         }
-      } else if (response && response.error) {
+      } else if (response?.error) {
         feedback('mainwp-message-zone-client', response.error, 'red');
       } else {
         feedback('mainwp-message-zone-client', __('Undefined error. Please try again.'), 'red');
@@ -346,7 +339,7 @@ jQuery(document).on('click', '#mainwp-clients-edit-custom-field', function () {
   let field_desc = parent.find('.field-description').html();
   let field_id = parent.attr('field-id');
 
-  field_name = field_name.replace(/\[|\]/gi, "");
+  field_name = field_name.replace(/[\[\]]/gi, "");
 
   jQuery('#mainwp-clients-custom-field-modal input[name="field-name"]').val(field_name);
   jQuery('#mainwp-clients-custom-field-modal input[name="field-description"]').val(field_desc);
@@ -417,7 +410,7 @@ jQuery(document).on('click', '#mainwp-clients-delete-general-field', function ()
       field_id: parent.attr('field-id'),
     }), function (data) {
       mainwp_set_message_zone('#mainwp-message-zone-client');
-      if (data && data.success) {
+      if (data?.success) {
         parent.html('<td colspan="3"><i class="green check icon"></i> ' + __('Field has been deleted successfully.') + '</td>').fadeOut(3000);
       } else {
         mainwp_set_message_zone('#mainwp-message-zone-client', __('Field can not be deleted.'), 'red');
@@ -439,7 +432,7 @@ jQuery(document).on('click', '#mainwp-clients-delete-individual-field', function
       field_id: parent.attr('field-id'),
       client_id: jQuery(this).attr('client-id'),
     }), function (data) {
-      if (data && data.success) {
+      if (data?.success) {
         parent.html('<td colspan="3"><i class="green check icon"></i> ' + __('Field has been deleted successfully.') + '</td>').fadeOut(3000);
       } else {
         mainwp_set_message_zone('#mainwp-message-zone-client', __('Field can not be deleted.'), 'red');

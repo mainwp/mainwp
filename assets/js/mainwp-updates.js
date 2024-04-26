@@ -2432,7 +2432,7 @@ let updatesoverview_ignore_http_response = function (elem, id) {
     jQuery('#wp_http_response_code_' + id + ' .http-code').html('<i class="ui active inline loader tiny"></i>');
     jQuery.post(ajaxurl, data, function (response) {
         jQuery(elem).prop("disabled", false);
-        if (response && response.ok) {
+        if (response?.ok) {
             jQuery(elem).closest('.mainwp-sub-row').remove();
         }
     }, 'json');

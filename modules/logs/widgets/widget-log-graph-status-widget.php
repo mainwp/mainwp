@@ -129,11 +129,11 @@ class Log_Graph_Status_Widget {
         $connected    = $total - $disconnected - $suspended;
         ?>
         <div id="mainwp-module-log-chart-status-wrapper" ></div>
-        
+
         <script type="text/javascript">
             jQuery( document ).ready( function() {
                 let options = {
-                    chart: { 
+                    chart: {
                         type: 'bar'
                     },
                     series: [ {

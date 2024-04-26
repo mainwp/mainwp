@@ -154,7 +154,7 @@ class Log_Clients_Widget {
                 <script type="text/javascript">
                     jQuery( document ).ready( function() {
                         let options = {
-                            chart: { 
+                            chart: {
                                 type: 'bar',
                                 height: 350,
                             },

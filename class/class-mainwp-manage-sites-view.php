@@ -1644,7 +1644,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                     } else {
                                         $editable = true;
                                         ?>
-                                        name="edit_<?php echo esc_attr( $type ) . '_code'; ?>"<?php } ?>><?php echo esc_html( file_get_contents( $custom_file ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- required to achieven desired results. Pull requests are welcome. ?></textarea>
+                                        name="edit_<?php echo esc_attr( $type ) . '_code'; ?>"
+                                                                <?php
+                                    }
+                                    ?>
+                                    ><?php echo esc_html( file_get_contents( $custom_file ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- required to achieven desired results. Pull requests are welcome. ?></textarea>
                                 </div>
                                 <?php
                             } elseif ( file_exists( $template_file ) ) {

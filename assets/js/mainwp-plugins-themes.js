@@ -1,5 +1,6 @@
 /* eslint complexity: ["error", 100] */
 
+window.mainwpVars = window.mainwpVars || {};
 
 //Ignore plugin
 jQuery(function () {
@@ -979,7 +980,7 @@ let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAf
         jQuery('#managesites-backup-ignore').hide();
         mainwpPopup('#managesites-backup-box').init({
             title: __("Checking backup settings..."), callback: function () {
-                window.bulkManageSitesTaskRunning = false;
+                mainwpVars.bulkManageSitesTaskRunning = false;
                 window.location.href = location.href;
             }
         });

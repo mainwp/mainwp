@@ -277,7 +277,8 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 if ( $step_key === $this->step ) {
                     echo 'active';
                 } elseif ( array_search( $this->step, array_keys( $this->steps ) ) > array_search( $step_key, array_keys( $this->steps ) ) ) {
-                    echo 'completed'; }
+                    echo 'completed';
+                }
                 ?>
                 ">
                     <div class="content">

@@ -9,6 +9,8 @@ let import_total = 0;
 let import_count_success = 0;
 let import_count_fails = 0;
 
+window.mainwpVars = window.mainwpVars || {};
+
 jQuery(function(){
     import_total = jQuery('#mainwp_managesites_total_import').val();
 

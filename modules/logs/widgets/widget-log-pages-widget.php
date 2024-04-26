@@ -172,7 +172,7 @@ class Log_Pages_Widget {
                 <script type="text/javascript">
                     jQuery( document ).ready( function() {
                         let options = {
-                            chart: { 
+                            chart: {
                                 type: 'bar',
                                 height: 350,
                             },

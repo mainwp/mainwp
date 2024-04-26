@@ -1,6 +1,8 @@
 
 /* eslint complexity: ["error", 100] */
 
+window.mainwpVars = window.mainwpVars || {};
+
 let executingUpdateCategories = false;
 let queueUpdateCategories = 0;
 
@@ -560,9 +562,9 @@ jQuery(document).on('keyup', '#mainwp-screenshots-sites-filter', function () {
 
 window.mainwp_get_icon_start = function () {
     jQuery('.cached-icon-expired').attr('queue', 1);
-    bulkInstallTotal = jQuery('.cached-icon-expired[queue="1"]').length;
-    console.log(bulkInstallTotal + ': expired cached icons');
-    if (0 === bulkInstallTotal) {
+    mainwpVars.bulkInstallTotal = jQuery('.cached-icon-expired[queue="1"]').length;
+    console.log(mainwpVars.bulkInstallTotal + ': expired cached icons');
+    if (0 === mainwpVars.bulkInstallTotal) {
         return;
     }
     mainwp_get_icon_start_next();

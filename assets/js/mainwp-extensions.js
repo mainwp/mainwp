@@ -294,7 +294,7 @@ jQuery(document).on('click', '.mainwp-extensions-deactivate', function () {
     let loadingEl = apiEl.find(".api-feedback");
 
     if (!apiEl.find('.mainwp-extensions-deactivate-chkbox').is(':checked'))
-        return false;
+        return;
 
     loadingEl.hide();
 
@@ -317,7 +317,6 @@ jQuery(document).on('click', '.mainwp-extensions-deactivate', function () {
                 loadingEl.find('.message').addClass('green');
                 loadingEl.find('.message').html(__('License deactivated.'));
                 statusEl.html('<i class="green check icon"></i> License');
-                success = true;
             } else if (response.error) {
                 loadingEl.find('.message').addClass('red');
                 loadingEl.find('.message').html(response.error);
@@ -334,7 +333,6 @@ jQuery(document).on('click', '.mainwp-extensions-deactivate', function () {
             location.href = 'admin.php?page=Extensions';
         }, 2000);
     }, 'json');
-    return false;
 });
 
 
@@ -471,8 +469,10 @@ function mainwp_extensions_grabkeys(retring) {
 }
 
 let extensions_loop_next = function () {
-    while ((extToActivate = jQuery('#mainwp-extensions-list .card[status="queue"]:first')) && (extToActivate.length > 0) && (currentActivateThreads < maxActivateThreads)) {
+    let extToActivate = jQuery('#mainwp-extensions-list .card[status="queue"]:first');
+    while (extToActivate.length > 0 && currentActivateThreads < maxActivateThreads) { // NOSONAR - variable modified outside the function.
         extensions_activate_next(extToActivate, true);
+        extToActivate = jQuery('#mainwp-extensions-list .card[status="queue"]:first');
     }
     if ((finishedActivateThreads == totalActivateThreads) && (countSuccessActivation == totalActivateThreads)) {
         setTimeout(function () {
@@ -482,6 +482,7 @@ let extensions_loop_next = function () {
 };
 
 let extensions_activate_next = function (pObj, bulkAct) {
+    pObj.attr("status", "running");
 
     let grabingEl = jQuery("#mainwp-extensions-api-fields");
     let apiEl = pObj;
@@ -490,7 +491,6 @@ let extensions_activate_next = function (pObj, bulkAct) {
 
     let master_api_key = grabingEl.find('#mainwp_com_api_key').val();
 
-    apiEl.attr("status", "running");
 
     let extensionSlug = apiEl.attr('extension-slug');
     let data = mainwp_secure_data({
@@ -695,11 +695,11 @@ jQuery(document).on('click', '#mainwp-extensions-installnow', function () {
     return false;
 })
 
-bulkExtensionsMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
-bulkExtensionsCurrentThreads = 0;
-bulkExtensionsTotal = 0;
-bulkExtensionsFinished = 0;
-bulkExtensionsRunning = false;
+let bulkExtensionsMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
+let bulkExtensionsCurrentThreads = 0;
+let bulkExtensionsTotal = 0;
+let bulkExtensionsFinished = 0;
+let bulkExtensionsRunning = false;
 
 let mainwp_extension_bulk_install = function () {
     if (bulkExtensionsRunning)

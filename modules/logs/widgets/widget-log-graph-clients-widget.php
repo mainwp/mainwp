@@ -117,7 +117,7 @@ class Log_Graph_Clients_Widget {
         <script type="text/javascript">
             jQuery( document ).ready( function() {
                 let options = {
-                    chart: { 
+                    chart: {
                         type: 'bar',
                     },
                     xaxis: {
@@ -141,7 +141,7 @@ class Log_Graph_Clients_Widget {
                         name: 'Sites',
                         data: [
                             <?php foreach ( $clients as $client ) : ?>
-                            { 
+                            {
                             x: '<?php echo esc_js( $client['name'] ); ?>',
                             y: <?php echo ! empty( $client['selected_sites'] ) ? count( explode( ',', $client['selected_sites'] ) ) : 0; ?>,
                             fillColor: "#18a4e0",

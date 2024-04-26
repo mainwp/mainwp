@@ -1,5 +1,6 @@
 /* eslint complexity: ["error", 100] */
 // current complexity is the only way to achieve desired results, pull request solutions appreciated.
+window.mainwpVars = window.mainwpVars || {};
 
 let ugradingWebsiteAll = false;
 let ugradingAllCurrentStep = '';
@@ -8,7 +9,8 @@ let managesitesContinueAfterBackup;
 let managesitesBackupSites;
 let managesitesBackupError;
 let managesitesBackupDownloadRunning;
-window.bulkManageSitesTaskRunning = false;
+
+mainwpVars.bulkManageSitesTaskRunning = false;
 
 let managesites_update_all_next_step = function () {
     let next = '';
@@ -85,7 +87,7 @@ window.mainwp_update_pluginsthemes = function (updateType, updateSiteIds) {
                     progressMax: sitesCount,
                     statusText: __('updated'),
                     callback: function () {
-                        bulkManageSitesTaskRunning = false;
+                        mainwpVars.bulkManageSitesTaskRunning = false;
                         window.location.href = location.href;
                     }
                 };
@@ -103,16 +105,18 @@ window.mainwp_update_pluginsthemes = function (updateType, updateSiteIds) {
 };
 
 let managesites_update_pluginsthemes = function (pType, websiteIds) {
-    websitesToUpdate = websiteIds;
-    currentWebsite = 0;
-    websitesDone = 0;
+    mainwpVars.websitesToUpdate = websiteIds;
+    mainwpVars.currentWebsite = 0;
+    mainwpVars.websitesDone = 0;
     websitesError = 0;
     websitesEveryError = 0;
-    websitesTotal = websitesLeft = websitesToUpdate.length;
 
-    bulkManageSitesTaskRunning = true;
+    mainwpVars.websitesTotal = mainwpVars.websitesToUpdate.length;
+    mainwpVars.websitesLeft = mainwpVars.websitesToUpdate.length;
 
-    if (websitesTotal == 0) {
+    mainwpVars.bulkManageSitesTaskRunning = true;
+
+    if (mainwpVars.websitesTotal == 0) {
         managesites_update_pluginsthemes_done(pType);
     } else {
         managesites_loop_pluginsthemes_next(pType);
@@ -120,24 +124,24 @@ let managesites_update_pluginsthemes = function (pType, websiteIds) {
 };
 
 let managesites_loop_pluginsthemes_next = function (pType) {
-    while (bulkManageSitesTaskRunning && (currentThreads < maxThreads) && (websitesLeft > 0)) {
+    while (mainwpVars.bulkManageSitesTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreads) && (mainwpVars.websitesLeft > 0)) {
         managesites_update_pluginsthemes_next(pType);
     }
 };
 
 let managesites_update_pluginsthemes_done = function (pType) {
-    currentThreads--;
-    if (!bulkManageSitesTaskRunning)
+    mainwpVars.currentThreads--;
+    if (!mainwpVars.bulkManageSitesTaskRunning)
         return;
-    websitesDone++;
-    if (websitesDone > websitesTotal)
-        websitesDone = websitesTotal;
+    mainwpVars.websitesDone++;
+    if (mainwpVars.websitesDone > mainwpVars.websitesTotal)
+        mainwpVars.websitesDone = mainwpVars.websitesTotal;
 
-    mainwpPopup('#mainwp-sync-sites-modal').setProgressSite(websitesDone);
+    mainwpPopup('#mainwp-sync-sites-modal').setProgressSite(mainwpVars.websitesDone);
 
-    if (websitesDone == websitesTotal) {
+    if (mainwpVars.websitesDone == mainwpVars.websitesTotal) {
         setTimeout(function () {
-            bulkManageSitesTaskRunning = false;
+            mainwpVars.bulkManageSitesTaskRunning = false;
 
             if (ugradingWebsiteAll) {
                 // get next updating everything step.
@@ -226,9 +230,9 @@ let managesites_update_pluginsthemes_next_int = function (websiteId, data, error
 
 
 let managesites_update_pluginsthemes_next = function (pType) {
-    currentThreads++;
-    websitesLeft--;
-    let websiteId = websitesToUpdate[currentWebsite++];
+    mainwpVars.currentThreads++;
+    mainwpVars.websitesLeft--;
+    let websiteId = mainwpVars.websitesToUpdate[mainwpVars.currentWebsite++];
     dashboard_update_site_status(websiteId, __('<i class="sync alternate loading icon"></i>'));
     let data = mainwp_secure_data({
         action: 'mainwp_upgradeplugintheme',
@@ -261,7 +265,7 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
         jQuery('#managesites-backup-ignore').hide();
         mainwpPopup('#managesites-backup-box').init({
             title: __("Checking backup settings..."), callback: function () {
-                bulkManageSitesTaskRunning = false;
+                mainwpVars.bulkManageSitesTaskRunning = false;
                 window.location.href = location.href;
             }
         });
@@ -522,7 +526,7 @@ managesites_wordpress_global_upgrade_all = function (updateSiteIds, updateEveryt
                 totalSites: nrOfWebsites,
                 statusText: __('updated'),
                 callback: function () {
-                    bulkManageSitesTaskRunning = false;
+                    mainwpVars.bulkManageSitesTaskRunning = false;
                     window.location.href = location.href;
                 }
             });
@@ -535,36 +539,37 @@ managesites_wordpress_global_upgrade_all = function (updateSiteIds, updateEveryt
 };
 
 let managesites_wordpress_upgrade_all_int = function (websiteIds) {
-    websitesToUpgrade = websiteIds;
-    currentWebsite = 0;
-    websitesDone = 0;
-    websitesTotal = websitesLeft = websitesToUpgrade.length;
+    mainwpVars.websitesToUpgrade = websiteIds;
+    mainwpVars.currentWebsite = 0;
+    mainwpVars.websitesDone = 0;
+    mainwpVars.websitesTotal = mainwpVars.websitesToUpgrade.length;
+    mainwpVars.websitesLeft = mainwpVars.websitesToUpgrade.length;
 
-    bulkManageSitesTaskRunning = true;
+    mainwpVars.bulkManageSitesTaskRunning = true;
 };
 let managesites_wordpress_upgrade_all_loop_next = function () {
-    while (bulkManageSitesTaskRunning && (currentThreads < maxThreads) && (websitesLeft > 0)) {
+    while (mainwpVars.bulkManageSitesTaskRunning && (mainwpVars.currentThreads < mainwpVars.maxThreads) && (mainwpVars.websitesLeft > 0)) {
         managesites_wordpress_upgrade_all_upgrade_next();
     }
 };
 let managesites_wordpress_upgrade_all_upgrade_next = function () {
-    currentThreads++;
-    websitesLeft--;
+    mainwpVars.currentThreads++;
+    mainwpVars.websitesLeft--;
 
-    let websiteId = websitesToUpgrade[currentWebsite++];
+    let websiteId = mainwpVars.websitesToUpgrade[mainwpVars.currentWebsite++];
     dashboard_update_site_status(websiteId, '<i class="sync alternate loading icon"></i>');
 
     managesites_wordpress_upgrade_int(websiteId);
 };
 let managesites_wordpress_upgrade_all_update_done = function () {
-    currentThreads--;
-    if (!bulkManageSitesTaskRunning)
+    mainwpVars.currentThreads--;
+    if (!mainwpVars.bulkManageSitesTaskRunning)
         return;
-    websitesDone++;
+    mainwpVars.websitesDone++;
 
-    mainwpPopup('#mainwp-sync-sites-modal').setProgressSite(websitesDone);
+    mainwpPopup('#mainwp-sync-sites-modal').setProgressSite(mainwpVars.websitesDone);
 
-    if (websitesDone == websitesTotal) {
+    if (mainwpVars.websitesDone == mainwpVars.websitesTotal) {
         if (ugradingWebsiteAll) {
             // get next updating everything step.
             let nextStep = managesites_update_all_next_step();
@@ -577,7 +582,7 @@ let managesites_wordpress_upgrade_all_update_done = function () {
         }
 
         setTimeout(function () {
-            bulkManageSitesTaskRunning = false;
+            mainwpVars.bulkManageSitesTaskRunning = false;
             mainwpPopup('#mainwp-sync-sites-modal').close(true);
         }, 3000);
         return;

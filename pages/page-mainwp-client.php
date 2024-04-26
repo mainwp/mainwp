@@ -1033,7 +1033,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <?php foreach ( $fields as $field ) : ?>
                     <?php
                     if ( ! $field ) {
-                        continue;}
+                        continue;
+                    }
                     ?>
                         <tr class="mainwp-field" field-id="<?php echo intval( $field->field_id ); ?>">
                             <td class="field-name">[<?php echo esc_html( stripslashes( $field->field_name ) ); ?>]</td>
@@ -2110,7 +2111,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 if ( $field ) {
                     $return['success'] = true;
                 } else {
-                    $return['error'] = esc_html__( 'Undefined error occurred. Please try again.', 'mainwp' ); }
+                    $return['error'] = esc_html__( 'Undefined error occurred. Please try again.', 'mainwp' );
+                }
             }
         }
         echo wp_json_encode( $return );

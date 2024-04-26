@@ -132,14 +132,14 @@ class Log_Graph_Php_Widget {
         <script type="text/javascript">
             jQuery( document ).ready( function() {
                 let options = {
-                    chart: { 
+                    chart: {
                         type: 'bar'
                     },
                     series: [ {
                         name: 'Sites',
                         data: [
                             <?php foreach ( $versions as $version => $count ) : ?>
-                            { 
+                            {
                             x: '<?php echo esc_js( $version ); ?>',
                             y: <?php echo intval( $count ); ?>,
                             fillColor: '#18a4e0'

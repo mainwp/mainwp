@@ -1112,7 +1112,8 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         <div class="ui grid field settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> <?php
         if ( empty( $hidden_elems ) && 'zip' !== $archiveFormat ) {
-            echo 'style="display: none;"';}
+            echo 'style="display: none;"';
+        }
         ?>
         >
             <label class="six wide column middle aligned">
@@ -1128,7 +1129,8 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         <div class="ui grid field settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> <?php
         if ( empty( $hidden_elems ) && 'zip' !== $archiveFormat ) {
-            echo 'style="display: none;"';}
+            echo 'style="display: none;"';
+        }
         ?>
         >
             <label class="six wide column middle aligned">
@@ -1144,7 +1146,8 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         <div class="ui grid field settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> <?php
         if ( empty( $hidden_elems ) && 'zip' !== $archiveFormat ) {
-            echo 'style="display: none;"';}
+            echo 'style="display: none;"';
+        }
         ?>
         >
         <label class="six wide column middle aligned">

@@ -725,7 +725,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-    public static function render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients ) { // phpcs:ignore -- Current complexity required to achieve desired results. Pull request solutions appreciated.
+    public static function render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients ) { // phpcs:ignore -- NOSONAR -Current complexity required to achieve desired results. Pull request solutions appreciated.
         $keyword = trim( $keyword );
         MainWP_Cache::init_cache( 'Plugins' );
 
@@ -1206,7 +1206,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param array $pluginsNameSites Plugin names with Sites array.
      * @param array $pluginsRealVersion Latest plugin release version.
      */
-    public static function render_manage_per_site_table( $sites, $pluginsSlug = array(), $sitePlugins = array(), $pluginsMainWP = array(), $muPlugins = array(), $pluginsName = array(), $pluginsNameSites = array(), $pluginsRealVersion = array() ) { //phpcs:ignore -- complex method.
+    public static function render_manage_per_site_table( $sites, $pluginsSlug = array(), $sitePlugins = array(), $pluginsMainWP = array(), $muPlugins = array(), $pluginsName = array(), $pluginsNameSites = array(), $pluginsRealVersion = array() ) { //phpcs:ignore -- NOSONAR - complex method.
 
         $userExtension         = MainWP_DB_Common::instance()->get_user_extension();
         $decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
@@ -1488,7 +1488,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param array $pluginsNameSites Plugin names with Sites array.
      * @param array $pluginsRealVersion Latest plugin release version.
      */
-    public static function render_manage_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion ) { //phpcs:ignore -- complex method.
+    public static function render_manage_table( $sites, $pluginsSlug, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsNameSites, $pluginsRealVersion ) { //phpcs:ignore -- NOSONAR - complex method.
 
         $userExtension         = MainWP_DB_Common::instance()->get_user_extension();
         $decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
@@ -1976,7 +1976,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @uses \MainWP\Dashboard\MainWP_UI::render_modal_edit_notes()
      */
-    public static function render_auto_update() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_auto_update() {  // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $cachedAUSearch = isset( $_SESSION['MainWP_PluginsActiveStatus'] ) ? $_SESSION['MainWP_PluginsActiveStatus'] : null; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized --- ok.
 

@@ -166,7 +166,7 @@ class Cost_Tracker_Hooks {
      *
      * @return array $item Site comlumn data.
      */
-    public function hook_manage_clients_display_item( $item ) { //phpcs:ignore -- complex.
+    public function hook_manage_clients_display_item( $item ) { //phpcs:ignore -- NOSONAR - complex.
         if ( ! is_array( $item ) || ! isset( $item['client_id'] ) ) {
             return $item;
         }
@@ -291,7 +291,7 @@ class Cost_Tracker_Hooks {
      *
      * @return array $item Site comlumn data.
      */
-    public function hook_manage_sites_display_item( $item ) { //phpcs:ignore -- complex.
+    public function hook_manage_sites_display_item( $item ) { //phpcs:ignore -- NOSONAR - complex.
         if ( ! is_array( $item ) || ! isset( $item['id'] ) ) {
             return $item;
         }

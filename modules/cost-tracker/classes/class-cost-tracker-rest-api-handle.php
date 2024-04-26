@@ -132,7 +132,7 @@ class Cost_Tracker_Rest_Api_Handle {
      *
      * @return string value.
      */
-    public function get_cost_field_value( $cost, $field ) { //phpcs:ignore -- complex method.
+    public function get_cost_field_value( $cost, $field ) { //phpcs:ignore -- NOSONAR - complex method.
         $value = '';
         switch ( $field ) {
             case 'id':

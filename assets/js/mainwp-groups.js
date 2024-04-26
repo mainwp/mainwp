@@ -71,21 +71,22 @@ jQuery(function () {
   // Delete a group
   jQuery(document).on('click', '#mainwp-delete-group-button', function () {
     let gruopItem = jQuery('#mainwp-groups-menu').find('.active');
-    mainwp_confirm('Are you sure you want to delete this tag?', function () {
+
+    let _deltag_callback = function () {
       let groupID = gruopItem.attr('id');
       let data = mainwp_secure_data({
         action: 'mainwp_group_delete',
         groupId: groupID
       });
-      jQuery.post(ajaxurl, data, function (gruopItem) {
-        return function (response) {
+      jQuery.post(ajaxurl, data, function (response) {
           response = response.trim();
           if (response == 'OK') {
             gruopItem.fadeOut(300);
           }
-        }
-      }(gruopItem));
-    });
+      });
+    };
+
+    mainwp_confirm('Are you sure you want to delete this tag?', _deltag_callback );
     return false;
   });
 
@@ -100,8 +101,8 @@ jQuery(function () {
       newName: newName,
       newColor: newColor
     });
-    jQuery.post(ajaxurl, data, function () {
-      return function (response) {
+
+    jQuery.post(ajaxurl, data, function (response) {
         if (response.error) {
           return;
         }
@@ -111,8 +112,8 @@ jQuery(function () {
             return false;
           }
         }).modal('hide');
-      }
-    }(), 'json');
+    }, 'json');
+
     return false;
   });
 

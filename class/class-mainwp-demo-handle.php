@@ -102,9 +102,7 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      * @uses  \MainWP\Dashboard\MainWP_Utility::starts_with()
      */
-    public function import_data_demo() { //phpcs:ignore -- complex method.
-
-        $errors = array();
+    public function import_data_demo() { //phpcs:ignore -- NOSONAR - complex method.
 
         $demo_files = array(
             'demo_mainwp_wp',
@@ -144,8 +142,6 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 $wp_data_rows = $json_content['data'];
             } elseif ( 'demo_mainwp_wp_clients_contacts' === $file ) {
                 $contacts_data_rows = $json_content['data'];
-            } elseif ( 'demo_mainwp_wp_options' === $file ) {
-                $wp_options_data_rows = $json_content['data'];
             } elseif ( 'demo_mainwp_wp_options' === $file ) {
                 $wp_options_data_rows = $json_content['data'];
             } elseif ( 'demo_mainwp_wp_actions' === $file ) {
@@ -290,7 +286,6 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
             $params['url']       = $url;
             $params['userid']    = $userid;
-            $params['adminname'] = $params['adminname'];
             $params['client_id'] = 0; // set: 0.
 
             $syncValues = array(
@@ -568,6 +563,7 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @param mixed  $output output.
      */
     public function handle_fetch_urls_demo( $data, $website, &$output ) {
+        unset( $data );
         if ( $this->is_demo_website( $website ) ) {
             $output->errors[ $website->id ] = $this->get_demo_notice();
         }

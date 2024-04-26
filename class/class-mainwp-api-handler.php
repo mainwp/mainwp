@@ -31,7 +31,7 @@ class MainWP_API_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @uses MainWP_Api_Manager_Plugin_Update::bulk_update_check()
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
      */
-    public static function check_exts_upgrade() {
+    public static function check_exts_upgrade() { // phpcs:ignore -- NOSONAR - complex.
 
         $extensions = MainWP_Extensions_Handler::get_extensions();
         $output     = array();

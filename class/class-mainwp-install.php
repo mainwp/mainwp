@@ -70,7 +70,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-    public function install() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function install() { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         // get_site_option is multisite aware!
         $currentVersion = get_site_option( $this->option_db_key );
 
@@ -379,7 +379,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         $sql = apply_filters( 'mainwp_db_install_tables', $sql, $currentVersion, $charset_collate );
 
-        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php'; // NOSONAR - compatible.
 
         global $wpdb;
 
@@ -418,7 +418,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @return void
      */
-    public function post_update() {
+    public function post_update() { // phpcs:ignore -- NOSONAR - complex.
 
         // get_site_option is multisite aware!
         $currentVersion = get_site_option( $this->option_db_key );

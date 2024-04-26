@@ -1097,7 +1097,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      * @uses \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
      */
-    public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all', $table_content = false, $clients = '' ) { // phpcs:ignore -- complex function.
+    public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all', $table_content = false, $clients = '' ) { // phpcs:ignore -- NOSONAR - complex function.
 
         $data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
@@ -1264,7 +1264,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
      */
-    public static function posts_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex method.
+    public static function posts_search_handler( $data, $website, &$output ) { // phpcs:ignore -- NOSONAR - complex method.
         if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
             return;
         }
@@ -1763,7 +1763,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * @return string Hidden time stamps html.
      */
-    public static function touch_time( $post, $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) { //phpcs:ignore -- complex method.
+    public static function touch_time( $post, $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) { //phpcs:ignore -- NOSONAR - complex method.
 
         /**
          * WordPress Locale.
@@ -1984,7 +1984,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Meta_Boxes::add_tags()
      * @uses \MainWP\Dashboard\MainWP_UI
      */
-    public static function render_bulkpost( $post_id, $input_type ) { //phpcs:ignore -- complex method.
+    public static function render_bulkpost( $post_id, $input_type ) { //phpcs:ignore -- NOSONAR - complex method.
         $post = get_post( $post_id );
 
         if ( $post ) {

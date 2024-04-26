@@ -965,7 +965,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      */
-    public static function render_footer_content( $websites, $current_wpid = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_footer_content( $websites, $current_wpid = false ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $cntr = 0;
         if ( is_array( $websites ) ) {
             $count = count( $websites );
@@ -1155,7 +1155,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * Render plugins install check modal.
      * for the exntesion overview page with the missing install plugin only.
      */
-    public static function render_plugins_install_check() { // phpcs:ignore -- complex function.
+    public static function render_plugins_install_check() { // phpcs:ignore -- NOSONAR - complex function.
 
         $install_check = get_option( 'mainwp_hide_plugins_install_check_notice', 0 );
 

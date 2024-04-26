@@ -68,7 +68,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-    public static function init_menu() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function init_menu() { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
             MainWP_Extensions_View::init_menu();
         }
@@ -371,7 +371,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-    public static function ajax_get_purchased_extensions() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function ajax_get_purchased_extensions() { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
 

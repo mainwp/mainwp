@@ -92,7 +92,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Extensions::init_menu()
      * @uses \MainWP\Dashboard\MainWP_Bulk_Update_Admin_Passwords::init_menu()
      */
-    public static function init_mainwp_menus() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function init_mainwp_menus() { // phpcs:ignore -- NOSONAR - complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         if ( MainWP_System_Utility::is_admin() ) {
 
             $menus_items = array();
@@ -329,7 +329,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @param array  $menus_items menus items.
      * @param string $part menus part.
      */
-    public static function init_mainwp_menu_items( $menus_items, $part ) { //phpcs:ignore -- complex method.
+    public static function init_mainwp_menu_items( $menus_items, $part ) { //phpcs:ignore -- NOSONAR - complex method.
         if ( ! is_array( $menus_items ) ) {
             return;
         }
@@ -554,7 +554,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * @return array $mainwp_leftmenu[] | $mainwp_sub_leftmenu[].
      */
-    public static function add_left_menu( $params = array(), $level = 1 ) { //phpcs:ignore -- complex method.
+    public static function add_left_menu( $params = array(), $level = 1 ) { //phpcs:ignore -- NOSONAR - complex method.
 
         if ( empty( $params ) ) {
             return;
@@ -652,7 +652,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * Build Top Level Main Menu HTML & Render.
      */
-    public static function render_left_menu() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_left_menu() { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * MainWP Left Menu, Sub Menu & Active menu slugs.
@@ -863,25 +863,15 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         }
                         $active_item = '';
 
-                        if ( ! $set_actived ) {
-                            if ( isset( $_mainwp_menu_active_slugs['parent_slug'][ $plugin_page ] ) ) {
-                                if ( $item_key === $_mainwp_menu_active_slugs['parent_slug'][ $plugin_page ] ) {
-                                    $active_item     = 'active';
-                                    $set_actived     = true;
-                                    $bar_item_active = $item;
-                                }
-                            }
+                        if ( ! $set_actived && isset( $_mainwp_menu_active_slugs['parent_slug'][ $plugin_page ] ) && $item_key === $_mainwp_menu_active_slugs['parent_slug'][ $plugin_page ] ) {
+                            $active_item     = 'active';
+                            $set_actived     = true;
                         }
 
                         // to fix active menu.
-                        if ( ! $set_actived ) {
-                            if ( isset( $_mainwp_menu_active_slugs[ $plugin_page ] ) ) {
-                                if ( $item_key === $_mainwp_menu_active_slugs[ $plugin_page ] ) {
-                                    $active_item     = 'active';
-                                    $set_actived     = true;
-                                    $bar_item_active = $item;
-                                }
-                            }
+                        if ( ! $set_actived && isset( $_mainwp_menu_active_slugs[ $plugin_page ] ) && $item_key === $_mainwp_menu_active_slugs[ $plugin_page ] ) {
+                            $active_item     = 'active';
+                            $set_actived     = true;
                         }
 
                         $id_attr = ! empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
@@ -922,29 +912,20 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 $href        = $item[2];
                                 $item_id     = isset( $item[3] ) ? $item[3] : '';
                                 $ext_state   = isset( $item[5] ) ? $item[5] : '';
-                                $active_path = isset( $item[6] ) ? $item[6] : '';
 
                                 $item_classes = 'inactive' === $ext_state ? 'extension-inactive' : '';
 
                                 $active_item = '';
 
-                                if ( ! $set_actived ) {
-                                    if ( isset( $_mainwp_menu_active_slugs['parent_slug'][ $plugin_page ] ) ) {
-                                        if ( $item_key === $_mainwp_menu_active_slugs['parent_slug'][ $plugin_page ] ) {
-                                            $active_item = 'active';
-                                            $set_actived = true;
-                                        }
-                                    }
+                                if ( ! $set_actived && isset( $_mainwp_menu_active_slugs['parent_slug'][ $plugin_page ] ) && $item_key === $_mainwp_menu_active_slugs['parent_slug'][ $plugin_page ] ) {
+                                    $active_item = 'active';
+                                    $set_actived = true;
                                 }
 
                                 // to fix active menu.
-                                if ( ! $set_actived ) {
-                                    if ( isset( $_mainwp_menu_active_slugs[ $plugin_page ] ) ) {
-                                        if ( $item_key === $_mainwp_menu_active_slugs[ $plugin_page ] ) {
-                                            $active_item = 'active';
-                                            $set_actived = true;
-                                        }
-                                    }
+                                if ( ! $set_actived && isset( $_mainwp_menu_active_slugs[ $plugin_page ] ) && $item_key === $_mainwp_menu_active_slugs[ $plugin_page ] ) {
+                                    $active_item = 'active';
+                                    $set_actived = true;
                                 }
 
                                 $id_attr = ! empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
@@ -1084,7 +1065,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * Renders the mobile menu.
      */
-    public static function render_mobile_menu() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_mobile_menu() { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
         ?>
         <div class="mainwp-main-mobile-navigation-container">
@@ -1343,7 +1324,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * @param mixed $parent_key The parent key.
      */
-    public static function render_sub_item( $parent_key ) { //phpcs:ignore -- complex method.
+    public static function render_sub_item( $parent_key ) { //phpcs:ignore -- NOSONAR - complex method.
         if ( empty( $parent_key ) ) {
             return;
         }

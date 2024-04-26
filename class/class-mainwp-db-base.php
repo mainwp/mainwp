@@ -68,7 +68,7 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Logger::info()
      */
     protected function test_connection() {
-        if ( ! self::ping( $this->wpdb->dbh ) ) {
+        if ( ! static::ping( $this->wpdb->dbh ) ) {
             MainWP_Logger::instance()->info( esc_html__( 'Trying to reconnect WordPress database connection...', 'mainwp' ) );
             $this->wpdb->db_connect();
         }
@@ -161,9 +161,9 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return false;
         }
 
-        $result = self::m_query( $sql, $this->wpdb->dbh );
+        $result = self::m_query( $sql, $this->wpdb->dbh ); // NOSONAR - required.
 
-        if ( ! $result || ( empty( self::num_rows( $result ) ) ) ) {
+        if ( ! $result || ( empty( self::num_rows( $result ) ) ) ) { // NOSONAR - required.
             return false;
         }
 
@@ -218,7 +218,7 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( ! function_exists( '\mysqli_connect' ) ) {
             return false;
         }
-        return self::$instance->wpdb->dbh instanceof \mysqli;
+        return self::$instance->wpdb->dbh instanceof \mysqli; // NOSONAR - required.
     }
 
     /**
@@ -231,7 +231,7 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return mixed \mysqli_ping
      */
     public static function ping( $link ) {
-        if ( self::use_mysqli() ) {
+        if ( self::use_mysqli() ) { // NOSONAR - required.
             return \mysqli_ping( $link );
         } else {
             return \mysql_ping( $link );
@@ -249,7 +249,7 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return mixed \mysqli_query
      */
     public static function m_query( $query, $link ) {
-        if ( self::use_mysqli() ) {
+        if ( self::use_mysqli() ) { // NOSONAR - required.
             return \mysqli_query( $link, $query );
         } else {
             return \mysql_query( $query, $link );
@@ -270,7 +270,7 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return $result;
         }
 
-        if ( self::use_mysqli() ) {
+        if ( self::use_mysqli() ) { // NOSONAR - required.
             return \mysqli_fetch_object( $result );
         } else {
             return \mysql_fetch_object( $result );
@@ -291,10 +291,10 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return $result;
         }
 
-        if ( self::use_mysqli() ) {
-            return \mysqli_free_result( $result );
+        if ( self::use_mysqli() ) { // NOSONAR - required.
+            \mysqli_free_result( $result );
         } else {
-            return \mysql_free_result( $result );
+            \mysql_free_result( $result );
         }
     }
 
@@ -313,7 +313,7 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return $result;
         }
 
-        if ( self::use_mysqli() ) {
+        if ( self::use_mysqli() ) { // NOSONAR - required.
             if ( ! ( $result instanceof \mysqli_result ) ) {
                 return $result;
             }
@@ -338,7 +338,7 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return $result;
         }
 
-        if ( self::use_mysqli() ) {
+        if ( self::use_mysqli() ) { // NOSONAR - required.
             return \mysqli_fetch_array( $result, ( null === $result_type ? MYSQLI_BOTH : $result_type ) );
         } else {
             return \mysql_fetch_array( $result, ( null === $result_type ? MYSQL_BOTH : $result_type ) );
@@ -356,11 +356,11 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return boolean|mixed false|\mysqli_num_rows.
      */
     public static function num_rows( $result ) {
-        if ( ! self::is_result( $result ) ) {
+        if ( ! self::is_result( $result ) ) { // NOSONAR - required.
             return false;
         }
 
-        if ( self::use_mysqli() ) {
+        if ( self::use_mysqli() ) { // NOSONAR - required.
             return \mysqli_num_rows( $result );
         } else {
             return \mysql_num_rows( $result );
@@ -381,7 +381,7 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return $result;
         }
 
-        if ( self::use_mysqli() ) {
+        if ( self::use_mysqli() ) { // NOSONAR - required.
             return $result instanceof \mysqli_result;
         } else {
             return is_resource( $result );

@@ -64,7 +64,7 @@ class Log_Connectors {
      *
      * @uses \MainWP\Dashboard\Module\Log\Log_Connector
      */
-    public function load_connectors() { //phpcs:ignore -- complex method.
+    public function load_connectors() { //phpcs:ignore -- NOSONAR - complex method.
         $connectors = $this->manager->get_internal_connectors();
 
         $enabled_logging = ! empty( $this->manager->settings->options['enabled'] ) ? true : false;

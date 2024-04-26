@@ -337,10 +337,8 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         $info = get_option( 'mainwp_extensions_plan_info' );
         if ( ! empty( $info ) ) {
             $info = json_decode( $info, true );
-            if ( is_array( $info ) && isset( $info['plan_purchased'] ) && isset( $info['plan_status'] ) ) {
-                if ( 'active' === $info['plan_status'] && in_array( $info['plan_purchased'], array( 'monthly', 'yearly', 'lifetime' ) ) ) {
-                    return true;
-                }
+            if ( is_array( $info ) && isset( $info['plan_purchased'] ) && isset( $info['plan_status'] ) && 'active' === $info['plan_status'] && in_array( $info['plan_purchased'], array( 'monthly', 'yearly', 'lifetime' ) ) ) {
+                return true;
             }
         }
         return $input;
@@ -498,6 +496,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return bool Activation notice.
      */
     public function is_extension_activated( $input, $slug ) {
+        unset( $input );
         return MainWP_Extensions_Handler::is_extension_activated( $slug );
     }
 
@@ -608,7 +607,8 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @param mixed  $post_id post ID.
      * @param bool   $show_create_tag Show create tag button.
      */
-    public function hook_select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class_style = '', $style = '', $selected_websites = array(), $selected_groups = array(), $show_client = false, $selected_clients = array(), $post_id = false, $show_create_tag = true ) {
+    public function hook_select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class_style = '', $style = '', $selected_websites = array(), $selected_groups = array(), $show_client = false, $selected_clients = array(), $post_id = false, $show_create_tag = true ) { //phpcs:ignore -- NOSONAR - compatible.
+        unset( $title );
         $sel_params = array(
             'type'             => $type,
             'show_group'       => $show_group,
@@ -690,6 +690,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return bool true.
      */
     public function update_user_extension( $input_value, $option_name, $option_value ) {
+        unset( $input_value );
         $userExtension                 = MainWP_DB_Common::instance()->get_user_extension();
         $userExtension->{$option_name} = wp_json_encode( $option_value );
         MainWP_DB_Common::instance()->update_user_extension( $userExtension );
@@ -734,6 +735,8 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return string|null Database query result (as string), or null on failure
      */
     public function hook_update_site_options( $boolean, $website, $option, $value ) {
+        unset( $boolean );
+
         if ( is_numeric( $website ) ) {
             $obj     = new \stdClass();
             $obj->id = intval( $website );
@@ -756,6 +759,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return object|null Database query results or null on failure.
      */
     public function hook_get_websites_by_user_id( $boolean, $userid, $selectgroups = false, $search_site = null, $orderBy = 'wp.url' ) {
+        unset( $boolean );
         return MainWP_DB::instance()->get_websites_by_user_id( $userid, $selectgroups, $search_site, $orderBy );
     }
 
@@ -770,7 +774,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return object|null Database query results or null on failure.
      */
     public function hook_get_website_by_id( $boolean, $website_id, $selectGroups = false, $extra_view = array() ) {
-
+        unset( $boolean );
         if ( empty( $website_id ) ) {
             return false;
         }
@@ -821,7 +825,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         $data[] = 'verify_certificate';
 
         if ( '' !== $sites ) {
-            foreach ( $sites as $k => $v ) {
+            foreach ( $sites as $v ) {
                 if ( MainWP_Utility::ctype_digit( $v ) ) {
                     $website = MainWP_DB::instance()->get_website_by_id( $v );
                     if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
@@ -949,6 +953,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return bool true.
      */
     public function db_free_result( $input_value, $result ) {
+        unset( $input_value );
         MainWP_DB::free_result( $result );
         return true;
     }
@@ -964,6 +969,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return bool true.
      */
     public function db_num_rows( $input_value, $result ) {
+        unset( $input_value );
         return MainWP_DB::num_rows( $result );
     }
 
@@ -979,6 +985,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return mixed websites.
      */
     public function db_get_websites_for_current_user( $input_value = false, $params = array() ) {
+        unset( $input_value );
         if ( ! is_array( $params ) ) {
             $params = array();
         }
@@ -1040,6 +1047,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return bool true.
      */
     public function hook_db_query( $input_value, $sql ) {
+        unset( $input_value );
         return MainWP_DB::instance()->query( $sql );
     }
 
@@ -1054,6 +1062,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return bool true.
      */
     public function db_fetch_object( $input_value, $result ) {
+        unset( $input_value );
         return MainWP_DB::fetch_object( $result );
     }
 
@@ -1069,6 +1078,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return bool true.
      */
     public function db_fetch_array( $input_value, $result ) {
+        unset( $input_value );
         return MainWP_DB::fetch_array( $result );
     }
 
@@ -1082,6 +1092,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return array $gen_email_settings email settings.
      */
     public function get_notification_settings( $settings, $type ) {
+        unset( $settings );
         $gen_email_settings = MainWP_Notification_Settings::get_general_email_settings( $type );
         return $gen_email_settings;
     }
@@ -1098,6 +1109,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @param string $content_type Text format.
      */
     public function hook_send_wp_mail( $input, $email, $subject, $formated_content, $content_type = '' ) {
+        unset( $input );
         return MainWP_Notification::send_wp_mail(
             $email,
             $subject,
@@ -1116,6 +1128,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return string
      */
     public function hook_get_template_html( $input, $template_name, $args = array() ) {
+        unset( $input );
         $mail_content = MainWP_Notification_Template::instance()->get_template_html(
             $template_name,
             $args
@@ -1147,6 +1160,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @param string $query_arg Query argument.
      */
     public function hook_check_security_request( $input_value, $action = '', $query_arg = '' ) {
+        unset( $input_value );
         if ( empty( $query_arg ) ) {
             //phpcs:ignore Squiz.PHP.CommentedOutCode.Found
             // to do, $query_arg = 'security'.
@@ -1169,6 +1183,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
      */
     public function hook_get_mainwp_dir( $input_value = false, $dir = null, $direct_access = false ) {
+        unset( $input_value );
         return MainWP_System_Utility::get_mainwp_dir( $dir, $direct_access );
     }
 
@@ -1299,7 +1314,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     public function upgrade_wp() {
 
         if ( ! mainwp_current_user_have_right( 'dashboard', 'update_wordpress' ) ) {
-            die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'update WordPress', 'mainwp' ), $echo = false ) ) ) );
+            die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'update WordPress', 'mainwp' ), false ) ) ) );
         }
 
         try {
@@ -1330,7 +1345,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public function upgrade_plugin_theme() {
+    public function upgrade_plugin_theme() { // phpcs:ignore -- NOSONAR - complex.
         try {
             // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : null;
@@ -1510,6 +1525,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return string
      */
     public function hook_get_download_sig( $input_value, $fullfile ) {
+        unset( $input_value );
         return MainWP_System_Utility::get_download_sig( $fullfile );
     }
 
@@ -1550,6 +1566,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @param string $slug Plugin slug.
      */
     public function hook_get_plugin_icon( $icon, $slug ) {
+        unset( $icon );
         return MainWP_System_Utility::get_plugin_icon( $slug );
     }
 
@@ -1562,6 +1579,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @param string $slug Theme slug.
      */
     public function hook_get_theme_icon( $icon, $slug ) {
+        unset( $icon );
         return MainWP_System_Utility::get_theme_icon( $slug );
     }
     /**
@@ -1573,6 +1591,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @param string $slug Plugin/Theme slug.
      */
     public function hook_get_dir_slug( $input, $slug ) {
+        unset( $input );
         return MainWP_Utility::get_dir_slug( $slug );
     }
 
@@ -1663,6 +1682,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @param string $ext_slug extension api slug.
      */
     public function hook_get_activation_info( $boolean, $ext_slug ) {
+        unset( $boolean );
         $data = MainWP_Api_Manager::instance()->get_activation_info( $ext_slug );
 
         $info = array();
@@ -1704,7 +1724,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return mixed $return result.
      */
     public function hook_run_dashboard_action( $boolean, $action, $out_die = false ) {
-
+        unset( $boolean );
         if ( ! isset( $action ) ) {
             return false;
         }
@@ -1777,6 +1797,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return array $return Decrypted Key value.
      */
     public function hook_get_key_value( $input_value, $name, $default_value = false ) {
+        unset( $input_value );
         return MainWP_Keys_Manager::instance()->get_keys_value( $name, $default_value );
     }
 
@@ -1793,6 +1814,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return array $return Decrypted Key value.
      */
     public function hook_update_key_value( $input_value, $name, $value = false, $prefix = 'ext_' ) {
+        unset( $input_value );
         return MainWP_Keys_Manager::instance()->update_key_value( $name, $value, $prefix );
     }
 
@@ -1823,6 +1845,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return array $return Decrypted Key value.
      */
     public function hook_encrypt_key_value( $input_value, $data, $prefix = 'ext_', $key_file = false ) {
+        unset( $input_value );
         return MainWP_Keys_Manager::instance()->encrypt_keys_data( $data, $prefix, $key_file );
     }
 
@@ -1838,6 +1861,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return array $return Decrypted Key value.
      */
     public function hook_decrypt_key_value( $input_value, $encrypted_data, $default_value = false ) {
+        unset( $input_value );
         return MainWP_Keys_Manager::instance()->decrypt_keys_data( $encrypted_data, $default_value );
     }
 
@@ -1866,6 +1890,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return array Lookup items.
      */
     public function hook_get_lookup_items( $false_val, $item_name, $item_id, $obj_name ) {
+        unset( $false_val );
         return MainWP_DB::instance()->get_lookup_items( $item_name, $item_id, $obj_name );
     }
 
@@ -1881,6 +1906,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return array Lookup items.
      */
     public function hook_insert_lookup_item( $false_val, $item_name, $item_id, $obj_name, $obj_id ) {
+        unset( $false_val );
         return MainWP_DB::instance()->insert_lookup_item( $item_name, $item_id, $obj_name, $obj_id );
     }
 
@@ -1894,6 +1920,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @return mixed results.
      */
     public function hook_delete_lookup_items( $false_val, $by = 'lookup_id', $params = array() ) {
+        unset( $false_val );
         return MainWP_DB::instance()->delete_lookup_items( $by, $params );
     }
 }

@@ -152,11 +152,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( $websites ) {
             foreach ( $websites as $website ) {
 
-                if ( ! empty( $sites_ids ) ) {
-                    // filter sites.
-                    if ( ! in_array( $website->id, $sites_ids ) ) {
-                        continue;
-                    }
+                if ( ! empty( $sites_ids ) && ! in_array( $website->id, $sites_ids ) ) {
+                    continue;
                 }
 
                 $connected_sites[] = array(
@@ -191,11 +188,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( $websites ) {
             foreach ( $websites as $website ) {
 
-                if ( ! empty( $sites_ids ) ) {
-                    // filter sites.
-                    if ( ! in_array( $website->id, $sites_ids ) ) {
-                        continue;
-                    }
+                if ( ! empty( $sites_ids ) && ! in_array( $website->id, $sites_ids ) ) {
+                    continue;
                 }
 
                 $disc_sites[] = array(
@@ -318,7 +312,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @return string|null Database query result (as string), or null on failure.
      */
-    public function get_website_options_array( &$website, $options ) {
+    public function get_website_options_array( &$website, $options ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( ! is_array( $options ) || empty( $options ) ) {
             return array();
@@ -690,7 +684,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
      */
-    public function get_sql_websites_for_current_user(
+    public function get_sql_websites_for_current_user( // phpcs:ignore -- NOSONAR - complex.
         $selectgroups = false,
         $search_site = null,
         $orderBy = 'wp.url',
@@ -730,14 +724,11 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
 
         $connected_sql = '';
-        if ( is_array( $params ) ) {
-            if ( isset( $params['connected'] ) ) {
-                if ( 'yes' === $params['connected'] ) {
-                    $connected_sql = ' AND wp_sync.sync_errors = "" ';
-                } elseif ( 'no' === $params['connected'] ) {
-                    $connected_sql = '  AND wp_sync.sync_errors <> "" ';
-                }
-            }
+
+        if ( is_array( $params ) && isset( $params['connected'] ) && 'yes' === $params['connected'] ) {
+            $connected_sql = ' AND wp_sync.sync_errors = "" ';
+        } elseif ( is_array( $params ) && isset( $params['connected'] ) && 'no' === $params['connected'] ) {
+            $connected_sql = '  AND wp_sync.sync_errors <> "" ';
         }
 
         if ( 'wp.url' === $orderBy ) {
@@ -786,7 +777,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @return object|null Database query results or null on failure.
      */
-    public function get_sql_wp_for_current_user( $params = array() ) {
+    public function get_sql_wp_for_current_user( $params = array() ) { // phpcs:ignore -- NOSONAR - complex.
         if ( ! is_array( $params ) ) {
             $params = array();
         }
@@ -963,7 +954,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-    public function get_websites_for_current_user( $params = array() ) {
+    public function get_websites_for_current_user( $params = array() ) { // phpcs:ignore -- NOSONAR - complex.
         if ( ! is_array( $params ) ) {
             $params = array();
         }
@@ -1132,7 +1123,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
      */
-    public function get_sql_search_websites_for_current_user( $params ) {
+    public function get_sql_search_websites_for_current_user( $params ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( ! is_array( $params ) ) {
             $params = array();
@@ -1185,13 +1176,11 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         if ( $selectgroups ) {
             $staging_group = get_option( 'mainwp_stagingsites_group_id' );
-            if ( $staging_group ) {
-                if ( in_array( $staging_group, $group_ids ) ) {
-                    if ( 0 === count( $group_ids ) ) {
-                        $is_staging = 'yes';
-                    } else {
-                        $is_staging = 'nocheckstaging';
-                    }
+            if ( $staging_group && in_array( $staging_group, $group_ids ) ) {
+                if ( 0 === count( $group_ids ) ) {
+                    $is_staging = 'yes';
+                } else {
+                    $is_staging = 'nocheckstaging';
                 }
             }
         }
@@ -1364,7 +1353,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @return boolean|null $_where Database query results or null on failure.
      */
-    public function get_sql_where_allow_access_sites( $site_table_alias = '', $is_staging = 'no' ) {
+    public function get_sql_where_allow_access_sites( $site_table_alias = '', $is_staging = 'no' ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( empty( $site_table_alias ) ) {
             $site_table_alias = $this->table_name( 'wp' );
@@ -1434,7 +1423,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @return boolean|null $_where Database query results or null on failer.
      */
-    public function get_sql_where_allow_groups( $group_table_alias = '', $with_staging = 'no' ) {
+    public function get_sql_where_allow_groups( $group_table_alias = '', $with_staging = 'no' ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( empty( $group_table_alias ) ) {
             $group_table_alias = $this->table_name( 'group' );
@@ -1651,7 +1640,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public function get_sql_websites_by_group_id(
+    public function get_sql_websites_by_group_id( // phpcs:ignore -- NOSONAR - complex.
         $id,
         $selectgroups = false,
         $orderBy = 'wp.url',
@@ -1664,10 +1653,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $is_staging = 'no';
         if ( $selectgroups ) {
             $staging_group = get_option( 'mainwp_stagingsites_group_id' );
-            if ( $staging_group ) {
-                if ( $id === $staging_group ) {
-                    $is_staging = 'yes';
-                }
+            if ( $staging_group && $id === $staging_group ) {
+                $is_staging = 'yes';
             }
         }
 
@@ -1990,7 +1977,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public function update_website(
+    public function update_website( // phpcs:ignore -- NOSONAR - complex.
         $websiteid,
         $url,
         $userid,
@@ -2268,7 +2255,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @return array $dbwebsites.
      */
-    public static function get_db_sites( $params = array() ) {
+    public static function get_db_sites( $params = array() ) { // phpcs:ignore -- NOSONAR - complex.
 
         $dbwebsites = array();
 
@@ -2289,16 +2276,14 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     $get_field = $field_indx;
                 }
 
-                if ( in_array( $get_field, static::$possible_options ) ) {
-                    if ( ! in_array( $get_field, $data_fields ) ) {
-                        $data_fields[] = $get_field;
-                    }
+                if ( in_array( $get_field, static::$possible_options ) && ! in_array( $get_field, $data_fields ) ) {
+                    $data_fields[] = $get_field;
                 }
             }
         }
 
         if ( ! empty( $sites ) ) {
-            foreach ( $sites as $k => $v ) {
+            foreach ( $sites as $v ) {
                 if ( MainWP_Utility::ctype_digit( $v ) ) {
                     $website = static::instance()->get_website_by_id( $v );
                     if ( empty( $website ) ) {
@@ -2310,7 +2295,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
 
         if ( ! empty( $groups ) ) {
-            foreach ( $groups as $k => $v ) {
+            foreach ( $groups as $v ) {
                 if ( MainWP_Utility::ctype_digit( $v ) ) {
                     $websites = static::instance()->query( static::instance()->get_sql_websites_by_group_id( $v ) );
                     while ( $websites && ( $website = static::fetch_object( $websites ) ) ) {
@@ -2345,7 +2330,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      */
-    public function get_sites( $websiteid = null, $for_manager = false, $others = array() ) { // phpcs:ignore -- not quite complex function.
+    public function get_sites( $websiteid = null, $for_manager = false, $others = array() ) { // phpcs:ignore -- NOSONAR - not quite complex function.
 
         if ( ! is_array( $others ) ) {
             $others = array();
@@ -2379,9 +2364,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             );
         } else {
             if ( isset( $others['orderby'] ) ) {
-                if ( ( 'site' === $others['orderby'] ) ) {
+                if ( 'site' === $others['orderby'] ) {
                     $orderBy = 'wp.name ' . ( 'asc' === $others['order'] ? 'asc' : 'desc' );
-                } elseif ( ( 'url' === $others['orderby'] ) ) {
+                } elseif ( 'url' === $others['orderby'] ) {
                     $orderBy = 'wp.url ' . ( 'asc' === $others['order'] ? 'asc' : 'desc' );
                 }
             }
@@ -2389,24 +2374,21 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $search_site = trim( $others['search'] );
             }
 
-            if ( is_array( $others ) ) {
-                if ( isset( $others['plugins_slug'] ) ) {
+            if ( is_array( $others ) && isset( $others['plugins_slug'] ) ) {
+                $slugs      = explode( ',', $others['plugins_slug'] );
+                $extraWhere = '';
+                foreach ( $slugs as $slug ) {
+                    $slug        = wp_json_encode( $slug );
+                    $slug        = trim( $slug, '"' );
+                    $slug        = str_replace( '\\', '.', $slug );
+                    $extraWhere .= ' wp.plugins REGEXP "' . $slug . '" OR';
+                }
+                $extraWhere = trim( rtrim( $extraWhere, 'OR' ) );
 
-                    $slugs      = explode( ',', $others['plugins_slug'] );
-                    $extraWhere = '';
-                    foreach ( $slugs as $slug ) {
-                        $slug        = wp_json_encode( $slug );
-                        $slug        = trim( $slug, '"' );
-                        $slug        = str_replace( '\\', '.', $slug );
-                        $extraWhere .= ' wp.plugins REGEXP "' . $slug . '" OR';
-                    }
-                    $extraWhere = trim( rtrim( $extraWhere, 'OR' ) );
-
-                    if ( '' === $extraWhere ) {
-                        $extraWhere = null;
-                    } else {
-                        $extraWhere = '(' . $extraWhere . ')';
-                    }
+                if ( '' === $extraWhere ) {
+                    $extraWhere = null;
+                } else {
+                    $extraWhere = '(' . $extraWhere . ')';
                 }
             }
         }
@@ -2509,7 +2491,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @return mixed Result
      */
-    public function delete_lookup_items( $by = 'lookup_id', $params = array() ) {
+    public function delete_lookup_items( $by = 'lookup_id', $params = array() ) { // phpcs:ignore -- NOSONAR - complex.
         if ( ! is_array( $params ) ) {
             return false;
         }

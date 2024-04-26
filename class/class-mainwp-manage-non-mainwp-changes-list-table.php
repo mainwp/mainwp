@@ -228,7 +228,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
     /**
      * Prepare the items to be listed.
      */
-    public function prepare_items() { //phpcs:ignore -- complex method.
+    public function prepare_items() { //phpcs:ignore -- NOSONAR - complex method.
 
         $orderby = '';
 

@@ -183,7 +183,7 @@ class Cost_Tracker_Clients_Widget {
      *
      * @return string $out Output.
      */
-    public function column_default( $item, $column_name, $client_id ) { //phpcs:ignore -- complex.
+    public function column_default( $item, $column_name, $client_id ) { //phpcs:ignore -- NOSONAR - complex.
         $out = '';
 
         $order_val = 0;

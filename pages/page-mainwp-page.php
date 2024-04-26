@@ -970,7 +970,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
      * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
      */
-    public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all', $clients = '' ) { // phpcs:ignore -- complex function.
+    public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all', $clients = '' ) { // phpcs:ignore -- NOSONAR - complex function.
 
         MainWP_Cache::init_cache( 'Page' );
 
@@ -1108,7 +1108,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
      * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
      */
-    public static function pages_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex function.
+    public static function pages_search_handler( $data, $website, &$output ) { // phpcs:ignore -- NOSONAR - complex function.
         if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
             return;
         }

@@ -206,7 +206,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * @uses \MainWP\Dashboard\MainWP_Security_Issues_Widget::get_class_name()
      * @uses \MainWP\Dashboard\MainWP_Updates_Overview::get_class_name()
      */
-    public static function add_meta_boxes( $page ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function add_meta_boxes( $page ) { // phpcs:ignore -- NOSONAR - complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * Get getmetaboxes

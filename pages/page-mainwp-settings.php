@@ -550,7 +550,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * @uses \MainWP\Dashboard\MainWP_Manage_Backups::render_settings()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_http_codes()
      */
-    public static function render() { //phpcs:ignore -- complex method.
+    public static function render() { //phpcs:ignore -- NOSONAR - complex method.
         if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
             return;
@@ -1152,7 +1152,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-    public static function render_advanced() { //phpcs:ignore -- complex method.
+    public static function render_advanced() { //phpcs:ignore -- NOSONAR - complex method.
         if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
             return;

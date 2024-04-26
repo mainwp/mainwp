@@ -70,7 +70,7 @@ class MainWP_Actions_Handler { //phpcs:ignore Generic.Classes.OpeningBraceSameLi
     public function do_action_mainwp_install_actions( $websites, $pAction, $output, $type, $post_data = array(), $upload = false ) {
 
         if ( ! in_array( $pAction, array( 'install', 'updated' ), true ) ) {
-            return false;
+            return;
         }
 
         $website = is_array( $websites ) ? current( $websites ) : $websites;
@@ -86,10 +86,8 @@ class MainWP_Actions_Handler { //phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( is_array( $output ) ) {
             $data = $output;
         } elseif ( is_object( $output ) ) {
-            if ( ! empty( $output->other_data ) && is_array( $output->other_data ) ) {
-                if ( isset( $output->other_data[ $website->id ]['install_items'] ) ) {
-                    $data['install_items'] = $output->other_data[ $website->id ]['install_items'];
-                }
+            if ( ! empty( $output->other_data ) && is_array( $output->other_data ) && isset( $output->other_data[ $website->id ]['install_items'] ) ) {
+                $data['install_items'] = $output->other_data[ $website->id ]['install_items'];
             }
         }
 

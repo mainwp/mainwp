@@ -119,7 +119,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::added_on_menu()
      * @uses \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
      */
-    public static function render() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render() { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $mainwp_api_key = false;
         if ( get_option( 'mainwp_extensions_api_save_login' ) ) {
             $mainwp_api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
@@ -403,7 +403,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::is_extension_activated()
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::polish_ext_name()
      */
-    public static function render_extension_card( $extension, $extension_update, $img_url, $disabled = false, $simple = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_extension_card( $extension, $extension_update, $img_url, $disabled = false, $simple = false ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         if ( isset( $extension['href'] ) && ! empty( $extension['href'] ) ) {
             $extension_page_url = $extension['href'];
@@ -420,16 +420,8 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $active = false;
         }
 
-        if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) {
-            if ( $active ) {
-                $extension_api_status = '<a href="javascript:void(0)" class="mainwp-extensions-api-activation api-status mainwp-green"><i class="lock open icon"></i> ' . esc_html__( 'Update Notification Enabled', 'mainwp' ) . '</a>';
-            } else {
-                $extension_api_status = '<a href="javascript:void(0)" class="mainwp-extensions-api-activation api-status mainwp-red"><i class="lock icon"></i> ' . esc_html__( 'Add API to Enable Update Notification', 'mainwp' ) . '</a>';
-            }
-
-            if ( ! isset( $extension['product_item_id'] ) ) {
-                $extension['product_item_id'] = 0;
-            }
+        if ( isset( $extension['apiManager'] ) && $extension['apiManager'] && ! isset( $extension['product_item_id'] ) ) {
+            $extension['product_item_id'] = 0;
         }
 
         $queue_status = '';
@@ -465,8 +457,6 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $new = '<span class="ui floating green mini label">NEW!</span>';
         }
 
-        $is_demo = MainWP_Demo_Handle::is_demo_mode();
-
         ?>
             <div class="ui card extension <?php echo $disabled ? 'grey mainwp-disabled-extension' : 'green mainwp-enabled-extension'; ?> extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $item_slug ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" status="<?php echo esc_attr( $queue_status ); ?>" license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
         <?php
@@ -482,7 +472,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         do_action( 'mainwp_extension_card_top', $extension );
         ?>
                 <div class="content">
-                    <img class="right floated mini ui image" src="<?php echo esc_html( $img_url ); ?>">
+                    <img class="right floated mini ui image" alt="image" src="<?php echo esc_html( $img_url ); ?>">
                     <div class="header">
 
                         <?php if ( ! $disabled ) { ?>
@@ -594,7 +584,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         ?>
         <div class="ui card extension grey mainwp-disabled-extension extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $extension['slug'] ); ?>">
             <div class="content">
-                <img class="right floated mini ui image" src="<?php echo esc_html( $img_url ); ?>">
+                <img class="right floated mini ui image" alt="image" src="<?php echo esc_html( $img_url ); ?>">
                 <div class="header">
                     <?php echo esc_html( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>
                 </div>

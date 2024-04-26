@@ -124,7 +124,7 @@ let mainwp_managesites_import_sites = function () {
     });
 
     jQuery.post(ajaxurl, data, function (res_things) {
-        response = res_things.response;
+        let response = res_things.response??'';
 
         let check_result = '[' + res_things.check_me + ']>> ';
 

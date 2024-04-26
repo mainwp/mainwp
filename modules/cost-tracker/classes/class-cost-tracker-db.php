@@ -177,7 +177,7 @@ PRIMARY KEY  (`id`)  ';
      * @throws \MainWP_Exception Existed cost tracker error.
      * @return mixed Result
      */
-    public function update_cost_tracker( $update ) { //phpcs:ignore -- complex.
+    public function update_cost_tracker( $update ) { //phpcs:ignore -- NOSONAR - complex.
         /**
          * WP database.
          *
@@ -366,7 +366,7 @@ PRIMARY KEY  (`id`)  ';
      *
      * @return mixed Result
      */
-    public function get_cost_tracker_by( $by = 'id', $value = null, $params = array() ) { //phpcs:ignore -- complex method.
+    public function get_cost_tracker_by( $by = 'id', $value = null, $params = array() ) { //phpcs:ignore -- NOSONAR - complex method.
         global $wpdb;
 
         if ( ! is_array( $params ) ) {
@@ -502,7 +502,7 @@ PRIMARY KEY  (`id`)  ';
      *
      * @return mixed Result
      */
-    public function get_all_cost_trackers_by_clients( $client_ids, $params = array() ) { //phpcs:ignore -- complex method.
+    public function get_all_cost_trackers_by_clients( $client_ids, $params = array() ) { //phpcs:ignore -- NOSONAR - complex method.
 
         if ( is_string( $client_ids ) ) {
             $client_ids = explode( ',', $client_ids );
@@ -641,7 +641,7 @@ PRIMARY KEY  (`id`)  ';
      *
      * @return mixed Result
      */
-    public function get_all_cost_trackers_by_sites( $sites_ids ) { //phpcs:ignore -- complex method.
+    public function get_all_cost_trackers_by_sites( $sites_ids ) { //phpcs:ignore -- NOSONAR - complex method.
 
         if ( is_string( $sites_ids ) ) {
             $sites_ids = explode( ',', $sites_ids );

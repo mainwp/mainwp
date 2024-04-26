@@ -294,7 +294,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @return void.
      */
-    public function reports_check_updates_861( $tokens, $sites_tokens_values ) { // phpcs:ignore -- complexex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function reports_check_updates_861( $tokens, $sites_tokens_values ) { // phpcs:ignore -- NOSONAR complexex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $default_client_fields  = MainWP_Client_Handler::get_default_client_fields();
         $default_contact_fields = MainWP_Client_Handler::get_default_contact_fields();
@@ -499,7 +499,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @return bool.
      */
-    public function update_client_contact( $data ) {
+    public function update_client_contact( $data ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( empty( $data ) ) {
             return false;
@@ -516,10 +516,8 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 $existed_email = true;
             }
 
-            if ( $curret_contact && ! empty( $contact_id ) ) {
-                if ( (int) $curret_contact->contact_id !== $contact_id ) { // update contact with existed email => failed.
-                    $existed_email = true;
-                }
+            if ( $curret_contact && ! empty( $contact_id ) && (int) $curret_contact->contact_id !== $contact_id ) { // update contact with existed email => failed.
+                $existed_email = true;
             }
 
             if ( $existed_email ) {
@@ -549,10 +547,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @return mixed $result results.
      */
-    public function get_wp_client_contact_by( $by = 'contact_id', $value = null, $obj = OBJECT, $params = array() ) {
-
-        $with_selected_sites = isset( $params['with_selected_sites'] ) && $params['with_selected_sites'] ? true : false;
-        $with_tags           = isset( $params['with_tags'] ) && $params['with_tags'] ? true : false;
+    public function get_wp_client_contact_by( $by = 'contact_id', $value = null, $obj = OBJECT, $params = array() ) { // phpcs:ignore -- NOSONAR - complex.
 
         $sql = '';
 
@@ -649,7 +644,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @return mixed $result results.
      */
-    public function get_wp_client_by( $by = 'client_id', $value = null, $obj = OBJECT, $params = array() ) { // phpcs:ignore -- complexex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function get_wp_client_by( $by = 'client_id', $value = null, $obj = OBJECT, $params = array() ) { // phpcs:ignore -- NOSONAR - complexex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $with_selected_sites = isset( $params['with_selected_sites'] ) && $params['with_selected_sites'] ? true : false;
         $with_tags           = isset( $params['with_tags'] ) && $params['with_tags'] ? true : false;
@@ -779,7 +774,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @return mixed result.
      */
-    public function get_wp_clients( $params = array() ) {
+    public function get_wp_clients( $params = array() ) { // phpcs:ignore -- NOSONAR - complex.
 
         $custom_field  = false;
         $with_tags     = false;
@@ -802,7 +797,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
                 $where .= ' AND wc.client_id IN (' . $clientWhere . ') ';
             }
-            $custom_field = $params['custom_fields'] && $params['custom_fields'] ? true : false;
+            $custom_field = $params['custom_fields'] ? true : false;
 
             $with_tags     = isset( $params['with_tags'] ) && $params['with_tags'] ? true : false;
             $with_contacts = isset( $params['with_contacts'] ) && $params['with_contacts'] ? true : false;
@@ -917,7 +912,6 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET client_id=0 WHERE client_id=%d ', $client_id ) );
             return true;
         }
-        return false;
     }
 
     /**
@@ -1067,10 +1061,8 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     public function update_client_field( $field_id, $field ) {
         if ( $field_id && ! empty( $field['field_name'] ) ) {
             $current = $this->get_client_fields_by( 'field_id', $field_id );
-            if ( $current ) {
-                if ( $this->wpdb->update( $this->table_name( 'wp_clients_fields' ), $field, array( 'field_id' => $field_id ) ) ) {
-                    return $this->get_client_fields_by( 'field_id', $current->field_id );
-                }
+            if ( $current && $this->wpdb->update( $this->table_name( 'wp_clients_fields' ), $field, array( 'field_id' => $field_id ) ) ) {
+                return $this->get_client_fields_by( 'field_id', $current->field_id );
             }
         }
         return false;
@@ -1163,7 +1155,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @return mixed results.
      */
-    public function get_client_fields( $general = true, $client_id = 0, $field_name_index = false ) {
+    public function get_client_fields( $general = true, $client_id = 0, $field_name_index = false ) { // phpcs:ignore -- NOSONAR - complex.
         $where = '';
 
         if ( $client_id ) {
@@ -1261,15 +1253,13 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      */
     public function delete_client_field_by( $by = 'field_id', $value = false, $client_id = false ) {
 
-        if ( 'field_id' === $by ) {
-            if ( $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_clients_fields' ) . ' WHERE field_id=%d AND client_id=%d', $value, $client_id ) ) ) { // delete individual or general client field.
-                if ( $client_id > 0 ) { // individual field value.
-                    $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_clients_field_values' ) . ' WHERE field_id=%d AND value_client_id=%d', $value, $client_id ) ); // delete individual tokens values, for one client.
-                } else {
-                    $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_clients_field_values' ) . ' WHERE field_id=%d', $value ) ); // delete general tokens values, multi clients (value_client_id).
-                }
-                return true;
+        if ( 'field_id' === $by && $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_clients_fields' ) . ' WHERE field_id=%d AND client_id=%d', $value, $client_id ) ) ) { // delete individual or general client field.
+            if ( $client_id > 0 ) { // individual field value.
+                $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_clients_field_values' ) . ' WHERE field_id=%d AND value_client_id=%d', $value, $client_id ) ); // delete individual tokens values, for one client.
+            } else {
+                $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_clients_field_values' ) . ' WHERE field_id=%d', $value ) ); // delete general tokens values, multi clients (value_client_id).
             }
+            return true;
         }
 
         return false;

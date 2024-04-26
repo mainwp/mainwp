@@ -81,14 +81,13 @@ class MainWP_Cache { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     public static function get_cached_context( $page ) {
         $cachedSearch = ( isset( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] ) && is_array( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] ) ? $_SESSION[ 'MainWP' . $page . 'SearchContext' ] : null ); //phpcs:ignore -- ok.
 
-        if ( null !== $cachedSearch ) {
-            if ( ( time() - ( 2 * 60 * 60 ) ) > $cachedSearch['time'] ) {
-                unset( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] );
-                unset( $_SESSION[ 'MainWP' . $page . 'Search' ] );
-                unset( $_SESSION[ 'MainWP' . $page . 'SearchResult' ] );
-                $cachedSearch = null;
-            }
+        if ( null !== $cachedSearch && ( ( time() - ( 2 * 60 * 60 ) ) > $cachedSearch['time'] ) ) {
+            unset( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] );
+            unset( $_SESSION[ 'MainWP' . $page . 'Search' ] );
+            unset( $_SESSION[ 'MainWP' . $page . 'SearchResult' ] );
+            $cachedSearch = null;
         }
+
         if ( null !== $cachedSearch && isset( $cachedSearch['status'] ) ) {
             $cachedSearch['status'] = explode( ',', $cachedSearch['status'] );
         }

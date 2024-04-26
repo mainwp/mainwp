@@ -134,7 +134,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      *
      * @param mixed $site_id Child Site id.
      */
-    public static function get_total_info( $site_id ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function get_total_info( $site_id ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
         $sql           = MainWP_DB::instance()->get_sql_website_by_id( $site_id, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
@@ -310,7 +310,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      */
-    public static function render_wpcore_updates( $website, $active_tab ) {
+    public static function render_wpcore_updates( $website, $active_tab ) { // phpcs:ignore -- NOSONAR - complex.
         $user_can_update_wp = mainwp_current_user_have_right( 'dashboard', 'update_wordpress' );
         $is_demo            = MainWP_Demo_Handle::is_demo_mode();
         ?>
@@ -398,7 +398,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
      */
-    public static function render_plugins_updates( $website, $active_tab, $userExtension ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_plugins_updates( $website, $active_tab, $userExtension ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
         if ( ! is_array( $trustedPlugins ) ) {
@@ -568,7 +568,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
      */
-    public static function render_themes_updates( $website, $active_tab, $userExtension ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_themes_updates( $website, $active_tab, $userExtension ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $trustedThemes = json_decode( $userExtension->trusted_themes, true );
         if ( ! is_array( $trustedThemes ) ) {

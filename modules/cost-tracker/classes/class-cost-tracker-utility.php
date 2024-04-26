@@ -161,7 +161,7 @@ class Cost_Tracker_Utility {
      *
      * @return string
      */
-    public static function cost_tracker_format_price( $price, $ret = false, $params = array() ) { //phpcs:ignore -- complex.
+    public static function cost_tracker_format_price( $price, $ret = false, $params = array() ) { //phpcs:ignore -- NOSONAR - complex.
         if ( ! is_array( $params ) ) {
             $params = array();
         }

@@ -242,7 +242,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
      */
-    public function mainwp_testwp() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function mainwp_testwp() { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $this->secure_request( 'mainwp_testwp' );
 
         $url               = null;
@@ -315,7 +315,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
         if ( 1 === $verifyCertificate ) {
             $ssl_verifyhost = true;
         } elseif ( 2 === $verifyCertificate ) {
-            if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
+            if ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) {
                 $ssl_verifyhost = true;
             }
         }

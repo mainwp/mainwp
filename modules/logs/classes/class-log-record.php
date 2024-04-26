@@ -131,7 +131,7 @@ class Log_Record {
      *
      * @param object $log  Record data object.
      */
-    public function __construct( $log ) { //phpcs:ignore -- complex method.
+    public function __construct( $log ) { //phpcs:ignore -- NOSONAR - complex method.
         $this->log_id        = isset( $log->log_id ) ? $log->log_id : null;
         $this->created       = isset( $log->created ) ? $log->created : null;
         $this->site_id       = isset( $log->site_id ) ? $log->site_id : null;

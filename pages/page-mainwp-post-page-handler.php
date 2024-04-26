@@ -74,7 +74,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Post_Handler::secure_request()
      * @uses \MainWP\Dashboard\MainWP_Post::list_meta_row()
      */
-    public static function ajax_add_meta() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function ajax_add_meta() { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_post_addmeta' );
 
@@ -438,7 +438,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-    public static function posting( $post_id ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function posting( $post_id ) { // phpcs:ignore -- NOSONAR - complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $p_id = $post_id;
 
         $edit_id = get_post_meta( $post_id, '_mainwp_edit_post_id', true );
@@ -600,7 +600,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param int    $post_id Post or Page ID.
      * @param string $what What posting process.
      */
-    public static function posting_posts( $post_id, $what ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function posting_posts( $post_id, $what ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         if ( empty( $post_id ) ) {
             return false;
@@ -1054,7 +1054,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @return array result
      */
-    public static function create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images, $replaceadvImg = false, $website = false ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images, $replaceadvImg = false, $website = false ) { // phpcs:ignore -- NOSONAR - complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * Current user global.
@@ -1253,7 +1253,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $dashboard_url   = str_replace( '/', '\/', $dashboard_url );
         }
 
-        $foundMatches = preg_match_all( '#(' . preg_quote( $site_url_source, null ) . ')[^\.]*(\.(png|gif|jpg|jpeg))#ix', $content, $matches, PREG_SET_ORDER ); // phpcs:ignore -- Current complexity.
+        $foundMatches = preg_match_all( '#(' . preg_quote( $site_url_source, null ) . ')[^\.]*(\.(png|gif|jpg|jpeg))#ix', $content, $matches, PREG_SET_ORDER ); // phpcs:ignore -- NOSONAR -Current complexity.
 
         if ( 0 < $foundMatches ) {
 

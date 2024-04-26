@@ -916,7 +916,6 @@ table.mainwp-manage-wpsites-table .error a {
     position: absolute;
     background-color: #ECECEC;
     background-color: white;
-    /*border: 1px solid #CCC;*/
     border-left: 0;
     z-index: 9999;
 }

@@ -8,6 +8,7 @@ let managesitesContinueAfterBackup;
 let managesitesBackupSites;
 let managesitesBackupError;
 let managesitesBackupDownloadRunning;
+window.bulkManageSitesTaskRunning = false;
 
 let managesites_update_all_next_step = function () {
     let next = '';
@@ -247,16 +248,13 @@ jQuery(document).on('click', '#managesites-backup-ignore', function () {
     }
 });
 
-let managesitesShowBusyFunction;
-let managesitesShowBusyTimeout;
-
 let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
     if (!mainwpParams['backup_before_upgrade']) {
         if (managesitesContinueAfterBackup != undefined)
             managesitesContinueAfterBackup();
         return;
     }
-    managesitesShowBusyFunction = function () {
+    let managesitesShowBusyFunction = function () {
         let output = __('Checking if a backup is required for the selected updates...');
         mainwpPopup('#managesites-backup-box').getContentEl().html(output);
         jQuery('#managesites-backup-all').hide();
@@ -270,7 +268,7 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
 
     };
 
-    managesitesShowBusyTimeout = setTimeout(managesitesShowBusyFunction, 300);
+    let managesitesShowBusyTimeout = setTimeout(managesitesShowBusyFunction, 300);
 
     //Step 2: Check if backups are ok.
     let data = mainwp_secure_data({
@@ -289,7 +287,7 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
                 mainwpPopup('#managesites-backup-box').close();
                 let siteFeedback;
 
-                if (response['result'] && response['result']['sites'] != undefined) {
+                if (response?.result?.sites) {
                     siteFeedback = [];
                     for (let currSiteId in response['result']['sites']) {
                         if (!response['result']['sites'][currSiteId]) {

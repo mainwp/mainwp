@@ -139,7 +139,7 @@ window.mainwp_fetch_plugins = function () {
         jQuery('#mainwp-loading-plugins-row').hide();
         jQuery('#mainwp-plugins-main-content').show();
 
-        if (response && response.result) {
+        if (response?.result) {
             jQuery('#mainwp-plugins-content').html(response.result);
             jQuery('#mainwp-plugins-bulk-actions-wapper').html(response.bulk_actions);
             jQuery('#mainwp-plugins-bulk-actions-wapper .ui.dropdown').dropdown();
@@ -674,7 +674,7 @@ window.mainwp_fetch_themes = function () {
     jQuery.post(ajaxurl, data, function (response) {
         jQuery('#mainwp-loading-themes-row').hide();
         jQuery('#mainwp-themes-main-content').show();
-        if (response && response.result) {
+        if (response?.result) {
             jQuery('#mainwp-themes-content').html(response.result);
             jQuery('#mainwp-themes-bulk-actions-wapper').html(response.bulk_actions);
             jQuery('#mainwp-themes-bulk-actions-wapper .ui.dropdown').dropdown();
@@ -714,9 +714,9 @@ let manage_plugin_Action = function (elem, what) {
     let end_row = '</div>';
     jQuery(rowElement).html(start_row + '<i class="notched circle loading icon"></i>' + __('Please wait...') + end_row);
     jQuery.post(ajaxurl, data, function (response) {
-        if (response && response.error) {
+        if (response?.error) {
             jQuery(rowElement).html(start_row + '<span data-tooltip="' + response.error + '" data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
-        } else if (response && response.result) {
+        } else if (response?.result) {
             if (what == 'delete') {
                 jQuery(rowElement).html(start_row + '<i class="green check icon"></i> ' + response.result + '</div>');
                 setTimeout(function () {
@@ -859,9 +859,9 @@ let manages_themeAction = function (elem, what) {
 
     jQuery(rowElement).html(start_row + '<i class="notched circle loading icon"></i>' + __('Please wait...') + end_row);
     jQuery.post(ajaxurl, data, function (response) {
-        if (response && response.error) {
+        if (response?.error) {
             jQuery(rowElement).html(start_row + '<span data-tooltip="' + response.error + '" data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
-        } else if (response && response.result) {
+        } else if (response?.result) {
             if (what == 'delete') {
                 jQuery(rowElement).html(start_row + '<i class="green check icon"></i> ' + response.result + end_row);
                 setTimeout(function () {
@@ -972,14 +972,14 @@ let manage_themes_upgrade_int = function (slug, websiteId) {
  * Check Backups.
  */
 let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAfterBackup) {
-    managesitesShowBusyFunction = function () {
+    let managesitesShowBusyFunction = function () {
         let output = __('Checking if a backup is required for the selected updates...');
         mainwpPopup('#managesites-backup-box').getContentEl().html(output);
         jQuery('#managesites-backup-all').hide();
         jQuery('#managesites-backup-ignore').hide();
         mainwpPopup('#managesites-backup-box').init({
             title: __("Checking backup settings..."), callback: function () {
-                bulkManageSitesTaskRunning = false;
+                window.bulkManageSitesTaskRunning = false;
                 window.location.href = location.href;
             }
         });
@@ -1005,7 +1005,7 @@ let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAf
                 mainwpPopup('#managesites-backup-box').close();
                 let siteFeedback;
 
-                if (response['result'] && response['result']['sites'] != undefined) {
+                if (response?.result?.sites) {
                     siteFeedback = [];
                     for (let currSiteId in response['result']['sites']) {
                         if (!response['result']['sites'][currSiteId]) {

@@ -78,7 +78,7 @@ let mainwp_managesites_doaction = function (action) {
         updateType = 2; // multi update
       }
 
-      mainwp_confirm(confirmMsg, _callback = function () { mainwp_managesites_doaction_process(action); }, _cancelled_callback, updateType);
+      mainwp_confirm(confirmMsg, function () { mainwp_managesites_doaction_process(action); }, _cancelled_callback, updateType);
       return false; // return those case
     }
 
@@ -320,7 +320,7 @@ let bulkManageSitesMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == 
 let bulkManageSitesCurrentThreads = 0;
 let bulkManageSitesTotal = 0;
 let bulkManageSitesFinished = 0;
-let bulkManageSitesTaskRunning = false;
+window.bulkManageSitesTaskRunning = false;
 
 
 let managesites_bulk_init = function () {

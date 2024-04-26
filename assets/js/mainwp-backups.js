@@ -258,7 +258,7 @@ backup_download_file = function (pSiteId, type, url, file, regexfile, size, subf
     appendToDiv(backsprocessContentEl, __('Downloading the file.') + ' <div id="managesite-backup-status-progress" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
     jQuery('#managesite-backup-status-progress').progress({ value: 0, total: size });
 
-    let fnc = function () {
+    let fnc = function (file) {
         return function (pFunction) {
             let data = mainwp_secure_data({
                 action: 'mainwp_backup_getfilesize',
@@ -739,7 +739,7 @@ managebackups_run_next = function () {
     });
 };
 
-managebackups_backup_download_file = function (pSiteId, pSiteName, type, url, file, regexfile, size, subfolder, remote_destinations) {
+let managebackups_backup_download_file = function (pSiteId, pSiteName, type, url, file, regexfile, size, subfolder, remote_destinations) {
     let backtaskContentEl = mainwpPopup('#managebackups-task-status-box').getContentEl();
     appendToDiv(backtaskContentEl, '[' + pSiteName + '] Downloading the file. <div id="managebackups-task-status-progress" siteId="' + pSiteId + '" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
     jQuery('#managebackups-task-status-progress[siteId="' + pSiteId + '"]').progress({ value: 0, total: size });
@@ -1360,11 +1360,11 @@ mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNamesx) {
                     let output = '<span class="mainwp-red">' + __('A full backup has not been taken in the last days for the following sites:') + '</span><br /><br />';
 
                     if (backupPrimary == '') { // default backup feature
-                        for (let id of siteFeedback ) {
+                        for (let id of siteFeedback) {
                             output += '<span class="updatesoverview-backup-site" siteid="' + id + '">' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
                         }
                     } else {
-                        for (let id of siteFeedback ) {
+                        for (let id of siteFeedback) {
                             output += '<span>' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
                         }
                     }

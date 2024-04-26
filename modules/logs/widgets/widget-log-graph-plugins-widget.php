@@ -137,7 +137,7 @@ class Log_Graph_Plugins_Widget {
         <script type="text/javascript">
             jQuery( document ).ready( function() {
                 let options = {
-                    chart: { 
+                    chart: {
                         type: 'bar',
                         stacked: true
                     },
@@ -150,7 +150,7 @@ class Log_Graph_Plugins_Widget {
                         name: 'Active Plugins',
                         data: [
                             <?php foreach ( $wp_plugins as $value ) : ?>
-                            { 
+                            {
                             x: '<?php echo esc_js( $value['name'] ) . '"'; ?>',
                             y: <?php echo intval( $value['active'] ); ?>,
                             fillColor: "#18a4e0",
@@ -161,7 +161,7 @@ class Log_Graph_Plugins_Widget {
                         name: 'Inactive Plugins',
                         data: [
                             <?php foreach ( $wp_plugins as $value ) : ?>
-                            { 
+                            {
                             x: '<?php echo esc_js( $value['name'] ) . '"'; ?>',
                             y: <?php echo intval( $value['inactive'] ); ?>,
                             },

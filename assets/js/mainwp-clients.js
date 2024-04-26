@@ -339,7 +339,7 @@ jQuery(document).on('click', '#mainwp-clients-edit-custom-field', function () {
   let field_desc = parent.find('.field-description').html();
   let field_id = parent.attr('field-id');
 
-  field_name = field_name.replace(/[\[\]]/gi, "");
+  field_name = field_name.replace(/[\[\]]/gi, ""); // NOSONAR -- Unnecessary escape character: \[. NOT work.
 
   jQuery('#mainwp-clients-custom-field-modal input[name="field-name"]').val(field_name);
   jQuery('#mainwp-clients-custom-field-modal input[name="field-description"]').val(field_desc);
@@ -357,7 +357,7 @@ jQuery(document).on('click', '#mainwp-clients-save-new-custom-field', function (
   return false;
 });
 
-mainwp_clients_update_custom_field = function (me) {
+let mainwp_clients_update_custom_field = function (me) {
   let parent = jQuery(me).parents('#mainwp-clients-custom-field-modal');
   let errors = [];
   let client_id = jQuery(me).attr('client-id');
@@ -416,7 +416,6 @@ jQuery(document).on('click', '#mainwp-clients-delete-general-field', function ()
         mainwp_set_message_zone('#mainwp-message-zone-client', __('Field can not be deleted.'), 'red');
       }
     }, 'json');
-    return false;
   }
   return false;
 });
@@ -438,7 +437,6 @@ jQuery(document).on('click', '#mainwp-clients-delete-individual-field', function
         mainwp_set_message_zone('#mainwp-message-zone-client', __('Field can not be deleted.'), 'red');
       }
     }, 'json');
-    return false;
   }
   return false;
 });

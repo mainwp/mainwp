@@ -14,6 +14,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
+
     /**
      * Private static variable to hold the single instance of the class.
      *
@@ -245,7 +246,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
             <div class="ui form">
                 <form method="POST" action="admin.php?page=SettingsEmail">
                     <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'SettingsEmail' ) ); ?>" />
-                    <input type="hidden" name="mainwp_setting_emails_type" value="<?php echo esc_html( $type ); ?>" />                      
+                    <input type="hidden" name="mainwp_setting_emails_type" value="<?php echo esc_html( $type ); ?>" />
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-email-tokens-info-message' ) ) : ?>
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-message"></i>
@@ -406,7 +407,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
         <?php endif; ?>
         <?php if ( 3 === (int) $updated ) : ?>
         <div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Email template updated successfully.', 'mainwp' ); ?></div>
-        <?php endif; ?> 
+        <?php endif; ?>
         <?php
     }
 

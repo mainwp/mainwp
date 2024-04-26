@@ -531,6 +531,17 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 }
             }
 
+            if ( ! empty( $params['login_required'] ) && ! empty( $params['where'] ) ) {
+                $login_params = apply_filters( 'mainwp_open_site_login_required_params', false, $params );
+                if ( is_array( $login_params ) && ! empty( $login_params ) ) {
+                    $login_where = '';
+                    foreach ( $login_params as $key => $value ) {
+                        $login_where .= '&' . rawurlencode( $key ) . '=' . rawurlencode( $value );
+                    }
+                    $params['where'] .= ! empty( $login_where ) ? $login_where : '';
+                }
+            }
+
             if ( false !== $alg ) {
                 $params['sign_algo'] = $alg;
             }
@@ -569,6 +580,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $url .= $key . '=' . $value . '&';
         }
 
+        error_log( $url );
         return rtrim( $url, '&' );
     }
 

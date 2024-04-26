@@ -130,14 +130,14 @@ class Log_Graph_Themes_Widget {
         <script type="text/javascript">
             jQuery( document ).ready( function() {
                 let options = {
-                    chart: { 
+                    chart: {
                         type: 'bar'
                     },
                     series: [ {
                         name: 'Sites',
                         data: [
                             <?php foreach ( $themes as $theme => $count ) : ?>
-                            { 
+                            {
                             x: '<?php echo esc_js( $theme ); ?>',
                             y: <?php echo intval( $count ); ?>,
                             fillColor: <?php echo $count >= 3 ? '"#7fb100"' : '"#18a4e0"'; ?>,

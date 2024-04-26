@@ -188,7 +188,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                      */
                     echo esc_html( apply_filters( 'mainwp_recent_posts_widget_title', esc_html__( 'Recent Posts', 'mainwp' ) ) );
                     ?>
-                    <?php if ( isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.NonceVerification.Missing ?> 
+                    <?php if ( isset( $_GET['client_id'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.NonceVerification.Missing ?>
                     <div class="sub header"><?php esc_html_e( 'The most recent posts from the Client websites', 'mainwp' ); ?></div>
                     <?php else : ?>
                     <div class="sub header"><?php esc_html_e( 'The most recent posts from your websites', 'mainwp' ); ?></div>

@@ -759,7 +759,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_System_View::get_class_name()
      * @uses \MainWP\Dashboard\MainWP_System_View::get_mainwp_translations()
      */
-    public function admin_init() { // phpcs:ignore -- complex function.
+    public function admin_init() { // phpcs:ignore -- NOSONAR - complex function.
 
         if ( ! MainWP_System_Utility::is_admin() ) {
             return;

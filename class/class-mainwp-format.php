@@ -182,8 +182,8 @@ class MainWP_Format { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @return string Formatted content
      */
-    public static function format_email( $to_email = null, $body = '', $title = '', $plain_text = false ) {
-
+    public static function format_email( $to_email = null, $body = '', $title = '', $plain_text = false ) { //phpcs:ignore -- NOSONAR - long function.
+        unset( $to_email );
         $current_year = gmdate( 'Y' );
         if ( $plain_text ) {
                 $mail_send['header'] = '';

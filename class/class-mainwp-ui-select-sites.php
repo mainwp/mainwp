@@ -48,7 +48,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
      */
-    public static function select_sites_box( $params = array() ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function select_sites_box( $params = array() ) { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $type                   = isset( $params['type'] ) ? $params['type'] : 'checkbox';
         $show_group             = isset( $params['show_group'] ) ? $params['show_group'] : true;
@@ -155,7 +155,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *  @type bool   $enable_suspended_clients (bool) True, if suspended clients is enabled. False if not.
      * }
      */
-    public static function select_sites_box_body( $params = array() ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function select_sites_box_body( $params = array() ) { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $type                   = isset( $params['type'] ) ? $params['type'] : 'checkbox';
         $show_group             = isset( $params['show_group'] ) ? $params['show_group'] : true;

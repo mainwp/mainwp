@@ -492,7 +492,7 @@ class Api_Backups_3rd_Party {
      *
      * @param mixed $website The Child Site Object.
      */
-    public function render_api_backups_site( $website ) { //phpcs:ignore -- complex function.
+    public function render_api_backups_site( $website ) { //phpcs:ignore -- NOSONAR - complex function.
 
         $available_backups = array();
 

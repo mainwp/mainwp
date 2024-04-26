@@ -485,7 +485,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
      * @uses \MainWP\Dashboard\MainWP_Menu::render_left_menu()
      */
-    public static function render_top_header( $params = array() ) { // phpcs:ignore -- complex.
+    public static function render_top_header( $params = array() ) { // phpcs:ignore -- NOSONAR - complex.
 
         $before_title = isset( $params['before_title'] ) ? $params['before_title'] . ' ' : '';
         $title        = isset( $params['title'] ) ? $params['title'] : '';
@@ -1233,7 +1233,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
      */
-    public static function render_header_actions() { //phpcs:ignore -- complex method.
+    public static function render_header_actions() { //phpcs:ignore -- NOSONAR - complex method.
         $sites_count   = MainWP_DB::instance()->get_websites_count();
         $website_id    = '';
         $sidebar_pages = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
@@ -1545,7 +1545,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
      */
-    public static function do_widget_boxes( $screen_id, ...$args ) { // phpcs:ignore -- complex.
+    public static function do_widget_boxes( $screen_id, ...$args ) { // phpcs:ignore -- NOSONAR - complex.
         global $mainwp_widget_boxes;
         $page = MainWP_System_Utility::get_page_id( $screen_id );
         if ( empty( $page ) ) {
@@ -1987,7 +1987,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * @return void  Render modal window for Page Settings html.
      */
-    public static function render_screen_options( $setting_page = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_screen_options( $setting_page = true ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
                 $default_widgets = array(
                     'overview'           => esc_html__( 'Updates Overview', 'mainwp' ),

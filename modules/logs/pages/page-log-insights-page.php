@@ -260,7 +260,7 @@ class Log_Insights_Page {
      * @uses \MainWP\Dashboard\MainWP_Recent_Posts::get_class_name()
      * @uses \MainWP\Dashboard\MainWP_Security_Issues_Widget::get_class_name()
      */
-    public static function add_meta_boxes( $page ) { //phpcs:ignore -- complex method.
+    public static function add_meta_boxes( $page ) { //phpcs:ignore -- NOSONAR - complex method.
 
         /**
          * Get getmetaboxes
@@ -449,7 +449,7 @@ class Log_Insights_Page {
      *
      * @param bool $save_filter To save filter.
      */
-    public function get_insights_filters( $save_filter = false ) { //phpcs:ignore -- complex method.
+    public function get_insights_filters( $save_filter = false ) { //phpcs:ignore -- NOSONAR - complex method.
 
         $filters = array( 'client', 'range', 'group', 'user', 'dtsstart', 'dtsstop' );
 

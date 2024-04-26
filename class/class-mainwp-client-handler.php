@@ -275,7 +275,7 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @throws \Exception Error message.
      * @return mixed Results.
      */
-    public static function rest_api_add_client( $data, $edit = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function rest_api_add_client( $data, $edit = false ) { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $params = array();
 
@@ -347,11 +347,7 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $params['created'] = intval( $data['created'] );
             }
 
-            try {
-                MainWP_DB_Client::instance()->update_client( $params, true );
-            } catch ( \Exception $e ) {
-                throw $e;
-            }
+            MainWP_DB_Client::instance()->update_client( $params, true );
 
             if ( isset( $data['selected_sites'] ) && is_array( $data['selected_sites'] ) ) {
                 $selected_sites = array_map( 'sanitize_text_field', wp_unslash( $data['selected_sites'] ) );
@@ -454,7 +450,7 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @return mixed $result Result of tokens.
      */
-    public function get_website_client_tokens_data( $websiteid = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function get_website_client_tokens_data( $websiteid = false ) { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         if ( empty( $websiteid ) ) {
             return false;
         }

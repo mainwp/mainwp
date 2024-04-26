@@ -470,16 +470,14 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
     public function add_group( $userid, $name, $color = '' ) {
-        if ( MainWP_Utility::ctype_digit( $userid ) ) {
-            if ( $this->wpdb->insert(
-                $this->table_name( 'group' ),
-                array(
-                    'userid' => $userid,
-                    'name'   => $this->escape( $name ),
-                    'color'  => $this->escape( $color ),
-                )
+        if ( MainWP_Utility::ctype_digit( $userid ) && $this->wpdb->insert(
+            $this->table_name( 'group' ),
+            array(
+                'userid' => $userid,
+                'name'   => $this->escape( $name ),
+                'color'  => $this->escape( $color ),
             )
-            ) {
+        ) ) {
 
                 $groupId = $this->wpdb->insert_id;
 
@@ -494,7 +492,6 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 do_action( 'mainwp_site_tag_action', $group, 'created' );
 
                 return $groupId;
-            }
         }
 
         return false;
@@ -754,7 +751,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @return bool true|false.
      */
-    public function rest_api_update_website( $websiteid, $data ) { // phpcs:ignore -- complex function.
+    public function rest_api_update_website( $websiteid, $data ) { // phpcs:ignore -- NOSONAR - complex function.
 
         $website = MainWP_DB::instance()->get_website_by_id( $websiteid );
         if ( empty( $website ) ) {

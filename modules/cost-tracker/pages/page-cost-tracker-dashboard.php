@@ -226,7 +226,7 @@ class Cost_Tracker_Dashboard {
      *
      * Handle display table rows.
      */
-    public function ajax_display_rows() { //phpcs:ignore -- complex.
+    public function ajax_display_rows() { //phpcs:ignore -- NOSONAR - complex.
 
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_cost_tracker_lists_display_rows' );
         $filtered_one_time_ids = get_user_option( 'mainwp_module_cost_tracker_onetime_filters_saved' );
@@ -755,7 +755,7 @@ class Cost_Tracker_Dashboard {
      *
      * @return array Rows html.
      */
-    public function ajax_get_datatable_rows() { //phpcs:ignore -- complex.
+    public function ajax_get_datatable_rows() { //phpcs:ignore -- NOSONAR - complex.
 
         $sel_ids = isset( $_GET['selected_ids'] ) ? $_GET['selected_ids'] : ''; //phpcs:ignore -- ok.
         $sel_ids = explode( ',', $sel_ids );
@@ -1199,7 +1199,7 @@ class Cost_Tracker_Dashboard {
      *
      * @return void
      */
-    public static function render_manage_tasks_table_top( $sel_one_time_ids = false ) { //phpcs:ignore -- complex.
+    public static function render_manage_tasks_table_top( $sel_one_time_ids = false ) { //phpcs:ignore -- NOSONAR - complex.
 
         $filters = static::get_cost_filter_params();
 

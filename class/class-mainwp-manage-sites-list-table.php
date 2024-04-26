@@ -84,7 +84,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
-    public function column_backup( $item ) {
+    public function column_backup( $item ) { // phpcs:ignore -- NOSONAR - complex.
         if ( null === $this->primary_backup ) {
             $this->primary_backup = MainWP_System_Utility::get_primary_backup();
         }
@@ -174,7 +174,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      *
      * @return string Column Name.
      */
-    public function column_default( $item, $column_name ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function column_default( $item, $column_name ) { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * Filter is being replaced with mainwp_sitestable_item
@@ -636,7 +636,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-    public function prepare_items( $optimize = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function prepare_items( $optimize = true ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         if ( null === $this->userExtension ) {
             $this->userExtension = MainWP_DB_Common::instance()->get_user_extension();
@@ -1378,8 +1378,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      * @param bool $optimize true|false Whether or not to optimise.
      * @param bool $top true|false.
      */
-    public function print_column_headers( $optimize, $top = true ) {
-        list( $columns, $sortable, $primary ) = $this->get_column_info();
+    public function print_column_headers( $optimize, $top = true ) { // phpcs:ignore -- NOSONAR - complex.
+        list( $columns, $sortable ) = $this->get_column_info();
 
         $current_url = set_url_scheme( 'http://' . ( isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '' ) . ( isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' ) );
         $current_url = remove_query_arg( 'paged', $current_url );
@@ -1491,7 +1491,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
-    public function ajax_get_datatable_rows() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function ajax_get_datatable_rows() { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $all_rows  = array();
         $info_rows = array();
         $use_favi  = get_option( 'mainwp_use_favicon', 1 );
@@ -1730,7 +1730,6 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                     }
                                 }
                             } elseif ( 'notes' === $column_name ) {
-                                    $col_class = 'collapsing center aligned';
                                 ?>
                                     <?php if ( empty( $website['note'] ) ) : ?>
                                         <a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>"><i class="sticky note outline icon"></i></a>
@@ -1871,7 +1870,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
-    protected function single_row_columns( $website, $good_health = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    protected function single_row_columns( $website, $good_health = false ) { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $total_wp_upgrades     = 0;
         $total_plugin_upgrades = 0;

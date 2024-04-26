@@ -1902,7 +1902,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param int    $total_themes_outdate total theme outdate.
      * @param string $site_view current site view.
      */
-    public static function render_header_tabs( $show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_header_tabs( $show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * Action: mainwp_updates_before_nav_tabs
@@ -2097,7 +2097,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             <table class="ui single line inverted unstackable table" id="mainwp-http-response-issues-table">
                 <thead>
                     <tr>
-                        <th class="no-sort" colspan="3"><?php esc_html_e( 'HTTP Response Check Results', 'mainwp' ); ?></th>
+                        <th scope="col" class="no-sort" colspan="3"><?php esc_html_e( 'HTTP Response Check Results', 'mainwp' ); ?></th>
                     </tr>
                     <tr>
                         <th scope="col"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
@@ -2312,7 +2312,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * Renders Page Settings Modal.
      */
-    public static function render_screen_options_modal() { // phpcs:ignore -- complex method.
+    public static function render_screen_options_modal() { // phpcs:ignore -- NOSONAR - complex method.
 
         $snAutomaticDailyUpdate       = (int) get_option( 'mainwp_automaticDailyUpdate' );
         $snPluginAutomaticDailyUpdate = (int) get_option( 'mainwp_pluginAutomaticDailyUpdate' );

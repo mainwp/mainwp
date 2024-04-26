@@ -380,7 +380,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * Render Page Settings Modal.
      */
-    public static function render_screen_options() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_screen_options() {  // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $columns = static::$sitesTable->get_columns();
 
@@ -1553,7 +1553,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Notification_Template::handle_template_file_action()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
-    public static function render_manage_sites() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_manage_sites() { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * Current user global.
@@ -1726,7 +1726,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
      * @uses  \MainWP\Dashboard\MainWP_Utility::valid_input_emails()
      */
-    private static function update_site_handle( $website ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    private static function update_site_handle( $website ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * Current user global.

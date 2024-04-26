@@ -112,7 +112,7 @@ class Log_Graph_Tags_Widget {
     /**
      * Method render_widget_content()
      */
-    public function render_widget_content() { //phpcs:ignore -- complex method.
+    public function render_widget_content() { //phpcs:ignore -- NOSONAR - complex method.
 
         $groups         = MainWP_DB_Common::instance()->get_groups_and_count();
         $groups_nrsites = array();

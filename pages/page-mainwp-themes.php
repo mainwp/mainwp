@@ -695,7 +695,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      */
-    public static function render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients = '' ) { // phpcs:ignore -- complex function.
+    public static function render_table( $keyword, $status, $groups, $sites, $not_criteria, $clients = '' ) { // phpcs:ignore -- NOSONAR - complex function.
         MainWP_Cache::init_cache( 'Themes' );
 
         $output                   = new \stdClass();
@@ -1061,7 +1061,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param array  $themesNameSites Installed theme version.
      * @param string $themesRealVersion Current theme version.
      */
-    public static function render_manage_per_site_table( $sites, $themesName = array(), $siteThemes = array(), $themesSlug = array(), $themesNameSites = array(), $themesRealVersion = array() ) { //phpcs:ignore -- complex method.
+    public static function render_manage_per_site_table( $sites, $themesName = array(), $siteThemes = array(), $themesSlug = array(), $themesNameSites = array(), $themesRealVersion = array() ) { //phpcs:ignore -- NOSONAR - complex method.
         $userExtension        = MainWP_DB_Common::instance()->get_user_extension();
         $decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
         $trustedThemes        = json_decode( $userExtension->trusted_themes, true );
@@ -1329,7 +1329,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param array  $themesNameSites Installed theme version.
      * @param string $themesRealVersion Current theme version.
      */
-    public static function render_manage_table( $sites, $themesName, $siteThemes, $themesSlug, $themesNameSites, $themesRealVersion ) { //phpcs:ignore -- complex method.
+    public static function render_manage_table( $sites, $themesName, $siteThemes, $themesSlug, $themesNameSites, $themesRealVersion ) { //phpcs:ignore -- NOSONAR - complex method.
 
         $userExtension        = MainWP_DB_Common::instance()->get_user_extension();
         $decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
@@ -1962,7 +1962,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @uses \MainWP\Dashboard\MainWP_UI::render_modal_edit_notes()
      */
-    public static function render_auto_update() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_auto_update() { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $cachedThemesSearch = null;
         if ( isset( $_SESSION['SNThemesAllStatus'] ) ) {

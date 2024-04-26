@@ -364,7 +364,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     private function log_to_db( $text, $priority, $log_color = 0, $forced = false, $website = false ) {
 
         if ( static::DISABLED === $this->logPriority ) {
-            return;
+            return false;
         }
 
         $priority = (int) apply_filters( 'mainwp_log_to_db_priority', $priority, $website );
@@ -383,10 +383,8 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $text = $this->prepare_log_info( $text );
 
-        if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
-            if ( 'CRON' !== strtoupper( substr( $text, 0, 4 ) ) ) {
-                $text = 'CRON :: ' . $text;
-            }
+        if ( defined( 'DOING_CRON' ) && DOING_CRON && 'CRON' !== strtoupper( substr( $text, 0, 4 ) ) ) {
+            $text = 'CRON :: ' . $text;
         }
 
         if ( $forced || $do_log ) {
@@ -439,7 +437,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @return bool true|false Default is False.
      */
-    private function log( $text, $priority,  $log_color = 0, $forced = false, $website = false ) { // phpcs:ignore -- complex function.
+    private function log( $text, $priority,  $log_color = 0, $forced = false, $website = false ) { // phpcs:ignore -- NOSONAR - complex function.
 
         if ( static::DISABLED === $this->logPriority ) {
             return;
@@ -788,7 +786,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * Grab log file and build output to screen.
      */
-    public function show_log_file() {
+    public function show_log_file() { // phpcs:ignore -- NOSONAR - complex.
         $logFile = $this->get_log_file();
 
         if ( ! file_exists( $logFile ) ) {

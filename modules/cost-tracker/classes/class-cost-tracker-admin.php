@@ -473,7 +473,7 @@ class Cost_Tracker_Admin {
      *
      * @return mixed Save output.
      */
-    public static function handle_edit_cost_tracker_post() { //phpcs:ignore -- complex method.
+    public static function handle_edit_cost_tracker_post() { //phpcs:ignore -- NOSONAR - complex method.
 
         if ( ! isset( $_POST['mwp_cost_tracker_editing_submit'] ) || ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'module_cost_tracker_edit_nonce' ) ) {
             return;

@@ -49,7 +49,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_http_codes()
      */
-    public static function try_visit( $url, $ssl_verifyhost = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null, $no_body = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function try_visit( $url, $ssl_verifyhost = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null, $no_body = false ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
         $postdata = array( 'test' => 'yes' );
@@ -131,10 +131,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $force_use_ipv4 = true;
         }
 
-        if ( $force_use_ipv4 ) {
-            if ( defined( 'CURLOPT_IPRESOLVE' ) && defined( 'CURL_IPRESOLVE_V4' ) ) {
-                curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
-            }
+        if ( $force_use_ipv4 && defined( 'CURLOPT_IPRESOLVE' ) && defined( 'CURL_IPRESOLVE_V4' ) ) {
+            curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
         }
 
         $disabled_functions = ini_get( 'disable_functions' );
@@ -148,7 +146,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     $data        = curl_multi_getcontent( $info['handle'] );
                     $err         = curl_error( $info['handle'] );
                     $http_status = curl_getinfo( $info['handle'], CURLINFO_HTTP_CODE );
-                    $errno       = curl_errno( $info['handle'] );
                     $realurl     = curl_getinfo( $info['handle'], CURLINFO_EFFECTIVE_URL );
 
                     curl_multi_remove_handle( $mh, $info['handle'] );
@@ -163,7 +160,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $data        = curl_exec( $ch );
             $err         = curl_error( $ch );
             $http_status = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
-            $errno       = curl_errno( $ch );
             $realurl     = curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
             if ( 'resource' === gettype( $ch ) ) {
                 curl_close( $ch );
@@ -299,7 +295,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( 1 === $verifyCertificate ) {
             $ssl_verifyhost = true;
         } elseif ( 2 === $verifyCertificate || null === $verifyCertificate ) {
-            if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
+            if ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === get_option( 'mainwp_sslVerifyCertificate' ) ) ) {
                 $ssl_verifyhost = true;
             }
         }
@@ -319,7 +315,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return mixed null|http_build_query()
      */
-    public static function get_post_data_authed( &$website, $what, $params = null ) {  //phpcs:ignore -- complex method.
+    public static function get_post_data_authed( &$website, $what, $params = null ) {  //phpcs:ignore -- NOSONAR - complex method.
         if ( $website && '' !== $what ) {
             $data             = array();
             $data['user']     = $website->adminname;
@@ -385,23 +381,20 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
              */
             global $current_user;
 
-            if ( ( ! defined( 'DOING_CRON' ) || false === DOING_CRON ) && ( ! defined( 'WP_CLI' ) || false === WP_CLI ) ) {
-                if ( is_object( $current_user ) && property_exists( $current_user, 'ID' ) && $current_user->ID ) {
-
-                    /**
-                     * Filter: mainwp_alter_login_user
-                     *
-                     * Filters users accounts so it allows you user to jump to child site under alternative administrator account.
-                     *
-                     * @param int $website->id Child site ID.
-                     * @param int $current_user->ID User ID.
-                     *
-                     * @since Unknown
-                     */
-                    $alter_user = apply_filters( 'mainwp_alter_login_user', false, $website->id, $current_user->ID );
-                    if ( ! empty( $alter_user ) ) {
-                        $data['alt_user'] = rawurlencode( $alter_user );
-                    }
+            if ( ( ! defined( 'DOING_CRON' ) || false === DOING_CRON ) && ( ! defined( 'WP_CLI' ) || false === WP_CLI ) && is_object( $current_user ) && property_exists( $current_user, 'ID' ) && $current_user->ID ) {
+                /**
+                 * Filter: mainwp_alter_login_user
+                 *
+                 * Filters users accounts so it allows you user to jump to child site under alternative administrator account.
+                 *
+                 * @param int $website->id Child site ID.
+                 * @param int $current_user->ID User ID.
+                 *
+                 * @since Unknown
+                 */
+                $alter_user = apply_filters( 'mainwp_alter_login_user', false, $website->id, $current_user->ID );
+                if ( ! empty( $alter_user ) ) {
+                    $data['alt_user'] = rawurlencode( $alter_user );
                 }
             }
 
@@ -421,7 +414,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return mixed null|http_build_query()
      */
-    private static function get_renew_post_data_authed( &$website, $what ) {
+    private static function get_renew_post_data_authed( &$website, $what ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( $website && '' !== $what ) {
             $compat_what      = 'disconnect'; // to compatible, renew will call disconnect.
@@ -487,7 +480,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return string $url
      */
-    public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false, $other_params = array() ) { //phpcs:ignore -- complex method.
+    public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false, $other_params = array() ) { //phpcs:ignore -- NOSONAR - complex method.
         $params = array();
         if ( $website && '' !== $paramValue ) {
 
@@ -557,13 +550,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
              */
             global $current_user;
 
-            if ( ( ! defined( 'DOING_CRON' ) || false === DOING_CRON ) && ( ! defined( 'WP_CLI' ) || false === WP_CLI ) ) {
-                if ( $current_user && $current_user->ID ) {
-                    /** This filter is documented in ../class/class-mainwp-connect.php */
-                    $alter_user = apply_filters( 'mainwp_alter_login_user', false, $website->id, $current_user->ID );
-                    if ( ! empty( $alter_user ) ) {
-                        $params['alt_user'] = rawurlencode( $alter_user );
-                    }
+            if ( ( ( ! defined( 'DOING_CRON' ) || false === DOING_CRON ) && ( ! defined( 'WP_CLI' ) || false === WP_CLI ) ) && $current_user && $current_user->ID ) {
+                /** This filter is documented in ../class/class-mainwp-connect.php */
+                $alter_user = apply_filters( 'mainwp_alter_login_user', false, $website->id, $current_user->ID );
+                if ( ! empty( $alter_user ) ) {
+                    $params['alt_user'] = rawurlencode( $alter_user );
                 }
             }
         }
@@ -579,8 +570,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         foreach ( $params as $key => $value ) {
             $url .= $key . '=' . $value . '&';
         }
-
-        error_log( $url );
         return rtrim( $url, '&' );
     }
 
@@ -649,7 +638,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_System::$version
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
      */
-    public static function fetch_urls_authed( &$websites, $what, $params, $handler, &$output, $whatPage = null, $others = array() ) { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function fetch_urls_authed( &$websites, $what, $params, $handler, &$output, $whatPage = null, $others = array() ) { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         if ( ! is_array( $websites ) || empty( $websites ) ) {
             return false;
@@ -815,11 +804,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 if ( 1 === $verifyCertificate ) {
                     $ssl_verifyhost = true;
                 } elseif ( 2 === $verifyCertificate ) {
-                    if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
+                    if ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) {
                         $ssl_verifyhost = true;
                     }
                 }
-            } elseif ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
+            } elseif ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) {
                 $ssl_verifyhost = true;
             }
 
@@ -902,7 +891,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 curl_multi_close( $mh );
             }
         } else {
-            foreach ( $requestHandles as $id => $ch ) {
+            foreach ( $requestHandles as $ch ) {
                 $data = curl_exec( $ch );
 
                 if ( null !== $handler ) {
@@ -987,8 +976,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
             return $fh;
         }
-
-        return false;
     }
 
     /**
@@ -1018,11 +1005,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     sleep( 1 );
                 }
             }
-
             return false;
         }
-
-        return false;
     }
 
     /**
@@ -1071,7 +1055,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Premium_Update::maybe_request_premium_updates()
      * @uses \MainWP\Dashboard\MainWP_Sync::sync_information_array()
      */
-    public static function fetch_url_authed(
+    public static function fetch_url_authed( // phpcs:ignore -- NOSONAR - complex.
         &$website,
         $what,
         $params = null,
@@ -1080,6 +1064,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $pRetryFailed = true,
         $rawResponse = null
     ) {
+        unset( $pForceFetch );
 
         // to support demo data.
         if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
@@ -1207,7 +1192,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return mixed static::fetch_url() Fetch URL.
      */
-    public static function fetch_url_not_authed(
+    public static function fetch_url_not_authed(  // NOSONAR - compatible.
         $url,
         $admin,
         $what,
@@ -1220,6 +1205,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $others = array(),
         &$output = array()
     ) {
+        unset( $pForceFetch );
 
         if ( empty( $params ) ) {
             $params = array();
@@ -1253,7 +1239,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return mixed static::fetch_url_site()
      */
-    public static function fetch_url(
+    public static function fetch_url( // phpcs:ignore -- NOSONAR - complex.
         &$website,
         $url,
         $postdata,
@@ -1321,7 +1307,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
      * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
      */
-    public static function fetch_url_site( // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function fetch_url_site( // phpcs:ignore -- NOSONAR - complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         &$website,
         $url,
         $postdata,
@@ -1410,11 +1396,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( 1 === (int) $verifyCertificate ) {
                 $ssl_verifyhost = true;
             } elseif ( 2 === (int) $verifyCertificate ) {
-                if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
+                if ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) {
                     $ssl_verifyhost = true;
                 }
             }
-        } elseif ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
+        } elseif ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) {
                 $ssl_verifyhost = true;
         }
 
@@ -1466,10 +1452,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $force_use_ipv4 = true;
         }
 
-        if ( $force_use_ipv4 ) {
-            if ( defined( 'CURLOPT_IPRESOLVE' ) && defined( 'CURL_IPRESOLVE_V4' ) ) {
-                curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
-            }
+        if ( $force_use_ipv4 && defined( 'CURLOPT_IPRESOLVE' ) && defined( 'CURL_IPRESOLVE_V4' ) ) {
+            curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
         }
 
         $timeout = 20 * 60 * 60;
@@ -1544,7 +1528,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $result      = $results[1];
             $information = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
             unset( $output['fetch_data'] ); // hide the data.
-            $data_log = is_array( $postdata ) ? print_r( $postdata, true ) : ( is_string( $postdata ) ? $postdata : '' );  //phpcs:ignore -- good.
+            $pdt      = is_string( $postdata ) ? $postdata : '';
+            $data_log = is_array( $postdata ) ? print_r( $postdata, true ) : $pdt;  //phpcs:ignore -- good.
             MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[' . $url . '] postdata [' . $data_log . '] information: [OK]' ); //phpcs:ignore -- ok.
             return $information;
         } elseif ( 200 === (int) $http_status && ! empty( $err ) ) {
@@ -1580,7 +1565,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_DB::get_wp_ip()
      * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
      */
-    private static function check_constraints( &$identifier, $website ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    private static function check_constraints( &$identifier, $website ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $semLock      = '103218';
         $identifier   = static::get_lock_identifier( $semLock );
         $minimumDelay = ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) );
@@ -1602,10 +1587,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
             if ( 0 < $minimumIPDelay && null !== $website ) {
                 $ip = MainWP_DB::instance()->get_wp_ip( $website->id );
-                if ( null !== $ip && '' !== $ip ) {
-                    if ( static::check_constraints_last_request( $identifier, $minimumIPDelay, $ip ) ) {
-                        continue;
-                    }
+                if ( null !== $ip && '' !== $ip && static::check_constraints_last_request( $identifier, $minimumIPDelay, $ip ) ) {
+                    continue;
                 }
             }
             $delay = false;
@@ -1631,10 +1614,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
             if ( 0 < $maximumIPRequests && null !== $website ) {
                 $ip = MainWP_DB::instance()->get_wp_ip( $website->id );
-                if ( null !== $ip && '' !== $ip ) {
-                    if ( static::check_constraints_open_requests( $identifier, $maximumIPRequests, $ip ) ) {
-                        continue;
-                    }
+                if ( null !== $ip && '' !== $ip && static::check_constraints_open_requests( $identifier, $maximumIPRequests, $ip ) ) {
+                    continue;
                 }
             }
             $delay = false;
@@ -1702,7 +1683,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_System::$version
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      */
-    public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
+    public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null ) { // phpcs:ignore -- NOSONAR - complex.
 
         $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
@@ -1735,11 +1716,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $fp    = fopen( $file, 'a' );
         $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
-        if ( false !== $size ) {
-            if ( $wp_filesystem->exists( $file ) ) {
-                $size = $wp_filesystem->size( $file );
-                $url .= '&foffset=' . $size;
-            }
+        if ( false !== $size && $wp_filesystem->exists( $file ) ) {
+            $size = $wp_filesystem->size( $file );
+            $url .= '&foffset=' . $size;
         }
         $ch = curl_init( str_replace( ' ', '%20', $url ) );
 

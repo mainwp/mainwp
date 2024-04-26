@@ -929,7 +929,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @return void
      */
-    public static function render_extensions_groups() { //phpcs:ignore -- complex method.
+    public static function render_extensions_groups() { //phpcs:ignore -- NOSONAR - complex method.
 
         $get_ext_group = array();
 

@@ -128,7 +128,7 @@ class Api_Backups_Settings {
      *
      * @param bool $individual Individual settings True|False.
      */
-    public static function render_3rd_party_api_manager( $individual = false  ) { //phpcs:ignore -- complex method.
+    public static function render_3rd_party_api_manager( $individual = false  ) { //phpcs:ignore -- NOSONAR - complex method.
         $_nonce_slug = $individual ? 'cloudways_api_form_individual' : 'cloudways_api_form_general';
         ?>
         <div id="3rd-party-api-manager">
@@ -781,7 +781,7 @@ class Api_Backups_Settings {
      *
      * @return void
      */
-    public function hook_mainwp_update_site( $website_id ) { //phpcs:ignore -- complex method.
+    public function hook_mainwp_update_site( $website_id ) { //phpcs:ignore -- NOSONAR - complex method.
         /**
          * 3rd-Party Backup API Provider Settings.
          *
@@ -865,7 +865,7 @@ class Api_Backups_Settings {
      * @param mixed $website Website.
      * @return mixed
      */
-    public function hook_render_mainwp_manage_sites_edit( $website ) { //phpcs:ignore -- complex method.
+    public function hook_render_mainwp_manage_sites_edit( $website ) { //phpcs:ignore -- NOSONAR - complex method.
 
         if ( empty( $website ) ) {
             return;

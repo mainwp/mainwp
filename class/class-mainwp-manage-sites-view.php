@@ -42,7 +42,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
-    public static function init_subpages_menu( &$subPages ) {
+    public static function init_subpages_menu( &$subPages ) { // phpcs:ignore -- NOSONAR - complex.
         ?>
         <div id="menu-mainwp-Sites" class="mainwp-submenu-wrapper">
             <div class="wp-submenu sub-open" style="">
@@ -160,7 +160,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      * @uses \MainWP\Dashboard\MainWP_UI::render_second_top_header()
      */
-    public static function render_header( $shownPage = '', $subPages = '' ) {
+    public static function render_header( $shownPage = '', $subPages = '' ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( '' === $shownPage || 'managesites' === $shownPage ) {
             $shownPage = 'ManageSites';
@@ -326,7 +326,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
      */
-    private static function render_managesites_header( $site_pages, $managesites_pages, $subPages, $site_id, $shownPage ) { //phpcs:ignore -- complex method.
+    private static function render_managesites_header( $site_pages, $managesites_pages, $subPages, $site_id, $shownPage ) { //phpcs:ignore -- NOSONAR - complex method.
 
         $renderItems = array();
         if ( isset( $managesites_pages[ $shownPage ] ) ) {
@@ -382,7 +382,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      * @uses  \MainWP\Dashboard\MainWP_Utility::starts_with()
      */
-    public static function render_import_sites() { // phpcs:ignore -- complex.
+    public static function render_import_sites() { // phpcs:ignore -- NOSONAR - complex.
         ?>
         <div id="mainwp-importing-sites" class="ui active inverted dimmer" style="display:none">
             <div class="ui medium text loader"><?php esc_html_e( 'Importing', 'mainwp' ); ?></div>
@@ -513,7 +513,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_indexed_extensions_infor()
      */
-    public static function render_sync_exts_settings() {
+    public static function render_sync_exts_settings() { // phpcs:ignore -- NOSONAR - complex.
         $sync_extensions_options = apply_filters_deprecated( 'mainwp-sync-extensions-options', array( array() ), '4.0.7.2', 'mainwp_sync_extensions_options' );  // @deprecated Use 'mainwp_sync_extensions_options' instead.
         $sync_extensions_options = apply_filters( 'mainwp_sync_extensions_options', $sync_extensions_options );
 
@@ -783,7 +783,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses  \MainWP\Dashboard\MainWP_Utility::starts_with()
      * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
      */
-    public static function render_edit_site( $websiteid, $updated ) { // phpcs:ignore -- complex.
+    public static function render_edit_site( $websiteid, $updated ) { // phpcs:ignore -- NOSONAR - complex.
         if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'edit sites', 'mainwp' ) );
             return;
@@ -1808,7 +1808,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
      */
-    public static function m_reconnect_site( $website, $sync_first = true ) { //phpcs:ignore -- complex method.
+    public static function m_reconnect_site( $website, $sync_first = true ) { //phpcs:ignore -- NOSONAR - complex method.
         if ( MainWP_System_Utility::can_edit_website( $website ) ) {
             $success = false;
             $_error  = '';
@@ -1972,7 +1972,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_openssl_conf()
      * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
      */
-    public static function add_wp_site( $website, $params = array(), &$output = array() ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function add_wp_site( $website, $params = array(), &$output = array() ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $error      = '';
         $message    = '';
         $id         = 0;
@@ -2210,9 +2210,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         MainWP_DB::instance()->update_website_values( $website->id, $data );
         if ( null !== $uniqueId ) {
             try {
-                $information = MainWP_Connect::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
+                MainWP_Connect::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
             } catch ( MainWP_Exception $e ) {
-                $error = $e->getMessage();
+                // error update unique id.
             }
         }
 

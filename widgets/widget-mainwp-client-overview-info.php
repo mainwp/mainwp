@@ -44,7 +44,7 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
      *
      * @param object $client_id Client ID.
      */
-    public static function render_client_overview( $client_id ) {  // phpcs:ignore -- complex function.
+    public static function render_client_overview( $client_id ) {  // phpcs:ignore -- NOSONAR - complex function.
         $params        = array(
             'with_selected_sites' => true,
             'with_tags'           => true,

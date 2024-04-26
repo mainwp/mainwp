@@ -71,13 +71,14 @@ class MainWP_Bulk_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
      * @return string $location Target URL.
      */
     public function redirect_edit_bulkpost( $location, $post_id ) {
+        unset( $location );
         if ( $post_id ) {
-            $location = admin_url( 'admin.php?page=PostBulkEdit&post_id=' . intval( $post_id ) );
+            $loc = admin_url( 'admin.php?page=PostBulkEdit&post_id=' . intval( $post_id ) );
         } else {
-            $location = admin_url( 'admin.php?page=PostBulkAdd' );
+            $loc = admin_url( 'admin.php?page=PostBulkAdd' );
         }
 
-        return $location;
+        return $loc;
     }
 
     /**
@@ -91,14 +92,14 @@ class MainWP_Bulk_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
      * @return string $location Target URL.
      */
     public function redirect_edit_bulkpage( $location, $post_id ) {
-
+        unset( $location );
         if ( $post_id ) {
-            $location = admin_url( 'admin.php?page=PageBulkEdit&post_id=' . intval( $post_id ) );
+            $loc = admin_url( 'admin.php?page=PageBulkEdit&post_id=' . intval( $post_id ) );
         } else {
-            $location = admin_url( 'admin.php?page=PageBulkAdd' );
+            $loc = admin_url( 'admin.php?page=PageBulkAdd' );
         }
 
-        return $location;
+        return $loc;
     }
 
 

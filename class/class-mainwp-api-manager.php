@@ -180,7 +180,7 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::activate()
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-    public function license_key_activation( $api_slug, $api_key ) {
+    public function license_key_activation( $api_slug, $api_key ) { // phpcs:ignore -- NOSONAR - complex.
 
         $options = $this->get_activation_info( $api_slug );
 
@@ -414,7 +414,7 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      *
      * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::grab_api_key()
      */
-    public function grab_license_key( $api_slug, $master_api_key ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function grab_license_key( $api_slug, $master_api_key ) { // phpcs:ignore -- NOSONAR - Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $options = $this->get_activation_info( $api_slug );
         if ( ! is_array( $options ) ) {
@@ -533,6 +533,8 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 break;
             case '902':
                 $error = esc_html__( 'Your membership has expired. Reactivate your membership to activate MainWP extensions', 'mainwp' );
+                break;
+            default:
                 break;
         }
         return $error;

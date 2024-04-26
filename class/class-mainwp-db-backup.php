@@ -141,7 +141,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @return boolean true|false.
      */
-    public function backup_full_task_running( $wp_id ) {
+    public function backup_full_task_running( $wp_id ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
             return false;
@@ -152,10 +152,8 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             foreach ( $progresses as $progress ) {
                 if ( empty( $progress->downloadedDBComplete ) && empty( $progress->downloadedFULLComplete ) ) {
                     $task = $this->get_backup_task_by_id( $progress->task_id );
-                    if ( $task ) {
-                        if ( ( 'full' === $task->type ) && ! $task->paused ) {
-                            return true;
-                        }
+                    if ( $task && ( 'full' === $task->type ) && ! $task->paused ) {
+                        return true;
                     }
                 }
             }
@@ -547,7 +545,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
-     * Method get_backup_tasks_todo_daily()
+     * Method get backup tasks daily.
      *
      * Get daily backup tasks.
      *
@@ -558,7 +556,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
-     * Method get_backup_tasks_todo_weekly()
+     * Method get backup tasks weekly.
      *
      * Get weekly backup tasks.
      *
@@ -569,7 +567,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
-     * Method get_backup_tasks_todo_monthly()
+     * Method get backup tasks monthly.
      *
      * Get monthly backup tasks.
      *

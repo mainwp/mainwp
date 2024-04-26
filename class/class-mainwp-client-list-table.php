@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  *
  * MainWP sites client list.
  *
- * @todo The only variables that seam to be used are $column_headers.
+ * @devtodo The only variables that seam to be used are $column_headers.
  *
  * @uses \MainWP\Dashboard\MainWP_Manage_Sites_List_Table
  */
@@ -55,7 +55,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
      *
      * @return string Column name.
      */
-    public function column_default( $item, $column_name ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function column_default( $item, $column_name ) { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         /**
          * Filter: mainwp_clients_sitestable_item
@@ -67,29 +67,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
          * @since 4.1
          */
         $item = apply_filters( 'mainwp_clients_sitestable_item', $item, $item );
-        switch ( $column_name ) {
-            case 'name':
-            case 'image':
-            case 'client_email':
-            case 'client_phone':
-            case 'client_facebook':
-            case 'client_twitter':
-            case 'client_instagram':
-            case 'client_linkedin':
-            case 'websites':
-            case 'tags':
-            case 'suspended':
-            case 'contact_name':
-            case 'address_1':
-            case 'address_2':
-            case 'city':
-            case 'zip':
-            case 'state':
-            case 'country':
-            case 'note':
-            default:
-                return isset( $item[ $column_name ] ) && ! empty( $item[ $column_name ] ) ? $item[ $column_name ] : 'N/A';
-        }
+        return isset( $item[ $column_name ] ) && ! empty( $item[ $column_name ] ) ? $item[ $column_name ] : 'N/A';
     }
 
     /**
@@ -305,7 +283,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
      *
      * @param bool $optimize true|false Whether or not to optimize.
      */
-    public function prepare_items( $optimize = false ) {
+    public function prepare_items( $optimize = false ) { // phpcs:ignore -- NOSONAR - complex.
 
         $params = array(
             'with_selected_sites' => true,
@@ -545,7 +523,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
         // for compatible.
         $optimize = $optimize ? true : false;
 
-        list( $columns, $sortable, $primary ) = $this->get_column_info();
+        list( $columns, $sortable ) = $this->get_column_info();
 
         if ( ! empty( $columns['cb'] ) ) {
             $columns['cb'] = '<div class="ui checkbox"><input id="' . ( $top ? 'cb-select-all-top' : 'cb-select-all-bottom' ) . '" type="checkbox" /></div>';
@@ -655,7 +633,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
      * @param mixed $item     Object containing the client info.
      * @param bool  $compatible to compatible param - DO NOT remove.
      */
-    protected function single_row_columns( $item, $compatible = true ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    protected function single_row_columns( $item, $compatible = true ) { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         list( $columns ) = $this->get_column_info();
 
@@ -745,8 +723,6 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 $note       = html_entity_decode( $item['note'] );
                 $esc_note   = MainWP_Utility::esc_content( $note );
                 $strip_note = wp_strip_all_tags( $esc_note );
-
-                $col_class = 'collapsing center aligned';
                 echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
                 if ( empty( $item['note'] ) ) :
                     ?>

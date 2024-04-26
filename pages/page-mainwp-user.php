@@ -1845,7 +1845,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-    public static function do_bulk_add() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
+    public static function do_bulk_add() { // phpcs:ignore -- NOSONAR -Current complexity is required to achieve desired results. Pull request solutions appreciated.
         $errors      = array();
         $errorFields = array();
 
@@ -2191,7 +2191,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-    public static function do_import() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
+    public static function do_import() { // phpcs:ignore -- NOSONAR -Current complexity is required to achieve desired results. Pull request solutions appreciated.
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $selected_sites  = ( isset( $_POST['select_sites'] ) && is_array( $_POST['select_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_sites'] ) ) : array();

@@ -2333,7 +2333,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic plugins updates.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                             <select name="mainwp_pluginAutomaticDailyUpdate" id="mainwp_pluginAutomaticDailyUpdate" class="ui dropdown">
                                 <option value="1" <?php echo 1 === $snPluginAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
-                                <option value="0" <?php echo false !== $snPluginAutomaticDailyUpdate && empty( $snPluginAutomaticDailyUpdate ) || 2 === $snPluginAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
+                                <option value="0" <?php echo ( false !== $snPluginAutomaticDailyUpdate && empty( $snPluginAutomaticDailyUpdate ) ) || 2 === $snPluginAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
                             </select>
                         </div>
                     </div>
@@ -2342,7 +2342,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic themes updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <select name="mainwp_themeAutomaticDailyUpdate" id="mainwp_themeAutomaticDailyUpdate" class="ui dropdown">
                                 <option value="1" <?php echo 1 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
-                                <option value="0" <?php echo false !== $snThemeAutomaticDailyUpdate && 0 === $snThemeAutomaticDailyUpdate || 2 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
+                                <option value="0" <?php echo ( false !== $snThemeAutomaticDailyUpdate && 0 === $snThemeAutomaticDailyUpdate ) || 2 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
                             </select>
                         </div>
                     </div>
@@ -2351,7 +2351,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic WordPress core updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <select name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" class="ui dropdown">
                                 <option value="1" <?php echo 1 === $snAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
-                                <option value="0" <?php echo false !== $snAutomaticDailyUpdate && 0 === $snAutomaticDailyUpdate || 2 === $snAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
+                                <option value="0" <?php echo ( false !== $snAutomaticDailyUpdate && 0 === $snAutomaticDailyUpdate ) || 2 === $snAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
                             </select>
                         </div>
                     </div>

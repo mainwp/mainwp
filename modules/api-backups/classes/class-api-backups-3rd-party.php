@@ -229,7 +229,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @param int    $site_id site id.
      * @param object $app app data.
      *
-     * @return void.
+     * @return void
      */
     public function update_3rd_party_cloudways_data( $site_id, $app ) {
         Api_Backups_Helper::update_website_option( $site_id, 'mainwp_3rd_party_app_id', $app->id );

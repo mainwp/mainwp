@@ -111,7 +111,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
      * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      */
-    public static function render_sites() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
+    public static function render_sites() { // phpcs:ignore -- NOSONAR - current complexity required to achieve desired results. Pull request solutions appreciated.
 
         $globalView = true;
 
@@ -182,7 +182,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 $wp_upgrades = array();
             }
 
-            if ( is_array( $wp_upgrades ) && count( $wp_upgrades ) > 0 ) {
+            if ( is_array( $wp_upgrades ) && ! empty( $wp_upgrades ) ) {
                 ++$total_wp_upgrades;
                 $all_wp_updates[] = array(
                     'id'   => $website->id,
@@ -238,7 +238,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
                 $total_translation_upgrades += count( $translation_upgrades );
 
-                if ( count( $translation_upgrades ) > 0 ) {
+                if ( ! empty( $translation_upgrades ) ) {
                     foreach ( $translation_upgrades as $trans_upgrade ) {
                         $slug                       = $trans_upgrade['slug'];
                         $all_translations_updates[] = array(
@@ -263,7 +263,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
                 $total_plugin_upgrades += count( $plugin_upgrades );
 
-                if ( count( $plugin_upgrades ) > 0 ) {
+                if ( ! empty( $plugin_upgrades ) ) {
                     foreach ( $plugin_upgrades as $slug => $value ) {
                         $all_plugins_updates[] = array(
                             'id'          => $website->id,
@@ -287,7 +287,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
                 $total_theme_upgrades += count( $theme_upgrades );
 
-                if ( count( $theme_upgrades ) > 0 ) {
+                if ( ! empty( $theme_upgrades ) ) {
                     foreach ( $theme_upgrades as $slug => $value ) {
                         $all_themes_updates[] = array(
                             'id'         => $website->id,
@@ -444,7 +444,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @param bool true|false $can_total_update permission to update all.
      * @param int             $limit_updates_all limit number of update per request, 0 is no limit.
      */
-    public static function render_total_update( $total_upgrades, $lastSyncMsg, $can_total_update, $limit_updates_all ) {
+    public static function render_total_update( $total_upgrades, $lastSyncMsg, $can_total_update, $limit_updates_all ) { // phpcs:ignore -- NOSONAR - complex.
         $current_wpid = MainWP_System_Utility::get_current_wpid();
         $globalView   = true;
         if ( $current_wpid ) {
@@ -1004,7 +1004,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @param int   $total_translation_upgrades total WordPress update.
      * @param mixed $all_translations_updates all transations update list.
      */
-    public static function render_global_update(
+    public static function render_global_update( // phpcs:ignore -- NOSONAR - complex.
         $user_can_update_wordpress,
         $total_wp_upgrades,
         $all_wp_updates,
@@ -1148,7 +1148,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_primary_backup()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
      */
-    public static function check_backups() {
+    public static function check_backups() { // phpcs:ignore -- NOSONAR - complex.
         if ( empty( $_POST['sites'] ) || ! is_array( $_POST['sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             return true;
         }

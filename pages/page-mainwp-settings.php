@@ -84,7 +84,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     }
 
     /** Run the export_sites method that exports the Child Sites .csv file */
-    public static function admin_init() {
+    public static function admin_init() { // phpcs:ignore -- NOSONAR - complex.
         static::export_sites();
         if ( isset( $_GET['clearActivationData'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'clear_activation_data' ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             delete_option( 'mainwp_extensions_api_username' );
@@ -234,7 +234,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=MainWPTools' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Tools', 'mainwp' ); ?></a>
                     <?php } ?>
                     <?php
-                    if ( isset( static::$subPages ) && is_array( static::$subPages ) && ( count( static::$subPages ) > 0 ) ) {
+                    if ( isset( static::$subPages ) && is_array( static::$subPages ) && ! empty( static::$subPages ) ) {
                         foreach ( static::$subPages as $subPage ) {
                             if ( MainWP_Menu::is_disable_menu_item( 3, 'Settings' . $subPage['slug'] ) ) {
                                 continue;
@@ -324,7 +324,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
      */
-    public static function render_header( $shownPage = '' ) {
+    public static function render_header( $shownPage = '' ) { // phpcs:ignore -- NOSONAR - complex.
 
         $params = array(
             'title' => esc_html__( 'MainWP Settings', 'mainwp' ),
@@ -418,7 +418,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-    public static function handle_settings_post() {
+    public static function handle_settings_post() { // phpcs:ignore -- NOSONAR - complex.
         if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
             $userExtension            = MainWP_DB_Common::instance()->get_user_extension();
             $userExtension->pluginDir = '';
@@ -683,16 +683,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         if ( empty( $mainwp_backup_before_upgrade_days ) || ! ctype_digit( $mainwp_backup_before_upgrade_days ) ) {
                             $mainwp_backup_before_upgrade_days = 7;
                         }
-
                         $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
-
-                        $update_time         = static::get_websites_automatic_update_time();
-                        $lastAutomaticUpdate = $update_time['last'];
-                        $nextAutomaticUpdate = $update_time['next'];
-
-                        $enableLegacyBackupFeature  = get_option( 'mainwp_enableLegacyBackupFeature' );
-                        $primaryBackup              = get_option( 'mainwp_primaryBackup' );
-                        $disableUpdateConfirmations = (int) get_option( 'mainwp_disable_update_confirmations', 0 );
+                        $enableLegacyBackupFeature    = get_option( 'mainwp_enableLegacyBackupFeature' );
+                        $primaryBackup                = get_option( 'mainwp_primaryBackup' );
+                        $disableUpdateConfirmations   = (int) get_option( 'mainwp_disable_update_confirmations', 0 );
 
                         $http_error_codes = MainWP_Utility::get_http_codes();
                         ?>
@@ -883,7 +877,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     /**
      * Render Timezone settings.
      */
-    public static function render_timezone_settings() {
+    public static function render_timezone_settings() { // phpcs:ignore -- NOSONAR - complex.
 
         $current_offset  = get_option( 'gmt_offset' );
         $tzstring        = get_option( 'timezone_string' );
@@ -1441,7 +1435,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      *
      * @uses \MainWP\Dashboard\MainWP_UI::render_screen_options()
      */
-    public static function render_mainwp_tools() {
+    public static function render_mainwp_tools() { // phpcs:ignore -- NOSONAR - complex.
         if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
 
@@ -1614,7 +1608,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     /**
      * Render MainWP themes selection.
      */
-    public function render_select_custom_themes() {
+    public function render_select_custom_themes() { // phpcs:ignore -- NOSONAR - complex.
         $custom_theme = $this->get_current_user_theme();
         if ( false === $custom_theme ) {
             // to compatible with Custom Dashboard extension settings.
@@ -1666,11 +1660,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      */
     public function get_custom_themes_files() {
         // get themes files.
-        $dirs       = $this->get_custom_theme_folder();
-        $scan_dir   = $dirs[0];
-        $handle     = opendir( $scan_dir );
-        $themes     = array();
-        $scan_files = array();
+        $dirs     = $this->get_custom_theme_folder();
+        $scan_dir = $dirs[0];
+        $handle   = opendir( $scan_dir );
+        $themes   = array();
         if ( $handle ) {
             $filename = readdir( $handle );
             while ( false !== $filename ) {

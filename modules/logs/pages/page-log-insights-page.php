@@ -23,7 +23,7 @@ use function MainWP\Dashboard\mainwp_do_not_have_permissions;
  *
  * @package MainWP\Dashboard
  */
-class Log_Insights_Page {
+class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
 
 
     /**
@@ -116,7 +116,7 @@ class Log_Insights_Page {
     /**
      * Handle update screen options.
      */
-    public function handle_update_screen_options() {
+    public function handle_update_screen_options() { //phpcs:ignore -- NOSONAR - complex.
         $update_opts = false;
         if ( isset( $_POST['module_log_overview_options_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['module_log_overview_options_nonce'] ), 'module_log_overview_options_nonce' ) ) {
             $update_opts = true;

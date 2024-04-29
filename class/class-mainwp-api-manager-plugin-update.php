@@ -53,16 +53,13 @@ class MainWP_Api_Manager_Plugin_Update { // phpcs:ignore Generic.Classes.Opening
      * Run each time the class is called.
      */
     public function __construct() {
-
         // API data.
     }
-
 
     /**
      * Create upgrade request API URL.
      *
      * @param array $args       Request arguments.
-     * @param bool  $bulk_check Bulk check request.
      *
      * @return string Build URL.
      *

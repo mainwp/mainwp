@@ -183,7 +183,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Site_Open::get_class_name()
      * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public static function init_menu() {
+    public static function init_menu() { // phpcs:ignore -- NOSONAR - complex.
         static::$page = MainWP_Manage_Sites_View::init_menu();
         add_action( 'load-' . static::$page, array( static::get_class_name(), 'on_load_page' ) );
 
@@ -289,7 +289,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         MainWP_System::enqueue_postbox_scripts();
 
-        $i = 1;
         if ( isset( $_REQUEST['do'] ) ) {
             if ( 'new' === $_REQUEST['do'] ) {
                 return;
@@ -619,7 +618,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::render_sync_exts_settings()
      */
     public static function render_new_site() {
-        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 
         $showpage = 'AddNew';
         static::render_header( $showpage );
@@ -1218,7 +1216,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Widget_Plugins::get_class_name()
      * @uses \MainWP\Dashboard\MainWP_Widget_Themes::get_class_name()
      */
-    public static function on_load_page_dashboard() { // phpcs:ignore -- current complexity is required to achieve desired results. Pull request solutions are welcome.
+    public static function on_load_page_dashboard() { // phpcs:ignore -- NOSONAR - current complexity is required to achieve desired results. Pull request solutions are welcome.
         wp_enqueue_script( 'common' );
         wp_enqueue_script( 'wp-lists' );
         wp_enqueue_script( 'postbox' );
@@ -1466,7 +1464,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Backup_View::show_backups()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
      */
-    public static function show_backups( &$website ) {
+    public static function show_backups( &$website ) {  //phpcs:ignore -- NOSONAR - complex.
         $dir = MainWP_System_Utility::get_mainwp_specific_dir( $website->id );
 
         MainWP_System_Utility::touch( $dir . 'index.php' );
@@ -1664,7 +1662,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_notification_types()
      * @uses  \MainWP\Dashboard\MainWP_Utility::valid_input_emails()
      */
-    private static function update_site_emails_settings_handle( $website ) {
+    private static function update_site_emails_settings_handle( $website ) { // phpcs:ignore -- NOSONAR - complex.
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $updated = false;
         if ( isset( $_POST['submit'] ) && isset( $_GET['emailsettingsid'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsiteEmailSettings' . sanitize_text_field( wp_unslash( $_GET['emailsettingsid'] ) ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
@@ -1742,7 +1740,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 // update site.
                 $groupids   = array();
                 $groupnames = array();
-                $tmpArr     = array();
                 if ( isset( $_POST['mainwp_managesites_edit_addgroups'] ) && ! empty( $_POST['mainwp_managesites_edit_addgroups'] ) ) {
                     $groupids = explode( ',', sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_addgroups'] ) ) );
                 }

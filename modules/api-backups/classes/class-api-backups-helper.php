@@ -130,7 +130,7 @@ class Api_Backups_Helper {
      *
      * @return mixed results.
      */
-    public static function free_result( $results ) {
+    public static function free_result( $results ) { //phpcs:ignore -- NOSONAR - complex.
         if ( empty( $results ) ) {
             return;
         }

@@ -74,7 +74,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public static function init_menu() {
 
-        $_page = add_submenu_page(
+        add_submenu_page(
             'mainwp_tab',
             __( 'Themes', 'mainwp' ),
             '<span id="mainwp-Themes">' . esc_html__( 'Themes', 'mainwp' ) . '</span>',
@@ -295,7 +295,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
      */
-    public static function render_header( $shownPage = '' ) {
+    public static function render_header( $shownPage = '' ) { // phpcs:ignore -- NOSONAR - complex.
         $params = array( 'title' => esc_html__( 'Themes', 'mainwp' ) );
 
         MainWP_UI::render_top_header( $params );
@@ -373,7 +373,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_result()
      * @uses \MainWP\Dashboard\MainWP_UI::render_empty_bulk_actions()
      */
-    public static function render() {
+    public static function render() { // phpcs:ignore -- NOSONAR - complex.
         $cachedSearch     = MainWP_Cache::get_cached_context( 'Themes' );
         $selected_sites   = array();
         $selected_groups  = array();
@@ -715,7 +715,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $multi_kws = array_filter( array_map( 'trim', $multi_kws ) );
 
             if ( '' !== $sites ) {
-                foreach ( $sites as $k => $v ) {
+                foreach ( $sites as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
                         $website          = MainWP_DB::instance()->get_website_by_id( $v );
                         $allThemes        = json_decode( $website->themes, true );
@@ -763,7 +763,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             }
 
             if ( '' !== $groups ) {
-                foreach ( $groups as $k => $v ) {
+                foreach ( $groups as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
                         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
                         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -875,7 +875,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $dbwebsites = array();
 
             if ( '' !== $sites ) {
-                foreach ( $sites as $k => $v ) {
+                foreach ( $sites as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
                         $website = MainWP_DB::instance()->get_website_by_id( $v );
                         if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
@@ -890,7 +890,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             }
 
             if ( '' !== $groups ) {
-                foreach ( $groups as $k => $v ) {
+                foreach ( $groups as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
                         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
                         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -987,7 +987,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 $themes_list = $output->themes_installed;
                 $view_mode   = MAINWP_VIEW_PER_SITE;
             }
-        } elseif ( 0 === count( $output->themes ) ) {
+        } elseif ( empty( $output->themes ) ) {
             ?>
             <div class="ui message yellow"><?php esc_html_e( 'No themes found.', 'mainwp' ); ?></div>
             <?php
@@ -997,7 +997,6 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $sites             = array();
         $siteThemes        = array();
-        $themes            = array();
         $themesNameSites   = array();
         $themesRealVersion = array();
         $themesSlug        = array();
@@ -1624,7 +1623,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @return mixed $bulkActions
      */
-    public static function render_bulk_actions( $status ) {
+    public static function render_bulk_actions( $status ) { // phpcs:ignore -- NOSONAR - complex.
         ob_start();
         ?>
         <select class="ui dropdown" id="mainwp-bulk-actions">
@@ -2114,7 +2113,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      */
-    public static function render_all_themes_table( $output = null ) { // phpcs:ignore -- not quite complex function.
+    public static function render_all_themes_table( $output = null ) { // phpcs:ignore -- NOSONAR - complex.
         $keyword       = null;
         $search_status = 'all';
 
@@ -2214,7 +2213,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             //phpcs:enable
         }
 
-        if ( 0 === count( $output->themes ) ) {
+        if ( empty( $output->themes ) ) {
             ?>
             <div class="ui message yellow"><?php esc_html_e( 'No themes found.', 'mainwp' ); ?></div>
             <?php
@@ -2251,7 +2250,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
      */
-    public static function render_all_themes_html( $themes, $search_status, $trustedThemes, $trustedThemesNotes, $decodedIgnoredThemes ) {
+    public static function render_all_themes_html( $themes, $search_status, $trustedThemes, $trustedThemesNotes, $decodedIgnoredThemes ) { // phpcs:ignore -- NOSONAR - complex.
 
         /**
          * Action: mainwp_themes_before_auto_updates_table
@@ -2405,7 +2404,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
             $tmpDecodedIgnoredThemes = json_decode( $website->ignored_themes, true );
 
-            if ( ! is_array( $tmpDecodedIgnoredThemes ) || 0 === count( $tmpDecodedIgnoredThemes ) ) {
+            if ( ! is_array( $tmpDecodedIgnoredThemes ) || empty( $tmpDecodedIgnoredThemes ) ) {
                 continue;
             }
 
@@ -2531,7 +2530,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      */
-    public static function render_sites_ignored( $cnt, $websites ) {
+    public static function render_sites_ignored( $cnt, $websites ) { // phpcs:ignore -- NOSONAR - complex.
         ?>
         <table id="mainwp-per-site-ignored-themes" class="ui compact selectable table unstackable">
             <thead>
@@ -2552,7 +2551,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         continue;
                     }
                     $decodedIgnoredThemes = json_decode( $website->ignored_themes, true );
-                    if ( ! is_array( $decodedIgnoredThemes ) || 0 === count( $decodedIgnoredThemes ) ) {
+                    if ( ! is_array( $decodedIgnoredThemes ) || empty( $decodedIgnoredThemes ) ) {
                         continue;
                     }
                     $first = true;
@@ -2630,7 +2629,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $tmpDecodedIgnoredThemes = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
             $tmpDecodedIgnoredThemes = ! empty( $tmpDecodedIgnoredThemes ) ? json_decode( $tmpDecodedIgnoredThemes, true ) : array();
 
-            if ( ! is_array( $tmpDecodedIgnoredThemes ) || 0 === count( $tmpDecodedIgnoredThemes ) ) {
+            if ( ! is_array( $tmpDecodedIgnoredThemes ) || empty( $tmpDecodedIgnoredThemes ) ) {
                 continue;
             }
             ++$cnt;
@@ -2756,7 +2755,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      */
-    public static function render_sites_ignored_abandoned( $cnt, $websites ) {
+    public static function render_sites_ignored_abandoned( $cnt, $websites ) { // phpcs:ignore -- NOSONAR - complex.
         ?>
     <table id="mainwp-per-site-ignored-abandoned-themes" class="ui compact selectable table unstackable">
         <thead>
@@ -2775,7 +2774,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     $decodedIgnoredThemes = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
                     $decodedIgnoredThemes = ! empty( $decodedIgnoredThemes ) ? json_decode( $decodedIgnoredThemes, true ) : array();
 
-                    if ( ! is_array( $decodedIgnoredThemes ) || 0 === count( $decodedIgnoredThemes ) ) {
+                    if ( ! is_array( $decodedIgnoredThemes ) || empty( $decodedIgnoredThemes ) ) {
                         continue;
                     }
 

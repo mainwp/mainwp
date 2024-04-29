@@ -115,7 +115,7 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                     ?>
                     <?php
 
-                    foreach ( $default_client_fields as $field_name => $field ) {
+                    foreach ( $default_client_fields as $field ) {
 
                         $db_field = isset( $field['db_field'] ) ? $field['db_field'] : '';
                         $val      = ( ! empty( $db_field ) && isset( $client_info[ $db_field ] ) ) ? $client_info[ $db_field ] : '';
@@ -167,7 +167,7 @@ class MainWP_Client_Info { //phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
                     <?php
 
-                    if ( is_array( $custom_fields ) && count( $custom_fields ) > 0 ) {
+                    if ( is_array( $custom_fields ) && ! empty( $custom_fields ) ) {
                         foreach ( $custom_fields as $field ) {
                             if ( empty( $field->field_value ) ) {
                                 continue;

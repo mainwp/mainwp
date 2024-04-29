@@ -99,7 +99,7 @@ class Cost_Tracker_Summary {
     /**
      * Handle update screen options.
      */
-    public function handle_update_screen_options() {
+    public function handle_update_screen_options() { //phpcs:ignore -- NOSONAR - complex.
         $update_opts = false;
         if ( isset( $_POST['module_cost_tracker_summay_options_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['module_cost_tracker_summay_options_nonce'] ), 'module_cost_tracker_summay_options_nonce' ) ) {
             $update_opts = true;

@@ -61,13 +61,6 @@ class Connector_Posts extends Log_Connector {
     }
 
     /**
-     * Register log data.
-     */
-    public function register() { //phpcs:ignore -- overrided.
-        parent::register();
-    }
-
-    /**
      * Return translated context labels
      *
      * @return array Context label translations

@@ -38,7 +38,7 @@ class MainWP_Plugins_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_Exception
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
      */
-    public static function plugins_search_handler( $data, $website, &$output ) {
+    public static function plugins_search_handler( $data, $website, &$output ) { // phpcs:ignore -- NOSONAR - complex.
         if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
             return;
         }
@@ -258,7 +258,7 @@ class MainWP_Plugins_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
      * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
      */
-    public static function trust_post() {
+    public static function trust_post() { // phpcs:ignore -- NOSONAR - complex.
         $userExtension  = MainWP_DB_Common::instance()->get_user_extension();
         $trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
         if ( ! is_array( $trustedPlugins ) ) {

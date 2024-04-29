@@ -102,7 +102,6 @@ class Cost_Tracker_Add_Edit {
         $selected_renewal             = '';
         $selected_cost_tracker_status = '';
         $last_renewal                 = time();
-        $next_renewal                 = 0;
         $selected_payment_method      = 'paypal';
         $slug                         = '';
         $selected_default_icon        = '';
@@ -119,7 +118,6 @@ class Cost_Tracker_Add_Edit {
                 $selected_cost_tracker_status = $edit_cost->cost_status;
                 $selected_renewal             = $edit_cost->renewal_type;
                 $last_renewal                 = $edit_cost->last_renewal;
-                $next_renewal                 = $edit_cost->next_renewal;
                 $selected_payment_method      = $edit_cost->payment_method;
                 $slug                         = $edit_cost->slug;
                 $selected_prod_icon           = $edit_cost->cost_icon;

@@ -94,8 +94,6 @@ class Log_Query {
             }
         }
 
-        $where_prev = '';
-
         if ( ! empty( $args['timestart'] ) && ! empty( $args['timestop'] ) ) {
             $where .= $wpdb->prepare( ' AND `lg`.`created` >= %d AND `lg`.`created` <= %d', $args['timestart'], $args['timestop'] );
         }

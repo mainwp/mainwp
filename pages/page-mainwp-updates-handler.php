@@ -39,7 +39,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_Exception
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public static function upgrade_site( $id ) {
+    public static function upgrade_site( $id ) { // phpcs:ignore -- NOSONAR - complex.
         if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
 
             $website = MainWP_DB::instance()->get_website_by_id( $id );
@@ -86,7 +86,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
-    public static function upgrade_website( $website ) {
+    public static function upgrade_website( $website ) { // phpcs:ignore -- NOSONAR - complex.
         if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 
             $wpcore_update_disabled_by = MainWP_System_Utility::disabled_wpcore_update_by( $website );
@@ -112,7 +112,6 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 if ( isset( $information['upgrade'] ) && ( 'SUCCESS' === $information['upgrade'] ) ) {
                     $success = true;
                 } elseif ( isset( $information['upgrade'] ) ) {
-                    $errorMsg = '';
                     if ( 'LOCALIZATION' === $information['upgrade'] ) {
                         $error = esc_html__( 'No update found for the set locale.', 'mainwp' );
                     } elseif ( 'NORESPONSE' === $information['upgrade'] ) {
@@ -162,7 +161,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public static function ignore_plugin_theme( $type, $slug, $name, $id ) {
+    public static function ignore_plugin_theme( $type, $slug, $name, $id ) { // phpcs:ignore -- NOSONAR - complex.
         if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
             $website = MainWP_DB::instance()->get_website_by_id( $id );
             if ( MainWP_System_Utility::can_edit_website( $website ) ) {
@@ -242,7 +241,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public static function unignore_plugin_theme( $type, $slug, $id ) {
+    public static function unignore_plugin_theme( $type, $slug, $id ) { // phpcs:ignore -- NOSONAR - complex.
         if ( ! empty( $id ) ) {
 
             /**
@@ -420,7 +419,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
      * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
      */
-    public static function unignore_plugins_themes( $type, $slug ) {
+    public static function unignore_plugins_themes( $type, $slug ) { // phpcs:ignore -- NOSONAR - complex.
         $slug          = urldecode( $slug );
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
         if ( 'plugin' === $type ) {
@@ -484,7 +483,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public static function unignore_abandoned_plugin_theme( $type, $slug, $id ) {
+    public static function unignore_abandoned_plugin_theme( $type, $slug, $id ) { // phpcs:ignore -- NOSONAR - complex.
         if ( isset( $id ) ) {
             if ( '_ALL_' === $id ) {
                 $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -536,7 +535,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
      * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
      */
-    public static function unignore_abandoned_plugins_themes( $type, $slug ) {
+    public static function unignore_abandoned_plugins_themes( $type, $slug ) { // phpcs:ignore -- NOSONAR - complex.
         $slug          = urldecode( $slug );
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
         if ( 'plugin' === $type ) {
@@ -595,7 +594,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public static function dismiss_plugin_theme( $type, $slug, $name, $id ) {
+    public static function dismiss_plugin_theme( $type, $slug, $name, $id ) { // phpcs:ignore -- NOSONAR - complex.
         if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
             $website = MainWP_DB::instance()->get_website_by_id( $id );
             if ( MainWP_System_Utility::can_edit_website( $website ) ) {

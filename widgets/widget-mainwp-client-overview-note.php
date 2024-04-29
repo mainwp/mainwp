@@ -47,9 +47,8 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $client_info = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id, ARRAY_A );
 
-        $note       = '';
-        $strip_note = '';
-        $esc_note   = '';
+        $note     = '';
+        $esc_note = '';
 
         if ( $client_info ) {
             $note     = html_entity_decode( $client_info['note'] );

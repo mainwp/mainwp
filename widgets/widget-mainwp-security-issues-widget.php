@@ -73,7 +73,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
      */
-    public static function render_issues( $websites, $total_securityIssues ) {
+    public static function render_issues( $websites, $total_securityIssues ) { // phpcs:ignore -- NOSONAR - complex.
         $is_demo = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <div class="mainwp-widget-header">

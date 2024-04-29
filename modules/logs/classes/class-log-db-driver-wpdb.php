@@ -160,6 +160,6 @@ class Log_DB_Driver_WPDB implements Log_DB_Driver {
      * @param \MainWP\Dashboard\Module\Log\Log_Manager $manager Instance of the Log_Manager.
      */
     public function purge_storage( $manager ) {
-        // @TODO: Not doing anything here until the deactivation/uninstall flow has been rethought.
+        // @DEVTODO: Not doing anything here until the deactivation/uninstall flow has been rethought.
     }
 }

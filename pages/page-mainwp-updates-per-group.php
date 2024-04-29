@@ -137,7 +137,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                             $wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
                                             $wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
-                                            if ( ( 0 === count( $wp_upgrades ) ) && empty( $website->sync_errors ) ) {
+                                            if ( ( empty( $wp_upgrades ) ) && empty( $website->sync_errors ) ) {
                                                 continue;
                                             }
 
@@ -232,7 +232,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      */
-    public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
+    public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedPlugins ) { // phpcs:ignore -- NOSONAR - complex.
         $updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view );
         $is_demo              = MainWP_Demo_Handle::is_demo_mode();
         ?>
@@ -362,7 +362,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                                         $total_group_plugin_updates += count( $plugin_upgrades );
 
-                                        if ( ( 0 === count( $plugin_upgrades ) ) && ( empty( $website->sync_errors ) ) ) {
+                                        if ( ( empty( $plugin_upgrades ) ) && ( empty( $website->sync_errors ) ) ) {
                                             continue;
                                         }
                                         ?>
@@ -501,7 +501,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      */
-    public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
+    public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedThemes ) { // phpcs:ignore -- NOSONAR - complex.
         $updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view, 'theme' );
         $is_demo              = MainWP_Demo_Handle::is_demo_mode();
         ?>
@@ -629,7 +629,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                                         $total_group_theme_updates += count( $theme_upgrades );
 
-                                        if ( ( 0 === count( $theme_upgrades ) ) && ( empty( $website->sync_errors ) ) ) {
+                                        if ( ( empty( $theme_upgrades ) ) && ( empty( $website->sync_errors ) ) ) {
                                             continue;
                                         }
                                         ?>
@@ -828,7 +828,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                     $translation_upgrades             = json_decode( $website->translation_upgrades, true );
                                     $total_group_translation_updates += count( $translation_upgrades );
 
-                                    if ( ( 0 === count( $translation_upgrades ) ) && ( empty( $website->sync_errors ) ) ) {
+                                    if ( ( empty( $translation_upgrades ) ) && ( empty( $website->sync_errors ) ) ) {
                                         continue;
                                     }
                                     ?>
@@ -947,7 +947,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      */
-    public static function render_abandoned_plugins( $websites, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedPlugins ) {
+    public static function render_abandoned_plugins( $websites, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedPlugins ) { // phpcs:ignore -- NOSONAR - complex.
         $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
         ?>
         <table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-abandoned-plugins-groups-table">
@@ -1106,7 +1106,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      */
-    public static function render_abandoned_themes( $websites, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedThemes ) {
+    public static function render_abandoned_themes( $websites, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedThemes ) { // phpcs:ignore -- NOSONAR - complex.
         $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
         ?>
         <table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-abandoned-themes-groups-table">

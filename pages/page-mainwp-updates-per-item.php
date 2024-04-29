@@ -48,7 +48,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      * @uses \MainWP\Dashboard\MainWP_Updates::get_continue_update_selector()
      */
-    public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
+    public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins ) { // phpcs:ignore -- NOSONAR - complex.
         $is_demo = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-plugins-updates-table">
@@ -260,7 +260,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      * @uses \MainWP\Dashboard\MainWP_Updates::get_continue_update_selector()
      */
-    public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
+    public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes ) { // phpcs:ignore -- NOSONAR - complex.
         $updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view, 'theme' );
         $is_demo              = MainWP_Demo_Handle::is_demo_mode();
         ?>
@@ -452,7 +452,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::get_continue_update_selector()
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      */
-    public static function render_trans_update( $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ) {
+    public static function render_trans_update( $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ) { // phpcs:ignore -- NOSONAR - complex.
         $is_demo = MainWP_Demo_Handle::is_demo_mode();
         ?>
         <table class="ui tablet stackable table mainwp-manage-updates-table main-master-checkbox" id="mainwp-translations-sites-table">
@@ -598,7 +598,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      */
-    public static function render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins ) {
+    public static function render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins ) { // phpcs:ignore -- NOSONAR - complex.
         $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
         ?>
         <table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-abandoned-plugins-items-table">
@@ -730,7 +730,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
      * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
      */
-    public static function render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes ) {
+    public static function render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes ) { // phpcs:ignore -- NOSONAR - complex.
         $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
         ?>
         <table class="ui tablet stackable table mainwp-manage-updates-table" id="mainwp-themes-updates-table">

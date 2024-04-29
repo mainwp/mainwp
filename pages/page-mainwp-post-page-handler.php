@@ -94,9 +94,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             }
 
             $meta = get_metadata_by_mid( 'post', $mid );
-            $pid  = (int) $meta->post_id;
             $meta = get_object_vars( $meta );
-
             $data = MainWP_Post::list_meta_row( $meta, $c );
 
         } elseif ( isset( $_POST['delete_meta'] ) && 'yes' === $_POST['delete_meta'] ) {
@@ -171,7 +169,6 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $siteIds          = explode( ',', urldecode( wp_unslash( $_REQUEST['sites'] ) ) ); // do not sanitize encoded values.
             $siteIdsRequested = array();
             foreach ( $siteIds as $siteId ) {
-                $siteId = $siteId;
                 if ( ! MainWP_Utility::ctype_digit( $siteId ) ) {
                     continue;
                 }
@@ -183,8 +180,6 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $groupIds          = explode( ',', sanitize_text_field( urldecode( wp_unslash( $_REQUEST['groups'] ) ) ) );  // sanitize ok.
             $groupIdsRequested = array();
             foreach ( $groupIds as $groupId ) {
-                $groupId = $groupId;
-
                 if ( ! MainWP_Utility::ctype_digit( $groupId ) ) {
                     continue;
                 }
@@ -461,11 +456,9 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 do_action( 'mainwp_bulkpost_before_post', $p_id );
 
                 $skip_post = false;
-                if ( $p_id ) {
-                    if ( 'yes' === get_post_meta( $p_id, '_mainwp_skip_posting', true ) ) {
-                        $skip_post = true;
-                        wp_delete_post( $p_id, true );
-                    }
+                if ( $p_id && 'yes' === get_post_meta( $p_id, '_mainwp_skip_posting', true ) ) {
+                    $skip_post = true;
+                    wp_delete_post( $p_id, true );
                 }
 
                 if ( ! $skip_post ) {
@@ -669,7 +662,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     }
                 }
 
-                include_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php';
+                include_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php'; // NOSONAR - WP compatible.
                 $featured_image_id   = get_post_thumbnail_id( $id );
                 $post_featured_image = null;
                 $featured_image_data = null;
@@ -912,8 +905,6 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $last_ajax_posting = false;
                 if ( 'ajax_posting' === $what ) {
                     // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-                    $total           = isset( $_POST['total'] ) ? intval( $_POST['total'] ) : 0;
-                    $count           = isset( $_POST['count'] ) ? intval( $_POST['count'] ) : 0;
                     $delete_bulkpost = isset( $_POST['delete_bulkpost'] ) && ! empty( $_POST['delete_bulkpost'] ) ? true : false;
                     // phpcs:enable
                     if ( $delete_bulkpost ) {
@@ -965,12 +956,12 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Exception
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
-    public static function get_post() {
+    public static function get_post() { //phpcs:ignore -- NOSONAR - complex.
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $postId        = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
         $postType      = isset( $_POST['postType'] ) ? sanitize_text_field( wp_unslash( $_POST['postType'] ) ) : '';
         $websiteId     = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
-        $replaceadvImg = isset( $_POST['replace_advance_img'] ) && ! empty( $_POST['replace_advance_img'] ) ? true : true;
+        $replaceadvImg = isset( $_POST['replace_advance_img'] ) && ! empty( $_POST['replace_advance_img'] ) ? true : false;
         // phpcs:enable
         if ( empty( $postId ) || empty( $websiteId ) ) {
             die( wp_json_encode( array( 'error' => 'Post ID or site ID not found. Please, reload the page and try again.' ) ) );
@@ -1031,7 +1022,6 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $post_category       = rawurldecode( isset( $post_data['post_category'] ) ? base64_decode( $post_data['post_category'] ) : null ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
         $post_tags           = rawurldecode( isset( $new_post['post_tags'] ) ? $new_post['post_tags'] : null );
         $post_featured_image = base64_decode( $post_data['post_featured_image'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-        $post_gallery_images = base64_decode( $post_data['post_gallery_images'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
         $upload_dir          = json_decode( base64_decode( $post_data['child_upload_dir'] ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
         $post_gallery_images = base64_decode( $post_data['post_gallery_images'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
         return static::create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images, $replaceadvImg, $website );
@@ -1115,37 +1105,35 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             }
         }
 
-        if ( has_shortcode( $new_post['post_content'], 'gallery' ) ) {
-            if ( preg_match_all( '/\[gallery[^\]]+ids=\"(.*?)\"[^\]]*\]/ix', $new_post['post_content'], $matches, PREG_SET_ORDER ) ) {
-                $replaceAttachedIds = array();
-                if ( is_array( $post_gallery_images ) ) {
-                    foreach ( $post_gallery_images as $gallery ) {
-                        if ( isset( $gallery['src'] ) ) {
-                            try {
-                                $upload = static::upload_image( $gallery['src'], $gallery, true );
-                                if ( null !== $upload ) {
-                                    $replaceAttachedIds[ $gallery['id'] ] = $upload['id'];
-                                }
-                            } catch ( \Exception $e ) {
-                                // ok.
+        if ( has_shortcode( $new_post['post_content'], 'gallery' ) && preg_match_all( '/\[gallery[^\]]+ids=\"(.*?)\"[^\]]*\]/ix', $new_post['post_content'], $matches, PREG_SET_ORDER ) ) {
+            $replaceAttachedIds = array();
+            if ( is_array( $post_gallery_images ) ) {
+                foreach ( $post_gallery_images as $gallery ) {
+                    if ( isset( $gallery['src'] ) ) {
+                        try {
+                            $upload = static::upload_image( $gallery['src'], $gallery, true );
+                            if ( null !== $upload ) {
+                                $replaceAttachedIds[ $gallery['id'] ] = $upload['id'];
                             }
+                        } catch ( \Exception $e ) {
+                            // ok.
                         }
                     }
                 }
-                if ( ! empty( $replaceAttachedIds ) ) {
-                    foreach ( $matches as $match ) {
-                        $idsToReplace     = $match[1];
-                        $idsToReplaceWith = '';
-                        $originalIds      = explode( ',', $idsToReplace );
-                        foreach ( $originalIds as $attached_id ) {
-                            if ( ! empty( $originalIds ) && isset( $replaceAttachedIds[ $attached_id ] ) ) {
-                                $idsToReplaceWith .= $replaceAttachedIds[ $attached_id ] . ',';
-                            }
+            }
+            if ( ! empty( $replaceAttachedIds ) ) {
+                foreach ( $matches as $match ) {
+                    $idsToReplace     = $match[1];
+                    $idsToReplaceWith = '';
+                    $originalIds      = explode( ',', $idsToReplace );
+                    foreach ( $originalIds as $attached_id ) {
+                        if ( ! empty( $originalIds ) && isset( $replaceAttachedIds[ $attached_id ] ) ) {
+                            $idsToReplaceWith .= $replaceAttachedIds[ $attached_id ] . ',';
                         }
-                        $idsToReplaceWith = rtrim( $idsToReplaceWith, ',' );
-                        if ( ! empty( $idsToReplaceWith ) ) {
-                            $new_post['post_content'] = str_replace( '"' . $idsToReplace . '"', '"' . $idsToReplaceWith . '"', $new_post['post_content'] );
-                        }
+                    }
+                    $idsToReplaceWith = rtrim( $idsToReplaceWith, ',' );
+                    if ( ! empty( $idsToReplaceWith ) ) {
+                        $new_post['post_content'] = str_replace( '"' . $idsToReplace . '"', '"' . $idsToReplaceWith . '"', $new_post['post_content'] );
                     }
                 }
             }
@@ -1238,7 +1226,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @return mixed array of result.
      */
-    public static function replace_advanced_image( $content, $upload_dir, $website, $withslashes = false ) {
+    public static function replace_advanced_image( $content, $upload_dir, $website, $withslashes = false ) { //phpcs:ignore -- NOSONAR - complex.
 
         if ( empty( $upload_dir ) || ! isset( $upload_dir['baseurl'] ) ) {
             return $content;
@@ -1316,12 +1304,11 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      */
-    public static function upload_image( $img_url, $img_data = array() ) {
+    public static function upload_image( $img_url, $img_data = array() ) { //phpcs:ignore -- NOSONAR - complex.
         if ( ! is_array( $img_data ) ) {
             $img_data = array();
         }
-        include_once ABSPATH . 'wp-admin/includes/file.php';
-        $upload_dir     = wp_upload_dir();
+        include_once ABSPATH . 'wp-admin/includes/file.php'; // NOSONAR - WP compatible.
         $temporary_file = download_url( $img_url );
 
         if ( is_wp_error( $temporary_file ) ) {
@@ -1347,7 +1334,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'post_status'    => 'inherit',
                 );
                 $attach_id   = wp_insert_attachment( $attachment, $local_img_path );
-                require_once ABSPATH . 'wp-admin/includes/image.php';
+                require_once ABSPATH . 'wp-admin/includes/image.php'; // NOSONAR - WP compatible.
                 $attach_data = wp_generate_attachment_metadata( $attach_id, $local_img_path );
                 wp_update_attachment_metadata( $attach_id, $attach_data );
                 if ( isset( $img_data['alt'] ) && ! empty( $img_data['alt'] ) ) {
@@ -1360,7 +1347,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             }
         }
 
-        $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+        MainWP_System_Utility::get_wp_file_system();
 
         /**
          * WordPress files system object.

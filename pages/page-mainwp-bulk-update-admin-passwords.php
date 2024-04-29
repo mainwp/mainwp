@@ -79,7 +79,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                 $selected_groups  = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
                 $selected_clients = ( isset( $_POST['selected_clients'] ) && is_array( $_POST['selected_clients'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_clients'] ) ) : array();
 
-                if ( ( 'group' === $_POST['select_by'] && 0 === count( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && 0 === count( $selected_sites ) ) || ( 'client' === $_POST['select_by'] && 0 === count( $selected_clients ) ) ) {
+                if ( ( 'group' === $_POST['select_by'] && empty( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && empty( $selected_sites ) ) || ( 'client' === $_POST['select_by'] && empty( $selected_clients ) ) ) {
                     $errors[] = esc_html__( 'Please select the sites or groups or clients where you want to change the administrator password.', 'mainwp' );
                 }
             } else {
@@ -92,7 +92,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
 
             $data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
-            if ( 0 === count( $errors ) ) {
+            if ( empty( $errors ) ) {
                 $show_form = false;
 
                 $new_password = wp_unslash( $_POST['password'] ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- ok.
@@ -147,7 +147,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                     }
                 }
 
-                if ( count( $dbwebsites ) > 0 ) {
+                if ( ! empty( $dbwebsites ) ) {
                     $post_data      = array( 'new_password' => base64_encode( $new_password ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
                     $output         = new \stdClass();
                     $output->ok     = array();

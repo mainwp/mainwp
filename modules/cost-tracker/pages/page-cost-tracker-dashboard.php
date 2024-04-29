@@ -18,7 +18,7 @@ use function MainWP\Dashboard\mainwp_do_not_have_permissions;
 /**
  * Class Cost_Tracker_Dashboard
  */
-class Cost_Tracker_Dashboard {
+class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
     // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
     /**
      * Variable to hold the items.
@@ -244,8 +244,6 @@ class Cost_Tracker_Dashboard {
             $req_order    = $order_values['order'];
         }
 
-        $search = isset( $_REQUEST['search']['value'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['search']['value'] ) ) : '';
-
         $filters = static::get_cost_filter_params();
 
         $get_saved = true;
@@ -440,7 +438,6 @@ class Cost_Tracker_Dashboard {
 
         static::$order   = $_order;
         static::$orderby = $_orderby;
-        $output          = array();
 
         $filtered = false;
         if ( isset( $_GET['selected_ids'] ) && ! empty( $_GET['selected_ids'] ) ) { //phpcs:ignore -- ok.
@@ -499,18 +496,11 @@ class Cost_Tracker_Dashboard {
             </div>
         </div>
         <?php
-        $lifetime_costs = isset( $output['lifetime_costs'] ) ? (float) $output['lifetime_costs'] : 0;
-        $monthly_costs  = isset( $output['monthly_costs'] ) ? (float) $output['monthly_costs'] : 0;
-        $yearly_costs   = isset( $output['yearly_costs'] ) ? (float) $output['yearly_costs'] : 0;
-
         static::render_modal_edit_notes();
         static::render_screen_options();
-
         $sites_per_page = get_option( 'mainwp_default_sites_per_page', 25 );
-
         $sites_per_page = intval( $sites_per_page );
-
-        $pages_length = array(
+        $pages_length   = array(
             25  => '25',
             10  => '10',
             50  => '50',
@@ -760,15 +750,6 @@ class Cost_Tracker_Dashboard {
         $sel_ids = isset( $_GET['selected_ids'] ) ? $_GET['selected_ids'] : ''; //phpcs:ignore -- ok.
         $sel_ids = explode( ',', $sel_ids );
 
-        $lifetime_costs = 0;
-        $yearly_costs   = 0;
-        $monthly_costs  = 0;
-
-        $payment_types = array(
-            'subscription' => esc_html__( 'Subscription', 'mainwp' ),
-            'lifetime'     => esc_html__( 'Lifetime', 'mainwp' ),
-        );
-
         $license_types = array(
             'single_site' => '<span data-tooltip="Single-Site License" data-inverted="" data-position="left center"><i class="wordpress large icon"></i></span>',
             'multi_site'  => '<span data-tooltip="Multiple-Site License" data-inverted="" data-position="left center"><i class="icons"><i class="wordpress mini icon"></i><i class="top left corner large wordpress icon"></i><i class="bottom right corner large wordpress icon"></i></i></span>',
@@ -801,7 +782,6 @@ class Cost_Tracker_Dashboard {
                 $esc_note     = apply_filters( 'mainwp_escape_content', $note );
                 $strip_note   = wp_strip_all_tags( $esc_note );
                 $last_renewal = $subscription ? $subscription->last_renewal : 0;
-                $next_renewal = $subscription && $last_renewal ? $subscription->next_renewal : 0;
 
                 $sel_sites   = ! empty( $subscription->sites ) ? json_decode( $subscription->sites, true ) : array();
                 $sel_groups  = ! empty( $subscription->groups ) ? json_decode( $subscription->groups, true ) : array();
@@ -832,33 +812,6 @@ class Cost_Tracker_Dashboard {
                     $filter_groups    = ! empty( $sel_groups ) ? '&g=' . implode( ',', $sel_groups ) : '';
                     $filter_clients   = ! empty( $sel_clients ) ? '&client=' . implode( ',', $sel_clients ) : '';
                     $url_manage_sites = 'admin.php?page=managesites' . $filter_sites . $filter_groups . $filter_clients;
-                }
-
-                $is_multi_license = 'multi_site' === $subscription->license_type ? true : false;
-
-                if ( 'lifetime' === $subscription->type ) {
-                    if ( $num_sites > 0 ) {
-                        if ( $is_multi_license ) {
-                            $lifetime_costs += (float) $subscription->price;
-                        } else { // single site.
-                            $lifetime_costs += (float) $subscription->price * $num_sites;
-                        }
-                    }
-                } elseif ( 'subscription' === $subscription->type ) {
-                    if ( $num_sites > 0 ) {
-                        if ( $is_multi_license ) {
-                            if ( 'monthly' === $subscription->renewal_type ) {
-                                $monthly_costs += (float) $subscription->price;
-                            } elseif ( 'yearly' === $subscription->renewal_type ) {
-                                $yearly_costs += (float) $subscription->price;
-                            }
-                        } elseif ( 'monthly' === $subscription->renewal_type ) {
-                            // single site.
-                                $monthly_costs += (float) $subscription->price * $num_sites;
-                        } elseif ( 'yearly' === $subscription->renewal_type ) {
-                            $yearly_costs += (float) $subscription->price * $num_sites;
-                        }
-                    }
                 }
 
                 $rw_classes = 'cost-item cost-tracker-item-' . intval( $subscription->id ) . ' cost-tracker-type-' . $product_types[ $subscription->product_type ];
@@ -969,6 +922,8 @@ class Cost_Tracker_Dashboard {
                                 </div>
                             </div>
                             <?php
+                            break;
+                        default:
                             break;
                     }
                     $cols_data[ $column_name ] = ob_get_clean();
@@ -1139,8 +1094,8 @@ class Cost_Tracker_Dashboard {
      */
     public function ajax_cost_tracker_delete() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_cost_tracker_delete' );
-        $sub_id  = isset( $_POST['sub_id'] ) ? intval( $_POST['sub_id'] ) : 0; //phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $current = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $sub_id );
+        $sub_id = isset( $_POST['sub_id'] ) ? intval( $_POST['sub_id'] ) : 0; //phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
         if ( Cost_Tracker_DB::get_instance()->delete_cost_tracker( 'id', $sub_id ) ) {
             die( wp_json_encode( array( 'status' => 'success' ) ) );
         } else {

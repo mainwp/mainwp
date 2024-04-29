@@ -83,7 +83,7 @@ class Log_Connectors {
 
         $classes = array();
         foreach ( $connectors as $connector ) {
-            include_once $this->manager->locations['dir'] . 'connectors/class-connector-' . $connector . '.php';
+            include_once $this->manager->locations['dir'] . 'connectors/class-connector-' . $connector . '.php'; // NOSONAR - WP compatible.
             $class_name = sprintf( '\MainWP\Dashboard\Module\Log\Connector_%s', str_replace( '-', '_', $connector ) );
             if ( ! class_exists( $class_name ) ) {
                 continue;

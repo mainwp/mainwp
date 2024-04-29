@@ -22,7 +22,7 @@ use function MainWP\Dashboard\mainwp_current_user_have_right;
 /**
  * Class Cost_Tracker_Admin
  */
-class Cost_Tracker_Admin {
+class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
 
     /**
      * Variable to hold the version number.
@@ -140,7 +140,6 @@ class Cost_Tracker_Admin {
         $allow_pages = array( 'ManageCostTracker', 'CostTrackerAdd', 'CostTrackerSettings', 'CostSummary' );
         if ( isset( $_GET['page'] ) && in_array( $_GET['page'], $allow_pages, true ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended
             $base_url = Cost_Tracker_Manager::get_location_path( 'url' );
-            wp_enqueue_style( 'mainwp-module-cost-tracker-extension', $base_url . 'ui/css/cost-tracker.css', array(), $this->version );
             wp_enqueue_script( 'mainwp-module-cost-tracker-extension', $base_url . 'ui/js/cost-tracker.js', array( 'jquery' ), $this->version, true );
             if ( 'CostSummary' === $_GET['page'] ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended
                 add_filter(
@@ -405,7 +404,7 @@ class Cost_Tracker_Admin {
      *
      * @param string $shownPage Current Page.
      */
-    public static function render_header( $shownPage = '' ) {
+    public static function render_header( $shownPage = '' ) { //phpcs:ignore -- NOSONAR - complex.
         $params = array(
             'title'      => esc_html__( 'Cost Tracker', 'mainwp' ),
             'which'      => 'page_cost_tracker_overview',
@@ -848,7 +847,7 @@ class Cost_Tracker_Admin {
      *
      * Handle sites screen settings
      */
-    public function handle_sites_screen_settings() {
+    public function handle_sites_screen_settings() { //phpcs:ignore -- NOSONAR - complex.
         if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'CostTrackerSitesScrOptions' ) ) {
             $show_cols = array();
             foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST ) ) as $key => $val ) {
@@ -880,8 +879,8 @@ class Cost_Tracker_Admin {
             ?>
             <p><?php esc_html_e( 'If you need help with the Cost Tracker extension, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui relaxed bulleted list">
-                <div class="item"><a href="" target="_blank"></a></div>
-                <div class="item"><a href="" target="_blank"></a></div>
+                <div class="item"><a href="#" target="_blank" aria-hidden="true"></a></div>
+                <div class="item"><a href="#" target="_blank" aria-hidden="true"></a></div>
             <?php
             /**
              * Action: mainwp_module_cost_tracker_help_item

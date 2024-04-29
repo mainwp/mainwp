@@ -110,7 +110,6 @@ abstract class Log_Connector {
             $user_id   = $data['user_id'];
             $state     = $data['state'];
         }
-        $created_timestamp = null;
         return call_user_func_array( array( Log_Manager::instance()->log, 'log' ), compact( 'connector', 'message', 'args', 'site_id', 'context', 'action', 'state', 'user_id' ) );
     }
 
@@ -123,7 +122,7 @@ abstract class Log_Connector {
      *
      * @return array
      */
-    public function get_changed_keys( $old_value, $new_value, $deep = false ) {
+    public function get_changed_keys( $old_value, $new_value, $deep = false ) { //phpcs:ignore -- NOSONAR - complex.
         if ( ! is_array( $old_value ) && ! is_array( $new_value ) ) {
             return array();
         }

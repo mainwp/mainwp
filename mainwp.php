@@ -73,7 +73,7 @@ if ( ! defined( 'MAINWP_MODULE_API_BACKUPS_ENABLED' ) ) {
 
 
 // Version information from WordPress.
-require_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'version.php';
+require_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'version.php'; // NOSONAR - WP compatible.
 
 if ( ! function_exists( 'mainwp_autoload' ) ) {
 
@@ -105,7 +105,7 @@ if ( ! function_exists( 'mainwp_autoload' ) ) {
             $autoload_path = sprintf( '%s%s-%s.php', $autoload_dir, $prefix, strtolower( str_replace( '_', '-', $class_name ) ) );
 
             if ( file_exists( $autoload_path ) ) {
-                require_once $autoload_path;
+                require_once $autoload_path; // NOSONAR - WP compatible.
                 break;
             }
         }
@@ -114,9 +114,9 @@ if ( ! function_exists( 'mainwp_autoload' ) ) {
 
 spl_autoload_register( 'mainwp_autoload' );
 
-require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'functions.php';
-require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'compatible.php';
-require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'class-mainwp-includes.php';
+require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'functions.php'; // NOSONAR -- WP compatible.
+require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'compatible.php'; // NOSONAR -- WP compatible.
+require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'class-mainwp-includes.php'; // NOSONAR -- WP compatible.
 
 // Detect if secupress_scanner is running.
 $mainwp_is_secupress_scanning = false;

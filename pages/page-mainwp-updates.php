@@ -401,7 +401,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
      * @uses \MainWP\Dashboard\MainWP_Utility::array_sort()
      */
-    public static function render() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- NOSONAR - current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $websites      = static::get_sites_for_current_user();
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
         $site_view     = (int) $userExtension->site_view;
@@ -2061,7 +2061,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
      */
-    public static function render_http_checks( $websites ) {
+    public static function render_http_checks( $websites ) {  //phpcs:ignore -- NOSONAR - complex.
 
         $enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
         $mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );
@@ -2213,7 +2213,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function activated_primary_backup_plugin( $what, $website ) {
         $plugins = json_decode( $website->plugins, 1 );
-        if ( ! is_array( $plugins ) || 0 === count( $plugins ) ) {
+        if ( ! is_array( $plugins ) || empty( $plugins ) ) {
             return false;
         }
 

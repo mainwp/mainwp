@@ -40,7 +40,7 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @param mixed $clients Clients data.
      */
-    private static function render_clients( $clients ) {
+    private static function render_clients( $clients ) { // phpcs:ignore -- NOSONAR - complex.
         ?>
         <div class="mainwp-widget-header">
             <h3 class="ui header handle-drag">

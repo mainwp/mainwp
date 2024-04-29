@@ -169,7 +169,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
-    public static function init_subpages_menu() {
+    public static function init_subpages_menu() { // phpcs:ignore -- NOSONAR - complex.
         ?>
         <div id="menu-mainwp-Pages" class="mainwp-submenu-wrapper">
             <div class="wp-submenu sub-open" style="">
@@ -368,7 +368,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
      */
-    public static function render_header( $shownPage = '', $post_id = null ) {
+    public static function render_header( $shownPage = '', $post_id = null ) { // phpcs:ignore -- NOSONAR - complex.
 
         $params = array(
             'title' => esc_html__( 'Pages', 'mainwp' ),
@@ -764,17 +764,24 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @param string $dtsstart Date & time of Session start time.
      * @param string $dtsstop Date & time of Session stop time.
      * @param string $status Page status.
-     * @param string $groups Groups to display.
-     * @param string $sites Site URLS.
-     * @param string $search_on Site on all sites. Default = all.
-     * @param mixed  $clients Selected Clients.
+     * @param array  $params Other params.
      *
      * @return void Page table html.
      *
      * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
      * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
      */
-    public static function render_table( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $search_on = 'all', $clients = '' ) {
+    public static function render_table( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $params = array() ) {
+
+        if ( ! is_array( $params ) ) {
+            $params = array();
+        }
+
+        $groups    = isset( $params['groups'] ) ? $params['groups'] : '';
+        $sites     = isset( $params['sites'] ) ? $params['sites'] : '';
+        $search_on = isset( $params['search_on'] ) ? $params['search_on'] : 'all';
+        $clients   = sset( $params['clients'] ) ? $params['clients'] : '';
+
         ?>
         <div id="mainwp_pages_error"></div>
         <div id="mainwp-loading-pages-row" style="display: none;">
@@ -978,7 +985,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         $dbwebsites = array();
         if ( ! empty( $sites ) ) {
-            foreach ( $sites as $k => $v ) {
+            foreach ( $sites as $v ) {
                 if ( MainWP_Utility::ctype_digit( $v ) ) {
                     $website = MainWP_DB::instance()->get_website_by_id( $v );
                     if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
@@ -988,7 +995,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
         }
         if ( ! empty( $groups ) ) {
-            foreach ( $groups as $k => $v ) {
+            foreach ( $groups as $v ) {
                 if ( MainWP_Utility::ctype_digit( $v ) ) {
                     $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
                     while ( $websites && ( $website   = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -1066,7 +1073,6 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         if ( empty( $output->pages ) ) {
             MainWP_Cache::add_body( 'Page', '' );
-            return;
         }
     }
 
@@ -1395,7 +1401,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-    public static function posting() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
+    public static function posting() { // phpcs:ignore -- NOSONAR - current complexity required to achieve desired results. Pull request solutions appreciated.
         $succes_message = '';
         $post_id        = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
@@ -1452,7 +1458,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         $selected_clients = get_post_meta( $id, '_selected_clients', true );
                         $post_slug        = base64_decode( get_post_meta( $id, '_slug', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
                         $post_custom      = get_post_custom( $id );
-                        include_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php';
+                        include_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php'; // NOSONAR - WP compatible.
                         $featured_image_id   = get_post_thumbnail_id( $id );
                         $post_featured_image = null;
                         $featured_image_data = null;
@@ -1567,7 +1573,6 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         $output         = new \stdClass();
                         $output->ok     = array();
                         $output->errors = array();
-                        $startTime      = time();
 
                         if ( ! empty( $dbwebsites ) ) {
 

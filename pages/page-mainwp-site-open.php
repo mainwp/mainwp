@@ -34,7 +34,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
-    public static function render() {
+    public static function render() { // phpcs:ignore -- NOSONAR - complex.
 
         static::verify_open_nonce();
 

@@ -51,7 +51,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
-    public static function render_sites() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
+    public static function render_sites() { // phpcs:ignore -- NOSONAR - current complexity required to achieve desired results. Pull request solutions appreciated.
         $current_wpid = MainWP_System_Utility::get_current_wpid();
 
         if ( $current_wpid ) {
@@ -87,15 +87,11 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $isUp          = ! $hasSyncErrors;
 
                 if ( $j !== $ALL ) {
-                    if ( $j === $SYNCERRORS ) {
-                        if ( ! $hasSyncErrors ) {
-                            continue;
-                        }
+                    if ( $j === $SYNCERRORS && ! $hasSyncErrors ) {
+                        continue;
                     }
-                    if ( $j === $UP ) {
-                        if ( ! $isUp ) {
-                            continue;
-                        }
+                    if ( $j === $UP && ! $isUp ) {
+                        continue;
                     }
                 }
 

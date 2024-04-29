@@ -580,19 +580,9 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
 
         if ( $hasSyncErrors ) {
             $a_color = '';
-            $w_color = '';
-            $p_color = '';
-            $t_color = '';
-        }
-
-        if ( $hasSyncErrors ) {
-            $h_color = '';
-            $h_color = '';
         }
 
         list( $columns ) = $this->get_column_info();
-
-        $http_error_codes = MainWP_Utility::get_http_codes();
 
         foreach ( $columns as $column_name => $column_display_name ) {
 
@@ -673,7 +663,7 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
      *
      * @return string Column Name.
      */
-    public function column_default( $item, $column_name ) { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function column_default( $item, $column_name ) { // phpcs:ignore -- NOSONAR - comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         switch ( $column_name ) {
             case 'status':

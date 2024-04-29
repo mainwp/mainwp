@@ -75,16 +75,6 @@ class Connector_Installer extends Log_Connector {
     }
 
     /**
-     * Register log data.
-     *
-     * @uses \MainWP\Dashboard\Module\Log\Log_Connector::register()
-     */
-    public function register() { //phpcs:ignore -- overrided.
-        parent::register();
-    }
-
-
-    /**
      * Log plugin|theme installations.
      *
      * @action mainwp_install_update_actions.
@@ -193,13 +183,7 @@ class Connector_Installer extends Log_Connector {
                 return false;
             }
 
-            if ( 'plugin' === $type || 'theme' === $type ) {
-                $message = esc_html_x(
-                    '%1$s',
-                    'Update. 1: name',
-                    'mainwp'
-                );
-            } elseif ( 'trans' === $type ) {
+            if ( 'plugin' === $type || 'theme' === $type || 'trans' === $type ) {
                 $message = esc_html_x(
                     '%1$s',
                     'Update. 1: name',
@@ -289,7 +273,7 @@ class Connector_Installer extends Log_Connector {
         }
 
         if ( empty( $logs_args ) ) {
-            return false;
+            return;
         }
 
         $action  = $plugin_act;
@@ -358,7 +342,7 @@ class Connector_Installer extends Log_Connector {
         }
 
         if ( empty( $logs_args ) ) {
-            return false;
+            return;
         }
 
         $action  = $theme_act;

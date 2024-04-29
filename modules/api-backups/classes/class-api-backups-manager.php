@@ -80,7 +80,7 @@ class Api_Backups_Manager {
             $dir           = $dir . DIRECTORY_SEPARATOR;
             $autoload_path = sprintf( '%s%s%s-%s.php', $autoload_dir, $dir, $prefix, strtolower( str_replace( '_', '-', $autoload_name ) ) );
             if ( is_readable( $autoload_path ) ) {
-                require_once $autoload_path;
+                require_once $autoload_path; // NOSONAR - WP compatible.
                 return;
             }
         }

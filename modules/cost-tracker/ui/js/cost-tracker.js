@@ -1,4 +1,4 @@
-mainwp_module_cost_tracker_valid_input_data = function () {
+let mainwp_module_cost_tracker_valid_input_data = function () {
     let errors = [];
     let selected_sites = [];
     let selected_groups = [];
@@ -49,7 +49,7 @@ jQuery(document).on('click', '#mainwp-module-cost-tracker-save-tracker-button', 
     }
 });
 
-jQuery(function($) {
+jQuery(function ($) {
     // Check all checkboxes
     jQuery('#mainwp-module-cost-tracker-sites-table th input[type="checkbox"]').change(function () {
         let checkboxes = jQuery('#mainwp-module-cost-tracker-sites-table').find(':checkbox');
@@ -62,7 +62,7 @@ jQuery(function($) {
 
     jQuery('.mainwp-module-cost-tracker-score.label').tab();
 
-    jQuery( document ).on( 'click', '.subscription_menu_item_delete', function () {
+    jQuery(document).on('click', '.subscription_menu_item_delete', function () {
         let objDel = jQuery(this);
         mainwp_confirm(__('Are you sure.'), function () {
             mainwp_module_cost_tracker_delete_start_specific(objDel, '', false);
@@ -110,12 +110,12 @@ jQuery(function($) {
     $(document).on('click', '.module-cost-tracker-add-custom-product-types', function () {
         jQuery('.cost-tracker-product-types-bottom').before(jQuery(this).attr('add-custom-product-types-tmpl'));
         let justAdded = jQuery(this).prev().prev();
-        jQuery(justAdded).find('.mainwp-module-cost-tracker-select-custom-product-types-icons').dropdown( {
-            onChange: function( val ) {
-                let parent = jQuery( this ).closest('.cost_tracker_settings_product_categories_icon_wrapper');
-                jQuery(parent).find('input[name="cost_tracker_custom_product_types[icon][]"]' ).val('deficon:' + val);
+        jQuery(justAdded).find('.mainwp-module-cost-tracker-select-custom-product-types-icons').dropdown({
+            onChange: function (val) {
+                let parent = jQuery(this).closest('.cost_tracker_settings_product_categories_icon_wrapper');
+                jQuery(parent).find('input[name="cost_tracker_custom_product_types[icon][]"]').val('deficon:' + val);
             }
-        } );
+        });
     });
 
     $(document).on('click', '.module-cost-tracker-add-custom-payment-methods', function () {
@@ -131,14 +131,13 @@ jQuery(document).on('click', '#mainwp-notes-subs-cancel', function () {
 });
 
 jQuery(document).on('click', '#mainwp-notes-subs-save', function () {
-    let which = jQuery('#mainwp-which-note').val();
     mainwp_module_cost_tracker_notes_save();
     let newnote = jQuery('#mainwp-notes-subs-note').val();
     jQuery('#mainwp-notes-subs-html').html(newnote);
     return false;
 });
 
-mainwp_module_cost_tracker_notes_show = function () {
+let mainwp_module_cost_tracker_notes_show = function () {
     jQuery('#mainwp-notes-subs-modal').modal('setting', 'closable', false).modal('show');
     jQuery('#mainwp-notes-subs-html').show();
     jQuery('#mainwp-notes-subs-editor').hide();
@@ -156,7 +155,7 @@ jQuery(document).on('click', '#mainwp-notes-subs-edit', function () {
     return false;
 });
 
-mainwp_module_cost_tracker_notes_save = function () {
+let mainwp_module_cost_tracker_notes_save = function () {
     let normalid = jQuery('#mainwp-notes-subs-subid').val();
     let newnote = jQuery('#mainwp-notes-subs-note').val();
     newnote = newnote.replace(/(?:\r\n|\r|\n)/g, '<br>');
@@ -198,22 +197,20 @@ let mod_costtracker_bulkCurrentThreads = 0;
 let mod_costtracker_bulkFinishedThreads = 0;
 
 // Manage Bulk Actions
-mainwp_module_cost_tracker_table_bulk_action = function (act) {
+let mainwp_module_cost_tracker_table_bulk_action = function (act) {
     let selector = '';
-    switch (act) {
-        case 'delete-sub':
-            selector += '#mainwp-module-cost-tracker-sites-table tbody tr';
-            jQuery(selector).addClass('queue');
-            mainwp_module_cost_tracker_delete_start_next(selector, true);
-            break;
+    if( 'delete-sub' === act) {
+        selector += '#mainwp-module-cost-tracker-sites-table tbody tr';
+        jQuery(selector).addClass('queue');
+        mainwp_module_cost_tracker_delete_start_next(selector);
     }
 }
 
-mainwp_module_cost_tracker_delete_start_next = function (selector) {
+let mainwp_module_cost_tracker_delete_start_next = function (selector) {
     if (mod_costtracker_bulkTotalThreads == 0) {
         mod_costtracker_bulkTotalThreads = jQuery('#mainwp-module-cost-tracker-sites-table tbody').find('input[type="checkbox"]:checked').length;
     }
-    while ((objProcess = jQuery(selector + '.queue:first')) && (objProcess.length > 0) && (mod_costtracker_bulkCurrentThreads < mod_costtracker_bulkMaxThreads)) {
+    while ((objProcess = jQuery(selector + '.queue:first')) && (objProcess.length > 0) && (mod_costtracker_bulkCurrentThreads < mod_costtracker_bulkMaxThreads)) { // NOSONAR - variable modified outside of the function.
         objProcess.removeClass('queue');
         if (objProcess.closest('tr').find('input[type="checkbox"]:checked').length == 0) {
             continue;
@@ -222,10 +219,10 @@ mainwp_module_cost_tracker_delete_start_next = function (selector) {
     }
 }
 
-mainwp_module_cost_tracker_delete_start_specific = function (pObj, selector, pBulk) {
+let mainwp_module_cost_tracker_delete_start_specific = function (pObj, selector, pBulk) {
     let row = pObj.closest('tr');
     let subid = jQuery(row).attr('item-id');
-    let bulk = pBulk ? true : false;
+    let bulk = pBulk;
 
     if (bulk) {
         mod_costtracker_bulkCurrentThreads++;
@@ -265,9 +262,4 @@ mainwp_module_cost_tracker_delete_start_specific = function (pObj, selector, pBu
 
     }, 'json');
     return false;
-}
-
-function mainwp_cost_tracker_round_digit(num, decimalPlaces = 0) {
-    num = Math.round(num + "e" + decimalPlaces);
-    return Number(num + "e" + -decimalPlaces);
 }

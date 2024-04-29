@@ -44,7 +44,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
      */
-    public static function select_sites_box( $type = 'checkbox', $show_group = true, $show_select_all = true, $class_style = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false, $postId = 0 ) {
+    public static function select_sites_box( $type = 'checkbox', $show_group = true, $show_select_all = true, $class_style = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false, $postId = 0 ) { // phpcs:ignore -- NOSONAR - compatible.
 
         if ( $postId ) {
 
@@ -111,8 +111,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      * @uses \MainWP\Dashboard\MainWP_DB::query()
      * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
      */
-    public static function select_sites_box_body( &$selected_websites = array(), &$selected_groups = array(), $type = 'checkbox', $show_group = true, $show_select_all = true, $updateQty = false, $enableOfflineSites = false, $postId = 0 ) {
-
+    public static function select_sites_box_body( &$selected_websites = array(), &$selected_groups = array(), $type = 'checkbox', $show_group = true, $show_select_all = true, $updateQty = false, $enableOfflineSites = false, $postId = 0 ) { // phpcs:ignore -- NOSONAR - compatible.
+        unset( $updateQty );
         if ( 'all' !== $selected_websites && ! is_array( $selected_websites ) ) {
             $selected_websites = array();
         }
@@ -188,7 +188,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      * @param bool  $show_group         Whether or not to show group, Default: true.
      * @param bool  $show_client         Whether or not to show client, Default: true.
      *
-     * @todo Move to view folder.
+     * @devtodo Move to view folder.
      */
     public static function render_select_sites_header( $tab_id, $staging_enabled, $selectedby, $show_group = true, $show_client = false ) {
 
@@ -253,7 +253,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      */
-    public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false, $show_select_all_disc = false ) { // phpcs:ignore
+    public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false, $show_select_all_disc = false ) { // phpcs:ignore -- NOSONAR - complex.
         /**
          * Action: mainwp_before_select_sites_list
          *
@@ -362,8 +362,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      */
-    public static function render_select_sites_staging( $selected_websites, $edit_site_id, $type = 'checkbox' ) {
-        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), $is_staging = 'yes' ) );
+    public static function render_select_sites_staging( $selected_websites, $edit_site_id, $type = 'checkbox' ) { //phpcs:ignore -- NOSONAR - complex.
+        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), 'yes' ) );
         ?>
         <div id="mainwp-select-sites-body">
             <div class="ui relaxed divided list" id="mainwp-select-staging-sites-list">
@@ -377,12 +377,10 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
                             $selected = false;
                             if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
-                                    $selected = ( 'all' === $selected_websites || in_array( $website->id, $selected_websites ) );
-                                    $disabled = '';
-                                if ( $edit_site_id ) {
-                                    if ( $website->id !== $edit_site_id ) {
-                                        $disabled = 'disabled="disabled"';
-                                    }
+                                $selected = ( 'all' === $selected_websites || in_array( $website->id, $selected_websites ) );
+                                $disabled = '';
+                                if ( $edit_site_id && $website->id !== $edit_site_id ) {
+                                    $disabled = 'disabled="disabled"';
                                 }
                                 ?>
                                 <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui <?php echo esc_html( $type ); ?> item <?php echo $selected ? 'selected_sites_item_checked' : ''; ?>">
@@ -437,7 +435,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <div id="mainwp-select-sites-body">
             <div class="ui relaxed divided list" id="mainwp-select-groups-list">
                 <?php
-                if ( 0 === count( $groups ) ) {
+                if ( empty( $groups ) ) {
                     ?>
                     <h2 class="ui icon header">
                         <i class="folder open outline icon"></i>
@@ -544,10 +542,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $count_sites = MainWP_DB::instance()->get_websites_count();
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        if ( empty( $count_sites ) ) {
-            if ( ! isset( $_GET['do'] ) ) {
-                static::render_modal_no_sites_note();
-            }
+        if ( empty( $count_sites ) && ! isset( $_GET['do'] ) ) {
+            static::render_modal_no_sites_note();
         }
 
         $siteViewMode = MainWP_Utility::get_siteview_mode();
@@ -1235,7 +1231,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      */
     public static function render_header_actions() { //phpcs:ignore -- NOSONAR - complex method.
         $sites_count   = MainWP_DB::instance()->get_websites_count();
-        $website_id    = '';
         $sidebar_pages = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
         $sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
         $sidebar_pages = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
@@ -1288,23 +1283,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             </div>
         </div>
 
-        <?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) || isset( $_GET['cacheControlId'] ) ) : ?>
-            <?php if ( isset( $_GET['dashboard'] ) ) : ?>
-                <?php $website_id = intval( $_GET['dashboard'] ); ?>
-            <?php elseif ( isset( $_GET['updateid'] ) ) : ?>
-                <?php $website_id = intval( $_GET['updateid'] ); ?>
-            <?php elseif ( isset( $_GET['emailsettingsid'] ) ) : ?>
-                <?php $website_id = intval( $_GET['emailsettingsid'] ); ?>
-            <?php elseif ( isset( $_GET['scanid'] ) ) : ?>
-                <?php $website_id = intval( $_GET['scanid'] ); ?>
-            <?php elseif ( isset( $_GET['cacheControlId'] ) ) : ?>
-                <?php $website_id = intval( $_GET['cacheControlId'] ); ?>
-            <?php else : ?>
-                <?php $website_id = intval( $_GET['id'] ); ?>
-            <?php endif; ?>
-
-        <?php endif; ?>
-                        <?php if ( ( 'mainwp_tab' === $page ) || isset( $_GET['dashboard'] ) || in_array( $page, $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended ?>
+        <?php if ( ( 'mainwp_tab' === $page ) || isset( $_GET['dashboard'] ) || in_array( $page, $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended ?>
         <a id="mainwp-screen-options-button" class="ui button basic icon" onclick="jQuery( '#mainwp-overview-screen-options-modal' ).modal({allowMultiple:true}).modal( 'show' ); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_html_e( 'Page Settings', 'mainwp' ); ?>">
             <i class="cog icon"></i>
         </a>
@@ -1326,8 +1305,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <a class="ui button basic icon" id="mainwp-sites-sidebar" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_attr_e( 'Quick sites shortcuts', 'mainwp' ); ?>">
             <i class="globe icon"></i>
         </a>
-
-        <?php $custom_theme = MainWP_Settings::get_instance()->get_current_user_theme(); ?>
         <div id="mainwp-select-theme-button" class="ui button icon mainwp-selecte-theme-button" custom-theme="default" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_html_e( 'Select MainWP theme', 'mainwp' ); ?>">
             <i class="palette icon"></i>
         </div>
@@ -1394,7 +1371,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      * @param array $subitems [access, active, style].
      * @param null  $name_caller Menu Name.
      */
-    public static function render_page_navigation( $subitems = array(), $name_caller = null ) {
+    public static function render_page_navigation( $subitems = array(), $name_caller = null ) {  //phpcs:ignore -- NOSONAR - complex.
 
         /**
          * Filter: mainwp_page_navigation
@@ -1474,13 +1451,13 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         echo '<div class="wrap">';
     }
 
-            /**
-             * Method render_footer()
-             *
-             * Render page footer.
-             *
-             * @return void Render closing tags for page container.
-             */
+    /**
+     * Method render_footer()
+     *
+     * Render page footer.
+     *
+     * @return void Render closing tags for page container.
+     */
     public static function render_footer() {
         $is_site = MainWP_System::is_mainwp_site_page();
         if ( $is_site ) {
@@ -1490,18 +1467,18 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         echo '</div>';
     }
 
-            /**
-             * Method add_widget_box()
-             *
-             * Customize WordPress add_meta_box() function.
-             *
-             * @param mixed $id Widget ID parameter.
-             * @param mixed $callback Callback function.
-             * @param null  $screen Current page.
-             * @param array $layout widget layout.
-             *
-             * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
-             */
+    /**
+     * Method add_widget_box()
+     *
+     * Customize WordPress add_meta_box() function.
+     *
+     * @param mixed $id Widget ID parameter.
+     * @param mixed $callback Callback function.
+     * @param null  $screen Current page.
+     * @param array $layout widget layout.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
+     */
     public static function add_widget_box( $id, $callback, $screen = null, $layout = array() ) {
         /**
         * MainWP widget boxes array.
@@ -1523,9 +1500,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             $mainwp_widget_boxes[ $page ] = array();
         }
 
-        if ( empty( $title ) ) {
-            $title = 'No Title';
-        }
         $mainwp_widget_boxes[ $page ][ $id ] = array(
             'id'       => $id,
             'callback' => $callback,

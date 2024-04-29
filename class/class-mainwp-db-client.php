@@ -904,7 +904,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             }
         );
 
-        if ( is_array( $site_ids ) && count( $site_ids ) > 0 ) {
+        if ( is_array( $site_ids ) && ! empty( $site_ids ) ) {
             $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET client_id=0 WHERE client_id=%d AND id NOT IN (' . implode( ',', $site_ids ) . ')', $client_id ) );
             $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET client_id=%d WHERE id IN (' . implode( ',', $site_ids ) . ')', $client_id ) );
             return true;

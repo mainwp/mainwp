@@ -185,7 +185,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return array $sorted Return the sorted array.
      */
-    public static function sortmulti( $arr, $index, $order, $natsort = false, $case_sensitive = false ) {
+    public static function sortmulti( $arr, $index, $order, $natsort = false, $case_sensitive = false ) { // phpcs:ignore -- NOSONAR - complex.
         $sorted = array();
         if ( is_array( $arr ) && ! empty( $arr ) ) {
             foreach ( array_keys( $arr ) as $key ) {
@@ -437,7 +437,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return mixed $outputSite Mapped site.
      */
-    public static function map_site( &$website, $keys, $object_output = true ) {
+    public static function map_site( &$website, $keys, $object_output = true ) { // phpcs:ignore -- NOSONAR - complex.
         if ( $object_output ) {
             $outputSite = new \stdClass();
             if ( ! empty( $website ) ) {
@@ -600,28 +600,6 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         return sanitize_file_name( $filename );
     }
 
-    /**
-     * Method normalize_filename()
-     *
-     * Normalize filename.
-     *
-     * @param mixed $s Filename to normalize.
-     *
-     * @return string $s Normalised filename.
-     */
-    public static function normalize_filename( $s ) {
-        $s = preg_replace( '@\x{00c4}@u', 'A', $s );
-        $s = preg_replace( '@\x{00d6}@u', 'O', $s );
-        $s = preg_replace( '@\x{00dc}@u', 'U', $s );
-        $s = preg_replace( '@\x{00cb}@u', 'E', $s );
-        $s = preg_replace( '@\x{00e4}@u', 'a', $s );
-        $s = preg_replace( '@\x{00f6}@u', 'o', $s );
-        $s = preg_replace( '@\x{00fc}@u', 'u', $s );
-        $s = preg_replace( '@\x{00eb}@u', 'e', $s );
-        $s = preg_replace( '@\x{00f1}@u', 'n', $s );
-        $s = preg_replace( '@\x{00ff}@u', 'y', $s );
-        return $s;
-    }
 
 
     /**
@@ -787,7 +765,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return string Filtered content containing only the allowed HTML.
      */
-    public static function esc_mixed_content( $data, $depth, $more_allowed = array() ) {
+    public static function esc_mixed_content( $data, $depth, $more_allowed = array() ) { // phpcs:ignore -- NOSONAR - complex.
         if ( $depth < 0 ) {
             throw new MainWP_Exception( 'Reached depth limit' );
         }
@@ -876,6 +854,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return boolean true|false.
      */
     public static function show_mainwp_message( $type, $notice_id ) {
+        unset( $type );
         $status = get_user_option( 'mainwp_notice_saved_status' );
         if ( ! is_array( $status ) ) {
             $status = array();
@@ -1241,7 +1220,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return array result error or success
      * @throws \MainWP_Exception Error message.
      */
-    public static function check_abandoned( $siteId = null, $which = '' ) {
+    public static function check_abandoned( $siteId = null, $which = '' ) { // phpcs:ignore -- NOSONAR - complex.
         if ( static::ctype_digit( $siteId ) ) {
             $website = MainWP_DB::instance()->get_website_by_id( $siteId );
             if ( MainWP_System_Utility::can_edit_website( $website ) ) {
@@ -1377,6 +1356,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return mixed If verified return 1 or 2, if not return false.
      */
     public static function hook_verify_ping_nonce( $input_value, $nonce = '', $siteid = false ) {
+        unset( $input_value );
         $action = 'pingnonce';
         return static::verify_site_nonce( $nonce, $action, $siteid );
     }
@@ -1494,7 +1474,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return mixed result.
      */
-    public static function get_remote_favicon( $url, $favi = '', $item_id = false, $file_prefix = '' ) {
+    public static function get_remote_favicon( $url, $favi = '', $item_id = false, $file_prefix = '' ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( empty( $favi ) ) {
             $favi = 'favicon.ico';
@@ -1515,7 +1495,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         if ( ! empty( $content ) ) {
 
-            $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+            MainWP_System_Utility::get_wp_file_system();
 
             global $wp_filesystem;
 
@@ -1590,7 +1570,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             global $wp_filesystem;
             $dirs = MainWP_System_Utility::get_icons_dir();
             if ( $hasWPFileSystem && $wp_filesystem->exists( $dirs[0] . $favi ) ) {
-                $wp_filesystem->delete( $dirs[0] . $current->icon_file );
+                $wp_filesystem->delete( $dirs[0] . $favi );
                 return true;
             }
         }

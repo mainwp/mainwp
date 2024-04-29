@@ -124,7 +124,7 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
             if ( file_exists( $file_path ) ) {
                 ob_start();
-                include_once $file_path;
+                include_once $file_path; // NOSONAR - WP compatible.
                 $json_content = ob_get_clean();
             }
 

@@ -283,7 +283,7 @@ window.wp = window.wp || {};
                 if (isPaginated) {
                     return this.apiCall(request, isPaginated).done(function (data) {
                         // Add the new themes to the current collection
-                        // @todo update counter
+                        // @devtodo update counter
                         self.add(data.themes);
                         self.trigger('query:success');
 

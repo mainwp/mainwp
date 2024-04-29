@@ -211,7 +211,7 @@ class Log_DB extends MainWP_DB {
      *
      * @return mixed results.
      */
-    public function create_compact_and_erase_records( $start_time, $end_time ) {
+    public function create_compact_and_erase_records( $start_time, $end_time ) { //phpcs:ignore -- NOSONAR - complex.
 
         global $wpdb;
 

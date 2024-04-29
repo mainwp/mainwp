@@ -15,7 +15,7 @@ use MainWP\Dashboard\MainWP_System_Utility;
 /**
  * Class Api_Backups_Utility
  */
-class Api_Backups_Utility {
+class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
 
     /**
      * Instance value.
@@ -113,7 +113,7 @@ class Api_Backups_Utility {
      *
      * @return object $outputSite Mapped site.
      */
-    public static function map_fields( &$website, $keys, $object_output = false ) {
+    public static function map_fields( &$website, $keys, $object_output = false ) { //phpcs:ignore -- NOSONAR - complex.
         $outputSite = array();
         if ( ! empty( $website ) ) {
             if ( is_object( $website ) ) {

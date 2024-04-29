@@ -1012,7 +1012,7 @@ class Api_Backups_Settings {
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Plesk URL', 'mainwp' ); ?></label>
                         <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'eg.: https://epic-snyder.123-111-123-143.plesk.page:8443', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <div class="ui left labeled input">
-                                <input type="text" id="plesk_api_url" name="plesk_api_url" value="<?php echo ( empty( $mainwp_plesk_api_url ) ? '' : esc_attr( $mainwp_plesk_api_url ) ); ?>" />
+                                <input type="text" id="plesk_api_url" name="plesk_api_url" value="<?php echo empty( $mainwp_plesk_api_url ) ? '' : esc_attr( $mainwp_plesk_api_url ); ?>" />
                             </div>
                         </div>
                     </div>

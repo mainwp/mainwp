@@ -204,7 +204,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * Render Screenshots.
      */
-    public static function render_all_sites() { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render_all_sites() { // phpcs:ignore -- NOSONAR - comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         /**
          * Sites Page header
          *
@@ -384,7 +384,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
                     <div class="card" site-url="<?php echo esc_url( $website->url ); ?>">
                             <div class="image" data-tooltip="<?php echo esc_attr( $status_tooltip ); ?>" data-position="top center" data-inverted="">
-                            <img data-src="//s0.wordpress.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=900">
+                            <img alt="" data-src="//s0.wordpress.com/mshots/v1/<?php echo esc_html( rawurlencode( $website->url ) ); ?>?w=900">
                         </div>
                             <div class="ui <?php echo esc_attr( $status_color ); ?> corner label">
                                 <i class="<?php echo esc_attr( $status_icon ); ?> icon"></i>
@@ -553,12 +553,9 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Prepare the items to be listed.
      */
-    public static function prepare_items() { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function prepare_items() { // phpcs:ignore -- NOSONAR - comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         $orderby = 'wp.url';
-
-        $req_orderby = null;
-        $req_order   = null;
 
         $perPage = 9999;
         $start   = 0;

@@ -80,7 +80,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      *
      * Build Cron Jobs Array & initiate via init_mainwp_cron()
      */
-    public function init_cron() {
+    public function init_cron() { //phpcs:ignore -- NOSONAR - complex.
 
         // Check wether or not to use MainWP Cron false|1.
         $useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( (int) get_option( 'mainwp_wp_cron' ) === 1 );
@@ -277,8 +277,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
 
         if ( $frequency_daily > 1 ) {
-            $last_run_timestamp_today = get_option( 'mainwp_updatescheck_last_run_timestamp_today', false );
-            $frequence_in_seconds     = intval( DAY_IN_SECONDS / $frequency_daily );
+            $frequence_in_seconds = intval( DAY_IN_SECONDS / $frequency_daily );
             if ( $frequence_in_seconds < 2 * HOUR_IN_SECONDS ) {
                 $frequence_in_seconds = 2 * HOUR_IN_SECONDS;
             }
@@ -342,7 +341,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-    public function cron_updates_check() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function cron_updates_check() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- NOSONAR Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         ignore_user_abort( true );
         MainWP_System_Utility::set_time_limit( 0 );
@@ -366,7 +365,6 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         $lasttimeAutomaticUpdate      = get_option( 'mainwp_updatescheck_last_timestamp' );
         $lasttimeStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_timestamp' );
-        $mainwpLastAutomaticUpdate    = get_option( 'mainwp_updatescheck_last' );
         $lasttimeDailyDigest          = get_option( 'mainwp_updatescheck_dailydigest_last_timestamp' );
         $mainwpLastDailydigest        = get_option( 'mainwp_dailydigest_last' );
 
@@ -475,9 +473,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             }
 
             $run_valid = false;
-            if ( $run_hours_interval ) {
-                $run_valid = true;
-            } elseif ( null === $run_hours_interval && $valid_to_run ) { // if not set sync time, and run frequency.
+            if ( $run_hours_interval || ( null === $run_hours_interval && $valid_to_run ) ) { // if not set sync time, and run frequency.
                 $run_valid = true;
             }
 
@@ -521,11 +517,9 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
             MainWP_Utility::update_option( 'mainwp_updatescheck_last_run', wp_json_encode( $last_run ) );
 
-            if ( $local_timestamp > $run_timestamp && $local_timestamp < $run_timestamp + $frequence_period_in_seconds ) {
-                if ( $frequencyDailyUpdate > 1 ) {
-                    $last_run_timestamp_today = $run_timestamp + $frequence_period_in_seconds * ( $frequencyDailyUpdate - 1 );
-                    MainWP_Utility::update_option( 'mainwp_updatescheck_last_run_timestamp_today', $last_run_timestamp_today );
-                }
+            if ( $local_timestamp > $run_timestamp && $local_timestamp < $run_timestamp + $frequence_period_in_seconds && $frequencyDailyUpdate > 1 ) {
+                $last_run_timestamp_today = $run_timestamp + $frequence_period_in_seconds * ( $frequencyDailyUpdate - 1 );
+                MainWP_Utility::update_option( 'mainwp_updatescheck_last_run_timestamp_today', $last_run_timestamp_today );
             }
 
             $this->refresh_saved_fields();
@@ -571,7 +565,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             MainWP_Utility::update_option( 'mainwp_daily_digest_plain_text', $plain_text );
         }
 
-        if ( 0 === count( $checkupdate_websites ) ) {
+        if ( empty( $checkupdate_websites ) ) {
             $busyCounter = MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start( $lasttimeStartAutomaticUpdate );
             if ( 0 !== $busyCounter ) {
                 MainWP_Logger::instance()->log_update_check( 'busy counter :: found ' . $busyCounter . ' websites' );
@@ -602,7 +596,6 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             if ( 'Y' !== get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
                 MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', 'Y' );
             }
-            return;
         } else {
 
             if ( ! $updatecheck_running ) {
@@ -973,68 +966,67 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 MainWP_Utility::update_option( 'mainwp_updatescheck_individual_digest_websites', $individualDailyDigestWebsitesSaved );
             }
 
-            if ( count( $coreNewUpdate ) !== 0 ) {
+            if ( ! empty( $coreNewUpdate ) ) {
                 $coreNewUpdateSaved = get_option( 'mainwp_updatescheck_mail_update_core_new' );
                 MainWP_Utility::update_option( 'mainwp_updatescheck_mail_update_core_new', MainWP_Utility::array_merge( $coreNewUpdateSaved, $coreNewUpdate ) );
             }
 
-            if ( count( $pluginsNewUpdate ) !== 0 ) {
+            if ( ! empty( $pluginsNewUpdate ) ) {
                 $pluginsNewUpdateSaved = get_option( 'mainwp_updatescheck_mail_update_plugins_new' );
                 MainWP_Utility::update_option( 'mainwp_updatescheck_mail_update_plugins_new', MainWP_Utility::array_merge( $pluginsNewUpdateSaved, $pluginsNewUpdate ) );
             }
 
-            if ( count( $themesNewUpdate ) !== 0 ) {
+            if ( ! empty( $themesNewUpdate ) ) {
                 $themesNewUpdateSaved = get_option( 'mainwp_updatescheck_mail_update_themes_new' );
                 MainWP_Utility::update_option( 'mainwp_updatescheck_mail_update_themes_new', MainWP_Utility::array_merge( $themesNewUpdateSaved, $themesNewUpdate ) );
             }
 
-            if ( count( $coreToUpdate ) !== 0 ) {
+            if ( ! empty( $coreToUpdate ) ) {
                 $coreToUpdateSaved = get_option( 'mainwp_updatescheck_mail_update_core' );
                 MainWP_Utility::update_option( 'mainwp_updatescheck_mail_update_core', MainWP_Utility::array_merge( $coreToUpdateSaved, $coreToUpdate ) );
             }
 
-            if ( count( $pluginsToUpdate ) !== 0 ) {
+            if ( ! empty( $pluginsToUpdate ) ) {
                 $pluginsToUpdateSaved = get_option( 'mainwp_updatescheck_mail_update_plugins' );
                 MainWP_Utility::update_option( 'mainwp_updatescheck_mail_update_plugins', MainWP_Utility::array_merge( $pluginsToUpdateSaved, $pluginsToUpdate ) );
             }
 
-            if ( count( $themesToUpdate ) !== 0 ) {
+            if ( ! empty( $themesToUpdate ) ) {
                 $themesToUpdateSaved = get_option( 'mainwp_updatescheck_mail_update_themes' );
                 MainWP_Utility::update_option( 'mainwp_updatescheck_mail_update_themes', MainWP_Utility::array_merge( $themesToUpdateSaved, $themesToUpdate ) );
             }
 
-            if ( count( $ignoredCoreToUpdate ) !== 0 ) {
+            if ( ! empty( $ignoredCoreToUpdate ) ) {
                 $ignoredCoreToUpdateSaved = get_option( 'mainwp_updatescheck_mail_ignore_core' );
                 MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_core', MainWP_Utility::array_merge( $ignoredCoreToUpdateSaved, $ignoredCoreToUpdate ) );
             }
 
-            if ( count( $ignoredCoreNewUpdate ) !== 0 ) {
+            if ( ! empty( $ignoredCoreNewUpdate ) ) {
                 $ignoredCoreNewUpdateSaved = get_option( 'mainwp_updatescheck_mail_ignore_core_new' );
                 MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_core_new', MainWP_Utility::array_merge( $ignoredCoreNewUpdateSaved, $ignoredCoreNewUpdate ) );
             }
 
-            if ( count( $notTrustedPluginsToUpdate ) !== 0 ) {
+            if ( ! empty( $notTrustedPluginsToUpdate ) ) {
                 $notTrustedPluginsToUpdateSaved = get_option( 'mainwp_updatescheck_mail_ignore_plugins' );
                 MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_plugins', MainWP_Utility::array_merge( $notTrustedPluginsToUpdateSaved, $notTrustedPluginsToUpdate ) );
             }
 
-            if ( count( $notTrustedPluginsNewUpdate ) !== 0 ) {
+            if ( ! empty( $notTrustedPluginsNewUpdate ) ) {
                 $notTrustedPluginsNewUpdateSaved = get_option( 'mainwp_updatescheck_mail_ignore_plugins_new' );
                 MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_plugins_new', MainWP_Utility::array_merge( $notTrustedPluginsNewUpdateSaved, $notTrustedPluginsNewUpdate ) );
             }
 
-            if ( count( $notTrustedThemesToUpdate ) !== 0 ) {
+            if ( ! empty( $notTrustedThemesToUpdate ) ) {
                 $notTrustedThemesToUpdateSaved = get_option( 'mainwp_updatescheck_mail_ignore_themes' );
                 MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_themes', MainWP_Utility::array_merge( $notTrustedThemesToUpdateSaved, $notTrustedThemesToUpdate ) );
             }
 
-            if ( count( $notTrustedThemesNewUpdate ) !== 0 ) {
+            if ( ! empty( $notTrustedThemesNewUpdate ) ) {
                 $notTrustedThemesNewUpdateSaved = get_option( 'mainwp_updatescheck_mail_ignore_themes_new' );
                 MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_themes_new', MainWP_Utility::array_merge( $notTrustedThemesNewUpdateSaved, $notTrustedThemesNewUpdate ) );
             }
 
-            if ( ( count( $coreToUpdate ) === 0 ) && ( count( $pluginsToUpdate ) === 0 ) && ( count( $themesToUpdate ) === 0 ) && ( count( $ignoredCoreToUpdate ) === 0 ) && ( count( $ignoredCoreNewUpdate ) === 0 ) && ( count( $notTrustedPluginsToUpdate ) === 0 ) && ( count( $notTrustedPluginsNewUpdate ) === 0 ) && ( count( $notTrustedThemesToUpdate ) === 0 ) && ( count( $notTrustedThemesNewUpdate ) === 0 )
-            ) {
+            if ( empty( $coreToUpdate ) && empty( $pluginsToUpdate ) && empty( $themesToUpdate ) && empty( $ignoredCoreToUpdate ) && empty( $ignoredCoreNewUpdate ) && empty( $notTrustedPluginsToUpdate ) && empty( $notTrustedPluginsNewUpdate ) && empty( $notTrustedThemesToUpdate ) && empty( $notTrustedThemesNewUpdate ) ) {
                 return;
             }
 
@@ -1324,7 +1316,13 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             return false;
         }
 
-        return MainWP_Notification::send_daily_digest_notification( $email_settings, $updateAvaiable, $wp_updates, $plugin_updates, $theme_updates, $sites_disconnected, $plain_text, $sites_ids, $email_site );
+        $params = array(
+            'plain_text' => $plain_text,
+            'sites_ids'  => $sites_ids,
+            'email_site' => $email_site,
+        );
+
+        return MainWP_Notification::send_daily_digest_notification( $email_settings, $updateAvaiable, $wp_updates, $plugin_updates, $theme_updates, $sites_disconnected, $params );
     }
 
     /**
@@ -1374,13 +1372,13 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_default_emails_fields()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_http_codes()
      */
-    public function start_notification_http_check( $plain_text ) {
+    public function start_notification_http_check( $plain_text ) { // phpcs:ignore -- NOSONAR - complex.
 
         $sitesHttpCheck       = array();
         $email_settings_sites = array();
 
         $sites_offline = MainWP_DB::instance()->get_websites_offline_check_status();
-        if ( is_array( $sites_offline ) && count( $sites_offline ) > 0 ) {
+        if ( is_array( $sites_offline ) && ! empty( $sites_offline ) ) {
             foreach ( $sites_offline as $site ) {
                 if ( 200 === (int) $site->http_response_code ) { // to fix: ignored 200 http code.
                     continue;
@@ -1449,7 +1447,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Method cron_deactivated_licenses_alert()
      */
-    public function cron_deactivated_licenses_alert() {
+    public function cron_deactivated_licenses_alert() { // phpcs:ignore -- NOSONAR - complex.
         $admin_email_settings = MainWP_Notification_Settings::get_default_emails_fields( 'deactivated_license_alert' );
         if ( empty( $admin_email_settings['disable'] ) && ! empty( $admin_email_settings['recipients'] ) ) {
             $deactivated_licenses = MainWP_Extensions_Handler::get_indexed_extensions_infor( false, true );
@@ -1574,9 +1572,9 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      *
      * Execute Backup Tasks.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_tasks_todo_daily()
-     * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_tasks_todo_weekly()
-     * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_tasks_todo_monthly()
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_tasks_todo_daily() - NOSONAR todo name.
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_tasks_todo_weekly() - NOSONAR todo name.
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_tasks_todo_monthly() - NOSONAR todo name.
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
      * @uses \MainWP\Dashboard\MainWP_Logger::info()
      * @uses \MainWP\Dashboard\MainWP_Logger::debug()
@@ -1584,7 +1582,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::execute_backup_task()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-    public function cron_backups() {
+    public function cron_backups() { // phpcs:ignore -- NOSONAR - complex.
         if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
             return;
         }
@@ -1604,15 +1602,15 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         $allTasks   = array();
         $dailyTasks = MainWP_DB_Backup::instance()->get_backup_tasks_todo_daily();
-        if ( count( $dailyTasks ) > 0 ) {
+        if ( ! empty( $dailyTasks ) ) {
             $allTasks = $dailyTasks;
         }
         $weeklyTasks = MainWP_DB_Backup::instance()->get_backup_tasks_todo_weekly();
-        if ( count( $weeklyTasks ) > 0 ) {
+        if ( ! empty( $weeklyTasks ) ) {
             $allTasks = array_merge( $allTasks, $weeklyTasks );
         }
         $monthlyTasks = MainWP_DB_Backup::instance()->get_backup_tasks_todo_monthly();
-        if ( count( $monthlyTasks ) > 0 ) {
+        if ( ! empty( $monthlyTasks ) ) {
             $allTasks = array_merge( $allTasks, $monthlyTasks );
         }
 

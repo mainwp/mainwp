@@ -159,10 +159,8 @@ class MainWP_Format { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $filters = array();
         foreach ( $items as $item ) {
             if ( isset( $item['id'] ) ) { // to valid and compatible data.
-                if ( ! empty( $sites_ids ) ) { // if filter by sites ids.
-                    if ( ! in_array( $item['id'], $sites_ids ) ) {
-                        continue;
-                    }
+                if ( ! empty( $sites_ids ) && ! in_array( $item['id'], $sites_ids ) ) {
+                    continue;
                 }
                 $filters[] = $item;
             }

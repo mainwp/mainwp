@@ -118,7 +118,7 @@ class Log_Manager {
         spl_autoload_register( array( $this, 'autoload' ) );
 
         // Load helper functions.
-        require_once $this->locations['inc_dir'] . 'functions.php';
+        require_once $this->locations['inc_dir'] . 'functions.php'; // NOSONAR - WP compatible.
 
         $driver         = new Log_DB_Driver_WPDB();
         $this->db       = new Log_DB( $driver );
@@ -174,7 +174,7 @@ class Log_Manager {
             $dir           = $dir . '/';
             $autoload_path = sprintf( '%s%s%s-%s.php', $autoload_dir, $dir, $prefix, strtolower( str_replace( '_', '-', $autoload_name ) ) );
             if ( is_readable( $autoload_path ) ) {
-                require_once $autoload_path;
+                require_once $autoload_path; // NOSONAR - WP compatible.
                 return;
             }
         }

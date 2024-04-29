@@ -300,7 +300,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
      */
-    public static function render_header( $shownPage = '' ) {
+    public static function render_header( $shownPage = '' ) {  //phpcs:ignore -- NOSONAR - complex.
         $params = array(
             'title' => esc_html__( 'Users', 'mainwp' ),
         );
@@ -979,7 +979,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-    public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '', $clients = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
+    public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '', $clients = '' ) { // phpcs:ignore -- NOSONAR - current complexity required to achieve desired results. Pull request solutions appreciated.
         MainWP_Cache::init_cache( 'Users' );
 
         $output         = new \stdClass();
@@ -1002,7 +1002,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
             $dbwebsites = array();
             if ( ! empty( $sites ) ) {
-                foreach ( $sites as $k => $v ) {
+                foreach ( $sites as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
                         $website = MainWP_DB::instance()->get_website_by_id( $v );
                         if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
@@ -1012,7 +1012,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 }
             }
             if ( ! empty( $groups ) ) {
-                foreach ( $groups as $k => $v ) {
+                foreach ( $groups as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
                         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
                         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -1080,7 +1080,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         } else {
             $dbwebsites = array();
             if ( '' !== $sites ) {
-                foreach ( $sites as $k => $v ) {
+                foreach ( $sites as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
                         $website = MainWP_DB::instance()->get_website_by_id( $v );
                         if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
@@ -1093,7 +1093,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 }
             }
             if ( '' !== $groups ) {
-                foreach ( $groups as $k => $v ) {
+                foreach ( $groups as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
                         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
                         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -1164,7 +1164,6 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         if ( empty( $output->users ) ) {
             static::render_cache_not_found();
-            return;
         }
     }
 
@@ -1358,7 +1357,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
-    public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
+    public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- NOSONAR - current complexity required to achieve desired results. Pull request solutions appreciated.
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $userId    = isset( $_POST['userId'] ) ? sanitize_text_field( wp_unslash( $_POST['userId'] ) ) : false;
@@ -1855,7 +1854,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $selected_groups  = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
             $selected_clients = ( isset( $_POST['selected_clients'] ) && is_array( $_POST['selected_clients'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_clients'] ) ) : array();
 
-            if ( ( 'group' === $_POST['select_by'] && 0 === count( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && 0 === count( $selected_sites ) ) || ( 'client' === $_POST['select_by'] && 0 === count( $selected_clients ) ) ) {
+            if ( ( 'group' === $_POST['select_by'] && empty( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && empty( $selected_sites ) ) || ( 'client' === $_POST['select_by'] && empty( $selected_clients ) ) ) {
                 $errors[] = esc_html__( 'Please select at least one website or group or client.', 'mainwp' );
             }
         } else {
@@ -1886,7 +1885,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         $data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
-        if ( ( 0 === count( $errors ) ) && ( 0 === count( $errorFields ) ) ) {
+        if ( empty( $errors ) && empty( $errorFields ) ) {
             $user_to_add = array(
                 'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',
                 'user_login' => isset( $_POST['user_login'] ) ? sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) : '',
@@ -1948,7 +1947,6 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 }
             }
 
-            $startTime = time();
             if ( ! empty( $dbwebsites ) ) {
                 $post_data      = array(
                     'new_user'      => base64_encode( wp_json_encode( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
@@ -2038,14 +2036,14 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      * @uses \MainWP\Dashboard\MainWP_Utility::starts_with()
      */
-    public static function render_bulk_upload() {
+    public static function render_bulk_upload() {  //phpcs:ignore -- NOSONAR - complex.
         static::render_header( 'Import' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $errors = array();
         if ( isset( $_FILES['import_user_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['import_user_file_bulkupload']['error'] ) {
             if ( isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) {
-                $tmp_path     = isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) : '';
-                $wpFileSystem = MainWP_System_Utility::get_wp_file_system();
+                $tmp_path = isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) : '';
+                MainWP_System_Utility::get_wp_file_system();
                 // phpcs:enable
                 /**
                  * WordPress files system object.

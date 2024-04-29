@@ -12,7 +12,7 @@ namespace MainWP\Dashboard;
 
 // Exit if access directly.
 if ( ! defined( 'WP_CLI' ) ) {
-    return;
+    return; // NOSONAR - skip CLI.
 }
 
 /**
@@ -149,44 +149,42 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      *
      * @return bool True on success, false or error.
      */
-    public static function handle_cli_callback( $cli_com, $args, $assoc_args ) {
+    public static function handle_cli_callback( $cli_com, $args, $assoc_args ) { // phpcs:ignore -- NOSONAR - complex.
         $callback = static::get_assoc_args_commands( $cli_com, $assoc_args );
-        if ( ! empty( $callback ) ) {
-            if ( method_exists( static::class, 'callback_' . $cli_com . '_' . $callback ) ) {
-                $website = false;
+        if ( ! empty( $callback ) && method_exists( static::class, 'callback_' . $cli_com . '_' . $callback ) ) {
+            $website = false;
 
-                $requires_site_id = false;
-                $site_id          = 0;
+            $requires_site_id = false;
+            $site_id          = 0;
 
-                if ( 'site' === $cli_com && ! isset( $assoc_args['add-site'] ) ) {
-                    $requires_site_id = true;
-                } elseif ( 'updates' === $cli_com && ( isset( $assoc_args['site-ignored-plugins-updates'] ) || isset( $assoc_args['site-ignored-themes-updates'] ) || isset( $assoc_args['ignore-update'] ) || isset( $assoc_args['unignore_update'] ) ) ) {
-                    $requires_site_id = true;
-                } elseif ( 'updates' === $cli_com && ( isset( $assoc_args['ignored-plugins-updates'] ) || isset( $assoc_args['ignored-themes-updates'] ) ) ) {
-                    $site_id = isset( $args[0] ) ? intval( $args[0] ) : false;
-                }
-
-                if ( $requires_site_id ) {
-                    $site_id = static::get_cli_params( $args, $assoc_args, 'site_id' );
-                    if ( empty( $site_id ) ) {
-                        \WP_CLI::error( 'Empty site id.' );
-                        return false;
-                    }
-                    $website = MainWP_DB::instance()->get_website_by_id( $site_id );
-                    if ( empty( $website ) ) {
-                        \WP_CLI::error( 'Site not found.' );
-                        return false;
-                    }
-                } elseif ( $site_id ) {
-                    $website = MainWP_DB::instance()->get_website_by_id( $site_id );
-                    if ( empty( $website ) ) {
-                        \WP_CLI::error( 'Site not found.' );
-                        return false;
-                    }
-                }
-                call_user_func_array( array( static::class, 'callback_' . $cli_com . '_' . $callback ), array( $args, $assoc_args, $website ) );
-                return true;
+            if ( 'site' === $cli_com && ! isset( $assoc_args['add-site'] ) ) {
+                $requires_site_id = true;
+            } elseif ( 'updates' === $cli_com && ( isset( $assoc_args['site-ignored-plugins-updates'] ) || isset( $assoc_args['site-ignored-themes-updates'] ) || isset( $assoc_args['ignore-update'] ) || isset( $assoc_args['unignore_update'] ) ) ) {
+                $requires_site_id = true;
+            } elseif ( 'updates' === $cli_com && ( isset( $assoc_args['ignored-plugins-updates'] ) || isset( $assoc_args['ignored-themes-updates'] ) ) ) {
+                $site_id = isset( $args[0] ) ? intval( $args[0] ) : false;
             }
+
+            if ( $requires_site_id ) {
+                $site_id = static::get_cli_params( $args, $assoc_args, 'site_id' );
+                if ( empty( $site_id ) ) {
+                    \WP_CLI::error( 'Empty site id.' );
+                    return false;
+                }
+                $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+                if ( empty( $website ) ) {
+                    \WP_CLI::error( 'Site not found.' );
+                    return false;
+                }
+            } elseif ( $site_id ) {
+                $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+                if ( empty( $website ) ) {
+                    \WP_CLI::error( 'Site not found.' );
+                    return false;
+                }
+            }
+            call_user_func_array( array( static::class, 'callback_' . $cli_com . '_' . $callback ), array( $args, $assoc_args, $website ) );
+            return true;
         }
         return false;
     }
@@ -201,7 +199,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      *
      * @return array Required data.
      */
-    public static function get_cli_params( $args, $assoc_args, $what ) {
+    public static function get_cli_params( $args, $assoc_args, $what ) { // phpcs:ignore -- NOSONAR - complex.
         if ( is_string( $what ) ) {
             if ( 'sites' === $what ) {
                 $sites = array();
@@ -398,7 +396,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         \WP_CLI::line( '' );
         $errors = 0;
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-            if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
+            if ( ! empty( $sites ) && ( ! in_array( $website->id, $sites, true ) ) ) {
                 continue;
             }
             \WP_CLI::line( '  -> ' . $website->name . ' (' . $website->url . ')' );
@@ -433,7 +431,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         \WP_CLI::line( 'Disconnect started' );
         $errors = 0;
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-            if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
+            if ( ! empty( $sites ) && ( ! in_array( $website->id, $sites, true ) ) ) {
                 continue;
             }
             \WP_CLI::line( '  -> ' . $website->name . ' (' . $website->url . ')' );
@@ -778,7 +776,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      * @param array  $assoc_args Arguments.
      * @param object $website    Object containing child site data.
      */
-    public static function callback_site_site_available_updates( $args = array(), $assoc_args = array(), $website = false ) {
+    public static function callback_site_site_available_updates( $args = array(), $assoc_args = array(), $website = false ) { // phpcs:ignore -- NOSONAR - complex.
         $wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
         $wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
@@ -816,13 +814,6 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
                 $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
             }
         }
-
-        $data = array(
-            'wp_core'     => $wp_upgrades,
-            'plugins'     => $plugin_upgrades,
-            'themes'      => $theme_upgrades,
-            'translation' => $translation_upgrades,
-        );
 
         \WP_CLI::line( '' );
         \WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Available Updates', 'mainwp' ) . '%n' ) );
@@ -928,7 +919,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         $wp           = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
         $wp           = ! empty( $wp ) ? json_decode( $wp, true ) : array();
 
-        if ( count( $wp ) > 0 ) {
+        if ( ! empty( $wp ) ) {
             $wp = 1;
         } else {
             $wp = 0;
@@ -1241,7 +1232,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      */
     public static function callback_site_remove_site( $args = array(), $assoc_args = array(), $website = false ) {
         \WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
-        $data = MainWP_Manage_Sites_Handler::remove_website( $website->id );
+        MainWP_Manage_Sites_Handler::remove_website( $website->id );
         \WP_CLI::line( \WP_CLI::colorize( '%g' . esc_html__( 'Site removed successfully.', 'mainwp' ) . '%n' ) );
     }
 
@@ -1256,9 +1247,8 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      */
     public static function callback_site_site_update_wordpress( $args = array(), $assoc_args = array(), $website = false ) {
         \WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
-        $error = false;
         try {
-            $data = MainWP_Updates_Handler::upgrade_website( $website );
+            MainWP_Updates_Handler::upgrade_website( $website );
             \WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . esc_html__( ' updated successfully.', 'mainwp' ) . '%n' ) );
         } catch ( \Exception $e ) {
             \WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
@@ -1316,7 +1306,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
                 )
             );
         } catch ( \Exception $e ) {
-            $error = MainWP_Error_Helper::get_console_error_message( $e );
+            MainWP_Error_Helper::get_console_error_message( $e );
         }
     }
 
@@ -1350,7 +1340,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
                 )
             );
         } catch ( \Exception $e ) {
-            $error = MainWP_Error_Helper::get_console_error_message( $e );
+            MainWP_Error_Helper::get_console_error_message( $e );
         }
     }
 
@@ -1385,7 +1375,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
                 )
             );
         } catch ( \Exception $e ) {
-            $error = MainWP_Error_Helper::get_console_error_message( $e );
+            MainWP_Error_Helper::get_console_error_message( $e );
         }
     }
 
@@ -1408,7 +1398,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         \WP_CLI::line( esc_html__( 'Please wait... ', 'mainwp' ) );
 
         try {
-            $data = MainWP_Connect::fetch_url_authed(
+            MainWP_Connect::fetch_url_authed(
                 $website,
                 'upgradeplugintheme',
                 array(
@@ -1417,7 +1407,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
                 )
             );
         } catch ( \Exception $e ) {
-            $error = MainWP_Error_Helper::get_console_error_message( $e );
+            MainWP_Error_Helper::get_console_error_message( $e );
         }
 
         \WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . esc_html__( ' item updated successfully.', 'mainwp' ) . '%n' ) );
@@ -1519,14 +1509,13 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      * @param array $args       Arguments.
      * @param array $assoc_args Arguments.
      */
-    public static function callback_updates_available_updates( $args = array(), $assoc_args = array() ) {
+    public static function callback_updates_available_updates( $args = array(), $assoc_args = array() ) { // phpcs:ignore -- NOSONAR - complex.
 
         \WP_CLI::line( '' );
         \WP_CLI::line( \WP_CLI::colorize( '%9' . esc_html__( 'Available Updates', 'mainwp' ) . '%n' ) );
         \WP_CLI::line( '' );
 
-        $all_updates = array();
-        $websites    = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
             $wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
             $wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
@@ -1643,13 +1632,13 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         if ( ! $ignored_all ) {
             $userExtension = MainWP_DB_Common::instance()->get_user_extension();
             $data          = json_decode( $userExtension->ignored_plugins, true );
-            foreach ( $data as $plugin => $value ) {
+            foreach ( $data as $value ) {
                 \WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $value );
             }
             if ( $website ) {
                 $ignored_plugins = json_decode( $website->ignored_plugins, true );
                 if ( is_array( $ignored_plugins ) ) {
-                    foreach ( $ignored_plugins as $slug => $name ) {
+                    foreach ( $ignored_plugins as $name ) {
                         \WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $name );
                     }
                 }
@@ -1675,7 +1664,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         \WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Ignored Updates', 'mainwp' ) . '%n' ) );
         \WP_CLI::line( '' );
 
-        foreach ( $data as $plugin => $value ) {
+        foreach ( $data as $value ) {
             \WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $value );
         }
 
@@ -1707,13 +1696,13 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         if ( ! $ignored_all ) {
             $userExtension = MainWP_DB_Common::instance()->get_user_extension();
             $data          = json_decode( $userExtension->ignored_themes, true );
-            foreach ( $data as $theme => $value ) {
+            foreach ( $data as $value ) {
                 \WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $value );
             }
             if ( $website ) {
                 $ignored_themes = json_decode( $website->ignored_themes, true );
                 if ( is_array( $ignored_themes ) ) {
-                    foreach ( $ignored_themes as $slug => $name ) {
+                    foreach ( $ignored_themes as $name ) {
                         \WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $name );
                     }
                 }
@@ -1740,7 +1729,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         \WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . esc_html__( 'Ignored Updates', 'mainwp' ) . '%n' ) );
         \WP_CLI::line( '' );
 
-        foreach ( $data as $theme => $value ) {
+        foreach ( $data as $value ) {
             \WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $value );
         }
 
@@ -1863,7 +1852,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         \WP_CLI::line( '' );
 
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-            if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
+            if ( ! empty( $sites ) && ( ! in_array( $website->id, $sites, true ) ) ) {
                 continue;
             }
 
@@ -1911,8 +1900,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
     public static function print_sites( $websites, $is_objs = false ) {
         $data = array();
         if ( $is_objs ) {
-            $fields     = array( 'id', 'url', 'name' );
-            $dbwebsites = array();
+            $fields = array( 'id', 'url', 'name' );
             foreach ( $websites as $site_id => $website ) {
                 $data[ $site_id ] = MainWP_Utility::map_site( $website, $fields, false );
             }

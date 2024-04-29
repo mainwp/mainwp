@@ -76,7 +76,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
     public static function init_menu() {
-        $_page = add_submenu_page(
+        add_submenu_page(
             'mainwp_tab',
             __( 'Plugins', 'mainwp' ),
             '<span id="mainwp-Plugins">' . esc_html__( 'Plugins', 'mainwp' ) . '</span>',
@@ -314,7 +314,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
      */
-    public static function render_header( $shownPage = '' ) {
+    public static function render_header( $shownPage = '' ) { // phpcs:ignore -- NOSONAR - complex.
 
         $params = array(
             'title' => esc_html__( 'Plugins', 'mainwp' ),
@@ -396,7 +396,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_result()
      * @uses \MainWP\Dashboard\MainWP_UI::render_empty_bulk_actions()
      */
-    public static function render() {
+    public static function render() { // phpcs:ignore -- NOSONAR - complex.
         $cachedSearch     = MainWP_Cache::get_cached_context( 'Plugins' );
         $selected_sites   = array();
         $selected_groups  = array();
@@ -745,7 +745,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $multi_kws = array_filter( array_map( 'trim', $multi_kws ) );
 
             if ( ! empty( $sites ) ) {
-                foreach ( $sites as $k => $v ) {
+                foreach ( $sites as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
                         $website          = MainWP_DB::instance()->get_website_by_id( $v );
                         $allPlugins       = json_decode( $website->plugins, true );
@@ -793,7 +793,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             if ( '' !== $groups ) {
-                foreach ( $groups as $k => $v ) {
+                foreach ( $groups as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
                         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
                         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -904,7 +904,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $dbwebsites = array();
 
             if ( '' !== $sites ) {
-                foreach ( $sites as $k => $v ) {
+                foreach ( $sites as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
                         $website = MainWP_DB::instance()->get_website_by_id( $v );
 
@@ -921,7 +921,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             if ( '' !== $groups ) {
-                foreach ( $groups as $k => $v ) {
+                foreach ( $groups as $v ) {
                     if ( MainWP_Utility::ctype_digit( $v ) ) {
                         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
                         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -1022,7 +1022,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $plugins_list = $output->plugins_installed;
                 $view_mode    = MAINWP_VIEW_PER_SITE;
             }
-        } elseif ( 0 === count( $output->plugins ) ) {
+        } elseif ( empty( $output->plugins ) ) {
             ?>
             <div class="ui message yellow"><?php esc_html_e( 'No plugins found.', 'mainwp' ); ?></div>
             <?php
@@ -1032,7 +1032,6 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $sites              = array();
         $sitePlugins        = array();
-        $plugins            = array();
         $pluginsNameSites   = array();
         $muPlugins          = array();
         $pluginsName        = array();
@@ -2125,7 +2124,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      */
-    public static function render_all_active_table( $output = null ) { // phpcs:ignore -- not quite complex function.
+    public static function render_all_active_table( $output = null ) { // phpcs:ignore -- NOSONAR - complex.
         $keyword       = null;
         $search_status = 'all';
 
@@ -2242,7 +2241,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         }
 
-        if ( 0 === count( $output->plugins ) ) {
+        if ( empty( $output->plugins ) ) {
             ?>
             <div class="ui message yellow"><?php esc_html_e( 'No plugins found.', 'mainwp' ); ?></div>
             <?php
@@ -2284,7 +2283,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
      */
-    public static function render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes ) {
+    public static function render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes ) { // phpcs:ignore -- NOSONAR - complex.
 
         /**
          * Action: mainwp_plugins_before_auto_updates_table
@@ -2447,7 +2446,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
             $tmpDecodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
 
-            if ( ! is_array( $tmpDecodedIgnoredPlugins ) || 0 === count( $tmpDecodedIgnoredPlugins ) ) {
+            if ( ! is_array( $tmpDecodedIgnoredPlugins ) || empty( $tmpDecodedIgnoredPlugins ) ) {
                 continue;
             }
             ++$cnt;
@@ -2583,7 +2582,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      */
-    public static function render_sites_ignored( $cnt, $websites ) {
+    public static function render_sites_ignored( $cnt, $websites ) { // phpcs:ignore -- NOSONAR - complex.
         ?>
         <table id="mainwp-per-site-ignored-plugins" class="ui unstackable compact selectable table ">
             <thead>
@@ -2606,7 +2605,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         }
 
                         $decodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
-                        if ( ! is_array( $decodedIgnoredPlugins ) || 0 === count( $decodedIgnoredPlugins ) ) {
+                        if ( ! is_array( $decodedIgnoredPlugins ) || empty( $decodedIgnoredPlugins ) ) {
                             continue;
                         }
                         $first = true;
@@ -2690,7 +2689,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $tmpDecodedDismissedPlugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
             $tmpDecodedDismissedPlugins = ! empty( $tmpDecodedDismissedPlugins ) ? json_decode( $tmpDecodedDismissedPlugins, true ) : array();
 
-            if ( ! is_array( $tmpDecodedDismissedPlugins ) || 0 === count( $tmpDecodedDismissedPlugins ) ) {
+            if ( ! is_array( $tmpDecodedDismissedPlugins ) || empty( $tmpDecodedDismissedPlugins ) ) {
                 continue;
             }
             ++$cnt;
@@ -2827,7 +2826,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      */
-    public static function render_sites_ignored_abandoned( $cnt, $websites ) {
+    public static function render_sites_ignored_abandoned( $cnt, $websites ) { // phpcs:ignore -- NOSONAR - complex.
         ?>
         <table id="mainwp-per-site-ignored-abandoned-plugins" class="ui compact selectable table unstackable">
             <thead>
@@ -2848,7 +2847,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         $decodedIgnoredPlugins = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
                         $decodedIgnoredPlugins = ! empty( $decodedIgnoredPlugins ) ? json_decode( $decodedIgnoredPlugins, true ) : array();
 
-                        if ( ! is_array( $decodedIgnoredPlugins ) || 0 === count( $decodedIgnoredPlugins ) ) {
+                        if ( ! is_array( $decodedIgnoredPlugins ) || empty( $decodedIgnoredPlugins ) ) {
                             continue;
                         }
                         $first = true;

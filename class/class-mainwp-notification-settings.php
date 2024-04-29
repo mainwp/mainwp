@@ -547,7 +547,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_notification_email()
      */
-    public static function get_default_emails_fields( $type, $field = '', $general = false ) {
+    public static function get_default_emails_fields( $type, $field = '', $general = false ) { // phpcs:ignore -- NOSONAR - complex.
 
         $recipients = MainWP_System_Utility::get_notification_email();
         $disable    = $general ? 0 : 1;
@@ -612,7 +612,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::replace_tokens_values()
      */
-    public static function replace_tokens_for_settings( $options, $fields, $website ) {
+    public static function replace_tokens_for_settings( $options, $fields, $website ) { // phpcs:ignore -- NOSONAR - complex.
 
         /**
          * Filter: mainwp_boilerplate_get_tokens

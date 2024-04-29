@@ -388,7 +388,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function update_website_option( $website, $option, $value ) {
         $rslt = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', $website->id ) );
-        if ( 0 === count( $rslt ) ) {
+        if ( empty( $rslt ) ) {
             $this->wpdb->insert(
                 $this->table_name( 'wp_options' ),
                 array(
@@ -501,7 +501,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         $rslt = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', 0 ) );
 
-        if ( 0 === count( $rslt ) ) {
+        if ( empty( $rslt ) ) {
             $this->wpdb->insert(
                 $this->table_name( 'wp_options' ),
                 array(
@@ -1177,7 +1177,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( $selectgroups ) {
             $staging_group = get_option( 'mainwp_stagingsites_group_id' );
             if ( $staging_group && in_array( $staging_group, $group_ids ) ) {
-                if ( 0 === count( $group_ids ) ) {
+                if ( empty( $group_ids ) ) {
                     $is_staging = 'yes';
                 } else {
                     $is_staging = 'nocheckstaging';

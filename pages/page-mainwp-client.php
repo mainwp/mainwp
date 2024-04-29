@@ -810,7 +810,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param string $sites  Clients Sites.
      * @param string $search Search field.
      */
-    public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
+    public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '' ) { // phpcs:ignore -- NOSONAR - current complexity required to achieve desired results. Pull request solutions appreciated.
         if ( empty( $output->clients ) ) {
             static::render_not_found();
         } else {
@@ -1029,7 +1029,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 </tr>
             </thead>
             <tbody>
-            <?php if ( is_array( $fields ) && count( $fields ) > 0 ) : ?>
+            <?php if ( is_array( $fields ) && ! empty( $fields ) ) : ?>
                 <?php foreach ( $fields as $field ) : ?>
                     <?php
                     if ( ! $field ) {
@@ -1134,9 +1134,6 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $add_new = true;
 
-        $dirs     = MainWP_System_Utility::get_mainwp_dir( 'client-images', true );
-        $base_dir = $dirs[0];
-
         $default_client_fields = MainWP_Client_Handler::get_default_client_fields();
         $client_to_add         = array();
         foreach ( $default_client_fields as $field_name => $item ) {
@@ -1208,7 +1205,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         if ( $client_id && isset( $client_fields['custom_fields'] ) && is_array( $client_fields['custom_fields'] ) ) {
-            foreach ( $client_fields['custom_fields'] as $input_name => $field_val ) {
+            foreach ( $client_fields['custom_fields'] as $field_val ) {
                 $field_id = array_key_first( $field_val );
                 // update custom field value for client.
                 if ( $field_id ) {
@@ -1638,12 +1635,6 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <?php
             }
 
-            $primary_contact_id = 0;
-
-            if ( $edit_client && $edit_client->primary_contact_id ) {
-                $primary_contact_id = $edit_client->primary_contact_id;
-            }
-
             if ( is_array( $custom_fields ) && count( $custom_fields ) > 0 ) {
                 $compatible_tokens = MainWP_Client_Handler::get_compatible_tokens();
                 foreach ( $custom_fields as $field ) {
@@ -2053,7 +2044,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * Save custom fields.
      */
-    public static function save_client_field() {
+    public static function save_client_field() { //phpcs:ignore -- NOSONAR - complex.
 
         $return = array(
             'success' => false,

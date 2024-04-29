@@ -54,7 +54,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      */
-    public static function validate_backup_tasks( $pBackupTasks ) {
+    public static function validate_backup_tasks( $pBackupTasks ) {  //phpcs:ignore -- NOSONAR - complex.
         if ( ! is_array( $pBackupTasks ) ) {
             return true;
         }
@@ -133,7 +133,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task()
      */
-    public static function update_backup() {
+    public static function update_backup() {  //phpcs:ignore -- NOSONAR - complex.
 
         /**
          * Current user global.
@@ -209,7 +209,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     }
 
     /** Add backup task. */
-    public static function add_backup() {
+    public static function add_backup() {  //phpcs:ignore -- NOSONAR - complex.
 
         /**
          * Current user global.
@@ -304,7 +304,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize()
      */
-    public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true ) { // phpcs:ignore -- not quite complex function.
+    public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true ) { // phpcs:ignore -- NOSONAR - not quite complex function.
 
         if ( $updateRun ) {
             MainWP_DB_Backup::instance()->update_backup_run( $task->id );

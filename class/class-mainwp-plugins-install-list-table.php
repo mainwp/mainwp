@@ -9,7 +9,7 @@ namespace MainWP\Dashboard;
 
 // Include class-wp-list-table.php.
 if ( ! class_exists( '\WP_List_Table' ) ) {
-    require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+    require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php'; // NOSONAR - WP compatible.
 }
 
 /**
@@ -72,7 +72,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
      * @global string $wp_version
      */
     public function prepare_items() { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-        include_once ABSPATH . 'wp-admin/includes/plugin-install.php';
+        include_once ABSPATH . 'wp-admin/includes/plugin-install.php'; // NOSONAR - WP compatible.
 
         global $tab; // required.
 
@@ -134,6 +134,8 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
                         break;
                     case 'author':
                         $args['author'] = $term;
+                        break;
+                    default:
                         break;
                 }
 
@@ -262,7 +264,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
      *
      * @return mixed Pagination HTML
      */
-    protected function pagination( $which ) {
+    protected function pagination( $which ) { //phpcs:ignore -- NOSONAR - complex.
         if ( empty( $this->_pagination_args ) ) {
             return;
         }
@@ -337,8 +339,6 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
 
         if ( $total_pages > 1 ) {
             $perpage_paging = $perpage_paging . "&nbsp;&nbsp;<div class='ui pagination menu'>" . join( "\n", $page_links ) . '</div>';
-        } else {
-            $perpage_paging = $perpage_paging;
         }
 
         ob_start();
@@ -398,7 +398,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
      *
      * @return mixed Plugin cards.
      */
-    public function display_rows() {
+    public function display_rows() { //phpcs:ignore -- NOSONAR - complex.
         $plugins_allowedtags = array(
             'a'       => array(
                 'href'   => array(),
@@ -459,8 +459,6 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
             $description = wp_strip_all_tags( $plugin['short_description'] );
             $version     = wp_kses( $plugin['version'], $plugins_allowedtags );
 
-            $name = wp_strip_all_tags( $title . ' ' . $version );
-
             $author = wp_kses( $plugin['author'], $plugins_allowedtags );
             if ( ! empty( $author ) ) {
                 $author = ' <cite>' . sprintf( esc_html__( 'By %s', 'mainwp' ), $author ) . '</cite>';
@@ -493,7 +491,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
             do_action( 'mainwp_install_plugin_card_top' );
             ?>
             <div class="content">
-            <a class="right floated mini ui image open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><img src="<?php echo esc_attr( $plugin_icon_url ); ?>" /></a>
+            <a class="right floated mini ui image open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><img src="<?php echo esc_attr( $plugin_icon_url ); ?>" alt="" /></a>
             <div class="header">
                 <a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><?php echo $title; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
                     </div>

@@ -299,8 +299,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * Render the Dashboard Body content.
      */
     public static function render_dashboard_body() {
-        $screen   = get_current_screen();
-        $clientid = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $screen = get_current_screen();
         ?>
         <div class="mainwp-primary-content-wrap">
         <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>

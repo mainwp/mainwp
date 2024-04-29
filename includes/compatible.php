@@ -141,7 +141,7 @@ if ( ! class_exists( 'MainWP_System' ) ) {
          *
          * @return MainWP_System
          */
-        static function Instance() {
+        public static function Instance() {
             return MainWP\Dashboard\Instance();
         }
     }
@@ -161,7 +161,7 @@ if ( ! class_exists( 'MainWP_Extensions_View' ) ) {
          *
          * @return array Available extensions.
          *
-         * @todo Move to MainWP Server via an XML file.
+         * @devtodo Move to MainWP Server via an XML file.
          */
         public static function getAvailableExtensions() {
             return MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions();

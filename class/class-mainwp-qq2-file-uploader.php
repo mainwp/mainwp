@@ -93,6 +93,8 @@ class MainWP_QQ2_File_Uploader { // phpcs:ignore Generic.Classes.OpeningBraceSam
             case 'k':
                 $val = substr( $str, 0, strlen( $str ) - 1 ) * 1024;
                 break;
+            default:
+                break;
         }
 
         return $val;

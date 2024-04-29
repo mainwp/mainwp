@@ -255,8 +255,6 @@ let mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
     }
     mainwp_managesites_bulk_reconnect_next();
   });
-
-  return;
 };
 
 //global.

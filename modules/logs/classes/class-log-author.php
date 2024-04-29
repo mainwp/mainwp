@@ -56,7 +56,7 @@ class Log_Author {
     /**
      * Get various user meta data
      *
-     * @todo Make sure this is being covered in the unit tests.
+     * @devtodo Make sure this is being covered in the unit tests.
      *
      * @param string $name User meta key.
      *

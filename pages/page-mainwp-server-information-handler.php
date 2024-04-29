@@ -43,7 +43,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         if ( isset( $_SESSION['cachedVersion'] ) && isset( $_SESSION['cachedTime'] ) && ( null !== $_SESSION['cachedVersion'] ) && ( ( $_SESSION['cachedTime'] + ( 60 * 30 ) ) > time() ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
             return $_SESSION['cachedVersion']; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
         }
-        include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
+        include_once ABSPATH . '/wp-admin/includes/plugin-install.php'; // NOSONAR - WP compatible.
         $api = MainWP_System_Utility::get_plugin_theme_info(
             'plugin',
             array(
@@ -849,7 +849,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
      * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
      */
-    public static function mainwp_options() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreaciated.
+    public static function mainwp_options() { // phpcs:ignore -- NOSONAR - current complexity required to achieve desired results. Pull request solutions appreaciated.
         $mainwp_options = array(
             'mainwp_number_of_child_sites'           => esc_html__( 'Number of connected sites', 'mainwp' ),
             'mainwp_wp_cron'                         => esc_html__( 'Use WP Cron', 'mainwp' ),
@@ -879,7 +879,6 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         }
 
         $options_value = array();
-        $userExtension = MainWP_DB_Common::instance()->get_user_extension();
         foreach ( $mainwp_options as $opt => $label ) {
             $value = get_option( $opt, false );
             switch ( $opt ) {

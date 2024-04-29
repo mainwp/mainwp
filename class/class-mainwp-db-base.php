@@ -161,7 +161,7 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return false;
         }
 
-        $result = self::m_query( $sql, $this->wpdb->dbh ); // NOSONAR - required.
+        $result = static::m_query( $sql, $this->wpdb->dbh ); // NOSONAR - required.
 
         if ( ! $result || ( empty( self::num_rows( $result ) ) ) ) { // NOSONAR - required.
             return false;

@@ -98,7 +98,7 @@ class MainWP_Site_Info { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
      * @param array  $website_info Website data.
      * @param array  $child_site_info Website info to display.
      */
-    public static function render_info( $website, $website_info, $child_site_info ) {
+    public static function render_info( $website, $website_info, $child_site_info ) { // phpcs:ignore -- NOSONAR - complex.
         ?>
         <div class="mainwp-widget-header">
         <h3 class="ui header handle-drag">

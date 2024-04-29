@@ -50,7 +50,7 @@ class Cost_Tracker_Clients_Widget {
      * @return void
      */
     public function __construct() {
-        // todo.
+        // construct.
     }
 
 
@@ -203,24 +203,22 @@ class Cost_Tracker_Clients_Widget {
                     'lifetime'  => 0,
                 );
 
-                if ( 'active' === $item->cost_status ) {
-                    if ( is_array( $item->cost_sites_ids ) ) {
-                        foreach ( $item->cost_sites_ids as $ct_siteid ) {
-                            // if site of cost tracker in the client's sites then calculate the site's cost/price.
-                            if ( is_array( $this->clients_sites[ $client_id ] ) && in_array( $ct_siteid, $this->clients_sites[ $client_id ] ) ) {
-                                $cost_val = 0;
-                                if ( 'single_site' === $item->license_type ) {
-                                    $cost_val = $item->price;
-                                } elseif ( 'multi_site' === $item->license_type && ! empty( $item->count_sites ) ) {
-                                    $cost_val = $item->price / $item->count_sites;
-                                }
-                                if ( 'lifetime' === $item->type ) {
-                                    $array_costs['lifetime'] += $cost_val;
-                                } elseif ( isset( $array_costs[ $item->renewal_type ] ) ) {
-                                    $array_costs[ $item->renewal_type ] += $cost_val;
-                                }
-                                $order_val += $cost_val;
+                if ( 'active' === $item->cost_status && is_array( $item->cost_sites_ids ) ) {
+                    foreach ( $item->cost_sites_ids as $ct_siteid ) {
+                        // if site of cost tracker in the client's sites then calculate the site's cost/price.
+                        if ( is_array( $this->clients_sites[ $client_id ] ) && in_array( $ct_siteid, $this->clients_sites[ $client_id ] ) ) {
+                            $cost_val = 0;
+                            if ( 'single_site' === $item->license_type ) {
+                                $cost_val = $item->price;
+                            } elseif ( 'multi_site' === $item->license_type && ! empty( $item->count_sites ) ) {
+                                $cost_val = $item->price / $item->count_sites;
                             }
+                            if ( 'lifetime' === $item->type ) {
+                                $array_costs['lifetime'] += $cost_val;
+                            } elseif ( isset( $array_costs[ $item->renewal_type ] ) ) {
+                                $array_costs[ $item->renewal_type ] += $cost_val;
+                            }
+                            $order_val += $cost_val;
                         }
                     }
                 }

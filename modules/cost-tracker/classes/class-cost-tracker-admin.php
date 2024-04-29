@@ -879,8 +879,8 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             ?>
             <p><?php esc_html_e( 'If you need help with the Cost Tracker extension, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui relaxed bulleted list">
-                <div class="item"><a href="#" target="_blank" aria-hidden="true"></a></div>
-                <div class="item"><a href="#" target="_blank" aria-hidden="true"></a></div>
+                <div class="item"><a href="#" target="_blank" aria-hidden=""></a></div> <?php // NOSONAR -- compatible with help. ?>
+                <div class="item"><a href="#" target="_blank" aria-hidden=""></a></div> <?php // NOSONAR -- compatible with help. ?>
             <?php
             /**
              * Action: mainwp_module_cost_tracker_help_item

@@ -1009,8 +1009,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public function activate_redirect( $location ) {
         unset( $location );
-        $loc = admin_url( 'admin.php?page=Extensions' );
-        return $loc;
+        return admin_url( 'admin.php?page=Extensions' );
     }
 
     /**

@@ -550,6 +550,9 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 } else {
                     $color = '';
                 }
+                // update group.
+                MainWP_DB_Common::instance()->update_group( $group->id, $name, $color );
+
                 // Reload group.
                 $group = MainWP_DB_Common::instance()->get_group_by_id( $group->id );
 

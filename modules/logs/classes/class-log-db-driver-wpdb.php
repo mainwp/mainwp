@@ -100,7 +100,7 @@ class Log_DB_Driver_WPDB implements Log_DB_Driver {
     public function insert_meta( $record_id, $key, $val ) {
         global $wpdb;
 
-        $result = $wpdb->insert( //phpcs:ignore -- ok.
+        return $wpdb->insert( //phpcs:ignore -- ok.
             $this->table_meta,
             array(
                 'meta_log_id' => $record_id,
@@ -108,8 +108,6 @@ class Log_DB_Driver_WPDB implements Log_DB_Driver {
                 'meta_value'  => $val, //phpcs:ignore -- ok.
             )
         );
-
-        return $result;
     }
 
     /**

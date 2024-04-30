@@ -100,7 +100,7 @@ class Cost_Tracker_Payment_Left_This_Month {
      *
      * @param array $cost_data     Cost data.
      */
-    public static function get_costs_widgets_data( $cost_data ) {
+    public static function get_costs_widgets_data( $cost_data ) { // phpcs:ignore -- NOSONAR - complex.
         $series_products_price = array();
         $colors                = array();
         $series_data           = array();

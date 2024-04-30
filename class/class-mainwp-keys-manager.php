@@ -291,9 +291,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $encryptedValue = $iv . $ciphertext . $tag;
 
         // Encode the encrypted value using base64 for storage.
-        $encodedValue = base64_encode( $encryptedValue ); //phpcs:ignore
-
-        return $encodedValue;
+        return base64_encode( $encryptedValue ); //phpcs:ignore
     }
 
     /**
@@ -330,9 +328,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $aes->setTag( $tag );
 
             // Decrypt the value.
-            $keypass = $aes->decrypt( $ciphertext );
-
-            return $keypass;
+            return $aes->decrypt( $ciphertext );
         } catch ( \Exception $ex ) {
             // error.
         }

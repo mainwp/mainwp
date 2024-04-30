@@ -391,10 +391,8 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $cachedResult = MainWP_Cache::get_cached_result( 'Themes' );
 
-        if ( isset( $_POST['select_mainwp_options_plugintheme_view'] ) && check_admin_referer( 'mainwp-admin-nonce' ) ) {
-            if ( is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) {
-                unset( $cachedResult['result'] ); // clear cached results.
-            }
+        if ( isset( $_POST['select_mainwp_options_plugintheme_view'] ) && check_admin_referer( 'mainwp-admin-nonce' ) && is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) {
+            unset( $cachedResult['result'] ); // clear cached results.
         }
 
         static::render_header( 'Manage' );
@@ -631,7 +629,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <div class="ui hidden fitted divider"></div>
                         <div class="field">
                             <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Display sites not meeting the above search criteria.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
-                                <input type="checkbox" <?php echo $disabledNegative ? 'disabled' : ''; ?> <?php echo ( $checkedNegative ? 'checked="true"' : '' ); ?> value="1" id="display_sites_not_meeting_criteria" />
+                                <input type="checkbox" <?php echo $disabledNegative ? 'disabled' : ''; ?> <?php echo $checkedNegative ? 'checked="true"' : ''; ?> value="1" id="display_sites_not_meeting_criteria" />
                                 <label for="display_sites_not_meeting_criteria"><?php esc_html_e( 'Exclude theme', 'mainwp' ); ?></label>
                                 </div>
                         </div>
@@ -722,13 +720,10 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         $_count           = count( $allThemes );
                         $_count_installed = 0;
                         for ( $i = 0; $i < $_count; $i++ ) {
-                            $theme = $allThemes[ $i ];
-                            if ( 'active' === $status || 'inactive' === $status ) {
-                                if ( 1 === (int) $theme['active'] && 'active' !== $status ) {
-                                    continue;
-                                } elseif ( 1 !== $theme['active'] && 'inactive' !== $status ) {
-                                    continue;
-                                }
+                            $theme           = $allThemes[ $i ];
+                            $active_inactive = 'active' === $status || 'inactive' === $status;
+                            if ( $active_inactive && ( ( 1 === (int) $theme['active'] && 'active' !== $status ) || ( 1 !== $theme['active'] && 'inactive' !== $status ) ) ) {
+                                continue;
                             }
 
                             if ( ! empty( $keyword ) ) {
@@ -747,15 +742,13 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             $output->themes[]     = $theme;
                             ++$_count_installed;
                         }
-                        if ( 0 === $_count_installed ) {
-                            if ( 'not_installed' === $status ) {
-                                for ( $i = 0; $i < $_count; $i++ ) {
-                                    $theme                      = $allThemes[ $i ];
-                                    $theme['websiteid']         = $website->id;
-                                    $theme['websiteurl']        = $website->url;
-                                    $theme['websitename']       = $website->name;
-                                    $output->themes_installed[] = $theme;
-                                }
+                        if ( 0 === $_count_installed && 'not_installed' === $status ) {
+                            for ( $i = 0; $i < $_count; $i++ ) {
+                                $theme                      = $allThemes[ $i ];
+                                $theme['websiteid']         = $website->id;
+                                $theme['websiteurl']        = $website->url;
+                                $theme['websitename']       = $website->name;
+                                $output->themes_installed[] = $theme;
                             }
                         }
                     }
@@ -774,13 +767,10 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             $_count           = count( $allThemes );
                             $_count_installed = 0;
                             for ( $i = 0; $i < $_count; $i++ ) {
-                                $theme = $allThemes[ $i ];
-                                if ( 'active' === $status || 'inactive' === $status ) {
-                                    if ( 1 === (int) $theme['active'] && 'active' !== $status ) {
-                                        continue;
-                                    } elseif ( 1 !== $theme['active'] && 'inactive' !== $status ) {
-                                        continue;
-                                    }
+                                $theme     = $allThemes[ $i ];
+                                $act_inact = 'active' === $status || 'inactive' === $status;
+                                if ( $act_inact && ( ( 1 === (int) $theme['active'] && 'active' !== $status ) || ( 1 !== $theme['active'] && 'inactive' !== $status ) ) ) {
+                                    continue;
                                 }
 
                                 if ( ! empty( $keyword ) ) {
@@ -799,15 +789,13 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 $output->themes[]     = $theme;
                                 ++$_count_installed;
                             }
-                            if ( 0 === $_count_installed ) {
-                                if ( 'not_installed' === $status ) {
-                                    for ( $i = 0; $i < $_count; $i++ ) {
-                                        $theme                      = $allThemes[ $i ];
-                                        $theme['websiteid']         = $website->id;
-                                        $theme['websiteurl']        = $website->url;
-                                        $theme['websitename']       = $website->name;
-                                        $output->themes_installed[] = $theme;
-                                    }
+                            if ( 0 === $_count_installed && 'not_installed' === $status ) {
+                                for ( $i = 0; $i < $_count; $i++ ) {
+                                    $theme                      = $allThemes[ $i ];
+                                    $theme['websiteid']         = $website->id;
+                                    $theme['websiteurl']        = $website->url;
+                                    $theme['websitename']       = $website->name;
+                                    $output->themes_installed[] = $theme;
                                 }
                             }
                         }
@@ -857,15 +845,13 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             $output->themes[]     = $theme;
                             ++$_count_installed;
                         }
-                        if ( 0 === $_count_installed ) {
-                            if ( 'not_installed' === $status ) {
-                                for ( $i = 0; $i < $_count; $i++ ) {
-                                    $theme                      = $allThemes[ $i ];
-                                    $theme['websiteid']         = $website->id;
-                                    $theme['websiteurl']        = $website->url;
-                                    $theme['websitename']       = $website->name;
-                                    $output->themes_installed[] = $theme;
-                                }
+                        if ( 0 === $_count_installed && 'not_installed' === $status ) {
+                            for ( $i = 0; $i < $_count; $i++ ) {
+                                $theme                      = $allThemes[ $i ];
+                                $theme['websiteid']         = $website->id;
+                                $theme['websiteurl']        = $website->url;
+                                $theme['websitename']       = $website->name;
+                                $output->themes_installed[] = $theme;
                             }
                         }
                     }
@@ -1076,38 +1062,36 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
             $theme_upgrades = array();
             $website        = MainWP_DB::instance()->get_website_by_id( $site_id );
-            if ( $website ) {
-                if ( ! $website->is_ignoreThemeUpdates ) {
-                    $theme_upgrades         = json_decode( $website->theme_upgrades, true );
-                    $decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-                    $decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+            if ( $website && ! $website->is_ignoreThemeUpdates ) {
+                $theme_upgrades         = json_decode( $website->theme_upgrades, true );
+                $decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
+                $decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 
-                    if ( is_array( $decodedPremiumUpgrades ) ) {
-                        foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
-                            $premiumUpgrade['premium'] = true;
+                if ( is_array( $decodedPremiumUpgrades ) ) {
+                    foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+                        $premiumUpgrade['premium'] = true;
 
-                            if ( 'theme' === $premiumUpgrade['type'] ) {
-                                if ( ! is_array( $theme_upgrades ) ) {
-                                    $theme_upgrades = array();
-                                }
-
-                                $premiumUpgrade = array_filter( $premiumUpgrade );
-
-                                if ( ! isset( $theme_upgrades[ $crrSlug ] ) ) {
-                                    $theme_upgrades[ $crrSlug ] = array();
-                                }
-                                $theme_upgrades[ $crrSlug ] = array_merge( $theme_upgrades[ $crrSlug ], $premiumUpgrade );
+                        if ( 'theme' === $premiumUpgrade['type'] ) {
+                            if ( ! is_array( $theme_upgrades ) ) {
+                                $theme_upgrades = array();
                             }
+
+                            $premiumUpgrade = array_filter( $premiumUpgrade );
+
+                            if ( ! isset( $theme_upgrades[ $crrSlug ] ) ) {
+                                $theme_upgrades[ $crrSlug ] = array();
+                            }
+                            $theme_upgrades[ $crrSlug ] = array_merge( $theme_upgrades[ $crrSlug ], $premiumUpgrade );
                         }
                     }
-                    $ignored_themes = json_decode( $website->ignored_themes, true );
-                    if ( is_array( $ignored_themes ) ) {
-                        $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
-                    }
+                }
+                $ignored_themes = json_decode( $website->ignored_themes, true );
+                if ( is_array( $ignored_themes ) ) {
+                    $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                }
 
-                    if ( is_array( $decodedIgnoredThemes ) ) {
-                        $theme_upgrades = array_diff_key( $theme_upgrades, $decodedIgnoredThemes );
-                    }
+                if ( is_array( $decodedIgnoredThemes ) ) {
+                    $theme_upgrades = array_diff_key( $theme_upgrades, $decodedIgnoredThemes );
                 }
             }
             $updateWebsites[ $site_id ] = $theme_upgrades;
@@ -1345,38 +1329,36 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
             $theme_upgrades = array();
             $website        = MainWP_DB::instance()->get_website_by_id( $site_id );
-            if ( $website ) {
-                if ( ! $website->is_ignoreThemeUpdates ) {
-                    $theme_upgrades         = json_decode( $website->theme_upgrades, true );
-                    $decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-                    $decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+            if ( $website && ! $website->is_ignoreThemeUpdates ) {
+                $theme_upgrades         = json_decode( $website->theme_upgrades, true );
+                $decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
+                $decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 
-                    if ( is_array( $decodedPremiumUpgrades ) ) {
-                        foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
-                            $premiumUpgrade['premium'] = true;
+                if ( is_array( $decodedPremiumUpgrades ) ) {
+                    foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+                        $premiumUpgrade['premium'] = true;
 
-                            if ( 'theme' === $premiumUpgrade['type'] ) {
-                                if ( ! is_array( $theme_upgrades ) ) {
-                                    $theme_upgrades = array();
-                                }
-
-                                $premiumUpgrade = array_filter( $premiumUpgrade );
-
-                                if ( ! isset( $theme_upgrades[ $crrSlug ] ) ) {
-                                    $theme_upgrades[ $crrSlug ] = array();
-                                }
-                                $theme_upgrades[ $crrSlug ] = array_merge( $theme_upgrades[ $crrSlug ], $premiumUpgrade );
+                        if ( 'theme' === $premiumUpgrade['type'] ) {
+                            if ( ! is_array( $theme_upgrades ) ) {
+                                $theme_upgrades = array();
                             }
+
+                            $premiumUpgrade = array_filter( $premiumUpgrade );
+
+                            if ( ! isset( $theme_upgrades[ $crrSlug ] ) ) {
+                                $theme_upgrades[ $crrSlug ] = array();
+                            }
+                            $theme_upgrades[ $crrSlug ] = array_merge( $theme_upgrades[ $crrSlug ], $premiumUpgrade );
                         }
                     }
-                    $ignored_themes = json_decode( $website->ignored_themes, true );
-                    if ( is_array( $ignored_themes ) ) {
-                        $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
-                    }
+                }
+                $ignored_themes = json_decode( $website->ignored_themes, true );
+                if ( is_array( $ignored_themes ) ) {
+                    $theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+                }
 
-                    if ( is_array( $decodedIgnoredThemes ) ) {
-                        $theme_upgrades = array_diff_key( $theme_upgrades, $decodedIgnoredThemes );
-                    }
+                if ( is_array( $decodedIgnoredThemes ) ) {
+                    $theme_upgrades = array_diff_key( $theme_upgrades, $decodedIgnoredThemes );
                 }
             }
             $updateWebsites[ $site_id ] = $theme_upgrades;
@@ -1477,16 +1459,12 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 $new_version = $upgradeInfo['update']['new_version'];
                             }
 
-                            if ( '' === $lastest_version ) {
-                                $lastest_version = $theme_version;
-                            } elseif ( version_compare( $theme_version, $lastest_version, '>' ) ) {
+                            if ( '' === $lastest_version || version_compare( $theme_version, $lastest_version, '>' ) ) {
                                 $lastest_version = $theme_version;
                             }
 
-                            if ( '' !== $new_version ) {
-                                if ( version_compare( $new_version, $lastest_version, '>' ) ) {
-                                    $lastest_version = $new_version;
-                                }
+                            if ( '' !== $new_version && version_compare( $new_version, $lastest_version, '>' ) ) {
+                                $lastest_version = $new_version;
                             }
 
                             if ( isset( $siteThemes[ $site_id ][ $slug_ver ] ) && ( 0 === (int) $siteThemes[ $site_id ][ $slug_ver ]['active'] || 1 === (int) $siteThemes[ $site_id ][ $slug_ver ]['active'] ) ) {
@@ -1672,8 +1650,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <button class="ui mini basic button" href="javascript:void(0)" id="mainwp-do-themes-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
         <span id="mainwp_bulk_action_loading"><i class="ui active inline loader tiny"></i></span>
         <?php
-        $bulkActions = ob_get_clean();
-        return $bulkActions;
+        return ob_get_clean();
     }
 
 
@@ -2142,7 +2119,8 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         if ( 'all' !== $search_theme_status ) {
                             if ( 1 === (int) $theme['active'] && 'active' !== $search_theme_status ) {
                                 continue;
-                            } elseif ( 1 !== $theme['active'] && 'inactive' !== $search_theme_status ) {
+                            }
+                            if ( 1 !== $theme['active'] && 'inactive' !== $search_theme_status ) {
                                 continue;
                             }
                         }
@@ -2207,9 +2185,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             );
         } elseif ( isset( $_SESSION['SNThemesAllStatus'] ) ) {
             //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $keyword             = isset( $_SESSION['SNThemesAllStatus']['keyword'] ) ? $_SESSION['SNThemesAllStatus']['keyword'] : '';
-            $search_status       = isset( $_SESSION['SNThemesAllStatus']['status'] ) ? $_SESSION['SNThemesAllStatus']['status'] : '';
-            $search_theme_status = isset( $_SESSION['SNThemesAllStatus']['theme_status'] ) ? $_SESSION['SNThemesAllStatus']['theme_status'] : '';
+            $search_status = isset( $_SESSION['SNThemesAllStatus']['status'] ) ? $_SESSION['SNThemesAllStatus']['status'] : '';
             //phpcs:enable
         }
 
@@ -2281,9 +2257,11 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 if ( ! empty( $search_status ) && 'all' !== $search_status ) {
                     if ( 'trust' === $search_status && ! in_array( $slug, $trustedThemes ) ) {
                         continue;
-                    } elseif ( 'untrust' === $search_status && in_array( $slug, $trustedThemes ) ) {
+                    }
+                    if ( 'untrust' === $search_status && in_array( $slug, $trustedThemes ) ) {
                         continue;
-                    } elseif ( 'ignored' === $search_status && ! isset( $decodedIgnoredThemes[ $slug ] ) ) {
+                    }
+                    if ( 'ignored' === $search_status && ! isset( $decodedIgnoredThemes[ $slug ] ) ) {
                         continue;
                     }
                 }

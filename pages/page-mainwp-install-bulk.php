@@ -48,20 +48,18 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
      */
     public static function admin_init() {
-        if ( isset( $_REQUEST['mainwp_do'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            if ( isset( $_REQUEST['qq_nonce'] ) && 'MainWP_Install_Bulk-uploadfile' === $_REQUEST['mainwp_do'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-                do_action( 'mainwp_secure_request', 'qq_nonce', 'qq_nonce' );
-                $allowedExtensions = array( 'zip' ); // Only zip allowed.
-                // max file size in bytes.
-                $sizeLimit = 2 * 1024 * 1024; // 2MB = max allowed.
+        if ( isset( $_REQUEST['mainwp_do'] ) && isset( $_REQUEST['qq_nonce'] ) && 'MainWP_Install_Bulk-uploadfile' === $_REQUEST['mainwp_do'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            do_action( 'mainwp_secure_request', 'qq_nonce', 'qq_nonce' );
+            $allowedExtensions = array( 'zip' ); // Only zip allowed.
+            // max file size in bytes.
+            $sizeLimit = 2 * 1024 * 1024; // 2MB = max allowed.
 
-                $uploader = new MainWP_QQ2_File_Uploader( $allowedExtensions, $sizeLimit );
-                $path     = MainWP_System_Utility::get_mainwp_specific_dir( 'bulk' );
+            $uploader = new MainWP_QQ2_File_Uploader( $allowedExtensions, $sizeLimit );
+            $path     = MainWP_System_Utility::get_mainwp_specific_dir( 'bulk' );
 
-                $result = $uploader->handle_upload( $path, true );
-                // to pass data through iframe you will need to encode all html tags.
-                die( htmlspecialchars( wp_json_encode( $result ), ENT_NOQUOTES ) ); // phpcs:ignore WordPress.Security.EscapeOutput
-            }
+            $result = $uploader->handle_upload( $path, true );
+            // to pass data through iframe you will need to encode all html tags.
+            die( htmlspecialchars( wp_json_encode( $result ), ENT_NOQUOTES ) ); // phpcs:ignore WordPress.Security.EscapeOutput
         }
     }
 
@@ -355,11 +353,10 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          * @since Unknown
          */
         $clear_and_lock_opts = apply_filters( 'mainwp_clear_and_lock_options', array() );
-        if ( isset( $post_data['url'] ) && false !== strpos( $post_data['url'], 'mwpdl' ) && false !== strpos( $post_data['url'], 'sig' ) ) {
-            if ( is_array( $clear_and_lock_opts ) && isset( $clear_and_lock_opts['wpadmin_user'] ) && ! empty( $clear_and_lock_opts['wpadmin_user'] ) && isset( $clear_and_lock_opts['wpadmin_passwd'] ) && ! empty( $clear_and_lock_opts['wpadmin_passwd'] ) ) {
-                $post_data['wpadmin_user']   = $clear_and_lock_opts['wpadmin_user'];
-                $post_data['wpadmin_passwd'] = $clear_and_lock_opts['wpadmin_passwd'];
-            }
+        $mwpdl               = isset( $post_data['url'] ) && false !== strpos( $post_data['url'], 'mwpdl' ) && false !== strpos( $post_data['url'], 'sig' );
+        if ( $mwpdl && is_array( $clear_and_lock_opts ) && isset( $clear_and_lock_opts['wpadmin_user'] ) && ! empty( $clear_and_lock_opts['wpadmin_user'] ) && isset( $clear_and_lock_opts['wpadmin_passwd'] ) && ! empty( $clear_and_lock_opts['wpadmin_passwd'] ) ) {
+            $post_data['wpadmin_user']   = $clear_and_lock_opts['wpadmin_user'];
+            $post_data['wpadmin_passwd'] = $clear_and_lock_opts['wpadmin_passwd'];
         }
         return $post_data;
     }
@@ -743,10 +740,8 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $result = $results[1];
             // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
             $information = MainWP_System_Utility::get_child_response( base64_decode( $result ) );
-            if ( is_array( $information ) ) {
-                if ( isset( $information['other_data']['install_items'] ) ) {
-                    $output->other_data[ $website->id ] = $information['other_data']; // content: install_items themes/plugins.
-                }
+            if ( is_array( $information ) && isset( $information['other_data']['install_items'] ) ) {
+                $output->other_data[ $website->id ] = $information['other_data']; // content: install_items themes/plugins.
             }
 
             if ( isset( $information['installation'] ) && 'SUCCESS' === $information['installation'] ) {
@@ -758,13 +753,11 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     $error = esc_html__( 'Already installed', 'mainwp' );
                 }
 
-                if ( 'not found' === strtolower( $error ) ) {
-                    if ( is_array( $post_data ) && isset( $post_data['type'] ) ) {
-                        if ( 'plugin' === $post_data['type'] ) {
-                            $error = esc_html__( 'Plugin file not found. Make sure security plugins or server-side security rules are not blocking requests from your child sites.', 'mainwp' );
-                        } elseif ( 'theme' === $post_data['type'] ) {
-                            $error = esc_html__( 'Theme file not found. Make sure security plugins or server-side security rules are not blocking requests from your child sites.', 'mainwp' );
-                        }
+                if ( 'not found' === strtolower( $error ) && is_array( $post_data ) && isset( $post_data['type'] ) ) {
+                    if ( 'plugin' === $post_data['type'] ) {
+                        $error = esc_html__( 'Plugin file not found. Make sure security plugins or server-side security rules are not blocking requests from your child sites.', 'mainwp' );
+                    } elseif ( 'theme' === $post_data['type'] ) {
+                        $error = esc_html__( 'Theme file not found. Make sure security plugins or server-side security rules are not blocking requests from your child sites.', 'mainwp' );
                     }
                 }
 

@@ -1098,8 +1098,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      */
     public function get_notification_settings( $settings, $type ) {
         unset( $settings );
-        $gen_email_settings = MainWP_Notification_Settings::get_general_email_settings( $type );
-        return $gen_email_settings;
+        return MainWP_Notification_Settings::get_general_email_settings( $type );
     }
 
     /**
@@ -1134,11 +1133,10 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      */
     public function hook_get_template_html( $input, $template_name, $args = array() ) {
         unset( $input );
-        $mail_content = MainWP_Notification_Template::instance()->get_template_html(
+        return MainWP_Notification_Template::instance()->get_template_html(
             $template_name,
             $args
         );
-        return $mail_content;
     }
 
     /**

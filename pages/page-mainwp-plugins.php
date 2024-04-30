@@ -329,14 +329,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             'active' => ( 'Manage' === $shownPage ) ? true : false,
         );
 
-        if ( mainwp_current_user_have_right( 'dashboard', 'install_plugins' ) ) {
-            if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginsInstall' ) ) {
-                $renderItems[] = array(
-                    'title'  => esc_html__( 'Install', 'mainwp' ),
-                    'href'   => 'admin.php?page=PluginsInstall',
-                    'active' => ( 'Install' === $shownPage ) ? true : false,
-                );
-            }
+        if ( mainwp_current_user_have_right( 'dashboard', 'install_plugins' ) && ! MainWP_Menu::is_disable_menu_item( 3, 'PluginsInstall' ) ) {
+            $renderItems[] = array(
+                'title'  => esc_html__( 'Install', 'mainwp' ),
+                'href'   => 'admin.php?page=PluginsInstall',
+                'active' => ( 'Install' === $shownPage ) ? true : false,
+            );
         }
 
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginsAutoUpdate' ) ) {
@@ -413,10 +411,8 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
         $cachedResult = MainWP_Cache::get_cached_result( 'Plugins' );
 
-        if ( isset( $_POST['select_mainwp_options_plugintheme_view'] ) && check_admin_referer( 'mainwp-admin-nonce' ) ) {
-            if ( is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) {
-                unset( $cachedResult['result'] ); // clear cached results.
-            }
+        if ( isset( $_POST['select_mainwp_options_plugintheme_view'] ) && check_admin_referer( 'mainwp-admin-nonce' ) && is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) {
+            unset( $cachedResult['result'] ); // clear cached results.
         }
 
         static::render_header( 'Manage' );
@@ -752,12 +748,10 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         $_count           = count( $allPlugins );
                         $_count_installed = 0;
                         for ( $i = 0; $i < $_count; $i++ ) {
-                            $plugin = $allPlugins[ $i ];
-
-                            if ( ( 'active' === $status ) || ( 'inactive' === $status ) ) {
-                                if ( ( ( 'active' === $status ) ? 1 : 0 ) !== (int) $plugin['active'] ) {
-                                        continue;
-                                }
+                            $plugin    = $allPlugins[ $i ];
+                            $is_active = 'active' === $status ? 1 : 0;
+                            if ( ( 'active' === $status || 'inactive' === $status ) && $is_active !== (int) $plugin['active'] ) {
+                                continue;
                             }
 
                             if ( ! empty( $keyword ) ) {
@@ -777,15 +771,13 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             ++$_count_installed;
                         }
 
-                        if ( 0 === $_count_installed ) {
-                            if ( 'not_installed' === $status ) {
-                                for ( $i = 0; $i < $_count; $i++ ) {
-                                    $plugin                      = $allPlugins[ $i ];
-                                    $plugin['websiteid']         = $website->id;
-                                    $plugin['websiteurl']        = $website->url;
-                                    $plugin['websitename']       = $website->name;
-                                    $output->plugins_installed[] = $plugin;
-                                }
+                        if ( 0 === $_count_installed && 'not_installed' === $status ) {
+                            for ( $i = 0; $i < $_count; $i++ ) {
+                                $plugin                      = $allPlugins[ $i ];
+                                $plugin['websiteid']         = $website->id;
+                                $plugin['websiteurl']        = $website->url;
+                                $plugin['websitename']       = $website->name;
+                                $output->plugins_installed[] = $plugin;
                             }
                         }
                     }
@@ -804,12 +796,10 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             $_count           = count( $allPlugins );
                             $_count_installed = 0;
                             for ( $i = 0; $i < $_count; $i++ ) {
-                                $plugin = $allPlugins[ $i ];
-
-                                if ( ( 'active' === $status ) || ( 'inactive' === $status ) ) {
-                                    if ( ( ( 'active' === $status ) ? 1 : 0 ) !== (int) $plugin['active'] ) {
-                                        continue;
-                                    }
+                                $plugin    = $allPlugins[ $i ];
+                                $is_active = 'active' === $status ? 1 : 0;
+                                if ( ( 'active' === $status || 'inactive' === $status ) && $is_active !== (int) $plugin['active'] ) {
+                                    continue;
                                 }
 
                                 if ( ! empty( $keyword ) ) {
@@ -829,15 +819,13 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 ++$_count_installed;
                             }
 
-                            if ( 0 === $_count_installed ) {
-                                if ( 'not_installed' === $status ) {
-                                    for ( $i = 0; $i < $_count; $i++ ) {
-                                        $plugin                      = $allPlugins[ $i ];
-                                        $plugin['websiteid']         = $website->id;
-                                        $plugin['websiteurl']        = $website->url;
-                                        $plugin['websitename']       = $website->name;
-                                        $output->plugins_installed[] = $plugin;
-                                    }
+                            if ( 0 === $_count_installed && 'not_installed' === $status ) {
+                                for ( $i = 0; $i < $_count; $i++ ) {
+                                    $plugin                      = $allPlugins[ $i ];
+                                    $plugin['websiteid']         = $website->id;
+                                    $plugin['websiteurl']        = $website->url;
+                                    $plugin['websitename']       = $website->name;
+                                    $output->plugins_installed[] = $plugin;
                                 }
                             }
                         }
@@ -864,10 +852,10 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         for ( $i = 0; $i < $_count; $i++ ) {
                             $plugin = $allPlugins[ $i ];
 
-                            if ( ( 'active' === $status ) || ( 'inactive' === $status ) ) {
-                                if ( ( ( 'active' === $status ) ? 1 : 0 ) !== (int) $plugin['active'] ) {
-                                    continue;
-                                }
+                            $is_active = ( 'active' === $status ) ? 1 : 0;
+
+                            if ( ( ( 'active' === $status ) || ( 'inactive' === $status ) ) && ( $is_active !== (int) $plugin['active'] ) ) {
+                                continue;
                             }
 
                             if ( ! empty( $keyword ) ) {
@@ -886,15 +874,13 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             $output->plugins[]     = $plugin;
                             ++$_count_installed;
                         }
-                        if ( 0 === $_count_installed ) {
-                            if ( 'not_installed' === $status ) {
-                                for ( $i = 0; $i < $_count; $i++ ) {
-                                    $plugin                      = $allPlugins[ $i ];
-                                    $plugin['websiteid']         = $website->id;
-                                    $plugin['websiteurl']        = $website->url;
-                                    $plugin['websitename']       = $website->name;
-                                    $output->plugins_installed[] = $plugin;
-                                }
+                        if ( 0 === $_count_installed && 'not_installed' === $status ) {
+                            for ( $i = 0; $i < $_count; $i++ ) {
+                                $plugin                      = $allPlugins[ $i ];
+                                $plugin['websiteid']         = $website->id;
+                                $plugin['websiteurl']        = $website->url;
+                                $plugin['websitename']       = $website->name;
+                                $output->plugins_installed[] = $plugin;
                             }
                         }
                     }
@@ -1138,8 +1124,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         <button class="ui mini basic button" href="javascript:void(0)" id="mainwp-do-plugins-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
         <span id="mainwp_bulk_action_loading"><i class="ui active inline loader tiny"></i></span>
         <?php
-        $bulkActions = ob_get_clean();
-        return $bulkActions;
+        return ob_get_clean();
     }
 
     /**
@@ -1222,38 +1207,36 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
             $plugin_upgrades = array();
             $website         = MainWP_DB::instance()->get_website_by_id( $site_id );
-            if ( $website ) {
-                if ( ! $website->is_ignorePluginUpdates ) {
-                    $plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
-                    $decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-                    $decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+            if ( $website && ! $website->is_ignorePluginUpdates ) {
+                $plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
+                $decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
+                $decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
 
-                    if ( is_array( $decodedPremiumUpgrades ) ) {
-                        foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
-                            $premiumUpgrade['premium'] = true;
+                if ( is_array( $decodedPremiumUpgrades ) ) {
+                    foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+                        $premiumUpgrade['premium'] = true;
 
-                            if ( 'plugin' === $premiumUpgrade['type'] ) {
-                                if ( ! is_array( $plugin_upgrades ) ) {
-                                    $plugin_upgrades = array();
-                                }
-
-                                $premiumUpgrade = array_filter( $premiumUpgrade );
-
-                                if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-                                    $plugin_upgrades[ $crrSlug ] = array();
-                                }
-                                $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
+                        if ( 'plugin' === $premiumUpgrade['type'] ) {
+                            if ( ! is_array( $plugin_upgrades ) ) {
+                                $plugin_upgrades = array();
                             }
+
+                            $premiumUpgrade = array_filter( $premiumUpgrade );
+
+                            if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
+                                $plugin_upgrades[ $crrSlug ] = array();
+                            }
+                            $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
                         }
                     }
-                    $ignored_plugins = json_decode( $website->ignored_plugins, true );
-                    if ( is_array( $ignored_plugins ) ) {
-                        $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
-                    }
+                }
+                $ignored_plugins = json_decode( $website->ignored_plugins, true );
+                if ( is_array( $ignored_plugins ) ) {
+                    $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                }
 
-                    if ( is_array( $decodedIgnoredPlugins ) ) {
-                        $plugin_upgrades = array_diff_key( $plugin_upgrades, $decodedIgnoredPlugins );
-                    }
+                if ( is_array( $decodedIgnoredPlugins ) ) {
+                    $plugin_upgrades = array_diff_key( $plugin_upgrades, $decodedIgnoredPlugins );
                 }
             }
             $updateWebsites[ $site_id ] = $plugin_upgrades;
@@ -1504,35 +1487,33 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
             $plugin_upgrades = array();
             $website         = MainWP_DB::instance()->get_website_by_id( $site_id );
-            if ( $website ) {
-                if ( ! $website->is_ignorePluginUpdates ) {
-                    $plugin_upgrades = json_decode( $website->plugin_upgrades, true );
-                    if ( ! is_array( $plugin_upgrades ) ) {
-                        $plugin_upgrades = array();
-                    }
-                    $decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-                    $decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
-                    if ( is_array( $decodedPremiumUpgrades ) ) {
-                        foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
-                            $premiumUpgrade['premium'] = true;
-                            if ( 'plugin' === $premiumUpgrade['type'] ) {
-                                $premiumUpgrade = array_filter( $premiumUpgrade );
+            if ( $website && ! $website->is_ignorePluginUpdates ) {
+                $plugin_upgrades = json_decode( $website->plugin_upgrades, true );
+                if ( ! is_array( $plugin_upgrades ) ) {
+                    $plugin_upgrades = array();
+                }
+                $decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
+                $decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
+                if ( is_array( $decodedPremiumUpgrades ) ) {
+                    foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+                        $premiumUpgrade['premium'] = true;
+                        if ( 'plugin' === $premiumUpgrade['type'] ) {
+                            $premiumUpgrade = array_filter( $premiumUpgrade );
 
-                                if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-                                    $plugin_upgrades[ $crrSlug ] = array();
-                                }
-                                $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
+                            if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
+                                $plugin_upgrades[ $crrSlug ] = array();
                             }
+                            $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
                         }
                     }
-                    $ignored_plugins = json_decode( $website->ignored_plugins, true );
-                    if ( is_array( $ignored_plugins ) ) {
-                        $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
-                    }
+                }
+                $ignored_plugins = json_decode( $website->ignored_plugins, true );
+                if ( is_array( $ignored_plugins ) ) {
+                    $plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+                }
 
-                    if ( is_array( $decodedIgnoredPlugins ) ) {
-                        $plugin_upgrades = array_diff_key( $plugin_upgrades, $decodedIgnoredPlugins );
-                    }
+                if ( is_array( $decodedIgnoredPlugins ) ) {
+                    $plugin_upgrades = array_diff_key( $plugin_upgrades, $decodedIgnoredPlugins );
                 }
             }
             $updateWebsites[ $site_id ] = $plugin_upgrades;
@@ -1627,16 +1608,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 $new_version = $upgradeInfo['update']['new_version'];
                             }
 
-                            if ( '' === $lastest_version ) {
-                                $lastest_version = $plugin_version;
-                            } elseif ( version_compare( $plugin_version, $lastest_version, '>' ) ) {
+                            if ( '' === $lastest_version || version_compare( $plugin_version, $lastest_version, '>' ) ) {
                                 $lastest_version = $plugin_version;
                             }
 
-                            if ( '' !== $new_version ) {
-                                if ( version_compare( $new_version, $lastest_version, '>' ) ) {
-                                    $lastest_version = $new_version;
-                                }
+                            if ( '' !== $new_version && version_compare( $new_version, $lastest_version, '>' ) ) {
+                                $lastest_version = $new_version;
                             }
 
                             if ( isset( $sitePlugins[ $site_id ][ $slug_ver ] ) && ( 0 === (int) $sitePlugins[ $site_id ][ $slug_ver ]['active'] || 1 === (int) $sitePlugins[ $site_id ][ $slug_ver ]['active'] ) ) {
@@ -2149,13 +2126,16 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     $_count     = count( $allPlugins );
                     for ( $i = 0; $i < $_count; $i++ ) {
                         $plugin = $allPlugins[ $i ];
+
+                        $all = true;
                         if ( 'all' !== $search_plugin_status ) {
-                            if ( 1 === (int) $plugin['active'] && 'active' !== $search_plugin_status ) {
-                                continue;
-                            } elseif ( 1 !== (int) $plugin['active'] && 'inactive' !== $search_plugin_status ) {
-                                continue;
-                            }
+                            $all = false;
                         }
+
+                        if ( ! $all && ( ( 1 === (int) $plugin['active'] && 'active' !== $search_plugin_status ) || ( 1 !== (int) $plugin['active'] && 'inactive' !== $search_plugin_status ) ) ) {
+                            continue;
+                        }
+
                         if ( ! empty( $keyword ) ) {
                             $keyword   = trim( $keyword );
                             $multi_kws = explode( ',', $keyword );
@@ -2231,14 +2211,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 //phpcs:enable
         }
 
-        if ( 'inactive' !== $search_plugin_status ) {
-            if ( empty( $keyword ) || ( ! empty( $keyword ) && false !== stristr( 'MainWP Child', $keyword ) ) ) {
-                $output->plugins[] = array(
-                    'slug'   => 'mainwp-child/mainwp-child.php',
-                    'name'   => 'MainWP Child',
-                    'active' => 1,
-                );
-            }
+        if ( 'inactive' !== $search_plugin_status && ( empty( $keyword ) || ( ! empty( $keyword ) && false !== stristr( 'MainWP Child', $keyword ) ) ) ) {
+            $output->plugins[] = array(
+                'slug'   => 'mainwp-child/mainwp-child.php',
+                'name'   => 'MainWP Child',
+                'active' => 1,
+            );
         }
 
         if ( empty( $output->plugins ) ) {
@@ -2316,9 +2294,13 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     if ( ! empty( $search_status ) && 'all' !== $search_status ) {
                         if ( 'trust' === $search_status && ! in_array( $slug, $trustedPlugins ) ) {
                             continue;
-                        } elseif ( 'untrust' === $search_status && in_array( $slug, $trustedPlugins ) ) {
+                        }
+
+                        if ( 'untrust' === $search_status && in_array( $slug, $trustedPlugins ) ) {
                             continue;
-                        } elseif ( 'ignored' === $search_status && ! isset( $decodedIgnoredPlugins[ $slug ] ) ) {
+                        }
+
+                        if ( 'ignored' === $search_status && ! isset( $decodedIgnoredPlugins[ $slug ] ) ) {
                             continue;
                         }
                     }

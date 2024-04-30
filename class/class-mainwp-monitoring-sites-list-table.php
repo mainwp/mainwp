@@ -91,7 +91,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      * @return array $sortable_columns Array of sortable column names.
      */
     public function get_sortable_columns() {
-        $sortable_columns = array(
+        return array(
             'site'        => array( 'site', false ),
             'url'         => array( 'url', false ),
             'status_code' => array( 'status_code', false ),
@@ -99,8 +99,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
             'site_health' => array( 'site_health', false ),
             'client_name' => array( 'client_name', false ),
         );
-
-        return $sortable_columns;
     }
 
     /**

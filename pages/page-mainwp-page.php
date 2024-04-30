@@ -734,7 +734,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             </div>
             <div class="field">
                 <label><?php esc_html_e( 'Max pages to return', 'mainwp' ); ?></label>
-                <input type="text" name="mainwp_maximumPages"  id="mainwp_maximumPages" value="<?php echo( ( false === get_option( 'mainwp_maximumPages' ) ) ? 50 : esc_attr( get_option( 'mainwp_maximumPages' ) ) ); ?>"/>
+                <input type="text" name="mainwp_maximumPages"  id="mainwp_maximumPages" value="<?php echo ( false === get_option( 'mainwp_maximumPages' ) ) ? 50 : esc_attr( get_option( 'mainwp_maximumPages' ) ); ?>"/>
             </div>
         </div>
         <?php
@@ -1438,11 +1438,9 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             do_action( 'mainwp_bulkpage_before_post', $post_id );
 
             $skip_post = false;
-            if ( $post_id ) {
-                if ( 'yes' === get_post_meta( $post_id, '_mainwp_skip_posting', true ) ) {
-                    $skip_post = true;
-                    wp_delete_post( $post_id, true );
-                }
+            if ( $post_id && 'yes' === get_post_meta( $post_id, '_mainwp_skip_posting', true ) ) {
+                $skip_post = true;
+                wp_delete_post( $post_id, true );
             }
 
             if ( ! $skip_post ) {

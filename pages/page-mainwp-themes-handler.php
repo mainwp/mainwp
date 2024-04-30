@@ -67,18 +67,16 @@ class MainWP_Themes_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $not_found        = false;
             }
 
-            if ( 'not_installed' === $output->status ) {
-                if ( $not_found ) {
-                    $installed = isset( $result_data['installed_themes'] ) && is_array( $result_data['installed_themes'] ) ? $result_data['installed_themes'] : array();
-                    foreach ( $installed as $theme ) {
-                        if ( ! isset( $theme['name'] ) ) {
-                            continue;
-                        }
-                        $theme['websiteid']         = $website->id;
-                        $theme['websiteurl']        = $website->url;
-                        $theme['websitename']       = $website->name;
-                        $output->themes_installed[] = $theme;
+            if ( 'not_installed' === $output->status && $not_found ) {
+                $installed = isset( $result_data['installed_themes'] ) && is_array( $result_data['installed_themes'] ) ? $result_data['installed_themes'] : array();
+                foreach ( $installed as $theme ) {
+                    if ( ! isset( $theme['name'] ) ) {
+                        continue;
                     }
+                    $theme['websiteid']         = $website->id;
+                    $theme['websiteurl']        = $website->url;
+                    $theme['websitename']       = $website->name;
+                    $output->themes_installed[] = $theme;
                 }
             }
 

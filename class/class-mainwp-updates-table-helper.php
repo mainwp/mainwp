@@ -112,13 +112,12 @@ class MainWP_Updates_Table_Helper { // phpcs:ignore Generic.Classes.OpeningBrace
      * @return array $sortable_columns Array of sortable column names.
      */
     public function get_sortable_columns() {
-        $sortable_columns = array(
+        return array(
             'title'   => true,
             'version' => true,
             'trusted' => true,
             'status'  => true,
         );
-        return $sortable_columns;
     }
 
     /**
@@ -196,8 +195,7 @@ class MainWP_Updates_Table_Helper { // phpcs:ignore Generic.Classes.OpeningBrace
         }
         $column_content .= $value;
 
-        $col = '<td class="' . $class . '">' . $column_content . '</td>';
-        return $col;
+        return '<td class="' . $class . '">' . $column_content . '</td>';
     }
 
     /**

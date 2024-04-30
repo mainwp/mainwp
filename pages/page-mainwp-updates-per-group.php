@@ -62,18 +62,16 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
                         <th scope="col" class="no-sort">
                             <?php
-                            if ( MainWP_Updates::user_can_update_wp() ) {
-                                if ( 0 < $total_wp_upgrades ) {
-                                    MainWP_Updates::set_continue_update_html_selector( 'wpcore_global_upgrade_all' );
-                                    if ( $is_demo ) {
-                                        MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini basic button disabled mainwp-update-selected-button" disabled="disabled">' . esc_html__( 'Update Selected Sites', 'mainwp' ) . '</a>' );
-                                        MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled mainwp-update-all-button" disabled="disabled">' . esc_html__( 'Update All Tags', 'mainwp' ) . '</a>' );
-                                    } else {
-                                        ?>
-                                        <a class="mainwp-update-selected-button ui green mini basic button" onclick="event.stopPropagation();updatesoverview_wordpress_global_upgrade_all( false, true ); return false;" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update Selected Sites', 'mainwp' ); ?></a>
-                                        <a class="mainwp-update-all-button ui green mini button" onclick="updatesoverview_wordpress_global_upgrade_all(); return false;" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update All Tags', 'mainwp' ); ?></a>
-                                        <?php
-                                    }
+                            if ( MainWP_Updates::user_can_update_wp() && 0 < $total_wp_upgrades ) {
+                                MainWP_Updates::set_continue_update_html_selector( 'wpcore_global_upgrade_all' );
+                                if ( $is_demo ) {
+                                    MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini basic button disabled mainwp-update-selected-button" disabled="disabled">' . esc_html__( 'Update Selected Sites', 'mainwp' ) . '</a>' );
+                                    MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="javascript:void(0)" class="ui green mini button disabled mainwp-update-all-button" disabled="disabled">' . esc_html__( 'Update All Tags', 'mainwp' ) . '</a>' );
+                                } else {
+                                    ?>
+                                    <a class="mainwp-update-selected-button ui green mini basic button" onclick="event.stopPropagation();updatesoverview_wordpress_global_upgrade_all( false, true ); return false;" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update Selected Sites', 'mainwp' ); ?></a>
+                                    <a class="mainwp-update-all-button ui green mini button" onclick="updatesoverview_wordpress_global_upgrade_all(); return false;" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update All Tags', 'mainwp' ); ?></a>
+                                    <?php
                                 }
                             }
                             ?>

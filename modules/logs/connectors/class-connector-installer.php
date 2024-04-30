@@ -241,9 +241,8 @@ class Connector_Installer extends Log_Connector {
      * @param string $plugin_act plugin action: activate, deactivate, delete.
      * @param array  $params params array.
      * @param array  $action_data response data.
-     * @param array  $others others data.
      */
-    public function callback_mainwp_install_plugin_action( $website, $plugin_act, $params, $action_data, $others ) {
+    public function callback_mainwp_install_plugin_action( $website, $plugin_act, $params, $action_data ) {
 
         if ( empty( $website ) || ! is_object( $website ) || empty( $website->id ) || empty( $plugin_act ) || ! is_string( $plugin_act ) || ! is_array( $params ) ) {
             return;
@@ -310,9 +309,8 @@ class Connector_Installer extends Log_Connector {
      * @param string $theme_act theme action: activate, delete.
      * @param array  $params params array.
      * @param array  $action_data response data.
-     * @param array  $others others data.
      */
-    public function callback_mainwp_install_theme_action( $website, $theme_act, $params, $action_data, $others ) {
+    public function callback_mainwp_install_theme_action( $website, $theme_act, $params, $action_data ) {
 
         if ( empty( $website ) || ! is_object( $website ) || empty( $website->id ) || empty( $theme_act ) || ! is_string( $theme_act ) || ! is_array( $params ) ) {
             return;

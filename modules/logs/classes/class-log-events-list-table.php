@@ -81,12 +81,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @return array $sortable_columns Array of sortable column names.
      */
     public function get_sortable_columns() {
-        $sortable_columns = array(
+        return array(
             'created'       => array( 'created', false ),
             'log_site_name' => array( 'name', false ),
             'user_id'       => array( 'user_id', false ),
         );
-        return $sortable_columns;
     }
 
     /**
@@ -110,10 +109,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @return array $columns Array of column names.
      */
     public function get_columns() {
-
-        $columns = $this->get_default_columns();
-
-        return $columns;
+        return $this->get_default_columns();
     }
 
     /**

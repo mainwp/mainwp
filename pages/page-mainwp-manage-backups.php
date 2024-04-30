@@ -841,8 +841,8 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 <label class="six wide column middle aligned"><?php esc_html_e( 'Backup type', 'mainwp' ); ?></label>
                 <div class="ten wide column">
                     <select name="mainwp-backup-type" id="mainwp-backup-type" class="ui dropdown">
-                        <option value="full" <?php echo( ! isset( $task ) || 'full' === $task->type ? 'selected' : '' ); ?>><?php esc_html_e( 'Full Backup', 'mainwp' ); ?></option>
-                        <option value="db" <?php echo( isset( $task ) && 'db' === $task->type ? 'selected' : '' ); ?>><?php esc_html_e( 'Database Backup', 'mainwp' ); ?></option>
+                        <option value="full" <?php echo ! isset( $task ) || 'full' === $task->type ? 'selected' : ''; ?>><?php esc_html_e( 'Full Backup', 'mainwp' ); ?></option>
+                        <option value="db" <?php echo isset( $task ) && 'db' === $task->type ? 'selected' : ''; ?>><?php esc_html_e( 'Database Backup', 'mainwp' ); ?></option>
                     </select>
                 </div>
             </div>

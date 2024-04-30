@@ -583,12 +583,11 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function get_sql_websites_to_check_status( $last_check, $count = 20 ) {
         $where = $this->get_sql_where_allow_access_sites( 'wp' );
-        $sql   = 'SELECT wp.*
+        return 'SELECT wp.*
                 FROM ' . $this->table_name( 'wp' ) . ' wp
                 WHERE wp.disable_status_check <> 1 AND ( wp.status_check_interval = 0 AND wp.offline_checks_last < ' . intval( $last_check ) . ' )' .
                 $where . '
                 LIMIT ' . intval( $count );
-        return $sql;
     }
 
 
@@ -601,12 +600,11 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function get_sql_websites_to_check_individual_status( $count = 20 ) {
         $where = $this->get_sql_where_allow_access_sites( 'wp' );
-        $sql   = 'SELECT wp.*
+        return 'SELECT wp.*
                 FROM ' . $this->table_name( 'wp' ) . ' wp
                 WHERE wp.disable_status_check <> 1 AND ( wp.status_check_interval <> 0 AND ( wp.offline_checks_last + wp.status_check_interval * 60 < UNIX_TIMESTAMP() ) )' .
                 $where . '
                 LIMIT ' . intval( $count );
-        return $sql;
     }
 
     /**
@@ -1766,37 +1764,35 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @param string $admin Child site administrator username.
      * @param string $pubkey OpenSSL public key.
      * @param string $privkey OpenSSL private key.
-     * @param array  $groupids Group IDs.
-     * @param array  $groupnames Group names.
-     * @param int    $verifyCertificate Whether or not to verify SSL Certificate.
-     * @param string $uniqueId Unique security ID.
-     * @param string $http_user HTTP Basic Authentication username.
-     * @param string $http_pass HTTP Basic Authentication password.
-     * @param int    $sslVersion SSL Version.
-     * @param int    $wpe Is it WP Engine hosted site.
-     * @param int    $isStaging Whether or not child site is staging site.
+     * @param array  $params Other params.
      *
      * @return int|false Child site ID or false on failure.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public function add_website(
+    public function add_website( // phpcs:ignore -- NOSONAR - complex.
         $userid,
         $name,
         $url,
         $admin,
         $pubkey,
         $privkey,
-        $groupids,
-        $groupnames,
-        $verifyCertificate = 1,
-        $uniqueId = '',
-        $http_user = null,
-        $http_pass = null,
-        $sslVersion = 0,
-        $wpe = 0,
-        $isStaging = 0
+        $params = array()
     ) {
+
+        if ( ! is_array( $params ) ) {
+            $params = array();
+        }
+
+        $groupids          = isset( $params['groupids'] ) ? $params['groupids'] : array();
+        $groupnames        = isset( $params['groupnames'] ) ? $params['groupnames'] : array();
+        $verifyCertificate = isset( $params['verifyCertificate'] ) ? (int) $params['verifyCertificate'] : 1;
+        $uniqueId          = isset( $params['uniqueId'] ) ? $params['uniqueId'] : '';
+        $http_user         = isset( $params['http_user'] ) ? $params['http_user'] : null;
+        $http_pass         = isset( $params['http_pass'] ) ? $params['http_pass'] : null;
+        $sslVersion        = isset( $params['sslVersion'] ) ? $params['sslVersion'] : 0;
+        $wpe               = isset( $params['wpe'] ) ? $params['wpe'] : 0;
+        $isStaging         = isset( $params['isStaging'] ) ? $params['isStaging'] : 0;
 
         if ( MainWP_Utility::ctype_digit( $userid ) ) {
             if ( '/' !== substr( $url, - 1 ) ) {
@@ -2200,9 +2196,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * Get websites to notice site health.
      *
      * @param int $globalThreshold Global site health threshold.
-     * @param int $count Limit count.
      */
-    public function get_websites_to_notice_health_threshold( $globalThreshold, $count = 10 ) {
+    public function get_websites_to_notice_health_threshold( $globalThreshold ) {
 
         $where      = $this->get_sql_where_allow_access_sites( 'wp' );
         $extra_view = array( 'monitoring_notification_emails', 'settings_notification_emails' );

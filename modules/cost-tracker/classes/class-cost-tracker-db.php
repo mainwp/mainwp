@@ -403,9 +403,8 @@ PRIMARY KEY  (`id`)  ';
             $sql = 'SELECT * FROM ' . $this->table_name( 'cost_tracker' );
         } elseif ( 'slug' === $by && is_string( $value ) ) {
             if ( in_array( $product_type, array( 'plugin', 'theme' ), true ) ) {
-                $sql    = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'cost_tracker' ) . ' WHERE `slug`=%s AND product_type = %s ', $value, $product_type ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-                $result = $wpdb->get_row( $sql, OBJECT ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-                return $result;
+                $sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'cost_tracker' ) . ' WHERE `slug`=%s AND product_type = %s ', $value, $product_type ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                return $wpdb->get_row( $sql, OBJECT ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
             } else {
                 $where = '';
                 if ( ! empty( $product_type ) ) {

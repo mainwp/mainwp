@@ -34,7 +34,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_Extensions::get_class_name()
      */
     public static function init_menu() {
-        $page = add_submenu_page(
+        return add_submenu_page(
             'mainwp_tab',
             __( 'Extensions', 'mainwp' ),
             ' <span id="mainwp-Extensions">' . esc_html__( 'Extensions', 'mainwp' ) . '</span>',
@@ -45,8 +45,6 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'render',
             )
         );
-
-        return $page;
     }
 
     /**
@@ -714,7 +712,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @return array $groups
      */
     public static function get_extension_groups() {
-        $groups = array(
+        return array(
             'admin'       => esc_html__( 'Administrative', 'mainwp' ),
             'agency'      => esc_html__( 'Agency', 'mainwp' ),
             'backup'      => esc_html__( 'Backups', 'mainwp' ),
@@ -727,7 +725,6 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'visitor'     => esc_html__( 'Analytics', 'mainwp' ),
             'updates'     => esc_html__( 'Updates', 'mainwp' ),
         );
-        return $groups;
     }
 
     /**

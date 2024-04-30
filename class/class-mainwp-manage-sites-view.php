@@ -2077,53 +2077,63 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                          */
                         global $current_user;
 
-                        $id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
+                        $others = array(
+                            'groupids'          => $groupids,
+                            'groupnames'        => $groupnames,
+                            'verifyCertificate' => $verifyCertificate,
+                            'addUniqueId'       => $addUniqueId,
+                            'http_user'         => $http_user,
+                            'http_pass'         => $http_pass,
+                            'sslVersion'        => $sslVersion,
+                        );
 
-                    if ( $id && isset( $params['clientid'] ) ) {
-                        MainWP_DB::instance()->update_website_values( $id, array( 'client_id' => intval( $params['clientid'] ) ) );
-                    }
+                        $id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $others ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
 
-                    if ( $id ) {
-                        $obj_site = (object) array( 'id' => $id );
-                        MainWP_DB::instance()->update_website_option( $obj_site, 'added_timestamp', time() );
-                        MainWP_DB::instance()->update_website_option( $obj_site, 'signature_algo', 9999 ); // use global.
-                        $icon_info = 'uploaded:' . $params['uploaded_site_icon'] . ';selected:' . $params['selected_site_icon'] . ';color:' . $params['cust_icon_color'];
-                        MainWP_DB::instance()->update_website_option( $obj_site, 'cust_site_icon_info', $icon_info );
-                    }
+                        if ( $id && isset( $params['clientid'] ) ) {
+                            MainWP_DB::instance()->update_website_values( $id, array( 'client_id' => intval( $params['clientid'] ) ) );
+                        }
 
-                    if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
-                        set_transient( 'mainwp_transient_just_connected_site_id', $id, HOUR_IN_SECONDS );
-                        $message = sprintf( esc_html__( '%1$sCongratulations you have connected %2$s.%3$s After finishing the Quick Setup Wizard, you can add additional sites from the Add New Sites page.', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>' );
-                    } else {
-                        $message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>' );
-                    }
+                        if ( $id ) {
+                            $obj_site = (object) array( 'id' => $id );
+                            MainWP_DB::instance()->update_website_option( $obj_site, 'added_timestamp', time() );
+                            MainWP_DB::instance()->update_website_option( $obj_site, 'signature_algo', 9999 ); // use global.
+                            $icon_info = 'uploaded:' . $params['uploaded_site_icon'] . ';selected:' . $params['selected_site_icon'] . ';color:' . $params['cust_icon_color'];
+                            MainWP_DB::instance()->update_website_option( $obj_site, 'cust_site_icon_info', $icon_info );
+                        }
 
-                    $website = MainWP_DB::instance()->get_website_by_id( $id );
+                        if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
+                            set_transient( 'mainwp_transient_just_connected_site_id', $id, HOUR_IN_SECONDS );
+                            $message = sprintf( esc_html__( '%1$sCongratulations you have connected %2$s.%3$s After finishing the Quick Setup Wizard, you can add additional sites from the Add New Sites page.', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>' );
+                        } else {
+                            $message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>' );
+                        }
 
-                    if ( $website ) { // to fix.
-                        /**
-                         * Fires immediately after a new website is added.
-                         *
-                         * @since 4.5.1.1
-                         *
-                         * @param object   $website  website data.
-                         * @param array $information The array of information data .
-                         */
-                        do_action( 'mainwp_site_added', $website, $information );
+                        $website = MainWP_DB::instance()->get_website_by_id( $id );
 
-                        /**
-                         * New site added
-                         *
-                         * Fires after adding a website to MainWP Dashboard.
-                         *
-                         * @param int $id Child site ID.
-                         *
-                         * @since 3.4
-                         */
-                        do_action( 'mainwp_added_new_site', $id, $website );
+                        if ( $website ) { // to fix.
+                            /**
+                             * Fires immediately after a new website is added.
+                             *
+                             * @since 4.5.1.1
+                             *
+                             * @param object   $website  website data.
+                             * @param array $information The array of information data .
+                             */
+                            do_action( 'mainwp_site_added', $website, $information );
 
-                        MainWP_Sync::sync_information_array( $website, $information );
-                    }
+                            /**
+                             * New site added
+                             *
+                             * Fires after adding a website to MainWP Dashboard.
+                             *
+                             * @param int $id Child site ID.
+                             *
+                             * @since 3.4
+                             */
+                            do_action( 'mainwp_added_new_site', $id, $website );
+
+                            MainWP_Sync::sync_information_array( $website, $information );
+                        }
                 } else {
                     $error = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a> <i class="external alternate icon"></i>' );
                 }

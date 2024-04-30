@@ -1359,8 +1359,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             </a>
             <?php
         }
-        $output = ob_get_clean();
-        return $output;
+        return ob_get_clean();
     }
 
     /**

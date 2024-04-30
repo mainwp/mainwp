@@ -1137,10 +1137,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $default_client_fields = MainWP_Client_Handler::get_default_client_fields();
         $client_to_add         = array();
         foreach ( $default_client_fields as $field_name => $item ) {
-            if ( ! empty( $item['db_field'] ) ) {
-                if ( isset( $client_fields['default_field'][ $field_name ] ) ) {
-                    $client_to_add[ $item['db_field'] ] = sanitize_text_field( wp_unslash( $client_fields['default_field'][ $field_name ] ) );
-                }
+            if ( ! empty( $item['db_field'] ) && isset( $client_fields['default_field'][ $field_name ] ) ) {
+                $client_to_add[ $item['db_field'] ] = sanitize_text_field( wp_unslash( $client_fields['default_field'][ $field_name ] ) );
             }
         }
 
@@ -1680,11 +1678,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
             $temp = static::get_add_contact_temp( false, false );
 
-            if ( $client_id ) {
-                if ( $client_contacts ) {
-                    foreach ( $client_contacts as $client_contact ) {
-                        static::get_add_contact_temp( $client_contact, true );
-                    }
+            if ( $client_id && $client_contacts ) {
+                foreach ( $client_contacts as $client_contact ) {
+                    static::get_add_contact_temp( $client_contact, true );
                 }
             }
             ?>

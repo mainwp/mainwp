@@ -268,31 +268,23 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         }
 
         // Load the Recent Posts widget.
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
-            if ( static::$enable_widgets['recent_posts'] ) {
-                MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( 1, 1, 6, 11 ) );
-            }
+        if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) && static::$enable_widgets['recent_posts'] ) {
+            MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, array( 1, 1, 6, 11 ) );
         }
 
         // Load the Recent Pages widget.
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
-            if ( static::$enable_widgets['recent_pages'] ) {
-                MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( 1, 1, 6, 11 ) );
-            }
+        if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) && static::$enable_widgets['recent_pages'] ) {
+            MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, array( 1, 1, 6, 11 ) );
         }
 
         // Load the Security Issues widget.
-        if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
-            if ( static::$enable_widgets['security_issues'] ) {
-                MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), $page, array( 1, 1, 4, 4 ) );
-            }
+        if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) && static::$enable_widgets['security_issues'] ) {
+            MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), $page, array( 1, 1, 4, 4 ) );
         }
 
         // Load the Connection Status widget.
-        if ( ! MainWP_System_Utility::get_current_wpid() ) {
-            if ( static::$enable_widgets['connection_status'] ) {
-                MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, array( 1, 1, 4, 5 ) );
-            }
+        if ( ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['connection_status'] ) {
+            MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, array( 1, 1, 4, 5 ) );
         }
 
         // Load the Non-MainWP Changes widget.
@@ -373,14 +365,12 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             <div class="ui segment" style="padding-top:0px;padding-bottom:0px;margin-bottom:0px;">
             <div id="mainwp-dashboard-info-box"></div>
             <?php
-            if ( ! empty( $current_wp_id ) ) {
-                if ( ! empty( $website->sync_errors ) ) {
-                    ?>
-                    <div class="ui red message">
-                        <p><?php echo '<strong>' . esc_html( stripslashes( $website->name ) ) . '</strong>' . esc_html__( ' is Disconnected. Click the Reconnect button to establish the connection again.', 'mainwp' ); ?></p>
-                    </div>
-                    <?php
-                }
+            if ( ! empty( $current_wp_id ) && ! empty( $website->sync_errors ) ) {
+                ?>
+                <div class="ui red message">
+                    <p><?php echo '<strong>' . esc_html( stripslashes( $website->name ) ) . '</strong>' . esc_html__( ' is Disconnected. Click the Reconnect button to establish the connection again.', 'mainwp' ); ?></p>
+                </div>
+                <?php
             }
             ?>
     <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>

@@ -67,18 +67,16 @@ class MainWP_Plugins_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 $not_found         = false;
             }
 
-            if ( 'not_installed' === $output->status ) {
-                if ( $not_found ) {
-                    $installed = isset( $result_data['installed_plugins'] ) && is_array( $result_data['installed_plugins'] ) ? $result_data['installed_plugins'] : array();
-                    foreach ( $installed as $plugin ) {
-                        if ( ! isset( $plugin['name'] ) ) {
-                            continue;
-                        }
-                        $plugin['websiteid']         = $website->id;
-                        $plugin['websiteurl']        = $website->url;
-                        $plugin['websitename']       = $website->name;
-                        $output->plugins_installed[] = $plugin;
+            if ( 'not_installed' === $output->status && $not_found ) {
+                $installed = isset( $result_data['installed_plugins'] ) && is_array( $result_data['installed_plugins'] ) ? $result_data['installed_plugins'] : array();
+                foreach ( $installed as $plugin ) {
+                    if ( ! isset( $plugin['name'] ) ) {
+                        continue;
                     }
+                    $plugin['websiteid']         = $website->id;
+                    $plugin['websiteurl']        = $website->url;
+                    $plugin['websitename']       = $website->name;
+                    $output->plugins_installed[] = $plugin;
                 }
             }
 

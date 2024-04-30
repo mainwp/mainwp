@@ -16,7 +16,7 @@ jQuery(function($) {
 	/**
 	 * Init site preview function.
 	 */
-	mainwp_preview_init_event = function () {
+	window.mainwp_preview_init_event = function () {
 		let mshotRemovalTimer = null;
 		let mshotSecondTryTimer = null
 		let mshotThirdTryTimer = null

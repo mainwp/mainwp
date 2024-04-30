@@ -324,7 +324,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <p><?php esc_attr_e( 'It\'s the perfect way to experience the benefits and ease of use MainWP provides without connecting to any of your own sites.', 'mainwp' ); ?></p>
             <p><?php esc_html_e( 'The demo content serves as placeholder data to give you a feel for the MainWP Dashboard. Please note that because no real websites are connected in this demo, some functionality will be restricted. Features that require a connection to actual websites will be disabled for the duration of the demo.', 'mainwp' ); ?></p>
             <p><?php esc_attr_e( 'Click this button to import the Demo content to your MainWP Dashboard and enable the Demo mode.', 'mainwp' ); ?></p>
-            <p><span><button class="ui big green button mainwp-import-demo-data-button" page-import="qsw-import" <?php echo ( ! $is_new || $enabled_demo ? 'disabled="disabled"' : '' ); ?>><?php esc_html_e( 'Enable Demo Mode With Guided Tours', 'mainwp' ); ?></button></span></p>
+            <p><span><button class="ui big green button mainwp-import-demo-data-button" page-import="qsw-import" <?php echo ! $is_new || $enabled_demo ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Enable Demo Mode With Guided Tours', 'mainwp' ); ?></button></span></p>
             <div class="ui blue message">
                 <?php printf( esc_html__( 'Guided tours feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
             </div>
@@ -782,7 +782,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 ?>
                 </label>
                 <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring" style="max-width:100px !important;">
-                    <input type="checkbox" name="mainwp_setup_disableSitesChecking" id="mainwp_setup_disableSitesChecking" <?php echo ( 1 === $disableSitesMonitoring ? '' : 'checked="true"' ); ?>/>
+                    <input type="checkbox" name="mainwp_setup_disableSitesChecking" id="mainwp_setup_disableSitesChecking" <?php echo 1 === $disableSitesMonitoring ? '' : 'checked="true"'; ?>/>
                     <label class=""></label>
                 </div>
             </div>
@@ -816,7 +816,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 ?>
                 </label>
                 <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="health-monitoring" style="max-width:100px !important;">
-                    <input type="checkbox" name="mainwp_setup_disable_sitesHealthMonitoring" id="mainwp_setup_disable_sitesHealthMonitoring" <?php echo ( 1 === $disableSitesHealthMonitoring ? '' : 'checked="true"' ); ?>/>
+                    <input type="checkbox" name="mainwp_setup_disable_sitesHealthMonitoring" id="mainwp_setup_disable_sitesHealthMonitoring" <?php echo 1 === $disableSitesHealthMonitoring ? '' : 'checked="true"'; ?>/>
                 </div>
             </div>
 

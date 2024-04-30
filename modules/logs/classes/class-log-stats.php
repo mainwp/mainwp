@@ -28,11 +28,9 @@ class Log_Stats {
      *
      *  @param array $items Logs items array.
      */
-    public static function get_stats_data( $items ) {
+    public static function get_stats_data( $items ) { //phpcs:ignore -- NOSONAR - complex.
         $data = array();
         if ( is_array( $items ) ) {
-            $total_count     = 0;
-            $total_dura_time = 0;
             foreach ( $items as $item ) {
                 if ( 'compact' !== $item->connector ) {
                     if ( ! isset( $data[ $item->connector ] ) ) {

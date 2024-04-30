@@ -178,7 +178,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @return array Array of disabled Extensions.
      */
-    public static function get_extensions_disabled( $compatible_api_response = false ) {
+    public static function get_extensions_disabled( $compatible_api_response = false ) { // phpcs:ignore -- NOSONAR - complex.
         if ( ! isset( static::$extensions_disabled ) || $compatible_api_response ) {
             static::$extensions_disabled = array();
             $all_available_extensions    = MainWP_Extensions_View::get_available_extensions( 'all' );
@@ -277,19 +277,15 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @return array Array of Extensions.
      */
-    public static function get_indexed_extensions_infor( $args = array(), $deactivated_license = null ) {
+    public static function get_indexed_extensions_infor( $args = array(), $deactivated_license = null ) { // phpcs:ignore -- NOSONAR - complex.
         if ( ! is_array( $args ) ) {
             $args = array();
         }
         $extensions = static::get_extensions();
         $return     = array();
         foreach ( $extensions as $extension ) {
-            if ( isset( $args['activated'] ) && ! empty( $args['activated'] ) ) {
-                if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) {
-                    if ( ! isset( $extension['activated_key'] ) || 'Activated' !== $extension['activated_key'] ) {
-                        continue;
-                    }
-                }
+            if ( ( isset( $args['activated'] ) && ! empty( $args['activated'] ) && isset( $extension['apiManager'] ) && $extension['apiManager'] ) && ( ! isset( $extension['activated_key'] ) || 'Activated' !== $extension['activated_key'] ) ) {
+                continue;
             }
             $apiManager            = isset( $extension['apiManager'] ) && $extension['apiManager'] ? true : false;
             $ext                   = array();
@@ -415,9 +411,9 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      */
-    public static function install_plugin( $url, $activatePlugin = false ) {
+    public static function install_plugin( $url, $activatePlugin = false ) { //phpcs:ignore -- NOSONAR - complex.
 
-        $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+        MainWP_System_Utility::get_wp_file_system();
 
         /**
          * WordPress files system object.
@@ -427,13 +423,13 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         global $wp_filesystem;
 
         if ( file_exists( ABSPATH . '/wp-admin/includes/screen.php' ) ) {
-            include_once ABSPATH . '/wp-admin/includes/screen.php';
+            include_once ABSPATH . '/wp-admin/includes/screen.php'; // NOSONAR - WP compatible.
         }
 
-        include_once ABSPATH . '/wp-admin/includes/template.php';
-        include_once ABSPATH . '/wp-admin/includes/misc.php';
-        include_once ABSPATH . '/wp-admin/includes/class-wp-upgrader.php';
-        include_once ABSPATH . '/wp-admin/includes/plugin.php';
+        include_once ABSPATH . '/wp-admin/includes/template.php'; // NOSONAR - WP compatible.
+        include_once ABSPATH . '/wp-admin/includes/misc.php'; // NOSONAR - WP compatible.
+        include_once ABSPATH . '/wp-admin/includes/class-wp-upgrader.php'; // NOSONAR - WP compatible.
+        include_once ABSPATH . '/wp-admin/includes/plugin.php'; // NOSONAR - WP compatible.
 
         $installer          = new \WP_Upgrader();
         $ssl_verifyhost     = get_option( 'mainwp_sslVerifyCertificate' );
@@ -683,7 +679,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 throw new MainWP_Exception( 'You can not edit this website.' );
             }
 
-            return MainWP_Connect::fetch_url_authed( $website, $what, $params, $checkConstraints = false, $pForceFetch = false, $pRetryFailed = true, $rawResponse );
+            return MainWP_Connect::fetch_url_authed( $website, $what, $params, false, false, true, $rawResponse );
         } catch ( MainWP_Exception $e ) {
             return array(
                 'error'     => MainWP_Error_Helper::get_error_message( $e ),
@@ -757,7 +753,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      */
-    public static function hook_get_sites( $pluginFile, $key, $websiteid = null, $for_manager = false, $others = array() ) { // phpcs:ignore -- not quite complex function.
+    public static function hook_get_sites( $pluginFile, $key, $websiteid = null, $for_manager = false, $others = array() ) { // phpcs:ignore -- NOSONAR - not quite complex function.
         if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return false;
         }
@@ -862,7 +858,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_www_prefix()
      */
-    public static function hook_clone_site( $pluginFile, $key, $websiteid, $cloneID, $clone_url, $force_update = false ) {
+    public static function hook_clone_site( $pluginFile, $key, $websiteid, $cloneID, $clone_url, $force_update = false ) { //phpcs:ignore -- NOSONAR - complex.
         if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return false;
         }
@@ -923,7 +919,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
              */
             global $current_user;
 
-            $id = MainWP_DB::instance()->add_website( $current_user->ID, $clone_name, $clone_url, $website->adminname, $website->pubkey, $website->privkey, array(), array(), $website->verify_certificate, ( null !== $website->uniqueId ? $website->uniqueId : '' ), $website->http_user, $website->http_pass, $website->ssl_version, $website->wpe, $isStaging = 1 );
+            $id = MainWP_DB::instance()->add_website( $current_user->ID, $clone_name, $clone_url, $website->adminname, $website->pubkey, $website->privkey, array(), array(), $website->verify_certificate, ( null !== $website->uniqueId ? $website->uniqueId : '' ), $website->http_user, $website->http_pass, $website->ssl_version, $website->wpe, 1 );
 
             /** This action is documented in class\class-mainwp-manage-sites-view.php */
             do_action( 'mainwp_added_new_site', $id, $website );
@@ -962,7 +958,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_icons_dir()
      */
-    public static function hook_delete_clone_site( $pluginFile, $key, $clone_url = '', $clone_site_id = false ) {
+    public static function hook_delete_clone_site( $pluginFile, $key, $clone_url = '', $clone_site_id = false ) { //phpcs:ignore -- NOSONAR - complex.
         if ( ! static::hook_verify( $pluginFile, $key ) ) {
             return false;
         }
@@ -996,7 +992,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 return false;
             }
 
-            $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+            MainWP_System_Utility::get_wp_file_system();
 
             /**
              * WordPress files system object.

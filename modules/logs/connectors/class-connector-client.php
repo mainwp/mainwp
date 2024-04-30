@@ -74,13 +74,6 @@ class Connector_Client extends Log_Connector {
     }
 
     /**
-     * Register log data.
-     */
-    public function register() { //phpcs:ignore -- overrided.
-        parent::register();
-    }
-
-    /**
      * Log client update
      *
      * @action mainwp_client_updated

@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  *
  * MainWP sites monitoring list.
  *
- * @todo The only variables that seam to be used are $column_headers.
+ * @devtodo The only variables that seam to be used are $column_headers.
  *
  * @uses \MainWP\Dashboard\MainWP_Manage_Sites_List_Table
  */
@@ -886,8 +886,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      * @param bool $optimize true|false Whether or not to optimise.
      * @param bool $top true|false.
      */
-    public function print_column_headers( $optimize, $top = true ) {
-        list( $columns, $sortable, $primary ) = $this->get_column_info();
+    public function print_column_headers( $optimize, $top = true ) { //phpcs:ignore -- NOSONAR - complex.
+        list( $columns, $sortable ) = $this->get_column_info();
 
         $current_url = set_url_scheme( 'http://' . ( isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '' ) . ( isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' ) );
         $current_url = remove_query_arg( 'paged', $current_url );
@@ -992,10 +992,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
         if ( 80 <= $hval && empty( $critical ) ) {
             $good_health = true;
         }
-
-        $statusUndefined = empty( $website['http_response_code'] );
-        $statusOnline    = ( 1 === (int) $website['offline_check_result'] );
-
+        $statusOnline   = ( 1 === (int) $website['offline_check_result'] );
         $classes        = trim( $classes );
         $status_classes = $statusOnline ? '' : 'error';
         if ( empty( $status_classes ) ) {
@@ -1026,10 +1023,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
         $statusUndefined = empty( $website['http_response_code'] );
         $statusOnline    = ( 1 === (int) $website['offline_check_result'] );
-
-        $note       = html_entity_decode( $website['note'] );
-        $esc_note   = MainWP_Utility::esc_content( $note );
-        $strip_note = wp_strip_all_tags( $esc_note );
 
         list( $columns ) = $this->get_column_info();
 
@@ -1114,12 +1107,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                     ?>
                 </td>
                     <?php
-                } elseif ( 'login' === $column_name ) {
-                    ?>
-                <td class="collapsing">
-                <a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website['client_id'] ); ?>"><?php echo esc_html( $website['client_name'] ); ?></a>
-                </td>
-                    <?php
                 } elseif ( 'client_name' === $column_name ) {
                     ?>
                 <td class="collapsing">
@@ -1193,18 +1180,21 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
         $http_error_codes = MainWP_Utility::get_http_codes();
 
         $use_favi = get_option( 'mainwp_use_favicon', 1 );
-        $imgfavi  = '';
-        if ( $use_favi ) {
-            $siteObj  = (object) $website;
-            $favi_url = MainWP_Connect::get_favico_url( $siteObj );
-            if ( ! empty( $favi_url ) ) {
-                $imgfavi = '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" />';
-            } else {
-                $imgfavi = '<i class="icon big wordpress" style="width:28px;height:28px;"></i> '; // phpcs:ignore -- Prevent modify WP icon.
-            }
-        }
+
         if ( $this->items ) {
             foreach ( $this->items as $website ) {
+
+                $imgfavi = '';
+                if ( $use_favi ) {
+                    $siteObj  = (object) $website;
+                    $favi_url = MainWP_Connect::get_favico_url( $siteObj );
+                    if ( ! empty( $favi_url ) ) {
+                        $imgfavi = '<img src="' . esc_attr( $favi_url ) . '" style="width:28px;height:28px;" class="ui circular image" />';
+                    } else {
+                        $imgfavi = '<i class="icon big wordpress" style="width:28px;height:28px;"></i> '; // phpcs:ignore -- Prevent modify WP icon.
+                    }
+                }
+
                 $rw_classes = '';
 
                 $statusUndefined = empty( $website['http_response_code'] );

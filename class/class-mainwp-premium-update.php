@@ -41,7 +41,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @return boolean true|false.
      */
-    public static function check_premium_updates( $updates, $type ) {
+    public static function check_premium_updates( $updates, $type ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( ! is_array( $updates ) || empty( $updates ) ) {
             return false;
@@ -107,12 +107,8 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
             if ( is_array( $premiums ) && ! empty( $premiums ) ) {
                 foreach ( $updates as $info ) {
-                    if ( isset( $info['slug'] ) ) {
-                        if ( in_array( $info['slug'], $premiums ) ) {
-                            return true;
-                        } elseif ( false !== strpos( $info['slug'], 'yith-' ) ) {
-                            return true;
-                        }
+                    if ( isset( $info['slug'] ) && ( in_array( $info['slug'], $premiums ) || false !== strpos( $info['slug'], 'yith-' ) ) ) {
+                        return true;
                     }
                 }
             }
@@ -131,10 +127,8 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
             if ( is_array( $premiums ) && ! empty( $premiums ) ) {
                 foreach ( $updates as $info ) {
-                    if ( isset( $info['slug'] ) ) {
-                        if ( in_array( $info['slug'], $premiums ) ) {
-                            return true;
-                        }
+                    if ( isset( $info['slug'] ) && in_array( $info['slug'], $premiums ) ) {
+                        return true;
                     }
                 }
             }
@@ -189,13 +183,9 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 static::try_to_detect_premiums_update( $website, 'theme' );
             }
 
-            if ( 'upgradeplugintheme' === $what ) {
-                if ( 'plugin' === $update_type || 'theme' === $update_type ) {
-                    if ( static::check_request_update_premium( $params['list'], $update_type ) ) {
-                        static::request_premiums_update( $website, $update_type, $params['list'] );
-                        $request_update = true;
-                    }
-                }
+            if ( 'upgradeplugintheme' === $what && ( 'plugin' === $update_type || 'theme' === $update_type ) && static::check_request_update_premium( $params['list'], $update_type ) ) {
+                static::request_premiums_update( $website, $update_type, $params['list'] );
+                $request_update = true;
             }
         }
 
@@ -212,7 +202,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @return bool true|false.
      */
-    public static function check_request_update_premium( $list_items, $type ) {
+    public static function check_request_update_premium( $list_items, $type ) { // phpcs:ignore -- NOSONAR - complex.
 
         $updates = explode( ',', $list_items );
 
@@ -241,10 +231,8 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
             if ( is_array( $update_premiums ) && ! empty( $update_premiums ) ) {
                 foreach ( $updates as $slug ) {
-                    if ( ! empty( $slug ) ) {
-                        if ( in_array( $slug, $update_premiums ) ) {
-                            return true;
-                        }
+                    if ( ! empty( $slug ) && in_array( $slug, $update_premiums ) ) {
+                        return true;
                     }
                 }
             }
@@ -261,11 +249,9 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
              */
             $update_premiums = apply_filters( 'mainwp_request_update_premium_themes', $update_premiums );
             if ( is_array( $update_premiums ) && ! empty( $update_premiums ) ) {
-                foreach ( $themes as $slug ) {
-                    if ( ! empty( $slug ) ) {
-                        if ( in_array( $slug, $update_premiums ) ) {
-                            return true;
-                        }
+                foreach ( $updates as $slug ) {
+                    if ( ! empty( $slug ) && in_array( $slug, $update_premiums ) ) {
+                        return true;
                     }
                 }
             }

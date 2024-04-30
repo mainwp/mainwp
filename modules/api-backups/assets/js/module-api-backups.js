@@ -4,7 +4,7 @@ let apibackups_bulkTotalThreads = 0;
 let apibackups_bulkCurrentThreads = 0;
 let apibackups_bulkFinishedThreads = 0;
 
-mainwp_api_backups_do_backups = function (pObj) {
+let mainwp_api_backups_do_backups = function (pObj) {
     // init queue status.
     jQuery('#mainwp-3rd-party-backups-table tbody td.check-column INPUT[type=checkbox]').each(function () {
         jQuery(this).attr('status', 'queue');
@@ -45,10 +45,12 @@ mainwp_api_backups_do_backups = function (pObj) {
 }
 
 
-mainwp_api_backups_do_backups_specific_next = function (selector) {
-    while ((objProcess = jQuery(selector + ':first')) && objProcess.length > 0 && apibackups_bulkCurrentThreads < apibackups_bulkMaxThreads) {
+let mainwp_api_backups_do_backups_specific_next = function (selector) {
+    let objProcess = jQuery(selector + ':first');
+    while (objProcess && objProcess.length > 0 && apibackups_bulkCurrentThreads < apibackups_bulkMaxThreads) { // NOSONAR - variables modified outside the function.
         objProcess.attr('status', 'proceed');
         mainwp_api_backups_do_backups_specific(objProcess, true, selector);
+        objProcess = jQuery(selector + ':first');
     }
 
     if (apibackups_bulkTotalThreads > 0 && apibackups_bulkFinishedThreads == apibackups_bulkTotalThreads) {
@@ -74,7 +76,7 @@ mainwp_api_backups_do_backups_specific_next = function (selector) {
  * mainwp_api_backups_selected_websites() `action` is defined in assets/classes/class-api-backups-handler.php admin_init(),
  * & fires off ajax_backups_selected_websites() function also defined in assets/classes/class-api-backups-handler.php
  */
-mainwp_api_backups_do_backups_specific = function (pObj, bulk, selector) {
+let mainwp_api_backups_do_backups_specific = function (pObj, bulk, selector) {
     let parent = pObj.closest('tr');
     let statusEl = parent.find('.running');
     let providerName = parent.attr('provider-name');

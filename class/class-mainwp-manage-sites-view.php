@@ -517,8 +517,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $sync_extensions_options = apply_filters_deprecated( 'mainwp-sync-extensions-options', array( array() ), '4.0.7.2', 'mainwp_sync_extensions_options' );  // @deprecated Use 'mainwp_sync_extensions_options' instead.
         $sync_extensions_options = apply_filters( 'mainwp_sync_extensions_options', $sync_extensions_options );
 
-        $working_extensions  = MainWP_Extensions_Handler::get_indexed_extensions_infor();
-        $available_exts_data = MainWP_Extensions_View::get_available_extensions();
+        $working_extensions = MainWP_Extensions_Handler::get_indexed_extensions_infor();
         if ( ! empty( $working_extensions ) && ! empty( $sync_extensions_options ) ) {
             ?>
 
@@ -539,14 +538,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $sync_info = isset( $sync_extensions_options[ $dir_slug ] ) ? $sync_extensions_options[ $dir_slug ] : array();
                 $ext_name  = MainWP_Extensions_Handler::polish_string_name( $data['name'] );
                 $ext_name  = esc_html( $ext_name );
-
-                $ext_data = isset( $available_exts_data[ dirname( $slug ) ] ) ? $available_exts_data[ dirname( $slug ) ] : array();
-
-                if ( isset( $ext_data['img'] ) ) {
-                    $img_url = $ext_data['img'];
-                } else {
-                    $img_url = MAINWP_PLUGIN_URL . 'assets/images/extensions/placeholder.png';
-                }
 
                 $html  = '<div class="ui grid field">';
                 $html .= '<div class="sync-ext-row" slug="' . $dir_slug . '" ext_name = "' . esc_attr( $ext_name ) . '"status="queue">';
@@ -719,46 +710,41 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
             <?php
             // Hook in MainWP Sucuri Extension.
-            if ( mainwp_current_user_have_right( 'extension', 'mainwp-sucuri-extension' ) ) {
-                if ( is_plugin_active( 'mainwp-sucuri-extension/mainwp-sucuri-extension.php' ) ) {
-                    do_action_deprecated( 'mainwp-sucuriscan-sites', array( $website ), '4.0.7.2', 'mainwp_sucuriscan_sites' ); // @deprecated Use 'mainwp_sucuriscan_sites' instead.
+            if ( mainwp_current_user_have_right( 'extension', 'mainwp-sucuri-extension' ) && is_plugin_active( 'mainwp-sucuri-extension/mainwp-sucuri-extension.php' ) ) {
+                do_action_deprecated( 'mainwp-sucuriscan-sites', array( $website ), '4.0.7.2', 'mainwp_sucuriscan_sites' ); // @deprecated Use 'mainwp_sucuriscan_sites' instead.
 
-                    /**
-                     * Action: mainwp_sucuriscan_sites
-                     *
-                     * Fires on a child site Hardening page.
-                     *
-                     * @hooked MainWP Sucuri Extension data.
-                     *
-                     * @param object $website Object containing child site info.
-                     *
-                     * @since Unknown
-                     */
-                    do_action( 'mainwp_sucuriscan_sites', $website );
-                }
+                /**
+                 * Action: mainwp_sucuriscan_sites
+                 *
+                 * Fires on a child site Hardening page.
+                 *
+                 * @hooked MainWP Sucuri Extension data.
+                 *
+                 * @param object $website Object containing child site info.
+                 *
+                 * @since Unknown
+                 */
+                do_action( 'mainwp_sucuriscan_sites', $website );
             }
             ?>
 
             <?php
             // Hook in MainWP Wordfence Extension.
-            if ( mainwp_current_user_have_right( 'extension', 'mainwp-wordfence-extension' ) ) {
-                if ( is_plugin_active( 'mainwp-wordfence-extension/mainwp-wordfence-extension.php' ) ) {
-                    do_action_deprecated( 'mainwp-wordfence-sites', array( $website ), '4.0.7.2', 'mainwp_wordfence_sites' ); // @deprecated Use 'mainwp_wordfence_sites' instead.
+            if ( mainwp_current_user_have_right( 'extension', 'mainwp-wordfence-extension' ) && is_plugin_active( 'mainwp-wordfence-extension/mainwp-wordfence-extension.php' ) ) {
+                do_action_deprecated( 'mainwp-wordfence-sites', array( $website ), '4.0.7.2', 'mainwp_wordfence_sites' ); // @deprecated Use 'mainwp_wordfence_sites' instead.
 
-                    /**
-                     * Action: mainwp_wordfence_sites
-                     *
-                     * Fires on a child site Hardening page.
-                     *
-                     * @hooked MainWP Wordfence Extension data.
-                     *
-                     * @param object $website Object containing child site info.
-                     *
-                     * @since Unknown
-                     */
-                    do_action( 'mainwp_wordfence_sites', $website );
-
-                }
+                /**
+                 * Action: mainwp_wordfence_sites
+                 *
+                 * Fires on a child site Hardening page.
+                 *
+                 * @hooked MainWP Wordfence Extension data.
+                 *
+                 * @param object $website Object containing child site info.
+                 *
+                 * @since Unknown
+                 */
+                do_action( 'mainwp_wordfence_sites', $website );
             }
             ?>
         </div>
@@ -2063,7 +2049,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         }
                     }
 
-                    if ( ( isset( $params['groupnames_import'] ) && '' !== $params['groupnames_import'] ) ) {
+                    if ( isset( $params['groupnames_import'] ) && '' !== $params['groupnames_import'] ) {
                         $tmpArr = preg_split( '/[;,]/', $params['groupnames_import'] );
                         foreach ( $tmpArr as $tmp ) {
                             $group = MainWP_DB_Common::instance()->get_group_by_name( trim( $tmp ) );

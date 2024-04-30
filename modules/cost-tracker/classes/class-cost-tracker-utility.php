@@ -179,13 +179,10 @@ class Cost_Tracker_Utility {
         $default = static::default_currency_settings();
         $args    = array_merge( $default, $settings );
 
-        $original_price = $price;
-
         // Convert to float to avoid issues on PHP 8.
         $price = (float) $price;
 
-        $unformatted_price = $price;
-        $negative          = $price < 0;
+        $negative = $price < 0;
 
         $price = $negative ? $price * -1 : $price;
         $price = number_format( $price, $args['decimals'], $args['decimal_separator'], $args['thousand_separator'] );
@@ -218,6 +215,8 @@ class Cost_Tracker_Utility {
                 break;
             case 'right_space':
                 $format = '%2$s&nbsp;%1$s';
+                break;
+            default:
                 break;
         }
 
@@ -288,7 +287,7 @@ class Cost_Tracker_Utility {
      *
      * @return array Currency symbols.
      */
-    public static function get_all_currency_symbols() {
+    public static function get_all_currency_symbols() { // phpcs:ignore -- NOSONAR -  multi lines.
 
         $currency_list = array(
             'AFA' => array(
@@ -1040,6 +1039,8 @@ class Cost_Tracker_Utility {
             case 'Cash':
                 $icon = '<span data-tooltip="Cash" data-inverted="" data-position="left center"><i class="money bill alternate outline large icon"></i></span>';
                 break;
+            default:
+                break;
         }
 
         return $icon;
@@ -1055,7 +1056,7 @@ class Cost_Tracker_Utility {
      * @return string icon.
      */
     public static function get_product_default_icons( $get_all = true, $def_type_icon = '' ) {
-
+        unset( $get_all );
         if ( 'default_custom_product_type' === $def_type_icon ) {
             return 'folder open';
         } elseif ( 'default_product' === $def_type_icon ) {

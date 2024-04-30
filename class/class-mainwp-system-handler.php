@@ -208,17 +208,6 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( ! is_array( $output ) ) {
             return array();
         }
-        $count = count( $output );
-        for ( $i = 0; $i < $count; $i++ ) {
-
-            if ( 'mainwp_getmetaboxes' === $filter ) {
-                // pass custom widget.
-                if ( isset( $output[ $i ]['custom'] ) && $output[ $i ]['custom'] && isset( $output[ $i ]['plugin'] ) ) {
-                    continue;
-                }
-            }
-        }
-
         return $output;
     }
 
@@ -257,6 +246,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return string sql.
      */
     public static function hook_get_sql_websites_for_current_user( $input_value, $pluginFile, $key, $params ) {
+        unset( $input_value );
         if ( ! MainWP_Extensions_Handler::hook_verify( $pluginFile, $key ) ) {
             return false;
         }
@@ -267,7 +257,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Handle manage sites screen settings
      */
-    public function handle_manage_sites_screen_settings() { // phpcs:ignore -- required to achieve desired results, pull request solutions appreciated.
+    public function handle_manage_sites_screen_settings() { // phpcs:ignore -- NOSONAR - required to achieve desired results, pull request solutions appreciated.
         if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'ManageSitesScrOptions' ) ) {
             $show_cols = array();
             foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST ) ) as $key => $val ) {
@@ -312,7 +302,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Handle monitoring sites screen settings
      */
-    public function handle_monitoring_sites_screen_settings() {
+    public function handle_monitoring_sites_screen_settings() { // phpcs:ignore -- NOSONAR - complex.
         if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MonitoringSitesScrOptions' ) ) {
             $show_cols = array();
             foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST ) ) as $key => $val ) {
@@ -352,7 +342,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Handle manage clients screen settings
      */
-    public function handle_clients_screen_settings() {
+    public function handle_clients_screen_settings() { // phpcs:ignore -- NOSONAR - complex.
         if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'ManageClientsScrOptions' ) ) {
             $show_cols = array();
             foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST ) ) as $key => $val ) {
@@ -414,17 +404,15 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         $update_selected_mainwp_themes = false;
 
-        if ( isset( $_GET['page'] ) && 'MainWPTools' === $_GET['page'] ) {
-            if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) {
-                if ( isset( $_POST['mainwp_restore_info_messages'] ) && ! empty( $_POST['mainwp_restore_info_messages'] ) ) {
-                    delete_user_option( $user->ID, 'mainwp_notice_saved_status' );
-                }
-                $enabled_tours = ! isset( $_POST['mainwp-guided-tours-option'] ) ? 0 : 1;
-                MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enabled_tours );
+        if ( isset( $_GET['page'] ) && 'MainWPTools' === $_GET['page'] && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) {
+            if ( isset( $_POST['mainwp_restore_info_messages'] ) && ! empty( $_POST['mainwp_restore_info_messages'] ) ) {
+                delete_user_option( $user->ID, 'mainwp_notice_saved_status' );
+            }
+            $enabled_tours = ! isset( $_POST['mainwp-guided-tours-option'] ) ? 0 : 1;
+            MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enabled_tours );
 
-                if ( isset( $_POST['mainwp_settings_custom_theme'] ) ) {
-                    $update_selected_mainwp_themes = true;
-                }
+            if ( isset( $_POST['mainwp_settings_custom_theme'] ) ) {
+                $update_selected_mainwp_themes = true;
             }
         }
 
@@ -432,11 +420,9 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $update_selected_mainwp_themes = true;
         }
 
-        if ( $update_selected_mainwp_themes ) {
-            if ( isset( $_POST['mainwp_settings_custom_theme'] ) ) {
-                $custom_theme = sanitize_text_field( wp_unslash( $_POST['mainwp_settings_custom_theme'] ) );
-                update_user_option( $user->ID, 'mainwp_selected_theme', $custom_theme );
-            }
+        if ( $update_selected_mainwp_themes && isset( $_POST['mainwp_settings_custom_theme'] ) ) {
+            $custom_theme = sanitize_text_field( wp_unslash( $_POST['mainwp_settings_custom_theme'] ) );
+            update_user_option( $user->ID, 'mainwp_selected_theme', $custom_theme );
         }
 
         $update_screen_options = false;
@@ -628,7 +614,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     public function include_pluggable() {
         // may causing of conflict with Post S m t p plugin.
         if ( ! function_exists( 'wp_create_nonce' ) ) {
-            include_once ABSPATH . WPINC . '/pluggable.php';
+            include_once ABSPATH . WPINC . '/pluggable.php'; // NOSONAR - WP compatible.
         }
     }
 
@@ -648,7 +634,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_System::get_plugin_slug()
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_slugs()
      */
-    public function plugins_api_extension_info( $input_value, $action, $arg ) {
+    public function plugins_api_extension_info( $input_value, $action, $arg ) { // phpcs:ignore -- NOSONAR - complex.
         if ( 'plugin_information' !== $action ) {
             return $input_value;
         }
@@ -706,7 +692,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @return mixed $res
      */
-    public function plugins_api_wp_plugins_api_result( $res, $action, $arg ) {
+    public function plugins_api_wp_plugins_api_result( $res, $action, $arg ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( 'plugin_information' !== $action ) {
             return $res;
@@ -1022,8 +1008,8 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return $location Admin URL + the page to redirect to.
      */
     public function activate_redirect( $location ) {
-        $location = admin_url( 'admin.php?page=Extensions' );
-        return $location;
+        unset( $location );
+        return admin_url( 'admin.php?page=Extensions' );
     }
 
     /**
@@ -1066,7 +1052,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         // try to deactivate license.
         if ( ! $dashboard_only ) {
             $mainwp_api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
-            $result         = MainWP_Api_Manager::instance()->license_key_deactivation( $ext_key, $mainwp_api_key );
+            MainWP_Api_Manager::instance()->license_key_deactivation( $ext_key, $mainwp_api_key );
         }
 
         MainWP_Api_Manager::instance()->remove_activation_info( $ext_key );

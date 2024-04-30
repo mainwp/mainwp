@@ -95,7 +95,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
-    public static function init_menu() {
+    public static function init_menu() {  //phpcs:ignore -- NOSONAR - complex.
         $enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
         $mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );
 
@@ -159,7 +159,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
-    public static function init_subpages_menu() {
+    public static function init_subpages_menu() {  //phpcs:ignore -- NOSONAR - complex.
         if ( static::$hideSubmenuBackups && ( empty( static::$subPages ) || ! is_array( static::$subPages ) ) ) {
             return;
         }
@@ -256,7 +256,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
      */
-    public static function render_header( $shownPage = '' ) {
+    public static function render_header( $shownPage = '' ) {  //phpcs:ignore -- NOSONAR - complex.
 
         $params = array(
             'title' => esc_html__( 'Backups', 'mainwp' ),
@@ -326,7 +326,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::can_edit_backuptask()
      * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::validate_backup_tasks()
      */
-    public static function render_manager() {
+    public static function render_manager() {  //phpcs:ignore -- NOSONAR - complex.
         $backupTask = null;
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
         if ( isset( $_GET['id'] ) ) {
@@ -416,7 +416,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_group_id()
      */
-    public function display( $backup_items ) {
+    public function display( $backup_items ) {  //phpcs:ignore -- NOSONAR - complex.
         $can_trigger = true;
         if ( ! mainwp_current_user_have_right( 'dashboard', 'run_backup_tasks' ) ) {
             $can_trigger = false;
@@ -558,7 +558,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         <div class="menu">
                         <div class="header">' . esc_html_e( 'Backup Actions', 'mainwp' ) . '</div>
                         <div class="divider"></div>';
-        foreach ( $actions as $action => $link ) {
+        foreach ( $actions as $link ) {
             $out .= $link;
         }
         $out .= '</div>
@@ -766,7 +766,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::can_edit_backuptask()
      * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::validate_backup_tasks()
      */
-    public static function render_schedule_backup() {
+    public static function render_schedule_backup() {  //phpcs:ignore -- NOSONAR - complex.
         $backupTask   = null;
         $backupTaskId = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
@@ -788,17 +788,6 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             }
         }
         $task = $backupTask;
-
-        $selected_websites = array();
-        $selected_groups   = array();
-        if ( ! empty( $task ) ) {
-            if ( '' !== $task->sites ) {
-                $selected_websites = explode( ',', $task->sites );
-            }
-            if ( '' !== $task->groups ) {
-                $selected_groups = explode( ',', $task->groups );
-            }
-        }
 
         $globalArchiveFormat = get_option( 'mainwp_archiveFormat' );
         if ( false === $globalArchiveFormat ) {
@@ -830,7 +819,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param mixed $useGlobal Use Global.
      * @param mixed $useSite Use Site.
      */
-    public static function render_task_details( $task, $globalArchiveFormatText, $archiveFormat, $useGlobal, $useSite ) {
+    public static function render_task_details( $task, $globalArchiveFormatText, $archiveFormat, $useGlobal, $useSite ) { // phpcs:ignore -- NOSONAR - complex.
         ?>
 
         <div class="ui divider hidden"></div>
@@ -979,7 +968,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Render backup settings.
      */
-    public static function render_settings() {
+    public static function render_settings() {  //phpcs:ignore -- NOSONAR - complex.
 
         $backupsOnServer            = get_option( 'mainwp_backupsOnServer' );
         $backupOnExternalSources    = get_option( 'mainwp_backupOnExternalSources' );

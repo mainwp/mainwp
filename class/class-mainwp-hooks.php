@@ -204,6 +204,13 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     }
 
     /**
+     * Method get_instance().
+     */
+    public static function get_instance() {
+        return new self();
+    }
+
+    /**
      * Method mainwp_log_debug()
      *
      * MainWP debug log.
@@ -453,11 +460,9 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      */
     public function mainwp_edit_site( $params ) {
         $ret = array();
-        if ( is_array( $params ) ) {
-            if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
-                $ret['siteid'] = MainWP_Manage_Sites_View::update_wp_site( $params );
-                return $ret;
-            }
+        if ( is_array( $params ) && isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
+            $ret['siteid'] = MainWP_Manage_Sites_View::update_wp_site( $params );
+            return $ret;
         }
         return $ret;
     }
@@ -1377,41 +1382,38 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
                 );
             }
 
-            if ( MainWP_Utility::ctype_digit( $websiteId ) ) {
-                if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-                    /**
-                    * Action: mainwp_before_plugin_theme_translation_update
-                    *
-                    * Fires before plugin/theme/translation update actions.
-                    *
-                    * @since 4.1
-                    */
-                    do_action( 'mainwp_before_plugin_theme_translation_update', $type, implode( ',', $slugs ), $website );
+            if ( MainWP_Utility::ctype_digit( $websiteId ) && MainWP_System_Utility::can_edit_website( $website ) ) {
+                /**
+                * Action: mainwp_before_plugin_theme_translation_update
+                *
+                * Fires before plugin/theme/translation update actions.
+                *
+                * @since 4.1
+                */
+                do_action( 'mainwp_before_plugin_theme_translation_update', $type, implode( ',', $slugs ), $website );
 
-                    $information = MainWP_Connect::fetch_url_authed(
-                        $website,
-                        'upgradeplugintheme',
-                        array(
-                            'type' => $type,
-                            'list' => urldecode( implode( ',', $slugs ) ),
-                        )
-                    );
+                $information = MainWP_Connect::fetch_url_authed(
+                    $website,
+                    'upgradeplugintheme',
+                    array(
+                        'type' => $type,
+                        'list' => urldecode( implode( ',', $slugs ) ),
+                    )
+                );
 
-                    /**
-                    * Action: mainwp_after_plugin_theme_translation_update
-                    *
-                    * Fires before plugin/theme/translation update actions.
-                    *
-                    * @since 4.1
-                    */
-                    do_action( 'mainwp_after_plugin_theme_translation_update', $information, $type, implode( ',', $slugs ), $website );
+                /**
+                * Action: mainwp_after_plugin_theme_translation_update
+                *
+                * Fires before plugin/theme/translation update actions.
+                *
+                * @since 4.1
+                */
+                do_action( 'mainwp_after_plugin_theme_translation_update', $information, $type, implode( ',', $slugs ), $website );
 
-                    if ( isset( $information['sync'] ) ) {
-                        unset( $information['sync'] );
-                    }
-
-                    wp_send_json( $information );
+                if ( isset( $information['sync'] ) ) {
+                    unset( $information['sync'] );
                 }
+                wp_send_json( $information );
             }
         } catch ( MainWP_Exception $e ) {
             die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
@@ -1485,11 +1487,9 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * Hook Atarim manage sites default item.
      */
     public function hook_atarim_manage_sites_default_item( $item ) {
-        if ( ! is_plugin_active( 'mainwp-atarim-extension/mainwp-atarim-extension.php' ) ) {
-            if ( is_array( $item ) && isset( $item['url'] ) ) {
-                $collaborate_link     = 'https://app.atarim.io/fetching/?_from=mainwp&url=' . $item['url'];
-                $item['atarim_tasks'] = '<a href="' . $collaborate_link . '" target="_balnk" data-tooltip="Collaborate on this website." data-inverted="" data-position="left center"><span class="ui blue icon label"><i class="comments icon"></i></span></a>';
-            }
+        if ( ! is_plugin_active( 'mainwp-atarim-extension/mainwp-atarim-extension.php' ) && is_array( $item ) && isset( $item['url'] ) ) {
+            $collaborate_link     = 'https://app.atarim.io/fetching/?_from=mainwp&url=' . $item['url'];
+            $item['atarim_tasks'] = '<a href="' . $collaborate_link . '" target="_balnk" data-tooltip="Collaborate on this website." data-inverted="" data-position="left center"><span class="ui blue icon label"><i class="comments icon"></i></span></a>';
         }
         return $item;
     }

@@ -55,7 +55,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Utility::sanitize()
      * @uses \MainWP\Dashboard\MainWP_Utility::date()
      * @uses \MainWP\Dashboard\MainWP_Utility::remove_preslash_spaces()
-     * @uses \MainWP\Dashboard\MainWP_Utility::normalize_filename()
+     * @uses \MainWP\Dashboard\static::normalize_filename()
      * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
      * @uses \MainWP\Dashboard\static::get_real_extension()
      */
@@ -90,7 +90,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $subfolder = str_replace( '%task%', '', $subfolder );
         $subfolder = str_replace( '%', '', $subfolder );
         $subfolder = MainWP_Utility::remove_preslash_spaces( $subfolder );
-        $subfolder = MainWP_Utility::normalize_filename( $subfolder );
+        $subfolder = static::normalize_filename( $subfolder );
 
         if ( ! MainWP_System::instance()->is_single_user() && ( $userid !== $website->userid ) ) {
             throw new MainWP_Exception( 'Undefined error.' );
@@ -130,7 +130,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $pFilename
         );
         $file = str_replace( '%', '', $file );
-        $file = MainWP_Utility::normalize_filename( $file );
+        $file = static::normalize_filename( $file );
 
         if ( ! empty( $file ) ) {
             $file .= $ext;
@@ -430,7 +430,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     }
                     $localBackupFile .= static::get_real_extension( $information['db'] );
 
-                    $localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
+                    $localBackupFile = static::normalize_filename( $localBackupFile );
 
                     $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDB' => $localBackupFile ) );
                 } else {
@@ -472,7 +472,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         $localBackupFile = $dir . $filename . $realExt;
                     }
 
-                    $localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
+                    $localBackupFile = static::normalize_filename( $localBackupFile );
 
                     $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULL' => $localBackupFile ) );
                 } else {
@@ -658,7 +658,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      * @uses \MainWP\Dashboard\MainWP_Utility::date()
      * @uses \MainWP\Dashboard\MainWP_Utility::remove_preslash_spaces()
-     * @uses \MainWP\Dashboard\MainWP_Utility::normalize_filename()
+     * @uses \MainWP\Dashboard\static::normalize_filename()
      * @uses \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
      * @uses \MainWP\Dashboard\static::get_real_extension()
      */
@@ -682,7 +682,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $subfolder = str_replace( '%task%', '', $subfolder );
             $subfolder = str_replace( '%', '', $subfolder );
             $subfolder = MainWP_Utility::remove_preslash_spaces( $subfolder );
-            $subfolder = MainWP_Utility::normalize_filename( $subfolder );
+            $subfolder = static::normalize_filename( $subfolder );
 
             $result['subfolder'] = $subfolder;
 
@@ -733,7 +733,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 );
                 $filename        = str_replace( '%', '', $filename );
                 $localBackupFile = $dir . $filename;
-                $localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
+                $localBackupFile = static::normalize_filename( $localBackupFile );
 
                 if ( 'db' === $type ) {
                     $localBackupFile .= static::get_real_extension( $information['file'] );
@@ -787,7 +787,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Utility::sanitize()
      * @uses \MainWP\Dashboard\MainWP_Utility::date()
      * @uses \MainWP\Dashboard\MainWP_Utility::remove_preslash_spaces()
-     * @uses \MainWP\Dashboard\MainWP_Utility::normalize_filename()
+     * @uses \MainWP\Dashboard\static::normalize_filename()
      * @uses \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
      * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
      * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
@@ -831,7 +831,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $subfolder = str_replace( '%task%', '', $subfolder );
         $subfolder = str_replace( '%', '', $subfolder );
         $subfolder = MainWP_Utility::remove_preslash_spaces( $subfolder );
-        $subfolder = MainWP_Utility::normalize_filename( $subfolder );
+        $subfolder = static::normalize_filename( $subfolder );
 
         if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
             throw new MainWP_Exception( 'Suspended site.', '', 'SUSPENDED_SITE' );
@@ -887,7 +887,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $pFilename
         );
         $file = str_replace( '%', '', $file );
-        $file = MainWP_Utility::normalize_filename( $file );
+        $file = static::normalize_filename( $file );
 
         // Normal flow: check site settings & fallback to global.
         if ( false === $pLoadFilesBeforeZip ) {
@@ -991,7 +991,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 );
                 $filename        = str_replace( '%', '', $filename );
                 $localBackupFile = $dir . $filename;
-                $localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
+                $localBackupFile = static::normalize_filename( $localBackupFile );
 
                 if ( 'db' === $pType ) {
                     $localBackupFile .= static::get_real_extension( $information['db'] );
@@ -1007,6 +1007,29 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         } else {
             throw new MainWP_Exception( 'Database backup failed due to an undefined error' );
         }
+    }
+
+    /**
+     * Method normalize_filename()
+     *
+     * Normalize filename.
+     *
+     * @param mixed $s Filename to normalize.
+     *
+     * @return string $s Normalised filename.
+     */
+    public static function normalize_filename( $s ) {
+        $s = preg_replace( '@\x{00c4}@u', 'A', $s );
+        $s = preg_replace( '@\x{00d6}@u', 'O', $s );
+        $s = preg_replace( '@\x{00dc}@u', 'U', $s );
+        $s = preg_replace( '@\x{00cb}@u', 'E', $s );
+        $s = preg_replace( '@\x{00e4}@u', 'a', $s );
+        $s = preg_replace( '@\x{00f6}@u', 'o', $s );
+        $s = preg_replace( '@\x{00fc}@u', 'u', $s );
+        $s = preg_replace( '@\x{00eb}@u', 'e', $s );
+        $s = preg_replace( '@\x{00f1}@u', 'n', $s );
+        $s = preg_replace( '@\x{00ff}@u', 'y', $s );
+        return $s;
     }
 
     /**

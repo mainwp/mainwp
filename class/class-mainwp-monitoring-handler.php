@@ -26,17 +26,15 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-    public static function handle_settings_post() {
-        if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
-            if ( MainWP_System_Utility::is_admin() ) {
-                MainWP_Utility::update_option( 'mainwp_disableSitesChecking', ( ! isset( $_POST['mainwp_disableSitesChecking'] ) ? 1 : 0 ) );
-                $val = isset( $_POST['mainwp_frequency_sitesChecking'] ) ? intval( $_POST['mainwp_frequency_sitesChecking'] ) : 1440;
-                MainWP_Utility::update_option( 'mainwp_frequencySitesChecking', $val );
-                MainWP_Utility::update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
-                $val = isset( $_POST['mainwp_site_healthThreshold'] ) ? intval( $_POST['mainwp_site_healthThreshold'] ) : 80;
-                MainWP_Utility::update_option( 'mainwp_sitehealthThreshold', $val );
-                return true;
-            }
+    public static function handle_settings_post() { // phpcs:ignore -- NOSONAR - complex.
+        if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) && MainWP_System_Utility::is_admin() ) {
+            MainWP_Utility::update_option( 'mainwp_disableSitesChecking', ( ! isset( $_POST['mainwp_disableSitesChecking'] ) ? 1 : 0 ) );
+            $val = isset( $_POST['mainwp_frequency_sitesChecking'] ) ? intval( $_POST['mainwp_frequency_sitesChecking'] ) : 1440;
+            MainWP_Utility::update_option( 'mainwp_frequencySitesChecking', $val );
+            MainWP_Utility::update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
+            $val = isset( $_POST['mainwp_site_healthThreshold'] ) ? intval( $_POST['mainwp_site_healthThreshold'] ) : 80;
+            MainWP_Utility::update_option( 'mainwp_sitehealthThreshold', $val );
+            return true;
         }
         return false;
     }
@@ -151,14 +149,8 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $old_value     = $website->health_value;
         $noticed_value = $website->health_site_noticed;
 
-        if ( 80 <= $old_value && 80 > $new_health ) {
-            if ( 1 === (int) $noticed_value ) {
-                $noticed_value = 0;
-            }
-        } elseif ( 80 > $old_value && 80 <= $new_health ) {
-            if ( 1 === (int) $noticed_value ) {
-                $noticed_value = 0;
-            }
+        if ( ( ( 80 <= $old_value && 80 > $new_health ) || ( 80 > $old_value && 80 <= $new_health ) ) && 1 === (int) $noticed_value ) {
+            $noticed_value = 0;
         }
         return $noticed_value;
     }
@@ -326,7 +318,9 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Notification::send_websites_health_status_notification()
      * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_html()
      */
-    public static function notice_site_health_threshold( $email_settings, $websites, $email, $plain_text, $general = true, $to_admin = false ) {
+    public static function notice_site_health_threshold( $email_settings, $websites, $email, $plain_text, $general = true, $to_admin = false ) { // phpcs:ignore -- NOSONAR - complex.
+
+        $to_email = $email;
 
         $admin_email = MainWP_Notification_Settings::get_general_email();
 
@@ -349,14 +343,14 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return;
         }
 
-        $email = $general ? $admin_email : '';
+        $to_email = $general ? $admin_email : $to_email;
 
         foreach ( $websites as $site ) {
 
             if ( ! $general ) {
                 $addition_emails = $site->monitoring_notification_emails;
                 if ( ! empty( $addition_emails ) ) {
-                    $email .= ',' . $addition_emails; // send to addition emails too.
+                    $to_email .= ',' . $addition_emails; // send to addition emails too.
                 }
             }
 
@@ -369,13 +363,13 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             );
 
             if ( ! empty( $email_settings['recipients'] ) ) {
-                $email .= ',' . $email_settings['recipients']; // send to recipients.
+                $to_email .= ',' . $email_settings['recipients']; // send to recipients.
             }
 
-            $email = trim( $email, ',' );
+            $to_email = trim( $to_email, ',' );
 
-            if ( ! empty( $email ) && ! empty( $mail_content ) ) {
-                MainWP_Notification::send_websites_health_status_notification( $email, $subject, $mail_content, $plain_text );
+            if ( ! empty( $to_email ) && ! empty( $mail_content ) ) {
+                MainWP_Notification::send_websites_health_status_notification( $to_email, $subject, $mail_content, $plain_text );
                 // update noticed value.
                 MainWP_DB::instance()->update_website_sync_values(
                     $site->id,

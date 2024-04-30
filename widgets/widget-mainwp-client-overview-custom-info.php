@@ -44,7 +44,7 @@ class MainWP_Client_Overview_Custom_Info { // phpcs:ignore Generic.Classes.Openi
      *
      * @param object $client_id Client ID.
      */
-    public static function render_addition_info( $client_id ) {
+    public static function render_addition_info( $client_id ) { // phpcs:ignore -- NOSONAR - complex.
 
         $client_info           = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id, ARRAY_A );
         $default_client_fields = MainWP_Client_Handler::get_default_client_fields();
@@ -99,7 +99,7 @@ class MainWP_Client_Overview_Custom_Info { // phpcs:ignore Generic.Classes.Openi
                     ?>
                     <?php
 
-                    if ( is_array( $custom_fields ) && count( $custom_fields ) > 0 ) {
+                    if ( is_array( $custom_fields ) && ! empty( $custom_fields ) ) {
                         foreach ( $custom_fields as $field ) {
                             $field_value = '';
                             if ( isset( $default_client_fields[ $field->field_name ] ) ) {

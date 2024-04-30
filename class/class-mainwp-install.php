@@ -379,7 +379,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         $sql = apply_filters( 'mainwp_db_install_tables', $sql, $currentVersion, $charset_collate );
 
-        require_once ABSPATH . 'wp-admin/includes/upgrade.php'; // NOSONAR - compatible.
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php'; // NOSONAR - WP compatible.
 
         global $wpdb;
 
@@ -534,7 +534,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @return void
      */
-    public function post_update_81( $current_version ) {
+    public function post_update_81( $current_version ) { //phpcs:ignore -- NOSONAR - complex.
 
         if ( version_compare( $current_version, '8.1', '<' ) ) {
 

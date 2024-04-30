@@ -369,7 +369,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
         if ( ! empty( $download_link ) ) {
             $return = MainWP_Extensions_Handler::install_plugin( $download_link );
         } elseif ( ! empty( $plugin_slug ) ) {
-            include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
+            include_once ABSPATH . '/wp-admin/includes/plugin-install.php'; // NOSONAR - WP compatible.
             $api = MainWP_System_Utility::get_plugin_theme_info(
                 'plugin',
                 array(
@@ -398,11 +398,9 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
     public function bulk_activate() {
         $this->check_security( 'mainwp_extension_bulk_activate' );
         $plugins = isset( $_POST['plugins'] ) ? wp_unslash( $_POST['plugins'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        if ( is_array( $plugins ) && ! empty( $plugins ) ) {
-            if ( current_user_can( 'activate_plugins' ) ) {
-                activate_plugins( $plugins );
-                die( 'SUCCESS' );
-            }
+        if ( is_array( $plugins ) && ! empty( $plugins ) && current_user_can( 'activate_plugins' ) ) {
+            activate_plugins( $plugins );
+            die( 'SUCCESS' );
         }
         die( 'FAILED' );
     }

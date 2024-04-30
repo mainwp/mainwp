@@ -141,7 +141,7 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             'mainwp-timecapsule-extension/mainwp-timecapsule-extension.php',
             'activity-log-mainwp/activity-log-mainwp.php',
         );
-        include_once ABSPATH . '/wp-admin/includes/plugin.php';
+        include_once ABSPATH . '/wp-admin/includes/plugin.php'; // NOSONAR - WP compatible.
 
         $deactivated_imcompatible = array();
         foreach ( $init_extensions as $extension ) {

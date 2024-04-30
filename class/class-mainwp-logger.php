@@ -389,8 +389,6 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         if ( $forced || $do_log ) {
 
-            $time = gmdate( $this->logDateFormat );
-
             /**
              * Current user global.
              *
@@ -734,7 +732,6 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $end_wrapper   = '</div>';
 
         while ( $rows && ( $row  = MainWP_DB::fetch_object( $rows ) ) ) {
-            $type = $row->log_type;
             $line = $row->log_content;
             if ( 120 * 1024 < strlen( $line ) ) {
                 $line = '[Data row too long]';

@@ -27,6 +27,14 @@ class MainWP_Bulk_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
         add_filter( 'post_updated_messages', array( &$this, 'post_updated_messages' ) );
     }
 
+
+    /**
+     * Method get_instance().
+     */
+    public static function get_instance() {
+        return new self();
+    }
+
     /**
      * Method handle_edit_bulkpost()
      *

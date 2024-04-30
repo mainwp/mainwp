@@ -529,7 +529,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB_Common::update_group()
      */
-    public static function rename_group() {
+    public static function rename_group() { //phpcs:ignore -- NOSONAR - complex.
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_POST['groupId'] ) ) {
             $group = MainWP_DB_Common::instance()->get_group_by_id( intval( $_POST['groupId'] ) );
@@ -550,9 +550,8 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 } else {
                     $color = '';
                 }
-
                 // update group.
-                $nr = MainWP_DB_Common::instance()->update_group( $group->id, $name, $color );
+                MainWP_DB_Common::instance()->update_group( $group->id, $name, $color );
 
                 // Reload group.
                 $group = MainWP_DB_Common::instance()->get_group_by_id( $group->id );
@@ -710,13 +709,11 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
         if ( $groupId ) {
             $group = MainWP_DB_Common::instance()->get_group_by_id( $groupId );
-            if ( ! empty( $group ) ) {
-                if ( ! empty( $site_ids ) ) {
-                    foreach ( $site_ids as $websiteId ) {
-                        $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
-                        if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-                            MainWP_DB_Common::instance()->update_group_site( $group->id, $website->id );
-                        }
+            if ( ! empty( $group ) && ! empty( $site_ids ) ) {
+                foreach ( $site_ids as $websiteId ) {
+                    $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
+                    if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+                        MainWP_DB_Common::instance()->update_group_site( $group->id, $website->id );
                     }
                 }
             }
@@ -746,7 +743,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
-    public static function update_group() {
+    public static function update_group() { //phpcs:ignore -- NOSONAR - complex.
          // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;
         if ( $groupid ) {

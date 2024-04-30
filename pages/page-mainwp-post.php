@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- Current complexity required to achieve desired results. Pull request solutions appreciated.
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity -- NOSONAR Current complexity required to achieve desired results. Pull request solutions appreciated.
 
     /**
      * Method get_class_name()
@@ -323,7 +323,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
-    public static function init_subpages_menu() {
+    public static function init_subpages_menu() { // phpcs:ignore -- NOSONAR - complex.
         ?>
         <div id="menu-mainwp-Posts" class="mainwp-submenu-wrapper">
             <div class="wp-submenu sub-open">
@@ -445,7 +445,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
      */
-    public static function render_header( $shownPage = '', $post_id = null ) {
+    public static function render_header( $shownPage = '', $post_id = null ) { // phpcs:ignore -- NOSONAR - complex.
         $params = array(
             'title' => esc_html__( 'Posts', 'mainwp' ),
         );
@@ -516,7 +516,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
      */
-    public static function render() {
+    public static function render() { // phpcs:ignore -- NOSONAR - complex.
         if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
             mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
             return;
@@ -784,7 +784,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
      */
-    public static function render_search_options() {
+    public static function render_search_options() { //phpcs:ignore -- NOSONAR - complex.
         $cachedSearch = MainWP_Cache::get_cached_context( 'Post' );
         if ( $cachedSearch && isset( $cachedSearch['keyword'] ) ) {
             $cachedSearch['keyword'] = trim( $cachedSearch['keyword'] );
@@ -867,23 +867,30 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
     /**
      * Renders Posts table.
      *
-     * @param bool   $cached Show cached data or not. Default: true.
-     * @param mixed  $keyword Search keywords.
-     * @param mixed  $dtsstart Date & time of Session start.
-     * @param mixed  $dtsstop Date & time of Session stop.
-     * @param mixed  $status Page statuses.
-     * @param mixed  $groups Groups to display.
-     * @param mixed  $sites Site URLS.
-     * @param int    $postId Post ID.
-     * @param int    $userId Current user ID.
-     * @param string $post_type Post type.
-     * @param string $search_on Site on all sites. Default = all.
-     * @param mixed  $clients Clients.
+     * @param bool  $cached Show cached data or not. Default: true.
+     * @param mixed $keyword Search keywords.
+     * @param mixed $dtsstart Date & time of Session start.
+     * @param mixed $dtsstop Date & time of Session stop.
+     * @param mixed $status Page statuses.
+     * @param array $params Other params.
      *
      * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
      * @uses \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
      */
-    public static function render_table( $cached = true, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0, $post_type = '', $search_on = 'all', $clients = '' ) {
+    public static function render_table( $cached = true, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $params = array() ) {
+
+        if ( ! is_array( $params ) ) {
+            $params = array();
+        }
+
+        $groups    = isset( $params['groups'] ) ? $params['groups'] : '';
+        $sites     = isset( $params['sites'] ) ? $params['sites'] : '';
+        $postId    = isset( $params['postId'] ) ? $params['postId'] : 0;
+        $userId    = isset( $params['userId'] ) ? $params['userId'] : 0;
+        $post_type = isset( $params['post_type'] ) ? $params['post_type'] : '';
+        $search_on = isset( $params['search_on'] ) ? $params['search_on'] : 'all';
+        $clients   = sset( $params['clients'] ) ? $params['clients'] : '';
+
         ?>
 
         <div id="mainwp-message-zone"></div>
@@ -1082,7 +1089,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @param bool    $table_content Generate table content only. Default = false.
      * @param mixed   $clients Clients.
      *
-     * @return string Post table body html.
+     * @return void
      *
      * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
      * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
@@ -1103,7 +1110,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         $dbwebsites = array();
         if ( '' !== $sites ) {
-            foreach ( $sites as $k => $v ) {
+            foreach ( $sites as $v ) {
                 if ( MainWP_Utility::ctype_digit( $v ) ) {
                     $website = MainWP_DB::instance()->get_website_by_id( $v );
                     if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
@@ -1116,7 +1123,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
         }
         if ( '' !== $groups ) {
-            foreach ( $groups as $k => $v ) {
+            foreach ( $groups as $v ) {
                 if ( MainWP_Utility::ctype_digit( $v ) ) {
                     $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
                     while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -1223,7 +1230,6 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
             if ( 0 === $output->posts ) {
                 MainWP_Cache::add_body( 'Post', '' );
-                return;
             }
         }
     }
@@ -1852,7 +1858,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      *
      * @return string Metabox html
      */
-    public static function do_meta_boxes( $screen, $context, $input_obj ) { // phpcs:ignore -- current complexity required to achieve desired results. Purll Request solutions appreciated.
+    public static function do_meta_boxes( $screen, $context, $input_obj ) { // phpcs:ignore -- NOSONAR - current complexity required to achieve desired results. Purll Request solutions appreciated.
 
         /**
          * WordPress Meta Boxes array.
@@ -1875,8 +1881,6 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         } elseif ( 'mainwp_page_PageBulkAdd' === $page || 'mainwp_page_PageBulkEdit' === $page ) {
             $page = 'bulkpage';
         }
-
-        $hidden = get_hidden_meta_boxes( $screen );
 
         printf( '<div id="%s-sortables" class="meta-box-sortables">', esc_attr( $context ) );
 
@@ -2495,7 +2499,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @param object $post Post object.
      * @param mixed  $post_type Post type.
      */
-    public static function render_post_fields( $post, $post_type ) {
+    public static function render_post_fields( $post, $post_type ) { // phpcs:ignore -- NOSONAR - complex.
         ?>
         <div class="mainwp-search-options mainwp-post-featured-image" id="postimagediv">
                 <?php echo '<div class="inside">'; ?>
@@ -2534,16 +2538,12 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 if ( 'private' === $post->post_status ) {
                     $post->post_password = '';
                     $visibility          = 'private';
-                    $visibility_trans    = esc_html__( 'Private', 'mainwp' );
                 } elseif ( ! empty( $post->post_password ) ) {
-                    $visibility       = 'password';
-                    $visibility_trans = esc_html__( 'Password protected', 'mainwp' );
+                    $visibility = 'password';
                 } elseif ( 'bulkpost' === $post_type && is_sticky( $post->ID ) ) {
-                    $visibility       = 'public';
-                    $visibility_trans = esc_html__( 'Public, Sticky', 'mainwp' );
+                    $visibility = 'public';
                 } else {
-                    $visibility       = 'public';
-                    $visibility_trans = esc_html__( 'Public', 'mainwp' );
+                    $visibility = 'public';
                 }
                 ?>
 

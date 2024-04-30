@@ -203,7 +203,7 @@ class Rest_Api {
      *
      * @return object $response An object that contains the return data and status of the API request.
      */
-    public function cost_tracker_rest_api_get_client_costs_callback( $request ) {
+    public function cost_tracker_rest_api_get_client_costs_callback( $request ) { //phpcs:ignore -- NOSONAR - complex.
         // first validate the request.
         if ( apply_filters( 'mainwp_rest_api_validate', false, $request ) ) {
             if ( isset( $request['client_id'] ) && null !== $request['client_id'] ) {
@@ -293,7 +293,7 @@ class Rest_Api {
      *
      * @return object $response An object that contains the return data and status of the API request.
      */
-    public function cost_tracker_rest_api_get_costs_callback( $request ) {
+    public function cost_tracker_rest_api_get_costs_callback( $request ) { //phpcs:ignore -- NOSONAR - complex.
         // first validate the request.
         if ( apply_filters( 'mainwp_rest_api_validate', false, $request ) ) {
             // get parameters.

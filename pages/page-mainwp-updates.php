@@ -401,7 +401,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
      * @uses \MainWP\Dashboard\MainWP_Utility::array_sort()
      */
-    public static function render() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function render() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- NOSONAR - current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $websites      = static::get_sites_for_current_user();
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
         $site_view     = (int) $userExtension->site_view;
@@ -752,14 +752,10 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          */
         $limit_updates_all = apply_filters( 'mainwp_limit_updates_all', 0 );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        if ( 0 < $limit_updates_all ) {
-            if ( isset( $_GET['continue_update'] ) && '' !== $_GET['continue_update'] ) {
-                static::$continue_update = sanitize_text_field( wp_unslash( $_GET['continue_update'] ) );
-                if ( 'plugins_upgrade_all' === static::$continue_update || 'themes_upgrade_all' === static::$continue_update || 'translations_upgrade_all' === static::$continue_update ) {
-                    if ( isset( $_GET['slug'] ) && '' !== $_GET['slug'] ) {
-                        static::$continue_update_slug = wp_unslash( $_GET['slug'] );
-                    }
-                }
+        if ( 0 < $limit_updates_all && isset( $_GET['continue_update'] ) && '' !== $_GET['continue_update'] ) {
+            static::$continue_update = sanitize_text_field( wp_unslash( $_GET['continue_update'] ) );
+            if ( ( 'plugins_upgrade_all' === static::$continue_update || 'themes_upgrade_all' === static::$continue_update || 'translations_upgrade_all' === static::$continue_update ) && isset( $_GET['slug'] ) && '' !== $_GET['slug'] ) {
+                static::$continue_update_slug = wp_unslash( $_GET['slug'] );
             }
         }
 
@@ -2061,7 +2057,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
      */
-    public static function render_http_checks( $websites ) {
+    public static function render_http_checks( $websites ) {  //phpcs:ignore -- NOSONAR - complex.
 
         $enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
         $mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );
@@ -2213,7 +2209,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function activated_primary_backup_plugin( $what, $website ) {
         $plugins = json_decode( $website->plugins, 1 );
-        if ( ! is_array( $plugins ) || 0 === count( $plugins ) ) {
+        if ( ! is_array( $plugins ) || empty( $plugins ) ) {
             return false;
         }
 
@@ -2333,7 +2329,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic plugins updates.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                             <select name="mainwp_pluginAutomaticDailyUpdate" id="mainwp_pluginAutomaticDailyUpdate" class="ui dropdown">
                                 <option value="1" <?php echo 1 === $snPluginAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
-                                <option value="0" <?php echo false !== $snPluginAutomaticDailyUpdate && empty( $snPluginAutomaticDailyUpdate ) || 2 === $snPluginAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
+                                <option value="0" <?php echo ( false !== $snPluginAutomaticDailyUpdate && empty( $snPluginAutomaticDailyUpdate ) ) || 2 === $snPluginAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
                             </select>
                         </div>
                     </div>
@@ -2342,7 +2338,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic themes updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <select name="mainwp_themeAutomaticDailyUpdate" id="mainwp_themeAutomaticDailyUpdate" class="ui dropdown">
                                 <option value="1" <?php echo 1 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
-                                <option value="0" <?php echo false !== $snThemeAutomaticDailyUpdate && 0 === $snThemeAutomaticDailyUpdate || 2 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
+                                <option value="0" <?php echo ( false !== $snThemeAutomaticDailyUpdate && 0 === $snThemeAutomaticDailyUpdate ) || 2 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
                             </select>
                         </div>
                     </div>
@@ -2351,7 +2347,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic WordPress core updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <select name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" class="ui dropdown">
                                 <option value="1" <?php echo 1 === $snAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
-                                <option value="0" <?php echo false !== $snAutomaticDailyUpdate && 0 === $snAutomaticDailyUpdate || 2 === $snAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
+                                <option value="0" <?php echo ( false !== $snAutomaticDailyUpdate && 0 === $snAutomaticDailyUpdate ) || 2 === $snAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
                             </select>
                         </div>
                     </div>

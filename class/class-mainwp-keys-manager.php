@@ -65,7 +65,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Handle autoload files.
      */
     public static function auto_load_files() {
-        require_once MAINWP_PLUGIN_DIR . 'libs' . DIRECTORY_SEPARATOR . 'phpseclib' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+        require_once MAINWP_PLUGIN_DIR . 'libs' . DIRECTORY_SEPARATOR . 'phpseclib' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php'; // NOSONAR -- WP compatible.
     }
 
     /**
@@ -349,7 +349,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @return void
      */
-    public static function init_keys_dir( $keysDir = '' ) {
+    public static function init_keys_dir( $keysDir = '' ) { //phpcs:ignore -- NOSONAR - complex.
 
         if ( '' === $keysDir ) {
             $keysDir = static::get_keys_dir();
@@ -429,7 +429,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @return string Encrypted value.
      */
-    public function encrypt_keys_data( $data, $prefix, $key_file = false ) {
+    public function encrypt_keys_data( $data, $prefix, $key_file = false ) {  //phpcs:ignore -- NOSONAR - complex.
 
         if ( empty( $data ) ) {
             if ( ! empty( $key_file ) ) {
@@ -443,7 +443,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         if ( ! function_exists( '\wp_rand' ) ) {
-            include_once ABSPATH . WPINC . '/pluggable.php';
+            include_once ABSPATH . WPINC . '/pluggable.php'; // NOSONAR - WP compatible.
         }
 
         if ( ! empty( $key_file ) && is_string( $key_file ) ) {

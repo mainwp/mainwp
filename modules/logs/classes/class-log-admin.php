@@ -253,7 +253,7 @@ class Log_Admin {
      *
      * @return void
      */
-    public function hook_purge_scheduled_action() {
+    public function hook_purge_scheduled_action() { //phpcs:ignore -- NOSONAR - complex.
         $enable_schedule = is_array( $this->manager->settings->options ) && ! empty( $this->manager->settings->options['enabled'] ) && ! empty( $this->manager->settings->options['auto_purge'] ) ? true : false;
         if ( $enable_schedule ) {
             $last_purge = get_option( 'mainwp_module_log_last_time_auto_purge_logs' );
@@ -273,14 +273,12 @@ class Log_Admin {
                 $time            = time();
                 $next_time_purge = false;
                 if ( false === $last_purge && false === $next_purge ) {
-                    $next_purge = $time + $days * DAY_IN_SECONDS;
+                    $next_time_purge = $time + $days * DAY_IN_SECONDS;
                 } elseif ( ! empty( $next_purge ) && $time > (int) $next_purge ) {
                     do_action( 'mainwp_log_action', 'module log :: purge logs schedule start.', MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY );
-
                     $end_time   = $time - $days * DAY_IN_SECONDS;
                     $start_time = ! empty( $last_purge ) ? $last_purge : $end_time - $days * DAY_IN_SECONDS;
-
-                    $this->manager->db->create_compact_and_erase_records( false, $end_time );
+                    $this->manager->db->create_compact_and_erase_records( $start_time, $end_time );
                     update_option( 'mainwp_module_log_last_time_auto_purge_logs', $time );
                     $next_time_purge = $time + $days * DAY_IN_SECONDS;
                 }
@@ -290,7 +288,6 @@ class Log_Admin {
             }
         }
     }
-
 
 
     /**

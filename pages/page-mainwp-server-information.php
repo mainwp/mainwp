@@ -41,7 +41,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::is_apache_server_software()
      */
-    public static function init_menu() {
+    public static function init_menu() { // phpcs:ignore -- NOSONAR - complex.
 
         add_action( 'mainwp_pageheader_infor', array( static::get_class_name(), 'render_header' ) );
         add_action( 'mainwp_pagefooter_infor', array( static::get_class_name(), 'render_footer' ) );
@@ -169,7 +169,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::is_apache_server_software()
      */
-    public static function init_subpages_menu() {
+    public static function init_subpages_menu() { // phpcs:ignore -- NOSONAR - complex.
         ?>
         <div id="menu-mainwp-ServerInformation" class="mainwp-submenu-wrapper">
             <div class="wp-submenu sub-open">
@@ -834,7 +834,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     public static function render_extensions_license_check_tbody() {
         $extensions       = MainWP_Extensions_Handler::get_extensions();
         $extensions_slugs = array();
-        if ( 0 === count( $extensions ) ) {
+        if ( empty( $extensions ) ) {
             echo '<tr><td colspan="4">' . esc_html__( 'No installed extensions', 'mainwp' ) . '</td></tr>';
         }
         foreach ( $extensions as $extension ) {
@@ -967,7 +967,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
-    public static function render_cron() {
+    public static function render_cron() { // phpcs:ignore -- NOSONAR - complex.
         if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
             mainwp_do_not_have_permissions( 'cron schedules', 'mainwp' );
             return;
@@ -1292,7 +1292,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::curlssl_compare()
      * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_class_name()
      */
-    public static function render_row( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) {
+    public static function render_row( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) { //phpcs:ignore -- NOSONAR - complex.
         $currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $getter ) );
          // phpcs:disable WordPress.Security.EscapeOutput
         ?>
@@ -1331,7 +1331,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::filesize_compare()
      * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::curlssl_compare()
      */
-    public static function render_row_with_description( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) {
+    public static function render_row_with_description( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) { // phpcs:ignore -- NOSONAR - complex.
         $currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $getter ) );
         // phpcs:disable WordPress.Security.EscapeOutput
         ?>
@@ -1454,7 +1454,6 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_class_name()
      */
     public static function render_error_log() {
-        $tbody      = '';
         $log_errors = ini_get( 'log_errors' );
         if ( ! $log_errors ) {
             echo '<tr><td colspan="2">' . esc_html__( 'Error logging disabled.', 'mainwp' );

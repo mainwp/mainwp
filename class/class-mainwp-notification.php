@@ -168,16 +168,22 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param mixed $plugin_updates     Plugins updates.
      * @param mixed $theme_updates      Themes updates.
      * @param mixed $sites_disconnected Sites disconnected.
-     * @param bool  $plain_text         Text format.
-     * @param bool  $sites_ids          Websites ids - default false (option).
-     * @param bool  $email_site         current report site.
+     * @param array $params         Other params.
      *
      * @return bool
      *
      * @uses \MainWP\Dashboard\MainWP_Logger::debug()
      * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_html()
      */
-    public static function send_daily_digest_notification( $email_settings, $available_updates, $wp_updates, $plugin_updates, $theme_updates, $sites_disconnected, $plain_text, $sites_ids = false, $email_site = false ) {
+    public static function send_daily_digest_notification( $email_settings, $available_updates, $wp_updates, $plugin_updates, $theme_updates, $sites_disconnected, $params = array() ) {
+
+        if ( ! is_array( $params ) ) {
+            $params = array();
+        }
+
+        $plain_text = isset( $params['plain_text'] ) ? $params['plain_text'] : '';
+        $sites_ids  = isset( $params['sites_ids'] ) ? $params['sites_ids'] : false;
+        $email_site = isset( $params['email_site'] ) ? $params['email_site'] : false;
 
         if ( $email_settings['disable'] ) {
             return false; // disabled send daily digest notification.

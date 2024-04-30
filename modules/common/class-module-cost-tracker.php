@@ -25,6 +25,14 @@ class MainWP_Module_Cost_Tracker { // phpcs:ignore Generic.Classes.OpeningBraceS
     }
 
     /**
+     * Method get_instance().
+     */
+    public static function get_instance() {
+        return new self();
+    }
+
+
+    /**
      * Init method.
      */
     public function plugins_loaded() {
@@ -40,12 +48,10 @@ class MainWP_Module_Cost_Tracker { // phpcs:ignore Generic.Classes.OpeningBraceS
         $dir = MAINWP_MODULES_DIR;
         // need to load log db install.
         if ( file_exists( $dir . 'cost-tracker/classes/class-cost-tracker-db.php' ) ) {
-            require_once $dir . 'cost-tracker/classes/class-cost-tracker-db.php';
+            require_once $dir . 'cost-tracker/classes/class-cost-tracker-db.php'; // NOSONAR - WP compatible.
         }
-        if ( mainwp_modules_is_enabled( 'cost-tracker' ) ) {
-            if ( file_exists( $dir . 'cost-tracker/classes/class-cost-tracker-manager.php' ) ) {
-                require_once $dir . 'cost-tracker/classes/class-cost-tracker-manager.php';
-            }
+        if ( mainwp_modules_is_enabled( 'cost-tracker' ) && file_exists( $dir . 'cost-tracker/classes/class-cost-tracker-manager.php' ) ) {
+            require_once $dir . 'cost-tracker/classes/class-cost-tracker-manager.php'; // NOSONAR - WP compatible.
         }
     }
 
@@ -69,4 +75,4 @@ class MainWP_Module_Cost_Tracker { // phpcs:ignore Generic.Classes.OpeningBraceS
     }
 }
 
-new MainWP_Module_Cost_Tracker();
+MainWP_Module_Cost_Tracker::get_instance();

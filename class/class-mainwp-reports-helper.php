@@ -59,7 +59,7 @@ class MainWP_Reports_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param array  $types Types of tokens.
      * @param int    $site_id Site ID.
      */
-    public function hook_get_reports_group_values( $values, $group, $types, $site_id ) {
+    public function hook_get_reports_group_values( $values, $group, $types, $site_id ) { // phpcs:ignore -- NOSONAR - complex.
         if ( ! is_array( $values ) ) {
             $values = array();
         }

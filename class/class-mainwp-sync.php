@@ -591,7 +591,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          */
         do_action( 'mainwp_site_sync', $pWebsite, $information, $act_success, $_error, $post_data );
 
-        return ( ! $error );
+        return ! $error;
     }
 
     /**
@@ -615,7 +615,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
      * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public static function get_wp_icon( $siteId = null ) {
+    public static function get_wp_icon( $siteId = null ) { // phpcs:ignore -- NOSONAR - complex.
         if ( MainWP_Utility::ctype_digit( $siteId ) ) {
             $website = MainWP_DB::instance()->get_website_by_id( $siteId );
             if ( MainWP_System_Utility::can_edit_website( $website ) ) {

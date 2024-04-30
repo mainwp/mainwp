@@ -80,17 +80,11 @@ class Log_List_Table {
         $escaped = false;
         switch ( $column_name ) {
             case 'date':
-                $created     = gmdate( 'Y-m-d H:i:s', $record->created );
-                $date_string = sprintf(
-                    '<time datetime="%s" class="relative-time record-created">%s</time>',
-                    mainwp_module_log_get_iso_8601_extended_date( $record->created ),
-                    get_date_from_gmt( $created, 'Y/m/d' )
-                );
-                $out         = get_date_from_gmt( $created, 'Y/m/d' );
-                $out        .= '<br />';
-                $out        .= get_date_from_gmt( $created, 'h:i:s A' );
+                $created = gmdate( 'Y-m-d H:i:s', $record->created );
+                $out     = get_date_from_gmt( $created, 'Y/m/d' );
+                $out    .= '<br />';
+                $out    .= get_date_from_gmt( $created, 'h:i:s A' );
                 break;
-
             case 'item':
                 $out = $record->item;
                 break;
@@ -562,7 +556,7 @@ class Log_List_Table {
      * Echo the column headers.
      */
     public function print_column_headers() {
-        list( $columns, $sortable, $primary ) = $this->get_column_info();
+        list( $columns, $sortable ) = $this->get_column_info();
 
         $def_columns                 = $this->get_default_columns();
         $def_columns['site_actions'] = '';

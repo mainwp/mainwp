@@ -39,14 +39,14 @@ jQuery(function () {
     jQuery(document).on('click', '#mainwp-do-pages-bulk-actions', function () {
         let action = jQuery('#mainwp-bulk-actions').val();
         if (action != 'trash' && action != 'restore' && action != 'delete') {
-            return false;
+            return;
         }
 
         let tmp = jQuery("input[name='page[]']:checked");
         countSent = tmp.length;
 
         if (countSent == 0)
-            return false;
+            return;
 
         let _callback = function () {
             jQuery('#mainwp-do-pages-bulk-actions').attr('disabled', 'true');
@@ -60,10 +60,9 @@ jQuery(function () {
         if (action == 'delete') {
             let msg = __('You are about to delete %1 page(s). Are you sure you want to proceed?', countSent);
             mainwp_confirm(msg, _callback);
-            return false;
+            return;
         }
         _callback();
-        return false;
     });
 });
 
@@ -123,12 +122,12 @@ let mainwp_fetch_pages = function () {
     if (typeof params !== 'object') {
         return;
     }
-    
+
     let _status = params['_status'];
     let selected_sites = params['selected_sites'];
     let selected_clients = params['selected_clients'];
     let selected_groups = params['selected_groups'];
-    
+
     let data = mainwp_secure_data({
         action: 'mainwp_pages_search',
         keyword: jQuery('#mainwp_page_search_by_keyword').val(),
@@ -201,7 +200,7 @@ let mainwp_fetch_pages = function () {
 };
 
 let mainwp_fetch_pages_prepare = function () { // NOSONAR - complexity 19/15.
-    
+
     let errors = [];
     let selected_sites = [];
     let selected_groups = [];
@@ -300,14 +299,14 @@ jQuery(function () {
     jQuery(document).on('click', '#mainwp-do-posts-bulk-actions', function () {
         let action = jQuery('#mainwp-bulk-actions').val();
         if (action != 'publish' && action != 'unpublish' && action != 'trash' && action != 'restore' && action != 'delete') {
-            return false;
+            return;
         }
 
         let tmp = jQuery("input[name='post[]']:checked");
         countSent = tmp.length;
 
         if (countSent == 0)
-            return false;
+            return;
 
         let _callback = function () {
             jQuery('#mainwp-do-posts-bulk-actions').attr('disabled', 'true');
@@ -320,10 +319,9 @@ jQuery(function () {
         if (action == 'delete') {
             let msg = __('You are about to delete %1 post(s). Are you sure you want to proceed?', countSent);
             mainwp_confirm(msg, _callback);
-            return false;
+            return;
         }
         _callback();
-        return false;
     });
 });
 

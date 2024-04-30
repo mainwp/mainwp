@@ -132,10 +132,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 while ( false !== ( $file = readdir( $dh ) ) ) {
                     if ( '.' !== $file && '..' !== $file ) {
                         $theFile = $dir . $file;
-                        if ( MainWP_Backup_Handler::is_archive( $file ) && ! MainWP_Backup_Handler::is_sql_archive( $file ) ) {
-                            if ( $wp_filesystem->mtime( $theFile ) > $lastbackup ) {
-                                $lastbackup = $wp_filesystem->mtime( $theFile );
-                            }
+                        if ( MainWP_Backup_Handler::is_archive( $file ) && ! MainWP_Backup_Handler::is_sql_archive( $file ) && $wp_filesystem->mtime( $theFile ) > $lastbackup ) {
+                            $lastbackup = $wp_filesystem->mtime( $theFile );
                         }
                     }
                 }

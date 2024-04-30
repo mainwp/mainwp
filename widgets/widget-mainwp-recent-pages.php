@@ -45,7 +45,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
      */
-    public static function render_sites() {
+    public static function render_sites() { // phpcs:ignore -- NOSONAR - complex.
 
         /** This filter is documented in /widgets/widget-mainwp-recent-posts.php */
         $recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 );
@@ -68,7 +68,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     }
 
                     $pages = json_decode( $website->recent_pages, 1 );
-                    if ( 0 === count( $pages ) ) {
+                    if ( empty( $pages ) ) {
                         continue;
                     }
                     foreach ( $pages as $page ) {
@@ -98,7 +98,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     }
 
                     $pages = json_decode( $website->recent_pages, 1 );
-                    if ( 0 === count( $pages ) ) {
+                    if ( empty( $pages ) ) {
                         continue;
                     }
                     foreach ( $pages as $page ) {
@@ -220,7 +220,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
-    public static function render_published_posts( $allPages, $recent_number, $individual ) {
+    public static function render_published_posts( $allPages, $recent_number, $individual ) { // phpcs:ignore -- NOSONAR - complex.
         $recent_pages_published = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'publish' );
         $recent_pages_published = MainWP_Utility::sortmulti( $recent_pages_published, 'dts', 'desc' );
         $is_demo                = MainWP_Demo_Handle::is_demo_mode();
@@ -238,7 +238,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
              * @since 4.1
              */
             do_action( 'mainwp_recent_pages_before_publised_list', $allPages, $recent_number );
-            if ( 0 === count( $recent_pages_published ) ) :
+            if ( empty( $recent_pages_published ) ) :
                 MainWP_UI::render_empty_element_placeholder();
             endif;
             ?>
@@ -249,10 +249,8 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 if ( ! isset( $recent_pages_published[ $i ]['title'] ) || empty( $recent_pages_published[ $i ]['title'] ) ) {
                     $recent_pages_published[ $i ]['title'] = '(No Title)';
                 }
-                if ( isset( $recent_pages_published[ $i ]['dts'] ) ) {
-                    if ( ! stristr( $recent_pages_published[ $i ]['dts'], '-' ) ) {
-                        $recent_pages_published[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_published[ $i ]['dts'] ) );
-                    }
+                if ( isset( $recent_pages_published[ $i ]['dts'] ) && ! stristr( $recent_pages_published[ $i ]['dts'], '-' ) ) {
+                    $recent_pages_published[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_published[ $i ]['dts'] ) );
                 }
 
                 $name = wp_strip_all_tags( $recent_pages_published[ $i ]['website']->name );
@@ -317,7 +315,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
-    public static function render_draft_posts( $allPages, $recent_number, $individual ) {
+    public static function render_draft_posts( $allPages, $recent_number, $individual ) { // phpcs:ignore -- NOSONAR - complex.
         $recent_pages_draft = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'draft' );
         $recent_pages_draft = MainWP_Utility::sortmulti( $recent_pages_draft, 'dts', 'desc' );
         $is_demo            = MainWP_Demo_Handle::is_demo_mode();
@@ -335,7 +333,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                  * @since 4.1
                  */
                 do_action( 'mainwp_recent_pages_before_draft_list', $allPages, $recent_number );
-                if ( 0 === count( $recent_pages_draft ) ) {
+                if ( empty( $recent_pages_draft ) ) {
                     MainWP_UI::render_empty_element_placeholder();
                 }
                 ?>
@@ -346,10 +344,8 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     if ( ! isset( $recent_pages_draft[ $i ]['title'] ) || empty( $recent_pages_draft[ $i ]['title'] ) ) {
                         $recent_pages_draft[ $i ]['title'] = '(No Title)';
                     }
-                    if ( isset( $recent_pages_draft[ $i ]['dts'] ) ) {
-                        if ( ! stristr( $recent_pages_draft[ $i ]['dts'], '-' ) ) {
-                            $recent_pages_draft[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_draft[ $i ]['dts'] ) );
-                        }
+                    if ( isset( $recent_pages_draft[ $i ]['dts'] ) && ! stristr( $recent_pages_draft[ $i ]['dts'], '-' ) ) {
+                        $recent_pages_draft[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_draft[ $i ]['dts'] ) );
                     }
                     $name = wp_strip_all_tags( $recent_pages_draft[ $i ]['website']->name );
                     ?>
@@ -410,7 +406,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
-    public static function render_pending_posts( $allPages, $recent_number, $individual ) {
+    public static function render_pending_posts( $allPages, $recent_number, $individual ) { // phpcs:ignore -- NOSONAR - complex.
         $recent_pages_pending = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'pending' );
         $recent_pages_pending = MainWP_Utility::sortmulti( $recent_pages_pending, 'dts', 'desc' );
         $is_demo              = MainWP_Demo_Handle::is_demo_mode();
@@ -428,7 +424,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                  * @since 4.1
                  */
                 do_action( 'mainwp_recent_pages_before_pending_list', $allPages, $recent_number );
-                if ( 0 === count( $recent_pages_pending ) ) {
+                if ( empty( $recent_pages_pending ) ) {
                     MainWP_UI::render_empty_element_placeholder();
                 }
                 ?>
@@ -439,10 +435,8 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     if ( ! isset( $recent_pages_pending[ $i ]['title'] ) || empty( $recent_pages_pending[ $i ]['title'] ) ) {
                         $recent_pages_pending[ $i ]['title'] = '(No Title)';
                     }
-                    if ( isset( $recent_pages_pending[ $i ]['dts'] ) ) {
-                        if ( ! stristr( $recent_pages_pending[ $i ]['dts'], '-' ) ) {
-                            $recent_pages_pending[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_pending[ $i ]['dts'] ) );
-                        }
+                    if ( isset( $recent_pages_pending[ $i ]['dts'] ) && ! stristr( $recent_pages_pending[ $i ]['dts'], '-' ) ) {
+                        $recent_pages_pending[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_pending[ $i ]['dts'] ) );
                     }
                     $name = wp_strip_all_tags( $recent_pages_pending[ $i ]['website']->name );
                     ?>
@@ -504,7 +498,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
-    public static function render_future_posts( $allPages, $recent_number, $individual ) {
+    public static function render_future_posts( $allPages, $recent_number, $individual ) { // phpcs:ignore -- NOSONAR - complex.
         $recent_pages_future = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'future' );
         $recent_pages_future = MainWP_Utility::sortmulti( $recent_pages_future, 'dts', 'desc' );
         $is_demo             = MainWP_Demo_Handle::is_demo_mode();
@@ -522,7 +516,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          * @since 4.1
          */
         do_action( 'mainwp_recent_pages_before_future_list', $allPages, $recent_number );
-        if ( 0 === count( $recent_pages_future ) ) {
+        if ( empty( $recent_pages_future ) ) {
             MainWP_UI::render_empty_element_placeholder();
         }
         ?>
@@ -533,10 +527,8 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             if ( ! isset( $recent_pages_future[ $i ]['title'] ) || empty( $recent_pages_future[ $i ]['title'] ) ) {
                 $recent_pages_future[ $i ]['title'] = '(No Title)';
             }
-            if ( isset( $recent_pages_future[ $i ]['dts'] ) ) {
-                if ( ! stristr( $recent_pages_future[ $i ]['dts'], '-' ) ) {
-                    $recent_pages_future[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_future[ $i ]['dts'] ) );
-                }
+            if ( isset( $recent_pages_future[ $i ]['dts'] ) && ! stristr( $recent_pages_future[ $i ]['dts'], '-' ) ) {
+                $recent_pages_future[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_future[ $i ]['dts'] ) );
             }
             $name = wp_strip_all_tags( $recent_pages_future[ $i ]['website']->name );
             ?>
@@ -599,7 +591,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
          * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
          */
-    public static function render_trash_posts( $allPages, $recent_number, $individual ) {
+    public static function render_trash_posts( $allPages, $recent_number, $individual ) { // phpcs:ignore -- NOSONAR - complex.
         $recent_pages_trash = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'trash' );
         $recent_pages_trash = MainWP_Utility::sortmulti( $recent_pages_trash, 'dts', 'desc' );
         $is_demo            = MainWP_Demo_Handle::is_demo_mode();
@@ -617,7 +609,7 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          * @since 4.1
          */
         do_action( 'mainwp_recent_pages_before_trash_list', $allPages, $recent_number );
-        if ( 0 === count( $recent_pages_trash ) ) {
+        if ( empty( $recent_pages_trash ) ) {
             MainWP_UI::render_empty_element_placeholder();
         }
         ?>
@@ -628,10 +620,8 @@ class MainWP_Recent_Pages { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             if ( ! isset( $recent_pages_trash[ $i ]['title'] ) || empty( $recent_pages_trash[ $i ]['title'] ) ) {
                 $recent_pages_trash[ $i ]['title'] = '(No Title)';
             }
-            if ( isset( $recent_pages_trash[ $i ]['dts'] ) ) {
-                if ( ! stristr( $recent_pages_trash[ $i ]['dts'], '-' ) ) {
-                    $recent_pages_trash[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_trash[ $i ]['dts'] ) );
-                }
+            if ( isset( $recent_pages_trash[ $i ]['dts'] ) && ! stristr( $recent_pages_trash[ $i ]['dts'], '-' ) ) {
+                $recent_pages_trash[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_trash[ $i ]['dts'] ) );
             }
             $name = wp_strip_all_tags( $recent_pages_trash[ $i ]['website']->name );
             ?>

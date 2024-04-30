@@ -93,13 +93,10 @@ class Api_Backups_Handler {
         }
 
         $server_id  = isset( $site_options['mainwp_3rd_party_instance_id'] ) ? $site_options['mainwp_3rd_party_instance_id'] : null;
-        $app_id     = isset( $site_options['mainwp_3rd_party_app_id'] ) ? $site_options['mainwp_3rd_party_app_id'] : null;
         $backup_api = isset( $site_options['mainwp_3rd_party_api'] ) ? strtolower( $site_options['mainwp_3rd_party_api'] ) : null;
 
-        if ( 'cpanel' !== $backup_api && 'plesk' !== $backup_api ) {
-            if ( empty( $server_id ) || empty( $backup_api ) ) {
-                wp_send_json( array( 'error' => esc_html__( 'Error: Check Backup API settings for the website. Server Id & or Backup API provider not set.', 'mainwp' ) ) );
-            }
+        if ( 'cpanel' !== $backup_api && 'plesk' !== $backup_api && ( empty( $server_id ) || empty( $backup_api ) ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'Error: Check Backup API settings for the website. Server Id & or Backup API provider not set.', 'mainwp' ) ) );
         }
 
         $return = true;
@@ -226,6 +223,8 @@ class Api_Backups_Handler {
                     }
                     static::send_bulk_backups_error( false, esc_html__( 'Error: Plesk Backup', 'mainwp' ) );
                 }
+                break;
+            default:
                 break;
         }
 

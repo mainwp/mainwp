@@ -256,7 +256,7 @@ window.wp = window.wp || {};
 
             // Otherwise, send a new API call and add it to the cache.
             if (!query && !isPaginated) {
-                query = this.apiCall(request).done(function (data) {
+                this.apiCall(request).done(function (data) {
 
                     // Update the collection with the queried data.
                     if (data.themes) {
@@ -283,7 +283,7 @@ window.wp = window.wp || {};
                 if (isPaginated) {
                     return this.apiCall(request, isPaginated).done(function (data) {
                         // Add the new themes to the current collection
-                        // @todo update counter
+                        // @devtodo update counter
                         self.add(data.themes);
                         self.trigger('query:success');
 
@@ -354,7 +354,7 @@ window.wp = window.wp || {};
                     }
                 }
             }).done(function (response) {
-                if (response && response.themes) {
+                if (response?.themes) {
                     let favThemes = jQuery('#mainwp-favorites-themes').attr('favorites-themes');
                     if ('' !== favThemes) {
                         try {
@@ -452,7 +452,8 @@ window.wp = window.wp || {};
 
             // Bail if the user scrolled on a touch device
             if (this.touchDrag === true) {
-                return this.touchDrag = false;
+                this.touchDrag = false;
+                return this.touchDrag;
             }
 
             // Prevent the modal from showing when the user clicks
@@ -477,7 +478,8 @@ window.wp = window.wp || {};
 
             // Bail if the user scrolled on a touch device
             if (this.touchDrag === true) {
-                return this.touchDrag = false;
+                this.touchDrag = false;
+                return this.touchDrag;
             }
 
             // Allow direct link path to installing a theme.
@@ -546,7 +548,8 @@ window.wp = window.wp || {};
                 // If we have no more themes, bail.
                 if (_.isUndefined(self.current)) {
                     self.options.parent.parent.trigger('theme:end');
-                    return self.current = current;
+                    self.current = current;
+                    return self.current;
                 }
 
                 preview.model = self.current;
@@ -1543,7 +1546,7 @@ window.wp = window.wp || {};
                 $('.filter-drawer .apply-filters').find('span').text('');
                 $('.filter-drawer .clear-filters').hide();
                 $('body').removeClass('filters-applied');
-                return false;
+                return [];
             }
 
             $('.filter-drawer .apply-filters').find('span').text(tags.length);

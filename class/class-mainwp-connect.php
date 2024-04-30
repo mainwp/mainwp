@@ -525,13 +525,15 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             if ( ! empty( $params['login_required'] ) && ! empty( $params['where'] ) ) {
-                $login_params = apply_filters( 'mainwp_open_site_login_required_params', false, $params );
-                if ( is_array( $login_params ) && ! empty( $login_params ) ) {
-                    $login_where = '';
-                    foreach ( $login_params as $key => $value ) {
-                        $login_where .= '&' . rawurlencode( $key ) . '=' . rawurlencode( $value );
+                $open_params = apply_filters( 'mainwp_open_site_login_required_params', false, $params, $website );
+                if ( is_array( $open_params ) && ! empty( $open_params ) ) {
+                    $where_params = '';
+                    foreach ( $open_params as $key => $value ) {
+                        $where_params .= rawurlencode( sanitize_text_field( wp_unslash( $key ) ) ) . '=' . rawurlencode( sanitize_text_field( wp_unslash( $value ) ) ) . '&';
                     }
-                    $params['where'] .= ! empty( $login_where ) ? $login_where : '';
+                    if ( ! empty( $where_params ) ) {
+                        $params['where_params'] .= rawurlencode( rtrim( $where_params, '&' ) );
+                    }
                 }
             }
 

@@ -21,33 +21,33 @@ jQuery(function(){
      */
 
     // Trigger action_backup.
-    jQuery('.mainwp_3rd_party_api_cloudways_action_backup').on('click', function (event) {
-        cloudways_action_backup(this, event);
+    jQuery('.mainwp_3rd_party_api_cloudways_action_backup').on('click', function () {
+        cloudways_action_backup(this);
     });
 
     // Trigger action_backup.
-    jQuery('#mainwp_3rd_party_api_cloudways_action_individual_create_backup').on('click', function (event) {
-        cloudways_action_backup(this, event);
+    jQuery('#mainwp_3rd_party_api_cloudways_action_individual_create_backup').on('click', function () {
+        cloudways_action_backup(this);
     });
 
     // Trigger action_update_ids.
-    jQuery('.mainwp_3rd_party_api_cloudways_action_update_ids').on('click', function (event) {
-        cloudways_action_update_ids(this, event);
+    jQuery('.mainwp_3rd_party_api_cloudways_action_update_ids').on('click', function () {
+        cloudways_action_update_ids(this);
     });
 
     //Trigger action_refresh_available_backups.
-    jQuery('#mainwp_3rd_party_api_cloudways_action_refresh_available_backups').on('click', function (event) {
-        cloudways_action_refresh_available_backups(this, event);
+    jQuery('#mainwp_3rd_party_api_cloudways_action_refresh_available_backups').on('click', function () {
+        cloudways_action_refresh_available_backups(this);
     });
 
     // Trigger action_restore_backup.
-    jQuery(document).on('click', '.mainwp_3rd_party_api_cloudways_action_restore_backup', function (event) {
-        cloudways_action_restore_backup(this, event);
+    jQuery(document).on('click', '.mainwp_3rd_party_api_cloudways_action_restore_backup', function () {
+        cloudways_action_restore_backup(this);
     });
 
     // Trigger action_delete_backup. This will delete the 24hr restore point allowing for a new restoration to be created.
-    jQuery('#mainwp_3rd_party_api_cloudways_action_delete_backup').on('click', function (event) {
-        cloudways_action_delete_backup(this, event);
+    jQuery('#mainwp_3rd_party_api_cloudways_action_delete_backup').on('click', function () {
+        cloudways_action_delete_backup(this);
     });
 
     /**
@@ -55,33 +55,33 @@ jQuery(function(){
      */
 
     // Trigger action_backup.
-    jQuery('.mainwp_3rd_party_api_vultr_action_backup').on('click', function (event) {
-        vultr_action_create_snapshot(this, event);
+    jQuery('.mainwp_3rd_party_api_vultr_action_backup').on('click', function () {
+        vultr_action_create_snapshot(this);
     });
 
     // Trigger action_backup.
-    jQuery('#mainwp_3rd_party_api_vultr_action_individual_create_backup').on('click', function (event) {
-        vultr_action_create_snapshot(this, event);
+    jQuery('#mainwp_3rd_party_api_vultr_action_individual_create_backup').on('click', function () {
+        vultr_action_create_snapshot(this);
     });
 
     // Trigger action_update_ids.
-    jQuery('.mainwp_3rd_party_api_vultr_action_update_ids').on('click', function (event) {
-        vultr_action_update_ids(this, event);
+    jQuery('.mainwp_3rd_party_api_vultr_action_update_ids').on('click', function () {
+        vultr_action_update_ids(this);
     });
 
     //Trigger action_refresh_available_backups.
-    jQuery('#mainwp_3rd_party_api_vultr_action_refresh_available_backups').on('click', function (event) {
-        vultr_action_refresh_available_backups(this, event);
+    jQuery('#mainwp_3rd_party_api_vultr_action_refresh_available_backups').on('click', function () {
+        vultr_action_refresh_available_backups(this);
     });
 
     // Trigger action_restore_backup.
-    jQuery(document).on('click', '.mainwp_3rd_party_api_vultr_action_restore_backup', function (event) {
-        vultr_action_restore_backup(this, event);
+    jQuery(document).on('click', '.mainwp_3rd_party_api_vultr_action_restore_backup', function () {
+        vultr_action_restore_backup(this);
     });
 
     // Trigger action_delete_backup.
-    jQuery(document).on('click', '.mainwp_3rd_party_api_vultr_action_delete_backup', function (event) {
-        vultr_action_delete_backup(this, event);
+    jQuery(document).on('click', '.mainwp_3rd_party_api_vultr_action_delete_backup', function () {
+        vultr_action_delete_backup(this);
     });
 
     /**
@@ -89,33 +89,33 @@ jQuery(function(){
      */
 
     // Trigger action_backup.
-    jQuery('.mainwp_3rd_party_api_gridpane_action_backup').on('click', function (event) {
-        gridpane_action_create_backup(this, event);
+    jQuery('.mainwp_3rd_party_api_gridpane_action_backup').on('click', function () {
+        gridpane_action_create_backup(this);
     });
 
     // Trigger action_backup.
-    jQuery('#mainwp_3rd_party_api_gridpane_action_individual_create_backup').on('click', function (event) {
-        gridpane_action_create_backup(this, event);
+    jQuery('#mainwp_3rd_party_api_gridpane_action_individual_create_backup').on('click', function () {
+        gridpane_action_create_backup(this);
     });
 
     // Trigger action_update_ids.
-    jQuery('.mainwp_3rd_party_api_gridpane_action_update_ids').on('click', function (event) {
-        gridpane_action_update_ids(this, event);
+    jQuery('.mainwp_3rd_party_api_gridpane_action_update_ids').on('click', function () {
+        gridpane_action_update_ids(this);
     });
 
     // Trigger action_refresh_available_backups.
-    jQuery('#mainwp_3rd_party_api_gridpane_action_refresh_available_backups').on('click', function (event) {
-        gridpane_action_refresh_available_backups(this, event);
+    jQuery('#mainwp_3rd_party_api_gridpane_action_refresh_available_backups').on('click', function () {
+        gridpane_action_refresh_available_backups(this);
     });
 
     // Trigger action_restore_backup.
-    jQuery(document).on('click', '.mainwp_3rd_party_api_gridpane_action_restore_backup', function (event) {
-        gridpane_action_restore_backup(this, event);
+    jQuery(document).on('click', '.mainwp_3rd_party_api_gridpane_action_restore_backup', function () {
+        gridpane_action_restore_backup(this);
     });
 
     // Trigger action_delete_backup.
-    jQuery(document).on('click', '.mainwp_3rd_party_api_gridpane_action_delete_backup', function (event) {
-        gridpane_action_delete_backup(this, event);
+    jQuery(document).on('click', '.mainwp_3rd_party_api_gridpane_action_delete_backup', function () {
+        gridpane_action_delete_backup(this);
     });
 
     /**
@@ -123,35 +123,35 @@ jQuery(function(){
      */
 
     // Trigger action_backup.
-    jQuery('.mainwp_3rd_party_api_linode_action_backup').on('click', function (event) {
-        linode_action_create_backup(this, event);
+    jQuery('.mainwp_3rd_party_api_linode_action_backup').on('click', function () {
+        linode_action_create_backup(this);
     });
 
     // Trigger action_backup.
-    jQuery('#mainwp_3rd_party_api_linode_action_individual_create_backup').on('click', function (event) {
-        linode_action_create_backup(this, event);
+    jQuery('#mainwp_3rd_party_api_linode_action_individual_create_backup').on('click', function () {
+        linode_action_create_backup(this);
     });
 
     //Trigger action_update_ids.
-    jQuery('.mainwp_3rd_party_api_linode_action_update_ids').on('click', function (event) {
-        linode_action_update_ids(this, event);
+    jQuery('.mainwp_3rd_party_api_linode_action_update_ids').on('click', function () {
+        linode_action_update_ids(this);
     });
 
     // Trigger action_refresh_available_backups.
-    jQuery('#mainwp_3rd_party_api_linode_action_refresh_available_backups').on('click', function (event) {
-        linode_action_refresh_available_backups(this, event);
+    jQuery('#mainwp_3rd_party_api_linode_action_refresh_available_backups').on('click', function () {
+        linode_action_refresh_available_backups(this);
     });
 
     // Trigger action_restore_backup.
-    jQuery(document).on('click', '.mainwp_3rd_party_api_linode_action_restore_backup', function (event) {
-        linode_action_restore_backup(this, event);
+    jQuery(document).on('click', '.mainwp_3rd_party_api_linode_action_restore_backup', function () {
+        linode_action_restore_backup(this);
     });
 
     // Trigger action_delete_backup.
-    jQuery('#mainwp_3rd_party_api_linode_action_cancel_backups').on('click', function (event) {
+    jQuery('#mainwp_3rd_party_api_linode_action_cancel_backups').on('click', function () {
         let confirmMsg = __('Are you sure you want to Disable and Delete all existing backups from this Linode?');
         mainwp_confirm(confirmMsg, function () {
-            linode_action_cancel_backups(this, event);
+            linode_action_cancel_backups(this);
         });
     });
 
@@ -161,32 +161,32 @@ jQuery(function(){
 
     //Trigger action_update_ids.
     jQuery('.mainwp_3rd_party_api_digitalocean_action_update_ids').on('click', function (event) {
-        digitalocean_action_update_ids(this, event);
+        digitalocean_action_update_ids(this);
     });
 
     // Trigger action_create_backup.
-    jQuery('.mainwp_3rd_party_api_digitalocean_action_backup').on('click', function (event) {
-        digitalocean_action_create_backup(this, event);
+    jQuery('.mainwp_3rd_party_api_digitalocean_action_backup').on('click', function () {
+        digitalocean_action_create_backup(this);
     });
 
     // Trigger action_individual_create_backup.
-    jQuery('#mainwp_3rd_party_api_digitalocean_action_individual_create_backup').on('click', function (event) {
-        digitalocean_action_create_backup(this, event);
+    jQuery('#mainwp_3rd_party_api_digitalocean_action_individual_create_backup').on('click', function () {
+        digitalocean_action_create_backup(this);
     });
 
     // Trigger action_refresh_available_backups.
-    jQuery('#mainwp_3rd_party_api_digitalocean_action_refresh_available_backups').on('click', function (event) {
-        digitalocean_action_refresh_available_backups(this, event);
+    jQuery('#mainwp_3rd_party_api_digitalocean_action_refresh_available_backups').on('click', function () {
+        digitalocean_action_refresh_available_backups(this);
     });
 
     // Trigger action_delete_backup.
-    jQuery(document).on('click', '.mainwp_3rd_party_api_digitalocean_action_delete_backup', function (event) {
-        digitalocean_action_delete_backup(this, event);
+    jQuery(document).on('click', '.mainwp_3rd_party_api_digitalocean_action_delete_backup', function () {
+        digitalocean_action_delete_backup(this);
     });
 
     // Trigger action_restore_backup.
-    jQuery(document).on('click', '.mainwp_3rd_party_api_digitalocean_action_restore_backup', function (event) {
-        digitalocean_action_restore_backup(this, event);
+    jQuery(document).on('click', '.mainwp_3rd_party_api_digitalocean_action_restore_backup', function () {
+        digitalocean_action_restore_backup(this);
     });
 
     /**
@@ -194,24 +194,24 @@ jQuery(function(){
      */
 
     // Trigger action_refresh_available_backups.
-    jQuery('#mainwp_3rd_party_api_cpanel_action_refresh_available_backups').on('click', function (event) {
-        cpanel_action_refresh_available_backups(this, event);
+    jQuery('#mainwp_3rd_party_api_cpanel_action_refresh_available_backups').on('click', function () {
+        cpanel_action_refresh_available_backups(this);
     });
 
     // Trigger action_restore_backup.
     jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_backup', function (event) {
         let confirmMsg = __('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
-            cPanel_action_restore_backup(this, event);
+            cPanel_action_restore_backup(this);
         });
     });
 
     // Trigger action_restore_database_backup.
-    jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_database_backup', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_database_backup', function () {
         let confirmMsg = __('Are you sure you want to Restore this backup?');
         let btObj = this;
         mainwp_confirm(confirmMsg, function () {
-            cpanel_action_restore_database_backup(btObj, event);
+            cpanel_action_restore_database_backup(btObj);
         });
     });
 
@@ -219,54 +219,54 @@ jQuery(function(){
     jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_manual_backup', function (event) {
         let confirmMsg = __('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
-            cpanel_action_restore_manual_backup(this, event);
+            cpanel_action_restore_manual_backup();
         });
     });
 
     // Trigger action_backup.
-    jQuery('#mainwp_3rd_party_api_cpanel_action_individual_create_backup').on('click', function (event) {
-        cpanel_action_create_backup(this, event);
+    jQuery('#mainwp_3rd_party_api_cpanel_action_individual_create_backup').on('click', function () {
+        cpanel_action_create_backup(this);
     });
 
     // Trigger action_create_wptk_backup.
-    jQuery('#mainwp_3rd_party_api_cpanel_action_create_wptk_backup').on('click', function (event) {
-        cpanel_action_create_wptk_backup(this, event);
+    jQuery('#mainwp_3rd_party_api_cpanel_action_create_wptk_backup').on('click', function () {
+        cpanel_action_create_wptk_backup(this);
     });
 
     // Trigger action_backup for bulk backups.
-    jQuery('.mainwp_3rd_party_api_cpanel_action_full_backup').on('click', function (event) {
-        cpanel_action_create_full_backup(this, event);
+    jQuery('.mainwp_3rd_party_api_cpanel_action_full_backup').on('click', function () {
+        cpanel_action_create_full_backup(this);
     });
 
     // Trigger action_database_backup.
     jQuery('#mainwp_3rd_party_api_cpanel_action_create_database_backup').on('click', function (event) {
-        cpanel_action_create_database_backup(this, event);
+        cpanel_action_create_database_backup(this);
     });
 
     // Trigger action_backup for full backups. Database & Files.
-    jQuery('#mainwp_3rd_party_api_cpanel_action_create_full_backup').on('click', function (event) {
-        cpanel_action_create_full_backup(this, event);
+    jQuery('#mainwp_3rd_party_api_cpanel_action_create_full_backup').on('click', function () {
+        cpanel_action_create_full_backup(this);
     });
 
     // Trigger action_restore_wptk_backup.
-    jQuery('.mainwp_3rd_party_api_cpanel_action_restore_wptk_backup').on('click', function (event) {
+    jQuery('.mainwp_3rd_party_api_cpanel_action_restore_wptk_backup').on('click', function () {
         let confirmMsg = __('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
-            cpanel_action_restore_wptk_backup(this, event);
+            cpanel_action_restore_wptk_backup(this);
         });
     });
 
     // Trigger action_delete_wptk_backup.
-    jQuery('.mainwp_3rd_party_api_cpanel_action_delete_wptk_backup').on('click', function (event) {
+    jQuery('.mainwp_3rd_party_api_cpanel_action_delete_wptk_backup').on('click', function () {
         let confirmMsg = __('Are you sure you want to Delete this backup?');
         mainwp_confirm(confirmMsg, function () {
-            cpanel_action_delete_wptk_backup(this, event);
+            cpanel_action_delete_wptk_backup(this);
         });
     });
 
     // Trigger action_download_wptk_backup
-    jQuery('.mainwp_3rd_party_api_cpanel_action_download_wptk_backup').on('click', function (event) {
-        cpanel_action_download_wptk_backup(this, event);
+    jQuery('.mainwp_3rd_party_api_cpanel_action_download_wptk_backup').on('click', function () {
+        cpanel_action_download_wptk_backup();
     });
 
     /**
@@ -274,39 +274,39 @@ jQuery(function(){
      */
 
     // Trigger action_refresh_available_backups.
-    jQuery('#mainwp_3rd_party_api_plesk_action_refresh_available_backups').on('click', function (event) {
-        plesk_action_refresh_available_backups(this, event);
+    jQuery('#mainwp_3rd_party_api_plesk_action_refresh_available_backups').on('click', function () {
+        plesk_action_refresh_available_backups(this);
     });
 
     //Trigger action_backup.
-    jQuery('#mainwp_3rd_party_api_plesk_action_individual_create_backup').on('click', function (event) {
-        plesk_action_create_backup(this, event);
+    jQuery('#mainwp_3rd_party_api_plesk_action_individual_create_backup').on('click', function () {
+        plesk_action_create_backup(this);
     });
 
     // Trigger action_backup. ( bulk )
-    jQuery('.mainwp_3rd_party_api_plesk_action_backup ').on('click', function (event) {
-        plesk_action_create_backup(this, event);
+    jQuery('.mainwp_3rd_party_api_plesk_action_backup ').on('click', function () {
+        plesk_action_create_backup(this);
     });
 
     // Trigger action_restore_backup.
     jQuery(document).on('click', '.mainwp_3rd_party_api_plesk_action_restore_backup', function (event) {
         let confirmMsg = __('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
-            plesk_action_restore_backup(this, event);
+            plesk_action_restore_backup();
         });
     });
 
     // Trigger action_delete_backup.
-    jQuery(document).on('click', '.mainwp_3rd_party_api_plesk_action_delete_backup', function (event) {
+    jQuery(document).on('click', '.mainwp_3rd_party_api_plesk_action_delete_backup', function () {
         let confirmMsg = __('Are you sure you want to Delete this backup?');
         mainwp_confirm(confirmMsg, function () {
-            plesk_action_delete_backup(this, event);
+            plesk_action_delete_backup();
         });
     });
 
     // Trigger action_backup_selected_sites.
-    jQuery('#action_backup_selected_sites').on('click', function (event) {
-        action_backup_selected_sites(this, event);
+    jQuery('#action_backup_selected_sites').on('click', function () {
+        action_backup_selected_sites(this);
     });
 
     /********************************************************
@@ -330,8 +330,8 @@ jQuery(function(){
     jQuery('#mainwp_api_cpanel_backup_tabs .item').tab();
 
     // Trigger action_check_tab. Handle the click event on the TAB Buttons.
-    jQuery('#mainwp_api_cpanel_backup_tabs .item').on('click', function (event) {
-        action_check_tab(this, event);
+    jQuery('#mainwp_api_cpanel_backup_tabs .item').on('click', function () {
+        action_check_tab();
     });
 
     /**
@@ -357,7 +357,7 @@ jQuery(function(){
  * This function is called when the "Backup Selected Sites" button is clicked.
  * mainwp_api_backups_do_backups() is defined in assets/js/mainwp-api-backups.js.
  */
-action_backup_selected_sites = function (pObj) {
+let action_backup_selected_sites = function (pObj) {
     mainwp_api_backups_do_backups(pObj);
 }
 
@@ -365,7 +365,7 @@ action_backup_selected_sites = function (pObj) {
  *  Handle switching TAB Action Buttons on Individual Cpanel Backups page.
  *  Check if cPanel or Plesk is selected TAB when TAB is clicked & display the correct content.
  */
-action_check_tab = function () {
+let action_check_tab = function () {
 
     let ref_this = jQuery('#mainwp_api_cpanel_backup_tabs div.active');
     if (ref_this.data('tab') === 'cpanel-native') {
@@ -386,7 +386,7 @@ let module_api_backups_prepare_working_status = function(button){
  */
 
 // Create Backup.
-cloudways_action_backup = function (pObj) {
+let cloudways_action_backup = function (pObj) {
 
     jQuery(pObj).attr('disabled', 'true');
     let button = jQuery(pObj).closest('td');
@@ -435,7 +435,7 @@ cloudways_action_backup = function (pObj) {
 };
 
 // Assign Apps to Child Sites.
-cloudways_action_update_ids = function (pObj) {
+let cloudways_action_update_ids = function (pObj) {
 
     jQuery(pObj).attr('disabled', 'true');
     let button = jQuery(pObj).closest('td');
@@ -460,7 +460,7 @@ cloudways_action_update_ids = function (pObj) {
 
 
 // Refresh Available Backup.
-cloudways_action_refresh_available_backups = function (pObj) {
+let cloudways_action_refresh_available_backups = function (pObj) {
 
     let websiteId = jQuery(pObj).attr('website_id');
 
@@ -512,7 +512,7 @@ cloudways_action_refresh_available_backups = function (pObj) {
 };
 
 // Restore backups.
-cloudways_action_restore_backup = function (pObj) {
+let cloudways_action_restore_backup = function (pObj) {
     let button = jQuery(pObj);
     let websiteId = jQuery(pObj).attr('website_id');
     let backupDate = jQuery(pObj).attr('backup_date');
@@ -557,7 +557,7 @@ cloudways_action_restore_backup = function (pObj) {
 };
 
 // Delete backups.
-cloudways_action_delete_backup = function (pObj) {
+let cloudways_action_delete_backup = function (pObj) {
 
     jQuery(pObj).attr('disabled', 'true');
     let button = jQuery(pObj).closest('td');
@@ -610,7 +610,7 @@ cloudways_action_delete_backup = function (pObj) {
  */
 
 // Assign Instances to Child Sites.
-vultr_action_update_ids = function (pObj) {
+let vultr_action_update_ids = function (pObj) {
     jQuery(pObj).attr('disabled', 'true');
     let button = jQuery(pObj).closest('td');
 
@@ -654,7 +654,7 @@ vultr_action_update_ids = function (pObj) {
 };
 
 // Create Backup.
-vultr_action_create_snapshot = function (pObj) {
+let vultr_action_create_snapshot = function (pObj) {
 
     jQuery(pObj).attr('disabled', 'true');
     let button = jQuery(pObj).closest('td');
@@ -698,7 +698,7 @@ vultr_action_create_snapshot = function (pObj) {
 };
 
 // Refresh Available Backup.
-vultr_action_refresh_available_backups = function (pObj) {
+let vultr_action_refresh_available_backups = function (pObj) {
 
     let websiteId = jQuery(pObj).attr('website_id');
 
@@ -742,7 +742,7 @@ vultr_action_refresh_available_backups = function (pObj) {
     });
 };
 // Restore Backup.
-vultr_action_restore_backup = function (pObj) {
+let vultr_action_restore_backup = function (pObj) {
 
     let button = jQuery(pObj);
     let websiteId = jQuery(pObj).attr('website_id');
@@ -789,7 +789,7 @@ vultr_action_restore_backup = function (pObj) {
 
 
 // Delete Backup.
-vultr_action_delete_backup = function (pObj) {
+let vultr_action_delete_backup = function (pObj) {
 
     let button = jQuery(pObj);
     let websiteId = jQuery(pObj).attr('website_id');
@@ -840,7 +840,7 @@ vultr_action_delete_backup = function (pObj) {
  */
 
 // Assign Site ID's to Child Sites.
-gridpane_action_update_ids = function (pObj) {
+let gridpane_action_update_ids = function (pObj) {
     jQuery(pObj).attr('disabled', 'true');
     let button = jQuery(pObj).closest('td');
 
@@ -863,7 +863,7 @@ gridpane_action_update_ids = function (pObj) {
 };
 
 // Create Backup.
-gridpane_action_create_backup = function (pObj) {
+let gridpane_action_create_backup = function (pObj) {
 
     jQuery(pObj).attr('disabled', 'true');
     let button = jQuery(pObj).closest('td');
@@ -912,7 +912,7 @@ gridpane_action_create_backup = function (pObj) {
 };
 
 // Refresh Available Backup.
-gridpane_action_refresh_available_backups = function (pObj) {
+let gridpane_action_refresh_available_backups = function (pObj) {
 
     let websiteId = jQuery(pObj).attr('website_id');
 
@@ -957,7 +957,7 @@ gridpane_action_refresh_available_backups = function (pObj) {
 };
 
 // Restore Backup.
-gridpane_action_restore_backup = function (pObj) {
+let gridpane_action_restore_backup = function (pObj) {
 
     let button = jQuery(pObj);
     let websiteId = jQuery(pObj).attr('website_id');
@@ -1005,7 +1005,7 @@ gridpane_action_restore_backup = function (pObj) {
 };
 
 // Delete Backup.
-gridpane_action_delete_backup = function (pObj) {
+let gridpane_action_delete_backup = function (pObj) {
 
     let button = jQuery(pObj);
 
@@ -1058,7 +1058,7 @@ gridpane_action_delete_backup = function (pObj) {
  */
 
 // Assign Site ID's to Child Sites.
-linode_action_update_ids = function (pObj) {
+let linode_action_update_ids = function (pObj) {
     jQuery(pObj).attr('disabled', 'true');
     let button = jQuery(pObj).closest('td');
 
@@ -1080,7 +1080,7 @@ linode_action_update_ids = function (pObj) {
 };
 
 // Create Backup.
-linode_action_create_backup = function (pObj) {
+let linode_action_create_backup = function (pObj) {
 
     jQuery(pObj).attr('disabled', 'true');
     let button = jQuery(pObj).closest('td');
@@ -1128,7 +1128,7 @@ linode_action_create_backup = function (pObj) {
 };
 
 // Refresh Available Backup.
-linode_action_refresh_available_backups = function (pObj) {
+let linode_action_refresh_available_backups = function (pObj) {
 
     let websiteId = jQuery(pObj).attr('website_id');
 
@@ -1173,7 +1173,7 @@ linode_action_refresh_available_backups = function (pObj) {
 };
 
 // restore Backup.
-linode_action_restore_backup = function (pObj) {
+let linode_action_restore_backup = function (pObj) {
 
     jQuery(pObj).attr('disabled', 'true');
     let button = jQuery(pObj).closest('td');
@@ -1222,7 +1222,7 @@ linode_action_restore_backup = function (pObj) {
 };
 
 // Cancel Backup.
-linode_action_cancel_backups = function (pObj) {
+let linode_action_cancel_backups = function (pObj) {
 
     let websiteId = jQuery(pObj).attr('website_id');
 
@@ -1269,7 +1269,7 @@ linode_action_cancel_backups = function (pObj) {
  */
 
 // Assign Site ID's to Child Sites.
-digitalocean_action_update_ids = function (pObj) {
+let digitalocean_action_update_ids = function (pObj) {
     jQuery(pObj).attr('disabled', 'true');
     let button = jQuery(pObj).closest('td');
 
@@ -1292,8 +1292,7 @@ digitalocean_action_update_ids = function (pObj) {
 };
 
 // Create Backup.
-digitalocean_action_create_backup = function (pObj) {
-
+let digitalocean_action_create_backup = function (pObj) {
     jQuery(pObj).attr('disabled', 'true');
     let button = jQuery(pObj).closest('td');
     let lastBackup = jQuery(pObj).closest('td').prev();
@@ -1339,7 +1338,7 @@ digitalocean_action_create_backup = function (pObj) {
 };
 
 // Refresh Available Backups.
-digitalocean_action_refresh_available_backups = function (pObj) {
+let digitalocean_action_refresh_available_backups = function (pObj) {
 
     let websiteId = jQuery(pObj).attr('website_id');
 
@@ -1384,7 +1383,7 @@ digitalocean_action_refresh_available_backups = function (pObj) {
 };
 
 // restore Backup.
-digitalocean_action_restore_backup = function (pObj) {
+let digitalocean_action_restore_backup = function (pObj) {
 
     let button = jQuery(pObj);
     let lastBackup = jQuery(pObj).closest('td').prev();
@@ -1433,7 +1432,7 @@ digitalocean_action_restore_backup = function (pObj) {
 };
 
 // Delete Backup.
-digitalocean_action_delete_backup = function (pObj) {
+let digitalocean_action_delete_backup = function (pObj) {
 
     let button = jQuery(pObj);
 
@@ -1480,7 +1479,7 @@ digitalocean_action_delete_backup = function (pObj) {
  * Cpanel Functions.
  */
 
-cpanel_action_create_wptk_backup = function (pObj) {
+let cpanel_action_create_wptk_backup = function (pObj) {
 
     let websiteId = jQuery(pObj).attr('website_id');
 
@@ -1524,7 +1523,7 @@ cpanel_action_create_wptk_backup = function (pObj) {
 
 // restore Backup.
 
-cpanel_action_restore_wptk_backup = function (pObj) {
+let cpanel_action_restore_wptk_backup = function (pObj) {
 
     // Disable link.
     jQuery(pObj).attr('disabled', 'true');
@@ -1572,7 +1571,7 @@ cpanel_action_restore_wptk_backup = function (pObj) {
 };
 
 // Delete Backup.
-cpanel_action_delete_wptk_backup = function (pObj) {
+let cpanel_action_delete_wptk_backup = function (pObj) {
 
     // Disable link.
     jQuery(pObj).attr('disabled', 'true');
@@ -1620,14 +1619,14 @@ cpanel_action_delete_wptk_backup = function (pObj) {
 };
 
 // Download Backup.
-cpanel_action_download_wptk_backup = function () {
+let cpanel_action_download_wptk_backup = function () {
 
     let href = jQuery('.mainwp_3rd_party_api_cpanel_action_download_wptk_backup').attr('href');
     window.open(href, '_blank');
 
 };
 
-cpanel_action_create_backup = function (pObj) {
+let cpanel_action_create_backup = function (pObj) {
 
     let websiteId = jQuery(pObj).attr('website_id');
 
@@ -1670,7 +1669,7 @@ cpanel_action_create_backup = function (pObj) {
 };
 
 // Refresh Available Backups.
-cpanel_action_refresh_available_backups = function (pObj) {
+let cpanel_action_refresh_available_backups = function (pObj) {
 
     let websiteId = jQuery(pObj).attr('website_id');
 
@@ -1715,7 +1714,7 @@ cpanel_action_refresh_available_backups = function (pObj) {
 };
 
 // restore Backup.
-cPanel_action_restore_backup = function (pObj) {
+let cPanel_action_restore_backup = function (pObj) {
 
     // Disable link.
     jQuery(pObj).attr('disabled', 'true');
@@ -1765,7 +1764,7 @@ cPanel_action_restore_backup = function (pObj) {
 };
 
 // restore Backup.
-cpanel_action_restore_database_backup = function (btObj) {
+let cpanel_action_restore_database_backup = function (btObj) {
 
     let websiteId = jQuery(btObj).attr('website_id');
     let backupID = jQuery(btObj).attr('backup_name');
@@ -1812,7 +1811,7 @@ cpanel_action_restore_database_backup = function (btObj) {
 };
 
 // restore Backup.
-cpanel_action_restore_manual_backup = function () {
+let cpanel_action_restore_manual_backup = function () {
 
     let websiteId = jQuery('#cpanel_automatic_backup_button').attr('website_id');
     let backupID = jQuery('#database_backup_button').attr('backup_name');
@@ -1858,7 +1857,7 @@ cpanel_action_restore_manual_backup = function () {
     });
 };
 
-cpanel_action_create_database_backup = function (pObj) {
+let cpanel_action_create_database_backup = function (pObj) {
 
     // Grab the website ID.
     let websiteId = jQuery(pObj).attr('website_id');
@@ -1903,7 +1902,7 @@ cpanel_action_create_database_backup = function (pObj) {
     });
 }
 
-cpanel_action_create_full_backup = function (pObj) {
+let cpanel_action_create_full_backup = function (pObj) {
 
     // Grab the website ID.
     let websiteId = jQuery(pObj).attr('website_id');
@@ -1956,7 +1955,7 @@ cpanel_action_create_full_backup = function (pObj) {
  */
 
 // Refresh Available Backups.
-plesk_action_refresh_available_backups = function (pObj) {
+let plesk_action_refresh_available_backups = function (pObj) {
 
     let websiteId = jQuery(pObj).attr('website_id');
 
@@ -2000,7 +1999,7 @@ plesk_action_refresh_available_backups = function (pObj) {
     });
 };
 
-plesk_action_create_backup = function (pObj) {
+let plesk_action_create_backup = function (pObj) {
 
     let websiteId = jQuery(pObj).attr('website_id');
 
@@ -2043,11 +2042,8 @@ plesk_action_create_backup = function (pObj) {
 };
 
 // Restore backups.
-plesk_action_restore_backup = function () {
-
-    //jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').attr('disabled', 'true');
+let plesk_action_restore_backup = function () {
     let button = jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').closest('td');
-
     let installationId = jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').attr('installation_id');
     let backupName = jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').attr('backup_name');
     let websiteId = jQuery('.mainwp_3rd_party_api_plesk_action_restore_backup').attr('website_id');
@@ -2092,7 +2088,7 @@ plesk_action_restore_backup = function () {
 };
 
 // Delete backups.
-plesk_action_delete_backup = function () {
+let plesk_action_delete_backup = function () {
     jQuery('.mainwp_3rd_party_api_plesk_action_delete_backup').attr('disabled', 'true');
     let button = jQuery('.mainwp_3rd_party_api_plesk_action_delete_backup').closest('td');
 

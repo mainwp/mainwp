@@ -369,7 +369,7 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_Sync::sync_information_array()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
-    public static function fix_security_issue() {
+    public static function fix_security_issue() { // phpcs:ignore -- NOSONAR - complex.
         $id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
         if ( ! $id ) {
             return '';

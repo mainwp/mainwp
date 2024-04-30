@@ -107,7 +107,7 @@ PRIMARY KEY  (`id`)  ';
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
 
-        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php'; // NOSONAR - WP compatible.
         foreach ( $sql as $query ) {
             dbDelta( $query );
         }
@@ -123,7 +123,7 @@ PRIMARY KEY  (`id`)  ';
      *
      * @return void
      */
-    public function update_db_cost( $current_version ) {
+    public function update_db_cost( $current_version ) { //phpcs:ignore -- NOSONAR - complex.
         if ( ! empty( $current_version ) ) {
             if ( version_compare( $current_version, '1.0.8', '<' ) ) {
                 $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'cost_tracker' ) . ' MODIFY COLUMN price decimal(26,8)' ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
@@ -152,7 +152,7 @@ PRIMARY KEY  (`id`)  ';
 
                     if ( ! empty( $items ) ) {
                         foreach ( $items as $it_id ) {
-                            $success = $this->wpdb->insert(
+                            $this->wpdb->insert(
                                 $this->table_name( 'lookup_item_objects' ),
                                 array(
                                     'item_id'     => $cost->id,
@@ -191,36 +191,34 @@ PRIMARY KEY  (`id`)  ';
 
         $id = isset( $update['id'] ) ? $update['id'] : 0;
 
-        if ( ! empty( $update['product_type'] ) && ! empty( $update['slug'] ) ) {
-            if ( in_array( $update['product_type'], array( 'plugin', 'theme' ), true ) ) {
-                // check existed cost tracker for this plugin / theme .
-                $current = $this->get_cost_tracker_by( 'slug', $update['slug'], $update['product_type'] );
-                if ( is_array( $current ) && ! empty( $current ) ) {
-                    $existed = false;
-                    if ( 1 === count( $current ) ) {
-                        $current = current( $current );
-                        if ( is_object( $current ) ) {
-                            if ( ! empty( $update['id'] ) ) {
-                                if ( ! empty( $current->id ) && (int) $current->id !== (int) $update['id'] ) {
-                                    $existed = true; // to fix.
-                                } elseif ( ! empty( $current->id ) ) {
-                                    $id = $current->id; // to update.
-                                }
-                            } else {
-                                $existed = true; // to fix: existed one.
+        if ( ! empty( $update['product_type'] ) && ! empty( $update['slug'] ) && in_array( $update['product_type'], array( 'plugin', 'theme' ), true ) ) {
+            // check existed cost tracker for this plugin / theme .
+            $current = $this->get_cost_tracker_by( 'slug', $update['slug'], $update['product_type'] );
+            if ( is_array( $current ) && ! empty( $current ) ) {
+                $existed = false;
+                if ( 1 === count( $current ) ) {
+                    $current = current( $current );
+                    if ( is_object( $current ) ) {
+                        if ( ! empty( $update['id'] ) ) {
+                            if ( ! empty( $current->id ) && (int) $current->id !== (int) $update['id'] ) {
+                                $existed = true; // to fix.
+                            } elseif ( ! empty( $current->id ) ) {
+                                $id = $current->id; // to update.
                             }
+                        } else {
+                            $existed = true; // to fix: existed one.
                         }
-                    } else {
-                        $existed = true; // to fix found multi items.
                     }
+                } else {
+                    $existed = true; // to fix found multi items.
+                }
 
-                    if ( $existed ) {
-                        $error = esc_html__( 'A cost tracker for this plugin already exists.', 'mainwp' );
-                        if ( 'theme' === $update['product_type'] ) {
-                            $error = esc_html__( 'A cost tracker for this theme already exists.', 'mainwp' );
-                        }
-                        throw new MainWP_Exception( esc_html( $error ) );
+                if ( $existed ) {
+                    $error = esc_html__( 'A cost tracker for this plugin already exists.', 'mainwp' );
+                    if ( 'theme' === $update['product_type'] ) {
+                        $error = esc_html__( 'A cost tracker for this theme already exists.', 'mainwp' );
                     }
+                    throw new MainWP_Exception( esc_html( $error ) );
                 }
             }
         }
@@ -228,8 +226,6 @@ PRIMARY KEY  (`id`)  ';
         if ( isset( $update['id'] ) ) {
             unset( $update['id'] );
         }
-
-        $site_id = isset( $update['site_id'] ) ? $update['site_id'] : '';
 
         if ( ! empty( $id ) ) {
 
@@ -304,7 +300,7 @@ PRIMARY KEY  (`id`)  ';
      *
      * @return mixed Result
      */
-    public function update_lookup_cost( $item_id, $obj_name, $new_obj_ids ) {
+    public function update_lookup_cost( $item_id, $obj_name, $new_obj_ids ) { //phpcs:ignore -- NOSONAR - complex.
 
         $allows = array( 'site', 'tag', 'client' );
 

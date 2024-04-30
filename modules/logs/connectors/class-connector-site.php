@@ -75,13 +75,6 @@ class Connector_Site extends Log_Connector {
     }
 
     /**
-     * Register log data.
-     */
-    public function register() { //phpcs:ignore -- overrided.
-        parent::register();
-    }
-
-    /**
      * Log site added process.
      *
      * @action transition_post_status.
@@ -93,7 +86,7 @@ class Connector_Site extends Log_Connector {
      */
     public function callback_mainwp_site_added( $website, $information = array() ) {
         if ( empty( $website ) || ! is_object( $website ) || empty( $website->id ) ) {
-            return;
+            return false;
         }
         $state = 1;
         $this->log(
@@ -218,20 +211,11 @@ class Connector_Site extends Log_Connector {
      * @return bool Return TRUE.
      */
     public function callback_mainwp_site_reconnected( $website, $success = true, $error = '' ) {
-
-        if ( $success ) {
-            $message = esc_html_x(
-                '%1$s',
-                '1. Item',
-                'mainwp'
-            );
-        } else {
-            $message = esc_html_x(
-                '%1$s',
-                '1. Item',
-                'mainwp'
-            );
-        }
+        $message = esc_html_x(
+            '%1$s',
+            '1. Item',
+            'mainwp'
+        );
 
         $args = array(
             'item'      => esc_html__( 'Reconnect', 'mainwp' ),
@@ -354,14 +338,14 @@ class Connector_Site extends Log_Connector {
     public function callback_mainwp_site_tag_action( $tag, $action, $data = array() ) {
 
         if ( empty( $tag ) || ! is_string( $action ) || ! in_array( $action, array( 'created', 'updated', 'deleted' ), true ) ) {
-            return;
+            return false;
         }
 
         $args = array(
             'name' => $tag->name,
         );
 
-        if ( 'created' === $action ) {
+        if ( 'created' === $action || 'deleted' === $action ) {
             $message = esc_html_x(
                 '%1$s',
                 '1. Tag name',
@@ -377,14 +361,8 @@ class Connector_Site extends Log_Connector {
                 'name'     => $tag->name,
                 'old_name' => is_array( $data ) && isset( $data['old_name'] ) ? $data['old_name'] : '',
             );
-        } elseif ( 'deleted' === $action ) {
-            $message = esc_html_x(
-                '%1$s',
-                '1. Tag name',
-                'mainwp'
-            );
         } else {
-            return;
+            return fase;
         }
 
         $state = 1;

@@ -156,7 +156,7 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
         $located = $template;
 
         if ( ! file_exists( $located ) ) {
-            return;
+            return '';
         }
 
         extract( $args ); // @codingStandardsIgnoreLine
@@ -176,7 +176,7 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
          */
         do_action( 'mainwp_before_template_part', $template_name, $located, $args );
 
-        include_once $located;
+        include_once $located; // NOSONAR - WP compatible.
 
         /**
          * Action: mainwp_after_template_part
@@ -324,7 +324,7 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      */
-    public function handle_template_file_action() {
+    public function handle_template_file_action() { // phpcs:ignore -- NOSONAR - complex.
         $updated_templ = false;
 
         $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
@@ -339,25 +339,21 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
         $type            = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : '';
         $templ_base_name = ! empty( $type ) ? static::get_template_name_by_notification_type( $type ) : '';
 
-        if ( ! empty( $templ_base_name ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'delete-email-template' ) ) {
-            if ( $hasWPFileSystem ) {
-                $dir     = $this->template_custom_path;
-                $deleted = $wp_filesystem->delete( $dir . $templ_base_name );
-                if ( $deleted ) {
-                    $updated_templ = 1;
-                }
+        if ( ! empty( $templ_base_name ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'delete-email-template' ) && $hasWPFileSystem ) {
+            $dir     = $this->template_custom_path;
+            $deleted = $wp_filesystem->delete( $dir . $templ_base_name );
+            if ( $deleted ) {
+                $updated_templ = 1;
             }
         }
 
-        if ( ! empty( $templ_base_name ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'copy-email-template' ) ) {
-            if ( $hasWPFileSystem ) {
-                $template_path = $this->template_path;
-                $source_dir    = apply_filters( 'mainwp_default_template_source_dir', $template_path, $templ_base_name );
-                $dest_dir      = $this->template_custom_path;
-                $copied        = $wp_filesystem->copy( $source_dir . $templ_base_name, $dest_dir . $templ_base_name );
-                if ( $copied ) {
-                    $updated_templ = 2;
-                }
+        if ( ! empty( $templ_base_name ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'copy-email-template' ) && $hasWPFileSystem ) {
+            $template_path = $this->template_path;
+            $source_dir    = apply_filters( 'mainwp_default_template_source_dir', $template_path, $templ_base_name );
+            $dest_dir      = $this->template_custom_path;
+            $copied        = $wp_filesystem->copy( $source_dir . $templ_base_name, $dest_dir . $templ_base_name );
+            if ( $copied ) {
+                $updated_templ = 2;
             }
         }
 

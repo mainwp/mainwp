@@ -55,15 +55,12 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $show_select_all        = isset( $params['show_select_all'] ) ? $params['show_select_all'] : true;
         $show_selectall_disc    = isset( $params['show_select_all_disconnect'] ) ? $params['show_select_all_disconnect'] : false;
         $show_new_tag           = isset( $params['show_create_tag'] ) ? $params['show_create_tag'] : true;
-        $class                  = isset( $params['class'] ) ? $params['class'] : '';
-        $style                  = isset( $params['style'] ) ? $params['style'] : '';
         $selected_sites         = isset( $params['selected_sites'] ) ? $params['selected_sites'] : array();
         $selected_groups        = isset( $params['selected_groups'] ) ? $params['selected_groups'] : array();
         $enableOfflineSites     = isset( $params['enable_offline_sites'] ) ? $params['enable_offline_sites'] : false;
         $postId                 = isset( $params['post_id'] ) ? $params['post_id'] : 0;
         $show_client            = isset( $params['show_client'] ) ? $params['show_client'] : false;
         $enableSuspendedClients = isset( $params['enable_suspended_clients'] ) ? $params['enable_suspended_clients'] : false;
-        $selected_clients       = isset( $params['selected_clients'] ) ? $params['selected_clients'] : array();
         $selected_clients       = isset( $params['selected_clients'] ) ? $params['selected_clients'] : array();
         $add_edit_client_id     = isset( $params['add_edit_client_id'] ) ? $params['add_edit_client_id'] : false;
 
@@ -341,7 +338,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
          *
          * @return void Render Select Clients html.
          */
-    public static function render_select_clients( $params = array() ) {
+    public static function render_select_clients( $params = array() ) { // phpcs:ignore -- NOSONAR - complex.
 
         $clients                = isset( $params['clients'] ) ? $params['clients'] : array();
         $type                   = isset( $params['type'] ) ? $params['type'] : 'checkbox';

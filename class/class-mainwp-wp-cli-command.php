@@ -5,7 +5,7 @@
  * This file extends the WP-CLI and provides a set of SubCommands to Control your
  * Child Sites that are added to the MainWP Dashboard.
  *
- * @todo: allow to add or remove child sites
+ * @devtodo: allow to add or remove child sites
  * @package     MainWP/Dashboard
  */
 
@@ -13,7 +13,7 @@ namespace MainWP\Dashboard;
 
 // Exit if access directly.
 if ( ! defined( 'WP_CLI' ) ) {
-    return;
+    return; // NOSONAR - jump to avoid CLI.
 }
 
 /**
@@ -219,7 +219,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      */
     public function sync( $args, $assoc_args ) {
         $sites = array();
-        if ( count( $args ) > 0 ) {
+        if ( ! empty( $args ) ) {
             $args_exploded = explode( ',', $args[0] );
             foreach ( $args_exploded as $arg ) {
                 if ( ! is_numeric( trim( $arg ) ) ) {
@@ -234,7 +234,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
             update_option( 'mainwp_last_synced_all_sites', time() );
         }
 
-        if ( 0 === count( $sites ) && ( ! isset( $assoc_args['all'] ) ) ) {
+        if ( empty( $sites ) && ( ! isset( $assoc_args['all'] ) ) ) {
             \WP_CLI::error( 'Please specify one or more child sites, or use --all.' );
         }
         MainWP_WP_CLI_Handle::handle_sync_sites( $args, $assoc_args );
@@ -264,7 +264,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::m_reconnect_site()
      */
-    public function reconnect( $args, $assoc_args ) {
+    public function reconnect( $args, $assoc_args ) {  //phpcs:ignore -- NOSONAR - complex.
         $sites = array();
         if ( ! empty( $args ) ) {
             $args_exploded = explode( ',', $args[0] );
@@ -277,7 +277,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
             }
         }
 
-        if ( 0 === count( $sites ) ) {
+        if ( empty( $sites ) ) {
             \WP_CLI::error( 'Please specify one or more child sites.' );
         }
 
@@ -372,7 +372,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
             $userExtension       = MainWP_DB_Common::instance()->get_user_extension();
             $websites_to_upgrade = array();
             while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
-                if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
+                if ( ! empty( $sites ) && ( ! in_array( $website->id, $sites, true ) ) ) {
                     continue;
                 }
 
@@ -537,7 +537,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
             $websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
             $userExtension = MainWP_DB_Common::instance()->get_user_extension();
             while ( $websites && ( $website      = MainWP_DB::fetch_object( $websites ) ) ) {
-                if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
+                if ( ! empty( $sites ) && ( ! in_array( $website->id, $sites, true ) ) ) {
                     continue;
                 }
 
@@ -556,14 +556,14 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
 
                     $tmp = array();
                     foreach ( $plugin_upgrades as $key => $plugin_upgrade ) {
-                        if ( ( count( $pluginSlugs ) > 0 ) && ( ! in_array( $plugin_upgrade['update']['slug'], $pluginSlugs, true ) ) ) {
+                        if ( ! empty( $pluginSlugs ) && ( ! in_array( $plugin_upgrade['update']['slug'], $pluginSlugs, true ) ) ) {
                             continue;
                         }
 
                         $tmp[] = $key;
                     }
 
-                    if ( 0 === count( $tmp ) ) {
+                    if ( empty( $tmp ) ) {
                         \WP_CLI::line( 'No available plugin updates for ' . $website->name );
 
                         continue;
@@ -627,7 +627,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      */
     public function theme( $args, $assoc_args ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $sites = array();
-        if ( count( $args ) > 0 ) {
+        if ( ! empty( $args ) ) {
             $args_exploded = explode( ',', $args[0] );
             foreach ( $args_exploded as $arg ) {
                 if ( ! is_numeric( trim( $arg ) ) ) {
@@ -643,7 +643,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
             $userExtension       = MainWP_DB_Common::instance()->get_user_extension();
             $websites_to_upgrade = array();
             while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
-                if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
+                if ( ! empty( $sites ) && ( ! in_array( $website->id, $sites, true ) ) ) {
                     continue;
                 }
 
@@ -731,7 +731,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
             $userExtension       = MainWP_DB_Common::instance()->get_user_extension();
             $websites_to_upgrade = array();
             while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
-                if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
+                if ( ! empty( $sites ) && ( ! in_array( $website->id, $sites, true ) ) ) {
                     continue;
                 }
                 $theme_to_list = json_decode( $website->themes, true );
@@ -809,7 +809,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
             $websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
             $userExtension = MainWP_DB_Common::instance()->get_user_extension();
             while ( $websites && ( $website      = MainWP_DB::fetch_object( $websites ) ) ) {
-                if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
+                if ( ! empty( $sites ) && ( ! in_array( $website->id, $sites, true ) ) ) {
                     continue;
                 }
 
@@ -828,14 +828,14 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
 
                     $tmp = array();
                     foreach ( $theme_upgrades as $key => $theme_upgrade ) {
-                        if ( ( count( $themeSlugs ) > 0 ) && ( ! in_array( $theme_upgrade['update']['slug'], $themeSlugs, true ) ) ) {
+                        if ( ! empty( $themeSlugs ) && ( ! in_array( $theme_upgrade['update']['slug'], $themeSlugs, true ) ) ) {
                             continue;
                         }
 
                         $tmp[] = $key;
                     }
 
-                    if ( 0 === count( $tmp ) ) {
+                    if ( empty( $tmp ) ) {
                         \WP_CLI::line( 'No available theme updates for ' . $website->name );
 
                         continue;

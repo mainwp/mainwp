@@ -45,7 +45,7 @@ class MainWP_Bulk_Add { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * @uses \MainWP\Dashboard\MainWP_Logger::warning_for_website()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
      */
-    public static function posting_bulk_handler( $data, $website, &$output ) {
+    public static function posting_bulk_handler( $data, $website, &$output ) { //phpcs:ignore -- NOSONAR - complex.
         if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
             return;
         }

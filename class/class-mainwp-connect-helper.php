@@ -94,14 +94,14 @@ class MainWP_Connect_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     /**
      * Method ajax_prepare_renew_connections()
      */
-    public function ajax_prepare_renew_connections() {
+    public function ajax_prepare_renew_connections() { // phpcs:ignore -- NOSONAR - complex.
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_prepare_renew_connections' );
         $sites = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
         $dbwebsites = array();
-        foreach ( $sites as $k => $v ) {
+        foreach ( $sites as $v ) {
             if ( MainWP_Utility::ctype_digit( $v ) ) {
                 $website = MainWP_DB::instance()->get_website_by_id( $v );
                 if ( $website ) {

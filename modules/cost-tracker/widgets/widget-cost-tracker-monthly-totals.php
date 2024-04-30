@@ -113,7 +113,6 @@ class Cost_Tracker_Monthly_Totals {
                 $time         = $upcoming2 + 1;
             }
 
-            $time = $current_time;
             foreach ( $cost_data as $cost ) {
                 if ( ! isset( $series_data[ $cost->product_type ] ) ) {
                     $series_data[ $cost->product_type ]           = array(

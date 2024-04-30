@@ -28,6 +28,13 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
     }
 
     /**
+     * Method get_instance().
+     */
+    public static function get_instance() {
+        return new self();
+    }
+
+    /**
      * MainWP_Menu constructor.
      *
      * Run each time the class is called.
@@ -342,35 +349,38 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             if ( ! is_array( $item ) ) {
                 continue;
             }
+
+            $empty_level = true;
+
             if ( ! empty( $item['slug'] ) && ! empty( $item['menu_level'] ) && ! empty( $item['init_menu_callback'] ) ) {
-                if ( ! static::is_disable_menu_item( intval( $item['menu_level'] ), $item['slug'] ) ) {
-                    if ( is_callable( $item['init_menu_callback'] ) ) {
-                        $accessable = false;
-                        if ( isset( $item['menu_rights'] ) ) {
-                            $item_rights = $item['menu_rights'];
-                            if ( is_array( $item_rights ) && ! empty( $item_rights ) ) {
-                                foreach ( $item_rights as $group_right => $rights ) {
-                                    if ( is_array( $rights ) ) {
-                                        foreach ( $rights as $func_right ) {
-                                            if ( mainwp_current_user_have_right( $group_right, $func_right ) ) {
-                                                $accessable = true;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    if ( $accessable ) {
+                $empty_level = false;
+            }
+
+            if ( ! $empty_level && ! static::is_disable_menu_item( intval( $item['menu_level'] ), $item['slug'] ) && is_callable( $item['init_menu_callback'] ) ) {
+                $accessable = false;
+                if ( isset( $item['menu_rights'] ) ) {
+                    $item_rights = $item['menu_rights'];
+                    if ( is_array( $item_rights ) && ! empty( $item_rights ) ) {
+                        foreach ( $item_rights as $group_right => $rights ) {
+                            if ( is_array( $rights ) ) {
+                                foreach ( $rights as $func_right ) {
+                                    if ( mainwp_current_user_have_right( $group_right, $func_right ) ) {
+                                        $accessable = true;
                                         break;
                                     }
                                 }
-                            } elseif ( true === $item['menu_rights'] ) {
-                                $accessable = true;
+                            }
+                            if ( $accessable ) {
+                                break;
                             }
                         }
-
-                        if ( $accessable ) {
-                            call_user_func( $item['init_menu_callback'] );
-                        }
+                    } elseif ( true === $item['menu_rights'] ) {
+                        $accessable = true;
                     }
+                }
+
+                if ( $accessable ) {
+                    call_user_func( $item['init_menu_callback'] );
                 }
             }
         }
@@ -428,11 +438,10 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         if ( ! static::is_disable_menu_item( 2, 'ManageClients' ) ) {
             MainWP_Client::init_subpages_menu();
         }
-        if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-            if ( ! static::is_disable_menu_item( 2, 'ManageBackups' ) ) {
-                MainWP_Manage_Backups::init_subpages_menu();
-            }
+        if ( get_option( 'mainwp_enableLegacyBackupFeature' ) && ! static::is_disable_menu_item( 2, 'ManageBackups' ) ) {
+            MainWP_Manage_Backups::init_subpages_menu();
         }
+
         if ( ! static::is_disable_menu_item( 2, 'Settings' ) ) {
             MainWP_Settings::init_subpages_menu();
         }
@@ -671,7 +680,6 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          * @since 4.0
          */
         $mainwp_leftmenu = apply_filters( 'mainwp_main_menu', $mainwp_leftmenu );
-        $main_leftmenu   = isset( $mainwp_leftmenu['mainwp_tab'] ) ? $mainwp_leftmenu['mainwp_tab'] : array();
         $bar_leftmenu    = isset( $mainwp_leftmenu['leftbar'] ) ? $mainwp_leftmenu['leftbar'] : array();
 
         /**
@@ -788,17 +796,10 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         $id_attr = ! empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
 
                         // phpcs:disable WordPress.Security.EscapeOutput
-                        if ( $has_sub ) {
-                            echo '<a ' . $id_attr . ' title="' . esc_html( $title ) . "\" class=\"item $active_item\" href=\"$href\">";
-                            echo ! empty( $item_icon ) ? $item_icon : '<i class="th large icon"></i>';
-                            echo '<span class="ui small text">' . esc_html( $title ) . '</span>';
-                            echo '</a>';
-                        } else {
-                            echo '<a ' . $id_attr . ' title="' . esc_html( $title ) . "\" class=\"item $active_item\" href=\"$href\">";
-                            echo ! empty( $item_icon ) ? $item_icon : '<i class="th large icon"></i>';
-                            echo '<span class="ui small text">' . esc_html( $title ) . '</span>';
-                            echo '</a>';
-                        }
+                        echo '<a ' . $id_attr . ' title="' . esc_html( $title ) . "\" class=\"item $active_item\" href=\"$href\">";
+                        echo ! empty( $item_icon ) ? $item_icon : '<i class="th large icon"></i>';
+                        echo '<span class="ui small text">' . esc_html( $title ) . '</span>';
+                        echo '</a>';
                         // phpcs:enable
                     }
                 }
@@ -821,17 +822,15 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                      */
                     $go_back_link = apply_filters( 'mainwp_go_back_wpadmin_link', $link );
 
-                    if ( false !== $go_back_link ) {
-                        if ( is_array( $go_back_link ) ) {
-                            if ( isset( $go_back_link['url'] ) ) {
-                                $link['url'] = $go_back_link['url'];
-                            }
-                            if ( isset( $go_back_link['text'] ) ) {
-                                $link['text'] = $go_back_link['text'];
-                            }
-                            if ( isset( $go_back_link['tip'] ) ) {
-                                $link['tip'] = $go_back_link['tip'];
-                            }
+                    if ( false !== $go_back_link && is_array( $go_back_link ) ) {
+                        if ( isset( $go_back_link['url'] ) ) {
+                            $link['url'] = $go_back_link['url'];
+                        }
+                        if ( isset( $go_back_link['text'] ) ) {
+                            $link['text'] = $go_back_link['text'];
+                        }
+                        if ( isset( $go_back_link['tip'] ) ) {
+                            $link['tip'] = $go_back_link['tip'];
                         }
                     }
                     ?>
@@ -1338,7 +1337,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         $submenu_items = $mainwp_sub_leftmenu[ $parent_key ];
 
-        if ( ! is_array( $submenu_items ) || 0 === count( $submenu_items ) ) {
+        if ( ! is_array( $submenu_items ) || empty( $submenu_items ) ) {
             return;
         }
 
@@ -1348,7 +1347,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         MainWP_Utility::array_sort_existed_keys( $submenu_items, 5 ); //phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- 5 => 'leftsub_order_level2'.
 
-        foreach ( $submenu_items as $sub_key => $sub_item ) {
+        foreach ( $submenu_items as $sub_item ) {
             $title        = $sub_item[0];
             $href         = $sub_item[1];
             $right        = $sub_item[2];
@@ -1401,11 +1400,9 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
 
             $right_group = 'dashboard';
-            if ( ! empty( $right ) ) {
-                if ( strpos( $right, 'extension_' ) === 0 ) {
-                    $right_group = 'extension';
-                    $right       = str_replace( 'extension_', '', $right );
-                }
+            if ( ! empty( $right ) && strpos( $right, 'extension_' ) === 0 ) {
+                $right_group = 'extension';
+                $right       = str_replace( 'extension_', '', $right );
             }
             if ( empty( $right ) || ( ! empty( $right ) && mainwp_current_user_have_right( $right_group, $right ) ) ) {
                 ?>

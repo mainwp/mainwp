@@ -473,7 +473,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      */
     public function hook_prepare_installcheck_plugin() {
         $this->secure_request( 'mainwp_preparebulkinstallcheckplugin' );
-        include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
+        include_once ABSPATH . '/wp-admin/includes/plugin-install.php'; // NOSONAR - WP compatible.
         $api           = MainWP_System_Utility::get_plugin_theme_info(
             'plugin',
             array(
@@ -497,7 +497,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      */
     public function mainwp_upgradewp() {
         if ( ! mainwp_current_user_have_right( 'dashboard', 'update_wordpress' ) ) {
-            die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'update WordPress', 'mainwp' ), $echo = false ) ) ) );
+            die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'update WordPress', 'mainwp' ), false ) ) ) );
         }
 
         $this->secure_request( 'mainwp_upgradewp' );
@@ -538,15 +538,15 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         }
 
         if ( 'plugin' === $_POST['type'] && ! mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) ) {
-            die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'update plugins', 'mainwp' ), $echo = false ) ) ) );
+            die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'update plugins', 'mainwp' ), false ) ) ) );
         }
 
         if ( 'theme' === $_POST['type'] && ! mainwp_current_user_have_right( 'dashboard', 'update_themes' ) ) {
-            die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'update themes', 'mainwp' ), $echo = false ) ) ) );
+            die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'update themes', 'mainwp' ), false ) ) ) );
         }
 
         if ( 'translation' === $_POST['type'] && ! mainwp_current_user_have_right( 'dashboard', 'update_translations' ) ) {
-            die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'update translations', 'mainwp' ), $echo = false ) ) ) );
+            die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( esc_html__( 'update translations', 'mainwp' ), false ) ) ) );
         }
 
         $this->secure_request( 'mainwp_upgradeplugintheme' );
@@ -595,14 +595,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
 
         $chunk_slugs = array();
 
-        if ( $chunk_support ) {
-            // calculate update slugs here.
-            if ( $max_update ) {
-                $slugs        = explode( ',', $slugs );
-                $chunk_slugs  = array_slice( $slugs, $max_update );
-                $update_slugs = array_diff( $slugs, $chunk_slugs );
-                $slugs        = implode( ',', $update_slugs );
-            }
+        if ( $chunk_support && $max_update ) {
+            $slugs        = explode( ',', $slugs );
+            $chunk_slugs  = array_slice( $slugs, $max_update );
+            $update_slugs = array_diff( $slugs, $chunk_slugs );
+            $slugs        = implode( ',', $update_slugs );
         }
 
         if ( empty( $slugs ) && ! $chunk_support ) {

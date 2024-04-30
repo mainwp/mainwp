@@ -133,7 +133,7 @@ class Cost_Tracker_Yearly_Renewals {
      * @param string $tab Tab.
      * @param array  $cost_data     Cost data.
      */
-    public static function get_costs_widgets_data( $tab, $cost_data ) {
+    public static function get_costs_widgets_data( $tab, $cost_data ) { //phpcs:ignore -- NOSONAR - complex.
         $list = array();
         if ( is_array( $cost_data ) ) {
             $time      = time();
@@ -201,7 +201,7 @@ class Cost_Tracker_Yearly_Renewals {
              * @since 5.0.2
              */
             do_action( 'mainwp_module_yearly_renewals_before_costs_list', $tab, $cost_data );
-            if ( 0 === count( $lists ) ) {
+            if ( empty( $lists ) ) {
                 echo '<div class="ui hidden divider"></div>';
                 echo '<div class="ui hidden divider"></div>';
                 echo '<div class="ui hidden divider"></div>';

@@ -113,12 +113,13 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_Updates::init()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-    public function __construct( $mainwp_plugin_file ) {
+    public function __construct( $mainwp_plugin_file ) { //phpcs:ignore -- NOSONAR - complex.
         static::$instance = $this;
 
         MainWP_Execution_Helper::instance()->init_exec_time();
 
-        new MainWP_Includes();
+        $loader = new MainWP_Includes();
+        $loader->includes();
 
         MainWP_Keys_Manager::auto_load_files();
 
@@ -130,11 +131,11 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         do_action( 'mainwp_system_init' );
 
         // includes rest api work.
-        require_once 'class-mainwp-rest-api.php';
+        require_once 'class-mainwp-rest-api.php'; // NOSONAR - WP compatible.
         Rest_Api::instance()->init();
 
         if ( is_admin() ) {
-            include_once ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'plugin.php';
+            include_once ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'plugin.php'; // NOSONAR - WP compatible.
             $pluginData            = get_plugin_data( $mainwp_plugin_file, true, false ); // to fix issue of user language setting.
             $this->current_version = $pluginData['Version'];
             $currentVersion        = get_option( 'mainwp_plugin_version' );
@@ -165,10 +166,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             define( 'MAINWP_VERSION', $this->current_version );
         }
 
-        if ( get_option( 'mainwp_setting_demo_mode_enabled' ) ) {
-            if ( ! defined( 'MAINWP_DEMO_MODE' ) ) {
-                define( 'MAINWP_DEMO_MODE', true );
-            }
+        if ( get_option( 'mainwp_setting_demo_mode_enabled' ) && ! defined( 'MAINWP_DEMO_MODE' ) ) {
+            define( 'MAINWP_DEMO_MODE', true );
         }
 
         $ssl_api_verifyhost = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( 1 === (int) get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
@@ -201,8 +200,9 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Client_Overview::instance();
 
         MainWP_Manage_Sites::init();
-        new MainWP_Hooks();
-        new MainWP_Menu();
+
+        MainWP_Hooks::get_instance();
+        MainWP_Menu::get_instance();
 
         add_action( 'admin_menu', array( MainWP_Menu::get_class_name(), 'init_mainwp_menus' ) );
         add_filter( 'admin_footer', array( &$this, 'admin_footer' ), 15 );
@@ -212,7 +212,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         add_action( 'admin_enqueue_scripts', array( &$this, 'admin_enqueue_scripts_fix_conflict' ), 9 );
         add_action( 'admin_body_class', array( MainWP_System_View::get_class_name(), 'admin_body_class' ) );
 
-        new MainWP_Bulk_Post();
+        MainWP_Bulk_Post::get_instance();
 
         add_action( 'admin_init', array( &$this, 'admin_init' ), 20 );
         add_action( 'admin_init', array( $this, 'hook_admin_update_check' ) );
@@ -271,10 +271,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( defined( 'WP_CLI' ) && WP_CLI ) {
             MainWP_WP_CLI_Command::init();
         }
-        if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
-            if ( isset( $_GET['mainwp_run'] ) && 'test' === $_GET['mainwp_run'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-                add_action( 'init', array( MainWP_System_Cron_Jobs::instance(), 'cron_active' ), PHP_INT_MAX );
-            }
+        if ( defined( 'DOING_CRON' ) && DOING_CRON && isset( $_GET['mainwp_run'] ) && 'test' === $_GET['mainwp_run'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            add_action( 'init', array( MainWP_System_Cron_Jobs::instance(), 'cron_active' ), PHP_INT_MAX );
         }
     }
 
@@ -296,7 +294,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @return array $alloptions Array of all options.
      */
-    public function load_all_options() {
+    public function load_all_options() { //phpcs:ignore -- NOSONAR - complex.
 
         /**
          * WordPress Database instance.
@@ -554,14 +552,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public static function is_mainwp_site_page() {
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
-        if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] ) {
-            if ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) {
-                return true;
-            } elseif ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] ) {
-                return true;
-            } elseif ( 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] ) {
-                return true;
-            }
+        if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) || ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] ) ) ) {
+            return true;
         }
         //phpcs:enable
         return false;
@@ -572,7 +564,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * Instantiate Plugin.
      */
-    public function init() {
+    public function init() { //phpcs:ignore -- NOSONAR - complex.
 
         /**
          * MainWP disabled menu items array.
@@ -627,10 +619,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     return true;
                 }
 
-                if ( empty( $current_user ) ) {
-                    if ( ! function_exists( 'wp_get_current_user' ) ) {
-                        require_once ABSPATH . WPINC . '/pluggable.php';
-                    }
+                if ( empty( $current_user ) && ! function_exists( 'wp_get_current_user' ) ) {
+                    require_once ABSPATH . WPINC . '/pluggable.php'; // NOSONAR - WP compatible.
                 }
 
                 return apply_filters( 'mainwp_currentusercan', true, $cap_type, $cap );
@@ -683,12 +673,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 exit();
             }
         } elseif ( isset( $_GET['page'] ) ) {
-            if ( MainWP_System_Utility::is_admin() ) {
-                switch ( $_GET['page'] ) {
-                    case 'mainwp-setup':
-                        new MainWP_Setup_Wizard();
-                        break;
-                }
+            if ( MainWP_System_Utility::is_admin() && 'mainwp-setup' === $_GET['page'] ) {
+                MainWP_Setup_Wizard::get_instance();
             }
         }
         // phpcs:enable
@@ -815,12 +801,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $en_params[] = 'jquery-ui-datepicker';
         }
         wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', $en_params, $this->current_version, true );
-
-        $enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
-        $primaryBackup             = get_option( 'mainwp_primaryBackup' );
-        $disable_backup_checking   = true; // removed option.
-
-        $mainwpParams = array(
+        $disable_backup_checking = true; // removed option.
+        $mainwpParams            = array(
             'image_url'                        => MAINWP_PLUGIN_URL . 'assets/images/',
             'backup_before_upgrade'            => 1 === (int) get_option( 'mainwp_backup_before_upgrade' ),
             'disable_checkBackupBeforeUpgrade' => $disable_backup_checking,
@@ -854,11 +836,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $load_gridster = false;
 
         // phpcs:disable WordPress.Security.NonceVerification
-        if ( isset( $_GET['page'] ) && ( 'mainwp_tab' === $_GET['page'] || ( 'managesites' === $_GET['page'] && isset( $_GET['dashboard'] ) ) ) ) {
-            $load_gridster = true;
-        } elseif ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) ) {
-            $load_gridster = true;
-        } elseif ( isset( $_GET['page'] ) && 0 === strpos( wp_unslash( $_GET['page'] ), 'ManageSites' ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- individual page.
+        if ( ( isset( $_GET['page'] ) && ( 'mainwp_tab' === $_GET['page'] || ( 'managesites' === $_GET['page'] && isset( $_GET['dashboard'] ) ) ) ) || ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) ) || ( isset( $_GET['page'] ) && 0 === strpos( wp_unslash( $_GET['page'] ), 'ManageSites' ) ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- individual page.
             $load_gridster = true;
         }
 
@@ -963,11 +941,9 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $_pos        = strlen( $request_uri ) - strlen( '/wp-admin/' );
         if ( ! empty( $request_uri ) && strpos( $request_uri, '/wp-admin/' ) !== false && strpos( $request_uri, '/wp-admin/' ) === $_pos ) {
             $referer = wp_get_referer();
-            if ( ! empty( $referer ) && strpos( $referer, 'wp-login.php?redirect_to' ) !== false && strpos( $referer, '&reauth=1' ) !== false ) {
-                if ( mainwp_current_user_have_right( 'dashboard', 'access_global_dashboard' ) ) {
-                    wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
-                    die();
-                }
+            if ( ! empty( $referer ) && strpos( $referer, 'wp-login.php?redirect_to' ) !== false && strpos( $referer, '&reauth=1' ) !== false && mainwp_current_user_have_right( 'dashboard', 'access_global_dashboard' ) ) {
+                wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
+                die();
             }
         }
 
@@ -1066,19 +1042,17 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 wp_enqueue_script( 'mainwp-groups', MAINWP_PLUGIN_URL . 'assets/js/mainwp-groups.js', array(), $this->current_version, true );
             }
             $enqueue_scripts = apply_filters( 'mainwp_admin_enqueue_scripts', array() );
-            if ( is_array( $enqueue_scripts ) ) {
-                if ( ! empty( $enqueue_scripts['apexcharts'] ) ) {
-                    wp_enqueue_script(
-                        'mainwp-apexcharts',
-                        MAINWP_PLUGIN_URL . 'assets/js/apexcharts/apexcharts.js',
-                        array(
-                            'jquery',
-                            'mainwp',
-                        ),
-                        $this->current_version,
-                        true
-                    );
-                }
+            if ( is_array( $enqueue_scripts ) && ! empty( $enqueue_scripts['apexcharts'] ) ) {
+                wp_enqueue_script(
+                    'mainwp-apexcharts',
+                    MAINWP_PLUGIN_URL . 'assets/js/apexcharts/apexcharts.js',
+                    array(
+                        'jquery',
+                        'mainwp',
+                    ),
+                    $this->current_version,
+                    true
+                );
             }
             wp_enqueue_script( 'mainwp-dropzone', MAINWP_PLUGIN_URL . 'assets/js/dropzone/dropzone.min.js', array(), $this->current_version, true );
         }
@@ -1111,7 +1085,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * Enqueue all Mainwp Admin Styles.
      */
-    public function admin_enqueue_styles() {
+    public function admin_enqueue_styles() { //phpcs:ignore -- NOSONAR - complex.
 
         wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'assets/css/mainwp.css', array(), $this->current_version );
         wp_enqueue_style( 'mainwp-responsive-layouts', MAINWP_PLUGIN_URL . 'assets/css/mainwp-responsive-layouts.css', array(), $this->current_version );
@@ -1186,9 +1160,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         global $menu;
 
         foreach ( $menu as $k => $item ) {
-            if ( 'edit.php?post_type=bulkpost' === $item[2] ) {
-                unset( $menu[ $k ] );
-            } elseif ( 'edit.php?post_type=bulkpage' === $item[2] ) {
+            if ( 'edit.php?post_type=bulkpost' === $item[2] || 'edit.php?post_type=bulkpage' === $item[2] ) {
                 unset( $menu[ $k ] );
             }
         }
@@ -1219,7 +1191,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_System_View::render_footer_content()
      * @uses \MainWP\Dashboard\MainWP_System_View::admin_footer()
      */
-    public function admin_footer() {
+    public function admin_footer() { //phpcs:ignore -- NOSONAR - complex.
         if ( ! static::is_mainwp_pages() ) {
             return;
         }
@@ -1254,9 +1226,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     $group_ids = get_user_option( 'mainwp_managesites_filter_group' );
                     if ( ! empty( $group_ids ) ) {
                         $group_ids = explode( ',', $group_ids ); // convert to array.
-                    }
-                    if ( $group_ids ) {
-                        $staging_group = get_option( 'mainwp_stagingsites_group_id' );
                     }
                 } elseif ( 'UpdatesManage' === $_GET['page'] || 'mainwp_tab' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                     $staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) ? true : false;
@@ -1353,10 +1322,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             // to update new saving format.
             MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
             MainWP_Utility::update_option( 'mainwp_update_check_version', $current_ver );
-        }
-
-        if ( false === $update_ver ) {
-            return;
         }
     }
 

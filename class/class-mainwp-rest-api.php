@@ -17,7 +17,7 @@ use Exception;
  *
  * @package MainWP\Dashboard
  */
-class Rest_Api {
+class Rest_Api { //phpcs:ignore -- NOSONAR - multi methods.
 
     // phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
@@ -128,7 +128,7 @@ class Rest_Api {
      * Creates the necessary endpoints for the api.
      * Note, for a request to be successful the URL query parameters consumer_key and consumer_secret need to be set and correct.
      */
-    public function mainwp_register_routes() {
+    public function mainwp_register_routes() { // phpcs:ignore -- NOSONAR - complex.
 
         // Create an array which holds all the endpoints. Method can be GET, POST, PUT, DELETE.
         $endpoints = array(
@@ -495,7 +495,7 @@ class Rest_Api {
      *
      * @return bool Whether the api credentials are valid.
      */
-    public function mainwp_validate_request( $request ) {
+    public function mainwp_validate_request( $request ) { // phpcs:ignore -- NOSONAR - complex.
 
         $consumer_key    = null;
         $consumer_secret = null;
@@ -542,10 +542,8 @@ class Rest_Api {
 
                     $valid_auth = true;
 
-                    if ( isset( $existed_key['ck_hashed'] ) ) {
-                        if ( ! wp_check_password( $consumer_key, $existed_key['ck_hashed'] ) ) {
-                            $valid_auth = false;
-                        }
+                    if ( isset( $existed_key['ck_hashed'] ) && ! wp_check_password( $consumer_key, $existed_key['ck_hashed'] ) ) {
+                        $valid_auth = false;
                     }
 
                     if ( $valid_auth ) {
@@ -650,6 +648,7 @@ class Rest_Api {
      * @return bool Whether the api credentials are valid.
      */
     public function rest_api_validate( $input_value, $request ) {
+        unset( $input_value );
         $valid = $this->mainwp_validate_request( $request );
         if ( true === $valid ) {
             return true;
@@ -764,12 +763,10 @@ class Rest_Api {
 
             $result = $data;
 
-            if ( 'array' === $format ) {
-                if ( is_array( $data ) ) {
-                    $result = array(
-                        'data' => $data,
-                    );
-                }
+            if ( 'array' === $format && is_array( $data ) ) {
+                $result = array(
+                    'data' => $data,
+                );
             }
 
             $response = new \WP_REST_Response( $result );
@@ -1264,7 +1261,7 @@ class Rest_Api {
      *
      * @return object $response An object that contains the return data and status of the API request.
      */
-    public function mainwp_rest_api_get_sites_by_url_callback( $request ) {
+    public function mainwp_rest_api_get_sites_by_url_callback( $request ) { // phpcs:ignore -- NOSONAR - complex.
 
         // first validate the request.
         $valid = $this->mainwp_validate_request( $request );
@@ -1291,12 +1288,10 @@ class Rest_Api {
 
             $result = $data;
 
-            if ( 'array' === $format ) {
-                if ( is_array( $data ) ) {
-                    $result = array(
-                        'data' => $data,
-                    );
-                }
+            if ( 'array' === $format && is_array( $data ) ) {
+                $result = array(
+                    'data' => $data,
+                );
             }
 
             $response = new \WP_REST_Response( $result );
@@ -1321,7 +1316,7 @@ class Rest_Api {
      *
      * @return object $response An object that contains the return data and status of the API request.
      */
-    public function mainwp_rest_api_get_sites_by_client_callback( $request ) {
+    public function mainwp_rest_api_get_sites_by_client_callback( $request ) { // phpcs:ignore -- NOSONAR - complex.
 
         // first validate the request.
         $valid = $this->mainwp_validate_request( $request );
@@ -1350,12 +1345,10 @@ class Rest_Api {
 
             $result = $data;
 
-            if ( 'array' === $format ) {
-                if ( is_array( $data ) ) {
-                    $result = array(
-                        'data' => $data,
-                    );
-                }
+            if ( 'array' === $format && is_array( $data ) ) {
+                $result = array(
+                    'data' => $data,
+                );
             }
 
             $response = new \WP_REST_Response( $result );
@@ -1381,7 +1374,7 @@ class Rest_Api {
      *
      * @return object $response An object that contains the return data and status of the API request.
      */
-    public function mainwp_rest_api_site_callback( $request ) {
+    public function mainwp_rest_api_site_callback( $request ) { // phpcs:ignore -- NOSONAR - complex.
 
         // first validate the request.
         $valid = $this->mainwp_validate_request( $request );
@@ -2154,7 +2147,7 @@ class Rest_Api {
      *
      * @return object $response An object that contains the return data and status of the API request.
      */
-    public function mainwp_rest_api_site_available_updates_count_callback( $request ) {
+    public function mainwp_rest_api_site_available_updates_count_callback( $request ) { // phpcs:ignore -- NOSONAR - complex.
 
         // first validate the request.
         $valid = $this->mainwp_validate_request( $request );
@@ -2179,7 +2172,7 @@ class Rest_Api {
                     $wp           = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
                     $wp           = ! empty( $wp ) ? json_decode( $wp, true ) : array();
 
-                    if ( count( $wp ) > 0 ) {
+                    if ( ! empty( $wp ) ) {
                         $wp = 1;
                     } else {
                         $wp = 0;
@@ -2490,7 +2483,7 @@ class Rest_Api {
      *
      * @return object $response An object that contains the return data and status of the API request.
      */
-    public function mainwp_rest_api_site_health_score_callback( $request ) {
+    public function mainwp_rest_api_site_health_score_callback( $request ) { // phpcs:ignore -- NOSONAR - complex.
 
         // first validate the request.
         $valid = $this->mainwp_validate_request( $request );
@@ -3194,7 +3187,7 @@ class Rest_Api {
      *
      * @return object $response An object that contains the return data and status of the API request.
      */
-    public function mainwp_rest_api_site_manage_plugin_callback( $request ) {
+    public function mainwp_rest_api_site_manage_plugin_callback( $request ) { // phpcs:ignore -- NOSONAR - complex.
 
         // first validate the request.
         $valid = $this->mainwp_validate_request( $request );
@@ -3265,7 +3258,7 @@ class Rest_Api {
      *
      * @return object $response An object that contains the return data and status of the API request.
      */
-    public function mainwp_rest_api_site_manage_theme_callback( $request ) {
+    public function mainwp_rest_api_site_manage_theme_callback( $request ) { // phpcs:ignore -- NOSONAR - complex.
 
         // first validate the request.
         $valid = $this->mainwp_validate_request( $request );
@@ -4097,7 +4090,7 @@ class Rest_Api {
      *
      * @return object $response An object that contains the return data and status of the API request.
      */
-    public function mainwp_rest_api_all_tags_callback( $request ) {
+    public function mainwp_rest_api_all_tags_callback( $request ) { // phpcs:ignore -- NOSONAR - complex.
 
         // first validate the request.
         $valid = $this->mainwp_validate_request( $request );

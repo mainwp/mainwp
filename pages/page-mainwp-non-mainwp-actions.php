@@ -218,18 +218,9 @@ class MainWP_Non_MainWP_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $website = MainWP_DB::instance()->get_website_by_id( $del_action->wpid );
-        $success = false;
-        $error   = '';
         try {
             if ( $website ) {
-                $response = MainWP_Connect::fetch_url_authed( $website, 'delete_actions', array( 'del' => 'act' ) );
-                if ( is_array( $response ) ) {
-                    if ( isset( $response['success'] ) ) {
-                        $success = true;
-                    } elseif ( isset( $response['error'] ) ) {
-                        $error = $response['error'];
-                    }
-                }
+                MainWP_Connect::fetch_url_authed( $website, 'delete_actions', array( 'del' => 'act' ) );
             }
         } catch ( \Exception $e ) {
             // ok!

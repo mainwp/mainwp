@@ -33,7 +33,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
      */
-    public static function check_site() {
+    public static function check_site() { // phpcs:ignore -- NOSONAR - complex.
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $url = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
         $url = urldecode( $url );
@@ -65,7 +65,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
                 $output = array();
 
-                $information = MainWP_Connect::fetch_url_not_authed( $url, $admin, 'stats', null, false, $verify_cert, $http_user, $http_pass, $ssl_version, $others = array( 'force_use_ipv4' => $force_use_ipv4 ), $output ); // Fetch the stats with the given admin name.
+                $information = MainWP_Connect::fetch_url_not_authed( $url, $admin, 'stats', null, false, $verify_cert, $http_user, $http_pass, $ssl_version, array( 'force_use_ipv4' => $force_use_ipv4 ), $output ); // Fetch the stats with the given admin name.
 
                 if ( isset( $information['wpversion'] ) ) {
                     $ret['response'] = 'OK';
@@ -305,7 +305,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_icons_dir()
      */
-    public static function remove_website( $site ) {
+    public static function remove_website( $site ) {  //phpcs:ignore -- NOSONAR - complex.
 
         if ( is_numeric( $site ) ) {
             $website = MainWP_DB::instance()->get_website_by_id( intval( $site ) );
@@ -337,7 +337,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             $favi = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );
             if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $website->id . '-' ) ) ) {
 
-                $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+                MainWP_System_Utility::get_wp_file_system();
 
                 /**
                  * WordPress files system object.

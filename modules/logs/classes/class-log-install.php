@@ -57,13 +57,6 @@ class Log_Install extends MainWP_Install {
     }
 
     /**
-     * Class constructor
-     */
-    public function __construct() { // phpcs:ignore -- overrided.
-        parent::__construct();
-    }
-
-    /**
      * Method handle to install module log tables.
      */
     public function install() {
@@ -127,15 +120,13 @@ class Log_Install extends MainWP_Install {
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
 
-        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php'; // NOSONAR - WP compatible.
 
         global $wpdb;
 
         if ( MainWP_Utility::instance()->is_disabled_functions( 'error_log' ) || ! function_exists( '\error_log' ) ) {
             error_reporting(0); // phpcs:ignore -- try to disabled the error_log somewhere in WP.
         }
-
-        $this->update_check_modify( $currentVersion );
 
         $suppress = $wpdb->suppress_errors();
         foreach ( $sql as $query ) {
@@ -144,17 +135,5 @@ class Log_Install extends MainWP_Install {
         $wpdb->suppress_errors( $suppress );
 
         MainWP_Utility::update_option( $this->log_db_option_key, $this->log_db_version );
-    }
-
-    /**
-     * Method handle update db tables and data.
-     *
-     * @param string $currentVersion current version.
-     */
-    public function update_check_modify( $currentVersion ) {
-
-        if ( empty( $currentVersion ) ) {
-            return;
-        }
     }
 }

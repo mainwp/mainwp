@@ -39,7 +39,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Utilizes WP API to grab plugin icons, last_updated, active_installs
      */
     public function prepare_icons() {
-        include_once ABSPATH . 'wp-admin/includes/plugin-install.php';
+        include_once ABSPATH . 'wp-admin/includes/plugin-install.php'; // NOSONAR - WP compatible.
 
         $args = array(
             'fields' => array(
@@ -71,7 +71,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
      */
-    public static function render_widget() {
+    public static function render_widget() { // phpcs:ignore -- NOSONAR - complex.
         $current_wpid = MainWP_System_Utility::get_current_wpid();
         if ( empty( $current_wpid ) ) {
             return;
@@ -110,7 +110,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
      * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
      */
-    public static function render_html_widget( $website, $allPlugins ) {
+    public static function render_html_widget( $website, $allPlugins ) { // phpcs:ignore -- NOSONAR - complex.
 
         $is_demo = MainWP_Demo_Handle::is_demo_mode();
 

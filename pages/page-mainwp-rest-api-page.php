@@ -145,7 +145,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     <div class="mainwp_boxoutin"></div>
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=RESTAPI' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'REST API', 'mainwp' ); ?></a>
                     <?php
-                    if ( isset( static::$subPages ) && is_array( static::$subPages ) && ( count( static::$subPages ) > 0 ) ) {
+                    if ( isset( static::$subPages ) && is_array( static::$subPages ) && ! empty( static::$subPages ) ) {
                         foreach ( static::$subPages as $subPage ) {
                             if ( MainWP_Menu::is_disable_menu_item( 3, 'RESTAPI' . $subPage['slug'] ) ) {
                                 continue;
@@ -215,7 +215,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      *
      * Handle rest api settings
      */
-    public function handle_rest_api_add_new() {
+    public function handle_rest_api_add_new() { // phpcs:ignore -- NOSONAR - complex.
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_POST['submit'] ) && isset( $_GET['page'] ) && 'AddApiKeys' === $_GET['page'] ) {
             if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) {
@@ -255,7 +255,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      *
      * Handle rest api settings
      */
-    public function handle_rest_api_edit() {
+    public function handle_rest_api_edit() { // phpcs:ignore -- NOSONAR - complex.
 
         $edit_id = isset( $_POST['editkey_id'] ) ? sanitize_text_field( wp_unslash( $_POST['editkey_id'] ) ) : false;
         if ( isset( $_POST['submit'] ) && ! empty( $edit_id ) && isset( $_POST['edit_key_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['edit_key_nonce'] ), 'edit-key-nonce-' . $edit_id ) ) {
@@ -335,7 +335,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
      */
-    public static function render_header( $shownPage = '' ) {
+    public static function render_header( $shownPage = '' ) { // phpcs:ignore -- NOSONAR - complex.
 
         $params = array(
             'title' => esc_html__( 'REST API', 'mainwp' ),
@@ -769,8 +769,6 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             $init_pers = 'r,w,d'; // to compatible.
         }
 
-        $item_pers = is_string( $init_pers ) ? explode( ',', $init_pers ) : array();
-
         static::render_header( 'Edit' );
         ?>
         <div id="rest-api-settings" class="ui segment">
@@ -859,7 +857,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      *
      * @return bool check result.
      */
-    public static function check_rest_api_enabled( $check_logged_in = false ) {
+    public static function check_rest_api_enabled( $check_logged_in = false ) { // phpcs:ignore -- NOSONAR - complex.
         $cookies = array();
         if ( $check_logged_in ) {
             if ( is_user_logged_in() && defined( 'LOGGED_IN_COOKIE' ) ) {

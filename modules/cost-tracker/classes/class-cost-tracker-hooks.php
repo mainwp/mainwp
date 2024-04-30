@@ -141,6 +141,7 @@ class Cost_Tracker_Hooks {
      * @param array $clients_ids sites ids prepared.
      */
     public function hook_clientstable_prepared_items( $clients, $clients_ids ) {
+        unset( $clients );
         if ( null === $this->clients_costs ) {
             $this->clients_sites = array();
             // get all sites of the $clients_ids.
@@ -172,13 +173,6 @@ class Cost_Tracker_Hooks {
         }
         $client_id = $item['client_id'];
         if ( ! isset( $item['client-cost-tracker'] ) ) {
-            $array_costs = array(
-                'weekly'    => 0,
-                'monthly'   => 0,
-                'quarterly' => 0,
-                'yearly'    => 0,
-                'lifetime'  => 0,
-            );
 
             $current_time = time();
             $upcoming1    = strtotime( gmdate( 'Y-m-d 00:00:00', $current_time ) );
@@ -211,16 +205,14 @@ class Cost_Tracker_Hooks {
 
                         $cost_val = 0;
 
-                        if ( ! empty( $next_price ) ) {
-                            if ( is_array( $cost->cost_sites_ids ) ) {
-                                foreach ( $cost->cost_sites_ids as $ct_siteid ) {
-                                    // if site of cost tracker in the client's sites then calculate the site's cost/price.
-                                    if ( is_array( $this->clients_sites[ $client_id ] ) && in_array( $ct_siteid, $this->clients_sites[ $client_id ] ) ) {
-                                        if ( 'single_site' === $cost->license_type ) {
-                                            $cost_val += $cost->price;
-                                        } elseif ( 'multi_site' === $cost->license_type && ! empty( $cost->count_sites ) ) {
-                                            $cost_val += $cost->price / $cost->count_sites;
-                                        }
+                        if ( ! empty( $next_price ) && is_array( $cost->cost_sites_ids ) ) {
+                            foreach ( $cost->cost_sites_ids as $ct_siteid ) {
+                                // if site of cost tracker in the client's sites then calculate the site's cost/price.
+                                if ( is_array( $this->clients_sites[ $client_id ] ) && in_array( $ct_siteid, $this->clients_sites[ $client_id ] ) ) {
+                                    if ( 'single_site' === $cost->license_type ) {
+                                        $cost_val += $cost->price;
+                                    } elseif ( 'multi_site' === $cost->license_type && ! empty( $cost->count_sites ) ) {
+                                        $cost_val += $cost->price / $cost->count_sites;
                                     }
                                 }
                             }
@@ -277,6 +269,7 @@ class Cost_Tracker_Hooks {
      *  @param array $site_ids sites ids prepared.
      */
     public function hook_sitestable_prepared_items( $websites, $site_ids ) {
+        unset( $websites );
         if ( null === $this->sites_costs ) {
             $this->sites_costs = Cost_Tracker_DB::get_instance()->get_all_cost_trackers_by_sites( $site_ids );
         }
@@ -386,19 +379,6 @@ class Cost_Tracker_Hooks {
         );
         return $widgets;
     }
-
-    /**
-     * Widgets screen options.
-     *
-     * @param array $input Input.
-     *
-     * @return array $input Input.
-     */
-    public function hook_get_site_overview_screen_options( $input ) {
-        $input['advanced-cost-tracker-costs'] = __( 'Cost Tracker', 'mainwp' );
-        return $input;
-    }
-
 
     /**
      * Method hook_get_client_page_metaboxes().

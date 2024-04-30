@@ -68,6 +68,8 @@ class Log_Filter_Input {
             case INPUT_SERVER :
                 $super = $_SERVER;
                 break;
+            default:
+                break;
         }
         // @codingStandardsIgnoreEnd
 
@@ -90,7 +92,7 @@ class Log_Filter_Input {
      * @throws \MainWP_Exception Unsupported filter provided.
      * @return mixed
      */
-    public static function filter( $var_value, $filter = null, $options = array() ) {
+    public static function filter( $var_value, $filter = null, $options = array() ) { //phpcs:ignore -- NOSONAR - complex.
         // Default filter is a sanitizer, not validator.
         $filter_type = 'sanitizer';
 
@@ -119,19 +121,13 @@ class Log_Filter_Input {
         }
 
         // Detect FILTER_REQUIRE_ARRAY flag.
-        if ( isset( $var_value ) && is_int( $options ) && FILTER_REQUIRE_ARRAY === $options ) {
-            if ( ! is_array( $var_value ) ) {
-                $var_value = ( 'validator' === $filter_type ) ? false : null;
-            }
+        if ( isset( $var_value ) && is_int( $options ) && FILTER_REQUIRE_ARRAY === $options && ! is_array( $var_value ) ) {
+            $var_value = ( 'validator' === $filter_type ) ? false : null;
         }
 
         // Polyfill the `default` attribute only, for now.
-        if ( is_array( $options ) && ! empty( $options['options']['default'] ) ) {
-            if ( 'validator' === $filter_type && false === $var_value ) {
-                $var_value = $options['options']['default'];
-            } elseif ( 'sanitizer' === $filter_type && null === $var_value ) {
-                $var_value = $options['options']['default'];
-            }
+        if ( is_array( $options ) && ! empty( $options['options']['default'] ) && ( ( 'validator' === $filter_type && false === $var_value ) || ( 'sanitizer' === $filter_type && null === $var_value ) ) ) {
+            $var_value = $options['options']['default'];
         }
 
         return $var_value;

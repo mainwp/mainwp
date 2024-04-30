@@ -155,7 +155,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     <?php
                 }
                 ?>
-                <?php if ( 0 === count( $extensions ) && empty( $extensions_disabled ) ) { ?>
+                <?php if ( empty( $extensions ) && empty( $extensions_disabled ) ) { ?>
                     <?php static::render_intro_notice(); ?>
                     <?php
                 } else {
@@ -472,7 +472,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         do_action( 'mainwp_extension_card_top', $extension );
         ?>
                 <div class="content">
-                    <img class="right floated mini ui image" alt="image" src="<?php echo esc_html( $img_url ); ?>">
+                    <img class="right floated mini ui image" alt="" src="<?php echo esc_html( $img_url ); ?>">
                     <div class="header">
 
                         <?php if ( ! $disabled ) { ?>
@@ -584,7 +584,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         ?>
         <div class="ui card extension grey mainwp-disabled-extension extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-title="<?php echo esc_attr( $extension['name'] ); ?>" base-slug="<?php echo esc_attr( $extension['slug'] ); ?>">
             <div class="content">
-                <img class="right floated mini ui image" alt="image" src="<?php echo esc_html( $img_url ); ?>">
+                <img class="right floated mini ui image" alt="" src="<?php echo esc_html( $img_url ); ?>">
                 <div class="header">
                     <?php echo esc_html( MainWP_Extensions_Handler::polish_ext_name( $extension, true ) ); ?>
                 </div>
@@ -738,9 +738,9 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @param mixed $types Extensions type. Default: array( 'free', 'pro' ).
      * @param array $ext_grouped Extensions grouped. Default: array().
      *
-     * @todo Move to MainWP Server via an XML file.
+     * @devtodo Move to MainWP Server via an XML file.
      */
-    public static function get_available_extensions( $types = array( 'free', 'pro' ), $ext_grouped = array() ) {
+    public static function get_available_extensions( $types = array( 'free', 'pro' ), $ext_grouped = array() ) { //phpcs:ignore -- NOSONAR - complex.
 
         $folder_url = MAINWP_PLUGIN_URL . 'assets/images/extensions/';
         $all_exts   = array(

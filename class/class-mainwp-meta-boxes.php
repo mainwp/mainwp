@@ -150,8 +150,6 @@ class MainWP_Meta_Boxes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
             $post_existing = ! empty( $_POST['post_only_existing'] ) ? 1 : 0;
             update_post_meta( $post_id, '_post_to_only_existing_categories', $post_existing );
-
-            return;
         }
         // phpcs:enable
     }
@@ -204,6 +202,7 @@ class MainWP_Meta_Boxes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      * @param object $post Post object.
      */
     private function add_extra( $title, $saveto, $prefix, $post ) {
+        unset( $title );
         $extra = base64_decode( get_post_meta( $post->ID, $saveto, true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_decode used for http encoding compatible.
         ?>
         <input type="hidden" name="<?php echo esc_attr( $prefix ); ?>_nonce" value="<?php echo esc_attr( wp_create_nonce( $prefix . '_' . $post->ID ) ); ?>"/>
@@ -238,6 +237,7 @@ class MainWP_Meta_Boxes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
      * @return int  $post_id Post ID.
      */
     private function add_extra_handle( $title, $saveto, $prefix, $post_id, $post_type ) {
+        unset( $title );
         /**
          * Verify this came from the our screen and with proper authorization.
          */

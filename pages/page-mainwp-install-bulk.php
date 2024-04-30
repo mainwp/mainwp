@@ -287,7 +287,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
      */
     public static function prepare_install() { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-        include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
+        include_once ABSPATH . '/wp-admin/includes/plugin-install.php'; // NOSONAR - WP compatible.
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $type = 'theme';
@@ -477,8 +477,8 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-    public static function prepare_upload() { // phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-        include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
+    public static function prepare_upload() { // phpcs:ignore -- NOSONAR - comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+        include_once ABSPATH . '/wp-admin/includes/plugin-install.php'; // NOSONAR - WP compatible.
 
         $output          = array();
         $output['sites'] = array();
@@ -694,7 +694,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
      */
     public static function clean_upload() {
-        $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+        MainWP_System_Utility::get_wp_file_system();
 
         /**
          * WordPress files system object.
@@ -734,7 +734,7 @@ class MainWP_Install_Bulk { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
      */
-    public static function install_plugin_theme_handler( $data, $website, &$output, $post_data = array() ) {
+    public static function install_plugin_theme_handler( $data, $website, &$output, $post_data = array() ) { // phpcs:ignore -- NOSONAR - complex.
         if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
             return;
         }

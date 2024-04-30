@@ -22,14 +22,6 @@ class Log {
     public $manager;
 
     /**
-     * Hold Current visitors IP Address.
-     *
-     * @var string Hold Current visitors IP Address.
-     * */
-    private $ip_address;
-
-
-    /**
      * Log constructor.
      *
      * Run each time the class is called.
@@ -55,7 +47,7 @@ class Log {
      *
      * @return bool|WP_Error True if updated, otherwise false|WP_Error
      */
-    public function log( $connector, $message, $args, $site_id, $context, $action, $state = null, $user_id = null ) {
+    public function log( $connector, $message, $args, $site_id, $context, $action, $state = null, $user_id = null ) { //phpcs:ignore -- NOSONAR - compatible.
 
         if ( is_null( $user_id ) ) {
             $user_id = get_current_user_id();

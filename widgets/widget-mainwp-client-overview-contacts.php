@@ -51,7 +51,7 @@ class MainWP_Client_Overview_Contacts { // phpcs:ignore Generic.Classes.OpeningB
      *
      * @param object $contact_info The Contact.
      */
-    public static function render_contact( $contact_info ) {
+    public static function render_contact( $contact_info ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( empty( $contact_info ) ) {
             return;

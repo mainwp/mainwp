@@ -150,7 +150,7 @@ abstract class MainWP_Post_Base_Handler { // phpcs:ignore Generic.Classes.Openin
         static::$security_names = apply_filters( 'mainwp_create_security_nonces', static::$security_names );
         if ( ! empty( static::$security_names ) ) {
             if ( ! function_exists( 'wp_create_nonce' ) ) {
-                include_once ABSPATH . WPINC . '/pluggable.php';
+                include_once ABSPATH . WPINC . '/pluggable.php'; // NOSONAR - WP compatible.
             }
             foreach ( static::$security_names as $action ) {
                 static::$security_nonces[ $action ] = wp_create_nonce( $action );

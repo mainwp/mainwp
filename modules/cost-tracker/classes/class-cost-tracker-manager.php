@@ -51,7 +51,7 @@ class Cost_Tracker_Manager {
         Cost_Tracker_Admin::get_instance();
         $base_dir = static::get_location_path();
         // includes rest api work.
-        require_once $base_dir . 'classes/class-cost-tracker-rest-api.php';
+        require_once $base_dir . 'classes/class-cost-tracker-rest-api.php'; // NOSONAR - WP compatible.
         Rest_Api::instance()->init();
     }
 
@@ -88,7 +88,7 @@ class Cost_Tracker_Manager {
             $dir           = $dir . DIRECTORY_SEPARATOR;
             $autoload_path = sprintf( '%s%s%s-%s.php', $autoload_dir, $dir, $prefix, strtolower( str_replace( '_', '-', $autoload_name ) ) );
             if ( is_readable( $autoload_path ) ) {
-                require_once $autoload_path;
+                require_once $autoload_path; // NOSONAR - WP compatible.
                 return;
             }
         }

@@ -30,7 +30,7 @@ class MainWP_QQ2_Uploaded_File_Xhr { // phpcs:ignore Generic.Classes.OpeningBrac
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      */
-    public function save( $path ) {
+    public function save( $path ) { // phpcs:ignore -- NOSONAR - complex.
         $input    = fopen( 'php://input', 'r' );
         $temp     = tmpfile();
         $realSize = stream_copy_to_stream( $input, $temp );
@@ -50,22 +50,16 @@ class MainWP_QQ2_Uploaded_File_Xhr { // phpcs:ignore Generic.Classes.OpeningBrac
         global $wp_filesystem;
 
         if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
-            if ( ! is_dir( dirname( dirname( dirname( $path ) ) ) ) ) {
-                if ( ! $wp_filesystem->mkdir( dirname( dirname( dirname( $path ) ) ), 0777 ) ) {
-                    throw new MainWP_Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
-                }
+            if ( ! is_dir( dirname( dirname( dirname( $path ) ) ) ) && ! $wp_filesystem->mkdir( dirname( dirname( dirname( $path ) ) ), 0777 ) ) {
+                throw new MainWP_Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
             }
 
-            if ( ! is_dir( dirname( dirname( $path ) ) ) ) {
-                if ( ! $wp_filesystem->mkdir( dirname( dirname( $path ) ), 0777 ) ) {
-                    throw new MainWP_Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
-                }
+            if ( ! is_dir( dirname( dirname( $path ) ) ) && ! $wp_filesystem->mkdir( dirname( dirname( $path ) ), 0777 ) ) {
+                throw new MainWP_Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
             }
 
-            if ( ! is_dir( dirname( $path ) ) ) {
-                if ( ! $wp_filesystem->mkdir( dirname( $path ), 0777 ) ) {
-                    throw new MainWP_Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
-                }
+            if ( ! is_dir( dirname( $path ) ) && ! $wp_filesystem->mkdir( dirname( $path ), 0777 ) ) {
+                throw new MainWP_Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
             }
 
             fseek( $temp, 0, SEEK_SET );

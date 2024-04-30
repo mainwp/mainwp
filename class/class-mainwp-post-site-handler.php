@@ -122,7 +122,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $newName  = isset( $_POST['newName'] ) ? sanitize_text_field( wp_unslash( $_POST['newName'] ) ) : '';
         $newColor = isset( $_POST['newColor'] ) ? sanitize_hex_color( wp_unslash( $_POST['newColor'] ) ) : '';
-        if ( empty( $newColor ) && ! empty( $tmp_color ) ) {
+        if ( empty( $newColor ) ) {
             $newColor = '#cce2ff'; // default.
         }
         $selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'intval', wp_unslash( $_POST['selected_sites'] ) ) : array();
@@ -280,10 +280,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
             if ( strpos( $temp_url, ':' ) ) {
                 $invalid     = true;
                 $allow_ports = apply_filters( 'mainwp_connect_sites_allow_ports', array(), $url );
-                if ( ! empty( $allow_ports ) && is_array( $allow_ports ) ) {
-                    if ( is_array( $info ) && ! empty( $info['port'] ) && ( in_array( intval( $info['port'] ), $allow_ports, true ) ) ) {
-                        $invalid = false;
-                    }
+                if ( ! empty( $allow_ports ) && is_array( $allow_ports ) && is_array( $info ) && ! empty( $info['port'] ) && ( in_array( intval( $info['port'] ), $allow_ports, true ) ) ) {
+                    $invalid = false;
                 }
                 if ( $invalid ) {
                     die( wp_json_encode( array( 'error' => esc_html__( 'Invalid URL.', 'mainwp' ) ) ) );

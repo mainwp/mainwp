@@ -15,7 +15,7 @@ use MainWP\Dashboard\MainWP_Utility;
  *
  * @package MainWP\Dashboard
  */
-class Log_Events_List_Table {
+class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
     /**
      * Holds instance of manager object
@@ -385,8 +385,6 @@ class Log_Events_List_Table {
             $req_order    = $order_values['order'];
         }
 
-        $search = isset( $_REQUEST['search']['value'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['search']['value'] ) ) : '';
-
         $filter_dtsstart   = '';
         $filter_dtsstop    = '';
         $array_clients_ids = array();
@@ -671,7 +669,7 @@ class Log_Events_List_Table {
      * Echo the column headers.
      */
     public function print_column_headers() {
-        list( $columns, $sortable, $primary ) = $this->get_column_info();
+        list( $columns, $sortable ) = $this->get_column_info();
 
         $def_columns                 = $this->get_default_columns();
         $def_columns['site_actions'] = '';

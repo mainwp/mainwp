@@ -45,13 +45,13 @@ jQuery(function () {
     jQuery(document).on('click', '#mainwp-do-users-bulk-actions', function () {
         let action = jQuery('#mainwp-bulk-actions').val();
         if (action == 'none')
-            return false;
+            return;
 
         let tmp = jQuery("input[name='user[]']:checked");
         userCountSent = tmp.length;
 
         if (userCountSent == 0)
-            return false;
+            return;
 
         let _callback = function () {
 
@@ -72,12 +72,10 @@ jQuery(function () {
         if (action == 'delete') {
             let msg = __('You are about to delete %1 user(s). Are you sure you want to proceed?', userCountSent);
             mainwp_confirm(msg, _callback);
-            return false;
+            return;
         }
 
         _callback();
-
-        return false;
     });
 
 
@@ -93,7 +91,7 @@ jQuery(function () {
         if (errors.length > 0) {
             jQuery('#mainwp_update_password_error').html(errors.join('<br />'));
             jQuery('#mainwp_update_password_error').show();
-            return false;
+            return;
         }
 
         jQuery('#mainwp_update_password_error').hide();
@@ -107,12 +105,10 @@ jQuery(function () {
                 mainwpuser_postAction(elem, 'update_user');
             }
         );
-
-        return false;
     });
 });
 
-mainwp_edit_users_box_init = function () {
+let mainwp_edit_users_box_init = function () {
 
     jQuery('form#update_user_profile select#role option[value="donotupdate"]').prop('selected', true);
     jQuery('form#update_user_profile select#role').prop("disabled", false);
@@ -126,7 +122,7 @@ mainwp_edit_users_box_init = function () {
     jQuery('form#update_user_profile input#password').val('');
 };
 
-mainwpuser_postAction = function (elem, what) {
+let mainwpuser_postAction = function (elem, what) {
     let rowElement = jQuery(elem).parents('tr');
     let userId = rowElement.find('.userId').val();
     let userName = rowElement.find('.userName').val();
@@ -151,8 +147,8 @@ mainwpuser_postAction = function (elem, what) {
     if (what === 'delete') {
         rowElement.html('<td colspan="8"><i class="ui active inline loader tiny"></i>  Please wait</td>');
     }
-    jQuery.post(ajaxurl, data, function (response) {
-        if (what == 'edit' && response && response.user_data) {
+    jQuery.post(ajaxurl, data, function (response) { // NOSONAR - complex.
+        if (what == 'edit' && response?.user_data) {
             let roles_filter = ['administrator', 'subscriber', 'contributor', 'author', 'editor'];
             let disabled_change_role = false;
             if (response.user_data.role == '' || jQuery.inArray(response.user_data.role, roles_filter) === -1) {
@@ -212,7 +208,6 @@ mainwpuser_postAction = function (elem, what) {
 
             if (what == 'update_user' || what == 'delete') {
                 jQuery('#mainwp_users_loading_info').show();
-                //jQuery( '#mainwp-update-users-box' ).hide();
                 jQuery('#mainwp-edit-users-modal').modal('hide');
                 mainwp_fetch_users();
             }

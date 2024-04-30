@@ -92,7 +92,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
      * @param bool $top true|false.
      */
     public function print_column_headers( $optimize, $top = true ) {
-        list( $columns, $sortable, $primary ) = $this->get_column_info();
+        list( $columns, $sortable ) = $this->get_column_info();
 
         $def_columns                 = $this->get_default_columns();
         $def_columns['data_actions'] = '';
@@ -286,7 +286,7 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
      *
      * @return array Rows html.
      */
-    public function ajax_get_datatable_rows() {
+    public function ajax_get_datatable_rows() { //phpcs:ignore -- NOSONAR - complex.
         $all_rows  = array();
         $info_rows = array();
         if ( $this->items ) {

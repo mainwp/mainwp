@@ -116,7 +116,7 @@ let mainwp_setup_managesites_add = function () {
     });
 
     jQuery.post(ajaxurl, data, function (res_things) {
-      response = res_things.response;
+      let response = res_things.response;
       response = response.trim();
 
       let url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();

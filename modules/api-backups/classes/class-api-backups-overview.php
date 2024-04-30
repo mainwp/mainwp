@@ -70,10 +70,8 @@ class Api_Backups_Overview {
      */
     public function get_current_tab() {
         $curent_tab = 'backups';
-        if ( isset( $_GET['tab'] ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            if ( 'settings' === $_GET['tab'] ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended
-                $curent_tab = 'settings';
-            }
+        if ( isset( $_GET['tab'] ) && 'settings' === $_GET['tab'] ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            $curent_tab = 'settings';
         }
         return $curent_tab;
     }

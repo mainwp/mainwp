@@ -201,7 +201,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
      * @uses \MainWP\Dashboard\MainWP_Post::render_table()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-    public function mainwp_posts_search() { // phpcs:ignore --  complex.
+    public function mainwp_posts_search() { // phpcs:ignore -- NOSONAR - complex.
         $this->secure_request( 'mainwp_posts_search' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $post_type = ( isset( $_POST['post_type'] ) && 0 < strlen( sanitize_text_field( wp_unslash( $_POST['post_type'] ) ) ) ? sanitize_text_field( wp_unslash( $_POST['post_type'] ) ) : 'post' );
@@ -225,7 +225,16 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         if ( $table_content_only ) {
             MainWP_Post::render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type, $search_on, true, $clients );
         } else {
-            MainWP_Post::render_table( false, $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type, $search_on, $clients );
+            $params = array(
+                'groups'    => $groups,
+                'sites'     => $sites,
+                'postId'    => $postId,
+                'userId'    => $userId,
+                'post_type' => $post_type,
+                'search_on' => $search_on,
+                'clients'   => $clients,
+            );
+            MainWP_Post::render_table( false, $keyword, $dtsstart, $dtsstop, $status, $params );
         }
         die();
     }
@@ -256,7 +265,15 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         $search_on = isset( $_POST['search_on'] ) ? sanitize_text_field( wp_unslash( $_POST['search_on'] ) ) : '';
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         MainWP_Cache::init_session();
-        MainWP_Page::render_table( false, $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on, $clients );
+
+        $params = array(
+            'groups'    => $groups,
+            'sites'     => $sites,
+            'search_on' => $search_on,
+            'clients'   => $clients,
+        );
+
+        MainWP_Page::render_table( false, $keyword, $dtsstart, $dtsstop, $status, $params );
         die();
     }
 
@@ -601,7 +618,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
      *
      * Update saved widget order.
      */
-    public function ajax_widgets_order() {
+    public function ajax_widgets_order() { //phpcs:ignore -- NOSONAR - complex.
 
         $this->secure_request( 'mainwp_widgets_order' );
         $user = wp_get_current_user();
@@ -997,10 +1014,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore Gen
         $field_id  = isset( $_POST['field_id'] ) ? intval( $_POST['field_id'] ) : 0;
         $client_id = isset( $_POST['client_id'] ) ? intval( $_POST['client_id'] ) : 0;  // $client_id > 0, individual token.
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        if ( $client_id ) {
-            if ( MainWP_DB_Client::instance()->delete_client_field_by( 'field_id', $field_id, $client_id ) ) {
-                $ret['success'] = true;
-            }
+        if ( $client_id && MainWP_DB_Client::instance()->delete_client_field_by( 'field_id', $field_id, $client_id ) ) {
+            $ret['success'] = true;
         }
         echo wp_json_encode( $ret );
         exit;

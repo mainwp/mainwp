@@ -76,7 +76,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param object $actions_info Sites actions info.
      * @param object $website Sites info.
      */
-    private static function render_info( $actions_info, $website ) {
+    private static function render_info( $actions_info, $website ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( ! is_array( $actions_info ) ) {
             $actions_info = array();
@@ -139,7 +139,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                      */
                     do_action( 'mainwp_non_mainwp_changes_table_top', $website );
                     ?>
-                    <?php foreach ( $actions_info as $idx => $data ) : ?>
+                    <?php foreach ( $actions_info as $data ) : ?>
                         <?php
                         if ( empty( $data->action_user ) || empty( $data->meta_data ) ) {
                             continue;

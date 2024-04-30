@@ -625,7 +625,6 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Render Add first Client Step form.
      */
     public function mwp_setup_add_client() {
-        $count         = MainWP_DB::instance()->get_websites_count( null, true );
         $count_clients = MainWP_DB_Client::instance()->count_total_clients();
         if ( ! empty( $count_clients ) ) {
             ?>
@@ -670,7 +669,6 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public function render_add_client_content() {
         $edit_client           = false;
         $client_id             = 0;
-        $client_image          = '';
         $default_client_fields = MainWP_Client_Handler::get_mini_default_client_fields();
         ?>
         <div class="ui form">
@@ -699,8 +697,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <?php
                     }
             }
-            $primary_contact_id = 0;
-            $temp               = $this->get_add_contact_temp( false );
+            $temp = $this->get_add_contact_temp( false );
             ?>
             <div class="field">
             <a href="javascript:void(0);" class="mainwp-client-add-contact" add-contact-temp="<?php echo esc_attr( $temp ); ?>"><i class="ui eye icon"></i><?php esc_html_e( 'Add Additional Contact', 'mainwp' ); ?></a>
@@ -721,10 +718,8 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public function get_add_contact_temp( $echo_out = false ) {
 
-        $input_name    = 'new_contacts_field';
-        $contact_id    = 0;
-        $contact_image = '';
-
+        $input_name = 'new_contacts_field';
+        $contact_id = 0;
         ob_start();
         ?>
             <div class="ui hidden divider top-contact-fields"></div> <?php // must have class: top-contact-fields. ?>
@@ -734,7 +729,6 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <?php
             $contact_fields = MainWP_Client_Handler::get_mini_default_contact_fields();
             foreach ( $contact_fields as $field_name => $field ) {
-                $db_field   = isset( $field['db_field'] ) ? $field['db_field'] : '';
                 $val        = '';
                 $contact_id = '';
                 ?>

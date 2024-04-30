@@ -163,7 +163,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return array $dir, $url
      */
     public static function get_icons_dir() {
-        $hasWPFileSystem = static::get_wp_file_system();
+        static::get_wp_file_system();
 
         /**
          * WordPress files system object.
@@ -245,7 +245,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return array $dir, $url
      */
     public static function get_mainwp_dir( $subdir = null, $direct_access = false ) {
-        $hasWPFileSystem = static::get_wp_file_system();
+        static::get_wp_file_system();
 
         /**
          * WordPress files system object.
@@ -383,7 +383,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
      */
-    public static function get_mainwp_specific_dir( $dir = null ) {
+    public static function get_mainwp_specific_dir( $dir = null ) { // phpcs:ignore -- NOSONAR - complex.
         if ( MainWP_System::instance()->is_single_user() ) {
             $userid = 0;
         } else {
@@ -518,15 +518,15 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( empty( $wp_filesystem ) ) {
             ob_start();
             if ( file_exists( ABSPATH . '/wp-admin/includes/screen.php' ) ) {
-                include_once ABSPATH . '/wp-admin/includes/screen.php';
+                include_once ABSPATH . '/wp-admin/includes/screen.php'; // NOSONAR - WP compatible.
             }
             if ( file_exists( ABSPATH . '/wp-admin/includes/template.php' ) ) {
-                include_once ABSPATH . '/wp-admin/includes/template.php';
+                include_once ABSPATH . '/wp-admin/includes/template.php'; // NOSONAR - WP compatible.
             }
-            include_once ABSPATH . 'wp-admin/includes/file.php';
+            include_once ABSPATH . 'wp-admin/includes/file.php'; // NOSONAR - WP compatible.
 
             if ( ! function_exists( 'wp_create_nonce' ) ) {
-                include_once ABSPATH . WPINC . '/pluggable.php';
+                include_once ABSPATH . WPINC . '/pluggable.php'; // NOSONAR - WP compatible.
             }
 
             $creds = request_filesystem_credentials( 'test' );
@@ -587,7 +587,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @return mixed Single Row Classes Item.
      */
-    public static function get_site_tags( $item, $client_tag = false ) {
+    public static function get_site_tags( $item, $client_tag = false ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( ! is_array( $item ) || ! isset( $item['wpgroups'] ) ) {
             return '';
@@ -748,7 +748,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         if ( ! isset( $screen->id ) ) {
-            return;
+            return '';
         }
 
         $page = $screen->id;
@@ -765,7 +765,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @return json $data|true.
      */
-    public static function get_child_response( $data ) {
+    public static function get_child_response( $data ) { // phpcs:ignore -- NOSONAR - complex.
             $resp = json_decode( $data, true );
 
         if ( is_array( $resp ) ) {
@@ -773,10 +773,8 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $resp['error'] = MainWP_Utility::esc_content( $resp['error'] );
             }
 
-            if ( isset( $resp['message'] ) ) {
-                if ( is_string( $resp['message'] ) ) {
-                    $resp['message'] = MainWP_Utility::esc_content( $resp['message'] );
-                }
+            if ( isset( $resp['message'] ) && is_string( $resp['message'] ) ) {
+                $resp['message'] = MainWP_Utility::esc_content( $resp['message'] );
             }
 
             if ( isset( $resp['error_message'] ) ) {
@@ -912,13 +910,13 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     public static function get_plugin_theme_info( $what, $params = array() ) {
 
         if ( 'plugin' === $what ) {
-            include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
+            include_once ABSPATH . '/wp-admin/includes/plugin-install.php'; // NOSONAR - WP compatible.
             return plugins_api(
                 'plugin_information',
                 $params
             );
         } elseif ( 'theme' === $what ) {
-            include_once ABSPATH . '/wp-admin/includes/theme-install.php';
+            include_once ABSPATH . '/wp-admin/includes/theme-install.php'; // NOSONAR - WP compatible.
             return themes_api(
                 'theme_information',
                 $params
@@ -984,7 +982,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param string $slug Plugin|Theme slug.
      * @param string $type Plugin|Theme.
      */
-    private static function fetch_wp_org_icons( $slug, $type ) {
+    private static function fetch_wp_org_icons( $slug, $type ) { // phpcs:ignore -- NOSONAR - complex.
         if ( 'plugin' === $type ) {
             $fields = array(
                 'tags'          => false,
@@ -1071,12 +1069,10 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         $cached_icons = MainWP_DB::instance()->get_general_option( $option_name, 'array' );
 
-        if ( isset( $cached_icons[ $slug ] ) ) {
-            if ( '' === $fetched_icon && ! empty( $cached_icons[ $slug ]['path'] ) ) {
-                // if fetch icon empty then used caching icon.
-                $fetched_icon = $cached_icons[ $slug ]['path'];
-                $icon         = rawurldecode( $fetched_icon );
-            }
+        if ( isset( $cached_icons[ $slug ] ) && '' === $fetched_icon && ! empty( $cached_icons[ $slug ]['path'] ) ) {
+            // if fetch icon empty then used caching icon.
+            $fetched_icon = $cached_icons[ $slug ]['path'];
+            $icon         = rawurldecode( $fetched_icon );
         }
 
         static::update_cached_icons( $fetched_icon, $slug, $type );
@@ -1110,7 +1106,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param string $slug Plugin slug.
      * @param bool   $forced_get Forced get icon, default: false.
      */
-    public static function get_plugin_icon( $slug, $forced_get = false ) {
+    public static function get_plugin_icon( $slug, $forced_get = false ) { // phpcs:ignore -- NOSONAR - complex.
 
         $icon = apply_filters( 'mainwp_get_plugin_theme_icon', '', $slug, 'plugin' );
 
@@ -1160,7 +1156,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param string $slug Theme slug.
      * @param bool   $forced_get Forced get icon, default: false.
      */
-    public static function get_theme_icon( $slug, $forced_get = false ) {
+    public static function get_theme_icon( $slug, $forced_get = false ) { // phpcs:ignore -- NOSONAR - complex.
 
         $icon = apply_filters( 'mainwp_get_plugin_theme_icon', '', $slug, 'theme' );
 
@@ -1249,10 +1245,8 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $set_cached_expired = apply_filters( 'mainwp_cache_icon_expired', false, $slug, 'theme' );
             $set_expired        = false;
 
-            if ( $set_cached_expired ) {
-                if ( time() > ( intval( $cached_icons[ $slug ]['lasttime_cached'] ) + 15 * MINUTE_IN_SECONDS ) ) {
-                    $set_expired = true;
-                }
+            if ( $set_cached_expired && time() > ( intval( $cached_icons[ $slug ]['lasttime_cached'] ) + 15 * MINUTE_IN_SECONDS ) ) {
+                $set_expired = true;
             }
 
             $forced_exprided = 1700238511;
@@ -1265,7 +1259,8 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     $icon = '<i style="font-size: 17px" class="plug circular inverted icon ' . $cls_expired . $cls_uploadable . '" ' . $attr_slug . '></i>'; // to update expired icon.
                 }
             } elseif ( ! empty( $scr ) ) {
-                $icon = '<img style="display:inline-block" class="ui mini circular image ' . ( $is_custom_icon ? $cls_uploadable : ( $set_expired ? $cls_expired : '' ) ) . '" ' . $attr_slug . ' cached-path-icon="true" src="' . esc_attr( $scr ) . '"/>';
+                $use_cls_expired = $set_expired ? $cls_expired : '';
+                $icon            = '<img style="display:inline-block" class="ui mini circular image ' . ( $is_custom_icon ? $cls_uploadable : $use_cls_expired ) . '" ' . $attr_slug . ' cached-path-icon="true" src="' . esc_attr( $scr ) . '"/>';
             } else {
                 $icon = '<i style="font-size: 17px" class="plug circular inverted icon ' . ( $set_expired ? $cls_expired : '' ) . $cls_uploadable . '" ' . $attr_slug . ' cached-path-icon="true"></i>';
             }
@@ -1332,7 +1327,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
                 $file_extension = strtolower( pathinfo( $file_name, PATHINFO_EXTENSION ) );
 
-                if ( ( $file_size > 500 * 1025 ) ) {
+                if ( $file_size > 500 * 1025 ) {
                     $output['error'][] = 3;
                 } elseif ( ! in_array( $file_type, $file_types ) ) {
                     $output['error'][] = 4;
@@ -1345,7 +1340,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
                     if ( move_uploaded_file( $tmp_file, $dest_file ) ) {
                         if ( file_exists( $dest_file ) ) {
-                            list( $width, $height, $type, $attr ) = getimagesize( $dest_file );
+                            list( $width, $height ) = getimagesize( $dest_file );
                         }
 
                         $resize = false;
@@ -1436,7 +1431,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @return mixed $alg Algorithm connect.
      */
-    public static function get_connect_sign_algorithm( $website ) {
+    public static function get_connect_sign_algorithm( $website ) { // phpcs:ignore -- NOSONAR - complex.
         $alg = is_object( $website ) && property_exists( $website, 'signature_algo' ) && ! empty( $website->signature_algo ) ? $website->signature_algo : false;
 
         // to fix.
@@ -1449,23 +1444,19 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $default_alg = OPENSSL_ALGO_SHA256;
         }
 
-        if ( ! empty( $alg ) ) {
-            if ( 9999 === $alg ) {
-                $alg = get_option( 'mainwp_connect_signature_algo', $default_alg );
-                // to fix.
-                if ( is_numeric( $alg ) ) {
-                    $alg = intval( $alg );
-                }
+        if ( ! empty( $alg ) && 9999 === $alg ) {
+            $alg = get_option( 'mainwp_connect_signature_algo', $default_alg );
+            // to fix.
+            if ( is_numeric( $alg ) ) {
+                $alg = intval( $alg );
             }
         }
 
         if ( empty( $alg ) ) {
             $site_info = MainWP_DB::instance()->get_website_option( $website, 'site_info' );
             $site_info = ! empty( $site_info ) ? json_decode( $site_info, true ) : array();
-            if ( is_array( $site_info ) && ! empty( $site_info['child_version'] ) ) {
-                if ( version_compare( $site_info['child_version'], '4.5', '>=' ) ) {
-                    $alg = $default_alg;
-                }
+            if ( is_array( $site_info ) && ! empty( $site_info['child_version'] ) && version_compare( $site_info['child_version'], '4.5', '>=' ) ) {
+                $alg = $default_alg;
             }
         }
 
@@ -1487,15 +1478,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function is_valid_supported_sign_alg( $alg ) {
         $valid = false;
-        if ( defined( 'OPENSSL_ALGO_SHA1' ) && OPENSSL_ALGO_SHA1 === $alg ) {
-            $valid = true;
-        } elseif ( defined( 'OPENSSL_ALGO_SHA224' ) && OPENSSL_ALGO_SHA224 === $alg ) {
-            $valid = true;
-        } elseif ( defined( 'OPENSSL_ALGO_SHA256' ) && OPENSSL_ALGO_SHA256 === $alg ) {
-            $valid = true;
-        } elseif ( defined( 'OPENSSL_ALGO_SHA384' ) && OPENSSL_ALGO_SHA384 === $alg ) {
-            $valid = true;
-        } elseif ( defined( 'OPENSSL_ALGO_SHA512' ) && OPENSSL_ALGO_SHA512 === $alg ) {
+        if ( defined( 'OPENSSL_ALGO_SHA1' ) && OPENSSL_ALGO_SHA1 === $alg || defined( 'OPENSSL_ALGO_SHA224' ) && OPENSSL_ALGO_SHA224 === $alg || defined( 'OPENSSL_ALGO_SHA256' ) && OPENSSL_ALGO_SHA256 === $alg || defined( 'OPENSSL_ALGO_SHA384' ) && OPENSSL_ALGO_SHA384 === $alg || defined( 'OPENSSL_ALGO_SHA512' ) && OPENSSL_ALGO_SHA512 === $alg ) {
             $valid = true;
         }
         return $valid;

@@ -29,8 +29,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * @return mixed $currentVersion verion number/
      */
     public static function get_current_version() {
-        $currentVersion = get_option( 'mainwp_plugin_version' );
-        return $currentVersion;
+        return get_option( 'mainwp_plugin_version' );
     }
 
     /**
@@ -66,8 +65,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * @return bool true|false.
      */
     public static function check_if_multisite() {
-        $isMultisite = ! is_multisite() ? true : false;
-        return $isMultisite;
+        return ! is_multisite() ? true : false;
     }
 
     /**
@@ -119,9 +117,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * @return string $fs File System Method.
      */
     public static function get_file_system_method() {
-        $fs = get_filesystem_method();
-
-        return $fs;
+        return get_filesystem_method();
     }
 
     /**
@@ -217,18 +213,16 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
 
         $general_verify_con = (int) get_option( 'mainwp_verify_connection_method', 0 );
 
-        if ( 2 !== $general_verify_con ) {
-            if ( function_exists( 'openssl_pkey_new' ) ) {
-                $res = openssl_pkey_new( $conf );
-                openssl_pkey_export( $res, $privkey, null, $conf );
+        if ( 2 !== $general_verify_con && function_exists( 'openssl_pkey_new' ) ) {
+            $res = openssl_pkey_new( $conf );
+            openssl_pkey_export( $res, $privkey, null, $conf );
 
-                $error = '';
-                while ( ( $errorRow = openssl_error_string() ) !== false ) {
-                    $error = $errorRow . "\n" . $error;
-                }
-                if ( ! empty( $error ) ) {
-                    $errors[] = $error;
-                }
+            $error = '';
+            while ( ( $errorRow = openssl_error_string() ) !== false ) {
+                $error = $errorRow . "\n" . $error;
+            }
+            if ( ! empty( $error ) ) {
+                $errors[] = $error;
             }
         }
 
@@ -284,10 +278,8 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      */
     public static function is_openssl_config_warning() {
         $ssl_warning = static::get_ssl_warning();
-        if ( '' !== $ssl_warning ) {
-            if ( false !== stristr( $ssl_warning, 'No such file or directory found', 'mainwp' ) || false !== stristr( $ssl_warning, 'No such process', 'mainwp' ) || false !== stristr( $ssl_warning, 'no such file', 'mainwp' ) ) {
-                return true;
-            }
+        if ( '' !== $ssl_warning && ( false !== stristr( $ssl_warning, 'No such file or directory found', 'mainwp' ) || false !== stristr( $ssl_warning, 'No such process', 'mainwp' ) || false !== stristr( $ssl_warning, 'no such file', 'mainwp' ) ) ) {
+            return true;
         }
         return false;
     }
@@ -416,7 +408,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * Get PHP_INT_SIZE * 8bit.
      */
     public static function get_architecture() {
-        echo( esc_html( PHP_INT_SIZE * 8 ) )
+        echo esc_html( PHP_INT_SIZE * 8 );
         ?>
         &nbsp;bit
         <?php
@@ -892,8 +884,6 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 case 'mainwp_maximumPosts':
                 case 'mainwp_maximumPages':
                 case 'mainwp_maximumComments':
-                case 'mainwp_maximumSyncRequests':
-                case 'mainwp_maximumInstallUpdateRequests':
                     break;
                 case 'mainwp_maximumRequests':
                     $value = ( false === $value ) ? 4 : $value;

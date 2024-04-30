@@ -203,7 +203,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                         <div class="item">
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
                             <span class="right floated content">
-                                <?php echo( isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ? '<i class="green check icon"></i>' : '<i class="red times icon"></i> ' . $output->errors[ $website->id ] ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                                <?php echo isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ? '<i class="green check icon"></i>' : '<i class="red times icon"></i> ' . $output->errors[ $website->id ]; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                             </span>
                         </div>
                     <?php endforeach; ?>

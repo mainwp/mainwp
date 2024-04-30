@@ -292,11 +292,9 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
         $items = $this->wpdb->get_results( $query );  // phpcs:ignore -- ok.
         $total = absint( $this->wpdb->get_var( $count_query ) );  // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
-        $result = array(
+        return array(
             'items' => $items,
             'count' => $total,
         );
-
-        return $result;
     }
 }

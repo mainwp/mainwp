@@ -289,7 +289,7 @@ class Cost_Tracker_Utility {
      */
     public static function get_all_currency_symbols() { // phpcs:ignore -- NOSONAR -  multi lines.
 
-        $currency_list = array(
+        return array(
             'AFA' => array(
                 'name'   => 'Afghan Afghani',
                 'symbol' => '؋',
@@ -963,8 +963,6 @@ class Cost_Tracker_Utility {
                 'symbol' => '$',
             ),
         );
-
-        return $currency_list;
     }
 
     /**

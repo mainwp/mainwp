@@ -154,13 +154,11 @@ class Connector_Posts extends Log_Connector {
      *
      * @action mainwp_post_action
      *
-     * @param object    $website website.
-     * @param string    $post_action post action.
-     * @param array     $data post data array.
-     * @param int|false $post_id post id.
-     * @param string    $type post|page.
+     * @param object $website website.
+     * @param string $post_action post action.
+     * @param array  $data post data array.
      */
-    public function callback_mainwp_post_action( $website, $post_action, $data, $post_id, $type = '' ) {
+    public function callback_mainwp_post_action( $website, $post_action, $data ) {
 
         if ( empty( $website ) || ! is_array( $data ) || empty( $data['post_title'] ) ) {
             return;

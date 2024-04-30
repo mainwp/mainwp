@@ -217,35 +217,39 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      */
     public function handle_rest_api_add_new() { // phpcs:ignore -- NOSONAR - complex.
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $submit = false;
+
         if ( isset( $_POST['submit'] ) && isset( $_GET['page'] ) && 'AddApiKeys' === $_GET['page'] ) {
-            if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) {
-                $all_keys = static::check_rest_api_updates();
+            $submit = true;
+        }
 
-                if ( ! is_array( $all_keys ) ) {
-                    $all_keys = array();
-                }
+        if ( $submit && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) {
+            $all_keys = static::check_rest_api_updates();
 
-                $consumer_key    = isset( $_POST['mainwp_consumer_key'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_consumer_key'] ) ) : '';
-                $consumer_secret = isset( $_POST['mainwp_consumer_secret'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_consumer_secret'] ) ) : '';
-                $desc            = isset( $_POST['mainwp_rest_add_api_key_desc'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_rest_add_api_key_desc'] ) ) : '';
-                $enabled         = ! empty( $_POST['mainwp_enable_rest_api'] ) ? 1 : 0;
-                $pers            = ! empty( $_POST['mainwp_rest_api_key_edit_pers'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_rest_api_key_edit_pers'] ) ) : '';
-
-                // hash the password.
-                $consumer_key_hashed       = wp_hash_password( $consumer_key );
-                $consumer_secret_hashed    = wp_hash_password( $consumer_secret );
-                $all_keys[ $consumer_key ] = array(
-                    'ck_hashed' => $consumer_key_hashed,
-                    'cs'        => $consumer_secret_hashed,
-                    'desc'      => $desc,
-                    'enabled'   => $enabled,
-                    'perms'     => $pers,
-                );
-                // store the data.
-                MainWP_Utility::update_option( 'mainwp_rest_api_keys', $all_keys );
-                wp_safe_redirect( esc_url( admin_url( 'admin.php?page=RESTAPI&message=created' ) ) );
-                exit();
+            if ( ! is_array( $all_keys ) ) {
+                $all_keys = array();
             }
+
+            $consumer_key    = isset( $_POST['mainwp_consumer_key'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_consumer_key'] ) ) : '';
+            $consumer_secret = isset( $_POST['mainwp_consumer_secret'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_consumer_secret'] ) ) : '';
+            $desc            = isset( $_POST['mainwp_rest_add_api_key_desc'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_rest_add_api_key_desc'] ) ) : '';
+            $enabled         = ! empty( $_POST['mainwp_enable_rest_api'] ) ? 1 : 0;
+            $pers            = ! empty( $_POST['mainwp_rest_api_key_edit_pers'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_rest_api_key_edit_pers'] ) ) : '';
+
+            // hash the password.
+            $consumer_key_hashed       = wp_hash_password( $consumer_key );
+            $consumer_secret_hashed    = wp_hash_password( $consumer_secret );
+            $all_keys[ $consumer_key ] = array(
+                'ck_hashed' => $consumer_key_hashed,
+                'cs'        => $consumer_secret_hashed,
+                'desc'      => $desc,
+                'enabled'   => $enabled,
+                'perms'     => $pers,
+            );
+            // store the data.
+            MainWP_Utility::update_option( 'mainwp_rest_api_keys', $all_keys );
+            wp_safe_redirect( esc_url( admin_url( 'admin.php?page=RESTAPI&message=created' ) ) );
+            exit();
         }
         // phpcs:enable
     }
@@ -584,10 +588,8 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      */
     public static function show_messages() {
         $msg = '';
-        if ( isset( $_GET['message'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            if ( 'saved' === $_GET['message'] || 'created' === $_GET['message'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-                $msg = esc_html__( 'API Key have been saved successfully!', 'mainwp' );
-            }
+        if ( isset( $_GET['message'] ) && ( 'saved' === $_GET['message'] || 'created' === $_GET['message'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $msg = esc_html__( 'API Key have been saved successfully!', 'mainwp' );
         }
         if ( ! empty( $msg ) ) {
             ?>
@@ -786,7 +788,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             ?>
                             <?php esc_html_e( 'Enable REST API Key', 'mainwp' ); ?></label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the REST API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" value="1" <?php echo ( $enabled ? 'checked="true"' : '' ); ?> />
+                                <input type="checkbox" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" value="1" <?php echo $enabled ? 'checked="true"' : ''; ?> />
                             </div>
                         </div>
                         <div class="ui grid field <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>"">
@@ -859,19 +861,17 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      */
     public static function check_rest_api_enabled( $check_logged_in = false ) { // phpcs:ignore -- NOSONAR - complex.
         $cookies = array();
-        if ( $check_logged_in ) {
-            if ( is_user_logged_in() && defined( 'LOGGED_IN_COOKIE' ) ) {
-                $cookies      = array();
-                $auth_cookies = wp_parse_auth_cookie( $_COOKIE[ LOGGED_IN_COOKIE ], 'logged_in' ); // phpcs:ignore -- ok.
-                if ( is_array( $auth_cookies ) ) {
-                    foreach ( $auth_cookies as $name => $value ) {
-                        $cookies[] = new \WP_Http_Cookie(
-                            array(
-                                'name'  => $name,
-                                'value' => $value,
-                            )
-                        );
-                    }
+        if ( $check_logged_in && is_user_logged_in() && defined( 'LOGGED_IN_COOKIE' ) ) {
+            $cookies      = array();
+            $auth_cookies = wp_parse_auth_cookie( $_COOKIE[ LOGGED_IN_COOKIE ], 'logged_in' ); // phpcs:ignore -- ok.
+            if ( is_array( $auth_cookies ) ) {
+                foreach ( $auth_cookies as $name => $value ) {
+                    $cookies[] = new \WP_Http_Cookie(
+                        array(
+                            'name'  => $name,
+                            'value' => $value,
+                        )
+                    );
                 }
             }
         }

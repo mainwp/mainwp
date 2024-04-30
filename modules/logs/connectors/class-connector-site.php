@@ -80,11 +80,10 @@ class Connector_Site extends Log_Connector {
      * @action transition_post_status.
      *
      * @param object $website Website object data.
-     * @param array  $information Sync array data.
      *
      * @return bool Return TRUE.
      */
-    public function callback_mainwp_site_added( $website, $information = array() ) {
+    public function callback_mainwp_site_added( $website ) {
         if ( empty( $website ) || ! is_object( $website ) || empty( $website->id ) ) {
             return false;
         }
@@ -115,12 +114,11 @@ class Connector_Site extends Log_Connector {
      * @param array  $information Sync array data.
      * @param bool   $success Sync success or failed.
      * @param string $sync_error Sync error data (options).
-     * @param array  $post_data addition post data (options).
      *
      * @return bool Return TRUE.
      */
-    public function callback_mainwp_site_sync( $website, $information, $success, $sync_error = '', $post_data = array() ) {
-
+    public function callback_mainwp_site_sync( $website, $information, $success, $sync_error = '' ) {
+        unset( $information );
         if ( empty( $website ) ) {
             return false;
         }
@@ -249,11 +247,10 @@ class Connector_Site extends Log_Connector {
      * @action transition_post_status.
      *
      * @param object $website Website object data.
-     * @param array  $post_values POST values.
      *
      * @return bool Return TRUE.
      */
-    public function callback_mainwp_site_updated( $website, $post_values ) {
+    public function callback_mainwp_site_updated( $website ) {
         $state = 1;
         $this->log(
             esc_html_x(

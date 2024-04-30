@@ -74,10 +74,8 @@ class Connector_User extends Log_Connector {
          * @param object $website  website data.
          * @param string $pAction post action.
          * @param array  $data data array.
-         * @param mixed  $extra extra info.
-         * @param bool   $optimize true|false optimize big site or not.
          */
-        public function callback_mainwp_user_action( $website, $pAction, $data, $extra = array(), $optimize = false ) {
+        public function callback_mainwp_user_action( $website, $pAction, $data ) {
 
             if ( empty( $website ) || ! is_object( $website ) || empty( $website->id ) || ! is_array( $data ) ) {
                 return;

@@ -63,8 +63,6 @@ class MainWP_Common_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, $get_fields, $is_staging );
 
-        $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, $get_fields, $is_staging );
-
         $userExtension = MainWP_DB_Common::instance()->get_user_extension();
         $websites      = MainWP_DB::instance()->query( $sql );
 

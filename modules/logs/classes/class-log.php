@@ -132,13 +132,9 @@ class Log {
         if ( null === $recordarr['state'] || '' === $recordarr['state'] ) {
             unset( $recordarr['state'] );
         }
-
-        $result = $this->manager->db->insert( $recordarr );
-
         // This is helpful in development environments.
         // error_log( $this->debug_backtrace( $recordarr ) ); //phpcs:ignore -- development.
-
-        return $result;
+        return $this->manager->db->insert( $recordarr );
     }
 
     /**
@@ -195,7 +191,7 @@ class Log {
         $backtrace = ob_get_clean();
         $backtrace = array_values( array_filter( explode( "\n", $backtrace ) ) );
 
-        $output = sprintf(
+        return sprintf(
             "Pro Reports Debug Backtrace\n\n    Summary | %s\n     Author | %s\n  Connector | %s\n    Context | %s\n     Action | %s\nReports Meta | %s\nAuthor Meta | %s\n\n%s\n",
             $message,
             $author,
@@ -206,7 +202,5 @@ class Log {
             $user_meta,
             implode( "\n", $backtrace )
         );
-
-        return $output;
     }
 }

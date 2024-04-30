@@ -116,7 +116,7 @@ class MainWP_Reports_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $theme_upgrades       = json_decode( $website->theme_upgrades, true );
         $translation_upgrades = json_decode( $website->translation_upgrades, true );
 
-        $results = array(
+        return array(
             'plugins'     => array(
                 'abandoned' => $abandoned_plugins,
                 'pending'   => $plugin_upgrades,
@@ -132,6 +132,5 @@ class MainWP_Reports_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 'pending' => $translation_upgrades,
             ),
         );
-        return $results;
     }
 }

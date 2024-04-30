@@ -94,8 +94,7 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @return string Activation upgrade URL.
      */
     public function get_upgrade_url() {
-        $url = apply_filters( 'mainwp_api_manager_upgrade_url', $this->upgrade_url );
-        return $url;
+        return apply_filters( 'mainwp_api_manager_upgrade_url', $this->upgrade_url );
     }
 
     /**

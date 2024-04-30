@@ -182,7 +182,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
      */
     public static function get_manage_columns() {
-        $colums = array(
+        return array(
             'name'     => esc_html__( 'Name', 'mainwp' ),
             'username' => esc_html__( 'Username', 'mainwp' ),
             'email'    => esc_html__( 'E-mail', 'mainwp' ),
@@ -190,7 +190,6 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             'posts'    => esc_html__( 'Posts', 'mainwp' ),
             'website'  => esc_html__( 'Website', 'mainwp' ),
         );
-        return $colums;
     }
 
     /**
@@ -1066,10 +1065,8 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             continue;
                         }
 
-                        if ( $check_users_role ) {
-                            if ( ! in_array( $user['id'], $search_user_role ) ) {
-                                continue;
-                            }
+                        if ( $check_users_role && ! in_array( $user['id'], $search_user_role ) ) {
+                            continue;
                         }
 
                         $tmpUsers       = array( $user );
@@ -1399,11 +1396,8 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         if ( 'update_user' === $pAction ) {
             $user_data = isset( $_POST['user_data'] ) ? wp_unslash( $_POST['user_data'] ) : '';
             parse_str( $user_data, $extra );
-            if ( $website->adminname === $userName ) {
-
-                if ( is_array( $extra ) && isset( $extra['role'] ) ) {
-                    unset( $extra['role'] );
-                }
+            if ( $website->adminname === $userName && is_array( $extra ) && isset( $extra['role'] ) ) {
+                unset( $extra['role'] );
             }
 
             if ( ! empty( $pass ) ) {
@@ -1473,13 +1467,9 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
         }
 
-        if ( 'edit' === $pAction ) {
-            if ( $website->adminname === $userName ) {
-                // This user is used for our secure link, you can not change the role.
-                if ( is_array( $information ) && isset( $information['user_data'] ) ) {
-                    $information['is_secure_admin'] = 1;
-                }
-            }
+        // This user is used for our secure link, you can not change the role.
+        if ( 'edit' === $pAction && $website->adminname === $userName && is_array( $information ) && isset( $information['user_data'] ) ) {
+            $information['is_secure_admin'] = 1;
         }
 
         return $information;
@@ -2018,7 +2008,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <?php foreach ( $dbwebsites as $website ) : ?>
                         <div class="item ui grid">
                             <span class="content"><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a></span>
-                            <span class="right floated content"><?php echo( isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ? '<i class="check green icon"></i> ' : '<i class="times red icon"></i> ' . $output->errors[ $website->id ] ); ?></span>
+                            <span class="right floated content"><?php echo isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ? '<i class="check green icon"></i> ' : '<i class="times red icon"></i> ' . $output->errors[ $website->id ]; ?></span>
                         </div>
                         <?php endforeach; ?>
                     </div>

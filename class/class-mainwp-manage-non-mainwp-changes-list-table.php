@@ -61,12 +61,11 @@ class MainWP_Manage_Non_MainWP_Changes_List_Table { // phpcs:ignore Generic.Clas
      * @return array $sortable_columns Array of sortable column names.
      */
     public function get_sortable_columns() {
-        $sortable_columns = array(
+        return array(
             'name'        => array( 'name', false ),
             'site'        => array( 'site', false ),
             'action_user' => array( 'action_user', false ),
         );
-        return $sortable_columns;
     }
 
     /**

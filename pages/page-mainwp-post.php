@@ -858,7 +858,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <?php endif; ?>
             <div class="field">
                 <label><?php esc_html_e( 'Max posts to return', 'mainwp' ); ?></label>
-                <input type="text" name="mainwp_maximumPosts"  id="mainwp_maximumPosts" value="<?php echo( ( false === get_option( 'mainwp_maximumPosts' ) ) ? 50 : esc_attr( get_option( 'mainwp_maximumPosts' ) ) ); ?>"/>
+                <input type="text" name="mainwp_maximumPosts"  id="mainwp_maximumPosts" value="<?php echo ( false === get_option( 'mainwp_maximumPosts' ) ) ? 50 : esc_attr( get_option( 'mainwp_maximumPosts' ) ); ?>"/>
             </div>
         </div>
         <?php

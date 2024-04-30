@@ -956,7 +956,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Updates_Per_Item::render_plugins_updates()
      * @uses \MainWP\Dashboard\MainWP_Updates_Per_Site::render_plugins_updates()
      */
-    public static function render_plugins_update_tab( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups, $site_view ) {
+    public static function render_plugins_update_tab( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups, $site_view ) { //phpcs:ignore -- NOSONAR - compatible.
         $trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
         if ( ! is_array( $trustedPlugins ) ) {
             $trustedPlugins = array();
@@ -1129,7 +1129,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Updates_Per_Item::render_themes_updates()
      * @uses \MainWP\Dashboard\MainWP_Updates_Per_Site::render_themes_updates()
      */
-    public static function render_themes_update_tab( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups, $site_view ) {
+    public static function render_themes_update_tab( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups, $site_view ) { //phpcs:ignore -- NOSONAR - compatible.
         $trustedThemes = json_decode( $userExtension->trusted_themes, true );
         if ( ! is_array( $trustedThemes ) ) {
             $trustedThemes = array();
@@ -1303,7 +1303,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_Updates_Per_Item::render_trans_update()
      * @uses \MainWP\Dashboard\MainWP_Updates_Per_Site::render_trans_update()
      */
-    public static function render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups, $site_view ) {
+    public static function render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups, $site_view ) { //phpcs:ignore -- NOSONAR - compatible.
         if ( 1 === (int) $mainwp_show_language_updates ) {
             ?>
         <div class="ui active tab" data-tab="translations-updates">
@@ -1958,7 +1958,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         continue;
                     }
                     ?>
-                    <a class="<?php echo( $slug === $current_tab ? 'active' : '' ); ?> item" data-tab="<?php echo esc_html( $slug ); ?>" href="admin.php?page=UpdatesManage&tab=<?php echo esc_html( $slug ); ?>"><?php echo esc_html( $tab['title'] ); ?><div class="ui small <?php echo empty( $tab['total_upgrades'] ) ? 'green' : 'red'; ?> label" timestamp="<?php echo esc_html( time() ); ?>"><?php echo intval( $tab['total_upgrades'] ); ?></div></a>
+                    <a class="<?php echo $slug === $current_tab ? 'active' : ''; ?> item" data-tab="<?php echo esc_html( $slug ); ?>" href="admin.php?page=UpdatesManage&tab=<?php echo esc_html( $slug ); ?>"><?php echo esc_html( $tab['title'] ); ?><div class="ui small <?php echo empty( $tab['total_upgrades'] ) ? 'green' : 'red'; ?> label" timestamp="<?php echo esc_html( time() ); ?>"><?php echo intval( $tab['total_upgrades'] ); ?></div></a>
                     <?php
                 }
                 ?>

@@ -191,7 +191,7 @@ class Log_List_Table {
      * @return array $sortable_columns Array of sortable column names.
      */
     public function get_sortable_columns() {
-        $sortable_columns = array(
+        return array(
             'date'          => array( 'date', false ),
             'log_site_name' => array( 'site', false ),
             'url'           => array( 'site', false ),
@@ -201,7 +201,6 @@ class Log_List_Table {
             'state'         => array( 'state', false ),
             'duration'      => array( 'duration', false ),
         );
-        return $sortable_columns;
     }
 
     /**
@@ -231,10 +230,7 @@ class Log_List_Table {
      * @return array $columns Array of column names.
      */
     public function get_columns() {
-
-        $columns = $this->get_default_columns();
-
-        return $columns;
+        return $this->get_default_columns();
     }
 
     /**

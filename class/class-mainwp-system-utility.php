@@ -318,9 +318,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $mwpDir      = $mwpDir[0];
         $fullFile    = $specificDir . $filename;
 
-        $download_url = admin_url( '?sig=' . static::get_download_sig( $fullFile ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $fullFile ) ) );
-
-        return $download_url;
+        return admin_url( '?sig=' . static::get_download_sig( $fullFile ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $fullFile ) ) );
     }
 
 
@@ -751,9 +749,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return '';
         }
 
-        $page = $screen->id;
-
-        return $page;
+        return $screen->id;
     }
 
     /**
@@ -1119,9 +1115,8 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( $forced_get ) {
             $fet_icon = static::fetch_wp_org_icons( $slug, 'plugin' );
             if ( false !== $fet_icon ) {
-                $scr  = MainWP_Utility::remove_http_prefix( $fet_icon );
-                $icon = '<img style="display:inline-block" class="ui mini circular image" updated-icon="true" src="' . esc_attr( $scr ) . '" />';
-                return $icon;
+                $scr = MainWP_Utility::remove_http_prefix( $fet_icon );
+                return '<img style="display:inline-block" class="ui mini circular image" updated-icon="true" src="' . esc_attr( $scr ) . '" />';
             }
             return $icon;
         }
@@ -1520,7 +1515,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Get default map site fields.
      */
     public static function get_default_map_site_fields() {
-        $data_fields = array(
+        return array(
             'id',
             'url',
             'name',
@@ -1533,7 +1528,6 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             'signature_algo',
             'verify_method',
         );
-        return $data_fields;
     }
 
     /**

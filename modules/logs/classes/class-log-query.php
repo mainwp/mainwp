@@ -179,12 +179,10 @@ class Log_Query {
         /**
          * QUERY THE DATABASE FOR RESULTS
          */
-        $result = array(
+        return array(
             'items' => $wpdb->get_results( $query ), // phpcs:ignore -- ok.
             'count' => absint( $wpdb->get_var( $count_query ) ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         );
-
-        return $result;
     }
 
     /**

@@ -100,9 +100,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             return false;
         }
 
-        $response = wp_remote_retrieve_body( $request );
-
-        return $response;
+        return wp_remote_retrieve_body( $request );
     }
 
     /**
@@ -139,9 +137,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             return false;
         }
 
-        $response = wp_remote_retrieve_body( $request );
-
-        return $response;
+        return wp_remote_retrieve_body( $request );
     }
 
     /**
@@ -178,9 +174,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             return false;
         }
 
-        $response = wp_remote_retrieve_body( $request );
-
-        return $response;
+        return wp_remote_retrieve_body( $request );
     }
 
     /**
@@ -232,9 +226,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             throw new MainWP_Exception( $error ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Escaped.
         }
 
-        $response = wp_remote_retrieve_body( $request );
-
-        return $response;
+        return wp_remote_retrieve_body( $request );
     }
 
     /**
@@ -272,9 +264,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             return false;
         }
 
-        $response = wp_remote_retrieve_body( $request );
-
-        return $response;
+        return wp_remote_retrieve_body( $request );
     }
 
     /**
@@ -306,8 +296,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             return false;
         }
 
-        $response = wp_remote_retrieve_body( $request );
-        return $response;
+        return wp_remote_retrieve_body( $request );
     }
 
     /**
@@ -328,8 +317,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 MainWP_Keys_Manager::instance()->update_key_value( 'mainwp_extensions_master_api_key', $decryp_api_key );
             }
         }
-        $decryp_api_key = MainWP_Keys_Manager::instance()->get_keys_value( 'mainwp_extensions_master_api_key' );
-        return $decryp_api_key;
+        return MainWP_Keys_Manager::instance()->get_keys_value( 'mainwp_extensions_master_api_key' );
     }
 }
 

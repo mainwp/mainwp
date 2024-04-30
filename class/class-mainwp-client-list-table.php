@@ -76,8 +76,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
      * @return array $sortable_columns Array of sortable column names.
      */
     public function get_sortable_columns() {
-
-        $sortable_columns = array(
+        return array(
             'name'             => array( 'name', false ),
             'client_email'     => array( 'client_email', false ),
             'client_phone'     => array( 'client_phone', false ),
@@ -97,7 +96,6 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
             'created'          => array( 'created', false ),
             'country'          => array( 'country', false ),
         );
-        return $sortable_columns;
     }
 
     /**

@@ -299,12 +299,8 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 $ext['activated_key'] = 'Activated';
             }
 
-            if ( null !== $deactivated_license ) {
-                if ( $deactivated_license && $apiManager && isset( $ext['activated_key'] ) && 'Activated' === $ext['activated_key'] ) {
-                    continue; // get deactivated license, skip activated license.
-                } elseif ( ! $deactivated_license && ( ! isset( $ext['activated_key'] ) || 'Activated' !== $ext['activated_key'] ) ) {
-                    continue; // get activated license, so skip deactivated license.
-                }
+            if ( null !== $deactivated_license && ( ( $deactivated_license && $apiManager && isset( $ext['activated_key'] ) && 'Activated' === $ext['activated_key'] ) || ( ! $deactivated_license && ( ! isset( $ext['activated_key'] ) || 'Activated' !== $ext['activated_key'] ) ) ) ) {
+                continue; // get deactivated license, skip activated license.
             }
 
             $return[ $extension['slug'] ] = $ext;
@@ -919,7 +915,19 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
              */
             global $current_user;
 
-            $id = MainWP_DB::instance()->add_website( $current_user->ID, $clone_name, $clone_url, $website->adminname, $website->pubkey, $website->privkey, array(), array(), $website->verify_certificate, ( null !== $website->uniqueId ? $website->uniqueId : '' ), $website->http_user, $website->http_pass, $website->ssl_version, $website->wpe, 1 );
+            $others = array(
+                'groupids'          => array(),
+                'groupnames'        => array(),
+                'verifyCertificate' => $website->verify_certificate,
+                'addUniqueId'       => ( null !== $website->uniqueId ? $website->uniqueId : '' ),
+                'http_user'         => $website->http_user,
+                'http_pass'         => $website->http_pass,
+                'sslVersion'        => $website->ssl_version,
+                'wpe'               => $website->wpe,
+                'isStaging'         => 1,
+            );
+
+            $id = MainWP_DB::instance()->add_website( $current_user->ID, $clone_name, $clone_url, $website->adminname, $website->pubkey, $website->privkey, $others );
 
             /** This action is documented in class\class-mainwp-manage-sites-view.php */
             do_action( 'mainwp_added_new_site', $id, $website );
@@ -963,7 +971,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return false;
         }
 
-        if ( ( empty( $clone_url ) && empty( $clone_site_id ) ) ) {
+        if ( empty( $clone_url ) && empty( $clone_site_id ) ) {
             return false;
         }
 

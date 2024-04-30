@@ -815,7 +815,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 </div>
                             </div>
                         </div>
-                        <?php if ( ( ( $enableLegacyBackupFeature && empty( $primaryBackup ) ) || ( empty( $enableLegacyBackupFeature ) && ! empty( $primaryBackup ) ) ) ) { ?>
+                        <?php if ( ( $enableLegacyBackupFeature && empty( $primaryBackup ) ) || ( empty( $enableLegacyBackupFeature ) && ! empty( $primaryBackup ) ) ) { ?>
                         <div class="ui grid field mainwp-parent-toggle settings-field-indicator-updates">
                             <label class="six wide column middle aligned">
                             <?php
@@ -1134,11 +1134,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::is_openssl_config_warning()
      */
     public static function show_openssl_lib_config() {
-        if ( MainWP_Server_Information_Handler::is_openssl_config_warning() ) {
-            return true;
-        } else {
-            return false;
-        }
+        return MainWP_Server_Information_Handler::is_openssl_config_warning() ? true : false;
     }
 
     /**
@@ -1574,7 +1570,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             <label class="six wide column middle aligned"><?php echo esc_html__( 'Demo mode', 'mainwp' ); ?></label>
                             <div class="ten wide column">
                                 <?php if ( ! $enabled_demo ) { ?>
-                            <span data-tooltip="<?php esc_attr_e( 'Demo Mode can not be enabled on MainWP Dashboards that already have sites connected, clients created or extensions installed.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><button page-import="settings" class="ui green button mainwp-import-demo-data-button" <?php echo ( ! $is_new ? 'disabled="disabled"' : '' ); ?>><?php esc_html_e( 'Import Demo Content', 'mainwp' ); ?></button></span>
+                            <span data-tooltip="<?php esc_attr_e( 'Demo Mode can not be enabled on MainWP Dashboards that already have sites connected, clients created or extensions installed.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><button page-import="settings" class="ui green button mainwp-import-demo-data-button" <?php echo ! $is_new ? 'disabled="disabled"' : ''; ?>><?php esc_html_e( 'Import Demo Content', 'mainwp' ); ?></button></span>
                                 <?php } else { ?>
                             <span data-tooltip="<?php esc_attr_e( 'Click this button to delete the Demo content from your MainWP Dashboard and disable the Demo mode.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><button class="ui green button mainwp-remove-demo-data-button"><?php esc_html_e( 'Delete Demo Content', 'mainwp' ); ?></button></span>
                                 <?php } ?>
@@ -1668,9 +1664,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             $filename = readdir( $handle );
             while ( false !== $filename ) {
                 $correct_file = true;
-                if ( '.' === substr( $filename, 0, 1 ) || 'index.php' === $filename ) {
-                    $correct_file = false;
-                } elseif ( '.css' !== substr( $filename, - 4 ) ) {
+                if ( '.' === substr( $filename, 0, 1 ) || 'index.php' === $filename || '.css' !== substr( $filename, - 4 ) ) {
                     $correct_file = false;
                 }
                 if ( $correct_file ) {
@@ -1730,8 +1724,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             // re-name the custom-dashboard folder to compatible.
             $wp_filesystem->move( $dirs[0] . 'custom-dashboard', $dirs[0] . 'themes' );
         }
-        $dirs = MainWP_System_Utility::get_mainwp_dir_allow_access( 'themes' );
-        return $dirs;
+        return MainWP_System_Utility::get_mainwp_dir_allow_access( 'themes' );
     }
 
 

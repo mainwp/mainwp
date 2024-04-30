@@ -97,20 +97,18 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 )
             );
         }
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
-            if ( MainWP_Server_Information_Handler::is_apache_server_software() ) {
-                add_submenu_page(
-                    'mainwp_tab',
-                    __( '.htaccess File', 'mainwp' ),
-                    '<div class="mainwp-hidden">' . esc_html__( '.htaccess File', 'mainwp' ) . '</div>',
-                    'read',
-                    '.htaccess',
-                    array(
-                        static::get_class_name(),
-                        'render_htaccess',
-                    )
-                );
-            }
+        if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) && MainWP_Server_Information_Handler::is_apache_server_software() ) {
+            add_submenu_page(
+                'mainwp_tab',
+                __( '.htaccess File', 'mainwp' ),
+                '<div class="mainwp-hidden">' . esc_html__( '.htaccess File', 'mainwp' ) . '</div>',
+                'read',
+                '.htaccess',
+                array(
+                    static::get_class_name(),
+                    'render_htaccess',
+                )
+            );
         }
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ActionLogs' ) ) {
             add_submenu_page(
@@ -186,12 +184,10 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=WPConfig' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'WP-Config File', 'mainwp' ); ?></a>
                     <?php } ?>
                     <?php
-                    if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
-                        if ( MainWP_Server_Information_Handler::is_apache_server_software() ) {
-                            ?>
-                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=.htaccess' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( '.htaccess File', 'mainwp' ); ?></a>
-                            <?php
-                        }
+                    if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) && MainWP_Server_Information_Handler::is_apache_server_software() ) {
+                        ?>
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=.htaccess' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( '.htaccess File', 'mainwp' ); ?></a>
+                        <?php
                     }
                     ?>
                     <?php
@@ -446,10 +442,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             </div>
         <?php endif; ?>
         <?php
-        if ( function_exists( 'curl_version' ) ) {
-            if ( ! MainWP_Server_Information_Handler::curlssl_compare( 'OpenSSL/1.1.0', '>=' ) ) {
-                echo "<div class='ui yellow message'>" . sprintf( esc_html__( 'Your host needs to update OpenSSL to at least version 1.1.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://community.letsencrypt.org/t/openssl-client-compatibility-changes-for-let-s-encrypt-certificates/143816" target="_blank">', '</a>' ) . '</div>';
-            }
+        if ( function_exists( 'curl_version' ) && ! MainWP_Server_Information_Handler::curlssl_compare( 'OpenSSL/1.1.0', '>=' ) ) {
+            echo "<div class='ui yellow message'>" . sprintf( esc_html__( 'Your host needs to update OpenSSL to at least version 1.1.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://community.letsencrypt.org/t/openssl-client-compatibility-changes-for-let-s-encrypt-certificates/143816" target="_blank">', '</a>' ) . '</div>';
         }
         ?>
         <table id="mainwp-system-report-wordpress-table" class="ui unstackable table single line mainwp-system-report-table mainwp-system-info-table">
@@ -1185,6 +1179,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             case 12:
                 $text = esc_html__( 'Twelve times per day', 'mainwp' );
                 break;
+            default:
+                break;
         }
         return $text;
     }
@@ -1213,6 +1209,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 break;
             case 'minutely':
                 $next_time = $lasttime_run ? $lasttime_run + MINUTE_IN_SECONDS : $local_timestamp + MINUTE_IN_SECONDS;
+                break;
+            default:
                 break;
         }
 
@@ -1247,8 +1245,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $mess = 'Not Writable';
         }
 
-        $output = '<tr><td>MainWP Upload Directory</td><td>' . $mess . '</td></tr>';
-        return $output;
+        return '<tr><td>MainWP Upload Directory</td><td>' . $mess . '</td></tr>';
     }
 
     /**
@@ -1295,10 +1292,11 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     public static function render_row( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) { //phpcs:ignore -- NOSONAR - complex.
         $currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $getter ) );
          // phpcs:disable WordPress.Security.EscapeOutput
+        $ver = is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html( $version );
         ?>
         <tr>
             <td><?php echo esc_html( $config ); ?></td>
-            <td><?php echo esc_html( $compare ); ?><?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html( $version ) ) ) . ' ' . $extraText; ?></td>
+            <td><?php echo esc_html( $compare ); ?><?php echo ( true === $version ? 'true' : $ver ) . ' ' . $extraText; ?></td>
             <td><?php echo true === $currentVersion ? 'true' : $currentVersion; ?></td>
             <?php if ( 'filesize' === $whatType ) { ?>
                 <td class="right aligned"><?php echo MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? static::get_pass_html() : static::get_warning_html( $errorType ); ?></td>
@@ -1334,10 +1332,11 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     public static function render_row_with_description( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) { // phpcs:ignore -- NOSONAR - complex.
         $currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $getter ) );
         // phpcs:disable WordPress.Security.EscapeOutput
+        $ver = is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html( $version );
         ?>
         <tr>
             <td><?php echo esc_html( $config ); ?></td>
-            <td><?php echo esc_html( $compare ); ?>  <?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html( $version ) ) ) . ' ' . $extraText; ?></td>
+            <td><?php echo esc_html( $compare ); ?>  <?php echo ( true === $version ? 'true' : $ver ) . ' ' . $extraText; ?></td>
             <td><?php echo true === $currentVersion ? 'true' : $currentVersion; ?></td>
             <?php if ( 'filesize' === $whatType ) { ?>
             <td class="right aligned"><?php echo MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? static::get_pass_html() : static::get_warning_html( $errorType ); ?></td>

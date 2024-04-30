@@ -47,11 +47,9 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * Get last sync status.
      *
-     * @param string|null $userId User ID.
-     *
      * @return string $return all_synced|not_synced|last_sync
      */
-    public function get_last_sync_status( $userId = null ) {
+    public function get_last_sync_status() {
         $sql      = $this->get_sql_websites_for_current_user();
         $websites = $this->query( $sql );
 
@@ -134,8 +132,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      */
     public function get_group_by_id( $id ) {
         if ( MainWP_Utility::ctype_digit( $id ) ) {
-            $group = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'group' ) . ' WHERE id= %d', $id ) );
-            return $group;
+            return $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'group' ) . ' WHERE id= %d', $id ) );
         }
 
         return null;
@@ -715,9 +712,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $this->wpdb->update( $this->table_name( 'users' ), $fields, array( 'userid' => $userid ) );
         }
 
-        $row = $this->wpdb->get_row( 'SELECT * FROM ' . $this->table_name( 'users' ) . ' WHERE userid= ' . $userid, OBJECT );
-
-        return $row;
+        return $this->wpdb->get_row( 'SELECT * FROM ' . $this->table_name( 'users' ) . ' WHERE userid= ' . $userid, OBJECT );
     }
 
 

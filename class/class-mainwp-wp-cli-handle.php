@@ -133,8 +133,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         }
         foreach ( $commands as $comm ) {
             if ( isset( $assoc_args[ $comm ] ) ) {
-                $callback = str_replace( '-', '_', $comm );
-                return $callback;
+                return str_replace( '-', '_', $comm );
             }
         }
         return false;

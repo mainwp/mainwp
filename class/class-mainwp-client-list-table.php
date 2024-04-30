@@ -411,7 +411,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
         ?>
     <script type="text/javascript">
             jQuery( document ).ready( function( $ ) {
-                let mainwp_manage_clients_screen_options = function () {
+                window.mainwp_manage_clients_screen_options = function () {
                     jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( {
                         allowMultiple: true,
                         onHide: function () {

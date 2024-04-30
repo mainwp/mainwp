@@ -20,7 +20,7 @@ if ( empty( $heading ) ) {
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=<?php bloginfo( 'charset' ); ?>" />
         <title><?php echo esc_html( get_bloginfo( 'name', 'display' ) ); ?></title>

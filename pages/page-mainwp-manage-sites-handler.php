@@ -279,9 +279,9 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
             if ( '' !== $error ) {
                 die( wp_json_encode( array( 'error' => esc_html( $error ) ) ) );
-            } elseif ( isset( $information['deactivated'] ) ) {
+            } elseif ( is_array( $result ) && isset( $result['deactivated'] ) ) {
                 die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
-            } elseif ( isset( $information['removed'] ) ) {
+            } elseif ( is_array( $result ) && isset( $result['removed'] ) ) {
                 die( wp_json_encode( array( 'result' => 'REMOVED' ) ) );
             } else {
                 die( wp_json_encode( array( 'undefined_error' => true ) ) );

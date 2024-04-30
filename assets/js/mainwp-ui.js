@@ -26,7 +26,7 @@ function read_current_url() {
     mainwp_current_url = document.location.href.replace(/^.*?\/([^/]*?)\/?$/i, '$1');
     return mainwp_current_url;
 }
-function load_url(href, obj, e) {
+function load_url(href, obj, e) { // NOSONAR - complex.
     let page = href.match(/page=/i) ? href.replace(/^.*\?page=([^&]+).*?$/i, '$1') : ''; // NOSONAR - safe with run time error.
     if (page || href == 'index.php') {
         if (!jQuery('body').hasClass('mainwp-ui-page')) {
@@ -70,7 +70,7 @@ function load_url(href, obj, e) {
                 page: page,
                 nonce: mainwp_ajax_nonce
             }, function (data) {
-                pagenow = page;
+                pagenow = page; // NOSONAR - wp variable.
                 data += '<div class="clear"></div>';
                 jQuery('#wpbody-content').html(data);
                 reload_init();
@@ -504,7 +504,7 @@ let mainwp_accordion_init_collapse = function () {
     jQuery('.mainwp-sidebar-accordion').each(function () {
         let ident = jQuery('.mainwp-sidebar-accordion').index(this);
         if (typeof (pagenow) !== 'undefined') {
-            val = localStorage.getItem('mainwp-accordion[' + pagenow + '][' + ident + ']');
+            let val = localStorage.getItem('mainwp-accordion[' + pagenow + '][' + ident + ']');
             if (val === '0') {
                 jQuery(this).find('.title').removeClass('active');
                 jQuery(this).find('.content').removeClass('active');
@@ -571,7 +571,7 @@ window.mainwp_get_icon_start = function () {
 }
 
 let mainwp_get_icon_start_next = function () {
-    itemIconProcess = jQuery('.cached-icon-expired[queue="1"]:first');
+    let itemIconProcess = jQuery('.cached-icon-expired[queue="1"]:first');
     if (itemIconProcess.length > 0) {
         mainwp_get_icon_start_specific(itemIconProcess);
     } else {

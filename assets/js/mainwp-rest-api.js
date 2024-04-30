@@ -12,13 +12,8 @@ jQuery(function($) {
     // Trigger Manage Bulk Actions
     jQuery(document).on('click', '#mainwp-do-rest-api-bulk-actions', function () {
         let action = jQuery("#mainwp-rest-api-bulk-actions-menu").dropdown("get value");
-        if (action == 'delete') {
-
-            if (bulk_RestAPITaskRunning) {
-                return false;
-            }
+        if (action == 'delete' && ! bulk_RestAPITaskRunning ) {
             mainwp_restapi_bulk_remove_keys_confirm();
-            return false;
         }
         return false;
     });
@@ -26,12 +21,12 @@ jQuery(function($) {
 });
 
 let mainwp_restapi_remove_key_confirm = function (pCheckedBox) {
-    confirmMsg = __("You are about to delete the selected REST API Key?");
+    let confirmMsg = __("You are about to delete the selected REST API Key?");
     mainwp_confirm(confirmMsg, function () { mainwp_restapi_bulk_remove_specific(pCheckedBox); });
 }
 
 let mainwp_restapi_bulk_remove_keys_confirm = function () {
-    confirmMsg = __("You are about to delete the selected REST API Key(s)?");
+    let confirmMsg = __("You are about to delete the selected REST API Key(s)?");
     mainwp_confirm(confirmMsg, function () { mainwp_restapi_bulk_init(); mainwp_restapi_remove_keys_next(); });
 }
 

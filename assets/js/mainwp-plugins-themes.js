@@ -28,14 +28,14 @@ jQuery(function () {
         let action = jQuery("#mainwp-bulk-actions").dropdown("get value");
 
         if (action == 'none')
-            return false;
+            return;
 
         let slugs = jQuery.map(jQuery("input[name='plugin[]']:checked"), function (el) {
             return jQuery(el).val();
         });
 
         if (slugs.length == 0)
-            return false;
+            return;
 
         jQuery('#mainwp-bulk-trust-plugins-action-apply').attr('disabled', 'true');
 
@@ -49,19 +49,17 @@ jQuery(function () {
             jQuery('#mainwp-bulk-trust-plugins-action-apply').prop("disabled", false);
             mainwp_fetch_all_active_plugins();
         }, 'json');
-
-        return false;
     });
     jQuery(document).on('click', '#mainwp-bulk-trust-themes-action-apply', function () {
         let action = jQuery("#mainwp-bulk-actions").dropdown("get value");
         if (action == 'none')
-            return false;
+            return;
 
         let slugs = jQuery.map(jQuery("input[name='theme[]']:checked"), function (el) {
             return jQuery(el).val();
         });
         if (slugs.length == 0)
-            return false;
+            return;
 
         jQuery('#mainwp-bulk-trust-themes-action-apply').attr('disabled', 'true');
 
@@ -75,8 +73,6 @@ jQuery(function () {
             jQuery('#mainwp-bulk-trust-themes-action-apply').prop("disabled", false);
             mainwp_fetch_all_themes();
         }, 'json');
-
-        return false;
     });
 });
 
@@ -175,7 +171,6 @@ jQuery(function () {
         console.log(selectedIds);
         if (selectedIds.length == 0) {
             feedback('mainwp-message-zone', __('Please select at least one website.'), 'yellow');
-            return false;
         } else {
             jQuery('#mainwp-message-zone').fadeOut(5000);
             let ids = selectedIds.join("-");
@@ -185,7 +180,6 @@ jQuery(function () {
             }
             location.href = 'admin.php?page=PluginsInstall&selected_sites=' + ids + kwd;
         }
-        return false;
     });
 
     jQuery('#mainwp-plugins-content .checkbox').on('click', function () {
@@ -299,7 +293,7 @@ jQuery(function () {
         mainwp_notes_show();
     });
 
-    mainwp_notes_plugin_save = function () {
+    window.mainwp_notes_plugin_save = function () {
         let slug = jQuery('#mainwp-notes-slug').val();
         let newnote = jQuery('#mainwp-notes-note').val();
         newnote = newnote.replace(/(?:\r\n|\r|\n)/g, '<br>');
@@ -347,7 +341,7 @@ jQuery(function () {
         mainwp_notes_show();
     });
 
-    mainwp_notes_theme_save = function () {
+    window.mainwp_notes_theme_save = function () {
         let slug = jQuery('#mainwp-notes-slug').val();
         let newnote = jQuery('#mainwp-notes-note').val();
         newnote = newnote.replace(/(?:\r\n|\r|\n)/g, '<br>');
@@ -462,7 +456,6 @@ jQuery(function () {
 
         if (selectedIds.length == 0) {
             feedback('mainwp-message-zone', __('Please select at least one website.'), 'yellow');
-            return false;
         } else {
             jQuery('#mainwp-message-zone').fadeOut(5000);
             let ids = selectedIds.join("-");
@@ -472,7 +465,6 @@ jQuery(function () {
             }
             location.href = 'admin.php?page=ThemesInstall&selected_sites=' + ids + kwd;
         }
-        return false;
     });
 
     jQuery('#mainwp-themes-content .checkbox').on('click', function () {
@@ -519,7 +511,7 @@ jQuery(function () {
         });
 
 
-        jQuery(selectedSites).each(function (idx, val) {
+        jQuery(selectedSites).each(function (idx, val) { // NOSONAR - complex.
             let websiteId = val;
             let selectedThemes = [];
 
@@ -587,9 +579,9 @@ jQuery(function () {
                 themeCountSent++;
                 jQuery.post(ajaxurl, data, function (response) {
                     if (response.error != undefined && response.error == Object(response.error)) { // check if .error is object.
-                        entries = Object.entries(response.error);
+                        let entries = Object.entries(response.error);
                         for (let entry of entries) {
-                            warnings = __(entry[0], encodeURIComponent(entry[1])); // entry[0]:id message, entry[1] string value.
+                            let warnings = __(entry[0], encodeURIComponent(entry[1])); // entry[0]:id message, entry[1] string value.
                             jQuery('#mainwp-message-zone').after('<div class="ui info message yellow"><i class="ui close icon"></i><span>' + warnings + '</span></div>');
                         }
                     }

@@ -104,6 +104,9 @@ window.mainwp_update_pluginsthemes = function (updateType, updateSiteIds) {
     mainwp_managesites_checkBackups(allWebsiteIds, siteNames);
 };
 
+let websitesError;
+let websitesEveryError;
+
 let managesites_update_pluginsthemes = function (pType, websiteIds) {
     mainwpVars.websitesToUpdate = websiteIds;
     mainwpVars.currentWebsite = 0;
@@ -170,6 +173,7 @@ let managesites_update_pluginsthemes_done = function (pType) {
     managesites_loop_pluginsthemes_next(pType);
 };
 
+let _tempVal = 0;
 
 let managesites_update_pluginsthemes_next_int = function (websiteId, data, errors) {
     // to enable chunk update, for manage sites page only
@@ -185,14 +189,6 @@ let managesites_update_pluginsthemes_next_int = function (websiteId, data, error
                     dashboard_update_site_status(pWebsiteId, getErrorMessageInfo(response.error, 'ui'));
                     websitesError++;
                 } else {
-                    if (response.result) {
-                        for (slug in response.result) {
-                            if (response.result[slug] == 1) {
-                                //ok.
-                            }
-                        }
-                    }
-
                     dashboard_update_site_status(websiteId, '<i class="green check icon"></i>', true);
                     // to support reduce update plugins/themes
                     if (response.chunk_slugs) {
@@ -419,7 +415,7 @@ let managesites_backup_run_next = function () {
             } else {
                 appendToDiv(backupContentEl, '[' + pSiteName + '] ' + __('Backup file created successfully!'));
 
-                managesites_backupnow_download_file({ 'id' : pSiteId, 'name' : pSiteName }, response.result.type, response.result.url, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder);
+                managesites_backupnow_download_file({ 'id': pSiteId, 'name': pSiteName }, response.result.type, response.result.url, response.result.local, response.result.regexfile, response.result.size, response.result.subfolder);
             }
 
         }
@@ -460,7 +456,7 @@ let managesites_backupnow_download_file = function (siteInfo, type, url, file, r
         local: file
     });
     managesitesBackupDownloadRunning = true;
-    jQuery.post(ajaxurl, data, function (pFile, pRegexFile, pSubfolder, pSize, pType, pInterVal, pSiteName, pSiteId, pUrl) {
+    jQuery.post(ajaxurl, data, function (pSize, pInterVal, pSiteName, pSiteId, pUrl) {
         return function (response) {
             managesitesBackupDownloadRunning = false;
             clearInterval(pInterVal);
@@ -487,10 +483,10 @@ let managesites_backupnow_download_file = function (siteInfo, type, url, file, r
 
             managesites_backup_run_next();
         }
-    }(file, regexfile, subfolder, size, type, interVal, pSiteName, pSiteId, url), 'json');
+    }(size, interVal, pSiteName, pSiteId, url), 'json');
 };
 
-managesites_wordpress_global_upgrade_all = function (updateSiteIds, updateEverything) {
+window.managesites_wordpress_global_upgrade_all = function (updateSiteIds, updateEverything) {
     let allWebsiteIds = jQuery('.dashboard_wp_id').map(function (indx, el) {
         return jQuery(el).val();
     });
@@ -598,7 +594,6 @@ let managesites_wordpress_upgrade_int = function (websiteId) {
     jQuery.post(ajaxurl, data, function (pWebsiteId) {
         return function (response) {
             if (response.error) {
-                result = getErrorMessage(response.error);
                 dashboard_update_site_status(pWebsiteId, '<i class="red times icon"></i>' + ' ' + mainwp_links_visit_site_and_admin('', websiteId), true);
             } else {
                 dashboard_update_site_status(pWebsiteId, '<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin('', websiteId));
@@ -611,7 +606,7 @@ let managesites_wordpress_upgrade_int = function (websiteId) {
     return false;
 };
 
-window.mainwp_managesites_prepare_backup_popup = function(response, pSiteNames, siteFeedback){
+window.mainwp_managesites_prepare_backup_popup = function (response, pSiteNames, siteFeedback) {
     let backupPrimary = '';
     if (response['result']['primary_backup'] && response['result']['primary_backup'] != undefined)
         backupPrimary = response['result']['primary_backup'];

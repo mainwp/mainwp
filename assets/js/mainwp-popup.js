@@ -132,13 +132,13 @@
                     // progress label.
                     let lb = value + ' / ' + this.totalSites + ' ' + this.statusText;
                     this.setStatusText(lb);
-                    pVal = this.getProgressValue();
+                    let pVal = this.getProgressValue();
                     pVal += 1;
                     this.setProgressValue(pVal);
                 },
                 appendItemsList: function (left, right) {
                     if (this.$overlayElementId == null)
-                        this.$overlayElementId;
+                        return;
 
                     let row = '<div class="item">';
                     row += '<div class="right floated content">';

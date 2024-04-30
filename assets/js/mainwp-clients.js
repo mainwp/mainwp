@@ -339,7 +339,7 @@ jQuery(document).on('click', '#mainwp-clients-edit-custom-field', function () {
   let field_desc = parent.find('.field-description').html();
   let field_id = parent.attr('field-id');
 
-  field_name = field_name.replace(/[\[\]]/gi, ""); // NOSONAR -- Unnecessary escape character: \[. NOT work.
+  field_name = field_name.replace(/\[|\]/gi, ""); // NOSONAR.
 
   jQuery('#mainwp-clients-custom-field-modal input[name="field-name"]').val(field_name);
   jQuery('#mainwp-clients-custom-field-modal input[name="field-description"]').val(field_desc);

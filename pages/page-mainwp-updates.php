@@ -752,14 +752,10 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          */
         $limit_updates_all = apply_filters( 'mainwp_limit_updates_all', 0 );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        if ( 0 < $limit_updates_all ) {
-            if ( isset( $_GET['continue_update'] ) && '' !== $_GET['continue_update'] ) {
-                static::$continue_update = sanitize_text_field( wp_unslash( $_GET['continue_update'] ) );
-                if ( 'plugins_upgrade_all' === static::$continue_update || 'themes_upgrade_all' === static::$continue_update || 'translations_upgrade_all' === static::$continue_update ) {
-                    if ( isset( $_GET['slug'] ) && '' !== $_GET['slug'] ) {
-                        static::$continue_update_slug = wp_unslash( $_GET['slug'] );
-                    }
-                }
+        if ( 0 < $limit_updates_all && isset( $_GET['continue_update'] ) && '' !== $_GET['continue_update'] ) {
+            static::$continue_update = sanitize_text_field( wp_unslash( $_GET['continue_update'] ) );
+            if ( ( 'plugins_upgrade_all' === static::$continue_update || 'themes_upgrade_all' === static::$continue_update || 'translations_upgrade_all' === static::$continue_update ) && isset( $_GET['slug'] ) && '' !== $_GET['slug'] ) {
+                static::$continue_update_slug = wp_unslash( $_GET['slug'] );
             }
         }
 

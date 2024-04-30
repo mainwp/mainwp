@@ -709,13 +709,11 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
         if ( $groupId ) {
             $group = MainWP_DB_Common::instance()->get_group_by_id( $groupId );
-            if ( ! empty( $group ) ) {
-                if ( ! empty( $site_ids ) ) {
-                    foreach ( $site_ids as $websiteId ) {
-                        $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
-                        if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-                            MainWP_DB_Common::instance()->update_group_site( $group->id, $website->id );
-                        }
+            if ( ! empty( $group ) && ! empty( $site_ids ) ) {
+                foreach ( $site_ids as $websiteId ) {
+                    $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
+                    if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+                        MainWP_DB_Common::instance()->update_group_site( $group->id, $website->id );
                     }
                 }
             }

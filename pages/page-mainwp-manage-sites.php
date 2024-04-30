@@ -304,7 +304,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( 'grid' !== $sitesViewMode ) {
             static::load_sites_table();
         } else {
-            new MainWP_Manage_Screenshots(); // to init hooks.
+            MainWP_Manage_Screenshots::get_instance(); // to init hooks.
         }
     }
 

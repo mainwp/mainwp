@@ -34,6 +34,13 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Method get_instance().
+     */
+    public static function get_instance() {
+        return new self();
+    }
+
+    /**
      * Method generate_tabletop()
      *
      * Run the render_manage_sites_table_top menthod.

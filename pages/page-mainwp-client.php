@@ -669,20 +669,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $show_cols = get_user_option( 'mainwp_settings_show_manage_clients_columns' );
 
         if ( false === $show_cols ) { // to backwards.
-            $default_cols = array(
-                'name'     => 1,
-                'email'    => 1,
-                'phone'    => 1,
-                'websites' => 1,
-            );
-
             $show_cols = array();
             foreach ( $columns as $name => $title ) {
-                if ( isset( $default_cols[ $name ] ) ) {
-                    $show_cols[ $name ] = 1;
-                } {
-                    $show_cols[ $name ] = 1; // show other columns.
-                }
+                $show_cols[ $name ] = 1;
             }
             $user = wp_get_current_user();
             if ( $user ) {

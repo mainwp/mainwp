@@ -403,29 +403,14 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         $show_cols = get_user_option( 'mainwp_settings_show_manage_sites_columns' );
         if ( false === $show_cols ) { // to backwards.
-
-                $default_cols = array(
-                    'site'         => 1,
-                    'login'        => 1,
-                    'url'          => 1,
-                    'update'       => 1,
-                    'site_health'  => 1,
-                    'last_sync'    => 1,
-                    'site_actions' => 1,
-                );
-
                 $show_cols = array();
-                foreach ( $columns as $name => $title ) {
-                    if ( isset( $default_cols[ $name ] ) ) {
-                        $show_cols[ $name ] = 1;
-                    } else {
-                        $show_cols[ $name ] = 1; // show other columns.
-                    }
-                }
+            foreach ( $columns as $name => $title ) {
+                $show_cols[ $name ] = 1;
+            }
                 $user = wp_get_current_user();
-                if ( $user ) {
-                    update_user_option( $user->ID, 'mainwp_settings_show_manage_sites_columns', $show_cols, true );
-                }
+            if ( $user ) {
+                update_user_option( $user->ID, 'mainwp_settings_show_manage_sites_columns', $show_cols, true );
+            }
         }
 
         if ( ! is_array( $show_cols ) ) {

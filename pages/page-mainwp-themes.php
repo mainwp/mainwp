@@ -820,14 +820,10 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         $_count           = count( $allThemes );
                         $_count_installed = 0;
                         for ( $i = 0; $i < $_count; $i++ ) {
-                            $theme = $allThemes[ $i ];
-
-                            if ( 'active' === $status || 'inactive' === $status ) {
-                                if ( 1 === (int) $theme['active'] && 'active' !== $status ) {
-                                    continue;
-                                } elseif ( 1 !== $theme['active'] && 'inactive' !== $status ) {
-                                    continue;
-                                }
+                            $theme     = $allThemes[ $i ];
+                            $act_inacy = 'active' === $status || 'inactive' === $status;
+                            if ( $act_inacy && ( ( 1 === (int) $theme['active'] && 'active' !== $status ) || ( 1 !== $theme['active'] && 'inactive' !== $status ) ) ) {
+                                continue;
                             }
                             if ( ! empty( $keyword ) ) {
                                 if ( $not_criteria ) {

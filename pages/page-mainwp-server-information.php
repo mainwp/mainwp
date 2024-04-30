@@ -1332,8 +1332,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     public static function render_row_with_description( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) { // phpcs:ignore -- NOSONAR - complex.
         $currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $getter ) );
         // phpcs:disable WordPress.Security.EscapeOutput
-        ?>
         $ver = is_array( $version ) && isset( $version['version'] ) ? esc_html( $version['version'] ) : esc_html( $version );
+        ?>
         <tr>
             <td><?php echo esc_html( $config ); ?></td>
             <td><?php echo esc_html( $compare ); ?>  <?php echo ( true === $version ? 'true' : $ver ) . ' ' . $extraText; ?></td>

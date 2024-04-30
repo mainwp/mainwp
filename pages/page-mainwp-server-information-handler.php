@@ -884,8 +884,6 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 case 'mainwp_maximumPosts':
                 case 'mainwp_maximumPages':
                 case 'mainwp_maximumComments':
-                case 'mainwp_maximumSyncRequests':
-                case 'mainwp_maximumInstallUpdateRequests':
                     break;
                 case 'mainwp_maximumRequests':
                     $value = ( false === $value ) ? 4 : $value;

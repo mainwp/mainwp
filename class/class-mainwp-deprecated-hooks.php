@@ -74,9 +74,9 @@ class MainWP_Deprecated_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSame
         'mainwp-pagefooter-sites'          => '4.1',
         'mainwp-pageheader-extensions'     => '4.1',
         'mainwp-pagefooter-extensions'     => '4.1',
-        'mainwp-pageheader-post'           => '4.1.5.1',
-        'mainwp-pagefooter-post'           => '4.1.5.1',
-        'mainwp-pageheader-page'           => '4.1.5.1',
+        'mainwp-pageheader-post'           => '4.1.5.1', // NOSONAR - no IP.
+        'mainwp-pagefooter-post'           => '4.1.5.1', // NOSONAR - no IP.
+        'mainwp-pageheader-page'           => '4.1.5.1', // NOSONAR - no IP.
     );
 
     /**

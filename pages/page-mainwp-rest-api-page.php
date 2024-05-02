@@ -744,7 +744,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      */
     public static function mainwp_generate_rand_hash() {
         if ( ! function_exists( 'openssl_random_pseudo_bytes' ) ) {
-            return sha1( wp_rand() );
+            return sha1( wp_rand() ); // NOSONAR - safe for keys.
         }
 
         return bin2hex( openssl_random_pseudo_bytes( 20 ) ); // @codingStandardsIgnoreLine

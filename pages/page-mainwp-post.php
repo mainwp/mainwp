@@ -120,7 +120,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
          * @since Unknown
          */
         $sub_pages        = array();
-        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-post', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_post' );  // @deprecated Use 'mainwp_getsubpages_post' instead.
+        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-post', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_post' );  // @deprecated Use 'mainwp_getsubpages_post' instead. NOSONAR - not IP.
         static::$subPages = apply_filters( 'mainwp_getsubpages_post', $sub_pages );
 
         if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
@@ -889,7 +889,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $userId    = isset( $params['userId'] ) ? $params['userId'] : 0;
         $post_type = isset( $params['post_type'] ) ? $params['post_type'] : '';
         $search_on = isset( $params['search_on'] ) ? $params['search_on'] : 'all';
-        $clients   = sset( $params['clients'] ) ? $params['clients'] : '';
+        $clients   = isset( $params['clients'] ) ? $params['clients'] : '';
 
         ?>
 

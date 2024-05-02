@@ -823,7 +823,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-client-info-message' ) ) : ?>
                     <div class="ui info message">
                         <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-client-info-message"></i>
-                        <?php printf( esc_html__( 'use the provided form to create a new client on your child site(). for additional help, please check this %1$shelp documentation %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-client/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                        <?php printf( esc_html__( 'use the provided form to create a new client on your child site(). for additional help, please check this %1$shelp documentation %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-client/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
                     </div>
                 <?php endif; ?>
                     <div class="ui message" id="mainwp-message-zone-client" style="display:none;"></div>
@@ -2021,7 +2021,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             ?>
             <p><?php esc_html_e( 'If you need help with managing clients, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui relaxed bulleted list">
-                <div class="item"><a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">Manage Clients</a> <i class="external alternate icon"></i></div>
+                <div class="item"><a href="https://kb.mainwp.com/docs/manage-clients/" target="_blank">Manage Clients</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
                 <?php
                 /**
                  * Action: mainwp_clients_help_item

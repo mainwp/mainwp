@@ -237,7 +237,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          * @since Unknown
          */
         $sub_pages        = array();
-        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-sites', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_sites' ); // @deprecated Use 'mainwp_getsubpages_sites' instead.
+        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-sites', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_sites' ); // @deprecated Use 'mainwp_getsubpages_sites' instead. NOSONAR - not IP.
         static::$subPages = apply_filters( 'mainwp_getsubpages_sites', $sub_pages );
 
         if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
@@ -622,9 +622,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-site-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-site-info-message"></i>
-                    <div><?php printf( esc_html__( 'Use the provided form to connect your websites to your MainWP Dashboard.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
-                    <div><?php printf( esc_html__( 'If you are experiencing issues with adding a website to your MainWP Dashboard, use the %1$sTest Connection%2$s feature to ensure that your MainWP Dashboard can communicate with your website.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/test-connection-between-your-mainwp-dashboard-and-child-site/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
-                    <div><?php printf( esc_html__( 'If you still can not connect the site, see the list of %1$spotential issues%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a>' ); ?></div>
+                    <div><?php printf( esc_html__( 'Use the provided form to connect your websites to your MainWP Dashboard.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+                    <div><?php printf( esc_html__( 'If you are experiencing issues with adding a website to your MainWP Dashboard, use the %1$sTest Connection%2$s feature to ensure that your MainWP Dashboard can communicate with your website.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/test-connection-between-your-mainwp-dashboard-and-child-site/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+                    <div><?php printf( esc_html__( 'If you still can not connect the site, see the list of %1$spotential issues%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
                     </div>
             <?php endif; ?>
 
@@ -849,7 +849,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </div>
 
                 <?php
-                do_action_deprecated( 'mainwp-manage-sites-edit', array( false ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
+                do_action_deprecated( 'mainwp-manage-sites-edit', array( false ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead. NOSONAR - not IP.
 
                 /**
                  * Edit site
@@ -1150,7 +1150,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>
                         <div class="ui info message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-sites-info-message"></i>
-                            <?php printf( esc_html__( 'You can download the sample CSV file to see how to format the import file properly. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                            <?php printf( esc_html__( 'You can download the sample CSV file to see how to format the import file properly. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
                         </div>
                     <?php endif; ?>
                     <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -1900,45 +1900,47 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
     /** Hook the section help content to the Help Sidebar element. */
     public static function mainwp_help_content() {
+        // @NO_SONAR_START@ start block.
         if ( isset( $_GET['page'] ) && 'managesites' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
             if ( isset( $_GET['do'] ) && 'new' === $_GET['do'] ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
                 ?>
                 <p><?php esc_html_e( 'If you need help connecting your websites, please review following help documents', 'mainwp' ); ?></p>
                 <div class="ui relaxed bulleted list">
-                    <div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/" target="_blank">Set up the MainWP Plugin</a> <i class="external alternate icon"></i></div>
-                    <div class="item"><a href="https://kb.mainwp.com/docs/install-mainwp-child/" target="_blank">Install MainWP Child</a> <i class="external alternate icon"></i></div>
-                    <div class="item"><a href="https://kb.mainwp.com/docs/set-unique-security-id/" target="_blank">Set Unique Security ID</a> <i class="external alternate icon"></i></div>
-                    <div class="item"><a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">Add a Site to your Dashboard</a> <i class="external alternate icon"></i></div>
-                    <div class="item"><a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">Import Sites</a> <i class="external alternate icon"></i></div>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/" target="_blank">Set up the MainWP Plugin</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/install-mainwp-child/" target="_blank">Install MainWP Child</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/set-unique-security-id/" target="_blank">Set Unique Security ID</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">Add a Site to your Dashboard</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">Import Sites</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
                 </div>
                 <?php
             } elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
                 ?>
                 <p><?php esc_html_e( 'If you need help connecting your websites, please review following help documents', 'mainwp' ); ?></p>
                 <div class="ui relaxed bulleted list">
-                    <div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/" target="_blank">Set up the MainWP Plugin</a> <i class="external alternate icon"></i></div>
-                    <div class="item"><a href="https://kb.mainwp.com/docs/install-mainwp-child/" target="_blank">Install MainWP Child</a> <i class="external alternate icon"></i></div>
-                    <div class="item"><a href="https://kb.mainwp.com/docs/set-unique-security-id/" target="_blank">Set Unique Security ID</a> <i class="external alternate icon"></i></div>
-                    <div class="item"><a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">Add a Site to your Dashboard</a> <i class="external alternate icon"></i></div>
-                    <div class="item"><a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">Import Sites</a> <i class="external alternate icon"></i></div>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/" target="_blank">Set up the MainWP Plugin</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/install-mainwp-child/" target="_blank">Install MainWP Child</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/set-unique-security-id/" target="_blank">Set Unique Security ID</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">Add a Site to your Dashboard</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">Import Sites</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
                 </div>
                 <?php
             } else {
                 ?>
                 <p><?php esc_html_e( 'If you need help with managing child sites, please review following help documents', 'mainwp' ); ?></p>
                 <div class="ui relaxed bulleted list">
-                    <div class="item"><a href="https://kb.mainwp.com/docs/manage-child-sites/" target="_blank">Manage Child Sites</a> <i class="external alternate icon"></i></div>
-                    <div class="item"><a href="https://kb.mainwp.com/docs/access-child-site-wp-admin/" target="_blank">Access Child Site WP Admin</a> <i class="external alternate icon"></i></div>
-                    <div class="item"><a href="https://kb.mainwp.com/docs/synchronize-a-child-site/" target="_blank">Synchronize a Child Site</a> <i class="external alternate icon"></i></div>
-                    <div class="item"><a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">Edit a Child Site</a> <i class="external alternate icon"></i></div>
-                    <div class="item"><a href="https://kb.mainwp.com/docs/reconnect-a-child-site/" target="_blank">Reconnect a Child Site</a> <i class="external alternate icon"></i></div>
-                    <div class="item"><a href="https://kb.mainwp.com/docs/delete-a-child-site/" target="_blank">Delete a Child Site</a> <i class="external alternate icon"></i></div>
-                    <div class="item"><a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">Security Issues</a> <i class="external alternate icon"></i></div>
-                    <div class="item"><a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">Manage Child Site Tags</a> <i class="external alternate icon"></i></div>
-                    <div class="item"><a href="https://kb.mainwp.com/docs/manage-child-site-notes/" target="_blank">Manage Child Site Notes</a> <i class="external alternate icon"></i></div>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/manage-child-sites/" target="_blank">Manage Child Sites</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/access-child-site-wp-admin/" target="_blank">Access Child Site WP Admin</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/synchronize-a-child-site/" target="_blank">Synchronize a Child Site</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">Edit a Child Site</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/reconnect-a-child-site/" target="_blank">Reconnect a Child Site</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/delete-a-child-site/" target="_blank">Delete a Child Site</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">Security Issues</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">Manage Child Site Tags</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
+                    <div class="item"><a href="https://kb.mainwp.com/docs/manage-child-site-notes/" target="_blank">Manage Child Site Notes</a> <i class="external alternate icon"></i></div> <?php // NOSONAR - noopener - open safe. ?>
                 </div>
                 <?php
             }
         }
+        // @NO_SONAR_END@ end of block.
     }
 }

@@ -596,7 +596,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-monitoring-info-message' ) ) : ?>
             <div class="ui info message">
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-monitoring-info-message"></i>
-                <?php printf( esc_html__( 'Monitor your sites uptime and site health.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                <?php printf( esc_html__( 'Monitor your sites uptime and site health.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
             </div>
         <?php endif; ?>
         <table id="mainwp-manage-sites-monitor-table" style="width:100%" class="ui single line selectable unstackable table mainwp-with-preview-table mainwp-manage-wpsites-table">
@@ -886,9 +886,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
      */
     public function print_column_headers( $optimize, $top = true ) { //phpcs:ignore -- NOSONAR - complex.
         list( $columns, $sortable ) = $this->get_column_info();
-
-        $current_url = set_url_scheme( 'http://' . ( isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '' ) . ( isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' ) );
-        $current_url = remove_query_arg( 'paged', $current_url );
 
         if ( ! empty( $columns['cb'] ) ) {
             $columns['cb'] = '<div class="ui checkbox"><input id="' . ( $top ? 'cb-select-all-top' : 'cb-select-all-bottom' ) . '" type="checkbox" /></div>';

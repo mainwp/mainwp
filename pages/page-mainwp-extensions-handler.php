@@ -542,7 +542,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public static function is_extension_enabled( $pluginFile ) {
         MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
-        return array( 'key' => md5( $pluginFile . '-SNNonceAdder' ) );
+        return array( 'key' => md5( $pluginFile . '-SNNonceAdder' ) ); // NOSONAR - safe for sig file name.
     }
 
     /**
@@ -581,7 +581,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return mixed md5( $pluginFile . '-SNNonceAdder' ) === $key
      */
     public static function hook_verify( $pluginFile, $key ) {
-        return md5( $pluginFile . '-SNNonceAdder' ) === $key;
+        return md5( $pluginFile . '-SNNonceAdder' ) === $key; // NOSONAR - safe for sig file name.
     }
 
     /**

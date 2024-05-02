@@ -185,9 +185,9 @@ window.wp = window.wp || {};
             // Find results
             // _.filter and .test
             results = this.filter(function (data) {
-                name = data.get('name').replace(/(<([^>]+)>)/ig, '');
-                description = data.get('description').replace(/(<([^>]+)>)/ig, '');
-                author = data.get('author').replace(/(<([^>]+)>)/ig, '');
+                name = data.get('name').replace(/(<([^>]+)>)/ig, ''); // NOSONAR - safe pattern from WP.
+                description = data.get('description').replace(/(<([^>]+)>)/ig, ''); // NOSONAR - safe pattern from WP.
+                author = data.get('author').replace(/(<([^>]+)>)/ig, ''); // NOSONAR - safe pattern from WP.
 
                 haystack = _.union(name, data.get('id'), description, author, data.get('tags'));
 

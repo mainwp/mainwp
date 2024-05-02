@@ -106,7 +106,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          *
          * @since Unknown
          */
-        $customPage = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.7.2', 'mainwp_getcustompage_backups' ); // @deprecated Use 'mainwp_getcustompage_backups' instead.
+        $customPage = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.7.2', 'mainwp_getcustompage_backups' ); // @deprecated Use 'mainwp_getcustompage_backups' instead. NOSONAR - not IP.
         $customPage = apply_filters( 'mainwp_getcustompage_backups', $customPage );
 
         if ( is_array( $customPage ) && isset( $customPage['slug'] ) && ! empty( $mainwp_primaryBackup ) ) {
@@ -141,7 +141,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          */
 
         $sub_pages        = array();
-        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-backups', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_backups' );  // @deprecated Use 'mainwp_getsubpages_backups' instead.
+        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-backups', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_backups' );  // @deprecated Use 'mainwp_getsubpages_backups' instead. NOSONAR - not IP.
         static::$subPages = apply_filters( 'mainwp_getsubpages_backups', $sub_pages );
         if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
             foreach ( static::$subPages as $subPage ) {
@@ -349,7 +349,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         $primary_methods      = array();
-        $primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead.
+        $primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead. NOSONAR - not IP.
         $primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
 
         if ( ! is_array( $primaryBackupMethods ) ) {
@@ -366,7 +366,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             static::render_header( '' );
             ?>
             <?php if ( 0 === count( $primaryBackupMethods ) ) { ?>
-                <div class="mainwp-notice mainwp-notice-blue"><?php printf( esc_html__( 'Did you know that MainWP has extensions for working with popular backup plugins? Visit the %1$sextensions site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
+                <div class="mainwp-notice mainwp-notice-blue"><?php printf( esc_html__( 'Did you know that MainWP has extensions for working with popular backup plugins? Visit the %1$sextensions site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
             <?php } ?>
             <div class="ui alt segment">
                 <div id="mainwp_managebackups_add_message" class="mainwp-notice mainwp-notice-green" style="display:
@@ -987,7 +987,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         $primaryBackup        = get_option( 'mainwp_primaryBackup' );
         $primary_methods      = array();
-        $primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead.
+        $primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead. NOSONAR - not IP.
         $primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
 
         if ( ! is_array( $primaryBackupMethods ) ) {
@@ -1009,7 +1009,7 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         <h3 class="ui dividing header">
             <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-backups', 'general-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
             <?php esc_html_e( 'Backup Settings', 'mainwp' ); ?>
-            <div class="sub header"><?php printf( esc_html__( 'MainWP is actively moving away from further development of the native backups feature. The best long-term solution would be one of the %1$sBackup Extensions%2$s.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
+            <div class="sub header"><?php printf( esc_html__( 'MainWP is actively moving away from further development of the native backups feature. The best long-term solution would be one of the %1$sBackup Extensions%2$s.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
         </h3>
         <?php if ( ! empty( $primaryBackupMethods ) ) : ?>
         <div class="ui grid field settings-field-indicator-backups">

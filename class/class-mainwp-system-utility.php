@@ -332,7 +332,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     public static function get_download_sig( $fullFile ) {
         $key_value  = uniqid( 'sig_', true ) . filesize( $fullFile ) . time();
         $sig_values = array(
-            'sig'       => md5( filesize( $fullFile ) ),
+            'sig'       => md5( filesize( $fullFile ) ), // NOSONAR - safe for sig file size.
             'key_value' => $key_value,
             'hash_key'  => wp_hash( $key_value ),
         );

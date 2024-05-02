@@ -28,9 +28,9 @@ class MainWP_Monitoring_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         <h3 class="ui dividing header">
             <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-basic-monitoring', 'general-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
             <?php esc_html_e( 'Basic Uptime Monitoring', 'mainwp' ); ?>
-            <div class="sub header"><?php printf( esc_html__( 'For additional help with setting up the Basic Uptime monitoring, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
+            <div class="sub header"><?php printf( esc_html__( 'For additional help with setting up the Basic Uptime monitoring, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
         </h3>
-        <div class="ui info message"><?php printf( esc_html__( 'Excessive checking can cause server resource issues.  For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
+        <div class="ui info message"><?php printf( esc_html__( 'Excessive checking can cause server resource issues.  For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
         <div class="ui grid field settings-field-indicator-basic-monitoring">
             <label class="six wide column middle aligned">
             <?php
@@ -66,7 +66,7 @@ class MainWP_Monitoring_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         <h3 class="ui dividing header">
             <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-health-monitoring', 'general-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
             <?php esc_html_e( 'Site Health Monitoring', 'mainwp' ); ?>
-            <div class="sub header"><?php printf( esc_html__( 'For additional help with setting up the Site Health monitoring, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
+            <div class="sub header"><?php printf( esc_html__( 'For additional help with setting up the Site Health monitoring, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
         </h3>
         <div class="ui grid field settings-field-indicator-health-monitoring">
             <label class="six wide column middle aligned">

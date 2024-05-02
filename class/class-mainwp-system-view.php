@@ -276,7 +276,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             ?>
             <div class="ui icon message yellow" style="margin-bottom: 0; border-radius: 0;">
                 <i class="exclamation circle icon"></i>
-                <strong><?php echo esc_html__( 'Important Notice: ', 'mainwp' ); ?></strong>&nbsp;<?php printf( esc_html__( 'MainWP Version 4 is a major upgrade from MainWP Version 3. Please, read this&nbsp; %1$supdating FAQ%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/faq-on-upgrading-from-mainwp-version-3-to-mainwp-version-4/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                <strong><?php echo esc_html__( 'Important Notice: ', 'mainwp' ); ?></strong>&nbsp;<?php printf( esc_html__( 'MainWP Version 4 is a major upgrade from MainWP Version 3. Please, read this&nbsp; %1$supdating FAQ%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/faq-on-upgrading-from-mainwp-version-3-to-mainwp-version-4/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
                 <i class="close icon mainwp-notice-dismiss" notice-id="upgrade_4"></i>
             </div>
             <?php
@@ -497,7 +497,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 <div>
                     <a href="https://chrome.google.com/webstore/detail/mainwp-browser-extension/kjlehednpnfgplekjminjpocdechbnge" target="_blank" class="ui green tiny button"><i class="chrome icon"></i> <?php echo esc_html__( 'Get Chrome Extension', 'mainwp' ); ?></a>
                     <a href="https://addons.mozilla.org/en-US/firefox/addon/mainwp-browser-extension/" target="_blank" class="ui green tiny button"><i class="firefox icon"></i> <?php echo esc_html__( 'Get Firefox Extension', 'mainwp' ); ?></a>
-                    <a href="https://mainwp.com/mainwp-browser-extension/" target="_blank" class="ui tiny button"><?php echo esc_html__( 'Read More', 'mainwp' ); ?></a>
+                    <a href="https://mainwp.com/mainwp-browser-extension/" target="_blank" class="ui tiny button"><?php echo esc_html__( 'Read More', 'mainwp' ); // NOSONAR - noopener - open safe. ?></a>
                 </div>
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp_browser_extensions_notice"></i>
             </div>

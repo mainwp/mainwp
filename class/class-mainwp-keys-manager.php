@@ -192,7 +192,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( ! empty( $opt ) && is_array( $opt ) && ! empty( $opt['file_key'] ) ) {
             $file_name = $opt['file_key'];
         } else {
-            $file_name = $prefix . sha1( sha1( $prefix . $name . time() ) . 'key_files' );
+            $file_name = $prefix . sha1( sha1( $prefix . $name . time() ) . 'key_files' ); // NOSONAR - safe for salt file name.
         }
 
         MainWP_Logger::instance()->debug( 'encrypt :: option name[' . $name . '] :: K file[' . $file_name . ']' );
@@ -448,7 +448,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $file_name = $data['file_key'];
         } else {
             $ran       = wp_rand( 0, 9990 ); // to fix repeat value.
-            $file_name = $prefix . sha1( sha1( $prefix . time() . $ran ) . 'key_files' );
+            $file_name = $prefix . sha1( sha1( $prefix . time() . $ran ) . 'key_files' ); // NOSONAR - safe for salt file name.
         }
 
         MainWP_Logger::instance()->debug( 'encrypt :: K file[' . $file_name . ']' );

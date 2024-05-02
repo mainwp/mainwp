@@ -199,7 +199,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
          *
          * @since Unknown
          */
-        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-settings', array( array() ), '4.0.7.2', 'mainwp_getsubpages_settings' );  // @deprecated Use 'mainwp_getsubpages_settings' instead.
+        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-settings', array( array() ), '4.0.7.2', 'mainwp_getsubpages_settings' );  // @deprecated Use 'mainwp_getsubpages_settings' instead. NOSONAR - not IP.
         static::$subPages = apply_filters( 'mainwp_getsubpages_settings', $sub_pages );
 
         if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {

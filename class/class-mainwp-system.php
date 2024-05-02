@@ -241,7 +241,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         add_filter( 'mainwp-activated-check', array( &$this, 'activated_check' ) ); // @deprecated Use 'mainwp_activated_check' instead.
         add_filter( 'mainwp_activated_check', array( &$this, 'activated_check' ) );
 
-        do_action_deprecated( 'mainwp-activated', array(), '4.0.7.2', 'mainwp_activated' ); // @deprecated Use 'mainwp_activated' instead.
+        do_action_deprecated( 'mainwp-activated', array(), '4.0.7.2', 'mainwp_activated' ); // @deprecated Use 'mainwp_activated' instead. NOSONAR - not IP.
 
         /**
          * Action: mainwp_activated
@@ -771,7 +771,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
              * @deprecated Use 'mainwp_getprimarybackup_activated' instead.
              *
              */
-            $return                                = apply_filters_deprecated( 'mainwp-getprimarybackup-activated', array( $return ), '4.0.7.2', 'mainwp_getprimarybackup_activated' );
+            $return                                = apply_filters_deprecated( 'mainwp-getprimarybackup-activated', array( $return ), '4.0.7.2', 'mainwp_getprimarybackup_activated' ); // NOSONAR - not IP.
             $mainwpUseExternalPrimaryBackupsMethod = apply_filters( 'mainwp_getprimarybackup_activated', $return );
         }
 

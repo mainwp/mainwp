@@ -308,7 +308,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp_groups_info"></i>
                     <div><?php esc_html_e( 'In case you are managing a large number of WordPress sites, it could be useful for you to mark them with different tags . Later, you will be able to make Site Selection by a tag that will speed up your work and makes it much easier.', 'mainwp' ); ?></div>
                     <div><?php esc_html_e( 'One child site can be assigned to multiple Tags at the same time.', 'mainwp' ); ?></div>
-                    <div><?php printf( esc_html__( 'for more information check the %1$sKnowledge Base %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?></div>
+                    <div><?php printf( esc_html__( 'for more information check the %1$sKnowledge Base %2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
             </div>
             <?php } ?>
             <?php

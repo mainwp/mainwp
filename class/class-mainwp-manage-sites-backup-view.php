@@ -75,7 +75,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
 
         /** This filter is documented in ../pages/page-mainwp-server-information-handler.php */
         $primary_methods      = array();
-        $primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead.
+        $primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead. NOSONAR - not IP.
         $primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
 
         if ( ! is_array( $primaryBackupMethods ) ) {
@@ -86,7 +86,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
         <div id="ajax-information-zone" class="updated" style="display: none;"></div>
 
         <?php if ( empty( $primaryBackupMethods ) ) { ?>
-            <div class="mainwp-notice mainwp-notice-blue"><?php printf( esc_html__( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %1$sExtensions Site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a> <i class="external alternate icon"></i>' ); ?></div>
+            <div class="mainwp-notice mainwp-notice-blue"><?php printf( esc_html__( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %1$sExtensions Site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
             <?php
         }
         ?>

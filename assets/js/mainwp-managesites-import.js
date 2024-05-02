@@ -131,7 +131,7 @@ let mainwp_managesites_import_sites = function () {
         response = response.trim();
         let url = import_wpurl;
         if (url.substring(0, 4) != 'http') {
-            url = 'http://' + url;
+            url = 'https://' + url; // default https://.
         }
         if (!url.endsWith('/')) {
             url += '/';

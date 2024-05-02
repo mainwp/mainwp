@@ -200,7 +200,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     public function apply_filters( $filter, $value = array() ) {
 
         if ( 'mainwp-getmetaboxes' === $filter ) {
-            $output = apply_filters_deprecated( 'mainwp-getmetaboxes', array( $value ), '4.0.7.2', 'mainwp_getmetaboxes' );  // @deprecated Use 'mainwp_getmetaboxes' instead.
+            $output = apply_filters_deprecated( 'mainwp-getmetaboxes', array( $value ), '4.0.7.2', 'mainwp_getmetaboxes' );  // @deprecated Use 'mainwp_getmetaboxes' instead. NOSONAR - not IP.
         } else {
             $output = apply_filters( $filter, $value );
         }

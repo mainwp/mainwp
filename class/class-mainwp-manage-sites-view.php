@@ -514,7 +514,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_indexed_extensions_infor()
      */
     public static function render_sync_exts_settings() { // phpcs:ignore -- NOSONAR - complex.
-        $sync_extensions_options = apply_filters_deprecated( 'mainwp-sync-extensions-options', array( array() ), '4.0.7.2', 'mainwp_sync_extensions_options' );  // @deprecated Use 'mainwp_sync_extensions_options' instead.
+        $sync_extensions_options = apply_filters_deprecated( 'mainwp-sync-extensions-options', array( array() ), '4.0.7.2', 'mainwp_sync_extensions_options' );  // @deprecated Use 'mainwp_sync_extensions_options' instead. NOSONAR - not IP.
         $sync_extensions_options = apply_filters( 'mainwp_sync_extensions_options', $sync_extensions_options );
 
         $working_extensions = MainWP_Extensions_Handler::get_indexed_extensions_infor();
@@ -677,7 +677,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-security-info-message' ) ) { ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-security-info-message"></i>
-                    <?php printf( esc_html__( 'Fix detected hardening issues on the childs site. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
+                    <?php printf( esc_html__( 'Fix detected hardening issues on the childs site. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?>
                 </div>
             <?php } ?>
             <?php
@@ -691,7 +691,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 return;
             }
             if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
-                do_action_deprecated( 'mainwp-securityissues-sites', array( $website ), '4.0.7.2', 'mainwp_securityissues_sites' ); // @deprecated Use 'mainwp_securityissues_sites' instead.
+                do_action_deprecated( 'mainwp-securityissues-sites', array( $website ), '4.0.7.2', 'mainwp_securityissues_sites' ); // @deprecated Use 'mainwp_securityissues_sites' instead. NOSONAR - not IP.
 
                 /**
                  * Action: mainwp_securityissues_sites
@@ -711,7 +711,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <?php
             // Hook in MainWP Sucuri Extension.
             if ( mainwp_current_user_have_right( 'extension', 'mainwp-sucuri-extension' ) && is_plugin_active( 'mainwp-sucuri-extension/mainwp-sucuri-extension.php' ) ) {
-                do_action_deprecated( 'mainwp-sucuriscan-sites', array( $website ), '4.0.7.2', 'mainwp_sucuriscan_sites' ); // @deprecated Use 'mainwp_sucuriscan_sites' instead.
+                do_action_deprecated( 'mainwp-sucuriscan-sites', array( $website ), '4.0.7.2', 'mainwp_sucuriscan_sites' ); // @deprecated Use 'mainwp_sucuriscan_sites' instead. NOSONAR - not IP.
 
                 /**
                  * Action: mainwp_sucuriscan_sites
@@ -731,7 +731,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <?php
             // Hook in MainWP Wordfence Extension.
             if ( mainwp_current_user_have_right( 'extension', 'mainwp-wordfence-extension' ) && is_plugin_active( 'mainwp-wordfence-extension/mainwp-wordfence-extension.php' ) ) {
-                do_action_deprecated( 'mainwp-wordfence-sites', array( $website ), '4.0.7.2', 'mainwp_wordfence_sites' ); // @deprecated Use 'mainwp_wordfence_sites' instead.
+                do_action_deprecated( 'mainwp-wordfence-sites', array( $website ), '4.0.7.2', 'mainwp_wordfence_sites' ); // @deprecated Use 'mainwp_wordfence_sites' instead. NOSONAR - not IP.
 
                 /**
                  * Action: mainwp_wordfence_sites
@@ -799,7 +799,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-edit-site-info-message' ) ) { ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-edit-site-info-message"></i>
-                    <?php printf( esc_html__( 'Edit the %1$s (%2$s) child site settings.  For additional help, please check this %3$shelp documentation%4$s.', 'mainwp' ), esc_html( stripslashes( $website->name ) ), '<a href="' . esc_url( $website->url ) . '" target="_blank">' . esc_url( $website->url ) . '</a>', '<a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                    <?php printf( esc_html__( 'Edit the %1$s (%2$s) child site settings.  For additional help, please check this %3$shelp documentation%4$s.', 'mainwp' ), esc_html( stripslashes( $website->name ) ), '<a href="' . esc_url( $website->url ) . '" target="_blank">' . esc_url( $website->url ) . '</a>', '<a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // phpcs:ignore WordPress.Security.EscapeOutput -- NOSONAR - noopener - open safe. ?>
                 </div>
             <?php } ?>
             <?php
@@ -1326,8 +1326,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     </div>
                 </div>
                 <?php
-                do_action_deprecated( 'mainwp-manage-sites-edit', array( $website ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
-                do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
+                do_action_deprecated( 'mainwp-manage-sites-edit', array( $website ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead. NOSONAR - not IP.
+                do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead. NOSONAR - not IP.
 
                 /** This action is documented in ../pages/page-mainwp-manage-sites.php */
                 do_action( 'mainwp_manage_sites_edit', $website );
@@ -1481,7 +1481,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-email-tokens-info-message' ) ) { ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-message"></i>
-                    <?php echo '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">Boilerplate</a> <i class="external alternate icon"></i> and <a href="https://mainwp.com/extension/pro-reports/" target="_blank">Reports</a> <i class="external alternate icon"></i> extensions tokens are supported in the email settings and templates if Extensions are in use.'; ?>
+                    <?php echo '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">Boilerplate</a> <i class="external alternate icon"></i> and <a href="https://mainwp.com/extension/pro-reports/" target="_blank">Reports</a> <i class="external alternate icon"></i> extensions tokens are supported in the email settings and templates if Extensions are in use.'; // NOSONAR - noopener - open safe. ?>
                 </div>
             <?php } ?>
             <h3 class="ui header"><?php echo esc_html( $title ); ?></h3>
@@ -2135,7 +2135,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             MainWP_Sync::sync_information_array( $website, $information );
                         }
                 } else {
-                    $error = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a> <i class="external alternate icon"></i>' );
+                    $error = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
                 }
             } catch ( MainWP_Exception $e ) {
                 if ( 'HTTPERROR' === $e->getMessage() ) {

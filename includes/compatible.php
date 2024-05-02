@@ -134,7 +134,7 @@ if ( ! class_exists( 'MainWP_System' ) ) {
          *
          * @var string Current plugin version.
          */
-        public static $version = '4.0.7.2';
+        public static $version = '4.0.7.2'; // NOSONAR - not IP.
 
         /**
          * Create public static instance.

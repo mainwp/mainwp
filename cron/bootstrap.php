@@ -40,7 +40,7 @@ if ( file_exists( __DIR__ . '/../../../../wp-load.php' ) ) {
         foreach ( $matches as $match ) {
             $execute = str_ireplace( 'ABSPATH', 'TMPABSPATH', $match[0] );
             $execute = str_ireplace( '__FILE__', "'" . __DIR__ . '/../../../../wp-config.php' . "'", $execute );
-            eval( $execute );
+            eval( $execute ); // NOSONAR - wp-config file are safe content.
             if ( file_exists( TMPABSPATH . 'wp-load.php' ) ) {
                 include_once TMPABSPATH . 'wp-load.php'; // NOSONAR - WP compatible.
                 $included = true;

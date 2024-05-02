@@ -247,9 +247,9 @@ let mainwp_fetch_pages_prepare = function () { // NOSONAR - complexity 19/15.
     }
 
     return {
-        'selected_sites' : selected_sites,
-        'selected_groups' : selected_groups,
-        'selected_clients' : selected_clients,
+        'selected_sites': selected_sites,
+        'selected_groups': selected_groups,
+        'selected_clients': selected_clients,
         '_status': _status,
     }
 }
@@ -401,6 +401,9 @@ let mainwp_fetch_posts = function (postId, userId, start_sites) {
 
     let params = mainwp_fetch_posts_prepare(postId, userId, start_sites);
 
+    console.log('params:');
+    console.log(params);
+
     if (typeof params !== 'object') {
         return;
     }
@@ -423,7 +426,7 @@ let mainwp_fetch_posts = function (postId, userId, start_sites) {
     }
 
     if (errors.length > 0) {
-        mainwp_set_message_zone('#mainwp-message-zone', errors, 'red');
+        mainwp_set_message_zone('#mainwp-message-zone', errors.join('<br />'), 'red');
         return;
     } else {
         mainwp_set_message_zone('#mainwp-message-zone');
@@ -486,9 +489,9 @@ let mainwp_fetch_posts_prepare = function (postId, userId, start_sites) { // NOS
     let num_sites = jQuery('#search-bulk-sites').attr('number-sites');
     num_sites = parseInt(num_sites);
 
-    let bulk_search = num_sites > 0;
+    let select_sites_error = '<div class="ui yellow message">' + __('Please select at least one website or group or client.') + '</div>';
 
-    let need_selected_sites = true;
+    let bulk_search = num_sites > 0;
 
     if (jQuery('#select_by').val() == 'site' && start_sites == undefined) {
         start_sites = 0;
@@ -506,18 +509,23 @@ let mainwp_fetch_posts_prepare = function (postId, userId, start_sites) { // NOS
             }
         });
         if (selected_sites.length == 0 && (!bulk_search || (bulk_search && start_sites == 0))) {
-            need_selected_sites = false;
+            errors.push(select_sites_error);
         }
     } else if (jQuery('#select_by').val() == 'client') {
         jQuery("input[name='selected_clients[]']:checked").each(function () {
             selected_clients.push(jQuery(this).val());
         });
+        if(selected_clients.length == 0){
+            errors.push(select_sites_error);
+        }
     } else if (jQuery('#select_by').val() == 'group') {
         jQuery("input[name='selected_groups[]']:checked").each(function () {
             selected_groups.push(jQuery(this).val());
         });
 
-        if (selected_groups.length > 0 && bulk_search && start_sites == undefined) {
+        if(selected_groups.length == 0){
+            errors.push(select_sites_error);
+        } else if (selected_groups.length > 0 && bulk_search && start_sites == undefined) {
             console.log(num_sites);
             start_sites = 0;
             // get sites of groups.
@@ -547,10 +555,6 @@ let mainwp_fetch_posts_prepare = function (postId, userId, start_sites) { // NOS
                 i++;
             });
         }
-    }
-
-    if( need_selected_sites && selected_clients.length == 0 && selected_groups.length == 0 ){
-        errors.push('<div class="ui yellow message">' + __('Please select at least one website or group or client.') + '</div>');
     }
 
     return {

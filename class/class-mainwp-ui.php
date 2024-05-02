@@ -799,7 +799,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             do_action( 'mainwp_help_sidebar_content' );
             ?>
             <div class="ui hidden divider"></div>
-            <a href="https://kb.mainwp.com/" class="ui big green fluid button"><?php esc_html_e( 'Help Documentation', 'mainwp' ); ?></a>
+            <a href="https://kb.mainwp.com/" class="ui big green fluid button"><?php esc_html_e( 'Help Documentation', 'mainwp' ); // NOSONAR - noopener - open safe. ?></a>
             <div class="ui hidden divider"></div>
             <div id="mainwp-sticky-help-button" class="" style="position: absolute; bottom: 1em; left: 1em; right: 1em;">
                 <a href="https://managers.mainwp.com/" target="_blank" class="ui fluid button"><?php esc_html_e( 'Still Need Help?', 'mainwp' ); ?></a>
@@ -897,7 +897,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                 <?php if ( ! MainWP_Demo_Handle::is_instawp_site() ) { ?>
                                 <div data-tooltip="<?php esc_attr_e( 'Delete the Demo content from your MainWP Dashboard and disable the Demo mode.', 'mainwp' ); ?>" data-inverted="" data-position="left center"><button class="ui big fluid button mainwp-remove-demo-data-button"><?php esc_html_e( 'Disable Demo Mode & Remove Demo Content', 'mainwp' ); ?></button></div>
                                 <?php } else { ?>
-                                <div data-tooltip="<?php esc_attr_e( 'Get started with MainWP.', 'mainwp' ); ?>" data-inverted="" data-position="left center"><a class="ui big fluid button" target="_blank" href="https://mainwp.com/install-mainwp/?utm_source=instawp-demo&utm_medium=banner&utm_campaign=download_black_banner&utm_id=instawp"><?php esc_html_e( 'Download MainWP', 'mainwp' ); ?></a></div>
+                                <div data-tooltip="<?php esc_attr_e( 'Get started with MainWP.', 'mainwp' ); ?>" data-inverted="" data-position="left center"><a class="ui big fluid button" target="_blank" href="https://mainwp.com/install-mainwp/?utm_source=instawp-demo&utm_medium=banner&utm_campaign=download_black_banner&utm_id=instawp"><?php esc_html_e( 'Download MainWP', 'mainwp' ); // NOSONAR - noopener - open safe. ?></a></div>
                                 <?php } ?>
                             </div>
                         </div>
@@ -1338,7 +1338,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <a class="item" id="mainwp-community-button" data-inverted="" data-position="bottom right" href="https://managers.mainwp.com/" target="_blank" data-tooltip="<?php esc_attr_e( 'MainWP Community', 'mainwp' ); ?>">
                     <i class="discourse icon"></i> <?php esc_html_e( 'Managers Community', 'mainwp' ); ?>
                 </a>
-                <a  class="item" id="mainwp-account-button" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Go to your MainWP Account at MainWP.com', 'mainwp' ); ?>" target="_blank" href="https://mainwp.com/my-account/">
+                <a  class="item" id="mainwp-account-button" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Go to your MainWP Account at MainWP.com', 'mainwp' ); ?>" target="_blank" href="https://mainwp.com/my-account/"> <?php // NOSONAR - noopener - open safe. ?>
                     <i class="user icon"></i> <?php esc_html_e( 'My MainWP Account', 'mainwp' ); ?>
                 </a>
             </div>
@@ -1932,7 +1932,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <div class="actions">
                 <div class="ui grid">
                     <div class="eight wide left aligned middle aligned column">
-                        <a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" class="ui basic green mini button" target="_blank"><?php esc_html_e( 'See How to Connect Sites', 'mainwp' ); ?></a>
+                        <a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" class="ui basic green mini button" target="_blank"><?php esc_html_e( 'See How to Connect Sites', 'mainwp' ); // NOSONAR - noopener - open safe. ?></a>
                     </div>
                     <div class="eight wide column">
                         <input type="button" class="ui mini basic cancel button mainwp-notice-dismiss" notice-id="mainwp-no-sites-modal-notice" value="<?php esc_attr_e( 'Let Me Look Around', 'mainwp' ); ?>"/>
@@ -1978,7 +1978,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     'get-started'        => esc_html__( 'Get Started with MainWP', 'mainwp' ),
                 );
 
-                $custom_opts = apply_filters_deprecated( 'mainwp-widgets-screen-options', array( array() ), '4.0.7.2', 'mainwp_widgets_screen_options' );  // @deprecated Use 'mainwp_widgets_screen_options' instead.
+                $custom_opts = apply_filters_deprecated( 'mainwp-widgets-screen-options', array( array() ), '4.0.7.2', 'mainwp_widgets_screen_options' );  // @deprecated Use 'mainwp_widgets_screen_options' instead. NOSONAR - not IP.
 
                 /**
                  * Filter: mainwp_widgets_screen_options
@@ -2118,7 +2118,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <div class="header"><?php esc_html_e( 'Select MainWP Theme', 'mainwp' ); ?></div>
         <div class="content ui form">
             <div class="ui blue message">
-                <div class=""><?php printf( esc_html__( 'Did you know you can create your custom theme? %1$sSee here how to do it%2$s!', '' ), '<a href="https://kb.mainwp.com/docs/how-to-change-the-theme-for-mainwp/" target="_blank">', '</a>' ); ?></div>
+                <div class=""><?php printf( esc_html__( 'Did you know you can create your custom theme? %1$sSee here how to do it%2$s!', '' ), '<a href="https://kb.mainwp.com/docs/how-to-change-the-theme-for-mainwp/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
             </div>
             <form method="POST" action="" name="mainwp_select_mainwp_themes_form" id="mainwp_select_mainwp_themes_form">
             <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -2179,7 +2179,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         <div class="item"><?php esc_html_e( 'Priority Support with Subscription', 'mainwp' ); ?></div>
                         <div class="item"><?php esc_html_e( 'Manage Unlimited Websites', 'mainwp' ); ?></div>
                     </div>
-                    <a href="https://mainwp.com/signup/?utm_campaign=Dashboard%20-%20Upgrade%20to%20Pro&utm_source=Dashboard&utm_medium=grey%20link%20modal&utm_term=get%20mainwp%20pro" class="ui big green button" target="_blank">Get MainWP Pro</a>
+                    <a href="https://mainwp.com/signup/?utm_campaign=Dashboard%20-%20Upgrade%20to%20Pro&utm_source=Dashboard&utm_medium=grey%20link%20modal&utm_term=get%20mainwp%20pro" class="ui big green button" target="_blank">Get MainWP Pro</a> <?php // NOSONAR - noopener - open safe. ?>
                 </div>
             <?php else : ?>
                 <div class="header"><?php esc_html_e( 'Install Extensions', 'mainwp' ); ?></div>

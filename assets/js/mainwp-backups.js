@@ -190,7 +190,7 @@ backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, subf
                     if (responseError != undefined) {
                         appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: ' + getErrorMessage(responseError) + '</span>');
                     } else {
-                        appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: Backup timed out! <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>');
+                        appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: Backup timed out! <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>'); // NOSONAR - noopener - open safe.
                     }
                 } else {
                     appendToDiv(backsprocessContentEl, ' Backup stalled, trying to resume from last file...');
@@ -234,7 +234,7 @@ backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, subf
                 if (responseError != undefined) {
                     appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: ' + getErrorMessage(responseError) + '</span>');
                 } else {
-                    appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: Backup timed out! <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>');
+                    appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: Backup timed out! <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>'); // NOSONAR - noopener - open safe.
                 }
             } else {
                 //Try again in 5seconds
@@ -733,7 +733,7 @@ managebackups_run_next = function () {
             return function () {
                 backupCreateRunning = false;
                 clearInterval(pInterVal);
-                appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + '<span class="mainwp-red">ERROR: Backup timed out - <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>');
+                appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + '<span class="mainwp-red">ERROR: Backup timed out - <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>'); // NOSONAR - noopener - open safe.
             }
         }(interVal, siteName), dataType: 'json'
     });

@@ -145,7 +145,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
          *
          * @since Unknown
          */
-        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-server', array( array() ), '4.0.7.2', 'mainwp_getsubpages_server' );
+        $sub_pages        = apply_filters_deprecated( 'mainwp-getsubpages-server', array( array() ), '4.0.7.2', 'mainwp_getsubpages_server' ); // NOSONAR - not IP.
         static::$subPages = apply_filters( 'mainwp_getsubpages_server', $sub_pages );
 
         if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {

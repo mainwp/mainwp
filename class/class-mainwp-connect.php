@@ -532,7 +532,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         $where_params .= rawurlencode( sanitize_text_field( wp_unslash( $key ) ) ) . '=' . rawurlencode( sanitize_text_field( wp_unslash( $value ) ) ) . '&';
                     }
                     if ( ! empty( $where_params ) ) {
-                        $params['where_params'] .= rawurlencode( rtrim( $where_params, '&' ) );
+                        $params['where_params'] = rawurlencode( rtrim( $where_params, '&' ) );
                     }
                 }
             }
@@ -730,7 +730,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             'name' => $website->name,
                         ),
                     ),
-                    '4.0.7.2',
+                    '4.0.7.2', // NOSONAR - not IP.
                     'mainwp_pre_posting_posts'
                 );
 
@@ -769,9 +769,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( ( null !== $website ) && ( ( property_exists( $website, 'wpe' ) && 1 !== $website->wpe ) || ( isset( $others['upgrade'] ) && ( true === $others['upgrade'] ) ) ) ) {
                 // to fix.
                 if ( defined( 'LOGGED_IN_SALT' ) && defined( 'NONCE_SALT' ) ) {
-                    $cookie_salt = sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
+                    $cookie_salt = sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' ); // NOSONAR - safe for salt file name.
                 } else {
-                    $cookie_salt = sha1( sha1( 'mainwp' . $website->id ) . 'WP_Cookie' );
+                    $cookie_salt = sha1( sha1( 'mainwp' . $website->id ) . 'WP_Cookie' ); // NOSONAR - safe for salt file name.
                 }
                 $cookieFile = $cookieDir . '/' . $cookie_salt;
                 if ( ! file_exists( $cookieFile ) ) {
@@ -779,7 +779,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 }
 
                 if ( file_exists( $cookieFile ) ) {
-                    @chmod( $cookieFile, 0644 );
+                    @chmod( $cookieFile, 0644 ); // NOSONAR - correct file permissions, owner: rwe, group & others: r.
                     curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
                     curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
                 }
@@ -1363,9 +1363,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( ( null !== $website ) && ( ( property_exists( $website, 'wpe' ) && 1 !== $website->wpe ) || ( isset( $others['upgrade'] ) && ( true === $others['upgrade'] ) ) ) ) {
             // to fix.
             if ( defined( 'LOGGED_IN_SALT' ) && defined( 'NONCE_SALT' ) ) {
-                $cookie_salt = sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
+                $cookie_salt = sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' ); // NOSONAR - safe for salt file name.
             } else {
-                $cookie_salt = sha1( sha1( 'mainwp' . $website->id ) . 'WP_Cookie' );
+                $cookie_salt = sha1( sha1( 'mainwp' . $website->id ) . 'WP_Cookie' ); // NOSONAR - safe for salt file name.
             }
             $cookieFile = $cookieDir . '/' . $cookie_salt;
             if ( ! file_exists( $cookieFile ) ) {
@@ -1373,7 +1373,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             if ( file_exists( $cookieFile ) ) {
-                @chmod( $cookieFile, 0644 );
+                @chmod( $cookieFile, 0644 ); // NOSONAR - correct file permissions, owner: rwe, group & others: r.
                 curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
                 curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
             }

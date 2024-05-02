@@ -556,7 +556,7 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public function prepend( $str, $filename ) {
         $context = stream_context_create();
         $fp      = fopen( $filename, 'r', 1, $context );
-        $tmpname = md5( $str );
+        $tmpname = md5( $str ); // NOSONAR - safe for salt file name.
         file_put_contents( $tmpname, $str );
         file_put_contents( $tmpname, $fp, FILE_APPEND );
         fclose( $fp );

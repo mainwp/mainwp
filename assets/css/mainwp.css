@@ -410,7 +410,7 @@
     font-size: 14px;
 }
 
-@media only screen and (min-width: 1370px) {
+@media only screen and (min-width: 1368px) {
 
     .mainwp-widget.ui.segment.gs-w {
         position: absolute;
@@ -1549,6 +1549,16 @@ th .down.icon {
 
 #mainw_managesites_add_edit_site_upload_custom_icon,
 #mainwp_add_edit_client_upload_custom_icon,
-.mainwp_add_edit_contact_upload_custom_icon{
+.mainwp_add_edit_contact_upload_custom_icon {
     margin-left: 30px !important;
+}
+
+#mainwp-first-level-navigation-menu #leftbar-item-quick-setup {
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+}
+
+#mainwp-first-level-navigation-menu #leftbar-item-quick-setup i,
+#mainwp-first-level-navigation-menu #leftbar-item-quick-setup span {
+    color: var(--grey-dark) !important;
 }

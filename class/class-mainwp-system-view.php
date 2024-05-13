@@ -303,7 +303,7 @@ class MainWP_System_View {
 						<i class="sync alternate icon"></i>
 						<div class="content">
 							<?php echo esc_html__( 'Hard Refresh Required', 'mainwp' ); ?>
-							
+
 						</div>
 					</h3>
 					<div class="ui hidden divider"></div>
@@ -322,14 +322,14 @@ class MainWP_System_View {
 						<i class="linkify icon"></i>
 						<div class="content">
 							<?php echo esc_html__( 'Extensions License Reactivation Required', 'mainwp' ); ?>
-							
+
 						</div>
 					</h3>
 					<div class="ui hidden divider"></div>
 					<div><?php echo esc_html__( 'As part of our upgrade to MainWP Dashboard version 5, we\'ve deactivated extension licenses to verify their validity and ensure everything is up to date.', 'mainwp' ); ?></div>
 					<br/>
 					<div><?php echo esc_html__( 'Simply click the "Activate Extensions" button on the Extensions page to reactivate all your Pro extension licenses in one go. It\'s quick and easy!', 'mainwp' ); ?></div>
-					
+
 					<div class="ui divider"></div>
 
 					<div><?php echo esc_html__( 'We appreciate your understanding and cooperation in keeping your MainWP ecosystem secure and efficient. Need help? Reach out to our support team', 'mainwp' ); ?></div>
@@ -663,9 +663,9 @@ class MainWP_System_View {
 		if ( ! $is_demo ) {
 			?>
 		<div class="ui blue message" style="margin-bottom: 0; border-radius: 0;">
-			<?php esc_html_e( 'Do you want MainWP Child to be updated automatically on your websites? This is highly recommended!', 'mainwp' ); ?> 
+			<?php esc_html_e( 'Do you want MainWP Child to be updated automatically on your websites? This is highly recommended!', 'mainwp' ); ?>
 			<div class="ui hidden divider"></div>
-			<a id="mainwp_btn_autoupdate_and_trust" class="ui mini green button" href="#"><?php esc_html_e( 'Update MainWP Child Plugin Automatically', 'mainwp' ); ?></a>	
+			<a id="mainwp_btn_autoupdate_and_trust" class="ui mini green button" href="#"><?php esc_html_e( 'Update MainWP Child Plugin Automatically', 'mainwp' ); ?></a>
 			<i class="close icon mainwp-events-notice-dismiss" notice="trust_child"></i>
 		</div>
 			<?php
@@ -1045,7 +1045,7 @@ class MainWP_System_View {
 				</div>
 			</div>
 		</div>
-		<input type="hidden" id="sync_selected_site_ids" value="" />		
+		<input type="hidden" id="sync_selected_site_ids" value="" />
 		<div class="ui tiny modal" id="mainwp-modal-confirm-select">
 		<i class="close icon"></i>
 			<div class="header"><?php esc_html_e( 'Confirmation', 'mainwp' ); ?></div>
@@ -1256,10 +1256,10 @@ class MainWP_System_View {
 			<div class="actions mainwp-modal-actions">
 				<div class="ui two columns grid">
 					<div class="left aligned column">
-						
+
 					</div>
 					<div class="ui right aligned column">
-						<input type="button" class="ui green button" id="mainwp-install-check-btn" value="<?php esc_html_e( 'Install Plugin', 'mainwp' ); ?>">	
+						<input type="button" class="ui green button" id="mainwp-install-check-btn" value="<?php esc_html_e( 'Install Plugin', 'mainwp' ); ?>">
 					</div>
 				</div>
 
@@ -1275,7 +1275,7 @@ class MainWP_System_View {
 						mainwp_notice_dismiss(noti_id, 1);
 						setTimeout(function () {
 							window.location.href = location.href;
-						}, 1000);					
+						}, 1000);
 					},
 				}).modal('show');
 				jQuery(document).on('click', '#mainwp-install-check-btn', function () {

@@ -27,7 +27,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '5.0.3.1'; // NOSONAR .
+	public static $version = '5.0.3.2'; // NOSONAR .
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -675,7 +675,7 @@ class MainWP_System {
 			$valid_sig = MainWP_System_Utility::valid_download_sig( $file, $sig_value );
 
 			if ( ! $valid_sig ) {
-				MainWP_Logger::instance()->debug( ' :: download :: invalid sig :: ' . base64_decode( $sig_value ) ); // phpcs:ignore -- for debug logging.  
+				MainWP_Logger::instance()->debug( ' :: download :: invalid sig :: ' . base64_decode( $sig_value ) ); // phpcs:ignore -- for debug logging.
 			}
 
 			if ( $hasWPFileSystem && $wp_filesystem->exists( $file ) && $valid_sig ) {
@@ -899,7 +899,7 @@ class MainWP_System {
 	public function hook_plugin_action_links( $actions, $plugin_file, $plugin_data ) {
 		if ( is_array( $plugin_data ) && ! empty( $plugin_data['slug'] ) && ! empty( $plugin_data['plugin'] ) && 'mainwp' === $plugin_data['slug'] && 'mainwp/mainwp.php' === $plugin_data['plugin'] ) {
 			$tmp = array(
-				'mainwp-setup' => '<a href="admin.php?page=mainwp-setup" id="mainwp-setup" aria-label="' . esc_html__( 'MainWP Dashboard Setup Wizard', 'mainwp' ) . '">' . esc_html__( 'Setup Wizard', 'mainwp' ) . '</a>',
+				'mainwp-setup' => '<a href="admin.php?page=mainwp-setup" id="mainwp-setup" aria-label="' . esc_html__( 'MainWP Dashboard Setup Wizard', 'mainwp' ) . '">' . esc_html__( 'Quick Setup', 'mainwp' ) . '</a>',
 			);
 			if ( is_array( $actions ) ) {
 				foreach ( $actions as $key => $val ) {
@@ -1224,6 +1224,16 @@ class MainWP_System {
 	 */
 	public function admin_footer() {
 		if ( ! self::is_mainwp_pages() ) {
+			$sites_count = MainWP_DB::instance()->get_websites_count();
+			if( empty( $sites_count ) ){
+				?>
+				<script type="text/javascript">
+					jQuery( function(){
+						jQuery( 'li#toplevel_page_mainwp_tab .wp-submenu-wrap .wp-submenu-head' ).after('<li style="background: #FFD300 !important;" class="wp-first-item"><a href="admin.php?page=mainwp-setup" style="color: #000 !important;" class="wp-first-item"><?php esc_html_e('Quick Setup', 'mainwp');?></a></li>');
+					});
+				</script>
+				<?php
+			}
 			return;
 		}
 

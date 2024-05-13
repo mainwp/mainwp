@@ -38,9 +38,9 @@
             'dev_requirement' => false,
         ),
         'phpseclib/phpseclib' => array(
-            'pretty_version' => '3.0.37',
-            'version' => '3.0.37.0',
-            'reference' => 'cfa2013d0f68c062055180dd4328cc8b9d1f30b8',
+            'pretty_version' => '3.0.35',
+            'version' => '3.0.35.0',
+            'reference' => '4b1827beabce71953ca479485c0ae9c51287f2fe',
             'type' => 'library',
             'install_path' => __DIR__ . '/../phpseclib/phpseclib',
             'aliases' => array(),

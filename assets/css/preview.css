@@ -20,7 +20,6 @@
     left: -6px;
     top: 91px;
 }
-
 .mshot-container {
     background: #e5e5e5;
     position: absolute;
@@ -33,12 +32,10 @@
     border-radius: 6px;
     -webkit-border-radius: 6px;
 }
-
 .mainwp-preview-mshot {
     position: absolute;
     z-index: 2000;
 }
-
 .mainwp-preview-mshot .mshot-image {
     margin: 0;
     height: 338px;

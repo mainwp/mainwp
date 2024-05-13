@@ -2,13 +2,13 @@
 /*---------------[RESPONSIVE LAYOUTS]-------------*/
 /*------------------------------------------------*/
 
-@media only screen and (max-height: 500px) {
+@media only screen and ( max-height: 500px ) {
 	.mainwp-nav-menu .item-wp-admin {
 		position: relative !important;
 	}
 }
 
-@media only screen and (min-width: 769px) {
+@media only screen and ( min-width: 769px ) {
 
 	.mainwp-768-show {
 		display: none !important;
@@ -24,24 +24,24 @@
 		text-align: right !important;
 	}
 
-	.mainwp-manage-updates-table tbody tr td.dt-empty {
+	.mainwp-manage-updates-table tbody tr td.dataTables_empty {
 		text-align: center !important;
 	}
 }
 
-@media only screen and (min-width: 992px) and (max-width: 1449px) {
+@media only screen and ( min-width: 992px ) and ( max-width: 1449px ) {
 	#mainwp-manage-updates {
 		overflow-x: scroll !important;
 	}
 }
 
-@media only screen and (min-width: 1360px) and (max-width: 1645px) {
+@media only screen and ( min-width: 1360px ) and ( max-width: 1645px ) {
 	#mainwp-update-everything-button {
 		font-size: 14px;
 	}
 }
 
-@media only screen and (min-width: 768px) and (max-width: 1365px) {
+@media only screen and ( min-width: 768px ) and ( max-width: 1365px ) {
 
 	.item-wp-admin {
 		z-index: 9999 !important;
@@ -51,10 +51,10 @@
 	#mainwp-updates-stats {
 		width: 100% !important;
 	}
-
+	
 }
 
-@media only screen and (min-width: 768px) and (max-width: 1080px) {
+@media only screen and ( min-width: 768px ) and ( max-width: 1080px ) {
 
 	.mainwp-ui .ui.two.column.grid .column,
 	.mainwp-ui .ui.three.column.grid .column {
@@ -65,20 +65,19 @@
 	#mainwp-top-header .ui.grid .left.floated.column {
 		width: 15% !important;
 	}
-
 	#mainwp-top-header .ui.grid .right.floated.column {
 		width: 85% !important;
 	}
 
 }
 
-@media screen and (min-width: 1200px) {
+@media screen and ( min-width: 1200px ) {
 	#mainwp-get-purchased-extensions-modal {
 		width: 1210px;
 	}
 }
 
-@media screen and (max-width: 1200px) {
+@media screen and ( max-width: 1200px ) {
 	#mainwp-get-purchased-extensions-modal #mainwp-install-extensions-menu {
 		overflow-x: auto;
 		overflow-y: hidden;
@@ -87,7 +86,7 @@
 
 
 
-@media screen and (max-width: 1366px) {
+@media screen and ( max-width: 1366px ) {
 
 	.mainwp-ui #mainwp-grid-wrapper {
 		padding: 1rem !important;
@@ -109,7 +108,7 @@
 	}
 }
 
-@media screen and (max-width: 1140px) {
+@media screen and ( max-width: 1140px ) {
 	.mainwp-content-wrap {
 		width: 100%;
 		margin-left: 0 !important;
@@ -124,21 +123,10 @@
 	.mainwp-main-mobile-navigation-container {
 		display: block;
 		padding: 10px;
+		vertical-align: middle;
 	}
 
-	.mainwp-ui.toplevel_page_mainwp_tab.mainwp-ui-leftmenu .mainwp-content-wrap,
-	.mainwp-ui.mainwp_page_Settings .mainwp-content-wrap,
-	.mainwp-ui.mainwp_page_SettingsAdvanced .mainwp-content-wrap,
-	.mainwp-ui.mainwp_page_SettingsEmail .mainwp-content-wrap,
-	.mainwp-ui.mainwp_page_MainWPTools .mainwp-content-wrap,
-	.mainwp-ui.mainwp_page_SettingsInsights .mainwp-content-wrap,
-	.mainwp-ui.mainwp_page_SettingsApiBackups .mainwp-content-wrap,
-	.mainwp-ui.mainwp_page_ServerInformation .mainwp-content-wrap,
-	.mainwp-ui.mainwp_page_ServerInformationCron .mainwp-content-wrap,
-	.mainwp-ui.mainwp_page_ErrorLog .mainwp-content-wrap,
-	.mainwp-ui.mainwp_page_ActionLogs .mainwp-content-wrap,
-	.mainwp-ui.mainwp_page_PluginPrivacy .mainwp-content-wrap,
-	.mainwp-ui.mainwp-hidden-second-level-navigation.mainwp-ui-leftmenu .mainwp-content-wrap {
+	.mainwp-ui.toplevel_page_mainwp_tab.mainwp-ui-leftmenu .mainwp-content-wrap, .mainwp-ui.mainwp_page_Settings .mainwp-content-wrap, .mainwp-ui.mainwp_page_SettingsAdvanced .mainwp-content-wrap, .mainwp-ui.mainwp_page_SettingsEmail .mainwp-content-wrap, .mainwp-ui.mainwp_page_MainWPTools .mainwp-content-wrap, .mainwp-ui.mainwp_page_SettingsInsights .mainwp-content-wrap, .mainwp-ui.mainwp_page_SettingsApiBackups .mainwp-content-wrap, .mainwp-ui.mainwp_page_ServerInformation .mainwp-content-wrap, .mainwp-ui.mainwp_page_ServerInformationCron .mainwp-content-wrap, .mainwp-ui.mainwp_page_ErrorLog .mainwp-content-wrap, .mainwp-ui.mainwp_page_ActionLogs .mainwp-content-wrap, .mainwp-ui.mainwp_page_PluginPrivacy .mainwp-content-wrap, .mainwp-ui.mainwp-hidden-second-level-navigation.mainwp-ui-leftmenu .mainwp-content-wrap {
 		margin-left: 0 !important;
 	}
 
@@ -147,7 +135,7 @@
 	}
 }
 
-@media screen and (max-width: 767px) {
+@media screen and ( max-width: 767px ) {
 
 	#mainwp-page-navigation-wrapper,
 	#mainwp-page-navigation-wrapper .mainwp-page-navigation {
@@ -165,7 +153,7 @@
 		float: none !important;
 	}
 
-	.mainwp-ui .ui.five.cards>.card {
+	.mainwp-ui .ui.five.cards > .card {
 		width: 100%;
 	}
 
@@ -187,7 +175,7 @@
 		text-align: center !important;
 	}
 
-	.ui.table:not(.unstackable)>tbody>tr>td:not(.rowspanned).mainwp-768-half-width-cell {
+	.ui.table:not(.unstackable) > tbody > tr > td:not(.rowspanned).mainwp-768-half-width-cell {
 		width: 50% !important;
 		display: inline-table !important;
 	}
@@ -228,7 +216,7 @@
 		width: 100% !important;
 	}
 
-
+	
 
 	.mainwp-main-content {
 		width: 100%;
@@ -288,7 +276,7 @@
 	.mainwp-ui .ui.buttons .ui.button {
 		width: auto !important;
 	}
-
+	
 	.mainwp-ui .ui.grid.field .column {
 		width: 100% !important;
 		display: block !important;
@@ -304,7 +292,7 @@
 
 	/*--- Tables ---*/
 
-	.ui.table:not(.unstackable)>thead.mainwp-768-hide {
+	.ui.table:not(.unstackable) > thead.mainwp-768-hide {
 		display: none !important;
 	}
 
@@ -348,7 +336,7 @@
 	/*--- Groups ---*/
 
 
-	#mainwp-manage-groups-sites-table tfoot tr th {
+ 	#mainwp-manage-groups-sites-table tfoot tr th {
 		display: block !important;
 		border-top: none !important;
 		background: #fff !important;
@@ -356,10 +344,10 @@
 
 	/* --- Updates --- */
 
-	.ui[class*="tablet stackable"].table.mainwp-manage-updates-table>thead>tr>th:not(.rowspanned),
-	.ui[class*="tablet stackable"].table.mainwp-manage-updates-table>tbody>tr>td:not(.rowspanned) {
+	.ui[class*="tablet stackable"].table.mainwp-manage-updates-table > thead > tr > th:not(.rowspanned),
+	.ui[class*="tablet stackable"].table.mainwp-manage-updates-table > tbody > tr > td:not(.rowspanned) {
 		width: auto !important;
-	}
+	 }
 
 	.mainwp-manage-updates-table tr,
 	.mainwp-manage-updates-item-table tr {
@@ -449,7 +437,7 @@
 	}
 
 	#mainwp-manage-themes-table tbody tr,
-	#mainwp-manage-plugins-table tbody tr {
+	#mainwp-manage-plugins-table tbody tr  {
 		padding: 0 !important;
 	}
 
@@ -555,6 +543,39 @@
 		display: block !important;
 	}
 
+	/*
+	#mainwp-manage-sites-content table.single.line,
+	#mainwp-posts-table,
+	#mainwp-pages-table,
+	#mainwp-manage-themes-table,
+	#mainwp-manage-plugins-table,
+	#mainwp-manage-themes-table table,
+	#mainwp-manage-plugins-table table,
+	#mainwp-wordpress-updates-groups-table,
+	#mainwp-plugins-updates-groups-table,
+	#mainwp-themes-updates-groups-table,
+	#mainwp-translations-groups-table,
+	#mainwp-abandoned-plugins-groups-table,
+	#mainwp-abandoned-themes-groups-table,
+	#mainwp-plugins-updates-sites-table,
+	#mainwp-themes-updates-sites-table,
+	#mainwp-abandoned-plugins-sites-table,
+	#mainwp-abandoned-themes-sites-table,
+	#mainwp-wordpress-updates-table,
+	#mainwp-plugins-updates-table,
+	#mainwp-themes-updates-table,
+	#mainwp-translations-sites-table,
+	#mainwp-abandoned-plugins-items-table,
+	#mainwp-abandoned-plugins-table,
+	#mainwp-abandoned-themes-table,
+	#mainwp-abandoned-themes-items-table,
+	#mainwp-all-active-plugins-table,
+	#mainwp-all-active-themes-table {
+		white-space: normal !important;
+	}
+*/
+
+
 	#mainwp-wordpress-updates-groups-table th,
 	#mainwp-plugins-updates-groups-table th,
 	#mainwp-themes-updates-groups-table th,
@@ -579,7 +600,7 @@
 	}
 
 
-	.mainwp-manage-updates-table:not(.unstackable) tr.content:not(.active) {
+	.mainwp-manage-updates-table:not(.unstackable) tr.content:not( .active ) {
 		display: none !important;
 	}
 
@@ -686,4 +707,11 @@
 	#mainwp-abandoned-themes-items-table tr table {
 		background: #f9fafb !important;
 	}
+
+	/*
+	#mainwp-http-response-issues-table {
+		white-space: normal !important;
+		width: 100% !important;
+	}
+	*/
 }

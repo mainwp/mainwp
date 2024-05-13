@@ -5,7 +5,7 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 6.5.2
+Tested up to: 6.5.3
 Requires PHP: 7.4
 Stable tag: 5.0.3.1
 License: GPLv3 or later
@@ -15,7 +15,7 @@ Streamline your WordPress management with a powerful, self-hosted dashboard for 
 
 == Description ==
 
-Managing multiple WordPress sites can be a time-consuming and frustrating task. The [MainWP Dashboard](https://mainwp.com/) empowers you to take back your time by allowing you to efficiently manage and secure all your WordPress sites from your own centralized Dashboard. 
+Managing multiple WordPress sites can be a time-consuming and frustrating task. The [MainWP Dashboard](https://mainwp.com/) empowers you to take back your time by allowing you to efficiently manage and secure all your WordPress sites from your own centralized Dashboard.
 
 Designed for agencies, freelancers, and web professionals, MainWP offers comprehensive control with a privacy-first approach. Harness the power of MainWP for updates, backups, and more, ensuring your sites are always running smoothly and securely.
 
@@ -49,7 +49,7 @@ The MainWP plugins come with their own [privacy policies](https://mainwp.com/mai
 
 **How Is MainWP Free? What’s the Catch? How Will You Continue to Pay Development Costs?**
 
-This is not a trial. The core MainWP Dashboard plugin is [100% FREE](https://mainwp.com/mainwp-free-features/) and always will be. It doesn’t matter if you have 5 sites or 5,000 WordPress sites; it’s always free. 
+This is not a trial. The core MainWP Dashboard plugin is [100% FREE](https://mainwp.com/mainwp-free-features/) and always will be. It doesn’t matter if you have 5 sites or 5,000 WordPress sites; it’s always free.
 
 We make money by offering MainWP Pro which includes a wide range of [Premium Extensions](https://mainwp.com/mainwp-extensions/) to grow with you.
 
@@ -57,7 +57,7 @@ We make money by offering MainWP Pro which includes a wide range of [Premium Ext
 
 Extensions enhance your MainWP Dashboard with additional features for backups, marketing, SEO, maintenance, security, monitoring, and other tools to help you better organize and manage websites.
 
-**Experience the MainWP Difference** 
+**Experience the MainWP Difference**
 
 Ready to streamline your WordPress management workflow and take control of your sites? Install MainWP today and discover how easy it is to keep your sites updated, secure, and running smoothly. Join the growing community of over 700K WordPress sites trusting MainWP for their management needs. Get started now and experience the MainWP difference firsthand!
 
@@ -69,7 +69,7 @@ However, we have user reports that most functions work correctly, but support wi
 
 1. We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.
 
-Using a new WordPress install will help reduce Plugin Conflicts and other issues caused by trying to run your MainWP Dashboard from an active site. 
+Using a new WordPress install will help reduce Plugin Conflicts and other issues caused by trying to run your MainWP Dashboard from an active site.
 
 Most hosting companies provide free subdomains ("demo.yourdomain.com"), and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard. If you are not sure how to set up a subdomain, contact your hosting company's support.
 
@@ -86,9 +86,9 @@ You can even install your MainWP Dashboard on a WordPress site located on your l
 == Frequently Asked Questions ==
 
 = What sets MainWP apart from other WordPress management platforms like ManageWP or InfiniteWP? =
-MainWP is a self-hosted, open-source WordPress management plugin that prioritizes user privacy and customization. 
+MainWP is a self-hosted, open-source WordPress management plugin that prioritizes user privacy and customization.
 
-Unlike SaaS (Software as a Service) platforms like ManageWP, WPUmbrella, or WPRemote, MainWP gives you complete control over your data and allows for extensive customization through its open-source architecture. 
+Unlike SaaS (Software as a Service) platforms like ManageWP, WPUmbrella, or WPRemote, MainWP gives you complete control over your data and allows for extensive customization through its open-source architecture.
 
 = Can MainWP handle bulk updates for WordPress core, plugins, and themes? =
 Yes, MainWP makes it easy to perform bulk updates for WordPress core, plugins, and themes across all your managed sites. With just a few clicks, you can ensure all your sites are running the latest versions, saving you valuable time and effort.
@@ -98,27 +98,27 @@ MainWP offers a robust client management system that allows you to organize site
 
 = Does MainWP offer any features for tracking costs associated with managing WordPress sites? =
 Yes, MainWP has a built-in Cost Tracker. This feature allows you to:
-* Record and categorize expenses for each site 
-* Set up recurring costs 
-* Generate detailed cost reports 
+* Record and categorize expenses for each site
+* Set up recurring costs
+* Generate detailed cost reports
 * Gain insights into your expenditure distribution
-* Track payments received and upcoming renewals 
+* Track payments received and upcoming renewals
 
 = What security features does MainWP offer to protect my WordPress sites? =
 MainWP prioritizes security by providing features like real-time security monitoring, malware scanning, and vulnerability detection. The plugin also integrates with popular security plugins.
 
 = Can I use MainWP to manage WordPress sites hosted on different servers or hosting providers? =
-Yes, MainWP is designed to work with WordPress sites hosted on any server or hosting provider. 
+Yes, MainWP is designed to work with WordPress sites hosted on any server or hosting provider.
 
 = How does MainWP handle WordPress site backups? =
-MainWP offers multiple backup options, including built-in backup solutions for popular hosting providers and integrations with some of the most installed backup plugins. 
+MainWP offers multiple backup options, including built-in backup solutions for popular hosting providers and integrations with some of the most installed backup plugins.
 
 = How do you pronounce MainWP? =
 MainWP is a unique name that we created for our company, so it's understandable if you're unsure about how to pronounce it. Here's the easiest way to remember:
 
 **Main + WP = MainWP**
 
-Think of it as the word "Main" followed by the letters "WP" (pronounced as "double-u pee"). In phonetic notation, it would look like this: /ˈmeɪn ˈdʌbəl juː ˈpiː/. 
+Think of it as the word "Main" followed by the letters "WP" (pronounced as "double-u pee"). In phonetic notation, it would look like this: /ˈmeɪn ˈdʌbəl juː ˈpiː/.
 
 *But don't worry if you pronounce it differently – we answer to almost anything, including WP Main and WPMain!*
 

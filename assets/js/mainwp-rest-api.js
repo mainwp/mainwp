@@ -1,38 +1,43 @@
 
-let bulk_RestAPIMaxThreads = 1;
-let bulk_RestAPICurrentThreads = 0;
-let bulk_RestAPITotal = 0;
-let bulk_RestAPIFinished = 0;
-let bulk_RestAPITaskRunning = false;
+bulk_RestAPIMaxThreads = 1;
+bulk_RestAPICurrentThreads = 0;
+bulk_RestAPITotal = 0;
+bulk_RestAPIFinished = 0;
+bulk_RestAPITaskRunning = false;
 
-jQuery(function($) {
+jQuery(document).ready(function ($) {
     $('body').on('click', '.copy-to-clipboard', function () {
         alert('Copied!');
     });
     // Trigger Manage Bulk Actions
     jQuery(document).on('click', '#mainwp-do-rest-api-bulk-actions', function () {
-        let action = jQuery("#mainwp-rest-api-bulk-actions-menu").dropdown("get value");
-        if (action == 'delete' && ! bulk_RestAPITaskRunning ) {
+        var action = jQuery("#mainwp-rest-api-bulk-actions-menu").dropdown("get value");
+        if (action == 'delete') {
+
+            if (bulk_RestAPITaskRunning) {
+                return false;
+            }
             mainwp_restapi_bulk_remove_keys_confirm();
+            return false;
         }
         return false;
     });
 
 });
 
-let mainwp_restapi_remove_key_confirm = function (pCheckedBox) {
-    let confirmMsg = __("You are about to delete the selected REST API Key?");
-    mainwp_confirm(confirmMsg, function () { mainwp_restapi_bulk_remove_specific(pCheckedBox); });
+mainwp_restapi_remove_key_confirm = function (pCheckedBox) {
+    confirmMsg = __("You are about to delete the selected REST API Key?");
+    mainwp_confirm(confirmMsg, _callback = function () {mainwp_restapi_bulk_remove_specific(pCheckedBox); });
 }
 
-let mainwp_restapi_bulk_remove_keys_confirm = function () {
-    let confirmMsg = __("You are about to delete the selected REST API Key(s)?");
-    mainwp_confirm(confirmMsg, function () { mainwp_restapi_bulk_init(); mainwp_restapi_remove_keys_next(); });
+mainwp_restapi_bulk_remove_keys_confirm = function () {
+    confirmMsg = __("You are about to delete the selected REST API Key(s)?");
+    mainwp_confirm(confirmMsg, _callback = function () { mainwp_restapi_bulk_init(); mainwp_restapi_remove_keys_next(); });
 }
 
-let mainwp_restapi_bulk_init = function () {
+mainwp_restapi_bulk_init = function () {
     jQuery('#mainwp-message-zone-apikeys').hide();
-    if (!bulk_RestAPITaskRunning) {
+    if (bulk_RestAPITaskRunning == false) {
         bulk_RestAPICurrentThreads = 0;
         bulk_RestAPITotal = 0;
         bulk_RestAPIFinished = 0;
@@ -43,11 +48,11 @@ let mainwp_restapi_bulk_init = function () {
 };
 
 
-let mainwp_restapi_remove_keys_next = function () {
-    while ((checkedBox = jQuery('#mainwp-rest-api-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulk_RestAPICurrentThreads < bulk_RestAPIMaxThreads)) { // NOSONAR - variables modified in other functions.
+mainwp_restapi_remove_keys_next = function () {
+    while ((checkedBox = jQuery('#mainwp-rest-api-body-table .check-column INPUT:checkbox:checked[status="queue"]:first')) && (checkedBox.length > 0) && (bulk_RestAPICurrentThreads < bulk_RestAPIMaxThreads)) {
         mainwp_restapi_bulk_remove_specific(checkedBox);
     }
-    if ((bulk_RestAPITotal > 0) && (bulk_RestAPIFinished == bulk_RestAPITotal)) { // NOSONAR - modified outside the function.
+    if ((bulk_RestAPITotal > 0) && (bulk_RestAPIFinished == bulk_RestAPITotal)) {
         setHtml('#mainwp-message-zone-apikeys', __("Process completed. Reloading page..."));
         setTimeout(function () {
             window.location.href = location.href;
@@ -55,16 +60,16 @@ let mainwp_restapi_remove_keys_next = function () {
     }
 }
 
-let mainwp_restapi_bulk_remove_specific = function (pCheckedBox) {
+mainwp_restapi_bulk_remove_specific = function (pCheckedBox) {
     pCheckedBox.attr('status', 'running');
-    let rowObj = pCheckedBox.closest('tr');
+    var rowObj = pCheckedBox.closest('tr');
     bulk_RestAPICurrentThreads++;
 
-    let id = rowObj.attr('key-ck-id');
+    var id = rowObj.attr('key-ck-id');
 
     rowObj.html('<td colspan="999"><i class="notched circle loading icon"></i> ' + 'Deleting ...' + '</td>');
 
-    let data = mainwp_secure_data({
+    var data = mainwp_secure_data({
         action: 'mainwp_rest_api_remove_keys',
         keyId: id
     });
@@ -72,8 +77,8 @@ let mainwp_restapi_bulk_remove_specific = function (pCheckedBox) {
         bulk_RestAPICurrentThreads--;
         bulk_RestAPIFinished++;
         rowObj.html('<td colspan="999"></td>');
-        let result = '';
-        let error = '';
+        var result = '';
+        var error = '';
         if (response.error != undefined) {
             error = response.error;
         } else if (response.success == 'SUCCESS') {

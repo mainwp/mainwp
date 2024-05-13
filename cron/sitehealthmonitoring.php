@@ -8,9 +8,9 @@
  */
 
 // include cron/bootstrap.php.
-require_once 'bootstrap.php'; // NOSONAR - WP compatible.
+require_once 'bootstrap.php';
 
 if ( isset( $mainWP ) ) {
-    // fire off mainWP->mainwp_cronchecksitehealth_action.
-    $mainWP->mainwp_cronchecksitehealth_action();
+	// fire off mainWP->mainwp_cronchecksitehealth_action.
+	$mainWP->mainwp_cronchecksitehealth_action();
 }

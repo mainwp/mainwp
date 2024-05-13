@@ -755,7 +755,7 @@ class MainWP_Menu {
                 $bar_item_active = null;
 
                 $sites_count = MainWP_DB::instance()->get_websites_count();
-                if (empty( $sites_count ) ) {
+                if ( empty( $sites_count ) ) {
                     ?>
                     <a style="background: #FFD300 !important;" id="leftbar-item-quick-setup" title="<?php esc_html_e( 'Quick Setup', 'mainwp' ); ?>" class="item" href="admin.php?page=mainwp-setup">
                         <i class="magic large icon"></i><span class="ui small text"><?php esc_html_e( 'Quick Setup', 'mainwp' ); ?></span>

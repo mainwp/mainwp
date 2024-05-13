@@ -67,7 +67,7 @@ abstract class JWK extends Progenitor
                 }
                 break;
             default:
-                throw new \Exception('Only EC and OKP JWK keys are supported');
+                throw new MainWP_Exception('Only EC and OKP JWK keys are supported');
         }
 
         $curve = '\phpseclib3\Crypt\EC\Curves\\' . str_replace('P-', 'nistp', $key->crv);

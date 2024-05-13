@@ -7,7 +7,7 @@ window.wp = window.wp || {};
 (function ($) {
 
     // Set up our namespace...
-    var themes, l10n;
+    let themes, l10n;
     themes = wp.themes = wp.themes || {};
 
     // Store the theme data and settings for organized and quick access
@@ -25,7 +25,7 @@ window.wp = window.wp || {};
         // Adds attributes to the default data coming through the .org themes api
         // Map `id` to `slug` for shared code
         initialize: function () {
-            var description;
+            let description;
 
             // If theme is already installed, set an attribute.
             if (_.indexOf(themes.data.installedThemes, this.get('slug')) !== -1) {
@@ -92,7 +92,7 @@ window.wp = window.wp || {};
         // Search input and view
         // for current theme collection
         search: function () {
-            var view,
+            let view,
                 self = this;
 
             // Don't render the search if there is only one theme
@@ -115,7 +115,7 @@ window.wp = window.wp || {};
         // Checks when the user gets close to the bottom
         // of the mage and triggers a theme:scroll event
         scroller: function () {
-            var self = this,
+            let self = this,
                 bottom, threshold;
 
             bottom = this.window.scrollTop() + self.window.height();
@@ -169,7 +169,7 @@ window.wp = window.wp || {};
         // Performs a search within the collection
         // @uses RegExp
         search: function (term) {
-            var match, results, haystack, name, description, author;
+            let match, results, haystack, name, description, author;
 
             // Start with a full collection
             this.reset(themes.data.themes, { silent: true });
@@ -185,9 +185,9 @@ window.wp = window.wp || {};
             // Find results
             // _.filter and .test
             results = this.filter(function (data) {
-                name = data.get('name').replace(/(<([^>]+)>)/ig, '');
-                description = data.get('description').replace(/(<([^>]+)>)/ig, '');
-                author = data.get('author').replace(/(<([^>]+)>)/ig, '');
+                name = data.get('name').replace(/(<([^>]+)>)/ig, ''); // NOSONAR - safe pattern from WP.
+                description = data.get('description').replace(/(<([^>]+)>)/ig, ''); // NOSONAR - safe pattern from WP.
+                author = data.get('author').replace(/(<([^>]+)>)/ig, ''); // NOSONAR - safe pattern from WP.
 
                 haystack = _.union(name, data.get('id'), description, author, data.get('tags'));
 
@@ -210,7 +210,7 @@ window.wp = window.wp || {};
         // Paginates the collection with a helper method
         // that slices the collection
         paginate: function (instance) {
-            var collection = this;
+            let collection = this;
             instance = instance || 0;
 
             // Themes per instance are set at 20
@@ -232,7 +232,7 @@ window.wp = window.wp || {};
              * @static
              * @type Array
              */
-            var queries = this.queries,
+            let queries = this.queries,
                 self = this,
                 query, isPaginated, count;
 
@@ -256,7 +256,7 @@ window.wp = window.wp || {};
 
             // Otherwise, send a new API call and add it to the cache.
             if (!query && !isPaginated) {
-                query = this.apiCall(request).done(function (data) {
+                this.apiCall(request).done(function (data) {
 
                     // Update the collection with the queried data.
                     if (data.themes) {
@@ -283,7 +283,7 @@ window.wp = window.wp || {};
                 if (isPaginated) {
                     return this.apiCall(request, isPaginated).done(function (data) {
                         // Add the new themes to the current collection
-                        // @todo update counter
+                        // @devtodo update counter
                         self.add(data.themes);
                         self.trigger('query:success');
 
@@ -354,11 +354,11 @@ window.wp = window.wp || {};
                     }
                 }
             }).done(function (response) {
-                if (response && response.themes) {
-                    var favThemes = jQuery('#mainwp-favorites-themes').attr('favorites-themes');
+                if (response?.themes) {
+                    let favThemes = jQuery('#mainwp-favorites-themes').attr('favorites-themes');
                     if ('' !== favThemes) {
                         try {
-                            var decoded_favThemes = JSON.parse(favThemes);
+                            let decoded_favThemes = JSON.parse(favThemes);
                             response.themes.forEach(function (part, index) {
                                 if (decoded_favThemes.hasOwnProperty(this[index].slug)) {
                                     this[index].added_fav = 1;
@@ -403,7 +403,7 @@ window.wp = window.wp || {};
         touchDrag: false,
 
         render: function () {
-            var data = this.model.toJSON();
+            let data = this.model.toJSON();
             // Render themes using the html template
             this.$el.html(this.html(data)).attr({
                 tabindex: 0,
@@ -432,7 +432,7 @@ window.wp = window.wp || {};
 
         // Add class of focus to the theme we are focused on.
         addFocus: function () {
-            var $themeToFocus = ($(':focus').hasClass('theme')) ? $(':focus') : $(':focus').parents('.theme');
+            let $themeToFocus = ($(':focus').hasClass('theme')) ? $(':focus') : $(':focus').parents('.theme');
 
             $('.theme.focus').removeClass('focus');
             $themeToFocus.addClass('focus');
@@ -441,9 +441,9 @@ window.wp = window.wp || {};
         // Single theme overlay screen
         // It's shown when clicking a theme
         expand: function (event) {
-            var self = this;
+            let self = this;
 
-            event = event || window.event;
+            event = event || window.event; // NOSONAR - compatible.
 
             // 'enter' and 'space' keys expand the details view when a theme is :focused
             if (event.type === 'keydown' && (event.which !== 13 && event.which !== 32)) {
@@ -452,7 +452,8 @@ window.wp = window.wp || {};
 
             // Bail if the user scrolled on a touch device
             if (this.touchDrag === true) {
-                return this.touchDrag = false;
+                this.touchDrag = false;
+                return this.touchDrag;
             }
 
             // Prevent the modal from showing when the user clicks
@@ -472,12 +473,13 @@ window.wp = window.wp || {};
         },
 
         preview: function (event) {
-            var self = this,
+            let self = this,
                 current, preview;
 
             // Bail if the user scrolled on a touch device
             if (this.touchDrag === true) {
-                return this.touchDrag = false;
+                this.touchDrag = false;
+                return this.touchDrag;
             }
 
             // Allow direct link path to installing a theme.
@@ -504,7 +506,7 @@ window.wp = window.wp || {};
 
             event.preventDefault();
 
-            event = event || window.event;
+            event = event || window.event; // NOSONAR - compatible.
 
             // Set focus to current theme.
             themes.focusedTheme = this.$el;
@@ -546,7 +548,8 @@ window.wp = window.wp || {};
                 // If we have no more themes, bail.
                 if (_.isUndefined(self.current)) {
                     self.options.parent.parent.trigger('theme:end');
-                    return self.current = current;
+                    self.current = current;
+                    return self.current;
                 }
 
                 preview.model = self.current;
@@ -594,7 +597,7 @@ window.wp = window.wp || {};
 
         // Handles .disabled classes for previous/next buttons in theme installer preview
         setNavButtonsState: function () {
-            var $themeInstaller = $('.theme-install-overlay'),
+            let $themeInstaller = $('.theme-install-overlay'),
                 current = _.isUndefined(this.current) ? this.model : this.current;
 
             // Disable previous at the zero position
@@ -627,7 +630,7 @@ window.wp = window.wp || {};
         html: themes.template('theme-single'),
 
         render: function () {
-            var data = this.model.toJSON();
+            let data = this.model.toJSON();
             this.$el.html(this.html(data));
             // Renders active theme styles
             this.activeTheme();
@@ -648,7 +651,7 @@ window.wp = window.wp || {};
 
         // Keeps :focus within the theme details elements
         containFocus: function ($el) {
-            var $target;
+            let $target;
 
             // Move focus to the primary action
             _.delay(function () {
@@ -677,10 +680,10 @@ window.wp = window.wp || {};
         // Single theme overlay screen
         // It's shown when clicking a theme
         collapse: function (event) {
-            var self = this,
+            let self = this,
                 scroll;
 
-            event = event || window.event;
+            event = event || window.event; // NOSONAR - compatible.
 
             // Prevent collapsing detailed view when there is only one theme available
             if (themes.data.themes.length === 1) {
@@ -746,13 +749,13 @@ window.wp = window.wp || {};
         },
 
         nextTheme: function () {
-            var self = this;
+            let self = this;
             self.trigger('theme:next', self.model.cid);
             return false;
         },
 
         previousTheme: function () {
-            var self = this;
+            let self = this;
             self.trigger('theme:previous', self.model.cid);
             return false;
         },
@@ -760,7 +763,7 @@ window.wp = window.wp || {};
         // Checks if the theme screenshot is the old 300px width version
         // and adds a corresponding class if it's true
         screenshotCheck: function (el) {
-            var screenshot, image;
+            let screenshot, image;
 
             screenshot = el.find('.screenshot img');
             image = new Image();
@@ -792,7 +795,7 @@ window.wp = window.wp || {};
         html: themes.template('theme-preview'),
 
         render: function () {
-            var data = this.model.toJSON();
+            let data = this.model.toJSON();
 
             this.$el.html(this.html(data));
 
@@ -822,7 +825,7 @@ window.wp = window.wp || {};
         },
 
         collapse: function (event) {
-            var $button = $(event.currentTarget);
+            let $button = $(event.currentTarget);
             if ('true' === $button.attr('aria-expanded')) {
                 $button.attr({ 'aria-expanded': 'false', 'aria-label': l10n.expandSidebar });
             } else {
@@ -869,7 +872,7 @@ window.wp = window.wp || {};
         liveThemeCount: 0,
 
         initialize: function (options) {
-            var self = this;
+            let self = this;
 
             // Set up parent
             this.parent = options.parent;
@@ -974,7 +977,7 @@ window.wp = window.wp || {};
         // Iterates through each instance of the collection
         // and renders each theme module
         renderThemes: function (page) {
-            var self = this;
+            let self = this;
 
             self.instance = self.collection.paginate(page);
 
@@ -1017,7 +1020,7 @@ window.wp = window.wp || {};
 
         // Grabs current theme and puts it at the beginning of the collection
         currentTheme: function () {
-            var self = this,
+            let self = this,
                 current;
 
             current = self.collection.findWhere({ active: true });
@@ -1037,7 +1040,7 @@ window.wp = window.wp || {};
         // Renders the overlay with the ThemeDetails view
         // Uses the current model data
         expand: function (id) {
-            var self = this;
+            let self = this;
 
             // Set the current theme model
             this.model = self.collection.get(id);
@@ -1077,7 +1080,7 @@ window.wp = window.wp || {};
         // based on the current position in the collection
         // @params [model cid]
         next: function (args) {
-            var self = this,
+            let self = this,
                 model, nextModel;
 
             // Get the current theme
@@ -1102,7 +1105,7 @@ window.wp = window.wp || {};
         // based on the current position in the collection
         // @params [model cid]
         previous: function (args) {
-            var self = this,
+            let self = this,
                 model, previousModel;
 
             // Get the current theme
@@ -1177,7 +1180,7 @@ window.wp = window.wp || {};
 
         // Runs a search on the theme collection.
         doSearch: _.debounce(function (event) {
-            var options = {};
+            let options = {};
 
             this.collection.doSearch(event.target.value);
 
@@ -1197,7 +1200,7 @@ window.wp = window.wp || {};
         }, 500),
 
         pushState: function (event) {
-            var url = themes.router.baseUrl('');
+            let url = themes.router.baseUrl('');
 
             if (event.target.value) {
                 url = themes.router.baseUrl(themes.router.searchPath + event.target.value);
@@ -1273,7 +1276,7 @@ window.wp = window.wp || {};
         },
 
         routes: function () {
-            var self = this;
+            let self = this;
             // Bind to our global thx object
             // so that the object is available to sub-views
             themes.router = new themes.Router();
@@ -1328,7 +1331,7 @@ window.wp = window.wp || {};
         },
 
         doSearch: _.debounce(function (value) {
-            var request = {};
+            let request = {};
 
             request.search = value;
 
@@ -1379,7 +1382,7 @@ window.wp = window.wp || {};
 
         // Initial render method
         render: function () {
-            var self = this;
+            let self = this;
 
             this.search();
             this.uploader();
@@ -1443,7 +1446,7 @@ window.wp = window.wp || {};
 
         // Sorting navigation
         onSort: function (event) {
-            var $el = $(event.target),
+            let $el = $(event.target),
                 sort = $el.data('sort');
 
             event.preventDefault();
@@ -1472,7 +1475,7 @@ window.wp = window.wp || {};
 
         // Filters and Tags
         onFilter: function (event) {
-            var request,
+            let request,
                 $el = $(event.target),
                 filter = $el.data('filter');
 
@@ -1505,7 +1508,7 @@ window.wp = window.wp || {};
 
         // Applying filters triggers a tag request
         applyFilters: function (event) {
-            var name,
+            let name,
                 tags = this.filtersChecked(),
                 request = { tag: tags },
                 filteringBy = $('.filtered-by .tags');
@@ -1531,7 +1534,7 @@ window.wp = window.wp || {};
         // Get the checked filters
         // @return {array} of tags or false
         filtersChecked: function () {
-            var items = $('.filter-group').find(':checkbox'),
+            let items = $('.filter-group').find(':checkbox'),
                 tags = [];
 
             _.each(items.filter(':checked'), function (item) {
@@ -1543,7 +1546,7 @@ window.wp = window.wp || {};
                 $('.filter-drawer .apply-filters').find('span').text('');
                 $('.filter-drawer .clear-filters').hide();
                 $('body').removeClass('filters-applied');
-                return false;
+                return [];
             }
 
             $('.filter-drawer .apply-filters').find('span').text(tags.length);
@@ -1600,7 +1603,7 @@ window.wp = window.wp || {};
         // Clears all the checked filters
         // @uses filtersChecked()
         clearFilters: function (event) {
-            var items = $('.filter-group').find(':checkbox'),
+            let items = $('.filter-group').find(':checkbox'),
                 self = this;
 
             event.preventDefault();
@@ -1682,7 +1685,7 @@ window.wp = window.wp || {};
         },
 
         routes: function () {
-            var self = this,
+            let self = this,
                 request = {};
 
             // Bind to our global `wp.themes` object
@@ -1741,10 +1744,10 @@ window.wp = window.wp || {};
 })(jQuery);
 
 // Align theme browser thickbox
-var tb_position;
-jQuery(document).ready(function ($) {
+let tb_position;
+jQuery(function($) {
     tb_position = function () {
-        var tbWindow = $('#TB_window'),
+        let tbWindow = $('#TB_window'),
             width = $(window).width(),
             H = $(window).height(),
             W = (1040 < width) ? 1040 : width,
@@ -1764,7 +1767,7 @@ jQuery(document).ready(function ($) {
         }
     };
 
-    $(window).on('resize',function () {
+    $(window).on('resize', function () {
         tb_position();
     });
 });

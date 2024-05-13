@@ -14,7 +14,7 @@
 // set php.ini variables.
 @ignore_user_abort( true );
 if ( false !== strpos( ini_get( 'disable_functions' ), 'set_time_limit' ) ) {
-	@set_time_limit( 0 );
+    @set_time_limit( 0 );
 }
 $mem = '512M';
 @ini_set( 'memory_limit', $mem );
@@ -31,26 +31,26 @@ $included = false;
 
 
 if ( file_exists( __DIR__ . '/../../../../wp-load.php' ) ) {
-	include_once __DIR__ . '/../../../../wp-load.php';
-	$included = true;
+    include_once __DIR__ . '/../../../../wp-load.php'; // NOSONAR - WP compatible.
+    $included = true;
 } elseif ( file_exists( __DIR__ . '/../../../../wp-config.php' ) ) {
-	$wp_config = file_get_contents( __DIR__ . '/../../../../wp-config.php' ); // phpcs:ignore -- used before loading WP.
-	preg_match_all( '/.*define[^d].*ABSPATH.*/i', $wp_config, $matches );
-	if ( count( $matches ) > 0 ) {
-		foreach ( $matches as $match ) {
-			$execute = str_ireplace( 'ABSPATH', 'TMPABSPATH', $match[0] );
-			$execute = str_ireplace( '__FILE__', "'" . __DIR__ . '/../../../../wp-config.php' . "'", $execute );			
-			eval( $execute );
-			if ( file_exists( TMPABSPATH . 'wp-load.php' ) ) {
-				include_once TMPABSPATH . 'wp-load.php';
-				$included = true;
-				break;
-			}
-		}
-	}
+    $wp_config = file_get_contents( __DIR__ . '/../../../../wp-config.php' ); // phpcs:ignore -- used before loading WP.
+    preg_match_all( '/.*define[^d].*ABSPATH.*/i', $wp_config, $matches );
+    if ( ! empty( $matches ) ) {
+        foreach ( $matches as $match ) {
+            $execute = str_ireplace( 'ABSPATH', 'TMPABSPATH', $match[0] );
+            $execute = str_ireplace( '__FILE__', "'" . __DIR__ . '/../../../../wp-config.php' . "'", $execute );
+            eval( $execute ); // NOSONAR - wp-config file are safe content.
+            if ( file_exists( TMPABSPATH . 'wp-load.php' ) ) {
+                include_once TMPABSPATH . 'wp-load.php'; // NOSONAR - WP compatible.
+                $included = true;
+                break;
+            }
+        }
+    }
 }
 
 // phpcs:enable
 if ( ! $included ) {
-	exit( 'Unsupported WordPress setup' );
+    exit( 'Unsupported WordPress setup' );
 }

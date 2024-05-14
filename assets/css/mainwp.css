@@ -1560,5 +1560,10 @@ th .down.icon {
 
 #mainwp-first-level-navigation-menu #leftbar-item-quick-setup i,
 #mainwp-first-level-navigation-menu #leftbar-item-quick-setup span {
+    color: #1c1d1b !important;
+}
+
+.mainwp-default-theme #mainwp-first-level-navigation-menu #leftbar-item-quick-setup i,
+.mainwp-default-theme #mainwp-first-level-navigation-menu #leftbar-item-quick-setup span {
     color: var(--grey-dark) !important;
 }

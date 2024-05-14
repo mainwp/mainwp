@@ -920,6 +920,12 @@ class MainWP_System_View {
 				$class_string .= ' mainwp-custom-theme ';
 			}
 
+			if ( ! empty( $selected_theme ) && is_string( $selected_theme ) ) {
+				$class_string .= ' mainwp-' . $selected_theme . '-theme ';
+			} else {
+				$class_string .= ' mainwp-classic-theme ';
+			}
+
 			$siteViewMode = MainWP_Utility::get_siteview_mode();
 			if ( 'grid' === $siteViewMode ) {
 				$class_string .= ' mainwp-sites-grid-view ';

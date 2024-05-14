@@ -149,7 +149,6 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 * Added: Quick Setup menu item to the MainWP main navigation for users with no child sites.
 * Updated: Renamed the "Setup Wizard" link in the plugin meta to "Quick Setup".
 
-
 = 5.0.3.1 - 4-16-2024 =
 
 * Fixed: A JavaScript error on the Monitoring page that prevented the table element from loading.

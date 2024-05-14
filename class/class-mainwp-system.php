@@ -1225,11 +1225,11 @@ class MainWP_System {
 	public function admin_footer() {
 		if ( ! self::is_mainwp_pages() ) {
 			$sites_count = MainWP_DB::instance()->get_websites_count();
-			if( empty( $sites_count ) ){
+			if ( empty( $sites_count ) ) {
 				?>
 				<script type="text/javascript">
 					jQuery( function(){
-						jQuery( 'li#toplevel_page_mainwp_tab .wp-submenu-wrap .wp-submenu-head' ).after('<li style="background: #FFD300 !important;" class="wp-first-item"><a href="admin.php?page=mainwp-setup" style="color: #000 !important;" class="wp-first-item"><?php esc_html_e('Quick Setup', 'mainwp');?></a></li>');
+						jQuery( 'li#toplevel_page_mainwp_tab .wp-submenu-wrap .wp-submenu-head' ).after('<li style="background: #FFD300 !important;" class="wp-first-item"><a href="admin.php?page=mainwp-setup" style="color: #000 !important;" class="wp-first-item"><?php esc_html_e( 'Quick Setup', 'mainwp' ); ?></a></li>');
 					});
 				</script>
 				<?php

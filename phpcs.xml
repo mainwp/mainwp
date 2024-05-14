@@ -4,13 +4,12 @@
 
     <!-- Check all PHP files in directory tree by default. -->
     <file>.</file>
-	
+
 	<exclude-pattern>*/vendor/*</exclude-pattern>
 	<exclude-pattern>*/bin/*</exclude-pattern>
 	<exclude-pattern>*/.github/*</exclude-pattern>
 	<exclude-pattern>*/tests/*</exclude-pattern>
 	<exclude-pattern>libs/</exclude-pattern>
-	<exclude-pattern>assets/js/apexcharts/*</exclude-pattern>
 
     <arg value="sp" />
 	<arg name="extensions" value="php" />
@@ -24,8 +23,8 @@
 	<rule ref="WordPress">
 		<exclude name="WordPress.NamingConventions.ValidVariableName" />
 		<exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition" />
-                
-		<!-- Disable Strict comparison in array check. Not applicable in the mojority of cases. -->               
+
+		<!-- Disable Strict comparison in array check. Not applicable in the mojority of cases. -->
 		<exclude name="WordPress.PHP.StrictInArray" />
 
 		<exclude name="WordPress.WP.I18n" />
@@ -39,25 +38,12 @@
 		<exclude name="Universal.ControlStructures.IfElseDeclaration.NoNewLine" />
 		<exclude name="Universal.Classes.RequireFinalClass.NonFinalClassFound" />
 		<exclude name="Universal.Namespaces.EnforceCurlyBraceSyntax.Forbidden" />
-		
+
 		<exclude name="Generic.Commenting.Todo" />
 		<exclude name="Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition" />
 		<exclude name="Generic.CodeAnalysis.EmptyStatement.DetectedCatch" />
 	</rule>
 
-	<rule ref="WordPress">
-		<exclude name="Generic.WhiteSpace.DisallowSpaceIndent" />
-	</rule>
-	
-	<rule ref="Generic.WhiteSpace.ScopeIndent">
-		<properties>
-			<property name="indent" value="4"/>
-			<property name="tabIndent" value="false"/>
-		</properties>
-	</rule>
-
-	<rule ref="Generic.WhiteSpace.DisallowTabIndent" />
-				
 	<rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
 		<exclude-pattern>/cron/backups_continue\.php$</exclude-pattern>
 	</rule>

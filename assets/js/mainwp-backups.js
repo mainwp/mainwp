@@ -2,12 +2,12 @@
 /**
  * Backup
  */
-var backupDownloadRunning = false;
-var backupError = false;
-var backupContinueRetries = 0;
-var backupContinueRetriesUnique = [];
+let backupDownloadRunning = false;
+let backupError = false;
+let backupContinueRetries = 0;
+let backupContinueRetriesUnique = [];
 
-jQuery(document).ready(function () {
+jQuery(function () {
     jQuery('#backup_btnSubmit').on('click', function () {
         backup();
     });
@@ -22,21 +22,21 @@ backup = function () {
     backupContinueRetries = 0;
 
     jQuery('#backup_loading').show();
-    var remote_destinations = jQuery('#backup_location_remote').hasClass('mainwp_action_down') ? jQuery.map(jQuery('#backup_destination_list').find('input[name="remote_destinations[]"]'), function (el) {
+    let remote_destinations = jQuery('#backup_location_remote').hasClass('mainwp_action_down') ? jQuery.map(jQuery('#backup_destination_list').find('input[name="remote_destinations[]"]'), function (el) {
         return { id: jQuery(el).val(), title: jQuery(el).attr('title'), type: jQuery(el).attr('destination_type') };
     }) : [];
 
-    var type = jQuery('#mainwp-backup-type').val();
-    var size = jQuery('#backup_site_' + type + '_size').val();
+    let type = jQuery('#mainwp-backup-type').val();
+    let size = jQuery('#backup_site_' + type + '_size').val();
     if (type == 'full') {
         size = size * 1024 * 1024 / 2.4; //Guessing how large the zip will be
     }
-    var fileName = jQuery('#backup_filename').val();
-    var fileNameUID = mainwp_uid();
-    var loadFilesBeforeZip = jQuery('[name="mainwp_options_loadFilesBeforeZip"]:checked').val();
+    let fileName = jQuery('#backup_filename').val();
+    let fileNameUID = mainwp_uid();
+    let loadFilesBeforeZip = jQuery('[name="mainwp_options_loadFilesBeforeZip"]:checked').val();
 
-    var backupPid = Math.round(new Date().getTime() / 1000);
-    var data = mainwp_secure_data({
+    let backupPid = Math.round(new Date().getTime() / 1000);
+    let data = mainwp_secure_data({
         action: 'mainwp_backup',
         site_id: jQuery('#backup_site_id').val(),
         pid: backupPid,
@@ -66,11 +66,11 @@ backup = function () {
             }
         }
     });
-    var backsprocessContentEl = mainwpPopup('#managesite-backup-status-box').getContentEl();
+    let backsprocessContentEl = mainwpPopup('#managesite-backup-status-box').getContentEl();
 
-    var fnc = function (pSiteId, pType, pFileName, pFileNameUID) {
+    let fnc = function (pSiteId, pType, pFileName, pFileNameUID) {
         return function (pFunction) {
-            var data2 = mainwp_secure_data({
+            let data2 = mainwp_secure_data({
                 action: 'mainwp_createbackup_getfilesize',
                 siteId: pSiteId,
                 type: pType,
@@ -92,7 +92,7 @@ backup = function () {
                         }
 
                         if (backupCreateRunning) {
-                            var progressBar = jQuery('#managesite-createbackup-status-progress');
+                            let progressBar = jQuery('#managesite-createbackup-status-progress');
                             if (progressBar.progress('get value') < progressBar.progress('get total')) {
                                 progressBar.progress('set progress', response.size);
                             }
@@ -133,7 +133,7 @@ backup = function () {
                 } else {
                     backupCreateRunning = false;
 
-                    var progressBar = jQuery('#managesite-createbackup-status-progress');
+                    let progressBar = jQuery('#managesite-createbackup-status-progress');
                     progressBar.progress('set progress', parseFloat(progressBar.progress('get total')));
 
                     appendToDiv(backsprocessContentEl, __('Backup file on child site created successfully!'));
@@ -152,9 +152,9 @@ backup = function () {
 };
 
 backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, subfolder, filename, responseError) {
-    var backsprocessContentEl = mainwpPopup('#managesite-backup-status-box').getContentEl();
+    let backsprocessContentEl = mainwpPopup('#managesite-backup-status-box').getContentEl();
     //we've got the pid file!!!!
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_backup_checkpid',
         site_id: siteId,
         pid: pid,
@@ -171,7 +171,7 @@ backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, subf
             if (response.status == 'done') {
                 backupCreateRunning = false;
 
-                var progressBar = jQuery('#managesite-createbackup-status-progress');
+                let progressBar = jQuery('#managesite-createbackup-status-progress');
                 progressBar.progress('set progress', parseFloat(progressBar.progress('get total')));
 
                 //download!!!
@@ -190,7 +190,7 @@ backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, subf
                     if (responseError != undefined) {
                         appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: ' + getErrorMessage(responseError) + '</span>');
                     } else {
-                        appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: Backup timed out! <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>');
+                        appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: Backup timed out! <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>'); // NOSONAR - noopener - open safe.
                     }
                 } else {
                     appendToDiv(backsprocessContentEl, ' Backup stalled, trying to resume from last file...');
@@ -211,7 +211,7 @@ backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, subf
                                 } else {
                                     backupCreateRunning = false;
 
-                                    var progressBar = jQuery('#managesite-createbackup-status-progress');
+                                    let progressBar = jQuery('#managesite-createbackup-status-progress');
                                     progressBar.progress('set progress', parseFloat(progressBar.progress('get total')));
 
                                     appendToDiv(backsprocessContentEl, __('Backupfile on child site created successfully.'));
@@ -234,7 +234,7 @@ backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, subf
                 if (responseError != undefined) {
                     appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: ' + getErrorMessage(responseError) + '</span>');
                 } else {
-                    appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: Backup timed out! <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>');
+                    appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: Backup timed out! <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>'); // NOSONAR - noopener - open safe.
                 }
             } else {
                 //Try again in 5seconds
@@ -254,13 +254,13 @@ backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, subf
 };
 
 backup_download_file = function (pSiteId, type, url, file, regexfile, size, subfolder, remote_destinations) {
-    var backsprocessContentEl = mainwpPopup('#managesite-backup-status-box').getContentEl();
+    let backsprocessContentEl = mainwpPopup('#managesite-backup-status-box').getContentEl();
     appendToDiv(backsprocessContentEl, __('Downloading the file.') + ' <div id="managesite-backup-status-progress" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
     jQuery('#managesite-backup-status-progress').progress({ value: 0, total: size });
 
-    var fnc = function () {
+    let fnc = function (file) {
         return function (pFunction) {
-            var data = mainwp_secure_data({
+            let data = mainwp_secure_data({
                 action: 'mainwp_backup_getfilesize',
                 local: file
             });
@@ -278,7 +278,7 @@ backup_download_file = function (pSiteId, type, url, file, regexfile, size, subf
                         }
 
                         if (backupDownloadRunning) {
-                            var progressBar = jQuery('#managesite-backup-status-progress');
+                            let progressBar = jQuery('#managesite-backup-status-progress');
                             if (progressBar.progress('get value') < progressBar.progress('get total')) {
                                 progressBar.progress('set progress', response.result);
                             }
@@ -307,7 +307,7 @@ backup_download_file = function (pSiteId, type, url, file, regexfile, size, subf
         fnc(fnc);
     }, 1000);
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_backup_download_file',
         site_id: pSiteId,
         type: type,
@@ -335,7 +335,7 @@ backup_download_file = function (pSiteId, type, url, file, regexfile, size, subf
                 jQuery('#managesite-backup-status-progress').progress('set progress', pSize);
                 appendToDiv(backsprocessContentEl, __('Download from child site completed.'));
 
-                var newData = mainwp_secure_data({
+                let newData = mainwp_secure_data({
                     action: 'mainwp_backup_delete_file',
                     site_id: pSiteId,
                     file: pUrl
@@ -356,20 +356,20 @@ backup_download_file = function (pSiteId, type, url, file, regexfile, size, subf
     });
 };
 
-var backupUploadRunning = [];
+let backupUploadRunning = [];
 backup_upload_file = function (pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pType, pSize) {
-    var backsprocessContentEl = mainwpPopup('#managesite-backup-status-box').getContentEl();
+    let backsprocessContentEl = mainwpPopup('#managesite-backup-status-box').getContentEl();
     if (pRemoteDestinations.length > 0) {
-        var remote_destination = pRemoteDestinations[0];
+        let remote_destination = pRemoteDestinations[0];
         //upload..
-        var unique = Date.now();
+        let unique = Date.now();
         appendToDiv(backsprocessContentEl, __('Uploading to remote destination: %1 (%2)', remote_destination.title, remote_destination.type) + '<div id="managesite-upload-status-progress-' + unique + '"  class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
 
         jQuery('#managesite-upload-status-progress-' + unique).progress({ value: 0, total: pSize });
 
-        var fnc = function (pUnique) {
+        let fnc = function (pUnique) {
             return function (pFunction) {
-                var data2 = mainwp_secure_data({
+                let data2 = mainwp_secure_data({
                     action: 'mainwp_backup_upload_getprogress',
                     unique: pUnique
                 }, false);
@@ -388,7 +388,7 @@ backup_upload_file = function (pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDe
                             }
 
                             if (backupUploadRunning[pUnique]) {
-                                var progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
+                                let progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
                                 if ((progressBar.length > 0) && (progressBar.progress('get value') < progressBar.progress('get total')) && (progressBar.progress('get value') < parseInt(response.result))) {
                                     progressBar.progress('set progress', response.result);
                                 }
@@ -419,7 +419,7 @@ backup_upload_file = function (pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDe
 
         backupUploadRunning[unique] = true;
 
-        var data = mainwp_secure_data({
+        let data = mainwp_secure_data({
             action: 'mainwp_backup_upload_file',
             file: pFile,
             siteId: pSiteId,
@@ -442,10 +442,10 @@ backup_upload_file = function (pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDe
                     } else {
                         backupUploadRunning[pUnique] = false;
 
-                        var progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
+                        let progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
                         progressBar.progress('set progress', pSize);
 
-                        var obj = response.result;
+                        let obj = response.result;
                         if (obj.error) {
                             backupError = true;
                             appendToDiv(backsprocessContentEl, '<span class="mainwp-red">' + __('Upload to %1 (%2) failed:', obj.title, obj.type) + ' ' + obj.error + '</span>');
@@ -477,9 +477,9 @@ backup_upload_file = function (pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDe
 };
 
 backup_upload_file_retry_fail = function (pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError) {
-    var backsprocessContentEl = mainwpPopup('#managesite-backup-status-box').getContentEl();
+    let backsprocessContentEl = mainwpPopup('#managesite-backup-status-box').getContentEl();
     //we've got the pid file!!!!
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_backup_upload_checkstatus',
         unique: pUnique,
         remote_destination: pRemoteDestId
@@ -493,7 +493,7 @@ backup_upload_file_retry_fail = function (pData, pSiteId, pFile, pRegexFile, pSu
             if (response.status == 'done') {
                 backupUploadRunning[pUnique] = false;
 
-                var progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
+                let progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
                 progressBar.progress('set progress', pSize);
 
                 appendToDiv(backsprocessContentEl, __('Upload to %1 (%2) successful!', response.info.title, response.info.type));
@@ -536,10 +536,10 @@ backup_upload_file_retry_fail = function (pData, pSiteId, pFile, pRegexFile, pSu
                                 } else {
                                     backupUploadRunning[pUnique] = false;
 
-                                    var progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
+                                    let progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
                                     progressBar.progress('set progress', pSize);
 
-                                    var obj = response.result;
+                                    let obj = response.result;
                                     if (obj.error) {
                                         backupError = true;
                                         appendToDiv(backsprocessContentEl, '<span class="mainwp-red">' + __('Upload to %1 (%2) failed:', obj.title, obj.type) + ' ' + obj.error + '</span>');
@@ -580,7 +580,7 @@ backup_upload_file_retry_fail = function (pData, pSiteId, pFile, pRegexFile, pSu
 /**
  * Manage backups page
  */
-jQuery(document).ready(function () {
+jQuery(function () {
     jQuery(document).on('click', '.backup_destination_exclude', function () {
         jQuery(this).parent().parent().animate({ height: 0 }, {
             duration: 'slow', complete: function () {
@@ -606,18 +606,18 @@ jQuery(document).ready(function () {
 
 });
 managebackups_exclude_folder = function (pElement) {
-    var folder = pElement.parent().attr('rel') + "\n";
+    let folder = pElement.parent().attr('rel') + "\n";
     if (jQuery('#excluded_folders_list').val().indexOf(folder) !== -1)
         return;
 
     jQuery('#excluded_folders_list').val(jQuery('#excluded_folders_list').val() + folder);
 };
 
-var manageBackupsError = false;
-var manageBackupsTaskRemoteDestinations;
-var manageBackupsTaskId;
-var manageBackupsTaskType;
-var manageBackupsTaskError;
+let manageBackupsError = false;
+let manageBackupsTaskRemoteDestinations;
+let manageBackupsTaskId;
+let manageBackupsTaskType;
+let manageBackupsTaskError;
 managebackups_run_now = function (el) {
     el = jQuery(el);
     el.hide();
@@ -630,10 +630,10 @@ managebackups_run_now = function (el) {
         }
     });
 
-    var taskId = el.attr('task_id');
-    var taskType = el.attr('task_type');
+    let taskId = el.attr('task_id');
+    let taskType = el.attr('task_type');
     //Fetch the sites to backup
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_backuptask_get_sites',
         task_id: taskId
     });
@@ -653,7 +653,7 @@ managebackups_run_now = function (el) {
     }(taskId, taskType), 'json');
 };
 managebackups_run_next = function () {
-    var backtaskContentEl = mainwpPopup('#managebackups-task-status-box').getContentEl();
+    let backtaskContentEl = mainwpPopup('#managebackups-task-status-box').getContentEl();
     if (manageBackupTaskSites.length == 0) {
         appendToDiv(backtaskContentEl, __('Backup task completed') + (manageBackupsTaskError ? ' <span class="mainwp-red">' + __('with errors') + '</span>' : '') + '.');
 
@@ -666,14 +666,14 @@ managebackups_run_next = function () {
         return;
     }
 
-    var siteId = manageBackupTaskSites[0]['id'];
-    var siteName = manageBackupTaskSites[0]['name'];
-    var size = manageBackupTaskSites[0][manageBackupsTaskType + 'size'];
-    var fileNameUID = mainwp_uid();
+    let siteId = manageBackupTaskSites[0]['id'];
+    let siteName = manageBackupTaskSites[0]['name'];
+    let size = manageBackupTaskSites[0][manageBackupsTaskType + 'size'];
+    let fileNameUID = mainwp_uid();
     appendToDiv(backtaskContentEl, '[' + siteName + '] ' + __('Creating backup file.') + '<div id="managebackups-task-status-create-progress" siteId="' + siteId + '" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
 
     manageBackupTaskSites.shift();
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_backuptask_run_site',
         task_id: manageBackupsTaskId,
         site_id: siteId,
@@ -681,8 +681,8 @@ managebackups_run_next = function () {
     });
 
     jQuery('#managebackups-task-status-create-progress[siteId="' + siteId + '"]').progress({ value: 0, total: size });
-    var interVal = setInterval(function () {
-        var data = mainwp_secure_data({
+    let interVal = setInterval(function () {
+        let data = mainwp_secure_data({
             action: 'mainwp_createbackup_getfilesize',
             type: manageBackupsTaskType,
             siteId: siteId,
@@ -695,7 +695,7 @@ managebackups_run_next = function () {
                     return;
 
                 if (backupCreateRunning) {
-                    var progressBar = jQuery('#managebackups-task-status-create-progress[siteId="' + pSiteId + '"]');
+                    let progressBar = jQuery('#managebackups-task-status-create-progress[siteId="' + pSiteId + '"]');
                     if (progressBar.progress('get value') < progressBar.progress('get total')) {
                         progressBar.progress('set progress', response.size);
                     }
@@ -715,7 +715,7 @@ managebackups_run_next = function () {
                 backupCreateRunning = false;
                 clearInterval(pInterVal);
 
-                var progressBar = jQuery('#managebackups-task-status-create-progress[siteId="' + pSiteId + '"]');
+                let progressBar = jQuery('#managebackups-task-status-create-progress[siteId="' + pSiteId + '"]');
                 progressBar.progress('set progress', parseFloat(progressBar.progress('get total')));
 
                 if (response.error) {
@@ -733,18 +733,18 @@ managebackups_run_next = function () {
             return function () {
                 backupCreateRunning = false;
                 clearInterval(pInterVal);
-                appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + '<span class="mainwp-red">ERROR: Backup timed out - <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>');
+                appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + '<span class="mainwp-red">ERROR: Backup timed out - <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>'); // NOSONAR - noopener - open safe.
             }
         }(interVal, siteName), dataType: 'json'
     });
 };
 
-managebackups_backup_download_file = function (pSiteId, pSiteName, type, url, file, regexfile, size, subfolder, remote_destinations) {
-    var backtaskContentEl = mainwpPopup('#managebackups-task-status-box').getContentEl();
+let managebackups_backup_download_file = function (pSiteId, pSiteName, type, url, file, regexfile, size, subfolder, remote_destinations) {
+    let backtaskContentEl = mainwpPopup('#managebackups-task-status-box').getContentEl();
     appendToDiv(backtaskContentEl, '[' + pSiteName + '] Downloading the file. <div id="managebackups-task-status-progress" siteId="' + pSiteId + '" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
     jQuery('#managebackups-task-status-progress[siteId="' + pSiteId + '"]').progress({ value: 0, total: size });
-    var interVal = setInterval(function () {
-        var data = mainwp_secure_data({
+    let interVal = setInterval(function () {
+        let data = mainwp_secure_data({
             action: 'mainwp_backup_getfilesize',
             local: file
         });
@@ -754,7 +754,7 @@ managebackups_backup_download_file = function (pSiteId, pSiteName, type, url, fi
                     return;
 
                 if (backupDownloadRunning) {
-                    var progressBar = jQuery('#managebackups-task-status-progress[siteId="' + pSiteId + '"]');
+                    let progressBar = jQuery('#managebackups-task-status-progress[siteId="' + pSiteId + '"]');
                     if (progressBar.progress('get value') < progressBar.progress('get total')) {
                         progressBar.progress('set progress', response.result);
                     }
@@ -763,7 +763,7 @@ managebackups_backup_download_file = function (pSiteId, pSiteName, type, url, fi
         }(pSiteId), 'json');
     }, 500);
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_backup_download_file',
         site_id: pSiteId,
         type: type,
@@ -789,7 +789,7 @@ managebackups_backup_download_file = function (pSiteId, pSiteName, type, url, fi
             appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + __('Download from child site completed.'));
 
 
-            var newData = mainwp_secure_data({
+            let newData = mainwp_secure_data({
                 action: 'mainwp_backup_delete_file',
                 site_id: pSiteId,
                 file: pUrl
@@ -802,18 +802,18 @@ managebackups_backup_download_file = function (pSiteId, pSiteName, type, url, fi
 };
 
 managebackups_backup_upload_file = function (pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pType, pSize) {
-    var backtaskContentEl = mainwpPopup('#managebackups-task-status-box').getContentEl();
+    let backtaskContentEl = mainwpPopup('#managebackups-task-status-box').getContentEl();
     if (pRemoteDestinations.length > 0) {
-        var remote_destination = pRemoteDestinations[0];
+        let remote_destination = pRemoteDestinations[0];
         //upload..
-        var unique = Date.now();
+        let unique = Date.now();
         appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + __('Uploading to selected remote destination: %1 (%2)', remote_destination.title, remote_destination.type) + '<div id="managesite-upload-status-progress-' + unique + '" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
 
         jQuery('#managesite-upload-status-progress-' + unique).progress({ value: 0, total: pSize });
 
-        var fnc = function (pUnique) {
+        let fnc = function (pUnique) {
             return function (pFunction) {
-                var data2 = mainwp_secure_data({
+                let data2 = mainwp_secure_data({
                     action: 'mainwp_backup_upload_getprogress',
                     unique: pUnique
                 }, false);
@@ -832,7 +832,7 @@ managebackups_backup_upload_file = function (pSiteId, pSiteName, pFile, pRegexFi
                             }
 
                             if (backupUploadRunning[pUnique]) {
-                                var progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
+                                let progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
                                 if ((progressBar.length > 0) && (progressBar.progress('get value') < progressBar.progress('get total')) && (progressBar.progress('get value') < parseInt(response.result))) {
                                     progressBar.progress('set progress', response.result);
                                 }
@@ -863,7 +863,7 @@ managebackups_backup_upload_file = function (pSiteId, pSiteName, pFile, pRegexFi
 
         backupUploadRunning[unique] = true;
 
-        var data = mainwp_secure_data({
+        let data = mainwp_secure_data({
             action: 'mainwp_backup_upload_file',
             file: pFile,
             siteId: pSiteId,
@@ -886,10 +886,10 @@ managebackups_backup_upload_file = function (pSiteId, pSiteName, pFile, pRegexFi
                     } else {
                         backupUploadRunning[pUnique] = false;
 
-                        var progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
+                        let progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
                         progressBar.progress('set progress', pSize);
 
-                        var obj = response.result;
+                        let obj = response.result;
                         if (obj.error) {
                             manageBackupsError = true;
                             appendToDiv(backtaskContentEl, '<span class="mainwp-red">[' + pSiteName + '] ' + __('Upload to %1 (%2) failed:', obj.title, obj.type) + ' ' + obj.error + '</span>');
@@ -915,9 +915,9 @@ managebackups_backup_upload_file = function (pSiteId, pSiteName, pFile, pRegexFi
 };
 
 managebackups_backup_upload_file_retry_fail = function (pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError) {
-    var backtaskContentEl = mainwpPopup('#managebackups-task-status-box').getContentEl();
+    let backtaskContentEl = mainwpPopup('#managebackups-task-status-box').getContentEl();
     //we've got the pid file!!!!
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_backup_upload_checkstatus',
         unique: pUnique,
         remote_destination: pRemoteDestId
@@ -931,7 +931,7 @@ managebackups_backup_upload_file_retry_fail = function (pData, pSiteId, pSiteNam
             if (response.status == 'done') {
                 backupUploadRunning[pUnique] = false;
 
-                var progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
+                let progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
                 progressBar.progress('set progress', pSize);
 
                 appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + __('Upload to %1 (%2) successful', response.info.title, response.info.type));
@@ -974,10 +974,10 @@ managebackups_backup_upload_file_retry_fail = function (pData, pSiteId, pSiteNam
                                 } else {
                                     backupUploadRunning[pUnique] = false;
 
-                                    var progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
+                                    let progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
                                     progressBar.progress('set progress', pSize);
 
-                                    var obj = response.result;
+                                    let obj = response.result;
                                     if (obj.error) {
                                         manageBackupsError = true;
                                         appendToDiv(backtaskContentEl, '<span class="mainwp-red">[' + pSiteName + '] ' + __('Upload to %1 (%2) failed:', obj.title, obj.type) + ' ' + obj.error + '</span>');
@@ -1024,13 +1024,13 @@ managebackups_init = function () {
 mainwp_managebackups_update = function () {
     managebackups_init();
 
-    var errors = [];
+    let errors = [];
     if (jQuery('#mainwp_managebackups_add_name').val() == '') {
         errors.push(__('Please enter a valid name for your backup task'));
     }
-
+    let selected_groups = [];
+    let selected_sites = [];
     if (jQuery('#select_by').val() == 'site') {
-        var selected_sites = [];
         jQuery("input[name='selected_sites[]']:checked").each(function () {
             selected_sites.push(jQuery(this).val());
         });
@@ -1038,7 +1038,6 @@ mainwp_managebackups_update = function () {
             errors.push(__('Please select websites or groups to add a backup task.'));
         }
     } else {
-        var selected_groups = [];
         jQuery("input[name='selected_groups[]']:checked").each(function () {
             selected_groups.push(jQuery(this).val());
         });
@@ -1054,10 +1053,10 @@ mainwp_managebackups_update = function () {
 
         jQuery('#mainwp_managebackups_update').attr('disabled', 'true'); //disable button to add..
 
-        //var loadFilesBeforeZip = jQuery( '[name="mainwp_options_loadFilesBeforeZip"]:checked' ).val();
-        var name = jQuery('#mainwp_managebackups_add_name').val();
+        //let loadFilesBeforeZip = jQuery( '[name="mainwp_options_loadFilesBeforeZip"]:checked' ).val();
+        let name = jQuery('#mainwp_managebackups_add_name').val();
         name = name.replace(/"/g, '&quot;');
-        var data = mainwp_secure_data({
+        let data = mainwp_secure_data({
             action: 'mainwp_updatebackup',
             id: jQuery('#mainwp_managebackups_edit_id').val(),
             name: name,
@@ -1094,13 +1093,13 @@ mainwp_managebackups_update = function () {
 mainwp_managebackups_add = function () {
     managebackups_init();
 
-    var errors = [];
+    let errors = [];
     if (jQuery('#mainwp_managebackups_add_name').val() == '') {
         errors.push(__('Please enter a valid name for your backup task'));
     }
-
+    let selected_sites = [];
+    let selected_groups = [];
     if (jQuery('#select_by').val() == 'site') {
-        var selected_sites = [];
         jQuery("input[name='selected_sites[]']:checked").each(function () {
             selected_sites.push(jQuery(this).val());
         });
@@ -1108,7 +1107,6 @@ mainwp_managebackups_add = function () {
             errors.push(__('Please select websites or groups.'));
         }
     } else {
-        var selected_groups = [];
         jQuery("input[name='selected_groups[]']:checked").each(function () {
             selected_groups.push(jQuery(this).val());
         });
@@ -1127,10 +1125,10 @@ mainwp_managebackups_add = function () {
         jQuery('#mainwp_managebackups_add').attr('disabled', 'true'); //disable button to add..
 
         jQuery('#mainwp_managesites_add').attr('disabled', 'true'); //Disable add button
-        var loadFilesBeforeZip = jQuery('[name="mainwp_options_loadFilesBeforeZip"]:checked').val();
-        var name = jQuery('#mainwp_managebackups_add_name').val();
+        let loadFilesBeforeZip = jQuery('[name="mainwp_options_loadFilesBeforeZip"]:checked').val();
+        let name = jQuery('#mainwp_managebackups_add_name').val();
         name = name.replace(/"/g, '&quot;');
-        var data = mainwp_secure_data({
+        let data = mainwp_secure_data({
             action: 'mainwp_addbackup',
             name: name,
             schedule: jQuery('#mainwp-backup-task-schedule').val(),
@@ -1164,21 +1162,21 @@ mainwp_managebackups_add = function () {
     }
 };
 managebackups_remove = function (element) {
-    var id = jQuery(element).attr('task_id');
+    let id = jQuery(element).attr('task_id');
     managebackups_init();
 
-    var msg = __('Are you sure you want to delete this backup task?');
+    let msg = __('Are you sure you want to delete this backup task?');
     mainwp_confirm(msg, function () {
         jQuery('#task-status-' + id).html(__('Removing the task...'));
-        var data = mainwp_secure_data({
+        let data = mainwp_secure_data({
             action: 'mainwp_removebackup',
             id: id
         });
         jQuery.post(ajaxurl, data, function (pElement) {
             return function (response) {
                 managebackups_init();
-                var result = '';
-                var error = '';
+                let result = '';
+                let error = '';
                 if (response.error != undefined) {
                     error = response.error;
                 } else if (response.result == 'SUCCESS') {
@@ -1203,19 +1201,19 @@ managebackups_remove = function (element) {
     return false;
 };
 managebackups_resume = function (element) {
-    var id = jQuery(element).attr('task_id');
+    let id = jQuery(element).attr('task_id');
     managebackups_init();
 
     jQuery('#task-status-' + id).html(__('Resuming the task...'));
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_resumebackup',
         id: id
     });
     jQuery.post(ajaxurl, data, function (pElement, pId) {
         return function (response) {
             managebackups_init();
-            var result = '';
-            var error = '';
+            let result = '';
+            let error = '';
             if (response.error != undefined) {
                 error = response.error;
             } else if (response.result == 'SUCCESS') {
@@ -1242,19 +1240,19 @@ managebackups_resume = function (element) {
     return false;
 };
 managebackups_pause = function (element) {
-    var id = jQuery(element).attr('task_id');
+    let id = jQuery(element).attr('task_id');
     managebackups_init();
 
     jQuery('#task-status-' + id).html(__('Pausing the task...'));
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_pausebackup',
         id: id
     });
     jQuery.post(ajaxurl, data, function (pElement, pId) {
         return function (response) {
             managebackups_init();
-            var result = '';
-            var error = '';
+            let result = '';
+            let error = '';
             if (response.error != undefined) {
                 error = response.error;
             } else if (response.result == 'SUCCESS') {
@@ -1290,10 +1288,10 @@ jQuery(document).on('click', '#updatesoverview-backup-ignore', function () {
     }
 });
 
-var updatesoverviewShowBusyFunction;
-var updatesoverviewShowBusyTimeout;
+let updatesoverviewShowBusyFunction;
+let updatesoverviewShowBusyTimeout;
 mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNamesx) {
-    if (mainwpParams['disable_checkBackupBeforeUpgrade'] == true) {
+    if (mainwpParams['disable_checkBackupBeforeUpgrade']) {
         if (updatesoverviewContinueAfterBackup != undefined) {
             updatesoverviewContinueAfterBackup();
         }
@@ -1302,7 +1300,7 @@ mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNamesx) {
 
     updatesoverviewShowBusyFunction = function () {
 
-        var output = __('Checking if a backup is required for the selected updates...');
+        let output = __('Checking if a backup is required for the selected updates...');
         mainwpPopup('#updatesoverview-backup-box').getContentEl().html(output);
         jQuery('#updatesoverview-backup-all').hide();
         jQuery('#updatesoverview-backup-ignore').hide();
@@ -1317,7 +1315,7 @@ mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNamesx) {
     updatesoverviewShowBusyTimeout = setTimeout(updatesoverviewShowBusyFunction, 300);
 
     //Step 2: Check if backups are ok.
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_checkbackups',
         sites: sitesToUpdate
     });
@@ -1332,12 +1330,12 @@ mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNamesx) {
 
                 mainwpPopup('#updatesoverview-backup-box').close();
 
-                var siteFeedback = undefined;
+                let siteFeedback = undefined;
 
                 if (response['result'] && response['result']['sites'] != undefined) {
                     siteFeedback = [];
-                    for (var currSiteId in response['result']['sites']) {
-                        if (response['result']['sites'][currSiteId] == false) {
+                    for (let currSiteId in response['result']['sites']) {
+                        if (!response['result']['sites'][currSiteId]) {
                             siteFeedback.push(currSiteId);
                         }
                     }
@@ -1346,7 +1344,7 @@ mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNamesx) {
                 }
 
                 if (siteFeedback != undefined) {
-                    var backupPrimary = '';
+                    let backupPrimary = '';
                     if (response['result']['primary_backup'] && response['result']['primary_backup'] != undefined)
                         backupPrimary = response['result']['primary_backup'];
 
@@ -1354,20 +1352,20 @@ mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNamesx) {
                         jQuery('#updatesoverview-backup-all').show();
                         jQuery('#updatesoverview-backup-ignore').show();
                     } else {
-                        var backupLink = mainwp_get_primaryBackup_link(backupPrimary);
+                        let backupLink = mainwp_get_primaryBackup_link(backupPrimary);
                         jQuery('#updatesoverview-backup-now').attr('href', backupLink).show();
                         jQuery('#updatesoverview-backup-ignore').val(__('Proceed with Updates')).show();
                     }
 
-                    var output = '<span class="mainwp-red">' + __('A full backup has not been taken in the last days for the following sites:') + '</span><br /><br />';
+                    let output = '<span class="mainwp-red">' + __('A full backup has not been taken in the last days for the following sites:') + '</span><br /><br />';
 
                     if (backupPrimary == '') { // default backup feature
-                        for (var j = 0; j < siteFeedback.length; j++) {
-                            output += '<span class="updatesoverview-backup-site" siteid="' + siteFeedback[j] + '">' + decodeURIComponent(pSiteNames[siteFeedback[j]]) + '</span><br />';
+                        for (let id of siteFeedback) {
+                            output += '<span class="updatesoverview-backup-site" siteid="' + id + '">' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
                         }
                     } else {
-                        for (var j = 0; j < siteFeedback.length; j++) {
-                            output += '<span>' + decodeURIComponent(pSiteNames[siteFeedback[j]]) + '</span><br />';
+                        for (let id of siteFeedback) {
+                            output += '<span>' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
                         }
                     }
 
@@ -1423,20 +1421,20 @@ jQuery(document).on('click', '#updatesoverview-backup-all', function () {
         }
     });
 
-    var sitesToBackup = jQuery('.updatesoverview-backup-site');
+    let sitesToBackup = jQuery('.updatesoverview-backup-site');
     updatesoverviewBackupSites = [];
-    for (var i = 0; i < sitesToBackup.length; i++) {
-        var currentSite = [];
-        currentSite['id'] = jQuery(sitesToBackup[i]).attr('siteid');
-        currentSite['name'] = jQuery(sitesToBackup[i]).text();
+    for (let id of sitesToBackup) {
+        let currentSite = [];
+        currentSite['id'] = jQuery(id).attr('siteid');
+        currentSite['name'] = jQuery(id).text();
         updatesoverviewBackupSites.push(currentSite);
     }
     updatesoverview_backup_run();
 });
 
-var updatesoverviewBackupSites;
-var updatesoverviewBackupError;
-var updatesoverviewBackupDownloadRunning;
+let updatesoverviewBackupSites;
+let updatesoverviewBackupError;
+let updatesoverviewBackupDownloadRunning;
 
 updatesoverview_backup_run = function () {
     mainwpPopup('#updatesoverview-backup-box').getContentEl().html(dateToHMS(new Date()) + ' ' + __('Starting required backup(s)...'));
@@ -1446,7 +1444,7 @@ updatesoverview_backup_run = function () {
 };
 
 updatesoverview_backup_run_next = function () {
-    var backupContentEl = mainwpPopup('#updatesoverview-backup-box').getContentEl();
+    let backupContentEl = mainwpPopup('#updatesoverview-backup-box').getContentEl();
     if (updatesoverviewBackupSites.length == 0) {
         appendToDiv(backupContentEl, __('Required backup(s) completed') + (updatesoverviewBackupError ? ' <span class="mainwp-red">' + __('with errors') + '</span>' : '') + '.');
 
@@ -1459,12 +1457,12 @@ updatesoverview_backup_run_next = function () {
         return;
     }
 
-    var siteName = updatesoverviewBackupSites[0]['name'];
+    let siteName = updatesoverviewBackupSites[0]['name'];
     appendToDiv(backupContentEl, '[' + siteName + '] ' + __('Creating backup file...'));
 
-    var siteId = updatesoverviewBackupSites[0]['id'];
+    let siteId = updatesoverviewBackupSites[0]['id'];
     updatesoverviewBackupSites.shift();
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_backup_run_site',
         site_id: siteId
     });
@@ -1485,11 +1483,11 @@ updatesoverview_backup_run_next = function () {
     }(siteId, siteName), 'json');
 };
 updatesoverview_backupnow_download_file = function (pSiteId, pSiteName, type, url, file, regexfile, size, subfolder) {
-    var backupContentEl = mainwpPopup('#updatesoverview-backup-box').getContentEl();
+    let backupContentEl = mainwpPopup('#updatesoverview-backup-box').getContentEl();
     appendToDiv(backupContentEl, '[' + pSiteName + '] Downloading the file... <div id="updatesoverview-backupnow-status-progress" siteId="' + pSiteId + '" class="ui green progress"><div class="bar"><div class="progress"></div></div>');
     jQuery('#updatesoverview-backupnow-status-progress[siteId="' + pSiteId + '"]').progress({ value: 0, total: size });
-    var interVal = setInterval(function () {
-        var data = mainwp_secure_data({
+    let interVal = setInterval(function () {
+        let data = mainwp_secure_data({
             action: 'mainwp_backup_getfilesize',
             local: file
         });
@@ -1499,7 +1497,7 @@ updatesoverview_backupnow_download_file = function (pSiteId, pSiteName, type, ur
                     return;
 
                 if (updatesoverviewBackupDownloadRunning) {
-                    var progressBar = jQuery('#updatesoverview-backupnow-status-progress[siteId="' + pSiteId + '"]');
+                    let progressBar = jQuery('#updatesoverview-backupnow-status-progress[siteId="' + pSiteId + '"]');
                     if (progressBar.progress('get value') < progressBar.progress('get total')) {
                         progressBar.progress('set progress', response.result);
                     }
@@ -1508,7 +1506,7 @@ updatesoverview_backupnow_download_file = function (pSiteId, pSiteName, type, ur
         }(pSiteId), 'json');
     }, 500);
 
-    var data = mainwp_secure_data({
+    let data = mainwp_secure_data({
         action: 'mainwp_backup_download_file',
         site_id: pSiteId,
         type: type,
@@ -1534,7 +1532,7 @@ updatesoverview_backupnow_download_file = function (pSiteId, pSiteName, type, ur
             appendToDiv(backupContentEl, '[' + pSiteName + '] ' + __('Download from the child site completed.'));
             appendToDiv(backupContentEl, '[' + pSiteName + '] ' + __('Backup completed.'));
 
-            var newData = mainwp_secure_data({
+            let newData = mainwp_secure_data({
                 action: 'mainwp_backup_delete_file',
                 site_id: pSiteId,
                 file: pUrl

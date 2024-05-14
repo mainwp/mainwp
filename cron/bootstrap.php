@@ -52,5 +52,5 @@ if ( file_exists( __DIR__ . '/../../../../wp-load.php' ) ) {
 
 // phpcs:enable
 if ( ! $included ) {
-    exit( 'Unsupported WordPress setup' );
+	exit( 'Unsupported WordPress setup' );
 }

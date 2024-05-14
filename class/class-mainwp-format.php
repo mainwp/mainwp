@@ -14,191 +14,191 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Format { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-    /**
-     * Method get_class_name()
-     *
-     * Get Class Name.
-     *
-     * @return object
-     */
-    public static function get_class_name() {
-        return __CLASS__;
-    }
+	/**
+	 * Method get_class_name()
+	 *
+	 * Get Class Name.
+	 *
+	 * @return object
+	 */
+	public static function get_class_name() {
+		return __CLASS__;
+	}
 
-    /**
-     * Method get_update_plugins_items().
-     *
-     * Get plugins update.
-     *
-     * @return array $update_items Plugins update items.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Utility::array_merge()
-     */
-    public static function get_update_plugins_items() {
+	/**
+	 * Method get_update_plugins_items().
+	 *
+	 * Get plugins update.
+	 *
+	 * @return array $update_items Plugins update items.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::array_merge()
+	 */
+	public static function get_update_plugins_items() {
 
-        $pluginsNewUpdate = get_option( 'mainwp_updatescheck_mail_update_plugins_new' );
-        if ( ! is_array( $pluginsNewUpdate ) ) {
-            $pluginsNewUpdate = array();
-        }
-        $pluginsToUpdate = get_option( 'mainwp_updatescheck_mail_update_plugins' );
-        if ( ! is_array( $pluginsToUpdate ) ) {
-            $pluginsToUpdate = array();
-        }
-        $notTrustedPluginsNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_plugins_new' );
-        if ( ! is_array( $notTrustedPluginsNewUpdate ) ) {
-            $notTrustedPluginsNewUpdate = array();
-        }
-        $notTrustedPluginsToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_plugins' );
-        if ( ! is_array( $notTrustedPluginsToUpdate ) ) {
-            $notTrustedPluginsToUpdate = array();
-        }
+		$pluginsNewUpdate = get_option( 'mainwp_updatescheck_mail_update_plugins_new' );
+		if ( ! is_array( $pluginsNewUpdate ) ) {
+			$pluginsNewUpdate = array();
+		}
+		$pluginsToUpdate = get_option( 'mainwp_updatescheck_mail_update_plugins' );
+		if ( ! is_array( $pluginsToUpdate ) ) {
+			$pluginsToUpdate = array();
+		}
+		$notTrustedPluginsNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_plugins_new' );
+		if ( ! is_array( $notTrustedPluginsNewUpdate ) ) {
+			$notTrustedPluginsNewUpdate = array();
+		}
+		$notTrustedPluginsToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_plugins' );
+		if ( ! is_array( $notTrustedPluginsToUpdate ) ) {
+			$notTrustedPluginsToUpdate = array();
+		}
 
-        $update_items = array();
-        $update_items = MainWP_Utility::array_merge( $pluginsNewUpdate, $pluginsToUpdate );
-        $update_items = MainWP_Utility::array_merge( $update_items, $notTrustedPluginsNewUpdate );
-        $update_items = MainWP_Utility::array_merge( $update_items, $notTrustedPluginsToUpdate );
+		$update_items = array();
+		$update_items = MainWP_Utility::array_merge( $pluginsNewUpdate, $pluginsToUpdate );
+		$update_items = MainWP_Utility::array_merge( $update_items, $notTrustedPluginsNewUpdate );
+		$update_items = MainWP_Utility::array_merge( $update_items, $notTrustedPluginsToUpdate );
 
-        return $update_items;
-    }
+		return $update_items;
+	}
 
-    /**
-     * Method get_update_themes_items().
-     *
-     * Get themes update items to email.
-     *
-     * @return array $update_items Update themes.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Utility::array_merge()
-     */
-    public static function get_update_themes_items() {
+	/**
+	 * Method get_update_themes_items().
+	 *
+	 * Get themes update items to email.
+	 *
+	 * @return array $update_items Update themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::array_merge()
+	 */
+	public static function get_update_themes_items() {
 
-        $themesNewUpdate = get_option( 'mainwp_updatescheck_mail_update_themes_new' );
-        if ( ! is_array( $themesNewUpdate ) ) {
-            $themesNewUpdate = array();
-        }
-        $themesToUpdate = get_option( 'mainwp_updatescheck_mail_update_themes' );
-        if ( ! is_array( $themesToUpdate ) ) {
-            $themesToUpdate = array();
-        }
-        $notTrustedThemesNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_themes_new' );
-        if ( ! is_array( $notTrustedThemesNewUpdate ) ) {
-            $notTrustedThemesNewUpdate = array();
-        }
-        $notTrustedThemesToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_themes' );
-        if ( ! is_array( $notTrustedThemesToUpdate ) ) {
-            $notTrustedThemesToUpdate = array();
-        }
+		$themesNewUpdate = get_option( 'mainwp_updatescheck_mail_update_themes_new' );
+		if ( ! is_array( $themesNewUpdate ) ) {
+			$themesNewUpdate = array();
+		}
+		$themesToUpdate = get_option( 'mainwp_updatescheck_mail_update_themes' );
+		if ( ! is_array( $themesToUpdate ) ) {
+			$themesToUpdate = array();
+		}
+		$notTrustedThemesNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_themes_new' );
+		if ( ! is_array( $notTrustedThemesNewUpdate ) ) {
+			$notTrustedThemesNewUpdate = array();
+		}
+		$notTrustedThemesToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_themes' );
+		if ( ! is_array( $notTrustedThemesToUpdate ) ) {
+			$notTrustedThemesToUpdate = array();
+		}
 
-        $update_items = array();
+		$update_items = array();
 
-        $update_items = MainWP_Utility::array_merge( $themesNewUpdate, $themesToUpdate );
-        $update_items = MainWP_Utility::array_merge( $update_items, $notTrustedThemesNewUpdate );
-        $update_items = MainWP_Utility::array_merge( $update_items, $notTrustedThemesToUpdate );
+		$update_items = MainWP_Utility::array_merge( $themesNewUpdate, $themesToUpdate );
+		$update_items = MainWP_Utility::array_merge( $update_items, $notTrustedThemesNewUpdate );
+		$update_items = MainWP_Utility::array_merge( $update_items, $notTrustedThemesToUpdate );
 
-        return $update_items;
-    }
+		return $update_items;
+	}
 
-    /**
-     * Method get_update_wp_items().
-     *
-     * Get WP update to email.
-     *
-     * @return array $update_items WP update items.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Utility::array_merge()
-     */
-    public static function get_update_wp_items() {
+	/**
+	 * Method get_update_wp_items().
+	 *
+	 * Get WP update to email.
+	 *
+	 * @return array $update_items WP update items.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::array_merge()
+	 */
+	public static function get_update_wp_items() {
 
-        $coreNewUpdate = get_option( 'mainwp_updatescheck_mail_update_core_new' );
-        if ( ! is_array( $coreNewUpdate ) ) {
-            $coreNewUpdate = array();
-        }
-        $coreToUpdate = get_option( 'mainwp_updatescheck_mail_update_core' );
-        if ( ! is_array( $coreToUpdate ) ) {
-            $coreToUpdate = array();
-        }
-        $ignoredCoreNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_core_new' );
-        if ( ! is_array( $ignoredCoreNewUpdate ) ) {
-            $ignoredCoreNewUpdate = array();
-        }
-        $ignoredCoreToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_core' );
-        if ( ! is_array( $ignoredCoreToUpdate ) ) {
-            $ignoredCoreToUpdate = array();
-        }
+		$coreNewUpdate = get_option( 'mainwp_updatescheck_mail_update_core_new' );
+		if ( ! is_array( $coreNewUpdate ) ) {
+			$coreNewUpdate = array();
+		}
+		$coreToUpdate = get_option( 'mainwp_updatescheck_mail_update_core' );
+		if ( ! is_array( $coreToUpdate ) ) {
+			$coreToUpdate = array();
+		}
+		$ignoredCoreNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_core_new' );
+		if ( ! is_array( $ignoredCoreNewUpdate ) ) {
+			$ignoredCoreNewUpdate = array();
+		}
+		$ignoredCoreToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_core' );
+		if ( ! is_array( $ignoredCoreToUpdate ) ) {
+			$ignoredCoreToUpdate = array();
+		}
 
-        $update_items = array();
+		$update_items = array();
 
-        $update_items = MainWP_Utility::array_merge( $coreNewUpdate, $coreToUpdate );
-        $update_items = MainWP_Utility::array_merge( $update_items, $ignoredCoreNewUpdate );
-        $update_items = MainWP_Utility::array_merge( $update_items, $ignoredCoreToUpdate );
+		$update_items = MainWP_Utility::array_merge( $coreNewUpdate, $coreToUpdate );
+		$update_items = MainWP_Utility::array_merge( $update_items, $ignoredCoreNewUpdate );
+		$update_items = MainWP_Utility::array_merge( $update_items, $ignoredCoreToUpdate );
 
-        return $update_items;
-    }
+		return $update_items;
+	}
 
-    /**
-     * Method get_site_updates_items().
-     *
-     * Get Updates items of websites.
-     *
-     * @param string $what values: plugin, theme, wpcore.
-     * @param array  $sites_ids Websites ids filter (option).
-     *
-     * @return array $update_items WP update items.
-     */
-    public static function get_site_updates_items( $what, $sites_ids = false ) {
+	/**
+	 * Method get_site_updates_items().
+	 *
+	 * Get Updates items of websites.
+	 *
+	 * @param string $what values: plugin, theme, wpcore.
+	 * @param array  $sites_ids Websites ids filter (option).
+	 *
+	 * @return array $update_items WP update items.
+	 */
+	public static function get_site_updates_items( $what, $sites_ids = false ) {
 
-        $items = array();
-        if ( 'plugin' === $what ) {
-            $items = static::get_update_plugins_items();
-        } elseif ( 'theme' === $what ) {
-            $items = static::get_update_themes_items();
-        } elseif ( 'wpcore' === $what ) {
-            $items = static::get_update_wp_items();
-        }
+		$items = array();
+		if ( 'plugin' === $what ) {
+			$items = static::get_update_plugins_items();
+		} elseif ( 'theme' === $what ) {
+			$items = static::get_update_themes_items();
+		} elseif ( 'wpcore' === $what ) {
+			$items = static::get_update_wp_items();
+		}
 
-        $filters = array();
-        foreach ( $items as $item ) {
-            if ( isset( $item['id'] ) ) { // to valid and compatible data.
-                if ( ! empty( $sites_ids ) && ! in_array( $item['id'], $sites_ids ) ) {
-                    continue;
-                }
-                $filters[] = $item;
-            }
-        }
-        return $filters;
-    }
+		$filters = array();
+		foreach ( $items as $item ) {
+			if ( isset( $item['id'] ) ) { // to valid and compatible data.
+				if ( ! empty( $sites_ids ) && ! in_array( $item['id'], $sites_ids ) ) {
+					continue;
+				}
+				$filters[] = $item;
+			}
+		}
+		return $filters;
+	}
 
-    /**
-     * Method format_email()
-     *
-     * Format email.
-     *
-     * @param string $to_email Send to emails.
-     * @param string $body Email's body.
-     * @param string $title Email's title.
-     * @param bool   $plain_text text format.
-     *
-     * @return string Formatted content
-     */
+	/**
+	 * Method format_email()
+	 *
+	 * Format email.
+	 *
+	 * @param string $to_email Send to emails.
+	 * @param string $body Email's body.
+	 * @param string $title Email's title.
+	 * @param bool   $plain_text text format.
+	 *
+	 * @return string Formatted content
+	 */
     public static function format_email( $to_email = null, $body = '', $title = '', $plain_text = false ) { //phpcs:ignore -- NOSONAR - long function.
-        unset( $to_email );
-        $current_year = gmdate( 'Y' );
-        if ( $plain_text ) {
-                $mail_send['header'] = '';
-                $mail_send['body']   = 'Hi,' . "\r\n\r\n" .
-                                        ( ( ! empty( $title ) ) ? $title . "\r\n\r\n" : '' ) .
-                                        $body . "\r\n\r\n";
-                $mail_send['footer'] = 'MainWP: https://mainwp.com' . "\r\n" .
-                                        'Extensions: https://mainwp.com/mainwp-extensions/' . "\r\n" .
-                                        'Documentation: https://kb.mainwp.com/' . "\r\n" .
-                                        'Blog: https://mainwp.com/mainwp-blog/' . "\r\n" .
-                                        'Codex: https://mainwp.dev/' . "\r\n" .
-                                        'Support: https://mainwp.com/support/' . "\r\n\r\n" .
-                                        'Follow us on Twitter: https://twitter.com/mymainwp' . "\r\n" .
-                                        'Friend us on Facebook: https://www.facebook.com/mainwp' . "\r\n\r\n" .
-                                        "Copyright {$current_year} MainWP, All rights reserved.";
-        } else {
-            $mail_send['header'] = <<<EOT
+		unset( $to_email );
+		$current_year = gmdate( 'Y' );
+		if ( $plain_text ) {
+				$mail_send['header'] = '';
+				$mail_send['body']   = 'Hi,' . "\r\n\r\n" .
+										( ( ! empty( $title ) ) ? $title . "\r\n\r\n" : '' ) .
+										$body . "\r\n\r\n";
+				$mail_send['footer'] = 'MainWP: https://mainwp.com' . "\r\n" .
+										'Extensions: https://mainwp.com/mainwp-extensions/' . "\r\n" .
+										'Documentation: https://kb.mainwp.com/' . "\r\n" .
+										'Blog: https://mainwp.com/mainwp-blog/' . "\r\n" .
+										'Codex: https://mainwp.dev/' . "\r\n" .
+										'Support: https://mainwp.com/support/' . "\r\n\r\n" .
+										'Follow us on Twitter: https://twitter.com/mymainwp' . "\r\n" .
+										'Friend us on Facebook: https://www.facebook.com/mainwp' . "\r\n\r\n" .
+										"Copyright {$current_year} MainWP, All rights reserved.";
+		} else {
+			$mail_send['header'] = <<<EOT
             <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
     <head>
@@ -453,9 +453,9 @@ class MainWP_Format { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                                     <!-- // Begin: Standard Content \\ -->
 EOT;
 
-            $title_content = ! empty( $title ) ? '<b style="color: rgb(127, 177, 0); font-family: Helvetica, Sans; font-size: medium; line-height: normal;"> ' . $title . ' </b><br>' : '';
+			$title_content = ! empty( $title ) ? '<b style="color: rgb(127, 177, 0); font-family: Helvetica, Sans; font-size: medium; line-height: normal;"> ' . $title . ' </b><br>' : '';
 
-            $mail_send['body'] = <<<EOT
+			$mail_send['body'] = <<<EOT
                                                     <table style="vertical-align:top;border:0;padding:20px;border-spacing:0;width:100%;">
                                                         <tr>
                                                             <td style="vertical-align:top;border-collapse: collapse;">
@@ -468,7 +468,7 @@ EOT;
                                                     </table>
 EOT;
 
-            $mail_send['footer'] = <<<EOT
+			$mail_send['footer'] = <<<EOT
                                                     <!-- // End: Standard Content \\ -->
 
                                                 </td>
@@ -534,8 +534,8 @@ EOT;
     </body>
 </html>
 EOT;
-        }
-        $mail_send = apply_filters( 'mainwp_format_email', $mail_send );
-        return $mail_send['header'] . $mail_send['body'] . $mail_send['footer'];
-    }
+		}
+		$mail_send = apply_filters( 'mainwp_format_email', $mail_send );
+		return $mail_send['header'] . $mail_send['body'] . $mail_send['footer'];
+	}
 }

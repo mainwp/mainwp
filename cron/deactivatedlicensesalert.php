@@ -11,6 +11,6 @@
 require_once 'bootstrap.php'; // NOSONAR - WP compatible.
 
 if ( isset( $mainWP ) ) {
-    // fire off mainWP->mainwp_crondeactivatedlicensesalert_action.
-    $mainWP->mainwp_crondeactivatedlicensesalert_action();
+	// fire off mainWP->mainwp_crondeactivatedlicensesalert_action.
+	$mainWP->mainwp_crondeactivatedlicensesalert_action();
 }

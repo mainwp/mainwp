@@ -52,7 +52,7 @@ class Api_Backups_Helper {
      * @return string clean url.
      */
     public static function clean_url( $url ) {
-        $clean_url = str_replace( array( 'https://www.', 'http://www.', 'https://', 'http://', 'www.' ), array( '', '', '', '', '' ), $url );
+        $clean_url = str_replace( array( 'https://www.', 'http://www.', 'https://', 'http://', 'www.' ), array( '', '', '', '', '' ), $url ); // NOSONAR - ok.
         $clean_url = rtrim( $clean_url, '/' );
         return $clean_url;
     }

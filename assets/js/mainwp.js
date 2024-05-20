@@ -4310,7 +4310,7 @@ jQuery(function ($) {
     mainwp_settings_fields_value_on_change(this, val);
   });
 
-  jQuery(document).on('change', '.settings-field-value-change-handler', function () {
+  jQuery(document).on('change', '.settings-field-value-change-handler', function () { // NOSONAR - complex ok.
     let me = this;
     let objName = $(this).prop('tagName'), val;
     if ('DIV' === objName) { // ui dropdown select.

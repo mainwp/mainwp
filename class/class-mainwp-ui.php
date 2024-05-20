@@ -169,11 +169,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <?php
         }
         ?>
-        <script type="text/javascript">
-        jQuery(function(){
-            jQuery('#mainwp-select-sites-header .ui.menu .item').tab( {'onVisible': function() { mainwp_sites_selection_onvisible_callback( this ); } } );
-        } );
-        </script>
         <?php
     }
 
@@ -1603,13 +1598,15 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
             }
         }
-                $breakpoint = apply_filters( 'mainwp_flexible_widgets_breakpoint', 1367 );
+        $breakpoint = apply_filters( 'mainwp_flexible_widgets_breakpoint', 1367 );
         ?>
         <script type="text/javascript">
             let is_mobile = false;
             if( jQuery( window ).width() < <?php echo intval( $breakpoint ); ?> ) {
                 is_mobile = true;
             }
+            console.log('mobile: ' + is_mobile);
+
             if ( ! is_mobile ) {
                 let page_sortablewidgets = '<?php echo esc_js( $page ); ?>';
                 jQuery( document ).ready( function( $ ) {
@@ -1618,7 +1615,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         wgIds.push( jQuery( this ).attr('id') );
                     } );
 
-                    jQuery( '.gridster' ).gridster( {
+                    let $mainwp_gridster = jQuery( '.gridster' ).gridster( {
                         auto_init: true,
                         autogenerate_stylesheet: true,
                         shift_larger_widgets_down: false,
@@ -1662,6 +1659,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         } );
                     }
                 });
+
             }
         </script>
                 <?php
@@ -1681,13 +1679,13 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <?php
     }
 
-            /**
-             * Method render_modal_install_plugin_theme()
-             *
-             * Render modal window for installing plugins & themes.
-             *
-             * @param string $what Which window to render, plugin|theme.
-             */
+    /**
+     * Method render_modal_install_plugin_theme()
+     *
+     * Render modal window for installing plugins & themes.
+     *
+     * @param string $what Which window to render, plugin|theme.
+     */
     public static function render_modal_install_plugin_theme( $what = 'plugin' ) {
         ?>
         <div id="plugintheme-installation-progress-modal" class="ui modal">
@@ -1786,7 +1784,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         <div class="ui grid field" id="mainwp_delete_image_field">
                             <label class="six wide column middle aligned"></label>
                             <div class="six wide column">
-                                <img class="ui tiny image" src="" /><br/>
+                                <img class="ui tiny image" src="" alt=""/><br/>
                                 <div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, delete image.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                                     <input type="checkbox"id="mainwp_delete_image_chk" item-icon-id="" />
                                     <label for="mainwp_delete_image_chk"><?php esc_html_e( 'Delete Image', 'mainwp' ); ?></label>
@@ -1837,13 +1835,13 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <?php
     }
 
-            /**
-             * Method render_sorting_icons()
-             *
-             * Render sorting up & down icons.
-             *
-             * @return void Render Sort up & down incon html.
-             */
+    /**
+     * Method render_sorting_icons()
+     *
+     * Render sorting up & down icons.
+     *
+     * @return void Render Sort up & down incon html.
+     */
     public static function render_sorting_icons() {
         ?>
         <i class="sort icon"></i><i class="sort up icon"></i><i class="sort down icon"></i>
@@ -2044,7 +2042,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         if ( isset( $_GET['page'] ) && ! in_array( $_GET['page'], $sidebar_pages ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
             $hide_up_everything = (int) get_option( 'mainwp_hide_update_everything' );
             ?>
-        <div class="ui grid field">
+        <div class="ui grid field settings-field-indicator-wrapper">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_hide_update_everything', $hide_up_everything );
@@ -2052,7 +2050,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             ?>
             </label>
             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the "Update Everything" button will be hidden in the Updates Overview widget.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                <input type="checkbox" name="hide_update_everything" <?php echo 1 === $hide_up_everything ? 'checked="true"' : ''; ?> />
+                <input type="checkbox" class="settings-field-value-change-handler" name="hide_update_everything" <?php echo 1 === $hide_up_everything ? 'checked="true"' : ''; ?> />
             </div>
         </div>
             <?php
@@ -2064,7 +2062,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 $indi_val = '';
             }
             ?>
-        <div class="ui grid field">
+        <div class="ui grid field settings-field-indicator-wrapper" default-indi-valuevaluevaluevalue="all">
             <label class="six wide column">
             <?php
             if ( $setting_page ) {
@@ -2084,7 +2082,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         ?>
                         <li>
                             <div class="ui checkbox">
-                                <input type="checkbox" id="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" name="mainwp_show_widgets[]" <?php echo esc_html( $_selected ); ?> value="<?php echo esc_attr( $name ); ?>">
+                                <input type="checkbox" class="settings-field-value-change-handler" id="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" name="mainwp_show_widgets[]" <?php echo esc_html( $_selected ); ?> value="<?php echo esc_attr( $name ); ?>">
                                 <label for="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" ><?php echo esc_html( $title ); ?></label>
                             </div>
                             <input type="hidden" name="mainwp_widgets_name[]" value="<?php echo esc_attr( $name ); ?>">

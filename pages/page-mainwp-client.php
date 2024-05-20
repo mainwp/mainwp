@@ -1350,7 +1350,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         ?>
         <h3 class="ui dividing header">
             <?php if ( $client_id ) : ?>
-                <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-edit-client', 'edit-client' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-edit-client' ); ?>
                 <?php echo esc_html__( 'Edit Client', 'mainwp' ); ?>
                 <div class="sub header"><?php esc_html_e( 'Edit client information.', 'mainwp' ); ?></div>
             <?php else : ?>
@@ -1366,12 +1366,11 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 $val      = $edit_client && '' !== $db_field && property_exists( $edit_client, $db_field ) ? $edit_client->{$db_field} : '';
                 $tip      = isset( $field['tooltip'] ) ? $field['tooltip'] : '';
                 ?>
-                <div class="ui grid field settings-field-indicator-edit-client">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-client">
                     <label class="six wide column middle aligned" <?php echo ! empty( $tip ) ? 'data-tooltip="' . esc_attr( $tip ) . '" data-inverted="" data-position="top left"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>>
                     <?php
-                    if ( $edit_client ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $val );
-                    }
+                    $indi_val = $val && $edit_client ? 1 : 0;
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
                     echo esc_html( $field['title'] );
                     ?>
                     </label>
@@ -1381,12 +1380,12 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     if ( 'client.note' === $field_name ) {
                         ?>
                             <div class="editor">
-                                <textarea class="code" cols="80" rows="10" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"><?php echo esc_html( $val ); ?></textarea>
+                                <textarea class="code settings-field-value-change-handler" cols="80" rows="10" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"><?php echo esc_html( $val ); ?></textarea>
                             </div>
                             <?php
                     } elseif ( 'client.suspended' === $field_name ) {
                         ?>
-                            <select name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" id="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" class="ui dropdown">
+                            <select class="ui dropdown settings-field-value-change-handler" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" id="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]" >
                                 <option value="0" <?php echo '0' === $val ? 'selected' : ''; ?>><?php esc_html_e( 'Active', 'mainwp' ); ?></option>
                                 <option value="1" <?php echo '1' === $val ? 'selected' : ''; ?>><?php esc_html_e( 'Suspended', 'mainwp' ); ?></option>
                                 <option value="2" <?php echo '2' === $val ? 'selected' : ''; ?>><?php esc_html_e( 'Lead', 'mainwp' ); ?></option>
@@ -1405,7 +1404,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         <?php
                     } else {
                         ?>
-                            <input type="text" value="<?php echo esc_html( $val ); ?>" class="regular-text" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"/>
+                            <input type="text" class="regular-text settings-field-value-change-handler" value="<?php echo esc_html( $val ); ?>" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"/>
                         <?php
                     }
                     ?>
@@ -1423,16 +1422,15 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
                     if ( 'client.name' === $field_name ) {
                         ?>
-                        <div class="ui grid field settings-field-indicator-edit-client">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-client">
                             <label class="six wide column middle aligned">
                                 <?php
-                                if ( $edit_client ) {
-                                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $client_image );
-                                }
+                                $indi_val = $client_image && $edit_client ? 1 : 0;
+                                MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
                                 ?>
                                 <?php esc_html_e( 'Client photo', 'mainwp' ); ?>
                             </label>
-                            <input type="hidden" name="mainwp_add_edit_client_uploaded_icon_hidden" id="mainwp_add_edit_client_uploaded_icon_hidden" value="<?php echo esc_attr( $client_image ); ?>">
+                            <input type="hidden" name="mainwp_add_edit_client_uploaded_icon_hidden" class="settings-field-value-change-handler" id="mainwp_add_edit_client_uploaded_icon_hidden" value="<?php echo esc_attr( $client_image ); ?>">
                             <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Upload a client photo.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
                                 <div class="ui green button basic mainwp-add-edit-client-icon-customable" iconItemId="<?php echo intval( $client_id ); ?>" iconFileSlug="<?php echo esc_attr( $client_image ); ?>" icon-src="<?php echo esc_attr( $uploaded_icon_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
                                 <?php if ( ! empty( $client_image ) ) { ?>
@@ -1442,7 +1440,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <?php } ?>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-edit-client">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-client" default-indi-indi-value="wordpress">
                             <label class="six wide column middle aligned">
                             <?php
                             $default_icons  = MainWP_UI::get_default_icons();
@@ -1455,13 +1453,12 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 $selected_color = static::get_cust_client_icon( $icon_info, 'color' );
                             }
 
-                            if ( 'wordpress' !== $selected_icon ) { //phpcs:ignore -- WP icon.
-                                MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', 1 );
-                            }
+                            $indi_val = 'wordpress' !== $selected_icon ? 1 : 0; //phpcs:ignore -- WP icon.
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
                             esc_html_e( 'Select icon', 'mainwp' );
                             ?>
                             </label>
-                            <input type="hidden" name="client_fields[default_field][selected_icon]" id="client_fields[default_field][selected_icon]" value="<?php echo esc_attr( $selected_icon ); ?>">
+                            <input type="hidden" name="client_fields[default_field][selected_icon]" class="settings-field-value-change-handler" id="client_fields[default_field][selected_icon]" value="<?php echo esc_attr( $selected_icon ); ?>">
                             <div class="six wide column" data-tooltip="<?php esc_attr_e( 'Select an icon if not using original client icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
                                 <div class="ui left action input mainwp-dropdown-color-picker-field">
                                     <div class="ui five column selection search dropdown not-auto-init" id="mainwp_edit_clients_icon_select">
@@ -1488,12 +1485,11 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             if ( $client_id ) {
                 $client_contacts = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'client_id', $client_id );
                 ?>
-            <div class="ui grid field settings-field-indicator-edit-client">
+            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-client">
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( $edit_client ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $client_contacts );
-                    }
+                    $indi_val = $edit_client && $client_contacts ? 1 : 0;
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
                     echo esc_html_e( 'Client primary contact', 'mainwp' );
                     ?>
                     </label>
@@ -1533,12 +1529,11 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     }
                     $field_val = ( property_exists( $field, 'field_value' ) && '' !== $field->field_value ) ? esc_html( $field->field_value ) : '';
                     ?>
-                    <div class="ui grid field mainwp-field settings-field-indicator-edit-client"  field-id="<?php echo intval( $field->field_id ); ?>">
+                    <div class="ui grid field mainwp-field settings-field-indicator-wrapper settings-field-indicator-edit-client"  field-id="<?php echo intval( $field->field_id ); ?>">
                         <label class="six wide column middle aligned field-description">
                         <?php
-                        if ( $edit_client ) {
-                            MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $field_val );
-                        }
+                        $indi_val = $edit_client && $field_val ? 1 : 0;
+                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
                         echo esc_html( $field->field_desc );
                         ?>
                         </label>
@@ -1572,7 +1567,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 }
             }
             ?>
-        <div class="ui grid field settings-field-indicator-edit-client">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-client">
             <label class="six wide column middle aligned"><?php esc_html_e( 'Create a new contact for this client', 'mainwp' ); ?></label>
             <div class="ui six wide column">
                 <div class="ui left labeled input">
@@ -1654,6 +1649,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 } else {
                                     jQuery('#mainwp_add_edit_client_uploaded_icon_hidden').val('');
                                 }
+                                jQuery( '#mainwp_add_edit_client_uploaded_icon_hidden' ).trigger('change');
                             }
                             let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked'); // to delete.
                             if(deleteIcon){
@@ -1692,6 +1688,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 } else {
                                     jQuery(parent).find('.mainwp_add_edit_contact_uploaded_icon_hidden').val('');
                                 }
+                                jQuery(parent).find( '.mainwp_add_edit_contact_uploaded_icon_hidden' ).trigger('change');
                             }
                             let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked'); // to delete.
                             if(deleteIcon){
@@ -1812,18 +1809,17 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     $val        = $edit_contact && '' !== $db_field && property_exists( $edit_contact, $db_field ) ? $edit_contact->{$db_field} : '';
                     $contact_id = $edit_contact && property_exists( $edit_contact, 'contact_id' ) ? $edit_contact->contact_id : '';
                 ?>
-                <div class="ui grid field">
+                <div class="ui grid field settings-field-indicator-wrapper">
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( $edit_contact ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $val );
-                    }
+                    $indi_val = $edit_contact && $val ? 1 : 0;
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
                     echo esc_html( $field['title'] );
                     ?>
                     </label>
                     <div class="ui six wide column">
                         <div class="ui left labeled input">
-                            <input type="text" value="<?php echo esc_attr( $val ); ?>" class="regular-text" name="client_fields[<?php echo esc_attr( $input_name ); ?>][<?php echo esc_attr( $field_name ); ?>][]"/>
+                            <input type="text" value="<?php echo esc_attr( $val ); ?>" class="regular-text settings-field-value-change-handler" name="client_fields[<?php echo esc_attr( $input_name ); ?>][<?php echo esc_attr( $field_name ); ?>][]"/>
                         </div>
                     </div>
                     <?php if ( $edit_contact ) : ?>
@@ -1835,16 +1831,15 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <?php
                 if ( 'contact.role' === $field_name ) {
                     ?>
-                        <div class="ui grid field mainwp_edit_clients_contact_uploaded_icon_wrapper">
+                        <div class="ui grid field mainwp_edit_clients_contact_uploaded_icon_wrapper settings-field-indicator-wrapper">
                             <label class="six wide column middle aligned">
                                 <?php
-                                if ( $edit_contact ) {
-                                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $contact_image );
-                                }
+                                $indi_val = $edit_contact && $contact_image ? 1 : 0;
+                                MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
                                 ?>
                                 <?php esc_html_e( 'Contact photo', 'mainwp' ); ?>
                             </label>
-                            <input type="hidden" name="mainwp_add_edit_contact_uploaded_icon_hidden[<?php echo esc_html( $input_name ); ?>][]" class="mainwp_add_edit_contact_uploaded_icon_hidden" value="<?php echo esc_attr( $contact_image ); ?>">
+                            <input type="hidden" name="mainwp_add_edit_contact_uploaded_icon_hidden[<?php echo esc_html( $input_name ); ?>][]" class="settings-field-value-change-handler mainwp_add_edit_contact_uploaded_icon_hidden" value="<?php echo esc_attr( $contact_image ); ?>">
                             <div class="three wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Upload a contact photo.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
                                 <div class="ui green button basic mainwp-add-edit-contact-icon-customable" iconItemId="<?php echo intval( $contact_id ); ?>" iconFileSlug="<?php echo esc_attr( $contact_image ); ?>" icon-src="<?php echo esc_attr( $uploaded_icon_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
                                 <?php
@@ -1856,7 +1851,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                 <?php } ?>
                             </div>
                         </div>
-                        <div class="ui grid field mainwp_edit_clients_contact_icon_wrapper" input-name="<?php echo esc_attr( $input_name ); ?>" >
+                        <div class="ui grid field mainwp_edit_clients_contact_icon_wrapper settings-field-indicator-wrapper" input-name="<?php echo esc_attr( $input_name ); ?>" default-indi-indi-value="wordpress">
                                 <label class="six wide column middle aligned">
                                 <?php
                                 $selected_icon  = 'wordpress'; //phpcs:ignore -- WP icon.
@@ -1867,14 +1862,13 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                     $selected_icon  = static::get_cust_client_icon( $icon_info, 'selected' );
                                     $selected_color = static::get_cust_client_icon( $icon_info, 'color' );
                                 }
-                                if ( 'wordpress' !== $selected_icon ) { //phpcs:ignore -- WP icon.
-                                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', 1 );
-                                }
+                                $indi_val = 'wordpress' !== $selected_icon ? 1 : 0; //phpcs:ignore -- WP icon.
+                                MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
                                 esc_html_e( 'Select icon', 'mainwp' );
                                 ?>
                                 </label>
                                 <div class="six wide column" data-tooltip="<?php esc_attr_e( 'Select an icon if not using original contact icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                                    <input type="hidden" name="client_fields[<?php echo esc_html( $input_name ); ?>][selected_icon][]" id="client_fields[<?php echo esc_attr( $input_name ); ?>][selected_icon][]" value="<?php echo esc_attr( $selected_icon ); ?>">
+                                    <input type="hidden" class="settings-field-value-change-handler" name="client_fields[<?php echo esc_html( $input_name ); ?>][selected_icon][]" id="client_fields[<?php echo esc_attr( $input_name ); ?>][selected_icon][]" value="<?php echo esc_attr( $selected_icon ); ?>">
                                     <div class="ui left action input mainwp-dropdown-color-picker-field">
                                         <div class="ui five column selection search dropdown not-auto-init mainwp-edit-clients-select-contact-icon" style="min-width:21em">
                                             <div class="text">

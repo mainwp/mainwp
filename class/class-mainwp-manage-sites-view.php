@@ -813,10 +813,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                 <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'UpdateWebsite' . $website->id ) ); ?>" />
                 <h3 class="ui dividing header">
-                <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-edit-site-general', 'edit-site' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-edit-site-general' ); ?>
                     <?php esc_html_e( 'General Settings', 'mainwp' ); ?>
                 </h3>
-                <div class="ui grid field settings-field-indicator-edit-site-general">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general" default-indi-value="">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $website->url );
@@ -837,7 +837,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                     <div class="item" data-value="none-www"><del><?php esc_html_e( 'www', 'mainwp' ); ?></del></div>
                                 </div>
                             </div>
-                            <input type="text" id="mainwp_managesites_edit_siteurl" disabled="disabled" name="mainwp_managesites_edit_siteurl" value="<?php echo esc_html( $website_url ); ?>" />
+                            <input type="text" id="mainwp_managesites_edit_siteurl" class="settings-field-value-change-handler" disabled="disabled" name="mainwp_managesites_edit_siteurl" value="<?php echo esc_html( $website_url ); ?>" />
                         </div>
                     </div>
                     <div class="ui four wide middle aligned column">
@@ -847,7 +847,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <?php
                 $adminname = $website->adminname;
                 ?>
-                <div class="ui grid field settings-field-indicator-edit-site-general">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $adminname );
@@ -855,11 +855,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <?php esc_html_e( 'Administrator username', 'mainwp' ); ?></label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the website Administrator username.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <div class="ui left labeled input">
-                            <input type="text" id="mainwp_managesites_edit_siteadmin" name="mainwp_managesites_edit_siteadmin" value="<?php echo esc_attr( $adminname ); ?>" />
+                            <input type="text" id="mainwp_managesites_edit_siteadmin" class="settings-field-value-change-handler" name="mainwp_managesites_edit_siteadmin" value="<?php echo esc_attr( $adminname ); ?>" />
                         </div>
                     </div>
                 </div>
-                <div class="ui grid field settings-field-indicator-edit-site-general">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $website->name );
@@ -867,12 +867,12 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <?php esc_html_e( 'Site title', 'mainwp' ); ?></label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the website title.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <div class="ui left labeled input">
-                            <input type="text" id="mainwp_managesites_edit_sitename" name="mainwp_managesites_edit_sitename" value="<?php echo esc_attr( stripslashes( $website->name ) ); ?>" />
+                            <input type="text" class="settings-field-value-change-handler" id="mainwp_managesites_edit_sitename" name="mainwp_managesites_edit_sitename" value="<?php echo esc_attr( stripslashes( $website->name ) ); ?>" />
                         </div>
                     </div>
                 </div>
 
-                <div class="ui grid field settings-field-indicator-edit-site-general">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $website->uniqueId );
@@ -881,7 +881,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <?php esc_html_e( 'Unique security ID', 'mainwp' ); ?></label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If in use, enter the website Unique ID.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <div class="ui left labeled input">
-                            <input type="text" id="mainwp_managesites_edit_uniqueId" name="mainwp_managesites_edit_uniqueId" value="<?php echo esc_attr( $website->uniqueId ); ?>" />
+                            <input type="text" id="mainwp_managesites_edit_uniqueId" class="settings-field-value-change-handler" name="mainwp_managesites_edit_uniqueId" value="<?php echo esc_attr( $website->uniqueId ); ?>" />
                         </div>
                     </div>
                 </div>
@@ -912,16 +912,15 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $default_icons = MainWP_UI::get_default_icons();
 
                 ?>
-                <div class="ui grid field settings-field-indicator-cost-add-edit">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-add-edit">
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( ! empty( $uploaded_site_icon ) ) {
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', 1 );
-                    }
+                    $indi_val = ! empty( $uploaded_site_icon ) ? 1 : 0;
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
                     esc_html_e( 'Upload site icon', 'mainwp' );
                     ?>
                     </label>
-                    <input type="hidden" name="mainwp_managesites_edit_site_uploaded_icon_hidden" id="mainwp_managesites_edit_site_uploaded_icon_hidden" value="<?php echo esc_attr( $uploaded_site_icon ); ?>">
+                    <input type="hidden" name="mainwp_managesites_edit_site_uploaded_icon_hidden" class="settings-field-value-change-handler" id="mainwp_managesites_edit_site_uploaded_icon_hidden" value="<?php echo esc_attr( $uploaded_site_icon ); ?>">
                     <div class="three wide middle aligned column" data-tooltip="<?php esc_attr_e( 'Upload the product icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
                         <div class="ui green button basic mainwp-managesites-edit-site-icon-customable" iconItemId="<?php echo intval( $website->id ); ?>" iconFileSlug="<?php echo esc_attr( $uploaded_site_icon ); ?>" icon-src="<?php echo esc_attr( $uploaded_icon_src ); ?>"><?php esc_html_e( 'Upload Icon', 'mainwp' ); ?></div>
                         <?php if ( ! empty( $uploaded_site_icon ) ) { ?>
@@ -932,16 +931,15 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     </div>
                 </div>
 
-                <div class="ui grid field settings-field-indicator-edit-site-general">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general" default-indi-value="wordpress">
                     <label class="six wide column middle aligned">
                     <?php
-                    if ( 'wordpress' !== $selected_site_icon ) { //phpcs:ignore -- WP icon.
-                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', 1 );
-                    }
+                    $indi_val = 'wordpress' !== $selected_site_icon ? 1 : 0; //phpcs:ignore -- WP icon.
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
                     esc_html_e( 'Select icon', 'mainwp' );
                     ?>
                     </label>
-                    <input type="hidden" name="mainwp_managesites_edit_site_selected_icon_hidden" id="mainwp_managesites_edit_site_selected_icon_hidden" value="<?php echo esc_attr( $selected_site_icon ); ?>">
+                    <input type="hidden" name="mainwp_managesites_edit_site_selected_icon_hidden" class="settings-field-value-change-handler" id="mainwp_managesites_edit_site_selected_icon_hidden" value="<?php echo esc_attr( $selected_site_icon ); ?>">
                     <div class="six wide column" data-tooltip="<?php esc_attr_e( 'Select an icon if not using original site icon.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
                         <div class="ui left action input mainwp-dropdown-color-picker-field">
                             <div class="ui five column selection search dropdown not-auto-init" id="mainwp_manage_add_edit_site_icon_select">
@@ -971,7 +969,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
                 $init_groups = ltrim( $init_groups, ',' );
                 ?>
-                <div class="ui grid field settings-field-indicator-edit-site-general">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $init_groups );
@@ -979,7 +977,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     <?php esc_html_e( 'Tags', 'mainwp' ); ?></label>
                     <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Add the website to existing tags(s).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <div class="ui multiple selection dropdown" init-value="<?php echo esc_attr( $init_groups ); ?>">
-                            <input name="mainwp_managesites_edit_addgroups" value="" type="hidden">
+                            <input name="mainwp_managesites_edit_addgroups" value="" class="settings-field-value-change-handler" type="hidden">
                             <i class="dropdown icon"></i>
                             <div class="default text"><?php echo '' === $init_groups ? esc_html__( 'No Tags added yet.', 'mainwp' ) : ''; ?></div>
                             <div class="menu">
@@ -993,7 +991,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <?php
                 $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
                 ?>
-                <div class="ui grid field settings-field-indicator-edit-site-general">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_client_id', (int) $website->client_id );
@@ -1002,7 +1000,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     </label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select Client.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <div class="ui search selection dropdown">
-                            <input type="hidden" name="mainwp_managesites_edit_client_id" value="<?php echo intval( $website->client_id ); ?>">
+                            <input type="hidden" name="mainwp_managesites_edit_client_id" class="settings-field-value-change-handler" value="<?php echo intval( $website->client_id ); ?>">
                             <i class="dropdown icon"></i>
                             <div class="default text"><?php esc_html_e( 'Select Client', 'mainwp' ); ?></div>
                             <div class="menu">
@@ -1021,7 +1019,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <a href="javascript:void(0)" class="ui basic green button edit-site-new-client-button"><?php esc_html_e( 'Create New Client', 'mainwp' ); ?></a>
                     </div>
                 </div>
-                <div class="ui grid field settings-field-indicator-edit-site-general">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general" default-indi-value="2">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_backup_before_upgrade', (int) $website->backup_before_upgrade );
@@ -1029,14 +1027,14 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     ?>
                     </label>
                     <div class="ui six wide column">
-                        <select class="ui dropdown" id="mainwp_backup_before_upgrade" name="mainwp_backup_before_upgrade">
+                        <select class="ui dropdown settings-field-value-change-handler" id="mainwp_backup_before_upgrade" name="mainwp_backup_before_upgrade">
                             <option <?php echo 1 === (int) $website->backup_before_upgrade ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'Yes', 'mainwp' ); ?></option>
                             <option <?php echo 0 === (int) $website->backup_before_upgrade ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
                             <option <?php echo 2 === (int) $website->backup_before_upgrade ? 'selected' : ''; ?> value="2"><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
                         </select>
                     </div>
                 </div>
-                <div class="ui grid field settings-field-indicator-edit-site-general">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_suspended_site', (int) $website->suspended );
@@ -1044,10 +1042,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     ?>
                     </label>
                     <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want Suspend this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <input type="checkbox" name="mainwp_suspended_site" id="mainwp_suspended_site" <?php echo 1 === (int) $website->suspended ? $style_checked : ''; //phpcs:ignore -- ok. ?>><label for="mainwp_suspended_site"></label>
+                        <input type="checkbox" name="mainwp_suspended_site" class="settings-field-value-change-handler" id="mainwp_suspended_site" <?php echo 1 === (int) $website->suspended ? $style_checked : ''; //phpcs:ignore -- ok. ?>><label for="mainwp_suspended_site"></label>
                     </div>
                 </div>
-                <div class="ui grid field settings-field-indicator-edit-site-general">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_automatic_update', (int) $website->automatic_update );
@@ -1055,11 +1053,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     ?>
                     </label>
                     <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want MainWP to automatically update WP Core on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <input type="checkbox" name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" <?php echo 1 === (int) $website->automatic_update ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_automaticDailyUpdate"></label>
+                        <input type="checkbox" name="mainwp_automaticDailyUpdate" class="settings-field-value-change-handler" id="mainwp_automaticDailyUpdate" <?php echo 1 === (int) $website->automatic_update ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_automaticDailyUpdate"></label>
                     </div>
                 </div>
                 <?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) { ?>
-                    <div class="ui grid field settings-field-indicator-edit-site-general">
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
                         <label class="six wide column middle aligned">
                         <?php
                         MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_is_ignoreCoreUpdates', (int) $website->is_ignoreCoreUpdates );
@@ -1067,10 +1065,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         ?>
                         </label>
                         <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore WP Core updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                            <input type="checkbox" name="mainwp_is_ignoreCoreUpdates" id="mainwp_is_ignoreCoreUpdates" <?php echo 1 === (int) $website->is_ignoreCoreUpdates ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_is_ignoreCoreUpdates"></label>
+                            <input type="checkbox" name="mainwp_is_ignoreCoreUpdates" class="settings-field-value-change-handler" id="mainwp_is_ignoreCoreUpdates" <?php echo 1 === (int) $website->is_ignoreCoreUpdates ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_is_ignoreCoreUpdates"></label>
                         </div>
                     </div>
-                    <div class="ui grid field settings-field-indicator-edit-site-general">
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
                         <label class="six wide column middle aligned">
                         <?php
                         MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_is_ignorePluginUpdates', (int) $website->is_ignorePluginUpdates );
@@ -1078,10 +1076,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         ?>
                         </label>
                         <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore plugin updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                            <input type="checkbox" name="mainwp_is_ignorePluginUpdates" id="mainwp_is_ignorePluginUpdates" <?php echo 1 === (int) $website->is_ignorePluginUpdates ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_is_ignorePluginUpdates"></label>
+                            <input type="checkbox" name="mainwp_is_ignorePluginUpdates" class="settings-field-value-change-handler" id="mainwp_is_ignorePluginUpdates" <?php echo 1 === (int) $website->is_ignorePluginUpdates ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_is_ignorePluginUpdates"></label>
                         </div>
                     </div>
-                    <div class="ui grid field settings-field-indicator-edit-site-general">
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
                         <label class="six wide column middle aligned">
                         <?php
                         MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_is_ignoreThemeUpdates', (int) $website->is_ignoreThemeUpdates );
@@ -1089,7 +1087,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         ?>
                         </label>
                         <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore theme updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                            <input type="checkbox" name="mainwp_is_ignoreThemeUpdates" id="mainwp_is_ignoreThemeUpdates" <?php echo 1 === (int) $website->is_ignoreThemeUpdates ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_is_ignoreThemeUpdates"></label>
+                            <input type="checkbox" name="mainwp_is_ignoreThemeUpdates" class="settings-field-value-change-handler" id="mainwp_is_ignoreThemeUpdates" <?php echo 1 === (int) $website->is_ignoreThemeUpdates ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_is_ignoreThemeUpdates"></label>
                         </div>
                     </div>
                 <?php } ?>
@@ -1109,24 +1107,25 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 </div>
 
                 <h3 class="ui dividing header">
-                <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-edit-site-uptime', 'edit-site' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-edit-site-uptime' ); ?>
                 <?php esc_html_e( 'Child Site Uptime Monitoring (Optional)', 'mainwp' ); ?></h3>
-                <div class="ui grid field settings-field-indicator-edit-site-uptime">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-uptime" defaul-value="0">
                     <label class="six wide column middle aligned">
                     <?php
-                    MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_disableSitesChecking', (int) $website->disable_status_check );
+                    $indi_compatible_val = ! $website->disable_status_check ? 1 : 0;
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_disableSitesChecking', $indi_compatible_val );
                     esc_html_e( 'Enable basic uptime monitoring (optional)', 'mainwp' );
                     ?>
                     </label>
                     <div class="six wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring" data-tooltip="<?php esc_attr_e( 'Enable if you want to monitoring this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <input type="checkbox" name="mainwp_managesites_edit_disableChecking" id="mainwp_managesites_edit_disableChecking" <?php echo 0 === (int) $website->disable_status_check ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_managesites_edit_disableChecking"></label>
+                        <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_managesites_edit_disableChecking" id="mainwp_managesites_edit_disableChecking" <?php echo 0 === (int) $website->disable_status_check ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_managesites_edit_disableChecking"></label>
                     </div>
                 </div>
                 <?php
                 $check_interval = (int) $website->status_check_interval;
                 $hide_style     = 'style="display:none"';
                 ?>
-                <div class="ui grid field settings-field-indicator-edit-site-uptime" <?php echo 1 === (int) $website->disable_status_check ? $hide_style : ''; //phpcs:ignore -- ok. ?> hide-element="monitoring">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-uptime" <?php echo 1 === (int) $website->disable_status_check ? $hide_style : ''; //phpcs:ignore -- ok. ?> hide-element="monitoring">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_status_check_interval', (int) $check_interval );
@@ -1134,7 +1133,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     ?>
                     </label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Check interval (optional)', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <select name="mainwp_managesites_edit_checkInterval" id="mainwp_managesites_edit_checkInterval" class="ui dropdown">
+                        <select name="mainwp_managesites_edit_checkInterval" id="mainwp_managesites_edit_checkInterval" class="ui dropdown  settings-field-value-change-handler">
                             <option value="5" <?php echo 5 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Every 5 minutes', 'mainwp' ); ?></option>
                             <option value="10" <?php echo 10 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Every 10 minutes', 'mainwp' ); ?></option>
                             <option value="30" <?php echo 30 === $check_interval ? 'selected' : ''; ?>><?php esc_html_e( 'Every 30 minutes', 'mainwp' ); ?></option>
@@ -1147,7 +1146,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         </select>
                     </div>
                 </div>
-                <div class="ui grid field settings-field-indicator-edit-site-uptime" <?php echo 1 === (int) $website->disable_status_check ? $hide_style : ''; //phpcs:ignore -- ok.?> hide-element="monitoring">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-uptime" <?php echo 1 === (int) $website->disable_status_check ? $hide_style : ''; //phpcs:ignore -- ok.?> hide-element="monitoring">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_monitoring_notification_emails', $website->monitoring_notification_emails );
@@ -1156,14 +1155,14 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     </label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Additional notification emails (comma-separated).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <div class="ui left labeled input">
-                            <input type="text" id="mainwp_managesites_edit_monitoringNotificationEmails" name="mainwp_managesites_edit_monitoringNotificationEmails" value="<?php echo ! empty( $website->monitoring_notification_emails ) ? esc_html( $website->monitoring_notification_emails ) : ''; ?>"/>
+                            <input type="text" class="settings-field-value-change-handler" id="mainwp_managesites_edit_monitoringNotificationEmails" name="mainwp_managesites_edit_monitoringNotificationEmails" value="<?php echo ! empty( $website->monitoring_notification_emails ) ? esc_html( $website->monitoring_notification_emails ) : ''; ?>"/>
                         </div>
                     </div>
                 </div>
                 <h3 class="ui dividing header">
-                <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-edit-site-health', 'edit-site' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-edit-site-health' ); ?>
                 <?php esc_html_e( 'Sites Health Monitoring (Optional)', 'mainwp' ); ?></h3>
-                <div class="ui grid field settings-field-indicator-edit-site-health">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-health" default-indi-value="1">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_disable_health_check', (int) $website->disable_health_check );
@@ -1171,13 +1170,13 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     ?>
                     </label>
                     <div class="six wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="health-monitoring" data-tooltip="<?php esc_attr_e( 'Enable if you want to monitoring this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <input type="checkbox" name="mainwp_managesites_edit_disableSiteHealthMonitoring" id="mainwp_managesites_edit_disableSiteHealthMonitoring" <?php echo 0 === (int) $website->disable_health_check ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_managesites_edit_disableSiteHealthMonitoring"></label>
+                        <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_managesites_edit_disableSiteHealthMonitoring" id="mainwp_managesites_edit_disableSiteHealthMonitoring" <?php echo 0 === (int) $website->disable_health_check ? $style_checked : ''; //phpcs:ignore -- ok.  ?>><label for="mainwp_managesites_edit_disableSiteHealthMonitoring"></label>
                     </div>
                 </div>
                 <?php
                 $healthThreshold = $website->health_threshold;
                 ?>
-                <div class="ui grid field settings-field-indicator-edit-site-health" <?php echo 1 === (int) $website->disable_health_check ? $hide_style : ''; //phpcs:ignore -- ok.?> hide-element="health-monitoring">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-health" default-indi-value="80" <?php echo 1 === (int) $website->disable_health_check ? $hide_style : ''; //phpcs:ignore -- ok.?> hide-element="health-monitoring">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_sitehealthThreshold', (int) $healthThreshold );
@@ -1185,7 +1184,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     ?>
                     </label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <select name="mainwp_managesites_edit_healthThreshold" id="mainwp_managesites_edit_healthThreshold" class="ui dropdown">
+                        <select name="mainwp_managesites_edit_healthThreshold" id="mainwp_managesites_edit_healthThreshold" class="ui dropdown settings-field-value-change-handler">
                             <option value="80" <?php echo 80 === $healthThreshold ? 'selected' : ''; ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
                             <option value="100" <?php echo 100 === $healthThreshold ? 'selected' : ''; ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
                             <option value="0" <?php echo 0 === $healthThreshold ? 'selected' : ''; ?>><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
@@ -1193,24 +1192,24 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     </div>
                 </div>
                 <h3 class="ui dividing header">
-                    <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-edit-site-advanced', 'edit-site' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                    <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-edit-site-advanced' ); ?>
                     <?php esc_html_e( 'Advanced Settings (Optional)', 'mainwp' ); ?></h3>
-                <div class="ui grid field">
-                    <label class="six wide column middle aligned">
-                    <?php
-                    MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_verify_certificate', (int) $website->verify_certificate );
-                    esc_html_e( 'Verify certificate (optional)', 'mainwp' );
-                    ?>
-                    </label>
-                    <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Do you want to verify SSL certificate.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <select class="ui dropdown" id="mainwp_managesites_edit_verifycertificate" name="mainwp_managesites_edit_verifycertificate">
-                        <option <?php echo 1 === (int) $website->verify_certificate ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'Yes', 'mainwp' ); ?></option>
-                        <option <?php echo 0 === (int) $website->verify_certificate ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
-                        <option <?php echo 2 === (int) $website->verify_certificate ? 'selected' : ''; ?> value="2"><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
-                        </select>
-                    </div>
+                    <div class="ui grid field settings-field-indicator-wrapper" default-indi-value="2">
+                        <label class="six wide column middle aligned">
+                        <?php
+                        MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_verify_certificate', (int) $website->verify_certificate );
+                        esc_html_e( 'Verify certificate (optional)', 'mainwp' );
+                        ?>
+                        </label>
+                        <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Do you want to verify SSL certificate.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <select class="ui dropdown settings-field-value-change-handler" id="mainwp_managesites_edit_verifycertificate" name="mainwp_managesites_edit_verifycertificate">
+                                <option <?php echo 1 === (int) $website->verify_certificate ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'Yes', 'mainwp' ); ?></option>
+                                <option <?php echo 0 === (int) $website->verify_certificate ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
+                                <option <?php echo 2 === (int) $website->verify_certificate ? 'selected' : ''; ?> value="2"><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
+                            </select>
+                        </div>
                 </div>
-                <div class="ui grid field settings-field-indicator-edit-site-advanced">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-advanced">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_ssl_version', (int) $website->ssl_version );
@@ -1218,7 +1217,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     ?>
                     </label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select SSL Version. If you are not sure, select "Auto Detect".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <select class="ui dropdown" id="mainwp_managesites_edit_ssl_version" name="mainwp_managesites_edit_ssl_version">
+                        <select class="ui dropdown settings-field-value-change-handler" id="mainwp_managesites_edit_ssl_version" name="mainwp_managesites_edit_ssl_version">
                             <option <?php echo 0 === (int) $website->ssl_version ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'Auto detect', 'mainwp' ); ?></option>
                             <option <?php echo 6 === (int) $website->ssl_version ? 'selected' : ''; ?> value="6"><?php esc_html_e( 'TLS v1.2', 'mainwp' ); ?></option>
                             <option <?php echo 1 === (int) $website->ssl_version ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'TLS v1.x', 'mainwp' ); ?></option>
@@ -1236,7 +1235,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $verify_conn_method = (int) $website->verify_method;
                 }
                 ?>
-                <div class="ui grid field settings-field-indicator-edit-site-advanced">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-advanced" default-indi-value="1">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_verify_method', (int) $verify_conn_method );
@@ -1244,7 +1243,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     ?>
                     </label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select Verify connection method. If you are not sure, select "Default".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <select class="ui dropdown"id="mainwp_managesites_edit_verify_connection_method" name="mainwp_managesites_edit_verify_connection_method">
+                        <select class="ui dropdown settings-field-value-change-handler"id="mainwp_managesites_edit_verify_connection_method" name="mainwp_managesites_edit_verify_connection_method">
                             <option <?php echo 1 === (int) $verify_conn_method ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'OpenSSL (default)', 'mainwp' ); ?></option>
                             <option <?php echo 2 === (int) $verify_conn_method ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'PHPSECLIB (fallback)', 'mainwp' ); ?></option>
                             <option <?php echo 3 === (int) $verify_conn_method ? 'selected' : ''; ?> value="3"><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
@@ -1260,7 +1259,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $site_sign_algo = (int) $website->signature_algo;
                 }
                 ?>
-                <div class="ui grid field settings-field-indicator-edit-site-advanced mainwp-hide-elemenent-sign-algo" <?php echo ( 2 === $verify_conn_method ) ? 'style="display:none;"' : ''; ?> >
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-advanced mainwp-hide-elemenent-sign-algo" default-indi-value="9999" <?php echo ( 2 === $verify_conn_method ) ? 'style="display:none;"' : ''; ?> >
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_signature_algo', (int) $site_sign_algo );
@@ -1268,7 +1267,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     ?>
                     </label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select OpenSSL signature algorithm. If you are not sure, select "Default".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <select class="ui dropdown" id="mainwp_managesites_edit_openssl_alg" name="mainwp_managesites_edit_openssl_alg">
+                        <select class="ui dropdown settings-field-value-change-handler" id="mainwp_managesites_edit_openssl_alg" name="mainwp_managesites_edit_openssl_alg">
                             <?php
                             foreach ( $sign_algs as $val => $text ) {
                                 ?>
@@ -1282,7 +1281,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     </div>
                 </div>
 
-                <div class="ui grid field settings-field-indicator-edit-site-advanced">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-advanced" default-indi-value="2">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_force_use_ipv4', (int) $website->force_use_ipv4 );
@@ -1290,7 +1289,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     ?>
                     </label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Do you want to force IPv4 for this child site?', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <select class="ui dropdown" id="mainwp_managesites_edit_forceuseipv4" name="mainwp_managesites_edit_forceuseipv4">
+                        <select class="ui dropdown settings-field-value-change-handler" id="mainwp_managesites_edit_forceuseipv4" name="mainwp_managesites_edit_forceuseipv4">
                             <option <?php echo ( 1 === (int) $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'Yes', 'mainwp' ); ?></option>
                             <option <?php echo ( 0 === (int) $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
                             <option <?php echo ( 2 === (int) $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="2"><?php echo $text_use_global; //phpcs:ignore --ok. ?></option>
@@ -1299,7 +1298,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 </div>
                 <input style="display:none" type="text" name="fakeusernameremembered"/>
                 <input style="display:none" type="password" name="fakepasswordremembered"/>
-                <div class="ui grid field settings-field-indicator-edit-site-advanced">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-advanced">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_http_user', $website->http_user );
@@ -1308,11 +1307,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     </label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP username here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <div class="ui left labeled input">
-                            <input type="text" id="mainwp_managesites_edit_http_user" name="mainwp_managesites_edit_http_user" value="<?php echo empty( $website->http_user ) ? '' : esc_attr( $website->http_user ); ?>" autocomplete="off" />
+                            <input type="text" class="settings-field-value-change-handler" id="mainwp_managesites_edit_http_user" name="mainwp_managesites_edit_http_user" value="<?php echo empty( $website->http_user ) ? '' : esc_attr( $website->http_user ); ?>" autocomplete="off" />
                         </div>
                     </div>
                 </div>
-                <div class="ui grid field settings-field-indicator-edit-site-advanced">
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-advanced">
                     <label class="six wide column middle aligned">
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_site_http_pass', $website->http_pass );
@@ -1321,7 +1320,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     </label>
                     <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'If the child site is HTTP Basic Auth protected, enter the HTTP password here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <div class="ui left labeled input">
-                            <input type="password" id="mainwp_managesites_edit_http_pass" name="mainwp_managesites_edit_http_pass" value="<?php echo empty( $website->http_pass ) ? '' : esc_attr( $website->http_pass ); ?>" autocomplete="new-password" />
+                            <input type="password" id="mainwp_managesites_edit_http_pass" class="settings-field-value-change-handler" name="mainwp_managesites_edit_http_pass" value="<?php echo empty( $website->http_pass ) ? '' : esc_attr( $website->http_pass ); ?>" autocomplete="new-password" />
                         </div>
                     </div>
                 </div>
@@ -1370,6 +1369,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     jQuery( '#mainwp_manage_add_edit_site_icon_select' ).dropdown( {
                         onChange: function( val ) {
                             jQuery( '#mainwp_managesites_edit_site_selected_icon_hidden' ).val(val);
+                            jQuery( '#mainwp_managesites_edit_site_selected_icon_hidden' ).trigger('change');
                         }
                     } );
 
@@ -1391,7 +1391,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                     let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked');
                                     let iconItemId = iconObj.attr('iconItemId');
                                     let iconFileSlug = iconObj.attr('iconFileSlug'); // to support delete file when iconItemId = 0.
-
                                     // upload/delete icon action.
                                     mainwp_upload_custom_types_icon(iconObj, 'mainwp_managesites_add_edit_site_upload_site_icon', iconItemId, iconFileSlug, deleteIcon, function(response){
                                         if (jQuery('#mainwp_managesites_edit_site_uploaded_icon_hidden').length > 0) {
@@ -1400,6 +1399,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                             } else {
                                                 jQuery('#mainwp_managesites_edit_site_uploaded_icon_hidden').val('');
                                             }
+                                            jQuery('#mainwp_managesites_edit_site_uploaded_icon_hidden').trigger('change');
                                         }
                                         let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked'); // to delete.
                                         if(deleteIcon){
@@ -1411,8 +1411,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                 iconObj.attr('icon-src', icon_src);
                                                 iconObj.attr('iconFileSlug', response.iconfile); // to support delete file when iconItemId = 0.
                                                 jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', icon_src);
-                                                jQuery('#mainw_managesites_add_edit_site_upload_custom_icon').html(icon_img);
-                                                jQuery('#mainw_managesites_add_edit_site_upload_custom_icon').show();
+                                                jQuery('#mainw_managesites_add_edit_site_upload_custom_icon').html(icon_img).show();
                                             }
                                         }
                                         setTimeout(function () {
@@ -1487,7 +1486,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <h3 class="ui header"><?php echo esc_html( $title ); ?></h3>
             <div class="sub header"><?php echo esc_html( $email_description ); ?></h3></div>
             <div class="ui divider"></div>
-            <div class="ui grid field">
+            <?php
+            $def_val = MainWP_Settings_Indicator::get_defaults_email_settings_value( $type, 'disable', false );
+            ?>
+            <div class="ui grid field settings-field-indicator-wrapper" default-indi-value="<?php echo esc_attr( $def_val ); ?>">
                 <label class="six wide column middle aligned">
                 <?php
                 MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'disable', (int) $options['disable'], false );
@@ -1495,10 +1497,13 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ?>
                 </label>
                 <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable this email notification.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                    <input type="checkbox" name="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][disable]" id="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][disable]" <?php echo ( 0 === $options['disable'] ) ? $style_checked : ''; //phpcs:ignore -- ok.  ?>/>
+                    <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1" name="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][disable]" id="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][disable]" <?php echo ( 0 === $options['disable'] ) ? $style_checked : ''; //phpcs:ignore -- ok.  ?>/>
                 </div>
             </div>
-            <div class="ui grid field" >
+            <?php
+            $def_val = MainWP_Settings_Indicator::get_defaults_email_settings_value( $type, 'recipients', false );
+            ?>
+            <div class="ui grid field settings-field-indicator-wrapper" default-indi-value="<?php echo esc_attr( $def_val ); ?>">
                 <label class="six wide column middle aligned">
                 <?php
                 MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'recipients', $options['recipients'], false );
@@ -1506,10 +1511,13 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ?>
                 </label>
                 <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'You can add multiple emails by separating them with comma.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                    <input type="text" name="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][recipients]" id="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][recipients]" value="<?php echo esc_html( $options['recipients'] ); ?>"/>
+                    <input type="text" class="settings-field-value-change-handler" name="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][recipients]" id="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][recipients]" value="<?php echo esc_html( $options['recipients'] ); ?>"/>
                 </div>
             </div>
-            <div class="ui grid field" >
+            <?php
+            $def_val = MainWP_Settings_Indicator::get_defaults_email_settings_value( $type, 'subject', false );
+            ?>
+            <div class="ui grid field settings-field-indicator-wrapper" default-indi-value="<?php echo esc_attr( $def_val ); ?>">
                 <label class="six wide column middle aligned">
                 <?php
                 MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'subject', $options['subject'], false );
@@ -1517,10 +1525,13 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ?>
                 </label>
                 <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the email subject.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                    <input type="text" name="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][subject]" id="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][subject]" value="<?php echo esc_html( $options['subject'] ); ?>"/>
+                    <input type="text" class="settings-field-value-change-handler" name="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][subject]" id="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][subject]" value="<?php echo esc_html( $options['subject'] ); ?>"/>
                 </div>
             </div>
-            <div class="ui grid field" >
+            <?php
+            $def_val = MainWP_Settings_Indicator::get_defaults_email_settings_value( $type, 'heading', false );
+            ?>
+            <div class="ui grid field settings-field-indicator-wrapper" default-indi-value="<?php echo esc_attr( $def_val ); ?>" >
                 <label class="six wide column middle aligned">
                 <?php
                 MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'heading', $options['heading'], false );
@@ -1528,10 +1539,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 ?>
                 </label>
                 <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the email heading.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                <input type="text" name="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][heading]" id="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][heading]" value="<?php echo esc_html( $options['heading'] ); ?>"/>
+                <input type="text" class="settings-field-value-change-handler"  name="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][heading]" id="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][heading]" value="<?php echo esc_html( $options['heading'] ); ?>"/>
                 </div>
             </div>
-            <div class="ui grid field" >
+            <div class="ui grid field settings-field-indicator-wrapper" >
                 <label class="six wide column middle aligned">
                 <?php
                 $templ     = MainWP_Notification_Template::get_template_name_by_notification_type( $type );
@@ -1544,6 +1555,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <?php
                 echo $overrided ? esc_html__( 'This template has been overridden and can be found in:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . esc_html( $templ ) . '</code>' : esc_html__( 'To override and edit this email template copy:', 'mainwp' ) . ' <code>mainwp/templates/' . esc_html( $templ ) . '</code> ' . esc_html__( 'to the folder:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . esc_html( $templ ) . '</code>';
                 ?>
+                <input type="hidden" class="settings-field-value-change-handler" value="<?php echo intval( $overrided ); ?>">
                 </div>
             </div>
             <div class="ui grid field" >
@@ -1561,7 +1573,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <?php
                     } else {
                         ?>
-                <a href="javascript:void(0)" class="ui button" onclick="mainwp_view_template('<?php echo esc_js( $type ); ?>'); return false;"><?php esc_html_e( 'View Template', 'mainwp' ); ?></a>
+                    <a href="javascript:void(0)" class="ui button" onclick="mainwp_view_template('<?php echo esc_js( $type ); ?>'); return false;"><?php esc_html_e( 'View Template', 'mainwp' ); ?></a>
                     <?php } ?>
                 </div>
             </div>

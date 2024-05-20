@@ -132,12 +132,12 @@ class Cost_Tracker_Settings {
             <?php
         }
         ?>
-        <div class="ui grid field settings-field-indicator-cost-settings">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-settings" default-indi-valuevalue="USD">
             <label class="six wide column middle aligned">
             <?php MainWP_Settings_Indicator::render_not_default_indicator( 'cost_tracker_currency_selected', $selected_currency ); ?>
             <?php esc_html_e( 'Currency', 'mainwp' ); ?></label>
             <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select preferred currency.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                <select id="mainwp_module_cost_tracker_settings_currency" name="mainwp_module_cost_tracker_settings_currency" class="ui search selection dropdown">
+                <select id="mainwp_module_cost_tracker_settings_currency settings-field-value-change-handler" name="mainwp_module_cost_tracker_settings_currency" class="ui search selection dropdown">
                     <?php foreach ( $currencies as $code => $name ) : ?>
                         <?php
                         $_select = '';
@@ -158,8 +158,11 @@ class Cost_Tracker_Settings {
             'left_space'  => esc_html__( 'Left Space', 'mainwp' ),
             'right_space' => esc_html__( 'Right Space', 'mainwp' ),
         );
+
+        $def_val = is_array( $default ) && isset( $default['currency_position'] ) ? $default['currency_position'] : '';
+
         ?>
-        <div class="ui grid field settings-field-indicator-cost-settings">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-settings" default-indi-valuevalue="<?php echo esc_attr( $def_val ); ?>">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'cost_tracker_currency_position', $currency_position );
@@ -168,7 +171,7 @@ class Cost_Tracker_Settings {
             </label>
             <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Choose the position of the currency symbol: before or after the amount.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
                 <div class="ui selection dropdown">
-                    <input type="hidden" name="mainwp_module_cost_tracker_currency_format[currency_position]" value="<?php echo esc_attr( $currency_position ); ?>">
+                    <input type="hidden" class="settings-field-value-change-handler" name="mainwp_module_cost_tracker_currency_format[currency_position]" value="<?php echo esc_attr( $currency_position ); ?>">
                     <i class="dropdown icon"></i>
                     <div class="default text"><?php echo esc_html__( 'Left', 'mainwp' ); ?></div>
                     <div class="menu">
@@ -184,7 +187,10 @@ class Cost_Tracker_Settings {
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-cost-settings">
+        <?php
+        $def_val = is_array( $default ) && isset( $default['thousand_separator'] ) ? $default['thousand_separator'] : '';
+        ?>
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-settings" default-indi-valuevalue="<?php echo esc_attr( $def_val ); ?>">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'cost_tracker_thousand_separator', $thousand_separator );
@@ -192,10 +198,13 @@ class Cost_Tracker_Settings {
             ?>
             </label>
             <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Select a separator for thousands to enhance number readability.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-                <input type="text" name="mainwp_module_cost_tracker_currency_format[thousand_separator]" value="<?php echo esc_html( $thousand_separator ); ?>" class="regular-text"/>
+                <input type="text" class="regular-text settings-field-value-change-handler" name="mainwp_module_cost_tracker_currency_format[thousand_separator]" value="<?php echo esc_html( $thousand_separator ); ?>" />
             </div>
         </div>
-        <div class="ui grid field settings-field-indicator-cost-settings">
+        <?php
+        $def_val = is_array( $default ) && isset( $default['decimal_separator'] ) ? $default['decimal_separator'] : '';
+        ?>
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-settings"  default-indi-valuevalue="<?php echo esc_attr( $def_val ); ?>">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'cost_tracker_decimal_separator', $decimal_separator );
@@ -206,7 +215,10 @@ class Cost_Tracker_Settings {
                 <input type="text" name="mainwp_module_cost_tracker_currency_format[decimal_separator]" value="<?php echo esc_html( $decimal_separator ); ?>" class="regular-text"/>
             </div>
         </div>
-        <div class="ui grid field settings-field-indicator-cost-settings">
+        <?php
+        $def_val = is_array( $default ) && isset( $default['decimals'] ) ? $default['decimals'] : '';
+        ?>
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cost-settings" default-indi-valuevalue="<?php echo esc_attr( $def_val ); ?>">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'cost_tracker_decimals', intval( $decimals ) );
@@ -217,10 +229,11 @@ class Cost_Tracker_Settings {
             <input type="number" name="mainwp_module_cost_tracker_currency_format[decimals]" id="mainwp_module_cost_tracker_currency_format[decimals]" class="small-text" placeholder="" min="1" max="8" step="1" value="<?php echo intval( $decimals ); ?>">
             </div>
         </div>
-        <div class="ui grid field settings-field-indicator-cost-settings ">
+        <div class="ui grid field settings-field-indicator-wrapper default-product-categories settings-field-indicator-cost-settings ">
             <label class="six wide column middle aligned">
             <?php
-            MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $cust_product_types );
+            $indi_val = $cust_product_types ? 1 : 0;
+            MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $indi_val );
             esc_html_e( 'Default product categories', 'mainwp' );
             ?>
             </label>
@@ -287,7 +300,7 @@ class Cost_Tracker_Settings {
                                 ?>
                                 <input type="hidden" name="cost_tracker_custom_product_types[icon][]" id="cost_tracker_custom_product_types[icon][]"  value="<?php echo esc_attr( $selected_prod_icon ); ?>" />
                             </div>
-                            <input type="text" style="width:200px;border-radius:0px" class="regular-text" value="<?php echo esc_attr( $title ); ?>" name="cost_tracker_custom_product_types[title][]"/>
+                            <input type="text" style="width:200px;border-radius:0px" class="regular-text settings-field-value-change-handler" value="<?php echo esc_attr( $title ); ?>" name="cost_tracker_custom_product_types[title][]"/>
                             <input type="color" data-tooltip="Color will update on save" data-position="top center" data-inverted="" name="cost_tracker_custom_product_types[color][]" class="mainwp-color-picker-input" id="cost_tracker_custom_product_types[color][]"  value="<?php echo esc_attr( $selected_color ); ?>" />
                         </div>
                     </div>
@@ -300,7 +313,7 @@ class Cost_Tracker_Settings {
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-cost-settings">
+        <div class="ui grid field settings-field-indicator-wrapper custom-payment-methods settings-field-indicator-cost-settings">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $cust_payment_methods );
@@ -317,7 +330,7 @@ class Cost_Tracker_Settings {
                     <div class="ui two columns grid cost-tracker-payment-methods-item">
                         <div class="ui column">
                             <input type="hidden" value="<?php echo esc_attr( $slug ); ?>" name="cost_tracker_custom_payment_methods[slug][]"/>
-                            <input type="text" class="regular-text" value="<?php echo esc_attr( $title ); ?>" name="cost_tracker_custom_payment_methods[title][]" >
+                            <input type="text" class="regular-text settings-field-value-change-handler" value="<?php echo esc_attr( $title ); ?>" name="cost_tracker_custom_payment_methods[title][]" >
                         </div>
                     </div>
                     <?php
@@ -398,7 +411,7 @@ class Cost_Tracker_Settings {
                 ?>
                 <input type="hidden" name="cost_tracker_custom_product_types[icon][]" id="cost_tracker_custom_product_types[icon][]"  value="<?php echo esc_attr( $selected_prod_icon ); ?>" />
             </div>
-            <input type="text" style="width:200px;border-radius:0px" class="regular-text" value="" name="cost_tracker_custom_product_types[title][]"/>
+            <input type="text" style="width:200px;border-radius:0px" class="regular-text settings-field-value-change-handler" value="" name="cost_tracker_custom_product_types[title][]"/>
             <input type="color" data-tooltip="Color will update on save" data-position="top center" data-inverted="" name="cost_tracker_custom_product_types[color][]" class="mainwp-color-picker-input" id="cost_tracker_custom_product_types[color][]"  value="#ad0000" />
         </div>
         <?php
@@ -414,7 +427,7 @@ class Cost_Tracker_Settings {
         <div class="ui two columns grid cost-tracker-payment-methods-item">
             <div class="ui column">
                 <input type="hidden" value="" name="cost_tracker_custom_payment_methods[slug][]"/>
-                <input type="text" class="regular-text" value="" placeholder="<?php esc_attr_e( 'Title', 'mainwp' ); ?>" name="cost_tracker_custom_payment_methods[title][]"/>
+                <input type="text" class="regular-text settings-field-value-change-handler" value="" placeholder="<?php esc_attr_e( 'Title', 'mainwp' ); ?>" name="cost_tracker_custom_payment_methods[title][]"/>
             </div>
         </div>
         <?php

@@ -44,20 +44,28 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
 
     /**
+     * Method render_indicator().
+     *
+     * @param bool $indi_type Indicator type.
+     * @param bool $field_indi_wrapper_cls field wrapper class.
+     * @param bool $visible Current indicator status.
+     */
+    public static function render_indicator( $indi_type = 'field', $field_indi_wrapper_cls = '', $visible = true ) {
+        echo static::get_indicator( $indi_type, $field_indi_wrapper_cls, $visible );  //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    }
+    /**
      * Method get_indicator().
      *
-     * @param bool $what header indicator.
+     * @param bool $indi_type Indicator type.
      * @param bool $field_indi_wrapper_cls field wrapper class.
-     * @param bool $attr_indi menu/header indicator attribute.
-     * @param bool $current_active Current menu indicator is active or not.
+     * @param bool $visible Current indicator status.
      */
-    public static function get_indicator( $what = 'field', $field_indi_wrapper_cls = '', $attr_indi = '', $current_active = false ) {
-        if ( 'header' === $what ) {
-            return '<i style="display:none;" indicator-status="hide" menu-indicator="' . esc_attr( $attr_indi ) . '" field-indicator-wrapper-class="' . esc_html( $field_indi_wrapper_cls ) . '" class="ui circle icon tiny yellow settings-field-header-indicator"></i>';
-        } elseif ( 'menu' === $what ) {
-            return '<i style="display:none;" indicator-status="hide" menu-indicator-active="' . intval( $current_active ) . '" menu-indicator="' . esc_attr( $attr_indi ) . '" class="ui circle icon tiny yellow settings-field-menu-indicator"></i>';
+    public static function get_indicator( $indi_type = 'field', $field_indi_wrapper_cls = '', $visible = true ) {
+        $cls = $visible ? 'visible-indicator' : '';
+        if ( 'header' === $indi_type ) {
+            return '<i style="display:none;" field-indicator-wrapper-class="' . esc_html( $field_indi_wrapper_cls ) . '" class="ui circle icon tiny yellow settings-field-header-indicator ' . $cls . ' "></i>';
         } else {
-            return '<i style="display:inline-block;" indicator-status="show" class="ui circle icon tiny yellow settings-field-icon-indicator"></i>';
+            return '<i class="ui circle icon tiny yellow settings-field-icon-indicator ' . $cls . '"></i>';
         }
     }
 
@@ -69,11 +77,13 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param bool   $render_indi to render indication.
      */
     public static function render_not_default_indicator( $field, $current_value, $render_indi = true ) {
-        $def  = static::get_defaults_value( $field );
-        $indi = '';
+        $def = static::get_defaults_value( $field );
+
+        $visible = false;
         if ( ( 'none_preset_value' !== $field && $current_value !== $def ) || ( 'none_preset_value' === $field && ! empty( $current_value ) ) ) {
-            $indi = static::get_indicator();
+            $visible = true;
         }
+        $indi = static::get_indicator( 'field', '', $visible );
         $indi = apply_filters( 'mainwp_default_settings_indicator', $indi, $field, $def, $current_value, $render_indi );
         if ( $render_indi ) {
             echo $indi; //phpcs:ignore -- ok.
@@ -91,11 +101,12 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param bool   $render_indi to render indication.
      */
     public static function render_not_default_email_settings_indicator( $type, $field, $current_value, $general = true, $render_indi = true ) {
-        $def  = static::get_defaults_email_settings_value( $type, $field, $general );
-        $indi = '';
+        $def     = static::get_defaults_email_settings_value( $type, $field, $general );
+        $visible = false;
         if ( null !== $def && $current_value !== $def ) {
-            $indi = static::get_indicator();
+            $visible = true;
         }
+        $indi = static::get_indicator( 'field', '', $visible );
         $indi = apply_filters( 'mainwp_default_settings_indicator', $indi, $field, $def, $current_value, $render_indi, $type );
         if ( $render_indi ) {
             echo $indi; //phpcs:ignore -- ok.
@@ -113,8 +124,8 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $defaults                  = array(
             'none_preset_value'                          => '',
             'mainwp_frequencyDailyUpdate'                => 2,
-            'date_formats'                               => 'F j, Y',
-            'time_formats'                               => 'g:i a',
+            'date_format'                                => 'F j, Y',
+            'time_format'                                => 'g:i a',
             'mainwp_sidebarPosition'                     => 1,
             'mainwp_hide_update_everything'              => 0,
             'show_default_widgets'                       => 'all',
@@ -129,7 +140,7 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_backup_before_upgrade'               => 0,
             'mainwp_backup_before_upgrade_days'          => 7,
             'mainwp_numberdays_Outdate_Plugin_Theme'     => 365,
-            'mainwp_disableSitesChecking'                => 1,
+            'mainwp_disableSitesChecking'                => 1, // default disable.
             'mainwp_disableSitesHealthMonitoring'        => 1,
             'mainwp_sitehealthThreshold'                 => 80,
             'mainwp_enableLegacyBackupFeature'           => 0,
@@ -150,6 +161,7 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_maximumInstallUpdateRequests'        => 3,
             'mainwp_optimize'                            => 1,
             'mainwp_wp_cron'                             => 1,
+            'mainwp_sslVerifyCertificate'                => 1,
             'mainwp_verify_connection_method'            => 1,
             'mainwp_connect_signature_algo'              => defined( 'OPENSSL_ALGO_SHA256' ) ? (int) OPENSSL_ALGO_SHA256 : 1,
             'mainwp_forceUseIPv4'                        => 0,

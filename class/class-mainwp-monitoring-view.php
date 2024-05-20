@@ -26,12 +26,12 @@ class MainWP_Monitoring_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $sitehealthThreshold          = (int) get_option( 'mainwp_sitehealthThreshold', 80 ); // "Should be improved" threshold.
         ?>
         <h3 class="ui dividing header">
-            <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-basic-monitoring', 'general-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-basic-monitoring' ); ?>
             <?php esc_html_e( 'Basic Uptime Monitoring', 'mainwp' ); ?>
             <div class="sub header"><?php printf( esc_html__( 'For additional help with setting up the Basic Uptime monitoring, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
         </h3>
         <div class="ui info message"><?php printf( esc_html__( 'Excessive checking can cause server resource issues.  For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
-        <div class="ui grid field settings-field-indicator-basic-monitoring">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-basic-monitoring" default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_disableSitesChecking', (int) $disableSitesMonitoring );
@@ -39,11 +39,11 @@ class MainWP_Monitoring_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             ?>
             </label>
             <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring">
-                <input type="checkbox" name="mainwp_disableSitesChecking" id="mainwp_disableSitesChecking" <?php echo 1 === (int) $disableSitesMonitoring ? '' : 'checked="true"'; ?>/>
+                <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1" name="mainwp_disableSitesChecking" id="mainwp_disableSitesChecking" <?php echo 1 === (int) $disableSitesMonitoring ? '' : 'checked="true"'; ?>/>
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-basic-monitoring" <?php echo $disableSitesMonitoring ? 'style="display:none"' : ''; ?> hide-element="monitoring">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-basic-monitoring" default-indi-value="60" <?php echo $disableSitesMonitoring ? 'style="display:none"' : ''; ?> hide-element="monitoring">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_frequencySitesChecking', (int) $frequencySitesChecking );
@@ -51,7 +51,7 @@ class MainWP_Monitoring_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             ?>
             </label>
             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Select preferred checking interval.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                <select name="mainwp_frequency_sitesChecking" id="mainwp_frequency_sitesChecking" class="ui dropdown">
+                <select name="mainwp_frequency_sitesChecking" id="mainwp_frequency_sitesChecking" class="ui dropdown settings-field-value-change-handler">
                     <option value="5" <?php echo 5 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 5 minutes', 'mainwp' ); ?></option>
                     <option value="10" <?php echo 10 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 10 minutes', 'mainwp' ); ?></option>
                     <option value="30" <?php echo 30 === $frequencySitesChecking ? 'selected' : ''; ?>><?php esc_html_e( 'Every 30 minutes', 'mainwp' ); ?></option>
@@ -64,11 +64,11 @@ class MainWP_Monitoring_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             </div>
         </div>
         <h3 class="ui dividing header">
-            <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-health-monitoring', 'general-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-health-monitoring' ); ?>
             <?php esc_html_e( 'Site Health Monitoring', 'mainwp' ); ?>
             <div class="sub header"><?php printf( esc_html__( 'For additional help with setting up the Site Health monitoring, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
         </h3>
-        <div class="ui grid field settings-field-indicator-health-monitoring">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-health-monitoring" default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_disableSitesHealthMonitoring', (int) $disableSitesHealthMonitoring );
@@ -76,11 +76,11 @@ class MainWP_Monitoring_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             ?>
             </label>
             <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="health-monitoring">
-                <input type="checkbox" name="mainwp_disable_sitesHealthMonitoring" id="mainwp_disable_sitesHealthMonitoring" <?php echo 1 === (int) $disableSitesHealthMonitoring ? '' : 'checked="true"'; ?>/>
+                <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1" name="mainwp_disable_sitesHealthMonitoring" id="mainwp_disable_sitesHealthMonitoring" <?php echo 1 === (int) $disableSitesHealthMonitoring ? '' : 'checked="true"'; ?>/>
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-health-monitoring" <?php echo $disableSitesHealthMonitoring ? 'style="display:none"' : ''; ?> hide-element="health-monitoring">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-health-monitoring" default-indi-value="80" <?php echo $disableSitesHealthMonitoring ? 'style="display:none"' : ''; ?> hide-element="health-monitoring">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_sitehealthThreshold', (int) $sitehealthThreshold );
@@ -88,7 +88,7 @@ class MainWP_Monitoring_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             ?>
             </label>
             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set preferred site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                <select name="mainwp_site_healthThreshold" id="mainwp_site_healthThreshold" class="ui dropdown">
+                <select name="mainwp_site_healthThreshold" id="mainwp_site_healthThreshold" class="ui dropdown settings-field-value-change-handler">
                     <option value="80" <?php echo ( 80 === $sitehealthThreshold || 0 === $sitehealthThreshold ) ? 'selected' : ''; ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
                     <option value="100" <?php echo 100 === $sitehealthThreshold ? 'selected' : ''; ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
                 </select>

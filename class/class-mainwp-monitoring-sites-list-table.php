@@ -760,7 +760,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                         "stateDuration" : <?php echo esc_js( $table_features['stateDuration'] ); ?>,
                         "order" : <?php echo $table_features['order']; // phpcs:ignore -- specical chars. ?>,
                         "scrollX" : <?php echo esc_js( $table_features['scrollX'] ); ?>,
-                        "lengthMenu" : [ [<?php echo intval( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All"] ],
+                        "lengthMenu" : [ [<?php echo esc_js( $pagelength_val ); ?>, -1 ], [<?php echo esc_js( $pagelength_title ); ?>, "All"] ],
                         serverSide: true,
                         "pageLength": <?php echo intval( $sites_per_page ); ?>,
                         "columnDefs": <?php echo wp_json_encode( $this->get_columns_defines() ); ?>,

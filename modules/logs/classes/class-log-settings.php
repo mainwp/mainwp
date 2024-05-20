@@ -176,9 +176,9 @@ class Log_Settings {
                 <form method="post" class="mainwp-table-container">
                     <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
                         <h3 class="ui dividing header">
-                        <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-insights', 'insights-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                        <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-insights' ); ?>
                         <?php esc_html_e( 'Dashboard Insights Settings', 'mainwp' ); ?></h3>
-                        <div class="ui grid field settings-field-indicator-insights">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-insights" default-indi-value="1">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_module_log_enabled', (int) $enabled );
@@ -186,7 +186,7 @@ class Log_Settings {
                             ?>
                             </label>
                             <div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will enable logging.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" name="mainwp_module_log_enabled" id="mainwp_module_log_enabled" <?php echo $enabled ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Enabled', 'mainwp' ); ?></label>
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_module_log_enabled" id="mainwp_module_log_enabled" <?php echo $enabled ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Enabled', 'mainwp' ); ?></label>
                             </div>
                         </div>
                         <?php $hide_field_class = 'log-settings-hidden-field'; ?>

@@ -1440,8 +1440,9 @@ let updatesoverview_global_upgrade_all = function (which) { // NOSONAR - Complex
         foundChildren = jQuery('#wp_upgrades').find('div[updated="0"]');
         if (foundChildren.length != 0) {
             for (let child of foundChildren) {
-                let siteId = child.attr('site_id');
-                let siteName = child.attr('site_name');
+                let siteElement = jQuery(child);
+                let siteId = siteElement.attr('site_id');
+                let siteName = siteElement.attr('site_name');
                 if (sitesToUpdate.indexOf(siteId) == -1) {
                     sitesCount++;
                     sitesToUpdate.push(siteId);

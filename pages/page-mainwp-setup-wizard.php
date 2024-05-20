@@ -780,7 +780,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <div class="ui hidden divider"></div>
         <form method="post" class="ui form">
             <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-            <div class="ui grid field">
+            <div class="ui grid field settings-field-indicator-wrapper" default-indi-value="1">
                 <div class="ui info message"><?php printf( esc_html__( 'Excessive checking can cause server resource issues. For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
                 <label class="six wide column middle aligned">
                 <?php
@@ -789,7 +789,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 ?>
                 </label>
                 <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring" style="max-width:100px !important;">
-                    <input type="checkbox" name="mainwp_setup_disableSitesChecking" id="mainwp_setup_disableSitesChecking" <?php echo 1 === $disableSitesMonitoring ? '' : 'checked="true"'; ?>/>
+                    <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1"  name="mainwp_setup_disableSitesChecking" id="mainwp_setup_disableSitesChecking" <?php echo 1 === $disableSitesMonitoring ? '' : 'checked="true"'; ?>/>
                     <label class=""></label>
                 </div>
             </div>
@@ -815,7 +815,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div><?php esc_html_e( "The MainWP Site Health Monitoring feature integrates with WordPress 5.1's Site Health tool, providing centralized notifications regarding the health status of your child sites. It allows you to choose between being notified for any status changes or only when the health drops below the 'Good' threshold, ensuring you're informed about crucial security and performance metrics.", 'mainwp' ); ?></div>
             <div class="ui hidden divider"></div>
             <div class="ui hidden divider"></div>
-            <div class="ui grid field">
+            <div class="ui grid field settings-field-indicator-wrapper" default-indi-value="1">
                 <label class="six wide column middle aligned">
                 <?php
                 MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_disableSitesHealthMonitoring', (int) $disableSitesHealthMonitoring );
@@ -823,11 +823,11 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 ?>
                 </label>
                 <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="health-monitoring" style="max-width:100px !important;">
-                    <input type="checkbox" name="mainwp_setup_disable_sitesHealthMonitoring" id="mainwp_setup_disable_sitesHealthMonitoring" <?php echo 1 === $disableSitesHealthMonitoring ? '' : 'checked="true"'; ?>/>
+                    <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1" name="mainwp_setup_disable_sitesHealthMonitoring" id="mainwp_setup_disable_sitesHealthMonitoring" <?php echo 1 === (int) $disableSitesHealthMonitoring ? '' : 'checked="true"'; ?>/>
                 </div>
             </div>
 
-            <div class="ui grid field" <?php echo $disableSitesHealthMonitoring ? 'style="display:none"' : ''; ?> hide-element="health-monitoring">
+            <div class="ui grid field settings-field-indicator-wrapper" default-indi-value="80" <?php echo $disableSitesHealthMonitoring ? 'style="display:none"' : ''; ?> hide-element="health-monitoring">
                 <label class="six wide column middle aligned">
                 <?php
                 MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_sitehealthThreshold', (int) $sitehealthThreshold );
@@ -835,7 +835,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 ?>
                 </label>
                 <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set preferred site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                    <select name="mainwp_setup_site_healthThreshold" id="mainwp_setup_site_healthThreshold" class="ui dropdown">
+                    <select name="mainwp_setup_site_healthThreshold" id="mainwp_setup_site_healthThreshold" class="ui dropdown settings-field-value-change-handler">
                         <option value="80" <?php echo 80 === $sitehealthThreshold || 0 === $sitehealthThreshold ? 'selected' : ''; ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
                         <option value="100" <?php echo 100 === $sitehealthThreshold ? 'selected' : ''; ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
                     </select>

@@ -254,11 +254,14 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                         </div>
                     <?php endif; ?>
                     <h3 class="ui header">
-                    <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-email-' . esc_attr( $type ), 'email-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                    <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-email-' . esc_attr( $type ) ); ?>
                     <?php echo esc_html( $title ); ?></h3>
                     <div class="sub header"><?php echo esc_html( $email_description ); ?></h3></div>
                     <div class="ui divider"></div>
-                    <div class="ui grid field settings-field-indicator-email-<?php echo esc_attr( $type ); ?>">
+                    <?php
+                    $def_val = MainWP_Settings_Indicator::get_defaults_email_settings_value( $type, 'disable' );
+                    ?>
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" default-indi-valuevalue="<?php echo esc_attr( $def_val ); ?>">
                         <label class="six wide column middle aligned">
                         <?php
                         MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'disable', (int) $options['disable'] );
@@ -266,10 +269,13 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                         ?>
                         </label>
                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable this email notification.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                            <input type="checkbox" name="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][disable]" id="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][disable]" <?php echo ( 0 === (int) $options['disable'] ) ? 'checked="true"' : ''; ?>/>
+                            <input type="checkbox" inverted-value="1" class="settings-field-value-change-handler" name="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][disable]" id="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][disable]" <?php echo ( 0 === (int) $options['disable'] ) ? 'checked="true"' : ''; ?>/>
                         </div>
                     </div>
-                    <div class="ui grid field settings-field-indicator-email-<?php echo esc_attr( $type ); ?>">
+                    <?php
+                    $def_val = MainWP_Settings_Indicator::get_defaults_email_settings_value( $type, 'recipients' );
+                    ?>
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" default-indi-valuevalue="<?php echo esc_attr( $def_val ); ?>">
                         <label class="six wide column middle aligned">
                         <?php
                         MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'recipients', $options['recipients'] );
@@ -277,10 +283,13 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                         ?>
                         </label>
                         <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'You can add multiple emails by separating them with comma.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                            <input type="text" name="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][recipients]" id="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][recipients]" value="<?php echo esc_html( $options['recipients'] ); ?>"/>
+                            <input type="text" class="settings-field-value-change-handler" name="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][recipients]" id="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][recipients]" value="<?php echo esc_html( $options['recipients'] ); ?>"/>
                         </div>
                     </div>
-                    <div class="ui grid field settings-field-indicator-email-<?php echo esc_attr( $type ); ?>">
+                    <?php
+                    $def_val = MainWP_Settings_Indicator::get_defaults_email_settings_value( $type, 'subject' );
+                    ?>
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" default-indi-valuevalue="<?php echo esc_attr( $def_val ); ?>">
                         <label class="six wide column middle aligned">
                         <?php
                         MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'subject', $options['subject'] );
@@ -288,10 +297,13 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                         ?>
                         </label>
                         <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter the email subject.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                            <input type="text" name="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][subject]" id="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][subject]" value="<?php echo esc_html( $options['subject'] ); ?>"/>
+                            <input type="text" class="settings-field-value-change-handler" name="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][subject]" id="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][subject]" value="<?php echo esc_html( $options['subject'] ); ?>"/>
                         </div>
                     </div>
-                    <div class="ui grid field settings-field-indicator-email-<?php echo esc_attr( $type ); ?>">
+                    <?php
+                    $def_val = MainWP_Settings_Indicator::get_defaults_email_settings_value( $type, 'heading' );
+                    ?>
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" default-indi-valuevalue="<?php echo esc_attr( $def_val ); ?>">
                         <label class="six wide column middle aligned">
                         <?php
                         MainWP_Settings_Indicator::render_not_default_email_settings_indicator( $type, 'heading', $options['heading'] );
@@ -299,10 +311,10 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                         ?>
                         </label>
                         <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter the email heading.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                            <input type="text" name="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][heading]" id="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][heading]" value="<?php echo esc_html( $options['heading'] ); ?>"/>
+                            <input type="text" class="settings-field-value-change-handler" name="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][heading]" id="mainwp_settingEmails[<?php echo esc_html( $type ); ?>][heading]" value="<?php echo esc_html( $options['heading'] ); ?>"/>
                         </div>
                     </div>
-                    <div class="ui grid field settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" >
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" >
                         <?php
                         $templ     = MainWP_Notification_Template::get_template_name_by_notification_type( $type );
                         $overrided = MainWP_Notification_Template::instance()->is_overrided_template( $type );
@@ -336,7 +348,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                         ?>
                         </div>
                     </div>
-                    <div class="ui grid field settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" >
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-email-<?php echo esc_attr( $type ); ?>" >
                         <label class="six wide column middle aligned"></label>
                         <div class="ui ten wide column" data-tooltip="<?php esc_attr_e( 'Manage the email HTML template.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <?php if ( $overrided ) : ?>

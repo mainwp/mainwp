@@ -49,6 +49,7 @@ jQuery(function () {
   jQuery('#mainwp_edit_clients_icon_select').dropdown({
     onChange: function (val) {
       jQuery('#client_fields\\[default_field\\]\\[selected_icon\\]').val(val);
+      jQuery('#client_fields\\[default_field\\]\\[selected_icon\\]').trigger('change');
     }
   });
 
@@ -58,6 +59,7 @@ jQuery(function () {
       let inname = parent.attr('input-name');
       if (undefined !== inname) {
         jQuery(parent).find('#client_fields\\[' + inname + '\\]\\[selected_icon\\]\\[\\]').val(val);
+        jQuery(parent).find('#client_fields\\[' + inname + '\\]\\[selected_icon\\]\\[\\]').trigger('change');
       }
     }
   });
@@ -72,6 +74,7 @@ jQuery(function () {
         let inname = parent.attr('input-name');
         if (undefined !== inname) {
           jQuery(parent).find('#client_fields\\[' + inname + '\\]\\[selected_icon\\]\\[\\]').val(val);
+          jQuery(parent).find('#client_fields\\[' + inname + '\\]\\[selected_icon\\]\\[\\]').trigger('change');
         }
       }
     });

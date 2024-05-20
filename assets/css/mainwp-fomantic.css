@@ -298,7 +298,7 @@
   place-items: center !important;
   width: 100% !important;
   height: 100% !important;
-  padding: 10px !important;
+  padding: 13px 16px !important;
   border: none !important;
   font-weight: 700;
   margin-left: -3px !important;
@@ -323,7 +323,7 @@
   color:rgba(40, 40, 40, 0.3) !important;
 }
 .mainwp-ui .pagination.menu .dt-paging-button.item.disabled{
-  padding: 10px !important;
+  padding: 13px 16px !important;
   display: grid !important;
   align-items: center !important;
 }

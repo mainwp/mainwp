@@ -247,7 +247,7 @@ class Api_Backups_Settings {
                         ?>
                         <div class="ui tab segment active" data-tab="cloudways">
                             <h3 class="ui dividing header">
-                            <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-cloudways-settings', 'api-backups' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-cloudways-settings' ); ?>
                             <?php esc_html_e( 'Cloudways API Settings', 'mainwp' ); ?></h3>
                             <ul>
                                 <li><?php printf( esc_html__( "1. If you don't already have one, get a %s", 'mainwp' ), '<a target="_blank" href="https://mainwp.com/go/cloudways-mainwp/">Cloudways account</a>' ); // NOSONAR - noopener - open safe. ?></li>
@@ -271,30 +271,29 @@ class Api_Backups_Settings {
                                      */
                                     do_action( 'cloudways_api_form_top' );
                                     ?>
-                                    <div class="ui grid field settings-field-indicator-cloudways-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cloudways-settings">
                                         <label class="six wide column middle aligned">
                                             <?php MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_enable_cloudways_api', 0 ) ); ?>
                                             <?php esc_html_e( 'Enable Cloudways API', 'mainwp' ); ?></label>
                                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Cloudways API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                            <input type="checkbox" name="mainwp_enable_cloudways_api" id="mainwp_enable_cloudways_api" <?php echo 1 === (int) get_option( 'mainwp_enable_cloudways_api', 0 ) ? 'checked="true"' : ''; ?> />
+                                            <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_cloudways_api" id="mainwp_enable_cloudways_api" <?php echo 1 === (int) get_option( 'mainwp_enable_cloudways_api', 0 ) ? 'checked="true"' : ''; ?> />
                                         </div>
                                     </div>
-                                    <div class="ui grid field settings-field-indicator-cloudways-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cloudways-settings">
                                         <label class="six wide column middle aligned">
                                             <?php
                                             MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_cloudways_api_account_email' ) );
                                             esc_html_e( 'Account Email', 'mainwp' );
                                             ?>
                                             </label>
-
-                                        <div class="five wide column">
-                                            <input type="text" name="mainwp_cloudways_api_account_email" id="mainwp_cloudways_api_account_email" value="<?php echo false === get_option( 'mainwp_cloudways_api_account_email' ) ? '' : esc_attr( get_option( 'mainwp_cloudways_api_account_email' ) ); ?>"  />
-                                        </div>
+                                            <div class="five wide column">
+                                                <input type="text" class="settings-field-value-change-handler" name="mainwp_cloudways_api_account_email" id="mainwp_cloudways_api_account_email" value="<?php echo false === get_option( 'mainwp_cloudways_api_account_email' ) ? '' : esc_attr( get_option( 'mainwp_cloudways_api_account_email' ) ); ?>"  />
+                                            </div>
                                     </div>
                                     <?php
                                         $_api_key = Api_Backups_3rd_Party::get_cloudways_api_key();
                                     ?>
-                                    <div class="ui grid field settings-field-indicator-cloudways-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cloudways-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $_api_key );
@@ -302,7 +301,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="password" name="mainwp_cloudways_api_key" id="mainwp_cloudways_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
+                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_cloudways_api_key" id="mainwp_cloudways_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
                                         </div>
                                     </div>
                                     <?php
@@ -324,7 +323,7 @@ class Api_Backups_Settings {
 
                         <div class="ui tab segment" data-tab="gridpane">
                             <h3 class="ui dividing header">
-                            <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-gridpane-settings', 'api-backups' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-gridpane-settings' ); ?>
                             <?php esc_html_e( 'GridPane API Settings', 'mainwp' ); ?></h3>
                             <div class="ui info message"><?php printf( esc_html__( 'Must be the %1$sGridPane Owners Account%2$s &amp; have a %1$sDeveloper Plan or above%2$s in order to use this feature.', 'mainwp' ), '<b>', '</b>' ); ?></div>
                             <ul>
@@ -333,7 +332,7 @@ class Api_Backups_Settings {
                                 <li><?php printf( esc_html__( '3. %1$sClick GridPare API%2$s in the left hand menu &amp; %1$sCreate your Personal Access Token%2$s', 'mainwp' ), '<b>', '</b>' ); ?></li>
                                 <li><?php printf( esc_html__( '4. Copy &amp; Paste your %1$sAPI Personal Access Token%2$s below', 'mainwp' ), '<b>', '</b>' ); ?></li>
                             </ul>
-                            <div class="ui hidden divider settings-field-indicator-gridpane-settings"></div>
+                            <div class="ui hidden divider settings-field-indicator-wrapper settings-field-indicator-gridpane-settings"></div>
                             <div class="ui form">
                                 <form method="POST" action="">
                                     <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -348,7 +347,7 @@ class Api_Backups_Settings {
                                      */
                                     do_action( 'gridpane_api_form_top' );
                                     ?>
-                                    <div class="ui grid field settings-field-indicator-gridpane-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-gridpane-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_enable_gridpane_api', 0 ) );
@@ -356,10 +355,10 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the GridPane API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                            <input type="checkbox" name="mainwp_enable_gridpane_api" id="mainwp_enable_gridpane_api" <?php echo 1 === (int) get_option( 'mainwp_enable_gridpane_api', 0 ) ? 'checked="true"' : ''; ?> />
+                                            <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_gridpane_api" id="mainwp_enable_gridpane_api" <?php echo 1 === (int) get_option( 'mainwp_enable_gridpane_api', 0 ) ? 'checked="true"' : ''; ?> />
                                         </div>
                                     </div>
-                                    <div class="ui grid field settings-field-indicator-gridpane-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-gridpane-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         $_api_key = Api_Backups_3rd_Party::get_gridpane_api_key();
@@ -368,7 +367,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="password" name="mainwp_gridpane_api_key" id="mainwp_gridpane_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
+                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_gridpane_api_key" id="mainwp_gridpane_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
                                         </div>
                                     </div>
                                     <?php
@@ -390,7 +389,7 @@ class Api_Backups_Settings {
 
                         <div class="ui tab segment" data-tab="vultr">
                             <h3 class="ui dividing header">
-                            <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-vultr-settings', 'api-backups' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-vultr-settings' ); ?>
                                 <?php esc_html_e( 'Vultr API Settings', 'mainwp' ); ?>
                             </h3>
                             <ul>
@@ -415,7 +414,7 @@ class Api_Backups_Settings {
                                          */
                                         do_action( 'vultr_api_form_top' );
                                     ?>
-                                    <div class="ui grid field settings-field-indicator-vultr-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-vultr-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_enable_vultr_api', 0 ) );
@@ -423,10 +422,10 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Vultr API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                            <input type="checkbox" name="mainwp_enable_vultr_api" id="mainwp_enable_vultr_api" <?php echo 1 === (int) get_option( 'mainwp_enable_vultr_api', 0 ) ? 'checked="true"' : ''; ?> />
+                                            <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_vultr_api" id="mainwp_enable_vultr_api" <?php echo 1 === (int) get_option( 'mainwp_enable_vultr_api', 0 ) ? 'checked="true"' : ''; ?> />
                                         </div>
                                     </div>
-                                    <div class="ui grid field settings-field-indicator-vultr-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-vultr-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         $_api_key = Api_Backups_3rd_Party::get_vultr_api_key();
@@ -435,7 +434,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="password" name="mainwp_vultr_api_key" id="mainwp_vultr_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
+                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_vultr_api_key" id="mainwp_vultr_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
                                         </div>
                                     </div>
                                     <?php
@@ -457,7 +456,7 @@ class Api_Backups_Settings {
 
                         <div class="ui tab segment" data-tab="linode">
                             <h3 class="ui dividing header">
-                                <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-linode-settings', 'api-backups' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                                <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-linode-settings' ); ?>
                                 <?php esc_html_e( 'Akamai (Linode) API Settings', 'mainwp' ); ?>
                             </h3>
                             <ul>
@@ -481,7 +480,7 @@ class Api_Backups_Settings {
                                          */
                                         do_action( 'linode_api_form_top' );
                                     ?>
-                                    <div class="ui grid field settings-field-indicator-linode-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-linode-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_enable_linode_api', 0 ) );
@@ -489,13 +488,13 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Akamai (Linode) API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                            <input type="checkbox" name="mainwp_enable_linode_api" id="mainwp_enable_linode_api" <?php echo 1 === (int) get_option( 'mainwp_enable_linode_api', 0 ) ? 'checked="true"' : ''; ?> />
+                                            <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_linode_api" id="mainwp_enable_linode_api" <?php echo 1 === (int) get_option( 'mainwp_enable_linode_api', 0 ) ? 'checked="true"' : ''; ?> />
                                         </div>
                                     </div>
                                     <?php
                                     $_api_key = Api_Backups_3rd_Party::get_linode_api_key();
                                     ?>
-                                    <div class="ui grid field settings-field-indicator-linode-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-linode-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $_api_key );
@@ -503,7 +502,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="password" name="mainwp_linode_api_key" id="mainwp_linode_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
+                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_linode_api_key" id="mainwp_linode_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
                                         </div>
                                     </div>
                                     <?php
@@ -525,7 +524,7 @@ class Api_Backups_Settings {
 
                         <div class="ui tab segment" data-tab="digitalocean">
                             <h3 class="ui dividing header">
-                            <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-digitalocean-settings', 'api-backups' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-digitalocean-settings' ); ?>
                                 <?php esc_html_e( 'DigitalOcean', 'mainwp' ); ?>
                             </h3>
                             <ul>
@@ -549,7 +548,7 @@ class Api_Backups_Settings {
                                          */
                                         do_action( 'digitalocean_api_form_top' );
                                     ?>
-                                    <div class="ui grid field settings-field-indicator-digitalocean-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-digitalocean-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_enable_digitalocean_api', 0 ) );
@@ -557,13 +556,13 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the DigitalOcean API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                            <input type="checkbox" name="mainwp_enable_digitalocean_api" id="mainwp_enable_digitalocean_api" <?php echo 1 === (int) get_option( 'mainwp_enable_digitalocean_api', 0 ) ? 'checked="true"' : ''; ?> />
+                                            <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_digitalocean_api" id="mainwp_enable_digitalocean_api" <?php echo 1 === (int) get_option( 'mainwp_enable_digitalocean_api', 0 ) ? 'checked="true"' : ''; ?> />
                                         </div>
                                     </div>
                                     <?php
                                     $_api_key = Api_Backups_3rd_Party::get_digitalocean_api_key();
                                     ?>
-                                    <div class="ui grid field settings-field-indicator-digitalocean-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-digitalocean-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $_api_key );
@@ -571,7 +570,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="password" name="mainwp_digitalocean_api_key" id="mainwp_digitalocean_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
+                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_digitalocean_api_key" id="mainwp_digitalocean_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
                                         </div>
                                     </div>
                                     <?php
@@ -593,7 +592,7 @@ class Api_Backups_Settings {
 
                         <div class="ui tab segment" data-tab="cpanel">
                             <h3 class="ui dividing header">
-                            <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-cpanel-settings', 'api-backups' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-cpanel-settings' ); ?>
                                 <?php esc_html_e( 'cPanel (WP Toolkit)', 'mainwp' ); ?>
                             </h3>
                             <ul>
@@ -616,7 +615,7 @@ class Api_Backups_Settings {
                                      */
                                     do_action( 'cpanel_api_form' );
                                     ?>
-                                    <div class="ui grid field settings-field-indicator-cpanel-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cpanel-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_enable_cpanel_api', 0 ) );
@@ -624,10 +623,10 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the cPanel API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                            <input type="checkbox" name="mainwp_enable_cpanel_api" id="mainwp_enable_cpanel_api" <?php echo 1 === (int) get_option( 'mainwp_enable_cpanel_api', 0 ) ? 'checked="true"' : ''; ?> />
+                                            <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_cpanel_api" id="mainwp_enable_cpanel_api" <?php echo 1 === (int) get_option( 'mainwp_enable_cpanel_api', 0 ) ? 'checked="true"' : ''; ?> />
                                         </div>
                                     </div>
-                                    <div class="ui grid field settings-field-indicator-cpanel-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cpanel-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_cpanel_url' ) );
@@ -635,10 +634,10 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="text" name="mainwp_cpanel_url" id="mainwp_cpanel_url" value="<?php echo false === get_option( 'mainwp_cpanel_url' ) ? '' : esc_attr( get_option( 'mainwp_cpanel_url' ) ); ?>"  />
+                                            <input type="text" class="settings-field-value-change-handler" name="mainwp_cpanel_url" id="mainwp_cpanel_url" value="<?php echo false === get_option( 'mainwp_cpanel_url' ) ? '' : esc_attr( get_option( 'mainwp_cpanel_url' ) ); ?>"  />
                                         </div>
                                     </div>
-                                    <div class="ui grid field settings-field-indicator-cpanel-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cpanel-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_cpanel_account_username' ) );
@@ -647,10 +646,10 @@ class Api_Backups_Settings {
                                         </label>
 
                                         <div class="five wide column">
-                                            <input type="text" name="mainwp_cpanel_account_username" id="mainwp_cpanel_account_username" value="<?php echo false === get_option( 'mainwp_cpanel_account_username' ) ? '' : esc_attr( get_option( 'mainwp_cpanel_account_username' ) ); ?>"  />
+                                            <input type="text" class="settings-field-value-change-handler" name="mainwp_cpanel_account_username" id="mainwp_cpanel_account_username" value="<?php echo false === get_option( 'mainwp_cpanel_account_username' ) ? '' : esc_attr( get_option( 'mainwp_cpanel_account_username' ) ); ?>"  />
                                         </div>
                                     </div>
-                                    <div class="ui grid field settings-field-indicator-cpanel-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cpanel-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         $_api_key = Api_Backups_3rd_Party::get_cpanel_account_password();
@@ -659,10 +658,10 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="password" name="mainwp_cpanel_account_password" id="mainwp_cpanel_account_password" value="<?php echo esc_attr( $_api_key ); ?>"  />
+                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_cpanel_account_password" id="mainwp_cpanel_account_password" value="<?php echo esc_attr( $_api_key ); ?>"  />
                                         </div>
                                     </div>
-                                    <div class="ui grid field settings-field-indicator-cpanel-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cpanel-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_cpanel_site_path' ) );
@@ -670,7 +669,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="text" name="mainwp_cpanel_site_path" id="mainwp_cpanel_site_path" value="<?php echo false === get_option( 'mainwp_cpanel_site_path' ) ? '' : esc_attr( get_option( 'mainwp_cpanel_site_path' ) ); ?>"  />
+                                            <input type="text" class="settings-field-value-change-handler" name="mainwp_cpanel_site_path" id="mainwp_cpanel_site_path" value="<?php echo false === get_option( 'mainwp_cpanel_site_path' ) ? '' : esc_attr( get_option( 'mainwp_cpanel_site_path' ) ); ?>"  />
                                         </div>
                                     </div>
                                     <?php
@@ -692,7 +691,7 @@ class Api_Backups_Settings {
 
                         <div class="ui tab segment" data-tab="plesk">
                             <h3 class="ui dividing header">
-                            <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-plesk-settings', 'api-backups' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-plesk-settings' ); ?>
                                 <?php esc_html_e( 'Plesk (WP Toolkit)', 'mainwp' ); ?>
                             </h3>
                             <ul>
@@ -716,7 +715,7 @@ class Api_Backups_Settings {
                                      */
                                     do_action( 'plesk_api_form_top' );
                                     ?>
-                                    <div class="ui grid field settings-field-indicator-plesk-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-plesk-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_enable_plesk_api', 0 ) );
@@ -724,10 +723,10 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Plesk API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                            <input type="checkbox" name="mainwp_enable_plesk_api" id="mainwp_enable_plesk_api" <?php echo 1 === (int) get_option( 'mainwp_enable_plesk_api', 0 ) ? 'checked="true"' : ''; ?> />
+                                            <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_plesk_api" id="mainwp_enable_plesk_api" <?php echo 1 === (int) get_option( 'mainwp_enable_plesk_api', 0 ) ? 'checked="true"' : ''; ?> />
                                         </div>
                                     </div>
-                                    <div class="ui grid field settings-field-indicator-plesk-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-plesk-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_plesk_api_url' ) );
@@ -735,10 +734,10 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column" data-tooltip="<?php esc_attr_e( 'eg.: https://epic-snyder.123-111-123-143.plesk.page:8443', 'mainwp' ); ?>">
-                                            <input type="text" name="mainwp_plesk_api_url" id="mainwp_plesk_api_url" value="<?php echo false === get_option( 'mainwp_plesk_api_url' ) ? '' : esc_attr( get_option( 'mainwp_plesk_api_url' ) ); ?>"  />
+                                            <input type="text" class="settings-field-value-change-handler" name="mainwp_plesk_api_url" id="mainwp_plesk_api_url" value="<?php echo false === get_option( 'mainwp_plesk_api_url' ) ? '' : esc_attr( get_option( 'mainwp_plesk_api_url' ) ); ?>"  />
                                         </div>
                                     </div>
-                                    <div class="ui grid field settings-field-indicator-plesk-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-plesk-settings">
                                         <label class="six wide column middle aligned">
                                         <?php
                                         $_api_key = Api_Backups_3rd_Party::get_plesk_api_key();
@@ -747,7 +746,7 @@ class Api_Backups_Settings {
                                         ?>
                                         </label>
                                         <div class="five wide column">
-                                            <input type="password" name="mainwp_plesk_api_key" id="mainwp_plesk_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
+                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_plesk_api_key" id="mainwp_plesk_api_key" value="<?php echo esc_attr( $_api_key ); ?>"  />
                                         </div>
                                     </div>
                                     <?php
@@ -924,14 +923,14 @@ class Api_Backups_Settings {
             <div class="sub header"><?php esc_html_e( 'Sites hosted on Cloudways and GridPane do not require these settings to be added manually. All the necessary info for the feature will be obtained automatically so you can leave these settings blank.', 'mainwp' ); ?></div>
         </h3>
         <?php if ( '' === $mainwp_3rd_party_api || 'cPanel' === $mainwp_3rd_party_api || 'Plesk' === $mainwp_3rd_party_api ) : ?>
-            <div class="ui grid field">
+            <div class="ui grid field settings-field-indicator-wrapper">
                 <label class="six wide column middle aligned">
                 <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $mainwp_3rd_party_api );
                 ?>
                 <?php esc_html_e( 'Choose a provider', 'mainwp' ); ?></label>
                 <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Detected provider', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                    <select class="ui dropdown" id="mainwp_managesites_edit_module_api_backups_provider" name="mainwp_managesites_edit_module_api_backups_provider">
+                    <select class="ui dropdown settings-field-value-change-handler" id="mainwp_managesites_edit_module_api_backups_provider" name="mainwp_managesites_edit_module_api_backups_provider">
                         <option <?php echo ( '' === $mainwp_3rd_party_api ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'None', 'mainwp' ); ?></option>
                         <option <?php echo ( 'DigitalOcean' === $mainwp_3rd_party_api ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'DigitalOcean', 'mainwp' ); ?></option>
                         <option <?php echo ( 'Linode' === $mainwp_3rd_party_api ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Akamai (Linode)', 'mainwp' ); ?></option>
@@ -1032,14 +1031,14 @@ class Api_Backups_Settings {
 
             <div class="ui hidden divider"></div>
         <?php elseif ( 'DigitalOcean' === $mainwp_3rd_party_api || 'Linode' === $mainwp_3rd_party_api || 'Vultr' === $mainwp_3rd_party_api ) : ?>
-            <div class="ui grid field">
+            <div class="ui grid field settings-field-indicator-wrapper">
                 <label class="six wide column middle aligned">
                 <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $mainwp_3rd_party_api );
                 ?>
                 <?php esc_html_e( 'Choose a provider', 'mainwp' ); ?></label>
                 <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Detected provider', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                    <select class="ui dropdown" id="mainwp_managesites_edit_module_api_backups_provider" name="mainwp_managesites_edit_module_api_backups_provider">
+                    <select class="ui dropdown settings-field-value-change-handler" id="mainwp_managesites_edit_module_api_backups_provider" name="mainwp_managesites_edit_module_api_backups_provider">
                         <option <?php echo ( '' === $mainwp_3rd_party_api ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'None', 'mainwp' ); ?></option>
                         <option <?php echo ( 'DigitalOcean' === $mainwp_3rd_party_api ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'DigitalOcean', 'mainwp' ); ?></option>
                         <option <?php echo ( 'Linode' === $mainwp_3rd_party_api ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Akamai (Linode)', 'mainwp' ); ?></option>
@@ -1059,21 +1058,21 @@ class Api_Backups_Settings {
                 </div>
             </div>
             <?php elseif ( 'Cloudways' === $mainwp_3rd_party_api ) : ?>
-            <div class="ui grid field">
+            <div class="ui grid field settings-field-indicator-wrapper">
                 <label class="six wide column middle aligned">
                 <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $mainwp_3rd_party_api );
                 ?>
                 <?php esc_html_e( 'Choose a provider', 'mainwp' ); ?></label>
                 <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Detected provider', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                    <select class="ui disabled dropdown">
+                    <select class="ui disabled dropdown settings-field-value-change-handler">
                         <option><?php esc_html_e( 'Cloudways', 'mainwp' ); ?></option>
                     </select>
                 </div>
             </div>
                 <?php $app_id = $mainwp_3rd_party_cloudways_app_id; ?>
                 <?php $server_id = $mainwp_3rd_party_cloudways_server_id; ?>
-            <div class="ui grid field">
+            <div class="ui grid field settings-field-indicator-wrapper">
                 <label class="six wide column middle aligned">
                 <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $app_id );
@@ -1081,7 +1080,7 @@ class Api_Backups_Settings {
                 <?php esc_html_e( 'App ID', 'mainwp' ); ?></label>
                 <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Detected Cloudways site ID.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                     <div class="ui left labeled input">
-                        <input type="text" disabled value="<?php echo esc_attr( $app_id ); ?>" />
+                        <input type="text" class="settings-field-value-change-handler" disabled value="<?php echo esc_attr( $app_id ); ?>" />
                     </div>
                 </div>
             </div>
@@ -1094,14 +1093,14 @@ class Api_Backups_Settings {
                 </div>
             </div>
             <?php elseif ( 'GridPane' === $mainwp_3rd_party_api ) : ?>
-            <div class="ui grid field">
+            <div class="ui grid field settings-field-indicator-wrapper">
                 <label class="six wide column middle aligned">
                 <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $mainwp_3rd_party_api );
                 ?>
                 <?php esc_html_e( 'Choose a provider', 'mainwp' ); ?></label>
                 <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Detected provider', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                    <select class="ui disabled dropdown">
+                    <select class="ui disabled dropdown settings-field-value-change-handler">
                         <option><?php esc_html_e( 'GridPane (Developer or higher)', 'mainwp' ); ?></option>
                     </select>
                 </div>

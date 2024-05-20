@@ -779,7 +779,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                         <input type="hidden" name="edit_key_nonce" value="<?php echo esc_attr( wp_create_nonce( 'edit-key-nonce-' . $keyid ) ); ?>" />
                         <input type="hidden" name="editkey_id" value="<?php echo esc_html( $keyid ); ?>" />
-                        <div class="ui grid field <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>">
+                        <div class="ui grid field settings-field-indicator-wrapper <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>">
                             <label class="six wide column middle aligned">
                             <?php
                             if ( $item ) {
@@ -788,10 +788,10 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             ?>
                             <?php esc_html_e( 'Enable REST API Key', 'mainwp' ); ?></label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the REST API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" value="1" <?php echo $enabled ? 'checked="true"' : ''; ?> />
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" value="1" <?php echo $enabled ? 'checked="true"' : ''; ?> />
                             </div>
                         </div>
-                        <div class="ui grid field <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>"">
+                        <div class="ui grid field settings-field-indicator-wrapper <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>"">
                             <label class="six wide column middle aligned">
                             <?php
                             if ( $item ) {
@@ -800,10 +800,10 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             ?>
                             <?php esc_html_e( 'Description', 'mainwp' ); ?></label>
                             <div class="five wide column">
-                                <input type="text" name="mainwp_rest_api_key_desc" id="mainwp_rest_api_key_desc" value="<?php echo esc_html( $edit_desc ); ?>" />
+                                <input type="text" class="settings-field-value-change-handler" name="mainwp_rest_api_key_desc" id="mainwp_rest_api_key_desc" value="<?php echo esc_html( $edit_desc ); ?>" />
                             </div>
                         </div>
-                        <div class="ui grid field <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>"">
+                        <div class="ui grid field settings-field-indicator-wrapper <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>"">
                             <label class="six wide column middle aligned">
                             <?php
                             if ( $item ) {
@@ -813,24 +813,23 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             <?php esc_html_e( 'Consumer key ending in', 'mainwp' ); ?></label>
                             <div class="five wide column">
                                 <div class="ui disabled input">
-                                    <input type="text" value="<?php echo esc_attr( '...' . $ending ); ?>" />
+                                    <input type="text" class="settings-field-value-change-handler" value="<?php echo esc_attr( '...' . $ending ); ?>" />
                                 </div>
                             </div>
                         </div>
-                        <div class="ui grid field <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>"">
+                        <div class="ui grid field settings-field-indicator-wrapper <?php echo $item ? 'settings-field-indicator-edit-api-keys' : ''; ?>" default-indi-valuevalue="3">
                             <label class="six wide column middle aligned">
                             <?php
                             if ( $item ) {
-                                $tmp = explode( ',', $init_pers );
-                                if ( 3 !== count( $tmp ) ) {
-                                    echo MainWP_Settings_Indicator::get_indicator(); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                                }
+                                $tmp     = explode( ',', $init_pers );
+                                $visible = 3 !== count( $tmp );
+                                MainWP_Settings_Indicator::render_indicator( '', '', $visible );
                             }
                             ?>
                             <?php esc_html_e( 'Permissions', 'mainwp' ); ?></label>
                             <div class="five wide column">
                                 <div class="ui multiple selection dropdown" init-value="<?php echo esc_attr( $init_pers ); ?>">
-                                    <input name="mainwp_rest_api_key_edit_pers" value="" type="hidden">
+                                    <input name="mainwp_rest_api_key_edit_pers" class="settings-field-value-change-handler" value="" type="hidden">
                                     <i class="dropdown icon"></i>
                                     <div class="default text"><?php echo ( '' === $init_pers ) ? esc_html__( 'No Permissions selected.', 'mainwp' ) : ''; ?></div>
                                     <div class="menu">

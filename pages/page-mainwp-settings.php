@@ -587,7 +587,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         do_action( 'mainwp_settings_form_top' );
                         ?>
                         <h3 class="ui dividing header">
-                        <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-general', 'general-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                        <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-general' ); ?>
                         <?php esc_html_e( 'General Settings', 'mainwp' ); ?></h3>
                         <?php
                         $timeDailyUpdate      = get_option( 'mainwp_timeDailyUpdate' );
@@ -596,7 +596,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         $delay_autoupdate     = (int) get_option( 'mainwp_delay_autoupdate', 1 );
 
                         ?>
-                        <div class="ui grid field settings-field-indicator-general">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-general">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_timeDailyUpdate', $timeDailyUpdate );
@@ -607,7 +607,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 <div class="time-selector">
                                     <div class="ui input left icon">
                                         <i class="clock icon"></i>
-                                        <input type="text" current-utc-datetime="<?php echo date( 'Y-m-d H:i:s' ); ?>" sync-time-local-datetime="<?php echo date( 'Y-m-d H:i:s', $run_timestamp ); ?>" local-datetime="<?php echo date( 'Y-m-d H:i:s', MainWP_Utility::get_timestamp() ); // phpcs:ignore -- to get local time. ?>" name="mainwp_timeDailyUpdate" id="mainwp_timeDailyUpdate" value="<?php echo esc_attr( $timeDailyUpdate ); ?>" />
+                                        <input type="text" class="settings-field-value-change-handler" current-utc-datetime="<?php echo date( 'Y-m-d H:i:s' ); ?>" sync-time-local-datetime="<?php echo date( 'Y-m-d H:i:s', $run_timestamp ); ?>" local-datetime="<?php echo date( 'Y-m-d H:i:s', MainWP_Utility::get_timestamp() ); // phpcs:ignore -- to get local time. ?>" name="mainwp_timeDailyUpdate" id="mainwp_timeDailyUpdate" value="<?php echo esc_attr( $timeDailyUpdate ); ?>" />
                                     </div>
                                 </div>
                                 <script type="text/javascript">
@@ -624,7 +624,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 </script>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-general">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-general" default-indi-value="2">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_frequencyDailyUpdate', $frequencyDailyUpdate );
@@ -632,7 +632,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set the frequency for automatic synchronization and updates throughout the day.', 'mainwp' ); ?>" data-inverted="" data-position="top left" >
-                                <select name="mainwp_frequencyDailyUpdate" id="mainwp_frequencyDailyUpdate" class="ui dropdown">
+                                <select name="mainwp_frequencyDailyUpdate" id="mainwp_frequencyDailyUpdate" class="ui dropdown settings-field-value-change-handler">
                                     <option value="1" <?php echo 1 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Once per day', 'mainwp' ); ?></option>
                                     <option value="2" <?php echo 2 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Twice per day', 'mainwp' ); ?></option>
                                     <option value="3" <?php echo 3 === $frequencyDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Three times per day', 'mainwp' ); ?></option>
@@ -659,7 +659,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         }
 
                         ?>
-                        <div class="ui grid field settings-field-indicator-general">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-general" default-indi-value="1">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_sidebarPosition', (int) $sidebarPosition );
@@ -667,7 +667,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Select if you want to show sidebar with option on left or right.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <select name="mainwp_sidebarPosition" id="mainwp_sidebarPosition" class="ui dropdown">
+                                <select name="mainwp_sidebarPosition" id="mainwp_sidebarPosition" class="ui dropdown settings-field-value-change-handler">
                                     <option value="1" <?php echo 1 === (int) $sidebarPosition ? 'selected' : ''; ?>><?php esc_html_e( 'Right (default)', 'mainwp' ); ?></option>
                                     <option value="0" <?php echo 0 === (int) $sidebarPosition ? 'selected' : ''; ?>><?php esc_html_e( 'Left', 'mainwp' ); ?></option>
                                 </select>
@@ -676,7 +676,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         <?php MainWP_UI::render_screen_options(); ?>
 
                         <h3 class="ui dividing header">
-                        <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-updates', 'general-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                        <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-updates' ); ?>
                         <?php esc_html_e( 'Updates Settings', 'mainwp' ); ?></h3>
                         <?php
                         $snAutomaticDailyUpdate            = (int) get_option( 'mainwp_automaticDailyUpdate', 0 );
@@ -694,7 +694,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
                         $http_error_codes = MainWP_Utility::get_http_codes();
                         ?>
-                        <div class="ui grid field settings-field-indicator-updates">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_pluginAutomaticDailyUpdate', $snPluginAutomaticDailyUpdate );
@@ -702,13 +702,13 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic plugins updates. If enabled, MainWP will update only plugins that you have marked as Trusted.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <select name="mainwp_pluginAutomaticDailyUpdate" id="mainwp_pluginAutomaticDailyUpdate" class="ui dropdown">
+                                <select name="mainwp_pluginAutomaticDailyUpdate" id="mainwp_pluginAutomaticDailyUpdate" class="ui dropdown settings-field-value-change-handler">
                                     <option value="1" <?php echo 1 === $snPluginAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
                                     <option value="0" <?php echo 0 === $snPluginAutomaticDailyUpdate || 2 === $snPluginAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
                                 </select>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-updates">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_themeAutomaticDailyUpdate', $snThemeAutomaticDailyUpdate );
@@ -716,13 +716,13 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic themes updates. If enabled, MainWP will update only themes that you have marked as Trusted.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <select name="mainwp_themeAutomaticDailyUpdate" id="mainwp_themeAutomaticDailyUpdate" class="ui dropdown">
+                                <select name="mainwp_themeAutomaticDailyUpdate" id="mainwp_themeAutomaticDailyUpdate" class="ui dropdown settings-field-value-change-handler">
                                     <option value="1" <?php echo 1 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
                                     <option value="0" <?php echo 0 === $snThemeAutomaticDailyUpdate || 2 === $snThemeAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
                                 </select>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-updates">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_automaticDailyUpdate', $snAutomaticDailyUpdate );
@@ -730,13 +730,13 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enable or disable automatic WordPress core updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <select name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" class="ui dropdown">
+                                <select name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" class="ui dropdown settings-field-value-change-handler">
                                     <option value="1" <?php echo 1 === $snAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
                                     <option value="0" <?php echo 0 === $snAutomaticDailyUpdate || 2 === (int) $snAutomaticDailyUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
                                 </select>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-updates">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates" default-indi-value="1">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_delay_autoupdate', $delay_autoupdate );
@@ -744,7 +744,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'Set the number of days to delay automatic updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <select name="mainwp_delay_autoupdate" id="mainwp_delay_autoupdate" class="ui dropdown">
+                                <select name="mainwp_delay_autoupdate" id="mainwp_delay_autoupdate" class="ui dropdown settings-field-value-change-handler">
                                     <option value="0" <?php echo 0 === $delay_autoupdate ? 'selected' : ''; ?>><?php esc_html_e( 'Delay off', 'mainwp' ); ?></option>
                                     <option value="1" <?php echo 1 === $delay_autoupdate ? 'selected' : ''; ?>><?php esc_html_e( '1 day', 'mainwp' ); ?></option>
                                     <option value="2" <?php echo 2 === $delay_autoupdate ? 'selected' : ''; ?>><?php esc_html_e( '2 days', 'mainwp' ); ?></option>
@@ -758,7 +758,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 </select>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-updates">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates" default-indi-value="1">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_show_language_updates', $mainwp_show_language_updates );
@@ -766,10 +766,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to manage Translation updates', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="checkbox" name="mainwp_show_language_updates" id="mainwp_show_language_updates" <?php echo 1 === (int) $mainwp_show_language_updates ? 'checked="true"' : ''; ?>/>
+                                <input type="checkbox" name="mainwp_show_language_updates" class="settings-field-value-change-handler" id="mainwp_show_language_updates" <?php echo 1 === (int) $mainwp_show_language_updates ? 'checked="true"' : ''; ?>/>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-updates">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_disable_update_confirmations', $disableUpdateConfirmations );
@@ -777,14 +777,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Choose if you want to disable the popup confirmations when performing updates.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <select name="mainwp_disable_update_confirmations" id="mainwp_disable_update_confirmations" class="ui dropdown">
+                                <select name="mainwp_disable_update_confirmations" id="mainwp_disable_update_confirmations" class="ui dropdown settings-field-value-change-handler">
                                     <option value="0" <?php echo 0 === $disableUpdateConfirmations ? 'selected' : ''; ?>><?php esc_html_e( 'Enable', 'mainwp' ); ?></option>
                                     <option value="2" <?php echo 2 === $disableUpdateConfirmations ? 'selected' : ''; ?>><?php esc_html_e( 'Disable', 'mainwp' ); ?></option>
                                     <option value="1" <?php echo 1 === $disableUpdateConfirmations ? 'selected' : ''; ?>><?php esc_html_e( 'Disable for single updates', 'mainwp' ); ?></option>
                                 </select>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-updates">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_check_http_response', get_option( 'mainwp_check_http_response', '' ) );
@@ -792,10 +792,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want your MainWP Dashboard to check child site header response after updates.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" name="mainwp_check_http_response" id="mainwp_check_http_response" <?php echo 1 === (int) get_option( 'mainwp_check_http_response', 0 ) ? 'checked="true"' : ''; ?>/>
+                                <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1" name="mainwp_check_http_response" id="mainwp_check_http_response" <?php echo 1 === (int) get_option( 'mainwp_check_http_response', 0 ) ? 'checked="true"' : ''; ?>/>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-updates">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_ignore_HTTP_response_status', (int) get_option( 'mainwp_ignore_HTTP_response_status', 0 ) );
@@ -804,7 +804,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </label>
                             <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'Select response codes that you want your MainWP Dashboard to ignore.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                                 <div class="ui multiple selection dropdown" init-value="<?php echo esc_attr( ( get_option( 'mainwp_ignore_HTTP_response_status', '' ) ) ); ?>">
-                                    <input name="mainwp_ignore_http_response_status" type="hidden">
+                                    <input name="mainwp_ignore_http_response_status" class="settings-field-value-change-handler" type="hidden">
                                     <i class="dropdown icon"></i>
                                     <div class="default text"></div>
                                     <div class="menu">
@@ -820,7 +820,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </div>
                         </div>
                         <?php if ( ( $enableLegacyBackupFeature && empty( $primaryBackup ) ) || ( empty( $enableLegacyBackupFeature ) && ! empty( $primaryBackup ) ) ) { ?>
-                        <div class="ui grid field mainwp-parent-toggle settings-field-indicator-updates">
+                        <div class="ui grid field mainwp-parent-toggle settings-field-indicator-wrapper settings-field-indicator-updates">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backup_before_upgrade', (int) $backup_before_upgrade );
@@ -828,10 +828,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will check if full backups exists before updating.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="checkbox" name="mainwp_backup_before_upgrade" id="mainwp_backup_before_upgrade" <?php echo 1 === (int) $backup_before_upgrade ? 'checked="true"' : ''; ?>/>
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_backup_before_upgrade" id="mainwp_backup_before_upgrade" <?php echo 1 === (int) $backup_before_upgrade ? 'checked="true"' : ''; ?>/>
                             </div>
                         </div>
-                        <div class="ui grid field mainwp-child-field settings-field-indicator-updates" <?php echo 1 === (int) $backup_before_upgrade ? '' : 'style="display:none"'; ?> >
+                        <div class="ui grid field mainwp-child-field settings-field-indicator-wrapper settings-field-indicator-updates" default-indi-value="7" <?php echo 1 === (int) $backup_before_upgrade ? '' : 'style="display:none"'; ?> >
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backup_before_upgrade_days', (int) $mainwp_backup_before_upgrade_days );
@@ -839,12 +839,12 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set the number of days without of backup tolerance.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" name="mainwp_backup_before_upgrade_days" id="mainwp_backup_before_upgrade_days" value="<?php echo esc_attr( $mainwp_backup_before_upgrade_days ); ?>" />
+                                <input type="text"  class="settings-field-value-change-handler" name="mainwp_backup_before_upgrade_days" id="mainwp_backup_before_upgrade_days" value="<?php echo esc_attr( $mainwp_backup_before_upgrade_days ); ?>" />
                             </div>
                         </div>
                         <?php } ?>
 
-                        <div class="ui grid field settings-field-indicator-updates">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates" default-indi-value="365">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_numberdays_Outdate_Plugin_Theme', (int) get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ) );
@@ -853,7 +853,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set how many days without an update before plugin or theme will be considered as abandoned.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo false === get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ? 365 : intval( get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
+                                <input type="text" class="settings-field-value-change-handler" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo false === get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ? 365 : intval( get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
                             </div>
                         </div>
                         <?php MainWP_Monitoring_View::render_settings(); ?>
@@ -906,7 +906,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         $timezone_format = _x( 'Y-m-d H:i:s', 'timezone date format' );
 
         ?>
-    <div class="ui grid field settings-field-indicator-general">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-general">
             <label class="six wide column middle aligned"><?php esc_html_e( 'Timezone', 'mainwp' ); ?></label>
             <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Choose either a city in the same timezone as you or a %s (Coordinated Universal Time) time offset.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                 <select id="timezone_string" class="ui dropdown" name="timezone_string" aria-describedby="timezone-description">
@@ -957,10 +957,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      */
     public static function render_datetime_settings() {
         ?>
-        <div class="ui grid field settings-field-indicator-general">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-general" default-indi-value="F j, Y">
             <label class="six wide column middle aligned">
             <?php
-            MainWP_Settings_Indicator::render_not_default_indicator( 'date_formats', get_option( 'date_format' ) );
+            MainWP_Settings_Indicator::render_not_default_indicator( 'date_format', get_option( 'date_format' ) );
             esc_html_e( 'Date format', 'mainwp' );
             ?>
             </label>
@@ -986,12 +986,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 }
                 echo ' /> <span class="date-time-text format-i18n">' . esc_html( date_i18n( $format ) ) . '</span><code>' . esc_html( $format ) . "</code></label><br />\n";
             }
-
                 echo '<label><input type="radio" name="date_format" id="date_format_custom_radio" value="\c\u\s\t\o\m"';
                 checked( $custom );
                 echo '/> <span class="date-time-text date-time-custom-text">' . esc_html__( 'Custom:' ) . '<span class="screen-reader-text"> ' . esc_html__( 'enter a custom date format in the following field' ) . '</span></span></label>' .
                     '<label for="date_format_custom" class="screen-reader-text">' . esc_html__( 'Custom date format:' ) . '</label>' .
-                    '<input type="text" name="date_format_custom" id="date_format_custom" value="' . esc_attr( get_option( 'date_format' ) ) . '" class="small-text" />' .
+                    '<input type="text" name="date_format_custom" id="date_format_custom" value="' . esc_attr( get_option( 'date_format' ) ) . '" class="small-text settings-field-value-change-handler" />' .
                     '<br />' .
                     '<em><strong>' . esc_html__( 'Preview:' ) . '</strong> <span class="example">' . esc_html( date_i18n( get_option( 'date_format' ) ) ) . '</span>' .
                     "<span class='spinner'></span>\n" . '</em>';
@@ -999,7 +998,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         </div>
     </div>
 
-    <div class="ui grid field">
+    <div class="ui grid field settings-field-indicator-wrapper" default-indi-value="g:i a">
         <label class="six wide column middle aligned">
         <?php
         MainWP_Settings_Indicator::render_not_default_indicator( 'time_format', get_option( 'time_format' ) );
@@ -1031,7 +1030,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             checked( $custom );
             echo '/> <span class="date-time-text date-time-custom-text">' . esc_html__( 'Custom:' ) . '<span class="screen-reader-text"> ' . esc_html__( 'enter a custom time format in the following field' ) . '</span></span></label>' .
                 '<label for="time_format_custom" class="screen-reader-text">' . esc_html__( 'Custom time format:' ) . '</label>' .
-                '<input type="text" name="time_format_custom" id="time_format_custom" value="' . esc_attr( get_option( 'time_format' ) ) . '" class="small-text" />' .
+                '<input type="text" class="small-text settings-field-value-change-handler" name="time_format_custom" id="time_format_custom" value="' . esc_attr( get_option( 'time_format' ) ) . '" />' .
                 '<br />' .
             '<em><strong>' . esc_html__( 'Preview:' ) . '</strong> <span class="example">' . esc_html( date_i18n( get_option( 'time_format' ) ) ) . '</span>' .
             "<span class='spinner'></span>\n" . '</em>';
@@ -1039,10 +1038,12 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         </div>
     </div>
     <script type="text/javascript">
-            jQu function($) {
+            jQuery(function($) {
                 $( 'input[name="date_format"]' ).on( 'click', function() {
-                    if ( 'date_format_custom_radio' !== $( this ).attr( 'id' ) )
+                    if ( 'date_format_custom_radio' !== $( this ).attr( 'id' ) ){
                         $( 'input[name="date_format_custom"]' ).val( $( this ).val() ).closest( '.fieldset-wrapper' ).find( '.example' ).text( $( this ).parent( 'label' ).children( '.format-i18n' ).text() );
+                        $( 'input[name="date_format_custom"]' ).trigger("change"); // support indicator.
+                    }
                 } );
 
                 $( 'input[name="date_format_custom"]' ).on( 'click input', function() {
@@ -1050,8 +1051,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 } );
 
                 $( 'input[name="time_format"]' ).on( 'click', function() {
-                    if ( 'time_format_custom_radio' !== $(this).attr( 'id' ) )
+                    if ( 'time_format_custom_radio' !== $(this).attr( 'id' ) ){
                         $( 'input[name="time_format_custom"]' ).val( $( this ).val() ).closest( '.fieldset-wrapper' ).find( '.example' ).text( $( this ).parent( 'label' ).children( '.format-i18n' ).text() );
+                        $( 'input[name="time_format_custom"]' ).trigger("change"); // support indicator.
+                    }
                 } );
 
                 $( 'input[name="time_format_custom"]' ).on( 'click input', function() {
@@ -1236,10 +1239,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     <?php } ?>
 
                         <h3 class="ui dividing header">
-                        <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-cross-ip', 'advanced-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                        <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-cross-ip' ); ?>
                         <?php esc_html_e( 'Cross IP Settings', 'mainwp' ); ?></h3>
 
-                        <div class="ui grid field settings-field-indicator-cross-ip">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cross-ip" default-indi-value="4">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_maximumRequests', (int) get_option( 'mainwp_maximumRequests', 4 ) );
@@ -1247,11 +1250,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" name="mainwp_maximumRequests" id="mainwp_maximumRequests" value="<?php echo false === get_option( 'mainwp_maximumRequests' ) ? 4 : esc_attr( get_option( 'mainwp_maximumRequests' ) ); ?>"/>
+                                <input type="text" class="settings-field-value-change-handler" name="mainwp_maximumRequests" id="mainwp_maximumRequests" value="<?php echo false === get_option( 'mainwp_maximumRequests' ) ? 4 : esc_attr( get_option( 'mainwp_maximumRequests' ) ); ?>"/>
                             </div>
                         </div>
 
-                        <div class="ui grid field settings-field-indicator-cross-ip">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cross-ip" default-indi-value="200">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_minimumDelay', (int) get_option( 'mainwp_minimumDelay', 200 ) );
@@ -1259,15 +1262,15 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" name="mainwp_minimumDelay" id="mainwp_minimumDelay" value="<?php echo false === get_option( 'mainwp_minimumDelay' ) ? 200 : esc_attr( get_option( 'mainwp_minimumDelay' ) ); ?>"/>
+                                <input type="text" class="settings-field-value-change-handler" name="mainwp_minimumDelay" id="mainwp_minimumDelay" value="<?php echo false === get_option( 'mainwp_minimumDelay' ) ? 200 : esc_attr( get_option( 'mainwp_minimumDelay' ) ); ?>"/>
                             </div>
                         </div>
 
                         <h3 class="ui dividing header">
-                        <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-per-ip', 'advanced-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                        <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-per-ip' ); ?>
                         <?php esc_html_e( 'Per IP Settings', 'mainwp' ); ?></h3>
 
-                        <div class="ui grid field settings-field-indicator-per-ip">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-per-ip" default-indi-value="1">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_maximumIPRequests', (int) get_option( 'mainwp_maximumIPRequests', 1 ) );
@@ -1275,11 +1278,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui input"  data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" name="mainwp_maximumIPRequests" id="mainwp_maximumIPRequests" value="<?php echo false === get_option( 'mainwp_maximumIPRequests' ) ? 1 : esc_attr( get_option( 'mainwp_maximumIPRequests' ) ); ?>"/>
+                                <input type="text" class="settings-field-value-change-handler" name="mainwp_maximumIPRequests" id="mainwp_maximumIPRequests" value="<?php echo false === get_option( 'mainwp_maximumIPRequests' ) ? 1 : esc_attr( get_option( 'mainwp_maximumIPRequests' ) ); ?>"/>
                             </div>
                         </div>
 
-                        <div class="ui grid field settings-field-indicator-per-ip">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-per-ip" default-indi-value="1000">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_minimumIPDelay', (int) get_option( 'mainwp_minimumIPDelay', 1000 ) );
@@ -1287,15 +1290,15 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" name="mainwp_minimumIPDelay" id="mainwp_minimumIPDelay" value="<?php echo false === get_option( 'mainwp_minimumIPDelay' ) ? 1000 : esc_attr( get_option( 'mainwp_minimumIPDelay' ) ); ?>"/>
+                                <input type="text" class="settings-field-value-change-handler" name="mainwp_minimumIPDelay" id="mainwp_minimumIPDelay" value="<?php echo false === get_option( 'mainwp_minimumIPDelay' ) ? 1000 : esc_attr( get_option( 'mainwp_minimumIPDelay' ) ); ?>"/>
                             </div>
                         </div>
 
                         <h3 class="ui dividing header">
-                        <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-frontend-request', 'advanced-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                        <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-frontend-request' ); ?>
                         <?php esc_html_e( 'Frontend Request Settings', 'mainwp' ); ?></h3>
 
-                        <div class="ui grid field settings-field-indicator-frontend-request">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-frontend-request" default-indi-value="8">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_maximumSyncRequests', (int) get_option( 'mainwp_maximumSyncRequests', 8 ) );
@@ -1303,11 +1306,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui input" data-tooltip="<?php esc_attr_e( 'This option allows you to control how many sites your MainWP Dashboard should sync at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" name="mainwp_maximumSyncRequests" id="mainwp_maximumSyncRequests" value="<?php echo false === get_option( 'mainwp_maximumSyncRequests' ) ? 8 : esc_attr( get_option( 'mainwp_maximumSyncRequests' ) ); ?>"/>
+                                <input type="text" class="settings-field-value-change-handler" name="mainwp_maximumSyncRequests" id="mainwp_maximumSyncRequests" value="<?php echo false === get_option( 'mainwp_maximumSyncRequests' ) ? 8 : esc_attr( get_option( 'mainwp_maximumSyncRequests' ) ); ?>"/>
                             </div>
                         </div>
 
-                        <div class="ui grid field settings-field-indicator-frontend-request">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-frontend-request" default-indi-value="3">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_maximumInstallUpdateRequests', (int) get_option( 'mainwp_maximumInstallUpdateRequests', 3 ) );
@@ -1315,14 +1318,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui input"  data-tooltip="<?php esc_attr_e( 'This option allows you to control how many update and install requests your MainWP Dashboard should process at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="text" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ? 3 : esc_attr( get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/>
+                                <input type="text" class="settings-field-value-change-handler" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ? 3 : esc_attr( get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/>
                             </div>
                         </div>
 
                         <h3 class="ui dividing header">
-                        <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-miscellaneous', 'advanced-settings' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                        <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-miscellaneous' ); ?>
                         <?php esc_html_e( 'Miscellaneous Settings', 'mainwp' ); ?></h3>
-                        <div class="ui grid field settings-field-indicator-miscellaneous">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous" default-indi-value="1">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_optimize', (int) get_option( 'mainwp_optimize', 1 ) );
@@ -1330,10 +1333,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will cache updates for faster loading.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" name="mainwp_optimize" id="mainwp_optimize" <?php echo 1 === (int) get_option( 'mainwp_optimize', 1 ) ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_optimize" id="mainwp_optimize" <?php echo 1 === (int) get_option( 'mainwp_optimize', 1 ) ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-miscellaneous">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous" default-indi-value="1">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_wp_cron', (int) get_option( 'mainwp_wp_cron', 1 ) );
@@ -1341,19 +1344,25 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Disabling this option will disable the WP Cron so all scheduled events will stop working.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="checkbox" name="mainwp_options_wp_cron" id="mainwp_options_wp_cron" <?php echo 1 === (int) get_option( 'mainwp_wp_cron' ) || ( false === get_option( 'mainwp_wp_cron' ) ) ? 'checked="true"' : ''; ?>/><label><?php esc_html_e( 'Default: On', 'mainwp' ); ?></label>
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_options_wp_cron" id="mainwp_options_wp_cron" <?php echo 1 === (int) get_option( 'mainwp_wp_cron' ) || ( false === get_option( 'mainwp_wp_cron' ) ) ? 'checked="true"' : ''; ?>/><label><?php esc_html_e( 'Default: On', 'mainwp' ); ?></label>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-miscellaneous" >
-                            <label class="six wide column middle aligned"><?php esc_html_e( 'Verify SSL certificate', 'mainwp' ); ?></label>
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous" default-indi-value="1" >
+                            <label class="six wide column middle aligned">
+                            <?php
+                                $indi_val = (int) get_option( 'mainwp_sslVerifyCertificate', 1 );
+                                MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_sslVerifyCertificate', $indi_val );
+                                esc_html_e( 'Verify SSL certificate', 'mainwp' );
+                            ?>
+                            </label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will verify the SSL Certificate on your Child Site (if exists) while connecting the Child Site.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="checkbox" name="mainwp_sslVerifyCertificate" id="mainwp_sslVerifyCertificate" value="checked" <?php echo false === get_option( 'mainwp_sslVerifyCertificate' ) || 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ? 'checked="checked"' : ''; ?>/><label><?php esc_html_e( 'Default: On', 'mainwp' ); ?></label>
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_sslVerifyCertificate" id="mainwp_sslVerifyCertificate" value="checked" <?php echo false === get_option( 'mainwp_sslVerifyCertificate' ) || 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ? 'checked="checked"' : ''; ?>/><label><?php esc_html_e( 'Default: On', 'mainwp' ); ?></label>
                             </div>
                         </div>
                         <?php
                         $general_verify_con = (int) get_option( 'mainwp_verify_connection_method', 1 );
                         ?>
-                        <div class="ui grid field settings-field-indicator-miscellaneous">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous" default-indi-value="1">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_verify_connection_method', (int) $general_verify_con );
@@ -1361,7 +1370,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select Verify connection method. If you are not sure, select "Default".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <select class="ui dropdown" id="mainwp_settings_verify_connection_method" name="mainwp_settings_verify_connection_method">
+                                <select class="ui dropdown settings-field-value-change-handler" id="mainwp_settings_verify_connection_method" name="mainwp_settings_verify_connection_method">
                                     <option <?php echo ( empty( $general_verify_con ) || 1 === $general_verify_con ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'OpenSSL (default)', 'mainwp' ); ?></option>
                                     <option <?php echo ( 2 === $general_verify_con ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'PHPSECLIB (fallback)', 'mainwp' ); ?></option>
                                 </select>
@@ -1377,8 +1386,9 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         } else {
                             $general_sign_alg = intval( $general_sign_alg );
                         }
+                        $algo_def = defined( 'OPENSSL_ALGO_SHA256' ) ? (int) OPENSSL_ALGO_SHA256 : 1;
                         ?>
-                        <div class="ui grid field mainwp-hide-elemenent-sign-algo settings-field-indicator-miscellaneous" <?php echo ( 2 === $general_verify_con ) ? 'style="display:none;"' : ''; ?> >
+                        <div default-indi-value="<?php echo esc_attr( $algo_def ); ?>" class="ui grid field mainwp-hide-elemenent-sign-algo settings-field-indicator-wrapper settings-field-indicator-miscellaneous" <?php echo ( 2 === $general_verify_con ) ? 'style="display:none;"' : ''; ?> >
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_connect_signature_algo', (int) $general_sign_alg );
@@ -1386,7 +1396,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select OpenSSL signature algorithm. If you are not sure, select "Default".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <select class="ui dropdown" id="mainwp_settings_openssl_alg" name="mainwp_settings_openssl_alg">
+                                <select class="ui dropdown settings-field-value-change-handler" id="mainwp_settings_openssl_alg" name="mainwp_settings_openssl_alg">
                                     <?php
                                     foreach ( $sign_algs as $val => $text ) {
                                         ?>
@@ -1398,7 +1408,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 <div class="ui yellow message mainwp-hide-elemenent-sign-algo-note" <?php echo ( 1 === $general_sign_alg ) ? '' : 'style="display:none;"'; ?>><?php echo esc_html( $sign_note ); ?></div>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-miscellaneous">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_forceUseIPv4', (int) get_option( 'mainwp_forceUseIPv4' ) );
@@ -1406,7 +1416,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             ?>
                             </label>
                             <div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'Enable if you want to force your MainWP Dashboard to use IPv4 while tryig to connect child sites.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-                                <input type="checkbox" name="mainwp_forceUseIPv4" id="mainwp_forceUseIPv4" value="checked" <?php echo ( 1 === (int) get_option( 'mainwp_forceUseIPv4' ) ) ? 'checked="checked"' : ''; ?>/><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_forceUseIPv4" id="mainwp_forceUseIPv4" value="checked" <?php echo ( 1 === (int) get_option( 'mainwp_forceUseIPv4' ) ) ? 'checked="checked"' : ''; ?>/><label><?php esc_html_e( 'Default: Off', 'mainwp' ); ?></label>
                             </div>
                         </div>
                         <?php
@@ -1470,7 +1480,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
                         <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'MainWPTools' ) ); ?>" />
                         <h3 class="ui dividing header">
-                        <?php echo MainWP_Settings_Indicator::get_indicator( 'header', 'settings-field-indicator-tools', 'mainwp-tools' ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                        <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-tools' ); ?>
                         <?php esc_html_e( 'MainWP Dashboard Tools', 'mainwp' ); ?></h3>
                         <?php
                         /**
@@ -1487,7 +1497,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         static::get_instance()->render_select_custom_themes();
 
                         ?>
-                        <div class="ui grid field settings-field-indicator-tools">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools">
                             <label class="six wide column middle aligned">
                             <?php
                             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_enable_guided_tours', (int) get_option( 'mainwp_enable_guided_tours', 0 ) );
@@ -1499,7 +1509,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                     <?php printf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?>
                                 </div>
                                 <div class="ui toggle checkbox">
-                                    <input type="checkbox" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ? 'checked="true"' : ''; ?> />
+                                    <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ? 'checked="true"' : ''; ?> />
                                 </div>
                             </div>
                         </div>
@@ -1625,7 +1635,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             $themes_files = array();
         }
         ?>
-        <div class="ui grid field settings-field-indicator-tools">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools" default-indi-value="default">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_selected_theme', $custom_theme );
@@ -1633,7 +1643,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             ?>
             </label>
             <div class="ten wide column" tabindex="0" data-tooltip="<?php esc_attr_e( 'Select your MainWP Dashboard theme.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                <select name="mainwp_settings_custom_theme" id="mainwp_settings_custom_theme" class="ui dropdown selection">
+                <select name="mainwp_settings_custom_theme" id="mainwp_settings_custom_theme" class="ui dropdown selection settings-field-value-change-handler">
                     <option value="default" <?php echo ( 'default' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Default', 'mainwp' ); ?></option>
                     <option value="classic" <?php echo ( 'classic' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Classic', 'mainwp' ); ?></option>
                     <option value="dark" <?php echo ( 'dark' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Dark', 'mainwp' ); ?></option>

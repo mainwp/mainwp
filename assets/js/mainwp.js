@@ -24,7 +24,7 @@ jQuery(function ($) {
   });
 
   // Show/Hide new category field and button
-  jQuery('#category-add-toggle').on('click', function () {
+  jQuery(document).on('click', '#category-add-toggle', function () {
     jQuery('#newcategory-field').toggle();
     jQuery('#mainwp-category-add-submit-field').toggle();
     return false;
@@ -941,7 +941,7 @@ jQuery(function () {
 window.mainwp_sync_sites_data = function (syncSiteIds, pAction) {
   let allWebsiteIds = [];
   jQuery('.dashboard_wp_id[error-status=0]').map(function (indx, el) {
-    allWebsiteIds.push( jQuery(el).val() );
+    allWebsiteIds.push(jQuery(el).val());
   });
   let globalSync = true;
   let selectedIds = [], excludeIds = [];
@@ -4293,22 +4293,74 @@ let mainwp_setttings_fields_indicator_show = function () {
   // for each header indicator.
   jQuery('.settings-field-header-indicator').each(function () {
     let cls = jQuery(this).attr('field-indicator-wrapper-class');
-    let menu_indi = jQuery(this).attr('menu-indicator');
     if ('' != cls && jQuery('.' + cls + ' .settings-field-icon-indicator').length > 0) {
       jQuery(this).attr('style', 'display:inline-block;');
-      jQuery(this).attr('indicator-status', 'show');
-      if (menu_indi !== undefined && menu_indi !== '' && jQuery('.settings-field-menu-indicator[menu-indicator="' + menu_indi + '"]').length) {
-        jQuery('.settings-field-menu-indicator[menu-indicator="' + menu_indi + '"]').attr('style', 'display:inline-block;');
-      }
+      jQuery(this).addClass('visible-indicator');
     }
   });
 }
 
-jQuery(function () {
+jQuery(function ($) {
   if (jQuery('.mainwp-ui-page').length) {
     mainwp_setttings_fields_indicator_show();
   }
+
+  jQuery(document).on('input', '.settings-field-value-change-handler', function () {
+    let val = $(this).val();
+    mainwp_settings_fields_value_on_change(this, val);
+  });
+
+  jQuery(document).on('change', '.settings-field-value-change-handler', function () {
+    let me = this;
+    let objName = $(this).prop('tagName'), val;
+    if ('DIV' === objName) { // ui dropdown select.
+      val = $(this).dropdown('get value');
+    } else if ($(this).is(':checkbox')) {
+      val = $(this).is(":checked") ? '1' : '0';
+      if ($(this).attr('name') === 'mainwp_show_widgets[]') {
+        if ($('input[type="checkbox"][name="mainwp_show_widgets[]"]:not(:checked)').length == 0) {
+          val = 'all';
+        }
+      }else if($(this).attr('inverted-value')){
+        val = val === '1' ? '0' : '1'; // to fix compatible with some case checked is disable, value is 0.
+      }
+    } else {
+      val = $(this).val();
+      if ($(this).attr('name') === 'mainwp_rest_api_key_edit_pers') {
+        val = val.split(',').length;
+      } else if ($(this).attr('name') === 'cost_tracker_custom_product_types[title][]') {
+        val = $('input[name="cost_tracker_custom_product_types[title][]"]').length; // default 0.
+        me = $('.settings-field-indicator-wrapper.default-product-categories');
+      } else if( $(this).attr('name') ===  'cost_tracker_custom_payment_methods[title][]'){
+        val = $('input[name="cost_tracker_custom_payment_methods[title][]"]').length; // default 0.
+        me = $('.settings-field-indicator-wrapper.custom-payment-methods');
+      }
+    }
+    console.log(objName);
+    console.log(val);
+    mainwp_settings_fields_value_on_change(me, val);
+  });
+
+  let mainwp_settings_fields_value_on_change = function (obj, val) {
+    let parent = $(obj).closest('.settings-field-indicator-wrapper');
+    if (parent.length) {
+      let defval = $(parent).attr('default-indi-value') ?? ''; // put default-indi-value at wrapper because semantic ui some case move class of input too input's parent.
+      let indiObj = parent.find('.settings-field-icon-indicator');
+      if (indiObj.length) {
+        console.log('value: ' + val + ' - default: ' + defval);
+        if (val == defval || ('0' == val && '' === defval)) { // empty and zero are same.
+          $(indiObj).removeClass('visible-indicator');
+        } else {
+          $(indiObj).addClass('visible-indicator');
+        }
+      }
+    }
+  }
+
 });
+
+
+
 let mainwp_common_filter_show_segments_modal = function (loadCallback) {
   jQuery('#mainwp-common-filter-segment-modal').modal({
     allowMultiple: false,

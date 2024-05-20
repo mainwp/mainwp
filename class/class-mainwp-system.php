@@ -843,7 +843,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $load_gridster = apply_filters( 'mainwp_enqueue_script_gridster', $load_gridster );
 
         if ( $load_gridster ) {
-            wp_enqueue_script( 'gridster', MAINWP_PLUGIN_URL . 'assets/js/gridster/jquery.gridster.min.js', array(), $this->current_version, true );
+            wp_enqueue_script( 'gridster', MAINWP_PLUGIN_URL . 'assets/js/gridster/jquery.dsmorse-gridster.js', array(), $this->current_version, true );
             wp_enqueue_style( 'gridster', MAINWP_PLUGIN_URL . 'assets/js/gridster/jquery.gridster.min.css', array(), $this->current_version );
         }
 

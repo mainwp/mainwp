@@ -763,7 +763,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $bar_item_active = null;
 
                 $sites_count = MainWP_DB::instance()->get_websites_count();
-                if (empty( $sites_count ) ) {
+                if ( empty( $sites_count ) ) {
                     ?>
                     <a style="background: #FFD300 !important;" id="leftbar-item-quick-setup" title="<?php esc_html_e( 'Quick Setup', 'mainwp' ); ?>" class="item" href="admin.php?page=mainwp-setup">
                         <i class="magic large icon"></i><span class="ui small text"><?php esc_html_e( 'Quick Setup', 'mainwp' ); ?></span>
@@ -978,7 +978,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <script type="text/javascript">
                 jQuery( document ).ready( function () {
 
-                    mainwp_left_bar_showhide_init = function(){
+                    let mainwp_left_bar_showhide_init = function(){
                         if(jQuery('body').hasClass('mainwp-hidden-second-level-navigation')){
                             return; // hide always.
                         }
@@ -986,7 +986,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             return; // hide always.
                         }
                         let lbar = jQuery( '#mainwp-collapse-second-level-navigation' );
-                        let show = 0 != mainwp_ui_state_load( 'showmenu' );
+                        let show = ( typeof mainwp_ui_state_load !== 'undefined' ) && 0 != mainwp_ui_state_load( 'showmenu' );
                         mainwp_left_bar_showhide( lbar, show);
                     }
                     mainwp_left_bar_showhide = function( lbar, show ){
@@ -999,7 +999,9 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             jQuery( lbar ).find( '.icon' ).addClass( 'left' );
                             jQuery( lbar ).css( "left", "272px" );
                             jQuery( lbar ).removeClass( 'collapsed' );
-                            mainwp_ui_state_save( 'showmenu', 1 );
+                            if( ( typeof mainwp_ui_state_save !== 'undefined' ) ) {
+                                mainwp_ui_state_save( 'showmenu', 1 );
+                            }
                         } else {
                             jQuery( '#mainwp-second-level-navigation' ).hide();
                             jQuery( '.mainwp-content-wrap' ).css( "margin-left", "72px" );
@@ -1010,7 +1012,9 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             jQuery( lbar ).css( "left", "72px" );
                             jQuery( lbar ).addClass( 'collapsed' );
                             jQuery( '#mainwp-top-header' ).css( "width", "100%" );
-                            mainwp_ui_state_save( 'showmenu', 0 );
+                            if( ( typeof mainwp_ui_state_save !== 'undefined' ) ) {
+                                mainwp_ui_state_save( 'showmenu', 0 );
+                            }
                         }
                     }
 

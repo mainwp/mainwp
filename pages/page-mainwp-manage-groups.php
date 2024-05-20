@@ -376,7 +376,13 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                             .nodes()
                             .to$().find('td.check-column .ui.checkbox' ).checkbox('set unchecked');
                         }
-                    } );
+                    } ).on( 'columns-reordered', function ( e, settings, details ) {
+                            console.log('columns-reordered');
+                            setTimeout(() => {
+                                jQuery( '#mainwp-manage-groups-sites-table .ui.checkbox' ).checkbox();
+                                mainwp_datatable_fix_menu_overflow('#mainwp-manage-groups-sites-table' );
+                            }, 1000);
+                        } );;
                     mainwp_datatable_fix_to_update_rows_state('#mainwp-manage-groups-sites-table'); // to fix saved rows state.
             } );
                 </script>

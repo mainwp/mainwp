@@ -801,7 +801,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     </div>
                 </div>
 
-                <div class="ui grid field">
+                <div class="ui grid field settings-field-indicator-wrapper">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Verify SSL certificate (optional)', 'mainwp' ); ?></label>
                     <div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Do you want to verify SSL certificate.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                         <input type="checkbox" name="mainwp_managesites_verify_certificate" id="mainwp_managesites_verify_certificate" checked="true" />
@@ -917,7 +917,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked');
                             let iconItemId = iconObj.attr('iconItemId');
                             let iconFileSlug = iconObj.attr('iconFileSlug'); // to support delete file when iconItemId = 0.
-
                             // upload/delete icon action.
                             mainwp_upload_custom_types_icon(iconObj, 'mainwp_managesites_add_edit_site_upload_site_icon', iconItemId, iconFileSlug, deleteIcon, function(response){
                                 if (jQuery('#mainwp_managesites_add_site_uploaded_icon_hidden').length > 0) {
@@ -937,8 +936,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                         iconObj.attr('icon-src', icon_src);
                                         iconObj.attr('iconFileSlug', response.iconfile); // to support delete file when iconItemId = 0.
                                         jQuery('#mainwp_delete_image_field').find('.ui.image').attr('src', icon_src);
-                                        jQuery('#mainw_managesites_add_edit_site_upload_custom_icon').html(icon_img);
-                                        jQuery('#mainw_managesites_add_edit_site_upload_custom_icon').show();
+                                        jQuery('#mainw_managesites_add_edit_site_upload_custom_icon').html(icon_img).show();
                                     }
                                 }
                                 setTimeout(function () {

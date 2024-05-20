@@ -1502,12 +1502,13 @@ th .down.icon {
     color: red;
 }
 
-.icon.settings-field-menu-indicator {
-    float: left !important;
-}
-
 .settings-field-icon-indicator {
     margin-left: -12px !important;
+    display: none !important;
+}
+
+.settings-field-icon-indicator.visible-indicator{
+    display: inline-block !important;
 }
 
 .category-select-item-sub1 {

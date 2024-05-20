@@ -2207,7 +2207,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         ?>
         <div class="ui one column grid">
             <div class="middle aligned center aligned column">
-                <img src="<?php echo esc_url( MAINWP_PLUGIN_URL ); ?>assets/images/mainwp-widget-placeholder.png" style="max-width:200px" class="mainwp-no-results-placeholder ui middle aligned image"/>
+                <img alt="" src="<?php echo esc_url( MAINWP_PLUGIN_URL ); ?>assets/images/mainwp-widget-placeholder.png" style="max-width:200px" class="mainwp-no-results-placeholder ui middle aligned image"/>
             <?php if ( '' !== $placeholder ) : ?>
                     <p><?php echo $placeholder; //phpcs:ignore -- requires escaped. ?></p>
                 <?php else : ?>
